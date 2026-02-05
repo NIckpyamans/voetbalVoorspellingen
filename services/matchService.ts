@@ -35,6 +35,23 @@ function mapLeague(event: SofaScoreEvent): string {
   return tournament || category || "Unknown";
 }
 
+function isEuropeanEvent(event: SofaScoreEvent): boolean {
+  // Whitelist of major European countries and UEFA competitions. This list is intentionally conservative
+  // and can be extended if you want more countries/leagues included.
+  const europeanSet = new Set([
+    'england','spain','italy','germany','france','netherlands','portugal','belgium','scotland','turkey','switzerland','austria','greece','sweden','norway','denmark','poland','czech republic','romania','ukraine','serbia','croatia','bosnia','bulgaria','hungary','slovakia','slovenia','ireland','wales','finland','luxembourg','malta','cyprus'
+  ]);
+
+  const category = safeStr(event?.tournament?.category?.name).toLowerCase();
+  const tname = safeStr(event?.tournament?.name).toLowerCase();
+
+  if (tname.includes('uefa') || tname.includes('champions') || tname.includes('europa')) return true;
+  if (category && europeanSet.has(category)) return true;
+  // also match where category might be a country code or contain the country name
+  for (const c of europeanSet) if (category.includes(c) || tname.includes(c)) return true;
+  return false;
+}
+
 function mapEventToMatch(dateISO: string, event: SofaScoreEvent): Match {
   const home = safeStr(event?.homeTeam?.name, "Home");
   const away = safeStr(event?.awayTeam?.name, "Away");
@@ -126,7 +143,8 @@ export async function fetchMatchesForDate(dateISO: string, signal?: AbortSignal)
     const url = `${SOFASCORE_BASE}/sport/football/scheduled-events/${dateISO}`;
     const json = await fetchJson(url, signal);
     const events: SofaScoreEvent[] = json?.events ?? [];
-    scheduled = events.map((e) => mapEventToMatch(dateISO, e));
+    const euEvents = events.filter(isEuropeanEvent);
+    scheduled = euEvents.map((e) => mapEventToMatch(dateISO, e));
     writeCache(dateISO, scheduled);
   }
 
@@ -136,7 +154,8 @@ export async function fetchMatchesForDate(dateISO: string, signal?: AbortSignal)
     const liveUrl = `${SOFASCORE_BASE}/sport/football/events/live`;
     const liveJson = await fetchJson(liveUrl, signal);
     const liveEvents: SofaScoreEvent[] = liveJson?.events ?? [];
-    live = liveEvents.map((e) => mapEventToMatch(dateISO, e));
+    const liveEu = liveEvents.filter(isEuropeanEvent);
+    live = liveEu.map((e) => mapEventToMatch(dateISO, e));
   } catch {
     // If live endpoint fails, still show scheduled.
   }

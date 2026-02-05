@@ -31,6 +31,18 @@ function mapLeague(event) {
   return tournament || category || 'Unknown';
 }
 
+function isEuropeanEvent(event) {
+  const europeanSet = new Set([
+    'england','spain','italy','germany','france','netherlands','portugal','belgium','scotland','turkey','switzerland','austria','greece','sweden','norway','denmark','poland','czech republic','romania','ukraine','serbia','croatia','bosnia','bulgaria','hungary','slovakia','slovenia','ireland','wales','finland','luxembourg','malta','cyprus'
+  ]);
+  const category = safeStr(event?.tournament?.category?.name).toLowerCase();
+  const tname = safeStr(event?.tournament?.name).toLowerCase();
+  if (tname.includes('uefa') || tname.includes('champions') || tname.includes('europa')) return true;
+  if (category && europeanSet.has(category)) return true;
+  for (const c of europeanSet) if (category.includes(c) || tname.includes(c)) return true;
+  return false;
+}
+
 function mapEventToMatch(dateISO, event) {
   const home = safeStr(event?.homeTeam?.name, 'Home');
   const away = safeStr(event?.awayTeam?.name, 'Away');
@@ -128,10 +140,11 @@ async function fetchMatchesForDate(dateISO) {
   const url = `${SOFASCORE_BASE}/sport/football/scheduled-events/${dateISO}`;
   const json = await fetchJson(url);
   const events = json?.events ?? [];
-  const scheduled = events.map(e => mapEventToMatch(dateISO, e));
+  const euEvents = events.filter(isEuropeanEvent);
+  const scheduled = euEvents.map(e => mapEventToMatch(dateISO, e));
   // Live
   let live = [];
-  try { const liveJson = await fetchJson(`${SOFASCORE_BASE}/sport/football/events/live`); live = (liveJson?.events ?? []).map(e => mapEventToMatch(dateISO, e)); } catch (e) { }
+  try { const liveJson = await fetchJson(`${SOFASCORE_BASE}/sport/football/events/live`); const liveEvents = (liveJson?.events ?? []); const liveEu = liveEvents.filter(isEuropeanEvent); live = liveEu.map(e => mapEventToMatch(dateISO, e)); } catch (e) { }
   const byId = new Map(); for (const m of scheduled) byId.set(m.id, m); for (const m of live) { const existing = byId.get(m.id); byId.set(m.id, existing ? { ...existing, ...m } : m); }
   return Array.from(byId.values()).sort((a,b) => a.kickoff.localeCompare(b.kickoff));
 }

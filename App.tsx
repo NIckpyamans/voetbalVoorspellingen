@@ -3,6 +3,7 @@ import Header from "./components/Header";
 import MatchCard from "./components/MatchCard";
 import BestBetCard from "./components/BestBetCard";
 import PredictionHistory from "./components/PredictionHistory";
+import LivePanel from "./components/LivePanel";
 import { Match, Prediction, BestBet } from "./types";
 import { getEnhancedPrediction, getOrCreateTeam, saveToMemory, updateTeamModelsFromResult } from "./services/geminiService";
 import { velocityEngine } from "./services/velocityEngine";
@@ -39,6 +40,15 @@ const App: React.FC = () => {
   const [predictions, setPredictions] = useState<Record<string, Prediction>>({});
   const [loading, setLoading] = useState(true);
   const [socketStatus, setSocketStatus] = useState<"OPEN" | "CLOSED" | "SYNCING">("CLOSED");
+
+  // UI option: only show European competitions (default ON). The matchService and worker also filter to Europe.
+  const [europeOnly, setEuropeOnly] = useState<boolean>(true);
+
+  function isEuropeanMatch(m: Match) {
+    if (!m.league) return false;
+    const l = m.league.toLowerCase();
+    return l.includes('uefa') || l.includes('europe') || l.includes('england') || l.includes('spain') || l.includes('italy') || l.includes('germany') || l.includes('france') || l.includes('netherlands') || l.includes('portugal') || l.includes('belgium') || l.includes('scotland') || l.includes('sweden') || l.includes('norway') || l.includes('denmark') || l.includes('poland') || l.includes('romania') || l.includes('croatia') || l.includes('serbia');
+  }
 
   // Prevent duplicate "learning" writes per match
   const learnedRef = useRef<Set<string>>(new Set());
@@ -126,13 +136,14 @@ const App: React.FC = () => {
     const finished: Match[] = [];
 
     for (const m of matches) {
+      if (europeOnly && !isEuropeanMatch(m)) continue;
       if (isFinished(m)) finished.push(m);
       else if (isLive(m)) live.push(m);
       else upcoming.push(m);
     }
 
     return [live, upcoming, finished];
-  }, [matches]);
+  }, [matches, europeOnly]);
 
   const dateLabel = useMemo(() => formatDateLabel(selectedDate), [selectedDate]);
 
@@ -152,7 +163,31 @@ const App: React.FC = () => {
     }, {});
   };
 
+  // Return sorted league entries: first by number of matches desc, then alphabetically
+  const getLeagueEntries = (arr: Match[]) => {
+    const grouped = groupByLeague(arr);
+    return Object.entries(grouped).sort((a, b) => {
+      const diff = b[1].length - a[1].length;
+      return diff !== 0 ? diff : a[0].localeCompare(b[0]);
+    });
+  };
+
+  const setExpandedFor = (entries: [string, Match[]][], value: boolean) => {
+    setExpanded((prev) => {
+      const copy = { ...prev };
+      entries.forEach(([league]) => (copy[league] = value));
+      return copy;
+    });
+  };
+
+  const [livePanelOpen, setLivePanelOpen] = useState(false);
+
   const [serverPredictions, setServerPredictions] = useState<any[] | null>(null);
+
+  // Compute sorted entries for rendering
+  const liveEntries = getLeagueEntries(liveMatches);
+  const upcomingEntries = getLeagueEntries(upcomingMatches);
+  const finishedEntries = getLeagueEntries(finishedMatches);
 
   useEffect(() => {
     const loadServer = async () => {
@@ -230,6 +265,14 @@ const App: React.FC = () => {
                 >
                   Vandaag
                 </button>
+
+                <button
+                  onClick={() => setEuropeOnly(!europeOnly)}
+                  className={`ml-2 px-3 py-2 rounded-xl text-sm font-black transition ${europeOnly ? 'bg-green-600 text-white' : 'bg-slate-800 text-slate-300'}`}
+                  title="Toggle Europe-only feed"
+                >
+                  {europeOnly ? 'Europa-only: Aan' : 'Europa-only: Uit'}
+                </button>
               </div>
             </div>
 
@@ -288,28 +331,36 @@ const App: React.FC = () => {
                   {liveMatches.length === 0 ? (
                     <div className="text-slate-500 text-sm">Geen live wedstrijden op dit moment.</div>
                   ) : (
-                    Object.entries(groupByLeague(liveMatches)).map(([league, ms]) => (
-                      <div key={`live-${league}`} className="mb-6">
-                        <button
-                          onClick={() => toggleLeague(league)}
-                          className="w-full text-left bg-slate-900/40 border border-white/5 rounded-xl px-4 py-3 flex items-center justify-between"
-                        >
-                          <div className="flex items-center gap-3">
-                            <div className="text-sm font-black">{league}</div>
-                            <div className="text-xs text-slate-400">{ms.length} wedstrijden</div>
-                          </div>
-                          <div className="text-xs text-slate-400">{expanded[league] ? '▾' : '▸'}</div>
-                        </button>
-
-                        {expanded[league] && (
-                          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mt-4">
-                            {ms.map((m) => (
-                              <MatchCard key={m.id} match={m} prediction={predictions[m.id]} />
-                            ))}
-                          </div>
-                        )}
+                    <>
+                      <div className="flex items-center justify-end gap-2 mb-4">
+                        <button className="text-sm text-slate-400 hover:text-white" onClick={() => setExpandedFor(liveEntries, true)}>Open alle</button>
+                        <button className="text-sm text-slate-400 hover:text-white" onClick={() => setExpandedFor(liveEntries, false)}>Sluit alle</button>
+                        <button className="text-sm font-black text-red-400 bg-red-900/10 px-3 py-1 rounded" onClick={() => setLivePanelOpen(true)}>Open live venster</button>
                       </div>
-                    ))
+
+                      {liveEntries.map(([league, ms]) => (
+                        <div key={`live-${league}`} className="mb-6" data-league={league}>
+                          <button
+                            onClick={() => toggleLeague(league)}
+                            className="w-full text-left bg-slate-900/40 border border-white/5 rounded-xl px-4 py-3 flex items-center justify-between"
+                          >
+                            <div className="flex items-center gap-3">
+                              <div className="text-sm font-black">{league}</div>
+                              <div className="text-xs text-slate-400">{ms.length} wedstrijden</div>
+                            </div>
+                            <div className="text-xs text-slate-400">{expanded[league] ? '▾' : '▸'}</div>
+                          </button>
+
+                          {expanded[league] && (
+                            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mt-4">
+                              {ms.map((m) => (
+                                <MatchCard key={m.id} match={m} prediction={predictions[m.id]} />
+                              ))}
+                            </div>
+                          )}
+                        </div>
+                      ))}
+                    </>
                   )}
                 </section>
 
@@ -325,28 +376,35 @@ const App: React.FC = () => {
                   {upcomingMatches.length === 0 ? (
                     <div className="text-slate-500 text-sm">Geen komende wedstrijden gevonden voor deze datum.</div>
                   ) : (
-                    Object.entries(groupByLeague(upcomingMatches)).map(([league, ms]) => (
-                      <div key={`up-${league}`} className="mb-6">
-                        <button
-                          onClick={() => toggleLeague(league)}
-                          className="w-full text-left bg-slate-900/40 border border-white/5 rounded-xl px-4 py-3 flex items-center justify-between"
-                        >
-                          <div className="flex items-center gap-3">
-                            <div className="text-sm font-black">{league}</div>
-                            <div className="text-xs text-slate-400">{ms.length} wedstrijden</div>
-                          </div>
-                          <div className="text-xs text-slate-400">{expanded[league] ? '▾' : '▸'}</div>
-                        </button>
-
-                        {expanded[league] && (
-                          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mt-4">
-                            {ms.map((m) => (
-                              <MatchCard key={m.id} match={m} prediction={predictions[m.id]} />
-                            ))}
-                          </div>
-                        )}
+                    <>
+                      <div className="flex items-center justify-end gap-2 mb-4">
+                        <button className="text-sm text-slate-400 hover:text-white" onClick={() => setExpandedFor(upcomingEntries, true)}>Open alle</button>
+                        <button className="text-sm text-slate-400 hover:text-white" onClick={() => setExpandedFor(upcomingEntries, false)}>Sluit alle</button>
                       </div>
-                    ))
+
+                      {upcomingEntries.map(([league, ms]) => (
+                        <div key={`up-${league}`} className="mb-6" data-league={league}>
+                          <button
+                            onClick={() => toggleLeague(league)}
+                            className="w-full text-left bg-slate-900/40 border border-white/5 rounded-xl px-4 py-3 flex items-center justify-between"
+                          >
+                            <div className="flex items-center gap-3">
+                              <div className="text-sm font-black">{league}</div>
+                              <div className="text-xs text-slate-400">{ms.length} wedstrijden</div>
+                            </div>
+                            <div className="text-xs text-slate-400">{expanded[league] ? '▾' : '▸'}</div>
+                          </button>
+
+                          {expanded[league] && (
+                            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mt-4">
+                              {ms.map((m) => (
+                                <MatchCard key={m.id} match={m} prediction={predictions[m.id]} />
+                              ))}
+                            </div>
+                          )}
+                        </div>
+                      ))}
+                    </>
                   )}
                 </section>
 
@@ -362,28 +420,35 @@ const App: React.FC = () => {
                   {finishedMatches.length === 0 ? (
                     <div className="text-slate-500 text-sm">Nog geen uitslagen binnen voor deze datum.</div>
                   ) : (
-                    Object.entries(groupByLeague(finishedMatches)).map(([league, ms]) => (
-                      <div key={`fin-${league}`} className="mb-6">
-                        <button
-                          onClick={() => toggleLeague(league)}
-                          className="w-full text-left bg-slate-900/40 border border-white/5 rounded-xl px-4 py-3 flex items-center justify-between"
-                        >
-                          <div className="flex items-center gap-3">
-                            <div className="text-sm font-black">{league}</div>
-                            <div className="text-xs text-slate-400">{ms.length} wedstrijden</div>
-                          </div>
-                          <div className="text-xs text-slate-400">{expanded[league] ? '▾' : '▸'}</div>
-                        </button>
-
-                        {expanded[league] && (
-                          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mt-4">
-                            {ms.map((m) => (
-                              <MatchCard key={m.id} match={m} prediction={predictions[m.id]} />
-                            ))}
-                          </div>
-                        )}
+                    <>
+                      <div className="flex items-center justify-end gap-2 mb-4">
+                        <button className="text-sm text-slate-400 hover:text-white" onClick={() => setExpandedFor(finishedEntries, true)}>Open alle</button>
+                        <button className="text-sm text-slate-400 hover:text-white" onClick={() => setExpandedFor(finishedEntries, false)}>Sluit alle</button>
                       </div>
-                    ))
+
+                      {finishedEntries.map(([league, ms]) => (
+                        <div key={`fin-${league}`} className="mb-6" data-league={league}>
+                          <button
+                            onClick={() => toggleLeague(league)}
+                            className="w-full text-left bg-slate-900/40 border border-white/5 rounded-xl px-4 py-3 flex items-center justify-between"
+                          >
+                            <div className="flex items-center gap-3">
+                              <div className="text-sm font-black">{league}</div>
+                              <div className="text-xs text-slate-400">{ms.length} wedstrijden</div>
+                            </div>
+                            <div className="text-xs text-slate-400">{expanded[league] ? '▾' : '▸'}</div>
+                          </button>
+
+                          {expanded[league] && (
+                            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mt-4">
+                              {ms.map((m) => (
+                                <MatchCard key={m.id} match={m} prediction={predictions[m.id]} />
+                              ))}
+                            </div>
+                          )}
+                        </div>
+                      ))}
+                    </>
                   )}
                 </section>
               </div>
@@ -393,6 +458,23 @@ const App: React.FC = () => {
           <PredictionHistory />
         )}
       </main>
+      <LivePanel
+        open={livePanelOpen}
+        onClose={() => setLivePanelOpen(false)}
+        liveMatches={liveMatches}
+        onJumpToLeague={(league) => {
+          setExpanded((prev) => ({ ...prev, [league]: true }));
+          setLivePanelOpen(false);
+          setTimeout(() => {
+            try {
+              const el = document.querySelector(`[data-league="${league}"]`);
+              if (el && typeof (el as any).scrollIntoView === 'function') (el as any).scrollIntoView({ behavior: 'smooth', block: 'start' });
+            } catch (e) {
+              // ignore
+            }
+          }, 150);
+        }}
+      />
     </div>
   );
 };
