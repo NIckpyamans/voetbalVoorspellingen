@@ -152,15 +152,18 @@ function updateTeamModelsFromResult(store, match, homeKey, awayKey) {
 }
 
 async function fetchMatchesForDate(dateISO) {
-  // Scheduled
   const url = `${SOFASCORE_BASE}/sport/football/scheduled-events/${dateISO}`;
   const json = await fetchJson(url);
-  const events = json?.events ?? [];
-  const euEvents = events.filter(isEuropeanEvent);
-  const scheduled = euEvents.map(e => mapEventToMatch(dateISO, e));
+
+  if (!json) {
+    console.log('[worker] geen data ontvangen van SofaScore');
+    return [];
+  }
   // Live
   let live = [];
-  try { const liveJson = await fetchJson(`${SOFASCORE_BASE}/sport/football/events/live`); const liveEvents = (liveJson?.events ?? []); const liveEu = liveEvents.filter(isEuropeanEvent); live = liveEu.map(e => mapEventToMatch(dateISO, e)); } catch (e) { }
+ try {
+  const liveJson = await fetchJson(`${SOFASCORE_BASE}/sport/football/events/live`);
+  if (!liveJson) throw new Error('geen live data'); const liveEvents = (liveJson?.events ?? []); const liveEu = liveEvents.filter(isEuropeanEvent); live = liveEu.map(e => mapEventToMatch(dateISO, e)); } catch (e) { }
   const byId = new Map(); for (const m of scheduled) byId.set(m.id, m); for (const m of live) { const existing = byId.get(m.id); byId.set(m.id, existing ? { ...existing, ...m } : m); }
   return Array.from(byId.values()).sort((a,b) => a.kickoff.localeCompare(b.kickoff));
 }
