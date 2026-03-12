@@ -71,9 +71,25 @@ function mapEventToMatch(dateISO, event) {
 }
 
 async function fetchJson(url) {
-  const res = await fetch(url, { headers: { Accept: 'application/json' } });
-  if (!res.ok) throw new Error(`HTTP ${res.status} for ${url}`);
-  return res.json();
+  try {
+    const res = await fetch(url, {
+      headers: {
+        Accept: 'application/json',
+        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64)'
+      }
+    });
+
+    if (!res.ok) {
+      console.log(`[worker] API fout ${res.status} voor ${url}`);
+      return null;
+    }
+
+    return await res.json();
+
+  } catch (err) {
+    console.log('[worker] fetch fout:', err.message);
+    return null;
+  }
 }
 
 function poisson(lambda, k) { return (Math.pow(lambda, k) * Math.exp(-lambda)) / factorial(k); }
