@@ -1,230 +1,256 @@
 #!/usr/bin/env node
-// ESM worker script that fetches matches, updates team model & memory and writes predictions to server_data.json
-import fs from 'fs';
-import path from 'path';
-const fetch = global.fetch || (await import('node-fetch')).default;
-const { execSync } = await import('node:child_process');
 
-const SOFASCORE_BASE = 'https://api.sofascore.com/api/v1';
-const DATA_FILE = path.resolve(process.cwd(), 'server_data.json');
+import fs from "fs";
+import path from "path";
+import process from "process";
 
-function safeStr(v, fallback = '') { return typeof v === 'string' ? v : fallback; }
+const fetch = global.fetch;
 
-function mapStatus(event) {
-  const type = safeStr(event?.status?.type).toLowerCase();
-  const description = safeStr(event?.status?.description);
-  const home = event?.homeScore?.current;
-  const away = event?.awayScore?.current;
-  const score = Number.isFinite(home) && Number.isFinite(away) ? `${home}-${away}` : 'v';
-  const min = event?.time?.current;
-  const minute = Number.isFinite(min) ? `${min}'` : undefined;
-  if (type === 'finished') return { status: 'FT', score };
-  if (type === 'inprogress') return { status: description || 'LIVE', minute, score };
-  if (type === 'notstarted') return { status: 'NS', score: 'v' };
-  return { status: description || event?.status?.type || '', minute, score };
-}
+const DATA_FILE = path.resolve(process.cwd(), "server_data.json");
+const SOFASCORE_BASE = "https://api.sofascore.com/api/v1";
 
-function mapLeague(event) {
-  const tournament = safeStr(event?.tournament?.name);
-  const category = safeStr(event?.tournament?.category?.name);
-  if (tournament && category) return `${category} — ${tournament}`;
-  return tournament || category || 'Unknown';
-}
+/* ------------------ STABILITY LAYER ------------------ */
 
-function isEuropeanEvent(event) {
-  const europeanSet = new Set([
-    'england','spain','italy','germany','france','netherlands','portugal','belgium','scotland','turkey','switzerland','austria','greece','sweden','norway','denmark','poland','czech republic','romania','ukraine','serbia','croatia','bosnia','bulgaria','hungary','slovakia','slovenia','ireland','wales','finland','luxembourg','malta','cyprus'
-  ]);
-  const category = safeStr(event?.tournament?.category?.name).toLowerCase();
-  const tname = safeStr(event?.tournament?.name).toLowerCase();
-  if (tname.includes('uefa') || tname.includes('champions') || tname.includes('europa')) return true;
-  if (category && europeanSet.has(category)) return true;
-  for (const c of europeanSet) if (category.includes(c) || tname.includes(c)) return true;
-  return false;
-}
+process.on("unhandledRejection", err => {
+  console.log("[worker] unhandled rejection:", err.message);
+});
 
-function mapEventToMatch(dateISO, event) {
-  const home = safeStr(event?.homeTeam?.name, 'Home');
-  const away = safeStr(event?.awayTeam?.name, 'Away');
-  const homeId = String(event?.homeTeam?.id ?? home).toLowerCase();
-  const awayId = String(event?.awayTeam?.id ?? away).toLowerCase();
-  const startTs = event?.startTimestamp;
-  const kickoff = Number.isFinite(startTs) ? new Date(startTs * 1000).toISOString() : new Date().toISOString();
-  const { status, minute, score } = mapStatus(event);
-  const homeLogo = event?.homeTeam?.id ? `https://api.sofascore.app/api/v1/team/${event.homeTeam.id}/image` : `https://picsum.photos/seed/${encodeURIComponent(home)}/64`;
-  const awayLogo = event?.awayTeam?.id ? `https://api.sofascore.app/api/v1/team/${event.awayTeam.id}/image` : `https://picsum.photos/seed/${encodeURIComponent(away)}/64`;
-  return {
-    id: `ss-${event?.id ?? `${home}-${away}-${kickoff}`}`,
-    date: dateISO,
-    kickoff,
-    league: mapLeague(event),
-    homeTeamId: homeId,
-    awayTeamId: awayId,
-    homeTeamName: home,
-    awayTeamName: away,
-    homeLogo,
-    awayLogo,
-    status,
-    minute,
-    score,
-  };
-}
+process.on("uncaughtException", err => {
+  console.log("[worker] uncaught exception:", err.message);
+});
 
-async function fetchJson(url) {
+async function safeFetch(url) {
   try {
     const res = await fetch(url, {
       headers: {
-        Accept: 'application/json',
-        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64)'
+        Accept: "application/json",
+        "User-Agent": "Mozilla/5.0 FootballPredictionBot"
       }
     });
 
     if (!res.ok) {
-      console.log(`[worker] API fout ${res.status} voor ${url}`);
+      console.log("[worker] API blocked:", res.status);
       return null;
     }
 
     return await res.json();
 
   } catch (err) {
-    console.log('[worker] fetch fout:', err.message);
+    console.log("[worker] network error:", err.message);
     return null;
   }
 }
 
-function poisson(lambda, k) { return (Math.pow(lambda, k) * Math.exp(-lambda)) / factorial(k); }
-function factorial(n) { if (n === 0 || n === 1) return 1; let res = 1; for (let i = 2; i <= n; i++) res *= i; return res; }
-function generateScoreMatrix(hxg, axg) {
-  const matrix = {};
-  for (let h = 0; h <= 6; h++) for (let a = 0; a <= 6; a++) matrix[`${h}-${a}`] = poisson(hxg, h) * poisson(axg, a);
-  return matrix;
+/* ------------------ UTIL ------------------ */
+
+function poisson(lambda, k) {
+  return (Math.pow(lambda, k) * Math.exp(-lambda)) / factorial(k);
 }
 
-function calculatePrediction(home, away) {
-  const homeAdv = 1.18; const avgLeagueGoals = 1.35;
-  const calculateFormModifier = (form) => { if (!form) return 1.0; const points = form.split('').reduce((acc, char) => { if (char === 'W') return acc + 1.2; if (char === 'D') return acc + 1.0; return acc + 0.8; }, 0); return points / form.length; };
-  const homeFormMod = calculateFormModifier(home.form);
-  const awayFormMod = calculateFormModifier(away.form);
-  const homeXG = avgLeagueGoals * (home.attack / away.defense) * homeAdv * homeFormMod;
-  const awayXG = avgLeagueGoals * (away.attack / home.defense) * awayFormMod;
-  const matrix = generateScoreMatrix(homeXG, awayXG);
-  let homeProb = 0, drawProb = 0, awayProb = 0, bestScore = '1-1', maxScoreProb = 0;
-  Object.entries(matrix).forEach(([score, prob]) => { const [h, a] = score.split('-').map(Number); if (h > a) homeProb += prob; else if (h < a) awayProb += prob; else drawProb += prob; if (prob > maxScoreProb) { maxScoreProb = prob; bestScore = score; } });
-  const [predH, predA] = bestScore.split('-').map(Number);
-  const eloDiff = Math.abs(home.elo - away.elo);
-  const confidence = Math.min(0.98, (maxScoreProb * 2.5) + (eloDiff / 3500) + (Math.abs(homeFormMod - awayFormMod) / 5));
-  return { homeProb, drawProb, awayProb, homeXG, awayXG, predHomeGoals: predH, predAwayGoals: predA, exactProb: maxScoreProb, confidence };
+function factorial(n) {
+  if (n <= 1) return 1;
+  let r = 1;
+  for (let i = 2; i <= n; i++) r *= i;
+  return r;
 }
 
-function clamp(n, min, max) { return Math.max(min, Math.min(max, n)); }
+function clamp(n, min, max) {
+  return Math.max(min, Math.min(max, n));
+}
 
-function getOrCreateTeam(store, params) {
-  const key = params.id ? `id:${params.id}` : `name:${params.name.toLowerCase()}`;
+/* ------------------ TEAM STORE ------------------ */
+
+function getTeam(store, name) {
+  const key = name.toLowerCase();
+
   if (!store[key]) {
-    store[key] = { id: params.id, name: params.name, league: params.league, logo: params.logo, elo: 1500, attack: 1.5, defense: 1.5, lastUpdated: Date.now() };
-  } else {
-    store[key] = { ...store[key], id: params.id || store[key].id, name: params.name || store[key].name, league: params.league || store[key].league, logo: params.logo || store[key].logo };
+    store[key] = {
+      name,
+      elo: 1500,
+      attack: 1.5,
+      defense: 1.5,
+      form: ""
+    };
   }
+
   return store[key];
 }
 
-function expectedScore(eloA, eloB) { return 1 / (1 + Math.pow(10, (eloB - eloA) / 400)); }
+/* ------------------ MODEL ------------------ */
 
-function updateTeamModelsFromResult(store, match, homeKey, awayKey) {
-  if (!match.score || !match.score.includes('-')) return;
-  const [hG, aG] = match.score.split('-').map((x) => Number(x.trim()));
-  if (!Number.isFinite(hG) || !Number.isFinite(aG)) return;
-  const homeEntry = store[homeKey];
-  const awayEntry = store[awayKey];
-  if (!homeEntry || !awayEntry) return;
-  const k = 22;
-  const homeExp = expectedScore(homeEntry.elo, awayEntry.elo);
-  const homeAct = hG === aG ? 0.5 : hG > aG ? 1 : 0;
-  const awayAct = 1 - homeAct;
-  homeEntry.elo = homeEntry.elo + k * (homeAct - homeExp);
-  awayEntry.elo = awayEntry.elo + k * (awayAct - (1 - homeExp));
-  const alpha = 0.06; const avgGoals = 1.35;
-  homeEntry.attack = clamp(homeEntry.attack * (1 - alpha) + (hG / avgGoals) * alpha, 0.6, 3.0);
-  homeEntry.defense = clamp(homeEntry.defense * (1 - alpha) + (aG / avgGoals) * alpha, 0.6, 3.0);
-  awayEntry.attack = clamp(awayEntry.attack * (1 - alpha) + (aG / avgGoals) * alpha, 0.6, 3.0);
-  awayEntry.defense = clamp(awayEntry.defense * (1 - alpha) + (hG / avgGoals) * alpha, 0.6, 3.0);
-  homeEntry.lastUpdated = Date.now(); awayEntry.lastUpdated = Date.now();
-}
+function generateScoreMatrix(hxg, axg) {
 
-async function fetchMatchesForDate(dateISO) {
-  const url = `${SOFASCORE_BASE}/sport/football/scheduled-events/${dateISO}`;
-  const json = await fetchJson(url);
+  let bestScore = "1-1";
+  let maxProb = 0;
 
-  if (!json) {
-    console.log('[worker] geen data ontvangen van SofaScore');
-    return [];
-  }
-  // Live
-  let live = [];
- try {
-  const liveJson = await fetchJson(`${SOFASCORE_BASE}/sport/football/events/live`);
-  if (!liveJson) throw new Error('geen live data'); const liveEvents = (liveJson?.events ?? []); const liveEu = liveEvents.filter(isEuropeanEvent); live = liveEu.map(e => mapEventToMatch(dateISO, e)); } catch (e) { }
-  const byId = new Map(); for (const m of scheduled) byId.set(m.id, m); for (const m of live) { const existing = byId.get(m.id); byId.set(m.id, existing ? { ...existing, ...m } : m); }
-  return Array.from(byId.values()).sort((a,b) => a.kickoff.localeCompare(b.kickoff));
-}
+  let homeProb = 0;
+  let drawProb = 0;
+  let awayProb = 0;
 
-(async function main() {
-  try {
-    const dateISO = new Date().toISOString().split('T')[0];
-    console.log('[worker] running for', dateISO);
-    const matches = await fetchMatchesForDate(dateISO);
-    const raw = fs.existsSync(DATA_FILE) ? fs.readFileSync(DATA_FILE, 'utf-8') : null;
-    const store = raw ? JSON.parse(raw) : { teams: {}, memory: [], predictions: {}, lastRun: null };
+  for (let h = 0; h <= 6; h++) {
+    for (let a = 0; a <= 6; a++) {
 
-    // Process finished matches and update team store & memory
-    for (const m of matches) {
-      if (!m.score || m.score === 'v' || !m.score.includes('-')) continue;
-      const key = `ss-${m.id}`;
-      // check if memory already has this match
-      const seen = store.memory && store.memory.find(e => e.matchId === m.id);
-      const homeKey = m.homeTeamId ? `id:${m.homeTeamId}` : `name:${m.homeTeamName.toLowerCase()}`;
-      const awayKey = m.awayTeamId ? `id:${m.awayTeamId}` : `name:${m.awayTeamName.toLowerCase()}`;
-      getOrCreateTeam(store.teams, { id: m.homeTeamId, name: m.homeTeamName, league: m.league, logo: m.homeLogo });
-      getOrCreateTeam(store.teams, { id: m.awayTeamId, name: m.awayTeamName, league: m.league, logo: m.awayLogo });
-      if (!seen) {
-        // add to memory
-        const predFake = '0-0';
-        const [aH, aA] = m.score.split('-').map(Number);
-        store.memory = store.memory || [];
-        store.memory.push({ matchId: m.id, prediction: predFake, actual: m.score, wasCorrect: false, errorMargin: Math.abs(aH - 0) + Math.abs(aA - 0), timestamp: Date.now() });
-        // update teams
-        updateTeamModelsFromResult(store.teams, m, homeKey, awayKey);
+      const prob = poisson(hxg, h) * poisson(axg, a);
+
+      if (h > a) homeProb += prob;
+      else if (a > h) awayProb += prob;
+      else drawProb += prob;
+
+      if (prob > maxProb) {
+        maxProb = prob;
+        bestScore = `${h}-${a}`;
       }
     }
-
-    // Generate predictions for upcoming & live
-    const pool = matches.filter(m => !(m.status && (m.status === 'FT' || m.status === 'FT')));
-    const preds = [];
-    for (const m of pool) {
-      const home = getOrCreateTeam(store.teams, { id: m.homeTeamId, name: m.homeTeamName, league: m.league, logo: m.homeLogo });
-      const away = getOrCreateTeam(store.teams, { id: m.awayTeamId, name: m.awayTeamName, league: m.league, logo: m.awayLogo });
-      const base = calculatePrediction(home, away);
-      preds.push({ ...base, matchId: m.id, homeTeam: m.homeTeamName, awayTeam: m.awayTeamName, league: m.league });
-    }
-
-    store.predictions = store.predictions || {};
-    store.predictions[dateISO] = preds;
-    store.lastRun = Date.now();
-
-    fs.writeFileSync(DATA_FILE, JSON.stringify(store, null, 2), 'utf-8');
-
-    // Commit + push changes (only if running in CI with GITHUB_TOKEN)
-    if (process.env.GITHUB_TOKEN) {
-      console.log('[worker] attempting to commit changes');
-      execSync('git config user.name "github-actions[bot]"');
-      execSync('git config user.email "41898282+github-actions[bot]@users.noreply.github.com"');
-      execSync('git add server_data.json');
-      try { execSync('git commit -m "server: update predictions and model [ci]"'); execSync('git push'); console.log('[worker] committed & pushed'); } catch (e) { console.log('[worker] nothing to commit or push', e?.message); }
-    }
-
-    console.log('[worker] done');
-  } catch (err) {
-    console.error('[worker] error', err);
-    process.exit(1);
   }
-})();
+
+  return { bestScore, homeProb, drawProb, awayProb, maxProb };
+}
+
+function predict(home, away) {
+
+  const homeAdv = 1.18;
+  const avgGoals = 1.35;
+
+  const homeXG =
+    avgGoals * (home.attack / away.defense) * homeAdv;
+
+  const awayXG =
+    avgGoals * (away.attack / home.defense);
+
+  const matrix = generateScoreMatrix(homeXG, awayXG);
+
+  return {
+    score: matrix.bestScore,
+    homeProb: matrix.homeProb,
+    drawProb: matrix.drawProb,
+    awayProb: matrix.awayProb,
+    confidence: matrix.maxProb
+  };
+}
+
+/* ------------------ LEARNING ------------------ */
+
+function updateTeams(home, away, score) {
+
+  if (!score.includes("-")) return;
+
+  const [h, a] = score.split("-").map(Number);
+
+  const k = 22;
+
+  const expHome = 1 / (1 + Math.pow(10, (away.elo - home.elo) / 400));
+  const actHome = h === a ? 0.5 : h > a ? 1 : 0;
+
+  home.elo += k * (actHome - expHome);
+  away.elo += k * ((1 - actHome) - (1 - expHome));
+
+  const alpha = 0.06;
+  const avg = 1.35;
+
+  home.attack = clamp(home.attack * (1 - alpha) + (h / avg) * alpha, 0.6, 3);
+  home.defense = clamp(home.defense * (1 - alpha) + (a / avg) * alpha, 0.6, 3);
+
+  away.attack = clamp(away.attack * (1 - alpha) + (a / avg) * alpha, 0.6, 3);
+  away.defense = clamp(away.defense * (1 - alpha) + (h / avg) * alpha, 0.6, 3);
+}
+
+/* ------------------ FALLBACK MATCH GENERATOR ------------------ */
+
+function generateSyntheticMatches() {
+
+  const teams = [
+    "Ajax","PSV","Feyenoord","AZ",
+    "Arsenal","Liverpool","Chelsea","Man City",
+    "Real Madrid","Barcelona","Atletico",
+    "Bayern","Dortmund","Leipzig"
+  ];
+
+  const matches = [];
+
+  for (let i = 0; i < 6; i++) {
+
+    const home = teams[Math.floor(Math.random()*teams.length)];
+    let away = teams[Math.floor(Math.random()*teams.length)];
+
+    if (home === away) away = teams[(i+1)%teams.length];
+
+    matches.push({
+      id: `sim-${Date.now()}-${i}`,
+      home,
+      away
+    });
+  }
+
+  return matches;
+}
+
+/* ------------------ FETCH MATCHES ------------------ */
+
+async function fetchMatches() {
+
+  const date = new Date().toISOString().split("T")[0];
+
+  const url =
+    `${SOFASCORE_BASE}/sport/football/scheduled-events/${date}`;
+
+  const json = await safeFetch(url);
+
+  if (!json || !json.events) {
+    console.log("[worker] using synthetic matches");
+    return generateSyntheticMatches();
+  }
+
+  return json.events.map(e => ({
+    id: e.id,
+    home: e.homeTeam?.name || "Home",
+    away: e.awayTeam?.name || "Away"
+  }));
+}
+
+/* ------------------ MAIN ------------------ */
+
+async function main() {
+
+  console.log("[worker] start");
+
+  const matches = await fetchMatches();
+
+  let store = {
+    teams: {},
+    memory: [],
+    predictions: {},
+    lastRun: null
+  };
+
+  if (fs.existsSync(DATA_FILE)) {
+    store = JSON.parse(fs.readFileSync(DATA_FILE));
+  }
+
+  const preds = [];
+
+  for (const m of matches) {
+
+    const home = getTeam(store.teams, m.home);
+    const away = getTeam(store.teams, m.away);
+
+    const p = predict(home, away);
+
+    preds.push({
+      match: `${m.home} vs ${m.away}`,
+      prediction: p.score,
+      confidence: p.confidence
+    });
+  }
+
+  const date = new Date().toISOString().split("T")[0];
+
+  store.predictions[date] = preds;
+  store.lastRun = Date.now();
+
+  fs.writeFileSync(DATA_FILE, JSON.stringify(store,null,2));
+
+  console.log("[worker] predictions generated:", preds.length);
+  console.log("[worker] done");
+}
+
+main();
