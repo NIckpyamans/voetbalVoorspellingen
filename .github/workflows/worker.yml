@@ -16,10 +16,12 @@ jobs:
         with:
           node-version: 22
       - run: node scripts/server-worker.js
-      - name: commit data
+
+      - name: Commit data
         run: |
           git config user.name github-actions
           git config user.email github-actions@github.com
           git add server_data.json
-          git commit -m "update predictions" || echo "no changes"
+          # [skip vercel] voorkomt dat Vercel opnieuw deployt bij elke data-update
+          git commit -m "update predictions [skip vercel]" || echo "no changes"
           git push
