@@ -1,26 +1,21 @@
 name: Football AI Worker
-
 on:
   schedule:
     - cron: "0 */6 * * *"
-
   workflow_dispatch:
+
+permissions:
+  contents: write
 
 jobs:
   run-worker:
-
     runs-on: ubuntu-latest
-
     steps:
-
       - uses: actions/checkout@v4
-
       - uses: actions/setup-node@v4
         with:
           node-version: 22
-
       - run: node scripts/server-worker.js
-
       - name: commit data
         run: |
           git config user.name github-actions
