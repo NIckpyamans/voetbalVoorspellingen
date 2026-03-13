@@ -1,4 +1,3 @@
-cat > /mnt/user-data/outputs/predict.ts << 'EOF'
 // api/predict.ts
 // Leest server_data.json van GitHub (publieke repo) i.p.v. lokale disk
 // Dit is nodig omdat Vercel serverless functies geen toegang hebben tot lokale bestanden
