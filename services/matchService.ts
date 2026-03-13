@@ -1,7 +1,8 @@
 import { Match } from "../types";
 
-// SofaScore has public JSON endpoints (no API key). They are unofficial and may change.
-const SOFASCORE_BASE = "https://api.sofascore.com/api/v1";
+// Alle SofaScore calls gaan via onze eigen Vercel API proxy
+// zodat CORS geen probleem is. De browser praat alleen met /api/...
+const PROXY_BASE = "/api";
 
 type SofaScoreEvent = any;
 
@@ -14,14 +15,9 @@ function mapStatus(event: SofaScoreEvent): { status: string; minute?: string; sc
   const description = safeStr(event?.status?.description);
   const home = event?.homeScore?.current;
   const away = event?.awayScore?.current;
-
-  const score =
-    Number.isFinite(home) && Number.isFinite(away) ? `${home}-${away}` : "v";
-
-  // Minute: SofaScore provides current minute as "time.current" for some events.
+  const score = Number.isFinite(home) && Number.isFinite(away) ? `${home}-${away}` : "v";
   const min = event?.time?.current;
   const minute = Number.isFinite(min) ? `${min}'` : undefined;
-
   if (type === "finished") return { status: "FT", score };
   if (type === "inprogress") return { status: description || "LIVE", minute, score };
   if (type === "notstarted") return { status: "NS", score: "v" };
@@ -36,18 +32,16 @@ function mapLeague(event: SofaScoreEvent): string {
 }
 
 function isEuropeanEvent(event: SofaScoreEvent): boolean {
-  // Whitelist of major European countries and UEFA competitions. This list is intentionally conservative
-  // and can be extended if you want more countries/leagues included.
   const europeanSet = new Set([
-    'england','spain','italy','germany','france','netherlands','portugal','belgium','scotland','turkey','switzerland','austria','greece','sweden','norway','denmark','poland','czech republic','romania','ukraine','serbia','croatia','bosnia','bulgaria','hungary','slovakia','slovenia','ireland','wales','finland','luxembourg','malta','cyprus'
+    'england','spain','italy','germany','france','netherlands','portugal','belgium',
+    'scotland','turkey','switzerland','austria','greece','sweden','norway','denmark',
+    'poland','czech republic','romania','ukraine','serbia','croatia','bosnia',
+    'bulgaria','hungary','slovakia','slovenia','ireland','wales','finland'
   ]);
-
   const category = safeStr(event?.tournament?.category?.name).toLowerCase();
   const tname = safeStr(event?.tournament?.name).toLowerCase();
-
   if (tname.includes('uefa') || tname.includes('champions') || tname.includes('europa')) return true;
   if (category && europeanSet.has(category)) return true;
-  // also match where category might be a country code or contain the country name
   for (const c of europeanSet) if (category.includes(c) || tname.includes(c)) return true;
   return false;
 }
@@ -57,22 +51,17 @@ function mapEventToMatch(dateISO: string, event: SofaScoreEvent): Match {
   const away = safeStr(event?.awayTeam?.name, "Away");
   const homeId = String(event?.homeTeam?.id ?? home).toLowerCase();
   const awayId = String(event?.awayTeam?.id ?? away).toLowerCase();
-
   const startTs = event?.startTimestamp;
   const kickoff = Number.isFinite(startTs)
     ? new Date(startTs * 1000).toISOString()
     : new Date().toISOString();
-
   const { status, minute, score } = mapStatus(event);
-
-  // Logo: SofaScore provides team IDs; we can use their public image CDN.
   const homeLogo = event?.homeTeam?.id
     ? `https://api.sofascore.app/api/v1/team/${event.homeTeam.id}/image`
     : `https://picsum.photos/seed/${encodeURIComponent(home)}/64`;
   const awayLogo = event?.awayTeam?.id
     ? `https://api.sofascore.app/api/v1/team/${event.awayTeam.id}/image`
     : `https://picsum.photos/seed/${encodeURIComponent(away)}/64`;
-
   return {
     id: `ss-${event?.id ?? `${home}-${away}-${kickoff}`}`,
     date: dateISO,
@@ -88,19 +77,6 @@ function mapEventToMatch(dateISO: string, event: SofaScoreEvent): Match {
     minute,
     score,
   };
-}
-
-async function fetchJson(url: string, signal?: AbortSignal) {
-  const res = await fetch(url, {
-    method: "GET",
-    headers: {
-      // Some CDNs are picky; a basic accept header helps.
-      Accept: "application/json",
-    },
-    signal,
-  });
-  if (!res.ok) throw new Error(`HTTP ${res.status} for ${url}`);
-  return res.json();
 }
 
 function storageKey(dateISO: string) {
@@ -123,42 +99,39 @@ function readCache(dateISO: string, maxAgeMs: number): Match[] | null {
 function writeCache(dateISO: string, data: Match[]) {
   try {
     localStorage.setItem(storageKey(dateISO), JSON.stringify({ ts: Date.now(), data }));
-  } catch {
-    // ignore
-  }
+  } catch {}
 }
 
-/**
- * Fetch all football matches for a specific date (YYYY-MM-DD).
- * Also merges live event data to ensure minute/score stays current.
- */
 export async function fetchMatchesForDate(dateISO: string, signal?: AbortSignal): Promise<Match[]> {
-  // Cache strategy:
-  // - Scheduled list changes slowly; cache for 5 minutes.
-  // - Live list changes fast; we always fetch live and merge.
   const cached = readCache(dateISO, 5 * 60 * 1000);
-
   let scheduled: Match[] = cached ?? [];
+
   if (!cached) {
-    const url = `${SOFASCORE_BASE}/sport/football/scheduled-events/${dateISO}`;
-    const json = await fetchJson(url, signal);
-    const events: SofaScoreEvent[] = json?.events ?? [];
-    const euEvents = events.filter(isEuropeanEvent);
-    scheduled = euEvents.map((e) => mapEventToMatch(dateISO, e));
-    writeCache(dateISO, scheduled);
+    try {
+      // Via onze eigen proxy (voorkomt CORS blokkade)
+      const res = await fetch(`${PROXY_BASE}/matches?date=${dateISO}`, { signal });
+      if (res.ok) {
+        const json = await res.json();
+        const events: SofaScoreEvent[] = json?.events ?? [];
+        const euEvents = events.filter(isEuropeanEvent);
+        scheduled = euEvents.map((e) => mapEventToMatch(dateISO, e));
+        writeCache(dateISO, scheduled);
+      }
+    } catch {
+      // proxy ook gefaald, gebruik lege array
+    }
   }
 
-  // Live merge
+  // Live merge via proxy
   let live: Match[] = [];
   try {
-    const liveUrl = `${SOFASCORE_BASE}/sport/football/events/live`;
-    const liveJson = await fetchJson(liveUrl, signal);
-    const liveEvents: SofaScoreEvent[] = liveJson?.events ?? [];
-    const liveEu = liveEvents.filter(isEuropeanEvent);
-    live = liveEu.map((e) => mapEventToMatch(dateISO, e));
-  } catch {
-    // If live endpoint fails, still show scheduled.
-  }
+    const liveRes = await fetch(`${PROXY_BASE}/matches?live=true`, { signal });
+    if (liveRes.ok) {
+      const liveJson = await liveRes.json();
+      const liveEvents: SofaScoreEvent[] = liveJson?.events ?? [];
+      live = liveEvents.filter(isEuropeanEvent).map((e) => mapEventToMatch(dateISO, e));
+    }
+  } catch {}
 
   const byId = new Map<string, Match>();
   for (const m of scheduled) byId.set(m.id, m);
@@ -167,6 +140,5 @@ export async function fetchMatchesForDate(dateISO: string, signal?: AbortSignal)
     byId.set(m.id, existing ? { ...existing, ...m } : m);
   }
 
-  // Sort by kickoff
   return Array.from(byId.values()).sort((a, b) => a.kickoff.localeCompare(b.kickoff));
 }
