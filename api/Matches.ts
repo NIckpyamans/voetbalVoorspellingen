@@ -1,124 +1,113 @@
 // api/Matches.ts
-// Server-side proxy voor wedstrijden via API-Football (api-sports.io)
-
-const API_BASE = "https://v3.football.api-sports.io";
+// Haalt wedstrijden op via meerdere gratis bronnen (geen API key)
+// Probeert SofaScore eerst, dan OpenLigaDB als fallback
 
 export default async function handler(req: any, res: any) {
   res.setHeader('Access-Control-Allow-Origin', '*');
-  res.setHeader('Cache-Control', 's-maxage=60');
-
-  const API_KEY = process.env.FOOTBALL_API_KEY;
-
-  if (!API_KEY) {
-    return res.status(200).json({ events: [], error: 'API key niet ingesteld' });
-  }
+  res.setHeader('Cache-Control', 's-maxage=120');
 
   try {
     const { date, live } = req.query;
     const today = new Date().toISOString().split('T')[0];
-    const targetDate = date || today;
+    const targetDate = (date as string) || today;
 
-    // Eerst: check status van je account
-    const statusRes = await fetch(`${API_BASE}/status`, {
-      headers: {
-        'x-apisports-key': API_KEY,
-        'Accept': 'application/json',
+    // Browser-achtige headers om blokkade te voorkomen
+    const headers: Record<string, string> = {
+      'Accept': 'application/json, text/plain, */*',
+      'Accept-Language': 'nl-NL,nl;q=0.9,en-US;q=0.8,en;q=0.7',
+      'Referer': 'https://www.sofascore.com/',
+      'Origin': 'https://www.sofascore.com',
+      'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/122.0.0.0 Safari/537.36',
+      'sec-ch-ua': '"Chromium";v="122", "Not(A:Brand";v="24"',
+      'sec-ch-ua-mobile': '?0',
+      'sec-ch-ua-platform': '"Windows"',
+      'Sec-Fetch-Dest': 'empty',
+      'Sec-Fetch-Mode': 'cors',
+      'Sec-Fetch-Site': 'same-site',
+    };
+
+    let events: any[] = [];
+    let source = 'none';
+
+    // Poging 1: SofaScore
+    try {
+      const url = live === 'true'
+        ? 'https://api.sofascore.com/api/v1/sport/football/events/live'
+        : `https://api.sofascore.com/api/v1/sport/football/scheduled-events/${targetDate}`;
+
+      const res1 = await fetch(url, { headers });
+
+      if (res1.ok) {
+        const data = await res1.json();
+        events = data.events || [];
+        source = 'sofascore';
+      } else {
+        console.log('[matches] SofaScore status:', res1.status);
       }
-    });
-    const statusData = await statusRes.json();
-    
-    // Als account niet geldig, geef nuttige foutmelding
-    if (statusData?.errors?.token) {
-      return res.status(200).json({ 
-        events: [], 
-        error: `API token fout: ${statusData.errors.token}`,
-        accountInfo: statusData 
-      });
+    } catch (e: any) {
+      console.log('[matches] SofaScore fout:', e.message);
     }
 
-    let url: string;
-    if (live === 'true') {
-      url = `${API_BASE}/fixtures?live=all`;
-    } else {
-      url = `${API_BASE}/fixtures?date=${targetDate}&timezone=Europe/Amsterdam`;
-    }
+    // Poging 2: TheSportsDB (100% gratis, geen key)
+    if (events.length === 0 && live !== 'true') {
+      try {
+        const [year, month, day] = targetDate.split('-');
+        const url = `https://www.thesportsdb.com/api/v1/json/3/eventsday.php?d=${year}-${month}-${day}&s=Soccer`;
+        const res2 = await fetch(url, {
+          headers: { 'Accept': 'application/json' }
+        });
 
-    const response = await fetch(url, {
-      headers: {
-        'x-apisports-key': API_KEY,
-        'Accept': 'application/json',
+        if (res2.ok) {
+          const data = await res2.json();
+          const rawEvents = data.events || [];
+
+          // Vertaal TheSportsDB formaat naar ons formaat
+          events = rawEvents.map((e: any) => ({
+            id: e.idEvent,
+            homeTeam: {
+              id: e.idHomeTeam,
+              name: e.strHomeTeam,
+              logo: e.strHomeTeamBadge || `https://www.thesportsdb.com/images/media/team/badge/${e.idHomeTeam}.png`
+            },
+            awayTeam: {
+              id: e.idAwayTeam,
+              name: e.strAwayTeam,
+              logo: e.strAwayTeamBadge || `https://www.thesportsdb.com/images/media/team/badge/${e.idAwayTeam}.png`
+            },
+            homeScore: { current: e.intHomeScore ? Number(e.intHomeScore) : null },
+            awayScore: { current: e.intAwayScore ? Number(e.intAwayScore) : null },
+            status: {
+              type: e.strStatus === 'Match Finished' ? 'finished' : 
+                    e.strStatus === 'In Progress' ? 'inprogress' : 'notstarted',
+              description: e.strStatus || 'NS'
+            },
+            time: { current: null },
+            startTimestamp: e.strTimestamp ? new Date(e.strTimestamp).getTime() / 1000 : null,
+            tournament: {
+              name: e.strLeague,
+              category: { name: e.strCountry || e.strLeague }
+            },
+            score: (e.intHomeScore !== null && e.intAwayScore !== null && 
+                    e.intHomeScore !== '' && e.intAwayScore !== '')
+              ? `${e.intHomeScore}-${e.intAwayScore}` : 'v',
+          }));
+
+          source = 'thesportsdb';
+        }
+      } catch (e: any) {
+        console.log('[matches] TheSportsDB fout:', e.message);
       }
-    });
-
-    if (!response.ok) {
-      return res.status(200).json({ 
-        events: [], 
-        error: `API fout: ${response.status}`,
-        accountStatus: statusData?.response
-      });
     }
 
-    const data = await response.json();
-
-    // Geef ook account info mee voor debugging
-    const accountInfo = statusData?.response;
-
-    // Vertaal naar ons formaat
-    const events = (data.response || []).map((item: any) => {
-      const fixture = item.fixture;
-      const teams = item.teams;
-      const goals = item.goals;
-      const league = item.league;
-
-      const statusCode = fixture?.status?.short || 'NS';
-      let statusType = 'notstarted';
-      if (['FT','AET','PEN'].includes(statusCode)) statusType = 'finished';
-      else if (['1H','2H','ET','BT','P','LIVE','HT'].includes(statusCode)) statusType = 'inprogress';
-
-      const homeGoals = goals?.home;
-      const awayGoals = goals?.away;
-      const scoreStr = (homeGoals !== null && awayGoals !== null && 
-                        homeGoals !== undefined && awayGoals !== undefined)
-        ? `${homeGoals}-${awayGoals}` : 'v';
-
-      return {
-        id: fixture?.id,
-        homeTeam: {
-          id: teams?.home?.id,
-          name: teams?.home?.name,
-          logo: teams?.home?.logo
-        },
-        awayTeam: {
-          id: teams?.away?.id,
-          name: teams?.away?.name,
-          logo: teams?.away?.logo
-        },
-        homeScore: { current: homeGoals },
-        awayScore: { current: awayGoals },
-        status: {
-          type: statusType,
-          description: statusCode
-        },
-        time: { current: fixture?.status?.elapsed },
-        startTimestamp: fixture?.timestamp,
-        tournament: {
-          name: league?.name,
-          category: { name: league?.country }
-        },
-        score: scoreStr,
-      };
-    });
-
-    return res.status(200).json({ 
+    return res.status(200).json({
       events,
       total: events.length,
       date: targetDate,
-      requestsUsed: accountInfo?.requests?.current,
-      requestsLimit: accountInfo?.requests?.limit_day,
+      source
     });
 
   } catch (err: any) {
-    console.error('matches proxy error:', err);
+    console.error('[matches] kritieke fout:', err);
     return res.status(200).json({ events: [], error: err?.message });
   }
 }
