@@ -1,7 +1,7 @@
 name: Football AI Worker
 on:
   schedule:
-    - cron: "0 */6 * * *"
+    - cron: "*/30 * * * *"  # Elke 30 minuten
   workflow_dispatch:
 
 permissions:
@@ -15,13 +15,12 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: 22
-      - run: node scripts/server-worker.js
-
+      - name: Run worker
+        run: node scripts/server-worker.js
       - name: Commit data
         run: |
           git config user.name github-actions
           git config user.email github-actions@github.com
           git add server_data.json
-          # [skip vercel] voorkomt dat Vercel opnieuw deployt bij elke data-update
-          git commit -m "update predictions [skip vercel]" || echo "no changes"
+          git commit -m "update wedstrijden [skip vercel]" || echo "geen wijzigingen"
           git push
