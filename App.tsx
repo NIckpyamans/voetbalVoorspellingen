@@ -41,14 +41,8 @@ const App: React.FC = () => {
   const [loading, setLoading] = useState(true);
   const [socketStatus, setSocketStatus] = useState<"OPEN" | "CLOSED" | "SYNCING">("CLOSED");
 
-  // UI option: only show European competitions (default ON). The matchService and worker also filter to Europe.
-  const [europeOnly, setEuropeOnly] = useState<boolean>(true);
 
-  function isEuropeanMatch(m: Match) {
-    if (!m.league) return false;
-    const l = m.league.toLowerCase();
-    return l.includes('uefa') || l.includes('europe') || l.includes('england') || l.includes('spain') || l.includes('italy') || l.includes('germany') || l.includes('france') || l.includes('netherlands') || l.includes('portugal') || l.includes('belgium') || l.includes('scotland') || l.includes('sweden') || l.includes('norway') || l.includes('denmark') || l.includes('poland') || l.includes('romania') || l.includes('croatia') || l.includes('serbia');
-  }
+
 
   // Prevent duplicate "learning" writes per match
   const learnedRef = useRef<Set<string>>(new Set());
@@ -136,14 +130,13 @@ const App: React.FC = () => {
     const finished: Match[] = [];
 
     for (const m of matches) {
-      if (europeOnly && !isEuropeanMatch(m)) continue;
       if (isFinished(m)) finished.push(m);
       else if (isLive(m)) live.push(m);
       else upcoming.push(m);
     }
 
     return [live, upcoming, finished];
-  }, [matches, europeOnly]);
+  }, [matches]);
 
   const dateLabel = useMemo(() => formatDateLabel(selectedDate), [selectedDate]);
 
@@ -266,13 +259,6 @@ const App: React.FC = () => {
                   Vandaag
                 </button>
 
-                <button
-                  onClick={() => setEuropeOnly(!europeOnly)}
-                  className={`ml-2 px-3 py-2 rounded-xl text-sm font-black transition ${europeOnly ? 'bg-green-600 text-white' : 'bg-slate-800 text-slate-300'}`}
-                  title="Toggle Europe-only feed"
-                >
-                  {europeOnly ? 'Europa-only: Aan' : 'Europa-only: Uit'}
-                </button>
               </div>
             </div>
 
