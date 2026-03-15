@@ -1,58 +1,58 @@
 #!/usr/bin/env node
-// server-worker.js - Alleen top Europese competities
-
 import fs from "fs";
 import path from "path";
 
 const SOFA = "https://api.sofascore.com/api/v1";
 const DATA_FILE = path.resolve(process.cwd(), "server_data.json");
 
-// Alleen top competities — geen amateur, geen reserve, geen youth
-const TOP_LEAGUES = new Set([
+// EXACTE whitelist — alleen deze competities
+const ALLOWED_LEAGUES = [
   // Nederland
-  'eredivisie','eerste divisie',
+  { country: 'netherlands', name: 'eredivisie', label: '🇳🇱 Eredivisie' },
+  { country: 'netherlands', name: 'eerste divisie', label: '🇳🇱 Eerste Divisie' },
+  { country: 'netherlands', name: 'knvb beker', label: '🇳🇱 KNVB Beker' },
   // Engeland
-  'premier league','championship',
+  { country: 'england', name: 'premier league', label: '🏴󠁧󠁢󠁥󠁮󠁧󠁿 Premier League' },
+  { country: 'england', name: 'championship', label: '🏴󠁧󠁢󠁥󠁮󠁧󠁿 Championship' },
   // Duitsland
-  'bundesliga','2. bundesliga',
+  { country: 'germany', name: 'bundesliga', label: '🇩🇪 Bundesliga' },
+  { country: 'germany', name: '2. bundesliga', label: '🇩🇪 2. Bundesliga' },
   // Spanje
-  'laliga','laliga2','la liga','segunda división',
+  { country: 'spain', name: 'laliga', label: '🇪🇸 LaLiga' },
+  { country: 'spain', name: 'laliga2', label: '🇪🇸 LaLiga2' },
+  { country: 'spain', name: 'la liga', label: '🇪🇸 LaLiga' },
+  { country: 'spain', name: 'segunda', label: '🇪🇸 LaLiga2' },
   // Italië
-  'serie a','serie b',
+  { country: 'italy', name: 'serie a', label: '🇮🇹 Serie A' },
+  { country: 'italy', name: 'serie b', label: '🇮🇹 Serie B' },
   // Frankrijk
-  'ligue 1','ligue 2',
+  { country: 'france', name: 'ligue 1', label: '🇫🇷 Ligue 1' },
+  { country: 'france', name: 'ligue 2', label: '🇫🇷 Ligue 2' },
   // Portugal
-  'liga portugal','liga portugal 2',
+  { country: 'portugal', name: 'liga portugal', label: '🇵🇹 Liga Portugal' },
+  { country: 'portugal', name: 'liga portugal 2', label: '🇵🇹 Liga Portugal 2' },
   // België
-  'pro league','challenger pro league',
-  // Turkije
-  'süper lig','1. lig',
+  { country: 'belgium', name: 'pro league', label: '🇧🇪 Pro League' },
+  { country: 'belgium', name: 'challenger pro league', label: '🇧🇪 Challenger Pro League' },
   // UEFA
-  'champions league','europa league','conference league',
-  'uefa champions league','uefa europa league','uefa conference league',
-]);
-
-const EXCLUDED_KEYWORDS = [
-  'amateur','reserve','u23','u21','u20','u19','u18','u17',
-  'youth','women','vrouwen','futsal','beach','indoor',
-  'group','zona','region','district','county','subregion'
+  { country: '', name: 'champions league', label: '🏆 Champions League' },
+  { country: '', name: 'uefa champions league', label: '🏆 Champions League' },
+  { country: '', name: 'europa league', label: '🥈 Europa League' },
+  { country: '', name: 'uefa europa league', label: '🥈 Europa League' },
+  { country: '', name: 'conference league', label: '🥉 Conference League' },
+  { country: '', name: 'uefa conference league', label: '🥉 Conference League' },
 ];
 
-function isTopLeague(event) {
-  const tname = (event?.tournament?.name || '').toLowerCase();
-  const category = (event?.tournament?.category?.name || '').toLowerCase();
+function getAllowedLeague(event) {
+  const tname = (event?.tournament?.name || '').toLowerCase().trim();
+  const category = (event?.tournament?.category?.name || '').toLowerCase().trim();
 
-  // Sluit amateur/reserve/youth uit
-  for (const keyword of EXCLUDED_KEYWORDS) {
-    if (tname.includes(keyword) || category.includes(keyword)) return false;
+  for (const league of ALLOWED_LEAGUES) {
+    const countryMatch = !league.country || category.includes(league.country);
+    const nameMatch = tname === league.name || tname.includes(league.name);
+    if (countryMatch && nameMatch) return league.label;
   }
-
-  // Check of het een top competitie is
-  for (const league of TOP_LEAGUES) {
-    if (tname.includes(league)) return true;
-  }
-
-  return false;
+  return null;
 }
 
 process.on("unhandledRejection", err => console.log("[worker] fout:", err.message));
@@ -69,20 +69,17 @@ async function safeFetch(url) {
         "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 Chrome/123.0.0.0 Safari/537.36",
       }
     });
-    if (!res.ok) { console.log("[worker] geblokkeerd:", res.status, url); return null; }
+    if (!res.ok) { console.log("[worker] geblokkeerd:", res.status); return null; }
     return await res.json();
-  } catch (err) {
-    console.log("[worker] netwerk fout:", err.message);
-    return null;
-  }
+  } catch (err) { console.log("[worker] fout:", err.message); return null; }
 }
 
 function factorial(n) { if (n <= 1) return 1; let r = 1; for (let i = 2; i <= n; i++) r *= i; return r; }
-function poisson(lambda, k) { return (Math.pow(lambda, k) * Math.exp(-lambda)) / factorial(k); }
-function clamp(v, min, max) { return Math.max(min, Math.min(max, v)); }
+function poisson(l, k) { return (Math.pow(l, k) * Math.exp(-l)) / factorial(k); }
+function clamp(v, a, b) { return Math.max(a, Math.min(b, v)); }
 
 function getTeam(teams, id, name) {
-  const key = id ? `id:${id}` : name.toLowerCase();
+  const key = id ? `id:${id}` : `name:${name.toLowerCase()}`;
   if (!teams[key]) teams[key] = { id: id || '', name, elo: 1500, attack: 1.5, defense: 1.5 };
   return teams[key];
 }
@@ -109,12 +106,12 @@ function updateTeams(home, away, score) {
   if (isNaN(h) || isNaN(a)) return;
   const k = 22, exp = 1 / (1 + Math.pow(10, (away.elo - home.elo) / 400));
   const act = h > a ? 1 : h === a ? 0.5 : 0;
-  home.elo += k * (act - exp); away.elo += k * ((1-act) - (1-exp));
+  home.elo += k * (act - exp); away.elo += k * ((1 - act) - (1 - exp));
   const alpha = 0.06, avg = 1.35;
-  home.attack = clamp(home.attack*(1-alpha)+(h/avg)*alpha, 0.6, 3);
-  home.defense = clamp(home.defense*(1-alpha)+(a/avg)*alpha, 0.6, 3);
-  away.attack = clamp(away.attack*(1-alpha)+(a/avg)*alpha, 0.6, 3);
-  away.defense = clamp(away.defense*(1-alpha)+(h/avg)*alpha, 0.6, 3);
+  home.attack = clamp(home.attack * (1-alpha) + (h/avg) * alpha, 0.6, 3);
+  home.defense = clamp(home.defense * (1-alpha) + (a/avg) * alpha, 0.6, 3);
+  away.attack = clamp(away.attack * (1-alpha) + (a/avg) * alpha, 0.6, 3);
+  away.defense = clamp(away.defense * (1-alpha) + (h/avg) * alpha, 0.6, 3);
 }
 
 async function main() {
@@ -131,14 +128,16 @@ async function main() {
 
   for (const date of [yesterday, today, tomorrow]) {
     const json = await safeFetch(`${SOFA}/sport/football/scheduled-events/${date}`);
-    if (!json?.events) { console.log(`[worker] geen data voor ${date}`); continue; }
-
-    const topEvents = json.events.filter(isTopLeague);
-    console.log(`[worker] ${date}: ${topEvents.length} top wedstrijden (van ${json.events.length} totaal)`);
+    if (!json?.events) continue;
 
     const dayMatches = [], dayPredictions = [];
+    let count = 0;
 
-    for (const e of topEvents) {
+    for (const e of json.events) {
+      const leagueLabel = getAllowedLeague(e);
+      if (!leagueLabel) continue;
+      count++;
+
       const homeName = e.homeTeam?.name || 'Home';
       const awayName = e.awayTeam?.name || 'Away';
       const homeId = e.homeTeam?.id ? String(e.homeTeam.id) : '';
@@ -148,20 +147,19 @@ async function main() {
       homeTeam.name = homeName; awayTeam.name = awayName;
 
       const statusType = e.status?.type || 'notstarted';
-      const homeGoals = e.homeScore?.current;
-      const awayGoals = e.awayScore?.current;
-      const score = (homeGoals != null && awayGoals != null) ? `${homeGoals}-${awayGoals}` : null;
+      const hg = e.homeScore?.current, ag = e.awayScore?.current;
+      const score = (hg != null && ag != null) ? `${hg}-${ag}` : null;
 
       if (statusType === 'finished' && score) updateTeams(homeTeam, awayTeam, score);
 
       const pred = predict(homeTeam, awayTeam);
       const matchId = `ss-${e.id}`;
-      const league = [e.tournament?.category?.name, e.tournament?.name].filter(Boolean).join(' — ');
 
       dayMatches.push({
         id: matchId, sofaId: e.id, date,
         kickoff: e.startTimestamp ? new Date(e.startTimestamp * 1000).toISOString() : null,
-        league, homeTeamName: homeName, awayTeamName: awayName,
+        league: leagueLabel,
+        homeTeamName: homeName, awayTeamName: awayName,
         homeTeamId: homeId, awayTeamId: awayId,
         homeLogo: homeId ? `https://api.sofascore.app/api/v1/team/${homeId}/image` : '',
         awayLogo: awayId ? `https://api.sofascore.app/api/v1/team/${awayId}/image` : '',
@@ -169,29 +167,28 @@ async function main() {
         score, minute: e.time?.current ? `${e.time.current}'` : null,
       });
 
-      dayPredictions.push({
-        matchId, homeTeam: homeName, awayTeam: awayName, league, ...pred
-      });
+      dayPredictions.push({ matchId, homeTeam: homeName, awayTeam: awayName, league: leagueLabel, ...pred });
     }
 
+    console.log(`[worker] ${date}: ${count} wedstrijden in topcompetities`);
     store.matches[date] = dayMatches;
     store.predictions[date] = dayPredictions;
   }
 
-  // Live wedstrijden mergen
+  // Live merge
   const liveJson = await safeFetch(`${SOFA}/sport/football/events/live`);
   if (liveJson?.events) {
-    const liveTop = liveJson.events.filter(isTopLeague);
-    console.log(`[worker] ${liveTop.length} live top wedstrijden`);
     if (!store.matches[today]) store.matches[today] = [];
-    for (const live of liveTop) {
+    for (const live of liveJson.events) {
+      const leagueLabel = getAllowedLeague(live);
+      if (!leagueLabel) continue;
       const matchId = `ss-${live.id}`;
       const idx = store.matches[today].findIndex(m => m.id === matchId);
       const hg = live.homeScore?.current, ag = live.awayScore?.current;
       const liveMatch = {
         id: matchId, sofaId: live.id, date: today,
         kickoff: live.startTimestamp ? new Date(live.startTimestamp * 1000).toISOString() : null,
-        league: [live.tournament?.category?.name, live.tournament?.name].filter(Boolean).join(' — '),
+        league: leagueLabel,
         homeTeamName: live.homeTeam?.name || 'Home', awayTeamName: live.awayTeam?.name || 'Away',
         homeTeamId: live.homeTeam?.id ? String(live.homeTeam.id) : '',
         awayTeamId: live.awayTeam?.id ? String(live.awayTeam.id) : '',
@@ -203,18 +200,16 @@ async function main() {
       if (idx >= 0) store.matches[today][idx] = liveMatch;
       else store.matches[today].push(liveMatch);
     }
+    console.log(`[worker] live merging klaar`);
   }
 
   store.lastRun = Date.now();
-
-  // Bewaar alleen laatste 7 dagen
   const cutoff = new Date(Date.now() - 7*86400000).toISOString().split('T')[0];
   for (const d of Object.keys(store.matches)) if (d < cutoff) delete store.matches[d];
   for (const d of Object.keys(store.predictions)) if (d < cutoff) delete store.predictions[d];
 
   fs.writeFileSync(DATA_FILE, JSON.stringify(store, null, 2));
-  const count = store.matches[today]?.length || 0;
-  console.log(`[worker] klaar! ${count} wedstrijden vandaag`);
+  console.log(`[worker] klaar! ${store.matches[today]?.length || 0} wedstrijden vandaag`);
 }
 
 main();
