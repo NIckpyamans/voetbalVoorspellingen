@@ -30,32 +30,6 @@ const TOP_LEAGUES = new Set([
   // UEFA
   'champions league','europa league','conference league',
   'uefa champions league','uefa europa league','uefa conference league',
-  // Schotland
-  'premiership',
-  // Griekenland
-  'super league',
-  // Zwitserland
-  'super league',
-  // Oostenrijk
-  'bundesliga',
-  // Rusland
-  'premier league','first league',
-  // Denemarken
-  'superliga',
-  // Noorwegen
-  'eliteserien',
-  // Zweden
-  'allsvenskan',
-  // Polen
-  'ekstraklasa',
-  // Tsjechië
-  'fortuna liga',
-  // Roemenië
-  'superliga',
-  // Kroatië
-  'hnl',
-  // Servië
-  'super liga',
 ]);
 
 const EXCLUDED_KEYWORDS = [
