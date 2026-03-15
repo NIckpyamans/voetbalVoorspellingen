@@ -1,6 +1,4 @@
-// api/Matches.ts
-// Leest wedstrijden uit server_data.json (opgeslagen door GitHub Actions worker)
-// De worker draait op GitHub servers die SofaScore NIET blokkeren
+// api/Matches.ts — geeft matches + lastRun terug vanuit server_data.json op GitHub
 
 const GITHUB_RAW = process.env.DATA_URL ||
   'https://raw.githubusercontent.com/NIckpyamans/voetbalVoorspellingen/main/server_data.json';
@@ -14,71 +12,51 @@ export default async function handler(req: any, res: any) {
     const today = new Date().toISOString().split('T')[0];
     const targetDate = (date as string) || today;
 
-    // Haal data op van GitHub (gratis, altijd beschikbaar)
+    // Haal server_data.json op van GitHub
     const ghRes = await fetch(`${GITHUB_RAW}?t=${Date.now()}`, {
       headers: { 'Cache-Control': 'no-cache' }
     });
 
     if (!ghRes.ok) {
-      return res.status(200).json({
-        events: [],
-        error: `GitHub fetch mislukt: ${ghRes.status}`,
-        tip: 'Zorg dat de GitHub Actions worker heeft gedraaid'
-      });
+      return res.status(200).json({ events: [], matches: [], lastRun: null, error: `GitHub ${ghRes.status}` });
     }
 
     const store = await ghRes.json();
+    const lastRun = store.lastRun || null;
 
-    let events: any[] = [];
+    // NIEUW formaat: store.matches[date]
+    if (store.matches?.[targetDate]) {
+      let matches = store.matches[targetDate];
 
-    if (live === 'true') {
-      // Live wedstrijden = wedstrijden van vandaag met status LIVE
-      const todayMatches = store.matches?.[today] || [];
-      events = todayMatches.filter((m: any) => m.status === 'LIVE');
-    } else {
-      // Wedstrijden voor gevraagde datum
-      events = store.matches?.[targetDate] || [];
+      // Live filter
+      if (live === 'true') {
+        matches = matches.filter((m: any) => m.status === 'LIVE');
+      }
+
+      return res.status(200).json({
+        matches,
+        events: matches, // compatibiliteit
+        total: matches.length,
+        date: targetDate,
+        lastRun,
+        source: 'github-worker-v2'
+      });
     }
 
-    // Vertaal naar het formaat dat matchService verwacht
-    const formatted = events.map((m: any) => ({
-      id: m.sofaId || m.id?.replace('ss-', ''),
-      homeTeam: {
-        id: m.homeTeamId,
-        name: m.homeTeamName,
-        logo: m.homeLogo
-      },
-      awayTeam: {
-        id: m.awayTeamId,
-        name: m.awayTeamName,
-        logo: m.awayLogo
-      },
-      homeScore: { current: m.score ? Number(m.score.split('-')[0]) : null },
-      awayScore: { current: m.score ? Number(m.score.split('-')[1]) : null },
-      status: {
-        type: m.status === 'FT' ? 'finished' :
-              m.status === 'LIVE' ? 'inprogress' : 'notstarted',
-        description: m.status
-      },
-      time: { current: m.minute ? parseInt(m.minute) : null },
-      startTimestamp: m.kickoff ? new Date(m.kickoff).getTime() / 1000 : null,
-      tournament: {
-        name: m.league?.split(' — ')[1] || m.league,
-        category: { name: m.league?.split(' — ')[0] || '' }
-      },
-      score: m.score || 'v'
-    }));
-
+    // OUD formaat: geen matches veld, geef lege array
+    // De predictions worden apart opgehaald via /api/predict
     return res.status(200).json({
-      events: formatted,
-      total: formatted.length,
+      matches: [],
+      events: [],
+      total: 0,
       date: targetDate,
-      lastRun: store.lastRun,
-      source: 'github-worker'
+      lastRun,
+      source: 'no-matches-yet',
+      message: 'Worker nog niet gedraaid met nieuwe code. Start de Football AI Worker via GitHub Actions.'
     });
 
   } catch (err: any) {
-    console.error('[matches] fout:', err);
-    return res.status(200).json({ events: [], error: err?.message });
+    console.error('[Matches]', err);
+    return res.status(200).json({ matches: [], events: [], lastRun: null, error: err?.message });
   }
 }
