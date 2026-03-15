@@ -1,154 +1,106 @@
-// services/matchService.ts
-// Leest van GitHub raw — ondersteunt zowel oud als nieuw server_data.json formaat
+// services/matchService.ts v3
+// Haalt data op via /api/matches (Vercel proxy) — geen CORS probleem
 
 import { Match } from "../types";
 
-const GITHUB_RAW = 'https://raw.githubusercontent.com/NIckpyamans/voetbalVoorspellingen/main/server_data.json';
-
-function cacheKey(dateISO: string) { return `footypredict_v4_${dateISO}`; }
+function storageKey(dateISO: string) {
+  return `footypredict_v5_${dateISO}`;
+}
 
 function readCache(dateISO: string, maxAgeMs: number) {
   try {
-    const raw = localStorage.getItem(cacheKey(dateISO));
+    const raw = localStorage.getItem(storageKey(dateISO));
     if (!raw) return null;
-    const p = JSON.parse(raw);
-    if (!p?.ts) return null;
-    if (Date.now() - p.ts > maxAgeMs) return null;
-    return p;
+    const parsed = JSON.parse(raw);
+    if (!parsed?.ts || Date.now() - parsed.ts > maxAgeMs) return null;
+    return { matches: parsed.matches || [], predictions: parsed.predictions || {}, lastRun: parsed.lastRun || null };
   } catch { return null; }
 }
 
-function writeCache(dateISO: string, data: any) {
-  try { localStorage.setItem(cacheKey(dateISO), JSON.stringify({ ts: Date.now(), ...data })); } catch {}
+function writeCache(dateISO: string, matches: Match[], predictions: Record<string, any>, lastRun: number | null) {
+  try {
+    localStorage.setItem(storageKey(dateISO), JSON.stringify({ ts: Date.now(), matches, predictions, lastRun }));
+  } catch {}
 }
 
-// Bouw een Match object vanuit een stored match of vanuit een prediction
-function buildMatch(raw: any): Match {
+function mapRawMatch(m: any): Match {
   return {
-    id:            raw.id       || raw.matchId || `ss-${raw.homeTeam}-${raw.awayTeam}`,
-    date:          raw.date     || '',
-    kickoff:       raw.kickoff  || null,
-    league:        raw.league   || '',
-    homeTeamId:    raw.homeTeamId || '',
-    awayTeamId:    raw.awayTeamId || '',
-    homeTeamName:  raw.homeTeamName || raw.homeTeam || 'Home',
-    awayTeamName:  raw.awayTeamName || raw.awayTeam || 'Away',
-    homeLogo:      raw.homeLogo  || (raw.homeTeamId ? `https://api.sofascore.app/api/v1/team/${raw.homeTeamId}/image` : ''),
-    awayLogo:      raw.awayLogo  || (raw.awayTeamId ? `https://api.sofascore.app/api/v1/team/${raw.awayTeamId}/image` : ''),
-    status:        raw.status   || 'NS',
-    score:         raw.score    || undefined,
-    minute:        raw.minute   || undefined,
-    ...(raw.homeForm        ? { homeForm: raw.homeForm }               : {}),
-    ...(raw.awayForm        ? { awayForm: raw.awayForm }               : {}),
-    ...(raw.homeElo         ? { homeElo: raw.homeElo }                 : {}),
-    ...(raw.awayElo         ? { awayElo: raw.awayElo }                 : {}),
-    ...(raw.h2h             ? { h2h: raw.h2h }                         : {}),
-    ...(raw.homeSeasonStats ? { homeSeasonStats: raw.homeSeasonStats } : {}),
-    ...(raw.awaySeasonStats ? { awaySeasonStats: raw.awaySeasonStats } : {}),
-  } as Match;
+    id: m.id, date: m.date, kickoff: m.kickoff, league: m.league,
+    homeTeamId: m.homeTeamId || '', awayTeamId: m.awayTeamId || '',
+    homeTeamName: m.homeTeamName || 'Home', awayTeamName: m.awayTeamName || 'Away',
+    homeLogo: m.homeLogo || '', awayLogo: m.awayLogo || '',
+    status: m.status || 'NS', score: m.score || undefined, minute: m.minute || undefined,
+    ...(m.homeForm        ? { homeForm: m.homeForm }             : {}),
+    ...(m.awayForm        ? { awayForm: m.awayForm }             : {}),
+    ...(m.homeElo         ? { homeElo: m.homeElo }               : {}),
+    ...(m.awayElo         ? { awayElo: m.awayElo }               : {}),
+    ...(m.h2h             ? { h2h: m.h2h }                       : {}),
+    ...(m.homeSeasonStats ? { homeSeasonStats: m.homeSeasonStats }: {}),
+    ...(m.awaySeasonStats ? { awaySeasonStats: m.awaySeasonStats }: {}),
+  };
 }
 
-export interface MatchesAndPredictions {
+export interface MatchesUpdate {
   matches: Match[];
   predictions: Record<string, any>;
   lastRun: number | null;
+  workerNeeded?: boolean;
 }
 
 export async function fetchMatchesAndPredictions(
   dateISO: string,
   signal?: AbortSignal
-): Promise<MatchesAndPredictions> {
+): Promise<MatchesUpdate> {
   const isToday = dateISO === new Date().toISOString().split('T')[0];
-  const cacheAge = isToday ? 90_000 : 30 * 60_000; // vandaag 90s, anders 30 min
+  const cacheAge = isToday ? 90_000 : 30 * 60_000;
   const cached = readCache(dateISO, cacheAge);
-
-  if (cached?.matches) {
-    const predMap: Record<string, any> = {};
-    for (const p of (cached.predictions || [])) if (p.matchId) predMap[p.matchId] = p;
-    return { matches: cached.matches, predictions: predMap, lastRun: cached.lastRun || null };
-  }
+  if (cached) return { ...cached, workerNeeded: false };
 
   try {
-    const res = await fetch(`${GITHUB_RAW}?t=${Date.now()}`, {
-      signal,
-      headers: { 'Cache-Control': 'no-cache' }
-    });
-    if (!res.ok) throw new Error(`GitHub ${res.status}`);
-    const store = await res.json();
+    // Haal via onze eigen Vercel API (geen CORS)
+    const res = await fetch(`/api/matches?date=${dateISO}`, { signal });
+    if (!res.ok) throw new Error(`API ${res.status}`);
+    const json = await res.json();
 
-    const predMap: Record<string, any> = {};
-    let matches: Match[] = [];
+    const lastRun: number | null = json.lastRun || null;
+    const rawMatches: any[] = json.events || json.matches || [];
 
-    // ── NIEUW formaat: store.matches[date] aanwezig ──────────────────────────
-    if (store.matches?.[dateISO]) {
-      const rawMatches: any[] = store.matches[dateISO];
-      const rawPreds:   any[] = store.predictions?.[dateISO] || [];
+    // Haal ook predictions op
+    const predRes = await fetch(`/api/predict?date=${dateISO}`, { signal });
+    const predJson = predRes.ok ? await predRes.json() : { predictions: [] };
+    const rawPreds: any[] = predJson.predictions || [];
 
-      // Koppel H2H van match aan prediction
-      const h2hMap: Record<string, any> = {};
-      for (const m of rawMatches) if (m.h2h) h2hMap[m.id] = m.h2h;
-
-      matches = rawMatches.map(buildMatch);
-      for (const p of rawPreds) {
-        if (p.matchId) predMap[p.matchId] = { ...p, ...(h2hMap[p.matchId] ? { h2h: h2hMap[p.matchId] } : {}) };
-      }
-
-    // ── OUD formaat: alleen store.predictions[date] beschikbaar ─────────────
-    } else if (store.predictions?.[dateISO]) {
-      const rawPreds: any[] = store.predictions[dateISO];
-      console.log(`[matchService] oud formaat, ${rawPreds.length} predictions voor ${dateISO}`);
-
-      for (const p of rawPreds) {
-        // Maak een nep-match van de prediction data
-        const matchId = p.matchId || `local-${p.homeTeam}-${p.awayTeam}`;
-        const m = buildMatch({ ...p, id: matchId });
-        matches.push(m);
-        predMap[matchId] = { ...p, matchId };
-      }
-
-    // ── GEEN data voor gevraagde datum — probeer meest recente datum ─────────
-    } else {
-      const allDates = Object.keys(store.matches || {}).concat(Object.keys(store.predictions || {}));
-      const uniqueDates = [...new Set(allDates)].sort().reverse();
-
-      if (uniqueDates.length > 0) {
-        const latestDate = uniqueDates[0];
-        console.log(`[matchService] geen data voor ${dateISO}, gebruik ${latestDate}`);
-
-        const rawMatches: any[] = store.matches?.[latestDate] || [];
-        const rawPreds:   any[] = store.predictions?.[latestDate] || [];
-
-        if (rawMatches.length > 0) {
-          matches = rawMatches.map(buildMatch);
-          for (const p of rawPreds) if (p.matchId) predMap[p.matchId] = p;
-        } else {
-          for (const p of rawPreds) {
-            const matchId = p.matchId || `local-${p.homeTeam}-${p.awayTeam}`;
-            matches.push(buildMatch({ ...p, id: matchId }));
-            predMap[matchId] = { ...p, matchId };
-          }
-        }
-      }
+    if (rawMatches.length === 0 && rawPreds.length === 0) {
+      return { matches: [], predictions: {}, lastRun, workerNeeded: true };
     }
 
-    writeCache(dateISO, { matches, predictions: Object.values(predMap), lastRun: store.lastRun });
-    return { matches, predictions: predMap, lastRun: store.lastRun };
+    // Als rawMatches leeg maar preds beschikbaar (oud formaat)
+    const matchesToUse = rawMatches.length > 0 ? rawMatches : rawPreds
+      .filter((p: any) => p.homeTeam && p.awayTeam)
+      .map((p: any) => ({
+        id: p.matchId, date: dateISO, kickoff: null,
+        league: p.league || '⚽ Onbekend',
+        homeTeamId: '', awayTeamId: '',
+        homeTeamName: p.homeTeam, awayTeamName: p.awayTeam,
+        homeLogo: '', awayLogo: '', status: 'NS',
+        homeElo: p.homeElo, awayElo: p.awayElo,
+        homeForm: p.homeForm, awayForm: p.awayForm,
+      }));
+
+    const matches = matchesToUse.map(mapRawMatch);
+    const predMap: Record<string, any> = {};
+    for (const p of rawPreds) if (p.matchId) predMap[p.matchId] = p;
+
+    // Voeg H2H toe vanuit match data
+    for (const m of matchesToUse) {
+      if (m.h2h && predMap[m.id]) predMap[m.id].h2h = m.h2h;
+    }
+
+    writeCache(dateISO, matches, predMap, lastRun);
+    return { matches, predictions: predMap, lastRun, workerNeeded: false };
 
   } catch (err) {
     console.error('[matchService]', err);
-    // Probeer verlopen cache als fallback
-    const stale = readCache(dateISO, Infinity);
-    if (stale?.matches) {
-      const predMap: Record<string, any> = {};
-      for (const p of (stale.predictions || [])) if (p.matchId) predMap[p.matchId] = p;
-      return { matches: stale.matches, predictions: predMap, lastRun: stale.lastRun };
-    }
-    return { matches: [], predictions: {}, lastRun: null };
+    return { matches: [], predictions: {}, lastRun: null, workerNeeded: false };
   }
-}
-
-// Legacy export
-export async function fetchMatchesForDate(dateISO: string, signal?: AbortSignal): Promise<Match[]> {
-  const { matches } = await fetchMatchesAndPredictions(dateISO, signal);
-  return matches;
 }
