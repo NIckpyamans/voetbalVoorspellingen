@@ -4,9 +4,10 @@
   "buildCommand": "npm run build",
   "outputDirectory": "dist",
   "rewrites": [
-    { "source": "/api/matches", "destination": "/api/Matches" },
-    { "source": "/api/matches/(.*)", "destination": "/api/Matches" },
-    { "source": "/api/(.*)", "destination": "/api/$1" },
-    { "source": "/((?!assets/).*)", "destination": "/index.html" }
+    { "source": "/api/matches",     "destination": "/api/Matches"  },
+    { "source": "/api/analyze",     "destination": "/api/analyze"  },
+    { "source": "/api/standings",   "destination": "/api/standings"},
+    { "source": "/api/(.*)",        "destination": "/api/$1"       },
+    { "source": "/((?!assets/).*)", "destination": "/index.html"   }
   ]
 }
