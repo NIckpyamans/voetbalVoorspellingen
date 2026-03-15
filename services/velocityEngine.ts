@@ -1,76 +1,59 @@
+// services/velocityEngine.ts — geoptimaliseerd voor snelheid
+
 import { Match } from "../types";
-import { fetchMatchesForDate } from "./matchService";
+import { fetchMatchesAndPredictions } from "./matchService";
 
-class MatchSocket {
-  public onmessage: ((data: Match[]) => void) | null = null;
-  public onopen: (() => void) | null = null;
-  public onerror: ((error: any) => void) | null = null;
-  public onclose: (() => void) | null = null;
-  private pulseInterval: number | null = null;
-  private isConnected: boolean = false;
-
-  public connect(date: string) {
-    if (this.isConnected) return;
-    setTimeout(() => {
-      this.isConnected = true;
-      if (this.onopen) this.onopen();
-      this.startHeartbeat(date);
-    }, 300);
-  }
-
-  private async startHeartbeat(date: string) {
-    const fetchAndPush = async () => {
-      try {
-        const controller = new AbortController();
-        const timeout = setTimeout(() => controller.abort(), 10000); // 10s timeout
-        const rawMatches = await fetchMatchesForDate(date, controller.signal);
-        clearTimeout(timeout);
-        if (this.onmessage) this.onmessage(rawMatches);
-      } catch (err: any) {
-        if (err?.name !== 'AbortError' && this.onerror) this.onerror(err);
-      }
-    };
-
-    await fetchAndPush();
-
-    // Live: elke 30 seconden vernieuwen
-    const isToday = date === new Date().toISOString().split('T')[0];
-    const interval = isToday ? 30000 : 120000; // vandaag: 30s, andere dag: 2min
-    this.pulseInterval = window.setInterval(fetchAndPush, interval);
-  }
-
-  public disconnect() {
-    if (this.pulseInterval) { clearInterval(this.pulseInterval); this.pulseInterval = null; }
-    this.isConnected = false;
-    if (this.onclose) this.onclose();
-  }
-
-  public get readyState() { return this.isConnected ? 'OPEN' : 'CLOSED'; }
+export interface MatchesUpdate {
+  matches: Match[];
+  predictions: Record<string, any>;
+  lastRun: number | null;
 }
 
 class VelocityEngine {
-  private socket: MatchSocket | null = null;
-  private subscribers: ((matches: Match[]) => void)[] = [];
+  private interval: number | null = null;
+  private subscribers: ((data: MatchesUpdate) => void)[] = [];
+  private currentDate: string | null = null;
+  private isRunning = false;
 
-  subscribe(callback: (matches: Match[]) => void) {
-    this.subscribers.push(callback);
-    return () => { this.subscribers = this.subscribers.filter(s => s !== callback); };
+  subscribe(cb: (data: MatchesUpdate) => void) {
+    this.subscribers.push(cb);
+    return () => { this.subscribers = this.subscribers.filter(s => s !== cb); };
   }
 
-  startPulse(date: string) {
-    if (this.socket) this.socket.disconnect();
-    this.socket = new MatchSocket();
-    this.socket.onopen = () => console.log("[VelocityEngine] verbonden");
-    this.socket.onmessage = (matches) => this.subscribers.forEach(sub => sub(matches));
-    this.socket.onerror = (err) => console.error("[VelocityEngine] fout:", err);
-    this.socket.connect(date);
+  async startPulse(date: string) {
+    if (this.interval) { clearInterval(this.interval); this.interval = null; }
+    this.currentDate = date;
+
+    // Direct eerste fetch
+    await this.fetch(date);
+
+    // Vandaag: vernieuwen elke 90 seconden (live scores)
+    // Andere dag: elke 5 minuten
+    const isToday = date === new Date().toISOString().split('T')[0];
+    const intervalMs = isToday ? 90_000 : 300_000;
+
+    this.interval = window.setInterval(async () => {
+      if (this.currentDate === date) await this.fetch(date);
+    }, intervalMs);
+  }
+
+  private async fetch(date: string) {
+    if (this.isRunning) return;
+    this.isRunning = true;
+    try {
+      const data = await fetchMatchesAndPredictions(date);
+      this.subscribers.forEach(s => s(data));
+    } catch (e) {
+      console.error('[VelocityEngine]', e);
+    } finally {
+      this.isRunning = false;
+    }
   }
 
   stopPulse() {
-    if (this.socket) { this.socket.disconnect(); this.socket = null; }
+    if (this.interval) { clearInterval(this.interval); this.interval = null; }
+    this.currentDate = null;
   }
-
-  getConnectionStatus() { return this.socket?.readyState || 'CLOSED'; }
 }
 
 export const velocityEngine = new VelocityEngine();
