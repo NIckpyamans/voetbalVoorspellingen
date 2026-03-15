@@ -4,7 +4,7 @@ import MatchCard from "./components/MatchCard";
 import BestBetCard from "./components/BestBetCard";
 import PredictionHistory from "./components/PredictionHistory";
 import LivePanel from "./components/LivePanel";
-import { Match, Prediction, BestBet } from "./types";
+import { Match, Prediction } from "./types";
 import { getEnhancedPrediction, getOrCreateTeam, saveToMemory, updateTeamModelsFromResult } from "./services/geminiService";
 import { velocityEngine } from "./services/velocityEngine";
 
@@ -16,45 +16,27 @@ function formatDateLabel(dateISO: string) {
 }
 
 function isLive(m: Match) {
-  const s = (m.status || "").toLowerCase();
-  return s === "live" || s.includes("1st") || s.includes("2nd") || s.includes("ht") || !!m.minute;
+  const s = (m.status || "").toUpperCase();
+  return s === "LIVE" || s.includes("1ST") || s.includes("2ND") || !!m.minute;
 }
 
 function isFinished(m: Match) {
-  const s = (m.status || "").toLowerCase();
-  return s === "ft" || s.includes("finished") || s.includes("end") || s.includes("aet");
+  const s = (m.status || "").toUpperCase();
+  return s === "FT" || s.includes("FINISH") || s.includes("AET");
 }
 
-// Vlag emoji op basis van land
-function getLeagueFlag(league: string): string {
-  const l = league.toLowerCase();
-  if (l.includes('england') || l.includes('premier league') || l.includes('championship')) return '🏴󠁧󠁢󠁥󠁮󠁧󠁿';
-  if (l.includes('netherlands') || l.includes('eredivisie') || l.includes('eerste divisie')) return '🇳🇱';
-  if (l.includes('germany') || l.includes('bundesliga')) return '🇩🇪';
-  if (l.includes('spain') || l.includes('laliga') || l.includes('la liga')) return '🇪🇸';
-  if (l.includes('italy') || l.includes('serie')) return '🇮🇹';
-  if (l.includes('france') || l.includes('ligue')) return '🇫🇷';
-  if (l.includes('portugal') || l.includes('liga portugal')) return '🇵🇹';
-  if (l.includes('belgium') || l.includes('pro league')) return '🇧🇪';
-  if (l.includes('champions league')) return '🏆';
-  if (l.includes('europa league')) return '🥈';
-  if (l.includes('conference league')) return '🥉';
-  if (l.includes('scotland')) return '🏴󠁧󠁢󠁳󠁣󠁴󠁿';
-  if (l.includes('turkey') || l.includes('süper lig')) return '🇹🇷';
-  if (l.includes('greece')) return '🇬🇷';
-  if (l.includes('austria')) return '🇦🇹';
-  if (l.includes('switzerland')) return '🇨🇭';
-  if (l.includes('denmark') || l.includes('superliga')) return '🇩🇰';
-  if (l.includes('norway')) return '🇳🇴';
-  if (l.includes('sweden')) return '🇸🇪';
-  if (l.includes('poland')) return '🇵🇱';
-  if (l.includes('czech')) return '🇨🇿';
-  if (l.includes('romania')) return '🇷🇴';
-  if (l.includes('croatia')) return '🇭🇷';
-  if (l.includes('serbia')) return '🇷🇸';
-  if (l.includes('russia')) return '🇷🇺';
-  return '⚽';
-}
+// Vaste volgorde voor competities
+const LEAGUE_ORDER = [
+  '🏆 Champions League', '🥈 Europa League', '🥉 Conference League',
+  '🏴󠁧󠁢󠁥󠁮󠁧󠁿 Premier League', '🏴󠁧󠁢󠁥󠁮󠁧󠁿 Championship',
+  '🇳🇱 Eredivisie', '🇳🇱 Eerste Divisie', '🇳🇱 KNVB Beker',
+  '🇩🇪 Bundesliga', '🇩🇪 2. Bundesliga',
+  '🇪🇸 LaLiga', '🇪🇸 LaLiga2',
+  '🇮🇹 Serie A', '🇮🇹 Serie B',
+  '🇫🇷 Ligue 1', '🇫🇷 Ligue 2',
+  '🇵🇹 Liga Portugal', '🇵🇹 Liga Portugal 2',
+  '🇧🇪 Pro League', '🇧🇪 Challenger Pro League',
+];
 
 const App: React.FC = () => {
   const [currentView, setCurrentView] = useState<"dashboard" | "history">("dashboard");
@@ -63,27 +45,24 @@ const App: React.FC = () => {
   const [predictions, setPredictions] = useState<Record<string, Prediction>>({});
   const [loading, setLoading] = useState(true);
   const [socketStatus, setSocketStatus] = useState<"OPEN" | "CLOSED" | "SYNCING">("CLOSED");
-  const [activeTab, setActiveTab] = useState<"alle" | "live" | "gepland" | "gespeeld" | string>("alle");
-  const [selectedLeague, setSelectedLeague] = useState<string | null>(null);
+  const [selectedLeague, setSelectedLeague] = useState<string>("alle");
+  const [activeStatus, setActiveStatus] = useState<"alle" | "live" | "gepland" | "gespeeld">("alle");
   const [livePanelOpen, setLivePanelOpen] = useState(false);
   const [serverPredictions, setServerPredictions] = useState<any[] | null>(null);
+  const [expandedLeagues, setExpandedLeagues] = useState<Record<string, boolean>>({});
   const learnedRef = useRef<Set<string>>(new Set());
   const predLoadedRef = useRef<Set<string>>(new Set());
+  const tabsRef = useRef<HTMLDivElement>(null);
 
-  // Laad server voorspellingen
+  // Server voorspellingen
   useEffect(() => {
-    const load = async () => {
-      try {
-        const res = await fetch(`/api/predict?date=${selectedDate}`);
-        const j = await res.json();
-        if (j?.predictions?.length > 0) setServerPredictions(j.predictions);
-        else setServerPredictions(null);
-      } catch { setServerPredictions(null); }
-    };
-    load();
+    fetch(`/api/predict?date=${selectedDate}`)
+      .then(r => r.json())
+      .then(j => setServerPredictions(j?.predictions?.length > 0 ? j.predictions : null))
+      .catch(() => setServerPredictions(null));
   }, [selectedDate]);
 
-  // Laad wedstrijden via velocity engine
+  // Wedstrijden laden
   useEffect(() => {
     setLoading(true);
     setSocketStatus("SYNCING");
@@ -95,19 +74,18 @@ const App: React.FC = () => {
       setLoading(false);
       setSocketStatus("OPEN");
 
-      // Voorspellingen laden in batches (niet alles tegelijk = sneller)
+      // Voorspellingen in batches laden
       const unloaded = newMatches.filter(m => !predLoadedRef.current.has(m.id));
       for (const m of unloaded) {
         predLoadedRef.current.add(m.id);
-        getEnhancedPrediction(m).then(pred => {
-          setPredictions(prev => ({ ...prev, [m.id]: pred }));
-        });
+        getEnhancedPrediction(m).then(pred =>
+          setPredictions(prev => ({ ...prev, [m.id]: pred }))
+        );
       }
 
-      // Leren van afgelopen wedstrijden
+      // Leren van resultaten
       for (const m of newMatches) {
-        if (!isFinished(m) || !m.score || m.score === "v" || !m.score.includes("-")) continue;
-        if (learnedRef.current.has(m.id)) continue;
+        if (!isFinished(m) || !m.score?.includes("-") || learnedRef.current.has(m.id)) continue;
         const pred = predictions[m.id];
         if (!pred) continue;
         saveToMemory(m.id, `${pred.predHomeGoals}-${pred.predAwayGoals}`, m.score);
@@ -122,11 +100,10 @@ const App: React.FC = () => {
     return () => { unsub(); velocityEngine.stopPulse(); setSocketStatus("CLOSED"); };
   }, [selectedDate]);
 
-  // Leren als predictions later aankomen
+  // Extra leermoment als predictions later aankomen
   useEffect(() => {
     for (const m of matches) {
-      if (!isFinished(m) || !m.score || m.score === "v" || !m.score.includes("-")) continue;
-      if (learnedRef.current.has(m.id)) continue;
+      if (!isFinished(m) || !m.score?.includes("-") || learnedRef.current.has(m.id)) continue;
       const pred = predictions[m.id];
       if (!pred) continue;
       saveToMemory(m.id, `${pred.predHomeGoals}-${pred.predAwayGoals}`, m.score);
@@ -137,74 +114,52 @@ const App: React.FC = () => {
     }
   }, [predictions, matches]);
 
-  // Groepeer per competitie
-  const groupByLeague = useCallback((arr: Match[]) => {
-    return arr.reduce((acc: Record<string, Match[]>, m) => {
-      const key = m.league || "Unknown";
-      acc[key] = acc[key] || [];
-      acc[key].push(m);
-      return acc;
-    }, {});
-  }, []);
-
   const liveMatches = useMemo(() => matches.filter(isLive), [matches]);
   const upcomingMatches = useMemo(() => matches.filter(m => !isLive(m) && !isFinished(m)), [matches]);
   const finishedMatches = useMemo(() => matches.filter(isFinished), [matches]);
 
-  // Alle unieke competities
+  // Unieke competities in vaste volgorde
   const allLeagues = useMemo(() => {
-    const leagues = [...new Set(matches.map(m => m.league).filter(Boolean))];
-    return leagues.sort((a, b) => {
-      // UEFA eerst, dan op naam
-      const aUefa = a.toLowerCase().includes('champions') || a.toLowerCase().includes('europa') || a.toLowerCase().includes('conference');
-      const bUefa = b.toLowerCase().includes('champions') || b.toLowerCase().includes('europa') || b.toLowerCase().includes('conference');
-      if (aUefa && !bUefa) return -1;
-      if (!aUefa && bUefa) return 1;
-      return a.localeCompare(b);
-    });
+    const present = new Set(matches.map(m => m.league).filter(Boolean));
+    const ordered = LEAGUE_ORDER.filter(l => present.has(l));
+    // Voeg eventuele onbekende competities toe aan het einde
+    for (const l of present) if (!LEAGUE_ORDER.includes(l)) ordered.push(l);
+    return ordered;
   }, [matches]);
 
-  // Welke matches worden getoond op basis van actieve tab/competitie
-  const displayedMatches = useMemo(() => {
-    if (selectedLeague) return matches.filter(m => m.league === selectedLeague);
-    if (activeTab === "live") return liveMatches;
-    if (activeTab === "gepland") return upcomingMatches;
-    if (activeTab === "gespeeld") return finishedMatches;
-    return matches; // alle
-  }, [matches, liveMatches, upcomingMatches, finishedMatches, activeTab, selectedLeague]);
+  // Gefilterde wedstrijden
+  const filteredMatches = useMemo(() => {
+    let base = selectedLeague === "alle" ? matches : matches.filter(m => m.league === selectedLeague);
+    if (activeStatus === "live") return base.filter(isLive);
+    if (activeStatus === "gepland") return base.filter(m => !isLive(m) && !isFinished(m));
+    if (activeStatus === "gespeeld") return base.filter(isFinished);
+    return base;
+  }, [matches, selectedLeague, activeStatus]);
 
-  const displayedByLeague = useMemo(() => {
-    const grouped = groupByLeague(displayedMatches);
-    return Object.entries(grouped).sort((a, b) => {
-      const aUefa = a[0].toLowerCase().includes('champions') || a[0].toLowerCase().includes('europa');
-      const bUefa = b[0].toLowerCase().includes('champions') || b[0].toLowerCase().includes('europa');
-      if (aUefa && !bUefa) return -1;
-      if (!aUefa && bUefa) return 1;
-      return b[1].length - a[1].length;
-    });
-  }, [displayedMatches, groupByLeague]);
-
-  const [expandedLeagues, setExpandedLeagues] = useState<Record<string, boolean>>({});
-  const toggleLeague = (league: string) => {
-    setExpandedLeagues(prev => ({ ...prev, [league]: !prev[league] }));
-  };
+  // Groepeer per competitie in vaste volgorde
+  const groupedMatches = useMemo(() => {
+    const grouped: Record<string, Match[]> = {};
+    for (const m of filteredMatches) {
+      grouped[m.league] = grouped[m.league] || [];
+      grouped[m.league].push(m);
+    }
+    const ordered = LEAGUE_ORDER.filter(l => grouped[l]);
+    for (const l of Object.keys(grouped)) if (!LEAGUE_ORDER.includes(l)) ordered.push(l);
+    return ordered.map(l => [l, grouped[l]] as [string, Match[]]);
+  }, [filteredMatches]);
 
   const bestBets = useMemo(() => {
-    if (serverPredictions?.length) {
-      return serverPredictions
-        .sort((a: any, b: any) => (b.exactProb ?? b.confidence) - (a.exactProb ?? a.confidence))
-        .slice(0, 5);
-    }
-    return [...liveMatches, ...upcomingMatches]
-      .map(m => {
+    const pool = serverPredictions?.length ? serverPredictions :
+      [...liveMatches, ...upcomingMatches].map(m => {
         const p = predictions[m.id];
-        if (!p) return null;
-        return { ...p, homeTeam: m.homeTeamName, awayTeam: m.awayTeamName, league: m.league, matchId: m.id };
-      })
-      .filter(Boolean)
-      .sort((a: any, b: any) => (b.exactProb ?? b.confidence) - (a.exactProb ?? a.confidence))
-      .slice(0, 5) as any[];
+        return p ? { ...p, homeTeam: m.homeTeamName, awayTeam: m.awayTeamName, league: m.league, matchId: m.id } : null;
+      }).filter(Boolean);
+    return (pool as any[]).sort((a, b) => (b.exactProb ?? b.confidence) - (a.exactProb ?? a.confidence)).slice(0, 5);
   }, [liveMatches, upcomingMatches, predictions, serverPredictions]);
+
+  const scrollTabs = (dir: 'left' | 'right') => {
+    if (tabsRef.current) tabsRef.current.scrollBy({ left: dir === 'right' ? 200 : -200, behavior: 'smooth' });
+  };
 
   const dateLabel = useMemo(() => formatDateLabel(selectedDate), [selectedDate]);
 
@@ -215,132 +170,151 @@ const App: React.FC = () => {
       <main className="max-w-7xl mx-auto px-4 md:px-6 pt-6">
         {currentView === "dashboard" ? (
           <>
-            {/* Datum + navigatie */}
-            <div className="flex flex-col md:flex-row md:items-end md:justify-between gap-4 mb-6">
+            {/* Datum */}
+            <div className="flex flex-col md:flex-row md:items-end md:justify-between gap-4 mb-5">
               <div>
                 <div className="text-xs font-black uppercase tracking-widest text-slate-500">Datum</div>
                 <div className="text-xl md:text-2xl font-black text-white tracking-tight">{dateLabel}</div>
-                <div className="text-[11px] text-slate-500 mt-1">
-                  Data: SofaScore · AI: Elo + Poisson · Status: <span className={socketStatus === "OPEN" ? "text-green-400" : socketStatus === "SYNCING" ? "text-yellow-400" : "text-red-400"}>{socketStatus}</span>
+                <div className="text-[10px] text-slate-500 mt-0.5">
+                  SofaScore · Elo+Poisson AI ·{" "}
+                  <span className={socketStatus === "OPEN" ? "text-green-400" : socketStatus === "SYNCING" ? "text-yellow-400 animate-pulse" : "text-red-400"}>
+                    ● {socketStatus}
+                  </span>
                 </div>
               </div>
-              <div className="flex items-center gap-3">
-                <input
-                  type="date"
-                  value={selectedDate}
-                  onChange={e => { setSelectedDate(e.target.value); setSelectedLeague(null); setActiveTab("alle"); }}
-                  className="bg-slate-900/70 border border-white/10 rounded-xl px-4 py-2 text-sm outline-none focus:border-blue-500/40"
-                />
-                <button
-                  onClick={() => { setSelectedDate(isoDate(new Date())); setSelectedLeague(null); setActiveTab("alle"); }}
-                  className="bg-blue-600/20 border border-blue-500/30 text-blue-200 rounded-xl px-4 py-2 text-sm font-black hover:bg-blue-600/30 transition"
-                >Vandaag</button>
+              <div className="flex items-center gap-2">
+                <input type="date" value={selectedDate}
+                  onChange={e => { setSelectedDate(e.target.value); setSelectedLeague("alle"); setActiveStatus("alle"); }}
+                  className="bg-slate-900/70 border border-white/10 rounded-xl px-3 py-2 text-sm outline-none focus:border-blue-500/40" />
+                <button onClick={() => { setSelectedDate(isoDate(new Date())); setSelectedLeague("alle"); setActiveStatus("alle"); }}
+                  className="bg-blue-600 text-white rounded-xl px-4 py-2 text-sm font-black hover:bg-blue-500 transition">
+                  Vandaag
+                </button>
               </div>
             </div>
 
-            {/* Statistieken */}
-            <div className="grid grid-cols-3 gap-3 mb-6">
-              <button onClick={() => { setActiveTab("gepland"); setSelectedLeague(null); }}
-                className={`glass-card p-4 rounded-2xl border transition ${activeTab === "gepland" && !selectedLeague ? "border-blue-500/50 bg-blue-900/20" : "border-blue-500/20 hover:border-blue-500/40"}`}>
-                <div className="text-[10px] font-black text-blue-400 uppercase">Nog te spelen</div>
-                <div className="text-2xl font-black">{upcomingMatches.length}</div>
-              </button>
-              <button onClick={() => { setActiveTab("live"); setSelectedLeague(null); }}
-                className={`glass-card p-4 rounded-2xl border transition ${activeTab === "live" && !selectedLeague ? "border-red-500/50 bg-red-900/20" : "border-red-500/20 hover:border-red-500/40"}`}>
-                <div className="text-[10px] font-black text-red-400 uppercase flex items-center gap-1">
-                  <span className="w-1.5 h-1.5 bg-red-500 rounded-full animate-pulse"></span> Live
-                </div>
-                <div className="text-2xl font-black">{liveMatches.length}</div>
-              </button>
-              <button onClick={() => { setActiveTab("gespeeld"); setSelectedLeague(null); }}
-                className={`glass-card p-4 rounded-2xl border transition ${activeTab === "gespeeld" && !selectedLeague ? "border-slate-400/50 bg-slate-800/40" : "border-slate-500/20 hover:border-slate-400/40"}`}>
-                <div className="text-[10px] font-black text-slate-400 uppercase">Gespeeld</div>
-                <div className="text-2xl font-black">{finishedMatches.length}</div>
-              </button>
+            {/* Status filters */}
+            <div className="grid grid-cols-3 gap-2 mb-4">
+              {[
+                { key: "gepland", label: "Gepland", count: upcomingMatches.length, color: "blue" },
+                { key: "live", label: "Live", count: liveMatches.length, color: "red" },
+                { key: "gespeeld", label: "Gespeeld", count: finishedMatches.length, color: "slate" },
+              ].map(({ key, label, count, color }) => (
+                <button key={key}
+                  onClick={() => setActiveStatus(activeStatus === key ? "alle" : key as any)}
+                  className={`glass-card p-3 rounded-2xl border text-left transition ${activeStatus === key ? `border-${color}-500/60 bg-${color}-900/20` : `border-${color}-500/20 hover:border-${color}-500/30`}`}>
+                  <div className={`text-[9px] font-black text-${color}-400 uppercase flex items-center gap-1`}>
+                    {key === "live" && <span className="w-1.5 h-1.5 bg-red-500 rounded-full animate-pulse"></span>}
+                    {label}
+                  </div>
+                  <div className="text-xl font-black">{count}</div>
+                </button>
+              ))}
             </div>
 
-            {/* Competitie tabs */}
-            <div className="mb-6 overflow-x-auto scrollbar-hide">
-              <div className="flex gap-2 pb-2 min-w-max">
+            {/* Competitie tabs met pijlen */}
+            <div className="relative flex items-center gap-1 mb-5">
+              <button onClick={() => scrollTabs('left')}
+                className="flex-shrink-0 w-7 h-7 bg-slate-800 hover:bg-slate-700 rounded-lg flex items-center justify-center text-slate-400 hover:text-white transition z-10">
+                ‹
+              </button>
+
+              <div ref={tabsRef} className="flex gap-1.5 overflow-x-auto scrollbar-hide flex-1 py-1">
+                {/* Alle knop */}
                 <button
-                  onClick={() => { setSelectedLeague(null); setActiveTab("alle"); }}
-                  className={`px-4 py-2 rounded-xl text-xs font-black transition whitespace-nowrap ${!selectedLeague && activeTab === "alle" ? "bg-white text-black" : "bg-slate-800 text-slate-300 hover:bg-slate-700"}`}
-                >
+                  onClick={() => setSelectedLeague("alle")}
+                  className={`flex-shrink-0 px-3 py-1.5 rounded-xl text-xs font-black transition ${selectedLeague === "alle" ? "bg-white text-black" : "bg-slate-800 text-slate-300 hover:bg-slate-700"}`}>
                   ⚽ Alle ({matches.length})
                 </button>
+
                 {allLeagues.map(league => {
+                  const parts = league.split(' ');
+                  const flag = parts[0]; // emoji
+                  const name = parts.slice(1).join(' '); // naam zonder emoji
                   const count = matches.filter(m => m.league === league).length;
+                  const liveCount = liveMatches.filter(m => m.league === league).length;
                   const isActive = selectedLeague === league;
+
                   return (
-                    <button
-                      key={league}
-                      onClick={() => { setSelectedLeague(league); setActiveTab("alle"); }}
-                      className={`px-3 py-2 rounded-xl text-xs font-black transition whitespace-nowrap ${isActive ? "bg-blue-600 text-white" : "bg-slate-800 text-slate-300 hover:bg-slate-700"}`}
-                    >
-                      {getLeagueFlag(league)} {league.split(' — ')[1] || league} ({count})
+                    <button key={league}
+                      onClick={() => setSelectedLeague(league)}
+                      className={`flex-shrink-0 px-3 py-1.5 rounded-xl text-xs font-black transition flex items-center gap-1 ${isActive ? "bg-blue-600 text-white" : "bg-slate-800 text-slate-300 hover:bg-slate-700"}`}>
+                      <span>{flag}</span>
+                      <span className="whitespace-nowrap">{name}</span>
+                      <span className={`text-[9px] px-1 rounded ${liveCount > 0 ? 'bg-red-500 text-white animate-pulse' : 'opacity-60'}`}>
+                        {liveCount > 0 ? `${liveCount}🔴` : count}
+                      </span>
                     </button>
                   );
                 })}
               </div>
+
+              <button onClick={() => scrollTabs('right')}
+                className="flex-shrink-0 w-7 h-7 bg-slate-800 hover:bg-slate-700 rounded-lg flex items-center justify-center text-slate-400 hover:text-white transition">
+                ›
+              </button>
             </div>
 
+            {/* Inhoud */}
             {loading ? (
-              <div className="flex flex-col gap-4">
-                {[1,2,3].map(i => <div key={i} className="h-32 glass-card rounded-3xl animate-pulse"></div>)}
+              <div className="flex flex-col gap-3">
+                {[1,2,3].map(i => <div key={i} className="h-24 glass-card rounded-2xl animate-pulse"></div>)}
               </div>
             ) : (
-              <div className="space-y-10">
-                {/* Top 5 beste voorspellingen */}
-                {!selectedLeague && activeTab === "alle" && (
+              <div className="space-y-6">
+                {/* Top 5 beste tips */}
+                {selectedLeague === "alle" && activeStatus === "alle" && bestBets.length > 0 && (
                   <section>
-                    <h2 className="text-lg font-black uppercase tracking-tight mb-4 flex items-center gap-2">
+                    <h2 className="text-sm font-black uppercase tracking-tight mb-3 flex items-center gap-2">
                       <span className="w-2 h-2 bg-yellow-400 rounded-full"></span>
-                      Top 5 meest zekere voorspellingen
-                      <span className="text-[10px] font-black text-yellow-300 bg-yellow-900/10 border border-yellow-500/10 px-2 py-1 rounded-full">{bestBets.length}</span>
+                      Top 5 meest zekere tips
                     </h2>
-                    <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-5 gap-4">
-                      {bestBets.length === 0
-                        ? <div className="text-slate-500 text-sm col-span-5">Voorspellingen worden geladen...</div>
-                        : bestBets.map((b: any) => <BestBetCard key={b.matchId} bet={b} />)
-                      }
+                    <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 gap-3">
+                      {bestBets.map((b: any) => <BestBetCard key={b.matchId} bet={b} />)}
                     </div>
                   </section>
                 )}
 
                 {/* Wedstrijden per competitie */}
-                {displayedByLeague.length === 0 ? (
-                  <div className="text-slate-500 text-center py-20">
-                    <div className="text-4xl mb-4">⚽</div>
-                    <div className="font-bold">Geen wedstrijden gevonden</div>
+                {groupedMatches.length === 0 ? (
+                  <div className="text-center py-16 text-slate-500">
+                    <div className="text-5xl mb-3">⚽</div>
+                    <div className="font-bold">Geen wedstrijden voor deze selectie</div>
                   </div>
                 ) : (
-                  displayedByLeague.map(([league, ms]) => {
-                    const isOpen = expandedLeagues[league] !== false; // standaard open
-                    const liveMsInLeague = ms.filter(isLive);
+                  groupedMatches.map(([league, ms]) => {
+                    const isOpen = expandedLeagues[league] !== false;
+                    const liveCnt = ms.filter(isLive).length;
+                    const parts = league.split(' ');
+                    const flag = parts[0];
+                    const name = parts.slice(1).join(' ');
+
                     return (
                       <section key={league}>
                         <button
-                          onClick={() => toggleLeague(league)}
-                          className="w-full text-left bg-slate-900/50 border border-white/5 hover:border-white/10 rounded-2xl px-5 py-4 flex items-center justify-between transition mb-3"
-                        >
-                          <div className="flex items-center gap-3">
-                            <span className="text-xl">{getLeagueFlag(league)}</span>
-                            <div>
-                              <div className="text-sm font-black text-white">{league}</div>
-                              <div className="text-[10px] text-slate-500">{ms.length} wedstrijden</div>
-                            </div>
-                            {liveMsInLeague.length > 0 && (
-                              <span className="flex items-center gap-1 bg-red-600/20 border border-red-500/30 text-red-400 text-[9px] font-black px-2 py-0.5 rounded-full animate-pulse">
-                                ● {liveMsInLeague.length} LIVE
+                          onClick={() => setExpandedLeagues(p => ({ ...p, [league]: !isOpen }))}
+                          className="w-full text-left bg-slate-900/60 border border-white/5 hover:border-white/10 rounded-xl px-4 py-3 flex items-center justify-between transition mb-2">
+                          <div className="flex items-center gap-2">
+                            <span className="text-lg">{flag}</span>
+                            <span className="text-sm font-black text-white">{name}</span>
+                            <span className="text-[10px] text-slate-500">{ms.length} wedstr.</span>
+                            {liveCnt > 0 && (
+                              <span className="bg-red-600/20 border border-red-500/30 text-red-400 text-[8px] font-black px-1.5 py-0.5 rounded-full animate-pulse">
+                                ● {liveCnt} LIVE
                               </span>
                             )}
                           </div>
-                          <span className="text-slate-500 text-sm">{isOpen ? "▾" : "▸"}</span>
+                          <span className="text-slate-500">{isOpen ? "▾" : "▸"}</span>
                         </button>
 
                         {isOpen && (
-                          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                            {ms.map(m => (
+                          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
+                            {ms.sort((a, b) => {
+                              // Live eerst, dan gepland, dan gespeeld
+                              if (isLive(a) && !isLive(b)) return -1;
+                              if (!isLive(a) && isLive(b)) return 1;
+                              return (a.kickoff || '').localeCompare(b.kickoff || '');
+                            }).map(m => (
                               <MatchCard key={m.id} match={m} prediction={predictions[m.id]} />
                             ))}
                           </div>
@@ -361,10 +335,7 @@ const App: React.FC = () => {
         open={livePanelOpen}
         onClose={() => setLivePanelOpen(false)}
         liveMatches={liveMatches}
-        onJumpToLeague={(league) => {
-          setSelectedLeague(league);
-          setLivePanelOpen(false);
-        }}
+        onJumpToLeague={(league) => { setSelectedLeague(league); setLivePanelOpen(false); }}
       />
     </div>
   );
