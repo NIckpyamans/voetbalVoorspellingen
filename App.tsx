@@ -3,6 +3,10 @@ import Header from "./components/Header";
 import MatchCard from "./components/MatchCard";
 import BestBetCard from "./components/BestBetCard";
 import PredictionHistory from "./components/PredictionHistory";
+import StandingsView from "./components/StandingsView";
+import SettingsView from "./components/SettingsView";
+import AnalysePage from "./components/AnalysePage";
+import AnalysePage from "./components/AnalysePage";
 import { Match } from "./types";
 import { velocityEngine } from "./services/velocityEngine";
 import { getOrCreateTeam, saveToMemory, updateTeamModelsFromResult } from "./services/geminiService";
@@ -66,7 +70,7 @@ const LEAGUE_ORDER = [
 ];
 
 const App: React.FC = () => {
-  const [currentView, setCurrentView] = useState<"dashboard"|"history">("dashboard");
+  const [currentView, setCurrentView] = useState<"dashboard"|"history"|"standings"|"settings">("dashboard");
   const [selectedDate, setSelectedDate] = useState<string>(isoDate(new Date()));
   const [matches, setMatches] = useState<Match[]>([]);
   const [predictions, setPredictions] = useState<Record<string, any>>({});
@@ -96,7 +100,7 @@ const App: React.FC = () => {
         if (!isFinished(m) || !m.score?.includes("-") || learnedRef.current.has(m.id)) continue;
         const pred = np[m.id];
         if (!pred) continue;
-        saveToMemory(m.id, `${pred.predHomeGoals}-${pred.predAwayGoals}`, m.score!);
+        saveToMemory(m.id, `${pred.predHomeGoals}-${pred.predAwayGoals}`, m.score!, m);
         const home = getOrCreateTeam({ id: m.homeTeamId, name: m.homeTeamName, league: m.league, logo: m.homeLogo });
         const away = getOrCreateTeam({ id: m.awayTeamId, name: m.awayTeamName, league: m.league, logo: m.awayLogo });
         updateTeamModelsFromResult(m, home, away);
@@ -314,6 +318,10 @@ const App: React.FC = () => {
               </div>
             )}
           </>
+        ) : currentView === "standings" ? (
+          <StandingsView/>
+        ) : currentView === "settings" ? (
+          <SettingsView/>
         ) : (
           <PredictionHistory/>
         )}
