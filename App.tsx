@@ -9,6 +9,8 @@ import { Match } from "./types";
 import { velocityEngine } from "./services/velocityEngine";
 import { getOrCreateTeam, saveToMemory, updateTeamModelsFromResult } from "./services/geminiService";
 
+type View = "dashboard" | "history" | "standings" | "settings";
+
 function isoDate(d: Date) { return d.toISOString().split("T")[0]; }
 function formatDateLabel(dateISO: string) {
   return new Date(`${dateISO}T12:00:00`).toLocaleDateString("nl-NL", {
@@ -24,53 +26,39 @@ function isFinished(m: Match) {
   return s === "FT" || s.includes("FINISH");
 }
 
-function shortLeagueName(league: string): string {
-  const map: Record<string, string> = {
-    '🏆 Champions League': '🏆 UCL',
-    '🥈 Europa League': '🥈 UEL',
-    '🥉 Conference League': '🥉 UECL',
-    '🏴󠁧󠁢󠁥󠁮󠁧󠁿 Premier League': '🏴󠁧󠁢󠁥󠁮󠁧󠁿 PL',
-    '🏴󠁧󠁢󠁥󠁮󠁧󠁿 Championship': '🏴󠁧󠁢󠁥󠁮󠁧󠁿 Champ',
-    '🇳🇱 Eredivisie': '🇳🇱 Ere',
-    '🇳🇱 Eerste Divisie': '🇳🇱 Eerste',
-    '🇳🇱 KNVB Beker': '🇳🇱 Beker',
-    '🇩🇪 Bundesliga': '🇩🇪 BL1',
-    '🇩🇪 2. Bundesliga': '🇩🇪 BL2',
-    '🇪🇸 LaLiga': '🇪🇸 LL1',
-    '🇪🇸 LaLiga2': '🇪🇸 LL2',
-    '🇮🇹 Serie A': '🇮🇹 SA',
-    '🇮🇹 Serie B': '🇮🇹 SB',
-    '🇫🇷 Ligue 1': '🇫🇷 L1',
-    '🇫🇷 Ligue 2': '🇫🇷 L2',
-    '🇵🇹 Liga Portugal': '🇵🇹 LP1',
-    '🇵🇹 Liga Portugal 2': '🇵🇹 LP2',
-    '🇧🇪 Pro League': '🇧🇪 Pro',
-    '🇧🇪 Challenger Pro League': '🇧🇪 Chall',
+function shortLeague(league: string): string {
+  const map: Record<string,string> = {
+    "🏆 Champions League":"🏆 UCL","🥈 Europa League":"🥈 UEL","🥉 Conference League":"🥉 UECL",
+    "🏴󠁧󠁢󠁥󠁮󠁧󠁿 Premier League":"🏴󠁧󠁢󠁥󠁮󠁧󠁿 PL","🏴󠁧󠁢󠁥󠁮󠁧󠁿 Championship":"🏴󠁧󠁢󠁥󠁮󠁧󠁿 Champ",
+    "🇳🇱 Eredivisie":"🇳🇱 Ere","🇳🇱 Eerste Divisie":"🇳🇱 Eerste","🇳🇱 KNVB Beker":"🇳🇱 Beker",
+    "🇩🇪 Bundesliga":"🇩🇪 BL1","🇩🇪 2. Bundesliga":"🇩🇪 BL2",
+    "🇪🇸 LaLiga":"🇪🇸 LL1","🇪🇸 LaLiga2":"🇪🇸 LL2",
+    "🇮🇹 Serie A":"🇮🇹 SA","🇮🇹 Serie B":"🇮🇹 SB",
+    "🇫🇷 Ligue 1":"🇫🇷 L1","🇫🇷 Ligue 2":"🇫🇷 L2",
+    "🇵🇹 Liga Portugal":"🇵🇹 LP1","🇵🇹 Liga Portugal 2":"🇵🇹 LP2",
+    "🇧🇪 Pro League":"🇧🇪 Pro","🇧🇪 Challenger Pro League":"🇧🇪 Chall",
   };
-  if (map[league]) return map[league];
-  const parts = league.split(' ');
-  return parts.slice(0, 2).join(' ');
+  return map[league] || league.split(" ").slice(0,2).join(" ");
 }
 
 const LEAGUE_ORDER = [
-  '🏆 Champions League','🥈 Europa League','🥉 Conference League',
-  '🏴󠁧󠁢󠁥󠁮󠁧󠁿 Premier League','🏴󠁧󠁢󠁥󠁮󠁧󠁿 Championship',
-  '🇳🇱 Eredivisie','🇳🇱 Eerste Divisie','🇳🇱 KNVB Beker',
-  '🇩🇪 Bundesliga','🇩🇪 2. Bundesliga',
-  '🇪🇸 LaLiga','🇪🇸 LaLiga2',
-  '🇮🇹 Serie A','🇮🇹 Serie B',
-  '🇫🇷 Ligue 1','🇫🇷 Ligue 2',
-  '🇵🇹 Liga Portugal','🇵🇹 Liga Portugal 2',
-  '🇧🇪 Pro League','🇧🇪 Challenger Pro League',
+  "🏆 Champions League","🥈 Europa League","🥉 Conference League",
+  "🏴󠁧󠁢󠁥󠁮󠁧󠁿 Premier League","🏴󠁧󠁢󠁥󠁮󠁧󠁿 Championship",
+  "🇳🇱 Eredivisie","🇳🇱 Eerste Divisie","🇳🇱 KNVB Beker",
+  "🇩🇪 Bundesliga","🇩🇪 2. Bundesliga",
+  "🇪🇸 LaLiga","🇪🇸 LaLiga2",
+  "🇮🇹 Serie A","🇮🇹 Serie B",
+  "🇫🇷 Ligue 1","🇫🇷 Ligue 2",
+  "🇵🇹 Liga Portugal","🇵🇹 Liga Portugal 2",
+  "🇧🇪 Pro League","🇧🇪 Challenger Pro League",
 ];
 
-type View = "dashboard" | "history" | "standings" | "settings";
-
 const App: React.FC = () => {
-  const [currentView, setCurrentView] = useState<View>("dashboard");
+  const [view, setView] = useState<View>("dashboard");
   const [selectedDate, setSelectedDate] = useState<string>(isoDate(new Date()));
   const [matches, setMatches] = useState<Match[]>([]);
   const [predictions, setPredictions] = useState<Record<string, any>>({});
+  const [standings, setStandings] = useState<Record<string, any>>({});
   const [loading, setLoading] = useState(true);
   const [syncStatus, setSyncStatus] = useState<"laden"|"klaar"|"fout">("laden");
   const [lastRun, setLastRun] = useState<number|null>(null);
@@ -78,6 +66,14 @@ const App: React.FC = () => {
   const [selectedLeague, setSelectedLeague] = useState<string>("alle");
   const tabsRef = useRef<HTMLDivElement>(null);
   const learnedRef = useRef<Set<string>>(new Set());
+
+  // Load standings once
+  useEffect(() => {
+    fetch("/api/standings")
+      .then(r => r.json())
+      .then(d => setStandings(d.standings || {}))
+      .catch(() => {});
+  }, []);
 
   useEffect(() => {
     setLoading(true);
@@ -92,7 +88,6 @@ const App: React.FC = () => {
       setLoading(false);
       setSyncStatus("klaar");
       if (lr) setLastRun(lr);
-
       for (const m of nm) {
         if (!isFinished(m) || !m.score?.includes("-") || learnedRef.current.has(m.id)) continue;
         const pred = np[m.id];
@@ -109,6 +104,17 @@ const App: React.FC = () => {
     return () => { unsub(); velocityEngine.stopPulse(); };
   }, [selectedDate]);
 
+  // Build standings lookup: teamId -> position
+  const standingsMap = useMemo(() => {
+    const map: Record<string, number> = {};
+    for (const s of Object.values(standings) as any[]) {
+      for (const row of (s.rows || [])) {
+        if (row.teamId) map[row.teamId] = row.pos;
+      }
+    }
+    return map;
+  }, [standings]);
+
   const filteredMatches = useMemo(() => {
     let base = selectedLeague === "alle" ? matches : matches.filter(m => m.league === selectedLeague);
     if (activeFilter === "live")     return base.filter(isLive);
@@ -118,10 +124,10 @@ const App: React.FC = () => {
   }, [matches, selectedLeague, activeFilter]);
 
   const sortedMatches = useMemo(() => [...filteredMatches].sort((a, b) => {
-    const aL = isLive(a), bL = isLive(b), aF = isFinished(a), bF = isFinished(b);
-    if (aL && !bL) return -1; if (!aL && bL) return 1;
-    if (!aF && bF) return -1; if (aF && !bF) return 1;
-    return (a.kickoff||'').localeCompare(b.kickoff||'');
+    const aL=isLive(a),bL=isLive(b),aF=isFinished(a),bF=isFinished(b);
+    if (aL&&!bL) return -1; if (!aL&&bL) return 1;
+    if (!aF&&bF) return -1; if (aF&&!bF) return 1;
+    return (a.kickoff||"").localeCompare(b.kickoff||"");
   }), [filteredMatches]);
 
   const allLeagues = useMemo(() => {
@@ -143,46 +149,43 @@ const App: React.FC = () => {
         return { ...pred, homeTeam: m.homeTeamName, awayTeam: m.awayTeamName, league: m.league, matchId };
       })
       .filter(Boolean)
-      .sort((a: any, b: any) => (b.exactProb||b.confidence||0) - (a.exactProb||a.confidence||0))
+      .sort((a:any, b:any) => (b.exactProb||b.confidence||0) - (a.exactProb||a.confidence||0))
       .slice(0, 5) as any[];
   }, [predictions, matches]);
 
-  const scrollTabs = (dir: 'left'|'right') => {
-    tabsRef.current?.scrollBy({ left: dir === 'right' ? 160 : -160, behavior: 'smooth' });
+  const scrollTabs = (dir: "left"|"right") => {
+    tabsRef.current?.scrollBy({ left: dir === "right" ? 160 : -160, behavior: "smooth" });
   };
 
   const lastRunLabel = lastRun
-    ? new Date(lastRun).toLocaleTimeString('nl-NL', { hour: '2-digit', minute: '2-digit' })
+    ? new Date(lastRun).toLocaleTimeString("nl-NL", { hour: "2-digit", minute: "2-digit" })
     : null;
 
-  const liveInLeague = (l: string) => matches.filter(m => m.league === l && isLive(m)).length;
+  // Enrich matches with standings position
+  const enrichedMatch = (m: Match) => ({
+    ...m,
+    homePos: standingsMap[(m as any).homeTeamId] || null,
+    awayPos: standingsMap[(m as any).awayTeamId] || null,
+  });
 
   return (
     <div className="min-h-screen pb-20 text-slate-100 bg-[#02020a]">
-      <Header currentView={currentView} onViewChange={setCurrentView} />
-
+      <Header currentView={view} onViewChange={setView} />
       <main className="max-w-7xl mx-auto px-4 md:px-6 pt-5">
 
-        {/* ── STANDINGS ── */}
-        {currentView === "standings" && <StandingsView />}
+        {view === "standings" && <StandingsView />}
+        {view === "settings"  && <SettingsView />}
+        {view === "history"   && <PredictionHistory />}
 
-        {/* ── SETTINGS ── */}
-        {currentView === "settings" && <SettingsView />}
-
-        {/* ── HISTORY ── */}
-        {currentView === "history" && <PredictionHistory />}
-
-        {/* ── DASHBOARD ── */}
-        {currentView === "dashboard" && (
+        {view === "dashboard" && (
           <>
-            {/* Datum */}
             <div className="flex flex-col md:flex-row md:items-end md:justify-between gap-3 mb-4">
               <div>
                 <div className="text-[10px] font-black uppercase tracking-widest text-slate-500">Datum</div>
                 <div className="text-xl font-black text-white tracking-tight">{formatDateLabel(selectedDate)}</div>
                 <div className="text-[10px] text-slate-500 mt-0.5 flex items-center gap-1.5">
-                  <span className={`w-1.5 h-1.5 rounded-full ${syncStatus==='klaar'?'bg-green-400':syncStatus==='laden'?'bg-yellow-400 animate-pulse':'bg-red-400'}`}/>
-                  {syncStatus==='laden' ? 'Data laden...' : `Gesynchroniseerd${lastRunLabel ? ` · Worker: ${lastRunLabel}` : ''}`}
+                  <span className={`w-1.5 h-1.5 rounded-full ${syncStatus==="klaar"?"bg-green-400":syncStatus==="laden"?"bg-yellow-400 animate-pulse":"bg-red-400"}`}/>
+                  {syncStatus==="laden" ? "Data laden..." : `Gesynchroniseerd${lastRunLabel ? ` · Worker: ${lastRunLabel}` : ""}`}
                 </div>
               </div>
               <div className="flex items-center gap-2">
@@ -196,15 +199,14 @@ const App: React.FC = () => {
               </div>
             </div>
 
-            {/* Tellers */}
             <div className="grid grid-cols-3 gap-2 mb-3">
               {[
                 {key:"gepland", label:"Gepland", count:plannedCount, c:"blue"},
                 {key:"live",    label:"Live",    count:liveCount,    c:"red"},
                 {key:"gespeeld",label:"Gespeeld",count:finishedCount,c:"slate"},
-              ].map(({key,label,count,c})=>(
+              ].map(({key,label,count,c}) => (
                 <button key={key}
-                  onClick={()=>setActiveFilter(activeFilter===key?"alle":key as any)}
+                  onClick={() => setActiveFilter(activeFilter===key?"alle":key as any)}
                   className={`glass-card p-3 rounded-2xl border text-left transition
                     ${activeFilter===key?`border-${c}-500/60 bg-${c}-900/20`:`border-${c}-500/20 hover:border-${c}-500/30`}`}>
                   <div className={`text-[9px] font-black text-${c}-400 uppercase flex items-center gap-1`}>
@@ -215,66 +217,59 @@ const App: React.FC = () => {
               ))}
             </div>
 
-            {/* Competitie tabs */}
             <div className="flex items-center gap-1 mb-4">
-              <button onClick={()=>scrollTabs('left')}
-                className="flex-shrink-0 w-6 h-6 bg-slate-800 hover:bg-slate-700 rounded-lg text-slate-300 text-sm font-black flex items-center justify-center transition">‹</button>
+              <button onClick={() => scrollTabs("left")}
+                className="flex-shrink-0 w-6 h-6 bg-slate-800 hover:bg-slate-700 rounded-lg text-slate-300 text-sm font-black flex items-center justify-center">‹</button>
               <div ref={tabsRef} className="flex gap-1 overflow-x-auto scrollbar-hide flex-1 py-0.5">
-                <button onClick={()=>{setSelectedLeague("alle");setActiveFilter("alle");}}
-                  className={`flex-shrink-0 px-2.5 py-1 rounded-lg text-[10px] font-black transition whitespace-nowrap
+                <button onClick={() => { setSelectedLeague("alle"); setActiveFilter("alle"); }}
+                  className={`flex-shrink-0 px-2.5 py-1 rounded-lg text-[10px] font-black whitespace-nowrap
                     ${selectedLeague==="alle"?"bg-white text-black":"bg-slate-800 text-slate-300 hover:bg-slate-700"}`}>
                   ⚽ {matches.length}
                 </button>
-                {allLeagues.map(league=>{
-                  const short   = shortLeagueName(league);
-                  const total   = matches.filter(m=>m.league===league).length;
-                  const liveCnt = liveInLeague(league);
+                {allLeagues.map(league => {
+                  const total   = matches.filter(m => m.league===league).length;
+                  const liveCnt = matches.filter(m => m.league===league && isLive(m)).length;
                   return (
-                    <button key={league} onClick={()=>setSelectedLeague(league)}
-                      title={league}
-                      className={`flex-shrink-0 px-2.5 py-1 rounded-lg text-[10px] font-black transition whitespace-nowrap
+                    <button key={league} onClick={() => setSelectedLeague(league)} title={league}
+                      className={`flex-shrink-0 px-2.5 py-1 rounded-lg text-[10px] font-black whitespace-nowrap
                         ${selectedLeague===league?"bg-blue-600 text-white":"bg-slate-800 text-slate-300 hover:bg-slate-700"}`}>
-                      {short}
+                      {shortLeague(league)}
                       {liveCnt > 0
                         ? <span className="ml-1 text-[8px] bg-red-500 text-white px-1 rounded animate-pulse">{liveCnt}🔴</span>
-                        : <span className="ml-1 opacity-50 text-[9px]">{total}</span>
-                      }
+                        : <span className="ml-1 opacity-50 text-[9px]">{total}</span>}
                     </button>
                   );
                 })}
               </div>
-              <button onClick={()=>scrollTabs('right')}
-                className="flex-shrink-0 w-6 h-6 bg-slate-800 hover:bg-slate-700 rounded-lg text-slate-300 text-sm font-black flex items-center justify-center transition">›</button>
+              <button onClick={() => scrollTabs("right")}
+                className="flex-shrink-0 w-6 h-6 bg-slate-800 hover:bg-slate-700 rounded-lg text-slate-300 text-sm font-black flex items-center justify-center">›</button>
             </div>
 
-            {/* Wedstrijden */}
             {loading ? (
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
-                {[1,2,3,4,5,6].map(i=><div key={i} className="h-64 glass-card rounded-2xl animate-pulse"/>)}
+                {[1,2,3,4,5,6].map(i => <div key={i} className="h-64 glass-card rounded-2xl animate-pulse"/>)}
               </div>
             ) : sortedMatches.length === 0 ? (
               <div className="text-center py-16 text-slate-500">
                 <div className="text-5xl mb-3">⚽</div>
                 <div className="font-bold">Geen wedstrijden voor deze selectie</div>
-                {syncStatus==='klaar' && matches.length===0 && (
+                {syncStatus==="klaar" && matches.length===0 && (
                   <div className="text-[11px] mt-2 text-slate-600">Start de GitHub Actions worker om wedstrijden te laden</div>
                 )}
               </div>
             ) : (
               <div className="space-y-6">
-                {/* Top 5 tips */}
                 {selectedLeague==="alle" && activeFilter==="alle" && bestBets.length > 0 && (
                   <section>
                     <h2 className="text-sm font-black uppercase mb-3 flex items-center gap-2">
                       <span className="w-2 h-2 bg-yellow-400 rounded-full"/>Top 5 meest zekere tips
                     </h2>
                     <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 gap-3">
-                      {bestBets.map((b:any)=><BestBetCard key={b.matchId} bet={b}/>)}
+                      {bestBets.map((b:any) => <BestBetCard key={b.matchId} bet={b}/>)}
                     </div>
                   </section>
                 )}
 
-                {/* Live */}
                 {(activeFilter==="alle"||activeFilter==="live") && sortedMatches.filter(isLive).length > 0 && (
                   <section>
                     <div className="flex items-center gap-2 mb-3">
@@ -282,14 +277,13 @@ const App: React.FC = () => {
                       <span className="text-sm font-black uppercase">Live ({sortedMatches.filter(isLive).length})</span>
                     </div>
                     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
-                      {sortedMatches.filter(isLive).map(m=>(
-                        <MatchCard key={m.id} match={m} prediction={predictions[m.id]}/>
+                      {sortedMatches.filter(isLive).map(m => (
+                        <MatchCard key={m.id} match={enrichedMatch(m)} prediction={predictions[m.id]}/>
                       ))}
                     </div>
                   </section>
                 )}
 
-                {/* Gepland */}
                 {(activeFilter==="alle"||activeFilter==="gepland") && sortedMatches.filter(m=>!isLive(m)&&!isFinished(m)).length > 0 && (
                   <section>
                     <div className="flex items-center gap-2 mb-3">
@@ -297,14 +291,13 @@ const App: React.FC = () => {
                       <span className="text-sm font-black uppercase">Nog te spelen ({sortedMatches.filter(m=>!isLive(m)&&!isFinished(m)).length})</span>
                     </div>
                     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
-                      {sortedMatches.filter(m=>!isLive(m)&&!isFinished(m)).map(m=>(
-                        <MatchCard key={m.id} match={m} prediction={predictions[m.id]}/>
+                      {sortedMatches.filter(m=>!isLive(m)&&!isFinished(m)).map(m => (
+                        <MatchCard key={m.id} match={enrichedMatch(m)} prediction={predictions[m.id]}/>
                       ))}
                     </div>
                   </section>
                 )}
 
-                {/* Gespeeld */}
                 {(activeFilter==="alle"||activeFilter==="gespeeld") && sortedMatches.filter(isFinished).length > 0 && (
                   <section>
                     <div className="flex items-center gap-2 mb-3">
@@ -312,8 +305,8 @@ const App: React.FC = () => {
                       <span className="text-sm font-black uppercase">Gespeeld ({sortedMatches.filter(isFinished).length})</span>
                     </div>
                     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
-                      {sortedMatches.filter(isFinished).map(m=>(
-                        <MatchCard key={m.id} match={m} prediction={predictions[m.id]}/>
+                      {sortedMatches.filter(isFinished).map(m => (
+                        <MatchCard key={m.id} match={enrichedMatch(m)} prediction={predictions[m.id]}/>
                       ))}
                     </div>
                   </section>
