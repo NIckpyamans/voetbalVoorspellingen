@@ -5,8 +5,6 @@ import BestBetCard from "./components/BestBetCard";
 import PredictionHistory from "./components/PredictionHistory";
 import StandingsView from "./components/StandingsView";
 import SettingsView from "./components/SettingsView";
-import AnalysePage from "./components/AnalysePage";
-import AnalysePage from "./components/AnalysePage";
 import { Match } from "./types";
 import { velocityEngine } from "./services/velocityEngine";
 import { getOrCreateTeam, saveToMemory, updateTeamModelsFromResult } from "./services/geminiService";
@@ -26,7 +24,6 @@ function isFinished(m: Match) {
   return s === "FT" || s.includes("FINISH");
 }
 
-// Korte namen voor tabs
 function shortLeagueName(league: string): string {
   const map: Record<string, string> = {
     '🏆 Champions League': '🏆 UCL',
@@ -50,9 +47,7 @@ function shortLeagueName(league: string): string {
     '🇧🇪 Pro League': '🇧🇪 Pro',
     '🇧🇪 Challenger Pro League': '🇧🇪 Chall',
   };
-  // Probeer exacte match
   if (map[league]) return map[league];
-  // Haal flag + eerste woord op als fallback
   const parts = league.split(' ');
   return parts.slice(0, 2).join(' ');
 }
@@ -69,8 +64,10 @@ const LEAGUE_ORDER = [
   '🇧🇪 Pro League','🇧🇪 Challenger Pro League',
 ];
 
+type View = "dashboard" | "history" | "standings" | "settings";
+
 const App: React.FC = () => {
-  const [currentView, setCurrentView] = useState<"dashboard"|"history"|"standings"|"settings">("dashboard");
+  const [currentView, setCurrentView] = useState<View>("dashboard");
   const [selectedDate, setSelectedDate] = useState<string>(isoDate(new Date()));
   const [matches, setMatches] = useState<Match[]>([]);
   const [predictions, setPredictions] = useState<Record<string, any>>({});
@@ -158,14 +155,25 @@ const App: React.FC = () => {
     ? new Date(lastRun).toLocaleTimeString('nl-NL', { hour: '2-digit', minute: '2-digit' })
     : null;
 
-  const liveInLeague  = (l: string) => matches.filter(m => m.league === l && isLive(m)).length;
+  const liveInLeague = (l: string) => matches.filter(m => m.league === l && isLive(m)).length;
 
   return (
     <div className="min-h-screen pb-20 text-slate-100 bg-[#02020a]">
       <Header currentView={currentView} onViewChange={setCurrentView} />
 
       <main className="max-w-7xl mx-auto px-4 md:px-6 pt-5">
-        {currentView === "dashboard" ? (
+
+        {/* ── STANDINGS ── */}
+        {currentView === "standings" && <StandingsView />}
+
+        {/* ── SETTINGS ── */}
+        {currentView === "settings" && <SettingsView />}
+
+        {/* ── HISTORY ── */}
+        {currentView === "history" && <PredictionHistory />}
+
+        {/* ── DASHBOARD ── */}
+        {currentView === "dashboard" && (
           <>
             {/* Datum */}
             <div className="flex flex-col md:flex-row md:items-end md:justify-between gap-3 mb-4">
@@ -174,7 +182,7 @@ const App: React.FC = () => {
                 <div className="text-xl font-black text-white tracking-tight">{formatDateLabel(selectedDate)}</div>
                 <div className="text-[10px] text-slate-500 mt-0.5 flex items-center gap-1.5">
                   <span className={`w-1.5 h-1.5 rounded-full ${syncStatus==='klaar'?'bg-green-400':syncStatus==='laden'?'bg-yellow-400 animate-pulse':'bg-red-400'}`}/>
-                  {syncStatus==='laden' ? 'Data laden...' : `Gesynchroniseerd${lastRunLabel ? ` · Arbeider: ${lastRunLabel}` : ''}`}
+                  {syncStatus==='laden' ? 'Data laden...' : `Gesynchroniseerd${lastRunLabel ? ` · Worker: ${lastRunLabel}` : ''}`}
                 </div>
               </div>
               <div className="flex items-center gap-2">
@@ -207,29 +215,25 @@ const App: React.FC = () => {
               ))}
             </div>
 
-            {/* Competitie tabs — compact met pijlen */}
+            {/* Competitie tabs */}
             <div className="flex items-center gap-1 mb-4">
               <button onClick={()=>scrollTabs('left')}
                 className="flex-shrink-0 w-6 h-6 bg-slate-800 hover:bg-slate-700 rounded-lg text-slate-300 text-sm font-black flex items-center justify-center transition">‹</button>
-
               <div ref={tabsRef} className="flex gap-1 overflow-x-auto scrollbar-hide flex-1 py-0.5">
-                {/* Alle knop */}
                 <button onClick={()=>{setSelectedLeague("alle");setActiveFilter("alle");}}
                   className={`flex-shrink-0 px-2.5 py-1 rounded-lg text-[10px] font-black transition whitespace-nowrap
                     ${selectedLeague==="alle"?"bg-white text-black":"bg-slate-800 text-slate-300 hover:bg-slate-700"}`}>
                   ⚽ {matches.length}
                 </button>
-
                 {allLeagues.map(league=>{
                   const short   = shortLeagueName(league);
                   const total   = matches.filter(m=>m.league===league).length;
                   const liveCnt = liveInLeague(league);
-                  const active  = selectedLeague===league;
                   return (
                     <button key={league} onClick={()=>setSelectedLeague(league)}
                       title={league}
                       className={`flex-shrink-0 px-2.5 py-1 rounded-lg text-[10px] font-black transition whitespace-nowrap
-                        ${active?"bg-blue-600 text-white":"bg-slate-800 text-slate-300 hover:bg-slate-700"}`}>
+                        ${selectedLeague===league?"bg-blue-600 text-white":"bg-slate-800 text-slate-300 hover:bg-slate-700"}`}>
                       {short}
                       {liveCnt > 0
                         ? <span className="ml-1 text-[8px] bg-red-500 text-white px-1 rounded animate-pulse">{liveCnt}🔴</span>
@@ -239,12 +243,11 @@ const App: React.FC = () => {
                   );
                 })}
               </div>
-
               <button onClick={()=>scrollTabs('right')}
                 className="flex-shrink-0 w-6 h-6 bg-slate-800 hover:bg-slate-700 rounded-lg text-slate-300 text-sm font-black flex items-center justify-center transition">›</button>
             </div>
 
-            {/* Inhoud */}
+            {/* Wedstrijden */}
             {loading ? (
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
                 {[1,2,3,4,5,6].map(i=><div key={i} className="h-64 glass-card rounded-2xl animate-pulse"/>)}
@@ -271,7 +274,7 @@ const App: React.FC = () => {
                   </section>
                 )}
 
-                {/* Live sectie */}
+                {/* Live */}
                 {(activeFilter==="alle"||activeFilter==="live") && sortedMatches.filter(isLive).length > 0 && (
                   <section>
                     <div className="flex items-center gap-2 mb-3">
@@ -286,7 +289,7 @@ const App: React.FC = () => {
                   </section>
                 )}
 
-                {/* Gepland sectie */}
+                {/* Gepland */}
                 {(activeFilter==="alle"||activeFilter==="gepland") && sortedMatches.filter(m=>!isLive(m)&&!isFinished(m)).length > 0 && (
                   <section>
                     <div className="flex items-center gap-2 mb-3">
@@ -301,7 +304,7 @@ const App: React.FC = () => {
                   </section>
                 )}
 
-                {/* Gespeeld sectie */}
+                {/* Gespeeld */}
                 {(activeFilter==="alle"||activeFilter==="gespeeld") && sortedMatches.filter(isFinished).length > 0 && (
                   <section>
                     <div className="flex items-center gap-2 mb-3">
@@ -318,12 +321,6 @@ const App: React.FC = () => {
               </div>
             )}
           </>
-        ) : currentView === "standings" ? (
-          <StandingsView/>
-        ) : currentView === "settings" ? (
-          <SettingsView/>
-        ) : (
-          <PredictionHistory/>
         )}
       </main>
     </div>
