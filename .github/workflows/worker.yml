@@ -1,8 +1,13 @@
 name: Football AI Worker
 on:
   schedule:
-    - cron: "*/30 * * * *"  # Elke 30 minuten
+    - cron: "*/30 * * * *"
   workflow_dispatch:
+
+# Voorkom dat twee workers tegelijk draaien
+concurrency:
+  group: football-worker
+  cancel-in-progress: false
 
 permissions:
   contents: write
@@ -12,15 +17,24 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+        with:
+          # Pull altijd de laatste versie voor de push
+          fetch-depth: 0
+
       - uses: actions/setup-node@v4
         with:
-          node-version: 22
+          node-version: 24
+
       - name: Run worker
         run: node scripts/server-worker.js
-      - name: Commit data
+
+      - name: Commit en push data
         run: |
           git config user.name github-actions
           git config user.email github-actions@github.com
           git add server_data.json
-          git commit -m "update wedstrijden [skip vercel]" || echo "geen wijzigingen"
-          git push
+          git diff --staged --quiet && echo "geen wijzigingen" && exit 0
+          git commit -m "update wedstrijden [skip vercel]"
+          # Pull eerst om merge conflicts te voorkomen, dan push
+          git pull --rebase origin main
+          git push origin main
