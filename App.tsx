@@ -1,10 +1,11 @@
-import React, { useEffect, useMemo, useRef, useState } from "react";
+import React, { useEffect, useMemo, useRef, useState, useCallback } from "react";
 import Header from "./components/Header";
 import MatchCard from "./components/MatchCard";
 import BestBetCard from "./components/BestBetCard";
 import PredictionHistory from "./components/PredictionHistory";
 import StandingsView from "./components/StandingsView";
 import SettingsView from "./components/SettingsView";
+import { FavoriteButton, FavoriteSection, getFavorites, isFavorite } from "./components/FavoriteTeams";
 import { Match } from "./types";
 import { velocityEngine } from "./services/velocityEngine";
 import { getOrCreateTeam, saveToMemory, updateTeamModelsFromResult } from "./services/geminiService";
@@ -62,12 +63,12 @@ const App: React.FC = () => {
   const [loading, setLoading] = useState(true);
   const [syncStatus, setSyncStatus] = useState<"laden"|"klaar"|"fout">("laden");
   const [lastRun, setLastRun] = useState<number|null>(null);
-  const [activeFilter, setActiveFilter] = useState<"alle"|"live"|"gepland"|"gespeeld">("alle");
+  const [activeFilter, setActiveFilter] = useState<"alle"|"favorieten"|"live"|"gepland"|"gespeeld">("alle");
   const [selectedLeague, setSelectedLeague] = useState<string>("alle");
+  const [favRefresh, setFavRefresh] = useState(0);
   const tabsRef = useRef<HTMLDivElement>(null);
   const learnedRef = useRef<Set<string>>(new Set());
 
-  // Load standings once
   useEffect(() => {
     fetch("/api/standings")
       .then(r => r.json())
@@ -104,7 +105,6 @@ const App: React.FC = () => {
     return () => { unsub(); velocityEngine.stopPulse(); };
   }, [selectedDate]);
 
-  // Build standings lookup: teamId -> position
   const standingsMap = useMemo(() => {
     const map: Record<string, number> = {};
     for (const s of Object.values(standings) as any[]) {
@@ -115,13 +115,28 @@ const App: React.FC = () => {
     return map;
   }, [standings]);
 
+  const enrichedMatch = useCallback((m: Match) => ({
+    ...m,
+    homePos: standingsMap[(m as any).homeTeamId] || null,
+    awayPos: standingsMap[(m as any).awayTeamId] || null,
+  }), [standingsMap]);
+
+  const favTeams = useMemo(() => getFavorites(), [favRefresh]);
+
   const filteredMatches = useMemo(() => {
     let base = selectedLeague === "alle" ? matches : matches.filter(m => m.league === selectedLeague);
-    if (activeFilter === "live")     return base.filter(isLive);
-    if (activeFilter === "gepland")  return base.filter(m => !isLive(m) && !isFinished(m));
-    if (activeFilter === "gespeeld") return base.filter(isFinished);
+    if (activeFilter === "live")       return base.filter(isLive);
+    if (activeFilter === "gepland")    return base.filter(m => !isLive(m) && !isFinished(m));
+    if (activeFilter === "gespeeld")   return base.filter(isFinished);
+    if (activeFilter === "favorieten") {
+      return base.filter(m => {
+        const homeKey = (m as any).homeTeamId || m.homeTeamName.toLowerCase();
+        const awayKey = (m as any).awayTeamId || m.awayTeamName.toLowerCase();
+        return favTeams.includes(homeKey) || favTeams.includes(awayKey);
+      });
+    }
     return base;
-  }, [matches, selectedLeague, activeFilter]);
+  }, [matches, selectedLeague, activeFilter, favTeams]);
 
   const sortedMatches = useMemo(() => [...filteredMatches].sort((a, b) => {
     const aL=isLive(a),bL=isLive(b),aF=isFinished(a),bF=isFinished(b);
@@ -138,8 +153,15 @@ const App: React.FC = () => {
   }, [matches]);
 
   const liveCount     = useMemo(() => matches.filter(isLive).length, [matches]);
-  const plannedCount  = useMemo(() => matches.filter(m => !isLive(m) && !isFinished(m)).length, [matches]);
+  const plannedCount  = useMemo(() => matches.filter(m => !isLive(m)&&!isFinished(m)).length, [matches]);
   const finishedCount = useMemo(() => matches.filter(isFinished).length, [matches]);
+  const favCount      = useMemo(() => {
+    return matches.filter(m => {
+      const hk = (m as any).homeTeamId || m.homeTeamName.toLowerCase();
+      const ak = (m as any).awayTeamId || m.awayTeamName.toLowerCase();
+      return favTeams.includes(hk) || favTeams.includes(ak);
+    }).length;
+  }, [matches, favTeams]);
 
   const bestBets = useMemo(() => {
     return Object.entries(predictions)
@@ -153,20 +175,12 @@ const App: React.FC = () => {
       .slice(0, 5) as any[];
   }, [predictions, matches]);
 
-  const scrollTabs = (dir: "left"|"right") => {
+  const scrollTabs = (dir: "left"|"right") =>
     tabsRef.current?.scrollBy({ left: dir === "right" ? 160 : -160, behavior: "smooth" });
-  };
 
   const lastRunLabel = lastRun
     ? new Date(lastRun).toLocaleTimeString("nl-NL", { hour: "2-digit", minute: "2-digit" })
     : null;
-
-  // Enrich matches with standings position
-  const enrichedMatch = (m: Match) => ({
-    ...m,
-    homePos: standingsMap[(m as any).homeTeamId] || null,
-    awayPos: standingsMap[(m as any).awayTeamId] || null,
-  });
 
   return (
     <div className="min-h-screen pb-20 text-slate-100 bg-[#02020a]">
@@ -179,6 +193,7 @@ const App: React.FC = () => {
 
         {view === "dashboard" && (
           <>
+            {/* Datum */}
             <div className="flex flex-col md:flex-row md:items-end md:justify-between gap-3 mb-4">
               <div>
                 <div className="text-[10px] font-black uppercase tracking-widest text-slate-500">Datum</div>
@@ -199,24 +214,28 @@ const App: React.FC = () => {
               </div>
             </div>
 
-            <div className="grid grid-cols-3 gap-2 mb-3">
+            {/* Tellers — inclusief favorieten */}
+            <div className="grid grid-cols-4 gap-2 mb-3">
               {[
-                {key:"gepland", label:"Gepland", count:plannedCount, c:"blue"},
-                {key:"live",    label:"Live",    count:liveCount,    c:"red"},
-                {key:"gespeeld",label:"Gespeeld",count:finishedCount,c:"slate"},
-              ].map(({key,label,count,c}) => (
+                {key:"favorieten", label:"Favorieten", count:favCount,    c:"yellow", icon:"★"},
+                {key:"live",       label:"Live",       count:liveCount,    c:"red",    icon:"●"},
+                {key:"gepland",    label:"Gepland",    count:plannedCount, c:"blue",   icon:""},
+                {key:"gespeeld",   label:"Gespeeld",   count:finishedCount,c:"slate",  icon:""},
+              ].map(({key,label,count,c,icon}) => (
                 <button key={key}
                   onClick={() => setActiveFilter(activeFilter===key?"alle":key as any)}
                   className={`glass-card p-3 rounded-2xl border text-left transition
                     ${activeFilter===key?`border-${c}-500/60 bg-${c}-900/20`:`border-${c}-500/20 hover:border-${c}-500/30`}`}>
                   <div className={`text-[9px] font-black text-${c}-400 uppercase flex items-center gap-1`}>
-                    {key==="live"&&<span className="w-1.5 h-1.5 bg-red-500 rounded-full animate-pulse"/>}{label}
+                    {icon && <span className={key==="live"?"animate-pulse":""}>{icon}</span>}
+                    {label}
                   </div>
                   <div className="text-xl font-black">{count}</div>
                 </button>
               ))}
             </div>
 
+            {/* Competitie tabs */}
             <div className="flex items-center gap-1 mb-4">
               <button onClick={() => scrollTabs("left")}
                 className="flex-shrink-0 w-6 h-6 bg-slate-800 hover:bg-slate-700 rounded-lg text-slate-300 text-sm font-black flex items-center justify-center">‹</button>
@@ -249,16 +268,46 @@ const App: React.FC = () => {
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
                 {[1,2,3,4,5,6].map(i => <div key={i} className="h-64 glass-card rounded-2xl animate-pulse"/>)}
               </div>
-            ) : sortedMatches.length === 0 ? (
+            ) : sortedMatches.length === 0 && activeFilter !== "alle" ? (
               <div className="text-center py-16 text-slate-500">
-                <div className="text-5xl mb-3">⚽</div>
-                <div className="font-bold">Geen wedstrijden voor deze selectie</div>
-                {syncStatus==="klaar" && matches.length===0 && (
-                  <div className="text-[11px] mt-2 text-slate-600">Start de GitHub Actions worker om wedstrijden te laden</div>
+                <div className="text-5xl mb-3">{activeFilter==="favorieten"?"★":"⚽"}</div>
+                <div className="font-bold">
+                  {activeFilter==="favorieten"
+                    ? "Geen wedstrijden van favoriete teams vandaag"
+                    : "Geen wedstrijden voor deze selectie"}
+                </div>
+                {activeFilter==="favorieten" && (
+                  <p className="text-[11px] mt-2 text-slate-600">
+                    Klik op ☆ bij een team op de wedstrijdkaart om het toe te voegen
+                  </p>
                 )}
               </div>
             ) : (
               <div className="space-y-6">
+                {/* Favorieten bovenaan als filter "alle" */}
+                {activeFilter==="alle" && favCount > 0 && (
+                  <section>
+                    <div className="flex items-center gap-2 mb-3">
+                      <span className="text-yellow-400">★</span>
+                      <span className="text-sm font-black uppercase">Favoriete teams ({favCount})</span>
+                    </div>
+                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
+                      {matches
+                        .filter(m => {
+                          const hk = (m as any).homeTeamId || m.homeTeamName.toLowerCase();
+                          const ak = (m as any).awayTeamId || m.awayTeamName.toLowerCase();
+                          return favTeams.includes(hk) || favTeams.includes(ak);
+                        })
+                        .slice(0, 6)
+                        .map(m => (
+                          <MatchCard key={m.id} match={enrichedMatch(m)} prediction={predictions[m.id]}
+                            onFavoriteChange={() => setFavRefresh(r => r+1)}/>
+                        ))}
+                    </div>
+                  </section>
+                )}
+
+                {/* Top 5 tips */}
                 {selectedLeague==="alle" && activeFilter==="alle" && bestBets.length > 0 && (
                   <section>
                     <h2 className="text-sm font-black uppercase mb-3 flex items-center gap-2">
@@ -270,7 +319,8 @@ const App: React.FC = () => {
                   </section>
                 )}
 
-                {(activeFilter==="alle"||activeFilter==="live") && sortedMatches.filter(isLive).length > 0 && (
+                {/* Live */}
+                {(activeFilter==="alle"||activeFilter==="live"||activeFilter==="favorieten") && sortedMatches.filter(isLive).length > 0 && (
                   <section>
                     <div className="flex items-center gap-2 mb-3">
                       <span className="w-2 h-2 bg-red-500 rounded-full animate-pulse"/>
@@ -278,13 +328,15 @@ const App: React.FC = () => {
                     </div>
                     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
                       {sortedMatches.filter(isLive).map(m => (
-                        <MatchCard key={m.id} match={enrichedMatch(m)} prediction={predictions[m.id]}/>
+                        <MatchCard key={m.id} match={enrichedMatch(m)} prediction={predictions[m.id]}
+                          onFavoriteChange={() => setFavRefresh(r => r+1)}/>
                       ))}
                     </div>
                   </section>
                 )}
 
-                {(activeFilter==="alle"||activeFilter==="gepland") && sortedMatches.filter(m=>!isLive(m)&&!isFinished(m)).length > 0 && (
+                {/* Gepland */}
+                {(activeFilter==="alle"||activeFilter==="gepland"||activeFilter==="favorieten") && sortedMatches.filter(m=>!isLive(m)&&!isFinished(m)).length > 0 && (
                   <section>
                     <div className="flex items-center gap-2 mb-3">
                       <span className="w-2 h-2 bg-blue-500 rounded-full"/>
@@ -292,13 +344,15 @@ const App: React.FC = () => {
                     </div>
                     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
                       {sortedMatches.filter(m=>!isLive(m)&&!isFinished(m)).map(m => (
-                        <MatchCard key={m.id} match={enrichedMatch(m)} prediction={predictions[m.id]}/>
+                        <MatchCard key={m.id} match={enrichedMatch(m)} prediction={predictions[m.id]}
+                          onFavoriteChange={() => setFavRefresh(r => r+1)}/>
                       ))}
                     </div>
                   </section>
                 )}
 
-                {(activeFilter==="alle"||activeFilter==="gespeeld") && sortedMatches.filter(isFinished).length > 0 && (
+                {/* Gespeeld */}
+                {(activeFilter==="alle"||activeFilter==="gespeeld"||activeFilter==="favorieten") && sortedMatches.filter(isFinished).length > 0 && (
                   <section>
                     <div className="flex items-center gap-2 mb-3">
                       <span className="w-2 h-2 bg-slate-400 rounded-full"/>
@@ -306,7 +360,8 @@ const App: React.FC = () => {
                     </div>
                     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
                       {sortedMatches.filter(isFinished).map(m => (
-                        <MatchCard key={m.id} match={enrichedMatch(m)} prediction={predictions[m.id]}/>
+                        <MatchCard key={m.id} match={enrichedMatch(m)} prediction={predictions[m.id]}
+                          onFavoriteChange={() => setFavRefresh(r => r+1)}/>
                       ))}
                     </div>
                   </section>
