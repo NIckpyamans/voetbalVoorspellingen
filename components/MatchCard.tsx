@@ -1,8 +1,9 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { Match } from '../types';
+import { FavoriteButton, isFavorite } from './FavoriteTeams';
 
 interface MatchCardProps {
-  match: Match & { homePos?: number | null; awayPos?: number | null };
+  match: Match;
   prediction?: any;
 }
 
@@ -20,24 +21,29 @@ function FormBadge({ form }: { form: string }) {
   );
 }
 
-function PosBadge({ pos }: { pos: number | null | undefined }) {
+function PosBadge({ pos }: { pos?: number | null }) {
   if (!pos) return null;
+  const color = pos <= 3 ? 'bg-blue-500/20 text-blue-300 border-blue-500/30'
+              : pos >= 16 ? 'bg-red-500/20 text-red-300 border-red-500/30'
+              : 'bg-slate-700/60 text-slate-400 border-slate-600/30';
   return (
-    <span className={`text-[8px] font-black px-1 py-0.5 rounded
-      ${pos<=3?'bg-blue-500/20 text-blue-300':pos>=16?'bg-red-500/20 text-red-300':'bg-slate-700 text-slate-400'}`}>
-      #{pos}
-    </span>
+    <span className={`text-[8px] font-black px-1.5 py-0.5 rounded border ${color}`}>#{pos}</span>
   );
 }
 
 function fmt(p: number) { return p > 0.01 ? (1/p).toFixed(2) : '-'; }
 
-const MatchCard: React.FC<MatchCardProps> = ({ match, prediction }) => {
+const MatchCard: React.FC<MatchCardProps> = ({ match, prediction, onFavoriteChange }) => {
   const [tab, setTab] = useState<'analyse'|'h2h'|'markten'|'stats'>('analyse');
   const [aiAnalysis, setAiAnalysis] = useState<string|null>(null);
   const [aiLoading, setAiLoading] = useState(false);
   const hasTriedRef = useRef(false);
   const analysisKey = `ai_v2_${match.id}`;
+
+  // Extra velden via cast
+  const m = match as any;
+  const homePos: number | null = m.homePos || null;
+  const awayPos: number | null = m.awayPos || null;
 
   useEffect(() => {
     if (hasTriedRef.current || !prediction) return;
@@ -81,7 +87,7 @@ const MatchCard: React.FC<MatchCardProps> = ({ match, prediction }) => {
   }
 
   const isFinishedMatch = match.status === 'FT';
-  const isLiveMatch     = match.status === 'LIVE' || !!(match as any).minute;
+  const isLiveMatch     = match.status === 'LIVE' || !!m.minute;
   const hasResult       = !!match.score && match.score !== 'v';
   const predictedScore  = `${prediction.predHomeGoals}-${prediction.predAwayGoals}`;
   const isCorrect       = isFinishedMatch && hasResult && match.score?.trim() === predictedScore.trim();
@@ -97,14 +103,14 @@ const MatchCard: React.FC<MatchCardProps> = ({ match, prediction }) => {
   const bttsY       = fmt(prediction.btts||0);
   const bttsN       = (prediction.btts||0) > 0.01 ? (1/(1-(prediction.btts||0))).toFixed(2) : '-';
 
-  const maxP      = Math.max(prediction.homeProb||0, prediction.drawProb||0, prediction.awayProb||0);
-  const favLabel  = maxP === prediction.homeProb ? `${match.homeTeamName.split(' ')[0]} wint`
-                  : maxP === prediction.drawProb  ? 'Gelijkspel'
-                  : `${match.awayTeamName.split(' ')[0]} wint`;
+  const maxP     = Math.max(prediction.homeProb||0, prediction.drawProb||0, prediction.awayProb||0);
+  const favLabel = maxP === prediction.homeProb ? `${match.homeTeamName.split(' ')[0]} wint`
+                 : maxP === prediction.drawProb  ? 'Gelijkspel'
+                 : `${match.awayTeamName.split(' ')[0]} wint`;
 
-  const h2h             = (match as any).h2h || prediction.h2h;
-  const homeSeasonStats = (match as any).homeSeasonStats;
-  const awaySeasonStats = (match as any).awaySeasonStats;
+  const h2h             = m.h2h || prediction.h2h;
+  const homeSeasonStats = m.homeSeasonStats;
+  const awaySeasonStats = m.awaySeasonStats;
   const scoreMatrix     = prediction.scoreMatrix || {};
   const topScores       = Object.entries(scoreMatrix).sort((a:any,b:any)=>b[1]-a[1]).slice(0,6);
 
@@ -122,29 +128,27 @@ const MatchCard: React.FC<MatchCardProps> = ({ match, prediction }) => {
         </span>
         <div className="flex items-center gap-1">
           {isCorrect    && <span className="bg-green-600 text-white text-[7px] font-black px-1.5 py-0.5 rounded">✓</span>}
-          {isLiveMatch  && <span className="bg-red-600 text-white text-[7px] font-black px-1.5 py-0.5 rounded animate-pulse">● {(match as any).minute}</span>}
+          {isLiveMatch  && <span className="bg-red-600 text-white text-[7px] font-black px-1.5 py-0.5 rounded animate-pulse">● {m.minute}</span>}
           {!isLiveMatch && kickoffTime && !isFinishedMatch && <span className="text-[8px] text-slate-400">🕐 {kickoffTime}</span>}
           {isFinishedMatch && !isLiveMatch && <span className="bg-slate-700 text-slate-300 text-[7px] font-black px-1.5 py-0.5 rounded">FT</span>}
         </div>
       </div>
 
-      {/* Teams + rangpositie */}
+      {/* Teams */}
       <div className="flex items-center justify-between gap-1 mb-3">
         <div className="flex flex-col items-center flex-1 gap-0.5 min-w-0">
           <img src={match.homeLogo} className="w-9 h-9 object-contain p-0.5 rounded-full bg-slate-800/50" alt=""
             onError={(e) => { (e.target as any).src=`https://ui-avatars.com/api/?name=${match.homeTeamName[0]}&background=1e293b&color=60a5fa&size=36&bold=true`; }}/>
           <span className="text-[9px] font-black text-white line-clamp-2 text-center leading-tight px-1">{match.homeTeamName}</span>
-          {/* Ranglijstpositie */}
-          <PosBadge pos={match.homePos}/>
-          <FormBadge form={prediction.homeForm||(match as any).homeForm||''} />
+          <PosBadge pos={homePos}/>
+          <FormBadge form={prediction.homeForm||m.homeForm||''} />
           {prediction.homeElo && <span className="text-[7px] text-slate-600">Elo {prediction.homeElo}</span>}
         </div>
 
         <div className="flex flex-col items-center min-w-[68px] gap-0.5">
           <div className="text-lg font-black">
-            {hasResult
-              ? <span className={isLiveMatch?'text-red-300':'text-white'}>{match.score}</span>
-              : <span className="text-slate-600 text-sm">vs</span>}
+            {hasResult ? <span className={isLiveMatch?'text-red-300':'text-white'}>{match.score}</span>
+                       : <span className="text-slate-600 text-sm">vs</span>}
           </div>
           <div className="bg-blue-600 px-2 py-0.5 rounded-full text-center shadow-lg shadow-blue-600/20">
             <div className="text-white text-[10px] font-black">{prediction.predHomeGoals}-{prediction.predAwayGoals}</div>
@@ -157,8 +161,8 @@ const MatchCard: React.FC<MatchCardProps> = ({ match, prediction }) => {
           <img src={match.awayLogo} className="w-9 h-9 object-contain p-0.5 rounded-full bg-slate-800/50" alt=""
             onError={(e) => { (e.target as any).src=`https://ui-avatars.com/api/?name=${match.awayTeamName[0]}&background=1e293b&color=60a5fa&size=36&bold=true`; }}/>
           <span className="text-[9px] font-black text-white line-clamp-2 text-center leading-tight px-1">{match.awayTeamName}</span>
-          <PosBadge pos={match.awayPos}/>
-          <FormBadge form={prediction.awayForm||(match as any).awayForm||''} />
+          <PosBadge pos={awayPos}/>
+          <FormBadge form={prediction.awayForm||m.awayForm||''} />
           {prediction.awayElo && <span className="text-[7px] text-slate-600">Elo {prediction.awayElo}</span>}
         </div>
       </div>
@@ -187,21 +191,15 @@ const MatchCard: React.FC<MatchCardProps> = ({ match, prediction }) => {
 
       {/* Tabs */}
       <div className="grid grid-cols-4 gap-0.5 mb-2 pt-1 border-t border-white/5">
-        {([
-          {key:'analyse',label:'🤖 AI'},
-          {key:'h2h',    label:'⚔️ H2H'},
-          {key:'markten',label:'📊 Markt'},
-          {key:'stats',  label:'📈 Stats'},
-        ] as const).map(({key,label}) => (
+        {(['analyse','h2h','markten','stats'] as const).map(key => (
           <button key={key} onClick={() => setTab(key)}
             className={`py-1 rounded-lg text-[8px] font-black transition
               ${tab===key?'bg-blue-600 text-white':'bg-slate-800/60 text-slate-400 hover:text-white'}`}>
-            {label}
+            {key==='analyse'?'🤖 AI':key==='h2h'?'⚔️ H2H':key==='markten'?'📊 Markt':'📈 Stats'}
           </button>
         ))}
       </div>
 
-      {/* Analyse */}
       {tab==='analyse' && (
         <div className="space-y-2">
           <div className="bg-gradient-to-br from-blue-950/60 to-purple-950/40 border border-blue-500/20 rounded-xl p-2.5 min-h-[56px]">
@@ -212,29 +210,23 @@ const MatchCard: React.FC<MatchCardProps> = ({ match, prediction }) => {
             {aiAnalysis ? (
               <p className="text-[9px] text-blue-100/90 leading-relaxed">{aiAnalysis}</p>
             ) : aiLoading ? (
-              <div className="flex gap-1">
-                {[1,2,3].map(i => <div key={i} className="w-2 h-2 bg-blue-500/40 rounded-full animate-bounce" style={{animationDelay:`${i*0.15}s`}}/>)}
-              </div>
+              <div className="flex gap-1">{[1,2,3].map(i=><div key={i} className="w-2 h-2 bg-blue-500/40 rounded-full animate-bounce" style={{animationDelay:`${i*0.15}s`}}/>)}</div>
             ) : (
               <p className="text-[9px] text-slate-500">Analyse wordt geladen...</p>
             )}
           </div>
-
           <div className="grid grid-cols-2 gap-1.5">
-            {[
-              {label:'xG Thuis', val:(prediction.homeXG||0).toFixed(2)},
-              {label:'xG Uit',   val:(prediction.awayXG||0).toFixed(2)},
-            ].map(({label,val}) => (
+            {[{label:'xG Thuis',val:(prediction.homeXG||0).toFixed(2)},{label:'xG Uit',val:(prediction.awayXG||0).toFixed(2)}]
+              .map(({label,val}) => (
               <div key={label} className="bg-slate-900/60 rounded-lg p-2 text-center">
                 <div className="text-[7px] text-slate-500 uppercase">{label}</div>
                 <div className="text-base font-black text-blue-400">{val}</div>
               </div>
             ))}
           </div>
-
           {topScores.length > 0 && (
             <div className="bg-slate-900/60 rounded-xl p-2">
-              <div className="text-[7px] text-slate-500 uppercase mb-1.5">Score matrix (Dixon-Coles)</div>
+              <div className="text-[7px] text-slate-500 uppercase mb-1.5">Score matrix</div>
               <div className="flex flex-wrap gap-1">
                 {topScores.map(([score,prob]:any) => (
                   <div key={score} className={`px-2 py-0.5 rounded-lg text-[9px] font-black flex items-center gap-1
@@ -245,7 +237,6 @@ const MatchCard: React.FC<MatchCardProps> = ({ match, prediction }) => {
               </div>
             </div>
           )}
-
           <div className="flex items-center gap-2">
             <span className="text-[7px] text-slate-500 w-14">Zekerheid</span>
             <div className="flex-1 h-1 bg-slate-800 rounded-full overflow-hidden">
@@ -257,16 +248,15 @@ const MatchCard: React.FC<MatchCardProps> = ({ match, prediction }) => {
         </div>
       )}
 
-      {/* H2H */}
       {tab==='h2h' && (
         <div>
           {h2h ? (
             <div className="space-y-1.5">
               <div className="grid grid-cols-3 gap-1 text-center">
                 {[
-                  {label:'Thuis', val:h2h.homeWins, cls:'bg-green-900/20 border border-green-500/20 text-green-400'},
-                  {label:'Gelijk', val:h2h.draws,   cls:'bg-slate-800/60 text-slate-400'},
-                  {label:'Uit',   val:h2h.awayWins, cls:'bg-red-900/20 border border-red-500/20 text-red-400'},
+                  {label:'Thuis',val:h2h.homeWins,cls:'bg-green-900/20 border border-green-500/20 text-green-400'},
+                  {label:'Gelijk',val:h2h.draws,cls:'bg-slate-800/60 text-slate-400'},
+                  {label:'Uit',val:h2h.awayWins,cls:'bg-red-900/20 border border-red-500/20 text-red-400'},
                 ].map(({label,val,cls}) => (
                   <div key={label} className={`rounded-lg p-1.5 ${cls}`}>
                     <div className="text-[7px] font-black uppercase">{label}</div>
@@ -275,7 +265,6 @@ const MatchCard: React.FC<MatchCardProps> = ({ match, prediction }) => {
                 ))}
               </div>
               <div className="bg-slate-900/60 rounded-xl p-2 space-y-1">
-                <div className="text-[7px] text-slate-500 uppercase mb-1">Laatste ontmoetingen</div>
                 {h2h.results.slice(-5).reverse().map((r:any,i:number) => (
                   <div key={i} className="flex items-center justify-between text-[9px] py-0.5 border-b border-white/5 last:border-0">
                     <span className="text-slate-300 truncate max-w-[90px]">{r.home}</span>
@@ -286,23 +275,20 @@ const MatchCard: React.FC<MatchCardProps> = ({ match, prediction }) => {
               </div>
             </div>
           ) : (
-            <div className="text-center py-6 text-slate-500 text-[10px]">
-              <div className="text-2xl mb-2">⚔️</div>H2H data nog niet beschikbaar
-            </div>
+            <div className="text-center py-6 text-slate-500 text-[10px]"><div className="text-2xl mb-2">⚔️</div>H2H niet beschikbaar</div>
           )}
         </div>
       )}
 
-      {/* Markten */}
       {tab==='markten' && (
         <div className="space-y-2">
           <div className="bg-slate-900/60 rounded-xl p-2">
             <div className="text-[7px] text-slate-500 uppercase mb-1.5">Over / Under</div>
             {[
-              {label:'Over 1.5',  prob:prediction.over15||0,           odds:fmt(prediction.over15||0)},
-              {label:'Over 2.5',  prob:prediction.over25||0,           odds:over25Odds},
-              {label:'Under 2.5', prob:1-(prediction.over25||0),       odds:under25Odds},
-              {label:'Over 3.5',  prob:prediction.over35||0,           odds:fmt(prediction.over35||0)},
+              {label:'Over 1.5', prob:prediction.over15||0, odds:fmt(prediction.over15||0)},
+              {label:'Over 2.5', prob:prediction.over25||0, odds:over25Odds},
+              {label:'Under 2.5',prob:1-(prediction.over25||0), odds:under25Odds},
+              {label:'Over 3.5', prob:prediction.over35||0, odds:fmt(prediction.over35||0)},
             ].map(({label,prob,odds}) => (
               <div key={label} className="flex items-center gap-2 mb-1">
                 <span className="text-[9px] text-slate-300 w-20 flex-shrink-0">{label}</span>
@@ -315,11 +301,11 @@ const MatchCard: React.FC<MatchCardProps> = ({ match, prediction }) => {
             ))}
           </div>
           <div className="bg-slate-900/60 rounded-xl p-2">
-            <div className="text-[7px] text-slate-500 uppercase mb-1.5">Beide teams scoren</div>
+            <div className="text-[7px] text-slate-500 uppercase mb-1.5">Beide teams scoren (BTTS)</div>
             <div className="grid grid-cols-2 gap-2">
               {[
-                {label:'Ja',  prob:prediction.btts||0,          odds:bttsY, color:'text-green-400'},
-                {label:'Nee', prob:1-(prediction.btts||0), odds:bttsN, color:'text-red-400'},
+                {label:'Ja',prob:prediction.btts||0,odds:bttsY,color:'text-green-400'},
+                {label:'Nee',prob:1-(prediction.btts||0),odds:bttsN,color:'text-red-400'},
               ].map(({label,prob,odds,color}) => (
                 <div key={label} className="bg-slate-800/60 rounded-lg p-2 text-center">
                   <div className={`text-[7px] font-black ${color} uppercase`}>BTTS {label}</div>
@@ -332,7 +318,6 @@ const MatchCard: React.FC<MatchCardProps> = ({ match, prediction }) => {
         </div>
       )}
 
-      {/* Stats */}
       {tab==='stats' && (
         <div className="space-y-2">
           {prediction.homeElo && prediction.awayElo && (
@@ -354,35 +339,9 @@ const MatchCard: React.FC<MatchCardProps> = ({ match, prediction }) => {
               </div>
             </div>
           )}
-          {(homeSeasonStats?.shotsOn || awaySeasonStats?.shotsOn) && (
-            <div className="bg-slate-900/60 rounded-xl p-2">
-              <div className="text-[7px] text-slate-500 uppercase mb-1.5">Seizoensstatistieken</div>
-              {[
-                {label:'Schoten op doel', h:homeSeasonStats?.shotsOn, a:awaySeasonStats?.shotsOn, max:8},
-                {label:'Balbezit %',      h:homeSeasonStats?.possession, a:awaySeasonStats?.possession, max:70},
-              ].filter(s=>s.h||s.a).map(({label,h,a,max}) => (
-                <div key={label} className="mb-1.5">
-                  <div className="text-[7px] text-slate-500 mb-0.5">{label}</div>
-                  <div className="flex items-center gap-2">
-                    <span className="text-[8px] font-black text-blue-400 w-6 text-right">{h?.toFixed(1)||'-'}</span>
-                    <div className="flex-1 flex gap-0.5">
-                      <div className="flex-1 h-1.5 bg-slate-800 rounded-full overflow-hidden flex justify-end">
-                        <div className="h-full bg-blue-500 rounded-full" style={{width:`${Math.min(100,((h||0)/max)*100)}%`}}/>
-                      </div>
-                      <div className="flex-1 h-1.5 bg-slate-800 rounded-full overflow-hidden">
-                        <div className="h-full bg-red-500 rounded-full" style={{width:`${Math.min(100,((a||0)/max)*100)}%`}}/>
-                      </div>
-                    </div>
-                    <span className="text-[8px] font-black text-red-400 w-6">{a?.toFixed(1)||'-'}</span>
-                  </div>
-                </div>
-              ))}
-            </div>
-          )}
-          {!homeSeasonStats && !awaySeasonStats && (
+          {!homeSeasonStats && !prediction.homeElo && (
             <div className="text-center py-4 text-slate-500 text-[10px]">
-              <div className="text-2xl mb-1">📈</div>
-              Seizoensstatistieken worden geladen na de volgende worker run
+              <div className="text-2xl mb-1">📈</div>Stats worden geladen na volgende worker run
             </div>
           )}
         </div>
