@@ -43,7 +43,7 @@ function InjuryBadge({ injuries }: { injuries: any }) {
 function Logo({ teamId, name, size=10 }: { teamId: string; name: string; size?: number }) {
   const [err, setErr] = useState(false);
   // Via proxy om CORS/hotlink blokkade van sofascore.app te omzeilen
-  const proxyUrl  = teamId ? `/api/logo?teamId=${teamId}` : '';
+  const proxyUrl  = teamId ? `/api/logo?id=${teamId}` : '';
   const fallback  = `https://ui-avatars.com/api/?name=${encodeURIComponent(name[0]||'?')}&background=1e293b&color=60a5fa&size=64&bold=true&format=png`;
   const src       = err || !proxyUrl ? fallback : proxyUrl;
   return (
