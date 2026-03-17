@@ -1,5 +1,5 @@
 #!/usr/bin/env node
-// server-worker.js v7 — goal timing kwartaalanalyse toegevoegd
+// server-worker.js v8 — live minuten, extra tijd, kwartaalanalyse — goal timing kwartaalanalyse toegevoegd
 // Verbeteringen: blessures, Bayesiaans leren, wedstrijdbelang, live statistieken, clublogo's
 
 import fs from "fs";
@@ -581,7 +581,10 @@ async function main() {
         homeLogo: homeId ? `https://api.sofascore.app/api/v1/team/${homeId}/image` : '',
         awayLogo: awayId  ? `https://api.sofascore.app/api/v1/team/${awayId}/image`  : '',
         status: statusType==='finished'?'FT':statusType==='inprogress'?'LIVE':'NS',
-        score, minute:e.time?.current?`${e.time.current}'`:null,
+        score,
+        minute: e.time?.current ? `${e.time.current}'` : null,
+        extraTime: e.time?.extra || null,
+        period: e.status?.description || null,
         homeForm:homeFormData.form||'', awayForm:awayFormData.form||'',
         homeElo:Math.round(homeTeam.elo), awayElo:Math.round(awayTeam.elo),
         homePos, awayPos,
@@ -646,10 +649,26 @@ async function main() {
       const matchId=`ss-${live.id}`;
       const idx=store.matches[today].findIndex(m=>m.id===matchId);
       const hg=live.homeScore?.current, ag=live.awayScore?.current;
+      // Bepaal nauwkeurige minuutweergave inclusief extra tijd en periode
+      const liveMin = live.time?.current || 0;
+      const liveExtra = live.time?.extra || 0;
+      const livePeriod = live.status?.description || '';
+      let minuteDisplay = null;
+      if (liveMin > 0) {
+        if (liveExtra > 0) {
+          minuteDisplay = `${liveMin}+${liveExtra}'`;
+        } else if (livePeriod.toLowerCase().includes('half')) {
+          minuteDisplay = `HT`;
+        } else {
+          minuteDisplay = `${liveMin}'`;
+        }
+      }
       const liveData={
         status:'LIVE',
         score:(hg!=null&&ag!=null)?`${hg}-${ag}`:null,
-        minute:live.time?.current?`${live.time.current}'`:null,
+        minute: minuteDisplay,
+        period: livePeriod,
+        extraTime: liveExtra || null,
       };
       if (idx>=0) {
         Object.assign(store.matches[today][idx], liveData);
