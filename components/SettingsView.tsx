@@ -8,27 +8,25 @@ const SettingsView: React.FC = () => {
   const [apiStatus, setApiStatus] = useState<'checking'|'ok'|'missing'>('checking');
 
   useEffect(() => {
-    const mem = localStorage.getItem('footypredict_memory');
-    if (mem) try { setHistoryCount(JSON.parse(mem).length); } catch {}
-    const teams = localStorage.getItem('footypredict_team_store_v1');
-    if (teams) try { setTeamCount(Object.keys(JSON.parse(teams)).length); } catch {}
+    try { setHistoryCount(JSON.parse(localStorage.getItem('footypredict_memory') || '[]').length); } catch {}
+    try { setTeamCount(Object.keys(JSON.parse(localStorage.getItem('footypredict_team_store_v1') || '{}')).length); } catch {}
 
-    // Haal worker tijd + API status op
     fetch('/api/matches?date=' + new Date().toISOString().split('T')[0])
       .then(r => r.json())
-      .then(d => {
-        if (d.lastRun) setLastWorker(new Date(d.lastRun).toLocaleString('nl-NL'));
-      })
+      .then(d => { if (d.lastRun) setLastWorker(new Date(d.lastRun).toLocaleString('nl-NL')); })
       .catch(() => {});
 
-    // Test of Claude AI werkt
+    // Test Groq API status
     fetch('/api/analyze', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ match: { homeTeamName: 'Test', awayTeamName: 'Test', league: 'Test', id: 'test' }, prediction: { homeProb: 0.5, drawProb: 0.25, awayProb: 0.25, homeXG: 1.2, awayXG: 1.0, predHomeGoals: 1, predAwayGoals: 1, over25: 0.5, btts: 0.5 } })
+      body: JSON.stringify({
+        match: { homeTeamName: 'Ajax', awayTeamName: 'PSV', league: 'Eredivisie', id: 'test' },
+        prediction: { homeProb: 0.45, drawProb: 0.25, awayProb: 0.30, homeXG: 1.4, awayXG: 1.1, predHomeGoals: 1, predAwayGoals: 1, over25: 0.52, btts: 0.55 }
+      })
     })
       .then(r => r.json())
-      .then(d => setApiStatus(d.error?.includes('ANTHROPIC_API_KEY') ? 'missing' : 'ok'))
+      .then(d => setApiStatus(d.error?.includes('GROQ_API_KEY') ? 'missing' : 'ok'))
       .catch(() => setApiStatus('missing'));
   }, []);
 
@@ -68,52 +66,22 @@ const SettingsView: React.FC = () => {
         ))}
       </div>
 
-      {/* Voorspellingsmodel — nu v6 met Bayesiaans */}
+      {/* Voorspellingsmodel v6 */}
       <div className="glass-card rounded-2xl border border-white/5 p-5">
         <div className="text-[10px] font-black text-slate-400 uppercase mb-3">Voorspellingsmodel (v6)</div>
-        <div className="space-y-3">
+        <div className="space-y-2.5">
           {[
-            {
-              name: 'Dixon-Coles + Poisson',
-              status: 'actief',
-              color: 'green',
-              desc: 'Corrigeert Poisson voor lage scores (0-0, 1-0). Kernmodel voor scorematrix.'
-            },
-            {
-              name: 'Bayesiaans Elo',
-              status: 'actief',
-              color: 'green',
-              desc: 'Dynamische K-factor: hoge onzekerheid bij weinig wedstrijden (K=32), stabiele teams K=18. Leert sneller bij nieuwe teams of seizoenswisseling.'
-            },
-            {
-              name: 'Blessuremodel',
-              status: 'actief',
-              color: 'green',
-              desc: 'Geblesseerde spelers verminderen aanvalskracht. Sleutelspelers (rating ≥7.5) geven extra straf van 3% per speler.'
-            },
-            {
-              name: 'Wedstrijdbelang',
-              status: 'actief',
-              color: 'green',
-              desc: 'Teams in top 3 of degradatiezone spelen met 15% hogere intensiteit. Beïnvloedt xG berekening.'
-            },
-            {
-              name: 'Live statistieken',
-              status: 'actief bij live',
-              color: 'blue',
-              desc: 'Realtime schoten, balbezit en hoekschoppen worden getoond tijdens lopende wedstrijden.'
-            },
-            {
-              name: 'Seizoensstatistieken',
-              status: 'actief',
-              color: 'green',
-              desc: 'Gemiddeld schoten op doel per wedstrijd meegewogen in xG berekening (30% gewicht).'
-            },
-          ].map(({ name, status, color, desc }) => (
-            <div key={name} className="flex gap-3 pb-3 border-b border-white/5 last:border-0">
-              <span className={`flex-shrink-0 mt-0.5 text-[9px] font-black px-1.5 py-0.5 rounded h-fit
+            { name: 'Dixon-Coles + Poisson', color: 'green', desc: 'Corrigeert Poisson voor lage scores. Kernmodel voor de scorematrix en kansen.' },
+            { name: 'Bayesiaans Elo', color: 'green', desc: 'Dynamische K-factor: nieuwe/onzekere teams leren sneller (K=32), gevestigde teams stabieler (K=18). Betere aanpassing bij seizoenswisseling.' },
+            { name: 'Blessuremodel', color: 'green', desc: 'Geblesseerde spelers verminderen aanvalskracht. Sleutelspelers (rating ≥7.5) kosten 3% extra xG per speler.' },
+            { name: 'Wedstrijdbelang', color: 'green', desc: 'Teams in top 3 of degradatiezone spelen 15% intensiever. Beïnvloedt xG berekening via matchImportance factor.' },
+            { name: 'Live statistieken', color: 'blue', desc: 'Realtime schoten, balbezit en hoekschoppen zichtbaar tijdens lopende wedstrijden.' },
+            { name: 'Seizoensstatistieken', color: 'green', desc: 'Gemiddeld schoten op doel per wedstrijd meegewogen in xG (30% gewicht naast vorm).' },
+          ].map(({ name, color, desc }) => (
+            <div key={name} className="flex gap-3 pb-2.5 border-b border-white/5 last:border-0">
+              <span className={`flex-shrink-0 mt-0.5 text-[8px] font-black px-1.5 py-0.5 rounded h-fit whitespace-nowrap
                 ${color==='green'?'bg-green-900/30 text-green-400':color==='blue'?'bg-blue-900/30 text-blue-400':'bg-slate-700 text-slate-400'}`}>
-                {status}
+                actief
               </span>
               <div>
                 <div className="text-[11px] font-black text-white">{name}</div>
@@ -124,82 +92,95 @@ const SettingsView: React.FC = () => {
         </div>
       </div>
 
-      {/* Claude AI status */}
+      {/* Groq AI analyse */}
       <div className="glass-card rounded-2xl border border-white/5 p-5">
-        <div className="text-[10px] font-black text-slate-400 uppercase mb-3">Claude AI analyse</div>
-
         <div className="flex items-center justify-between mb-4">
           <div>
-            <div className="text-[11px] font-black text-white">Status</div>
-            <div className="text-[9px] text-slate-500 mt-0.5">Automatische analyse per wedstrijd</div>
+            <div className="text-[10px] font-black text-slate-400 uppercase">AI Analyse (Groq — gratis)</div>
+            <div className="text-[9px] text-slate-500 mt-0.5">LLaMA 3.3 70B · automatisch per wedstrijd · 24u gecached</div>
           </div>
-          <span className={`text-[10px] font-black px-2 py-1 rounded-lg
-            ${apiStatus==='ok'?'bg-green-900/30 text-green-400':apiStatus==='missing'?'bg-red-900/30 text-red-400':'bg-slate-700 text-slate-400'}`}>
-            {apiStatus==='ok'?'✓ Werkt':apiStatus==='missing'?'✗ API key ontbreekt':'Controleren...'}
+          <span className={`text-[10px] font-black px-2 py-1 rounded-lg flex-shrink-0
+            ${apiStatus==='ok'?'bg-green-900/30 text-green-400 border border-green-500/20':
+              apiStatus==='missing'?'bg-red-900/30 text-red-400 border border-red-500/20':
+              'bg-slate-700 text-slate-400'}`}>
+            {apiStatus==='ok'?'✓ Werkt':apiStatus==='missing'?'✗ Key ontbreekt':'Controleren...'}
           </span>
         </div>
 
         {apiStatus === 'missing' && (
-          <div className="bg-amber-900/20 border border-amber-500/20 rounded-xl p-4 space-y-3">
-            <div className="text-[10px] font-black text-amber-400 uppercase">Instellen: ANTHROPIC_API_KEY</div>
-            <div className="text-[10px] text-amber-300/80 leading-relaxed space-y-1.5">
-              <div>1. Ga naar <span className="font-black text-white">console.anthropic.com</span> → API Keys → maak een nieuwe key aan</div>
-              <div>2. Ga naar <span className="font-black text-white">vercel.com</span> → jouw project → <span className="font-black">Settings → Environment Variables</span></div>
-              <div>3. Voeg toe: <span className="font-mono text-xs bg-slate-800 px-1.5 py-0.5 rounded">ANTHROPIC_API_KEY</span> = jouw API key</div>
-              <div>4. Klik <span className="font-black text-white">Save</span> → ga naar <span className="font-black text-white">Deployments → Redeploy</span></div>
+          <div className="bg-blue-900/15 border border-blue-500/20 rounded-xl p-4 space-y-3">
+            <div className="text-[10px] font-black text-blue-300 uppercase">Groq instellen — volledig gratis</div>
+            <div className="space-y-2 text-[11px] text-slate-300 leading-relaxed">
+              <div className="flex gap-2">
+                <span className="flex-shrink-0 w-5 h-5 rounded-full bg-blue-600 text-white text-[9px] font-black flex items-center justify-center">1</span>
+                <span>Ga naar <span className="font-black text-white">console.groq.com</span> en registreer met je e-mailadres. Geen creditcard nodig.</span>
+              </div>
+              <div className="flex gap-2">
+                <span className="flex-shrink-0 w-5 h-5 rounded-full bg-blue-600 text-white text-[9px] font-black flex items-center justify-center">2</span>
+                <span>Klik op <span className="font-black text-white">"API Keys"</span> in het linkermenu → <span className="font-black text-white">"Create API Key"</span> → kopieer de sleutel (begint met <span className="font-mono text-xs bg-slate-800 px-1 rounded">gsk_...</span>)</span>
+              </div>
+              <div className="flex gap-2">
+                <span className="flex-shrink-0 w-5 h-5 rounded-full bg-blue-600 text-white text-[9px] font-black flex items-center justify-center">3</span>
+                <span>Ga naar <span className="font-black text-white">vercel.com</span> → jouw project → <span className="font-black text-white">Settings → Environment Variables</span></span>
+              </div>
+              <div className="flex gap-2">
+                <span className="flex-shrink-0 w-5 h-5 rounded-full bg-blue-600 text-white text-[9px] font-black flex items-center justify-center">4</span>
+                <span>Voeg toe: Sleutel = <span className="font-mono text-xs bg-slate-800 px-1 rounded">GROQ_API_KEY</span> · Waarde = jouw sleutel → Opslaan</span>
+              </div>
+              <div className="flex gap-2">
+                <span className="flex-shrink-0 w-5 h-5 rounded-full bg-blue-600 text-white text-[9px] font-black flex items-center justify-center">5</span>
+                <span>Ga naar <span className="font-black text-white">Deployments → Redeploy</span> → klaar!</span>
+              </div>
             </div>
-            <div className="text-[9px] text-slate-500 pt-1 border-t border-white/5">
-              Claude Sonnet 4.6 kost ~€0.001 per analyse. Bij 100 wedstrijden per dag ≈ €3/maand.
+            <div className="text-[9px] text-slate-500 pt-2 border-t border-white/5">
+              Groq is volledig gratis · LLaMA 3.3 70B · 500.000 tokens/dag · geen creditcard
             </div>
           </div>
         )}
 
         {apiStatus === 'ok' && (
-          <div className="text-[10px] text-slate-400 leading-relaxed">
-            Claude Sonnet 4.6 genereert automatisch een 3-zinnige Nederlandse analyse bij elke wedstrijd.
-            De analyse bevat: verwachte uitkomst, opvallende statistiek en een concrete wedtip.
-            Resultaat wordt 24 uur gecached zodat je niet telkens betaalt.
+          <div className="text-[10px] text-slate-400 leading-relaxed space-y-1">
+            <div>LLaMA 3.3 70B genereert automatisch een Nederlandse analyse van 3 zinnen per wedstrijd.</div>
+            <div>De analyse bevat: verwachte uitkomst, opvallende statistiek en een concrete wedtip.</div>
+            <div>Resultaten worden 24 uur gecached zodat je gratis limiet niet onnodig verbruikt wordt.</div>
           </div>
         )}
       </div>
 
-      {/* Hoe werkt het leren */}
+      {/* Leren */}
       <div className="glass-card rounded-2xl border border-white/5 p-5">
-        <div className="text-[10px] font-black text-slate-400 uppercase mb-3">Hoe werkt het leren?</div>
+        <div className="text-[10px] font-black text-slate-400 uppercase mb-3">Automatisch leren</div>
         <div className="space-y-3 text-[11px] text-slate-300 leading-relaxed">
           {[
-            { n:'1', c:'green', t:'Volledig automatisch', d:'De GitHub Actions worker draait elke 30 minuten op de achtergrond. Je hoeft de site nooit te openen.' },
-            { n:'2', c:'blue',  t:'Bayesiaans Elo updaten', d:'Na elke uitslag past het model de teamsterktes aan. Nieuwe teams leren sneller (K=32), gevestigde teams stabieler (K=18).' },
-            { n:'3', c:'purple',t:'Blessures verwerken', d:'Elke 4 uur worden blessurelijsten vernieuwd. Geblesseerde sterspelers verlagen direct de aanvalskrachtverwachting.' },
-            { n:'4', c:'amber', t:'Verbetering over tijd', d:'Na enkele weken zijn er genoeg wedstrijden verwerkt voor goede Elo-schattingen. Na een volledig seizoen zijn de voorspellingen het nauwkeurigst.' },
+            { n:'1', c:'green',  t:'Volledig automatisch', d:'GitHub Actions worker draait elke 30 minuten. Je hoeft de site nooit open te hebben.' },
+            { n:'2', c:'blue',   t:'Bayesiaans Elo update', d:'Na elke uitslag worden teamsterktes aangepast. Nieuwe teams leren sneller (K=32), gevestigde teams stabieler (K=18).' },
+            { n:'3', c:'purple', t:'Blessures bijhouden', d:'Elke 4 uur worden blessurelijsten vernieuwd. Geblesseerde sterspelers verlagen direct de aanvalsverwachting.' },
+            { n:'4', c:'amber',  t:'Analyse opslaan', d:'AI analyses worden 24 uur gecached in de browser en accumuleren over tijd zodat het systeem steeds meer context heeft.' },
           ].map(({ n, c, t, d }) => (
             <div key={n} className="flex gap-3">
               <span className={`flex-shrink-0 w-5 h-5 rounded-full flex items-center justify-center text-[9px] font-black
                 ${c==='green'?'bg-green-900/40 text-green-400':c==='blue'?'bg-blue-900/40 text-blue-400':c==='purple'?'bg-purple-900/40 text-purple-400':'bg-amber-900/40 text-amber-400'}`}>
                 {n}
               </span>
-              <div>
-                <span className="font-black text-white">{t} — </span>
-                <span className="text-slate-400">{d}</span>
-              </div>
+              <div><span className="font-black text-white">{t} — </span><span className="text-slate-400">{d}</span></div>
             </div>
           ))}
         </div>
       </div>
 
-      {/* Cache beheer */}
+      {/* Cache */}
       <div className="glass-card rounded-2xl border border-white/5 p-5">
         <div className="text-[10px] font-black text-slate-400 uppercase mb-3">Cache beheer</div>
         <div className="space-y-3">
           <div className="flex items-center justify-between">
             <div>
               <div className="text-[11px] font-black text-white">App-cache wissen</div>
-              <div className="text-[9px] text-slate-500">Tijdelijke gegevens verwijderen, herlaadt wedstrijden</div>
+              <div className="text-[9px] text-slate-500">Verwijdert tijdelijke data, herlaadt wedstrijden</div>
             </div>
             <button onClick={clearCache}
               className={`px-4 py-1.5 rounded-lg text-[10px] font-black transition
                 ${cacheCleared?'bg-green-600 text-white':'bg-slate-700 text-slate-300 hover:bg-slate-600'}`}>
-              {cacheCleared ? '✓ Gewist' : 'Cache wissen'}
+              {cacheCleared?'✓ Gewist':'Cache wissen'}
             </button>
           </div>
           <div className="flex items-center justify-between border-t border-white/5 pt-3">
@@ -216,7 +197,7 @@ const SettingsView: React.FC = () => {
       </div>
 
       <div className="text-center text-[9px] text-slate-700">
-        FootyAI v6 · Dixon-Coles · Bayesiaans Elo · Blessuremodel · Claude Sonnet 4.6
+        FootyAI v6 · Dixon-Coles · Bayesiaans Elo · Blessuremodel · Groq LLaMA 3.3 70B
       </div>
     </div>
   );
