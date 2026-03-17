@@ -647,7 +647,7 @@ async function main() {
       if (!h2h) continue;
       m.h2h = h2h;
       store.h2hCache[m.id] = { ...h2h, fetched: now };
-      h2hFetched++;
+      h2hFetched++;}
     const predIdx = store.predictions[today]?.findIndex(p=>p.matchId===m.id);
     if (predIdx>=0) {
       const p = store.predictions[today][predIdx];
