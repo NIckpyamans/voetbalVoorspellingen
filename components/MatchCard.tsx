@@ -432,6 +432,17 @@ const MatchCard: React.FC<MatchCardProps> = ({ match, prediction, onFavoriteChan
             </div>
             <span className="text-[8px] font-black text-white">{((prediction.confidence||0)*100).toFixed(0)}%</span>
           </div>
+
+          {/* False positive waarschuwing */}
+          {(prediction.homeFalsePositive || prediction.awayFalsePositive) && (
+            <div className="bg-purple-900/20 border border-purple-500/20 rounded-lg px-2 py-1.5">
+              <div className="text-[7px] font-black text-purple-400 uppercase mb-0.5">⚠️ Valse reeks gedetecteerd</div>
+              <div className="text-[8px] text-purple-300/80 leading-relaxed">
+                {prediction.homeFalsePositive && `${match.homeTeamName.split(' ')[0]} wint vaker dan xG rechtvaardigt — mogelijk geluksreeks. `}
+                {prediction.awayFalsePositive && `${match.awayTeamName.split(' ')[0]} wint vaker dan xG rechtvaardigt — mogelijk geluksreeks.`}
+              </div>
+            </div>
+          )}
         </div>
       )}
 
