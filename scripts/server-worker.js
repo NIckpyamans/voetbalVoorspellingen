@@ -1,5 +1,5 @@
 #!/usr/bin/env node
-// server-worker.js v6
+// server-worker.js v7 — goal timing kwartaalanalyse toegevoegd
 // Verbeteringen: blessures, Bayesiaans leren, wedstrijdbelang, live statistieken, clublogo's
 
 import fs from "fs";
@@ -147,6 +147,49 @@ async function fetchTeamForm(teamId, n=10) {
   };
 }
 
+
+// ── DOELPUNTEN TIMING per kwartaal ────────────────────────────────────────────
+async function fetchGoalTiming(teamId) {
+  const json = await safeFetch(`${SOFA}/team/${teamId}/events/last/0`);
+  if (!json?.events) return null;
+  const finished = json.events.filter(e => e.status?.type === 'finished').slice(-20);
+  if (finished.length < 3) return null;
+
+  const scored   = { q1:0, q2:0, q3:0, q4:0 };
+  const conceded = { q1:0, q2:0, q3:0, q4:0 };
+  let totalScored=0, totalConceded=0;
+
+  for (const e of finished) {
+    const isHome = String(e.homeTeam?.id) === String(teamId);
+    for (const inc of (e.incidents||[])) {
+      if (!['goal','Goal'].includes(inc.incidentType)) continue;
+      if (inc.incidentClass === 'ownGoal') continue;
+      const min = inc.time || inc.minute || 0;
+      const byTeam = isHome ? inc.isHome !== false : inc.isHome === false;
+      const q = min <= 22 ? 'q1' : min <= 45 ? 'q2' : min <= 67 ? 'q3' : 'q4';
+      if (byTeam) { scored[q]++;   totalScored++;   }
+      else        { conceded[q]++; totalConceded++; }
+    }
+  }
+  if (totalScored === 0 && totalConceded === 0) return null;
+  const pct = (n, t) => t > 0 ? Math.round((n/t)*100) : 0;
+  return {
+    scored: {
+      ...scored, total: totalScored,
+      q1pct:pct(scored.q1,totalScored), q2pct:pct(scored.q2,totalScored),
+      q3pct:pct(scored.q3,totalScored), q4pct:pct(scored.q4,totalScored),
+      peak: Object.entries(scored).filter(([k])=>k.length===2).sort((a,b)=>b[1]-a[1])[0]?.[0]||'q3',
+    },
+    conceded: {
+      ...conceded, total: totalConceded,
+      q1pct:pct(conceded.q1,totalConceded), q2pct:pct(conceded.q2,totalConceded),
+      q3pct:pct(conceded.q3,totalConceded), q4pct:pct(conceded.q4,totalConceded),
+      peak: Object.entries(conceded).filter(([k])=>k.length===2).sort((a,b)=>b[1]-a[1])[0]?.[0]||'q3',
+    },
+    games: finished.length,
+  };
+}
+
 // ── H2H ───────────────────────────────────────────────────────────────────────
 async function fetchH2H(eventId) {
   const json = await safeFetch(`${SOFA}/event/${eventId}/h2h`);
@@ -285,6 +328,16 @@ function dixonColesPredict(homeStats, awayStats, homeSeasonStats, awaySeasonStat
   hxg *= (importance > 1.0 ? (1 + (importance-1)*0.5) : 1.0);
   axg *= (importance > 1.0 ? (1 + (importance-1)*0.5) : 1.0);
 
+  // Doelpunten timing correctie (kwartaalanalyse)
+  const homeT = homeStats?.goalTiming;
+  const awayT  = awayStats?.goalTiming;
+  if (homeT || awayT) {
+    if (homeT?.scored?.q4pct > 35) hxg = clamp(hxg * 1.03, 0.15, 5.5);
+    if (homeT?.scored?.q1pct > 35) hxg = clamp(hxg * 1.02, 0.15, 5.5);
+    if (awayT?.scored?.q1pct > 35) axg = clamp(axg * 1.04, 0.15, 5.5);
+    if (homeT?.conceded?.q3pct > 35) axg = clamp(axg * 1.03, 0.15, 5.5);
+  }
+
   // H2H correctie
   if (h2h?.played >= 4) {
     const h2hBoost = (h2h.homeWins/h2h.played - 0.4) * 0.08;
@@ -400,9 +453,12 @@ async function main() {
     if (now-(store.teamStatsUpdated[teamId]||0) < SIX_HOURS) continue;
     const stats = await fetchTeamForm(teamId,10);
     store.teamStats[teamId]=stats;
+    // Doelpunten timing ophalen (kwartaalanalyse)
+    const timing = await fetchGoalTiming(teamId);
+    if (timing) store.teamStats[teamId].goalTiming = timing;
     store.teamStatsUpdated[teamId]=now;
     formUpdated++;
-    await sleep(150);
+    await sleep(200);
   }
   console.log(`[worker] ${formUpdated} teamvormen bijgewerkt`);
 
@@ -530,8 +586,10 @@ async function main() {
         homeElo:Math.round(homeTeam.elo), awayElo:Math.round(awayTeam.elo),
         homePos, awayPos,
         matchImportance:pred.matchImportance,
-        homeInjuries: store.teamInjuries[homeId]||null,
-        awayInjuries: store.teamInjuries[awayId]||null,
+        homeInjuries:   store.teamInjuries[homeId]||null,
+        awayInjuries:   store.teamInjuries[awayId]||null,
+        homeGoalTiming: store.teamStats[homeId]?.goalTiming || null,
+        awayGoalTiming: store.teamStats[awayId]?.goalTiming  || null,
         homeSeasonStats: store.teamSeasonStats[homeId]||null,
         awaySeasonStats: store.teamSeasonStats[awayId]||null,
       });
