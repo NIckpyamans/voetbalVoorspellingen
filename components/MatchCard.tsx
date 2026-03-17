@@ -40,12 +40,15 @@ function InjuryBadge({ injuries }: { injuries: any }) {
   );
 }
 
-function Logo({ src, name, size=10 }: { src: string; name: string; size?: number }) {
+function Logo({ teamId, name, size=10 }: { teamId: string; name: string; size?: number }) {
   const [err, setErr] = useState(false);
-  const fallback = `https://ui-avatars.com/api/?name=${encodeURIComponent(name[0]||'?')}&background=1e293b&color=60a5fa&size=64&bold=true&format=png`;
+  // Via proxy om CORS/hotlink blokkade van sofascore.app te omzeilen
+  const proxyUrl  = teamId ? `/api/logo?teamId=${teamId}` : '';
+  const fallback  = `https://ui-avatars.com/api/?name=${encodeURIComponent(name[0]||'?')}&background=1e293b&color=60a5fa&size=64&bold=true&format=png`;
+  const src       = err || !proxyUrl ? fallback : proxyUrl;
   return (
     <img
-      src={err ? fallback : (src || fallback)}
+      src={src}
       className={`w-${size} h-${size} object-contain rounded-full bg-slate-800/60 p-0.5`}
       alt={name}
       onError={() => setErr(true)}
@@ -173,7 +176,7 @@ const MatchCard: React.FC<MatchCardProps> = ({ match, prediction, onFavoriteChan
       <div className="flex items-center justify-between gap-1 mb-3">
         {/* Thuis */}
         <div className="flex flex-col items-center flex-1 gap-0.5 min-w-0">
-          <Logo src={match.homeLogo} name={match.homeTeamName} size={12}/>
+          <Logo teamId={(match as any).homeTeamId||''} name={match.homeTeamName} size={12}/>
           <span className="text-[9px] font-black text-white line-clamp-2 text-center leading-tight px-1 mt-0.5">
             {match.homeTeamName}
           </span>
@@ -199,7 +202,7 @@ const MatchCard: React.FC<MatchCardProps> = ({ match, prediction, onFavoriteChan
 
         {/* Uit */}
         <div className="flex flex-col items-center flex-1 gap-0.5 min-w-0">
-          <Logo src={match.awayLogo} name={match.awayTeamName} size={12}/>
+          <Logo teamId={(match as any).awayTeamId||''} name={match.awayTeamName} size={12}/>
           <span className="text-[9px] font-black text-white line-clamp-2 text-center leading-tight px-1 mt-0.5">
             {match.awayTeamName}
           </span>
