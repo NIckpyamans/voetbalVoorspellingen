@@ -1,5 +1,5 @@
 #!/usr/bin/env node
-// server-worker.js v8 — live minuten, extra tijd, kwartaalanalyse — goal timing kwartaalanalyse toegevoegd
+// server-worker.js v8 — live minuten, H2H cache, false positive detectie, kwartaalanalyse — goal timing kwartaalanalyse toegevoegd
 // Verbeteringen: blessures, Bayesiaans leren, wedstrijdbelang, live statistieken, clublogo's
 
 import fs from "fs";
@@ -370,15 +370,34 @@ function dixonColesPredict(homeStats, awayStats, homeSeasonStats, awaySeasonStat
   const eloDiff  = Math.abs(homeElo-awayElo);
   const eloBoost = Math.min(0.12, eloDiff/1200);
   const h2hBoost = h2h?.played>=6 ? 0.03 : 0;
-  // Verbetering 2: Bayesiaans confidence (lagere confidence bij weinig data)
   const dataConfidence = Math.min(1.0,
     (homeStats.gamesPlayed||0)/10 * 0.5 + (awayStats.gamesPlayed||0)/10 * 0.5
   );
-  const confidence = Math.min(0.93, bestP*3.5*dataConfidence + eloBoost + h2hBoost);
+
+  // False positive detectie: team wint maar underperformt xG → lagere confidence
+  // Gebaseerd op onderzoek: vergelijk werkelijke resultaten vs xG-gebaseerde verwachting
+  let fpPenalty = 0;
+  if (homeStats.wins > 0 && homeStats.avgScored > 0) {
+    const homeWinRate  = homeStats.wins / (homeStats.gamesPlayed||1);
+    const homeXGRate   = homeStats.avgScored / 1.35; // normaliseer vs league gemiddelde
+    // Als win rate veel hoger dan xG suggereert → geluk, niet echte sterkte
+    if (homeWinRate > homeXGRate + 0.25) fpPenalty += 0.04;
+  }
+  if (awayStats.wins > 0 && awayStats.avgScored > 0) {
+    const awayWinRate  = awayStats.wins / (awayStats.gamesPlayed||1);
+    const awayXGRate   = awayStats.avgScored / 1.35;
+    if (awayWinRate > awayXGRate + 0.25) fpPenalty += 0.03;
+  }
+
+  const confidence = Math.min(0.93, bestP*3.5*dataConfidence + eloBoost + h2hBoost - fpPenalty);
   const [predH, predA] = bestScore.split('-').map(Number);
   const sortedMatrix = Object.fromEntries(
     Object.entries(scoreMatrix).sort((a,b)=>b[1]-a[1]).slice(0,8)
   );
+  // False positive detectie vlag voor UI weergave
+  const homeFP = homeStats.wins > 0 && (homeStats.wins/(homeStats.gamesPlayed||1)) > (homeStats.avgScored/1.35 + 0.25);
+  const awayFP  = awayStats.wins > 0 && (awayStats.wins/(awayStats.gamesPlayed||1)) > (awayStats.avgScored/1.35 + 0.25);
+
   return {
     homeProb:parseFloat(hp.toFixed(4)), drawProb:parseFloat(dp.toFixed(4)), awayProb:parseFloat(ap.toFixed(4)),
     homeXG:parseFloat(hxg.toFixed(2)), awayXG:parseFloat(axg.toFixed(2)),
@@ -608,15 +627,27 @@ async function main() {
     console.log(`[worker] ${date}: ${dayMatches.length} wedstrijden`);
   }
 
-  // ── Stap 7: H2H voor vandaag ─────────────────────────────────────────────
-  const todayMatches = store.matches[today]||[];
+  // ── Stap 7: H2H voor vandaag + morgen ────────────────────────────────────
+  // H2H wordt gecached op matchId zodat het niet elke run opgehaald hoeft te worden
+  if (!store.h2hCache) store.h2hCache = {};
   let h2hFetched=0;
-  for (const m of todayMatches.slice(0,25)) {
-    if (m.h2h) continue;
-    await sleep(250);
-    const h2h = await fetchH2H(m.sofaId);
-    if (!h2h) continue;
-    m.h2h=h2h; h2hFetched++;
+  const h2hMatchdays = [today, tomorrow];
+  for (const day of h2hMatchdays) {
+    const dayMatches = store.matches[day]||[];
+    for (const m of dayMatches.slice(0,30)) {
+      // Sla over als H2H al in match zit OF in cache
+      if (m.h2h) continue;
+      const cached_h2h = store.h2hCache[m.id];
+      if (cached_h2h && (now - (cached_h2h.fetched||0)) < 7*86400*1000) {
+        m.h2h = cached_h2h;
+        continue;
+      }
+      await sleep(250);
+      const h2h = await fetchH2H(m.sofaId);
+      if (!h2h) continue;
+      m.h2h = h2h;
+      store.h2hCache[m.id] = { ...h2h, fetched: now };
+      h2hFetched++;
     const predIdx = store.predictions[today]?.findIndex(p=>p.matchId===m.id);
     if (predIdx>=0) {
       const p = store.predictions[today][predIdx];
