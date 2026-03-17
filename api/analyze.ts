@@ -1,68 +1,67 @@
 // api/analyze.ts — Claude AI analyse per wedstrijd
-// Gebruikt Anthropic claude-sonnet-4-20250514 om Nederlandse matchanalyse te schrijven
-
 export default async function handler(req: any, res: any) {
   res.setHeader('Access-Control-Allow-Origin', '*');
-  res.setHeader('Cache-Control', 's-maxage=3600'); // 1 uur cache
+  res.setHeader('Cache-Control', 's-maxage=3600');
 
-  if (req.method !== 'POST') {
-    return res.status(405).json({ error: 'Alleen POST toegestaan' });
+  if (req.method === 'OPTIONS') return res.status(200).end();
+  if (req.method !== 'POST') return res.status(405).json({ error: 'Alleen POST' });
+
+  const apiKey = process.env.ANTHROPIC_API_KEY;
+  if (!apiKey) {
+    return res.status(200).json({
+      analysis: null,
+      error: 'ANTHROPIC_API_KEY niet ingesteld — zie Vercel → Settings → Environment Variables'
+    });
   }
 
   try {
     const { match, prediction } = req.body;
-    if (!match || !prediction) {
-      return res.status(400).json({ error: 'match en prediction zijn verplicht' });
-    }
+    if (!match || !prediction) return res.status(400).json({ error: 'match en prediction verplicht' });
 
-    // Bouw een rijke prompt op basis van alle beschikbare data
-    const h2h = match.h2h;
-    const homeForm = prediction.homeForm || match.homeForm || '';
-    const awayForm = prediction.awayForm || match.awayForm || '';
+    const h2h     = match.h2h || prediction.h2h;
+    const homeInj = match.homeInjuries;
+    const awayInj = match.awayInjuries;
 
-    const prompt = `Je bent een professionele voetbalanalist. Analyseer deze wedstrijd in het Nederlands in maximaal 3 korte zinnen (max 120 woorden totaal). Wees direct en specifiek.
+    const prompt = `Je bent een professionele voetbalanalist. Schrijf een analyse van precies 3 zinnen in het Nederlands. Wees direct en gebruik de cijfers.
 
-Wedstrijd: ${match.homeTeamName} vs ${match.awayTeamName}
+Wedstrijd: ${match.homeTeamName}${match.homePos ? ` (#${match.homePos})` : ''} vs ${match.awayTeamName}${match.awayPos ? ` (#${match.awayPos})` : ''}
 Competitie: ${match.league}
-${match.kickoff ? `Aftrap: ${new Date(match.kickoff).toLocaleString('nl-NL')}` : ''}
+${match.kickoff ? `Aftrap: ${new Date(match.kickoff).toLocaleString('nl-NL', { weekday:'short', day:'numeric', month:'short', hour:'2-digit', minute:'2-digit' })}` : ''}
 
-AI Model voorspelling:
-- Score: ${prediction.predHomeGoals}-${prediction.predAwayGoals}
-- Kansen: Thuis ${(prediction.homeProb*100).toFixed(0)}% | Gelijk ${(prediction.drawProb*100).toFixed(0)}% | Uit ${(prediction.awayProb*100).toFixed(0)}%
-- Verwachte doelpunten: ${match.homeTeamName} ${prediction.homeXG} xG | ${match.awayTeamName} ${prediction.awayXG} xG
-- Over 2.5 doelpunten: ${((prediction.over25||0)*100).toFixed(0)}%
-- Beide scoren: ${((prediction.btts||0)*100).toFixed(0)}%
+Model: ${prediction.predHomeGoals}-${prediction.predAwayGoals} | Thuis ${(prediction.homeProb*100).toFixed(0)}% | Gelijk ${(prediction.drawProb*100).toFixed(0)}% | Uit ${(prediction.awayProb*100).toFixed(0)}%
+xG: ${(prediction.homeXG||0).toFixed(2)} - ${(prediction.awayXG||0).toFixed(2)} | Over 2.5: ${((prediction.over25||0)*100).toFixed(0)}% | BTTS: ${((prediction.btts||0)*100).toFixed(0)}%
+${match.matchImportance > 1.05 ? `Belangrijk duel (factor ${match.matchImportance})` : ''}
 
-Teamdata:
-- ${match.homeTeamName}: Elo ${prediction.homeElo || match.homeElo || '~'}, Vorm ${homeForm || 'onbekend'}${match.homeSeasonStats?.possession ? `, Balbezit ${match.homeSeasonStats.possession}%` : ''}${match.homeSeasonStats?.shotsOn ? `, ${match.homeSeasonStats.shotsOn} schoten op doel/wedstrijd` : ''}
-- ${match.awayTeamName}: Elo ${prediction.awayElo || match.awayElo || '~'}, Vorm ${awayForm || 'onbekend'}${match.awaySeasonStats?.possession ? `, Balbezit ${match.awaySeasonStats.possession}%` : ''}${match.awaySeasonStats?.shotsOn ? `, ${match.awaySeasonStats.shotsOn} schoten op doel/wedstrijd` : ''}
+${match.homeTeamName}: Elo ${prediction.homeElo||'?'}, vorm ${prediction.homeForm||'?'}${match.homeSeasonStats?.avgPossession ? `, bezit ${match.homeSeasonStats.avgPossession}%` : ''}
+${match.awayTeamName}: Elo ${prediction.awayElo||'?'}, vorm ${prediction.awayForm||'?'}${match.awaySeasonStats?.avgPossession ? `, bezit ${match.awaySeasonStats.avgPossession}%` : ''}
+${homeInj?.injuredCount > 0 ? `Geblesseerd ${match.homeTeamName.split(' ')[0]}: ${homeInj.injuredCount} spelers${homeInj.keyPlayersMissing?.length ? ` (${homeInj.keyPlayersMissing.join(', ')})` : ''}` : ''}
+${awayInj?.injuredCount > 0 ? `Geblesseerd ${match.awayTeamName.split(' ')[0]}: ${awayInj.injuredCount} spelers${awayInj.keyPlayersMissing?.length ? ` (${awayInj.keyPlayersMissing.join(', ')})` : ''}` : ''}
+${h2h?.played >= 2 ? `H2H: Thuis ${h2h.homeWins}W-${h2h.draws}G-${h2h.awayWins}V | ${h2h.results.slice(-2).reverse().map((r: any) => `${r.home} ${r.score} ${r.away}`).join(' | ')}` : ''}
 
-${h2h && h2h.played >= 2 ? `Onderlinge duels (laatste ${h2h.played}): Thuis ${h2h.homeWins}W-${h2h.draws}G-${h2h.awayWins}V
-Recente ontmoetingen: ${h2h.results.slice(-3).reverse().map((r: any) => `${r.home} ${r.score} ${r.away}`).join(' | ')}` : ''}
-
-Schrijf een directe analyse in 3 zinnen. Begin met de favoriete uitkomst, noem een opvallende statistiek, en eindig met een concrete wedtip.`;
+Schrijf precies 3 zinnen: (1) favoriete uitkomst met onderbouwing, (2) opvallende statistiek of blessure-impact, (3) concrete wedtip.`;
 
     const response = await fetch('https://api.anthropic.com/v1/messages', {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
         'anthropic-version': '2023-06-01',
+        'x-api-key': apiKey,
       },
       body: JSON.stringify({
-        model: 'claude-sonnet-4-20250514',
-        max_tokens: 200,
+        model: 'claude-sonnet-4-6',   // ← correcte model string
+        max_tokens: 300,
         messages: [{ role: 'user', content: prompt }]
       })
     });
 
     if (!response.ok) {
-      const err = await response.text();
-      return res.status(200).json({ analysis: null, error: `Claude API fout: ${response.status}` });
+      const errText = await response.text();
+      console.error('[analyze] Anthropic fout:', response.status, errText);
+      return res.status(200).json({ analysis: null, error: `Anthropic API fout ${response.status}` });
     }
 
     const data = await response.json();
-    const analysis = data.content?.[0]?.text || null;
-
+    const analysis = data.content?.[0]?.text?.trim() || null;
     return res.status(200).json({ analysis, matchId: match.id });
 
   } catch (err: any) {
