@@ -1,9 +1,44 @@
+function QuarterBar({ timing, label, color = 'blue' }: { timing: any; label: string; color?: string }) {
+  if (!timing) return null;
+  const quarters = [
+    { key: 'q1', label: '0-22'', pct: timing.q1pct },
+    { key: 'q2', label: '23-45'', pct: timing.q2pct },
+    { key: 'q3', label: '46-67'', pct: timing.q3pct },
+    { key: 'q4', label: '68-90'', pct: timing.q4pct },
+  ];
+  const peak = timing.peak;
+  return (
+    <div className="mb-2">
+      <div className="text-[7px] text-slate-500 mb-1">{label} ({timing.total} goals, {timing.games} wedstrijden)</div>
+      <div className="flex gap-1">
+        {quarters.map(q => (
+          <div key={q.key} className="flex-1 text-center">
+            <div className={`relative h-8 bg-slate-800 rounded overflow-hidden flex items-end`}>
+              <div
+                className={`w-full rounded transition-all ${q.key === peak ? (color==='blue'?'bg-blue-500':'bg-red-500') : 'bg-slate-600'}`}
+                style={{ height: `${Math.max(10, q.pct)}%` }}
+              />
+              {q.key === peak && (
+                <div className="absolute top-0.5 left-0 right-0 text-[7px] font-black text-white text-center">★</div>
+              )}
+            </div>
+            <div className={`text-[7px] mt-0.5 font-black ${q.key === peak ? (color==='blue'?'text-blue-400':'text-red-400') : 'text-slate-500'}`}>
+              {q.pct}%
+            </div>
+            <div className="text-[6px] text-slate-700">{q.label}</div>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}
+
 import React, { useState, useEffect, useRef } from 'react';
 import { Match } from '../types';
 import { FavoriteButton } from './FavoriteTeams';
 
 interface MatchCardProps {
-  match: Match & { homePos?: number|null; awayPos?: number|null; liveStats?: any; homeInjuries?: any; awayInjuries?: any; };
+  match: Match & { homePos?: number|null; awayPos?: number|null; liveStats?: any; homeInjuries?: any; awayInjuries?: any; homeGoalTiming?: any; awayGoalTiming?: any; };
   prediction?: any;
   onFavoriteChange?: () => void;
 }
@@ -138,6 +173,8 @@ const MatchCard: React.FC<MatchCardProps> = ({ match, prediction, onFavoriteChan
   const liveStats       = (match as any).liveStats;
   const homeInjuries    = (match as any).homeInjuries;
   const awayInjuries    = (match as any).awayInjuries;
+  const homeGoalTiming  = (match as any).homeGoalTiming;
+  const awayGoalTiming  = (match as any).awayGoalTiming;
   const matchImportance = (match as any).matchImportance || prediction.matchImportance;
   const scoreMatrix     = prediction.scoreMatrix || {};
   const topScores       = Object.entries(scoreMatrix).sort((a:any,b:any)=>b[1]-a[1]).slice(0,6);
@@ -176,7 +213,7 @@ const MatchCard: React.FC<MatchCardProps> = ({ match, prediction, onFavoriteChan
       <div className="flex items-center justify-between gap-1 mb-3">
         {/* Thuis */}
         <div className="flex flex-col items-center flex-1 gap-0.5 min-w-0">
-          <Logo teamId={(match as any).homeTeamId||''} name={match.homeTeamName} size={12}/>
+          <Logo teamId={(match as any).homeTeamId||''} directUrl={match.homeLogo} name={match.homeTeamName} size={12}/>
           <span className="text-[9px] font-black text-white line-clamp-2 text-center leading-tight px-1 mt-0.5">
             {match.homeTeamName}
           </span>
@@ -202,7 +239,7 @@ const MatchCard: React.FC<MatchCardProps> = ({ match, prediction, onFavoriteChan
 
         {/* Uit */}
         <div className="flex flex-col items-center flex-1 gap-0.5 min-w-0">
-          <Logo teamId={(match as any).awayTeamId||''} name={match.awayTeamName} size={12}/>
+          <Logo teamId={(match as any).awayTeamId||''} directUrl={match.awayLogo} name={match.awayTeamName} size={12}/>
           <span className="text-[9px] font-black text-white line-clamp-2 text-center leading-tight px-1 mt-0.5">
             {match.awayTeamName}
           </span>
