@@ -628,14 +628,12 @@ async function main() {
   }
 
   // ── Stap 7: H2H voor vandaag + morgen ────────────────────────────────────
-  // H2H wordt gecached op matchId zodat het niet elke run opgehaald hoeft te worden
   if (!store.h2hCache) store.h2hCache = {};
   let h2hFetched=0;
   const h2hMatchdays = [today, tomorrow];
   for (const day of h2hMatchdays) {
     const dayMatches = store.matches[day]||[];
     for (const m of dayMatches.slice(0,30)) {
-      // Sla over als H2H al in match zit OF in cache
       if (m.h2h) continue;
       const cached_h2h = store.h2hCache[m.id];
       if (cached_h2h && (now - (cached_h2h.fetched||0)) < 7*86400*1000) {
@@ -647,24 +645,28 @@ async function main() {
       if (!h2h) continue;
       m.h2h = h2h;
       store.h2hCache[m.id] = { ...h2h, fetched: now };
-      h2hFetched++;}
-    const predIdx = store.predictions[today]?.findIndex(p=>p.matchId===m.id);
-    if (predIdx>=0) {
-      const p = store.predictions[today][predIdx];
-      const homeFormData = store.teamStats[m.homeTeamId]||{gamesPlayed:0};
-      const awayFormData = store.teamStats[m.awayTeamId]||{gamesPlayed:0};
-      const tId = m.sofaId ? null : null;
-      const newPred = dixonColesPredict(
-        homeFormData, awayFormData,
-        store.teamSeasonStats[m.homeTeamId]||null,
-        store.teamSeasonStats[m.awayTeamId]||null,
-        m.homeElo||1500, m.awayElo||1500,
-        h2h,
-        store.teamInjuries[m.homeTeamId]||null,
-        store.teamInjuries[m.awayTeamId]||null,
-        m.homePos, m.awayPos, 20
-      );
-      store.predictions[today][predIdx]={ ...p, ...newPred };
+      h2hFetched++;
+
+      // Herbereken voorspelling met H2H (alleen voor vandaag)
+      if (day === today) {
+        const predIdx = store.predictions[today]?.findIndex(p=>p.matchId===m.id);
+        if (predIdx >= 0) {
+          const p = store.predictions[today][predIdx];
+          const homeFormData = store.teamStats[m.homeTeamId]||{gamesPlayed:0};
+          const awayFormData = store.teamStats[m.awayTeamId]||{gamesPlayed:0};
+          const newPred = dixonColesPredict(
+            homeFormData, awayFormData,
+            store.teamSeasonStats[m.homeTeamId]||null,
+            store.teamSeasonStats[m.awayTeamId]||null,
+            m.homeElo||1500, m.awayElo||1500,
+            h2h,
+            store.teamInjuries[m.homeTeamId]||null,
+            store.teamInjuries[m.awayTeamId]||null,
+            m.homePos, m.awayPos, 20
+          );
+          store.predictions[today][predIdx] = { ...p, ...newPred };
+        }
+      }
     }
   }
   console.log(`[worker] ${h2hFetched} H2H opgehaald`);
