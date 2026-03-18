@@ -69,6 +69,49 @@ function dixonColesAdjustment(h, a, homeXG, awayXG, rho = -0.13) {
   return 1;
 }
 
+function parseMinuteFromDescription(description) {
+  const text = String(description || "");
+  const plus = text.match(/(\d+)\s*\+\s*(\d+)/);
+  if (plus) return { current: Number(plus[1]), extra: Number(plus[2]) };
+
+  const plain = text.match(/(\d+)/);
+  if (plain) return { current: Number(plain[1]), extra: 0 };
+
+  return null;
+}
+
+function resolveMinuteState(eventLike, eventDetails) {
+  const period =
+    eventLike?.status?.description ||
+    eventDetails?.status?.description ||
+    null;
+
+  const parsed =
+    parseMinuteFromDescription(period) ||
+    parseMinuteFromDescription(eventDetails?.time?.injuryTime1) ||
+    null;
+
+  const current =
+    Number(eventLike?.time?.current ?? eventDetails?.time?.current ?? parsed?.current ?? 0) || null;
+  const extra =
+    Number(eventLike?.time?.extra ?? eventDetails?.time?.extra ?? parsed?.extra ?? 0) || null;
+
+  const periodText = String(period || "").toLowerCase();
+  const minute =
+    periodText.includes("half time") || periodText.includes("halftime") || periodText === "ht"
+      ? "HT"
+      : current
+        ? `${current}${extra ? `+${extra}` : ""}'`
+        : null;
+
+  return {
+    minute,
+    minuteValue: current,
+    extraTime: extra,
+    period,
+  };
+}
+
 function normalizeName(name) {
   return String(name || "")
     .toLowerCase()
@@ -1236,6 +1279,8 @@ async function main() {
       const homeClubElo = lookupClubElo(clubEloSnapshot, homeName);
       const awayClubElo = lookupClubElo(clubEloSnapshot, awayName);
 
+      const minuteState = resolveMinuteState(event, eventDetails);
+
       const prediction = predict({
         homeRecent,
         awayRecent,
@@ -1273,10 +1318,10 @@ async function main() {
         awayLogo: awayId ? `https://api.sofascore.app/api/v1/team/${awayId}/image` : "",
         status: event.status?.type === "inprogress" ? "LIVE" : event.status?.type === "finished" ? "FT" : "NS",
         score,
-        minute: event.time?.current ? `${event.time.current}${event.time?.extra ? `+${event.time.extra}` : ""}'` : null,
-        minuteValue: Number(event.time?.current || 0) || null,
-        extraTime: Number(event.time?.extra || 0) || null,
-        period: event.status?.description || null,
+        minute: minuteState.minute,
+        minuteValue: minuteState.minuteValue,
+        extraTime: minuteState.extraTime,
+        period: minuteState.period,
         liveUpdatedAt: event.status?.type === "inprogress" ? now : null,
         homeForm: homeRecent?.form || "",
         awayForm: awayRecent?.form || "",
@@ -1367,15 +1412,29 @@ async function main() {
     const match = (store.matches[today] || []).find((item) => item.id === matchId);
     if (!match) continue;
 
+    let liveDetails = null;
+    if (!live.time?.current) {
+      liveDetails = store.eventCache?.[live.id] || null;
+      if (!liveDetails || now - Number(store.eventCacheUpdated?.[live.id] || 0) > EVENT_TTL) {
+        liveDetails = await fetchEventDetails(live.id);
+        if (liveDetails) {
+          store.eventCache[live.id] = liveDetails;
+          store.eventCacheUpdated[live.id] = now;
+        }
+      }
+    }
+
+    const minuteState = resolveMinuteState(live, liveDetails);
+
     match.status = "LIVE";
     match.score =
       live.homeScore?.current != null && live.awayScore?.current != null
         ? `${live.homeScore.current}-${live.awayScore.current}`
         : match.score;
-    match.minute = live.time?.current ? `${live.time.current}${live.time?.extra ? `+${live.time.extra}` : ""}'` : match.minute;
-    match.minuteValue = Number(live.time?.current || 0) || match.minuteValue || null;
-    match.extraTime = Number(live.time?.extra || 0) || null;
-    match.period = live.status?.description || null;
+    match.minute = minuteState.minute || match.minute;
+    match.minuteValue = minuteState.minuteValue || match.minuteValue || null;
+    match.extraTime = minuteState.extraTime || null;
+    match.period = minuteState.period || match.period || null;
     match.liveUpdatedAt = Date.now();
     match.liveStats = await fetchLiveStats(live.id);
 
