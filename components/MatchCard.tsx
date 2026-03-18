@@ -172,6 +172,43 @@ function KeySignals({ match, prediction }: { match: any; prediction: any }) {
   );
 }
 
+function InsightGrid({ match, prediction }: { match: any; prediction: any }) {
+  const homeSplit = match.homeRecent?.splits?.home;
+  const awaySplit = match.awayRecent?.splits?.away;
+  const clubEloDiff = prediction.modelEdges?.clubEloDiff;
+  const homeBtts = match.homeRecent?.bttsRate != null ? `${Math.round(match.homeRecent.bttsRate * 100)}%` : "-";
+  const awayBtts = match.awayRecent?.bttsRate != null ? `${Math.round(match.awayRecent.bttsRate * 100)}%` : "-";
+
+  return (
+    <div className="grid grid-cols-2 gap-1.5 mb-2">
+      <div className="rounded-xl border border-blue-500/15 bg-blue-950/20 px-2 py-1.5">
+        <div className="text-[7px] uppercase font-black text-blue-300/80">Thuissplit</div>
+        <div className="text-[10px] font-black text-white">
+          {homeSplit ? `${homeSplit.avgScored}-${homeSplit.avgConceded}` : "-"}
+        </div>
+      </div>
+      <div className="rounded-xl border border-red-500/15 bg-red-950/20 px-2 py-1.5">
+        <div className="text-[7px] uppercase font-black text-red-300/80">Uitsplit</div>
+        <div className="text-[10px] font-black text-white">
+          {awaySplit ? `${awaySplit.avgScored}-${awaySplit.avgConceded}` : "-"}
+        </div>
+      </div>
+      <div className="rounded-xl border border-violet-500/15 bg-violet-950/20 px-2 py-1.5">
+        <div className="text-[7px] uppercase font-black text-violet-300/80">ClubElo edge</div>
+        <div className="text-[10px] font-black text-white">
+          {clubEloDiff == null ? "-" : clubEloDiff > 0 ? `+${clubEloDiff}` : `${clubEloDiff}`}
+        </div>
+      </div>
+      <div className="rounded-xl border border-emerald-500/15 bg-emerald-950/20 px-2 py-1.5">
+        <div className="text-[7px] uppercase font-black text-emerald-300/80">BTTS trend</div>
+        <div className="text-[10px] font-black text-white">
+          {homeBtts} / {awayBtts}
+        </div>
+      </div>
+    </div>
+  );
+}
+
 function aggregateLoser(match: any, aggregate: any) {
   if (!aggregate?.active || !aggregate?.leader) return null;
   return aggregate.leader === match.homeTeamName ? match.awayTeamName : match.homeTeamName;
@@ -299,6 +336,8 @@ const MatchCard: React.FC<MatchCardProps> = ({ match, prediction, onFavoriteChan
         <Badge label="H2H" value={h2h?.played ? `${h2h.homeWins}-${h2h.draws}-${h2h.awayWins}` : "Leeg"} tone={h2h?.played ? "purple" : "slate"} />
         <Badge label="Context" value={match.context?.summary ? "Aan" : "Basis"} tone={match.context?.summary ? "amber" : "slate"} />
       </div>
+
+      <InsightGrid match={match} prediction={prediction} />
 
       <div className="grid grid-cols-3 gap-1 mb-2">
         {[
