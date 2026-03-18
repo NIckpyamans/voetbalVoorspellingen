@@ -32,6 +32,13 @@ const factorial = (n) => {
 const poisson = (lambda, k) => {
   return (Math.pow(lambda, k) * Math.exp(-lambda)) / factorial(k);
 };
+const dixonColesAdjustment = (h, a, homeXG, awayXG, rho = -0.13) => {
+  if (h === 0 && a === 0) return 1 - homeXG * awayXG * rho;
+  if (h === 0 && a === 1) return 1 + homeXG * rho;
+  if (h === 1 && a === 0) return 1 + awayXG * rho;
+  if (h === 1 && a === 1) return 1 - rho;
+  return 1;
+};
 
 async function safeFetch(url) {
   try {
