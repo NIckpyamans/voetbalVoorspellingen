@@ -86,6 +86,11 @@ function buildRouteHint(items: KnockoutItem[], index: number) {
   return `Bij winst tegen winnaar van ${sibling.homeTeamName} vs ${sibling.awayTeamName}`;
 }
 
+function nextRoundLabel(rounds: string[], currentIndex: number) {
+  if (currentIndex >= rounds.length - 1) return null;
+  return rounds[currentIndex + 1];
+}
+
 const StandingsView: React.FC = () => {
   const [standings, setStandings] = useState<Record<string, LeagueStanding>>({});
   const [cupSheets, setCupSheets] = useState<Record<string, CupSheet>>({});
@@ -283,59 +288,69 @@ const StandingsView: React.FC = () => {
           </div>
 
           {currentCup && (
-            <div className="space-y-4">
-              {Object.entries(currentCup.rounds)
-                .map(([round, items]) => [round, items.filter((item) => item.league === selectedCup)] as const)
-                .filter(([, items]) => items.length > 0)
-                .sort((a, b) => roundWeight(a[0]) - roundWeight(b[0]))
-                .map(([round, items]) => (
-                  <section key={round} className="glass-card rounded-2xl border border-white/5 p-4">
-                    <div className="text-sm font-black uppercase text-white mb-3">{round}</div>
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-                      {items
-                        .sort((a, b) => String(a.kickoff || "").localeCompare(String(b.kickoff || "")))
-                        .map((item, index, sortedRoundItems) => {
-                          const loser = scoreLoser(item);
-                          const routeHint = buildRouteHint(sortedRoundItems, index);
-                          return (
-                            <div key={item.matchId} className="rounded-xl border border-white/5 bg-slate-900/50 p-3">
-                              <div className="text-[10px] uppercase text-amber-400 font-black">{item.league}</div>
-                              <div className="text-[11px] text-slate-400 mt-1">
-                                {item.stakes || "Knock-out"}
-                              </div>
-                              <div className="mt-2 space-y-1">
-                                <div className={`text-sm font-black ${loser === item.homeTeamName ? "text-slate-500 line-through" : "text-white"}`}>
-                                  {item.homeTeamName}
-                                </div>
-                                <div className={`text-sm font-black ${loser === item.awayTeamName ? "text-slate-500 line-through" : "text-white"}`}>
-                                  {item.awayTeamName}
-                                </div>
-                              </div>
-                              <div className="text-[11px] text-slate-300 mt-2">
-                                Huidig duel: {item.score || "Nog niet gestart"}
-                              </div>
-                              {item.aggregate?.active && (
-                                <>
-                                  <div className="text-[11px] text-amber-300 mt-1">
-                                    Eerste duel: {item.aggregate.firstLegText || item.aggregate.firstLegScore || "onbekend"}
+            <div className="glass-card rounded-2xl border border-white/5 p-4">
+              <div className="text-sm font-black uppercase text-white mb-3">{currentCup.league}</div>
+              <div className="overflow-x-auto scrollbar-hide pb-2">
+                <div className="flex gap-4 min-w-max">
+                  {Object.entries(currentCup.rounds)
+                    .map(([round, items]) => [round, items.filter((item) => item.league === selectedCup)] as const)
+                    .filter(([, items]) => items.length > 0)
+                    .sort((a, b) => roundWeight(a[0]) - roundWeight(b[0]))
+                    .map(([round], _, arr) => round)
+                    .map((round, roundIndex, roundLabels) => {
+                      const items = (currentCup.rounds[round] || [])
+                        .filter((item) => item.league === selectedCup)
+                        .sort((a, b) => String(a.kickoff || "").localeCompare(String(b.kickoff || "")));
+                      const nextRound = nextRoundLabel(roundLabels, roundIndex);
+
+                      return (
+                        <section key={round} className="w-[320px] flex-shrink-0">
+                          <div className="text-sm font-black uppercase text-white mb-3">{round}</div>
+                          <div className="space-y-3">
+                            {items.map((item, index) => {
+                              const loser = scoreLoser(item);
+                              const routeHint = buildRouteHint(items, index);
+                              return (
+                                <div key={item.matchId} className="rounded-xl border border-white/5 bg-slate-900/50 p-3">
+                                  <div className="text-[11px] text-slate-400">
+                                    {item.stakes || "Knock-out"}
                                   </div>
-                                  <div className="text-[11px] text-amber-300">
-                                    Aggregate: {item.aggregate.aggregateScore || "-"}
-                                    {item.aggregate.leader ? ` · ${item.aggregate.leader} door` : ""}
+                                  <div className="mt-2 space-y-1">
+                                    <div className={`text-sm font-black ${loser === item.homeTeamName ? "text-slate-500 line-through" : "text-white"}`}>
+                                      {item.homeTeamName}
+                                    </div>
+                                    <div className={`text-sm font-black ${loser === item.awayTeamName ? "text-slate-500 line-through" : "text-white"}`}>
+                                      {item.awayTeamName}
+                                    </div>
                                   </div>
-                                </>
-                              )}
-                              {routeHint && (
-                                <div className="text-[11px] text-slate-500 mt-2">
-                                  {routeHint}
+                                  <div className="text-[11px] text-slate-300 mt-2">
+                                    Duel: {item.score || "Nog niet gestart"}
+                                  </div>
+                                  {item.aggregate?.active && (
+                                    <>
+                                      <div className="text-[11px] text-amber-300 mt-1">
+                                        Eerste duel: {item.aggregate.firstLegText || item.aggregate.firstLegScore || "onbekend"}
+                                      </div>
+                                      <div className="text-[11px] text-amber-300">
+                                        Aggregate: {item.aggregate.aggregateScore || "-"}
+                                        {item.aggregate.leader ? ` · ${item.aggregate.leader} door` : ""}
+                                      </div>
+                                    </>
+                                  )}
+                                  {routeHint && nextRound && (
+                                    <div className="text-[11px] text-slate-500 mt-2">
+                                      Naar {nextRound}: {routeHint}
+                                    </div>
+                                  )}
                                 </div>
-                              )}
-                            </div>
-                          );
-                        })}
-                    </div>
-                  </section>
-                ))}
+                              );
+                            })}
+                          </div>
+                        </section>
+                      );
+                    })}
+                </div>
+              </div>
             </div>
           )}
         </>
