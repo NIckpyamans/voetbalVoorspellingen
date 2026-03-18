@@ -64,6 +64,28 @@ function scoreLoser(item: KnockoutItem) {
   return aggregate.leader === item.homeTeamName ? item.awayTeamName : item.homeTeamName;
 }
 
+function roundWeight(round: string) {
+  const text = String(round || "").toLowerCase();
+  if (text.includes("final")) return 90;
+  if (text.includes("semi")) return 80;
+  if (text.includes("quarter")) return 70;
+  if (text.includes("acht")) return 60;
+  if (text.includes("round of 16")) return 60;
+  if (text.includes("laatste 16")) return 60;
+  if (text.includes("play-off")) return 50;
+  if (text.includes("32")) return 40;
+  return 10;
+}
+
+function buildRouteHint(items: KnockoutItem[], index: number) {
+  if (items.length < 2) return null;
+  const pairStart = Math.floor(index / 2) * 2;
+  const siblingIndex = index % 2 === 0 ? pairStart + 1 : pairStart;
+  const sibling = items[siblingIndex];
+  if (!sibling || sibling.matchId === items[index].matchId) return null;
+  return `Bij winst tegen winnaar van ${sibling.homeTeamName} vs ${sibling.awayTeamName}`;
+}
+
 const StandingsView: React.FC = () => {
   const [standings, setStandings] = useState<Record<string, LeagueStanding>>({});
   const [cupSheets, setCupSheets] = useState<Record<string, CupSheet>>({});
@@ -263,15 +285,18 @@ const StandingsView: React.FC = () => {
           {currentCup && (
             <div className="space-y-4">
               {Object.entries(currentCup.rounds)
-                .sort((a, b) => a[0].localeCompare(b[0]))
+                .map(([round, items]) => [round, items.filter((item) => item.league === selectedCup)] as const)
+                .filter(([, items]) => items.length > 0)
+                .sort((a, b) => roundWeight(a[0]) - roundWeight(b[0]))
                 .map(([round, items]) => (
                   <section key={round} className="glass-card rounded-2xl border border-white/5 p-4">
                     <div className="text-sm font-black uppercase text-white mb-3">{round}</div>
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
                       {items
                         .sort((a, b) => String(a.kickoff || "").localeCompare(String(b.kickoff || "")))
-                        .map((item) => {
+                        .map((item, index, sortedRoundItems) => {
                           const loser = scoreLoser(item);
+                          const routeHint = buildRouteHint(sortedRoundItems, index);
                           return (
                             <div key={item.matchId} className="rounded-xl border border-white/5 bg-slate-900/50 p-3">
                               <div className="text-[10px] uppercase text-amber-400 font-black">{item.league}</div>
@@ -299,6 +324,11 @@ const StandingsView: React.FC = () => {
                                     {item.aggregate.leader ? ` · ${item.aggregate.leader} door` : ""}
                                   </div>
                                 </>
+                              )}
+                              {routeHint && (
+                                <div className="text-[11px] text-slate-500 mt-2">
+                                  {routeHint}
+                                </div>
                               )}
                             </div>
                           );
