@@ -237,6 +237,12 @@ const MatchCard: React.FC<MatchCardProps> = ({ match, prediction, onFavoriteChan
             {match.kickoff ? new Date(match.kickoff).toLocaleString("nl-NL") : ""}
             {match.roundLabel ? ` · ${match.roundLabel}` : ""}
           </div>
+          {liveMinute && (
+            <div className="mt-1 inline-flex items-center gap-1 rounded-full bg-red-900/35 border border-red-500/25 px-2 py-0.5">
+              <span className="w-1.5 h-1.5 rounded-full bg-red-500 animate-pulse" />
+              <span className="text-[9px] font-black text-red-200">LIVE {liveMinute}</span>
+            </div>
+          )}
         </div>
         <div className="flex items-center gap-1">
           {importantMatch && (
@@ -244,7 +250,6 @@ const MatchCard: React.FC<MatchCardProps> = ({ match, prediction, onFavoriteChan
               Belangrijk
             </span>
           )}
-          {liveMinute && <span className="bg-red-600/90 text-white text-[9px] font-black px-1.5 py-0.5 rounded">{liveMinute}</span>}
           <FavoriteButton teamId={match.homeTeamId || ""} teamName={match.homeTeamName} onChange={onFavoriteChange} />
           <FavoriteButton teamId={match.awayTeamId || ""} teamName={match.awayTeamName} onChange={onFavoriteChange} />
         </div>
@@ -262,11 +267,6 @@ const MatchCard: React.FC<MatchCardProps> = ({ match, prediction, onFavoriteChan
 
         <div className="min-w-[104px] text-center">
           <div className="text-xl font-black text-white">{match.score || "vs"}</div>
-          {liveMinute && (
-            <div className="mt-1 text-[8px] text-red-200 bg-red-900/30 border border-red-500/20 rounded-full px-2 py-0.5">
-              Minuut {liveMinute}
-            </div>
-          )}
           <div className="mt-1 bg-blue-600 px-2 py-0.5 rounded-full text-[10px] font-black text-white">
             Voorspelling {prediction.predHomeGoals}-{prediction.predAwayGoals}
           </div>
