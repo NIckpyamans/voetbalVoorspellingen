@@ -1,6 +1,3 @@
-
-// We now ingest matches directly from the internet (SofaScore public endpoints).
-// That means we can see many different competitions, so league is a free-form string.
 export type League = string;
 
 export interface Team {
@@ -12,13 +9,61 @@ export interface Team {
   defense: number;
   logo: string;
   form?: string;
+  [key: string]: any;
+}
+
+export interface MatchLineupTeamSummary {
+  formation?: string | null;
+  starters?: number;
+  bench?: number;
+  avgRating?: number | null;
+  confirmed?: boolean;
+}
+
+export interface MatchLineupSummary {
+  home?: MatchLineupTeamSummary | null;
+  away?: MatchLineupTeamSummary | null;
+  confirmed?: boolean;
+}
+
+export interface MatchWeather {
+  temperature?: number | null;
+  precipitationProbability?: number | null;
+  precipitation?: number | null;
+  windSpeed?: number | null;
+  riskLevel?: "low" | "medium" | "high" | null;
+}
+
+export interface MatchSplitStats {
+  games: number;
+  avgScored: number;
+  avgConceded: number;
+  bttsRate: number;
+  wins: number;
+  draws: number;
+  losses: number;
+}
+
+export interface MatchRecentStats {
+  form?: string;
+  avgScored?: number;
+  avgConceded?: number;
+  bttsRate?: number;
+  gamesPlayed?: number;
+  wins?: number;
+  draws?: number;
+  losses?: number;
+  splits?: {
+    home?: MatchSplitStats;
+    away?: MatchSplitStats;
+  };
+  lastMatchKickoff?: string | null;
+  goalTiming?: any;
 }
 
 export interface Match {
   id: string;
-  // ISO date (YYYY-MM-DD) of the fixture (local time is derived from kickoff)
   date: string;
-  // ISO datetime string
   kickoff: string;
   league: League;
   homeTeamId: string;
@@ -28,9 +73,13 @@ export interface Match {
   homeLogo: string;
   awayLogo: string;
   status?: string;
-  minute?: string; // live minute (e.g. "74'")
+  minute?: string;
+  minuteValue?: number;
+  extraTime?: number | null;
+  period?: string | null;
+  liveUpdatedAt?: number | null;
   score?: string;
-  h2h?: string;
+  h2h?: any;
   homeForm?: string;
   awayForm?: string;
   keyInjuries?: string;
@@ -41,6 +90,26 @@ export interface Match {
     away: string[];
   };
   events?: string[];
+  homePos?: number | null;
+  awayPos?: number | null;
+  homeElo?: number;
+  awayElo?: number;
+  homeSeasonStats?: any;
+  awaySeasonStats?: any;
+  homeInjuries?: any;
+  awayInjuries?: any;
+  homeGoalTiming?: any;
+  awayGoalTiming?: any;
+  liveStats?: any;
+  matchImportance?: number;
+  homeRecent?: MatchRecentStats;
+  awayRecent?: MatchRecentStats;
+  homeRestDays?: number | null;
+  awayRestDays?: number | null;
+  weather?: MatchWeather | null;
+  lineupSummary?: MatchLineupSummary | null;
+  modelEdges?: any;
+  [key: string]: any;
 }
 
 export interface Prediction {
@@ -56,6 +125,26 @@ export interface Prediction {
   confidence: number;
   analysis?: string;
   learningNote?: string;
+  homeElo?: number;
+  awayElo?: number;
+  homeForm?: string;
+  awayForm?: string;
+  over05?: number;
+  over15?: number;
+  over25?: number;
+  over35?: number;
+  btts?: number;
+  scoreMatrix?: Record<string, number>;
+  h2h?: any;
+  matchImportance?: number;
+  homeFalsePositive?: boolean;
+  awayFalsePositive?: boolean;
+  homeRestDays?: number | null;
+  awayRestDays?: number | null;
+  weather?: MatchWeather | null;
+  lineupSummary?: MatchLineupSummary | null;
+  modelEdges?: any;
+  [key: string]: any;
 }
 
 export interface PredictionMemory {
