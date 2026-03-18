@@ -21,6 +21,7 @@ function parseMinuteValue(minute?: string | number | null, minuteValue?: number 
 
 function useLiveMinute(match: any) {
   const [now, setNow] = useState(() => Date.now());
+
   useEffect(() => {
     if (String(match?.status || "").toUpperCase() !== "LIVE" && !match?.minute && !match?.minuteValue) return;
     const timer = window.setInterval(() => setNow(Date.now()), 15000);
@@ -171,6 +172,11 @@ function KeySignals({ match, prediction }: { match: any; prediction: any }) {
   );
 }
 
+function aggregateLoser(match: any, aggregate: any) {
+  if (!aggregate?.active || !aggregate?.leader) return null;
+  return aggregate.leader === match.homeTeamName ? match.awayTeamName : match.homeTeamName;
+}
+
 const MatchCard: React.FC<MatchCardProps> = ({ match, prediction, onFavoriteChange }) => {
   const [tab, setTab] = useState<"analyse" | "h2h" | "vorm" | "markten" | "stats">("analyse");
   const [aiAnalysis, setAiAnalysis] = useState<string | null>(null);
@@ -204,6 +210,7 @@ const MatchCard: React.FC<MatchCardProps> = ({ match, prediction, onFavoriteChan
   const weather = match.weather || prediction.weather;
   const h2h = match.h2h || prediction.h2h;
   const aggregate = match.aggregate || prediction.aggregate;
+  const loser = aggregateLoser(match, aggregate);
   const topScores = Object.entries(prediction.scoreMatrix || {})
     .sort((a: any, b: any) => b[1] - a[1])
     .slice(0, 6);
@@ -219,9 +226,7 @@ const MatchCard: React.FC<MatchCardProps> = ({ match, prediction, onFavoriteChan
           </div>
         </div>
         <div className="flex items-center gap-1">
-          {liveMinute && (
-            <span className="bg-red-600/90 text-white text-[9px] font-black px-1.5 py-0.5 rounded">{liveMinute}</span>
-          )}
+          {liveMinute && <span className="bg-red-600/90 text-white text-[9px] font-black px-1.5 py-0.5 rounded">{liveMinute}</span>}
           <FavoriteButton teamId={match.homeTeamId || ""} teamName={match.homeTeamName} onChange={onFavoriteChange} />
           <FavoriteButton teamId={match.awayTeamId || ""} teamName={match.awayTeamName} onChange={onFavoriteChange} />
         </div>
@@ -230,55 +235,46 @@ const MatchCard: React.FC<MatchCardProps> = ({ match, prediction, onFavoriteChan
       <div className="flex items-center justify-between gap-2 mb-3">
         <div className="flex-1 text-center">
           <Logo teamId={match.homeTeamId || ""} directUrl={match.homeLogo} name={match.homeTeamName} />
-          <div className="text-[10px] font-black text-white">{match.homeTeamName}</div>
+          <div className={`text-[10px] font-black ${loser === match.homeTeamName ? "text-slate-500 line-through" : "text-white"}`}>
+            {match.homeTeamName}
+          </div>
           <div className="text-[7px] text-slate-500">positie {match.homePos || "-"} · ClubElo {match.homeClubElo ?? "-"}</div>
           <FormPills form={match.homeForm} />
         </div>
-        <div className="min-w-[96px] text-center">
+
+        <div className="min-w-[104px] text-center">
           <div className="text-xl font-black text-white">{match.score || "vs"}</div>
           <div className="bg-blue-600 px-2 py-0.5 rounded-full text-[10px] font-black text-white">
             {prediction.predHomeGoals}-{prediction.predAwayGoals}
           </div>
           {aggregate?.active && (
-            <div className="mt-1 text-[8px] text-amber-300 bg-amber-900/20 border border-amber-500/15 rounded-full px-2 py-0.5">
-              Agg {aggregate.aggregateScore || "-"}
+            <div className="mt-1 space-y-1">
+              <div className="text-[8px] text-amber-300 bg-amber-900/20 border border-amber-500/15 rounded-full px-2 py-0.5">
+                Eerste duel {aggregate.firstLegScore || "?"}
+              </div>
+              <div className="text-[8px] text-amber-300 bg-amber-900/20 border border-amber-500/15 rounded-full px-2 py-0.5">
+                Agg {aggregate.aggregateScore || "-"}
+              </div>
             </div>
           )}
         </div>
+
         <div className="flex-1 text-center">
           <Logo teamId={match.awayTeamId || ""} directUrl={match.awayLogo} name={match.awayTeamName} />
-          <div className="text-[10px] font-black text-white">{match.awayTeamName}</div>
+          <div className={`text-[10px] font-black ${loser === match.awayTeamName ? "text-slate-500 line-through" : "text-white"}`}>
+            {match.awayTeamName}
+          </div>
           <div className="text-[7px] text-slate-500">positie {match.awayPos || "-"} · ClubElo {match.awayClubElo ?? "-"}</div>
           <FormPills form={match.awayForm} />
         </div>
       </div>
 
       <div className="grid grid-cols-5 gap-1.5 mb-2">
-        <Badge
-          label="Rust"
-          value={match.homeRestDays != null && match.awayRestDays != null ? `${match.homeRestDays}d/${match.awayRestDays}d` : "?"}
-          tone="blue"
-        />
-        <Badge
-          label="Weer"
-          value={weather ? `${weather.temperature ?? "?"}C` : "?"}
-          tone={weather?.riskLevel === "high" ? "red" : weather?.riskLevel === "medium" ? "amber" : "slate"}
-        />
-        <Badge
-          label="Lineups"
-          value={match.lineupSummary?.confirmed ? "Bevestigd" : "Open"}
-          tone={match.lineupSummary?.confirmed ? "green" : "slate"}
-        />
-        <Badge
-          label="H2H"
-          value={h2h?.played ? `${h2h.homeWins}-${h2h.draws}-${h2h.awayWins}` : "Leeg"}
-          tone={h2h?.played ? "purple" : "slate"}
-        />
-        <Badge
-          label="Context"
-          value={match.context?.summary ? "Aan" : "Basis"}
-          tone={match.context?.summary ? "amber" : "slate"}
-        />
+        <Badge label="Rust" value={match.homeRestDays != null && match.awayRestDays != null ? `${match.homeRestDays}d/${match.awayRestDays}d` : "?"} tone="blue" />
+        <Badge label="Weer" value={weather ? `${weather.temperature ?? "?"}C` : "?"} tone={weather?.riskLevel === "high" ? "red" : weather?.riskLevel === "medium" ? "amber" : "slate"} />
+        <Badge label="Lineups" value={match.lineupSummary?.confirmed ? "Bevestigd" : "Open"} tone={match.lineupSummary?.confirmed ? "green" : "slate"} />
+        <Badge label="H2H" value={h2h?.played ? `${h2h.homeWins}-${h2h.draws}-${h2h.awayWins}` : "Leeg"} tone={h2h?.played ? "purple" : "slate"} />
+        <Badge label="Context" value={match.context?.summary ? "Aan" : "Basis"} tone={match.context?.summary ? "amber" : "slate"} />
       </div>
 
       <div className="grid grid-cols-3 gap-1 mb-2">
@@ -394,16 +390,8 @@ const MatchCard: React.FC<MatchCardProps> = ({ match, prediction, onFavoriteChan
           </div>
 
           <div className="grid grid-cols-2 gap-2">
-            <Badge
-              label="Thuissplit"
-              value={match.homeRecent?.splits?.home ? `${match.homeRecent.splits.home.avgScored}-${match.homeRecent.splits.home.avgConceded}` : "-"}
-              tone="blue"
-            />
-            <Badge
-              label="Uitsplit"
-              value={match.awayRecent?.splits?.away ? `${match.awayRecent.splits.away.avgScored}-${match.awayRecent.splits.away.avgConceded}` : "-"}
-              tone="red"
-            />
+            <Badge label="Thuissplit" value={match.homeRecent?.splits?.home ? `${match.homeRecent.splits.home.avgScored}-${match.homeRecent.splits.home.avgConceded}` : "-"} tone="blue" />
+            <Badge label="Uitsplit" value={match.awayRecent?.splits?.away ? `${match.awayRecent.splits.away.avgScored}-${match.awayRecent.splits.away.avgConceded}` : "-"} tone="red" />
           </div>
         </div>
       )}
