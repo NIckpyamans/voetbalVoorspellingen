@@ -1,6 +1,6 @@
 import { Match } from "../types";
 
-const CACHE_VERSION = "v7";
+const CACHE_VERSION = "v2_free";
 const LIVE_CACHE_AGE_MS = 15_000;
 const TODAY_CACHE_AGE_MS = 90_000;
 const OTHER_CACHE_AGE_MS = 30 * 60_000;
@@ -10,17 +10,18 @@ function storageKey(dateISO: string) {
 }
 
 function isLiveMatch(match: any) {
-  return String(match?.status || "").toUpperCase() === "LIVE" || match?.minute != null || match?.minuteValue != null;
+  return (
+    String(match?.status || "").toUpperCase() === "LIVE" ||
+    match?.minute != null ||
+    match?.minuteValue != null
+  );
 }
 
 function parseMinuteValue(minute: any, minuteValue?: any) {
   const explicit = Number(minuteValue);
   if (Number.isFinite(explicit) && explicit > 0) return explicit;
-
   if (typeof minute === "number" && Number.isFinite(minute)) return minute;
-
   if (typeof minute !== "string") return null;
-
   if (minute.toUpperCase() === "HT") return 45;
 
   const plusMatch = minute.match(/(\d+)\s*\+\s*(\d+)/);
@@ -41,7 +42,6 @@ function normalizeMinute(minute: any, minuteValue?: any, extraTime?: any, period
 
   const extra = Number(extraTime || 0);
   if (extra > 0) return `${baseMinute}+${extra}'`;
-
   return `${baseMinute}'`;
 }
 
@@ -109,18 +109,16 @@ function mapRawMatch(m: any): Match {
     status: m.status || "NS",
     score: m.score || undefined,
     minute: normalizeMinute(m.minute, minuteValue, m.extraTime, m.period),
-
     ...(minuteValue != null ? { minuteValue } : {}),
     ...(m.period != null ? { period: m.period } : {}),
     ...(m.extraTime != null ? { extraTime: m.extraTime } : {}),
     ...(m.liveUpdatedAt != null ? { liveUpdatedAt: m.liveUpdatedAt } : {}),
-
     ...(m.homeForm ? { homeForm: m.homeForm } : {}),
     ...(m.awayForm ? { awayForm: m.awayForm } : {}),
     ...(m.homeElo ? { homeElo: m.homeElo } : {}),
     ...(m.awayElo ? { awayElo: m.awayElo } : {}),
-    ...(m.homePos ? { homePos: m.homePos } : {}),
-    ...(m.awayPos ? { awayPos: m.awayPos } : {}),
+    ...(m.homePos != null ? { homePos: m.homePos } : {}),
+    ...(m.awayPos != null ? { awayPos: m.awayPos } : {}),
     ...(m.matchImportance ? { matchImportance: m.matchImportance } : {}),
     ...(m.h2h ? { h2h: m.h2h } : {}),
     ...(m.homeSeasonStats ? { homeSeasonStats: m.homeSeasonStats } : {}),
@@ -130,7 +128,14 @@ function mapRawMatch(m: any): Match {
     ...(m.homeGoalTiming ? { homeGoalTiming: m.homeGoalTiming } : {}),
     ...(m.awayGoalTiming ? { awayGoalTiming: m.awayGoalTiming } : {}),
     ...(m.liveStats ? { liveStats: m.liveStats } : {}),
-  };
+    ...(m.homeRecent ? { homeRecent: m.homeRecent } : {}),
+    ...(m.awayRecent ? { awayRecent: m.awayRecent } : {}),
+    ...(m.homeRestDays != null ? { homeRestDays: m.homeRestDays } : {}),
+    ...(m.awayRestDays != null ? { awayRestDays: m.awayRestDays } : {}),
+    ...(m.weather ? { weather: m.weather } : {}),
+    ...(m.lineupSummary ? { lineupSummary: m.lineupSummary } : {}),
+    ...(m.modelEdges ? { modelEdges: m.modelEdges } : {}),
+  } as Match;
 }
 
 export interface MatchesUpdate {
@@ -148,21 +153,14 @@ export async function fetchMatchesAndPredictions(
   if (cached) return { ...cached, workerNeeded: false };
 
   try {
-    const res = await fetch(`/api/matches?date=${dateISO}`, {
-      signal,
-      cache: "no-store",
-    });
-
+    const res = await fetch(`/api/matches?date=${dateISO}`, { signal, cache: "no-store" });
     if (!res.ok) throw new Error(`API ${res.status}`);
     const json = await res.json();
 
     const lastRun: number | null = json.lastRun || null;
     const rawMatches: any[] = json.matches || json.events || [];
 
-    const predRes = await fetch(`/api/predict?date=${dateISO}`, {
-      signal,
-      cache: "no-store",
-    });
+    const predRes = await fetch(`/api/predict?date=${dateISO}`, { signal, cache: "no-store" });
     const predJson = predRes.ok ? await predRes.json() : { predictions: [] };
     const rawPredictions: any[] = predJson.predictions || [];
 
@@ -174,18 +172,23 @@ export async function fetchMatchesAndPredictions(
     const predictionMap: Record<string, any> = {};
 
     for (const prediction of rawPredictions) {
-      if (!prediction.matchId) continue;
-      predictionMap[prediction.matchId] = prediction;
+      if (prediction.matchId) predictionMap[prediction.matchId] = prediction;
     }
 
     for (const rawMatch of rawMatches) {
       if (!rawMatch.id) continue;
-
       if (!predictionMap[rawMatch.id]) predictionMap[rawMatch.id] = {};
-
-      if (rawMatch.h2h) predictionMap[rawMatch.id] = { ...predictionMap[rawMatch.id], h2h: rawMatch.h2h };
-      if (rawMatch.homePos != null) predictionMap[rawMatch.id] = { ...predictionMap[rawMatch.id], homePos: rawMatch.homePos };
-      if (rawMatch.awayPos != null) predictionMap[rawMatch.id] = { ...predictionMap[rawMatch.id], awayPos: rawMatch.awayPos };
+      predictionMap[rawMatch.id] = {
+        ...predictionMap[rawMatch.id],
+        ...(rawMatch.h2h ? { h2h: rawMatch.h2h } : {}),
+        ...(rawMatch.homePos != null ? { homePos: rawMatch.homePos } : {}),
+        ...(rawMatch.awayPos != null ? { awayPos: rawMatch.awayPos } : {}),
+        ...(rawMatch.homeRestDays != null ? { homeRestDays: rawMatch.homeRestDays } : {}),
+        ...(rawMatch.awayRestDays != null ? { awayRestDays: rawMatch.awayRestDays } : {}),
+        ...(rawMatch.weather ? { weather: rawMatch.weather } : {}),
+        ...(rawMatch.lineupSummary ? { lineupSummary: rawMatch.lineupSummary } : {}),
+        ...(rawMatch.modelEdges ? { modelEdges: rawMatch.modelEdges } : {}),
+      };
     }
 
     writeCache(dateISO, matches, predictionMap, lastRun);
