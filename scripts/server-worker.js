@@ -118,6 +118,18 @@ function finalizeSplit(split) {
   };
 }
 
+function calcMatchImportance(homePos, awayPos, totalTeams) {
+  if (!homePos || !awayPos || !totalTeams) return 1;
+
+  const relegationStart = Math.max(totalTeams - 2, 1);
+  const homePressure =
+    homePos <= 3 || homePos >= relegationStart ? 1.08 : homePos <= 6 ? 1.03 : 1;
+  const awayPressure =
+    awayPos <= 3 || awayPos >= relegationStart ? 1.08 : awayPos <= 6 ? 1.03 : 1;
+
+  return Number(Math.max(homePressure, awayPressure).toFixed(2));
+}
+
 async function safeFetch(url) {
   try {
     const response = await fetch(url, {
@@ -310,9 +322,14 @@ async function fetchTeamForm(teamId) {
       date: event.startTimestamp
         ? new Date(event.startTimestamp * 1000).toISOString().split("T")[0]
         : null,
+      eventId: event.id || null,
       league: event.tournament?.name || event.uniqueTournament?.name || null,
+      tournamentId:
+        event.uniqueTournament?.id || event.tournament?.uniqueTournament?.id || event.tournament?.id || null,
+      seasonId: event.season?.id || null,
       venue: isHome ? "H" : "A",
       opponent: isHome ? event.awayTeam?.name || "Opponent" : event.homeTeam?.name || "Opponent",
+      opponentId: isHome ? String(event.awayTeam?.id || "") : String(event.homeTeam?.id || ""),
       score: gf != null && ga != null ? `${gf}-${ga}` : null,
       goalsFor: gf ?? null,
       goalsAgainst: ga ?? null,
@@ -656,7 +673,7 @@ function extractRoundLabel(eventDetails) {
   );
 }
 
-function buildAggregateInfo(event, eventDetails, h2h) {
+function buildAggregateInfo(event, eventDetails, h2h, fallbackPreviousLeg = null) {
   const results = h2h?.results || [];
   const currentEventId = Number(event.id || 0);
   const previousLeg = [...results]
@@ -666,7 +683,7 @@ function buildAggregateInfo(event, eventDetails, h2h) {
       const now = Number(event.startTimestamp || 0) * 1000;
       return d > 0 && now > 0 && now - d < 160 * 24 * 60 * 60 * 1000;
     })
-    .sort((a, b) => String(b.date || "").localeCompare(String(a.date || "")))[0];
+    .sort((a, b) => String(b.date || "").localeCompare(String(a.date || "")))[0] || fallbackPreviousLeg;
 
   const label = String(
     eventDetails?.roundInfo?.cupRoundType ||
@@ -780,6 +797,55 @@ function buildHomeAwayEdge(homeRecent, awayRecent) {
   return Number(((home.avgScored - away.avgConceded) + (away.avgScored - home.avgConceded)).toFixed(2));
 }
 
+function findPreviousLegFromRecent(
+  homeRecent,
+  awayRecent,
+  currentHomeId,
+  currentAwayId,
+  currentHomeName,
+  currentAwayName,
+  tournamentId,
+  seasonId,
+  currentEventId
+) {
+  const combined = [
+    ...(homeRecent?.recentMatches || []),
+    ...(awayRecent?.recentMatches || []),
+  ];
+
+  const match = combined.find((item) => {
+    if (!item?.opponentId) return false;
+    if (String(item.eventId || "") === String(currentEventId || "")) return false;
+    if (tournamentId && item.tournamentId && item.tournamentId !== tournamentId) return false;
+    if (seasonId && item.seasonId && item.seasonId !== seasonId) return false;
+    return (
+      String(item.opponentId || "") === String(currentAwayId || "") ||
+      String(item.opponentId || "") === String(currentHomeId || "")
+    );
+  });
+
+  if (!match?.score) return null;
+
+  const [goalsFor, goalsAgainst] = String(match.score).split("-").map(Number);
+  if (Number.isNaN(goalsFor) || Number.isNaN(goalsAgainst)) return null;
+
+  const currentHomeWasHome = String(match.opponentId || "") === String(currentAwayId || "");
+  const homeTeamId = currentHomeWasHome ? String(currentHomeId || "") : String(currentAwayId || "");
+  const awayTeamId = currentHomeWasHome ? String(currentAwayId || "") : String(currentHomeId || "");
+  const home = currentHomeWasHome ? currentHomeName : currentAwayName;
+  const away = currentHomeWasHome ? currentAwayName : currentHomeName;
+
+  return {
+    eventId: match.eventId || null,
+    date: match.date || null,
+    homeTeamId,
+    awayTeamId,
+    home,
+    away,
+    score: `${goalsFor}-${goalsAgainst}`,
+  };
+}
+
 function predict(input) {
   const avgLeagueGoals = 1.35;
   const homeSplit = pickHomeStrength(input.homeRecent);
@@ -845,6 +911,11 @@ function predict(input) {
     const balance = (Number(input.h2h.homeWins || 0) - Number(input.h2h.awayWins || 0)) / Math.max(Number(input.h2h.played || 1), 1);
     homeXG *= clamp(1 + balance * 0.05, 0.92, 1.08);
     awayXG *= clamp(1 - balance * 0.05, 0.92, 1.08);
+  }
+
+  if (input.matchImportance && input.matchImportance > 1) {
+    homeXG *= clamp(input.matchImportance, 1, 1.08);
+    awayXG *= clamp(input.matchImportance, 1, 1.08);
   }
 
   homeXG = clamp(homeXG, 0.22, 3.8);
@@ -918,7 +989,9 @@ function predict(input) {
       homeAwayEdge,
       clubEloDiff: homeClubElo > 0 && awayClubElo > 0 ? Math.round(homeClubElo - awayClubElo) : null,
       stakes: input.context?.summary || null,
+      matchImportance: input.matchImportance || 1,
     },
+    matchImportance: input.matchImportance || 1,
   };
 }
 
@@ -1107,11 +1180,40 @@ async function main() {
         store.weatherCache[weatherKey] = { updated: now, data: weather };
       }
 
-      const aggregate = buildAggregateInfo(event, eventDetails, h2h);
       const homeRecent = store.teamStats[homeId] || null;
       const awayRecent = store.teamStats[awayId] || null;
+      const fallbackPreviousLeg = findPreviousLegFromRecent(
+        homeRecent,
+        awayRecent,
+        homeId,
+        awayId,
+        homeName,
+        awayName,
+        tournamentId,
+        seasonId,
+        event.id
+      );
+      if ((!h2h || !h2h.played) && fallbackPreviousLeg) {
+        h2h = {
+          played: 1,
+          homeWins: 0,
+          draws: 0,
+          awayWins: 0,
+          results: [fallbackPreviousLeg],
+          status: "fallback",
+        };
+      } else if (fallbackPreviousLeg && !String(JSON.stringify(h2h?.results || [])).includes(String(fallbackPreviousLeg.score))) {
+        h2h = {
+          ...(h2h || {}),
+          results: [...(h2h?.results || []), fallbackPreviousLeg],
+          played: Number(h2h?.played || 0) + 1,
+          status: h2h?.status || "loaded",
+        };
+      }
+      const aggregate = buildAggregateInfo(event, eventDetails, h2h, fallbackPreviousLeg);
       const homeRestDays = calcRestDays(homeRecent?.lastMatchKickoff, kickoff);
       const awayRestDays = calcRestDays(awayRecent?.lastMatchKickoff, kickoff);
+      const matchImportance = calcMatchImportance(homePos, awayPos, standing?.rows?.length || 20);
       const context = buildContext({
         standingMeta,
         homePos,
@@ -1142,6 +1244,7 @@ async function main() {
         homeClubElo,
         awayClubElo,
         context,
+        matchImportance,
       });
 
       const matchId = `ss-${event.id}`;
@@ -1187,6 +1290,7 @@ async function main() {
         awayClubElo,
         homePos,
         awayPos,
+        matchImportance,
         roundLabel: extractRoundLabel(eventDetails),
         context,
         modelEdges: prediction.modelEdges,
@@ -1210,6 +1314,7 @@ async function main() {
         context,
         homeClubElo,
         awayClubElo,
+        matchImportance,
         ...prediction,
       });
 
