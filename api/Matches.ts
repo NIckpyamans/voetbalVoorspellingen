@@ -33,7 +33,6 @@ export default async function handler(req: any, res: any) {
 
     if (store.matches?.[targetDate]) {
       let matches = store.matches[targetDate];
-
       if (live === "true") {
         matches = matches.filter((m: any) => String(m.status || "").toUpperCase() === "LIVE");
       }
@@ -44,7 +43,7 @@ export default async function handler(req: any, res: any) {
         total: matches.length,
         date: targetDate,
         lastRun,
-        source: "github-worker-v7",
+        source: "github-worker-v2-free",
       });
     }
 
