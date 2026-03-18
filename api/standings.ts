@@ -15,6 +15,7 @@ export default async function handler(req: any, res: any) {
       return res.status(200).json({
         standings: {},
         knockoutOverview: {},
+        cupSheets: {},
         error: `GitHub ${response.status}`,
       });
     }
@@ -23,6 +24,7 @@ export default async function handler(req: any, res: any) {
     return res.status(200).json({
       standings: store.standings || {},
       knockoutOverview: store.knockoutOverview || {},
+      cupSheets: store.cupSheets || {},
       lastRun: store.lastRun || null,
       workerVersion: store.workerVersion || "unknown",
     });
@@ -30,6 +32,7 @@ export default async function handler(req: any, res: any) {
     return res.status(200).json({
       standings: {},
       knockoutOverview: {},
+      cupSheets: {},
       error: err?.message || "Unknown error",
     });
   }
