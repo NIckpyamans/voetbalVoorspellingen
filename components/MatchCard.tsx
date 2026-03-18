@@ -262,13 +262,18 @@ const MatchCard: React.FC<MatchCardProps> = ({ match, prediction, onFavoriteChan
 
         <div className="min-w-[104px] text-center">
           <div className="text-xl font-black text-white">{match.score || "vs"}</div>
-          <div className="bg-blue-600 px-2 py-0.5 rounded-full text-[10px] font-black text-white">
-            {prediction.predHomeGoals}-{prediction.predAwayGoals}
+          {liveMinute && (
+            <div className="mt-1 text-[8px] text-red-200 bg-red-900/30 border border-red-500/20 rounded-full px-2 py-0.5">
+              Minuut {liveMinute}
+            </div>
+          )}
+          <div className="mt-1 bg-blue-600 px-2 py-0.5 rounded-full text-[10px] font-black text-white">
+            Voorspelling {prediction.predHomeGoals}-{prediction.predAwayGoals}
           </div>
           {aggregate?.active && (
             <div className="mt-1 space-y-1">
               <div className="text-[8px] text-amber-300 bg-amber-900/20 border border-amber-500/15 rounded-full px-2 py-0.5">
-                Eerste duel {aggregate.firstLegScore || "?"}
+                Eerste duel {aggregate.firstLegText || aggregate.firstLegScore || "?"}
               </div>
               <div className="text-[8px] text-amber-300 bg-amber-900/20 border border-amber-500/15 rounded-full px-2 py-0.5">
                 Agg {aggregate.aggregateScore || "-"}
