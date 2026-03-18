@@ -503,7 +503,7 @@ const App: React.FC = () => {
                   </section>
                 )}
 
-                {activeFilter === "gespeeld" && finishedMatches.length > 0 && (
+                {(activeFilter === "alle" || activeFilter === "gespeeld" || activeFilter === "favorieten") && finishedMatches.length > 0 && (
                   <section>
                     <div className="flex items-center gap-2 mb-3">
                       <span className="w-2 h-2 bg-slate-400 rounded-full" />
