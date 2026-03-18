@@ -939,6 +939,7 @@ function defaultStore() {
     matches: {},
     standings: {},
     knockoutOverview: {},
+    cupSheets: {},
     teamStats: {},
     teamStatsUpdated: {},
     teamInjuries: {},
@@ -972,7 +973,9 @@ async function main() {
   const dates = [today, tomorrow];
 
   if (!store.knockoutOverview) store.knockoutOverview = {};
+  if (!store.cupSheets) store.cupSheets = {};
   for (const date of dates) store.knockoutOverview[date] = [];
+  store.cupSheets = {};
 
   let clubEloSnapshot = store.clubEloCache;
   if (!clubEloSnapshot || !store.clubEloUpdated || now - store.clubEloUpdated > CLUB_ELO_TTL) {
@@ -1211,7 +1214,7 @@ async function main() {
       });
 
       if (leagueInfo.type === "cup" || aggregate?.active || context.summary?.includes("play-off")) {
-        store.knockoutOverview[date].push({
+        const knockoutItem = {
           league: leagueInfo.label,
           roundLabel: extractRoundLabel(eventDetails),
           stakes: context.stakes,
@@ -1222,7 +1225,21 @@ async function main() {
           aggregate,
           score,
           status: event.status?.type === "inprogress" ? "LIVE" : event.status?.type === "finished" ? "FT" : "NS",
-        });
+        };
+
+        store.knockoutOverview[date].push(knockoutItem);
+
+        if (!store.cupSheets[leagueInfo.label]) {
+          store.cupSheets[leagueInfo.label] = {
+            league: leagueInfo.label,
+            rounds: {},
+          };
+        }
+        const roundKey = String(extractRoundLabel(eventDetails) || "Knock-out");
+        if (!store.cupSheets[leagueInfo.label].rounds[roundKey]) {
+          store.cupSheets[leagueInfo.label].rounds[roundKey] = [];
+        }
+        store.cupSheets[leagueInfo.label].rounds[roundKey].push(knockoutItem);
       }
 
       await sleep(40);
@@ -1279,4 +1296,3 @@ async function main() {
 }
 
 main();
-
