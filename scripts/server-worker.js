@@ -813,14 +813,21 @@ function findPreviousLegFromRecent(
     ...(awayRecent?.recentMatches || []),
   ];
 
+  const homeNameNorm = normalizeName(currentHomeName);
+  const awayNameNorm = normalizeName(currentAwayName);
+
   const match = combined.find((item) => {
-    if (!item?.opponentId) return false;
     if (String(item.eventId || "") === String(currentEventId || "")) return false;
     if (tournamentId && item.tournamentId && item.tournamentId !== tournamentId) return false;
     if (seasonId && item.seasonId && item.seasonId !== seasonId) return false;
-    return (
+    const opponentIdMatch =
       String(item.opponentId || "") === String(currentAwayId || "") ||
-      String(item.opponentId || "") === String(currentHomeId || "")
+      String(item.opponentId || "") === String(currentHomeId || "");
+    const opponentNameNorm = normalizeName(item.opponent || "");
+    const opponentNameMatch =
+      opponentNameNorm === homeNameNorm || opponentNameNorm === awayNameNorm;
+    return (
+      opponentIdMatch || opponentNameMatch
     );
   });
 
