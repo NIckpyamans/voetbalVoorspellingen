@@ -1,3 +1,11 @@
+function recentSummary(teamName: string, recent: any) {
+  const form = recent?.form || "onbekend";
+  const lastFive = (recent?.recentMatches || [])
+    .map((item: any) => `${item.venue || "?"}${item.result || "?"} ${item.score || "-"}`)
+    .join(" | ");
+  return `${teamName}: vorm ${form}${lastFive ? `, laatste 5 ${lastFive}` : ""}`;
+}
+
 function buildTemplateAnalysis(match: any, prediction: any) {
   const home = match.homeTeamName;
   const away = match.awayTeamName;
@@ -7,49 +15,36 @@ function buildTemplateAnalysis(match: any, prediction: any) {
   const homeXG = Number(prediction.homeXG || 0).toFixed(2);
   const awayXG = Number(prediction.awayXG || 0).toFixed(2);
 
-  const fav =
+  const favorite =
     homeProb >= drawProb && homeProb >= awayProb
       ? `${home} is favoriet`
       : awayProb >= homeProb && awayProb >= drawProb
         ? `${away} is favoriet`
-        : "gelijkspel ligt relatief dicht bij de topkans";
-
-  const h2h = match.h2h || prediction.h2h;
-  const homeRest = match.homeRestDays ?? prediction.homeRestDays;
-  const awayRest = match.awayRestDays ?? prediction.awayRestDays;
-  const weather = match.weather || prediction.weather;
-  const lineup = match.lineupSummary || prediction.lineupSummary;
-  const modelEdges = prediction.modelEdges || match.modelEdges;
+        : "gelijkspel zit dicht bij de topkans";
 
   const signals: string[] = [];
-  if (homeRest != null && awayRest != null) {
-    const diff = Number(homeRest) - Number(awayRest);
-    if (Math.abs(diff) >= 1.5) {
-      signals.push(
-        diff > 0
-          ? `${home} heeft meer rust (${homeRest} tegen ${awayRest} dagen)`
-          : `${away} heeft meer rust (${awayRest} tegen ${homeRest} dagen)`
-      );
-    }
-  }
-  if (weather?.riskLevel && weather.riskLevel !== "low") {
-    signals.push(
-      `het weer kan invloed hebben met ${weather.windSpeed ?? "?"} km/u wind en ${weather.precipitationProbability ?? "?"}% neerslagkans`
-    );
-  }
-  if (lineup?.confirmed) signals.push("de bevestigde opstellingen zijn al meegenomen");
-  if (h2h?.played >= 4) signals.push(`in de recente H2H staat het ${h2h.homeWins}-${h2h.draws}-${h2h.awayWins}`);
-  if (modelEdges?.weatherRisk === "high") signals.push("de omstandigheden drukken waarschijnlijk het tempo");
+  const context = match.context || prediction.context;
+  const aggregate = match.aggregate || prediction.aggregate;
+  const h2h = match.h2h || prediction.h2h;
+  const weather = match.weather || prediction.weather;
+  const lineup = match.lineupSummary || prediction.lineupSummary;
 
-  const signalSentence =
-    signals.length > 0 ? signals.slice(0, 2).join(" en ") : "de kernsignalen komen uit vorm, Elo en thuis-uit splits";
+  if (context?.summary) signals.push(context.summary);
+  if (aggregate?.active && aggregate.aggregateScore) signals.push(`aggregate ${aggregate.aggregateScore}`);
+  if (h2h?.played >= 3) signals.push(`H2H ${h2h.homeWins}-${h2h.draws}-${h2h.awayWins}`);
+  if (weather?.riskLevel && weather.riskLevel !== "low") {
+    signals.push(`weerimpact ${weather.temperature ?? "?"}C en ${weather.precipitationProbability ?? "?"}% neerslagkans`);
+  }
+  if (lineup?.confirmed) signals.push("bevestigde opstellingen");
 
   let tip = "BTTS Ja";
-  if ((prediction.over25 || 0) >= 0.62) tip = "Over 2.5";
-  if ((prediction.homeProb || 0) >= 0.56) tip = `${home} wint`;
-  if ((prediction.awayProb || 0) >= 0.56) tip = `${away} wint`;
+  if ((prediction.homeProb || 0) >= 0.55) tip = `${home} wint`;
+  else if ((prediction.awayProb || 0) >= 0.55) tip = `${away} wint`;
+  else if ((prediction.over25 || 0) >= 0.62) tip = "Over 2.5";
 
-  return `${fav} met ${homeProb}%-${drawProb}%-${awayProb}% en een verwacht scorebeeld van ${prediction.predHomeGoals}-${prediction.predAwayGoals} op basis van ${homeXG}-${awayXG} xG. ${signalSentence}. Tip: ${tip}.`;
+  const signalText = signals.length ? signals.slice(0, 3).join(", ") : "vorm, thuis-uit splits en modelkansen";
+
+  return `${favorite} met ${homeProb}%-${drawProb}%-${awayProb}% en een verwacht scorebeeld van ${prediction.predHomeGoals}-${prediction.predAwayGoals} op basis van ${homeXG}-${awayXG} xG. Belangrijkste signalen: ${signalText}. Tip: ${tip}.`;
 }
 
 async function tryOllama(prompt: string) {
@@ -64,14 +59,13 @@ async function tryOllama(prompt: string) {
         model: process.env.OLLAMA_MODEL || "gpt-oss:20b",
         prompt,
         stream: false,
-        options: { temperature: 0.3 },
+        options: { temperature: 0.25 },
       }),
     });
     clearTimeout(timeout);
     if (!response.ok) return null;
     const data = await response.json();
-    const text = String(data?.response || "").trim();
-    return text || null;
+    return String(data?.response || "").trim() || null;
   } catch {
     clearTimeout(timeout);
     return null;
@@ -92,12 +86,12 @@ export default async function handler(req: any, res: any) {
     }
 
     const h2h = match.h2h || prediction.h2h;
-    const homeInj = match.homeInjuries;
-    const awayInj = match.awayInjuries;
+    const aggregate = match.aggregate || prediction.aggregate;
+    const context = match.context || prediction.context;
     const weather = match.weather || prediction.weather;
     const lineup = match.lineupSummary || prediction.lineupSummary;
 
-    const prompt = `Je bent een professionele Nederlandse voetbalanalist. Schrijf precies 3 zinnen, direct en concreet.
+    const prompt = `Je bent een professionele Nederlandse voetbalanalist. Schrijf precies 3 zinnen, compact en concreet.
 WEDSTRIJD: ${match.homeTeamName} vs ${match.awayTeamName}
 COMPETITIE: ${match.league}
 VOORSPELLING: ${prediction.predHomeGoals}-${prediction.predAwayGoals}
@@ -107,16 +101,18 @@ OVER 2.5: ${((prediction.over25 || 0) * 100).toFixed(0)}%
 BTTS: ${((prediction.btts || 0) * 100).toFixed(0)}%
 THUIS VORM: ${prediction.homeForm || match.homeForm || "onbekend"}
 UIT VORM: ${prediction.awayForm || match.awayForm || "onbekend"}
-ELO: ${prediction.homeElo || "?"} - ${prediction.awayElo || "?"}
+${recentSummary(match.homeTeamName, match.homeRecent)}
+${recentSummary(match.awayTeamName, match.awayRecent)}
 RUSTDAGEN: ${match.homeRestDays ?? prediction.homeRestDays ?? "?"} - ${match.awayRestDays ?? prediction.awayRestDays ?? "?"}
+CLUB ELO: ${prediction.homeClubElo ?? match.homeClubElo ?? "?"} - ${prediction.awayClubElo ?? match.awayClubElo ?? "?"}
 WEER: ${weather ? `${weather.temperature ?? "?"}C, wind ${weather.windSpeed ?? "?"}, regenkans ${weather.precipitationProbability ?? "?"}%` : "onbekend"}
-LINEUPS BEVESTIGD: ${lineup?.confirmed ? "ja" : "nee"}
-${homeInj?.injuredCount > 0 ? `BLESSURES THUIS: ${homeInj.injuredCount}` : ""}
-${awayInj?.injuredCount > 0 ? `BLESSURES UIT: ${awayInj.injuredCount}` : ""}
+LINEUPS: ${lineup?.confirmed ? "bevestigd" : "open"}
 ${h2h?.played >= 2 ? `H2H: ${h2h.homeWins}-${h2h.draws}-${h2h.awayWins}` : ""}
+${aggregate?.active ? `TWEELUIK: eerste duel ${aggregate.firstLegScore || "?"}, aggregate ${aggregate.aggregateScore || "?"}` : ""}
+${context?.summary ? `CONTEXT: ${context.summary}` : ""}
 Regels:
-- Zin 1: verwachte uitkomst met onderbouwing
-- Zin 2: belangrijkste extra signaal uit rust, weer, blessures, H2H of lineups
+- Zin 1: uitkomst met onderbouwing
+- Zin 2: vorm/context/tweeluik of H2H
 - Zin 3: concrete tip
 - Nederlands
 - geen intro of afsluiter`;
