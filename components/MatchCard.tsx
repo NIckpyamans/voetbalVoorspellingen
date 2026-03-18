@@ -24,7 +24,7 @@ function useLiveMinute(match: any) {
 
   useEffect(() => {
     if (String(match?.status || "").toUpperCase() !== "LIVE" && !match?.minute && !match?.minuteValue) return;
-    const timer = window.setInterval(() => setNow(Date.now()), 15000);
+    const timer = window.setInterval(() => setNow(Date.now()), 30000);
     return () => window.clearInterval(timer);
   }, [match?.status, match?.minute, match?.minuteValue, match?.liveUpdatedAt]);
 
@@ -32,7 +32,7 @@ function useLiveMinute(match: any) {
     const period = String(match?.period || "").toLowerCase();
     if (period.includes("half time") || period.includes("halftime") || period.includes("break")) return "HT";
     const base = parseMinuteValue(match?.minute, match?.minuteValue);
-    if (base == null) return null;
+    if (base == null) return String(match?.status || "").toUpperCase() === "LIVE" ? "LIVE" : null;
     const updatedAt = Number(match?.liveUpdatedAt || 0) || 0;
     const drift = updatedAt > 0 ? Math.max(0, Math.floor((now - updatedAt) / 60000)) : 0;
     const total = base + drift;
@@ -237,10 +237,10 @@ const MatchCard: React.FC<MatchCardProps> = ({ match, prediction, onFavoriteChan
             {match.kickoff ? new Date(match.kickoff).toLocaleString("nl-NL") : ""}
             {match.roundLabel ? ` · ${match.roundLabel}` : ""}
           </div>
-          {liveMinute && (
+          {isLive && (
             <div className="mt-1 inline-flex items-center gap-1 rounded-full bg-red-900/35 border border-red-500/25 px-2 py-0.5">
               <span className="w-1.5 h-1.5 rounded-full bg-red-500 animate-pulse" />
-              <span className="text-[9px] font-black text-red-200">LIVE {liveMinute}</span>
+              <span className="text-[9px] font-black text-red-200">{liveMinute && liveMinute !== "LIVE" ? `LIVE ${liveMinute}` : "LIVE nu"}</span>
             </div>
           )}
         </div>
