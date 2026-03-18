@@ -45,6 +45,11 @@ interface KnockoutItem {
   status?: string;
 }
 
+interface CupSheet {
+  league: string;
+  rounds: Record<string, KnockoutItem[]>;
+}
+
 function zoneClasses(color?: string) {
   if (color === "blue") return "border-l-blue-500 text-blue-400";
   if (color === "amber") return "border-l-amber-500 text-amber-400";
@@ -52,37 +57,51 @@ function zoneClasses(color?: string) {
   return "border-l-slate-600 text-slate-400";
 }
 
+function scoreLoser(item: KnockoutItem) {
+  const aggregate = item.aggregate;
+  if (!aggregate?.active || !aggregate.aggregateScore) return null;
+  if (!aggregate.leader) return null;
+  return aggregate.leader === item.homeTeamName ? item.awayTeamName : item.homeTeamName;
+}
+
 const StandingsView: React.FC = () => {
   const [standings, setStandings] = useState<Record<string, LeagueStanding>>({});
-  const [knockoutOverview, setKnockoutOverview] = useState<Record<string, KnockoutItem[]>>({});
+  const [cupSheets, setCupSheets] = useState<Record<string, CupSheet>>({});
   const [loading, setLoading] = useState(true);
-  const [selected, setSelected] = useState<string | null>(null);
+  const [mode, setMode] = useState<"league" | "cup">("league");
+  const [selectedLeague, setSelectedLeague] = useState<string | null>(null);
+  const [selectedCup, setSelectedCup] = useState<string | null>(null);
 
   useEffect(() => {
     fetch("/api/standings")
       .then((response) => response.json())
       .then((data) => {
-        setStandings(data.standings || {});
-        setKnockoutOverview(data.knockoutOverview || {});
-        const keys = Object.keys(data.standings || {});
-        if (keys.length > 0) setSelected(keys[0]);
+        const nextStandings = data.standings || {};
+        const nextCupSheets = data.cupSheets || {};
+        setStandings(nextStandings);
+        setCupSheets(nextCupSheets);
+
+        const standingKeys = Object.keys(nextStandings);
+        const cupKeys = Object.keys(nextCupSheets);
+        if (standingKeys.length > 0) setSelectedLeague(standingKeys[0]);
+        if (cupKeys.length > 0) setSelectedCup(cupKeys[0]);
+        if (standingKeys.length === 0 && cupKeys.length > 0) setMode("cup");
       })
       .finally(() => setLoading(false));
   }, []);
 
-  const sortedKeys = useMemo(() => {
+  const sortedLeagueKeys = useMemo(() => {
     return Object.keys(standings).sort((a, b) =>
       String(standings[a]?.label || "").localeCompare(String(standings[b]?.label || ""))
     );
   }, [standings]);
 
-  const knockoutItems = useMemo(() => {
-    return Object.values(knockoutOverview)
-      .flat()
-      .sort((a, b) => String(a.kickoff || "").localeCompare(String(b.kickoff || "")));
-  }, [knockoutOverview]);
+  const sortedCupKeys = useMemo(() => {
+    return Object.keys(cupSheets).sort((a, b) => a.localeCompare(b));
+  }, [cupSheets]);
 
-  const currentStanding = selected ? standings[selected] : null;
+  const currentStanding = selectedLeague ? standings[selectedLeague] : null;
+  const currentCup = selectedCup ? cupSheets[selectedCup] : null;
 
   if (loading) {
     return (
@@ -94,11 +113,11 @@ const StandingsView: React.FC = () => {
     );
   }
 
-  if (sortedKeys.length === 0 && knockoutItems.length === 0) {
+  if (sortedLeagueKeys.length === 0 && sortedCupKeys.length === 0) {
     return (
       <div className="text-center py-20 text-slate-500">
         <div className="text-5xl mb-3">Standen</div>
-        <div className="font-bold">Standen en knock-out info verschijnen na de volgende worker run.</div>
+        <div className="font-bold">Standen en bekerschema verschijnen na de volgende worker run.</div>
       </div>
     );
   }
@@ -106,55 +125,42 @@ const StandingsView: React.FC = () => {
   return (
     <div className="space-y-5">
       <div>
-        <h2 className="text-2xl font-black text-white uppercase tracking-tight">Standen & knock-out</h2>
-        {currentStanding && (
-          <p className="text-slate-500 text-xs mt-1">
-            Bijgewerkt: {new Date(currentStanding.updated).toLocaleString("nl-NL")}
-          </p>
-        )}
+        <h2 className="text-2xl font-black text-white uppercase tracking-tight">Standen & bekerschema</h2>
+        <p className="text-slate-500 text-xs mt-1">
+          Competities en bekerwedstrijden staan nu apart, per toernooi en ronde.
+        </p>
       </div>
 
-      {knockoutItems.length > 0 && (
-        <section className="glass-card rounded-2xl border border-white/5 p-4">
-          <div className="text-sm font-black uppercase text-white mb-3">Knock-out & play-offs</div>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-            {knockoutItems.map((item) => (
-              <div key={item.matchId} className="rounded-xl border border-white/5 bg-slate-900/50 p-3">
-                <div className="text-[10px] uppercase text-amber-400 font-black">{item.league}</div>
-                <div className="text-[11px] text-slate-400 mt-1">
-                  {item.roundLabel || "Knock-out"}{item.stakes ? ` · ${item.stakes}` : ""}
-                </div>
-                <div className="mt-2 text-sm font-black text-white">
-                  {item.homeTeamName} vs {item.awayTeamName}
-                </div>
-                <div className="text-[11px] text-slate-400 mt-1">
-                  {item.score || "Nog niet gestart"}
-                  {item.aggregate?.active && item.aggregate.aggregateScore
-                    ? ` · aggregate ${item.aggregate.aggregateScore}`
-                    : ""}
-                </div>
-                {item.aggregate?.firstLegText && (
-                  <div className="text-[11px] text-slate-500 mt-1">
-                    Eerste duel: {item.aggregate.firstLegText}
-                  </div>
-                )}
-              </div>
-            ))}
-          </div>
-        </section>
-      )}
+      <div className="flex gap-2">
+        <button
+          onClick={() => setMode("league")}
+          className={`px-4 py-2 rounded-xl text-xs font-black ${
+            mode === "league" ? "bg-blue-600 text-white" : "bg-slate-800 text-slate-300"
+          }`}
+        >
+          Standen
+        </button>
+        <button
+          onClick={() => setMode("cup")}
+          className={`px-4 py-2 rounded-xl text-xs font-black ${
+            mode === "cup" ? "bg-blue-600 text-white" : "bg-slate-800 text-slate-300"
+          }`}
+        >
+          Bekerschema
+        </button>
+      </div>
 
-      {sortedKeys.length > 0 && (
+      {mode === "league" && sortedLeagueKeys.length > 0 && (
         <>
           <div className="flex gap-1.5 overflow-x-auto scrollbar-hide pb-1">
-            {sortedKeys.map((key) => {
+            {sortedLeagueKeys.map((key) => {
               const label = standings[key]?.label || key;
               return (
                 <button
                   key={key}
-                  onClick={() => setSelected(key)}
+                  onClick={() => setSelectedLeague(key)}
                   className={`flex-shrink-0 px-3 py-1.5 rounded-lg text-[10px] font-black transition ${
-                    selected === key ? "bg-blue-600 text-white" : "bg-slate-800 text-slate-300 hover:bg-slate-700"
+                    selectedLeague === key ? "bg-blue-600 text-white" : "bg-slate-800 text-slate-300 hover:bg-slate-700"
                   }`}
                 >
                   {label}
@@ -182,6 +188,7 @@ const StandingsView: React.FC = () => {
                   currentStanding.meta?.zones?.find(
                     (item) => row.pos >= item.from && row.pos <= item.to
                   ) || null;
+
                 return (
                   <div
                     key={row.teamId || index}
@@ -232,6 +239,73 @@ const StandingsView: React.FC = () => {
                   </div>
                 ))}
               </div>
+            </div>
+          )}
+        </>
+      )}
+
+      {mode === "cup" && sortedCupKeys.length > 0 && (
+        <>
+          <div className="flex gap-1.5 overflow-x-auto scrollbar-hide pb-1">
+            {sortedCupKeys.map((key) => (
+              <button
+                key={key}
+                onClick={() => setSelectedCup(key)}
+                className={`flex-shrink-0 px-3 py-1.5 rounded-lg text-[10px] font-black transition ${
+                  selectedCup === key ? "bg-blue-600 text-white" : "bg-slate-800 text-slate-300 hover:bg-slate-700"
+                }`}
+              >
+                {key}
+              </button>
+            ))}
+          </div>
+
+          {currentCup && (
+            <div className="space-y-4">
+              {Object.entries(currentCup.rounds)
+                .sort((a, b) => a[0].localeCompare(b[0]))
+                .map(([round, items]) => (
+                  <section key={round} className="glass-card rounded-2xl border border-white/5 p-4">
+                    <div className="text-sm font-black uppercase text-white mb-3">{round}</div>
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                      {items
+                        .sort((a, b) => String(a.kickoff || "").localeCompare(String(b.kickoff || "")))
+                        .map((item) => {
+                          const loser = scoreLoser(item);
+                          return (
+                            <div key={item.matchId} className="rounded-xl border border-white/5 bg-slate-900/50 p-3">
+                              <div className="text-[10px] uppercase text-amber-400 font-black">{item.league}</div>
+                              <div className="text-[11px] text-slate-400 mt-1">
+                                {item.stakes || "Knock-out"}
+                              </div>
+                              <div className="mt-2 space-y-1">
+                                <div className={`text-sm font-black ${loser === item.homeTeamName ? "text-slate-500 line-through" : "text-white"}`}>
+                                  {item.homeTeamName}
+                                </div>
+                                <div className={`text-sm font-black ${loser === item.awayTeamName ? "text-slate-500 line-through" : "text-white"}`}>
+                                  {item.awayTeamName}
+                                </div>
+                              </div>
+                              <div className="text-[11px] text-slate-300 mt-2">
+                                Huidig duel: {item.score || "Nog niet gestart"}
+                              </div>
+                              {item.aggregate?.active && (
+                                <>
+                                  <div className="text-[11px] text-amber-300 mt-1">
+                                    Eerste duel: {item.aggregate.firstLegText || item.aggregate.firstLegScore || "onbekend"}
+                                  </div>
+                                  <div className="text-[11px] text-amber-300">
+                                    Aggregate: {item.aggregate.aggregateScore || "-"}
+                                    {item.aggregate.leader ? ` · ${item.aggregate.leader} door` : ""}
+                                  </div>
+                                </>
+                              )}
+                            </div>
+                          );
+                        })}
+                    </div>
+                  </section>
+                ))}
             </div>
           )}
         </>
