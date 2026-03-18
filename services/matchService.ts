@@ -1,7 +1,7 @@
 import { Match } from "../types";
 
 const CACHE_VERSION = "v3_rich";
-const LIVE_CACHE_AGE_MS = 15_000;
+const LIVE_CACHE_AGE_MS = 30_000;
 const TODAY_CACHE_AGE_MS = 90_000;
 const OTHER_CACHE_AGE_MS = 30 * 60_000;
 
