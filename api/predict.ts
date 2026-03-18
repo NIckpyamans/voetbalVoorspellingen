@@ -18,8 +18,6 @@ function buildDerivedOdds(prediction: any) {
 
 function buildValueFlags(prediction: any) {
   const odds = prediction.odds || {};
-  const derived = buildDerivedOdds(prediction);
-
   const compare = (modelProb: number, marketOdd?: number | string | null) => {
     const odd = Number(marketOdd);
     if (!Number.isFinite(odd) || odd <= 1.01) return null;
@@ -33,7 +31,7 @@ function buildValueFlags(prediction: any) {
   };
 
   return {
-    derived,
+    derived: buildDerivedOdds(prediction),
     home: compare(Number(prediction.homeProb || 0), odds.home),
     draw: compare(Number(prediction.drawProb || 0), odds.draw),
     away: compare(Number(prediction.awayProb || 0), odds.away),
@@ -42,20 +40,25 @@ function buildValueFlags(prediction: any) {
 
 function enrichPrediction(prediction: any, matchMap: Record<string, any>) {
   const match = matchMap[prediction.matchId] || null;
-  const odds = prediction.odds || null;
-
   return {
     ...prediction,
-    odds,
     derivedOdds: buildDerivedOdds(prediction),
     valueFlags: buildValueFlags(prediction),
+    odds: prediction.odds || null,
     weather: prediction.weather || match?.weather || null,
     lineupSummary: prediction.lineupSummary || match?.lineupSummary || null,
     h2h: prediction.h2h || match?.h2h || null,
+    h2hStatus: prediction.h2hStatus || match?.h2hStatus || "empty",
+    aggregate: prediction.aggregate || match?.aggregate || null,
+    context: prediction.context || match?.context || null,
     homeRestDays:
       prediction.homeRestDays != null ? prediction.homeRestDays : match?.homeRestDays ?? null,
     awayRestDays:
       prediction.awayRestDays != null ? prediction.awayRestDays : match?.awayRestDays ?? null,
+    homeClubElo:
+      prediction.homeClubElo != null ? prediction.homeClubElo : match?.homeClubElo ?? null,
+    awayClubElo:
+      prediction.awayClubElo != null ? prediction.awayClubElo : match?.awayClubElo ?? null,
     modelEdges: prediction.modelEdges || match?.modelEdges || null,
     match,
   };
@@ -67,9 +70,7 @@ export default async function handler(req: any, res: any) {
   res.setHeader("Cache-Control", "no-store");
 
   try {
-    const date =
-      (req.query?.date as string) || new Date().toISOString().split("T")[0];
-
+    const date = (req.query?.date as string) || new Date().toISOString().split("T")[0];
     const response = await fetch(`${GITHUB_RAW_URL}?t=${Date.now()}`, {
       headers: { "Cache-Control": "no-cache" },
     });
@@ -84,19 +85,15 @@ export default async function handler(req: any, res: any) {
     }
 
     const store = await response.json();
-    const serverPredictions: any[] = store.predictions?.[date] || [];
+    const predictions: any[] = store.predictions?.[date] || [];
     const matches: any[] = store.matches?.[date] || [];
     const matchMap = Object.fromEntries(matches.map((match: any) => [match.id, match]));
 
-    const enriched = serverPredictions.map((prediction: any) =>
-      enrichPrediction(prediction, matchMap)
-    );
-
     return res.status(200).json({
       date,
-      predictions: enriched,
-      total: enriched.length,
-      source: enriched.length > 0 ? "server-data-v2" : "none",
+      predictions: predictions.map((prediction) => enrichPrediction(prediction, matchMap)),
+      total: predictions.length,
+      source: predictions.length ? "server-data-v3" : "none",
       lastRun: store.lastRun || null,
     });
   } catch (err: any) {
