@@ -36,7 +36,7 @@ const LivePanel: React.FC<LivePanelProps> = ({ open, onClose, liveMatches, onJum
 
   useEffect(() => {
     if (!open) return;
-    const timer = window.setInterval(() => setNow(Date.now()), 15000);
+    const timer = window.setInterval(() => setNow(Date.now()), 30000);
     return () => window.clearInterval(timer);
   }, [open]);
 
