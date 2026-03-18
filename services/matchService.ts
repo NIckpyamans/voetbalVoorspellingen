@@ -1,6 +1,6 @@
 import { Match } from "../types";
 
-const CACHE_VERSION = "v2_free";
+const CACHE_VERSION = "v3_rich";
 const LIVE_CACHE_AGE_MS = 15_000;
 const TODAY_CACHE_AGE_MS = 90_000;
 const OTHER_CACHE_AGE_MS = 30 * 60_000;
@@ -60,7 +60,6 @@ function readCache(dateISO: string) {
     const parsed = JSON.parse(raw);
     const matches = parsed.matches || [];
     const maxAge = getMaxCacheAge(dateISO, matches);
-
     if (!parsed?.ts || Date.now() - parsed.ts > maxAge) return null;
 
     return {
@@ -73,12 +72,7 @@ function readCache(dateISO: string) {
   }
 }
 
-function writeCache(
-  dateISO: string,
-  matches: Match[],
-  predictions: Record<string, any>,
-  lastRun: number | null
-) {
+function writeCache(dateISO: string, matches: Match[], predictions: Record<string, any>, lastRun: number | null) {
   try {
     localStorage.setItem(
       storageKey(dateISO),
@@ -117,10 +111,15 @@ function mapRawMatch(m: any): Match {
     ...(m.awayForm ? { awayForm: m.awayForm } : {}),
     ...(m.homeElo ? { homeElo: m.homeElo } : {}),
     ...(m.awayElo ? { awayElo: m.awayElo } : {}),
+    ...(m.homeClubElo != null ? { homeClubElo: m.homeClubElo } : {}),
+    ...(m.awayClubElo != null ? { awayClubElo: m.awayClubElo } : {}),
     ...(m.homePos != null ? { homePos: m.homePos } : {}),
     ...(m.awayPos != null ? { awayPos: m.awayPos } : {}),
-    ...(m.matchImportance ? { matchImportance: m.matchImportance } : {}),
     ...(m.h2h ? { h2h: m.h2h } : {}),
+    ...(m.h2hStatus ? { h2hStatus: m.h2hStatus } : {}),
+    ...(m.aggregate ? { aggregate: m.aggregate } : {}),
+    ...(m.context ? { context: m.context } : {}),
+    ...(m.roundLabel != null ? { roundLabel: m.roundLabel } : {}),
     ...(m.homeSeasonStats ? { homeSeasonStats: m.homeSeasonStats } : {}),
     ...(m.awaySeasonStats ? { awaySeasonStats: m.awaySeasonStats } : {}),
     ...(m.homeInjuries ? { homeInjuries: m.homeInjuries } : {}),
@@ -181,6 +180,9 @@ export async function fetchMatchesAndPredictions(
       predictionMap[rawMatch.id] = {
         ...predictionMap[rawMatch.id],
         ...(rawMatch.h2h ? { h2h: rawMatch.h2h } : {}),
+        ...(rawMatch.h2hStatus ? { h2hStatus: rawMatch.h2hStatus } : {}),
+        ...(rawMatch.aggregate ? { aggregate: rawMatch.aggregate } : {}),
+        ...(rawMatch.context ? { context: rawMatch.context } : {}),
         ...(rawMatch.homePos != null ? { homePos: rawMatch.homePos } : {}),
         ...(rawMatch.awayPos != null ? { awayPos: rawMatch.awayPos } : {}),
         ...(rawMatch.homeRestDays != null ? { homeRestDays: rawMatch.homeRestDays } : {}),
@@ -188,6 +190,8 @@ export async function fetchMatchesAndPredictions(
         ...(rawMatch.weather ? { weather: rawMatch.weather } : {}),
         ...(rawMatch.lineupSummary ? { lineupSummary: rawMatch.lineupSummary } : {}),
         ...(rawMatch.modelEdges ? { modelEdges: rawMatch.modelEdges } : {}),
+        ...(rawMatch.homeClubElo != null ? { homeClubElo: rawMatch.homeClubElo } : {}),
+        ...(rawMatch.awayClubElo != null ? { awayClubElo: rawMatch.awayClubElo } : {}),
       };
     }
 
