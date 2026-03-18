@@ -1,77 +1,106 @@
-// api/predict.ts
-// Geeft voorspellingen terug inclusief odds van bookmakers
+const GITHUB_RAW_URL =
+  process.env.DATA_URL ||
+  "https://raw.githubusercontent.com/NIckpyamans/voetbalVoorspellingen/main/server_data.json";
 
-const GITHUB_RAW_URL = process.env.DATA_URL ||
-  'https://raw.githubusercontent.com/NIckpyamans/voetbalVoorspellingen/main/server_data.json';
+function impliedOdds(prob: number | undefined) {
+  const p = Number(prob || 0);
+  if (!p || p <= 0.01) return null;
+  return Number((1 / p).toFixed(2));
+}
 
-const API_BASE = "https://v3.football.api-sports.io";
+function buildDerivedOdds(prediction: any) {
+  return {
+    home: impliedOdds(prediction.homeProb),
+    draw: impliedOdds(prediction.drawProb),
+    away: impliedOdds(prediction.awayProb),
+  };
+}
+
+function buildValueFlags(prediction: any) {
+  const odds = prediction.odds || {};
+  const derived = buildDerivedOdds(prediction);
+
+  const compare = (modelProb: number, marketOdd?: number | string | null) => {
+    const odd = Number(marketOdd);
+    if (!Number.isFinite(odd) || odd <= 1.01) return null;
+    const marketProb = 1 / odd;
+    const edge = modelProb - marketProb;
+    return {
+      edge: Number(edge.toFixed(4)),
+      edgePct: Number((edge * 100).toFixed(1)),
+      value: edge >= 0.04,
+    };
+  };
+
+  return {
+    derived,
+    home: compare(Number(prediction.homeProb || 0), odds.home),
+    draw: compare(Number(prediction.drawProb || 0), odds.draw),
+    away: compare(Number(prediction.awayProb || 0), odds.away),
+  };
+}
+
+function enrichPrediction(prediction: any, matchMap: Record<string, any>) {
+  const match = matchMap[prediction.matchId] || null;
+  const odds = prediction.odds || null;
+
+  return {
+    ...prediction,
+    odds,
+    derivedOdds: buildDerivedOdds(prediction),
+    valueFlags: buildValueFlags(prediction),
+    weather: prediction.weather || match?.weather || null,
+    lineupSummary: prediction.lineupSummary || match?.lineupSummary || null,
+    h2h: prediction.h2h || match?.h2h || null,
+    homeRestDays:
+      prediction.homeRestDays != null ? prediction.homeRestDays : match?.homeRestDays ?? null,
+    awayRestDays:
+      prediction.awayRestDays != null ? prediction.awayRestDays : match?.awayRestDays ?? null,
+    modelEdges: prediction.modelEdges || match?.modelEdges || null,
+    match,
+  };
+}
 
 export default async function handler(req: any, res: any) {
-  res.setHeader('Access-Control-Allow-Origin', '*');
-  res.setHeader('Access-Control-Allow-Methods', 'GET');
-  res.setHeader('Cache-Control', 's-maxage=300');
-
-  const API_KEY = process.env.FOOTBALL_API_KEY;
+  res.setHeader("Access-Control-Allow-Origin", "*");
+  res.setHeader("Access-Control-Allow-Methods", "GET");
+  res.setHeader("Cache-Control", "no-store");
 
   try {
-    const date = (req.query?.date as string) || new Date().toISOString().split('T')[0];
+    const date =
+      (req.query?.date as string) || new Date().toISOString().split("T")[0];
 
-    // 1) Haal server_data.json op van GitHub (AI voorspellingen van worker)
-    let serverPredictions: any[] = [];
-    try {
-      const response = await fetch(GITHUB_RAW_URL, {
-        headers: { 'Cache-Control': 'no-cache' }
+    const response = await fetch(`${GITHUB_RAW_URL}?t=${Date.now()}`, {
+      headers: { "Cache-Control": "no-cache" },
+    });
+
+    if (!response.ok) {
+      return res.status(200).json({
+        date,
+        predictions: [],
+        source: "none",
+        error: `GitHub ${response.status}`,
       });
-      if (response.ok) {
-        const store = await response.json();
-        if (store.predictions?.[date]) {
-          serverPredictions = store.predictions[date];
-        } else {
-          // Geef meest recente terug
-          const dates = Object.keys(store.predictions || {}).sort().reverse();
-          if (dates.length > 0) serverPredictions = store.predictions[dates[0]];
-        }
-      }
-    } catch {}
-
-    // 2) Haal odds op van API-Football (als key beschikbaar)
-    let oddsMap: Record<string, any> = {};
-    if (API_KEY) {
-      try {
-        const oddsRes = await fetch(`${API_BASE}/odds?date=${date}&bookmaker=6`, {
-          headers: { 'x-apisports-key': API_KEY }
-        });
-        if (oddsRes.ok) {
-          const oddsData = await oddsRes.json();
-          for (const item of (oddsData.response || [])) {
-            const fixtureId = item.fixture?.id;
-            const market = item.bookmakers?.[0]?.bets?.find((b: any) => b.name === 'Match Winner');
-            if (fixtureId && market) {
-              oddsMap[fixtureId] = {
-                home: market.values?.find((v: any) => v.value === 'Home')?.odd,
-                draw: market.values?.find((v: any) => v.value === 'Draw')?.odd,
-                away: market.values?.find((v: any) => v.value === 'Away')?.odd,
-              };
-            }
-          }
-        }
-      } catch {}
     }
 
-    // 3) Voeg odds toe aan voorspellingen
-    const enriched = serverPredictions.map((p: any) => ({
-      ...p,
-      odds: oddsMap[p.matchId] || null
-    }));
+    const store = await response.json();
+    const serverPredictions: any[] = store.predictions?.[date] || [];
+    const matches: any[] = store.matches?.[date] || [];
+    const matchMap = Object.fromEntries(matches.map((match: any) => [match.id, match]));
+
+    const enriched = serverPredictions.map((prediction: any) =>
+      enrichPrediction(prediction, matchMap)
+    );
 
     return res.status(200).json({
       date,
       predictions: enriched,
-      source: enriched.length > 0 ? 'server-data' : 'none',
+      total: enriched.length,
+      source: enriched.length > 0 ? "server-data-v2" : "none",
+      lastRun: store.lastRun || null,
     });
-
   } catch (err: any) {
-    console.error('predict api error', err);
-    res.status(500).json({ error: err?.message || 'unknown' });
+    console.error("[predict]", err);
+    return res.status(500).json({ error: err?.message || "unknown" });
   }
 }
