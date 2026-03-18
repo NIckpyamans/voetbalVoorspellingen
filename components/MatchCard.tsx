@@ -59,6 +59,27 @@ function Badge({ label, value, tone = "slate" }: { label: string; value: string;
   );
 }
 
+function Logo({ teamId, directUrl, name }: { teamId: string; directUrl?: string; name: string }) {
+  const [attempt, setAttempt] = useState(0);
+  const sources = [
+    teamId ? `/api/logo?id=${teamId}` : null,
+    teamId ? `https://api.sofascore.app/api/v1/team/${teamId}/image` : null,
+    directUrl || null,
+    `https://ui-avatars.com/api/?name=${encodeURIComponent(name[0] || "?")}&background=1e293b&color=60a5fa&size=80&bold=true&format=png`,
+  ].filter(Boolean) as string[];
+
+  return (
+    <img
+      src={sources[Math.min(attempt, sources.length - 1)]}
+      referrerPolicy="no-referrer"
+      crossOrigin="anonymous"
+      className="w-12 h-12 object-contain rounded-full bg-slate-800/60 p-0.5 mx-auto mb-1"
+      alt={name}
+      onError={() => setAttempt((value) => Math.min(value + 1, sources.length - 1))}
+    />
+  );
+}
+
 const MatchCard: React.FC<MatchCardProps> = ({ match, prediction, onFavoriteChange }) => {
   const [tab, setTab] = useState<"analyse" | "h2h" | "markten" | "stats">("analyse");
   const [aiAnalysis, setAiAnalysis] = useState<string | null>(null);
@@ -109,6 +130,7 @@ const MatchCard: React.FC<MatchCardProps> = ({ match, prediction, onFavoriteChan
 
       <div className="flex items-center justify-between gap-2 mb-3">
         <div className="flex-1 text-center">
+          <Logo teamId={match.homeTeamId || ""} directUrl={match.homeLogo} name={match.homeTeamName} />
           <div className="text-[10px] font-black text-white">{match.homeTeamName}</div>
           <div className="text-[7px] text-slate-500">vorm {match.homeForm || "-"}</div>
         </div>
@@ -119,6 +141,7 @@ const MatchCard: React.FC<MatchCardProps> = ({ match, prediction, onFavoriteChan
           </div>
         </div>
         <div className="flex-1 text-center">
+          <Logo teamId={match.awayTeamId || ""} directUrl={match.awayLogo} name={match.awayTeamName} />
           <div className="text-[10px] font-black text-white">{match.awayTeamName}</div>
           <div className="text-[7px] text-slate-500">vorm {match.awayForm || "-"}</div>
         </div>
