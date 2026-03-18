@@ -83,8 +83,11 @@ const LivePanel: React.FC<LivePanelProps> = ({ open, onClose, liveMatches, onJum
                         <div className="text-sm font-black text-white truncate">
                           {match.homeTeamName} vs {match.awayTeamName}
                         </div>
-                        <div className="text-[11px] text-slate-400 flex gap-2">
-                          <span>{getLiveMinuteLabel(match, now)}</span>
+                        <div className="text-[11px] text-slate-400 flex gap-2 items-center">
+                          <span className="inline-flex items-center gap-1 rounded-full bg-red-900/35 border border-red-500/25 px-2 py-0.5 text-red-200 font-black">
+                            <span className="w-1.5 h-1.5 rounded-full bg-red-500 animate-pulse" />
+                            {getLiveMinuteLabel(match, now)}
+                          </span>
                           {match.weather?.riskLevel && match.weather.riskLevel !== "low" && <span>weer: {match.weather.riskLevel}</span>}
                         </div>
                       </div>
