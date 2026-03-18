@@ -177,6 +177,18 @@ function aggregateLoser(match: any, aggregate: any) {
   return aggregate.leader === match.homeTeamName ? match.awayTeamName : match.homeTeamName;
 }
 
+function showImportance(match: any) {
+  const importance = Number(match.matchImportance || 1);
+  const homePos = Number(match.homePos || 0);
+  const awayPos = Number(match.awayPos || 0);
+  const topOrBottom =
+    (homePos > 0 && homePos <= 3) ||
+    (awayPos > 0 && awayPos <= 3) ||
+    (homePos >= 16 && homePos > 0) ||
+    (awayPos >= 16 && awayPos > 0);
+  return importance > 1.02 || topOrBottom;
+}
+
 const MatchCard: React.FC<MatchCardProps> = ({ match, prediction, onFavoriteChange }) => {
   const [tab, setTab] = useState<"analyse" | "h2h" | "vorm" | "markten" | "stats">("analyse");
   const [aiAnalysis, setAiAnalysis] = useState<string | null>(null);
@@ -211,6 +223,7 @@ const MatchCard: React.FC<MatchCardProps> = ({ match, prediction, onFavoriteChan
   const h2h = match.h2h || prediction.h2h;
   const aggregate = match.aggregate || prediction.aggregate;
   const loser = aggregateLoser(match, aggregate);
+  const importantMatch = showImportance(match);
   const topScores = Object.entries(prediction.scoreMatrix || {})
     .sort((a: any, b: any) => b[1] - a[1])
     .slice(0, 6);
@@ -226,6 +239,11 @@ const MatchCard: React.FC<MatchCardProps> = ({ match, prediction, onFavoriteChan
           </div>
         </div>
         <div className="flex items-center gap-1">
+          {importantMatch && (
+            <span className="bg-amber-900/30 text-amber-300 border border-amber-500/20 text-[8px] font-black px-1.5 py-0.5 rounded-full">
+              Belangrijk
+            </span>
+          )}
           {liveMinute && <span className="bg-red-600/90 text-white text-[9px] font-black px-1.5 py-0.5 rounded">{liveMinute}</span>}
           <FavoriteButton teamId={match.homeTeamId || ""} teamName={match.homeTeamName} onChange={onFavoriteChange} />
           <FavoriteButton teamId={match.awayTeamId || ""} teamName={match.awayTeamName} onChange={onFavoriteChange} />
@@ -236,9 +254,9 @@ const MatchCard: React.FC<MatchCardProps> = ({ match, prediction, onFavoriteChan
         <div className="flex-1 text-center">
           <Logo teamId={match.homeTeamId || ""} directUrl={match.homeLogo} name={match.homeTeamName} />
           <div className={`text-[10px] font-black ${loser === match.homeTeamName ? "text-slate-500 line-through" : "text-white"}`}>
-            {match.homeTeamName}
+            {match.homeTeamName} {match.homePos ? `(#${match.homePos})` : ""}
           </div>
-          <div className="text-[7px] text-slate-500">positie {match.homePos || "-"} · ClubElo {match.homeClubElo ?? "-"}</div>
+          <div className="text-[7px] text-slate-500">ClubElo {match.homeClubElo ?? "-"}</div>
           <FormPills form={match.homeForm} />
         </div>
 
@@ -262,9 +280,9 @@ const MatchCard: React.FC<MatchCardProps> = ({ match, prediction, onFavoriteChan
         <div className="flex-1 text-center">
           <Logo teamId={match.awayTeamId || ""} directUrl={match.awayLogo} name={match.awayTeamName} />
           <div className={`text-[10px] font-black ${loser === match.awayTeamName ? "text-slate-500 line-through" : "text-white"}`}>
-            {match.awayTeamName}
+            {match.awayTeamName} {match.awayPos ? `(#${match.awayPos})` : ""}
           </div>
-          <div className="text-[7px] text-slate-500">positie {match.awayPos || "-"} · ClubElo {match.awayClubElo ?? "-"}</div>
+          <div className="text-[7px] text-slate-500">ClubElo {match.awayClubElo ?? "-"}</div>
           <FormPills form={match.awayForm} />
         </div>
       </div>
