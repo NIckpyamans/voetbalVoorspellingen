@@ -23,7 +23,7 @@ class VelocityEngine {
     await this.fetch(date);
 
     const isToday = date === new Date().toISOString().split("T")[0];
-    const ms = isToday ? 15_000 : 300_000;
+    const ms = isToday ? 30_000 : 300_000;
 
     this.interval = window.setInterval(async () => {
       if (this.currentDate === date) {
