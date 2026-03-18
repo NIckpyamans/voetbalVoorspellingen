@@ -7,7 +7,9 @@
     "dev": "vite",
     "build": "vite build",
     "preview": "vite preview",
+    "check": "tsc --noEmit",
     "worker": "node scripts/server-worker.js",
+    "worker:once": "node scripts/server-worker.js",
     "worker:loop": "bash -lc \"while true; do node scripts/server-worker.js; sleep 30; done\""
   },
   "dependencies": {
