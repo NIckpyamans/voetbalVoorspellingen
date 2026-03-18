@@ -23,18 +23,15 @@ const LEAGUES = [
 
 const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
 const clamp = (v, a, b) => Math.max(a, Math.min(b, v));
-
 const factorial = (n) => {
   if (n <= 1) return 1;
   let result = 1;
   for (let i = 2; i <= n; i += 1) result *= i;
   return result;
 };
-
 const poisson = (lambda, k) => {
   return (Math.pow(lambda, k) * Math.exp(-lambda)) / factorial(k);
 };
-
 
 async function safeFetch(url) {
   try {
@@ -425,4 +422,3 @@ async function main() {
 }
 
 main();
-
