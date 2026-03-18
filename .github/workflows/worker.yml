@@ -1,4 +1,5 @@
 name: Football AI Worker
+
 on:
   schedule:
     - cron: "*/30 * * * *"
@@ -11,9 +12,15 @@ concurrency:
 permissions:
   contents: write
 
+env:
+  TZ: Europe/Amsterdam
+  FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: "true"
+
 jobs:
   run-worker:
     runs-on: ubuntu-latest
+    timeout-minutes: 15
+
     steps:
       - uses: actions/checkout@v4
         with:
@@ -23,11 +30,15 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: 24
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
 
       - name: Run worker
         run: node scripts/server-worker.js
 
-      - name: Commit en push
+      - name: Commit and push data
         run: |
           git config user.name github-actions
           git config user.email github-actions@github.com
