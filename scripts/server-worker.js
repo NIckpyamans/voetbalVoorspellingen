@@ -7,170 +7,408 @@ const SOFA = "https://api.sofascore.com/api/v1";
 const DATA_FILE = path.resolve(process.cwd(), "server_data.json");
 
 const LEAGUES = [
-  ["netherlands", "eredivisie", "Netherlands - Eredivisie"],
-  ["netherlands", "eerste divisie", "Netherlands - Eerste Divisie"],
-  ["england", "premier league", "England - Premier League"],
-  ["england", "championship", "England - Championship"],
-  ["germany", "bundesliga", "Germany - Bundesliga"],
-  ["spain", "laliga", "Spain - LaLiga"],
-  ["italy", "serie a", "Italy - Serie A"],
-  ["france", "ligue 1", "France - Ligue 1"],
-  ["belgium", "pro league", "Belgium - Pro League"],
-  ["", "champions league", "Europe - Champions League"],
-  ["", "europa league", "Europe - Europa League"],
-  ["", "conference league", "Europe - Conference League"],
+  { country: "netherlands", name: "eredivisie", label: "Netherlands - Eredivisie", type: "league" },
+  { country: "netherlands", name: "eerste divisie", label: "Netherlands - Eerste Divisie", type: "league" },
+  { country: "netherlands", name: "knvb beker", label: "Netherlands - KNVB Beker", type: "cup" },
+  { country: "england", name: "premier league", label: "England - Premier League", type: "league" },
+  { country: "england", name: "championship", label: "England - Championship", type: "league" },
+  { country: "germany", name: "bundesliga", label: "Germany - Bundesliga", type: "league" },
+  { country: "germany", name: "2. bundesliga", label: "Germany - 2. Bundesliga", type: "league" },
+  { country: "spain", name: "laliga", label: "Spain - LaLiga", type: "league" },
+  { country: "spain", name: "la liga", label: "Spain - LaLiga", type: "league" },
+  { country: "spain", name: "laliga2", label: "Spain - LaLiga2", type: "league" },
+  { country: "spain", name: "segunda", label: "Spain - LaLiga2", type: "league" },
+  { country: "italy", name: "serie a", label: "Italy - Serie A", type: "league" },
+  { country: "italy", name: "serie b", label: "Italy - Serie B", type: "league" },
+  { country: "france", name: "ligue 1", label: "France - Ligue 1", type: "league" },
+  { country: "france", name: "ligue 2", label: "France - Ligue 2", type: "league" },
+  { country: "portugal", name: "liga portugal", label: "Portugal - Liga Portugal", type: "league" },
+  { country: "portugal", name: "liga portugal 2", label: "Portugal - Liga Portugal 2", type: "league" },
+  { country: "belgium", name: "pro league", label: "Belgium - Pro League", type: "league" },
+  { country: "belgium", name: "challenger pro league", label: "Belgium - Challenger Pro League", type: "league" },
+  { country: "", name: "champions league", label: "Europe - Champions League", type: "cup" },
+  { country: "", name: "europa league", label: "Europe - Europa League", type: "cup" },
+  { country: "", name: "conference league", label: "Europe - Conference League", type: "cup" },
 ];
 
-const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
-const clamp = (v, a, b) => Math.max(a, Math.min(b, v));
-const factorial = (n) => {
+const sleep = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
+const clamp = (value, min, max) => Math.max(min, Math.min(max, value));
+
+const FORM_TTL = 6 * 60 * 60 * 1000;
+const INJURY_TTL = 4 * 60 * 60 * 1000;
+const SEASON_TTL = 12 * 60 * 60 * 1000;
+const H2H_TTL = 3 * 24 * 60 * 60 * 1000;
+const WEATHER_TTL = 6 * 60 * 60 * 1000;
+const EVENT_TTL = 12 * 60 * 60 * 1000;
+const CLUB_ELO_TTL = 12 * 60 * 60 * 1000;
+
+process.on("unhandledRejection", (err) => {
+  console.error("[worker] unhandledRejection:", err?.message || err);
+});
+
+process.on("uncaughtException", (err) => {
+  console.error("[worker] uncaughtException:", err?.message || err);
+});
+
+function factorial(n) {
   if (n <= 1) return 1;
   let result = 1;
   for (let i = 2; i <= n; i += 1) result *= i;
   return result;
-};
-const poisson = (lambda, k) => {
+}
+
+function poisson(lambda, k) {
   return (Math.pow(lambda, k) * Math.exp(-lambda)) / factorial(k);
-};
-const dixonColesAdjustment = (h, a, homeXG, awayXG, rho = -0.13) => {
+}
+
+function dixonColesAdjustment(h, a, homeXG, awayXG, rho = -0.13) {
   if (h === 0 && a === 0) return 1 - homeXG * awayXG * rho;
   if (h === 0 && a === 1) return 1 + homeXG * rho;
   if (h === 1 && a === 0) return 1 + awayXG * rho;
   if (h === 1 && a === 1) return 1 - rho;
   return 1;
-};
+}
+
+function normalizeName(name) {
+  return String(name || "")
+    .toLowerCase()
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .replace(/[^a-z0-9]+/g, " ")
+    .trim();
+}
+
+function buildPossibleNames(name) {
+  const normalized = normalizeName(name);
+  const variants = new Set([normalized]);
+  if (normalized.includes("fc ")) variants.add(normalized.replace("fc ", "").trim());
+  if (normalized.includes(" cf")) variants.add(normalized.replace(" cf", "").trim());
+  if (normalized.includes(" afc")) variants.add(normalized.replace(" afc", "").trim());
+  if (normalized.includes(" sc")) variants.add(normalized.replace(" sc", "").trim());
+  if (normalized.includes(" ac")) variants.add(normalized.replace(" ac", "").trim());
+  return [...variants].filter(Boolean);
+}
+
+function emptySplit() {
+  return {
+    games: 0,
+    avgScored: 1.35,
+    avgConceded: 1.35,
+    bttsRate: 0.5,
+    wins: 0,
+    draws: 0,
+    losses: 0,
+    scoredTotal: 0,
+    concededTotal: 0,
+  };
+}
+
+function finalizeSplit(split) {
+  if (!split.games) return emptySplit();
+  return {
+    games: split.games,
+    avgScored: Number((split.scored / split.games).toFixed(2)),
+    avgConceded: Number((split.conceded / split.games).toFixed(2)),
+    bttsRate: Number((split.btts / split.games).toFixed(2)),
+    wins: split.wins,
+    draws: split.draws,
+    losses: split.losses,
+    scoredTotal: split.scored,
+    concededTotal: split.conceded,
+  };
+}
 
 async function safeFetch(url) {
   try {
-    const r = await fetch(url, {
+    const response = await fetch(url, {
       headers: {
         Accept: "application/json",
         "Accept-Language": "en-US,en;q=0.9",
         Origin: "https://www.sofascore.com",
         Referer: "https://www.sofascore.com/",
-        "User-Agent": "Mozilla/5.0",
+        "User-Agent":
+          "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 Chrome/123.0 Safari/537.36",
       },
     });
-    if (!r.ok) return null;
-    return await r.json();
+    if (!response.ok) return null;
+    return await response.json();
   } catch {
     return null;
   }
 }
 
-function getLeague(event) {
-  const tournament = String(event?.tournament?.name || "").toLowerCase();
-  const country = String(event?.tournament?.category?.name || "").toLowerCase();
-  for (const [c, name, label] of LEAGUES) {
-    if ((!c || country.includes(c)) && (tournament === name || tournament.includes(name))) return label;
+async function safeFetchText(url) {
+  try {
+    const response = await fetch(url, {
+      headers: {
+        Accept: "text/plain,text/csv,*/*",
+        "User-Agent":
+          "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 Chrome/123.0 Safari/53736",
+      },
+    });
+    if (!response.ok) return null;
+    return await response.text();
+  } catch {
+    return null;
   }
-  return null;
 }
 
-function emptySplit() {
-  return { games: 0, avgScored: 1.35, avgConceded: 1.35, bttsRate: 0.5, wins: 0, draws: 0, losses: 0 };
+function getLeagueInfo(event) {
+  const tournament = String(
+    event?.uniqueTournament?.name || event?.tournament?.name || ""
+  ).toLowerCase();
+  const country = String(event?.tournament?.category?.name || "").toLowerCase();
+  return LEAGUES.find(
+    (league) =>
+      (!league.country || country.includes(league.country)) &&
+      (tournament === league.name || tournament.includes(league.name))
+  ) || null;
 }
 
-function finalizeSplit(s) {
-  if (!s.games) return emptySplit();
+function deriveStandingMeta(label, rowsCount) {
+  const rows = Number(rowsCount || 0);
+  const zones = [];
+  const notes = [];
+
+  if (label.includes("Premier League") || label.includes("LaLiga") || label.includes("Serie A") || label.includes("Bundesliga") || label.includes("Ligue 1")) {
+    zones.push(
+      { key: "ucl", label: "Champions League", color: "blue", from: 1, to: 4 },
+      { key: "europe", label: "Europees", color: "amber", from: 5, to: 6 },
+      { key: "relegation", label: "Degradatie", color: "red", from: Math.max(rows - 2, 1), to: rows }
+    );
+  } else if (label.includes("Championship")) {
+    zones.push(
+      { key: "promotion", label: "Promotie", color: "blue", from: 1, to: 2 },
+      { key: "playoffs", label: "Play-offs", color: "amber", from: 3, to: 6 },
+      { key: "relegation", label: "Degradatie", color: "red", from: Math.max(rows - 2, 1), to: rows }
+    );
+    notes.push("Posities 3 tot en met 6 spelen promotie-play-offs.");
+  } else if (label.includes("Eerste Divisie")) {
+    zones.push(
+      { key: "promotion", label: "Promotie", color: "blue", from: 1, to: 2 },
+      { key: "period", label: "Play-off zone", color: "amber", from: 3, to: 8 }
+    );
+    notes.push("Eerste Divisie gebruikt periode- en play-offtickets.");
+  } else if (label.includes("Eredivisie")) {
+    zones.push(
+      { key: "ucl", label: "Champions League", color: "blue", from: 1, to: 3 },
+      { key: "playoffs", label: "Europees play-off", color: "amber", from: 4, to: 8 },
+      { key: "relegation", label: "Degradatie / nacompetitie", color: "red", from: Math.max(rows - 2, 1), to: rows }
+    );
+  } else {
+    zones.push(
+      { key: "top", label: "Topzone", color: "blue", from: 1, to: Math.min(4, rows || 4) },
+      { key: "bottom", label: "Gevarenzone", color: "red", from: Math.max(rows - 2, 1), to: rows || 1 }
+    );
+  }
+
   return {
-    games: s.games,
-    avgScored: Number((s.scored / s.games).toFixed(2)),
-    avgConceded: Number((s.conceded / s.games).toFixed(2)),
-    bttsRate: Number((s.btts / s.games).toFixed(2)),
-    wins: s.wins,
-    draws: s.draws,
-    losses: s.losses,
+    format: "league",
+    zones,
+    notes,
+  };
+}
+
+function getZoneForPosition(meta, position) {
+  if (!meta?.zones?.length || !position) return null;
+  return meta.zones.find((zone) => position >= zone.from && position <= zone.to) || null;
+}
+
+async function fetchStandings(tournamentId, seasonId, label) {
+  if (!tournamentId || !seasonId) return null;
+  const json = await safeFetch(
+    `${SOFA}/unique-tournament/${tournamentId}/season/${seasonId}/standings/total`
+  );
+  const rows = json?.standings?.[0]?.rows || [];
+  if (!rows.length) return null;
+
+  const mapped = rows.map((row) => ({
+    pos: row.position,
+    team: row.team?.name,
+    teamId: String(row.team?.id || ""),
+    p: row.matches,
+    w: row.wins,
+    d: row.draws,
+    l: row.losses,
+    gf: row.scoresFor,
+    ga: row.scoresAgainst,
+    pts: row.points,
+  }));
+
+  return {
+    label,
+    rows: mapped,
+    updated: Date.now(),
+    meta: deriveStandingMeta(label, mapped.length),
+  };
+}
+
+async function fetchLiveStats(eventId) {
+  const json = await safeFetch(`${SOFA}/event/${eventId}/statistics`);
+  if (!json?.statistics) return null;
+
+  const flat = {};
+  for (const block of json.statistics) {
+    for (const group of block.groups || []) {
+      for (const item of group.statisticsItems || []) {
+        const key = String(item.name || "")
+          .toLowerCase()
+          .replace(/\s+/g, "_");
+        if (key) flat[key] = { home: item.home, away: item.away };
+      }
+    }
+  }
+
+  return {
+    shots_on_target: flat.shots_on_target || flat.on_target || null,
+    shots_total: flat.total_shots || flat.shots_total || null,
+    possession: flat.ball_possession || null,
+    corners: flat.corner_kicks || null,
+    xg: flat.expected_goals || null,
   };
 }
 
 async function fetchTeamForm(teamId) {
   const json = await safeFetch(`${SOFA}/team/${teamId}/events/last/0`);
-  const events = (json?.events || []).filter((e) => e.status?.type === "finished").slice(-10);
-  if (!events.length) return { form: "", avgScored: 1.35, avgConceded: 1.35, gamesPlayed: 0, splits: { home: emptySplit(), away: emptySplit() }, lastMatchKickoff: null };
+  const finished = (json?.events || [])
+    .filter((event) => event.status?.type === "finished")
+    .sort((a, b) => Number(a.startTimestamp || 0) - Number(b.startTimestamp || 0));
 
-  let form = "", scored = 0, conceded = 0;
-  const split = {
+  if (!finished.length) {
+    return {
+      form: "",
+      avgScored: 1.35,
+      avgConceded: 1.35,
+      bttsRate: 0.5,
+      gamesPlayed: 0,
+      wins: 0,
+      draws: 0,
+      losses: 0,
+      splits: { home: emptySplit(), away: emptySplit() },
+      recentMatches: [],
+      lastMatchKickoff: null,
+      strongestSide: "balanced",
+    };
+  }
+
+  const sample = finished.slice(-10);
+  let form = "";
+  let scored = 0;
+  let conceded = 0;
+  let btts = 0;
+  const splitState = {
     home: { games: 0, scored: 0, conceded: 0, btts: 0, wins: 0, draws: 0, losses: 0 },
     away: { games: 0, scored: 0, conceded: 0, btts: 0, wins: 0, draws: 0, losses: 0 },
   };
 
-  for (const e of events) {
-    const isHome = String(e.homeTeam?.id) === String(teamId);
-    const gf = isHome ? e.homeScore?.current : e.awayScore?.current;
-    const ga = isHome ? e.awayScore?.current : e.homeScore?.current;
+  const recentMatches = sample.slice(-5).map((event) => {
+    const isHome = String(event.homeTeam?.id || "") === String(teamId);
+    const gf = isHome ? event.homeScore?.current : event.awayScore?.current;
+    const ga = isHome ? event.awayScore?.current : event.homeScore?.current;
+    const result = gf > ga ? "W" : gf === ga ? "D" : "L";
+    return {
+      date: event.startTimestamp
+        ? new Date(event.startTimestamp * 1000).toISOString().split("T")[0]
+        : null,
+      league: event.tournament?.name || event.uniqueTournament?.name || null,
+      venue: isHome ? "H" : "A",
+      opponent: isHome ? event.awayTeam?.name || "Opponent" : event.homeTeam?.name || "Opponent",
+      score: gf != null && ga != null ? `${gf}-${ga}` : null,
+      goalsFor: gf ?? null,
+      goalsAgainst: ga ?? null,
+      result,
+    };
+  });
+
+  for (const event of sample) {
+    const isHome = String(event.homeTeam?.id || "") === String(teamId);
+    const gf = isHome ? event.homeScore?.current : event.awayScore?.current;
+    const ga = isHome ? event.awayScore?.current : event.homeScore?.current;
     if (gf == null || ga == null) continue;
+
     scored += gf;
     conceded += ga;
+    if (gf > 0 && ga > 0) btts += 1;
     form += gf > ga ? "W" : gf === ga ? "D" : "L";
-    const b = isHome ? split.home : split.away;
-    b.games += 1; b.scored += gf; b.conceded += ga;
-    if (gf > 0 && ga > 0) b.btts += 1;
-    if (gf > ga) b.wins += 1; else if (gf === ga) b.draws += 1; else b.losses += 1;
+
+    const target = isHome ? splitState.home : splitState.away;
+    target.games += 1;
+    target.scored += gf;
+    target.conceded += ga;
+    if (gf > 0 && ga > 0) target.btts += 1;
+    if (gf > ga) target.wins += 1;
+    else if (gf === ga) target.draws += 1;
+    else target.losses += 1;
   }
+
+  const homeSplit = finalizeSplit(splitState.home);
+  const awaySplit = finalizeSplit(splitState.away);
+
+  let strongestSide = "balanced";
+  if (homeSplit.avgScored > awaySplit.avgScored + 0.25) strongestSide = "home";
+  if (awaySplit.avgScored > homeSplit.avgScored + 0.25) strongestSide = "away";
 
   return {
     form: form.slice(-5),
-    avgScored: Number((scored / events.length).toFixed(2)),
-    avgConceded: Number((conceded / events.length).toFixed(2)),
-    gamesPlayed: events.length,
+    avgScored: Number((scored / sample.length).toFixed(2)),
+    avgConceded: Number((conceded / sample.length).toFixed(2)),
+    bttsRate: Number((btts / sample.length).toFixed(2)),
+    gamesPlayed: sample.length,
     wins: (form.match(/W/g) || []).length,
     draws: (form.match(/D/g) || []).length,
     losses: (form.match(/L/g) || []).length,
-    splits: { home: finalizeSplit(split.home), away: finalizeSplit(split.away) },
-    lastMatchKickoff: events[events.length - 1]?.startTimestamp ? new Date(events[events.length - 1].startTimestamp * 1000).toISOString() : null,
+    splits: { home: homeSplit, away: awaySplit },
+    recentMatches,
+    lastMatchKickoff: sample[sample.length - 1]?.startTimestamp
+      ? new Date(sample[sample.length - 1].startTimestamp * 1000).toISOString()
+      : null,
+    strongestSide,
   };
 }
 
 async function fetchInjuries(teamId) {
   const json = await safeFetch(`${SOFA}/team/${teamId}/players`);
-  if (!json?.players) return { injuredCount: 0, injuredRating: 0, keyPlayersMissing: [] };
-  const injured = json.players.filter((p) => p.player?.injured === true || p.status === "injured" || p.status === "doubtful");
+  if (!json?.players) {
+    return { injuredCount: 0, injuredRating: 0, keyPlayersMissing: [] };
+  }
+
+  const injured = json.players.filter(
+    (player) =>
+      player.player?.injured === true ||
+      player.status === "injured" ||
+      player.status === "doubtful"
+  );
+
   return {
     injuredCount: injured.length,
-    injuredRating: Number(injured.reduce((t, p) => t + Math.max(0, Number(p.player?.rating || 6) - 6), 0).toFixed(2)),
-    keyPlayersMissing: injured.map((p) => p.player?.name).filter(Boolean).slice(0, 3),
+    injuredRating: Number(
+      injured.reduce(
+        (total, player) => total + Math.max(0, Number(player.player?.rating || 6) - 6),
+        0
+      ).toFixed(2)
+    ),
+    keyPlayersMissing: injured
+      .map((player) => player.player?.name)
+      .filter(Boolean)
+      .slice(0, 4),
   };
 }
 
 async function fetchSeasonStats(teamId, tournamentId, seasonId) {
   if (!tournamentId || !seasonId) return null;
-  const json = await safeFetch(`${SOFA}/team/${teamId}/unique-tournament/${tournamentId}/season/${seasonId}/statistics/overall`);
-  const s = json?.statistics;
-  if (!s) return null;
-  return { avgShotsOn: s.averageShotsOnTarget || null, avgPossession: s.averageBallPossession || null, games: s.matches || null };
-}
-
-async function fetchH2H(eventId, currentHomeId, currentAwayId) {
-  const json = await safeFetch(`${SOFA}/event/${eventId}/h2h`);
-  const events = (json?.events || []).filter((e) => e.status?.type === "finished").slice(-8);
-  if (!events.length) return null;
-  let homeWins = 0, draws = 0, awayWins = 0;
-  const results = [];
-  for (const e of events) {
-    const hg = e.homeScore?.current, ag = e.awayScore?.current;
-    if (hg == null || ag == null) continue;
-    const winner = hg === ag ? "" : hg > ag ? String(e.homeTeam?.id || "") : String(e.awayTeam?.id || "");
-    if (hg === ag) draws += 1;
-    else if (winner === String(currentHomeId || "")) homeWins += 1;
-    else if (winner === String(currentAwayId || "")) awayWins += 1;
-    results.push({ home: e.homeTeam?.name, away: e.awayTeam?.name, score: `${hg}-${ag}` });
-  }
-  return { played: results.length, homeWins, draws, awayWins, results };
-}
-
-async function fetchLineupSummary(eventId) {
-  const json = await safeFetch(`${SOFA}/event/${eventId}/lineups`);
-  if (!json) return null;
-  const convert = (t) => {
-    if (!t) return null;
-    const starters = t.players?.filter((p) => p?.substitute === false) || [];
-    return { formation: t.formation || null, starters: starters.length, confirmed: starters.length >= 10 };
+  const json = await safeFetch(
+    `${SOFA}/team/${teamId}/unique-tournament/${tournamentId}/season/${seasonId}/statistics/overall`
+  );
+  const stats = json?.statistics;
+  if (!stats) return null;
+  return {
+    avgShotsOn: stats.averageShotsOnTarget || null,
+    avgShots: stats.averageShots || null,
+    avgPossession: stats.averageBallPossession || null,
+    avgCorners: stats.averageCorners || null,
+    cleanSheets: stats.cleanSheets || null,
+    games: stats.matches || null,
   };
-  const home = convert(json.home || json.homeTeam);
-  const away = convert(json.away || json.awayTeam);
-  if (!home && !away) return null;
-  return { home, away, confirmed: !!(home?.confirmed && away?.confirmed) };
 }
 
 async function fetchEventDetails(eventId) {
@@ -178,9 +416,110 @@ async function fetchEventDetails(eventId) {
   return json?.event || null;
 }
 
+async function fetchLineupSummary(eventId) {
+  const json = await safeFetch(`${SOFA}/event/${eventId}/lineups`);
+  if (!json) return null;
+
+  const convert = (lineupTeam) => {
+    if (!lineupTeam) return null;
+    const starters = (lineupTeam.players || []).filter((player) => player?.substitute === false);
+    const bench = (lineupTeam.players || []).filter((player) => player?.substitute === true);
+    const rated = starters
+      .map((player) => Number(player.player?.rating || player.rating || 0))
+      .filter((rating) => rating > 0);
+    return {
+      formation: lineupTeam.formation || null,
+      starters: starters.length,
+      bench: bench.length,
+      avgRating: rated.length
+        ? Number((rated.reduce((sum, rating) => sum + rating, 0) / rated.length).toFixed(2))
+        : null,
+      confirmed: starters.length >= 10,
+    };
+  };
+
+  const home = convert(json.home || json.homeTeam);
+  const away = convert(json.away || json.awayTeam);
+  if (!home && !away) return null;
+
+  return {
+    home,
+    away,
+    confirmed: !!(home?.confirmed && away?.confirmed),
+  };
+}
+
+async function fetchH2H(eventId, currentHomeId, currentAwayId, tournamentId, seasonId) {
+  const json = await safeFetch(`${SOFA}/event/${eventId}/h2h`);
+  const raw = json?.events || [];
+
+  const finished = raw
+    .filter((event) => event.status?.type === "finished")
+    .filter((event) => {
+      if (!tournamentId || !seasonId) return true;
+      const eventTournamentId =
+        event.uniqueTournament?.id || event.tournament?.uniqueTournament?.id || event.tournament?.id;
+      const eventSeasonId = event.season?.id;
+      return eventTournamentId === tournamentId && eventSeasonId === seasonId;
+    })
+    .sort((a, b) => Number(a.startTimestamp || 0) - Number(b.startTimestamp || 0))
+    .slice(-8);
+
+  if (!finished.length) {
+    return { played: 0, homeWins: 0, draws: 0, awayWins: 0, results: [], status: "empty" };
+  }
+
+  let homeWins = 0;
+  let draws = 0;
+  let awayWins = 0;
+  const results = [];
+
+  for (const event of finished) {
+    const homeGoals = event.homeScore?.current;
+    const awayGoals = event.awayScore?.current;
+    if (homeGoals == null || awayGoals == null) continue;
+
+    const winnerId =
+      homeGoals === awayGoals
+        ? ""
+        : homeGoals > awayGoals
+          ? String(event.homeTeam?.id || "")
+          : String(event.awayTeam?.id || "");
+
+    if (homeGoals === awayGoals) draws += 1;
+    else if (winnerId === String(currentHomeId || "")) homeWins += 1;
+    else if (winnerId === String(currentAwayId || "")) awayWins += 1;
+
+    results.push({
+      eventId: event.id,
+      date: event.startTimestamp
+        ? new Date(event.startTimestamp * 1000).toISOString().split("T")[0]
+        : null,
+      tournamentId:
+        event.uniqueTournament?.id || event.tournament?.uniqueTournament?.id || event.tournament?.id || null,
+      seasonId: event.season?.id || null,
+      homeTeamId: String(event.homeTeam?.id || ""),
+      awayTeamId: String(event.awayTeam?.id || ""),
+      home: event.homeTeam?.name || "Home",
+      away: event.awayTeam?.name || "Away",
+      score: `${homeGoals}-${awayGoals}`,
+      winnerId,
+    });
+  }
+
+  return {
+    played: results.length,
+    homeWins,
+    draws,
+    awayWins,
+    results,
+    status: results.length ? "loaded" : "empty",
+  };
+}
+
 function getCoords(eventDetails) {
-  const v = eventDetails?.venue || {};
-  const loc = v.location || v.coordinates || eventDetails?.venueCoordinates;
+  const venue = eventDetails?.venue || {};
+  const loc = venue.location || venue.coordinates || eventDetails?.venueCoordinates;
   if (!loc) return null;
   const lat = Number(loc.latitude ?? loc.lat);
   const lon = Number(loc.longitude ?? loc.lng ?? loc.lon);
@@ -189,31 +528,44 @@ function getCoords(eventDetails) {
 
 async function fetchWeather(lat, lon, kickoffISO) {
   if (!kickoffISO) return null;
-  const d = new Date(kickoffISO);
-  const date = d.toISOString().split("T")[0];
+  const kickoff = new Date(kickoffISO);
+  const date = kickoff.toISOString().split("T")[0];
   const url = `https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}&hourly=temperature_2m,precipitation_probability,precipitation,windspeed_10m&timezone=auto&start_date=${date}&end_date=${date}`;
   try {
-    const r = await fetch(url);
-    if (!r.ok) return null;
-    const j = await r.json();
-    const times = j?.hourly?.time || [];
+    const response = await fetch(url);
+    if (!response.ok) return null;
+    const json = await response.json();
+    const times = json?.hourly?.time || [];
     if (!times.length) return null;
-    let idx = 0, best = Infinity;
+    let bestIndex = 0;
+    let bestDiff = Infinity;
     for (let i = 0; i < times.length; i += 1) {
-      const diff = Math.abs(new Date(times[i]).getTime() - d.getTime());
-      if (diff < best) { best = diff; idx = i; }
+      const diff = Math.abs(new Date(times[i]).getTime() - kickoff.getTime());
+      if (diff < bestDiff) {
+        bestDiff = diff;
+        bestIndex = i;
+      }
     }
-    const windSpeed = j.hourly.windspeed_10m?.[idx] ?? null;
-    const precipitationProbability = j.hourly.precipitation_probability?.[idx] ?? null;
-    const precipitation = j.hourly.precipitation?.[idx] ?? null;
+
+    const windSpeed = json.hourly.windspeed_10m?.[bestIndex] ?? null;
+    const precipitationProbability = json.hourly.precipitation_probability?.[bestIndex] ?? null;
+    const precipitation = json.hourly.precipitation?.[bestIndex] ?? null;
+
     return {
-      temperature: j.hourly.temperature_2m?.[idx] ?? null,
+      temperature: json.hourly.temperature_2m?.[bestIndex] ?? null,
       windSpeed,
       precipitationProbability,
       precipitation,
-      riskLevel: (Number(windSpeed || 0) >= 22 || Number(precipitationProbability || 0) >= 55) ? "medium" : "low",
+      riskLevel:
+        Number(windSpeed || 0) >= 28 || Number(precipitationProbability || 0) >= 70
+          ? "high"
+          : Number(windSpeed || 0) >= 20 || Number(precipitationProbability || 0) >= 50
+            ? "medium"
+            : "low",
     };
-  } catch { return null; }
+  } catch {
+    return null;
+  }
 }
 
 function calcRestDays(lastMatchKickoff, currentKickoff) {
@@ -222,142 +574,584 @@ function calcRestDays(lastMatchKickoff, currentKickoff) {
   return diff > 0 ? Number((diff / 86400000).toFixed(1)) : null;
 }
 
-function predict(input) {
-  const avgLeagueGoals = 1.35;
-  const homeSplit = input.homeStats.splits?.home || emptySplit();
-  const awaySplit = input.awayStats.splits?.away || emptySplit();
-  let homeXG = avgLeagueGoals * 1.1 * ((input.homeStats.avgScored || 1.35) / avgLeagueGoals) * ((awaySplit.avgConceded || 1.35) / avgLeagueGoals);
-  let awayXG = avgLeagueGoals * ((input.awayStats.avgScored || 1.35) / avgLeagueGoals) * ((homeSplit.avgConceded || 1.35) / avgLeagueGoals);
-  if (input.homeSeasonStats?.avgShotsOn && input.awaySeasonStats?.avgShotsOn) {
-    const avgShots = (input.homeSeasonStats.avgShotsOn + input.awaySeasonStats.avgShotsOn) / 2 || 1;
-    homeXG *= clamp(input.homeSeasonStats.avgShotsOn / avgShots, 0.85, 1.15);
-    awayXG *= clamp(input.awaySeasonStats.avgShotsOn / avgShots, 0.85, 1.15);
-  }
-  if (input.homeRestDays != null && input.awayRestDays != null) {
-    const diff = input.homeRestDays - input.awayRestDays;
-    homeXG *= clamp(1 + diff * 0.012, 0.94, 1.06);
-    awayXG *= clamp(1 - diff * 0.012, 0.94, 1.06);
-  }
-  if (input.weather?.riskLevel === "medium") { homeXG *= 0.96; awayXG *= 0.96; }
-  if (input.homeInjuries?.injuredCount) homeXG *= clamp(1 - input.homeInjuries.injuredCount * 0.025, 0.88, 1);
-  if (input.awayInjuries?.injuredCount) awayXG *= clamp(1 - input.awayInjuries.injuredCount * 0.025, 0.88, 1);
-  if (input.h2h?.played >= 4) {
-    const balance = (input.h2h.homeWins - input.h2h.awayWins) / Math.max(input.h2h.played, 1);
-    homeXG *= 1 + balance * 0.05; awayXG *= 1 - balance * 0.05;
-  }
-  homeXG = clamp(homeXG, 0.25, 3.5); awayXG = clamp(awayXG, 0.25, 3.5);
+async function fetchClubEloSnapshot(dateISO) {
+  const urls = [`https://api.clubelo.com/${dateISO}`, `http://api.clubelo.com/${dateISO}`];
 
-  const maxGoals = 6;
-  let hp = 0, dp = 0, ap = 0, bestP = 0, bestScore = "1-1", over25 = 0, btts = 0;
-  const scoreMatrix = {};
-  for (let h = 0; h <= maxGoals; h += 1) {
-    for (let a = 0; a <= maxGoals; a += 1) {
-      const p = poisson(homeXG, h) * poisson(awayXG, a) * dixonColesAdjustment(h, a, homeXG, awayXG);
-      if (h > a) hp += p; else if (h === a) dp += p; else ap += p;
-      if (p > bestP) { bestP = p; bestScore = `${h}-${a}`; }
-      if (h + a > 2.5) over25 += p;
-      if (h > 0 && a > 0) btts += p;
-      if (p > 0.01) scoreMatrix[`${h}-${a}`] = Number(p.toFixed(4));
+  let text = null;
+  for (const url of urls) {
+    text = await safeFetchText(url);
+    if (text) break;
+  }
+
+  if (!text) return null;
+  const lines = text.split(/\r?\n/).filter(Boolean);
+  if (lines.length < 2) return null;
+  const headers = lines[0].split(",");
+  const clubIndex = headers.findIndex((header) => /club/i.test(header));
+  const eloIndex = headers.findIndex((header) => /^elo$/i.test(header));
+  if (clubIndex < 0 || eloIndex < 0) return null;
+
+  const map = {};
+  for (const line of lines.slice(1)) {
+    const parts = line.split(",");
+    const club = parts[clubIndex];
+    const elo = Number(parts[eloIndex]);
+    if (!club || !Number.isFinite(elo)) continue;
+    for (const variant of buildPossibleNames(club)) {
+      map[variant] = elo;
     }
   }
-  const total = hp + dp + ap; hp /= total; dp /= total; ap /= total;
-  const [predHomeGoals, predAwayGoals] = bestScore.split("-").map(Number);
+
+  return map;
+}
+
+function lookupClubElo(snapshot, teamName) {
+  if (!snapshot) return null;
+  for (const variant of buildPossibleNames(teamName)) {
+    if (snapshot[variant] != null) return Number(snapshot[variant]);
+  }
+  return null;
+}
+
+function inferRivalry(homeName, awayName, homeCountry, awayCountry) {
+  const home = normalizeName(homeName);
+  const away = normalizeName(awayName);
+  const rivalryPairs = [
+    ["ajax", "feyenoord"],
+    ["ajax", "psv"],
+    ["feyenoord", "psv"],
+    ["arsenal", "tottenham"],
+    ["liverpool", "everton"],
+    ["manchester united", "manchester city"],
+    ["barcelona", "real madrid"],
+    ["inter", "milan"],
+    ["lazio", "roma"],
+    ["celtic", "rangers"],
+  ];
+
+  for (const [a, b] of rivalryPairs) {
+    if ((home.includes(a) && away.includes(b)) || (home.includes(b) && away.includes(a))) {
+      return "rivaliteit";
+    }
+  }
+
+  if (homeCountry && awayCountry && homeCountry === awayCountry) {
+    const firstHomeWord = home.split(" ")[0];
+    const firstAwayWord = away.split(" ")[0];
+    if (firstHomeWord && firstAwayWord && firstHomeWord === firstAwayWord) {
+      return "streekduel";
+    }
+  }
+
+  return null;
+}
+
+function extractRoundLabel(eventDetails) {
+  return (
+    eventDetails?.roundInfo?.name ||
+    eventDetails?.roundInfo?.roundType ||
+    eventDetails?.roundInfo?.round ||
+    eventDetails?.roundInfo?.cupRoundType ||
+    null
+  );
+}
+
+function buildAggregateInfo(event, eventDetails, h2h) {
+  const results = h2h?.results || [];
+  const currentEventId = Number(event.id || 0);
+  const previousLeg = [...results]
+    .filter((result) => Number(result.eventId || 0) !== currentEventId)
+    .filter((result) => {
+      const d = result.date ? new Date(result.date).getTime() : 0;
+      const now = Number(event.startTimestamp || 0) * 1000;
+      return d > 0 && now > 0 && now - d < 160 * 24 * 60 * 60 * 1000;
+    })
+    .sort((a, b) => String(b.date || "").localeCompare(String(a.date || "")))[0];
+
+  const label = String(
+    eventDetails?.roundInfo?.cupRoundType ||
+      eventDetails?.roundInfo?.name ||
+      eventDetails?.roundInfo?.roundType ||
+      ""
+  ).toLowerCase();
+  const isKnockoutHint =
+    label.includes("round") ||
+    label.includes("play") ||
+    label.includes("quarter") ||
+    label.includes("semi") ||
+    label.includes("final") ||
+    label.includes("knockout") ||
+    label.includes("qualif");
+
+  if (!previousLeg && !isKnockoutHint) return null;
+
+  let firstLegHomeGoals = 0;
+  let firstLegAwayGoals = 0;
+  let firstLegText = null;
+  if (previousLeg?.score) {
+    const [prevHomeGoals, prevAwayGoals] = previousLeg.score.split("-").map(Number);
+    if (!Number.isNaN(prevHomeGoals) && !Number.isNaN(prevAwayGoals)) {
+      const currentHomeId = String(event.homeTeam?.id || "");
+      if (String(previousLeg.homeTeamId || "") === currentHomeId) {
+        firstLegHomeGoals = prevHomeGoals;
+        firstLegAwayGoals = prevAwayGoals;
+      } else if (String(previousLeg.awayTeamId || "") === currentHomeId) {
+        firstLegHomeGoals = prevAwayGoals;
+        firstLegAwayGoals = prevHomeGoals;
+      }
+      firstLegText = `${previousLeg.home} ${previousLeg.score} ${previousLeg.away}`;
+    }
+  }
+
+  const currentHomeGoals = Number(event.homeScore?.current || 0);
+  const currentAwayGoals = Number(event.awayScore?.current || 0);
+  const homeAggregate = firstLegHomeGoals + currentHomeGoals;
+  const awayAggregate = firstLegAwayGoals + currentAwayGoals;
+  const leader =
+    homeAggregate === awayAggregate
+      ? null
+      : homeAggregate > awayAggregate
+        ? event.homeTeam?.name || null
+        : event.awayTeam?.name || null;
+
   return {
-    homeProb: Number(hp.toFixed(4)),
-    drawProb: Number(dp.toFixed(4)),
-    awayProb: Number(ap.toFixed(4)),
+    active: !!previousLeg || isKnockoutHint,
+    firstLegScore: previousLeg?.score || null,
+    firstLegText,
+    aggregateScore: `${homeAggregate}-${awayAggregate}`,
+    homeAggregate,
+    awayAggregate,
+    currentHomeGoals,
+    currentAwayGoals,
+    leader,
+    roundLabel: extractRoundLabel(eventDetails),
+    note:
+      leader && (currentHomeGoals > 0 || currentAwayGoals > 0 || previousLeg)
+        ? `${leader} ligt voor in het tweeluik`
+        : "Tweeluik / knock-out context",
+  };
+}
+
+function buildContext(matchInput) {
+  const homeZone = getZoneForPosition(matchInput.standingMeta, matchInput.homePos);
+  const awayZone = getZoneForPosition(matchInput.standingMeta, matchInput.awayPos);
+  const rivalry = inferRivalry(
+    matchInput.homeTeamName,
+    matchInput.awayTeamName,
+    matchInput.homeCountry,
+    matchInput.awayCountry
+  );
+
+  const notes = [];
+  if (homeZone?.key === "relegation" || awayZone?.key === "relegation") notes.push("degradatiedruk");
+  if (homeZone?.key === "ucl" || awayZone?.key === "ucl" || homeZone?.key === "promotion" || awayZone?.key === "promotion") notes.push("topstrijd");
+  if (homeZone?.key === "playoffs" || awayZone?.key === "playoffs" || homeZone?.key === "period" || awayZone?.key === "period") notes.push("play-off druk");
+  if (matchInput.aggregate?.active) notes.push("tweeluik");
+  if (matchInput.leagueType === "cup") notes.push("knock-out");
+  if (rivalry) notes.push(rivalry);
+
+  return {
+    homeZone: homeZone?.label || null,
+    awayZone: awayZone?.label || null,
+    rivalry,
+    summary: notes.length ? notes.join(" · ") : null,
+    stakes:
+      notes.length > 0
+        ? notes.join(", ")
+        : matchInput.homePos && matchInput.awayPos
+          ? `stand posities ${matchInput.homePos} en ${matchInput.awayPos}`
+          : null,
+  };
+}
+
+function pickHomeStrength(homeRecent) {
+  const split = homeRecent?.splits?.home || emptySplit();
+  return split.games > 0 ? split : emptySplit();
+}
+
+function pickAwayStrength(awayRecent) {
+  const split = awayRecent?.splits?.away || emptySplit();
+  return split.games > 0 ? split : emptySplit();
+}
+
+function buildHomeAwayEdge(homeRecent, awayRecent) {
+  const home = pickHomeStrength(homeRecent);
+  const away = pickAwayStrength(awayRecent);
+  return Number(((home.avgScored - away.avgConceded) + (away.avgScored - home.avgConceded)).toFixed(2));
+}
+
+function predict(input) {
+  const avgLeagueGoals = 1.35;
+  const homeSplit = pickHomeStrength(input.homeRecent);
+  const awaySplit = pickAwayStrength(input.awayRecent);
+
+  let homeXG =
+    avgLeagueGoals *
+    1.11 *
+    clamp((input.homeRecent?.avgScored || avgLeagueGoals) / avgLeagueGoals, 0.7, 1.6) *
+    clamp((awaySplit.avgConceded || avgLeagueGoals) / avgLeagueGoals, 0.75, 1.5);
+
+  let awayXG =
+    avgLeagueGoals *
+    clamp((input.awayRecent?.avgScored || avgLeagueGoals) / avgLeagueGoals, 0.7, 1.6) *
+    clamp((homeSplit.avgConceded || avgLeagueGoals) / avgLeagueGoals, 0.75, 1.5);
+
+  const homeClubElo = Number(input.homeClubElo || 0);
+  const awayClubElo = Number(input.awayClubElo || 0);
+  if (homeClubElo > 0 && awayClubElo > 0) {
+    const eloDiff = homeClubElo - awayClubElo;
+    homeXG *= clamp(1 + eloDiff / 1600, 0.9, 1.14);
+    awayXG *= clamp(1 - eloDiff / 1600, 0.9, 1.14);
+  }
+
+  if (input.homeSeasonStats?.avgShotsOn && input.awaySeasonStats?.avgShotsOn) {
+    const averageShots =
+      (Number(input.homeSeasonStats.avgShotsOn || 0) + Number(input.awaySeasonStats.avgShotsOn || 0)) / 2 || 1;
+    homeXG *= clamp(Number(input.homeSeasonStats.avgShotsOn || 0) / averageShots, 0.88, 1.14);
+    awayXG *= clamp(Number(input.awaySeasonStats.avgShotsOn || 0) / averageShots, 0.88, 1.14);
+  }
+
+  if (input.homeRestDays != null && input.awayRestDays != null) {
+    const diff = Number(input.homeRestDays) - Number(input.awayRestDays);
+    homeXG *= clamp(1 + diff * 0.012, 0.93, 1.08);
+    awayXG *= clamp(1 - diff * 0.012, 0.93, 1.08);
+  }
+
+  if (input.weather?.riskLevel === "medium") {
+    homeXG *= 0.97;
+    awayXG *= 0.97;
+  }
+  if (input.weather?.riskLevel === "high") {
+    homeXG *= 0.93;
+    awayXG *= 0.93;
+  }
+
+  if (input.homeInjuries?.injuredCount) {
+    homeXG *= clamp(1 - Number(input.homeInjuries.injuredCount) * 0.025, 0.85, 1);
+  }
+  if (input.awayInjuries?.injuredCount) {
+    awayXG *= clamp(1 - Number(input.awayInjuries.injuredCount) * 0.025, 0.85, 1);
+  }
+
+  if (input.lineupSummary?.confirmed) {
+    const homeRating = Number(input.lineupSummary.home?.avgRating || 6.8);
+    const awayRating = Number(input.lineupSummary.away?.avgRating || 6.8);
+    const diff = homeRating - awayRating;
+    homeXG *= clamp(1 + diff * 0.02, 0.94, 1.08);
+    awayXG *= clamp(1 - diff * 0.02, 0.94, 1.08);
+  }
+
+  if (input.h2h?.played >= 3) {
+    const balance = (Number(input.h2h.homeWins || 0) - Number(input.h2h.awayWins || 0)) / Math.max(Number(input.h2h.played || 1), 1);
+    homeXG *= clamp(1 + balance * 0.05, 0.92, 1.08);
+    awayXG *= clamp(1 - balance * 0.05, 0.92, 1.08);
+  }
+
+  homeXG = clamp(homeXG, 0.22, 3.8);
+  awayXG = clamp(awayXG, 0.22, 3.8);
+
+  let homeProb = 0;
+  let drawProb = 0;
+  let awayProb = 0;
+  let over15 = 0;
+  let over25 = 0;
+  let over35 = 0;
+  let btts = 0;
+  let bestScore = "1-1";
+  let bestProb = 0;
+  const scoreMatrix = {};
+
+  for (let homeGoals = 0; homeGoals <= 6; homeGoals += 1) {
+    for (let awayGoals = 0; awayGoals <= 6; awayGoals += 1) {
+      const probability =
+        poisson(homeXG, homeGoals) *
+        poisson(awayXG, awayGoals) *
+        dixonColesAdjustment(homeGoals, awayGoals, homeXG, awayXG);
+
+      if (homeGoals > awayGoals) homeProb += probability;
+      else if (homeGoals === awayGoals) drawProb += probability;
+      else awayProb += probability;
+
+      if (probability > bestProb) {
+        bestProb = probability;
+        bestScore = `${homeGoals}-${awayGoals}`;
+      }
+
+      const totalGoals = homeGoals + awayGoals;
+      if (totalGoals > 1.5) over15 += probability;
+      if (totalGoals > 2.5) over25 += probability;
+      if (totalGoals > 3.5) over35 += probability;
+      if (homeGoals > 0 && awayGoals > 0) btts += probability;
+      if (probability > 0.01) scoreMatrix[`${homeGoals}-${awayGoals}`] = Number(probability.toFixed(4));
+    }
+  }
+
+  const totalProb = homeProb + drawProb + awayProb;
+  homeProb /= totalProb;
+  drawProb /= totalProb;
+  awayProb /= totalProb;
+
+  const [predHomeGoals, predAwayGoals] = bestScore.split("-").map(Number);
+  const homeAwayEdge = buildHomeAwayEdge(input.homeRecent, input.awayRecent);
+
+  return {
+    homeProb: Number(homeProb.toFixed(4)),
+    drawProb: Number(drawProb.toFixed(4)),
+    awayProb: Number(awayProb.toFixed(4)),
     homeXG: Number(homeXG.toFixed(2)),
     awayXG: Number(awayXG.toFixed(2)),
     predHomeGoals,
     predAwayGoals,
-    exactProb: Number(bestP.toFixed(4)),
-    confidence: Number(Math.min(0.9, bestP * 3.5 + 0.18).toFixed(3)),
+    exactProb: Number(bestProb.toFixed(4)),
+    confidence: Number(Math.min(0.92, bestProb * 3.5 + 0.22).toFixed(3)),
+    over15: Number(over15.toFixed(3)),
     over25: Number(over25.toFixed(3)),
+    over35: Number(over35.toFixed(3)),
     btts: Number(btts.toFixed(3)),
     scoreMatrix,
     modelEdges: {
-      rest: input.homeRestDays != null && input.awayRestDays != null ? Number((input.homeRestDays - input.awayRestDays).toFixed(1)) : null,
+      rest: input.homeRestDays != null && input.awayRestDays != null
+        ? Number((Number(input.homeRestDays) - Number(input.awayRestDays)).toFixed(1))
+        : null,
       weatherRisk: input.weather?.riskLevel || "low",
       lineupConfirmed: !!input.lineupSummary?.confirmed,
+      homeAwayEdge,
+      clubEloDiff: homeClubElo > 0 && awayClubElo > 0 ? Math.round(homeClubElo - awayClubElo) : null,
+      stakes: input.context?.summary || null,
     },
   };
 }
 
 function getTeam(storeTeams, id, name) {
-  const key = id ? `id:${id}` : `name:${String(name || "").toLowerCase()}`;
-  if (!storeTeams[key]) storeTeams[key] = { id: id || "", name, elo: 1500 };
+  const key = id ? `id:${id}` : `name:${normalizeName(name)}`;
+  if (!storeTeams[key]) {
+    storeTeams[key] = { id: id || "", name: name || "Unknown", elo: 1500 };
+  }
+  storeTeams[key].name = name || storeTeams[key].name;
+  if (id) storeTeams[key].id = id;
   return storeTeams[key];
 }
 
+function defaultStore() {
+  return {
+    teams: {},
+    predictions: {},
+    matches: {},
+    standings: {},
+    knockoutOverview: {},
+    teamStats: {},
+    teamStatsUpdated: {},
+    teamInjuries: {},
+    teamInjuriesUpdated: {},
+    teamSeasonStats: {},
+    teamSeasonStatsUpdated: {},
+    eventCache: {},
+    eventCacheUpdated: {},
+    h2hCache: {},
+    weatherCache: {},
+    clubEloCache: null,
+    clubEloUpdated: null,
+    lastRun: null,
+    workerVersion: "v3-rich",
+  };
+}
+
 async function main() {
-  let store = { teams: {}, predictions: {}, matches: {}, teamStats: {}, teamSeasonStats: {}, teamInjuries: {}, standings: {}, h2hCache: {}, weatherCache: {}, lastRun: null, workerVersion: "v2-free" };
+  let store = defaultStore();
   if (fs.existsSync(DATA_FILE)) {
-    try { store = { ...store, ...JSON.parse(fs.readFileSync(DATA_FILE, "utf-8")) }; } catch {}
+    try {
+      store = { ...store, ...JSON.parse(fs.readFileSync(DATA_FILE, "utf-8")) };
+    } catch {
+      console.warn("[worker] kon server_data.json niet lezen, start leeg");
+    }
   }
 
+  const now = Date.now();
   const today = new Date().toISOString().split("T")[0];
   const tomorrow = new Date(Date.now() + 86400000).toISOString().split("T")[0];
   const dates = [today, tomorrow];
 
+  if (!store.knockoutOverview) store.knockoutOverview = {};
+  for (const date of dates) store.knockoutOverview[date] = [];
+
+  let clubEloSnapshot = store.clubEloCache;
+  if (!clubEloSnapshot || !store.clubEloUpdated || now - store.clubEloUpdated > CLUB_ELO_TTL) {
+    clubEloSnapshot = await fetchClubEloSnapshot(today);
+    if (clubEloSnapshot) {
+      store.clubEloCache = clubEloSnapshot;
+      store.clubEloUpdated = now;
+    }
+  }
+
   const allEvents = {};
+  const teamTournamentMap = new Map();
+  const tournamentsMap = new Map();
+  const requiredTeamIds = new Set();
+
   for (const date of dates) {
     const json = await safeFetch(`${SOFA}/sport/football/scheduled-events/${date}`);
-    allEvents[date] = (json?.events || []).filter((e) => getLeague(e));
+    const events = (json?.events || []).filter((event) => getLeagueInfo(event));
+    allEvents[date] = events;
+
+    for (const event of events) {
+      const leagueInfo = getLeagueInfo(event);
+      const homeId = String(event.homeTeam?.id || "");
+      const awayId = String(event.awayTeam?.id || "");
+      const tournamentId =
+        event.uniqueTournament?.id || event.tournament?.uniqueTournament?.id || event.tournament?.id || null;
+      const seasonId = event.season?.id || null;
+
+      if (homeId) requiredTeamIds.add(homeId);
+      if (awayId) requiredTeamIds.add(awayId);
+      if (homeId && tournamentId && seasonId) teamTournamentMap.set(homeId, { tournamentId, seasonId });
+      if (awayId && tournamentId && seasonId) teamTournamentMap.set(awayId, { tournamentId, seasonId });
+      if (tournamentId && seasonId && leagueInfo) {
+        tournamentsMap.set(`${tournamentId}_${seasonId}`, { tournamentId, seasonId, label: leagueInfo.label });
+      }
+    }
+  }
+
+  for (const teamId of requiredTeamIds) {
+    if (!store.teamStats[teamId] || now - Number(store.teamStatsUpdated?.[teamId] || 0) > FORM_TTL) {
+      store.teamStats[teamId] = await fetchTeamForm(teamId);
+      store.teamStatsUpdated[teamId] = now;
+      await sleep(90);
+    }
+    if (!store.teamInjuries[teamId] || now - Number(store.teamInjuriesUpdated?.[teamId] || 0) > INJURY_TTL) {
+      store.teamInjuries[teamId] = await fetchInjuries(teamId);
+      store.teamInjuriesUpdated[teamId] = now;
+      await sleep(70);
+    }
+    const seasonInfo = teamTournamentMap.get(teamId);
+    if (
+      seasonInfo &&
+      (!store.teamSeasonStats[teamId] || now - Number(store.teamSeasonStatsUpdated?.[teamId] || 0) > SEASON_TTL)
+    ) {
+      store.teamSeasonStats[teamId] = await fetchSeasonStats(teamId, seasonInfo.tournamentId, seasonInfo.seasonId);
+      store.teamSeasonStatsUpdated[teamId] = now;
+      await sleep(70);
+    }
+  }
+
+  const standingsByTournament = {};
+  for (const [key, info] of tournamentsMap.entries()) {
+    const cached = store.standings[key];
+    if (cached?.rows?.length && now - Number(cached.updated || 0) <= SEASON_TTL) {
+      standingsByTournament[key] = cached;
+      continue;
+    }
+    const fresh = await fetchStandings(info.tournamentId, info.seasonId, info.label);
+    if (fresh) {
+      store.standings[key] = fresh;
+      standingsByTournament[key] = fresh;
+      await sleep(60);
+    }
   }
 
   for (const date of dates) {
     const dayMatches = [];
     const dayPredictions = [];
-    for (const event of allEvents[date]) {
-      const league = getLeague(event);
+
+    for (const event of allEvents[date] || []) {
+      const leagueInfo = getLeagueInfo(event);
+      if (!leagueInfo) continue;
+
       const homeId = String(event.homeTeam?.id || "");
       const awayId = String(event.awayTeam?.id || "");
       const homeName = event.homeTeam?.name || "Home";
       const awayName = event.awayTeam?.name || "Away";
+      const homeCountry = String(event.homeTeam?.country?.name || event.tournament?.category?.name || "");
+      const awayCountry = String(event.awayTeam?.country?.name || event.tournament?.category?.name || "");
+      const kickoff = event.startTimestamp ? new Date(event.startTimestamp * 1000).toISOString() : null;
+      const tournamentId =
+        event.uniqueTournament?.id || event.tournament?.uniqueTournament?.id || event.tournament?.id || null;
+      const seasonId = event.season?.id || null;
+      const standingsKey = tournamentId && seasonId ? `${tournamentId}_${seasonId}` : "";
+      const standing = standingsByTournament[standingsKey] || store.standings[standingsKey] || null;
+      const standingMeta = standing?.meta || null;
+      const homePos = standing?.rows?.find((row) => String(row.teamId || "") === homeId)?.pos ?? null;
+      const awayPos = standing?.rows?.find((row) => String(row.teamId || "") === awayId)?.pos ?? null;
+
       getTeam(store.teams, homeId, homeName);
       getTeam(store.teams, awayId, awayName);
 
-      if (!store.teamStats[homeId]) store.teamStats[homeId] = await fetchTeamForm(homeId);
-      if (!store.teamStats[awayId]) store.teamStats[awayId] = await fetchTeamForm(awayId);
-      if (!store.teamInjuries[homeId]) store.teamInjuries[homeId] = await fetchInjuries(homeId);
-      if (!store.teamInjuries[awayId]) store.teamInjuries[awayId] = await fetchInjuries(awayId);
+      let eventDetails = store.eventCache?.[event.id] || null;
+      if (!eventDetails || now - Number(store.eventCacheUpdated?.[event.id] || 0) > EVENT_TTL) {
+        eventDetails = await fetchEventDetails(event.id);
+        if (eventDetails) {
+          store.eventCache[event.id] = eventDetails;
+          store.eventCacheUpdated[event.id] = now;
+        }
+        await sleep(60);
+      }
 
-      const tournamentId = event.uniqueTournament?.id || event.tournament?.uniqueTournament?.id;
-      const seasonId = event.season?.id;
-      if (!store.teamSeasonStats[homeId]) store.teamSeasonStats[homeId] = await fetchSeasonStats(homeId, tournamentId, seasonId);
-      if (!store.teamSeasonStats[awayId]) store.teamSeasonStats[awayId] = await fetchSeasonStats(awayId, tournamentId, seasonId);
-
-      const kickoff = event.startTimestamp ? new Date(event.startTimestamp * 1000).toISOString() : null;
-      const eventDetails = await fetchEventDetails(event.id);
-      const coords = getCoords(eventDetails);
-      const weather = coords ? await fetchWeather(coords.lat, coords.lon, kickoff) : null;
       const lineupSummary = await fetchLineupSummary(event.id);
-      const h2h = await fetchH2H(event.id, homeId, awayId);
 
-      const homeRestDays = calcRestDays(store.teamStats[homeId]?.lastMatchKickoff, kickoff);
-      const awayRestDays = calcRestDays(store.teamStats[awayId]?.lastMatchKickoff, kickoff);
+      const h2hKey = `${event.id}_${homeId}_${awayId}`;
+      let h2h = store.h2hCache?.[h2hKey]?.data || null;
+      if (!h2h || now - Number(store.h2hCache?.[h2hKey]?.updated || 0) > H2H_TTL) {
+        h2h = await fetchH2H(event.id, homeId, awayId, tournamentId, seasonId);
+        store.h2hCache[h2hKey] = { updated: now, data: h2h };
+        await sleep(60);
+      }
 
-      const pred = predict({
-        homeStats: store.teamStats[homeId],
-        awayStats: store.teamStats[awayId],
-        homeSeasonStats: store.teamSeasonStats[homeId],
-        awaySeasonStats: store.teamSeasonStats[awayId],
-        homeInjuries: store.teamInjuries[homeId],
-        awayInjuries: store.teamInjuries[awayId],
+      const coords = getCoords(eventDetails);
+      const weatherKey = coords && kickoff ? `${coords.lat.toFixed(2)}_${coords.lon.toFixed(2)}_${kickoff.slice(0, 13)}` : null;
+      let weather = weatherKey ? store.weatherCache?.[weatherKey]?.data || null : null;
+      if (weatherKey && (!weather || now - Number(store.weatherCache?.[weatherKey]?.updated || 0) > WEATHER_TTL)) {
+        weather = await fetchWeather(coords.lat, coords.lon, kickoff);
+        if (!store.weatherCache) store.weatherCache = {};
+        store.weatherCache[weatherKey] = { updated: now, data: weather };
+      }
+
+      const aggregate = buildAggregateInfo(event, eventDetails, h2h);
+      const homeRecent = store.teamStats[homeId] || null;
+      const awayRecent = store.teamStats[awayId] || null;
+      const homeRestDays = calcRestDays(homeRecent?.lastMatchKickoff, kickoff);
+      const awayRestDays = calcRestDays(awayRecent?.lastMatchKickoff, kickoff);
+      const context = buildContext({
+        standingMeta,
+        homePos,
+        awayPos,
+        leagueType: leagueInfo.type,
+        aggregate,
+        homeTeamName: homeName,
+        awayTeamName: awayName,
+        homeCountry,
+        awayCountry,
+      });
+
+      const homeClubElo = lookupClubElo(clubEloSnapshot, homeName);
+      const awayClubElo = lookupClubElo(clubEloSnapshot, awayName);
+
+      const prediction = predict({
+        homeRecent,
+        awayRecent,
+        homeSeasonStats: store.teamSeasonStats[homeId] || null,
+        awaySeasonStats: store.teamSeasonStats[awayId] || null,
+        homeInjuries: store.teamInjuries[homeId] || null,
+        awayInjuries: store.teamInjuries[awayId] || null,
         homeRestDays,
         awayRestDays,
         weather,
         lineupSummary,
         h2h,
+        homeClubElo,
+        awayClubElo,
+        context,
       });
 
       const matchId = `ss-${event.id}`;
-      dayMatches.push({
+      const score =
+        event.homeScore?.current != null && event.awayScore?.current != null
+          ? `${event.homeScore.current}-${event.awayScore.current}`
+          : null;
+      const match = {
         id: matchId,
         sofaId: event.id,
         date,
         kickoff,
-        league,
+        league: leagueInfo.label,
         homeTeamId: homeId,
         awayTeamId: awayId,
         homeTeamName: homeName,
@@ -365,45 +1159,75 @@ async function main() {
         homeLogo: homeId ? `https://api.sofascore.app/api/v1/team/${homeId}/image` : "",
         awayLogo: awayId ? `https://api.sofascore.app/api/v1/team/${awayId}/image` : "",
         status: event.status?.type === "inprogress" ? "LIVE" : event.status?.type === "finished" ? "FT" : "NS",
-        score: event.homeScore?.current != null && event.awayScore?.current != null ? `${event.homeScore.current}-${event.awayScore.current}` : null,
+        score,
         minute: event.time?.current ? `${event.time.current}${event.time?.extra ? `+${event.time.extra}` : ""}'` : null,
-        minuteValue: event.time?.current || null,
-        extraTime: event.time?.extra || null,
+        minuteValue: Number(event.time?.current || 0) || null,
+        extraTime: Number(event.time?.extra || 0) || null,
         period: event.status?.description || null,
-        liveUpdatedAt: event.status?.type === "inprogress" ? Date.now() : null,
-        homeForm: store.teamStats[homeId]?.form || "",
-        awayForm: store.teamStats[awayId]?.form || "",
-        homeInjuries: store.teamInjuries[homeId],
-        awayInjuries: store.teamInjuries[awayId],
-        homeSeasonStats: store.teamSeasonStats[homeId],
-        awaySeasonStats: store.teamSeasonStats[awayId],
-        homeRecent: store.teamStats[homeId],
-        awayRecent: store.teamStats[awayId],
+        liveUpdatedAt: event.status?.type === "inprogress" ? now : null,
+        homeForm: homeRecent?.form || "",
+        awayForm: awayRecent?.form || "",
+        homeRecent,
+        awayRecent,
+        homeSeasonStats: store.teamSeasonStats[homeId] || null,
+        awaySeasonStats: store.teamSeasonStats[awayId] || null,
+        homeInjuries: store.teamInjuries[homeId] || null,
+        awayInjuries: store.teamInjuries[awayId] || null,
         homeRestDays,
         awayRestDays,
         weather,
         lineupSummary,
         h2h,
-        modelEdges: pred.modelEdges,
-      });
+        h2hStatus: h2h?.status || "empty",
+        aggregate,
+        homeClubElo,
+        awayClubElo,
+        homePos,
+        awayPos,
+        roundLabel: extractRoundLabel(eventDetails),
+        context,
+        modelEdges: prediction.modelEdges,
+      };
 
+      dayMatches.push(match);
       dayPredictions.push({
         matchId,
         homeTeam: homeName,
         awayTeam: awayName,
-        league,
-        homeForm: store.teamStats[homeId]?.form || "",
-        awayForm: store.teamStats[awayId]?.form || "",
+        league: leagueInfo.label,
+        homeForm: homeRecent?.form || "",
+        awayForm: awayRecent?.form || "",
         homeRestDays,
         awayRestDays,
         weather,
         lineupSummary,
         h2h,
-        ...pred,
+        h2hStatus: h2h?.status || "empty",
+        aggregate,
+        context,
+        homeClubElo,
+        awayClubElo,
+        ...prediction,
       });
 
-      await sleep(80);
+      if (leagueInfo.type === "cup" || aggregate?.active || context.summary?.includes("play-off")) {
+        store.knockoutOverview[date].push({
+          league: leagueInfo.label,
+          roundLabel: extractRoundLabel(eventDetails),
+          stakes: context.stakes,
+          matchId,
+          kickoff,
+          homeTeamName: homeName,
+          awayTeamName: awayName,
+          aggregate,
+          score,
+          status: event.status?.type === "inprogress" ? "LIVE" : event.status?.type === "finished" ? "FT" : "NS",
+        });
+      }
+
+      await sleep(40);
     }
+
     store.matches[date] = dayMatches;
     store.predictions[date] = dayPredictions;
   }
@@ -411,21 +1235,48 @@ async function main() {
   const liveJson = await safeFetch(`${SOFA}/sport/football/events/live`);
   for (const live of liveJson?.events || []) {
     const matchId = `ss-${live.id}`;
-    const match = (store.matches[today] || []).find((m) => m.id === matchId);
+    const match = (store.matches[today] || []).find((item) => item.id === matchId);
     if (!match) continue;
+
     match.status = "LIVE";
-    match.score = live.homeScore?.current != null && live.awayScore?.current != null ? `${live.homeScore.current}-${live.awayScore.current}` : match.score;
+    match.score =
+      live.homeScore?.current != null && live.awayScore?.current != null
+        ? `${live.homeScore.current}-${live.awayScore.current}`
+        : match.score;
     match.minute = live.time?.current ? `${live.time.current}${live.time?.extra ? `+${live.time.extra}` : ""}'` : match.minute;
-    match.minuteValue = live.time?.current || match.minuteValue || null;
-    match.extraTime = live.time?.extra || null;
+    match.minuteValue = Number(live.time?.current || 0) || match.minuteValue || null;
+    match.extraTime = Number(live.time?.extra || 0) || null;
     match.period = live.status?.description || null;
     match.liveUpdatedAt = Date.now();
     match.liveStats = await fetchLiveStats(live.id);
-    await sleep(50);
+
+    if (match.aggregate?.active) {
+      const [homeGoals, awayGoals] = String(match.score || "0-0").split("-").map(Number);
+      if (!Number.isNaN(homeGoals) && !Number.isNaN(awayGoals)) {
+        match.aggregate.homeAggregate =
+          Number(match.aggregate.homeAggregate || 0) - Number(match.aggregate.currentHomeGoals || 0) + homeGoals;
+        match.aggregate.awayAggregate =
+          Number(match.aggregate.awayAggregate || 0) - Number(match.aggregate.currentAwayGoals || 0) + awayGoals;
+        match.aggregate.currentHomeGoals = homeGoals;
+        match.aggregate.currentAwayGoals = awayGoals;
+        match.aggregate.aggregateScore = `${match.aggregate.homeAggregate}-${match.aggregate.awayAggregate}`;
+        match.aggregate.leader =
+          match.aggregate.homeAggregate === match.aggregate.awayAggregate
+            ? null
+            : match.aggregate.homeAggregate > match.aggregate.awayAggregate
+              ? match.homeTeamName
+              : match.awayTeamName;
+      }
+    }
+
+    await sleep(30);
   }
 
   store.lastRun = Date.now();
+  store.workerVersion = "v3-rich";
   fs.writeFileSync(DATA_FILE, JSON.stringify(store, null, 2));
+  console.log("[worker] klaar");
 }
 
 main();
+
