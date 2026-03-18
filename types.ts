@@ -42,6 +42,19 @@ export interface MatchSplitStats {
   wins: number;
   draws: number;
   losses: number;
+  scoredTotal?: number;
+  concededTotal?: number;
+}
+
+export interface RecentMatchItem {
+  date?: string | null;
+  league?: string | null;
+  venue?: "H" | "A";
+  opponent?: string;
+  score?: string | null;
+  goalsFor?: number | null;
+  goalsAgainst?: number | null;
+  result?: "W" | "D" | "L";
 }
 
 export interface MatchRecentStats {
@@ -53,12 +66,47 @@ export interface MatchRecentStats {
   wins?: number;
   draws?: number;
   losses?: number;
+  strongestSide?: "home" | "away" | "balanced" | string;
   splits?: {
     home?: MatchSplitStats;
     away?: MatchSplitStats;
   };
+  recentMatches?: RecentMatchItem[];
   lastMatchKickoff?: string | null;
   goalTiming?: any;
+}
+
+export interface H2HResult {
+  eventId?: string | number;
+  date?: string | null;
+  homeTeamId?: string;
+  awayTeamId?: string;
+  home?: string;
+  away?: string;
+  score?: string;
+  winnerId?: string;
+}
+
+export interface MatchAggregateInfo {
+  active?: boolean;
+  firstLegScore?: string | null;
+  firstLegText?: string | null;
+  aggregateScore?: string | null;
+  homeAggregate?: number;
+  awayAggregate?: number;
+  currentHomeGoals?: number;
+  currentAwayGoals?: number;
+  leader?: string | null;
+  roundLabel?: string | number | null;
+  note?: string | null;
+}
+
+export interface MatchContext {
+  homeZone?: string | null;
+  awayZone?: string | null;
+  rivalry?: string | null;
+  summary?: string | null;
+  stakes?: string | null;
 }
 
 export interface Match {
@@ -79,21 +127,26 @@ export interface Match {
   period?: string | null;
   liveUpdatedAt?: number | null;
   score?: string;
-  h2h?: any;
+  h2h?: {
+    played?: number;
+    homeWins?: number;
+    draws?: number;
+    awayWins?: number;
+    status?: string;
+    results?: H2HResult[];
+  } | null;
+  h2hStatus?: string;
+  aggregate?: MatchAggregateInfo | null;
+  context?: MatchContext | null;
+  roundLabel?: string | number | null;
   homeForm?: string;
   awayForm?: string;
-  keyInjuries?: string;
-  topScorers?: string;
-  context?: string;
-  lineups?: {
-    home: string[];
-    away: string[];
-  };
-  events?: string[];
   homePos?: number | null;
   awayPos?: number | null;
   homeElo?: number;
   awayElo?: number;
+  homeClubElo?: number | null;
+  awayClubElo?: number | null;
   homeSeasonStats?: any;
   awaySeasonStats?: any;
   homeInjuries?: any;
@@ -127,6 +180,8 @@ export interface Prediction {
   learningNote?: string;
   homeElo?: number;
   awayElo?: number;
+  homeClubElo?: number | null;
+  awayClubElo?: number | null;
   homeForm?: string;
   awayForm?: string;
   over05?: number;
@@ -136,6 +191,9 @@ export interface Prediction {
   btts?: number;
   scoreMatrix?: Record<string, number>;
   h2h?: any;
+  h2hStatus?: string;
+  aggregate?: MatchAggregateInfo | null;
+  context?: MatchContext | null;
   matchImportance?: number;
   homeFalsePositive?: boolean;
   awayFalsePositive?: boolean;
@@ -144,6 +202,8 @@ export interface Prediction {
   weather?: MatchWeather | null;
   lineupSummary?: MatchLineupSummary | null;
   modelEdges?: any;
+  derivedOdds?: any;
+  valueFlags?: any;
   [key: string]: any;
 }
 
