@@ -1,6 +1,6 @@
 import { Match } from "../types";
 
-const CACHE_VERSION = "v3_rich";
+const CACHE_VERSION = "v4_ensemble_ready";
 const LIVE_CACHE_AGE_MS = 30_000;
 const TODAY_CACHE_AGE_MS = 90_000;
 const OTHER_CACHE_AGE_MS = 30 * 60_000;
@@ -135,6 +135,10 @@ function mapRawMatch(m: any): Match {
     ...(m.weather ? { weather: m.weather } : {}),
     ...(m.lineupSummary ? { lineupSummary: m.lineupSummary } : {}),
     ...(m.modelEdges ? { modelEdges: m.modelEdges } : {}),
+    ...(m.homeTeamProfile ? { homeTeamProfile: m.homeTeamProfile } : {}),
+    ...(m.awayTeamProfile ? { awayTeamProfile: m.awayTeamProfile } : {}),
+    ...(m.featureVector ? { featureVector: m.featureVector } : {}),
+    ...(m.ensembleMeta ? { ensembleMeta: m.ensembleMeta } : {}),
   } as Match;
 }
 
@@ -194,6 +198,10 @@ export async function fetchMatchesAndPredictions(
         ...(rawMatch.modelEdges ? { modelEdges: rawMatch.modelEdges } : {}),
         ...(rawMatch.homeClubElo != null ? { homeClubElo: rawMatch.homeClubElo } : {}),
         ...(rawMatch.awayClubElo != null ? { awayClubElo: rawMatch.awayClubElo } : {}),
+        ...(rawMatch.homeTeamProfile ? { homeTeamProfile: rawMatch.homeTeamProfile } : {}),
+        ...(rawMatch.awayTeamProfile ? { awayTeamProfile: rawMatch.awayTeamProfile } : {}),
+        ...(rawMatch.featureVector ? { featureVector: rawMatch.featureVector } : {}),
+        ...(rawMatch.ensembleMeta ? { ensembleMeta: rawMatch.ensembleMeta } : {}),
       };
     }
 
