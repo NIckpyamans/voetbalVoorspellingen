@@ -66,6 +66,8 @@ export interface MatchRecentStats {
   over25Rate?: number;
   cleanSheetRate?: number;
   failToScoreRate?: number;
+  yellowCardRate?: number;
+  redCardRate?: number;
   gamesPlayed?: number;
   wins?: number;
   draws?: number;
@@ -88,6 +90,7 @@ export interface TeamProfile {
   pointsPerGame?: number;
   attackTrend?: number;
   consistency?: number;
+  setPieceScore?: number;
   homeSplit?: any;
   awaySplit?: any;
   season?: any;
@@ -95,6 +98,10 @@ export interface TeamProfile {
     count?: number;
     ratingImpact?: number;
     keyPlayersMissing?: string[];
+  };
+  discipline?: {
+    yellowRate?: number;
+    redRate?: number;
   };
 }
 
