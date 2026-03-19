@@ -49,6 +49,15 @@ function buildTemplateAnalysis(match: any, prediction: any) {
   if (prediction.modelEdges?.clubEloDiff != null) {
     signals.push(`ClubElo edge ${prediction.modelEdges.clubEloDiff > 0 ? home : away}`);
   }
+  if (prediction.modelEdges?.riskProfile) signals.push(`risico ${prediction.modelEdges.riskProfile}`);
+  if (prediction.modelEdges?.modelAgreement != null) {
+    signals.push(`model agreement ${Math.round(prediction.modelEdges.modelAgreement * 100)}%`);
+  }
+  if (prediction.modelEdges?.tacticalMismatch?.summary) signals.push(prediction.modelEdges.tacticalMismatch.summary);
+  if (prediction.modelEdges?.formShift?.summary) signals.push(prediction.modelEdges.formShift.summary);
+  if (match.homeTeamProfile?.setPieceScore || match.awayTeamProfile?.setPieceScore) {
+    signals.push(`set-piece ${match.homeTeamProfile?.setPieceScore ?? "-"}-${match.awayTeamProfile?.setPieceScore ?? "-"}`);
+  }
 
   let tip = "BTTS Ja";
   if ((prediction.homeProb || 0) >= 0.55) tip = `${home} wint`;
@@ -121,6 +130,13 @@ CLUB ELO: ${prediction.homeClubElo ?? match.homeClubElo ?? "?"} - ${prediction.a
 BLESSURES: ${match.homeInjuries?.injuredCount || 0} - ${match.awayInjuries?.injuredCount || 0}
 STERKE KANT: ${match.homeTeamName} ${match.homeRecent?.strongestSide || "balanced"} | ${match.awayTeamName} ${match.awayRecent?.strongestSide || "balanced"}
 MODEL: ${(prediction.ensembleMeta || match.ensembleMeta)?.active ? `${(prediction.ensembleMeta || match.ensembleMeta).baseModel} + ${(prediction.ensembleMeta || match.ensembleMeta).blendModel}` : "basis"}
+RISICO: ${prediction.modelEdges?.riskProfile || "onbekend"}
+AGREEMENT: ${prediction.modelEdges?.modelAgreement != null ? `${Math.round(prediction.modelEdges.modelAgreement * 100)}%` : "?"}
+LINEUP IMPACT: ${prediction.modelEdges?.lineupImpact?.summary || "neutraal"}
+TACTISCHE MISMATCH: ${prediction.modelEdges?.tacticalMismatch?.summary || "gebalanceerd"}
+FORM SHIFT: ${prediction.modelEdges?.formShift?.summary || "stabiel"}
+SET PIECE: ${match.homeTeamProfile?.setPieceScore ?? "?"} - ${match.awayTeamProfile?.setPieceScore ?? "?"}
+KAARTEN: ${match.homeRecent?.yellowCardRate ?? "?"} - ${match.awayRecent?.yellowCardRate ?? "?"}
 WEER: ${weather ? `${weather.temperature ?? "?"}C, wind ${weather.windSpeed ?? "?"}, regenkans ${weather.precipitationProbability ?? "?"}%` : "onbekend"}
 LINEUPS: ${lineup?.confirmed ? "bevestigd" : "open"}
 ${h2h?.played >= 2 ? `H2H: ${h2h.homeWins}-${h2h.draws}-${h2h.awayWins}` : ""}
