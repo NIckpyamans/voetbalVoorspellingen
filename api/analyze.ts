@@ -58,6 +58,9 @@ function buildTemplateAnalysis(match: any, prediction: any) {
   if (match.homeTeamProfile?.setPieceScore || match.awayTeamProfile?.setPieceScore) {
     signals.push(`set-piece ${match.homeTeamProfile?.setPieceScore ?? "-"}-${match.awayTeamProfile?.setPieceScore ?? "-"}`);
   }
+  if (prediction.modelEdges?.travelEdge?.summary) signals.push(prediction.modelEdges.travelEdge.summary);
+  if (prediction.modelEdges?.keeperEdge?.summary) signals.push(prediction.modelEdges.keeperEdge.summary);
+  if (prediction.modelEdges?.lineupImpact?.summary) signals.push(prediction.modelEdges.lineupImpact.summary);
 
   let tip = "BTTS Ja";
   if ((prediction.homeProb || 0) >= 0.55) tip = `${home} wint`;
@@ -136,7 +139,11 @@ LINEUP IMPACT: ${prediction.modelEdges?.lineupImpact?.summary || "neutraal"}
 TACTISCHE MISMATCH: ${prediction.modelEdges?.tacticalMismatch?.summary || "gebalanceerd"}
 FORM SHIFT: ${prediction.modelEdges?.formShift?.summary || "stabiel"}
 SET PIECE: ${match.homeTeamProfile?.setPieceScore ?? "?"} - ${match.awayTeamProfile?.setPieceScore ?? "?"}
+HOEKEN: ${match.homeTeamProfile?.cornersTrend ?? "?"} - ${match.awayTeamProfile?.cornersTrend ?? "?"}
 KAARTEN: ${match.homeRecent?.yellowCardRate ?? "?"} - ${match.awayRecent?.yellowCardRate ?? "?"}
+KEEPER EDGE: ${prediction.modelEdges?.keeperEdge?.summary || "onbekend"}
+TRAVEL: ${prediction.modelEdges?.travelEdge?.summary || "beperkt"}
+CONTINUITY: ${prediction.modelEdges?.lineupImpact?.homeContinuity ?? "?"} - ${prediction.modelEdges?.lineupImpact?.awayContinuity ?? "?"}
 WEER: ${weather ? `${weather.temperature ?? "?"}C, wind ${weather.windSpeed ?? "?"}, regenkans ${weather.precipitationProbability ?? "?"}%` : "onbekend"}
 LINEUPS: ${lineup?.confirmed ? "bevestigd" : "open"}
 ${h2h?.played >= 2 ? `H2H: ${h2h.homeWins}-${h2h.draws}-${h2h.awayWins}` : ""}
