@@ -201,6 +201,13 @@ function buildTeamProfile({ teamName, recent, seasonStats, injuries, clubElo, st
           ).toFixed(2)
         )
       : 0.5;
+  const setPieceScore = Number(
+    (
+      Number(seasonStats?.avgCorners || 4.5) * 0.45 +
+      Number(seasonStats?.avgShotsOn || 4) * 0.35 +
+      Math.max(0, attackTrend) * 0.2
+    ).toFixed(2)
+  );
 
   return {
     teamName,
@@ -210,6 +217,7 @@ function buildTeamProfile({ teamName, recent, seasonStats, injuries, clubElo, st
     pointsPerGame: toPointsPerGame(recent?.wins, recent?.draws, recent?.gamesPlayed),
     attackTrend,
     consistency,
+    setPieceScore,
     homeSplit: {
       avgScored: homeSplit.avgScored,
       avgConceded: homeSplit.avgConceded,
@@ -235,6 +243,10 @@ function buildTeamProfile({ teamName, recent, seasonStats, injuries, clubElo, st
       count: Number(injuries?.injuredCount || 0),
       ratingImpact: Number(injuries?.injuredRating || 0),
       keyPlayersMissing: injuries?.keyPlayersMissing || [],
+    },
+    discipline: {
+      yellowRate: Number(recent?.yellowCardRate || 0),
+      redRate: Number(recent?.redCardRate || 0),
     },
   };
 }
@@ -280,6 +292,14 @@ function buildFeatureVector(input) {
     away_btts_rate: Number(input.awayRecent?.bttsRate || 0.5),
     home_over25_home: Number(homeSplit.over25Rate || 0.45),
     away_over25_away: Number(awaySplit.over25Rate || 0.45),
+    home_yellow_rate: Number(input.homeRecent?.yellowCardRate || 0),
+    away_yellow_rate: Number(input.awayRecent?.yellowCardRate || 0),
+    set_piece_diff: Number(
+      (
+        Number(input.homeTeamProfile?.setPieceScore || 0) -
+        Number(input.awayTeamProfile?.setPieceScore || 0)
+      ).toFixed(2)
+    ),
   };
 }
 
@@ -296,6 +316,8 @@ function buildHeuristicEnsemble(featureVector) {
   awayScore -= featureVector.rest_diff * 0.08;
   homeScore += (featureVector.home_home_split_scored - featureVector.away_away_split_conceded) * 0.16;
   awayScore += (featureVector.away_away_split_scored - featureVector.home_home_split_conceded) * 0.16;
+  homeScore += featureVector.set_piece_diff * 0.04;
+  awayScore -= featureVector.set_piece_diff * 0.04;
   drawScore += Math.max(0, 0.25 - Math.abs(featureVector.ppg_diff) * 0.06);
   drawScore += Math.max(0, 0.18 - Math.abs(featureVector.club_elo_diff) / 1000);
   homeScore -= featureVector.home_injuries * 0.05;
@@ -325,6 +347,118 @@ function blendProbabilities(base, heuristic, weightBase = 0.78) {
     homeProb: Number((homeProb / total).toFixed(4)),
     drawProb: Number((drawProb / total).toFixed(4)),
     awayProb: Number((awayProb / total).toFixed(4)),
+  };
+}
+
+function calcModelAgreement(base, heuristic) {
+  const diffs = [
+    Math.abs(Number(base.homeProb || 0) - Number(heuristic.homeProb || 0)),
+    Math.abs(Number(base.drawProb || 0) - Number(heuristic.drawProb || 0)),
+    Math.abs(Number(base.awayProb || 0) - Number(heuristic.awayProb || 0)),
+  ];
+  const avgDiff = diffs.reduce((sum, value) => sum + value, 0) / diffs.length;
+  return Number(Math.max(0, 1 - avgDiff * 4).toFixed(3));
+}
+
+function buildLineupImpact(input) {
+  const homeInjuries = Number(input.homeInjuries?.injuredCount || 0);
+  const awayInjuries = Number(input.awayInjuries?.injuredCount || 0);
+  const homeRating = Number(input.lineupSummary?.home?.avgRating || 6.8);
+  const awayRating = Number(input.lineupSummary?.away?.avgRating || 6.8);
+  const ratingDiff = Number((homeRating - awayRating).toFixed(2));
+
+  const homeImpact = Number((homeInjuries * 0.12 - Math.max(0, ratingDiff) * 0.08).toFixed(2));
+  const awayImpact = Number((awayInjuries * 0.12 + Math.min(0, ratingDiff) * -0.08).toFixed(2));
+
+  let summary = "neutraal";
+  if (homeImpact + 0.12 < awayImpact) summary = "thuisvoordeel in opstelling";
+  else if (awayImpact + 0.12 < homeImpact) summary = "uitvoordeel in opstelling";
+
+  return {
+    confirmed: !!input.lineupSummary?.confirmed,
+    homeImpact,
+    awayImpact,
+    ratingDiff,
+    summary,
+  };
+}
+
+function buildTacticalMismatch(input) {
+  const homeSplit = pickHomeStrength(input.homeRecent);
+  const awaySplit = pickAwayStrength(input.awayRecent);
+  const homeScore = Number(((homeSplit.avgScored || 1.35) + (awaySplit.avgConceded || 1.35)).toFixed(2));
+  const awayScore = Number(((awaySplit.avgScored || 1.35) + (homeSplit.avgConceded || 1.35)).toFixed(2));
+
+  let summary = "gebalanceerd";
+  if (homeScore > awayScore + 0.35) summary = "thuis aanvallende mismatch";
+  else if (awayScore > homeScore + 0.35) summary = "uit aanvallende mismatch";
+
+  return {
+    homeScore,
+    awayScore,
+    summary,
+  };
+}
+
+function buildFormShift(input) {
+  const homeSplit = pickHomeStrength(input.homeRecent);
+  const awaySplit = pickAwayStrength(input.awayRecent);
+  const homeShift = Number(((Number(input.homeRecent?.avgScored || 1.35) - Number(homeSplit.avgScored || 1.35))).toFixed(2));
+  const awayShift = Number(((Number(input.awayRecent?.avgScored || 1.35) - Number(awaySplit.avgScored || 1.35))).toFixed(2));
+
+  return {
+    homeShift,
+    awayShift,
+    summary:
+      Math.abs(homeShift) < 0.15 && Math.abs(awayShift) < 0.15
+        ? "stabiel"
+        : homeShift > awayShift
+          ? "thuis vorm stijgt sneller"
+          : "uit vorm stijgt sneller",
+  };
+}
+
+function buildRiskProfile({ confidence, agreement, weatherRisk, lineupConfirmed, injuriesTotal }) {
+  let score = 0;
+  if (confidence < 0.48) score += 2;
+  else if (confidence < 0.6) score += 1;
+
+  if (agreement < 0.65) score += 2;
+  else if (agreement < 0.78) score += 1;
+
+  if (weatherRisk === "medium") score += 1;
+  if (weatherRisk === "high") score += 2;
+  if (!lineupConfirmed) score += 1;
+  if (injuriesTotal >= 4) score += 1;
+
+  if (score >= 5) return "hoog";
+  if (score >= 3) return "middel";
+  return "laag";
+}
+
+function buildTeamAiSummary(side, teamName, recent, profile, injuries) {
+  const split = side === "home" ? recent?.splits?.home : recent?.splits?.away;
+  const strengths = [];
+  const risks = [];
+
+  if ((profile?.pointsPerGame || 0) >= 1.9) strengths.push("hoog puntenritme");
+  if ((profile?.pointsPerGame || 0) <= 1.1) risks.push("laag puntenritme");
+  if ((profile?.attackTrend || 0) >= 0.45) strengths.push("positieve aanvalstrend");
+  if ((profile?.attackTrend || 0) <= -0.2) risks.push("negatieve vormtrend");
+  if ((split?.cleanSheetRate || 0) >= 0.35) strengths.push("sterke verdedigende split");
+  if ((split?.failToScoreRate || recent?.failToScoreRate || 0) >= 0.35) risks.push("regelmatig moeite met scoren");
+  if ((injuries?.injuredCount || injuries?.count || 0) >= 3) risks.push("meerdere afwezigen");
+  if ((profile?.setPieceScore || 0) >= 3.8) strengths.push("sterk in standaardsituaties");
+  if ((recent?.yellowCardRate || 0) >= 2.4) risks.push("hoog kaartenritme");
+
+  return {
+    teamName,
+    strengths: strengths.slice(0, 3),
+    risks: risks.slice(0, 3),
+    summary:
+      strengths.length || risks.length
+        ? `${teamName}: ${[...strengths.slice(0, 2), ...risks.slice(0, 2)].join(", ")}`
+        : `${teamName}: weinig afwijkende signalen`,
   };
 }
 
@@ -550,6 +684,8 @@ async function fetchTeamForm(teamId) {
   let scored = 0;
   let conceded = 0;
   let btts = 0;
+  let yellowCards = 0;
+  let redCards = 0;
   const splitState = {
     home: { games: 0, scored: 0, conceded: 0, btts: 0, over15: 0, over25: 0, cleanSheets: 0, failToScore: 0, wins: 0, draws: 0, losses: 0 },
     away: { games: 0, scored: 0, conceded: 0, btts: 0, over15: 0, over25: 0, cleanSheets: 0, failToScore: 0, wins: 0, draws: 0, losses: 0 },
@@ -602,6 +738,19 @@ async function fetchTeamForm(teamId) {
     if (gf > ga) target.wins += 1;
     else if (gf === ga) target.draws += 1;
     else target.losses += 1;
+
+    for (const incident of event.incidents || []) {
+      const type = String(incident.incidentType || "").toLowerCase();
+      const klass = String(incident.incidentClass || "").toLowerCase();
+      const isCard = type.includes("card") || klass.includes("card") || klass.includes("yellow") || klass.includes("red");
+      if (!isCard) continue;
+
+      const byTeam = isHome ? incident.isHome !== false : incident.isHome === false;
+      if (!byTeam) continue;
+
+      if (klass.includes("red")) redCards += 1;
+      else yellowCards += 1;
+    }
   }
 
   const homeSplit = finalizeSplit(splitState.home);
@@ -638,6 +787,8 @@ async function fetchTeamForm(teamId) {
       const gf = isHome ? event.homeScore?.current : event.awayScore?.current;
       return gf === 0;
     }).length / sample.length).toFixed(2)),
+    yellowCardRate: Number((yellowCards / sample.length).toFixed(2)),
+    redCardRate: Number((redCards / sample.length).toFixed(2)),
     gamesPlayed: sample.length,
     wins: (form.match(/W/g) || []).length,
     draws: (form.match(/D/g) || []).length,
@@ -1241,11 +1392,27 @@ function predict(input) {
   const homeAwayEdge = buildHomeAwayEdge(input.homeRecent, input.awayRecent);
   const featureVector = buildFeatureVector(input);
   const heuristicModel = buildHeuristicEnsemble(featureVector);
+  const baseModel = { homeProb, drawProb, awayProb };
   const blended = blendProbabilities(
-    { homeProb, drawProb, awayProb },
+    baseModel,
     heuristicModel,
     0.78
   );
+  const modelAgreement = calcModelAgreement(baseModel, heuristicModel);
+  const lineupImpact = buildLineupImpact(input);
+  const tacticalMismatch = buildTacticalMismatch(input);
+  const formShift = buildFormShift(input);
+  const riskProfile = buildRiskProfile({
+    confidence: Math.min(0.93, bestProb * 3.5 + 0.24),
+    agreement: modelAgreement,
+    weatherRisk: input.weather?.riskLevel || "low",
+    lineupConfirmed: !!input.lineupSummary?.confirmed,
+    injuriesTotal: Number(input.homeInjuries?.injuredCount || 0) + Number(input.awayInjuries?.injuredCount || 0),
+  });
+  const teamAiSummary = {
+    home: buildTeamAiSummary("home", input.homeTeamProfile?.teamName || "Thuis", input.homeRecent, input.homeTeamProfile, input.homeInjuries),
+    away: buildTeamAiSummary("away", input.awayTeamProfile?.teamName || "Uit", input.awayRecent, input.awayTeamProfile, input.awayInjuries),
+  };
 
   return {
     homeProb: blended.homeProb,
@@ -1268,10 +1435,16 @@ function predict(input) {
         : null,
       weatherRisk: input.weather?.riskLevel || "low",
       lineupConfirmed: !!input.lineupSummary?.confirmed,
+      lineupImpact,
       homeAwayEdge,
+      tacticalMismatch,
+      formShift,
       clubEloDiff: homeClubElo > 0 && awayClubElo > 0 ? Math.round(homeClubElo - awayClubElo) : null,
       stakes: input.context?.summary || null,
       matchImportance: input.matchImportance || 1,
+      modelAgreement,
+      riskProfile,
+      teamAiSummary,
     },
     featureVector,
     ensembleMeta: {
@@ -1282,6 +1455,13 @@ function predict(input) {
       blendWeightHeuristic: 0.22,
       trainingReady: true,
       suggestedNextModel: "CatBoost or LightGBM",
+      baseProbabilities: {
+        homeProb: Number(baseModel.homeProb.toFixed(4)),
+        drawProb: Number(baseModel.drawProb.toFixed(4)),
+        awayProb: Number(baseModel.awayProb.toFixed(4)),
+      },
+      heuristicProbabilities: heuristicModel,
+      agreement: modelAgreement,
     },
     matchImportance: input.matchImportance || 1,
   };
