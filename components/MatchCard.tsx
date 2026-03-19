@@ -108,6 +108,32 @@ function FormPills({ form }: { form?: string }) {
   );
 }
 
+function TeamMeta({
+  profile,
+  injuries,
+}: {
+  profile?: any;
+  injuries?: any;
+}) {
+  const sideLabel =
+    profile?.strongestSide === "home"
+      ? "thuis sterk"
+      : profile?.strongestSide === "away"
+        ? "uit sterk"
+        : "gebalanceerd";
+
+  return (
+    <div className="mt-1 space-y-0.5">
+      <div className="text-[8px] text-slate-400">
+        PPG {profile?.pointsPerGame ?? "-"} · {sideLabel}
+      </div>
+      <div className="text-[8px] text-slate-500">
+        trend {profile?.attackTrend ?? "-"} · blessures {injuries?.count ?? injuries?.injuredCount ?? 0}
+      </div>
+    </div>
+  );
+}
+
 function RecentList({ title, recent }: { title: string; recent: any }) {
   const items = recent?.recentMatches || [];
   return (
@@ -178,6 +204,7 @@ function InsightGrid({ match, prediction }: { match: any; prediction: any }) {
   const clubEloDiff = prediction.modelEdges?.clubEloDiff;
   const homeBtts = match.homeRecent?.bttsRate != null ? `${Math.round(match.homeRecent.bttsRate * 100)}%` : "-";
   const awayBtts = match.awayRecent?.bttsRate != null ? `${Math.round(match.awayRecent.bttsRate * 100)}%` : "-";
+  const ensemble = prediction.ensembleMeta || match.ensembleMeta;
 
   return (
     <div className="grid grid-cols-2 gap-1.5 mb-2">
@@ -203,6 +230,19 @@ function InsightGrid({ match, prediction }: { match: any; prediction: any }) {
         <div className="text-[7px] uppercase font-black text-emerald-300/80">BTTS trend</div>
         <div className="text-[10px] font-black text-white">
           {homeBtts} / {awayBtts}
+        </div>
+      </div>
+      <div className="rounded-xl border border-cyan-500/15 bg-cyan-950/20 px-2 py-1.5 col-span-2">
+        <div className="flex items-center justify-between gap-2">
+          <div>
+            <div className="text-[7px] uppercase font-black text-cyan-300/80">Ensemble model</div>
+            <div className="text-[10px] font-black text-white">
+              {ensemble?.active ? `${ensemble.baseModel} + ${ensemble.blendModel}` : "Dixon-Coles basis"}
+            </div>
+          </div>
+          <div className="text-right text-[8px] text-cyan-100/80">
+            {ensemble?.blendWeightBase != null ? `${Math.round(ensemble.blendWeightBase * 100)}% basis` : ""}
+          </div>
         </div>
       </div>
     </div>
@@ -300,6 +340,7 @@ const MatchCard: React.FC<MatchCardProps> = ({ match, prediction, onFavoriteChan
           </div>
           <div className="text-[7px] text-slate-500">ClubElo {match.homeClubElo ?? "-"}</div>
           <FormPills form={match.homeForm} />
+          <TeamMeta profile={match.homeTeamProfile} injuries={match.homeInjuries} />
         </div>
 
         <div className="min-w-[104px] text-center">
@@ -326,15 +367,17 @@ const MatchCard: React.FC<MatchCardProps> = ({ match, prediction, onFavoriteChan
           </div>
           <div className="text-[7px] text-slate-500">ClubElo {match.awayClubElo ?? "-"}</div>
           <FormPills form={match.awayForm} />
+          <TeamMeta profile={match.awayTeamProfile} injuries={match.awayInjuries} />
         </div>
       </div>
 
-      <div className="grid grid-cols-5 gap-1.5 mb-2">
+      <div className="grid grid-cols-3 gap-1.5 mb-2">
         <Badge label="Rust" value={match.homeRestDays != null && match.awayRestDays != null ? `${match.homeRestDays}d/${match.awayRestDays}d` : "?"} tone="blue" />
         <Badge label="Weer" value={weather ? `${weather.temperature ?? "?"}C` : "?"} tone={weather?.riskLevel === "high" ? "red" : weather?.riskLevel === "medium" ? "amber" : "slate"} />
         <Badge label="Lineups" value={match.lineupSummary?.confirmed ? "Bevestigd" : "Open"} tone={match.lineupSummary?.confirmed ? "green" : "slate"} />
         <Badge label="H2H" value={h2h?.played ? `${h2h.homeWins}-${h2h.draws}-${h2h.awayWins}` : "Leeg"} tone={h2h?.played ? "purple" : "slate"} />
         <Badge label="Context" value={match.context?.summary ? "Aan" : "Basis"} tone={match.context?.summary ? "amber" : "slate"} />
+        <Badge label="Model" value={(prediction.ensembleMeta || match.ensembleMeta)?.active ? "Ensemble" : "Basis"} tone="blue" />
       </div>
 
       <InsightGrid match={match} prediction={prediction} />
@@ -478,6 +521,10 @@ const MatchCard: React.FC<MatchCardProps> = ({ match, prediction, onFavoriteChan
             <Badge label="Schoten uit" value={match.awaySeasonStats?.avgShotsOn != null ? Number(match.awaySeasonStats.avgShotsOn).toFixed(1) : "-"} tone="red" />
             <Badge label="Blessures thuis" value={`${match.homeInjuries?.injuredCount || 0}`} tone="amber" />
             <Badge label="Blessures uit" value={`${match.awayInjuries?.injuredCount || 0}`} tone="amber" />
+            <Badge label="PPG thuis" value={match.homeTeamProfile?.pointsPerGame != null ? String(match.homeTeamProfile.pointsPerGame) : "-"} tone="blue" />
+            <Badge label="PPG uit" value={match.awayTeamProfile?.pointsPerGame != null ? String(match.awayTeamProfile.pointsPerGame) : "-"} tone="red" />
+            <Badge label="Clean sheet" value={match.homeRecent?.cleanSheetRate != null ? `${Math.round(match.homeRecent.cleanSheetRate * 100)}% / ${Math.round((match.awayRecent?.cleanSheetRate || 0) * 100)}%` : "-"} tone="green" />
+            <Badge label="Fail to score" value={match.homeRecent?.failToScoreRate != null ? `${Math.round(match.homeRecent.failToScoreRate * 100)}% / ${Math.round((match.awayRecent?.failToScoreRate || 0) * 100)}%` : "-"} tone="amber" />
           </div>
 
           {topScores.length > 0 && (
