@@ -60,6 +60,10 @@ function enrichPrediction(prediction: any, matchMap: Record<string, any>) {
     awayClubElo:
       prediction.awayClubElo != null ? prediction.awayClubElo : match?.awayClubElo ?? null,
     modelEdges: prediction.modelEdges || match?.modelEdges || null,
+    homeTeamProfile: prediction.homeTeamProfile || match?.homeTeamProfile || null,
+    awayTeamProfile: prediction.awayTeamProfile || match?.awayTeamProfile || null,
+    featureVector: prediction.featureVector || match?.featureVector || null,
+    ensembleMeta: prediction.ensembleMeta || match?.ensembleMeta || null,
     match,
   };
 }
@@ -93,7 +97,7 @@ export default async function handler(req: any, res: any) {
       date,
       predictions: predictions.map((prediction) => enrichPrediction(prediction, matchMap)),
       total: predictions.length,
-      source: predictions.length ? "server-data-v3" : "none",
+      source: predictions.length ? "server-data-v4-ensemble" : "none",
       lastRun: store.lastRun || null,
     });
   } catch (err: any) {
