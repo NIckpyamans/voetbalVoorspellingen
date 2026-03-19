@@ -218,6 +218,19 @@ function buildTeamProfile({ teamName, recent, seasonStats, injuries, clubElo, st
     attackTrend,
     consistency,
     setPieceScore,
+    cornersTrend: Number(seasonStats?.avgCorners || 0),
+    disciplineIndex: Number(
+      (
+        Number(recent?.yellowCardRate || 0) +
+        Number(recent?.redCardRate || 0) * 1.7
+      ).toFixed(2)
+    ),
+    fatigueIndex: Number(
+      (
+        Math.max(0, 5 - Number(recent?.gamesPlayed || 0) * 0.1) +
+        Math.max(0, Number(injuries?.injuredCount || 0) * 0.12)
+      ).toFixed(2)
+    ),
     homeSplit: {
       avgScored: homeSplit.avgScored,
       avgConceded: homeSplit.avgConceded,
@@ -251,11 +264,46 @@ function buildTeamProfile({ teamName, recent, seasonStats, injuries, clubElo, st
   };
 }
 
+function calcLineupContinuity(lineupSide, injuries) {
+  const starters = Number(lineupSide?.starters || 0);
+  const avgRating = Number(lineupSide?.avgRating || 6.8);
+  const injuryPenalty = Number(injuries?.injuredCount || 0) * 0.07;
+  const starterScore = starters ? Math.min(1, starters / 11) : 0.55;
+  const ratingScore = Math.max(0, Math.min(1, (avgRating - 6) / 2));
+  return Number(Math.max(0, starterScore * 0.6 + ratingScore * 0.4 - injuryPenalty).toFixed(2));
+}
+
+function calcTravelPenalty({ homeCountry, awayCountry, leagueType }) {
+  const home = normalizeName(homeCountry);
+  const away = normalizeName(awayCountry);
+  if (!home || !away) return 0;
+  if (home === away) return 0;
+  if (leagueType === "cup") return 0.22;
+  return 0.1;
+}
+
+function calcKeeperEdge(lineupSummary) {
+  const homeKeeper = Number(lineupSummary?.home?.keeperRating || 0);
+  const awayKeeper = Number(lineupSummary?.away?.keeperRating || 0);
+  if (!homeKeeper && !awayKeeper) return 0;
+  return Number((homeKeeper - awayKeeper).toFixed(2));
+}
+
 function buildFeatureVector(input) {
   const homeSplit = pickHomeStrength(input.homeRecent);
   const awaySplit = pickAwayStrength(input.awayRecent);
   const homePpg = toPointsPerGame(input.homeRecent?.wins, input.homeRecent?.draws, input.homeRecent?.gamesPlayed);
   const awayPpg = toPointsPerGame(input.awayRecent?.wins, input.awayRecent?.draws, input.awayRecent?.gamesPlayed);
+  const lineupRatingDiff = Number(
+    (
+      Number(input.lineupSummary?.home?.avgRating || 0) -
+      Number(input.lineupSummary?.away?.avgRating || 0)
+    ).toFixed(2)
+  );
+  const homeContinuity = calcLineupContinuity(input.lineupSummary?.home, input.homeInjuries);
+  const awayContinuity = calcLineupContinuity(input.lineupSummary?.away, input.awayInjuries);
+  const awayTravelPenalty = calcTravelPenalty(input);
+  const keeperRatingDiff = calcKeeperEdge(input.lineupSummary);
 
   return {
     home_avg_scored: Number(input.homeRecent?.avgScored || 1.35),
@@ -294,12 +342,31 @@ function buildFeatureVector(input) {
     away_over25_away: Number(awaySplit.over25Rate || 0.45),
     home_yellow_rate: Number(input.homeRecent?.yellowCardRate || 0),
     away_yellow_rate: Number(input.awayRecent?.yellowCardRate || 0),
+    home_cards_rate: Number(
+      (
+        Number(input.homeRecent?.yellowCardRate || 0) +
+        Number(input.homeRecent?.redCardRate || 0) * 1.8
+      ).toFixed(2)
+    ),
+    away_cards_rate: Number(
+      (
+        Number(input.awayRecent?.yellowCardRate || 0) +
+        Number(input.awayRecent?.redCardRate || 0) * 1.8
+      ).toFixed(2)
+    ),
+    home_avg_corners: Number(input.homeSeasonStats?.avgCorners || 0),
+    away_avg_corners: Number(input.awaySeasonStats?.avgCorners || 0),
     set_piece_diff: Number(
       (
         Number(input.homeTeamProfile?.setPieceScore || 0) -
         Number(input.awayTeamProfile?.setPieceScore || 0)
       ).toFixed(2)
     ),
+    lineups_avg_rating_diff: lineupRatingDiff,
+    home_lineup_continuity: homeContinuity,
+    away_lineup_continuity: awayContinuity,
+    keeper_rating_diff: keeperRatingDiff,
+    away_travel_penalty: awayTravelPenalty,
   };
 }
 
@@ -318,10 +385,22 @@ function buildHeuristicEnsemble(featureVector) {
   awayScore += (featureVector.away_away_split_scored - featureVector.home_home_split_conceded) * 0.16;
   homeScore += featureVector.set_piece_diff * 0.04;
   awayScore -= featureVector.set_piece_diff * 0.04;
+  homeScore += (featureVector.home_avg_corners - featureVector.away_avg_corners) * 0.015;
+  awayScore += (featureVector.away_avg_corners - featureVector.home_avg_corners) * 0.015;
+  homeScore += featureVector.lineups_avg_rating_diff * 0.05;
+  awayScore -= featureVector.lineups_avg_rating_diff * 0.05;
+  homeScore += featureVector.keeper_rating_diff * 0.035;
+  awayScore -= featureVector.keeper_rating_diff * 0.035;
+  homeScore += (featureVector.home_lineup_continuity - featureVector.away_lineup_continuity) * 0.16;
+  awayScore += (featureVector.away_lineup_continuity - featureVector.home_lineup_continuity) * 0.16;
+  homeScore += featureVector.away_travel_penalty * 0.18;
+  awayScore -= featureVector.away_travel_penalty * 0.18;
   drawScore += Math.max(0, 0.25 - Math.abs(featureVector.ppg_diff) * 0.06);
   drawScore += Math.max(0, 0.18 - Math.abs(featureVector.club_elo_diff) / 1000);
   homeScore -= featureVector.home_injuries * 0.05;
   awayScore -= featureVector.away_injuries * 0.05;
+  homeScore -= featureVector.home_cards_rate * 0.015;
+  awayScore -= featureVector.away_cards_rate * 0.015;
   homeScore += featureVector.h2h_balance * 0.12;
   awayScore -= featureVector.h2h_balance * 0.12;
 
@@ -366,9 +445,12 @@ function buildLineupImpact(input) {
   const homeRating = Number(input.lineupSummary?.home?.avgRating || 6.8);
   const awayRating = Number(input.lineupSummary?.away?.avgRating || 6.8);
   const ratingDiff = Number((homeRating - awayRating).toFixed(2));
+  const keeperDiff = calcKeeperEdge(input.lineupSummary);
+  const homeContinuity = calcLineupContinuity(input.lineupSummary?.home, input.homeInjuries);
+  const awayContinuity = calcLineupContinuity(input.lineupSummary?.away, input.awayInjuries);
 
-  const homeImpact = Number((homeInjuries * 0.12 - Math.max(0, ratingDiff) * 0.08).toFixed(2));
-  const awayImpact = Number((awayInjuries * 0.12 + Math.min(0, ratingDiff) * -0.08).toFixed(2));
+  const homeImpact = Number((homeInjuries * 0.12 - Math.max(0, ratingDiff) * 0.08 - Math.max(0, keeperDiff) * 0.04).toFixed(2));
+  const awayImpact = Number((awayInjuries * 0.12 + Math.min(0, ratingDiff) * -0.08 + Math.min(0, keeperDiff) * 0.04 * -1).toFixed(2));
 
   let summary = "neutraal";
   if (homeImpact + 0.12 < awayImpact) summary = "thuisvoordeel in opstelling";
@@ -379,6 +461,9 @@ function buildLineupImpact(input) {
     homeImpact,
     awayImpact,
     ratingDiff,
+    keeperDiff,
+    homeContinuity,
+    awayContinuity,
     summary,
   };
 }
@@ -418,7 +503,30 @@ function buildFormShift(input) {
   };
 }
 
-function buildRiskProfile({ confidence, agreement, weatherRisk, lineupConfirmed, injuriesTotal }) {
+function buildTravelEdge(input, featureVector) {
+  const penalty = Number(featureVector?.away_travel_penalty || 0);
+  if (penalty <= 0) {
+    return { penalty, summary: "geen noemenswaardige reisimpact" };
+  }
+  return {
+    penalty,
+    summary:
+      input.leagueType === "cup"
+        ? "uitploeg heeft extra Europese reislast"
+        : "uitploeg heeft extra reislast",
+  };
+}
+
+function buildKeeperEdge(input, featureVector) {
+  const diff = Number(featureVector?.keeper_rating_diff || 0);
+  if (Math.abs(diff) < 0.05) return { diff, summary: "keepers liggen dicht bij elkaar" };
+  return {
+    diff,
+    summary: diff > 0 ? "thuiskeeper oogt sterker" : "uitkeeper oogt sterker",
+  };
+}
+
+function buildRiskProfile({ confidence, agreement, weatherRisk, lineupConfirmed, injuriesTotal, awayTravelPenalty, keeperDiff }) {
   let score = 0;
   if (confidence < 0.48) score += 2;
   else if (confidence < 0.6) score += 1;
@@ -430,6 +538,8 @@ function buildRiskProfile({ confidence, agreement, weatherRisk, lineupConfirmed,
   if (weatherRisk === "high") score += 2;
   if (!lineupConfirmed) score += 1;
   if (injuriesTotal >= 4) score += 1;
+  if (awayTravelPenalty >= 0.2) score += 1;
+  if (Math.abs(Number(keeperDiff || 0)) >= 0.35) score -= 1;
 
   if (score >= 5) return "hoog";
   if (score >= 3) return "middel";
@@ -449,7 +559,9 @@ function buildTeamAiSummary(side, teamName, recent, profile, injuries) {
   if ((split?.failToScoreRate || recent?.failToScoreRate || 0) >= 0.35) risks.push("regelmatig moeite met scoren");
   if ((injuries?.injuredCount || injuries?.count || 0) >= 3) risks.push("meerdere afwezigen");
   if ((profile?.setPieceScore || 0) >= 3.8) strengths.push("sterk in standaardsituaties");
+  if ((profile?.cornersTrend || 0) >= 5.2) strengths.push("hoog cornersvolume");
   if ((recent?.yellowCardRate || 0) >= 2.4) risks.push("hoog kaartenritme");
+  if ((profile?.fatigueIndex || 0) >= 1.2) risks.push("vermoeidheidsrisico");
 
   return {
     teamName,
@@ -497,7 +609,7 @@ function buildTrainingSnapshot(store) {
 
   return {
     generatedAt: new Date().toISOString(),
-    version: "v4-ensemble-ready",
+    version: "v5-ensemble-ready",
     rows,
   };
 }
@@ -860,6 +972,10 @@ async function fetchLineupSummary(eventId) {
     if (!lineupTeam) return null;
     const starters = (lineupTeam.players || []).filter((player) => player?.substitute === false);
     const bench = (lineupTeam.players || []).filter((player) => player?.substitute === true);
+    const keeper =
+      starters.find((player) => String(player?.player?.position || player?.position || "").toUpperCase().startsWith("G")) ||
+      starters.find((player) => String(player?.position || "").toUpperCase().startsWith("G")) ||
+      null;
     const rated = starters
       .map((player) => Number(player.player?.rating || player.rating || 0))
       .filter((rating) => rating > 0);
@@ -870,6 +986,8 @@ async function fetchLineupSummary(eventId) {
       avgRating: rated.length
         ? Number((rated.reduce((sum, rating) => sum + rating, 0) / rated.length).toFixed(2))
         : null,
+      keeperName: keeper?.player?.name || keeper?.name || null,
+      keeperRating: keeper ? Number(keeper.player?.rating || keeper.rating || 0) || null : null,
       confirmed: starters.length >= 10,
     };
   };
@@ -1402,12 +1520,16 @@ function predict(input) {
   const lineupImpact = buildLineupImpact(input);
   const tacticalMismatch = buildTacticalMismatch(input);
   const formShift = buildFormShift(input);
+  const travelEdge = buildTravelEdge(input, featureVector);
+  const keeperEdge = buildKeeperEdge(input, featureVector);
   const riskProfile = buildRiskProfile({
     confidence: Math.min(0.93, bestProb * 3.5 + 0.24),
     agreement: modelAgreement,
     weatherRisk: input.weather?.riskLevel || "low",
     lineupConfirmed: !!input.lineupSummary?.confirmed,
     injuriesTotal: Number(input.homeInjuries?.injuredCount || 0) + Number(input.awayInjuries?.injuredCount || 0),
+    awayTravelPenalty: featureVector.away_travel_penalty,
+    keeperDiff: featureVector.keeper_rating_diff,
   });
   const teamAiSummary = {
     home: buildTeamAiSummary("home", input.homeTeamProfile?.teamName || "Thuis", input.homeRecent, input.homeTeamProfile, input.homeInjuries),
@@ -1439,6 +1561,8 @@ function predict(input) {
       homeAwayEdge,
       tacticalMismatch,
       formShift,
+      travelEdge,
+      keeperEdge,
       clubEloDiff: homeClubElo > 0 && awayClubElo > 0 ? Math.round(homeClubElo - awayClubElo) : null,
       stakes: input.context?.summary || null,
       matchImportance: input.matchImportance || 1,
@@ -1498,7 +1622,7 @@ function defaultStore() {
     clubEloCache: null,
     clubEloUpdated: null,
     lastRun: null,
-    workerVersion: "v4-ensemble-ready",
+    workerVersion: "v5-ensemble-ready",
   };
 }
 
@@ -1734,6 +1858,11 @@ async function main() {
         h2h,
         homeClubElo,
         awayClubElo,
+        homeTeamProfile,
+        awayTeamProfile,
+        homeCountry,
+        awayCountry,
+        leagueType: leagueInfo.type,
         context,
         matchImportance,
       });
@@ -1906,7 +2035,7 @@ async function main() {
   }
 
   store.lastRun = Date.now();
-  store.workerVersion = "v4-ensemble-ready";
+  store.workerVersion = "v5-ensemble-ready";
   fs.mkdirSync(path.dirname(TRAINING_SNAPSHOT_FILE), { recursive: true });
   fs.writeFileSync(TRAINING_SNAPSHOT_FILE, JSON.stringify(buildTrainingSnapshot(store), null, 2));
   fs.writeFileSync(DATA_FILE, JSON.stringify(store, null, 2));
