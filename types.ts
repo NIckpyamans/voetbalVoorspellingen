@@ -17,6 +17,8 @@ export interface MatchLineupTeamSummary {
   starters?: number;
   bench?: number;
   avgRating?: number | null;
+  keeperName?: string | null;
+  keeperRating?: number | null;
   confirmed?: boolean;
 }
 
@@ -91,6 +93,9 @@ export interface TeamProfile {
   attackTrend?: number;
   consistency?: number;
   setPieceScore?: number;
+  cornersTrend?: number;
+  disciplineIndex?: number;
+  fatigueIndex?: number;
   homeSplit?: any;
   awaySplit?: any;
   season?: any;
