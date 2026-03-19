@@ -6,6 +6,7 @@ import path from "path";
 const ROOT = process.cwd();
 const SNAPSHOT_FILE = path.join(ROOT, "training", "training-snapshot.json");
 const EXPORT_FILE = path.join(ROOT, "training", "catboost-ready.json");
+const EXPORT_CSV_FILE = path.join(ROOT, "training", "catboost-ready.csv");
 const CONFIG_FILE = path.join(ROOT, "training", "ensemble-config.json");
 
 function readJsonSafe(filePath, fallback) {
@@ -54,12 +55,28 @@ function main() {
     )
   );
 
+  const featureNames = config.primaryFeatures || [];
+  const csvLines = [
+    ["matchId", "date", "league", "label", ...featureNames].join(","),
+    ...exportRows.map((row) =>
+      [
+        row.matchId,
+        row.date,
+        JSON.stringify(row.league ?? ""),
+        row.label,
+        ...featureNames.map((name) => Number(row.features?.[name] || 0)),
+      ].join(",")
+    ),
+  ];
+  fs.writeFileSync(EXPORT_CSV_FILE, csvLines.join("\n"));
+
   process.stdout.write(
     JSON.stringify(
       {
         ok: true,
         totalRows: exportRows.length,
         output: EXPORT_FILE,
+        csvOutput: EXPORT_CSV_FILE,
       },
       null,
       2
