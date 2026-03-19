@@ -5,6 +5,7 @@ import path from "path";
 
 const SOFA = "https://api.sofascore.com/api/v1";
 const DATA_FILE = path.resolve(process.cwd(), "server_data.json");
+const TRAINING_SNAPSHOT_FILE = path.resolve(process.cwd(), "training", "training-snapshot.json");
 
 const LEAGUES = [
   { country: "netherlands", name: "eredivisie", label: "Netherlands - Eredivisie", type: "league" },
@@ -138,6 +139,10 @@ function emptySplit() {
     avgScored: 1.35,
     avgConceded: 1.35,
     bttsRate: 0.5,
+    over15Rate: 0.5,
+    over25Rate: 0.45,
+    cleanSheetRate: 0.2,
+    failToScoreRate: 0.25,
     wins: 0,
     draws: 0,
     losses: 0,
@@ -153,6 +158,10 @@ function finalizeSplit(split) {
     avgScored: Number((split.scored / split.games).toFixed(2)),
     avgConceded: Number((split.conceded / split.games).toFixed(2)),
     bttsRate: Number((split.btts / split.games).toFixed(2)),
+    over15Rate: Number((split.over15 / split.games).toFixed(2)),
+    over25Rate: Number((split.over25 / split.games).toFixed(2)),
+    cleanSheetRate: Number((split.cleanSheets / split.games).toFixed(2)),
+    failToScoreRate: Number((split.failToScore / split.games).toFixed(2)),
     wins: split.wins,
     draws: split.draws,
     losses: split.losses,
@@ -171,6 +180,192 @@ function calcMatchImportance(homePos, awayPos, totalTeams) {
     awayPos <= 3 || awayPos >= relegationStart ? 1.08 : awayPos <= 6 ? 1.03 : 1;
 
   return Number(Math.max(homePressure, awayPressure).toFixed(2));
+}
+
+function toPointsPerGame(wins, draws, games) {
+  if (!games) return 0;
+  return Number((((wins || 0) * 3 + (draws || 0)) / games).toFixed(2));
+}
+
+function buildTeamProfile({ teamName, recent, seasonStats, injuries, clubElo, standingPos }) {
+  const homeSplit = recent?.splits?.home || emptySplit();
+  const awaySplit = recent?.splits?.away || emptySplit();
+  const strongestSide = recent?.strongestSide || "balanced";
+  const attackTrend = Number(((recent?.avgScored || 1.35) - (recent?.avgConceded || 1.35)).toFixed(2));
+  const consistency =
+    recent?.gamesPlayed
+      ? Number(
+          (
+            (Number(recent.wins || 0) + Number(recent.draws || 0) * 0.5) /
+            Math.max(Number(recent.gamesPlayed || 1), 1)
+          ).toFixed(2)
+        )
+      : 0.5;
+
+  return {
+    teamName,
+    standingPos: standingPos ?? null,
+    clubElo: clubElo ?? null,
+    strongestSide,
+    pointsPerGame: toPointsPerGame(recent?.wins, recent?.draws, recent?.gamesPlayed),
+    attackTrend,
+    consistency,
+    homeSplit: {
+      avgScored: homeSplit.avgScored,
+      avgConceded: homeSplit.avgConceded,
+      over25Rate: homeSplit.over25Rate,
+      cleanSheetRate: homeSplit.cleanSheetRate,
+    },
+    awaySplit: {
+      avgScored: awaySplit.avgScored,
+      avgConceded: awaySplit.avgConceded,
+      over25Rate: awaySplit.over25Rate,
+      cleanSheetRate: awaySplit.cleanSheetRate,
+    },
+    season: seasonStats
+      ? {
+          avgShotsOn: seasonStats.avgShotsOn ?? null,
+          avgShots: seasonStats.avgShots ?? null,
+          avgPossession: seasonStats.avgPossession ?? null,
+          avgCorners: seasonStats.avgCorners ?? null,
+          cleanSheets: seasonStats.cleanSheets ?? null,
+        }
+      : null,
+    injuries: {
+      count: Number(injuries?.injuredCount || 0),
+      ratingImpact: Number(injuries?.injuredRating || 0),
+      keyPlayersMissing: injuries?.keyPlayersMissing || [],
+    },
+  };
+}
+
+function buildFeatureVector(input) {
+  const homeSplit = pickHomeStrength(input.homeRecent);
+  const awaySplit = pickAwayStrength(input.awayRecent);
+  const homePpg = toPointsPerGame(input.homeRecent?.wins, input.homeRecent?.draws, input.homeRecent?.gamesPlayed);
+  const awayPpg = toPointsPerGame(input.awayRecent?.wins, input.awayRecent?.draws, input.awayRecent?.gamesPlayed);
+
+  return {
+    home_avg_scored: Number(input.homeRecent?.avgScored || 1.35),
+    away_avg_scored: Number(input.awayRecent?.avgScored || 1.35),
+    home_avg_conceded: Number(input.homeRecent?.avgConceded || 1.35),
+    away_avg_conceded: Number(input.awayRecent?.avgConceded || 1.35),
+    home_home_split_scored: Number(homeSplit.avgScored || 1.35),
+    home_home_split_conceded: Number(homeSplit.avgConceded || 1.35),
+    away_away_split_scored: Number(awaySplit.avgScored || 1.35),
+    away_away_split_conceded: Number(awaySplit.avgConceded || 1.35),
+    home_ppg: homePpg,
+    away_ppg: awayPpg,
+    ppg_diff: Number((homePpg - awayPpg).toFixed(2)),
+    home_rest_days: Number(input.homeRestDays ?? 0),
+    away_rest_days: Number(input.awayRestDays ?? 0),
+    rest_diff: Number((Number(input.homeRestDays ?? 0) - Number(input.awayRestDays ?? 0)).toFixed(2)),
+    club_elo_diff: Number((Number(input.homeClubElo || 0) - Number(input.awayClubElo || 0)).toFixed(0)),
+    home_injuries: Number(input.homeInjuries?.injuredCount || 0),
+    away_injuries: Number(input.awayInjuries?.injuredCount || 0),
+    weather_risk:
+      input.weather?.riskLevel === "high" ? 2 : input.weather?.riskLevel === "medium" ? 1 : 0,
+    lineups_confirmed: input.lineupSummary?.confirmed ? 1 : 0,
+    h2h_balance:
+      input.h2h?.played >= 1
+        ? Number(
+            (
+              (Number(input.h2h.homeWins || 0) - Number(input.h2h.awayWins || 0)) /
+              Math.max(Number(input.h2h.played || 1), 1)
+            ).toFixed(2)
+          )
+        : 0,
+    match_importance: Number(input.matchImportance || 1),
+    home_btts_rate: Number(input.homeRecent?.bttsRate || 0.5),
+    away_btts_rate: Number(input.awayRecent?.bttsRate || 0.5),
+    home_over25_home: Number(homeSplit.over25Rate || 0.45),
+    away_over25_away: Number(awaySplit.over25Rate || 0.45),
+  };
+}
+
+function buildHeuristicEnsemble(featureVector) {
+  let homeScore = 0;
+  let drawScore = 0;
+  let awayScore = 0;
+
+  homeScore += featureVector.ppg_diff * 0.22;
+  awayScore -= featureVector.ppg_diff * 0.22;
+  homeScore += featureVector.club_elo_diff / 180 * 0.18;
+  awayScore -= featureVector.club_elo_diff / 180 * 0.18;
+  homeScore += featureVector.rest_diff * 0.08;
+  awayScore -= featureVector.rest_diff * 0.08;
+  homeScore += (featureVector.home_home_split_scored - featureVector.away_away_split_conceded) * 0.16;
+  awayScore += (featureVector.away_away_split_scored - featureVector.home_home_split_conceded) * 0.16;
+  drawScore += Math.max(0, 0.25 - Math.abs(featureVector.ppg_diff) * 0.06);
+  drawScore += Math.max(0, 0.18 - Math.abs(featureVector.club_elo_diff) / 1000);
+  homeScore -= featureVector.home_injuries * 0.05;
+  awayScore -= featureVector.away_injuries * 0.05;
+  homeScore += featureVector.h2h_balance * 0.12;
+  awayScore -= featureVector.h2h_balance * 0.12;
+
+  const homeRaw = Math.exp(homeScore);
+  const drawRaw = Math.exp(drawScore);
+  const awayRaw = Math.exp(awayScore);
+  const total = homeRaw + drawRaw + awayRaw;
+
+  return {
+    homeProb: Number((homeRaw / total).toFixed(4)),
+    drawProb: Number((drawRaw / total).toFixed(4)),
+    awayProb: Number((awayRaw / total).toFixed(4)),
+  };
+}
+
+function blendProbabilities(base, heuristic, weightBase = 0.78) {
+  const weightHeuristic = 1 - weightBase;
+  const homeProb = base.homeProb * weightBase + heuristic.homeProb * weightHeuristic;
+  const drawProb = base.drawProb * weightBase + heuristic.drawProb * weightHeuristic;
+  const awayProb = base.awayProb * weightBase + heuristic.awayProb * weightHeuristic;
+  const total = homeProb + drawProb + awayProb;
+  return {
+    homeProb: Number((homeProb / total).toFixed(4)),
+    drawProb: Number((drawProb / total).toFixed(4)),
+    awayProb: Number((awayProb / total).toFixed(4)),
+  };
+}
+
+function buildTrainingSnapshot(store) {
+  const rows = [];
+  for (const date of Object.keys(store.matches || {})) {
+    const matches = store.matches?.[date] || [];
+    const predictions = Object.fromEntries(
+      (store.predictions?.[date] || []).map((prediction) => [prediction.matchId, prediction])
+    );
+
+    for (const match of matches) {
+      const prediction = predictions[match.id] || {};
+      rows.push({
+        date,
+        matchId: match.id,
+        league: match.league,
+        homeTeam: match.homeTeamName,
+        awayTeam: match.awayTeamName,
+        status: match.status || "NS",
+        score: match.score || null,
+        label:
+          String(match.status || "").toUpperCase() === "FT" && match.score?.includes("-")
+            ? (() => {
+                const [homeGoals, awayGoals] = String(match.score).split("-").map(Number);
+                if (homeGoals > awayGoals) return "H";
+                if (homeGoals < awayGoals) return "A";
+                return "D";
+              })()
+            : null,
+        featureVector: prediction.featureVector || null,
+        ensembleMeta: prediction.ensembleMeta || null,
+      });
+    }
+  }
+
+  return {
+    generatedAt: new Date().toISOString(),
+    version: "v4-ensemble-ready",
+    rows,
+  };
 }
 
 async function safeFetch(url) {
@@ -335,6 +530,10 @@ async function fetchTeamForm(teamId) {
       avgScored: 1.35,
       avgConceded: 1.35,
       bttsRate: 0.5,
+      over15Rate: 0.5,
+      over25Rate: 0.45,
+      cleanSheetRate: 0.2,
+      failToScoreRate: 0.25,
       gamesPlayed: 0,
       wins: 0,
       draws: 0,
@@ -352,8 +551,8 @@ async function fetchTeamForm(teamId) {
   let conceded = 0;
   let btts = 0;
   const splitState = {
-    home: { games: 0, scored: 0, conceded: 0, btts: 0, wins: 0, draws: 0, losses: 0 },
-    away: { games: 0, scored: 0, conceded: 0, btts: 0, wins: 0, draws: 0, losses: 0 },
+    home: { games: 0, scored: 0, conceded: 0, btts: 0, over15: 0, over25: 0, cleanSheets: 0, failToScore: 0, wins: 0, draws: 0, losses: 0 },
+    away: { games: 0, scored: 0, conceded: 0, btts: 0, over15: 0, over25: 0, cleanSheets: 0, failToScore: 0, wins: 0, draws: 0, losses: 0 },
   };
 
   const recentMatches = sample.slice(-5).map((event) => {
@@ -396,6 +595,10 @@ async function fetchTeamForm(teamId) {
     target.scored += gf;
     target.conceded += ga;
     if (gf > 0 && ga > 0) target.btts += 1;
+    if (gf + ga > 1) target.over15 += 1;
+    if (gf + ga > 2) target.over25 += 1;
+    if (ga === 0) target.cleanSheets += 1;
+    if (gf === 0) target.failToScore += 1;
     if (gf > ga) target.wins += 1;
     else if (gf === ga) target.draws += 1;
     else target.losses += 1;
@@ -413,6 +616,28 @@ async function fetchTeamForm(teamId) {
     avgScored: Number((scored / sample.length).toFixed(2)),
     avgConceded: Number((conceded / sample.length).toFixed(2)),
     bttsRate: Number((btts / sample.length).toFixed(2)),
+    over15Rate: Number((sample.filter((event) => {
+      const isHome = String(event.homeTeam?.id || "") === String(teamId);
+      const gf = isHome ? event.homeScore?.current : event.awayScore?.current;
+      const ga = isHome ? event.awayScore?.current : event.homeScore?.current;
+      return gf != null && ga != null && gf + ga > 1;
+    }).length / sample.length).toFixed(2)),
+    over25Rate: Number((sample.filter((event) => {
+      const isHome = String(event.homeTeam?.id || "") === String(teamId);
+      const gf = isHome ? event.homeScore?.current : event.awayScore?.current;
+      const ga = isHome ? event.awayScore?.current : event.homeScore?.current;
+      return gf != null && ga != null && gf + ga > 2;
+    }).length / sample.length).toFixed(2)),
+    cleanSheetRate: Number((sample.filter((event) => {
+      const isHome = String(event.homeTeam?.id || "") === String(teamId);
+      const ga = isHome ? event.awayScore?.current : event.homeScore?.current;
+      return ga === 0;
+    }).length / sample.length).toFixed(2)),
+    failToScoreRate: Number((sample.filter((event) => {
+      const isHome = String(event.homeTeam?.id || "") === String(teamId);
+      const gf = isHome ? event.homeScore?.current : event.awayScore?.current;
+      return gf === 0;
+    }).length / sample.length).toFixed(2)),
     gamesPlayed: sample.length,
     wins: (form.match(/W/g) || []).length,
     draws: (form.match(/D/g) || []).length,
@@ -1014,17 +1239,24 @@ function predict(input) {
 
   const [predHomeGoals, predAwayGoals] = bestScore.split("-").map(Number);
   const homeAwayEdge = buildHomeAwayEdge(input.homeRecent, input.awayRecent);
+  const featureVector = buildFeatureVector(input);
+  const heuristicModel = buildHeuristicEnsemble(featureVector);
+  const blended = blendProbabilities(
+    { homeProb, drawProb, awayProb },
+    heuristicModel,
+    0.78
+  );
 
   return {
-    homeProb: Number(homeProb.toFixed(4)),
-    drawProb: Number(drawProb.toFixed(4)),
-    awayProb: Number(awayProb.toFixed(4)),
+    homeProb: blended.homeProb,
+    drawProb: blended.drawProb,
+    awayProb: blended.awayProb,
     homeXG: Number(homeXG.toFixed(2)),
     awayXG: Number(awayXG.toFixed(2)),
     predHomeGoals,
     predAwayGoals,
     exactProb: Number(bestProb.toFixed(4)),
-    confidence: Number(Math.min(0.92, bestProb * 3.5 + 0.22).toFixed(3)),
+    confidence: Number(Math.min(0.93, bestProb * 3.5 + 0.24).toFixed(3)),
     over15: Number(over15.toFixed(3)),
     over25: Number(over25.toFixed(3)),
     over35: Number(over35.toFixed(3)),
@@ -1040,6 +1272,16 @@ function predict(input) {
       clubEloDiff: homeClubElo > 0 && awayClubElo > 0 ? Math.round(homeClubElo - awayClubElo) : null,
       stakes: input.context?.summary || null,
       matchImportance: input.matchImportance || 1,
+    },
+    featureVector,
+    ensembleMeta: {
+      active: true,
+      baseModel: "dixon-coles-poisson",
+      blendModel: "heuristic-form-elo",
+      blendWeightBase: 0.78,
+      blendWeightHeuristic: 0.22,
+      trainingReady: true,
+      suggestedNextModel: "CatBoost or LightGBM",
     },
     matchImportance: input.matchImportance || 1,
   };
@@ -1076,7 +1318,7 @@ function defaultStore() {
     clubEloCache: null,
     clubEloUpdated: null,
     lastRun: null,
-    workerVersion: "v3-rich",
+    workerVersion: "v4-ensemble-ready",
   };
 }
 
@@ -1281,6 +1523,23 @@ async function main() {
 
       const minuteState = resolveMinuteState(event, eventDetails);
 
+      const homeTeamProfile = buildTeamProfile({
+        teamName: homeName,
+        recent: homeRecent,
+        seasonStats: store.teamSeasonStats[homeId] || null,
+        injuries: store.teamInjuries[homeId] || null,
+        clubElo: homeClubElo,
+        standingPos: homePos,
+      });
+      const awayTeamProfile = buildTeamProfile({
+        teamName: awayName,
+        recent: awayRecent,
+        seasonStats: store.teamSeasonStats[awayId] || null,
+        injuries: store.teamInjuries[awayId] || null,
+        clubElo: awayClubElo,
+        standingPos: awayPos,
+      });
+
       const prediction = predict({
         homeRecent,
         awayRecent,
@@ -1335,6 +1594,8 @@ async function main() {
         awayRestDays,
         weather,
         lineupSummary,
+        homeTeamProfile,
+        awayTeamProfile,
         h2h,
         h2hStatus: h2h?.status || "empty",
         aggregate,
@@ -1360,6 +1621,8 @@ async function main() {
         awayRestDays,
         weather,
         lineupSummary,
+        homeTeamProfile,
+        awayTeamProfile,
         h2h,
         h2hStatus: h2h?.status || "empty",
         aggregate,
@@ -1367,6 +1630,8 @@ async function main() {
         homeClubElo,
         awayClubElo,
         matchImportance,
+        featureVector: prediction.featureVector,
+        ensembleMeta: prediction.ensembleMeta,
         ...prediction,
       });
 
@@ -1461,7 +1726,9 @@ async function main() {
   }
 
   store.lastRun = Date.now();
-  store.workerVersion = "v3-rich";
+  store.workerVersion = "v4-ensemble-ready";
+  fs.mkdirSync(path.dirname(TRAINING_SNAPSHOT_FILE), { recursive: true });
+  fs.writeFileSync(TRAINING_SNAPSHOT_FILE, JSON.stringify(buildTrainingSnapshot(store), null, 2));
   fs.writeFileSync(DATA_FILE, JSON.stringify(store, null, 2));
   console.log("[worker] klaar");
 }
