@@ -216,6 +216,8 @@ function ExpandableInsights({ match, prediction }: { match: any; prediction: any
   const riskProfile = prediction.modelEdges?.riskProfile || "middel";
   const agreement = ensemble?.agreement ?? prediction.modelEdges?.modelAgreement;
   const teamAiSummary = prediction.modelEdges?.teamAiSummary;
+  const travelEdge = prediction.modelEdges?.travelEdge;
+  const keeperEdge = prediction.modelEdges?.keeperEdge;
 
   const riskTone =
     riskProfile === "laag"
@@ -274,6 +276,9 @@ function ExpandableInsights({ match, prediction }: { match: any; prediction: any
               <div>Weerrisico: <span className="font-black text-white">{match.weather?.riskLevel || prediction.weather?.riskLevel || "low"}</span></div>
               <div>Lineups: <span className="font-black text-white">{match.lineupSummary?.confirmed ? "bevestigd" : "open"}</span></div>
               <div>Lineup impact: <span className="font-black text-white">{lineupImpact?.summary || "neutraal"}</span></div>
+              <div>Continuity: <span className="font-black text-white">{lineupImpact?.homeContinuity ?? "-"} / {lineupImpact?.awayContinuity ?? "-"}</span></div>
+              <div>Keeper edge: <span className="font-black text-white">{keeperEdge?.summary || "gelijk"}</span></div>
+              <div>Travel edge: <span className="font-black text-white">{travelEdge?.summary || "geen"}</span></div>
               <div>Tactische mismatch: <span className="font-black text-white">{prediction.modelEdges?.tacticalMismatch?.summary || "gebalanceerd"}</span></div>
               <div>Form shift: <span className="font-black text-white">{prediction.modelEdges?.formShift?.summary || "stabiel"}</span></div>
             </div>
@@ -314,6 +319,7 @@ function ExpandableInsights({ match, prediction }: { match: any; prediction: any
               <div>Thuis: <span className="font-black text-white">{lineupImpact?.homeImpact != null ? lineupImpact.homeImpact : "-"}</span></div>
               <div>Uit: <span className="font-black text-white">{lineupImpact?.awayImpact != null ? lineupImpact.awayImpact : "-"}</span></div>
               <div>Rating diff: <span className="font-black text-white">{lineupImpact?.ratingDiff != null ? lineupImpact.ratingDiff : "-"}</span></div>
+              <div>Keeper diff: <span className="font-black text-white">{lineupImpact?.keeperDiff != null ? lineupImpact.keeperDiff : "-"}</span></div>
             </div>
           </div>
         </div>
@@ -324,7 +330,9 @@ function ExpandableInsights({ match, prediction }: { match: any; prediction: any
             <div className="space-y-1 text-[8px] text-slate-300">
               <div>{match.homeTeamName}: set-piece <span className="font-black text-white">{match.homeTeamProfile?.setPieceScore ?? "-"}</span></div>
               <div>{match.awayTeamName}: set-piece <span className="font-black text-white">{match.awayTeamProfile?.setPieceScore ?? "-"}</span></div>
+              <div>Hoeken: <span className="font-black text-white">{match.homeTeamProfile?.cornersTrend ?? "-"}/{match.awayTeamProfile?.cornersTrend ?? "-"}</span></div>
               <div>Kaartenritme: <span className="font-black text-white">{match.homeRecent?.yellowCardRate != null ? `${match.homeRecent.yellowCardRate}/${match.awayRecent?.yellowCardRate ?? "-"}` : "-"}</span></div>
+              <div>Vermoeidheid: <span className="font-black text-white">{match.homeTeamProfile?.fatigueIndex ?? "-"}/{match.awayTeamProfile?.fatigueIndex ?? "-"}</span></div>
             </div>
           </div>
           <div className="rounded-xl border border-indigo-500/15 bg-indigo-950/20 p-2">
@@ -395,6 +403,8 @@ function ExpandableMatchMeta({
 }) {
   const confirmedLineups = match.lineupSummary?.confirmed;
   const activeModel = (prediction.ensembleMeta || match.ensembleMeta)?.active ? "Ensemble" : "Basis";
+  const agreement = (prediction.ensembleMeta || match.ensembleMeta)?.agreement ?? prediction.modelEdges?.modelAgreement;
+  const risk = prediction.modelEdges?.riskProfile || "middel";
 
   return (
     <details className="group rounded-xl border border-white/8 bg-slate-950/35 overflow-hidden mb-2">
@@ -406,6 +416,9 @@ function ExpandableMatchMeta({
           </div>
         </div>
         <div className="flex items-center gap-2">
+          <span className="rounded-full bg-slate-800 px-2 py-0.5 text-[8px] font-black text-slate-300">
+            {agreement != null ? `${Math.round(agreement * 100)}%` : risk}
+          </span>
           <span className="rounded-full bg-slate-800 px-2 py-0.5 text-[8px] font-black text-slate-300">
             {activeModel}
           </span>
@@ -427,6 +440,36 @@ function ExpandableMatchMeta({
         <KeySignals match={match} prediction={prediction} />
       </div>
     </details>
+  );
+}
+
+function ModelEdgeStrip({ match, prediction }: { match: any; prediction: any }) {
+  const agreement = (prediction.ensembleMeta || match.ensembleMeta)?.agreement ?? prediction.modelEdges?.modelAgreement;
+  const risk = prediction.modelEdges?.riskProfile || "middel";
+  const travel = prediction.modelEdges?.travelEdge?.summary || "geen reisimpact";
+  const keeper = prediction.modelEdges?.keeperEdge?.summary || "keepers gelijk";
+
+  return (
+    <div className="grid grid-cols-4 gap-1.5 mb-2">
+      <div className="rounded-xl border border-cyan-500/15 bg-cyan-950/20 px-2 py-1.5">
+        <div className="text-[7px] uppercase font-black text-cyan-300/80">Model</div>
+        <div className="text-[10px] font-black text-white">
+          {agreement != null ? `${Math.round(agreement * 100)}% sync` : "basis"}
+        </div>
+      </div>
+      <div className="rounded-xl border border-amber-500/15 bg-amber-950/20 px-2 py-1.5">
+        <div className="text-[7px] uppercase font-black text-amber-300/80">Risico</div>
+        <div className="text-[10px] font-black text-white">{risk}</div>
+      </div>
+      <div className="rounded-xl border border-violet-500/15 bg-violet-950/20 px-2 py-1.5">
+        <div className="text-[7px] uppercase font-black text-violet-300/80">Reis</div>
+        <div className="text-[10px] font-black text-white truncate">{travel.replace("uitploeg ", "")}</div>
+      </div>
+      <div className="rounded-xl border border-emerald-500/15 bg-emerald-950/20 px-2 py-1.5">
+        <div className="text-[7px] uppercase font-black text-emerald-300/80">Keeper</div>
+        <div className="text-[10px] font-black text-white truncate">{keeper.replace("thuis", "H").replace("uit", "U")}</div>
+      </div>
+    </div>
   );
 }
 
@@ -616,6 +659,8 @@ const MatchCard: React.FC<MatchCardProps> = ({ match, prediction, onFavoriteChan
           </div>
         ))}
       </div>
+
+      <ModelEdgeStrip match={match} prediction={prediction} />
 
       <ExpandableMatchMeta match={match} prediction={prediction} weather={weather} h2h={h2h} />
 
