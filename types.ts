@@ -62,6 +62,10 @@ export interface MatchRecentStats {
   avgScored?: number;
   avgConceded?: number;
   bttsRate?: number;
+  over15Rate?: number;
+  over25Rate?: number;
+  cleanSheetRate?: number;
+  failToScoreRate?: number;
   gamesPlayed?: number;
   wins?: number;
   draws?: number;
@@ -74,6 +78,24 @@ export interface MatchRecentStats {
   recentMatches?: RecentMatchItem[];
   lastMatchKickoff?: string | null;
   goalTiming?: any;
+}
+
+export interface TeamProfile {
+  teamName?: string;
+  standingPos?: number | null;
+  clubElo?: number | null;
+  strongestSide?: "home" | "away" | "balanced" | string;
+  pointsPerGame?: number;
+  attackTrend?: number;
+  consistency?: number;
+  homeSplit?: any;
+  awaySplit?: any;
+  season?: any;
+  injuries?: {
+    count?: number;
+    ratingImpact?: number;
+    keyPlayersMissing?: string[];
+  };
 }
 
 export interface H2HResult {
@@ -162,6 +184,10 @@ export interface Match {
   weather?: MatchWeather | null;
   lineupSummary?: MatchLineupSummary | null;
   modelEdges?: any;
+  homeTeamProfile?: TeamProfile | null;
+  awayTeamProfile?: TeamProfile | null;
+  featureVector?: Record<string, number> | null;
+  ensembleMeta?: any;
   [key: string]: any;
 }
 
@@ -202,6 +228,8 @@ export interface Prediction {
   weather?: MatchWeather | null;
   lineupSummary?: MatchLineupSummary | null;
   modelEdges?: any;
+  featureVector?: Record<string, number> | null;
+  ensembleMeta?: any;
   derivedOdds?: any;
   valueFlags?: any;
   [key: string]: any;
