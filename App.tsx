@@ -99,7 +99,6 @@ const App: React.FC = () => {
   const [activeFilter, setActiveFilter] = useState<FilterMode>("alle");
   const [selectedLeague, setSelectedLeague] = useState<string>("alle");
   const [favRefresh, setFavRefresh] = useState(0);
-  const tabsRef = useRef<HTMLDivElement>(null);
   const learnedRef = useRef<Set<string>>(new Set());
 
   useEffect(() => {
@@ -261,13 +260,6 @@ const App: React.FC = () => {
       .slice(0, 5) as any[];
   }, [dayMatches, predictions]);
 
-  const scrollTabs = (direction: "left" | "right") => {
-    tabsRef.current?.scrollBy({
-      left: direction === "right" ? 160 : -160,
-      behavior: "smooth",
-    });
-  };
-
   const lastRunLabel = lastRun
     ? new Date(lastRun).toLocaleTimeString("nl-NL", { hour: "2-digit", minute: "2-digit" })
     : null;
@@ -355,63 +347,48 @@ const App: React.FC = () => {
               ))}
             </div>
 
-            <div className="flex items-center gap-1 mb-4">
+            {/* AANGEPAST: Multi-row league tabs zonder scroll */}
+            <div className="flex flex-wrap gap-1 mb-4 py-0.5">
               <button
-                onClick={() => scrollTabs("left")}
-                className="flex-shrink-0 w-6 h-6 bg-slate-800 hover:bg-slate-700 rounded-lg text-slate-300 text-sm font-black flex items-center justify-center"
+                onClick={() => {
+                  setSelectedLeague("alle");
+                  setActiveFilter("alle");
+                }}
+                className={`flex-shrink-0 px-2.5 py-1 rounded-lg text-[10px] font-black whitespace-nowrap ${
+                  selectedLeague === "alle"
+                    ? "bg-white text-black"
+                    : "bg-slate-800 text-slate-300 hover:bg-slate-700"
+                }`}
               >
-                ‹
+                ⚽ {dayMatches.length}
               </button>
 
-              <div ref={tabsRef} className="flex gap-1 overflow-x-auto scrollbar-hide flex-1 py-0.5">
-                <button
-                  onClick={() => {
-                    setSelectedLeague("alle");
-                    setActiveFilter("alle");
-                  }}
-                  className={`flex-shrink-0 px-2.5 py-1 rounded-lg text-[10px] font-black whitespace-nowrap ${
-                    selectedLeague === "alle"
-                      ? "bg-white text-black"
-                      : "bg-slate-800 text-slate-300 hover:bg-slate-700"
-                  }`}
-                >
-                  ⚽ {dayMatches.length}
-                </button>
+              {allLeagues.map((league) => {
+                const total = dayMatches.filter((match) => match.league === league).length;
+                const leagueLiveCount = dayMatches.filter((match) => match.league === league && isLive(match)).length;
 
-                {allLeagues.map((league) => {
-                  const total = dayMatches.filter((match) => match.league === league).length;
-                  const leagueLiveCount = dayMatches.filter((match) => match.league === league && isLive(match)).length;
-
-                  return (
-                    <button
-                      key={league}
-                      onClick={() => setSelectedLeague(league)}
-                      title={league}
-                      className={`flex-shrink-0 px-2.5 py-1 rounded-lg text-[10px] font-black whitespace-nowrap ${
-                        selectedLeague === league
-                          ? "bg-blue-600 text-white"
-                          : "bg-slate-800 text-slate-300 hover:bg-slate-700"
-                      }`}
-                    >
-                      {shortLeague(league)}
-                      {leagueLiveCount > 0 ? (
-                        <span className="ml-1 text-[8px] bg-red-500 text-white px-1 rounded animate-pulse">
-                          {leagueLiveCount}
-                        </span>
-                      ) : (
-                        <span className="ml-1 opacity-50 text-[9px]">{total}</span>
-                      )}
-                    </button>
-                  );
-                })}
-              </div>
-
-              <button
-                onClick={() => scrollTabs("right")}
-                className="flex-shrink-0 w-6 h-6 bg-slate-800 hover:bg-slate-700 rounded-lg text-slate-300 text-sm font-black flex items-center justify-center"
-              >
-                ›
-              </button>
+                return (
+                  <button
+                    key={league}
+                    onClick={() => setSelectedLeague(league)}
+                    title={league}
+                    className={`flex-shrink-0 px-2.5 py-1 rounded-lg text-[10px] font-black whitespace-nowrap ${
+                      selectedLeague === league
+                        ? "bg-blue-600 text-white"
+                        : "bg-slate-800 text-slate-300 hover:bg-slate-700"
+                    }`}
+                  >
+                    {shortLeague(league)}
+                    {leagueLiveCount > 0 ? (
+                      <span className="ml-1 text-[8px] bg-red-500 text-white px-1 rounded animate-pulse">
+                        {leagueLiveCount}
+                      </span>
+                    ) : (
+                      <span className="ml-1 opacity-50 text-[9px]">{total}</span>
+                    )}
+                  </button>
+                );
+              })}
             </div>
 
             {loading ? (
