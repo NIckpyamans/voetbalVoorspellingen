@@ -1,9 +1,18 @@
-import { Match } from "../types";
+// ============================================================================
+// MATCH SERVICE - VOLLEDIG
+// Haalt wedstrijden en voorspellingen op, inclusief ALLE mogelijke velden
+// ============================================================================
 
-const CACHE_VERSION = "v4_ensemble_ready";
+import { Match, Prediction } from "../types";
+
+const CACHE_VERSION = "v5_complete_data";
 const LIVE_CACHE_AGE_MS = 30_000;
 const TODAY_CACHE_AGE_MS = 90_000;
 const OTHER_CACHE_AGE_MS = 30 * 60_000;
+
+// ============================================================================
+// CACHE FUNCTIES
+// ============================================================================
 
 function storageKey(dateISO: string) {
   return `footypredict_${CACHE_VERSION}_${dateISO}`;
@@ -15,34 +24,6 @@ function isLiveMatch(match: any) {
     match?.minute != null ||
     match?.minuteValue != null
   );
-}
-
-function parseMinuteValue(minute: any, minuteValue?: any) {
-  const explicit = Number(minuteValue);
-  if (Number.isFinite(explicit) && explicit > 0) return explicit;
-  if (typeof minute === "number" && Number.isFinite(minute)) return minute;
-  if (typeof minute !== "string") return null;
-  if (minute.toUpperCase() === "HT") return 45;
-
-  const plusMatch = minute.match(/(\d+)\s*\+\s*(\d+)/);
-  if (plusMatch) return Number(plusMatch[1]) + Number(plusMatch[2]);
-
-  const plainMatch = minute.match(/(\d+)/);
-  return plainMatch ? Number(plainMatch[1]) : null;
-}
-
-function normalizeMinute(minute: any, minuteValue?: any, extraTime?: any, period?: any) {
-  const periodText = String(period || "").toLowerCase();
-  if (periodText.includes("half time") || periodText.includes("halftime") || periodText.includes("break")) {
-    return "HT";
-  }
-
-  const baseMinute = parseMinuteValue(minute, minuteValue);
-  if (!baseMinute) return undefined;
-
-  const extra = Number(extraTime || 0);
-  if (extra > 0) return `${baseMinute}+${extra}'`;
-  return `${baseMinute}'`;
 }
 
 function getMaxCacheAge(dateISO: string, matches: any[]) {
@@ -86,20 +67,67 @@ function writeCache(dateISO: string, matches: Match[], predictions: Record<strin
   } catch {}
 }
 
+// ============================================================================
+// MINUTE PARSING FUNCTIES
+// ============================================================================
+
+function parseMinuteValue(minute: any, minuteValue?: any) {
+  const explicit = Number(minuteValue);
+  if (Number.isFinite(explicit) && explicit > 0) return explicit;
+  if (typeof minute === "number" && Number.isFinite(minute)) return minute;
+  if (typeof minute !== "string") return null;
+  if (minute.toUpperCase() === "HT") return 45;
+
+  const plusMatch = minute.match(/(\d+)\s*\+\s*(\d+)/);
+  if (plusMatch) return Number(plusMatch[1]) + Number(plusMatch[2]);
+
+  const plainMatch = minute.match(/(\d+)/);
+  return plainMatch ? Number(plainMatch[1]) : null;
+}
+
+function normalizeMinute(minute: any, minuteValue?: any, extraTime?: any, period?: any) {
+  const periodText = String(period || "").toLowerCase();
+  if (periodText.includes("half time") || periodText.includes("halftime") || periodText.includes("break")) {
+    return "HT";
+  }
+
+  const baseMinute = parseMinuteValue(minute, minuteValue);
+  if (!baseMinute) return undefined;
+
+  const extra = Number(extraTime || 0);
+  if (extra > 0) return `${baseMinute}+${extra}'`;
+  return `${baseMinute}'`;
+}
+
+// ============================================================================
+// MATCH MAPPING FUNCTIE - MET ALLE VELDEN
+// ============================================================================
+
 function mapRawMatch(m: any): Match {
   const minuteValue = parseMinuteValue(m.minute, m.minuteValue);
 
   return {
+    // ========================================
+    // BASIS INFORMATIE
+    // ========================================
     id: m.id,
     date: m.date,
     kickoff: m.kickoff,
     league: m.league,
+    
+    // ========================================
+    // TEAMS
+    // ========================================
     homeTeamId: m.homeTeamId || "",
     awayTeamId: m.awayTeamId || "",
     homeTeamName: m.homeTeamName || "Home",
     awayTeamName: m.awayTeamName || "Away",
     homeLogo: m.homeLogo || "",
     awayLogo: m.awayLogo || "",
+    
+    // ========================================
+    // STATUS & SCORE
+    // ========================================
     status: m.status || "NS",
     score: m.score || undefined,
     minute: normalizeMinute(m.minute, minuteValue, m.extraTime, m.period),
@@ -107,56 +135,132 @@ function mapRawMatch(m: any): Match {
     ...(m.period != null ? { period: m.period } : {}),
     ...(m.extraTime != null ? { extraTime: m.extraTime } : {}),
     ...(m.liveUpdatedAt != null ? { liveUpdatedAt: m.liveUpdatedAt } : {}),
+    
+    // ========================================
+    // VORM & RANKINGS
+    // ========================================
     ...(m.homeForm ? { homeForm: m.homeForm } : {}),
     ...(m.awayForm ? { awayForm: m.awayForm } : {}),
     ...(m.homeElo ? { homeElo: m.homeElo } : {}),
     ...(m.awayElo ? { awayElo: m.awayElo } : {}),
     ...(m.homeClubElo != null ? { homeClubElo: m.homeClubElo } : {}),
     ...(m.awayClubElo != null ? { awayClubElo: m.awayClubElo } : {}),
-    ...(m.matchImportance != null ? { matchImportance: m.matchImportance } : {}),
     ...(m.homePos != null ? { homePos: m.homePos } : {}),
     ...(m.awayPos != null ? { awayPos: m.awayPos } : {}),
+    
+    // ========================================
+    // CONTEXT & BELANG
+    // ========================================
+    ...(m.matchImportance != null ? { matchImportance: m.matchImportance } : {}),
+    ...(m.roundLabel != null ? { roundLabel: m.roundLabel } : {}),
+    ...(m.context ? { context: m.context } : {}),
+    
+    // ========================================
+    // HEAD-TO-HEAD & AGGREGATE
+    // ========================================
     ...(m.h2h ? { h2h: m.h2h } : {}),
     ...(m.h2hStatus ? { h2hStatus: m.h2hStatus } : {}),
     ...(m.aggregate ? { aggregate: m.aggregate } : {}),
-    ...(m.context ? { context: m.context } : {}),
-    ...(m.roundLabel != null ? { roundLabel: m.roundLabel } : {}),
+    
+    // ========================================
+    // SEIZOEN STATISTIEKEN
+    // ========================================
     ...(m.homeSeasonStats ? { homeSeasonStats: m.homeSeasonStats } : {}),
     ...(m.awaySeasonStats ? { awaySeasonStats: m.awaySeasonStats } : {}),
-    ...(m.homeInjuries ? { homeInjuries: m.homeInjuries } : {}),
-    ...(m.awayInjuries ? { awayInjuries: m.awayInjuries } : {}),
-    ...(m.homeGoalTiming ? { homeGoalTiming: m.homeGoalTiming } : {}),
-    ...(m.awayGoalTiming ? { awayGoalTiming: m.awayGoalTiming } : {}),
-    ...(m.liveStats ? { liveStats: m.liveStats } : {}),
+    
+    // ========================================
+    // RECENTE VORM
+    // ========================================
     ...(m.homeRecent ? { homeRecent: m.homeRecent } : {}),
     ...(m.awayRecent ? { awayRecent: m.awayRecent } : {}),
+    
+    // ========================================
+    // BLESSURES & OPSTELLINGEN
+    // ========================================
+    ...(m.homeInjuries ? { homeInjuries: m.homeInjuries } : {}),
+    ...(m.awayInjuries ? { awayInjuries: m.awayInjuries } : {}),
+    ...(m.lineupSummary ? { lineupSummary: m.lineupSummary } : {}),
+    
+    // ========================================
+    // WEDSTRIJD OMSTANDIGHEDEN
+    // ========================================
     ...(m.homeRestDays != null ? { homeRestDays: m.homeRestDays } : {}),
     ...(m.awayRestDays != null ? { awayRestDays: m.awayRestDays } : {}),
     ...(m.weather ? { weather: m.weather } : {}),
-    ...(m.lineupSummary ? { lineupSummary: m.lineupSummary } : {}),
-    ...(m.modelEdges ? { modelEdges: m.modelEdges } : {}),
+    ...(m.venue ? { venue: m.venue } : {}),
+    
+    // ========================================
+    // GOAL TIMING
+    // ========================================
+    ...(m.homeGoalTiming ? { homeGoalTiming: m.homeGoalTiming } : {}),
+    ...(m.awayGoalTiming ? { awayGoalTiming: m.awayGoalTiming } : {}),
+    
+    // ========================================
+    // LIVE STATS
+    // ========================================
+    ...(m.liveStats ? { liveStats: m.liveStats } : {}),
+    
+    // ========================================
+    // TEAM PROFIELEN
+    // ========================================
     ...(m.homeTeamProfile ? { homeTeamProfile: m.homeTeamProfile } : {}),
     ...(m.awayTeamProfile ? { awayTeamProfile: m.awayTeamProfile } : {}),
+    
+    // ========================================
+    // SCHEIDSRECHTER
+    // ========================================
+    ...(m.referee ? { referee: m.referee } : {}),
+    
+    // ========================================
+    // MODEL EDGES
+    // ========================================
+    ...(m.modelEdges ? { modelEdges: m.modelEdges } : {}),
+    
+    // ========================================
+    // MACHINE LEARNING
+    // ========================================
     ...(m.featureVector ? { featureVector: m.featureVector } : {}),
     ...(m.ensembleMeta ? { ensembleMeta: m.ensembleMeta } : {}),
+    
+    // ========================================
+    // BETTING DATA (OPTIONEEL)
+    // ========================================
+    ...(m.odds ? { odds: m.odds } : {}),
+    ...(m.marketMovement ? { marketMovement: m.marketMovement } : {}),
+    
+    // ========================================
+    // METADATA
+    // ========================================
+    ...(m.coverage ? { coverage: m.coverage } : {}),
+    ...(m.importance ? { importance: m.importance } : {}),
   } as Match;
 }
 
+// ============================================================================
+// EXPORT INTERFACE
+// ============================================================================
+
 export interface MatchesUpdate {
   matches: Match[];
-  predictions: Record<string, any>;
+  predictions: Record<string, Prediction>;
   lastRun: number | null;
   workerNeeded?: boolean;
 }
+
+// ============================================================================
+// HOOFD FETCH FUNCTIE
+// ============================================================================
 
 export async function fetchMatchesAndPredictions(
   dateISO: string,
   signal?: AbortSignal
 ): Promise<MatchesUpdate> {
+  // Check cache eerst
   const cached = readCache(dateISO);
   if (cached) return { ...cached, workerNeeded: false };
 
   try {
+    // Fetch matches
     const res = await fetch(`/api/matches?date=${dateISO}`, { signal, cache: "no-store" });
     if (!res.ok) throw new Error(`API ${res.status}`);
     const json = await res.json();
@@ -164,26 +268,42 @@ export async function fetchMatchesAndPredictions(
     const lastRun: number | null = json.lastRun || null;
     const rawMatches: any[] = json.matches || json.events || [];
 
+    // Fetch predictions
     const predRes = await fetch(`/api/predict?date=${dateISO}`, { signal, cache: "no-store" });
     const predJson = predRes.ok ? await predRes.json() : { predictions: [] };
     const rawPredictions: any[] = predJson.predictions || [];
 
+    // Als er geen data is
     if (rawMatches.length === 0 && rawPredictions.length === 0) {
       return { matches: [], predictions: {}, lastRun, workerNeeded: true };
     }
 
+    // Map matches met ALLE velden
     const matches = rawMatches.map(mapRawMatch);
-    const predictionMap: Record<string, any> = {};
-
+    
+    // Build prediction map
+    const predictionMap: Record<string, Prediction> = {};
+    
     for (const prediction of rawPredictions) {
-      if (prediction.matchId) predictionMap[prediction.matchId] = prediction;
+      if (prediction.matchId) {
+        predictionMap[prediction.matchId] = prediction;
+      }
     }
 
+    // Merge match data into predictions voor convenience
     for (const rawMatch of rawMatches) {
       if (!rawMatch.id) continue;
-      if (!predictionMap[rawMatch.id]) predictionMap[rawMatch.id] = {};
+      
+      if (!predictionMap[rawMatch.id]) {
+        predictionMap[rawMatch.id] = {} as Prediction;
+      }
+      
+      // Voeg relevante match data toe aan prediction
       predictionMap[rawMatch.id] = {
         ...predictionMap[rawMatch.id],
+        matchId: rawMatch.id,
+        
+        // Kopieer nuttige velden voor convenience in predictions
         ...(rawMatch.h2h ? { h2h: rawMatch.h2h } : {}),
         ...(rawMatch.h2hStatus ? { h2hStatus: rawMatch.h2hStatus } : {}),
         ...(rawMatch.aggregate ? { aggregate: rawMatch.aggregate } : {}),
@@ -202,13 +322,34 @@ export async function fetchMatchesAndPredictions(
         ...(rawMatch.awayTeamProfile ? { awayTeamProfile: rawMatch.awayTeamProfile } : {}),
         ...(rawMatch.featureVector ? { featureVector: rawMatch.featureVector } : {}),
         ...(rawMatch.ensembleMeta ? { ensembleMeta: rawMatch.ensembleMeta } : {}),
+        ...(rawMatch.homeForm ? { homeForm: rawMatch.homeForm } : {}),
+        ...(rawMatch.awayForm ? { awayForm: rawMatch.awayForm } : {}),
       };
     }
 
+    // Write to cache
     writeCache(dateISO, matches, predictionMap, lastRun);
-    return { matches, predictions: predictionMap, lastRun, workerNeeded: false };
+    
+    return { 
+      matches, 
+      predictions: predictionMap, 
+      lastRun, 
+      workerNeeded: false 
+    };
+    
   } catch (err) {
     console.error("[matchService]", err);
-    return { matches: [], predictions: {}, lastRun: null, workerNeeded: false };
+    return { 
+      matches: [], 
+      predictions: {}, 
+      lastRun: null, 
+      workerNeeded: false 
+    };
   }
 }
+
+// ============================================================================
+// HELPER FUNCTIES (EXPORT VOOR GEBRUIK ELDERS)
+// ============================================================================
+
+export { isLiveMatch };
