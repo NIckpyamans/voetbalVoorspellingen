@@ -1,9 +1,14 @@
+// ============================================================================
+// API ROUTE: /api/Matches.ts
+// AANGEPAST: Ondersteunt meerdere dagen (gisteren, vandaag, morgen)
+// ============================================================================
+
 const GITHUB_RAW =
   process.env.DATA_URL ||
   "https://raw.githubusercontent.com/NIckpyamans/voetbalVoorspellingen/main/server_data.json";
 
 export default async function handler(req: any, res: any) {
-  const { date, live } = req.query;
+  const { date, live, days } = req.query;
   const today = new Date().toISOString().split("T")[0];
   const targetDate = typeof date === "string" && date ? date : today;
   const isLiveSensitiveRequest = targetDate === today || live === "true";
@@ -31,6 +36,38 @@ export default async function handler(req: any, res: any) {
     const store = await ghRes.json();
     const lastRun = store.lastRun || null;
 
+    // NIEUW: Ondersteuning voor meerdere dagen
+    // Als 'days' parameter is meegegeven, haal meerdere dagen op
+    if (days && typeof days === "string") {
+      const numDays = parseInt(days, 10);
+      if (!isNaN(numDays) && numDays > 0 && numDays <= 7) {
+        const multiDayMatches: any[] = [];
+        const requestedDate = new Date(targetDate);
+        
+        // Haal data voor meerdere dagen (bijv. gisteren, vandaag, morgen)
+        for (let i = -Math.floor(numDays / 2); i <= Math.floor(numDays / 2); i++) {
+          const checkDate = new Date(requestedDate);
+          checkDate.setDate(checkDate.getDate() + i);
+          const dateStr = checkDate.toISOString().split("T")[0];
+          
+          if (store.matches?.[dateStr]) {
+            multiDayMatches.push(...store.matches[dateStr]);
+          }
+        }
+
+        return res.status(200).json({
+          matches: multiDayMatches,
+          events: multiDayMatches,
+          total: multiDayMatches.length,
+          date: targetDate,
+          dateRange: `${numDays} dagen`,
+          lastRun,
+          source: "github-worker-v2-free-multiday",
+        });
+      }
+    }
+
+    // BESTAANDE: Enkele dag (zoals voorheen)
     if (store.matches?.[targetDate]) {
       let matches = store.matches[targetDate];
       if (live === "true") {
