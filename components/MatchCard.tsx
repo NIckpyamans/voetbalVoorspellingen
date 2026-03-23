@@ -1,6 +1,8 @@
 // ============================================================================
-// MATCH CARD COMPONENT - VOLLEDIG
-// Toont wedstrijdkaart met ALLE beschikbare data
+// MATCH CARD COMPONENT - VOLLEDIG AANGEPAST
+// - Voorspelling blijft zichtbaar na wedstrijd
+// - Verticale layout voor odds
+// - AI learning systeem
 // ============================================================================
 
 import React, { useEffect, useState, useCallback, useRef } from "react";
@@ -13,11 +15,20 @@ interface MatchCardProps {
   onFavoriteChange?: () => void;
 }
 
+interface AILearning {
+  correctPredictions: string[];
+  wrongPredictions: string[];
+  learnings: string[];
+  confidenceAccuracy: number;
+}
+
 const MatchCard: React.FC<MatchCardProps> = ({ match, prediction, onFavoriteChange }) => {
   const [analysis, setAnalysis] = useState<string | null>(null);
   const [analysisLoading, setAnalysisLoading] = useState(false);
   const [showAnalysis, setShowAnalysis] = useState(false);
   const [showAdvanced, setShowAdvanced] = useState(false);
+  const [aiLearning, setAiLearning] = useState<AILearning | null>(null);
+  const [learningLoading, setLearningLoading] = useState(false);
   const analysisCache = useRef<Map<string, { text: string; timestamp: number }>>(new Map());
 
   const homeKey = match.homeTeamId || match.homeTeamName.toLowerCase();
@@ -28,6 +39,119 @@ const MatchCard: React.FC<MatchCardProps> = ({ match, prediction, onFavoriteChan
   const isLive = String(match.status || "").toUpperCase() === "LIVE" || !!match.minute;
   const isFinished = String(match.status || "").toUpperCase() === "FT" || 
                      String(match.status || "").toUpperCase().includes("FINISH");
+
+  // ========================================
+  // AI LEARNING SYSTEM - NIEUW!
+  // ========================================
+  const generateAILearning = useCallback(async () => {
+    if (!prediction || !isFinished || !match.score) return;
+    
+    setLearningLoading(true);
+    try {
+      // Parse score (bijv. "2-1" naar {home: 2, away: 1})
+      const [homeScore, awayScore] = match.score.split("-").map(Number);
+      
+      const learnings: AILearning = {
+        correctPredictions: [],
+        wrongPredictions: [],
+        learnings: [],
+        confidenceAccuracy: 0
+      };
+
+      // Check voorspelde uitslag vs werkelijk
+      const predictedHomeGoals = prediction.predHomeGoals;
+      const predictedAwayGoals = prediction.predAwayGoals;
+      
+      // Check winner
+      const actualResult = homeScore > awayScore ? "home" : awayScore > homeScore ? "away" : "draw";
+      const predictedResult = predictedHomeGoals > predictedAwayGoals ? "home" : 
+                              predictedAwayGoals > predictedHomeGoals ? "away" : "draw";
+      
+      if (actualResult === predictedResult) {
+        learnings.correctPredictions.push(`✅ Winnaar correct voorspeld (${actualResult})`);
+      } else {
+        learnings.wrongPredictions.push(`❌ Winnaar verkeerd: voorspeld ${predictedResult}, werkelijk ${actualResult}`);
+        learnings.learnings.push(`${match.homeTeamName} vs ${match.awayTeamName}: Herzie vorm en statistieken`);
+      }
+
+      // Check score accuracy
+      if (predictedHomeGoals === homeScore && predictedAwayGoals === awayScore) {
+        learnings.correctPredictions.push(`✅ Exacte score correct! (${homeScore}-${awayScore})`);
+      } else {
+        const scoreDiff = Math.abs((predictedHomeGoals - homeScore)) + Math.abs((predictedAwayGoals - awayScore));
+        if (scoreDiff <= 1) {
+          learnings.correctPredictions.push(`🎯 Bijna exacte score (voorspeld: ${predictedHomeGoals}-${predictedAwayGoals}, werkelijk: ${homeScore}-${awayScore})`);
+        } else {
+          learnings.wrongPredictions.push(`📊 Score verschil: voorspeld ${predictedHomeGoals}-${predictedAwayGoals}, werkelijk ${homeScore}-${awayScore}`);
+        }
+      }
+
+      // Check over/under 2.5
+      const totalGoals = homeScore + awayScore;
+      if (prediction.over25) {
+        const predictedOver25 = prediction.over25 > 0.5;
+        const actualOver25 = totalGoals > 2.5;
+        if (predictedOver25 === actualOver25) {
+          learnings.correctPredictions.push(`✅ Over 2.5 correct voorspeld (${totalGoals} doelpunten)`);
+        } else {
+          learnings.wrongPredictions.push(`❌ Over 2.5 verkeerd: ${totalGoals} doelpunten`);
+          learnings.learnings.push(`Overweeg doelstelling aanpassing voor ${match.league}`);
+        }
+      }
+
+      // Check BTTS
+      if (prediction.btts) {
+        const predictedBtts = prediction.btts > 0.5;
+        const actualBtts = homeScore > 0 && awayScore > 0;
+        if (predictedBtts === actualBtts) {
+          learnings.correctPredictions.push(`✅ BTTS correct voorspeld`);
+        } else {
+          learnings.wrongPredictions.push(`❌ BTTS verkeerd voorspeld`);
+        }
+      }
+
+      // Check probabilities accuracy
+      const homeProb = prediction.homeProb || 0;
+      const drawProb = prediction.drawProb || 0;
+      const awayProb = prediction.awayProb || 0;
+      
+      const highestProb = Math.max(homeProb, drawProb, awayProb);
+      const predictedOutcome = highestProb === homeProb ? "home" : 
+                               highestProb === awayProb ? "away" : "draw";
+      
+      if (predictedOutcome === actualResult) {
+        learnings.confidenceAccuracy = highestProb * 100;
+        learnings.learnings.push(`Model had ${Math.round(highestProb * 100)}% vertrouwen en zat goed!`);
+      } else {
+        learnings.confidenceAccuracy = 0;
+        learnings.learnings.push(`Model had ${Math.round(highestProb * 100)}% vertrouwen maar zat fout - herzie model gewichten`);
+      }
+
+      // Check xG vs actual
+      if (prediction.homeXG && prediction.awayXG) {
+        const xgDiff = Math.abs(prediction.homeXG - homeScore) + Math.abs(prediction.awayXG - awayScore);
+        if (xgDiff < 1) {
+          learnings.correctPredictions.push(`✅ xG model zeer accuraat`);
+        } else if (xgDiff > 2) {
+          learnings.wrongPredictions.push(`❌ xG model niet accuraat (verschil: ${xgDiff.toFixed(1)})`);
+          learnings.learnings.push(`${match.homeTeamName}: Mogelijk overschatting aanvallende kracht`);
+        }
+      }
+
+      setAiLearning(learnings);
+    } catch (err) {
+      console.error("AI Learning generation failed:", err);
+    } finally {
+      setLearningLoading(false);
+    }
+  }, [match, prediction, isFinished]);
+
+  // Auto-generate learning when match finishes
+  useEffect(() => {
+    if (isFinished && prediction && !aiLearning && !learningLoading) {
+      generateAILearning();
+    }
+  }, [isFinished, prediction, aiLearning, learningLoading, generateAILearning]);
 
   // ========================================
   // ANALYSIS FETCH
@@ -86,23 +210,29 @@ const MatchCard: React.FC<MatchCardProps> = ({ match, prediction, onFavoriteChan
   // RENDER HELPERS
   // ========================================
   const renderScore = () => {
-    if (match.score) {
-      return (
-        <div className="text-2xl font-black">
-          {match.score}
-        </div>
-      );
-    }
+    // AANGEPAST: Toon zowel werkelijke score ALS voorspelde score
+    const hasActualScore = !!match.score;
+    const hasPrediction = !!prediction;
     
-    if (prediction) {
-      return (
-        <div className="text-lg font-black opacity-60">
-          {prediction.predHomeGoals}-{prediction.predAwayGoals}
-        </div>
-      );
-    }
-    
-    return <div className="text-sm opacity-50">VS</div>;
+    return (
+      <div className="text-center">
+        {hasActualScore && (
+          <div className="text-2xl font-black text-green-400">
+            {match.score}
+          </div>
+        )}
+        
+        {hasPrediction && (
+          <div className={`text-lg font-bold ${hasActualScore ? 'text-slate-500 text-sm mt-1' : 'text-slate-300'}`}>
+            {hasActualScore ? '(voorspeld: ' : ''}{prediction.predHomeGoals}-{prediction.predAwayGoals}{hasActualScore ? ')' : ''}
+          </div>
+        )}
+        
+        {!hasActualScore && !hasPrediction && (
+          <div className="text-sm opacity-50">VS</div>
+        )}
+      </div>
+    );
   };
 
   const renderOdds = () => {
@@ -112,20 +242,119 @@ const MatchCard: React.FC<MatchCardProps> = ({ match, prediction, onFavoriteChan
     const drawProb = Math.round((prediction.drawProb || 0) * 100);
     const awayProb = Math.round((prediction.awayProb || 0) * 100);
 
+    // AANGEPAST: Verticale layout ipv horizontaal
     return (
-      <div className="grid grid-cols-3 gap-1 mb-2">
-        <div className="bg-slate-800/50 rounded px-2 py-1 text-center">
-          <div className="text-[9px] text-slate-400">THUIS</div>
-          <div className="text-sm font-black">{homeProb}%</div>
+      <div className="space-y-2 mb-3">
+        <div className="flex items-center justify-between bg-slate-800/50 rounded px-3 py-2">
+          <div className="flex items-center gap-2">
+            {match.homeLogo && (
+              <img src={match.homeLogo} alt="" className="w-4 h-4 object-contain" />
+            )}
+            <span className="text-sm font-medium truncate max-w-[150px]">{match.homeTeamName}</span>
+          </div>
+          <div className="flex items-center gap-2">
+            <div className="text-xl font-black">{homeProb}%</div>
+            <div className="flex gap-0.5">
+              {Array.from({ length: 5 }).map((_, i) => (
+                <span key={i} className={i < Math.round(homeProb / 20) ? "text-yellow-400" : "text-slate-700"}>
+                  ⭐
+                </span>
+              ))}
+            </div>
+          </div>
         </div>
-        <div className="bg-slate-800/50 rounded px-2 py-1 text-center">
-          <div className="text-[9px] text-slate-400">GELIJK</div>
-          <div className="text-sm font-black">{drawProb}%</div>
+
+        <div className="flex items-center justify-between bg-slate-800/50 rounded px-3 py-2">
+          <span className="text-sm font-medium text-slate-400">Gelijkspel</span>
+          <div className="flex items-center gap-2">
+            <div className="text-xl font-black">{drawProb}%</div>
+            <div className="flex gap-0.5">
+              {Array.from({ length: 5 }).map((_, i) => (
+                <span key={i} className={i < Math.round(drawProb / 20) ? "text-yellow-400" : "text-slate-700"}>
+                  ⭐
+                </span>
+              ))}
+            </div>
+          </div>
         </div>
-        <div className="bg-slate-800/50 rounded px-2 py-1 text-center">
-          <div className="text-[9px] text-slate-400">UIT</div>
-          <div className="text-sm font-black">{awayProb}%</div>
+
+        <div className="flex items-center justify-between bg-slate-800/50 rounded px-3 py-2">
+          <div className="flex items-center gap-2">
+            {match.awayLogo && (
+              <img src={match.awayLogo} alt="" className="w-4 h-4 object-contain" />
+            )}
+            <span className="text-sm font-medium truncate max-w-[150px]">{match.awayTeamName}</span>
+          </div>
+          <div className="flex items-center gap-2">
+            <div className="text-xl font-black">{awayProb}%</div>
+            <div className="flex gap-0.5">
+              {Array.from({ length: 5 }).map((_, i) => (
+                <span key={i} className={i < Math.round(awayProb / 20) ? "text-yellow-400" : "text-slate-700"}>
+                  ⭐
+                </span>
+              ))}
+            </div>
+          </div>
         </div>
+      </div>
+    );
+  };
+
+  // NIEUW: Render AI Learning
+  const renderAILearning = () => {
+    if (!aiLearning || !isFinished) return null;
+
+    return (
+      <div className="mt-3 p-3 bg-gradient-to-br from-purple-900/30 to-blue-900/30 rounded-lg border border-purple-500/20">
+        <div className="text-xs font-bold text-purple-300 mb-2 flex items-center gap-2">
+          🤖 AI LEARNING RAPPORT
+        </div>
+
+        {/* Correct predictions */}
+        {aiLearning.correctPredictions.length > 0 && (
+          <div className="mb-2">
+            <div className="text-[10px] text-green-400 font-semibold mb-1">CORRECT:</div>
+            <div className="space-y-1">
+              {aiLearning.correctPredictions.map((item, i) => (
+                <div key={i} className="text-xs text-green-300">{item}</div>
+              ))}
+            </div>
+          </div>
+        )}
+
+        {/* Wrong predictions */}
+        {aiLearning.wrongPredictions.length > 0 && (
+          <div className="mb-2">
+            <div className="text-[10px] text-red-400 font-semibold mb-1">FOUT:</div>
+            <div className="space-y-1">
+              {aiLearning.wrongPredictions.map((item, i) => (
+                <div key={i} className="text-xs text-red-300">{item}</div>
+              ))}
+            </div>
+          </div>
+        )}
+
+        {/* Learnings */}
+        {aiLearning.learnings.length > 0 && (
+          <div className="mb-2">
+            <div className="text-[10px] text-yellow-400 font-semibold mb-1">LEERPUNTEN:</div>
+            <div className="space-y-1">
+              {aiLearning.learnings.map((item, i) => (
+                <div key={i} className="text-xs text-yellow-300">💡 {item}</div>
+              ))}
+            </div>
+          </div>
+        )}
+
+        {/* Confidence score */}
+        {aiLearning.confidenceAccuracy > 0 && (
+          <div className="mt-2 pt-2 border-t border-purple-500/20">
+            <div className="text-xs">
+              <span className="text-slate-400">Vertrouwen accuraatheid: </span>
+              <span className="text-purple-300 font-bold">{Math.round(aiLearning.confidenceAccuracy)}%</span>
+            </div>
+          </div>
+        )}
       </div>
     );
   };
@@ -238,27 +467,15 @@ const MatchCard: React.FC<MatchCardProps> = ({ match, prediction, onFavoriteChan
         <div className="text-[9px] text-slate-400 mb-1">LIVE STATISTIEKEN</div>
         
         {stats.possession && (
-          <div>
-            <div className="flex justify-between text-[10px] mb-0.5">
-              <span>{stats.possession.home}%</span>
-              <span className="text-slate-500">Balbezit</span>
-              <span>{stats.possession.away}%</span>
-            </div>
-            <div className="h-1 bg-slate-800 rounded-full overflow-hidden flex">
-              <div 
-                className="bg-blue-500" 
-                style={{ width: `${stats.possession.home}%` }}
-              />
-              <div 
-                className="bg-red-500" 
-                style={{ width: `${stats.possession.away}%` }}
-              />
-            </div>
+          <div className="flex justify-between text-xs">
+            <span>{stats.possession.home}%</span>
+            <span className="text-slate-500">Balbezit</span>
+            <span>{stats.possession.away}%</span>
           </div>
         )}
 
         {stats.shots && (
-          <div className="flex justify-between text-[10px]">
+          <div className="flex justify-between text-xs">
             <span>{stats.shots.home}</span>
             <span className="text-slate-500">Schoten</span>
             <span>{stats.shots.away}</span>
@@ -266,39 +483,39 @@ const MatchCard: React.FC<MatchCardProps> = ({ match, prediction, onFavoriteChan
         )}
 
         {stats.shotsOnTarget && (
-          <div className="flex justify-between text-[10px]">
+          <div className="flex justify-between text-xs">
             <span>{stats.shotsOnTarget.home}</span>
             <span className="text-slate-500">Op doel</span>
             <span>{stats.shotsOnTarget.away}</span>
           </div>
         )}
 
-        {stats.xG && (
-          <div className="flex justify-between text-[10px]">
-            <span>{stats.xG.home.toFixed(1)}</span>
-            <span className="text-slate-500">Live xG</span>
-            <span>{stats.xG.away.toFixed(1)}</span>
-          </div>
-        )}
-
         {stats.corners && (
-          <div className="flex justify-between text-[10px]">
+          <div className="flex justify-between text-xs">
             <span>{stats.corners.home}</span>
-            <span className="text-slate-500">Hoekschoppen</span>
+            <span className="text-slate-500">Corners</span>
             <span>{stats.corners.away}</span>
           </div>
         )}
 
+        {stats.fouls && (
+          <div className="flex justify-between text-xs">
+            <span>{stats.fouls.home}</span>
+            <span className="text-slate-500">Overtredingen</span>
+            <span>{stats.fouls.away}</span>
+          </div>
+        )}
+
         {(stats.yellowCards || stats.redCards) && (
-          <div className="flex justify-between text-[10px]">
+          <div className="flex justify-between text-xs">
             <span>
-              {stats.yellowCards?.home || 0}
-              {stats.redCards?.home ? ` (${stats.redCards.home}🔴)` : ""}
+              {stats.yellowCards?.home || 0} 
+              {stats.redCards?.home ? ` (${stats.redCards.home} 🔴)` : ""}
             </span>
             <span className="text-slate-500">Kaarten</span>
             <span>
               {stats.yellowCards?.away || 0}
-              {stats.redCards?.away ? ` (${stats.redCards.away}🔴)` : ""}
+              {stats.redCards?.away ? ` (${stats.redCards.away} 🔴)` : ""}
             </span>
           </div>
         )}
@@ -310,34 +527,25 @@ const MatchCard: React.FC<MatchCardProps> = ({ match, prediction, onFavoriteChan
     if (!showAdvanced) return null;
 
     return (
-      <div className="mt-3 p-3 bg-slate-900/50 rounded space-y-2">
-        <div className="text-[10px] font-bold text-slate-400 mb-2">GEAVANCEERDE STATISTIEKEN</div>
-        
-        {/* Rest Days */}
-        {(match.homeRestDays != null || match.awayRestDays != null) && (
-          <div className="flex justify-between text-xs">
-            <span>{match.homeRestDays ?? "?"}</span>
-            <span className="text-slate-500">Rustdagen</span>
-            <span>{match.awayRestDays ?? "?"}</span>
-          </div>
-        )}
-
+      <div className="space-y-2 mt-2 p-3 bg-slate-900/30 rounded text-xs">
         {/* Injuries */}
         {(match.homeInjuries || match.awayInjuries) && (
-          <div className="flex justify-between text-xs">
-            <span className={match.homeInjuries?.injuredCount ? "text-red-400" : ""}>
-              {match.homeInjuries?.injuredCount || 0}
-            </span>
-            <span className="text-slate-500">Blessures</span>
-            <span className={match.awayInjuries?.injuredCount ? "text-red-400" : ""}>
-              {match.awayInjuries?.injuredCount || 0}
-            </span>
+          <div>
+            <div className="text-slate-500 mb-1">Blessures & Schorsingen</div>
+            <div className="flex justify-between gap-2">
+              <span className="text-red-400">
+                {match.homeInjuries || "Geen"}
+              </span>
+              <span className="text-red-400">
+                {match.awayInjuries || "Geen"}
+              </span>
+            </div>
           </div>
         )}
 
         {/* H2H */}
         {match.h2h && match.h2h.played >= 2 && (
-          <div className="text-xs">
+          <div>
             <div className="text-slate-500 mb-1">Head-to-Head ({match.h2h.played}x)</div>
             <div className="flex justify-between">
               <span className="text-green-400">{match.h2h.homeWins}W</span>
@@ -349,7 +557,7 @@ const MatchCard: React.FC<MatchCardProps> = ({ match, prediction, onFavoriteChan
 
         {/* Weather */}
         {match.weather && (
-          <div className="text-xs">
+          <div>
             <div className="text-slate-500 mb-1">Weer</div>
             <div className="flex justify-between">
               {match.weather.temperature && <span>{match.weather.temperature}°C</span>}
@@ -363,7 +571,7 @@ const MatchCard: React.FC<MatchCardProps> = ({ match, prediction, onFavoriteChan
 
         {/* Team Profiles */}
         {(match.homeTeamProfile?.setPieceScore || match.awayTeamProfile?.setPieceScore) && (
-          <div className="flex justify-between text-xs">
+          <div className="flex justify-between">
             <span>{match.homeTeamProfile?.setPieceScore ?? "-"}</span>
             <span className="text-slate-500">Set Pieces</span>
             <span>{match.awayTeamProfile?.setPieceScore ?? "-"}</span>
@@ -372,7 +580,7 @@ const MatchCard: React.FC<MatchCardProps> = ({ match, prediction, onFavoriteChan
 
         {/* Referee */}
         {match.referee?.name && (
-          <div className="text-xs">
+          <div>
             <div className="text-slate-500">Scheidsrechter</div>
             <div>{match.referee.name}</div>
             {match.referee.avgCardsPerGame && (
@@ -385,7 +593,7 @@ const MatchCard: React.FC<MatchCardProps> = ({ match, prediction, onFavoriteChan
 
         {/* Model Edges */}
         {prediction?.modelEdges && (
-          <div className="text-xs space-y-1">
+          <div className="space-y-1">
             {prediction.modelEdges.riskProfile && (
               <div>
                 Risico: <span className={
@@ -410,14 +618,14 @@ const MatchCard: React.FC<MatchCardProps> = ({ match, prediction, onFavoriteChan
 
         {/* Lineup Confirmed */}
         {match.lineupSummary?.confirmed && (
-          <div className="text-xs text-green-400">
+          <div className="text-green-400">
             ✓ Opstellingen bevestigd
           </div>
         )}
 
         {/* Venue */}
         {match.venue?.name && (
-          <div className="text-xs">
+          <div>
             <div className="text-slate-500">Stadion</div>
             <div>{match.venue.name}</div>
             {match.venue.capacity && (
@@ -430,7 +638,7 @@ const MatchCard: React.FC<MatchCardProps> = ({ match, prediction, onFavoriteChan
 
         {/* Aggregate */}
         {match.aggregate?.active && (
-          <div className="text-xs">
+          <div>
             <div className="text-slate-500">Tweeluik</div>
             <div>
               Eerste duel: {match.aggregate.firstLegScore || "?"}
@@ -443,7 +651,7 @@ const MatchCard: React.FC<MatchCardProps> = ({ match, prediction, onFavoriteChan
 
         {/* Context */}
         {match.context?.summary && (
-          <div className="text-xs">
+          <div>
             <div className="text-slate-500">Context</div>
             <div className="text-yellow-300">{match.context.summary}</div>
           </div>
@@ -476,13 +684,10 @@ const MatchCard: React.FC<MatchCardProps> = ({ match, prediction, onFavoriteChan
         </div>
       </div>
 
-      {/* Teams */}
+      {/* Teams - AANGEPAST: Logo's nu alleen in odds sectie */}
       <div className="flex items-center gap-3 mb-4">
         <div className="flex-1 space-y-2">
           <div className="flex items-center gap-2">
-            {match.homeLogo && (
-              <img src={match.homeLogo} alt="" className="w-6 h-6 object-contain" />
-            )}
             <div className="flex-1 font-bold text-sm truncate">{match.homeTeamName}</div>
             <button
               onClick={(e) => handleFavoriteClick(homeKey, e)}
@@ -493,9 +698,6 @@ const MatchCard: React.FC<MatchCardProps> = ({ match, prediction, onFavoriteChan
           </div>
 
           <div className="flex items-center gap-2">
-            {match.awayLogo && (
-              <img src={match.awayLogo} alt="" className="w-6 h-6 object-contain" />
-            )}
             <div className="flex-1 font-bold text-sm truncate">{match.awayTeamName}</div>
             <button
               onClick={(e) => handleFavoriteClick(awayKey, e)}
@@ -511,8 +713,11 @@ const MatchCard: React.FC<MatchCardProps> = ({ match, prediction, onFavoriteChan
         </div>
       </div>
 
-      {/* Odds */}
+      {/* Odds - NU VERTICAAL */}
       {renderOdds()}
+
+      {/* AI Learning - ALLEEN NA WEDSTRIJD */}
+      {renderAILearning()}
 
       {/* xG */}
       {renderXG()}
