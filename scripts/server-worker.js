@@ -289,6 +289,41 @@ function calcKeeperEdge(lineupSummary) {
   return Number((homeKeeper - awayKeeper).toFixed(2));
 }
 
+function calculateRecentH2HBalance(h2h, currentHomeId, currentAwayId) {
+  if (!h2h?.results || h2h.results.length === 0) return 0;
+  if (!currentHomeId || !currentAwayId) return 0;
+  
+  // Pak de laatste 5 wedstrijden (of minder als er niet genoeg zijn)
+  const recent = h2h.results.slice(-5);
+  
+  // Bereken gewogen balance - recentere wedstrijden wegen zwaarder
+  // Gewichten: laatste = 1.0, voorlaatste = 0.9, etc.
+  let weightedScore = 0;
+  let totalWeight = 0;
+  
+  recent.forEach((result, index) => {
+    const weight = 0.6 + (index * 0.1); // 0.6, 0.7, 0.8, 0.9, 1.0
+    
+    // Score: +1 als huidige home team won, -1 als huidige away team won, 0 voor draw
+    let score = 0;
+    if (result.winnerId) {
+      const currentHomeIdStr = String(currentHomeId);
+      const currentAwayIdStr = String(currentAwayId);
+      
+      if (result.winnerId === currentHomeIdStr) {
+        score = 1;
+      } else if (result.winnerId === currentAwayIdStr) {
+        score = -1;
+      }
+    }
+    
+    weightedScore += score * weight;
+    totalWeight += weight;
+  });
+  
+  return totalWeight > 0 ? Number((weightedScore / totalWeight).toFixed(2)) : 0;
+}
+
 function buildFeatureVector(input) {
   const homeSplit = pickHomeStrength(input.homeRecent);
   const awaySplit = pickAwayStrength(input.awayRecent);
@@ -333,6 +368,22 @@ function buildFeatureVector(input) {
               (Number(input.h2h.homeWins || 0) - Number(input.h2h.awayWins || 0)) /
               Math.max(Number(input.h2h.played || 1), 1)
             ).toFixed(2)
+          )
+        : 0,
+    h2h_recent_5_balance: calculateRecentH2HBalance(input.h2h),
+    recent_h2h_balance:
+      input.h2h?.results?.length >= 1
+        ? Number(
+            (() => {
+              const recent5 = (input.h2h.results || []).slice(-5);
+              let homeWins = 0;
+              let awayWins = 0;
+              recent5.forEach(r => {
+                if (r.winnerId === input.homeTeamId) homeWins++;
+                else if (r.winnerId === input.awayTeamId) awayWins++;
+              });
+              return ((homeWins - awayWins) / Math.max(recent5.length, 1)).toFixed(2);
+            })()
           )
         : 0,
     match_importance: Number(input.matchImportance || 1),
@@ -401,8 +452,12 @@ function buildHeuristicEnsemble(featureVector) {
   awayScore -= featureVector.away_injuries * 0.05;
   homeScore -= featureVector.home_cards_rate * 0.015;
   awayScore -= featureVector.away_cards_rate * 0.015;
-  homeScore += featureVector.h2h_balance * 0.12;
-  awayScore -= featureVector.h2h_balance * 0.12;
+  // H2H algemeen patroon (lichte weging)
+  homeScore += featureVector.h2h_balance * 0.08;
+  awayScore -= featureVector.h2h_balance * 0.08;
+  // H2H laatste 5 wedstrijden (zware weging voor recente onderlinge vorm)
+  homeScore += featureVector.h2h_recent_5_balance * 0.20;
+  awayScore -= featureVector.h2h_recent_5_balance * 0.20;
 
   const homeRaw = Math.exp(homeScore);
   const drawRaw = Math.exp(drawScore);
@@ -1845,6 +1900,8 @@ async function main() {
       });
 
       const prediction = predict({
+        homeTeamId: homeId,
+        awayTeamId: awayId,
         homeRecent,
         awayRecent,
         homeSeasonStats: store.teamSeasonStats[homeId] || null,
