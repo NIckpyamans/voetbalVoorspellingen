@@ -210,27 +210,51 @@ const MatchCard: React.FC<MatchCardProps> = ({ match, prediction, onFavoriteChan
   // RENDER HELPERS
   // ========================================
   const renderScore = () => {
-    // AANGEPAST: Toon zowel werkelijke score ALS voorspelde score
+    // AANGEPAST: Verticale score weergave - elk cijfer bij eigen team
     const hasActualScore = !!match.score;
     const hasPrediction = !!prediction;
     
+    // Parse scores
+    let homeActualScore = "";
+    let awayActualScore = "";
+    if (hasActualScore && match.score) {
+      const parts = match.score.split("-");
+      homeActualScore = parts[0] || "";
+      awayActualScore = parts[1] || "";
+    }
+    
     return (
-      <div className="text-center">
-        {hasActualScore && (
-          <div className="text-2xl font-black text-green-400">
-            {match.score}
-          </div>
-        )}
+      <div className="min-w-[60px]">
+        {/* Home score */}
+        <div className="text-center mb-2">
+          {hasActualScore && (
+            <div className="text-2xl font-black text-green-400">
+              {homeActualScore}
+            </div>
+          )}
+          {hasPrediction && (
+            <div className={`text-sm font-bold ${hasActualScore ? 'text-slate-500' : 'text-slate-300'}`}>
+              {hasActualScore ? `(${prediction.predHomeGoals})` : prediction.predHomeGoals}
+            </div>
+          )}
+        </div>
         
-        {hasPrediction && (
-          <div className={`text-lg font-bold ${hasActualScore ? 'text-slate-500 text-sm mt-1' : 'text-slate-300'}`}>
-            {hasActualScore ? '(voorspeld: ' : ''}{prediction.predHomeGoals}-{prediction.predAwayGoals}{hasActualScore ? ')' : ''}
-          </div>
-        )}
+        {/* VS divider */}
+        <div className="text-xs text-slate-600 text-center my-1">VS</div>
         
-        {!hasActualScore && !hasPrediction && (
-          <div className="text-sm opacity-50">VS</div>
-        )}
+        {/* Away score */}
+        <div className="text-center mt-2">
+          {hasActualScore && (
+            <div className="text-2xl font-black text-green-400">
+              {awayActualScore}
+            </div>
+          )}
+          {hasPrediction && (
+            <div className={`text-sm font-bold ${hasActualScore ? 'text-slate-500' : 'text-slate-300'}`}>
+              {hasActualScore ? `(${prediction.predAwayGoals})` : prediction.predAwayGoals}
+            </div>
+          )}
+        </div>
       </div>
     );
   };
@@ -242,59 +266,32 @@ const MatchCard: React.FC<MatchCardProps> = ({ match, prediction, onFavoriteChan
     const drawProb = Math.round((prediction.drawProb || 0) * 100);
     const awayProb = Math.round((prediction.awayProb || 0) * 100);
 
-    // AANGEPAST: Verticale layout ipv horizontaal
+    // AANGEPAST: Compacte weergave zonder sterren
     return (
-      <div className="space-y-2 mb-3">
-        <div className="flex items-center justify-between bg-slate-800/50 rounded px-3 py-2">
+      <div className="space-y-1.5 mb-3">
+        <div className="flex items-center justify-between bg-slate-800/50 rounded px-3 py-1.5">
           <div className="flex items-center gap-2">
             {match.homeLogo && (
               <img src={match.homeLogo} alt="" className="w-4 h-4 object-contain" />
             )}
             <span className="text-sm font-medium truncate max-w-[150px]">{match.homeTeamName}</span>
           </div>
-          <div className="flex items-center gap-2">
-            <div className="text-xl font-black">{homeProb}%</div>
-            <div className="flex gap-0.5">
-              {Array.from({ length: 5 }).map((_, i) => (
-                <span key={i} className={i < Math.round(homeProb / 20) ? "text-yellow-400" : "text-slate-700"}>
-                  ⭐
-                </span>
-              ))}
-            </div>
-          </div>
+          <div className="text-sm font-bold">{homeProb}%</div>
         </div>
 
-        <div className="flex items-center justify-between bg-slate-800/50 rounded px-3 py-2">
+        <div className="flex items-center justify-between bg-slate-800/50 rounded px-3 py-1.5">
           <span className="text-sm font-medium text-slate-400">Gelijkspel</span>
-          <div className="flex items-center gap-2">
-            <div className="text-xl font-black">{drawProb}%</div>
-            <div className="flex gap-0.5">
-              {Array.from({ length: 5 }).map((_, i) => (
-                <span key={i} className={i < Math.round(drawProb / 20) ? "text-yellow-400" : "text-slate-700"}>
-                  ⭐
-                </span>
-              ))}
-            </div>
-          </div>
+          <div className="text-sm font-bold">{drawProb}%</div>
         </div>
 
-        <div className="flex items-center justify-between bg-slate-800/50 rounded px-3 py-2">
+        <div className="flex items-center justify-between bg-slate-800/50 rounded px-3 py-1.5">
           <div className="flex items-center gap-2">
             {match.awayLogo && (
               <img src={match.awayLogo} alt="" className="w-4 h-4 object-contain" />
             )}
             <span className="text-sm font-medium truncate max-w-[150px]">{match.awayTeamName}</span>
           </div>
-          <div className="flex items-center gap-2">
-            <div className="text-xl font-black">{awayProb}%</div>
-            <div className="flex gap-0.5">
-              {Array.from({ length: 5 }).map((_, i) => (
-                <span key={i} className={i < Math.round(awayProb / 20) ? "text-yellow-400" : "text-slate-700"}>
-                  ⭐
-                </span>
-              ))}
-            </div>
-          </div>
+          <div className="text-sm font-bold">{awayProb}%</div>
         </div>
       </div>
     );
@@ -527,7 +524,7 @@ const MatchCard: React.FC<MatchCardProps> = ({ match, prediction, onFavoriteChan
     if (!showAdvanced) return null;
 
     return (
-      <div className="space-y-2 mt-2 p-3 bg-slate-900/30 rounded text-xs">
+      <div className="space-y-2 mt-2 p-3 bg-slate-800/40 rounded text-xs border border-slate-700/30">
         {/* Injuries */}
         {(match.homeInjuries || match.awayInjuries) && (
           <div>
@@ -547,11 +544,30 @@ const MatchCard: React.FC<MatchCardProps> = ({ match, prediction, onFavoriteChan
         {match.h2h && match.h2h.played >= 2 && (
           <div>
             <div className="text-slate-500 mb-1">Head-to-Head ({match.h2h.played}x)</div>
-            <div className="flex justify-between">
+            <div className="flex justify-between mb-1">
               <span className="text-green-400">{match.h2h.homeWins}W</span>
               <span className="text-yellow-400">{match.h2h.draws}D</span>
               <span className="text-red-400">{match.h2h.awayWins}W</span>
             </div>
+            {match.h2h.results && match.h2h.results.length > 0 && (
+              <div className="mt-2 space-y-1">
+                <div className="text-[10px] text-slate-400">Laatste 5 duels:</div>
+                {match.h2h.results.slice(-5).reverse().map((result: any, i: number) => (
+                  <div key={i} className="flex justify-between text-[10px]">
+                    <span className="text-slate-400">{result.date?.split('-').slice(0, 2).reverse().join('/')}</span>
+                    <span className="text-slate-300">{result.score}</span>
+                    <span className={
+                      result.winnerId === match.homeTeamId ? "text-green-400" :
+                      result.winnerId === match.awayTeamId ? "text-red-400" :
+                      "text-yellow-400"
+                    }>
+                      {result.winnerId === match.homeTeamId ? "W" :
+                       result.winnerId === match.awayTeamId ? "L" : "D"}
+                    </span>
+                  </div>
+                ))}
+              </div>
+            )}
           </div>
         )}
 
