@@ -5,6 +5,7 @@ import BestBetCard from "./components/BestBetCard";
 import PredictionHistory from "./components/PredictionHistory";
 import StandingsView from "./components/StandingsView";
 import SettingsView from "./components/SettingsView";
+import DateNavigation from "./components/DateNavigation"; // NIEUW IMPORT
 import { getFavorites } from "./components/FavoriteTeams";
 import { Match } from "./types";
 import { velocityEngine } from "./services/velocityEngine";
@@ -199,39 +200,31 @@ const App: React.FC = () => {
     }
 
     return leagueScoped;
-  }, [activeFilter, dayMatches, favoriteTeams, selectedLeague]);
+  }, [dayMatches, activeFilter, selectedLeague, favoriteTeams]);
 
   const sortedMatches = useMemo(() => {
-    return [...filteredMatches].sort((left, right) => {
-      const leftLive = isLive(left);
-      const rightLive = isLive(right);
-      const leftFinished = isFinished(left);
-      const rightFinished = isFinished(right);
-
-      if (leftLive && !rightLive) return -1;
-      if (!leftLive && rightLive) return 1;
-      if (!leftFinished && rightFinished) return -1;
-      if (leftFinished && !rightFinished) return 1;
-
-      return String(left.kickoff || "").localeCompare(String(right.kickoff || ""));
+    return [...filteredMatches].sort((a, b) => {
+      const aIdx = LEAGUE_ORDER.indexOf(a.league);
+      const bIdx = LEAGUE_ORDER.indexOf(b.league);
+      if (aIdx !== -1 && bIdx !== -1) return aIdx - bIdx;
+      if (aIdx !== -1) return -1;
+      if (bIdx !== -1) return 1;
+      return a.league.localeCompare(b.league);
     });
   }, [filteredMatches]);
 
   const allLeagues = useMemo(() => {
-    const present = new Set(dayMatches.map((match) => match.league).filter(Boolean));
-    const ordered = LEAGUE_ORDER.filter((league) => present.has(league));
-    for (const league of present) {
-      if (!LEAGUE_ORDER.includes(league)) ordered.push(league);
-    }
-    return ordered;
+    const uniqueLeagues = Array.from(new Set(dayMatches.map((match) => match.league)));
+    return uniqueLeagues.sort((a, b) => {
+      const aIdx = LEAGUE_ORDER.indexOf(a);
+      const bIdx = LEAGUE_ORDER.indexOf(b);
+      if (aIdx !== -1 && bIdx !== -1) return aIdx - bIdx;
+      if (aIdx !== -1) return -1;
+      if (bIdx !== -1) return 1;
+      return a.localeCompare(b);
+    });
   }, [dayMatches]);
 
-  const liveCount = useMemo(() => dayMatches.filter(isLive).length, [dayMatches]);
-  const plannedCount = useMemo(
-    () => dayMatches.filter((match) => !isLive(match) && !isFinished(match)).length,
-    [dayMatches]
-  );
-  const finishedCount = useMemo(() => dayMatches.filter(isFinished).length, [dayMatches]);
   const favoriteMatches = useMemo(() => {
     return dayMatches.filter((match) => {
       const homeKey = (match as any).homeTeamId || match.homeTeamName.toLowerCase();
@@ -239,88 +232,68 @@ const App: React.FC = () => {
       return favoriteTeams.includes(homeKey) || favoriteTeams.includes(awayKey);
     });
   }, [dayMatches, favoriteTeams]);
+
+  const liveMatches = useMemo(() => sortedMatches.filter(isLive), [sortedMatches]);
+  const plannedMatches = useMemo(() => sortedMatches.filter((match) => !isLive(match) && !isFinished(match)), [sortedMatches]);
+  const finishedMatches = useMemo(() => sortedMatches.filter(isFinished), [sortedMatches]);
+
   const favoriteCount = favoriteMatches.length;
+  const liveCount = dayMatches.filter(isLive).length;
+  const plannedCount = dayMatches.filter((match) => !isLive(match) && !isFinished(match)).length;
+  const finishedCount = dayMatches.filter(isFinished).length;
 
   const bestBets = useMemo(() => {
     return Object.entries(predictions)
-      .map(([matchId, prediction]) => {
-        const match = dayMatches.find((entry) => entry.id === matchId);
-        if (!match || !prediction || isFinished(match)) return null;
+      .filter(([matchId]) => {
+        const match = matches.find((match) => match.id === matchId);
+        return match && belongsToSelectedDate(match, selectedDate) && !isFinished(match);
+      })
+      .map(([matchId, pred]) => {
+        const match = matches.find((match) => match.id === matchId);
+        if (!match) return null;
+
+        const homeProb = pred.homeProb || 0;
+        const drawProb = pred.drawProb || 0;
+        const awayProb = pred.awayProb || 0;
+        const maxProb = Math.max(homeProb, drawProb, awayProb);
+        const outcome = maxProb === homeProb ? "home" : maxProb === awayProb ? "away" : "draw";
 
         return {
-          ...prediction,
-          homeTeam: match.homeTeamName,
-          awayTeam: match.awayTeamName,
-          league: match.league,
           matchId,
+          match,
+          outcome,
+          probability: maxProb,
+          league: match.league,
         };
       })
-      .filter(Boolean)
-      .sort((left: any, right: any) => (right.exactProb || right.confidence || 0) - (left.exactProb || left.confidence || 0))
-      .slice(0, 5) as any[];
-  }, [dayMatches, predictions]);
-
-  const lastRunLabel = lastRun
-    ? new Date(lastRun).toLocaleTimeString("nl-NL", { hour: "2-digit", minute: "2-digit" })
-    : null;
-
-  const liveMatches = sortedMatches.filter(isLive);
-  const plannedMatches = sortedMatches.filter((match) => !isLive(match) && !isFinished(match));
-  const finishedMatches = sortedMatches.filter(isFinished);
+      .filter((bet): bet is NonNullable<typeof bet> => bet !== null)
+      .sort((a, b) => b.probability - a.probability)
+      .slice(0, 5);
+  }, [predictions, matches, selectedDate]);
 
   return (
-    <div className="min-h-screen pb-20 text-slate-100 bg-[#02020a]">
-      <Header currentView={view} onViewChange={setView} />
-      <main className="max-w-7xl mx-auto px-4 md:px-6 pt-5">
-        {view === "standings" && <StandingsView />}
-        {view === "settings" && <SettingsView />}
-        {view === "history" && <PredictionHistory />}
+    <div className="min-h-screen bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900">
+      <Header 
+        view={view} 
+        onViewChange={setView}
+        syncStatus={syncStatus}
+        lastRun={lastRun}
+      />
 
-        {view === "dashboard" && (
+      <main className="max-w-7xl mx-auto px-4 py-6">
+        {view === "history" ? (
+          <PredictionHistory />
+        ) : view === "standings" ? (
+          <StandingsView />
+        ) : view === "settings" ? (
+          <SettingsView />
+        ) : (
           <>
-            <div className="flex flex-col md:flex-row md:items-end md:justify-between gap-3 mb-4">
-              <div>
-                <div className="text-[10px] font-black uppercase tracking-widest text-slate-500">Datum</div>
-                <div className="text-xl font-black text-white tracking-tight">{formatDateLabel(selectedDate)}</div>
-                <div className="text-[10px] text-slate-500 mt-0.5 flex items-center gap-1.5">
-                  <span
-                    className={`w-1.5 h-1.5 rounded-full ${
-                      syncStatus === "klaar"
-                        ? "bg-green-400"
-                        : syncStatus === "laden"
-                          ? "bg-yellow-400 animate-pulse"
-                          : "bg-red-400"
-                    }`}
-                  />
-                  {syncStatus === "laden"
-                    ? "Data laden..."
-                    : `Gesynchroniseerd${lastRunLabel ? ` · Worker: ${lastRunLabel}` : ""}`}
-                </div>
-              </div>
-
-              <div className="flex items-center gap-2">
-                <input
-                  type="date"
-                  value={selectedDate}
-                  onChange={(event) => {
-                    setSelectedDate(event.target.value);
-                    setSelectedLeague("alle");
-                    setActiveFilter("alle");
-                  }}
-                  className="bg-slate-900/70 border border-white/10 rounded-xl px-3 py-2 text-sm outline-none"
-                />
-                <button
-                  onClick={() => {
-                    setSelectedDate(isoDate(new Date()));
-                    setSelectedLeague("alle");
-                    setActiveFilter("alle");
-                  }}
-                  className="bg-blue-600 text-white rounded-xl px-4 py-2 text-sm font-black hover:bg-blue-500 transition"
-                >
-                  Vandaag
-                </button>
-              </div>
-            </div>
+            {/* DATE NAVIGATION - NIEUW! */}
+            <DateNavigation 
+              selectedDate={selectedDate}
+              onDateChange={setSelectedDate}
+            />
 
             <div className="grid grid-cols-4 gap-2 mb-3">
               {[
