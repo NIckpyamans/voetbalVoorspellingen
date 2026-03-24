@@ -256,18 +256,23 @@ const App: React.FC = () => {
         const drawProb = pred.drawProb || 0;
         const awayProb = pred.awayProb || 0;
         const maxProb = Math.max(homeProb, drawProb, awayProb);
-        const outcome = maxProb === homeProb ? "home" : maxProb === awayProb ? "away" : "draw";
 
         return {
           matchId,
-          match,
-          outcome,
-          probability: maxProb,
+          homeTeam: match.homeTeamName,
+          awayTeam: match.awayTeamName,
           league: match.league,
+          predHomeGoals: pred.predHomeGoals || 0,
+          predAwayGoals: pred.predAwayGoals || 0,
+          homeProb,
+          drawProb,
+          awayProb,
+          confidence: pred.confidence || maxProb,
+          exactProb: pred.exactProb,
         };
       })
       .filter((bet): bet is NonNullable<typeof bet> => bet !== null)
-      .sort((a, b) => b.probability - a.probability)
+      .sort((a, b) => (b.confidence || 0) - (a.confidence || 0))
       .slice(0, 5);
   }, [predictions, matches, selectedDate]);
 
