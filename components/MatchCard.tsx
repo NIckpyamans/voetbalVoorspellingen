@@ -266,32 +266,26 @@ const MatchCard: React.FC<MatchCardProps> = ({ match, prediction, onFavoriteChan
     const drawProb = Math.round((prediction.drawProb || 0) * 100);
     const awayProb = Math.round((prediction.awayProb || 0) * 100);
 
-    // AANGEPAST: Compacte weergave zonder sterren
+    // AANGEPAST: Horizontale layout op 1 regel
     return (
-      <div className="space-y-1.5 mb-3">
-        <div className="flex items-center justify-between bg-slate-800/50 rounded px-3 py-1.5">
-          <div className="flex items-center gap-2">
-            {match.homeLogo && (
-              <img src={match.homeLogo} alt="" className="w-4 h-4 object-contain" />
-            )}
-            <span className="text-sm font-medium truncate max-w-[150px]">{match.homeTeamName}</span>
-          </div>
-          <div className="text-sm font-bold">{homeProb}%</div>
+      <div className="flex items-center gap-2 mb-3 bg-slate-800/50 rounded px-3 py-2">
+        <div className="flex items-center gap-1.5 flex-1">
+          {match.homeLogo && (
+            <img src={match.homeLogo} alt="" className="w-4 h-4 object-contain" />
+          )}
+          <span className="text-xs font-bold">{homeProb}%</span>
         </div>
-
-        <div className="flex items-center justify-between bg-slate-800/50 rounded px-3 py-1.5">
-          <span className="text-sm font-medium text-slate-400">Gelijkspel</span>
-          <div className="text-sm font-bold">{drawProb}%</div>
+        
+        <div className="flex items-center gap-1.5 flex-1 justify-center">
+          <span className="text-xs text-slate-400 font-medium">Gelijk</span>
+          <span className="text-xs font-bold">{drawProb}%</span>
         </div>
-
-        <div className="flex items-center justify-between bg-slate-800/50 rounded px-3 py-1.5">
-          <div className="flex items-center gap-2">
-            {match.awayLogo && (
-              <img src={match.awayLogo} alt="" className="w-4 h-4 object-contain" />
-            )}
-            <span className="text-sm font-medium truncate max-w-[150px]">{match.awayTeamName}</span>
-          </div>
-          <div className="text-sm font-bold">{awayProb}%</div>
+        
+        <div className="flex items-center gap-1.5 flex-1 justify-end">
+          <span className="text-xs font-bold">{awayProb}%</span>
+          {match.awayLogo && (
+            <img src={match.awayLogo} alt="" className="w-4 h-4 object-contain" />
+          )}
         </div>
       </div>
     );
