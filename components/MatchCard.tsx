@@ -207,6 +207,23 @@ function TeamDeepStats({
   );
 }
 
+function buildRecentH2HForm(h2h: any, currentHomeId?: string, currentAwayId?: string) {
+  const recent = (h2h?.results || []).slice(-5);
+  return recent.map((result: any, index: number) => {
+    let label = "D";
+    if (result?.winnerId && currentHomeId && String(result.winnerId) === String(currentHomeId)) label = "W";
+    else if (result?.winnerId && currentAwayId && String(result.winnerId) === String(currentAwayId)) label = "L";
+    return {
+      key: `${result?.eventId || index}-${index}`,
+      label,
+      score: result?.score || "-",
+      date: result?.date || "-",
+      home: result?.home || "",
+      away: result?.away || "",
+    };
+  });
+}
+
 function ExpandableInsights({ match, prediction }: { match: any; prediction: any }) {
   const [open, setOpen] = useState(false);
   const ensemble = prediction.ensembleMeta || match.ensembleMeta;
@@ -219,6 +236,8 @@ function ExpandableInsights({ match, prediction }: { match: any; prediction: any
   const teamAiSummary = prediction.modelEdges?.teamAiSummary;
   const travelEdge = prediction.modelEdges?.travelEdge;
   const keeperEdge = prediction.modelEdges?.keeperEdge;
+  const learningEdge = prediction.modelEdges?.learningEdge || match.learningSummary;
+  const marketCalibration = prediction.modelEdges?.marketCalibration || match.marketCalibration;
 
   const riskTone =
     riskProfile === "laag"
@@ -346,6 +365,26 @@ function ExpandableInsights({ match, prediction }: { match: any; prediction: any
             <div className="text-[8px] font-black uppercase text-indigo-300 mb-1">Extra AI-richting</div>
             <div className="text-[8px] text-slate-300 leading-relaxed">
               Klaar voor corners-trend, cards-trend, set-piece kracht, reis/vermoeidheid, managerwissel en markt-vs-model zodra die databronnen gekoppeld worden.
+            </div>
+          </div>
+        </div>
+
+        <div className="grid grid-cols-2 gap-2">
+          <div className="rounded-xl border border-sky-500/15 bg-sky-950/20 p-2">
+            <div className="text-[8px] font-black uppercase text-sky-300 mb-1">Leermodel review</div>
+            <div className="space-y-1 text-[8px] text-slate-300">
+              <div>Samenvatting: <span className="font-black text-white">{learningEdge?.summary || "nog geen reviewdata"}</span></div>
+              <div>Hitrate thuis/uit: <span className="font-black text-white">{learningEdge?.homeOutcomeHitRate != null ? `${Math.round(learningEdge.homeOutcomeHitRate * 100)}%` : "-"} / {learningEdge?.awayOutcomeHitRate != null ? `${Math.round(learningEdge.awayOutcomeHitRate * 100)}%` : "-"}</span></div>
+              <div>Bias thuis/uit: <span className="font-black text-white">{learningEdge?.homeBias ?? "-"} / {learningEdge?.awayBias ?? "-"}</span></div>
+            </div>
+          </div>
+          <div className="rounded-xl border border-rose-500/15 bg-rose-950/20 p-2">
+            <div className="text-[8px] font-black uppercase text-rose-300 mb-1">Markt-calibratie</div>
+            <div className="space-y-1 text-[8px] text-slate-300">
+              <div>Bron: <span className="font-black text-white">{marketCalibration?.source || "geen"}</span></div>
+              <div>Samenvatting: <span className="font-black text-white">{marketCalibration?.summary || "geen historische marktdata gekoppeld"}</span></div>
+              <div>Implied PPG: <span className="font-black text-white">{marketCalibration?.homeImpliedPpg ?? "-"} / {marketCalibration?.awayImpliedPpg ?? "-"}</span></div>
+              <div>Overperf diff: <span className="font-black text-white">{marketCalibration?.overperformanceDiff ?? "-"}</span></div>
             </div>
           </div>
         </div>
@@ -782,6 +821,42 @@ const MatchCard: React.FC<MatchCardProps> = ({ match, prediction, onFavoriteChan
             <div className="rounded-lg p-1.5 bg-red-900/20 border border-red-500/20 text-red-400">
               <div className="text-[7px] font-black uppercase">Uit</div>
               <div className="text-xl font-black text-white">{h2h?.awayWins || 0}</div>
+            </div>
+          </div>
+
+          <div className="grid grid-cols-2 gap-2">
+            <div className="rounded-lg p-2 bg-slate-900/60">
+              <div className="text-[7px] font-black uppercase text-slate-400 mb-1">Laatste 5 onderling</div>
+              <div className="flex gap-1">
+                {buildRecentH2HForm(h2h, match.homeTeamId, match.awayTeamId).length ? (
+                  buildRecentH2HForm(h2h, match.homeTeamId, match.awayTeamId).map((item) => (
+                    <span
+                      key={item.key}
+                      title={`${item.date} ${item.home} ${item.score} ${item.away}`}
+                      className={`w-5 h-5 rounded-sm text-[8px] font-black flex items-center justify-center ${
+                        item.label === "W"
+                          ? "bg-green-500 text-white"
+                          : item.label === "L"
+                            ? "bg-red-500 text-white"
+                            : "bg-amber-500 text-black"
+                      }`}
+                    >
+                      {item.label}
+                    </span>
+                  ))
+                ) : (
+                  <div className="text-[9px] text-slate-500">geen recente onderlinge data</div>
+                )}
+              </div>
+            </div>
+            <div className="rounded-lg p-2 bg-slate-900/60">
+              <div className="text-[7px] font-black uppercase text-slate-400 mb-1">Recente H2H balans</div>
+              <div className="text-[11px] font-black text-white">
+                {h2h?.weightedRecentBalance != null ? h2h.weightedRecentBalance : "-"}
+              </div>
+              <div className="text-[8px] text-slate-500 mt-1">
+                positief = voordeel {match.homeTeamName}, negatief = voordeel {match.awayTeamName}
+              </div>
             </div>
           </div>
 
