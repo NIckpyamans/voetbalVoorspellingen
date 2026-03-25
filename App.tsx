@@ -238,6 +238,7 @@ const App: React.FC = () => {
   const finishedMatches = useMemo(() => sortedMatches.filter(isFinished), [sortedMatches]);
 
   const favoriteCount = favoriteMatches.length;
+  const matchGridClass = "grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-4 gap-2.5";
   const liveCount = dayMatches.filter(isLive).length;
   const plannedCount = dayMatches.filter((match) => !isLive(match) && !isFinished(match)).length;
   const finishedCount = dayMatches.filter(isFinished).length;
@@ -370,7 +371,7 @@ const App: React.FC = () => {
             </div>
 
             {loading ? (
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
+              <div className={matchGridClass}>
                 {[1, 2, 3, 4, 5, 6].map((index) => (
                   <div key={index} className="h-64 glass-card rounded-2xl animate-pulse" />
                 ))}
@@ -393,7 +394,7 @@ const App: React.FC = () => {
                       <span className="text-sm font-black uppercase">Favoriete teams ({favoriteCount})</span>
                     </div>
 
-                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
+                    <div className={matchGridClass}>
                       {favoriteMatches.slice(0, 6).map((match) => (
                         <MatchCard
                           key={match.id}
@@ -426,7 +427,7 @@ const App: React.FC = () => {
                       <span className="w-2 h-2 bg-red-500 rounded-full animate-pulse" />
                       <span className="text-sm font-black uppercase">Live ({liveMatches.length})</span>
                     </div>
-                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
+                    <div className={matchGridClass}>
                       {liveMatches.map((match) => (
                         <MatchCard
                           key={match.id}
@@ -445,7 +446,7 @@ const App: React.FC = () => {
                       <span className="w-2 h-2 bg-blue-500 rounded-full" />
                       <span className="text-sm font-black uppercase">Nog te spelen ({plannedMatches.length})</span>
                     </div>
-                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
+                    <div className={matchGridClass}>
                       {plannedMatches.map((match) => (
                         <MatchCard
                           key={match.id}
@@ -464,7 +465,7 @@ const App: React.FC = () => {
                       <span className="w-2 h-2 bg-slate-400 rounded-full" />
                       <span className="text-sm font-black uppercase">Gespeeld ({finishedMatches.length})</span>
                     </div>
-                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
+                    <div className={matchGridClass}>
                       {finishedMatches.map((match) => (
                         <MatchCard
                           key={match.id}
