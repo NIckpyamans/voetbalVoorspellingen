@@ -306,8 +306,8 @@ const App: React.FC = () => {
 
             <div className="grid grid-cols-4 gap-2 mb-3">
               {[
-                { key: "favorieten", label: "Favorieten", count: favoriteCount, color: "yellow", icon: "â˜…" },
-                { key: "live", label: "Live", count: liveCount, color: "red", icon: "â—" },
+                { key: "favorieten", label: "Favorieten", count: favoriteCount, color: "yellow", icon: "★" },
+                { key: "live", label: "Live", count: liveCount, color: "red", icon: "●" },
                 { key: "gepland", label: "Gepland", count: plannedCount, color: "blue", icon: "" },
                 { key: "gespeeld", label: "Gespeeld", count: finishedCount, color: "slate", icon: "" },
               ].map(({ key, label, count, color, icon }) => (
@@ -342,7 +342,7 @@ const App: React.FC = () => {
                     : "bg-slate-800 text-slate-300 hover:bg-slate-700"
                 }`}
               >
-                âš½ {dayMatches.length}
+                ⚽ {dayMatches.length}
               </button>
 
               {allLeagues.map((league) => {
@@ -381,7 +381,7 @@ const App: React.FC = () => {
               </div>
             ) : sortedMatches.length === 0 && activeFilter !== "alle" ? (
               <div className="text-center py-16 text-slate-500">
-                <div className="text-5xl mb-3">{activeFilter === "favorieten" ? "â˜…" : "âš½"}</div>
+                <div className="text-5xl mb-3">{activeFilter === "favorieten" ? "★" : "⚽"}</div>
                 <div className="font-bold">
                   {activeFilter === "favorieten"
                     ? "Geen wedstrijden van favoriete teams op deze dag"
@@ -393,7 +393,7 @@ const App: React.FC = () => {
                 {activeFilter === "alle" && favoriteCount > 0 && (
                   <section>
                     <div className="flex items-center gap-2 mb-3">
-                      <span className="text-yellow-400">â˜…</span>
+                      <span className="text-yellow-400">★</span>
                       <span className="text-sm font-black uppercase">Favoriete teams ({favoriteCount})</span>
                     </div>
 
@@ -483,7 +483,7 @@ const App: React.FC = () => {
 
                 {!loading && dayMatches.length === 0 && (
                   <div className="text-center py-16 text-slate-500">
-                    <div className="text-5xl mb-3">ðŸ“…</div>
+                    <div className="text-5xl mb-3">📅</div>
                     <div className="font-bold">Geen wedstrijden gevonden voor {formatDateLabel(selectedDate)}</div>
                   </div>
                 )}
