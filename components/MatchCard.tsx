@@ -597,6 +597,18 @@ const MatchCard: React.FC<MatchCardProps> = ({ match, prediction, onFavoriteChan
   const topScores = Object.entries(prediction.scoreMatrix || {})
     .sort((a: any, b: any) => b[1] - a[1])
     .slice(0, 6);
+  const confidenceBase = prediction.confidence ?? Math.max(prediction.homeProb || 0, prediction.drawProb || 0, prediction.awayProb || 0);
+  const confidencePct = Math.max(0, Math.min(99, Math.round((confidenceBase || 0) * 100)));
+  const modelLabel = (prediction.ensembleMeta || match.ensembleMeta)?.active ? "Ensemble" : "Basis";
+  const timingLabel = isLive
+    ? liveMinute && liveMinute !== "LIVE"
+      ? liveMinute
+      : "live"
+    : isFinished
+      ? "FT"
+      : match.kickoff
+        ? new Date(match.kickoff).toLocaleTimeString("nl-NL", { hour: "2-digit", minute: "2-digit" })
+        : "-";
 
   return (
     <div className={`glass-card rounded-2xl p-3 border transition-all ${isLive ? "border-red-500/50 bg-red-950/20" : isFinished ? "border-slate-600/30 bg-slate-900/20" : "border-slate-700/30"}`}>
@@ -633,7 +645,9 @@ const MatchCard: React.FC<MatchCardProps> = ({ match, prediction, onFavoriteChan
           </div>
           <div className="text-[7px] text-slate-500">ClubElo {match.homeClubElo ?? "-"}</div>
           <FormPills form={match.homeForm} />
-          <TeamMeta profile={match.homeTeamProfile} injuries={match.homeInjuries} />
+          <div className="text-[8px] text-slate-500 mt-0.5">
+            PPG {match.homeTeamProfile?.pointsPerGame ?? "-"}
+          </div>
         </div>
 
         <div className="min-w-[104px] text-center">
@@ -660,7 +674,24 @@ const MatchCard: React.FC<MatchCardProps> = ({ match, prediction, onFavoriteChan
           </div>
           <div className="text-[7px] text-slate-500">ClubElo {match.awayClubElo ?? "-"}</div>
           <FormPills form={match.awayForm} />
-          <TeamMeta profile={match.awayTeamProfile} injuries={match.awayInjuries} />
+          <div className="text-[8px] text-slate-500 mt-0.5">
+            PPG {match.awayTeamProfile?.pointsPerGame ?? "-"}
+          </div>
+        </div>
+      </div>
+
+      <div className="grid grid-cols-3 gap-1 mb-2">
+        <div className="rounded-lg border border-blue-500/15 bg-blue-950/20 px-2 py-1.5 text-center">
+          <div className="text-[7px] uppercase font-black text-blue-300/80">Vertrouwen</div>
+          <div className="text-[11px] font-black text-white">{confidencePct}%</div>
+        </div>
+        <div className="rounded-lg border border-cyan-500/15 bg-cyan-950/20 px-2 py-1.5 text-center">
+          <div className="text-[7px] uppercase font-black text-cyan-300/80">Model</div>
+          <div className="text-[11px] font-black text-white">{modelLabel}</div>
+        </div>
+        <div className="rounded-lg border border-violet-500/15 bg-violet-950/20 px-2 py-1.5 text-center">
+          <div className="text-[7px] uppercase font-black text-violet-300/80">Wedstrijdtijd</div>
+          <div className="text-[11px] font-black text-white">{timingLabel}</div>
         </div>
       </div>
 
@@ -676,6 +707,10 @@ const MatchCard: React.FC<MatchCardProps> = ({ match, prediction, onFavoriteChan
             <div className="text-[9px] text-yellow-400 font-bold">{odds}</div>
           </div>
         ))}
+      </div>
+
+      <div className="mb-2">
+        <KeySignals match={match} prediction={prediction} />
       </div>
 
       <ExpandableMatchMeta match={match} prediction={prediction} weather={weather} h2h={h2h} />
