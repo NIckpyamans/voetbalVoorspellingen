@@ -140,6 +140,161 @@ function normalizeName(name) {
     .trim();
 }
 
+const EUROPEAN_COUNTRIES = new Set(
+  [
+    "albania",
+    "andorra",
+    "armenia",
+    "austria",
+    "azerbaijan",
+    "belarus",
+    "belgium",
+    "bosnia and herzegovina",
+    "bosnia herzegovina",
+    "bulgaria",
+    "croatia",
+    "cyprus",
+    "czech republic",
+    "czechia",
+    "denmark",
+    "england",
+    "estonia",
+    "faroe islands",
+    "finland",
+    "france",
+    "georgia",
+    "germany",
+    "gibraltar",
+    "greece",
+    "hungary",
+    "iceland",
+    "ireland",
+    "israel",
+    "italy",
+    "kazakhstan",
+    "kosovo",
+    "latvia",
+    "liechtenstein",
+    "lithuania",
+    "luxembourg",
+    "malta",
+    "moldova",
+    "montenegro",
+    "netherlands",
+    "north macedonia",
+    "norway",
+    "poland",
+    "portugal",
+    "romania",
+    "san marino",
+    "scotland",
+    "serbia",
+    "slovakia",
+    "slovenia",
+    "spain",
+    "sweden",
+    "switzerland",
+    "turkey",
+    "ukraine",
+    "wales",
+  ].map((entry) => normalizeName(entry))
+);
+
+function isEuropeanCountryName(name) {
+  return EUROPEAN_COUNTRIES.has(normalizeName(name));
+}
+
+function isSeniorInternationalTournament(tournamentName) {
+  const value = normalizeName(tournamentName);
+  if (!value) return false;
+  const blocked = ["u17", "u18", "u19", "u20", "u21", "u23", "women", "femin", "vrouw", "futsal"];
+  return !blocked.some((token) => value.includes(token));
+}
+
+function getInternationalLeagueInfo(event) {
+  const tournament = String(
+    event?.uniqueTournament?.name || event?.tournament?.name || ""
+  );
+  const tournamentNorm = normalizeName(tournament);
+  const categoryNorm = normalizeName(event?.tournament?.category?.name || "");
+  const homeCountryNorm = normalizeName(event?.homeTeam?.country?.name || "");
+  const awayCountryNorm = normalizeName(event?.awayTeam?.country?.name || "");
+  const europeanPair =
+    isEuropeanCountryName(homeCountryNorm) && isEuropeanCountryName(awayCountryNorm);
+
+  if (!isSeniorInternationalTournament(tournamentNorm)) return null;
+
+  if (
+    tournamentNorm.includes("world championship qualification") ||
+    tournamentNorm.includes("world championship qual") ||
+    tournamentNorm.includes("world cup qualification") ||
+    tournamentNorm.includes("fifa world cup qualification")
+  ) {
+    if (categoryNorm.includes("europe") || europeanPair || tournamentNorm.includes("uefa")) {
+      return {
+        country: "",
+        name: tournamentNorm,
+        label: "Europe - World Cup Qualification",
+        type: "league",
+      };
+    }
+  }
+
+  if (
+    (tournamentNorm.includes("european championship") && tournamentNorm.includes("qualification")) ||
+    tournamentNorm.includes("euro qualification") ||
+    tournamentNorm.includes("uefa euro qualification")
+  ) {
+    if (categoryNorm.includes("europe") || europeanPair) {
+      return {
+        country: "",
+        name: tournamentNorm,
+        label: "Europe - Euro Qualification",
+        type: "league",
+      };
+    }
+  }
+
+  if (tournamentNorm.includes("uefa nations league")) {
+    return {
+      country: "",
+      name: tournamentNorm,
+      label: "Europe - UEFA Nations League",
+      type: "league",
+    };
+  }
+
+  if (
+    tournamentNorm.includes("european championship") &&
+    !tournamentNorm.includes("qualification")
+  ) {
+    if (categoryNorm.includes("europe") || europeanPair) {
+      return {
+        country: "",
+        name: tournamentNorm,
+        label: "Europe - European Championship",
+        type: "cup",
+      };
+    }
+  }
+
+  if (
+    (tournamentNorm.includes("friendly games") || tournamentNorm.includes("international friendly")) &&
+    !tournamentNorm.includes("club")
+  ) {
+    if (europeanPair) {
+      return {
+        country: "",
+        name: tournamentNorm,
+        label: "Europe - International Friendly",
+        type: "league",
+      };
+    }
+  }
+
+  return null;
+}
+
 function buildPossibleNames(name) {
   const normalized = normalizeName(name);
   const variants = new Set([normalized]);
@@ -1176,6 +1331,8 @@ function getLeagueInfo(event) {
     event?.uniqueTournament?.name || event?.tournament?.name || ""
   ).toLowerCase();
   const country = String(event?.tournament?.category?.name || "").toLowerCase();
+  const international = getInternationalLeagueInfo(event);
+  if (international) return international;
   return LEAGUES.find(
     (league) =>
       (!league.country || country.includes(league.country)) &&
@@ -1529,8 +1686,11 @@ async function fetchH2H(eventId, currentHomeId, currentAwayId, tournamentId, sea
   const json = await safeFetch(`${SOFA}/event/${eventId}/h2h`);
   const raw = json?.events || [];
 
-  const finished = raw
+  const finishedAll = raw
     .filter((event) => event.status?.type === "finished")
+    .sort((a, b) => Number(a.startTimestamp || 0) - Number(b.startTimestamp || 0));
+
+  const finishedSameCompetition = finishedAll
     .filter((event) => {
       if (!tournamentId || !seasonId) return true;
       const eventTournamentId =
@@ -1538,6 +1698,18 @@ async function fetchH2H(eventId, currentHomeId, currentAwayId, tournamentId, sea
       const eventSeasonId = event.season?.id;
       return eventTournamentId === tournamentId && eventSeasonId === seasonId;
     })
+    .sort((a, b) => Number(a.startTimestamp || 0) - Number(b.startTimestamp || 0));
+
+  const merged = [];
+  const seenEventIds = new Set();
+  for (const event of [...finishedSameCompetition, ...finishedAll]) {
+    const eventKey = String(event.id || `${event.startTimestamp || ""}_${event.homeTeam?.id || ""}_${event.awayTeam?.id || ""}`);
+    if (seenEventIds.has(eventKey)) continue;
+    seenEventIds.add(eventKey);
+    merged.push(event);
+  }
+
+  const finished = merged
     .sort((a, b) => Number(a.startTimestamp || 0) - Number(b.startTimestamp || 0))
     .slice(-8);
 
@@ -1588,9 +1760,15 @@ async function fetchH2H(eventId, currentHomeId, currentAwayId, tournamentId, sea
     homeWins,
     draws,
     awayWins,
+    sameCompetitionPlayed: finishedSameCompetition.length,
     weightedRecentBalance: calculateRecentH2HBalance({ results }, currentHomeId, currentAwayId),
     results,
-    status: results.length ? "loaded" : "empty",
+    status:
+      results.length
+        ? finishedSameCompetition.length
+          ? "loaded"
+          : "all-competitions"
+        : "empty",
   };
 }
 
