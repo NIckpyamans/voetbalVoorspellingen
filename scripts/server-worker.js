@@ -35,6 +35,17 @@ const LEAGUES = [
 const sleep = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
 const clamp = (value, min, max) => Math.max(min, Math.min(max, value));
 
+function toAmsterdamDateKey(dateLike) {
+  const date = dateLike instanceof Date ? dateLike : new Date(dateLike);
+  if (Number.isNaN(date.getTime())) return null;
+  return new Intl.DateTimeFormat("sv-SE", {
+    timeZone: "Europe/Amsterdam",
+    year: "numeric",
+    month: "2-digit",
+    day: "2-digit",
+  }).format(date);
+}
+
 const FORM_TTL = 6 * 60 * 60 * 1000;
 const INJURY_TTL = 4 * 60 * 60 * 1000;
 const SEASON_TTL = 12 * 60 * 60 * 1000;
@@ -261,6 +272,7 @@ function getInternationalLeagueInfo(event) {
   if (
     tournamentNorm.includes("world championship qualification") ||
     tournamentNorm.includes("world championship qual") ||
+    tournamentNorm.includes("world cup qual") ||
     tournamentNorm.includes("world cup qualification") ||
     tournamentNorm.includes("fifa world cup qualification")
   ) {
@@ -2456,7 +2468,14 @@ async function main() {
 
   for (const date of dates) {
     const json = await safeFetch(`${SOFA}/sport/football/scheduled-events/${date}`);
-    const events = (json?.events || []).filter((event) => getLeagueInfo(event));
+    const events = (json?.events || [])
+      .filter((event) => {
+        const key = event?.startTimestamp
+          ? toAmsterdamDateKey(new Date(Number(event.startTimestamp) * 1000))
+          : null;
+        return key === date;
+      })
+      .filter((event) => getLeagueInfo(event));
     allEvents[date] = events;
 
     for (const event of events) {
