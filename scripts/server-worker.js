@@ -140,6 +140,25 @@ function normalizeName(name) {
     .trim();
 }
 
+function isWomenContext(...values) {
+  const text = values
+    .flatMap((value) => (value == null ? [] : [String(value)]))
+    .join(" ")
+    .toLowerCase();
+
+  return (
+    text.includes("women") ||
+    text.includes("woman") ||
+    text.includes("femminile") ||
+    text.includes("feminine") ||
+    text.includes("feminin") ||
+    text.includes("frauen") ||
+    text.includes("dames") ||
+    text.includes("ladies") ||
+    text.includes("vrouw")
+  );
+}
+
 const EUROPEAN_COUNTRIES = new Set(
   [
     "albania",
@@ -211,7 +230,20 @@ function isSeniorInternationalTournament(tournamentName) {
   return !blocked.some((token) => value.includes(token));
 }
 
+function shouldExcludeEvent(event) {
+  return isWomenContext(
+    event?.uniqueTournament?.name,
+    event?.tournament?.name,
+    event?.tournament?.category?.name,
+    event?.homeTeam?.name,
+    event?.awayTeam?.name,
+    event?.homeTeam?.teamType,
+    event?.awayTeam?.teamType
+  );
+}
+
 function getInternationalLeagueInfo(event) {
+  if (shouldExcludeEvent(event)) return null;
   const tournament = String(
     event?.uniqueTournament?.name || event?.tournament?.name || ""
   );
@@ -219,6 +251,8 @@ function getInternationalLeagueInfo(event) {
   const categoryNorm = normalizeName(event?.tournament?.category?.name || "");
   const homeCountryNorm = normalizeName(event?.homeTeam?.country?.name || "");
   const awayCountryNorm = normalizeName(event?.awayTeam?.country?.name || "");
+  const hasEuropeanTeam =
+    isEuropeanCountryName(homeCountryNorm) || isEuropeanCountryName(awayCountryNorm);
   const europeanPair =
     isEuropeanCountryName(homeCountryNorm) && isEuropeanCountryName(awayCountryNorm);
 
@@ -230,7 +264,7 @@ function getInternationalLeagueInfo(event) {
     tournamentNorm.includes("world cup qualification") ||
     tournamentNorm.includes("fifa world cup qualification")
   ) {
-    if (categoryNorm.includes("europe") || europeanPair || tournamentNorm.includes("uefa")) {
+    if (categoryNorm.includes("europe") || hasEuropeanTeam || tournamentNorm.includes("uefa")) {
       return {
         country: "",
         name: tournamentNorm,
@@ -245,7 +279,7 @@ function getInternationalLeagueInfo(event) {
     tournamentNorm.includes("euro qualification") ||
     tournamentNorm.includes("uefa euro qualification")
   ) {
-    if (categoryNorm.includes("europe") || europeanPair) {
+    if (categoryNorm.includes("europe") || hasEuropeanTeam) {
       return {
         country: "",
         name: tournamentNorm,
@@ -268,7 +302,7 @@ function getInternationalLeagueInfo(event) {
     tournamentNorm.includes("european championship") &&
     !tournamentNorm.includes("qualification")
   ) {
-    if (categoryNorm.includes("europe") || europeanPair) {
+    if (categoryNorm.includes("europe") || hasEuropeanTeam) {
       return {
         country: "",
         name: tournamentNorm,
@@ -282,7 +316,7 @@ function getInternationalLeagueInfo(event) {
     (tournamentNorm.includes("friendly games") || tournamentNorm.includes("international friendly")) &&
     !tournamentNorm.includes("club")
   ) {
-    if (europeanPair) {
+    if (hasEuropeanTeam) {
       return {
         country: "",
         name: tournamentNorm,
@@ -1327,6 +1361,7 @@ async function safeFetchText(url) {
 }
 
 function getLeagueInfo(event) {
+  if (shouldExcludeEvent(event)) return null;
   const tournament = String(
     event?.uniqueTournament?.name || event?.tournament?.name || ""
   ).toLowerCase();
@@ -1338,6 +1373,50 @@ function getLeagueInfo(event) {
       (!league.country || country.includes(league.country)) &&
       (tournament === league.name || tournament.includes(league.name))
   ) || null;
+}
+
+function purgeExcludedContent(store) {
+  const excludedTeamIds = new Set();
+
+  for (const [date, matches] of Object.entries(store.matches || {})) {
+    const safeMatches = [];
+    for (const match of matches || []) {
+      const excluded = isWomenContext(match?.league, match?.homeTeamName, match?.awayTeamName);
+      if (excluded) {
+        if (match?.homeTeamId) excludedTeamIds.add(String(match.homeTeamId));
+        if (match?.awayTeamId) excludedTeamIds.add(String(match.awayTeamId));
+      } else {
+        safeMatches.push(match);
+      }
+    }
+    store.matches[date] = safeMatches;
+    store.predictions[date] = (store.predictions?.[date] || []).filter(
+      (prediction) => !isWomenContext(prediction?.league, prediction?.homeTeamName, prediction?.awayTeamName)
+    );
+  }
+
+  for (const key of Object.keys(store.teams || {})) {
+    const team = store.teams[key];
+    if (excludedTeamIds.has(String(team?.id || "")) || isWomenContext(team?.league, team?.name)) {
+      delete store.teams[key];
+    }
+  }
+
+  const keyedMaps = [
+    "teamStats",
+    "teamStatsUpdated",
+    "teamInjuries",
+    "teamInjuriesUpdated",
+    "teamSeasonStats",
+    "teamSeasonStatsUpdated",
+  ];
+
+  for (const mapName of keyedMaps) {
+    if (!store[mapName]) continue;
+    for (const key of Object.keys(store[mapName])) {
+      if (excludedTeamIds.has(String(key))) delete store[mapName][key];
+    }
+  }
 }
 
 function deriveStandingMeta(label, rowsCount) {
@@ -2356,6 +2435,7 @@ async function main() {
   if (!store.marketProfilesUpdated) store.marketProfilesUpdated = {};
   if (!store.postMatchReviews) store.postMatchReviews = {};
   if (!store.teamLearning) store.teamLearning = {};
+  purgeExcludedContent(store);
   for (const date of dates) store.knockoutOverview[date] = [];
   store.cupSheets = {};
   rebuildReviewsAndLearning(store);
