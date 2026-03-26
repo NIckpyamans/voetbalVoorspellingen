@@ -65,10 +65,22 @@ export interface Match {
     draws: number;
     awayWins: number;
     avgGoals?: number;
+    status?: string;
+    weightedRecentBalance?: number;
     lastMatches?: Array<{
       date: string;
       score: string;
       winner: string;
+    }>;
+    results?: Array<{
+      eventId?: string;
+      date: string;
+      home: string;
+      away: string;
+      score: string;
+      winnerId?: string;
+      tournamentId?: string | number;
+      seasonId?: string | number;
     }>;
   };
   h2hStatus?: string;
@@ -370,6 +382,39 @@ export interface Match {
       homeMotivation?: number;
       awayMotivation?: number;
     };
+    learningEdge?: {
+      summary?: string;
+      homeOutcomeHitRate?: number;
+      awayOutcomeHitRate?: number;
+      homeBias?: number;
+      awayBias?: number;
+    };
+    marketCalibration?: {
+      summary?: string;
+      source?: string;
+      homeImpliedPpg?: number | null;
+      awayImpliedPpg?: number | null;
+      overperformanceDiff?: number;
+      homeGames?: number;
+      awayGames?: number;
+    };
+  };
+
+  marketCalibration?: {
+    summary?: string;
+    source?: string;
+    homeImpliedPpg?: number | null;
+    awayImpliedPpg?: number | null;
+    overperformanceDiff?: number;
+    homeGames?: number;
+    awayGames?: number;
+  };
+  learningSummary?: {
+    summary?: string;
+    homeOutcomeHitRate?: number;
+    awayOutcomeHitRate?: number;
+    homeBias?: number;
+    awayBias?: number;
   };
   
   // ========================================
@@ -489,6 +534,8 @@ export interface Prediction {
   awayTeamProfile?: any;
   featureVector?: any;
   ensembleMeta?: any;
+  marketCalibration?: any;
+  learningSummary?: any;
 }
 
 // ============================================================================

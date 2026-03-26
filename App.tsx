@@ -47,14 +47,17 @@ function isFinished(match: Match) {
 }
 
 function belongsToSelectedDate(match: Match, dateISO: string) {
+  if (String(match.date || "") === dateISO) {
+    return true;
+  }
+
   if (match.kickoff) {
     const parsed = new Date(match.kickoff);
     if (!Number.isNaN(parsed.getTime())) {
       return formatAmsterdamDate(parsed) === dateISO;
     }
   }
-
-  return String(match.date || "") === dateISO;
+  return false;
 }
 
 function shortLeague(league: string) {
@@ -69,6 +72,11 @@ const LEAGUE_ORDER = [
   "Europe - Champions League",
   "Europe - Europa League",
   "Europe - Conference League",
+  "Europe - UEFA Nations League",
+  "Europe - World Cup Qualification",
+  "Europe - Euro Qualification",
+  "Europe - European Championship",
+  "Europe - International Friendly",
   "England - Premier League",
   "England - Championship",
   "Netherlands - Eredivisie",

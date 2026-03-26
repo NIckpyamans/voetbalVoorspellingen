@@ -208,7 +208,7 @@ function TeamDeepStats({
 }
 
 function buildRecentH2HForm(h2h: any, currentHomeId?: string, currentAwayId?: string) {
-  const recent = (h2h?.results || []).slice(-5);
+  const recent = (h2h?.results || []).slice(-5).reverse();
   return recent.map((result: any, index: number) => {
     let label = "D";
     if (result?.winnerId && currentHomeId && String(result.winnerId) === String(currentHomeId)) label = "W";
@@ -222,6 +222,13 @@ function buildRecentH2HForm(h2h: any, currentHomeId?: string, currentAwayId?: st
       away: result?.away || "",
     };
   });
+}
+
+function getH2HSourceLabel(status?: string) {
+  if (status === "all-competitions") return "laatste onderlinge duels uit alle competities";
+  if (status === "loaded") return "laatste onderlinge duels in brondata";
+  if (status === "fallback") return "aangevuld met vorige duel-fallback";
+  return "geen recente onderlinge brondata";
 }
 
 function ExpandableInsights({ match, prediction }: { match: any; prediction: any }) {
@@ -827,6 +834,7 @@ const MatchCard: React.FC<MatchCardProps> = ({ match, prediction, onFavoriteChan
           <div className="grid grid-cols-2 gap-2">
             <div className="rounded-lg p-2 bg-slate-900/60">
               <div className="text-[7px] font-black uppercase text-slate-400 mb-1">Laatste 5 onderling</div>
+              <div className="text-[8px] text-slate-500 mb-1">{getH2HSourceLabel(h2h?.status)}</div>
               <div className="flex gap-1">
                 {buildRecentH2HForm(h2h, match.homeTeamId, match.awayTeamId).length ? (
                   buildRecentH2HForm(h2h, match.homeTeamId, match.awayTeamId).map((item) => (
