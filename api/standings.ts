@@ -1,4 +1,4 @@
-import { fetchServerStore } from "./_dataSource";
+import { fetchServerStore } from "./_dataSource.js";
 
 function buildCupSheetsFromMatches(store: any) {
   const sheets: Record<string, any> = {};
@@ -67,3 +67,4 @@ export default async function handler(req: any, res: any) {
     });
   }
 }
+

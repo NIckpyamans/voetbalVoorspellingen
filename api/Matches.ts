@@ -1,4 +1,4 @@
-import { fetchServerStore } from "./_dataSource";
+import { fetchServerStore } from "./_dataSource.js";
 
 function attachReview(match: any, store: any) {
   return {
@@ -83,3 +83,4 @@ export default async function handler(req: any, res: any) {
     });
   }
 }
+

@@ -1,4 +1,4 @@
-import { fetchServerStore } from "./_dataSource";
+import { fetchServerStore } from "./_dataSource.js";
 
 function impliedOdds(prob: number | undefined) {
   const p = Number(prob || 0);
@@ -95,3 +95,4 @@ export default async function handler(req: any, res: any) {
     return res.status(500).json({ error: err?.message || "unknown" });
   }
 }
+
