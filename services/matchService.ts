@@ -215,6 +215,9 @@ function mapRawMatch(m: any): Match {
     // MODEL EDGES
     // ========================================
     ...(m.modelEdges ? { modelEdges: m.modelEdges } : {}),
+    ...(m.learningSummary ? { learningSummary: m.learningSummary } : {}),
+    ...(m.marketCalibration ? { marketCalibration: m.marketCalibration } : {}),
+    ...(m.review ? { review: m.review } : {}),
     
     // ========================================
     // MACHINE LEARNING
@@ -321,6 +324,9 @@ export async function fetchMatchesAndPredictions(
         ...(rawMatch.homeTeamProfile ? { homeTeamProfile: rawMatch.homeTeamProfile } : {}),
         ...(rawMatch.awayTeamProfile ? { awayTeamProfile: rawMatch.awayTeamProfile } : {}),
         ...(rawMatch.featureVector ? { featureVector: rawMatch.featureVector } : {}),
+        ...(rawMatch.learningSummary ? { learningSummary: rawMatch.learningSummary } : {}),
+        ...(rawMatch.marketCalibration ? { marketCalibration: rawMatch.marketCalibration } : {}),
+        ...(rawMatch.review ? { review: rawMatch.review } : {}),
         ...(rawMatch.ensembleMeta ? { ensembleMeta: rawMatch.ensembleMeta } : {}),
         ...(rawMatch.homeForm ? { homeForm: rawMatch.homeForm } : {}),
         ...(rawMatch.awayForm ? { awayForm: rawMatch.awayForm } : {}),
@@ -353,3 +359,4 @@ export async function fetchMatchesAndPredictions(
 // ============================================================================
 
 export { isLiveMatch };
+

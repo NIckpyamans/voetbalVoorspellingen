@@ -389,7 +389,24 @@ export interface Match {
       homeBias?: number;
       awayBias?: number;
     };
-    marketCalibration?: {
+    review?: {
+    matchId: string;
+    predictedScore: string;
+    actualScore: string;
+    predictedOutcome: string;
+    actualOutcome: string;
+    confidence: number;
+    outcomeHit: boolean;
+    exactHit: boolean;
+    totalGoalError: number;
+    totalGoalBias: number;
+    homeGoalBias: number;
+    awayGoalBias: number;
+    failureSignals: string[];
+    createdAt: number;
+  };
+
+  marketCalibration?: {
       summary?: string;
       source?: string;
       homeImpliedPpg?: number | null;
@@ -398,6 +415,23 @@ export interface Match {
       homeGames?: number;
       awayGames?: number;
     };
+  };
+
+  review?: {
+    matchId: string;
+    predictedScore: string;
+    actualScore: string;
+    predictedOutcome: string;
+    actualOutcome: string;
+    confidence: number;
+    outcomeHit: boolean;
+    exactHit: boolean;
+    totalGoalError: number;
+    totalGoalBias: number;
+    homeGoalBias: number;
+    awayGoalBias: number;
+    failureSignals: string[];
+    createdAt: number;
   };
 
   marketCalibration?: {
@@ -536,6 +570,7 @@ export interface Prediction {
   ensembleMeta?: any;
   marketCalibration?: any;
   learningSummary?: any;
+  review?: any;
 }
 
 // ============================================================================
@@ -639,3 +674,4 @@ export interface MatchAnalysis {
   keyFactors?: string[];
   timestamp?: number;
 }
+

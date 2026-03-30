@@ -5,6 +5,10 @@ const SettingsView: React.FC = () => {
   const [teamCount, setTeamCount] = useState(0);
   const [lastWorker, setLastWorker] = useState<string | null>(null);
   const [analysisEngine, setAnalysisEngine] = useState<"checking" | "ollama" | "template">("checking");
+  const [workerVersion, setWorkerVersion] = useState<string>("onbekend");
+  const [sourceBranch, setSourceBranch] = useState<string>("onbekend");
+  const [reviewCount, setReviewCount] = useState(0);
+  const [teamLearningCount, setTeamLearningCount] = useState(0);
 
   useEffect(() => {
     try {
@@ -18,6 +22,10 @@ const SettingsView: React.FC = () => {
       .then((response) => response.json())
       .then((data) => {
         if (data.lastRun) setLastWorker(new Date(data.lastRun).toLocaleString("nl-NL"));
+        if (data.workerVersion) setWorkerVersion(data.workerVersion);
+        if (data.sourceBranch) setSourceBranch(data.sourceBranch);
+        if (data.reviewCount != null) setReviewCount(Number(data.reviewCount || 0));
+        if (data.teamLearningCount != null) setTeamLearningCount(Number(data.teamLearningCount || 0));
       })
       .catch(() => {});
 
@@ -52,7 +60,7 @@ const SettingsView: React.FC = () => {
       <div>
         <h2 className="text-2xl font-black text-white uppercase tracking-tight">Instellingen</h2>
         <p className="text-slate-500 text-xs mt-0.5">
-          Modelstatus, lokale opslag en controle van de huidige AI-opzet.
+          Modelstatus, workerdata, reviewlaag en controle van de huidige AI-opzet.
         </p>
       </div>
 
@@ -62,7 +70,11 @@ const SettingsView: React.FC = () => {
           { label: "Opgeslagen voorspellingen", value: historyCount.toLocaleString() },
           { label: "Teams in lokale leerstore", value: teamCount.toLocaleString() },
           { label: "Laatste worker run", value: lastWorker || "Onbekend" },
-          { label: "Analyse-engine", value: analysisEngine === "checking" ? "Controleren..." : analysisEngine === "ollama" ? "Ollama lokaal" : "Template fallback" },
+          { label: "Worker versie", value: workerVersion },
+          { label: "Databron branch", value: sourceBranch },
+          { label: "Reviews opgeslagen", value: reviewCount.toLocaleString() },
+          { label: "Teams met leerdata", value: teamLearningCount.toLocaleString() },
+          { label: "Analyse-engine", value: analysisEngine === "checking" ? "Controleren..." : analysisEngine === "ollama" ? "Ollama lokaal" : "Template/review fallback" },
         ].map(({ label, value }) => (
           <div key={label} className="flex items-center justify-between py-2 border-b border-white/5 last:border-0">
             <span className="text-[11px] text-slate-400">{label}</span>
@@ -77,22 +89,22 @@ const SettingsView: React.FC = () => {
           {[
             {
               name: "Dixon-Coles + Poisson",
-              desc: "De hoofdmotor voor kansen en scorematrix. Dit is inhoudelijk sterker voor wedstrijdkansen dan een chatmodel alleen.",
+              desc: "De hoofdmotor voor kansen en scorematrix. Dit blijft de basis voor wedstrijdkansen.",
               tone: "green",
             },
             {
               name: "Heuristische ensemblelaag",
-              desc: "Voegt ClubElo, rust, splitvorm, lineups, keeperverschil, corners, kaarten en reislast toe als extra correctielaag.",
+              desc: "Voegt ClubElo, rust, splitvorm, lineups, keeperverschil, corners, kaarten en reislast toe als correctielaag.",
               tone: "blue",
             },
             {
-              name: "Lokale AI-analyse",
-              desc: "Ollama schrijft de Nederlandse analyse als die lokaal beschikbaar is. Anders valt de app automatisch terug op een gratis templatesamenvatting.",
+              name: "Post-match reviewlaag",
+              desc: "Verwerkt voorspelde uitslag versus echte uitslag, failure-signals en teambias om volgende voorspellingen scherper te maken.",
               tone: "purple",
             },
             {
               name: "Trainingsvoorbereiding",
-              desc: "De worker schrijft featuredata weg voor een volgende stap met CatBoost of LightGBM. Dat is de beste route als je de voorspellingen nog stabieler wilt maken.",
+              desc: "De worker schrijft featuredata en reviews weg voor CatBoost of LightGBM als volgende stap.",
               tone: "amber",
             },
           ].map((item) => (
@@ -120,20 +132,11 @@ const SettingsView: React.FC = () => {
       </div>
 
       <div className="glass-card rounded-2xl border border-white/5 p-5">
-        <div className="text-[10px] font-black text-slate-400 uppercase mb-3">Aanbevolen volgende stap</div>
+        <div className="text-[10px] font-black text-slate-400 uppercase mb-3">AI reviewstatus</div>
         <div className="space-y-2 text-[11px] text-slate-300 leading-relaxed">
-          <div>
-            <span className="font-black text-white">1. Workerdata verder benutten:</span> corners, keeper-rating, lineup continuity,
-            kaartenritme en reislast zitten nu in de features en kunnen direct in het model meewegen.
-          </div>
-          <div>
-            <span className="font-black text-white">2. Later een ML-laag toevoegen:</span> train eerst op de `training-snapshot`
-            met CatBoost. Houd de huidige engine als basis en gebruik ML als extra correctielaag.
-          </div>
-          <div>
-            <span className="font-black text-white">3. LLM alleen voor uitleg:</span> de tekst-AI is handig voor analyses, maar
-            niet als hoofdvoorspeller.
-          </div>
+          <div><span className="font-black text-white">Outcome learning:</span> teams bouwen nu biasdata op uit echte uitslagen.</div>
+          <div><span className="font-black text-white">Failure-signals:</span> open lineups, weer, H2H en rustverschil worden achteraf gelogd als een voorspelling fout zat.</div>
+          <div><span className="font-black text-white">UI-review:</span> gespeelde wedstrijden tonen nu modelreview met voorspeld versus werkelijk resultaat.</div>
         </div>
       </div>
 

@@ -1,6 +1,4 @@
-const GITHUB_RAW =
-  process.env.DATA_URL ||
-  "https://raw.githubusercontent.com/NIckpyamans/voetbalVoorspellingen/main/server_data.json";
+import { fetchServerStore } from "./_dataSource";
 
 function buildCupSheetsFromMatches(store: any) {
   const sheets: Record<string, any> = {};
@@ -44,20 +42,7 @@ export default async function handler(req: any, res: any) {
   res.setHeader("Cache-Control", "s-maxage=180, stale-while-revalidate=60");
 
   try {
-    const response = await fetch(`${GITHUB_RAW}?t=${Date.now()}`, {
-      headers: { "Cache-Control": "no-cache" },
-    });
-
-    if (!response.ok) {
-      return res.status(200).json({
-        standings: {},
-        knockoutOverview: {},
-        cupSheets: {},
-        error: `GitHub ${response.status}`,
-      });
-    }
-
-    const store = await response.json();
+    const { store, branch } = await fetchServerStore();
     const cupSheets =
       Object.keys(store.cupSheets || {}).length > 0
         ? store.cupSheets
@@ -69,6 +54,9 @@ export default async function handler(req: any, res: any) {
       cupSheets,
       lastRun: store.lastRun || null,
       workerVersion: store.workerVersion || "unknown",
+      reviewCount: Object.keys(store.postMatchReviews || {}).length,
+      teamLearningCount: Object.keys(store.teamLearning || {}).length,
+      sourceBranch: branch,
     });
   } catch (err: any) {
     return res.status(200).json({

@@ -1,6 +1,7 @@
 import React, { useEffect, useMemo, useRef, useState } from "react";
 import { Match } from "../types";
 import { FavoriteButton } from "./FavoriteTeams";
+import PostMatchReview from "./PostMatchReview";
 
 interface MatchCardProps {
   match: Match;
@@ -645,6 +646,7 @@ const MatchCard: React.FC<MatchCardProps> = ({ match, prediction, onFavoriteChan
     .slice(0, 6);
   const confidenceBase = prediction.confidence ?? Math.max(prediction.homeProb || 0, prediction.drawProb || 0, prediction.awayProb || 0);
   const confidencePct = Math.max(0, Math.min(99, Math.round((confidenceBase || 0) * 100)));
+  const review = match.review || prediction.review || null;
   const modelLabel = (prediction.ensembleMeta || match.ensembleMeta)?.active ? "Ensemble" : "Basis";
   const timingLabel = isLive
     ? liveMinute && liveMinute !== "LIVE"
@@ -783,6 +785,7 @@ const MatchCard: React.FC<MatchCardProps> = ({ match, prediction, onFavoriteChan
 
       {tab === "analyse" && (
         <div className="space-y-2">
+          {review && <PostMatchReview review={review} prediction={prediction} />}
           <div className="bg-gradient-to-br from-blue-950/60 to-purple-950/40 border border-blue-500/20 rounded-xl p-2.5 min-h-[64px]">
             <div className="text-[7px] font-black text-blue-400 uppercase mb-1.5">AI Analyse</div>
             {aiAnalysis ? (
@@ -942,3 +945,4 @@ const MatchCard: React.FC<MatchCardProps> = ({ match, prediction, onFavoriteChan
 };
 
 export default MatchCard;
+
