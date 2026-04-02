@@ -1144,6 +1144,7 @@ function buildMarketCalibration(input) {
       strength: 0,
       closingLean: "neutral",
       closingCoverage: 0,
+      bookmakerSignals: [],
     };
   }
 
@@ -1158,11 +1159,61 @@ function buildMarketCalibration(input) {
   const sampleGames = Number(home?.homeGames || 0) + Number(away?.awayGames || 0);
   const sampleStrength = Math.min(sampleGames / 26, 1);
   const closingCoverage = Number(leagueMeta?.closingCoverage || 0);
-  const strength = Number((sampleStrength * 0.62 + Math.min(closingCoverage, 1) * 0.38).toFixed(2));
-  const closingLean = diff >= 0.35 ? "home" : diff <= -0.35 ? "away" : "neutral";
+  const bookmakerSignals = BOOKMAKER_DEFS.map((bookmaker) => {
+    const homeBook = home?.bookmakers?.[bookmaker.key] || null;
+    const awayBook = away?.bookmakers?.[bookmaker.key] || null;
+    if (!homeBook && !awayBook) return null;
+
+    const bookDiff = Number(
+      (
+        Number(homeBook?.homeOverperformance || 0) -
+        Number(awayBook?.awayOverperformance || 0)
+      ).toFixed(2)
+    );
+    const bookGames = Number(homeBook?.homeGames || 0) + Number(awayBook?.awayGames || 0);
+    const bookCoverage = Number(
+      (
+        (Number(homeBook?.closingCoverage || closingCoverage) +
+          Number(awayBook?.closingCoverage || closingCoverage)) /
+        2
+      ).toFixed(2)
+    );
+    const bookStrength = Number((Math.min(bookGames / 18, 1) * 0.58 + Math.min(bookCoverage, 1) * 0.42).toFixed(2));
+    const bookLean = bookDiff >= 0.3 ? "home" : bookDiff <= -0.3 ? "away" : "neutral";
+    return {
+      key: bookmaker.key,
+      bookmaker: bookmaker.label,
+      diff: bookDiff,
+      strength: bookStrength,
+      closingCoverage: bookCoverage,
+      lean: bookLean,
+    };
+  }).filter(Boolean);
+
+  const weightedBookDiff = bookmakerSignals.length
+    ? bookmakerSignals.reduce((sum, item) => sum + Number(item.diff || 0) * Math.max(Number(item.strength || 0), 0.1), 0) /
+      bookmakerSignals.reduce((sum, item) => sum + Math.max(Number(item.strength || 0), 0.1), 0)
+    : diff;
+  const bookmakerAgreement =
+    bookmakerSignals.length > 0
+      ? Number(
+          (
+            bookmakerSignals.filter((item) => item.lean === "home" || item.lean === "away").length /
+            bookmakerSignals.length
+          ).toFixed(2)
+        )
+      : 0;
+  const strength = Number(
+    (
+      sampleStrength * 0.42 +
+      Math.min(closingCoverage, 1) * 0.23 +
+      (bookmakerSignals.length ? bookmakerSignals.reduce((sum, item) => sum + Number(item.strength || 0), 0) / bookmakerSignals.length : 0) * 0.35
+    ).toFixed(2)
+  );
+  const closingLean = weightedBookDiff >= 0.35 ? "home" : weightedBookDiff <= -0.35 ? "away" : "neutral";
 
   return {
-    summary: `closing-profiel ${input.homeTeamProfile?.teamName || "thuis"} ${homeImplied.toFixed(2)} PPG vs ${input.awayTeamProfile?.teamName || "uit"} ${awayImplied.toFixed(2)} PPG, closing dekking ${Math.round(closingCoverage * 100)}%`,
+    summary: `closing-profiel ${input.homeTeamProfile?.teamName || "thuis"} ${homeImplied.toFixed(2)} PPG vs ${input.awayTeamProfile?.teamName || "uit"} ${awayImplied.toFixed(2)} PPG, dekking ${Math.round(closingCoverage * 100)}%, bookmaker-consensus ${Math.round(bookmakerAgreement * 100)}%`,
     source: "football-data.co.uk",
     homeImpliedPpg: homeImplied,
     awayImpliedPpg: awayImplied,
@@ -1172,6 +1223,8 @@ function buildMarketCalibration(input) {
     strength,
     closingLean,
     closingCoverage,
+    bookmakerSignals,
+    bookmakerAgreement,
   };
 }
 
@@ -1303,6 +1356,57 @@ function extractRefereePenaltyCount(row) {
   return null;
 }
 
+const BOOKMAKER_DEFS = [
+  {
+    key: "PS",
+    label: "Pinnacle",
+    closing: ["PSCH", "PSCD", "PSCA"],
+    opening: ["PSH", "PSD", "PSA"],
+  },
+  {
+    key: "B365",
+    label: "Bet365",
+    closing: ["B365CH", "B365CD", "B365CA"],
+    opening: ["B365H", "B365D", "B365A"],
+  },
+  {
+    key: "Avg",
+    label: "Average",
+    closing: ["AvgCH", "AvgCD", "AvgCA"],
+    opening: ["AvgH", "AvgD", "AvgA"],
+  },
+  {
+    key: "Max",
+    label: "Max",
+    closing: ["MaxCH", "MaxCD", "MaxCA"],
+    opening: ["MaxH", "MaxD", "MaxA"],
+  },
+];
+
+function buildRefereeAliasVariants(refereeName) {
+  const normalized = normalizeName(refereeName);
+  if (!normalized) return [];
+
+  const parts = normalized.split(" ").filter(Boolean);
+  const aliases = new Set([normalized]);
+  const surname = parts.at(-1) || normalized;
+  aliases.add(surname);
+
+  if (parts.length >= 2) {
+    aliases.add(`${parts[0]} ${surname}`);
+    aliases.add(`${parts[0][0]} ${surname}`);
+    aliases.add(`${parts[0][0]}.${surname}`);
+    aliases.add(parts.slice(-2).join(" "));
+  }
+
+  if (parts.length >= 3) {
+    aliases.add(`${parts[0]} ${parts[1]} ${surname}`);
+    aliases.add(`${parts[0][0]} ${parts[1][0]} ${surname}`);
+  }
+
+  return [...aliases].filter(Boolean);
+}
+
 function outcomeFromGoals(homeGoals, awayGoals) {
   if (!Number.isFinite(homeGoals) || !Number.isFinite(awayGoals)) return null;
   if (homeGoals > awayGoals) return "H";
@@ -1325,6 +1429,7 @@ function normalizeProbabilities(home, draw, away) {
 function buildMarketProfiles(rows) {
   const teams = {};
   const referees = {};
+  const refereeAliases = {};
   let closingRows = 0;
   let fallbackRows = 0;
   let validRows = 0;
@@ -1367,6 +1472,7 @@ function buildMarketProfiles(rows) {
         awayActualPoints: 0,
         homeImpliedPoints: 0,
         awayImpliedPoints: 0,
+        bookmakers: {},
       };
     }
     if (!teams[awayKey]) {
@@ -1379,6 +1485,7 @@ function buildMarketProfiles(rows) {
         awayActualPoints: 0,
         homeImpliedPoints: 0,
         awayImpliedPoints: 0,
+        bookmakers: {},
       };
     }
 
@@ -1391,6 +1498,58 @@ function buildMarketProfiles(rows) {
     teams[awayKey].totalGames += 1;
     teams[awayKey].awayActualPoints += actualAwayPoints;
     teams[awayKey].awayImpliedPoints += impliedAwayPoints;
+
+    for (const bookmaker of BOOKMAKER_DEFS) {
+      const homeBookMeta = pickOddsWithMeta(row, [bookmaker.closing[0]], [bookmaker.opening[0]]);
+      const drawBookMeta = pickOddsWithMeta(row, [bookmaker.closing[1]], [bookmaker.opening[1]]);
+      const awayBookMeta = pickOddsWithMeta(row, [bookmaker.closing[2]], [bookmaker.opening[2]]);
+      if (!homeBookMeta.value || !drawBookMeta.value || !awayBookMeta.value) continue;
+
+      const usedBookClosing = [homeBookMeta, drawBookMeta, awayBookMeta].filter((item) => item.closing).length >= 2;
+      const bookmakerImplied = normalizeProbabilities(1 / homeBookMeta.value, 1 / drawBookMeta.value, 1 / awayBookMeta.value);
+
+      if (!teams[homeKey].bookmakers[bookmaker.key]) {
+        teams[homeKey].bookmakers[bookmaker.key] = {
+          bookmaker: bookmaker.label,
+          homeGames: 0,
+          awayGames: 0,
+          homeActualPoints: 0,
+          awayActualPoints: 0,
+          homeImpliedPoints: 0,
+          awayImpliedPoints: 0,
+          closingRows: 0,
+          fallbackRows: 0,
+        };
+      }
+      if (!teams[awayKey].bookmakers[bookmaker.key]) {
+        teams[awayKey].bookmakers[bookmaker.key] = {
+          bookmaker: bookmaker.label,
+          homeGames: 0,
+          awayGames: 0,
+          homeActualPoints: 0,
+          awayActualPoints: 0,
+          homeImpliedPoints: 0,
+          awayImpliedPoints: 0,
+          closingRows: 0,
+          fallbackRows: 0,
+        };
+      }
+
+      teams[homeKey].bookmakers[bookmaker.key].homeGames += 1;
+      teams[homeKey].bookmakers[bookmaker.key].homeActualPoints += actualHomePoints;
+      teams[homeKey].bookmakers[bookmaker.key].homeImpliedPoints += bookmakerImplied.home * 3 + bookmakerImplied.draw;
+      teams[awayKey].bookmakers[bookmaker.key].awayGames += 1;
+      teams[awayKey].bookmakers[bookmaker.key].awayActualPoints += actualAwayPoints;
+      teams[awayKey].bookmakers[bookmaker.key].awayImpliedPoints += bookmakerImplied.away * 3 + bookmakerImplied.draw;
+
+      if (usedBookClosing) {
+        teams[homeKey].bookmakers[bookmaker.key].closingRows += 1;
+        teams[awayKey].bookmakers[bookmaker.key].closingRows += 1;
+      } else {
+        teams[homeKey].bookmakers[bookmaker.key].fallbackRows += 1;
+        teams[awayKey].bookmakers[bookmaker.key].fallbackRows += 1;
+      }
+    }
 
     const refereeName = String(row.Referee || row.referee || "").trim();
     if (refereeName) {
@@ -1438,6 +1597,30 @@ function buildMarketProfiles(rows) {
       awayImpliedPpg: Number(awayImpliedPpg.toFixed(2)),
       homeOverperformance: Number((homeActualPpg - homeImpliedPpg).toFixed(2)),
       awayOverperformance: Number((awayActualPpg - awayImpliedPpg).toFixed(2)),
+      bookmakers: Object.fromEntries(
+        Object.entries(value.bookmakers || {}).map(([bookKey, bookValue]) => {
+          const bookHomeActualPpg = bookValue.homeGames ? bookValue.homeActualPoints / bookValue.homeGames : 0;
+          const bookAwayActualPpg = bookValue.awayGames ? bookValue.awayActualPoints / bookValue.awayGames : 0;
+          const bookHomeImpliedPpg = bookValue.homeGames ? bookValue.homeImpliedPoints / bookValue.homeGames : 0;
+          const bookAwayImpliedPpg = bookValue.awayGames ? bookValue.awayImpliedPoints / bookValue.awayGames : 0;
+          const totalBookRows = Number(bookValue.closingRows || 0) + Number(bookValue.fallbackRows || 0);
+          return [
+            bookKey,
+            {
+              bookmaker: bookValue.bookmaker,
+              homeGames: Number(bookValue.homeGames || 0),
+              awayGames: Number(bookValue.awayGames || 0),
+              homeActualPpg: Number(bookHomeActualPpg.toFixed(2)),
+              awayActualPpg: Number(bookAwayActualPpg.toFixed(2)),
+              homeImpliedPpg: Number(bookHomeImpliedPpg.toFixed(2)),
+              awayImpliedPpg: Number(bookAwayImpliedPpg.toFixed(2)),
+              homeOverperformance: Number((bookHomeActualPpg - bookHomeImpliedPpg).toFixed(2)),
+              awayOverperformance: Number((bookAwayActualPpg - bookAwayImpliedPpg).toFixed(2)),
+              closingCoverage: totalBookRows ? Number((Number(bookValue.closingRows || 0) / totalBookRows).toFixed(2)) : 0,
+            },
+          ];
+        })
+      ),
     };
   }
 
@@ -1456,8 +1639,12 @@ function buildMarketProfiles(rows) {
       avgCards,
       redRate,
       penaltyRate,
+      aliases: buildRefereeAliasVariants(value.refereeName),
       summary: `${value.refereeName}: ${avgCards} kaarten gem. over ${value.matches} duels`,
     };
+    for (const alias of buildRefereeAliasVariants(value.refereeName)) {
+      if (!refereeAliases[alias]) refereeAliases[alias] = key;
+    }
   }
 
   return {
@@ -1471,6 +1658,7 @@ function buildMarketProfiles(rows) {
     },
     teams: formattedTeams,
     referees: formattedReferees,
+    refereeAliases,
   };
 }
 
@@ -1502,17 +1690,31 @@ function lookupMarketTeamProfile(leagueMarketProfile, teamName) {
 function lookupHistoricalRefereeProfile(leagueMarketProfile, refereeName) {
   if (!refereeName) return null;
   const referees = leagueMarketProfile?.referees || {};
+  const aliasMap = leagueMarketProfile?.refereeAliases || {};
   const normalizedRef = normalizeName(refereeName);
+  const aliasHit = aliasMap[normalizedRef];
+  if (aliasHit && referees[aliasHit]) return referees[aliasHit];
   const direct = referees[normalizedRef];
   if (direct) return direct;
+  const aliases = buildRefereeAliasVariants(refereeName);
+  for (const alias of aliases) {
+    const aliasKey = aliasMap[alias];
+    if (aliasKey && referees[aliasKey]) return referees[aliasKey];
+  }
   const surname = normalizedRef.split(" ").filter(Boolean).slice(-1)[0] || normalizedRef;
   return (
     Object.values(referees).find((entry) => {
       const candidate = normalizeName(entry?.refereeName || "");
       if (candidate === normalizedRef) return true;
       if (!surname) return false;
+      const candidateAliases = Array.isArray(entry?.aliases) ? entry.aliases : buildRefereeAliasVariants(entry?.refereeName || "");
       const candidateSurname = candidate.split(" ").filter(Boolean).slice(-1)[0] || candidate;
-      return candidate.includes(normalizedRef) || normalizedRef.includes(candidate) || candidateSurname === surname;
+      return (
+        candidate.includes(normalizedRef) ||
+        normalizedRef.includes(candidate) ||
+        candidateSurname === surname ||
+        candidateAliases.some((alias) => aliases.includes(alias))
+      );
     }) || null
   );
 }
@@ -2118,16 +2320,26 @@ function getReliabilityBucket(input) {
       league.includes("international") ||
       league.includes("world cup") ||
       league.includes("championship"));
-
-  if (
-    input?.aggregate?.active ||
+  const isQualification =
+    isInternational &&
+    (league.includes("qualification") || round.includes("qualification") || summary.includes("qualification"));
+  const isFriendly =
+    isInternational && (league.includes("friendly") || league.includes("international friendly") || summary.includes("friendly"));
+  const isTwoLegKnockout =
+    !!input?.aggregate?.active ||
+    summary.includes("tweeluik") ||
+    summary.includes("two-leg") ||
+    summary.includes("aggregate");
+  const isCupRound =
     leagueType === "cup" ||
     summary.includes("knock") ||
     summary.includes("play-off") ||
-    /final|semi|quarter|round of|achtste|kwart|halve/.test(round)
-  ) {
-    return "knock-out";
-  }
+    /final|semi|quarter|round of|achtste|kwart|halve/.test(round);
+
+  if (isTwoLegKnockout) return "two-leg-knockout";
+  if (isQualification) return "qualification";
+  if (isFriendly) return "friendly";
+  if (isCupRound) return "cup";
   if (isInternational) return "interland";
   return "league";
 }
@@ -2815,6 +3027,7 @@ function predict(input) {
   const leagueReliability = buildLeagueReliabilityEdge(input);
   const phaseReliability = buildPhaseReliabilityEdge(input);
   const refereeProfile = input.refereeProfile || null;
+  const bookmakerSignals = Array.isArray(marketCalibration.bookmakerSignals) ? marketCalibration.bookmakerSignals : [];
 
   if (learningEdge.combinedReliability) {
     const learningBiasShift = clamp((Number(learningEdge.homeBias || 0) - Number(learningEdge.awayBias || 0)) * 0.045, -0.08, 0.08);
@@ -2830,6 +3043,18 @@ function predict(input) {
     );
     homeXG *= clamp(1 + marketShift, 0.95, 1.06);
     awayXG *= clamp(1 - marketShift, 0.95, 1.06);
+  }
+  if (bookmakerSignals.length) {
+    const weightedBookDiff =
+      bookmakerSignals.reduce((sum, item) => sum + Number(item.diff || 0) * Math.max(Number(item.strength || 0), 0.1), 0) /
+      bookmakerSignals.reduce((sum, item) => sum + Math.max(Number(item.strength || 0), 0.1), 0);
+    const bookmakerShift = clamp(
+      weightedBookDiff * (Number(marketCalibration.bookmakerAgreement || 0) >= 0.7 ? 0.032 : 0.018),
+      -0.06,
+      0.06
+    );
+    homeXG *= clamp(1 + bookmakerShift, 0.955, 1.07);
+    awayXG *= clamp(1 - bookmakerShift, 0.955, 1.07);
   }
 
   if (leagueReliability.reliabilityScore != null && leagueReliability.reliabilityScore < 0.45) {
@@ -2925,10 +3150,28 @@ function predict(input) {
       : phaseReliability.reliabilityScore != null && phaseReliability.reliabilityScore < 0.52
         ? 0.015
         : 0;
+  const bookmakerPenalty =
+    bookmakerSignals.length === 0
+      ? 0.015
+      : Number(marketCalibration.bookmakerAgreement || 0) < 0.45
+        ? 0.018
+        : Number(marketCalibration.bookmakerAgreement || 0) < 0.62
+          ? 0.008
+          : 0;
+  const closingCoveragePenalty =
+    Number(marketCalibration.closingCoverage || 0) < 0.2
+      ? 0.012
+      : Number(marketCalibration.closingCoverage || 0) < 0.4
+        ? 0.005
+        : 0;
   const fragilityPenalty =
     (Number(learningEdge.homeFragility || 0) + Number(learningEdge.awayFragility || 0) >= 4 ? 0.02 : 0) +
     (!input.lineupSummary?.confirmed ? 0.015 : 0);
-  const adjustedConfidence = clamp(baseConfidence - reliabilityPenalty - fragilityPenalty - leaguePenalty - phasePenalty, 0.24, 0.93);
+  const adjustedConfidence = clamp(
+    baseConfidence - reliabilityPenalty - fragilityPenalty - leaguePenalty - phasePenalty - bookmakerPenalty - closingCoveragePenalty,
+    0.24,
+    0.93
+  );
   const riskProfile = buildRiskProfile({
     confidence: adjustedConfidence,
     agreement: modelAgreement,
@@ -3082,7 +3325,7 @@ function defaultStore() {
     leagueReliability: {},
     phaseReliability: {},
     lastRun: null,
-    workerVersion: "v8-ref-closing-phase",
+    workerVersion: "v9-ref-bookmaker-phase",
   };
 }
 
@@ -3616,7 +3859,7 @@ async function main() {
   compactStore(store, today, now);
   rebuildReviewsAndLearning(store);
   store.lastRun = Date.now();
-  store.workerVersion = "v8-ref-closing-phase";
+  store.workerVersion = "v9-ref-bookmaker-phase";
   fs.mkdirSync(path.dirname(TRAINING_SNAPSHOT_FILE), { recursive: true });
   fs.writeFileSync(TRAINING_SNAPSHOT_FILE, JSON.stringify(buildTrainingSnapshot(store)));
   fs.writeFileSync(DATA_FILE, JSON.stringify(store));

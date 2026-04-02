@@ -249,6 +249,7 @@ function ExpandableInsights({ match, prediction }: { match: any; prediction: any
   const competitionReliability = prediction.modelEdges?.leagueReliability || match.competitionReliability;
   const phaseReliability = prediction.modelEdges?.phaseReliability || match.phaseReliability;
   const refereeProfile = prediction.modelEdges?.refereeProfile || match.refereeProfile;
+  const bookmakerSignals = Array.isArray(marketCalibration?.bookmakerSignals) ? marketCalibration.bookmakerSignals.slice(0, 3) : [];
 
   const riskTone =
     riskProfile === "laag"
@@ -400,7 +401,9 @@ function ExpandableInsights({ match, prediction }: { match: any; prediction: any
               <div>Overperf diff: <span className="font-black text-white">{marketCalibration?.overperformanceDiff ?? "-"}</span></div>
               <div>Closing-sterkte: <span className="font-black text-white">{marketCalibration?.strength != null ? `${Math.round(marketCalibration.strength * 100)}%` : "-"}</span></div>
               <div>Closing-dekking: <span className="font-black text-white">{marketCalibration?.closingCoverage != null ? `${Math.round(marketCalibration.closingCoverage * 100)}%` : "-"}</span></div>
+              <div>Bookmaker-consensus: <span className="font-black text-white">{marketCalibration?.bookmakerAgreement != null ? `${Math.round(marketCalibration.bookmakerAgreement * 100)}%` : "-"}</span></div>
               <div>Closing lean: <span className="font-black text-white">{marketCalibration?.closingLean || "-"}</span></div>
+              <div>Bookies: <span className="font-black text-white">{bookmakerSignals.length ? bookmakerSignals.map((item) => `${item.bookmaker}:${item.lean}`).join(" / ") : "-"}</span></div>
             </div>
           </div>
         </div>

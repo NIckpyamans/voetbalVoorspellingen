@@ -422,6 +422,15 @@ export interface Match {
       strength?: number;
       closingLean?: string;
       closingCoverage?: number;
+      bookmakerAgreement?: number;
+      bookmakerSignals?: Array<{
+        key?: string;
+        bookmaker?: string;
+        diff?: number;
+        strength?: number;
+        closingCoverage?: number;
+        lean?: string;
+      }>;
       homeGames?: number;
       awayGames?: number;
     };
@@ -482,6 +491,15 @@ export interface Match {
     strength?: number;
     closingLean?: string;
     closingCoverage?: number;
+    bookmakerAgreement?: number;
+    bookmakerSignals?: Array<{
+      key?: string;
+      bookmaker?: string;
+      diff?: number;
+      strength?: number;
+      closingCoverage?: number;
+      lean?: string;
+    }>;
     homeGames?: number;
     awayGames?: number;
   };

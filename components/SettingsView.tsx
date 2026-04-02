@@ -108,7 +108,7 @@ const SettingsView: React.FC = () => {
             },
             {
               name: "Closing-line calibratie",
-              desc: "Historische implied strength en closing-profiel sturen de kansverdeling nu sterker bij, vooral bij interlands en toernooiwedstrijden.",
+              desc: "Historische implied strength, closing-profiel en bookmaker-consensus sturen de kansverdeling nu sterker bij, vooral bij interlands en toernooiwedstrijden.",
               tone: "blue",
             },
             {
@@ -123,13 +123,18 @@ const SettingsView: React.FC = () => {
             },
             {
               name: "Fase-betrouwbaarheid",
-              desc: "Competitie, interland en knock-out krijgen nu ook een aparte fase-score, zodat toernooiwedstrijden anders gewogen worden dan reguliere league-duels.",
+              desc: "League, kwalificatie, vriendschappelijk, cup en two-leg knockout krijgen nu aparte betrouwbaarheidsscores, zodat wedstrijdtypes strakker gescheiden worden.",
               tone: "amber",
             },
             {
               name: "Historische scheidsdata",
-              desc: "Waar beschikbaar komt kaartenritme en penalty-profiel nu uit historische referee-rows uit football-data.co.uk in plaats van alleen teamschatting.",
+              desc: "Waar beschikbaar komt kaartenritme en penalty-profiel nu uit historische referee-rows uit football-data.co.uk, met competitie-specifieke alias-cache voor betere matchrate.",
               tone: "amber",
+            },
+            {
+              name: "AI verbeterlus",
+              desc: "De app leert nu uit reviews en monitor-data, maar schrijft niet blind live code over. De veilige route blijft: voorstellen, controleren en dan pas uitrollen.",
+              tone: "purple",
             },
             {
               name: "Trainingsvoorbereiding",
@@ -182,8 +187,9 @@ const SettingsView: React.FC = () => {
           <div><span className="font-black text-white">Failure-signals:</span> open lineups, weer, H2H en rustverschil worden achteraf gelogd als een voorspelling fout zat.</div>
           <div><span className="font-black text-white">UI-review:</span> gespeelde wedstrijden tonen nu modelreview met voorspeld versus werkelijk resultaat.</div>
           <div><span className="font-black text-white">Competitieprofiel:</span> interlands en clubcompetities krijgen nu een aparte betrouwbaarheidsscore in de kaart.</div>
-          <div><span className="font-black text-white">Faseprofiel:</span> knock-out, interland en league-fases worden nu apart beoordeeld zodat de confidence per wedstrijdtype scherper wordt.</div>
-          <div><span className="font-black text-white">Referee-history:</span> historische kaarten- en penaltydata van scheidsrechters wordt waar mogelijk direct in de heuristiek gebruikt.</div>
+          <div><span className="font-black text-white">Faseprofiel:</span> kwalificatie, friendly, league, cup en two-leg knockout worden nu apart beoordeeld zodat de confidence per wedstrijdtype scherper wordt.</div>
+          <div><span className="font-black text-white">Referee-history:</span> historische kaarten- en penaltydata van scheidsrechters wordt waar mogelijk direct in de heuristiek gebruikt, met competitie-specifieke alias-cache.</div>
+          <div><span className="font-black text-white">Bookmakerlaag:</span> closing-odds worden niet meer alleen samengesteld bekeken, maar ook per bookmaker gewogen in de calibratie.</div>
         </div>
       </div>
 
