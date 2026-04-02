@@ -246,6 +246,8 @@ function ExpandableInsights({ match, prediction }: { match: any; prediction: any
   const keeperEdge = prediction.modelEdges?.keeperEdge;
   const learningEdge = prediction.modelEdges?.learningEdge || match.learningSummary;
   const marketCalibration = prediction.modelEdges?.marketCalibration || match.marketCalibration;
+  const competitionReliability = prediction.modelEdges?.leagueReliability || match.competitionReliability;
+  const refereeProfile = prediction.modelEdges?.refereeProfile || match.refereeProfile;
 
   const riskTone =
     riskProfile === "laag"
@@ -313,6 +315,7 @@ function ExpandableInsights({ match, prediction }: { match: any; prediction: any
               <div>Continuity: <span className="font-black text-white">{lineupImpact?.homeContinuity ?? "-"} / {lineupImpact?.awayContinuity ?? "-"}</span></div>
               <div>Keeper edge: <span className="font-black text-white">{keeperEdge?.summary || "gelijk"}</span></div>
               <div>Travel edge: <span className="font-black text-white">{travelEdge?.summary || "geen"}</span></div>
+              <div>Scheids: <span className="font-black text-white">{refereeProfile?.summary || "niet gekoppeld"}</span></div>
               <div>Tactische mismatch: <span className="font-black text-white">{prediction.modelEdges?.tacticalMismatch?.summary || "gebalanceerd"}</span></div>
               <div>Form shift: <span className="font-black text-white">{prediction.modelEdges?.formShift?.summary || "stabiel"}</span></div>
             </div>
@@ -384,6 +387,7 @@ function ExpandableInsights({ match, prediction }: { match: any; prediction: any
               <div>Samenvatting: <span className="font-black text-white">{learningEdge?.summary || "nog geen reviewdata"}</span></div>
               <div>Hitrate thuis/uit: <span className="font-black text-white">{learningEdge?.homeOutcomeHitRate != null ? `${Math.round(learningEdge.homeOutcomeHitRate * 100)}%` : "-"} / {learningEdge?.awayOutcomeHitRate != null ? `${Math.round(learningEdge.awayOutcomeHitRate * 100)}%` : "-"}</span></div>
               <div>Bias thuis/uit: <span className="font-black text-white">{learningEdge?.homeBias ?? "-"} / {learningEdge?.awayBias ?? "-"}</span></div>
+              <div>Betrouwbaarheid: <span className="font-black text-white">{learningEdge?.combinedReliability != null ? `${Math.round(learningEdge.combinedReliability * 100)}%` : "-"}</span></div>
             </div>
           </div>
           <div className="rounded-xl border border-rose-500/15 bg-rose-950/20 p-2">
@@ -393,6 +397,8 @@ function ExpandableInsights({ match, prediction }: { match: any; prediction: any
               <div>Samenvatting: <span className="font-black text-white">{marketCalibration?.summary || "geen historische marktdata gekoppeld"}</span></div>
               <div>Implied PPG: <span className="font-black text-white">{marketCalibration?.homeImpliedPpg ?? "-"} / {marketCalibration?.awayImpliedPpg ?? "-"}</span></div>
               <div>Overperf diff: <span className="font-black text-white">{marketCalibration?.overperformanceDiff ?? "-"}</span></div>
+              <div>Closing-sterkte: <span className="font-black text-white">{marketCalibration?.strength != null ? `${Math.round(marketCalibration.strength * 100)}%` : "-"}</span></div>
+              <div>Closing lean: <span className="font-black text-white">{marketCalibration?.closingLean || "-"}</span></div>
             </div>
           </div>
         </div>
@@ -408,11 +414,26 @@ function ExpandableInsights({ match, prediction }: { match: any; prediction: any
           </div>
         </div>
 
-        <div className="rounded-xl border border-amber-500/15 bg-amber-950/20 p-2">
-          <div className="text-[8px] font-black uppercase text-amber-300 mb-1">Extra info die we later nog kunnen toevoegen</div>
-          <div className="text-[8px] text-slate-300 leading-relaxed">
-            managerwissel, reisafstand, verwachte opstelling per positie, corners-trend, kaarten-trend, set-piece kracht,
-            marktvergelijking met historische odds en een aparte ML-score uit CatBoost of LightGBM.
+        <div className="grid grid-cols-2 gap-2">
+          <div className="rounded-xl border border-emerald-500/15 bg-emerald-950/20 p-2">
+            <div className="text-[8px] font-black uppercase text-emerald-300 mb-1">Competitiebetrouwbaarheid</div>
+            <div className="space-y-1 text-[8px] text-slate-300">
+              <div>Score: <span className="font-black text-white">{competitionReliability?.reliabilityScore != null ? `${Math.round(competitionReliability.reliabilityScore * 100)}%` : "-"}</span></div>
+              <div>1X2 hitrate: <span className="font-black text-white">{competitionReliability?.outcomeHitRate != null ? `${Math.round(competitionReliability.outcomeHitRate * 100)}%` : "-"}</span></div>
+              <div>Exact hitrate: <span className="font-black text-white">{competitionReliability?.exactHitRate != null ? `${Math.round(competitionReliability.exactHitRate * 100)}%` : "-"}</span></div>
+              <div>Gem. goal error: <span className="font-black text-white">{competitionReliability?.avgGoalError ?? "-"}</span></div>
+              <div>Bron: <span className="font-black text-white">{competitionReliability?.summary || "nog in opbouw"}</span></div>
+            </div>
+          </div>
+          <div className="rounded-xl border border-amber-500/15 bg-amber-950/20 p-2">
+            <div className="text-[8px] font-black uppercase text-amber-300 mb-1">Scheidsrechter-profiel</div>
+            <div className="space-y-1 text-[8px] text-slate-300">
+              <div>Naam: <span className="font-black text-white">{refereeProfile?.name || "onbekend"}</span></div>
+              <div>Land: <span className="font-black text-white">{refereeProfile?.country || "-"}</span></div>
+              <div>Kaartenritme: <span className="font-black text-white">{refereeProfile?.cardsTrend != null ? refereeProfile.cardsTrend.toFixed(2) : "-"}</span></div>
+              <div>Penalty-kans: <span className="font-black text-white">{refereeProfile?.estimatedPenaltyRate != null ? `${Math.round(refereeProfile.estimatedPenaltyRate * 100)}%` : "-"}</span></div>
+              <div>Profiel: <span className="font-black text-white">{refereeProfile?.strictness || "-"}</span></div>
+            </div>
           </div>
         </div>
       </div>
@@ -431,6 +452,10 @@ function KeySignals({ match, prediction }: { match: any; prediction: any }) {
   }
   if (match.h2h?.played >= 3) signals.push(`H2H ${match.h2h.homeWins}-${match.h2h.draws}-${match.h2h.awayWins}`);
   if (match.lineupSummary?.confirmed) signals.push("opstellingen bevestigd");
+  if (match.competitionReliability?.reliabilityScore != null) {
+    signals.push(`competitiebetrouwbaarheid ${Math.round(match.competitionReliability.reliabilityScore * 100)}%`);
+  }
+  if (match.refereeProfile?.strictness) signals.push(`scheids ${match.refereeProfile.strictness}`);
 
   if (signals.length === 0) return null;
 

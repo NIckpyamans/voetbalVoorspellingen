@@ -82,6 +82,7 @@ const SettingsView: React.FC = () => {
           { label: "Databron branch", value: sourceBranch },
           { label: "Reviews opgeslagen", value: reviewCount.toLocaleString() },
           { label: "Teams met leerdata", value: teamLearningCount.toLocaleString() },
+          { label: "Senior-filter", value: "vrouwen + jeugd/U21 uitgesloten" },
           { label: "Analyse-engine", value: analysisEngine === "checking" ? "Controleren..." : analysisEngine === "ollama" ? "Ollama lokaal" : "Template/review fallback" },
         ].map(({ label, value }) => (
           <div key={label} className="flex items-center justify-between py-2 border-b border-white/5 last:border-0">
@@ -102,13 +103,23 @@ const SettingsView: React.FC = () => {
             },
             {
               name: "Heuristische ensemblelaag",
-              desc: "Voegt ClubElo, rust, splitvorm, lineups, keeperverschil, corners, kaarten en reislast toe als correctielaag.",
+              desc: "Voegt ClubElo, rust, splitvorm, lineups, keeperverschil, corners, kaarten, reislast en referee-profiel toe als correctielaag.",
+              tone: "blue",
+            },
+            {
+              name: "Closing-line calibratie",
+              desc: "Historische implied strength en closing-profiel sturen de kansverdeling nu sterker bij, vooral bij interlands en toernooiwedstrijden.",
               tone: "blue",
             },
             {
               name: "Post-match reviewlaag",
               desc: "Verwerkt voorspelde uitslag versus echte uitslag, failure-signals en teambias om volgende voorspellingen scherper te maken.",
               tone: "purple",
+            },
+            {
+              name: "Competitie-betrouwbaarheid",
+              desc: "Elke competitie bouwt een eigen betrouwbaarheidsscore op uit outcome hitrate, exact hitrate en gemiddelde goal error.",
+              tone: "green",
             },
             {
               name: "Trainingsvoorbereiding",
@@ -150,6 +161,7 @@ const SettingsView: React.FC = () => {
           <div><span className="font-black text-white">Worker-runs:</span> blijven op de achtergrond draaien zonder extra leer-workflow erbovenop.</div>
           <div><span className="font-black text-white">Build-noise:</span> worker commits met alleen dataverandering kunnen nu door Vercel worden overgeslagen.</div>
           <div><span className="font-black text-white">Mail:</span> eventuele GitHub accountmails voor watches of Actions komen uit je accountinstellingen, niet uit de app zelf.</div>
+          <div><span className="font-black text-white">Data-filter:</span> senior-mannenfeed blijft nu schoner doordat vrouwen en jeugd/U21 centraal uit de worker worden gefilterd.</div>
         </div>
       </div>
 
@@ -159,6 +171,7 @@ const SettingsView: React.FC = () => {
           <div><span className="font-black text-white">Outcome learning:</span> teams bouwen nu biasdata op uit echte uitslagen.</div>
           <div><span className="font-black text-white">Failure-signals:</span> open lineups, weer, H2H en rustverschil worden achteraf gelogd als een voorspelling fout zat.</div>
           <div><span className="font-black text-white">UI-review:</span> gespeelde wedstrijden tonen nu modelreview met voorspeld versus werkelijk resultaat.</div>
+          <div><span className="font-black text-white">Competitieprofiel:</span> interlands en clubcompetities krijgen nu een aparte betrouwbaarheidsscore in de kaart.</div>
         </div>
       </div>
 

@@ -277,6 +277,34 @@ function isWomenContext(...values) {
   );
 }
 
+function isYouthContext(...values) {
+  const text = values
+    .flatMap((value) => (value == null ? [] : [String(value)]))
+    .join(" ")
+    .toLowerCase();
+
+  return (
+    text.includes("u17") ||
+    text.includes("u18") ||
+    text.includes("u19") ||
+    text.includes("u20") ||
+    text.includes("u21") ||
+    text.includes("u23") ||
+    text.includes("under 17") ||
+    text.includes("under 18") ||
+    text.includes("under 19") ||
+    text.includes("under 20") ||
+    text.includes("under 21") ||
+    text.includes("under 23") ||
+    text.includes("youth") ||
+    text.includes("junior")
+  );
+}
+
+function getCompetitionSegment(...values) {
+  return isYouthContext(...values) ? "youth" : "senior";
+}
+
 const EUROPEAN_COUNTRIES = new Set(
   [
     "albania",
@@ -350,6 +378,14 @@ function isSeniorInternationalTournament(tournamentName) {
 
 function shouldExcludeEvent(event) {
   return isWomenContext(
+    event?.uniqueTournament?.name,
+    event?.tournament?.name,
+    event?.tournament?.category?.name,
+    event?.homeTeam?.name,
+    event?.awayTeam?.name,
+    event?.homeTeam?.teamType,
+    event?.awayTeam?.teamType
+  ) || isYouthContext(
     event?.uniqueTournament?.name,
     event?.tournament?.name,
     event?.tournament?.category?.name,
@@ -669,6 +705,8 @@ function buildFeatureVector(input) {
   const awayLearning = input.awayLearning || {};
   const homeMarket = input.homeMarketProfile || {};
   const awayMarket = input.awayMarketProfile || {};
+  const leagueReliability = input.leagueReliability || {};
+  const refereeProfile = input.refereeProfile || {};
 
   return {
     home_avg_scored: Number(input.homeRecent?.avgScored || 1.35),
@@ -761,6 +799,11 @@ function buildFeatureVector(input) {
         Number(awayMarket.awayOverperformance || 0)
       ).toFixed(2)
     ),
+    market_strength: Number(input.marketCalibration?.strength || 0),
+    league_reliability: Number(leagueReliability.reliabilityScore || 0.5),
+    league_avg_goal_error: Number(leagueReliability.avgGoalError || 2),
+    referee_cards_trend: Number(refereeProfile.cardsTrend || 0),
+    referee_penalty_rate: Number(refereeProfile.estimatedPenaltyRate || 0),
     lineups_avg_rating_diff: lineupRatingDiff,
     home_lineup_continuity: homeContinuity,
     away_lineup_continuity: awayContinuity,
@@ -794,6 +837,13 @@ function buildHeuristicEnsemble(featureVector) {
   awayScore += (featureVector.away_lineup_continuity - featureVector.home_lineup_continuity) * 0.16;
   homeScore += featureVector.away_travel_penalty * 0.18;
   awayScore -= featureVector.away_travel_penalty * 0.18;
+  homeScore += featureVector.market_overperformance_diff * 0.1 * Math.max(featureVector.market_strength, 0.35);
+  awayScore -= featureVector.market_overperformance_diff * 0.1 * Math.max(featureVector.market_strength, 0.35);
+  homeScore += (featureVector.league_reliability - 0.5) * 0.08;
+  awayScore += (featureVector.league_reliability - 0.5) * 0.08;
+  drawScore += Math.max(0, 0.12 - featureVector.referee_penalty_rate * 0.08);
+  homeScore -= Math.max(0, featureVector.referee_cards_trend - 2.8) * 0.02;
+  awayScore -= Math.max(0, featureVector.referee_cards_trend - 2.8) * 0.02;
   drawScore += Math.max(0, 0.25 - Math.abs(featureVector.ppg_diff) * 0.06);
   drawScore += Math.max(0, 0.18 - Math.abs(featureVector.club_elo_diff) / 1000);
   homeScore -= featureVector.home_injuries * 0.05;
@@ -1023,7 +1073,7 @@ function buildTrainingSnapshot(store) {
 
   return {
     generatedAt: new Date().toISOString(),
-    version: "v6-review-market-compact",
+    version: "v7-ref-market-league",
     reviewCount: Object.keys(store.postMatchReviews || {}).length,
     rows,
   };
@@ -1070,6 +1120,8 @@ function buildMarketCalibration(input) {
       homeImpliedPpg: null,
       awayImpliedPpg: null,
       overperformanceDiff: 0,
+      strength: 0,
+      closingLean: "neutral",
     };
   }
 
@@ -1081,15 +1133,20 @@ function buildMarketCalibration(input) {
       Number(away?.awayOverperformance || 0)
     ).toFixed(2)
   );
+  const sampleGames = Number(home?.homeGames || 0) + Number(away?.awayGames || 0);
+  const strength = Number(Math.min(sampleGames / 26, 1).toFixed(2));
+  const closingLean = diff >= 0.35 ? "home" : diff <= -0.35 ? "away" : "neutral";
 
   return {
-    summary: `marktprofiel ${input.homeTeamProfile?.teamName || "thuis"} ${homeImplied.toFixed(2)} PPG vs ${input.awayTeamProfile?.teamName || "uit"} ${awayImplied.toFixed(2)} PPG`,
+    summary: `closing-profiel ${input.homeTeamProfile?.teamName || "thuis"} ${homeImplied.toFixed(2)} PPG vs ${input.awayTeamProfile?.teamName || "uit"} ${awayImplied.toFixed(2)} PPG`,
     source: "football-data.co.uk",
     homeImpliedPpg: homeImplied,
     awayImpliedPpg: awayImplied,
     overperformanceDiff: diff,
     homeGames: Number(home?.homeGames || 0),
     awayGames: Number(away?.awayGames || 0),
+    strength,
+    closingLean,
   };
 }
 
@@ -1460,6 +1517,7 @@ function rebuildReviewsAndLearning(store) {
 
   store.postMatchReviews = reviews;
   store.teamLearning = buildTeamLearningFromReviews(reviews);
+  store.leagueReliability = buildLeagueReliabilityFromReviews(reviews);
 }
 
 async function safeFetch(url) {
@@ -1518,7 +1576,9 @@ function purgeExcludedContent(store) {
   for (const [date, matches] of Object.entries(store.matches || {})) {
     const safeMatches = [];
     for (const match of matches || []) {
-      const excluded = isWomenContext(match?.league, match?.homeTeamName, match?.awayTeamName);
+      const excluded =
+        isWomenContext(match?.league, match?.homeTeamName, match?.awayTeamName) ||
+        isYouthContext(match?.league, match?.homeTeamName, match?.awayTeamName);
       if (excluded) {
         if (match?.homeTeamId) excludedTeamIds.add(String(match.homeTeamId));
         if (match?.awayTeamId) excludedTeamIds.add(String(match.awayTeamId));
@@ -1528,13 +1588,15 @@ function purgeExcludedContent(store) {
     }
     store.matches[date] = safeMatches;
     store.predictions[date] = (store.predictions?.[date] || []).filter(
-      (prediction) => !isWomenContext(prediction?.league, prediction?.homeTeamName, prediction?.awayTeamName)
+      (prediction) =>
+        !isWomenContext(prediction?.league, prediction?.homeTeamName, prediction?.awayTeamName) &&
+        !isYouthContext(prediction?.league, prediction?.homeTeamName, prediction?.awayTeamName)
     );
   }
 
   for (const key of Object.keys(store.teams || {})) {
     const team = store.teams[key];
-    if (excludedTeamIds.has(String(team?.id || "")) || isWomenContext(team?.league, team?.name)) {
+    if (excludedTeamIds.has(String(team?.id || "")) || isWomenContext(team?.league, team?.name) || isYouthContext(team?.league, team?.name)) {
       delete store.teams[key];
     }
   }
@@ -1659,9 +1721,18 @@ async function fetchLiveStats(eventId) {
   };
 }
 
-async function fetchTeamForm(teamId) {
+async function fetchTeamForm(teamId, options = {}) {
   const json = await safeFetch(`${SOFA}/team/${teamId}/events/last/0`);
+  const targetSegment =
+    options.segment ||
+    getCompetitionSegment(options.teamName, options.tournamentName);
   const finished = (json?.events || [])
+    .filter((event) => getCompetitionSegment(
+      event?.homeTeam?.name,
+      event?.awayTeam?.name,
+      event?.tournament?.name,
+      event?.uniqueTournament?.name
+    ) === targetSegment)
     .filter((event) => event.status?.type === "finished")
     .sort((a, b) => Number(a.startTimestamp || 0) - Number(b.startTimestamp || 0));
 
@@ -1857,6 +1928,107 @@ async function fetchSeasonStats(teamId, tournamentId, seasonId) {
 async function fetchEventDetails(eventId) {
   const json = await safeFetch(`${SOFA}/event/${eventId}`);
   return json?.event || null;
+}
+
+function extractReferee(eventDetails) {
+  const referee =
+    eventDetails?.referee ||
+    eventDetails?.eventOfficials?.find?.((item) => String(item?.role || "").toLowerCase().includes("ref")) ||
+    null;
+
+  if (!referee) return null;
+
+  return {
+    id: referee.id ? String(referee.id) : "",
+    name: referee.name || referee.fullName || "Onbekend",
+    country: referee.country?.name || referee.nationality || null,
+  };
+}
+
+function buildLeagueReliabilityFromReviews(reviews) {
+  const leagues = {};
+
+  for (const review of Object.values(reviews || {})) {
+    const league = String(review?.league || "").trim();
+    if (!league) continue;
+    if (!leagues[league]) {
+      leagues[league] = {
+        league,
+        matches: 0,
+        outcomeHits: 0,
+        exactHits: 0,
+        totalGoalError: 0,
+      };
+    }
+    leagues[league].matches += 1;
+    leagues[league].outcomeHits += review.outcomeHit ? 1 : 0;
+    leagues[league].exactHits += review.exactHit ? 1 : 0;
+    leagues[league].totalGoalError += Number(review.totalGoalError || 0);
+  }
+
+  for (const value of Object.values(leagues)) {
+    const matches = Math.max(Number(value.matches || 0), 1);
+    const outcomeHitRate = Number((Number(value.outcomeHits || 0) / matches).toFixed(2));
+    const exactHitRate = Number((Number(value.exactHits || 0) / matches).toFixed(2));
+    const avgGoalError = Number((Number(value.totalGoalError || 0) / matches).toFixed(2));
+    let reliability = Number((outcomeHitRate * 0.68 + exactHitRate * 0.22 + Math.max(0, 1 - avgGoalError / 4) * 0.1).toFixed(2));
+
+    if (String(value.league || "").startsWith("Europe -")) {
+      reliability = Number((reliability * 0.96).toFixed(2));
+    }
+
+    value.outcomeHitRate = outcomeHitRate;
+    value.exactHitRate = exactHitRate;
+    value.avgGoalError = avgGoalError;
+    value.reliabilityScore = reliability;
+    value.summary = `${value.league}: ${Math.round(reliability * 100)}% betrouwbaar op ${value.matches} reviews`;
+  }
+
+  return leagues;
+}
+
+function buildLeagueReliabilityEdge(input) {
+  const reliability = input.leagueReliability || null;
+  if (!reliability) {
+    return {
+      summary: "geen competitiereviewdata",
+      reliabilityScore: null,
+      outcomeHitRate: null,
+      avgGoalError: null,
+    };
+  }
+
+  return {
+    summary: reliability.summary,
+    reliabilityScore: Number(reliability.reliabilityScore || 0),
+    outcomeHitRate: Number(reliability.outcomeHitRate || 0),
+    exactHitRate: Number(reliability.exactHitRate || 0),
+    avgGoalError: Number(reliability.avgGoalError || 0),
+    matches: Number(reliability.matches || 0),
+  };
+}
+
+function buildRefereeProfile(referee, homeRecent, awayRecent, marketCalibration) {
+  if (!referee?.name) return null;
+  const homeCards = Number(homeRecent?.yellowCardRate || 0) + Number(homeRecent?.redCardRate || 0) * 1.8;
+  const awayCards = Number(awayRecent?.yellowCardRate || 0) + Number(awayRecent?.redCardRate || 0) * 1.8;
+  const cardsTrend = Number(((homeCards + awayCards) / 2).toFixed(2));
+  const penaltyBase = Number(
+    (
+      Number(homeRecent?.over25Rate || 0.45) * 0.12 +
+      Number(awayRecent?.over25Rate || 0.45) * 0.12 +
+      Math.max(0, Number(marketCalibration?.overperformanceDiff || 0)) * 0.04
+    ).toFixed(2)
+  );
+  const strictness = cardsTrend >= 2.9 ? "streng" : cardsTrend >= 2.2 ? "gemiddeld" : "laat doorspelen";
+
+  return {
+    ...referee,
+    cardsTrend,
+    estimatedPenaltyRate: penaltyBase,
+    strictness,
+    summary: `${referee.name}: ${strictness}, kaartenritme ${cardsTrend}, penalty-kans ${Math.round(penaltyBase * 100)}%`,
+  };
 }
 
 async function fetchLineupSummary(eventId) {
@@ -2381,6 +2553,8 @@ function predict(input) {
 
   const learningEdge = buildLearningEdge(input);
   const marketCalibration = buildMarketCalibration(input);
+  const leagueReliability = buildLeagueReliabilityEdge(input);
+  const refereeProfile = input.refereeProfile || null;
 
   if (learningEdge.combinedReliability) {
     const learningBiasShift = clamp((Number(learningEdge.homeBias || 0) - Number(learningEdge.awayBias || 0)) * 0.045, -0.08, 0.08);
@@ -2389,9 +2563,23 @@ function predict(input) {
   }
 
   if (Number(marketCalibration.overperformanceDiff || 0)) {
-    const marketShift = clamp(Number(marketCalibration.overperformanceDiff || 0) * 0.025, -0.05, 0.05);
+    const marketShift = clamp(
+      Number(marketCalibration.overperformanceDiff || 0) * (marketCalibration.strength >= 0.7 ? 0.04 : 0.025),
+      -0.08,
+      0.08
+    );
     homeXG *= clamp(1 + marketShift, 0.95, 1.06);
     awayXG *= clamp(1 - marketShift, 0.95, 1.06);
+  }
+
+  if (leagueReliability.reliabilityScore != null && leagueReliability.reliabilityScore < 0.45) {
+    homeXG *= 0.98;
+    awayXG *= 0.98;
+  }
+
+  if (refereeProfile?.estimatedPenaltyRate >= 0.12) {
+    homeXG *= 1.02;
+    awayXG *= 1.02;
   }
 
   homeXG = clamp(homeXG, 0.22, 3.8);
@@ -2461,10 +2649,16 @@ function predict(input) {
       : learningEdge.combinedReliability && learningEdge.combinedReliability < 0.55
         ? 0.03
         : 0;
+  const leaguePenalty =
+    leagueReliability.reliabilityScore != null && leagueReliability.reliabilityScore < 0.4
+      ? 0.05
+      : leagueReliability.reliabilityScore != null && leagueReliability.reliabilityScore < 0.52
+        ? 0.02
+        : 0;
   const fragilityPenalty =
     (Number(learningEdge.homeFragility || 0) + Number(learningEdge.awayFragility || 0) >= 4 ? 0.02 : 0) +
     (!input.lineupSummary?.confirmed ? 0.015 : 0);
-  const adjustedConfidence = clamp(baseConfidence - reliabilityPenalty - fragilityPenalty, 0.24, 0.93);
+  const adjustedConfidence = clamp(baseConfidence - reliabilityPenalty - fragilityPenalty - leaguePenalty, 0.24, 0.93);
   const riskProfile = buildRiskProfile({
     confidence: adjustedConfidence,
     agreement: modelAgreement,
@@ -2507,7 +2701,9 @@ function predict(input) {
       travelEdge,
       keeperEdge,
       learningEdge,
+      leagueReliability,
       marketCalibration,
+      refereeProfile,
       clubEloDiff: homeClubElo > 0 && awayClubElo > 0 ? Math.round(homeClubElo - awayClubElo) : null,
       stakes: input.context?.summary || null,
       matchImportance: input.matchImportance || 1,
@@ -2612,8 +2808,9 @@ function defaultStore() {
     marketProfilesUpdated: {},
     postMatchReviews: {},
     teamLearning: {},
+    leagueReliability: {},
     lastRun: null,
-    workerVersion: "v6-review-market-compact",
+    workerVersion: "v7-ref-market-league",
   };
 }
 
@@ -2638,6 +2835,7 @@ async function main() {
   if (!store.marketProfilesUpdated) store.marketProfilesUpdated = {};
   if (!store.postMatchReviews) store.postMatchReviews = {};
   if (!store.teamLearning) store.teamLearning = {};
+  if (!store.leagueReliability) store.leagueReliability = {};
   purgeExcludedContent(store);
   compactStore(store, today, now);
   for (const date of dates) store.knockoutOverview[date] = [];
@@ -2674,14 +2872,30 @@ async function main() {
       const leagueInfo = getLeagueInfo(event);
       const homeId = String(event.homeTeam?.id || "");
       const awayId = String(event.awayTeam?.id || "");
+      const homeName = event.homeTeam?.name || "Home";
+      const awayName = event.awayTeam?.name || "Away";
       const tournamentId =
         event.uniqueTournament?.id || event.tournament?.uniqueTournament?.id || event.tournament?.id || null;
       const seasonId = event.season?.id || null;
 
       if (homeId) requiredTeamIds.add(homeId);
       if (awayId) requiredTeamIds.add(awayId);
-      if (homeId && tournamentId && seasonId) teamTournamentMap.set(homeId, { tournamentId, seasonId });
-      if (awayId && tournamentId && seasonId) teamTournamentMap.set(awayId, { tournamentId, seasonId });
+      if (homeId && tournamentId && seasonId) {
+        teamTournamentMap.set(homeId, {
+          tournamentId,
+          seasonId,
+          teamName: homeName,
+          tournamentName: event?.tournament?.name || event?.uniqueTournament?.name || "",
+        });
+      }
+      if (awayId && tournamentId && seasonId) {
+        teamTournamentMap.set(awayId, {
+          tournamentId,
+          seasonId,
+          teamName: awayName,
+          tournamentName: event?.tournament?.name || event?.uniqueTournament?.name || "",
+        });
+      }
       if (tournamentId && seasonId && leagueInfo) {
         tournamentsMap.set(`${tournamentId}_${seasonId}`, { tournamentId, seasonId, label: leagueInfo.label });
       }
@@ -2713,7 +2927,14 @@ async function main() {
 
   for (const teamId of requiredTeamIds) {
     if (!store.teamStats[teamId] || now - Number(store.teamStatsUpdated?.[teamId] || 0) > FORM_TTL) {
-      store.teamStats[teamId] = await fetchTeamForm(teamId);
+      store.teamStats[teamId] = await fetchTeamForm(teamId, {
+        teamName: teamTournamentMap.get(teamId)?.teamName,
+        tournamentName: teamTournamentMap.get(teamId)?.tournamentName,
+        segment: getCompetitionSegment(
+          teamTournamentMap.get(teamId)?.teamName,
+          teamTournamentMap.get(teamId)?.tournamentName
+        ),
+      });
       store.teamStatsUpdated[teamId] = now;
       await sleep(90);
     }
@@ -2863,6 +3084,7 @@ async function main() {
       const awayMarketProfile = lookupMarketTeamProfile(leagueMarketProfile, awayName);
       const homeLearning = store.teamLearning[homeId ? `id:${homeId}` : `name:${normalizeName(homeName)}`] || null;
       const awayLearning = store.teamLearning[awayId ? `id:${awayId}` : `name:${normalizeName(awayName)}`] || null;
+      const leagueReliability = store.leagueReliability?.[leagueInfo.label] || null;
 
       const minuteState = resolveMinuteState(event, eventDetails);
 
@@ -2882,6 +3104,14 @@ async function main() {
         clubElo: awayClubElo,
         standingPos: awayPos,
       });
+      const referee = extractReferee(eventDetails);
+      const marketCalibration = buildMarketCalibration({
+        homeMarketProfile,
+        awayMarketProfile,
+        homeTeamProfile,
+        awayTeamProfile,
+      });
+      const refereeProfile = buildRefereeProfile(referee, homeRecent, awayRecent, marketCalibration);
 
       const prediction = predict({
         homeTeamId: homeId,
@@ -2910,6 +3140,9 @@ async function main() {
         awayMarketProfile,
         homeLearning,
         awayLearning,
+        leagueReliability,
+        marketCalibration,
+        refereeProfile,
       });
 
       const matchId = `ss-${event.id}`;
@@ -2954,6 +3187,8 @@ async function main() {
         h2hStatus: h2h?.status || "empty",
         marketCalibration: prediction.modelEdges?.marketCalibration || null,
         learningSummary: prediction.modelEdges?.learningEdge || null,
+        competitionReliability: prediction.modelEdges?.leagueReliability || null,
+        refereeProfile: prediction.modelEdges?.refereeProfile || refereeProfile || null,
         aggregate,
         homeClubElo,
         awayClubElo,
@@ -2983,6 +3218,8 @@ async function main() {
         h2hStatus: h2h?.status || "empty",
         marketCalibration: prediction.modelEdges?.marketCalibration || null,
         learningSummary: prediction.modelEdges?.learningEdge || null,
+        competitionReliability: prediction.modelEdges?.leagueReliability || null,
+        refereeProfile: prediction.modelEdges?.refereeProfile || refereeProfile || null,
         aggregate,
         context,
         homeClubElo,
@@ -3086,7 +3323,7 @@ async function main() {
   compactStore(store, today, now);
   rebuildReviewsAndLearning(store);
   store.lastRun = Date.now();
-  store.workerVersion = "v6-review-market-compact";
+  store.workerVersion = "v7-ref-market-league";
   fs.mkdirSync(path.dirname(TRAINING_SNAPSHOT_FILE), { recursive: true });
   fs.writeFileSync(TRAINING_SNAPSHOT_FILE, JSON.stringify(buildTrainingSnapshot(store)));
   fs.writeFileSync(DATA_FILE, JSON.stringify(store));

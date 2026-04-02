@@ -388,6 +388,11 @@ export interface Match {
       awayOutcomeHitRate?: number;
       homeBias?: number;
       awayBias?: number;
+      combinedReliability?: number;
+      homeAvgGoalError?: number;
+      awayAvgGoalError?: number;
+      homeFragility?: number;
+      awayFragility?: number;
     };
     review?: {
     matchId: string;
@@ -414,8 +419,27 @@ export interface Match {
       homeImpliedPpg?: number | null;
       awayImpliedPpg?: number | null;
       overperformanceDiff?: number;
+      strength?: number;
+      closingLean?: string;
       homeGames?: number;
       awayGames?: number;
+    };
+    leagueReliability?: {
+      summary?: string;
+      reliabilityScore?: number | null;
+      outcomeHitRate?: number | null;
+      exactHitRate?: number | null;
+      avgGoalError?: number | null;
+      matches?: number;
+    };
+    refereeProfile?: {
+      id?: string;
+      name?: string;
+      country?: string | null;
+      cardsTrend?: number;
+      estimatedPenaltyRate?: number;
+      strictness?: string;
+      summary?: string;
     };
   };
 
@@ -444,6 +468,8 @@ export interface Match {
     homeImpliedPpg?: number | null;
     awayImpliedPpg?: number | null;
     overperformanceDiff?: number;
+    strength?: number;
+    closingLean?: string;
     homeGames?: number;
     awayGames?: number;
   };
@@ -458,6 +484,23 @@ export interface Match {
     awayAvgGoalError?: number;
     homeFragility?: number;
     awayFragility?: number;
+  };
+  competitionReliability?: {
+    summary?: string;
+    reliabilityScore?: number | null;
+    outcomeHitRate?: number | null;
+    exactHitRate?: number | null;
+    avgGoalError?: number | null;
+    matches?: number;
+  };
+  refereeProfile?: {
+    id?: string;
+    name?: string;
+    country?: string | null;
+    cardsTrend?: number;
+    estimatedPenaltyRate?: number;
+    strictness?: string;
+    summary?: string;
   };
   
   // ========================================
