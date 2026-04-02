@@ -421,10 +421,19 @@ export interface Match {
       overperformanceDiff?: number;
       strength?: number;
       closingLean?: string;
+      closingCoverage?: number;
       homeGames?: number;
       awayGames?: number;
     };
     leagueReliability?: {
+      summary?: string;
+      reliabilityScore?: number | null;
+      outcomeHitRate?: number | null;
+      exactHitRate?: number | null;
+      avgGoalError?: number | null;
+      matches?: number;
+    };
+    phaseReliability?: {
       summary?: string;
       reliabilityScore?: number | null;
       outcomeHitRate?: number | null;
@@ -439,6 +448,8 @@ export interface Match {
       cardsTrend?: number;
       estimatedPenaltyRate?: number;
       strictness?: string;
+      source?: string;
+      matches?: number;
       summary?: string;
     };
   };
@@ -470,6 +481,7 @@ export interface Match {
     overperformanceDiff?: number;
     strength?: number;
     closingLean?: string;
+    closingCoverage?: number;
     homeGames?: number;
     awayGames?: number;
   };
@@ -493,6 +505,14 @@ export interface Match {
     avgGoalError?: number | null;
     matches?: number;
   };
+  phaseReliability?: {
+    summary?: string;
+    reliabilityScore?: number | null;
+    outcomeHitRate?: number | null;
+    exactHitRate?: number | null;
+    avgGoalError?: number | null;
+    matches?: number;
+  };
   refereeProfile?: {
     id?: string;
     name?: string;
@@ -500,6 +520,8 @@ export interface Match {
     cardsTrend?: number;
     estimatedPenaltyRate?: number;
     strictness?: string;
+    source?: string;
+    matches?: number;
     summary?: string;
   };
   

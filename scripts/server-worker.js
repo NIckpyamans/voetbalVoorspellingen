@@ -165,18 +165,31 @@ const MAX_MARKET_PROFILES = 64;
 const MARKET_LEAGUE_CODES = {
   "England - Premier League": "E0",
   "England - Championship": "E1",
+  "Scotland - Premiership": "SC0",
+  "Scotland - Championship": "SC1",
   "Netherlands - Eredivisie": "N1",
   "Netherlands - Eerste Divisie": "N2",
   "Germany - Bundesliga": "D1",
   "Germany - 2. Bundesliga": "D2",
   "Spain - LaLiga": "SP1",
   "Spain - LaLiga2": "SP2",
+  "Spain - LaLiga 2": "SP2",
   "Italy - Serie A": "I1",
   "Italy - Serie B": "I2",
   "France - Ligue 1": "F1",
   "France - Ligue 2": "F2",
   "Portugal - Liga Portugal": "P1",
+  "Portugal - Liga Portugal 2": "P2",
   "Belgium - Pro League": "B1",
+  "Belgium - Challenger Pro League": "B2",
+  "Turkey - Super Lig": "T1",
+  "Greece - Super League": "G1",
+  "Austria - Bundesliga": "AUT",
+  "Switzerland - Super League": "SWZ",
+  "Denmark - Superliga": "DNK",
+  "Sweden - Allsvenskan": "SWE",
+  "Norway - Eliteserien": "NOR",
+  "Poland - Ekstraklasa": "POL",
 };
 
 process.on("unhandledRejection", (err) => {
@@ -706,6 +719,7 @@ function buildFeatureVector(input) {
   const homeMarket = input.homeMarketProfile || {};
   const awayMarket = input.awayMarketProfile || {};
   const leagueReliability = input.leagueReliability || {};
+  const phaseReliability = input.phaseReliability || {};
   const refereeProfile = input.refereeProfile || {};
 
   return {
@@ -802,6 +816,8 @@ function buildFeatureVector(input) {
     market_strength: Number(input.marketCalibration?.strength || 0),
     league_reliability: Number(leagueReliability.reliabilityScore || 0.5),
     league_avg_goal_error: Number(leagueReliability.avgGoalError || 2),
+    phase_reliability: Number(phaseReliability.reliabilityScore || 0.5),
+    phase_avg_goal_error: Number(phaseReliability.avgGoalError || 2),
     referee_cards_trend: Number(refereeProfile.cardsTrend || 0),
     referee_penalty_rate: Number(refereeProfile.estimatedPenaltyRate || 0),
     lineups_avg_rating_diff: lineupRatingDiff,
@@ -866,6 +882,10 @@ function buildHeuristicEnsemble(featureVector) {
   awayScore += (featureVector.away_market_implied_ppg - featureVector.home_market_implied_ppg) * 0.12;
   homeScore += featureVector.market_overperformance_diff * 0.10;
   awayScore -= featureVector.market_overperformance_diff * 0.10;
+  homeScore += (featureVector.phase_reliability - 0.5) * 0.08;
+  awayScore += (featureVector.phase_reliability - 0.5) * 0.08;
+  homeScore -= Math.max(0, featureVector.phase_avg_goal_error - 1.5) * 0.03;
+  awayScore -= Math.max(0, featureVector.phase_avg_goal_error - 1.5) * 0.03;
 
   const homeRaw = Math.exp(homeScore);
   const drawRaw = Math.exp(drawScore);
@@ -1113,6 +1133,7 @@ function buildLearningEdge(input) {
 function buildMarketCalibration(input) {
   const home = input.homeMarketProfile || null;
   const away = input.awayMarketProfile || null;
+  const leagueMeta = input.leagueMarketProfile?.leagueMeta || null;
   if (!home && !away) {
     return {
       summary: "geen historische marktdata gekoppeld",
@@ -1122,6 +1143,7 @@ function buildMarketCalibration(input) {
       overperformanceDiff: 0,
       strength: 0,
       closingLean: "neutral",
+      closingCoverage: 0,
     };
   }
 
@@ -1134,11 +1156,13 @@ function buildMarketCalibration(input) {
     ).toFixed(2)
   );
   const sampleGames = Number(home?.homeGames || 0) + Number(away?.awayGames || 0);
-  const strength = Number(Math.min(sampleGames / 26, 1).toFixed(2));
+  const sampleStrength = Math.min(sampleGames / 26, 1);
+  const closingCoverage = Number(leagueMeta?.closingCoverage || 0);
+  const strength = Number((sampleStrength * 0.62 + Math.min(closingCoverage, 1) * 0.38).toFixed(2));
   const closingLean = diff >= 0.35 ? "home" : diff <= -0.35 ? "away" : "neutral";
 
   return {
-    summary: `closing-profiel ${input.homeTeamProfile?.teamName || "thuis"} ${homeImplied.toFixed(2)} PPG vs ${input.awayTeamProfile?.teamName || "uit"} ${awayImplied.toFixed(2)} PPG`,
+    summary: `closing-profiel ${input.homeTeamProfile?.teamName || "thuis"} ${homeImplied.toFixed(2)} PPG vs ${input.awayTeamProfile?.teamName || "uit"} ${awayImplied.toFixed(2)} PPG, closing dekking ${Math.round(closingCoverage * 100)}%`,
     source: "football-data.co.uk",
     homeImpliedPpg: homeImplied,
     awayImpliedPpg: awayImplied,
@@ -1147,6 +1171,7 @@ function buildMarketCalibration(input) {
     awayGames: Number(away?.awayGames || 0),
     strength,
     closingLean,
+    closingCoverage,
   };
 }
 
@@ -1157,6 +1182,20 @@ function getSeasonFolder(dateISO) {
   const startYear = month >= 6 ? year : year - 1;
   const endYear = startYear + 1;
   return `${String(startYear).slice(-2)}${String(endYear).slice(-2)}`;
+}
+
+function getSeasonFolders(dateISO, seasonsBack = 2) {
+  const base = dateISO ? new Date(`${dateISO}T12:00:00Z`) : new Date();
+  const year = base.getUTCFullYear();
+  const month = base.getUTCMonth();
+  const startYear = month >= 6 ? year : year - 1;
+  const folders = [];
+  for (let offset = 0; offset < seasonsBack; offset += 1) {
+    const currentStart = startYear - offset;
+    const currentEnd = currentStart + 1;
+    folders.push(`${String(currentStart).slice(-2)}${String(currentEnd).slice(-2)}`);
+  }
+  return [...new Set(folders)];
 }
 
 async function fetchText(url) {
@@ -1233,6 +1272,37 @@ function pickOdds(row, keys) {
   return null;
 }
 
+function pickOddsWithMeta(row, closingKeys, openingKeys) {
+  for (const key of closingKeys) {
+    const value = toNumber(row?.[key]);
+    if (value && value > 1.01) return { value, closing: true, key };
+  }
+  for (const key of openingKeys) {
+    const value = toNumber(row?.[key]);
+    if (value && value > 1.01) return { value, closing: false, key };
+  }
+  return { value: null, closing: false, key: null };
+}
+
+function extractRefereePenaltyCount(row) {
+  const penaltyKeys = [
+    "Penalties",
+    "pens",
+    "PEN",
+    "HPen",
+    "APen",
+    "HomePens",
+    "AwayPens",
+    "PKH",
+    "PKA",
+  ];
+  for (const key of penaltyKeys) {
+    const value = toNumber(row?.[key]);
+    if (Number.isFinite(value) && value >= 0) return value;
+  }
+  return null;
+}
+
 function outcomeFromGoals(homeGoals, awayGoals) {
   if (!Number.isFinite(homeGoals) || !Number.isFinite(awayGoals)) return null;
   if (homeGoals > awayGoals) return "H";
@@ -1254,6 +1324,10 @@ function normalizeProbabilities(home, draw, away) {
 
 function buildMarketProfiles(rows) {
   const teams = {};
+  const referees = {};
+  let closingRows = 0;
+  let fallbackRows = 0;
+  let validRows = 0;
 
   for (const row of rows || []) {
     const homeTeam = String(row.HomeTeam || row.homeTeam || "").trim();
@@ -1261,11 +1335,19 @@ function buildMarketProfiles(rows) {
     const homeGoals = toNumber(row.FTHG);
     const awayGoals = toNumber(row.FTAG);
     const result = String(row.FTR || outcomeFromGoals(homeGoals, awayGoals) || "");
-    const homeOdds = pickOdds(row, ["B365H", "AvgH", "PSH", "MaxH"]);
-    const drawOdds = pickOdds(row, ["B365D", "AvgD", "PSD", "MaxD"]);
-    const awayOdds = pickOdds(row, ["B365A", "AvgA", "PSA", "MaxA"]);
+    const homeOddsMeta = pickOddsWithMeta(row, ["PSCH", "AvgCH", "MaxCH", "B365CH"], ["PSH", "AvgH", "MaxH", "B365H"]);
+    const drawOddsMeta = pickOddsWithMeta(row, ["PSCD", "AvgCD", "MaxCD", "B365CD"], ["PSD", "AvgD", "MaxD", "B365D"]);
+    const awayOddsMeta = pickOddsWithMeta(row, ["PSCA", "AvgCA", "MaxCA", "B365CA"], ["PSA", "AvgA", "MaxA", "B365A"]);
+    const homeOdds = homeOddsMeta.value;
+    const drawOdds = drawOddsMeta.value;
+    const awayOdds = awayOddsMeta.value;
 
     if (!homeTeam || !awayTeam || !homeOdds || !drawOdds || !awayOdds || !result) continue;
+
+    validRows += 1;
+    const usedClosing = [homeOddsMeta, drawOddsMeta, awayOddsMeta].filter((item) => item.closing).length >= 2;
+    if (usedClosing) closingRows += 1;
+    else fallbackRows += 1;
 
     const implied = normalizeProbabilities(1 / homeOdds, 1 / drawOdds, 1 / awayOdds);
     const actualHomePoints = result === "H" ? 3 : result === "D" ? 1 : 0;
@@ -1309,6 +1391,34 @@ function buildMarketProfiles(rows) {
     teams[awayKey].totalGames += 1;
     teams[awayKey].awayActualPoints += actualAwayPoints;
     teams[awayKey].awayImpliedPoints += impliedAwayPoints;
+
+    const refereeName = String(row.Referee || row.referee || "").trim();
+    if (refereeName) {
+      const refereeKey = normalizeName(refereeName);
+      const yellowCards = Number(toNumber(row.HY) || 0) + Number(toNumber(row.AY) || 0);
+      const redCards = Number(toNumber(row.HR) || 0) + Number(toNumber(row.AR) || 0);
+      const totalCards = Number((yellowCards + redCards * 2).toFixed(2));
+      const penaltyCount = extractRefereePenaltyCount(row);
+      if (!referees[refereeKey]) {
+        referees[refereeKey] = {
+          refereeName,
+          matches: 0,
+          yellowCards: 0,
+          redCards: 0,
+          totalCards: 0,
+          penaltyEvents: 0,
+          penaltyMatches: 0,
+        };
+      }
+      referees[refereeKey].matches += 1;
+      referees[refereeKey].yellowCards += yellowCards;
+      referees[refereeKey].redCards += redCards;
+      referees[refereeKey].totalCards += totalCards;
+      if (penaltyCount != null) {
+        referees[refereeKey].penaltyEvents += Number(penaltyCount || 0);
+        referees[refereeKey].penaltyMatches += 1;
+      }
+    }
   }
 
   const formattedTeams = {};
@@ -1331,10 +1441,36 @@ function buildMarketProfiles(rows) {
     };
   }
 
+  const formattedReferees = {};
+  for (const [key, value] of Object.entries(referees)) {
+    const matches = Math.max(Number(value.matches || 0), 1);
+    const avgCards = Number((Number(value.totalCards || 0) / matches).toFixed(2));
+    const redRate = Number((Number(value.redCards || 0) / matches).toFixed(2));
+    const penaltyRate =
+      Number(value.penaltyMatches || 0) > 0
+        ? Number((Number(value.penaltyEvents || 0) / Number(value.penaltyMatches || 1)).toFixed(2))
+        : null;
+    formattedReferees[key] = {
+      refereeName: value.refereeName,
+      matches: Number(value.matches || 0),
+      avgCards,
+      redRate,
+      penaltyRate,
+      summary: `${value.refereeName}: ${avgCards} kaarten gem. over ${value.matches} duels`,
+    };
+  }
+
   return {
     updatedAt: Date.now(),
     sampleSize: rows.length,
+    leagueMeta: {
+      validRows,
+      closingRows,
+      fallbackRows,
+      closingCoverage: validRows ? Number((closingRows / validRows).toFixed(2)) : 0,
+    },
     teams: formattedTeams,
+    referees: formattedReferees,
   };
 }
 
@@ -1342,13 +1478,17 @@ async function fetchHistoricalMarketProfile(leagueLabel, dateISO) {
   const code = MARKET_LEAGUE_CODES[leagueLabel];
   if (!code) return null;
 
-  const seasonFolder = getSeasonFolder(dateISO);
-  const url = `https://www.football-data.co.uk/mmz4281/${seasonFolder}/${code}.csv`;
-  const csvText = await fetchText(url);
-  if (!csvText) return null;
-  const rows = parseCsv(csvText);
-  if (!rows.length) return null;
-  return buildMarketProfiles(rows);
+  const seasonFolders = getSeasonFolders(dateISO, 2);
+  const allRows = [];
+  for (const seasonFolder of seasonFolders) {
+    const url = `https://www.football-data.co.uk/mmz4281/${seasonFolder}/${code}.csv`;
+    const csvText = await fetchText(url);
+    if (!csvText) continue;
+    const rows = parseCsv(csvText);
+    if (rows.length) allRows.push(...rows);
+  }
+  if (!allRows.length) return null;
+  return buildMarketProfiles(allRows);
 }
 
 function lookupMarketTeamProfile(leagueMarketProfile, teamName) {
@@ -1357,6 +1497,24 @@ function lookupMarketTeamProfile(leagueMarketProfile, teamName) {
     if (teams[variant]) return teams[variant];
   }
   return null;
+}
+
+function lookupHistoricalRefereeProfile(leagueMarketProfile, refereeName) {
+  if (!refereeName) return null;
+  const referees = leagueMarketProfile?.referees || {};
+  const normalizedRef = normalizeName(refereeName);
+  const direct = referees[normalizedRef];
+  if (direct) return direct;
+  const surname = normalizedRef.split(" ").filter(Boolean).slice(-1)[0] || normalizedRef;
+  return (
+    Object.values(referees).find((entry) => {
+      const candidate = normalizeName(entry?.refereeName || "");
+      if (candidate === normalizedRef) return true;
+      if (!surname) return false;
+      const candidateSurname = candidate.split(" ").filter(Boolean).slice(-1)[0] || candidate;
+      return candidate.includes(normalizedRef) || normalizedRef.includes(candidate) || candidateSurname === surname;
+    }) || null
+  );
 }
 
 function getPredictedOutcome(prediction) {
@@ -1400,6 +1558,7 @@ function buildPostMatchReview(match, prediction) {
     matchId: match.id,
     date: match.date,
     league: match.league,
+    phaseBucket: getReliabilityBucket(match),
     homeTeamId: match.homeTeamId,
     awayTeamId: match.awayTeamId,
     homeTeamName: match.homeTeamName,
@@ -1518,6 +1677,7 @@ function rebuildReviewsAndLearning(store) {
   store.postMatchReviews = reviews;
   store.teamLearning = buildTeamLearningFromReviews(reviews);
   store.leagueReliability = buildLeagueReliabilityFromReviews(reviews);
+  store.phaseReliability = buildPhaseReliabilityFromReviews(reviews);
 }
 
 async function safeFetch(url) {
@@ -1945,6 +2105,33 @@ function extractReferee(eventDetails) {
   };
 }
 
+function getReliabilityBucket(input) {
+  const league = String(input?.league || "").toLowerCase();
+  const round = String(input?.roundLabel || "").toLowerCase();
+  const summary = String(input?.context?.summary || input?.context?.type || "").toLowerCase();
+  const leagueType = String(input?.leagueType || "").toLowerCase();
+  const isInternational =
+    league.startsWith("europe -") &&
+    (league.includes("nations league") ||
+      league.includes("qualification") ||
+      league.includes("friendly") ||
+      league.includes("international") ||
+      league.includes("world cup") ||
+      league.includes("championship"));
+
+  if (
+    input?.aggregate?.active ||
+    leagueType === "cup" ||
+    summary.includes("knock") ||
+    summary.includes("play-off") ||
+    /final|semi|quarter|round of|achtste|kwart|halve/.test(round)
+  ) {
+    return "knock-out";
+  }
+  if (isInternational) return "interland";
+  return "league";
+}
+
 function buildLeagueReliabilityFromReviews(reviews) {
   const leagues = {};
 
@@ -1987,6 +2174,45 @@ function buildLeagueReliabilityFromReviews(reviews) {
   return leagues;
 }
 
+function buildPhaseReliabilityFromReviews(reviews) {
+  const phases = {};
+
+  for (const review of Object.values(reviews || {})) {
+    const phase = String(review?.phaseBucket || "league").trim();
+    if (!phases[phase]) {
+      phases[phase] = {
+        phase,
+        matches: 0,
+        outcomeHits: 0,
+        exactHits: 0,
+        totalGoalError: 0,
+      };
+    }
+    phases[phase].matches += 1;
+    phases[phase].outcomeHits += review.outcomeHit ? 1 : 0;
+    phases[phase].exactHits += review.exactHit ? 1 : 0;
+    phases[phase].totalGoalError += Number(review.totalGoalError || 0);
+  }
+
+  for (const value of Object.values(phases)) {
+    const matches = Math.max(Number(value.matches || 0), 1);
+    const outcomeHitRate = Number((Number(value.outcomeHits || 0) / matches).toFixed(2));
+    const exactHitRate = Number((Number(value.exactHits || 0) / matches).toFixed(2));
+    const avgGoalError = Number((Number(value.totalGoalError || 0) / matches).toFixed(2));
+    const reliability = Number(
+      (outcomeHitRate * 0.68 + exactHitRate * 0.22 + Math.max(0, 1 - avgGoalError / 4) * 0.1).toFixed(2)
+    );
+
+    value.outcomeHitRate = outcomeHitRate;
+    value.exactHitRate = exactHitRate;
+    value.avgGoalError = avgGoalError;
+    value.reliabilityScore = reliability;
+    value.summary = `${value.phase}: ${Math.round(reliability * 100)}% betrouwbaar op ${value.matches} reviews`;
+  }
+
+  return phases;
+}
+
 function buildLeagueReliabilityEdge(input) {
   const reliability = input.leagueReliability || null;
   if (!reliability) {
@@ -2008,26 +2234,59 @@ function buildLeagueReliabilityEdge(input) {
   };
 }
 
-function buildRefereeProfile(referee, homeRecent, awayRecent, marketCalibration) {
+function buildPhaseReliabilityEdge(input) {
+  const reliability = input.phaseReliability || null;
+  if (!reliability) {
+    return {
+      summary: "geen fase-reviewdata",
+      reliabilityScore: null,
+      outcomeHitRate: null,
+      exactHitRate: null,
+      avgGoalError: null,
+      matches: 0,
+    };
+  }
+
+  return {
+    summary: reliability.summary,
+    reliabilityScore: Number(reliability.reliabilityScore || 0),
+    outcomeHitRate: Number(reliability.outcomeHitRate || 0),
+    exactHitRate: Number(reliability.exactHitRate || 0),
+    avgGoalError: Number(reliability.avgGoalError || 0),
+    matches: Number(reliability.matches || 0),
+  };
+}
+
+function buildRefereeProfile(referee, homeRecent, awayRecent, marketCalibration, historicalRefereeProfile) {
   if (!referee?.name) return null;
   const homeCards = Number(homeRecent?.yellowCardRate || 0) + Number(homeRecent?.redCardRate || 0) * 1.8;
   const awayCards = Number(awayRecent?.yellowCardRate || 0) + Number(awayRecent?.redCardRate || 0) * 1.8;
-  const cardsTrend = Number(((homeCards + awayCards) / 2).toFixed(2));
-  const penaltyBase = Number(
+  const estimatedCardsTrend = Number(((homeCards + awayCards) / 2).toFixed(2));
+  const estimatedPenaltyBase = Number(
     (
       Number(homeRecent?.over25Rate || 0.45) * 0.12 +
       Number(awayRecent?.over25Rate || 0.45) * 0.12 +
       Math.max(0, Number(marketCalibration?.overperformanceDiff || 0)) * 0.04
     ).toFixed(2)
   );
-  const strictness = cardsTrend >= 2.9 ? "streng" : cardsTrend >= 2.2 ? "gemiddeld" : "laat doorspelen";
+  const cardsTrend = Number(
+    historicalRefereeProfile?.avgCards != null ? historicalRefereeProfile.avgCards : estimatedCardsTrend
+  );
+  const estimatedPenaltyRate =
+    historicalRefereeProfile?.penaltyRate != null ? historicalRefereeProfile.penaltyRate : estimatedPenaltyBase;
+  const strictness = cardsTrend >= 4.8 ? "streng" : cardsTrend >= 3.2 ? "gemiddeld" : "laat doorspelen";
+  const source = historicalRefereeProfile ? "football-data.co.uk referee history" : "team-profiel schatting";
 
   return {
     ...referee,
     cardsTrend,
-    estimatedPenaltyRate: penaltyBase,
+    estimatedPenaltyRate,
     strictness,
-    summary: `${referee.name}: ${strictness}, kaartenritme ${cardsTrend}, penalty-kans ${Math.round(penaltyBase * 100)}%`,
+    source,
+    matches: Number(historicalRefereeProfile?.matches || 0),
+    summary: historicalRefereeProfile
+      ? `${referee.name}: ${strictness}, ${cardsTrend} kaarten gem. uit ${historicalRefereeProfile.matches} duels`
+      : `${referee.name}: ${strictness}, kaartenritme ${cardsTrend}, penalty-kans ${Math.round(estimatedPenaltyRate * 100)}%`,
   };
 }
 
@@ -2554,6 +2813,7 @@ function predict(input) {
   const learningEdge = buildLearningEdge(input);
   const marketCalibration = buildMarketCalibration(input);
   const leagueReliability = buildLeagueReliabilityEdge(input);
+  const phaseReliability = buildPhaseReliabilityEdge(input);
   const refereeProfile = input.refereeProfile || null;
 
   if (learningEdge.combinedReliability) {
@@ -2575,6 +2835,10 @@ function predict(input) {
   if (leagueReliability.reliabilityScore != null && leagueReliability.reliabilityScore < 0.45) {
     homeXG *= 0.98;
     awayXG *= 0.98;
+  }
+  if (phaseReliability.reliabilityScore != null && phaseReliability.reliabilityScore < 0.45) {
+    homeXG *= 0.985;
+    awayXG *= 0.985;
   }
 
   if (refereeProfile?.estimatedPenaltyRate >= 0.12) {
@@ -2655,10 +2919,16 @@ function predict(input) {
       : leagueReliability.reliabilityScore != null && leagueReliability.reliabilityScore < 0.52
         ? 0.02
         : 0;
+  const phasePenalty =
+    phaseReliability.reliabilityScore != null && phaseReliability.reliabilityScore < 0.4
+      ? 0.04
+      : phaseReliability.reliabilityScore != null && phaseReliability.reliabilityScore < 0.52
+        ? 0.015
+        : 0;
   const fragilityPenalty =
     (Number(learningEdge.homeFragility || 0) + Number(learningEdge.awayFragility || 0) >= 4 ? 0.02 : 0) +
     (!input.lineupSummary?.confirmed ? 0.015 : 0);
-  const adjustedConfidence = clamp(baseConfidence - reliabilityPenalty - fragilityPenalty - leaguePenalty, 0.24, 0.93);
+  const adjustedConfidence = clamp(baseConfidence - reliabilityPenalty - fragilityPenalty - leaguePenalty - phasePenalty, 0.24, 0.93);
   const riskProfile = buildRiskProfile({
     confidence: adjustedConfidence,
     agreement: modelAgreement,
@@ -2702,6 +2972,7 @@ function predict(input) {
       keeperEdge,
       learningEdge,
       leagueReliability,
+      phaseReliability,
       marketCalibration,
       refereeProfile,
       clubEloDiff: homeClubElo > 0 && awayClubElo > 0 ? Math.round(homeClubElo - awayClubElo) : null,
@@ -2809,8 +3080,9 @@ function defaultStore() {
     postMatchReviews: {},
     teamLearning: {},
     leagueReliability: {},
+    phaseReliability: {},
     lastRun: null,
-    workerVersion: "v7-ref-market-league",
+    workerVersion: "v8-ref-closing-phase",
   };
 }
 
@@ -2836,6 +3108,7 @@ async function main() {
   if (!store.postMatchReviews) store.postMatchReviews = {};
   if (!store.teamLearning) store.teamLearning = {};
   if (!store.leagueReliability) store.leagueReliability = {};
+  if (!store.phaseReliability) store.phaseReliability = {};
   purgeExcludedContent(store);
   compactStore(store, today, now);
   for (const date of dates) store.knockoutOverview[date] = [];
@@ -3085,6 +3358,15 @@ async function main() {
       const homeLearning = store.teamLearning[homeId ? `id:${homeId}` : `name:${normalizeName(homeName)}`] || null;
       const awayLearning = store.teamLearning[awayId ? `id:${awayId}` : `name:${normalizeName(awayName)}`] || null;
       const leagueReliability = store.leagueReliability?.[leagueInfo.label] || null;
+      const roundLabel = extractRoundLabel(eventDetails);
+      const phaseBucket = getReliabilityBucket({
+        league: leagueInfo.label,
+        leagueType: leagueInfo.type,
+        aggregate,
+        context,
+        roundLabel,
+      });
+      const phaseReliability = store.phaseReliability?.[phaseBucket] || null;
 
       const minuteState = resolveMinuteState(event, eventDetails);
 
@@ -3105,13 +3387,21 @@ async function main() {
         standingPos: awayPos,
       });
       const referee = extractReferee(eventDetails);
+      const historicalRefereeProfile = lookupHistoricalRefereeProfile(leagueMarketProfile, referee?.name);
       const marketCalibration = buildMarketCalibration({
         homeMarketProfile,
         awayMarketProfile,
         homeTeamProfile,
         awayTeamProfile,
+        leagueMarketProfile,
       });
-      const refereeProfile = buildRefereeProfile(referee, homeRecent, awayRecent, marketCalibration);
+      const refereeProfile = buildRefereeProfile(
+        referee,
+        homeRecent,
+        awayRecent,
+        marketCalibration,
+        historicalRefereeProfile
+      );
 
       const prediction = predict({
         homeTeamId: homeId,
@@ -3141,6 +3431,7 @@ async function main() {
         homeLearning,
         awayLearning,
         leagueReliability,
+        phaseReliability,
         marketCalibration,
         refereeProfile,
       });
@@ -3188,6 +3479,7 @@ async function main() {
         marketCalibration: prediction.modelEdges?.marketCalibration || null,
         learningSummary: prediction.modelEdges?.learningEdge || null,
         competitionReliability: prediction.modelEdges?.leagueReliability || null,
+        phaseReliability: prediction.modelEdges?.phaseReliability || null,
         refereeProfile: prediction.modelEdges?.refereeProfile || refereeProfile || null,
         aggregate,
         homeClubElo,
@@ -3195,7 +3487,7 @@ async function main() {
         homePos,
         awayPos,
         matchImportance,
-        roundLabel: extractRoundLabel(eventDetails),
+        roundLabel,
         context,
         modelEdges: prediction.modelEdges,
       };
@@ -3219,6 +3511,7 @@ async function main() {
         marketCalibration: prediction.modelEdges?.marketCalibration || null,
         learningSummary: prediction.modelEdges?.learningEdge || null,
         competitionReliability: prediction.modelEdges?.leagueReliability || null,
+        phaseReliability: prediction.modelEdges?.phaseReliability || null,
         refereeProfile: prediction.modelEdges?.refereeProfile || refereeProfile || null,
         aggregate,
         context,
@@ -3233,7 +3526,7 @@ async function main() {
       if (leagueInfo.type === "cup" || aggregate?.active || context.summary?.includes("play-off")) {
         const knockoutItem = {
           league: leagueInfo.label,
-          roundLabel: extractRoundLabel(eventDetails),
+          roundLabel,
           stakes: context.stakes,
           matchId,
           kickoff,
@@ -3252,7 +3545,7 @@ async function main() {
             rounds: {},
           };
         }
-        const roundKey = String(extractRoundLabel(eventDetails) || "Knock-out");
+        const roundKey = String(roundLabel || "Knock-out");
         if (!store.cupSheets[leagueInfo.label].rounds[roundKey]) {
           store.cupSheets[leagueInfo.label].rounds[roundKey] = [];
         }
@@ -3323,7 +3616,7 @@ async function main() {
   compactStore(store, today, now);
   rebuildReviewsAndLearning(store);
   store.lastRun = Date.now();
-  store.workerVersion = "v7-ref-market-league";
+  store.workerVersion = "v8-ref-closing-phase";
   fs.mkdirSync(path.dirname(TRAINING_SNAPSHOT_FILE), { recursive: true });
   fs.writeFileSync(TRAINING_SNAPSHOT_FILE, JSON.stringify(buildTrainingSnapshot(store)));
   fs.writeFileSync(DATA_FILE, JSON.stringify(store));

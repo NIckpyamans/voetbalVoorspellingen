@@ -247,6 +247,7 @@ function ExpandableInsights({ match, prediction }: { match: any; prediction: any
   const learningEdge = prediction.modelEdges?.learningEdge || match.learningSummary;
   const marketCalibration = prediction.modelEdges?.marketCalibration || match.marketCalibration;
   const competitionReliability = prediction.modelEdges?.leagueReliability || match.competitionReliability;
+  const phaseReliability = prediction.modelEdges?.phaseReliability || match.phaseReliability;
   const refereeProfile = prediction.modelEdges?.refereeProfile || match.refereeProfile;
 
   const riskTone =
@@ -398,6 +399,7 @@ function ExpandableInsights({ match, prediction }: { match: any; prediction: any
               <div>Implied PPG: <span className="font-black text-white">{marketCalibration?.homeImpliedPpg ?? "-"} / {marketCalibration?.awayImpliedPpg ?? "-"}</span></div>
               <div>Overperf diff: <span className="font-black text-white">{marketCalibration?.overperformanceDiff ?? "-"}</span></div>
               <div>Closing-sterkte: <span className="font-black text-white">{marketCalibration?.strength != null ? `${Math.round(marketCalibration.strength * 100)}%` : "-"}</span></div>
+              <div>Closing-dekking: <span className="font-black text-white">{marketCalibration?.closingCoverage != null ? `${Math.round(marketCalibration.closingCoverage * 100)}%` : "-"}</span></div>
               <div>Closing lean: <span className="font-black text-white">{marketCalibration?.closingLean || "-"}</span></div>
             </div>
           </div>
@@ -426,13 +428,37 @@ function ExpandableInsights({ match, prediction }: { match: any; prediction: any
             </div>
           </div>
           <div className="rounded-xl border border-amber-500/15 bg-amber-950/20 p-2">
+            <div className="text-[8px] font-black uppercase text-amber-300 mb-1">Fasebetrouwbaarheid</div>
+            <div className="space-y-1 text-[8px] text-slate-300">
+              <div>Score: <span className="font-black text-white">{phaseReliability?.reliabilityScore != null ? `${Math.round(phaseReliability.reliabilityScore * 100)}%` : "-"}</span></div>
+              <div>1X2 hitrate: <span className="font-black text-white">{phaseReliability?.outcomeHitRate != null ? `${Math.round(phaseReliability.outcomeHitRate * 100)}%` : "-"}</span></div>
+              <div>Exact hitrate: <span className="font-black text-white">{phaseReliability?.exactHitRate != null ? `${Math.round(phaseReliability.exactHitRate * 100)}%` : "-"}</span></div>
+              <div>Gem. goal error: <span className="font-black text-white">{phaseReliability?.avgGoalError ?? "-"}</span></div>
+              <div>Bron: <span className="font-black text-white">{phaseReliability?.summary || "nog in opbouw"}</span></div>
+            </div>
+          </div>
+        </div>
+
+        <div className="grid grid-cols-2 gap-2">
+          <div className="rounded-xl border border-amber-500/15 bg-amber-950/20 p-2">
             <div className="text-[8px] font-black uppercase text-amber-300 mb-1">Scheidsrechter-profiel</div>
             <div className="space-y-1 text-[8px] text-slate-300">
               <div>Naam: <span className="font-black text-white">{refereeProfile?.name || "onbekend"}</span></div>
               <div>Land: <span className="font-black text-white">{refereeProfile?.country || "-"}</span></div>
+              <div>Bron: <span className="font-black text-white">{refereeProfile?.source || "-"}</span></div>
+              <div>Historische duels: <span className="font-black text-white">{refereeProfile?.matches ?? "-"}</span></div>
               <div>Kaartenritme: <span className="font-black text-white">{refereeProfile?.cardsTrend != null ? refereeProfile.cardsTrend.toFixed(2) : "-"}</span></div>
               <div>Penalty-kans: <span className="font-black text-white">{refereeProfile?.estimatedPenaltyRate != null ? `${Math.round(refereeProfile.estimatedPenaltyRate * 100)}%` : "-"}</span></div>
               <div>Profiel: <span className="font-black text-white">{refereeProfile?.strictness || "-"}</span></div>
+            </div>
+          </div>
+          <div className="rounded-xl border border-slate-500/15 bg-slate-950/20 p-2">
+            <div className="text-[8px] font-black uppercase text-slate-300 mb-1">Bronkwaliteit</div>
+            <div className="space-y-1 text-[8px] text-slate-300">
+              <div>Closing-diepte: <span className="font-black text-white">{marketCalibration?.closingCoverage != null ? `${Math.round(marketCalibration.closingCoverage * 100)}%` : "-"}</span></div>
+              <div>Marktsterkte: <span className="font-black text-white">{marketCalibration?.strength != null ? `${Math.round(marketCalibration.strength * 100)}%` : "-"}</span></div>
+              <div>Competitie: <span className="font-black text-white">{competitionReliability?.reliabilityScore != null ? `${Math.round(competitionReliability.reliabilityScore * 100)}%` : "-"}</span></div>
+              <div>Fase: <span className="font-black text-white">{phaseReliability?.reliabilityScore != null ? `${Math.round(phaseReliability.reliabilityScore * 100)}%` : "-"}</span></div>
             </div>
           </div>
         </div>
@@ -454,6 +480,9 @@ function KeySignals({ match, prediction }: { match: any; prediction: any }) {
   if (match.lineupSummary?.confirmed) signals.push("opstellingen bevestigd");
   if (match.competitionReliability?.reliabilityScore != null) {
     signals.push(`competitiebetrouwbaarheid ${Math.round(match.competitionReliability.reliabilityScore * 100)}%`);
+  }
+  if (match.phaseReliability?.reliabilityScore != null) {
+    signals.push(`fase ${Math.round(match.phaseReliability.reliabilityScore * 100)}%`);
   }
   if (match.refereeProfile?.strictness) signals.push(`scheids ${match.refereeProfile.strictness}`);
 

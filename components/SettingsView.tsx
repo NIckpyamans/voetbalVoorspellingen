@@ -122,6 +122,16 @@ const SettingsView: React.FC = () => {
               tone: "green",
             },
             {
+              name: "Fase-betrouwbaarheid",
+              desc: "Competitie, interland en knock-out krijgen nu ook een aparte fase-score, zodat toernooiwedstrijden anders gewogen worden dan reguliere league-duels.",
+              tone: "amber",
+            },
+            {
+              name: "Historische scheidsdata",
+              desc: "Waar beschikbaar komt kaartenritme en penalty-profiel nu uit historische referee-rows uit football-data.co.uk in plaats van alleen teamschatting.",
+              tone: "amber",
+            },
+            {
               name: "Trainingsvoorbereiding",
               desc: "De worker schrijft featuredata en reviews weg voor CatBoost of LightGBM als volgende stap.",
               tone: "amber",
@@ -172,6 +182,8 @@ const SettingsView: React.FC = () => {
           <div><span className="font-black text-white">Failure-signals:</span> open lineups, weer, H2H en rustverschil worden achteraf gelogd als een voorspelling fout zat.</div>
           <div><span className="font-black text-white">UI-review:</span> gespeelde wedstrijden tonen nu modelreview met voorspeld versus werkelijk resultaat.</div>
           <div><span className="font-black text-white">Competitieprofiel:</span> interlands en clubcompetities krijgen nu een aparte betrouwbaarheidsscore in de kaart.</div>
+          <div><span className="font-black text-white">Faseprofiel:</span> knock-out, interland en league-fases worden nu apart beoordeeld zodat de confidence per wedstrijdtype scherper wordt.</div>
+          <div><span className="font-black text-white">Referee-history:</span> historische kaarten- en penaltydata van scheidsrechters wordt waar mogelijk direct in de heuristiek gebruikt.</div>
         </div>
       </div>
 
