@@ -133,7 +133,7 @@ const SettingsView: React.FC = () => {
             },
             {
               name: "AI verbeterlus",
-              desc: "De app leert nu uit reviews en monitor-data, maar schrijft niet blind live code over. De veilige route blijft: voorstellen, controleren en dan pas uitrollen.",
+              desc: "De app leert nu uit reviews en monitor-data, maakt aan het eind van de dag een voorstelbranch met patchadvies, maar schrijft nooit blind live code over.",
               tone: "purple",
             },
             {
@@ -177,6 +177,7 @@ const SettingsView: React.FC = () => {
           <div><span className="font-black text-white">Build-noise:</span> worker commits met alleen dataverandering kunnen nu door Vercel worden overgeslagen.</div>
           <div><span className="font-black text-white">Mail:</span> eventuele GitHub accountmails voor watches of Actions komen uit je accountinstellingen, niet uit de app zelf.</div>
           <div><span className="font-black text-white">Data-filter:</span> senior-mannenfeed blijft nu schoner doordat vrouwen en jeugd/U21 centraal uit de worker worden gefilterd.</div>
+          <div><span className="font-black text-white">Reviewvoorstel:</span> de monitor bouwt nu dagelijks een voorstelbranch-plan op zonder automatisch live te gaan.</div>
         </div>
       </div>
 
@@ -190,6 +191,7 @@ const SettingsView: React.FC = () => {
           <div><span className="font-black text-white">Faseprofiel:</span> kwalificatie, friendly, league, cup en two-leg knockout worden nu apart beoordeeld zodat de confidence per wedstrijdtype scherper wordt.</div>
           <div><span className="font-black text-white">Referee-history:</span> historische kaarten- en penaltydata van scheidsrechters wordt waar mogelijk direct in de heuristiek gebruikt, met competitie-specifieke alias-cache.</div>
           <div><span className="font-black text-white">Bookmakerlaag:</span> closing-odds worden niet meer alleen samengesteld bekeken, maar ook per bookmaker gewogen in de calibratie.</div>
+          <div><span className="font-black text-white">Reviewbranch generator:</span> dagelijkse monitorbevindingen worden automatisch samengevat in een patchvoorstel, zodat verbeteringen sneller maar veilig doorgezet kunnen worden.</div>
         </div>
       </div>
 

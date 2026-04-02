@@ -1,0 +1,52 @@
+name: Review Proposal
+
+on:
+  schedule:
+    - cron: "15 22 * * *"
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+env:
+  TZ: Europe/Amsterdam
+  FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: "true"
+
+jobs:
+  review-proposal:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          token: ${{ secrets.GITHUB_TOKEN }}
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Run health check
+        run: node scripts/health-check.js
+
+      - name: Build day report
+        run: node scripts/day-report.js
+
+      - name: Build review proposal
+        run: node scripts/propose-review-branch.js
+
+      - name: Commit and push proposal
+        run: |
+          BRANCH_NAME="${{ github.ref_name }}"
+          git config user.name github-actions
+          git config user.email github-actions@github.com
+          git add monitor/daily-findings.json monitor/review-branch-proposal.json
+          git diff --staged --quiet && echo "geen wijzigingen" && exit 0
+          git commit -m "update review proposal [skip vercel]"
+          git pull --rebase origin "$BRANCH_NAME" || true
+          git push origin "$BRANCH_NAME"

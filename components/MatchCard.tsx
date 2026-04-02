@@ -705,6 +705,18 @@ const MatchCard: React.FC<MatchCardProps> = ({ match, prediction, onFavoriteChan
   const confidencePct = Math.max(0, Math.min(99, Math.round((confidenceBase || 0) * 100)));
   const review = match.review || prediction.review || null;
   const modelLabel = (prediction.ensembleMeta || match.ensembleMeta)?.active ? "Ensemble" : "Basis";
+  const phaseReliability = prediction.modelEdges?.phaseReliability || match.phaseReliability;
+  const modelScopeLabel =
+    String(match.league || "").startsWith("Europe -") && (
+      String(match.league || "").toLowerCase().includes("friendly") ||
+      String(match.league || "").toLowerCase().includes("qualification") ||
+      String(match.league || "").toLowerCase().includes("nations league") ||
+      String(match.league || "").toLowerCase().includes("international")
+    )
+      ? "Interland"
+      : "Club";
+  const scopeScore =
+    phaseReliability?.reliabilityScore != null ? `${Math.round(phaseReliability.reliabilityScore * 100)}%` : "-";
   const timingLabel = isLive
     ? liveMinute && liveMinute !== "LIVE"
       ? liveMinute
@@ -785,7 +797,7 @@ const MatchCard: React.FC<MatchCardProps> = ({ match, prediction, onFavoriteChan
         </div>
       </div>
 
-      <div className="grid grid-cols-3 gap-1 mb-2">
+      <div className="grid grid-cols-4 gap-1 mb-2">
         <div className="rounded-lg border border-blue-500/15 bg-blue-950/20 px-2 py-1.5 text-center">
           <div className="text-[7px] uppercase font-black text-blue-300/80">Vertrouwen</div>
           <div className="text-[11px] font-black text-white">{confidencePct}%</div>
@@ -797,6 +809,10 @@ const MatchCard: React.FC<MatchCardProps> = ({ match, prediction, onFavoriteChan
         <div className="rounded-lg border border-violet-500/15 bg-violet-950/20 px-2 py-1.5 text-center">
           <div className="text-[7px] uppercase font-black text-violet-300/80">Wedstrijdtijd</div>
           <div className="text-[11px] font-black text-white">{timingLabel}</div>
+        </div>
+        <div className="rounded-lg border border-emerald-500/15 bg-emerald-950/20 px-2 py-1.5 text-center">
+          <div className="text-[7px] uppercase font-black text-emerald-300/80">{modelScopeLabel}</div>
+          <div className="text-[11px] font-black text-white">{scopeScore}</div>
         </div>
       </div>
 
