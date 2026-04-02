@@ -394,9 +394,11 @@ export interface Match {
     predictedScore: string;
     actualScore: string;
     predictedOutcome: string;
+    probabilityOutcome?: string;
     actualOutcome: string;
     confidence: number;
     outcomeHit: boolean;
+    probabilityOutcomeHit?: boolean;
     exactHit: boolean;
     totalGoalError: number;
     totalGoalBias: number;
@@ -422,9 +424,11 @@ export interface Match {
     predictedScore: string;
     actualScore: string;
     predictedOutcome: string;
+    probabilityOutcome?: string;
     actualOutcome: string;
     confidence: number;
     outcomeHit: boolean;
+    probabilityOutcomeHit?: boolean;
     exactHit: boolean;
     totalGoalError: number;
     totalGoalBias: number;
@@ -449,6 +453,11 @@ export interface Match {
     awayOutcomeHitRate?: number;
     homeBias?: number;
     awayBias?: number;
+    combinedReliability?: number;
+    homeAvgGoalError?: number;
+    awayAvgGoalError?: number;
+    homeFragility?: number;
+    awayFragility?: number;
   };
   
   // ========================================

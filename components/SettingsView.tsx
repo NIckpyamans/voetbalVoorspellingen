@@ -3,6 +3,8 @@ import React, { useEffect, useState } from "react";
 const SettingsView: React.FC = () => {
   const [historyCount, setHistoryCount] = useState(0);
   const [teamCount, setTeamCount] = useState(0);
+  const [historySizeKb, setHistorySizeKb] = useState(0);
+  const [teamStoreSizeKb, setTeamStoreSizeKb] = useState(0);
   const [lastWorker, setLastWorker] = useState<string | null>(null);
   const [analysisEngine, setAnalysisEngine] = useState<"checking" | "ollama" | "template">("checking");
   const [workerVersion, setWorkerVersion] = useState<string>("onbekend");
@@ -12,10 +14,14 @@ const SettingsView: React.FC = () => {
 
   useEffect(() => {
     try {
-      setHistoryCount(JSON.parse(localStorage.getItem("footypredict_memory") || "[]").length);
+      const raw = localStorage.getItem("footypredict_memory") || "[]";
+      setHistoryCount(JSON.parse(raw).length);
+      setHistorySizeKb(Math.round((new Blob([raw]).size / 1024) * 10) / 10);
     } catch {}
     try {
-      setTeamCount(Object.keys(JSON.parse(localStorage.getItem("footypredict_team_store_v1") || "{}")).length);
+      const raw = localStorage.getItem("footypredict_team_store_v1") || "{}";
+      setTeamCount(Object.keys(JSON.parse(raw)).length);
+      setTeamStoreSizeKb(Math.round((new Blob([raw]).size / 1024) * 10) / 10);
     } catch {}
 
     fetch(`/api/matches?date=${new Date().toISOString().split("T")[0]}`)
@@ -69,6 +75,8 @@ const SettingsView: React.FC = () => {
         {[
           { label: "Opgeslagen voorspellingen", value: historyCount.toLocaleString() },
           { label: "Teams in lokale leerstore", value: teamCount.toLocaleString() },
+          { label: "Geheugen voorspellingen", value: `${historySizeKb.toLocaleString()} KB` },
+          { label: "Geheugen teamstore", value: `${teamStoreSizeKb.toLocaleString()} KB` },
           { label: "Laatste worker run", value: lastWorker || "Onbekend" },
           { label: "Worker versie", value: workerVersion },
           { label: "Databron branch", value: sourceBranch },
@@ -107,6 +115,11 @@ const SettingsView: React.FC = () => {
               desc: "De worker schrijft featuredata en reviews weg voor CatBoost of LightGBM als volgende stap.",
               tone: "amber",
             },
+            {
+              name: "Compacte opslaglaag",
+              desc: "Lokale opslag en workerdata worden nu automatisch ingekort zodat history, reviewdata en cache niet onnodig blijven groeien.",
+              tone: "green",
+            },
           ].map((item) => (
             <div key={item.name} className="flex gap-3 pb-3 border-b border-white/5 last:border-0">
               <span
@@ -128,6 +141,15 @@ const SettingsView: React.FC = () => {
               </div>
             </div>
           ))}
+        </div>
+      </div>
+
+      <div className="glass-card rounded-2xl border border-white/5 p-5">
+        <div className="text-[10px] font-black text-slate-400 uppercase mb-3">Achtergrondupdates</div>
+        <div className="space-y-2 text-[11px] text-slate-300 leading-relaxed">
+          <div><span className="font-black text-white">Worker-runs:</span> blijven op de achtergrond draaien zonder extra leer-workflow erbovenop.</div>
+          <div><span className="font-black text-white">Build-noise:</span> worker commits met alleen dataverandering kunnen nu door Vercel worden overgeslagen.</div>
+          <div><span className="font-black text-white">Mail:</span> eventuele GitHub accountmails voor watches of Actions komen uit je accountinstellingen, niet uit de app zelf.</div>
         </div>
       </div>
 

@@ -46,6 +46,105 @@ function toAmsterdamDateKey(dateLike) {
   }).format(date);
 }
 
+function addDaysToDateKey(dateKey, offset) {
+  const base = new Date(`${dateKey}T12:00:00Z`);
+  base.setUTCDate(base.getUTCDate() + offset);
+  return base.toISOString().slice(0, 10);
+}
+
+function buildRetainedDateSet(baseDateKey) {
+  const retain = new Set();
+  for (let offset = -HISTORY_KEEP_DAYS_BACK; offset <= HISTORY_KEEP_DAYS_FORWARD; offset += 1) {
+    retain.add(addDaysToDateKey(baseDateKey, offset));
+  }
+  return retain;
+}
+
+function trimScoreMatrix(scoreMatrix, limit = MAX_SCORE_MATRIX_ENTRIES) {
+  return Object.fromEntries(
+    Object.entries(scoreMatrix || {})
+      .sort((a, b) => Number(b[1] || 0) - Number(a[1] || 0))
+      .slice(0, limit)
+  );
+}
+
+function compactPredictionEntry(prediction, historical = false) {
+  if (!prediction || typeof prediction !== "object") return prediction;
+  const compact = {
+    ...prediction,
+    scoreMatrix: trimScoreMatrix(prediction.scoreMatrix),
+  };
+
+  if (historical) {
+    delete compact.featureVector;
+    delete compact.analysis;
+    if (compact.ensembleMeta) {
+      compact.ensembleMeta = {
+        active: !!compact.ensembleMeta.active,
+        baseModel: compact.ensembleMeta.baseModel,
+        blendModel: compact.ensembleMeta.blendModel,
+        blendWeightBase: compact.ensembleMeta.blendWeightBase,
+        blendWeightHeuristic: compact.ensembleMeta.blendWeightHeuristic,
+        agreement: compact.ensembleMeta.agreement,
+        baseProbabilities: compact.ensembleMeta.baseProbabilities,
+        heuristicProbabilities: compact.ensembleMeta.heuristicProbabilities,
+      };
+    }
+  }
+
+  return compact;
+}
+
+function pruneUpdatedMap(store, valueKey, updatedKey, ttl, now, maxEntries = null) {
+  const values = store[valueKey] || {};
+  const updated = store[updatedKey] || {};
+  for (const key of Object.keys(updated)) {
+    if (now - Number(updated[key] || 0) > ttl) {
+      delete updated[key];
+      delete values[key];
+    }
+  }
+
+  if (maxEntries && Object.keys(updated).length > maxEntries) {
+    const keep = new Set(
+      Object.entries(updated)
+        .sort((a, b) => Number(b[1] || 0) - Number(a[1] || 0))
+        .slice(0, maxEntries)
+        .map(([key]) => key)
+    );
+    for (const key of Object.keys(updated)) {
+      if (!keep.has(key)) {
+        delete updated[key];
+        delete values[key];
+      }
+    }
+  }
+
+  store[valueKey] = values;
+  store[updatedKey] = updated;
+}
+
+function pruneEmbeddedUpdatedMap(store, valueKey, ttl, now, maxEntries = null) {
+  const values = store[valueKey] || {};
+  for (const key of Object.keys(values)) {
+    if (now - Number(values[key]?.updated || 0) > ttl) delete values[key];
+  }
+
+  if (maxEntries && Object.keys(values).length > maxEntries) {
+    const keep = new Set(
+      Object.entries(values)
+        .sort((a, b) => Number(b[1]?.updated || 0) - Number(a[1]?.updated || 0))
+        .slice(0, maxEntries)
+        .map(([key]) => key)
+    );
+    for (const key of Object.keys(values)) {
+      if (!keep.has(key)) delete values[key];
+    }
+  }
+
+  store[valueKey] = values;
+}
+
 const FORM_TTL = 6 * 60 * 60 * 1000;
 const INJURY_TTL = 4 * 60 * 60 * 1000;
 const SEASON_TTL = 12 * 60 * 60 * 1000;
@@ -54,6 +153,14 @@ const WEATHER_TTL = 6 * 60 * 60 * 1000;
 const EVENT_TTL = 12 * 60 * 60 * 1000;
 const CLUB_ELO_TTL = 12 * 60 * 60 * 1000;
 const MARKET_TTL = 24 * 60 * 60 * 1000;
+const HISTORY_KEEP_DAYS_BACK = 12;
+const HISTORY_KEEP_DAYS_FORWARD = 4;
+const MAX_REVIEWS = 1200;
+const MAX_SCORE_MATRIX_ENTRIES = 10;
+const MAX_EVENT_CACHE = 300;
+const MAX_H2H_CACHE = 500;
+const MAX_WEATHER_CACHE = 220;
+const MAX_MARKET_PROFILES = 64;
 
 const MARKET_LEAGUE_CODES = {
   "England - Premier League": "E0",
@@ -916,7 +1023,7 @@ function buildTrainingSnapshot(store) {
 
   return {
     generatedAt: new Date().toISOString(),
-    version: "v6-review-market",
+    version: "v6-review-market-compact",
     reviewCount: Object.keys(store.postMatchReviews || {}).length,
     rows,
   };
@@ -927,16 +1034,29 @@ function buildLearningEdge(input) {
   const away = input.awayLearning || null;
   const homeBias = Number(home?.homeOutcomeBias || 0);
   const awayBias = Number(away?.awayOutcomeBias || 0);
+  const homeReliability = Number(home?.outcomeHitRate || 0);
+  const awayReliability = Number(away?.outcomeHitRate || 0);
   const summary = home || away
-    ? `${input.homeTeamProfile?.teamName || "Thuis"} ${homeBias >= 0 ? "licht onderschat" : "licht overschat"} / ${input.awayTeamProfile?.teamName || "Uit"} ${awayBias >= 0 ? "licht onderschat" : "licht overschat"}`
+    ? `${input.homeTeamProfile?.teamName || "Thuis"} ${homeBias >= 0 ? "licht onderschat" : "licht overschat"} (${Math.round(homeReliability * 100)}%) / ${input.awayTeamProfile?.teamName || "Uit"} ${awayBias >= 0 ? "licht onderschat" : "licht overschat"} (${Math.round(awayReliability * 100)}%)`
     : "nog geen reviewdata";
 
   return {
     summary,
-    homeOutcomeHitRate: Number(home?.outcomeHitRate || 0),
-    awayOutcomeHitRate: Number(away?.outcomeHitRate || 0),
+    homeOutcomeHitRate: homeReliability,
+    awayOutcomeHitRate: awayReliability,
     homeBias,
     awayBias,
+    homeAvgGoalError: Number(home?.avgGoalError || 0),
+    awayAvgGoalError: Number(away?.avgGoalError || 0),
+    combinedReliability: Number(((homeReliability + awayReliability) / ((home || away) ? (home && away ? 2 : 1) : 1)).toFixed(2)),
+    homeFragility:
+      Number(home?.openLineupMisses || 0) +
+      Number(home?.weatherMisses || 0) +
+      Number(home?.h2hMisses || 0),
+    awayFragility:
+      Number(away?.openLineupMisses || 0) +
+      Number(away?.weatherMisses || 0) +
+      Number(away?.h2hMisses || 0),
   };
 }
 
@@ -1198,10 +1318,11 @@ function buildPostMatchReview(match, prediction) {
   const [actualHomeGoals, actualAwayGoals] = String(match.score).split("-").map(Number);
   if (!Number.isFinite(actualHomeGoals) || !Number.isFinite(actualAwayGoals)) return null;
 
-  const predictedOutcome = getPredictedOutcome(prediction);
-  const actualOutcome = outcomeFromGoals(actualHomeGoals, actualAwayGoals);
   const predHomeGoals = Number(prediction.predHomeGoals || 0);
   const predAwayGoals = Number(prediction.predAwayGoals || 0);
+  const predictedOutcome = outcomeFromGoals(predHomeGoals, predAwayGoals);
+  const probabilityOutcome = getPredictedOutcome(prediction);
+  const actualOutcome = outcomeFromGoals(actualHomeGoals, actualAwayGoals);
   const totalGoalError = Math.abs(predHomeGoals - actualHomeGoals) + Math.abs(predAwayGoals - actualAwayGoals);
   const totalGoalBias = Number(
     ((actualHomeGoals + actualAwayGoals) - (predHomeGoals + predAwayGoals)).toFixed(2)
@@ -1214,6 +1335,8 @@ function buildPostMatchReview(match, prediction) {
     if (prediction?.weatherRisk === "high" || prediction?.modelEdges?.weatherRisk === "high") failureSignals.push("weather_risk");
     if (Math.abs(Number(prediction?.modelEdges?.rest || 0)) >= 2) failureSignals.push("rest_gap");
     if (match?.h2h?.results?.length >= 3) failureSignals.push("h2h_signal");
+    if (Math.abs(Number(prediction?.modelEdges?.marketCalibration?.overperformanceDiff || 0)) >= 0.45) failureSignals.push("market_misread");
+    if (Number(prediction?.modelEdges?.modelAgreement || 0) < 0.45) failureSignals.push("low_model_agreement");
   }
 
   return {
@@ -1227,9 +1350,11 @@ function buildPostMatchReview(match, prediction) {
     predictedScore: `${predHomeGoals}-${predAwayGoals}`,
     actualScore: match.score,
     predictedOutcome,
+    probabilityOutcome,
     actualOutcome,
     confidence: Number(prediction.confidence || 0),
     outcomeHit: predictedOutcome === actualOutcome,
+    probabilityOutcomeHit: probabilityOutcome === actualOutcome,
     exactHit: predHomeGoals === actualHomeGoals && predAwayGoals === actualAwayGoals,
     totalGoalError,
     totalGoalBias,
@@ -2254,6 +2379,21 @@ function predict(input) {
     awayXG *= clamp(input.matchImportance, 1, 1.08);
   }
 
+  const learningEdge = buildLearningEdge(input);
+  const marketCalibration = buildMarketCalibration(input);
+
+  if (learningEdge.combinedReliability) {
+    const learningBiasShift = clamp((Number(learningEdge.homeBias || 0) - Number(learningEdge.awayBias || 0)) * 0.045, -0.08, 0.08);
+    homeXG *= clamp(1 + learningBiasShift, 0.94, 1.08);
+    awayXG *= clamp(1 - learningBiasShift, 0.94, 1.08);
+  }
+
+  if (Number(marketCalibration.overperformanceDiff || 0)) {
+    const marketShift = clamp(Number(marketCalibration.overperformanceDiff || 0) * 0.025, -0.05, 0.05);
+    homeXG *= clamp(1 + marketShift, 0.95, 1.06);
+    awayXG *= clamp(1 - marketShift, 0.95, 1.06);
+  }
+
   homeXG = clamp(homeXG, 0.22, 3.8);
   awayXG = clamp(awayXG, 0.22, 3.8);
 
@@ -2314,10 +2454,19 @@ function predict(input) {
   const formShift = buildFormShift(input);
   const travelEdge = buildTravelEdge(input, featureVector);
   const keeperEdge = buildKeeperEdge(input, featureVector);
-  const learningEdge = buildLearningEdge(input);
-  const marketCalibration = buildMarketCalibration(input);
+  const baseConfidence = Math.min(0.93, bestProb * 3.5 + 0.24);
+  const reliabilityPenalty =
+    learningEdge.combinedReliability && learningEdge.combinedReliability < 0.44
+      ? 0.07
+      : learningEdge.combinedReliability && learningEdge.combinedReliability < 0.55
+        ? 0.03
+        : 0;
+  const fragilityPenalty =
+    (Number(learningEdge.homeFragility || 0) + Number(learningEdge.awayFragility || 0) >= 4 ? 0.02 : 0) +
+    (!input.lineupSummary?.confirmed ? 0.015 : 0);
+  const adjustedConfidence = clamp(baseConfidence - reliabilityPenalty - fragilityPenalty, 0.24, 0.93);
   const riskProfile = buildRiskProfile({
-    confidence: Math.min(0.93, bestProb * 3.5 + 0.24),
+    confidence: adjustedConfidence,
     agreement: modelAgreement,
     weatherRisk: input.weather?.riskLevel || "low",
     lineupConfirmed: !!input.lineupSummary?.confirmed,
@@ -2339,7 +2488,7 @@ function predict(input) {
     predHomeGoals,
     predAwayGoals,
     exactProb: Number(bestProb.toFixed(4)),
-    confidence: Number(Math.min(0.93, bestProb * 3.5 + 0.24).toFixed(3)),
+    confidence: Number(adjustedConfidence.toFixed(3)),
     over15: Number(over15.toFixed(3)),
     over25: Number(over25.toFixed(3)),
     over35: Number(over35.toFixed(3)),
@@ -2387,6 +2536,48 @@ function predict(input) {
   };
 }
 
+function compactStore(store, referenceDateKey, now) {
+  const retainedDates = buildRetainedDateSet(referenceDateKey);
+  const retainedMatchIds = new Set();
+
+  for (const date of Object.keys(store.matches || {})) {
+    if (!retainedDates.has(date)) {
+      delete store.matches[date];
+      delete store.predictions[date];
+      delete store.knockoutOverview?.[date];
+      continue;
+    }
+
+    store.matches[date] = (store.matches[date] || []).filter(Boolean);
+    store.predictions[date] = (store.predictions[date] || []).map((prediction) =>
+      compactPredictionEntry(prediction, date !== referenceDateKey && date !== addDaysToDateKey(referenceDateKey, 1))
+    );
+
+    for (const match of store.matches[date]) {
+      if (match?.id) retainedMatchIds.add(match.id);
+    }
+  }
+
+  const reviewEntries = Object.entries(store.postMatchReviews || {})
+    .filter(([, review]) => retainedMatchIds.has(review?.matchId))
+    .sort((a, b) => Number(b[1]?.createdAt || 0) - Number(a[1]?.createdAt || 0))
+    .slice(0, MAX_REVIEWS);
+  store.postMatchReviews = Object.fromEntries(reviewEntries);
+
+  pruneUpdatedMap(store, "teamStats", "teamStatsUpdated", FORM_TTL, now, 600);
+  pruneUpdatedMap(store, "teamInjuries", "teamInjuriesUpdated", INJURY_TTL, now, 600);
+  pruneUpdatedMap(store, "teamSeasonStats", "teamSeasonStatsUpdated", SEASON_TTL, now, 600);
+  pruneUpdatedMap(store, "eventCache", "eventCacheUpdated", EVENT_TTL, now, MAX_EVENT_CACHE);
+  pruneUpdatedMap(store, "marketProfiles", "marketProfilesUpdated", MARKET_TTL, now, MAX_MARKET_PROFILES);
+  pruneEmbeddedUpdatedMap(store, "h2hCache", H2H_TTL, now, MAX_H2H_CACHE);
+  pruneEmbeddedUpdatedMap(store, "weatherCache", WEATHER_TTL, now, MAX_WEATHER_CACHE);
+
+  if (store.clubEloUpdated && now - Number(store.clubEloUpdated || 0) > CLUB_ELO_TTL * 2) {
+    store.clubEloCache = null;
+    store.clubEloUpdated = null;
+  }
+}
+
 function getTeam(storeTeams, id, name) {
   const key = id ? `id:${id}` : `name:${normalizeName(name)}`;
   if (!storeTeams[key]) {
@@ -2422,7 +2613,7 @@ function defaultStore() {
     postMatchReviews: {},
     teamLearning: {},
     lastRun: null,
-    workerVersion: "v6-review-market",
+    workerVersion: "v6-review-market-compact",
   };
 }
 
@@ -2448,6 +2639,7 @@ async function main() {
   if (!store.postMatchReviews) store.postMatchReviews = {};
   if (!store.teamLearning) store.teamLearning = {};
   purgeExcludedContent(store);
+  compactStore(store, today, now);
   for (const date of dates) store.knockoutOverview[date] = [];
   store.cupSheets = {};
   rebuildReviewsAndLearning(store);
@@ -2891,12 +3083,13 @@ async function main() {
     await sleep(30);
   }
 
+  compactStore(store, today, now);
   rebuildReviewsAndLearning(store);
   store.lastRun = Date.now();
-  store.workerVersion = "v6-review-market";
+  store.workerVersion = "v6-review-market-compact";
   fs.mkdirSync(path.dirname(TRAINING_SNAPSHOT_FILE), { recursive: true });
-  fs.writeFileSync(TRAINING_SNAPSHOT_FILE, JSON.stringify(buildTrainingSnapshot(store), null, 2));
-  fs.writeFileSync(DATA_FILE, JSON.stringify(store, null, 2));
+  fs.writeFileSync(TRAINING_SNAPSHOT_FILE, JSON.stringify(buildTrainingSnapshot(store)));
+  fs.writeFileSync(DATA_FILE, JSON.stringify(store));
   console.log("[worker] klaar");
 }
 
