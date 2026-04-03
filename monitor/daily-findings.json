@@ -133,6 +133,41 @@
           ]
         }
       ]
+    },
+    "2026-04-04": {
+      "runs": [
+        {
+          "timestamp": "2026-04-03T22:53:45.872Z",
+          "stats": {
+            "today": "2026-04-04",
+            "dataPresent": true,
+            "lastRun": 1775255845804,
+            "ageMinutes": 16,
+            "todayMatches": 45,
+            "liveMatches": 0,
+            "liveWithoutMinute": 0,
+            "h2hFilled": 1,
+            "h2hMissing": 44,
+            "standingsCount": 26,
+            "cupSheetCount": 4,
+            "phaseReliabilityCount": 5
+          },
+          "issues": [
+            {
+              "key": "historical_referee_unmatched",
+              "severity": "low",
+              "message": "Geen enkele wedstrijd van vandaag gebruikt historische referee-data.",
+              "details": {}
+            },
+            {
+              "key": "duplicate_minute_logic",
+              "severity": "low",
+              "message": "Minute parsing staat op meerdere plekken dubbel; bundelen in één helper zou onderhoud verbeteren.",
+              "details": {}
+            }
+          ]
+        }
+      ]
     }
   }
 }
