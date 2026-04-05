@@ -1,39 +1,27 @@
 {
-  "generatedAt": "2026-04-04T22:50:18.945Z",
-  "date": "2026-04-05",
+  "generatedAt": "2026-04-05T22:52:00.441Z",
+  "date": "2026-04-06",
   "proposalOnly": true,
   "shouldPropose": true,
-  "branchName": "codex/review-20260405",
-  "summary": "AI reviewvoorstel voor 2026-04-05: 2 aandachtspunt(en) met patchadvies, niet automatisch live.",
+  "branchName": "codex/review-20260406",
+  "summary": "AI reviewvoorstel voor 2026-04-06: 1 aandachtspunt(en) met patchadvies, niet automatisch live.",
   "latestStats": {
-    "today": "2026-04-05",
+    "today": "2026-04-06",
     "dataPresent": true,
-    "lastRun": 1775342044597,
-    "ageMinutes": 16,
-    "todayMatches": 34,
+    "lastRun": 1775428527060,
+    "ageMinutes": 17,
+    "todayMatches": 43,
     "liveMatches": 0,
     "liveWithoutMinute": 0,
-    "h2hFilled": 1,
-    "h2hMissing": 33,
+    "h2hFilled": 2,
+    "h2hMissing": 41,
     "standingsCount": 26,
-    "cupSheetCount": 2,
+    "cupSheetCount": 4,
     "phaseReliabilityCount": 5
   },
   "findings": [
     {
       "priority": 1,
-      "key": "historical_referee_unmatched",
-      "severity": "low",
-      "message": "Geen enkele wedstrijd van vandaag gebruikt historische referee-data.",
-      "whyItMatters": "Historische scheidsrechterdata matcht nog te weinig.",
-      "recommendedFiles": [
-        "scripts/server-worker.js",
-        "components/MatchCard.tsx"
-      ],
-      "details": {}
-    },
-    {
-      "priority": 2,
       "key": "duplicate_minute_logic",
       "severity": "low",
       "message": "Minute parsing staat op meerdere plekken dubbel; bundelen in één helper zou onderhoud verbeteren.",
@@ -47,7 +35,6 @@
     }
   ],
   "recommendedFiles": [
-    "scripts/server-worker.js",
     "components/MatchCard.tsx",
     "components/LivePanel.tsx",
     "services/matchService.ts"
