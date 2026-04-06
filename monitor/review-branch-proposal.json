@@ -1,20 +1,20 @@
 {
-  "generatedAt": "2026-04-05T22:52:00.441Z",
-  "date": "2026-04-06",
+  "generatedAt": "2026-04-06T22:57:02.887Z",
+  "date": "2026-04-07",
   "proposalOnly": true,
   "shouldPropose": true,
-  "branchName": "codex/review-20260406",
-  "summary": "AI reviewvoorstel voor 2026-04-06: 1 aandachtspunt(en) met patchadvies, niet automatisch live.",
+  "branchName": "codex/review-20260407",
+  "summary": "AI reviewvoorstel voor 2026-04-07: 2 aandachtspunt(en) met patchadvies, niet automatisch live.",
   "latestStats": {
-    "today": "2026-04-06",
+    "today": "2026-04-07",
     "dataPresent": true,
-    "lastRun": 1775428527060,
-    "ageMinutes": 17,
-    "todayMatches": 43,
+    "lastRun": 1775515890601,
+    "ageMinutes": 6,
+    "todayMatches": 3,
     "liveMatches": 0,
     "liveWithoutMinute": 0,
-    "h2hFilled": 2,
-    "h2hMissing": 41,
+    "h2hFilled": 0,
+    "h2hMissing": 3,
     "standingsCount": 26,
     "cupSheetCount": 4,
     "phaseReliabilityCount": 5
@@ -22,6 +22,18 @@
   "findings": [
     {
       "priority": 1,
+      "key": "h2h_empty",
+      "severity": "medium",
+      "message": "Alle wedstrijden van vandaag hebben lege H2H-data.",
+      "whyItMatters": "Onderlinge duels worden niet sterk genoeg gevuld.",
+      "recommendedFiles": [
+        "scripts/server-worker.js",
+        "components/MatchCard.tsx"
+      ],
+      "details": {}
+    },
+    {
+      "priority": 2,
       "key": "duplicate_minute_logic",
       "severity": "low",
       "message": "Minute parsing staat op meerdere plekken dubbel; bundelen in één helper zou onderhoud verbeteren.",
@@ -35,6 +47,7 @@
     }
   ],
   "recommendedFiles": [
+    "scripts/server-worker.js",
     "components/MatchCard.tsx",
     "components/LivePanel.tsx",
     "services/matchService.ts"
