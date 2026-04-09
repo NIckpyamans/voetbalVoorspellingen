@@ -157,7 +157,7 @@ const MARKET_TTL = 24 * 60 * 60 * 1000;
 const INTERNATIONAL_AVAILABILITY_TTL = 12 * 60 * 60 * 1000;
 const HISTORY_KEEP_DAYS_BACK = 12;
 const HISTORY_KEEP_DAYS_FORWARD = 4;
-const MAX_REVIEWS = 1200;
+const MAX_REVIEWS = 2500;
 const MAX_SCORE_MATRIX_ENTRIES = 10;
 const MAX_EVENT_CACHE = 300;
 const MAX_H2H_CACHE = 500;
@@ -3515,7 +3515,6 @@ function compactStore(store, referenceDateKey, now) {
   }
 
   const reviewEntries = Object.entries(store.postMatchReviews || {})
-    .filter(([, review]) => retainedMatchIds.has(review?.matchId))
     .sort((a, b) => Number(b[1]?.createdAt || 0) - Number(a[1]?.createdAt || 0))
     .slice(0, MAX_REVIEWS);
   store.postMatchReviews = Object.fromEntries(reviewEntries);
@@ -3572,7 +3571,7 @@ function defaultStore() {
     phaseReliability: {},
     aiAdvice: [],
     lastRun: null,
-    workerVersion: "v10-h2h-minute-advice",
+    workerVersion: "v11-history-competition-sources",
   };
 }
 
@@ -4171,7 +4170,7 @@ async function main() {
   rebuildReviewsAndLearning(store);
   store.aiAdvice = buildAiRecommendations(store, today);
   store.lastRun = Date.now();
-  store.workerVersion = "v10-h2h-minute-advice";
+  store.workerVersion = "v11-history-competition-sources";
   fs.mkdirSync(path.dirname(TRAINING_SNAPSHOT_FILE), { recursive: true });
   fs.writeFileSync(TRAINING_SNAPSHOT_FILE, JSON.stringify(buildTrainingSnapshot(store)));
   fs.writeFileSync(DATA_FILE, JSON.stringify(store));

@@ -14,7 +14,7 @@ type TeamStoreEntry = {
 
 const TEAM_STORE_KEY = "footypredict_team_store_v1";
 const MEMORY_KEY = "footypredict_memory";
-const MEMORY_LIMIT = 1400;
+const MEMORY_LIMIT = 4000;
 const TEAM_STORE_LIMIT = 900;
 const TEAM_STORE_MAX_AGE = 180 * 24 * 60 * 60 * 1000;
 

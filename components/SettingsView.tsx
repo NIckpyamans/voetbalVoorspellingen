@@ -317,6 +317,50 @@ const SettingsView: React.FC = () => {
       </div>
 
       <div className="glass-card rounded-2xl border border-white/5 p-5">
+        <div className="text-[10px] font-black text-slate-400 uppercase mb-3">Gratis databronnen met meeste extra waarde</div>
+        <div className="space-y-3">
+          {[
+            {
+              name: "football-data.co.uk",
+              status: "gekoppeld",
+              desc: "Blijft de sterkste gratis bron voor historische odds, closing-lijnen, bookmakerkolommen en veel competitiemeta.",
+            },
+            {
+              name: "Understat",
+              status: "aanbevolen",
+              desc: "Kan extra xG/xGA-profielen voor topcompetities leveren en is vooral nuttig voor clubwedstrijden met veel schotdata.",
+            },
+            {
+              name: "FBref",
+              status: "aanbevolen",
+              desc: "Kan geavanceerde teamstatistieken en home/away splits aanvullen waar de huidige feed dun blijft.",
+            },
+            {
+              name: "Transfermarkt",
+              status: "deels gekoppeld",
+              desc: "Wordt al best-effort gebruikt voor interland blessures/schorsingen; kan later nog breder per competitie worden ingezet.",
+            },
+          ].map((item) => (
+            <div key={item.name} className="rounded-xl border border-white/5 bg-slate-900/30 p-3">
+              <div className="flex items-center justify-between gap-3">
+                <div className="text-[11px] font-black text-white">{item.name}</div>
+                <span className={`text-[8px] font-black px-2 py-0.5 rounded-full ${
+                  item.status === "gekoppeld"
+                    ? "bg-green-900/30 text-green-300"
+                    : item.status === "deels gekoppeld"
+                      ? "bg-blue-900/30 text-blue-300"
+                      : "bg-amber-900/30 text-amber-300"
+                }`}>
+                  {item.status}
+                </span>
+              </div>
+              <div className="text-[10px] text-slate-400 mt-1">{item.desc}</div>
+            </div>
+          ))}
+        </div>
+      </div>
+
+      <div className="glass-card rounded-2xl border border-white/5 p-5">
         <div className="text-[10px] font-black text-slate-400 uppercase mb-3">Cache beheer</div>
         <div className="space-y-3">
           <div className="flex items-center justify-between">
