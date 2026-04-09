@@ -2,6 +2,7 @@
 
 import fs from "fs";
 import path from "path";
+import { normalizeMinute, parseMinuteValue } from "../shared/minute.js";
 
 const SOFA = "https://api.sofascore.com/api/v1";
 const DATA_FILE = path.resolve(process.cwd(), "server_data.json");
@@ -153,6 +154,7 @@ const WEATHER_TTL = 6 * 60 * 60 * 1000;
 const EVENT_TTL = 12 * 60 * 60 * 1000;
 const CLUB_ELO_TTL = 12 * 60 * 60 * 1000;
 const MARKET_TTL = 24 * 60 * 60 * 1000;
+const INTERNATIONAL_AVAILABILITY_TTL = 12 * 60 * 60 * 1000;
 const HISTORY_KEEP_DAYS_BACK = 12;
 const HISTORY_KEEP_DAYS_FORWARD = 4;
 const MAX_REVIEWS = 1200;
@@ -161,6 +163,7 @@ const MAX_EVENT_CACHE = 300;
 const MAX_H2H_CACHE = 500;
 const MAX_WEATHER_CACHE = 220;
 const MAX_MARKET_PROFILES = 64;
+const MAX_INTERNATIONAL_AVAILABILITY = 160;
 
 const MARKET_LEAGUE_CODES = {
   "England - Premier League": "E0",
@@ -246,13 +249,7 @@ function resolveMinuteState(eventLike, eventDetails) {
   const extra =
     Number(eventLike?.time?.extra ?? eventDetails?.time?.extra ?? parsed?.extra ?? 0) || null;
 
-  const periodText = String(period || "").toLowerCase();
-  const minute =
-    periodText.includes("half time") || periodText.includes("halftime") || periodText === "ht"
-      ? "HT"
-      : current
-        ? `${current}${extra ? `+${extra}` : ""}'`
-        : null;
+  const minute = normalizeMinute(null, current, extra, period) || null;
 
   return {
     minute,
@@ -1134,17 +1131,22 @@ function buildMarketCalibration(input) {
   const home = input.homeMarketProfile || null;
   const away = input.awayMarketProfile || null;
   const leagueMeta = input.leagueMarketProfile?.leagueMeta || null;
+  const supplemental = input.supplementalOdds || null;
   if (!home && !away) {
+    const supplementalSignals = Array.isArray(supplemental?.bookmakerSignals) ? supplemental.bookmakerSignals : [];
     return {
-      summary: "geen historische marktdata gekoppeld",
-      source: "football-data.co.uk",
+      summary: supplementalSignals.length
+        ? `geen historische marktdata, live oddsdekking ${supplementalSignals.length} bookmakers`
+        : "geen historische marktdata gekoppeld",
+      source: supplementalSignals.length ? "Sofascore current odds" : "football-data.co.uk",
       homeImpliedPpg: null,
       awayImpliedPpg: null,
       overperformanceDiff: 0,
-      strength: 0,
-      closingLean: "neutral",
-      closingCoverage: 0,
-      bookmakerSignals: [],
+      strength: supplementalSignals.length ? 0.26 : 0,
+      closingLean: supplemental?.bookmakerSignals?.[0]?.lean || "neutral",
+      closingCoverage: Number(supplemental?.closingCoverage || 0),
+      bookmakerSignals: supplementalSignals,
+      bookmakerAgreement: Number(supplemental?.bookmakerAgreement || 0),
     };
   }
 
@@ -1159,7 +1161,7 @@ function buildMarketCalibration(input) {
   const sampleGames = Number(home?.homeGames || 0) + Number(away?.awayGames || 0);
   const sampleStrength = Math.min(sampleGames / 26, 1);
   const closingCoverage = Number(leagueMeta?.closingCoverage || 0);
-  const bookmakerSignals = BOOKMAKER_DEFS.map((bookmaker) => {
+  const historicalSignals = BOOKMAKER_DEFS.map((bookmaker) => {
     const homeBook = home?.bookmakers?.[bookmaker.key] || null;
     const awayBook = away?.bookmakers?.[bookmaker.key] || null;
     if (!homeBook && !awayBook) return null;
@@ -1182,13 +1184,21 @@ function buildMarketCalibration(input) {
     const bookLean = bookDiff >= 0.3 ? "home" : bookDiff <= -0.3 ? "away" : "neutral";
     return {
       key: bookmaker.key,
-      bookmaker: bookmaker.label,
-      diff: bookDiff,
-      strength: bookStrength,
-      closingCoverage: bookCoverage,
-      lean: bookLean,
-    };
+        bookmaker: bookmaker.label,
+        diff: bookDiff,
+        strength: bookStrength,
+        closingCoverage: bookCoverage,
+        lean: bookLean,
+        source: "football-data.co.uk",
+      };
   }).filter(Boolean);
+
+  const supplementalSignals = Array.isArray(supplemental?.bookmakerSignals) ? supplemental.bookmakerSignals : [];
+  const bookmakerSignals = [...historicalSignals];
+  for (const signal of supplementalSignals) {
+    if (bookmakerSignals.some((item) => item.key === signal.key)) continue;
+    bookmakerSignals.push(signal);
+  }
 
   const weightedBookDiff = bookmakerSignals.length
     ? bookmakerSignals.reduce((sum, item) => sum + Number(item.diff || 0) * Math.max(Number(item.strength || 0), 0.1), 0) /
@@ -1206,15 +1216,16 @@ function buildMarketCalibration(input) {
   const strength = Number(
     (
       sampleStrength * 0.42 +
-      Math.min(closingCoverage, 1) * 0.23 +
+      Math.min(Math.max(closingCoverage, Number(supplemental?.closingCoverage || 0)), 1) * 0.23 +
       (bookmakerSignals.length ? bookmakerSignals.reduce((sum, item) => sum + Number(item.strength || 0), 0) / bookmakerSignals.length : 0) * 0.35
     ).toFixed(2)
   );
   const closingLean = weightedBookDiff >= 0.35 ? "home" : weightedBookDiff <= -0.35 ? "away" : "neutral";
+  const effectiveCoverage = Number(Math.max(closingCoverage, Number(supplemental?.closingCoverage || 0)).toFixed(2));
 
   return {
-    summary: `closing-profiel ${input.homeTeamProfile?.teamName || "thuis"} ${homeImplied.toFixed(2)} PPG vs ${input.awayTeamProfile?.teamName || "uit"} ${awayImplied.toFixed(2)} PPG, dekking ${Math.round(closingCoverage * 100)}%, bookmaker-consensus ${Math.round(bookmakerAgreement * 100)}%`,
-    source: "football-data.co.uk",
+    summary: `closing-profiel ${input.homeTeamProfile?.teamName || "thuis"} ${homeImplied.toFixed(2)} PPG vs ${input.awayTeamProfile?.teamName || "uit"} ${awayImplied.toFixed(2)} PPG, dekking ${Math.round(effectiveCoverage * 100)}%, bookmaker-consensus ${Math.round(bookmakerAgreement * 100)}%`,
+    source: supplementalSignals.length ? "football-data.co.uk + Sofascore current odds" : "football-data.co.uk",
     homeImpliedPpg: homeImplied,
     awayImpliedPpg: awayImplied,
     overperformanceDiff: diff,
@@ -1222,7 +1233,7 @@ function buildMarketCalibration(input) {
     awayGames: Number(away?.awayGames || 0),
     strength,
     closingLean,
-    closingCoverage,
+    closingCoverage: effectiveCoverage,
     bookmakerSignals,
     bookmakerAgreement,
   };
@@ -1426,10 +1437,43 @@ function normalizeProbabilities(home, draw, away) {
   };
 }
 
+function buildPairKey(homeTeam, awayTeam) {
+  return [normalizeName(homeTeam), normalizeName(awayTeam)].filter(Boolean).sort().join("__");
+}
+
+function parseHistoricalRowDate(value) {
+  const text = String(value || "").trim();
+  if (!text) return null;
+  const slash = text.match(/^(\d{1,2})\/(\d{1,2})\/(\d{2,4})$/);
+  if (slash) {
+    const year = Number(slash[3]) < 100 ? 2000 + Number(slash[3]) : Number(slash[3]);
+    const iso = `${year}-${String(slash[2]).padStart(2, "0")}-${String(slash[1]).padStart(2, "0")}`;
+    return iso;
+  }
+  const dash = new Date(text);
+  if (!Number.isNaN(dash.getTime())) return dash.toISOString().slice(0, 10);
+  return null;
+}
+
+function mergeH2HResultLists(existingResults = [], extraResults = []) {
+  const seen = new Set();
+  const merged = [];
+  for (const item of [...existingResults, ...extraResults]) {
+    const key = `${item?.date || ""}_${item?.home || ""}_${item?.away || ""}_${item?.score || ""}`;
+    if (seen.has(key)) continue;
+    seen.add(key);
+    merged.push(item);
+  }
+  return merged
+    .sort((a, b) => String(a?.date || "").localeCompare(String(b?.date || "")))
+    .slice(-8);
+}
+
 function buildMarketProfiles(rows) {
   const teams = {};
   const referees = {};
   const refereeAliases = {};
+  const h2hPairs = {};
   let closingRows = 0;
   let fallbackRows = 0;
   let validRows = 0;
@@ -1498,6 +1542,20 @@ function buildMarketProfiles(rows) {
     teams[awayKey].totalGames += 1;
     teams[awayKey].awayActualPoints += actualAwayPoints;
     teams[awayKey].awayImpliedPoints += impliedAwayPoints;
+
+    const pairKey = buildPairKey(homeTeam, awayTeam);
+    if (!h2hPairs[pairKey]) h2hPairs[pairKey] = [];
+    const winnerId = result === "H" ? homeKey : result === "A" ? awayKey : "";
+    h2hPairs[pairKey].push({
+      date: parseHistoricalRowDate(row.Date),
+      home: homeTeam,
+      away: awayTeam,
+      homeTeamId: "",
+      awayTeamId: "",
+      score: Number.isFinite(homeGoals) && Number.isFinite(awayGoals) ? `${homeGoals}-${awayGoals}` : "-",
+      winnerId,
+      source: "football-data.co.uk",
+    });
 
     for (const bookmaker of BOOKMAKER_DEFS) {
       const homeBookMeta = pickOddsWithMeta(row, [bookmaker.closing[0]], [bookmaker.opening[0]]);
@@ -1659,6 +1717,9 @@ function buildMarketProfiles(rows) {
     teams: formattedTeams,
     referees: formattedReferees,
     refereeAliases,
+    h2hPairs: Object.fromEntries(
+      Object.entries(h2hPairs).map(([key, values]) => [key, values.sort((a, b) => String(a?.date || "").localeCompare(String(b?.date || ""))).slice(-12)])
+    ),
   };
 }
 
@@ -1677,6 +1738,47 @@ async function fetchHistoricalMarketProfile(leagueLabel, dateISO) {
   }
   if (!allRows.length) return null;
   return buildMarketProfiles(allRows);
+}
+
+function lookupHistoricalH2HBackfill(leagueMarketProfile, homeName, awayName, currentHomeId, currentAwayId) {
+  const pairs = leagueMarketProfile?.h2hPairs || {};
+  const pairKey = buildPairKey(homeName, awayName);
+  const raw = Array.isArray(pairs[pairKey]) ? pairs[pairKey] : [];
+  const results = raw
+    .map((item) => ({
+      ...item,
+      homeTeamId: item.homeTeamId || "",
+      awayTeamId: item.awayTeamId || "",
+      winnerId:
+        item.winnerId === normalizeName(homeName)
+          ? String(currentHomeId || "")
+          : item.winnerId === normalizeName(awayName)
+            ? String(currentAwayId || "")
+            : "",
+    }))
+    .slice(-5);
+
+  if (!results.length) return null;
+
+  let homeWins = 0;
+  let draws = 0;
+  let awayWins = 0;
+  for (const result of results) {
+    if (!result.winnerId) draws += 1;
+    else if (String(result.winnerId) === String(currentHomeId || "")) homeWins += 1;
+    else if (String(result.winnerId) === String(currentAwayId || "")) awayWins += 1;
+  }
+
+  return {
+    played: results.length,
+    homeWins,
+    draws,
+    awayWins,
+    sameCompetitionPlayed: results.length,
+    weightedRecentBalance: calculateRecentH2HBalance({ results }, currentHomeId, currentAwayId),
+    results,
+    status: "historical-competition",
+  };
 }
 
 function lookupMarketTeamProfile(leagueMarketProfile, teamName) {
@@ -1717,6 +1819,141 @@ function lookupHistoricalRefereeProfile(leagueMarketProfile, refereeName) {
       );
     }) || null
   );
+}
+
+function flattenOddsContainers(node, bucket = []) {
+  if (!node) return bucket;
+  if (Array.isArray(node)) {
+    for (const item of node) flattenOddsContainers(item, bucket);
+    return bucket;
+  }
+  if (typeof node !== "object") return bucket;
+
+  const maybeHome = Number(node.home || node.homeOdds || node.homeValue || node.oddsHome || node.choice1?.value || 0);
+  const maybeDraw = Number(node.draw || node.drawOdds || node.drawValue || node.oddsDraw || node.choiceX?.value || 0);
+  const maybeAway = Number(node.away || node.awayOdds || node.awayValue || node.oddsAway || node.choice2?.value || 0);
+  const bookmaker =
+    node.bookmaker?.name ||
+    node.bookmakerName ||
+    node.provider ||
+    node.name ||
+    node.marketName ||
+    "";
+
+  if (maybeHome > 1.01 && maybeDraw > 1.01 && maybeAway > 1.01) {
+    bucket.push({
+      bookmaker: String(bookmaker || "Sofascore"),
+      home: maybeHome,
+      draw: maybeDraw,
+      away: maybeAway,
+    });
+  }
+
+  for (const value of Object.values(node)) flattenOddsContainers(value, bucket);
+  return bucket;
+}
+
+async function fetchEventBookmakerOdds(eventId) {
+  const urls = [
+    `${SOFA}/event/${eventId}/odds/1/all`,
+    `${SOFA}/event/${eventId}/odds/1`,
+    `${SOFA}/event/${eventId}/odds`,
+  ];
+
+  for (const url of urls) {
+    const json = await safeFetch(url);
+    const rows = flattenOddsContainers(json, []);
+    if (!rows.length) continue;
+
+    const byBook = {};
+    for (const row of rows) {
+      const key = normalizeName(row.bookmaker);
+      if (!key || byBook[key]) continue;
+      byBook[key] = row;
+    }
+
+    const signals = Object.values(byBook).slice(0, 8).map((row) => {
+      const implied = normalizeProbabilities(1 / row.home, 1 / row.draw, 1 / row.away);
+      const lean = implied.home >= implied.away && implied.home >= implied.draw ? "home" : implied.away >= implied.draw ? "away" : "neutral";
+      return {
+        key: normalizeName(row.bookmaker),
+        bookmaker: row.bookmaker,
+        diff: Number((implied.home - implied.away).toFixed(2)),
+        strength: Number((Math.max(implied.home, implied.draw, implied.away) * 0.9).toFixed(2)),
+        closingCoverage: 1,
+        lean,
+        source: "sofascore-odds",
+      };
+    });
+
+    return {
+      source: "Sofascore current odds",
+      bookmakerSignals: signals,
+      bookmakerAgreement:
+        signals.length > 0
+          ? Number((signals.filter((item) => item.lean === "home" || item.lean === "away").length / signals.length).toFixed(2))
+          : 0,
+      closingCoverage: signals.length > 0 ? 1 : 0,
+    };
+  }
+
+  return null;
+}
+
+async function fetchTransfermarktNationalTeamAvailability(teamName) {
+  const query = encodeURIComponent(teamName);
+  const searchUrl = `https://www.transfermarkt.com/schnellsuche/ergebnis/schnellsuche?query=${query}`;
+  const searchText = await safeFetchText(searchUrl);
+  if (!searchText) return null;
+
+  const teamPattern = /href="\/([^"/]+)\/startseite\/verein\/(\d+)"[^>]*>([^<]+)</gi;
+  let match = null;
+  let candidate = null;
+  const normalizedQuery = normalizeName(teamName);
+  while ((match = teamPattern.exec(searchText))) {
+    const name = String(match[3] || "").trim();
+    const normalizedName = normalizeName(name);
+    if (!normalizedName) continue;
+    if (normalizedName.includes(normalizedQuery) || normalizedQuery.includes(normalizedName)) {
+      candidate = { slug: match[1], id: match[2], name };
+      break;
+    }
+  }
+  if (!candidate) return null;
+
+  const availabilityUrl = `https://www.transfermarkt.com/${candidate.slug}/sperrenundverletzungen/verein/${candidate.id}`;
+  const html = await safeFetchText(availabilityUrl);
+  if (!html) return null;
+
+  const names = [...html.matchAll(/spielerprofil[^>]*>([^<]+)</gi)].map((item) => String(item[1] || "").trim()).filter(Boolean);
+  const suspensionHits = [...html.matchAll(/sperre|suspended|suspension/gi)].length;
+  const injuryHits = [...html.matchAll(/verletz|injur|knock|muscular|ankle|illness/gi)].length;
+  const doubtHits = [...html.matchAll(/fraglich|doubt|questionable/gi)].length;
+
+  if (!injuryHits && !suspensionHits && !doubtHits) return null;
+
+  return {
+    injuredCount: Math.min(injuryHits, Math.max(names.length, injuryHits)),
+    suspendedCount: suspensionHits,
+    doubtsCount: doubtHits,
+    source: "Transfermarkt availability",
+    keyPlayersMissing: names.slice(0, 4),
+    suspendedPlayers: names.slice(0, Math.min(3, suspensionHits || 0)),
+  };
+}
+
+function mergeAvailability(baseAvailability, extraAvailability) {
+  if (!extraAvailability) return baseAvailability;
+  return {
+    ...baseAvailability,
+    injuredCount: Math.max(Number(baseAvailability?.injuredCount || 0), Number(extraAvailability?.injuredCount || 0)),
+    suspendedCount: Math.max(Number(baseAvailability?.suspendedCount || 0), Number(extraAvailability?.suspendedCount || 0)),
+    doubtsCount: Math.max(Number(baseAvailability?.doubtsCount || 0), Number(extraAvailability?.doubtsCount || 0)),
+    injuredRating: Number(baseAvailability?.injuredRating || 0),
+    keyPlayersMissing: [...new Set([...(baseAvailability?.keyPlayersMissing || []), ...(extraAvailability?.keyPlayersMissing || [])])].slice(0, 5),
+    suspendedPlayers: [...new Set([...(baseAvailability?.suspendedPlayers || []), ...(extraAvailability?.suspendedPlayers || [])])].slice(0, 4),
+    source: extraAvailability?.source || baseAvailability?.source || "Sofascore players",
+  };
 }
 
 function getPredictedOutcome(prediction) {
@@ -2242,20 +2479,18 @@ async function fetchTeamForm(teamId, options = {}) {
   };
 }
 
-async function fetchInjuries(teamId) {
+async function fetchInjuries(teamId, context = {}) {
   const json = await safeFetch(`${SOFA}/team/${teamId}/players`);
-  if (!json?.players) {
-    return { injuredCount: 0, injuredRating: 0, keyPlayersMissing: [] };
-  }
-
-  const injured = json.players.filter(
+  const injured = Array.isArray(json?.players)
+    ? json.players.filter(
     (player) =>
       player.player?.injured === true ||
       player.status === "injured" ||
       player.status === "doubtful"
-  );
+      )
+    : [];
 
-  return {
+  const baseAvailability = {
     injuredCount: injured.length,
     injuredRating: Number(
       injured.reduce(
@@ -2267,7 +2502,18 @@ async function fetchInjuries(teamId) {
       .map((player) => player.player?.name)
       .filter(Boolean)
       .slice(0, 4),
+    suspendedCount: 0,
+    suspendedPlayers: [],
+    doubtsCount: injured.filter((player) => player.status === "doubtful").length,
+    source: "Sofascore players",
   };
+
+  const tournamentName = String(context?.tournamentName || "");
+  const isInternational = isSeniorInternationalTournament(tournamentName);
+  if (!isInternational) return baseAvailability;
+
+  const extraAvailability = await fetchTransfermarktNationalTeamAvailability(context?.teamName || "");
+  return mergeAvailability(baseAvailability, extraAvailability);
 }
 
 async function fetchSeasonStats(teamId, tournamentId, seasonId) {
@@ -3324,9 +3570,51 @@ function defaultStore() {
     teamLearning: {},
     leagueReliability: {},
     phaseReliability: {},
+    aiAdvice: [],
     lastRun: null,
-    workerVersion: "v9-ref-bookmaker-phase",
+    workerVersion: "v10-h2h-minute-advice",
   };
+}
+
+function buildAiRecommendations(store, todayKey) {
+  const todayMatches = Array.isArray(store.matches?.[todayKey]) ? store.matches[todayKey] : [];
+  const issues = [];
+
+  const h2hMissing = todayMatches.filter((match) => !match?.h2h?.played).length;
+  if (h2hMissing > 0) {
+    issues.push({
+      title: "H2H aanvullen",
+      summary: `${h2hMissing} wedstrijd(en) missen nog onderlinge historie.`,
+      action: "Voeg waar mogelijk extra competitie-backfill of bronfallback toe in de worker.",
+      priority: "medium",
+    });
+  }
+
+  const bookmakerMissing = todayMatches.filter(
+    (match) => !Array.isArray(match?.marketCalibration?.bookmakerSignals) || !match.marketCalibration.bookmakerSignals.length
+  ).length;
+  if (bookmakerMissing > 0) {
+    issues.push({
+      title: "Bookmakerdekking verbreden",
+      summary: `${bookmakerMissing} wedstrijd(en) missen bookmaker-signalen.`,
+      action: "Gebruik extra oddsbron of current-odds fallback voor interlands en zeldzame competities.",
+      priority: "medium",
+    });
+  }
+
+  const exactReviews = Object.values(store.postMatchReviews || {});
+  const exactHitRate =
+    exactReviews.length > 0
+      ? exactReviews.filter((item) => item.exactHit).length / exactReviews.length
+      : 0;
+  issues.push({
+    title: "Modelkalibratie",
+    summary: `Exact-score hitrate staat op ${Math.round(exactHitRate * 100)}% over ${exactReviews.length} reviews.`,
+    action: "Gebruik deze score om ensemble- en closing-gewichten te blijven finetunen.",
+    priority: exactHitRate < 0.14 ? "high" : "low",
+  });
+
+  return issues;
 }
 
 async function main() {
@@ -3455,7 +3743,7 @@ async function main() {
       await sleep(90);
     }
     if (!store.teamInjuries[teamId] || now - Number(store.teamInjuriesUpdated?.[teamId] || 0) > INJURY_TTL) {
-      store.teamInjuries[teamId] = await fetchInjuries(teamId);
+      store.teamInjuries[teamId] = await fetchInjuries(teamId, teamTournamentMap.get(teamId) || {});
       store.teamInjuriesUpdated[teamId] = now;
       await sleep(70);
     }
@@ -3577,6 +3865,20 @@ async function main() {
           status: h2h?.status || "loaded",
         };
       }
+      const historicalH2H = lookupHistoricalH2HBackfill(store.marketProfiles[leagueInfo.label] || null, homeName, awayName, homeId, awayId);
+      if ((!h2h || Number(h2h.played || 0) < 3) && historicalH2H) {
+        const mergedHistoricalResults = mergeH2HResultLists(h2h?.results || [], historicalH2H.results || []);
+        h2h = {
+          played: mergedHistoricalResults.length,
+          homeWins: mergedHistoricalResults.filter((item) => String(item.winnerId || "") === String(homeId || "")).length,
+          draws: mergedHistoricalResults.filter((item) => !item.winnerId).length,
+          awayWins: mergedHistoricalResults.filter((item) => String(item.winnerId || "") === String(awayId || "")).length,
+          sameCompetitionPlayed: Number(h2h?.sameCompetitionPlayed || 0) + Number(historicalH2H.sameCompetitionPlayed || 0),
+          weightedRecentBalance: calculateRecentH2HBalance({ results: mergedHistoricalResults }, homeId, awayId),
+          results: mergedHistoricalResults,
+          status: h2h?.played ? "merged-historical-competition" : "historical-competition",
+        };
+      }
       const aggregate = buildAggregateInfo(event, eventDetails, h2h, fallbackPreviousLeg);
       const homeRestDays = calcRestDays(homeRecent?.lastMatchKickoff, kickoff);
       const awayRestDays = calcRestDays(awayRecent?.lastMatchKickoff, kickoff);
@@ -3631,12 +3933,21 @@ async function main() {
       });
       const referee = extractReferee(eventDetails);
       const historicalRefereeProfile = lookupHistoricalRefereeProfile(leagueMarketProfile, referee?.name);
+      let supplementalOdds = null;
+      if (
+        String(leagueInfo.label || "").toLowerCase().includes("qualification") ||
+        String(leagueInfo.label || "").toLowerCase().includes("friendly") ||
+        String(leagueInfo.label || "").toLowerCase().includes("international")
+      ) {
+        supplementalOdds = await fetchEventBookmakerOdds(event.id);
+      }
       const marketCalibration = buildMarketCalibration({
         homeMarketProfile,
         awayMarketProfile,
         homeTeamProfile,
         awayTeamProfile,
         leagueMarketProfile,
+        supplementalOdds,
       });
       const refereeProfile = buildRefereeProfile(
         referee,
@@ -3858,8 +4169,9 @@ async function main() {
 
   compactStore(store, today, now);
   rebuildReviewsAndLearning(store);
+  store.aiAdvice = buildAiRecommendations(store, today);
   store.lastRun = Date.now();
-  store.workerVersion = "v9-ref-bookmaker-phase";
+  store.workerVersion = "v10-h2h-minute-advice";
   fs.mkdirSync(path.dirname(TRAINING_SNAPSHOT_FILE), { recursive: true });
   fs.writeFileSync(TRAINING_SNAPSHOT_FILE, JSON.stringify(buildTrainingSnapshot(store)));
   fs.writeFileSync(DATA_FILE, JSON.stringify(store));

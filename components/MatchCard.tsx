@@ -2,22 +2,12 @@ import React, { useEffect, useMemo, useRef, useState } from "react";
 import { Match } from "../types";
 import { FavoriteButton } from "./FavoriteTeams";
 import PostMatchReview from "./PostMatchReview";
+import { getLiveMinuteLabel } from "../shared/minute.js";
 
 interface MatchCardProps {
   match: Match;
   prediction?: any;
   onFavoriteChange?: () => void;
-}
-
-function parseMinuteValue(minute?: string | number | null, minuteValue?: number | null) {
-  if (typeof minuteValue === "number" && Number.isFinite(minuteValue)) return minuteValue;
-  if (typeof minute === "number" && Number.isFinite(minute)) return minute;
-  if (!minute) return null;
-  if (String(minute).toUpperCase() === "HT") return 45;
-  const plusMatch = String(minute).match(/(\d+)\s*\+\s*(\d+)/);
-  if (plusMatch) return Number(plusMatch[1]) + Number(plusMatch[2]);
-  const plainMatch = String(minute).match(/(\d+)/);
-  return plainMatch ? Number(plainMatch[1]) : null;
 }
 
 function useLiveMinute(match: any) {
@@ -29,16 +19,7 @@ function useLiveMinute(match: any) {
     return () => window.clearInterval(timer);
   }, [match?.status, match?.minute, match?.minuteValue, match?.liveUpdatedAt]);
 
-  return useMemo(() => {
-    const period = String(match?.period || "").toLowerCase();
-    if (period.includes("half time") || period.includes("halftime") || period.includes("break")) return "HT";
-    const base = parseMinuteValue(match?.minute, match?.minuteValue);
-    if (base == null) return String(match?.status || "").toUpperCase() === "LIVE" ? "LIVE" : null;
-    const updatedAt = Number(match?.liveUpdatedAt || 0) || 0;
-    const drift = updatedAt > 0 ? Math.max(0, Math.floor((now - updatedAt) / 60000)) : 0;
-    const total = base + drift;
-    return total > 90 ? `90+${total - 90}'` : `${total}'`;
-  }, [match, now]);
+  return useMemo(() => getLiveMinuteLabel(match, now), [match, now]);
 }
 
 function fmt(probability: number) {
@@ -227,6 +208,8 @@ function buildRecentH2HForm(h2h: any, currentHomeId?: string, currentAwayId?: st
 
 function getH2HSourceLabel(status?: string) {
   if (status === "all-competitions") return "laatste onderlinge duels uit alle competities";
+  if (status === "historical-competition") return "aangevuld uit historische competitiedata";
+  if (status === "merged-historical-competition") return "live bron + historische competitiedata";
   if (status === "loaded") return "laatste onderlinge duels in brondata";
   if (status === "fallback") return "aangevuld met vorige duel-fallback";
   return "geen recente onderlinge brondata";
@@ -736,12 +719,6 @@ const MatchCard: React.FC<MatchCardProps> = ({ match, prediction, onFavoriteChan
             {match.kickoff ? new Date(match.kickoff).toLocaleString("nl-NL") : ""}
             {match.roundLabel ? ` · ${match.roundLabel}` : ""}
           </div>
-          {isLive && (
-            <div className="mt-1 inline-flex items-center gap-1 rounded-full bg-red-900/35 border border-red-500/25 px-2 py-0.5">
-              <span className="w-1.5 h-1.5 rounded-full bg-red-500 animate-pulse" />
-              <span className="text-[9px] font-black text-red-200">{liveMinute && liveMinute !== "LIVE" ? `LIVE ${liveMinute}` : "LIVE nu"}</span>
-            </div>
-          )}
         </div>
         <div className="flex items-center gap-1">
           {importantMatch && (
@@ -991,8 +968,8 @@ const MatchCard: React.FC<MatchCardProps> = ({ match, prediction, onFavoriteChan
             <Badge label="xG uit" value={(prediction.awayXG || 0).toFixed(2)} tone="red" />
             <Badge label="Schoten thuis" value={match.homeSeasonStats?.avgShotsOn != null ? Number(match.homeSeasonStats.avgShotsOn).toFixed(1) : "-"} tone="blue" />
             <Badge label="Schoten uit" value={match.awaySeasonStats?.avgShotsOn != null ? Number(match.awaySeasonStats.avgShotsOn).toFixed(1) : "-"} tone="red" />
-            <Badge label="Blessures thuis" value={`${match.homeInjuries?.injuredCount || 0}`} tone="amber" />
-            <Badge label="Blessures uit" value={`${match.awayInjuries?.injuredCount || 0}`} tone="amber" />
+            <Badge label="Blessures thuis" value={`${match.homeInjuries?.injuredCount || 0}/${match.homeInjuries?.suspendedCount || 0}`} tone="amber" />
+            <Badge label="Blessures uit" value={`${match.awayInjuries?.injuredCount || 0}/${match.awayInjuries?.suspendedCount || 0}`} tone="amber" />
             <Badge label="PPG thuis" value={match.homeTeamProfile?.pointsPerGame != null ? String(match.homeTeamProfile.pointsPerGame) : "-"} tone="blue" />
             <Badge label="PPG uit" value={match.awayTeamProfile?.pointsPerGame != null ? String(match.awayTeamProfile.pointsPerGame) : "-"} tone="red" />
             <Badge label="Clean sheet" value={match.homeRecent?.cleanSheetRate != null ? `${Math.round(match.homeRecent.cleanSheetRate * 100)}% / ${Math.round((match.awayRecent?.cleanSheetRate || 0) * 100)}%` : "-"} tone="green" />

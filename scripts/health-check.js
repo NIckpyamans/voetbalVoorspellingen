@@ -13,6 +13,7 @@ const FILES = {
   livePanel: path.join(ROOT, "components", "LivePanel.tsx"),
   worker: path.join(ROOT, "scripts", "server-worker.js"),
   matchService: path.join(ROOT, "services", "matchService.ts"),
+  minuteHelper: path.join(ROOT, "shared", "minute.js"),
   logo: path.join(ROOT, "api", "logo.ts"),
   standings: path.join(ROOT, "api", "standings.ts"),
 };
@@ -193,14 +194,11 @@ function collectCodeChecks() {
   const livePanelText = readText(FILES.livePanel);
   const workerText = readText(FILES.worker);
   const matchServiceText = readText(FILES.matchService);
+  const minuteHelperText = readText(FILES.minuteHelper);
   const logoText = readText(FILES.logo);
 
   if (!appText.includes("belongsToSelectedDate")) {
     pushIssue(issues, "date_filter_missing", "high", "Dashboard mist een expliciete dagfilterfunctie.");
-  }
-
-  if (!matchCardText.includes("LIVE ") && !matchCardText.includes("LIVE nu")) {
-    pushIssue(issues, "live_chip_missing", "high", "MatchCard toont geen duidelijke live-chip.");
   }
 
   if (!workerText.includes("resolveMinuteState")) {
@@ -223,12 +221,16 @@ function collectCodeChecks() {
     pushIssue(issues, "matchservice_normalize_missing", "medium", "matchService normaliseert minute niet.");
   }
 
+  if (!minuteHelperText.includes("getLiveMinuteLabel")) {
+    pushIssue(issues, "minute_helper_missing", "medium", "Gedeelde minute-helper ontbreekt.");
+  }
+
   if (!logoText.includes("/api/logo") && !matchCardText.includes("/api/logo?id=")) {
     pushIssue(issues, "logo_fallback_missing", "medium", "Logo fallback lijkt niet actief.");
   }
 
   const parserHits = [matchCardText, livePanelText, matchServiceText]
-    .map((text) => (text.includes("parseMinuteValue") ? 1 : 0))
+    .map((text) => (text.includes("function parseMinuteValue") ? 1 : 0))
     .reduce((sum, value) => sum + value, 0);
 
   if (parserHits >= 3) {

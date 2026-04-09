@@ -1,22 +1,22 @@
 {
-  "generatedAt": "2026-04-08T23:01:42.483Z",
+  "generatedAt": "2026-04-09T13:52:29.023Z",
   "date": "2026-04-09",
   "proposalOnly": true,
   "shouldPropose": true,
   "branchName": "codex/review-20260409",
-  "summary": "AI reviewvoorstel voor 2026-04-09: 4 aandachtspunt(en) met patchadvies, niet automatisch live.",
+  "summary": "AI reviewvoorstel voor 2026-04-09: 3 aandachtspunt(en) met patchadvies, niet automatisch live.",
   "latestStats": {
     "today": "2026-04-09",
     "dataPresent": true,
-    "lastRun": 1775686076926,
-    "ageMinutes": 54,
+    "lastRun": 1775741964556,
+    "ageMinutes": 4,
     "todayMatches": 7,
     "liveMatches": 0,
     "liveWithoutMinute": 0,
     "h2hFilled": 0,
     "h2hMissing": 7,
-    "standingsCount": 27,
-    "cupSheetCount": 3,
+    "standingsCount": 26,
+    "cupSheetCount": 7,
     "phaseReliabilityCount": 5
   },
   "findings": [
@@ -56,27 +56,12 @@
         "components/MatchCard.tsx"
       ],
       "details": {}
-    },
-    {
-      "priority": 4,
-      "key": "duplicate_minute_logic",
-      "severity": "low",
-      "message": "Minute parsing staat op meerdere plekken dubbel; bundelen in één helper zou onderhoud verbeteren.",
-      "whyItMatters": "Minute parsing staat nog dubbel en kan regressies geven.",
-      "recommendedFiles": [
-        "components/MatchCard.tsx",
-        "components/LivePanel.tsx",
-        "services/matchService.ts"
-      ],
-      "details": {}
     }
   ],
   "recommendedFiles": [
     "scripts/server-worker.js",
     "components/MatchCard.tsx",
-    "types.ts",
-    "components/LivePanel.tsx",
-    "services/matchService.ts"
+    "types.ts"
   ],
   "nextStep": "Gebruik deze proposal om gericht een reviewbranch te maken en alleen na controle te mergen."
 }

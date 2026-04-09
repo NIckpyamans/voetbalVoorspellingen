@@ -11,6 +11,9 @@ const SettingsView: React.FC = () => {
   const [sourceBranch, setSourceBranch] = useState<string>("onbekend");
   const [reviewCount, setReviewCount] = useState(0);
   const [teamLearningCount, setTeamLearningCount] = useState(0);
+  const [aiAdvice, setAiAdvice] = useState<any[]>([]);
+  const [biweeklyDigest, setBiweeklyDigest] = useState<any | null>(null);
+  const [manualAdvice, setManualAdvice] = useState("");
 
   useEffect(() => {
     try {
@@ -23,6 +26,7 @@ const SettingsView: React.FC = () => {
       setTeamCount(Object.keys(JSON.parse(raw)).length);
       setTeamStoreSizeKb(Math.round((new Blob([raw]).size / 1024) * 10) / 10);
     } catch {}
+    setManualAdvice(localStorage.getItem("footypredict_manual_ai_advice") || "");
 
     fetch(`/api/matches?date=${new Date().toISOString().split("T")[0]}`)
       .then((response) => response.json())
@@ -32,6 +36,8 @@ const SettingsView: React.FC = () => {
         if (data.sourceBranch) setSourceBranch(data.sourceBranch);
         if (data.reviewCount != null) setReviewCount(Number(data.reviewCount || 0));
         if (data.teamLearningCount != null) setTeamLearningCount(Number(data.teamLearningCount || 0));
+        if (Array.isArray(data.aiAdvice)) setAiAdvice(data.aiAdvice);
+        if (data.biweeklyDigest) setBiweeklyDigest(data.biweeklyDigest);
       })
       .catch(() => {});
 
@@ -59,6 +65,10 @@ const SettingsView: React.FC = () => {
     if (!window.confirm("Alle voorspellingengeschiedenis wissen?")) return;
     localStorage.removeItem("footypredict_memory");
     setHistoryCount(0);
+  };
+
+  const saveManualAdvice = () => {
+    localStorage.setItem("footypredict_manual_ai_advice", manualAdvice.trim());
   };
 
   return (
@@ -90,6 +100,117 @@ const SettingsView: React.FC = () => {
             <span className="text-[11px] font-black text-white">{value}</span>
           </div>
         ))}
+      </div>
+
+      <div className="glass-card rounded-2xl border border-white/5 p-5">
+        <div className="text-[10px] font-black text-slate-400 uppercase mb-3">AI advies van deze week</div>
+        <div className="space-y-3">
+          {(aiAdvice || []).length > 0 ? (
+            aiAdvice.map((item, index) => (
+              <div key={`${item.title || "advice"}-${index}`} className="rounded-xl border border-white/5 bg-slate-900/40 p-3">
+                <div className="flex items-center justify-between gap-3">
+                  <div className="text-[11px] font-black text-white">{item.title}</div>
+                  <span className={`text-[8px] font-black px-2 py-0.5 rounded-full ${
+                    item.priority === "high" ? "bg-red-900/30 text-red-300" : item.priority === "medium" ? "bg-amber-900/30 text-amber-300" : "bg-green-900/30 text-green-300"
+                  }`}>
+                    {item.priority || "info"}
+                  </span>
+                </div>
+                <div className="text-[10px] text-slate-300 mt-1">{item.summary}</div>
+                <div className="text-[9px] text-slate-500 mt-1">{item.action}</div>
+              </div>
+            ))
+          ) : (
+            <div className="text-[11px] text-slate-500">Nog geen nieuw AI advies opgebouwd uit de monitor.</div>
+          )}
+
+          <div className="rounded-xl border border-blue-500/10 bg-blue-950/10 p-3">
+            <div className="text-[10px] font-black text-blue-300 uppercase mb-2">Eigen verbeternotitie voor AI</div>
+            <div className="text-[10px] text-slate-400 mb-2">
+              Typ hier een verbeterpunt of wens. Deze notitie blijft lokaal bewaard zodat je hem later direct kunt meenemen in nieuwe AI-aanpassingen.
+            </div>
+            <textarea
+              value={manualAdvice}
+              onChange={(event) => setManualAdvice(event.target.value)}
+              rows={4}
+              className="w-full rounded-xl border border-white/10 bg-slate-950/60 px-3 py-2 text-[11px] text-white outline-none focus:border-blue-500/30"
+              placeholder="Bijvoorbeeld: geef knock-out interlands extra gewicht aan schorsingen en eerste duel..."
+            />
+            <div className="mt-2 flex justify-end">
+              <button
+                onClick={saveManualAdvice}
+                className="px-3 py-1.5 rounded-lg bg-blue-600 text-white text-[10px] font-black hover:bg-blue-500 transition"
+              >
+                Notitie bewaren
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div className="glass-card rounded-2xl border border-white/5 p-5">
+        <div className="text-[10px] font-black text-slate-400 uppercase mb-3">Tweewekelijkse AI bundel</div>
+        {biweeklyDigest ? (
+          <div className="space-y-3">
+            <div className="rounded-xl border border-white/5 bg-slate-900/40 p-3">
+              <div className="flex items-center justify-between gap-3">
+                <div>
+                  <div className="text-[11px] font-black text-white">{biweeklyDigest.summary}</div>
+                  <div className="text-[9px] text-slate-500 mt-1">
+                    Periode {biweeklyDigest.range?.from || "?"} t/m {biweeklyDigest.range?.to || "?"}
+                  </div>
+                </div>
+                <span className="text-[8px] font-black px-2 py-0.5 rounded-full bg-blue-900/30 text-blue-300">
+                  {biweeklyDigest.cadence || "bundel"}
+                </span>
+              </div>
+            </div>
+
+            <div className="grid grid-cols-3 gap-2">
+              {[
+                { label: "Runs", value: biweeklyDigest.totals?.totalRuns || 0 },
+                { label: "Bevindingen", value: biweeklyDigest.totals?.totalIssues || 0 },
+                { label: "Thema's", value: biweeklyDigest.totals?.uniqueIssueTypes || 0 },
+              ].map((item) => (
+                <div key={item.label} className="rounded-xl border border-white/5 bg-slate-900/40 px-3 py-2">
+                  <div className="text-[9px] font-black text-slate-500 uppercase">{item.label}</div>
+                  <div className="text-[16px] font-black text-white mt-1">{item.value}</div>
+                </div>
+              ))}
+            </div>
+
+            <div className="space-y-2">
+              {(biweeklyDigest.topFindings || []).slice(0, 6).map((item: any) => (
+                <div key={item.key} className="rounded-xl border border-white/5 bg-slate-900/30 p-3">
+                  <div className="flex items-center justify-between gap-3">
+                    <div className="text-[11px] font-black text-white">{item.title}</div>
+                    <span className={`text-[8px] font-black px-2 py-0.5 rounded-full ${
+                      item.highestSeverity === "high"
+                        ? "bg-red-900/30 text-red-300"
+                        : item.highestSeverity === "medium"
+                          ? "bg-amber-900/30 text-amber-300"
+                          : "bg-green-900/30 text-green-300"
+                    }`}>
+                      {item.count}x
+                    </span>
+                  </div>
+                  <div className="text-[10px] text-slate-400 mt-1">{item.recommendation}</div>
+                </div>
+              ))}
+            </div>
+
+            <div className="rounded-xl border border-purple-500/10 bg-purple-950/10 p-3">
+              <div className="text-[10px] font-black text-purple-300 uppercase mb-1">Mailstatus</div>
+              <div className="text-[10px] text-slate-300">
+                {biweeklyDigest.delivery?.note || "De AI bundel wordt opgebouwd en opgeslagen. Voor echte e-mailverzending is nog een mailservice of mailcredential nodig."}
+              </div>
+            </div>
+          </div>
+        ) : (
+          <div className="text-[11px] text-slate-500">
+            Nog geen tweewekelijkse bundel beschikbaar. Deze wordt automatisch opgebouwd zodra de digest-workflow draait.
+          </div>
+        )}
       </div>
 
       <div className="glass-card rounded-2xl border border-white/5 p-5">

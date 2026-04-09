@@ -767,3 +767,28 @@ export interface MatchAnalysis {
   timestamp?: number;
 }
 
+export interface PredictionMemory {
+  matchId: string;
+  prediction: string;
+  actual: string;
+  wasCorrect: boolean;
+  winnerCorrect?: boolean;
+  predictedOutcome?: string | null;
+  actualOutcome?: string | null;
+  errorMargin: number;
+  timestamp: number;
+  homeTeam?: string | null;
+  awayTeam?: string | null;
+  league?: string | null;
+}
+
+export interface Team {
+  id: string;
+  name: string;
+  league: string;
+  elo: number;
+  attack: number;
+  defense: number;
+  logo?: string;
+}
+

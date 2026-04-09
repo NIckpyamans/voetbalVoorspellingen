@@ -1,0 +1,78 @@
+{
+  "generatedAt": "2026-04-09T13:53:00.188Z",
+  "range": {
+    "from": "2026-03-27",
+    "to": "2026-04-09",
+    "days": 2
+  },
+  "shouldNotify": false,
+  "shouldRefresh": false,
+  "cadence": "tweewekelijks",
+  "summary": "AI bundel over de laatste 14 dagen: 4 hoofdthema's uit 7 monitorbevindingen.",
+  "totals": {
+    "totalRuns": 2,
+    "totalIssues": 7,
+    "uniqueIssueTypes": 4
+  },
+  "latestStats": {
+    "today": "2026-04-09",
+    "dataPresent": true,
+    "lastRun": 1775741964556,
+    "ageMinutes": 4,
+    "todayMatches": 7,
+    "liveMatches": 0,
+    "liveWithoutMinute": 0,
+    "h2hFilled": 0,
+    "h2hMissing": 7,
+    "standingsCount": 26,
+    "cupSheetCount": 7,
+    "phaseReliabilityCount": 5
+  },
+  "topFindings": [
+    {
+      "key": "h2h_empty",
+      "title": "H2H niet gevuld",
+      "count": 2,
+      "highestSeverity": "medium",
+      "sampleMessage": "Alle wedstrijden van vandaag hebben lege H2H-data.",
+      "recommendation": "Trek H2H verder uit historische competitiebestanden en bewaak fallbackdekking in de worker."
+    },
+    {
+      "key": "bookmaker_signals_missing",
+      "title": "Bookmakersignalen missen",
+      "count": 2,
+      "highestSeverity": "medium",
+      "sampleMessage": "Alle wedstrijden missen bookmaker-signalen in de marktcalibratie.",
+      "recommendation": "Verbred de interland-oddsbron en toon dekking per bookmaker in de kaart."
+    },
+    {
+      "key": "historical_referee_unmatched",
+      "title": "Historische scheidsdata matcht te weinig",
+      "count": 2,
+      "highestSeverity": "low",
+      "sampleMessage": "Geen enkele wedstrijd van vandaag gebruikt historische referee-data.",
+      "recommendation": "Trek bredere referee-archieven per land/competitie in cache en onderhoud aliasen."
+    },
+    {
+      "key": "duplicate_minute_logic",
+      "title": "Minute-logica nog dubbel",
+      "count": 1,
+      "highestSeverity": "low",
+      "sampleMessage": "Minute parsing staat op meerdere plekken dubbel; bundelen in één helper zou onderhoud verbeteren.",
+      "recommendation": "Houd minute parsing centraal in de helper en verwijder resterende duplicaten."
+    }
+  ],
+  "reviewProposal": {
+    "branchName": "codex/review-20260409",
+    "summary": "AI reviewvoorstel voor 2026-04-09: 3 aandachtspunt(en) met patchadvies, niet automatisch live.",
+    "recommendedFiles": [
+      "scripts/server-worker.js",
+      "components/MatchCard.tsx",
+      "types.ts"
+    ]
+  },
+  "delivery": {
+    "emailConfigured": false,
+    "note": "Mailverzending vereist nog aparte mailcredentials of een mailservice. De bundel wordt nu wel automatisch opgebouwd en opgeslagen."
+  }
+}

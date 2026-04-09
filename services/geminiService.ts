@@ -65,6 +65,9 @@ function compactMemory(items: PredictionMemory[]) {
         homeTeam: (item as any).homeTeam || null,
         awayTeam: (item as any).awayTeam || null,
         league: (item as any).league || null,
+        predictedOutcome: (item as any).predictedOutcome || null,
+        actualOutcome: (item as any).actualOutcome || null,
+        winnerCorrect: !!(item as any).winnerCorrect,
       } as PredictionMemory);
     }
   }
@@ -181,12 +184,17 @@ export function saveToMemory(matchId: string, predScore: string, actualScore: st
   const wasCorrect = predScore.trim() === actualScore.trim();
   const [pH, pA] = predScore.split("-").map(Number);
   const [aH, aA] = actualScore.split("-").map(Number);
+  const predictedOutcome = pH > pA ? "Thuis" : pA > pH ? "Uit" : "Gelijk";
+  const actualOutcome = aH > aA ? "Thuis" : aA > aH ? "Uit" : "Gelijk";
   const errorMargin = Math.abs(pH - aH) + Math.abs(pA - aA);
   memory.push({
     matchId,
     prediction: predScore,
     actual: actualScore,
     wasCorrect,
+    winnerCorrect: predictedOutcome === actualOutcome,
+    predictedOutcome,
+    actualOutcome,
     errorMargin,
     timestamp: Date.now(),
     homeTeam: match?.homeTeamName || null,

@@ -1,4 +1,16 @@
 import { fetchServerStore } from "./_dataSource.js";
+import fs from "fs";
+import path from "path";
+
+function readBiweeklyDigest() {
+  try {
+    const digestPath = path.join(process.cwd(), "monitor", "biweekly-review-digest.json");
+    if (!fs.existsSync(digestPath)) return null;
+    return JSON.parse(fs.readFileSync(digestPath, "utf-8"));
+  } catch {
+    return null;
+  }
+}
 
 function attachReview(match: any, store: any) {
   return {
@@ -24,6 +36,7 @@ export default async function handler(req: any, res: any) {
   try {
     const { store, branch } = await fetchServerStore();
     const lastRun = store.lastRun || null;
+    const biweeklyDigest = readBiweeklyDigest();
 
     if (days && typeof days === "string") {
       const numDays = parseInt(days, 10);
@@ -49,6 +62,8 @@ export default async function handler(req: any, res: any) {
           workerVersion: store.workerVersion || "unknown",
           reviewCount: Object.keys(store.postMatchReviews || {}).length,
           teamLearningCount: Object.keys(store.teamLearning || {}).length,
+          aiAdvice: store.aiAdvice || [],
+          biweeklyDigest,
           sourceBranch: branch,
           source: "github-worker-v3-multiday",
         });
@@ -69,6 +84,8 @@ export default async function handler(req: any, res: any) {
       workerVersion: store.workerVersion || "unknown",
       reviewCount: Object.keys(store.postMatchReviews || {}).length,
       teamLearningCount: Object.keys(store.teamLearning || {}).length,
+      aiAdvice: store.aiAdvice || [],
+      biweeklyDigest,
       sourceBranch: branch,
       source: matches.length ? "github-worker-v3" : "no-matches-yet",
       message: matches.length ? null : "Nog geen wedstrijden gevonden voor deze dag in de actuele workerdata.",

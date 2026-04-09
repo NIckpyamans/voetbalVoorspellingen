@@ -4,6 +4,7 @@
 // ============================================================================
 
 import { Match, Prediction } from "../types";
+import { normalizeMinute, parseMinuteValue } from "../shared/minute.js";
 
 const CACHE_VERSION = "v5_complete_data";
 const LIVE_CACHE_AGE_MS = 30_000;
@@ -65,38 +66,6 @@ function writeCache(dateISO: string, matches: Match[], predictions: Record<strin
       })
     );
   } catch {}
-}
-
-// ============================================================================
-// MINUTE PARSING FUNCTIES
-// ============================================================================
-
-function parseMinuteValue(minute: any, minuteValue?: any) {
-  const explicit = Number(minuteValue);
-  if (Number.isFinite(explicit) && explicit > 0) return explicit;
-  if (typeof minute === "number" && Number.isFinite(minute)) return minute;
-  if (typeof minute !== "string") return null;
-  if (minute.toUpperCase() === "HT") return 45;
-
-  const plusMatch = minute.match(/(\d+)\s*\+\s*(\d+)/);
-  if (plusMatch) return Number(plusMatch[1]) + Number(plusMatch[2]);
-
-  const plainMatch = minute.match(/(\d+)/);
-  return plainMatch ? Number(plainMatch[1]) : null;
-}
-
-function normalizeMinute(minute: any, minuteValue?: any, extraTime?: any, period?: any) {
-  const periodText = String(period || "").toLowerCase();
-  if (periodText.includes("half time") || periodText.includes("halftime") || periodText.includes("break")) {
-    return "HT";
-  }
-
-  const baseMinute = parseMinuteValue(minute, minuteValue);
-  if (!baseMinute) return undefined;
-
-  const extra = Number(extraTime || 0);
-  if (extra > 0) return `${baseMinute}+${extra}'`;
-  return `${baseMinute}'`;
 }
 
 // ============================================================================
