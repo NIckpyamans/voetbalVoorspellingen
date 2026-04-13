@@ -1,10 +1,10 @@
 # FootyAI tweewekelijkse AI-digest
 
-Periode: 2026-03-27 t/m 2026-04-09
+Periode: 2026-03-31 t/m 2026-04-13
 
 AI bundel over de laatste 14 dagen: 4 hoofdthema's uit 7 monitorbevindingen.
 
-- Runs: 2
+- Runs: 6
 - Bevindingen: 7
 - Thema's: 4
 
@@ -19,8 +19,7 @@ AI bundel over de laatste 14 dagen: 4 hoofdthema's uit 7 monitorbevindingen.
   - Houd minute parsing centraal in de helper en verwijder resterende duplicaten.
 
 ## Reviewbranch voorstel
-- codex/review-20260409
-- AI reviewvoorstel voor 2026-04-09: 3 aandachtspunt(en) met patchadvies, niet automatisch live.
+- Geen voorstel nodig.
 
 ## Mailstatus
 - Mailverzending vereist nog aparte mailcredentials of een mailservice. De bundel wordt nu wel automatisch opgebouwd en opgeslagen.
