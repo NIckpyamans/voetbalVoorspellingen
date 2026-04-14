@@ -1,25 +1,55 @@
 {
-  "generatedAt": "2026-04-13T23:04:30.007Z",
-  "date": "2026-04-14",
+  "generatedAt": "2026-04-14T23:05:20.763Z",
+  "date": "2026-04-15",
   "proposalOnly": true,
-  "shouldPropose": false,
-  "branchName": "codex/review-20260414",
-  "summary": "Geen reviewbranch nodig op 2026-04-14.",
+  "shouldPropose": true,
+  "branchName": "codex/review-20260415",
+  "summary": "AI reviewvoorstel voor 2026-04-15: 2 aandachtspunt(en) met patchadvies, niet automatisch live.",
   "latestStats": {
-    "today": "2026-04-14",
+    "today": "2026-04-15",
     "dataPresent": true,
-    "lastRun": 1776120726644,
-    "ageMinutes": 12,
-    "todayMatches": 7,
+    "lastRun": 1776204727033,
+    "ageMinutes": 53,
+    "todayMatches": 3,
     "liveMatches": 0,
     "liveWithoutMinute": 0,
     "h2hFilled": 3,
-    "h2hMissing": 4,
-    "standingsCount": 27,
-    "cupSheetCount": 6,
-    "phaseReliabilityCount": 4
+    "h2hMissing": 0,
+    "standingsCount": 28,
+    "cupSheetCount": 3,
+    "phaseReliabilityCount": 3
   },
-  "findings": [],
-  "recommendedFiles": [],
-  "nextStep": "Geen actie nodig; monitor blijft op de achtergrond doorlopen."
+  "findings": [
+    {
+      "priority": 1,
+      "key": "bookmaker_signals_missing",
+      "severity": "medium",
+      "message": "Alle wedstrijden missen bookmaker-signalen in de marktcalibratie.",
+      "whyItMatters": "Bookmaker-specifieke closing-signalen ontbreken nog in wedstrijden.",
+      "recommendedFiles": [
+        "scripts/server-worker.js",
+        "components/MatchCard.tsx",
+        "types.ts"
+      ],
+      "details": {}
+    },
+    {
+      "priority": 2,
+      "key": "historical_referee_unmatched",
+      "severity": "low",
+      "message": "Geen enkele wedstrijd van vandaag gebruikt historische referee-data.",
+      "whyItMatters": "Historische scheidsrechterdata matcht nog te weinig.",
+      "recommendedFiles": [
+        "scripts/server-worker.js",
+        "components/MatchCard.tsx"
+      ],
+      "details": {}
+    }
+  ],
+  "recommendedFiles": [
+    "scripts/server-worker.js",
+    "components/MatchCard.tsx",
+    "types.ts"
+  ],
+  "nextStep": "Gebruik deze proposal om gericht een reviewbranch te maken en alleen na controle te mergen."
 }
