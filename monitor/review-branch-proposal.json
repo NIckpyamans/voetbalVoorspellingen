@@ -1,55 +1,25 @@
 {
-  "generatedAt": "2026-04-16T14:17:14.535Z",
-  "date": "2026-04-16",
+  "generatedAt": "2026-04-16T23:03:24.971Z",
+  "date": "2026-04-17",
   "proposalOnly": true,
-  "shouldPropose": true,
-  "branchName": "codex/review-20260416",
-  "summary": "AI reviewvoorstel voor 2026-04-16: 2 aandachtspunt(en) met patchadvies, niet automatisch live.",
+  "shouldPropose": false,
+  "branchName": "codex/review-20260417",
+  "summary": "Geen reviewbranch nodig op 2026-04-17.",
   "latestStats": {
-    "today": "2026-04-16",
+    "today": "2026-04-17",
     "dataPresent": true,
-    "lastRun": 1776349033766,
-    "ageMinutes": 0,
-    "todayMatches": 9,
+    "lastRun": 1776379420122,
+    "ageMinutes": 20,
+    "todayMatches": 34,
     "liveMatches": 0,
     "liveWithoutMinute": 0,
-    "h2hFilled": 8,
-    "h2hMissing": 1,
+    "h2hFilled": 5,
+    "h2hMissing": 29,
     "standingsCount": 28,
     "cupSheetCount": 5,
     "phaseReliabilityCount": 3
   },
-  "findings": [
-    {
-      "priority": 1,
-      "key": "bookmaker_signals_missing",
-      "severity": "medium",
-      "message": "Alle wedstrijden missen bookmaker-signalen in de marktcalibratie.",
-      "whyItMatters": "Bookmaker-specifieke closing-signalen ontbreken nog in wedstrijden.",
-      "recommendedFiles": [
-        "scripts/server-worker.js",
-        "components/MatchCard.tsx",
-        "types.ts"
-      ],
-      "details": {}
-    },
-    {
-      "priority": 2,
-      "key": "historical_referee_unmatched",
-      "severity": "low",
-      "message": "Geen enkele wedstrijd van vandaag gebruikt historische referee-data.",
-      "whyItMatters": "Historische scheidsrechterdata matcht nog te weinig.",
-      "recommendedFiles": [
-        "scripts/server-worker.js",
-        "components/MatchCard.tsx"
-      ],
-      "details": {}
-    }
-  ],
-  "recommendedFiles": [
-    "scripts/server-worker.js",
-    "components/MatchCard.tsx",
-    "types.ts"
-  ],
-  "nextStep": "Gebruik deze proposal om gericht een reviewbranch te maken en alleen na controle te mergen."
+  "findings": [],
+  "recommendedFiles": [],
+  "nextStep": "Geen actie nodig; monitor blijft op de achtergrond doorlopen."
 }
