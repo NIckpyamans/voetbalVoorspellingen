@@ -1,46 +1,38 @@
 {
-  "generatedAt": "2026-04-13T08:24:31.915Z",
+  "generatedAt": "2026-04-16T14:17:14.775Z",
   "range": {
-    "from": "2026-03-31",
-    "to": "2026-04-13",
-    "days": 6
+    "from": "2026-04-03",
+    "to": "2026-04-16",
+    "days": 8
   },
   "shouldNotify": false,
   "shouldRefresh": true,
   "cadence": "tweewekelijks",
-  "summary": "AI bundel over de laatste 14 dagen: 4 hoofdthema's uit 7 monitorbevindingen.",
+  "summary": "AI bundel over de laatste 14 dagen: 3 hoofdthema's uit 9 monitorbevindingen.",
   "totals": {
-    "totalRuns": 6,
-    "totalIssues": 7,
-    "uniqueIssueTypes": 4
+    "totalRuns": 9,
+    "totalIssues": 9,
+    "uniqueIssueTypes": 3
   },
   "latestStats": {
-    "today": "2026-04-13",
+    "today": "2026-04-16",
     "dataPresent": true,
-    "lastRun": 1776033469056,
-    "ageMinutes": 18,
-    "todayMatches": 12,
+    "lastRun": 1776349033766,
+    "ageMinutes": 0,
+    "todayMatches": 9,
     "liveMatches": 0,
     "liveWithoutMinute": 0,
-    "h2hFilled": 2,
-    "h2hMissing": 10,
-    "standingsCount": 27,
-    "cupSheetCount": 6,
-    "phaseReliabilityCount": 5
+    "h2hFilled": 8,
+    "h2hMissing": 1,
+    "standingsCount": 28,
+    "cupSheetCount": 5,
+    "phaseReliabilityCount": 3
   },
   "topFindings": [
     {
-      "key": "h2h_empty",
-      "title": "H2H niet gevuld",
-      "count": 2,
-      "highestSeverity": "medium",
-      "sampleMessage": "Alle wedstrijden van vandaag hebben lege H2H-data.",
-      "recommendation": "Trek H2H verder uit historische competitiebestanden en bewaak fallbackdekking in de worker."
-    },
-    {
       "key": "bookmaker_signals_missing",
       "title": "Bookmakersignalen missen",
-      "count": 2,
+      "count": 4,
       "highestSeverity": "medium",
       "sampleMessage": "Alle wedstrijden missen bookmaker-signalen in de marktcalibratie.",
       "recommendation": "Verbred de interland-oddsbron en toon dekking per bookmaker in de kaart."
@@ -48,21 +40,29 @@
     {
       "key": "historical_referee_unmatched",
       "title": "Historische scheidsdata matcht te weinig",
-      "count": 2,
+      "count": 4,
       "highestSeverity": "low",
       "sampleMessage": "Geen enkele wedstrijd van vandaag gebruikt historische referee-data.",
       "recommendation": "Trek bredere referee-archieven per land/competitie in cache en onderhoud aliasen."
     },
     {
-      "key": "duplicate_minute_logic",
-      "title": "Minute-logica nog dubbel",
+      "key": "h2h_empty",
+      "title": "H2H niet gevuld",
       "count": 1,
-      "highestSeverity": "low",
-      "sampleMessage": "Minute parsing staat op meerdere plekken dubbel; bundelen in één helper zou onderhoud verbeteren.",
-      "recommendation": "Houd minute parsing centraal in de helper en verwijder resterende duplicaten."
+      "highestSeverity": "medium",
+      "sampleMessage": "Alle wedstrijden van vandaag hebben lege H2H-data.",
+      "recommendation": "Trek H2H verder uit historische competitiebestanden en bewaak fallbackdekking in de worker."
     }
   ],
-  "reviewProposal": null,
+  "reviewProposal": {
+    "branchName": "codex/review-20260416",
+    "summary": "AI reviewvoorstel voor 2026-04-16: 2 aandachtspunt(en) met patchadvies, niet automatisch live.",
+    "recommendedFiles": [
+      "scripts/server-worker.js",
+      "components/MatchCard.tsx",
+      "types.ts"
+    ]
+  },
   "delivery": {
     "emailConfigured": false,
     "note": "Mailverzending vereist nog aparte mailcredentials of een mailservice. De bundel wordt nu wel automatisch opgebouwd en opgeslagen."
