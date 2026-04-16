@@ -1103,19 +1103,28 @@ function buildLearningEdge(input) {
   const awayBias = Number(away?.awayOutcomeBias || 0);
   const homeReliability = Number(home?.outcomeHitRate || 0);
   const awayReliability = Number(away?.outcomeHitRate || 0);
+  const homeReviewedMatches = Number(home?.reviewedMatches || 0);
+  const awayReviewedMatches = Number(away?.reviewedMatches || 0);
+  const totalReviewedMatches = homeReviewedMatches + awayReviewedMatches;
+  const denominator = (home ? 1 : 0) + (away ? 1 : 0) || 1;
   const summary = home || away
     ? `${input.homeTeamProfile?.teamName || "Thuis"} ${homeBias >= 0 ? "licht onderschat" : "licht overschat"} (${Math.round(homeReliability * 100)}%) / ${input.awayTeamProfile?.teamName || "Uit"} ${awayBias >= 0 ? "licht onderschat" : "licht overschat"} (${Math.round(awayReliability * 100)}%)`
     : "nog geen reviewdata";
 
   return {
     summary,
+    homeReviewedMatches,
+    awayReviewedMatches,
+    totalReviewedMatches,
     homeOutcomeHitRate: homeReliability,
     awayOutcomeHitRate: awayReliability,
+    homeExactHitRate: Number(home?.exactHitRate || 0),
+    awayExactHitRate: Number(away?.exactHitRate || 0),
     homeBias,
     awayBias,
     homeAvgGoalError: Number(home?.avgGoalError || 0),
     awayAvgGoalError: Number(away?.avgGoalError || 0),
-    combinedReliability: Number(((homeReliability + awayReliability) / ((home || away) ? (home && away ? 2 : 1) : 1)).toFixed(2)),
+    combinedReliability: Number(((homeReliability + awayReliability) / denominator).toFixed(2)),
     homeFragility:
       Number(home?.openLineupMisses || 0) +
       Number(home?.weatherMisses || 0) +
@@ -2099,7 +2108,7 @@ function buildTeamLearningFromReviews(reviews) {
 }
 
 function rebuildReviewsAndLearning(store) {
-  const reviews = {};
+  const reviews = { ...(store.postMatchReviews || {}) };
 
   for (const date of Object.keys(store.matches || {})) {
     const matches = store.matches?.[date] || [];
@@ -2117,6 +2126,7 @@ function rebuildReviewsAndLearning(store) {
   store.teamLearning = buildTeamLearningFromReviews(reviews);
   store.leagueReliability = buildLeagueReliabilityFromReviews(reviews);
   store.phaseReliability = buildPhaseReliabilityFromReviews(reviews);
+  store.featureDiagnostics = buildFeatureDiagnosticsFromReviews(reviews);
 }
 
 async function safeFetch(url) {
@@ -2669,6 +2679,60 @@ function buildPhaseReliabilityFromReviews(reviews) {
   }
 
   return phases;
+}
+
+function buildFeatureDiagnosticsFromReviews(reviews) {
+  const items = Object.values(reviews || {});
+  const failureCounts = {};
+  const phaseMap = {};
+  let exactHits = 0;
+  let outcomeHits = 0;
+  let probabilityHits = 0;
+  let totalGoalError = 0;
+
+  for (const review of items) {
+    if (review.exactHit) exactHits += 1;
+    if (review.outcomeHit) outcomeHits += 1;
+    if (review.probabilityOutcomeHit) probabilityHits += 1;
+    totalGoalError += Number(review.totalGoalError || 0);
+
+    const phase = String(review.phaseBucket || "unknown");
+    if (!phaseMap[phase]) phaseMap[phase] = { phase, matches: 0, exactHits: 0, outcomeHits: 0 };
+    phaseMap[phase].matches += 1;
+    if (review.exactHit) phaseMap[phase].exactHits += 1;
+    if (review.outcomeHit) phaseMap[phase].outcomeHits += 1;
+
+    for (const signal of review.failureSignals || []) {
+      failureCounts[signal] = Number(failureCounts[signal] || 0) + 1;
+    }
+  }
+
+  const total = items.length || 1;
+  const topFailureSignals = Object.entries(failureCounts)
+    .sort((a, b) => Number(b[1]) - Number(a[1]))
+    .slice(0, 6)
+    .map(([signal, count]) => ({ signal, count: Number(count) }));
+  const phaseBreakdown = Object.values(phaseMap)
+    .map((item) => ({
+      ...item,
+      exactHitRate: Number((item.exactHits / Math.max(item.matches, 1)).toFixed(2)),
+      outcomeHitRate: Number((item.outcomeHits / Math.max(item.matches, 1)).toFixed(2)),
+    }))
+    .sort((a, b) => b.matches - a.matches);
+
+  return {
+    reviews: items.length,
+    exactHitRate: Number((exactHits / total).toFixed(3)),
+    outcomeHitRate: Number((outcomeHits / total).toFixed(3)),
+    probabilityOutcomeHitRate: Number((probabilityHits / total).toFixed(3)),
+    avgGoalError: Number((totalGoalError / total).toFixed(2)),
+    topFailureSignals,
+    phaseBreakdown,
+    summary:
+      items.length > 0
+        ? `Reviewdiagnose: exact ${Math.round((exactHits / total) * 100)}%, uitkomst ${Math.round((outcomeHits / total) * 100)}%, topkans ${Math.round((probabilityHits / total) * 100)}%.`
+        : "Nog geen reviewdiagnose beschikbaar.",
+  };
 }
 
 function buildLeagueReliabilityEdge(input) {
@@ -3276,9 +3340,21 @@ function predict(input) {
   const bookmakerSignals = Array.isArray(marketCalibration.bookmakerSignals) ? marketCalibration.bookmakerSignals : [];
 
   if (learningEdge.combinedReliability) {
-    const learningBiasShift = clamp((Number(learningEdge.homeBias || 0) - Number(learningEdge.awayBias || 0)) * 0.045, -0.08, 0.08);
+    const learningWeight = 0.045 + Math.min(Number(learningEdge.totalReviewedMatches || 0) / 18, 1) * 0.03;
+    const learningBiasShift = clamp((Number(learningEdge.homeBias || 0) - Number(learningEdge.awayBias || 0)) * learningWeight, -0.1, 0.1);
     homeXG *= clamp(1 + learningBiasShift, 0.94, 1.08);
     awayXG *= clamp(1 - learningBiasShift, 0.94, 1.08);
+  }
+
+  if (Number(learningEdge.totalReviewedMatches || 0) >= 8) {
+    const exactEdge =
+      clamp(
+        (Number(learningEdge.homeExactHitRate || 0) - Number(learningEdge.awayExactHitRate || 0)) * 0.035,
+        -0.04,
+        0.04
+      );
+    homeXG *= clamp(1 + exactEdge, 0.97, 1.05);
+    awayXG *= clamp(1 - exactEdge, 0.97, 1.05);
   }
 
   if (Number(marketCalibration.overperformanceDiff || 0)) {
@@ -3569,9 +3645,10 @@ function defaultStore() {
     teamLearning: {},
     leagueReliability: {},
     phaseReliability: {},
+    featureDiagnostics: null,
     aiAdvice: [],
     lastRun: null,
-    workerVersion: "v11-history-competition-sources",
+    workerVersion: "v12-validation-learning",
   };
 }
 
@@ -3612,6 +3689,29 @@ function buildAiRecommendations(store, todayKey) {
     action: "Gebruik deze score om ensemble- en closing-gewichten te blijven finetunen.",
     priority: exactHitRate < 0.14 ? "high" : "low",
   });
+
+  const diagnostics = store.featureDiagnostics || null;
+  const topFailure = diagnostics?.topFailureSignals?.[0] || null;
+  if (topFailure) {
+    issues.push({
+      title: "Top faalsignaal",
+      summary: `${topFailure.signal} kwam ${topFailure.count} keer terug in de reviewdata.`,
+      action: "Gebruik dit signaal om de modelweging of brondekking gericht te verbeteren.",
+      priority: topFailure.count >= 8 ? "high" : "medium",
+    });
+  }
+
+  if (diagnostics?.probabilityOutcomeHitRate != null) {
+    issues.push({
+      title: "Topkans versus scoremodel",
+      summary: `Topkans-hit staat op ${Math.round(Number(diagnostics.probabilityOutcomeHitRate || 0) * 100)}% tegenover ${Math.round(Number(diagnostics.outcomeHitRate || 0) * 100)}% score-uitkomsthit.`,
+      action: "Gebruik dit verschil om te bepalen of het model te agressief op exacte score of juist te voorzichtig op 1X2 zit.",
+      priority:
+        Number(diagnostics.probabilityOutcomeHitRate || 0) - Number(diagnostics.outcomeHitRate || 0) >= 0.12
+          ? "medium"
+          : "low",
+    });
+  }
 
   return issues;
 }
@@ -4170,7 +4270,7 @@ async function main() {
   rebuildReviewsAndLearning(store);
   store.aiAdvice = buildAiRecommendations(store, today);
   store.lastRun = Date.now();
-  store.workerVersion = "v11-history-competition-sources";
+  store.workerVersion = "v12-validation-learning";
   fs.mkdirSync(path.dirname(TRAINING_SNAPSHOT_FILE), { recursive: true });
   fs.writeFileSync(TRAINING_SNAPSHOT_FILE, JSON.stringify(buildTrainingSnapshot(store)));
   fs.writeFileSync(DATA_FILE, JSON.stringify(store));

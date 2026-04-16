@@ -13,6 +13,7 @@ const SettingsView: React.FC = () => {
   const [teamLearningCount, setTeamLearningCount] = useState(0);
   const [aiAdvice, setAiAdvice] = useState<any[]>([]);
   const [biweeklyDigest, setBiweeklyDigest] = useState<any | null>(null);
+  const [featureDiagnostics, setFeatureDiagnostics] = useState<any | null>(null);
   const [manualAdvice, setManualAdvice] = useState("");
 
   useEffect(() => {
@@ -38,6 +39,7 @@ const SettingsView: React.FC = () => {
         if (data.teamLearningCount != null) setTeamLearningCount(Number(data.teamLearningCount || 0));
         if (Array.isArray(data.aiAdvice)) setAiAdvice(data.aiAdvice);
         if (data.biweeklyDigest) setBiweeklyDigest(data.biweeklyDigest);
+        if (data.featureDiagnostics) setFeatureDiagnostics(data.featureDiagnostics);
       })
       .catch(() => {});
 
@@ -314,6 +316,62 @@ const SettingsView: React.FC = () => {
           <div><span className="font-black text-white">Bookmakerlaag:</span> closing-odds worden niet meer alleen samengesteld bekeken, maar ook per bookmaker gewogen in de calibratie.</div>
           <div><span className="font-black text-white">Reviewbranch generator:</span> dagelijkse monitorbevindingen worden automatisch samengevat in een patchvoorstel, zodat verbeteringen sneller maar veilig doorgezet kunnen worden.</div>
         </div>
+      </div>
+
+      <div className="glass-card rounded-2xl border border-white/5 p-5">
+        <div className="text-[10px] font-black text-slate-400 uppercase mb-3">Modelvalidatie uit reviewdata</div>
+        {featureDiagnostics ? (
+          <div className="space-y-3">
+            <div className="rounded-xl border border-white/5 bg-slate-900/40 p-3">
+              <div className="text-[11px] font-black text-white">{featureDiagnostics.summary}</div>
+              <div className="grid grid-cols-2 md:grid-cols-4 gap-2 mt-3">
+                {[
+                  { label: "Reviews", value: featureDiagnostics.reviews || 0 },
+                  { label: "Exact hit", value: `${Math.round(Number(featureDiagnostics.exactHitRate || 0) * 100)}%` },
+                  { label: "Uitkomst hit", value: `${Math.round(Number(featureDiagnostics.outcomeHitRate || 0) * 100)}%` },
+                  { label: "Topkans hit", value: `${Math.round(Number(featureDiagnostics.probabilityOutcomeHitRate || 0) * 100)}%` },
+                ].map((item) => (
+                  <div key={item.label} className="rounded-xl border border-white/5 bg-slate-950/40 px-3 py-2">
+                    <div className="text-[8px] font-black text-slate-500 uppercase">{item.label}</div>
+                    <div className="text-[15px] font-black text-white mt-1">{item.value}</div>
+                  </div>
+                ))}
+              </div>
+            </div>
+
+            <div className="grid md:grid-cols-2 gap-3">
+              <div className="rounded-xl border border-white/5 bg-slate-900/30 p-3">
+                <div className="text-[10px] font-black text-slate-400 uppercase mb-2">Belangrijkste faalsignalen</div>
+                <div className="space-y-2">
+                  {(featureDiagnostics.topFailureSignals || []).slice(0, 5).map((item: any) => (
+                    <div key={item.signal} className="flex items-center justify-between text-[10px]">
+                      <span className="text-slate-300">{item.signal}</span>
+                      <span className="font-black text-white">{item.count}x</span>
+                    </div>
+                  ))}
+                </div>
+              </div>
+              <div className="rounded-xl border border-white/5 bg-slate-900/30 p-3">
+                <div className="text-[10px] font-black text-slate-400 uppercase mb-2">Faseprestaties</div>
+                <div className="space-y-2">
+                  {(featureDiagnostics.phaseBreakdown || []).slice(0, 5).map((item: any) => (
+                    <div key={item.phase} className="text-[10px]">
+                      <div className="flex items-center justify-between">
+                        <span className="text-slate-300">{item.phase}</span>
+                        <span className="font-black text-white">{item.matches} duels</span>
+                      </div>
+                      <div className="text-slate-500 mt-0.5">
+                        Exact {Math.round(Number(item.exactHitRate || 0) * 100)}% · Uitkomst {Math.round(Number(item.outcomeHitRate || 0) * 100)}%
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            </div>
+          </div>
+        ) : (
+          <div className="text-[11px] text-slate-500">Nog geen modelvalidatie opgebouwd uit reviewdata.</div>
+        )}
       </div>
 
       <div className="glass-card rounded-2xl border border-white/5 p-5">
