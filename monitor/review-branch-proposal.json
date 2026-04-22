@@ -1,25 +1,41 @@
 {
-  "generatedAt": "2026-04-21T22:59:26.902Z",
-  "date": "2026-04-22",
+  "generatedAt": "2026-04-22T23:07:30.788Z",
+  "date": "2026-04-23",
   "proposalOnly": true,
-  "shouldPropose": false,
-  "branchName": "codex/review-20260422",
-  "summary": "Geen reviewbranch nodig op 2026-04-22.",
+  "shouldPropose": true,
+  "branchName": "codex/review-20260423",
+  "summary": "AI reviewvoorstel voor 2026-04-23: 1 aandachtspunt(en) met patchadvies, niet automatisch live.",
   "latestStats": {
-    "today": "2026-04-22",
+    "today": "2026-04-23",
     "dataPresent": true,
-    "lastRun": 1776809360228,
-    "ageMinutes": 50,
-    "todayMatches": 14,
+    "lastRun": 1776898664254,
+    "ageMinutes": 10,
+    "todayMatches": 9,
     "liveMatches": 0,
     "liveWithoutMinute": 0,
     "h2hFilled": 1,
-    "h2hMissing": 13,
+    "h2hMissing": 8,
     "standingsCount": 28,
     "cupSheetCount": 4,
     "phaseReliabilityCount": 3
   },
-  "findings": [],
-  "recommendedFiles": [],
-  "nextStep": "Geen actie nodig; monitor blijft op de achtergrond doorlopen."
+  "findings": [
+    {
+      "priority": 1,
+      "key": "historical_referee_unmatched",
+      "severity": "low",
+      "message": "Geen enkele wedstrijd van vandaag gebruikt historische referee-data.",
+      "whyItMatters": "Historische scheidsrechterdata matcht nog te weinig.",
+      "recommendedFiles": [
+        "scripts/server-worker.js",
+        "components/MatchCard.tsx"
+      ],
+      "details": {}
+    }
+  ],
+  "recommendedFiles": [
+    "scripts/server-worker.js",
+    "components/MatchCard.tsx"
+  ],
+  "nextStep": "Gebruik deze proposal om gericht een reviewbranch te maken en alleen na controle te mergen."
 }
