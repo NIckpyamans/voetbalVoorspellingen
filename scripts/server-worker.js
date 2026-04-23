@@ -1232,6 +1232,18 @@ function buildMarketCalibration(input) {
   const closingLean = weightedBookDiff >= 0.35 ? "home" : weightedBookDiff <= -0.35 ? "away" : "neutral";
   const effectiveCoverage = Number(Math.max(closingCoverage, Number(supplemental?.closingCoverage || 0)).toFixed(2));
 
+  if (!bookmakerSignals.length && Number.isFinite(weightedBookDiff)) {
+    bookmakerSignals.push({
+      key: "Hist",
+      bookmaker: "Historical closing",
+      diff: Number(weightedBookDiff.toFixed(2)),
+      strength: Number(Math.max(strength, 0.12).toFixed(2)),
+      closingCoverage: effectiveCoverage,
+      lean: closingLean,
+      source: "historical-closing-fallback",
+    });
+  }
+
   return {
     summary: `closing-profiel ${input.homeTeamProfile?.teamName || "thuis"} ${homeImplied.toFixed(2)} PPG vs ${input.awayTeamProfile?.teamName || "uit"} ${awayImplied.toFixed(2)} PPG, dekking ${Math.round(effectiveCoverage * 100)}%, bookmaker-consensus ${Math.round(bookmakerAgreement * 100)}%`,
     source: supplementalSignals.length ? "football-data.co.uk + Sofascore current odds" : "football-data.co.uk",
@@ -1390,6 +1402,30 @@ const BOOKMAKER_DEFS = [
     opening: ["B365H", "B365D", "B365A"],
   },
   {
+    key: "BW",
+    label: "Bet&Win",
+    closing: ["BWCH", "BWCD", "BWCA"],
+    opening: ["BWH", "BWD", "BWA"],
+  },
+  {
+    key: "IW",
+    label: "Interwetten",
+    closing: ["IWCH", "IWCD", "IWCA"],
+    opening: ["IWH", "IWD", "IWA"],
+  },
+  {
+    key: "WH",
+    label: "William Hill",
+    closing: ["WHCH", "WHCD", "WHCA"],
+    opening: ["WHH", "WHD", "WHA"],
+  },
+  {
+    key: "VC",
+    label: "VC Bet",
+    closing: ["VCCH", "VCCD", "VCCA"],
+    opening: ["VCH", "VCD", "VCA"],
+  },
+  {
     key: "Avg",
     label: "Average",
     closing: ["AvgCH", "AvgCD", "AvgCA"],
@@ -1409,6 +1445,11 @@ function buildRefereeAliasVariants(refereeName) {
 
   const parts = normalized.split(" ").filter(Boolean);
   const aliases = new Set([normalized]);
+  const connectors = new Set(["de", "da", "del", "van", "von", "der", "den", "di", "la", "le"]);
+  const filteredParts = parts.filter((part) => !connectors.has(part) && part !== "jr" && part !== "sr");
+  const effectiveParts = filteredParts.length ? filteredParts : parts;
+  const collapsed = effectiveParts.join(" ");
+  if (collapsed) aliases.add(collapsed);
   const surname = parts.at(-1) || normalized;
   aliases.add(surname);
 
@@ -1424,7 +1465,49 @@ function buildRefereeAliasVariants(refereeName) {
     aliases.add(`${parts[0][0]} ${parts[1][0]} ${surname}`);
   }
 
+  if (effectiveParts.length >= 2) {
+    aliases.add(`${effectiveParts[0]} ${effectiveParts.at(-1)}`);
+    aliases.add(`${effectiveParts[0][0]} ${effectiveParts.at(-1)}`);
+    aliases.add(effectiveParts.slice(-2).join(" "));
+  }
+
+  if (effectiveParts.length >= 3) {
+    aliases.add(effectiveParts.slice(-3).join(" "));
+    aliases.add(`${effectiveParts.slice(0, -1).join(" ")} ${effectiveParts.at(-1)}`);
+    aliases.add(`${effectiveParts[0][0]} ${effectiveParts[1][0]} ${effectiveParts.at(-1)}`);
+  }
+
   return [...aliases].filter(Boolean);
+}
+
+function getMarketLeagueFamilyCodes(leagueLabel) {
+  const direct = MARKET_LEAGUE_CODES[leagueLabel];
+  const countryPrefix = String(leagueLabel || "").split(" - ")[0] || "";
+  const codes = new Set();
+  if (direct) codes.add(direct);
+  if (countryPrefix) {
+    for (const [label, code] of Object.entries(MARKET_LEAGUE_CODES)) {
+      if (!code) continue;
+      if (String(label).startsWith(`${countryPrefix} - `)) codes.add(code);
+    }
+  }
+  return [...codes];
+}
+
+function mergeRefereeArchives(profiles) {
+  const merged = { referees: {}, refereeAliases: {} };
+  for (const profile of profiles || []) {
+    for (const [key, value] of Object.entries(profile?.referees || {})) {
+      const existing = merged.referees[key];
+      if (!existing || Number(value?.matches || 0) > Number(existing?.matches || 0)) {
+        merged.referees[key] = value;
+      }
+    }
+    for (const [alias, key] of Object.entries(profile?.refereeAliases || {})) {
+      if (!merged.refereeAliases[alias]) merged.refereeAliases[alias] = key;
+    }
+  }
+  return merged;
 }
 
 function outcomeFromGoals(homeGoals, awayGoals) {
@@ -1733,17 +1816,19 @@ function buildMarketProfiles(rows) {
 }
 
 async function fetchHistoricalMarketProfile(leagueLabel, dateISO) {
-  const code = MARKET_LEAGUE_CODES[leagueLabel];
-  if (!code) return null;
+  const codes = getMarketLeagueFamilyCodes(leagueLabel);
+  if (!codes.length) return null;
 
   const seasonFolders = getSeasonFolders(dateISO, 2);
   const allRows = [];
   for (const seasonFolder of seasonFolders) {
-    const url = `https://www.football-data.co.uk/mmz4281/${seasonFolder}/${code}.csv`;
-    const csvText = await fetchText(url);
-    if (!csvText) continue;
-    const rows = parseCsv(csvText);
-    if (rows.length) allRows.push(...rows);
+    for (const code of codes) {
+      const url = `https://www.football-data.co.uk/mmz4281/${seasonFolder}/${code}.csv`;
+      const csvText = await fetchText(url);
+      if (!csvText) continue;
+      const rows = parseCsv(csvText);
+      if (rows.length) allRows.push(...rows);
+    }
   }
   if (!allRows.length) return null;
   return buildMarketProfiles(allRows);
@@ -1798,23 +1883,30 @@ function lookupMarketTeamProfile(leagueMarketProfile, teamName) {
   return null;
 }
 
-function lookupHistoricalRefereeProfile(leagueMarketProfile, refereeName) {
+function lookupHistoricalRefereeProfile(leagueMarketProfile, refereeName, globalArchive = null) {
   if (!refereeName) return null;
   const referees = leagueMarketProfile?.referees || {};
   const aliasMap = leagueMarketProfile?.refereeAliases || {};
+  const globalReferees = globalArchive?.referees || {};
+  const globalAliasMap = globalArchive?.refereeAliases || {};
   const normalizedRef = normalizeName(refereeName);
   const aliasHit = aliasMap[normalizedRef];
   if (aliasHit && referees[aliasHit]) return referees[aliasHit];
   const direct = referees[normalizedRef];
   if (direct) return direct;
+  const globalAliasHit = globalAliasMap[normalizedRef];
+  if (globalAliasHit && globalReferees[globalAliasHit]) return globalReferees[globalAliasHit];
+  if (globalReferees[normalizedRef]) return globalReferees[normalizedRef];
   const aliases = buildRefereeAliasVariants(refereeName);
   for (const alias of aliases) {
     const aliasKey = aliasMap[alias];
     if (aliasKey && referees[aliasKey]) return referees[aliasKey];
+    const globalKey = globalAliasMap[alias];
+    if (globalKey && globalReferees[globalKey]) return globalReferees[globalKey];
   }
   const surname = normalizedRef.split(" ").filter(Boolean).slice(-1)[0] || normalizedRef;
   return (
-    Object.values(referees).find((entry) => {
+    [...Object.values(referees), ...Object.values(globalReferees)].find((entry) => {
       const candidate = normalizeName(entry?.refereeName || "");
       if (candidate === normalizedRef) return true;
       if (!surname) return false;
@@ -3646,9 +3738,37 @@ function defaultStore() {
     leagueReliability: {},
     phaseReliability: {},
     featureDiagnostics: null,
+    sourceCoverage: null,
     aiAdvice: [],
     lastRun: null,
-    workerVersion: "v12-validation-learning",
+    workerVersion: "v13-source-coverage",
+  };
+}
+
+function buildSourceCoverage(store, todayKey) {
+  const todayMatches = Array.isArray(store.matches?.[todayKey]) ? store.matches[todayKey] : [];
+  const total = Math.max(todayMatches.length, 1);
+  const bookmakerCovered = todayMatches.filter(
+    (match) => Array.isArray(match?.marketCalibration?.bookmakerSignals) && match.marketCalibration.bookmakerSignals.length > 0
+  ).length;
+  const refereeCovered = todayMatches.filter(
+    (match) => Number(match?.refereeProfile?.matches || 0) > 0
+  ).length;
+  const h2hCovered = todayMatches.filter((match) => Number(match?.h2h?.played || 0) > 0).length;
+  return {
+    todayMatches: todayMatches.length,
+    bookmakerCoverage: Number((bookmakerCovered / total).toFixed(2)),
+    refereeCoverage: Number((refereeCovered / total).toFixed(2)),
+    h2hCoverage: Number((h2hCovered / total).toFixed(2)),
+    marketProfiles: Object.keys(store.marketProfiles || {}).length,
+    understat: {
+      status: "pilot",
+      note: "Publieke Understat bron is bereikbaar, maar nog niet stabiel genoeg ingelezen voor productie-xG in alle competities.",
+    },
+    fbref: {
+      status: "rate-limited",
+      note: "FBref is inhoudelijk sterk, maar worker-fetches worden te vaak geblokkeerd. Daarom nu alleen als toekomstige uitbreidingsbron.",
+    },
   };
 }
 
@@ -3674,6 +3794,32 @@ function buildAiRecommendations(store, todayKey) {
       title: "Bookmakerdekking verbreden",
       summary: `${bookmakerMissing} wedstrijd(en) missen bookmaker-signalen.`,
       action: "Gebruik extra oddsbron of current-odds fallback voor interlands en zeldzame competities.",
+      priority: "medium",
+    });
+  }
+
+  const sourceCoverage = store.sourceCoverage || null;
+  if (sourceCoverage && Number(sourceCoverage.bookmakerCoverage || 0) < 0.7) {
+    issues.push({
+      title: "Bronkwaliteit odds nog dun",
+      summary: `Bookmakerdekking staat op ${Math.round(Number(sourceCoverage.bookmakerCoverage || 0) * 100)}% voor de actuele speeldag.`,
+      action: "Verbred internationale oddsfallbacks en gebruik historische closing-signalen als live odds ontbreken.",
+      priority: "medium",
+    });
+  }
+  if (sourceCoverage && Number(sourceCoverage.refereeCoverage || 0) < 0.65) {
+    issues.push({
+      title: "Referee-matchrate verhogen",
+      summary: `Historische referee-dekking staat op ${Math.round(Number(sourceCoverage.refereeCoverage || 0) * 100)}%.`,
+      action: "Gebruik bredere aliasvarianten en gecombineerde referee-archieven per land/competitiefamilie.",
+      priority: "medium",
+    });
+  }
+  if (sourceCoverage && Number(sourceCoverage.h2hCoverage || 0) < 0.75) {
+    issues.push({
+      title: "H2H fallback verbreden",
+      summary: `H2H-dekking staat op ${Math.round(Number(sourceCoverage.h2hCoverage || 0) * 100)}% voor de actuele speeldag.`,
+      action: "Blijf competitiebackfill combineren met neutrale onderlinge fallback buiten de live bron.",
       priority: "medium",
     });
   }
@@ -3712,6 +3858,48 @@ function buildAiRecommendations(store, todayKey) {
           : "low",
     });
   }
+
+  const topFailureSignals = diagnostics?.topFailureSignals || [];
+  const modelAgreementFailure = topFailureSignals.find((item) => item.signal === "low_model_agreement");
+  if (modelAgreementFailure) {
+    issues.push({
+      title: "Modelen zitten te vaak uit elkaar",
+      summary: `Low model agreement kwam ${modelAgreementFailure.count} keer terug in reviewdata.`,
+      action: "Verlaag confidence eerder als scoremodel en 1X2-topkans te ver uiteenlopen.",
+      priority: modelAgreementFailure.count >= 5 ? "high" : "medium",
+    });
+  }
+  const h2hSignalFailure = topFailureSignals.find((item) => item.signal === "h2h_signal");
+  if (h2hSignalFailure) {
+    issues.push({
+      title: "H2H-signaal herwegen",
+      summary: `H2H-signal kwam ${h2hSignalFailure.count} keer terug als faalsignaal.`,
+      action: "Gebruik H2H alleen zwaar als het recent, voldoende gevuld en competitietype-vergelijkbaar is.",
+      priority: "medium",
+    });
+  }
+  const clubEloFailure = topFailureSignals.find((item) => item.signal === "clubelo_misread");
+  if (clubEloFailure) {
+    issues.push({
+      title: "ClubElo interlands strakker scheiden",
+      summary: `ClubElo/sterktesprong zat ${clubEloFailure.count} keer mis in de reviews.`,
+      action: "Splits interland- en clubkracht nog strakker en temper ClubElo bij nationale teams.",
+      priority: "medium",
+    });
+  }
+
+  issues.push({
+    title: "Understat bronstatus",
+    summary: "Understat blijft technisch kansrijk voor gratis xG/xGA-profielen, maar is nog pilot en niet breed genoeg gekoppeld.",
+    action: "Volgende stap: per ondersteunde topcompetitie een gecontroleerde Understat parser toevoegen in plaats van alles tegelijk.",
+    priority: "low",
+  });
+  issues.push({
+    title: "FBref bronstatus",
+    summary: "FBref heeft sterke shot- en splitdata, maar worker-fetches worden nog te vaak geblokkeerd.",
+    action: "Gebruik FBref voorlopig als handmatige/periodieke verrijkingsbron of via vooraf gebouwde snapshots.",
+    priority: "low",
+  });
 
   return issues;
 }
@@ -3827,6 +4015,8 @@ async function main() {
       }
     }
   }
+
+  const globalRefereeArchive = mergeRefereeArchives(Object.values(store.marketProfiles || {}));
 
   for (const teamId of requiredTeamIds) {
     if (!store.teamStats[teamId] || now - Number(store.teamStatsUpdated?.[teamId] || 0) > FORM_TTL) {
@@ -4031,7 +4221,7 @@ async function main() {
         standingPos: awayPos,
       });
       const referee = extractReferee(eventDetails);
-      const historicalRefereeProfile = lookupHistoricalRefereeProfile(leagueMarketProfile, referee?.name);
+      const historicalRefereeProfile = lookupHistoricalRefereeProfile(leagueMarketProfile, referee?.name, globalRefereeArchive);
       let supplementalOdds = null;
       if (
         String(leagueInfo.label || "").toLowerCase().includes("qualification") ||
@@ -4268,9 +4458,10 @@ async function main() {
 
   compactStore(store, today, now);
   rebuildReviewsAndLearning(store);
+  store.sourceCoverage = buildSourceCoverage(store, today);
   store.aiAdvice = buildAiRecommendations(store, today);
   store.lastRun = Date.now();
-  store.workerVersion = "v12-validation-learning";
+  store.workerVersion = "v13-source-coverage";
   fs.mkdirSync(path.dirname(TRAINING_SNAPSHOT_FILE), { recursive: true });
   fs.writeFileSync(TRAINING_SNAPSHOT_FILE, JSON.stringify(buildTrainingSnapshot(store)));
   fs.writeFileSync(DATA_FILE, JSON.stringify(store));

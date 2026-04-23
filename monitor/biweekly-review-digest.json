@@ -1,60 +1,59 @@
 {
-  "generatedAt": "2026-04-20T08:29:22.836Z",
+  "generatedAt": "2026-04-23T07:31:18.994Z",
   "range": {
-    "from": "2026-04-07",
-    "to": "2026-04-20",
-    "days": 12
+    "from": "2026-04-10",
+    "to": "2026-04-23",
+    "days": 8
   },
   "shouldNotify": false,
   "shouldRefresh": false,
   "cadence": "tweewekelijks",
-  "summary": "AI bundel over de laatste 14 dagen: 3 hoofdthema's uit 9 monitorbevindingen.",
+  "summary": "AI bundel over de laatste 14 dagen: 2 hoofdthema's uit 8 monitorbevindingen.",
   "totals": {
-    "totalRuns": 13,
-    "totalIssues": 9,
-    "uniqueIssueTypes": 3
+    "totalRuns": 10,
+    "totalIssues": 8,
+    "uniqueIssueTypes": 2
   },
   "latestStats": {
-    "today": "2026-04-20",
+    "today": "2026-04-23",
     "dataPresent": true,
-    "lastRun": 1776636031531,
-    "ageMinutes": 56,
-    "todayMatches": 8,
+    "lastRun": 1776929478319,
+    "ageMinutes": 0,
+    "todayMatches": 9,
     "liveMatches": 0,
     "liveWithoutMinute": 0,
     "h2hFilled": 1,
-    "h2hMissing": 7,
+    "h2hMissing": 8,
     "standingsCount": 28,
-    "cupSheetCount": 5,
+    "cupSheetCount": 6,
     "phaseReliabilityCount": 3
   },
   "topFindings": [
     {
-      "key": "bookmaker_signals_missing",
-      "title": "Bookmakersignalen missen",
-      "count": 4,
-      "highestSeverity": "medium",
-      "sampleMessage": "Alle wedstrijden missen bookmaker-signalen in de marktcalibratie.",
-      "recommendation": "Verbred de interland-oddsbron en toon dekking per bookmaker in de kaart."
-    },
-    {
       "key": "historical_referee_unmatched",
       "title": "Historische scheidsdata matcht te weinig",
-      "count": 4,
+      "count": 5,
       "highestSeverity": "low",
       "sampleMessage": "Geen enkele wedstrijd van vandaag gebruikt historische referee-data.",
       "recommendation": "Trek bredere referee-archieven per land/competitie in cache en onderhoud aliasen."
     },
     {
-      "key": "h2h_empty",
-      "title": "H2H niet gevuld",
-      "count": 1,
+      "key": "bookmaker_signals_missing",
+      "title": "Bookmakersignalen missen",
+      "count": 3,
       "highestSeverity": "medium",
-      "sampleMessage": "Alle wedstrijden van vandaag hebben lege H2H-data.",
-      "recommendation": "Trek H2H verder uit historische competitiebestanden en bewaak fallbackdekking in de worker."
+      "sampleMessage": "Alle wedstrijden missen bookmaker-signalen in de marktcalibratie.",
+      "recommendation": "Verbred de interland-oddsbron en toon dekking per bookmaker in de kaart."
     }
   ],
-  "reviewProposal": null,
+  "reviewProposal": {
+    "branchName": "codex/review-20260423",
+    "summary": "AI reviewvoorstel voor 2026-04-23: 1 aandachtspunt(en) met patchadvies, niet automatisch live.",
+    "recommendedFiles": [
+      "scripts/server-worker.js",
+      "components/MatchCard.tsx"
+    ]
+  },
   "delivery": {
     "emailConfigured": false,
     "note": "Mailverzending vereist nog aparte mailcredentials of een mailservice. De bundel wordt nu wel automatisch opgebouwd en opgeslagen."

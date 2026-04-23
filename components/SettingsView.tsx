@@ -14,6 +14,7 @@ const SettingsView: React.FC = () => {
   const [aiAdvice, setAiAdvice] = useState<any[]>([]);
   const [biweeklyDigest, setBiweeklyDigest] = useState<any | null>(null);
   const [featureDiagnostics, setFeatureDiagnostics] = useState<any | null>(null);
+  const [sourceCoverage, setSourceCoverage] = useState<any | null>(null);
   const [manualAdvice, setManualAdvice] = useState("");
 
   useEffect(() => {
@@ -40,6 +41,7 @@ const SettingsView: React.FC = () => {
         if (Array.isArray(data.aiAdvice)) setAiAdvice(data.aiAdvice);
         if (data.biweeklyDigest) setBiweeklyDigest(data.biweeklyDigest);
         if (data.featureDiagnostics) setFeatureDiagnostics(data.featureDiagnostics);
+        if (data.sourceCoverage) setSourceCoverage(data.sourceCoverage);
       })
       .catch(() => {});
 
@@ -72,6 +74,10 @@ const SettingsView: React.FC = () => {
   const saveManualAdvice = () => {
     localStorage.setItem("footypredict_manual_ai_advice", manualAdvice.trim());
   };
+
+  const bundleUpdatedAt = biweeklyDigest?.generatedAt
+    ? new Date(biweeklyDigest.generatedAt).toLocaleString("nl-NL")
+    : null;
 
   return (
     <div className="max-w-3xl space-y-5">
@@ -161,6 +167,9 @@ const SettingsView: React.FC = () => {
                   <div className="text-[9px] text-slate-500 mt-1">
                     Periode {biweeklyDigest.range?.from || "?"} t/m {biweeklyDigest.range?.to || "?"}
                   </div>
+                  <div className="text-[9px] text-slate-600 mt-1">
+                    Laatste bundelupdate {bundleUpdatedAt || "onbekend"}
+                  </div>
                 </div>
                 <span className="text-[8px] font-black px-2 py-0.5 rounded-full bg-blue-900/30 text-blue-300">
                   {biweeklyDigest.cadence || "bundel"}
@@ -212,6 +221,57 @@ const SettingsView: React.FC = () => {
           <div className="text-[11px] text-slate-500">
             Nog geen tweewekelijkse bundel beschikbaar. Deze wordt automatisch opgebouwd zodra de digest-workflow draait.
           </div>
+        )}
+      </div>
+
+      <div className="glass-card rounded-2xl border border-white/5 p-5">
+        <div className="text-[10px] font-black text-slate-400 uppercase mb-3">Bronkwaliteit van vandaag</div>
+        {sourceCoverage ? (
+          <div className="space-y-3">
+            <div className="grid grid-cols-2 gap-2">
+              {[
+                {
+                  label: "Bookmakerdekking",
+                  value: `${Math.round(Number(sourceCoverage.bookmakerCoverage || 0) * 100)}%`,
+                },
+                {
+                  label: "Referee-dekking",
+                  value: `${Math.round(Number(sourceCoverage.refereeCoverage || 0) * 100)}%`,
+                },
+                {
+                  label: "H2H-dekking",
+                  value: `${Math.round(Number(sourceCoverage.h2hCoverage || 0) * 100)}%`,
+                },
+                {
+                  label: "Historische marktprofielen",
+                  value: Number(sourceCoverage.marketProfiles || 0).toLocaleString(),
+                },
+              ].map((item) => (
+                <div key={item.label} className="rounded-xl border border-white/5 bg-slate-900/40 px-3 py-2">
+                  <div className="text-[9px] font-black text-slate-500 uppercase">{item.label}</div>
+                  <div className="text-[16px] font-black text-white mt-1">{item.value}</div>
+                </div>
+              ))}
+            </div>
+
+            <div className="rounded-xl border border-emerald-500/10 bg-emerald-950/10 p-3">
+              <div className="text-[10px] font-black text-emerald-300 uppercase mb-1">Understat status</div>
+              <div className="text-[10px] text-slate-300">
+                <span className="font-black text-white mr-1">{sourceCoverage.understat?.status || "onbekend"}:</span>
+                {sourceCoverage.understat?.note || "Nog geen status."}
+              </div>
+            </div>
+
+            <div className="rounded-xl border border-amber-500/10 bg-amber-950/10 p-3">
+              <div className="text-[10px] font-black text-amber-300 uppercase mb-1">FBref status</div>
+              <div className="text-[10px] text-slate-300">
+                <span className="font-black text-white mr-1">{sourceCoverage.fbref?.status || "onbekend"}:</span>
+                {sourceCoverage.fbref?.note || "Nog geen status."}
+              </div>
+            </div>
+          </div>
+        ) : (
+          <div className="text-[11px] text-slate-500">Bronkwaliteit wordt zichtbaar zodra de worker deze samenvatting opnieuw heeft opgebouwd.</div>
         )}
       </div>
 

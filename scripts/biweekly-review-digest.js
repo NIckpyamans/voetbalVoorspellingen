@@ -88,10 +88,11 @@ function recommendationFor(key) {
 function buildDigest() {
   const findings = readJsonSafe(FINDINGS_FILE, { days: {} });
   const proposal = readJsonSafe(PROPOSAL_FILE, null);
-  const today = getAmsterdamDate();
-  const fromDate = subtractDays(today, 13);
+  const allFindingDays = Object.keys(findings.days || {}).sort();
+  const latestFindingDay = allFindingDays.at(-1) || getAmsterdamDate();
+  const fromDate = subtractDays(latestFindingDay, 13);
   const includedDays = Object.keys(findings.days || {})
-    .filter((key) => key >= fromDate && key <= today)
+    .filter((key) => key >= fromDate && key <= latestFindingDay)
     .sort();
 
   const runs = includedDays.flatMap((key) => findings.days?.[key]?.runs || []);
@@ -131,13 +132,13 @@ function buildDigest() {
       recommendation: recommendationFor(item.key),
     }));
 
-  const week = getIsoWeek(today);
+  const week = getIsoWeek(latestFindingDay);
   const shouldRefresh = week % 2 === 0;
   const digest = {
     generatedAt: new Date().toISOString(),
     range: {
       from: fromDate,
-      to: today,
+      to: latestFindingDay,
       days: includedDays.length,
     },
     shouldNotify: false,
@@ -171,7 +172,7 @@ function buildDigest() {
   const md = [
     "# FootyAI tweewekelijkse AI-digest",
     "",
-    `Periode: ${fromDate} t/m ${today}`,
+    `Periode: ${fromDate} t/m ${latestFindingDay}`,
     "",
     digest.summary,
     "",
