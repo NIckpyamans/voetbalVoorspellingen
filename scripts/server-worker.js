@@ -1261,26 +1261,71 @@ function buildMarketCalibration(input) {
 }
 
 function getSeasonFolder(dateISO) {
-  const base = dateISO ? new Date(`${dateISO}T12:00:00Z`) : new Date();
-  const year = base.getUTCFullYear();
-  const month = base.getUTCMonth();
+  const base = dateISO ? new Date(dateISO) : new Date();
+  const amsterdamString = base.toLocaleString("sv-SE", {
+    timeZone: "Europe/Amsterdam",
+    year: "numeric",
+    month: "numeric",
+  });
+  const [yearStr, monthStr] = amsterdamString.split('/');
+  const year = parseInt(yearStr, 10);
+  const month = parseInt(monthStr, 10) - 1;
   const startYear = month >= 6 ? year : year - 1;
   const endYear = startYear + 1;
   return `${String(startYear).slice(-2)}${String(endYear).slice(-2)}`;
 }
 
 function getSeasonFolders(dateISO, seasonsBack = 2) {
-  const base = dateISO ? new Date(`${dateISO}T12:00:00Z`) : new Date();
-  const year = base.getUTCFullYear();
-  const month = base.getUTCMonth();
+  function getSeasonFolder(dateISO) {
+    const base = dateISO ? new Date(dateISO) : new Date();
+    const amsterdamString = base.toLocaleString("sv-SE", {
+      timeZone: "Europe/Amsterdam",
+      year: "numeric",
+      month: "numeric",
+    });
+    const [yearStr, monthStr] = amsterdamString.split('/');
+    const year = parseInt(yearStr, 10);
+    const month = parseInt(monthStr, 10) - 1;
+    const startYear = month >= 6 ? year : year - 1;
+    const endYear = startYear + 1;
+    return `${String(startYear).slice(-2)}${String(endYear).slice(-2)}`;
+  }
+  
+  function getSeasonFolders(dateISO, seasonsBack = 2) {
+    const base = dateISO ? new Date(dateISO) : new Date();
+    const amsterdamString = base.toLocaleString("en-US", {
+      timeZone: "Europe/Amsterdam",
+      year: "numeric",
+      month: "numeric",
+    });
+    const [monthStr, yearStr] = amsterdamString.split('/');
+    const year = parseInt(yearStr, 10);
+    const month = parseInt(monthStr, 10) - 1;
+    const startYear = month >= 6 ? year : year - 1;
+    const folders = [];
+    for (let offset = 0; offset < seasonsBack; offset += 1) {
+      const currentStart = startYear - offset;
+      const currentEnd = currentStart + 1;
+      folders.push(`${String(currentStart).slice(-2)}${String(currentEnd).slice(-2)}`);
+    }
+    return folders;
+  }  const base = dateISO ? new Date(dateISO) : new Date();
+  const amsterdamString = base.toLocaleString("en-US", {
+    timeZone: "Europe/Amsterdam",
+    year: "numeric",
+    month: "numeric",
+  });
+  const [monthStr, yearStr] = amsterdamString.split('/');
+  const year = parseInt(yearStr);
+  const month = parseInt(monthStr) - 1; 
   const startYear = month >= 6 ? year : year - 1;
   const folders = [];
-  for (let offset = 0; offset < seasonsBack; offset += 1) {
+   for (let offset = 0; offset < seasonsBack; offset += 1) {
     const currentStart = startYear - offset;
     const currentEnd = currentStart + 1;
     folders.push(`${String(currentStart).slice(-2)}${String(currentEnd).slice(-2)}`);
   }
-  return [...new Set(folders)];
+   return folders;
 }
 
 async function fetchText(url) {
