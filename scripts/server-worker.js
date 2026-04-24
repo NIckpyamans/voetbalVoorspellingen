@@ -2278,9 +2278,13 @@ async function safeFetch(url) {
           "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 Chrome/123.0 Safari/537.36",
       },
     });
-    if (!response.ok) return null;
+    if (!response.ok) {
+      console.error(`[worker] API error ${response.status} voor ${url}`);
+      return null;
+    }
     return await response.json();
-  } catch {
+  } catch (err) {
+    console.error(`[worker] Fetch error voor ${url}: ${err?.message || err}`);
     return null;
   }
 }
@@ -3994,7 +3998,22 @@ async function main() {
 
   for (const date of dates) {
     const json = await safeFetch(`${SOFA}/sport/football/scheduled-events/${date}`);
-    const events = (json?.events || [])
+    
+    // Handle different possible API response structures
+    let apiEvents = [];
+    if (Array.isArray(json)) {
+      apiEvents = json;
+    } else if (json?.events && Array.isArray(json.events)) {
+      apiEvents = json.events;
+    } else if (json?.data && Array.isArray(json.data)) {
+      apiEvents = json.data;
+    }
+    
+    if (apiEvents.length > 0) {
+      console.log(`[worker] ${date}: ${apiEvents.length} events van API, filtering...`);
+    }
+    
+    const events = apiEvents
       .filter((event) => {
         const key = event?.startTimestamp
           ? toAmsterdamDateKey(new Date(Number(event.startTimestamp) * 1000))
@@ -4002,6 +4021,13 @@ async function main() {
         return key === date;
       })
       .filter((event) => getLeagueInfo(event));
+    
+    if (events.length > 0) {
+      console.log(`[worker] ${date}: ${events.length} events na filtering (${apiEvents.length} totaal)`);
+    } else if (apiEvents.length > 0) {
+      console.warn(`[worker] ${date}: WAARSCHUWING - ${apiEvents.length} API events maar 0 na filtering!`);
+    }
+    
     allEvents[date] = events;
 
     for (const event of events) {
@@ -4507,6 +4533,13 @@ async function main() {
   store.aiAdvice = buildAiRecommendations(store, today);
   store.lastRun = Date.now();
   store.workerVersion = "v13-source-coverage";
+  
+  // Log summary
+  const totalMatches = Object.values(store.matches || {}).flat().length;
+  console.log(`[worker] Totaal ${totalMatches} wedstrijden opgeslagen`);
+  console.log(`[worker] Vandaag: ${(store.matches?.[today] || []).length} wedstrijden`);
+  console.log(`[worker] Morgen: ${(store.matches?.[tomorrow] || []).length} wedstrijden`);
+  
   fs.mkdirSync(path.dirname(TRAINING_SNAPSHOT_FILE), { recursive: true });
   fs.writeFileSync(TRAINING_SNAPSHOT_FILE, JSON.stringify(buildTrainingSnapshot(store)));
   fs.writeFileSync(DATA_FILE, JSON.stringify(store));
