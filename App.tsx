@@ -99,9 +99,7 @@ const LEAGUE_ORDER = [
 const App: React.FC = () => {
   const [view, setView] = useState<View>("dashboard");
   const [selectedDate, setSelectedDate] = useState<string>(() => {
-    const tomorrow = new Date();
-    tomorrow.setDate(tomorrow.getDate() + 1);
-    return isoDate(tomorrow);
+    return isoDate(new Date());
   });
   const [matches, setMatches] = useState<Match[]>([]);
   const [predictions, setPredictions] = useState<Record<string, any>>({});
