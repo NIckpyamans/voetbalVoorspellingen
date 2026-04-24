@@ -10,12 +10,13 @@ import { getFavorites } from "./components/FavoriteTeams";
 import { Match } from "./types";
 import { velocityEngine } from "./services/velocityEngine";
 import { getOrCreateTeam, saveToMemory, updateTeamModelsFromResult } from "./services/geminiService";
+import { todayAmsterdamKey, toAmsterdamDateKey } from "./shared/date.js";
 
 type View = "dashboard" | "history" | "standings" | "settings";
 type FilterMode = "alle" | "favorieten" | "live" | "gepland" | "gespeeld";
 
 function isoDate(date: Date) {
-  return date.toISOString().split("T")[0];
+  return toAmsterdamDateKey(date) || todayAmsterdamKey();
 }
 
 function formatDateLabel(dateISO: string) {
@@ -28,12 +29,7 @@ function formatDateLabel(dateISO: string) {
 }
 
 function formatAmsterdamDate(date: Date) {
-  return new Intl.DateTimeFormat("sv-SE", {
-    timeZone: "Europe/Amsterdam",
-    year: "numeric",
-    month: "2-digit",
-    day: "2-digit",
-  }).format(date);
+  return toAmsterdamDateKey(date) || isoDate(date);
 }
 
 function isLive(match: Match) {

@@ -5,8 +5,9 @@
 
 import { Match, Prediction } from "../types";
 import { normalizeMinute, parseMinuteValue } from "../shared/minute.js";
+import { todayAmsterdamKey } from "../shared/date.js";
 
-const CACHE_VERSION = "v5_complete_data";
+const CACHE_VERSION = "v6_amsterdam_date_fix";
 const LIVE_CACHE_AGE_MS = 30_000;
 const TODAY_CACHE_AGE_MS = 90_000;
 const OTHER_CACHE_AGE_MS = 30 * 60_000;
@@ -28,7 +29,7 @@ function isLiveMatch(match: any) {
 }
 
 function getMaxCacheAge(dateISO: string, matches: any[]) {
-  const today = new Date().toISOString().split("T")[0];
+  const today = todayAmsterdamKey();
   if (dateISO !== today) return OTHER_CACHE_AGE_MS;
   if ((matches || []).some(isLiveMatch)) return LIVE_CACHE_AGE_MS;
   return TODAY_CACHE_AGE_MS;

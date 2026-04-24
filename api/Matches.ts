@@ -1,6 +1,7 @@
 import { fetchServerStore } from "./_dataSource.js";
 import fs from "fs";
 import path from "path";
+import { addDaysToDateKey, todayAmsterdamKey } from "../shared/date.js";
 
 function readBiweeklyDigest() {
   try {
@@ -23,7 +24,7 @@ function attachReview(match: any, store: any) {
 
 export default async function handler(req: any, res: any) {
   const { date, live, days } = req.query;
-  const today = new Date().toISOString().split("T")[0];
+  const today = todayAmsterdamKey();
   const targetDate = typeof date === "string" && date ? date : today;
   const isLiveSensitiveRequest = targetDate === today || live === "true";
 
@@ -42,12 +43,8 @@ export default async function handler(req: any, res: any) {
       const numDays = parseInt(days, 10);
       if (!isNaN(numDays) && numDays > 0 && numDays <= 7) {
         const multiDayMatches: any[] = [];
-        const requestedDate = new Date(targetDate);
-
         for (let i = -Math.floor(numDays / 2); i <= Math.floor(numDays / 2); i++) {
-          const checkDate = new Date(requestedDate);
-          checkDate.setDate(checkDate.getDate() + i);
-          const dateStr = checkDate.toISOString().split("T")[0];
+          const dateStr = addDaysToDateKey(targetDate, i);
           const dayMatches = (store.matches?.[dateStr] || []).map((match: any) => attachReview(match, store));
           multiDayMatches.push(...dayMatches);
         }

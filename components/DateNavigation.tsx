@@ -4,14 +4,11 @@
 // ============================================================================
 
 import React from "react";
+import { addDaysToDateKey, todayAmsterdamKey } from "../shared/date.js";
 
 interface DateNavigationProps {
   selectedDate: string; // ISO format: "2025-03-23"
   onDateChange: (date: string) => void;
-}
-
-function isoDate(date: Date) {
-  return date.toISOString().split("T")[0];
 }
 
 function formatDateLabel(dateISO: string) {
@@ -44,19 +41,15 @@ function formatDateLabel(dateISO: string) {
 }
 
 const DateNavigation: React.FC<DateNavigationProps> = ({ selectedDate, onDateChange }) => {
-  const today = isoDate(new Date());
+  const today = todayAmsterdamKey();
   const isToday = selectedDate === today;
 
   const goToPreviousDay = () => {
-    const currentDate = new Date(`${selectedDate}T12:00:00`);
-    currentDate.setDate(currentDate.getDate() - 1);
-    onDateChange(isoDate(currentDate));
+    onDateChange(addDaysToDateKey(selectedDate, -1));
   };
 
   const goToNextDay = () => {
-    const currentDate = new Date(`${selectedDate}T12:00:00`);
-    currentDate.setDate(currentDate.getDate() + 1);
-    onDateChange(isoDate(currentDate));
+    onDateChange(addDaysToDateKey(selectedDate, 1));
   };
 
   const goToToday = () => {

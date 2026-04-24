@@ -1,4 +1,5 @@
 import { fetchServerStore } from "./_dataSource.js";
+import { todayAmsterdamKey } from "../shared/date.js";
 
 function impliedOdds(prob: number | undefined) {
   const p = Number(prob || 0);
@@ -75,7 +76,7 @@ export default async function handler(req: any, res: any) {
   res.setHeader("Cache-Control", "no-store");
 
   try {
-    const date = (req.query?.date as string) || new Date().toISOString().split("T")[0];
+    const date = (req.query?.date as string) || todayAmsterdamKey();
     const { store, branch } = await fetchServerStore();
     const predictions: any[] = store.predictions?.[date] || [];
     const matches: any[] = store.matches?.[date] || [];

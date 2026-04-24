@@ -195,6 +195,28 @@ const MARKET_LEAGUE_CODES = {
   "Poland - Ekstraklasa": "POL",
 };
 
+const SPORTSDB_LEAGUE_IDS = {
+  "Belgium - Pro League": "4338",
+  "England - Championship": "4329",
+  "England - Premier League": "4328",
+  "France - Ligue 1": "4334",
+  "Germany - Bundesliga": "4331",
+  "Italy - Serie A": "4332",
+  "Netherlands - Eredivisie": "4337",
+  "Spain - LaLiga": "4335",
+};
+
+const SPORTSDB_NAME_TO_LABEL = {
+  "Belgian Pro League": "Belgium - Pro League",
+  "Dutch Eredivisie": "Netherlands - Eredivisie",
+  "English League Championship": "England - Championship",
+  "English Premier League": "England - Premier League",
+  "French Ligue 1": "France - Ligue 1",
+  "German Bundesliga": "Germany - Bundesliga",
+  "Italian Serie A": "Italy - Serie A",
+  "Spanish La Liga": "Spain - LaLiga",
+};
+
 process.on("unhandledRejection", (err) => {
   console.error("[worker] unhandledRejection:", err?.message || err);
 });
@@ -1387,6 +1409,188 @@ function parseCsv(text) {
     });
     return row;
   });
+}
+
+function parseFootballDataDateKey(value) {
+  const raw = String(value || "").trim();
+  if (!raw) return null;
+
+  const slashMatch = raw.match(/^(\d{1,2})\/(\d{1,2})\/(\d{2,4})$/);
+  if (slashMatch) {
+    const day = Number(slashMatch[1]);
+    const month = Number(slashMatch[2]);
+    let year = Number(slashMatch[3]);
+    if (year < 100) year += year >= 70 ? 1900 : 2000;
+    return `${year}-${String(month).padStart(2, "0")}-${String(day).padStart(2, "0")}`;
+  }
+
+  const isoMatch = raw.match(/^(\d{4})-(\d{2})-(\d{2})$/);
+  if (isoMatch) return raw;
+  return null;
+}
+
+function buildFootballDataKickoffIso(dateKey, timeValue) {
+  const rawTime = String(timeValue || "").trim();
+  const timeMatch = rawTime.match(/^(\d{1,2}):(\d{2})$/);
+  const hours = timeMatch ? Number(timeMatch[1]) : 15;
+  const minutes = timeMatch ? Number(timeMatch[2]) : 0;
+  return new Date(
+    `${dateKey}T${String(hours).padStart(2, "0")}:${String(minutes).padStart(2, "0")}:00+02:00`
+  ).toISOString();
+}
+
+async function fetchFallbackScheduledEventsFromMarket(dateISO) {
+  const seasonFolder = getSeasonFolder(dateISO);
+  const fallbackEvents = [];
+  const seen = new Set();
+
+  for (const leagueInfo of LEAGUES.filter((item) => MARKET_LEAGUE_CODES[item.label])) {
+    const marketCode = MARKET_LEAGUE_CODES[leagueInfo.label];
+    const csvText = await fetchText(`https://www.football-data.co.uk/mmz4281/${seasonFolder}/${marketCode}.csv`);
+    if (!csvText) continue;
+
+    for (const row of parseCsv(csvText)) {
+      const rowDate = parseFootballDataDateKey(row.Date || row.date);
+      if (rowDate !== dateISO) continue;
+
+      const homeName = String(row.HomeTeam || row.homeTeam || "").trim();
+      const awayName = String(row.AwayTeam || row.awayTeam || "").trim();
+      if (!homeName || !awayName) continue;
+      if (isWomenContext(leagueInfo.label, homeName, awayName) || isYouthContext(leagueInfo.label, homeName, awayName)) continue;
+
+      const id = `fd-${marketCode}-${dateISO}-${normalizeName(homeName)}-${normalizeName(awayName)}`;
+      if (seen.has(id)) continue;
+      seen.add(id);
+
+      const homeGoals = toNumber(row.FTHG);
+      const awayGoals = toNumber(row.FTAG);
+      const finished = Number.isFinite(homeGoals) && Number.isFinite(awayGoals);
+
+      fallbackEvents.push({
+        id,
+        startTimestamp: Math.floor(new Date(buildFootballDataKickoffIso(dateISO, row.Time)).getTime() / 1000),
+        homeTeam: { id: "", name: homeName, country: { name: leagueInfo.country || "" } },
+        awayTeam: { id: "", name: awayName, country: { name: leagueInfo.country || "" } },
+        uniqueTournament: { id: null, name: leagueInfo.name },
+        tournament: {
+          id: null,
+          name: leagueInfo.name,
+          category: { name: leagueInfo.country || "" },
+          uniqueTournament: { id: null },
+        },
+        season: { id: null },
+        status: { type: finished ? "finished" : "notstarted" },
+        homeScore: finished ? { current: homeGoals } : {},
+        awayScore: finished ? { current: awayGoals } : {},
+        source: "football-data-fixture-fallback",
+      });
+    }
+  }
+
+  return fallbackEvents;
+}
+
+function getSportsDbSeasonLabel(dateISO) {
+  const base = new Date(`${dateISO}T12:00:00Z`);
+  const year = base.getUTCFullYear();
+  const month = base.getUTCMonth();
+  return month >= 6 ? `${year}-${year + 1}` : `${year - 1}-${year}`;
+}
+
+async function fetchSportsDbScheduledEvents(dateISO) {
+  const fallbackEvents = [];
+  const seen = new Set();
+  const appendEvent = (event, leagueLabel) => {
+    const leagueInfo = LEAGUES.find((item) => item.label === leagueLabel);
+    if (!leagueInfo) return;
+    const homeName = String(event?.strHomeTeam || "").trim();
+    const awayName = String(event?.strAwayTeam || "").trim();
+    if (!homeName || !awayName) return;
+    if (isWomenContext(leagueLabel, homeName, awayName) || isYouthContext(leagueLabel, homeName, awayName)) return;
+
+    const eventId = `tsdb-${leagueLabel}-${event.idEvent || `${dateISO}-${normalizeName(homeName)}-${normalizeName(awayName)}`}`;
+    if (seen.has(eventId)) return;
+    seen.add(eventId);
+
+    const kickoff = event?.strTimestamp
+      ? new Date(String(event.strTimestamp).replace(" ", "T") + "Z")
+      : new Date(buildFootballDataKickoffIso(dateISO, event?.strTimeLocal || event?.strTime));
+    const homeGoals = toNumber(event?.intHomeScore);
+    const awayGoals = toNumber(event?.intAwayScore);
+    const statusText = String(event?.strStatus || "").toLowerCase();
+    const finished = Number.isFinite(homeGoals) && Number.isFinite(awayGoals);
+    const statusType = finished || statusText.includes("finished")
+      ? "finished"
+      : statusText.includes("live") || statusText.includes("progress")
+        ? "inprogress"
+        : "notstarted";
+
+    fallbackEvents.push({
+      id: eventId,
+      startTimestamp: Math.floor(kickoff.getTime() / 1000),
+      homeTeam: {
+        id: "",
+        name: homeName,
+        country: { name: leagueInfo.country || "" },
+        logoUrl: String(event?.strHomeTeamBadge || ""),
+      },
+      awayTeam: {
+        id: "",
+        name: awayName,
+        country: { name: leagueInfo.country || "" },
+        logoUrl: String(event?.strAwayTeamBadge || ""),
+      },
+      uniqueTournament: { id: null, name: leagueInfo.name },
+      tournament: {
+        id: null,
+        name: leagueInfo.name,
+        category: { name: leagueInfo.country || "" },
+        uniqueTournament: { id: null },
+      },
+      season: { id: null },
+      status: { type: statusType },
+      homeScore: finished ? { current: homeGoals } : {},
+      awayScore: finished ? { current: awayGoals } : {},
+      source: "thesportsdb-fixture-fallback",
+    });
+  };
+
+  try {
+    const response = await fetch(`https://www.thesportsdb.com/api/v1/json/123/eventsday.php?d=${dateISO}&s=Soccer`, {
+      headers: {
+        Accept: "application/json",
+        "User-Agent":
+          "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 Chrome/123.0 Safari/537.36",
+      },
+    });
+    if (response.ok) {
+      const json = await response.json();
+      for (const event of Array.isArray(json?.events) ? json.events : []) {
+        const leagueLabel = SPORTSDB_NAME_TO_LABEL[String(event?.strLeague || "")];
+        if (leagueLabel) appendEvent(event, leagueLabel);
+      }
+    }
+  } catch {}
+
+  for (const [leagueLabel, leagueId] of Object.entries(SPORTSDB_LEAGUE_IDS)) {
+    try {
+      const response = await fetch(`https://www.thesportsdb.com/api/v1/json/123/eventsnextleague.php?id=${leagueId}`, {
+        headers: {
+          Accept: "application/json",
+          "User-Agent":
+            "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 Chrome/123.0 Safari/537.36",
+        },
+      });
+      if (!response.ok) continue;
+      const json = await response.json();
+      for (const event of Array.isArray(json?.events) ? json.events : []) {
+        if (String(event?.dateEvent || "") !== dateISO) continue;
+        appendEvent(event, leagueLabel);
+      }
+    } catch {}
+  }
+
+  return fallbackEvents;
 }
 
 function toNumber(value) {
@@ -3964,9 +4168,9 @@ async function main() {
   }
 
   const now = Date.now();
-  const today = new Date().toISOString().split("T")[0];
-  const yesterday = new Date(Date.now() - 86400000).toISOString().split("T")[0];
-  const tomorrow = new Date(Date.now() + 86400000).toISOString().split("T")[0];
+  const today = toAmsterdamDateKey(new Date());
+  const yesterday = addDaysToDateKey(today, -1);
+  const tomorrow = addDaysToDateKey(today, 1);
   const dates = [yesterday, today, tomorrow];
 
   if (!store.knockoutOverview) store.knockoutOverview = {};
@@ -4014,7 +4218,7 @@ async function main() {
       console.log(`[worker] ${date}: ${apiEvents.length} events van API, filtering...`);
     }
     
-    const events = apiEvents
+    let events = apiEvents
       .filter((event) => {
         const key = event?.startTimestamp
           ? toAmsterdamDateKey(new Date(Number(event.startTimestamp) * 1000))
@@ -4022,6 +4226,22 @@ async function main() {
         return key === date;
       })
       .filter((event) => getLeagueInfo(event));
+
+    if (!events.length) {
+      const fallbackEvents = await fetchFallbackScheduledEventsFromMarket(date);
+      if (fallbackEvents.length) {
+        console.log(`[worker] ${date}: ${fallbackEvents.length} fallback events uit football-data.co.uk`);
+        events = fallbackEvents;
+      }
+    }
+
+    if (!events.length) {
+      const sportsDbEvents = await fetchSportsDbScheduledEvents(date);
+      if (sportsDbEvents.length) {
+        console.log(`[worker] ${date}: ${sportsDbEvents.length} fallback events uit TheSportsDB`);
+        events = sportsDbEvents;
+      }
+    }
     
     if (events.length > 0) {
       console.log(`[worker] ${date}: ${events.length} events na filtering (${apiEvents.length} totaal)`);
@@ -4141,6 +4361,7 @@ async function main() {
     for (const event of allEvents[date] || []) {
       const leagueInfo = getLeagueInfo(event);
       if (!leagueInfo) continue;
+      const isFallbackEvent = String(event?.source || "").includes("fallback");
 
       const homeId = String(event.homeTeam?.id || "");
       const awayId = String(event.awayTeam?.id || "");
@@ -4161,8 +4382,8 @@ async function main() {
       getTeam(store.teams, homeId, homeName);
       getTeam(store.teams, awayId, awayName);
 
-      let eventDetails = store.eventCache?.[event.id] || null;
-      if (!eventDetails || now - Number(store.eventCacheUpdated?.[event.id] || 0) > EVENT_TTL) {
+      let eventDetails = isFallbackEvent ? null : store.eventCache?.[event.id] || null;
+      if (!isFallbackEvent && (!eventDetails || now - Number(store.eventCacheUpdated?.[event.id] || 0) > EVENT_TTL)) {
         eventDetails = await fetchEventDetails(event.id);
         if (eventDetails) {
           store.eventCache[event.id] = eventDetails;
@@ -4171,11 +4392,11 @@ async function main() {
         await sleep(60);
       }
 
-      const lineupSummary = await fetchLineupSummary(event.id);
+      const lineupSummary = isFallbackEvent ? null : await fetchLineupSummary(event.id);
 
       const h2hKey = `${event.id}_${homeId}_${awayId}`;
-      let h2h = store.h2hCache?.[h2hKey]?.data || null;
-      if (!h2h || now - Number(store.h2hCache?.[h2hKey]?.updated || 0) > H2H_TTL) {
+      let h2h = isFallbackEvent ? null : store.h2hCache?.[h2hKey]?.data || null;
+      if (!isFallbackEvent && (!h2h || now - Number(store.h2hCache?.[h2hKey]?.updated || 0) > H2H_TTL)) {
         h2h = await fetchH2H(event.id, homeId, awayId, tournamentId, seasonId);
         store.h2hCache[h2hKey] = { updated: now, data: h2h };
         await sleep(60);
@@ -4296,9 +4517,12 @@ async function main() {
       const historicalRefereeProfile = lookupHistoricalRefereeProfile(leagueMarketProfile, referee?.name, globalRefereeArchive);
       let supplementalOdds = null;
       if (
-        String(leagueInfo.label || "").toLowerCase().includes("qualification") ||
-        String(leagueInfo.label || "").toLowerCase().includes("friendly") ||
-        String(leagueInfo.label || "").toLowerCase().includes("international")
+        !isFallbackEvent &&
+        (
+          String(leagueInfo.label || "").toLowerCase().includes("qualification") ||
+          String(leagueInfo.label || "").toLowerCase().includes("friendly") ||
+          String(leagueInfo.label || "").toLowerCase().includes("international")
+        )
       ) {
         supplementalOdds = await fetchEventBookmakerOdds(event.id);
       }
@@ -4366,8 +4590,8 @@ async function main() {
         awayTeamId: awayId,
         homeTeamName: homeName,
         awayTeamName: awayName,
-        homeLogo: homeId ? `https://api.sofascore.app/api/v1/team/${homeId}/image` : "",
-        awayLogo: awayId ? `https://api.sofascore.app/api/v1/team/${awayId}/image` : "",
+        homeLogo: event.homeTeam?.logoUrl || (homeId ? `https://api.sofascore.app/api/v1/team/${homeId}/image` : ""),
+        awayLogo: event.awayTeam?.logoUrl || (awayId ? `https://api.sofascore.app/api/v1/team/${awayId}/image` : ""),
         status: event.status?.type === "inprogress" ? "LIVE" : event.status?.type === "finished" ? "FT" : "NS",
         score,
         minute: minuteState.minute,
@@ -4533,7 +4757,7 @@ async function main() {
   store.sourceCoverage = buildSourceCoverage(store, today);
   store.aiAdvice = buildAiRecommendations(store, today);
   store.lastRun = Date.now();
-  store.workerVersion = "v13-source-coverage";
+  store.workerVersion = "v14-amsterdam-fallback";
   
   // Log summary
   const totalMatches = Object.values(store.matches || {}).flat().length;
