@@ -3965,8 +3965,9 @@ async function main() {
 
   const now = Date.now();
   const today = new Date().toISOString().split("T")[0];
+  const yesterday = new Date(Date.now() - 86400000).toISOString().split("T")[0];
   const tomorrow = new Date(Date.now() + 86400000).toISOString().split("T")[0];
-  const dates = [today, tomorrow];
+  const dates = [yesterday, today, tomorrow];
 
   if (!store.knockoutOverview) store.knockoutOverview = {};
   if (!store.cupSheets) store.cupSheets = {};
