@@ -3,21 +3,45 @@ import React, { useEffect, useState } from "react";
 const SettingsView: React.FC = () => {
   const [historyCount, setHistoryCount] = useState(0);
   const [teamCount, setTeamCount] = useState(0);
+  const [historySizeKb, setHistorySizeKb] = useState(0);
+  const [teamStoreSizeKb, setTeamStoreSizeKb] = useState(0);
   const [lastWorker, setLastWorker] = useState<string | null>(null);
   const [analysisEngine, setAnalysisEngine] = useState<"checking" | "ollama" | "template">("checking");
+  const [workerVersion, setWorkerVersion] = useState<string>("onbekend");
+  const [sourceBranch, setSourceBranch] = useState<string>("onbekend");
+  const [reviewCount, setReviewCount] = useState(0);
+  const [teamLearningCount, setTeamLearningCount] = useState(0);
+  const [aiAdvice, setAiAdvice] = useState<any[]>([]);
+  const [biweeklyDigest, setBiweeklyDigest] = useState<any | null>(null);
+  const [featureDiagnostics, setFeatureDiagnostics] = useState<any | null>(null);
+  const [sourceCoverage, setSourceCoverage] = useState<any | null>(null);
+  const [manualAdvice, setManualAdvice] = useState("");
 
   useEffect(() => {
     try {
-      setHistoryCount(JSON.parse(localStorage.getItem("footypredict_memory") || "[]").length);
+      const raw = localStorage.getItem("footypredict_memory") || "[]";
+      setHistoryCount(JSON.parse(raw).length);
+      setHistorySizeKb(Math.round((new Blob([raw]).size / 1024) * 10) / 10);
     } catch {}
     try {
-      setTeamCount(Object.keys(JSON.parse(localStorage.getItem("footypredict_team_store_v1") || "{}")).length);
+      const raw = localStorage.getItem("footypredict_team_store_v1") || "{}";
+      setTeamCount(Object.keys(JSON.parse(raw)).length);
+      setTeamStoreSizeKb(Math.round((new Blob([raw]).size / 1024) * 10) / 10);
     } catch {}
+    setManualAdvice(localStorage.getItem("footypredict_manual_ai_advice") || "");
 
     fetch(`/api/matches?date=${new Date().toISOString().split("T")[0]}`)
       .then((response) => response.json())
       .then((data) => {
         if (data.lastRun) setLastWorker(new Date(data.lastRun).toLocaleString("nl-NL"));
+        if (data.workerVersion) setWorkerVersion(data.workerVersion);
+        if (data.sourceBranch) setSourceBranch(data.sourceBranch);
+        if (data.reviewCount != null) setReviewCount(Number(data.reviewCount || 0));
+        if (data.teamLearningCount != null) setTeamLearningCount(Number(data.teamLearningCount || 0));
+        if (Array.isArray(data.aiAdvice)) setAiAdvice(data.aiAdvice);
+        if (data.biweeklyDigest) setBiweeklyDigest(data.biweeklyDigest);
+        if (data.featureDiagnostics) setFeatureDiagnostics(data.featureDiagnostics);
+        if (data.sourceCoverage) setSourceCoverage(data.sourceCoverage);
       })
       .catch(() => {});
 
@@ -47,12 +71,20 @@ const SettingsView: React.FC = () => {
     setHistoryCount(0);
   };
 
+  const saveManualAdvice = () => {
+    localStorage.setItem("footypredict_manual_ai_advice", manualAdvice.trim());
+  };
+
+  const bundleUpdatedAt = biweeklyDigest?.generatedAt
+    ? new Date(biweeklyDigest.generatedAt).toLocaleString("nl-NL")
+    : null;
+
   return (
     <div className="max-w-3xl space-y-5">
       <div>
         <h2 className="text-2xl font-black text-white uppercase tracking-tight">Instellingen</h2>
         <p className="text-slate-500 text-xs mt-0.5">
-          Modelstatus, lokale opslag en controle van de huidige AI-opzet.
+          Modelstatus, workerdata, reviewlaag en controle van de huidige AI-opzet.
         </p>
       </div>
 
@@ -61,8 +93,15 @@ const SettingsView: React.FC = () => {
         {[
           { label: "Opgeslagen voorspellingen", value: historyCount.toLocaleString() },
           { label: "Teams in lokale leerstore", value: teamCount.toLocaleString() },
+          { label: "Geheugen voorspellingen", value: `${historySizeKb.toLocaleString()} KB` },
+          { label: "Geheugen teamstore", value: `${teamStoreSizeKb.toLocaleString()} KB` },
           { label: "Laatste worker run", value: lastWorker || "Onbekend" },
-          { label: "Analyse-engine", value: analysisEngine === "checking" ? "Controleren..." : analysisEngine === "ollama" ? "Ollama lokaal" : "Template fallback" },
+          { label: "Worker versie", value: workerVersion },
+          { label: "Databron branch", value: sourceBranch },
+          { label: "Reviews opgeslagen", value: reviewCount.toLocaleString() },
+          { label: "Teams met leerdata", value: teamLearningCount.toLocaleString() },
+          { label: "Senior-filter", value: "vrouwen + jeugd/U21 uitgesloten" },
+          { label: "Analyse-engine", value: analysisEngine === "checking" ? "Controleren..." : analysisEngine === "ollama" ? "Ollama lokaal" : "Template/review fallback" },
         ].map(({ label, value }) => (
           <div key={label} className="flex items-center justify-between py-2 border-b border-white/5 last:border-0">
             <span className="text-[11px] text-slate-400">{label}</span>
@@ -72,28 +111,223 @@ const SettingsView: React.FC = () => {
       </div>
 
       <div className="glass-card rounded-2xl border border-white/5 p-5">
+        <div className="text-[10px] font-black text-slate-400 uppercase mb-3">AI advies van deze week</div>
+        <div className="space-y-3">
+          {(aiAdvice || []).length > 0 ? (
+            aiAdvice.map((item, index) => (
+              <div key={`${item.title || "advice"}-${index}`} className="rounded-xl border border-white/5 bg-slate-900/40 p-3">
+                <div className="flex items-center justify-between gap-3">
+                  <div className="text-[11px] font-black text-white">{item.title}</div>
+                  <span className={`text-[8px] font-black px-2 py-0.5 rounded-full ${
+                    item.priority === "high" ? "bg-red-900/30 text-red-300" : item.priority === "medium" ? "bg-amber-900/30 text-amber-300" : "bg-green-900/30 text-green-300"
+                  }`}>
+                    {item.priority || "info"}
+                  </span>
+                </div>
+                <div className="text-[10px] text-slate-300 mt-1">{item.summary}</div>
+                <div className="text-[9px] text-slate-500 mt-1">{item.action}</div>
+              </div>
+            ))
+          ) : (
+            <div className="text-[11px] text-slate-500">Nog geen nieuw AI advies opgebouwd uit de monitor.</div>
+          )}
+
+          <div className="rounded-xl border border-blue-500/10 bg-blue-950/10 p-3">
+            <div className="text-[10px] font-black text-blue-300 uppercase mb-2">Eigen verbeternotitie voor AI</div>
+            <div className="text-[10px] text-slate-400 mb-2">
+              Typ hier een verbeterpunt of wens. Deze notitie blijft lokaal bewaard zodat je hem later direct kunt meenemen in nieuwe AI-aanpassingen.
+            </div>
+            <textarea
+              value={manualAdvice}
+              onChange={(event) => setManualAdvice(event.target.value)}
+              rows={4}
+              className="w-full rounded-xl border border-white/10 bg-slate-950/60 px-3 py-2 text-[11px] text-white outline-none focus:border-blue-500/30"
+              placeholder="Bijvoorbeeld: geef knock-out interlands extra gewicht aan schorsingen en eerste duel..."
+            />
+            <div className="mt-2 flex justify-end">
+              <button
+                onClick={saveManualAdvice}
+                className="px-3 py-1.5 rounded-lg bg-blue-600 text-white text-[10px] font-black hover:bg-blue-500 transition"
+              >
+                Notitie bewaren
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div className="glass-card rounded-2xl border border-white/5 p-5">
+        <div className="text-[10px] font-black text-slate-400 uppercase mb-3">Tweewekelijkse AI bundel</div>
+        {biweeklyDigest ? (
+          <div className="space-y-3">
+            <div className="rounded-xl border border-white/5 bg-slate-900/40 p-3">
+              <div className="flex items-center justify-between gap-3">
+                <div>
+                  <div className="text-[11px] font-black text-white">{biweeklyDigest.summary}</div>
+                  <div className="text-[9px] text-slate-500 mt-1">
+                    Periode {biweeklyDigest.range?.from || "?"} t/m {biweeklyDigest.range?.to || "?"}
+                  </div>
+                  <div className="text-[9px] text-slate-600 mt-1">
+                    Laatste bundelupdate {bundleUpdatedAt || "onbekend"}
+                  </div>
+                </div>
+                <span className="text-[8px] font-black px-2 py-0.5 rounded-full bg-blue-900/30 text-blue-300">
+                  {biweeklyDigest.cadence || "bundel"}
+                </span>
+              </div>
+            </div>
+
+            <div className="grid grid-cols-3 gap-2">
+              {[
+                { label: "Runs", value: biweeklyDigest.totals?.totalRuns || 0 },
+                { label: "Bevindingen", value: biweeklyDigest.totals?.totalIssues || 0 },
+                { label: "Thema's", value: biweeklyDigest.totals?.uniqueIssueTypes || 0 },
+              ].map((item) => (
+                <div key={item.label} className="rounded-xl border border-white/5 bg-slate-900/40 px-3 py-2">
+                  <div className="text-[9px] font-black text-slate-500 uppercase">{item.label}</div>
+                  <div className="text-[16px] font-black text-white mt-1">{item.value}</div>
+                </div>
+              ))}
+            </div>
+
+            <div className="space-y-2">
+              {(biweeklyDigest.topFindings || []).slice(0, 6).map((item: any) => (
+                <div key={item.key} className="rounded-xl border border-white/5 bg-slate-900/30 p-3">
+                  <div className="flex items-center justify-between gap-3">
+                    <div className="text-[11px] font-black text-white">{item.title}</div>
+                    <span className={`text-[8px] font-black px-2 py-0.5 rounded-full ${
+                      item.highestSeverity === "high"
+                        ? "bg-red-900/30 text-red-300"
+                        : item.highestSeverity === "medium"
+                          ? "bg-amber-900/30 text-amber-300"
+                          : "bg-green-900/30 text-green-300"
+                    }`}>
+                      {item.count}x
+                    </span>
+                  </div>
+                  <div className="text-[10px] text-slate-400 mt-1">{item.recommendation}</div>
+                </div>
+              ))}
+            </div>
+
+            <div className="rounded-xl border border-purple-500/10 bg-purple-950/10 p-3">
+              <div className="text-[10px] font-black text-purple-300 uppercase mb-1">Mailstatus</div>
+              <div className="text-[10px] text-slate-300">
+                {biweeklyDigest.delivery?.note || "De AI bundel wordt opgebouwd en opgeslagen. Voor echte e-mailverzending is nog een mailservice of mailcredential nodig."}
+              </div>
+            </div>
+          </div>
+        ) : (
+          <div className="text-[11px] text-slate-500">
+            Nog geen tweewekelijkse bundel beschikbaar. Deze wordt automatisch opgebouwd zodra de digest-workflow draait.
+          </div>
+        )}
+      </div>
+
+      <div className="glass-card rounded-2xl border border-white/5 p-5">
+        <div className="text-[10px] font-black text-slate-400 uppercase mb-3">Bronkwaliteit van vandaag</div>
+        {sourceCoverage ? (
+          <div className="space-y-3">
+            <div className="grid grid-cols-2 gap-2">
+              {[
+                {
+                  label: "Bookmakerdekking",
+                  value: `${Math.round(Number(sourceCoverage.bookmakerCoverage || 0) * 100)}%`,
+                },
+                {
+                  label: "Referee-dekking",
+                  value: `${Math.round(Number(sourceCoverage.refereeCoverage || 0) * 100)}%`,
+                },
+                {
+                  label: "H2H-dekking",
+                  value: `${Math.round(Number(sourceCoverage.h2hCoverage || 0) * 100)}%`,
+                },
+                {
+                  label: "Historische marktprofielen",
+                  value: Number(sourceCoverage.marketProfiles || 0).toLocaleString(),
+                },
+              ].map((item) => (
+                <div key={item.label} className="rounded-xl border border-white/5 bg-slate-900/40 px-3 py-2">
+                  <div className="text-[9px] font-black text-slate-500 uppercase">{item.label}</div>
+                  <div className="text-[16px] font-black text-white mt-1">{item.value}</div>
+                </div>
+              ))}
+            </div>
+
+            <div className="rounded-xl border border-emerald-500/10 bg-emerald-950/10 p-3">
+              <div className="text-[10px] font-black text-emerald-300 uppercase mb-1">Understat status</div>
+              <div className="text-[10px] text-slate-300">
+                <span className="font-black text-white mr-1">{sourceCoverage.understat?.status || "onbekend"}:</span>
+                {sourceCoverage.understat?.note || "Nog geen status."}
+              </div>
+            </div>
+
+            <div className="rounded-xl border border-amber-500/10 bg-amber-950/10 p-3">
+              <div className="text-[10px] font-black text-amber-300 uppercase mb-1">FBref status</div>
+              <div className="text-[10px] text-slate-300">
+                <span className="font-black text-white mr-1">{sourceCoverage.fbref?.status || "onbekend"}:</span>
+                {sourceCoverage.fbref?.note || "Nog geen status."}
+              </div>
+            </div>
+          </div>
+        ) : (
+          <div className="text-[11px] text-slate-500">Bronkwaliteit wordt zichtbaar zodra de worker deze samenvatting opnieuw heeft opgebouwd.</div>
+        )}
+      </div>
+
+      <div className="glass-card rounded-2xl border border-white/5 p-5">
         <div className="text-[10px] font-black text-slate-400 uppercase mb-3">Actieve voorspellaag</div>
         <div className="space-y-3">
           {[
             {
               name: "Dixon-Coles + Poisson",
-              desc: "De hoofdmotor voor kansen en scorematrix. Dit is inhoudelijk sterker voor wedstrijdkansen dan een chatmodel alleen.",
+              desc: "De hoofdmotor voor kansen en scorematrix. Dit blijft de basis voor wedstrijdkansen.",
               tone: "green",
             },
             {
               name: "Heuristische ensemblelaag",
-              desc: "Voegt ClubElo, rust, splitvorm, lineups, keeperverschil, corners, kaarten en reislast toe als extra correctielaag.",
+              desc: "Voegt ClubElo, rust, splitvorm, lineups, keeperverschil, corners, kaarten, reislast en referee-profiel toe als correctielaag.",
               tone: "blue",
             },
             {
-              name: "Lokale AI-analyse",
-              desc: "Ollama schrijft de Nederlandse analyse als die lokaal beschikbaar is. Anders valt de app automatisch terug op een gratis templatesamenvatting.",
+              name: "Closing-line calibratie",
+              desc: "Historische implied strength, closing-profiel en bookmaker-consensus sturen de kansverdeling nu sterker bij, vooral bij interlands en toernooiwedstrijden.",
+              tone: "blue",
+            },
+            {
+              name: "Post-match reviewlaag",
+              desc: "Verwerkt voorspelde uitslag versus echte uitslag, failure-signals en teambias om volgende voorspellingen scherper te maken.",
+              tone: "purple",
+            },
+            {
+              name: "Competitie-betrouwbaarheid",
+              desc: "Elke competitie bouwt een eigen betrouwbaarheidsscore op uit outcome hitrate, exact hitrate en gemiddelde goal error.",
+              tone: "green",
+            },
+            {
+              name: "Fase-betrouwbaarheid",
+              desc: "League, kwalificatie, vriendschappelijk, cup en two-leg knockout krijgen nu aparte betrouwbaarheidsscores, zodat wedstrijdtypes strakker gescheiden worden.",
+              tone: "amber",
+            },
+            {
+              name: "Historische scheidsdata",
+              desc: "Waar beschikbaar komt kaartenritme en penalty-profiel nu uit historische referee-rows uit football-data.co.uk, met competitie-specifieke alias-cache voor betere matchrate.",
+              tone: "amber",
+            },
+            {
+              name: "AI verbeterlus",
+              desc: "De app leert nu uit reviews en monitor-data, maakt aan het eind van de dag een voorstelbranch met patchadvies, maar schrijft nooit blind live code over.",
               tone: "purple",
             },
             {
               name: "Trainingsvoorbereiding",
-              desc: "De worker schrijft featuredata weg voor een volgende stap met CatBoost of LightGBM. Dat is de beste route als je de voorspellingen nog stabieler wilt maken.",
+              desc: "De worker schrijft featuredata en reviews weg voor CatBoost of LightGBM als volgende stap.",
               tone: "amber",
+            },
+            {
+              name: "Compacte opslaglaag",
+              desc: "Lokale opslag en workerdata worden nu automatisch ingekort zodat history, reviewdata en cache niet onnodig blijven groeien.",
+              tone: "green",
             },
           ].map((item) => (
             <div key={item.name} className="flex gap-3 pb-3 border-b border-white/5 last:border-0">
@@ -120,20 +354,127 @@ const SettingsView: React.FC = () => {
       </div>
 
       <div className="glass-card rounded-2xl border border-white/5 p-5">
-        <div className="text-[10px] font-black text-slate-400 uppercase mb-3">Aanbevolen volgende stap</div>
+        <div className="text-[10px] font-black text-slate-400 uppercase mb-3">Achtergrondupdates</div>
         <div className="space-y-2 text-[11px] text-slate-300 leading-relaxed">
-          <div>
-            <span className="font-black text-white">1. Workerdata verder benutten:</span> corners, keeper-rating, lineup continuity,
-            kaartenritme en reislast zitten nu in de features en kunnen direct in het model meewegen.
+          <div><span className="font-black text-white">Worker-runs:</span> blijven op de achtergrond draaien zonder extra leer-workflow erbovenop.</div>
+          <div><span className="font-black text-white">Build-noise:</span> worker commits met alleen dataverandering kunnen nu door Vercel worden overgeslagen.</div>
+          <div><span className="font-black text-white">Mail:</span> eventuele GitHub accountmails voor watches of Actions komen uit je accountinstellingen, niet uit de app zelf.</div>
+          <div><span className="font-black text-white">Data-filter:</span> senior-mannenfeed blijft nu schoner doordat vrouwen en jeugd/U21 centraal uit de worker worden gefilterd.</div>
+          <div><span className="font-black text-white">Reviewvoorstel:</span> de monitor bouwt nu dagelijks een voorstelbranch-plan op zonder automatisch live te gaan.</div>
+        </div>
+      </div>
+
+      <div className="glass-card rounded-2xl border border-white/5 p-5">
+        <div className="text-[10px] font-black text-slate-400 uppercase mb-3">AI reviewstatus</div>
+        <div className="space-y-2 text-[11px] text-slate-300 leading-relaxed">
+          <div><span className="font-black text-white">Outcome learning:</span> teams bouwen nu biasdata op uit echte uitslagen.</div>
+          <div><span className="font-black text-white">Failure-signals:</span> open lineups, weer, H2H en rustverschil worden achteraf gelogd als een voorspelling fout zat.</div>
+          <div><span className="font-black text-white">UI-review:</span> gespeelde wedstrijden tonen nu modelreview met voorspeld versus werkelijk resultaat.</div>
+          <div><span className="font-black text-white">Competitieprofiel:</span> interlands en clubcompetities krijgen nu een aparte betrouwbaarheidsscore in de kaart.</div>
+          <div><span className="font-black text-white">Faseprofiel:</span> kwalificatie, friendly, league, cup en two-leg knockout worden nu apart beoordeeld zodat de confidence per wedstrijdtype scherper wordt.</div>
+          <div><span className="font-black text-white">Referee-history:</span> historische kaarten- en penaltydata van scheidsrechters wordt waar mogelijk direct in de heuristiek gebruikt, met competitie-specifieke alias-cache.</div>
+          <div><span className="font-black text-white">Bookmakerlaag:</span> closing-odds worden niet meer alleen samengesteld bekeken, maar ook per bookmaker gewogen in de calibratie.</div>
+          <div><span className="font-black text-white">Reviewbranch generator:</span> dagelijkse monitorbevindingen worden automatisch samengevat in een patchvoorstel, zodat verbeteringen sneller maar veilig doorgezet kunnen worden.</div>
+        </div>
+      </div>
+
+      <div className="glass-card rounded-2xl border border-white/5 p-5">
+        <div className="text-[10px] font-black text-slate-400 uppercase mb-3">Modelvalidatie uit reviewdata</div>
+        {featureDiagnostics ? (
+          <div className="space-y-3">
+            <div className="rounded-xl border border-white/5 bg-slate-900/40 p-3">
+              <div className="text-[11px] font-black text-white">{featureDiagnostics.summary}</div>
+              <div className="grid grid-cols-2 md:grid-cols-4 gap-2 mt-3">
+                {[
+                  { label: "Reviews", value: featureDiagnostics.reviews || 0 },
+                  { label: "Exact hit", value: `${Math.round(Number(featureDiagnostics.exactHitRate || 0) * 100)}%` },
+                  { label: "Uitkomst hit", value: `${Math.round(Number(featureDiagnostics.outcomeHitRate || 0) * 100)}%` },
+                  { label: "Topkans hit", value: `${Math.round(Number(featureDiagnostics.probabilityOutcomeHitRate || 0) * 100)}%` },
+                ].map((item) => (
+                  <div key={item.label} className="rounded-xl border border-white/5 bg-slate-950/40 px-3 py-2">
+                    <div className="text-[8px] font-black text-slate-500 uppercase">{item.label}</div>
+                    <div className="text-[15px] font-black text-white mt-1">{item.value}</div>
+                  </div>
+                ))}
+              </div>
+            </div>
+
+            <div className="grid md:grid-cols-2 gap-3">
+              <div className="rounded-xl border border-white/5 bg-slate-900/30 p-3">
+                <div className="text-[10px] font-black text-slate-400 uppercase mb-2">Belangrijkste faalsignalen</div>
+                <div className="space-y-2">
+                  {(featureDiagnostics.topFailureSignals || []).slice(0, 5).map((item: any) => (
+                    <div key={item.signal} className="flex items-center justify-between text-[10px]">
+                      <span className="text-slate-300">{item.signal}</span>
+                      <span className="font-black text-white">{item.count}x</span>
+                    </div>
+                  ))}
+                </div>
+              </div>
+              <div className="rounded-xl border border-white/5 bg-slate-900/30 p-3">
+                <div className="text-[10px] font-black text-slate-400 uppercase mb-2">Faseprestaties</div>
+                <div className="space-y-2">
+                  {(featureDiagnostics.phaseBreakdown || []).slice(0, 5).map((item: any) => (
+                    <div key={item.phase} className="text-[10px]">
+                      <div className="flex items-center justify-between">
+                        <span className="text-slate-300">{item.phase}</span>
+                        <span className="font-black text-white">{item.matches} duels</span>
+                      </div>
+                      <div className="text-slate-500 mt-0.5">
+                        Exact {Math.round(Number(item.exactHitRate || 0) * 100)}% · Uitkomst {Math.round(Number(item.outcomeHitRate || 0) * 100)}%
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            </div>
           </div>
-          <div>
-            <span className="font-black text-white">2. Later een ML-laag toevoegen:</span> train eerst op de `training-snapshot`
-            met CatBoost. Houd de huidige engine als basis en gebruik ML als extra correctielaag.
-          </div>
-          <div>
-            <span className="font-black text-white">3. LLM alleen voor uitleg:</span> de tekst-AI is handig voor analyses, maar
-            niet als hoofdvoorspeller.
-          </div>
+        ) : (
+          <div className="text-[11px] text-slate-500">Nog geen modelvalidatie opgebouwd uit reviewdata.</div>
+        )}
+      </div>
+
+      <div className="glass-card rounded-2xl border border-white/5 p-5">
+        <div className="text-[10px] font-black text-slate-400 uppercase mb-3">Gratis databronnen met meeste extra waarde</div>
+        <div className="space-y-3">
+          {[
+            {
+              name: "football-data.co.uk",
+              status: "gekoppeld",
+              desc: "Blijft de sterkste gratis bron voor historische odds, closing-lijnen, bookmakerkolommen en veel competitiemeta.",
+            },
+            {
+              name: "Understat",
+              status: "aanbevolen",
+              desc: "Kan extra xG/xGA-profielen voor topcompetities leveren en is vooral nuttig voor clubwedstrijden met veel schotdata.",
+            },
+            {
+              name: "FBref",
+              status: "aanbevolen",
+              desc: "Kan geavanceerde teamstatistieken en home/away splits aanvullen waar de huidige feed dun blijft.",
+            },
+            {
+              name: "Transfermarkt",
+              status: "deels gekoppeld",
+              desc: "Wordt al best-effort gebruikt voor interland blessures/schorsingen; kan later nog breder per competitie worden ingezet.",
+            },
+          ].map((item) => (
+            <div key={item.name} className="rounded-xl border border-white/5 bg-slate-900/30 p-3">
+              <div className="flex items-center justify-between gap-3">
+                <div className="text-[11px] font-black text-white">{item.name}</div>
+                <span className={`text-[8px] font-black px-2 py-0.5 rounded-full ${
+                  item.status === "gekoppeld"
+                    ? "bg-green-900/30 text-green-300"
+                    : item.status === "deels gekoppeld"
+                      ? "bg-blue-900/30 text-blue-300"
+                      : "bg-amber-900/30 text-amber-300"
+                }`}>
+                  {item.status}
+                </span>
+              </div>
+              <div className="text-[10px] text-slate-400 mt-1">{item.desc}</div>
+            </div>
+          ))}
         </div>
       </div>
 

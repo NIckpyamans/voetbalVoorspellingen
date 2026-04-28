@@ -4,8 +4,10 @@
 // ============================================================================
 
 import { Match, Prediction } from "../types";
+import { normalizeMinute, parseMinuteValue } from "../shared/minute.js";
+import { todayAmsterdamKey } from "../shared/date.js";
 
-const CACHE_VERSION = "v5_complete_data";
+const CACHE_VERSION = "v6_amsterdam_date_fix";
 const LIVE_CACHE_AGE_MS = 30_000;
 const TODAY_CACHE_AGE_MS = 90_000;
 const OTHER_CACHE_AGE_MS = 30 * 60_000;
@@ -27,7 +29,7 @@ function isLiveMatch(match: any) {
 }
 
 function getMaxCacheAge(dateISO: string, matches: any[]) {
-  const today = new Date().toISOString().split("T")[0];
+  const today = todayAmsterdamKey();
   if (dateISO !== today) return OTHER_CACHE_AGE_MS;
   if ((matches || []).some(isLiveMatch)) return LIVE_CACHE_AGE_MS;
   return TODAY_CACHE_AGE_MS;
@@ -65,38 +67,6 @@ function writeCache(dateISO: string, matches: Match[], predictions: Record<strin
       })
     );
   } catch {}
-}
-
-// ============================================================================
-// MINUTE PARSING FUNCTIES
-// ============================================================================
-
-function parseMinuteValue(minute: any, minuteValue?: any) {
-  const explicit = Number(minuteValue);
-  if (Number.isFinite(explicit) && explicit > 0) return explicit;
-  if (typeof minute === "number" && Number.isFinite(minute)) return minute;
-  if (typeof minute !== "string") return null;
-  if (minute.toUpperCase() === "HT") return 45;
-
-  const plusMatch = minute.match(/(\d+)\s*\+\s*(\d+)/);
-  if (plusMatch) return Number(plusMatch[1]) + Number(plusMatch[2]);
-
-  const plainMatch = minute.match(/(\d+)/);
-  return plainMatch ? Number(plainMatch[1]) : null;
-}
-
-function normalizeMinute(minute: any, minuteValue?: any, extraTime?: any, period?: any) {
-  const periodText = String(period || "").toLowerCase();
-  if (periodText.includes("half time") || periodText.includes("halftime") || periodText.includes("break")) {
-    return "HT";
-  }
-
-  const baseMinute = parseMinuteValue(minute, minuteValue);
-  if (!baseMinute) return undefined;
-
-  const extra = Number(extraTime || 0);
-  if (extra > 0) return `${baseMinute}+${extra}'`;
-  return `${baseMinute}'`;
 }
 
 // ============================================================================
@@ -215,6 +185,9 @@ function mapRawMatch(m: any): Match {
     // MODEL EDGES
     // ========================================
     ...(m.modelEdges ? { modelEdges: m.modelEdges } : {}),
+    ...(m.learningSummary ? { learningSummary: m.learningSummary } : {}),
+    ...(m.marketCalibration ? { marketCalibration: m.marketCalibration } : {}),
+    ...(m.review ? { review: m.review } : {}),
     
     // ========================================
     // MACHINE LEARNING
@@ -321,6 +294,9 @@ export async function fetchMatchesAndPredictions(
         ...(rawMatch.homeTeamProfile ? { homeTeamProfile: rawMatch.homeTeamProfile } : {}),
         ...(rawMatch.awayTeamProfile ? { awayTeamProfile: rawMatch.awayTeamProfile } : {}),
         ...(rawMatch.featureVector ? { featureVector: rawMatch.featureVector } : {}),
+        ...(rawMatch.learningSummary ? { learningSummary: rawMatch.learningSummary } : {}),
+        ...(rawMatch.marketCalibration ? { marketCalibration: rawMatch.marketCalibration } : {}),
+        ...(rawMatch.review ? { review: rawMatch.review } : {}),
         ...(rawMatch.ensembleMeta ? { ensembleMeta: rawMatch.ensembleMeta } : {}),
         ...(rawMatch.homeForm ? { homeForm: rawMatch.homeForm } : {}),
         ...(rawMatch.awayForm ? { awayForm: rawMatch.awayForm } : {}),
@@ -353,3 +329,4 @@ export async function fetchMatchesAndPredictions(
 // ============================================================================
 
 export { isLiveMatch };
+

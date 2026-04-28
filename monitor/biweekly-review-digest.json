@@ -1,0 +1,61 @@
+{
+  "generatedAt": "2026-04-27T08:42:09.235Z",
+  "range": {
+    "from": "2026-04-14",
+    "to": "2026-04-27",
+    "days": 7
+  },
+  "shouldNotify": false,
+  "shouldRefresh": true,
+  "cadence": "tweewekelijks",
+  "summary": "AI bundel over de laatste 14 dagen: 2 hoofdthema's uit 11 monitorbevindingen.",
+  "totals": {
+    "totalRuns": 9,
+    "totalIssues": 11,
+    "uniqueIssueTypes": 2
+  },
+  "latestStats": {
+    "today": "2026-04-27",
+    "dataPresent": true,
+    "lastRun": 1777243325920,
+    "ageMinutes": 18,
+    "todayMatches": 3,
+    "liveMatches": 0,
+    "liveWithoutMinute": 0,
+    "h2hFilled": 2,
+    "h2hMissing": 1,
+    "standingsCount": 29,
+    "cupSheetCount": 2,
+    "phaseReliabilityCount": 3
+  },
+  "topFindings": [
+    {
+      "key": "historical_referee_unmatched",
+      "title": "Historische scheidsdata matcht te weinig",
+      "count": 8,
+      "highestSeverity": "low",
+      "sampleMessage": "Geen enkele wedstrijd van vandaag gebruikt historische referee-data.",
+      "recommendation": "Trek bredere referee-archieven per land/competitie in cache en onderhoud aliasen."
+    },
+    {
+      "key": "bookmaker_signals_missing",
+      "title": "Bookmakersignalen missen",
+      "count": 3,
+      "highestSeverity": "medium",
+      "sampleMessage": "Alle wedstrijden missen bookmaker-signalen in de marktcalibratie.",
+      "recommendation": "Verbred de interland-oddsbron en toon dekking per bookmaker in de kaart."
+    }
+  ],
+  "reviewProposal": {
+    "branchName": "codex/review-20260427",
+    "summary": "AI reviewvoorstel voor 2026-04-27: 1 aandachtspunt(en) met patchadvies, niet automatisch live.",
+    "recommendedFiles": [
+      "scripts/server-worker.js",
+      "components/MatchCard.tsx"
+    ]
+  },
+  "delivery": {
+    "emailConfigured": false,
+    "note": "Mailverzending vereist nog aparte mailcredentials of een mailservice. De bundel wordt nu wel automatisch opgebouwd en opgeslagen."
+  }
+}

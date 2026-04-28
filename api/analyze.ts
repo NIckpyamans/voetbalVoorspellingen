@@ -12,7 +12,34 @@ function recentSummary(teamName: string, recent: any) {
   return `${teamName}: vorm ${form}${splitText}${lastFive ? `, laatste 5 ${lastFive}` : ""}`;
 }
 
+function formatFailureSignals(review: any) {
+  const labels: Record<string, string> = {
+    clubelo_misread: "ClubElo-signaal zat fout",
+    open_lineups: "open opstellingen verstoorden de voorspelling",
+    weather_risk: "weerimpact speelde mee",
+    rest_gap: "rustverschil woog verkeerd",
+    h2h_signal: "H2H-signaal sloeg door",
+  };
+  return (review?.failureSignals || []).map((key: string) => labels[key] || key);
+}
+
+function buildPostMatchTemplate(match: any, prediction: any, review: any) {
+  const model = (prediction.ensembleMeta || match.ensembleMeta)?.active
+    ? `${(prediction.ensembleMeta || match.ensembleMeta).baseModel} + ${(prediction.ensembleMeta || match.ensembleMeta).blendModel}`
+    : "basis";
+  const signalText = formatFailureSignals(review);
+
+  return `Modelreview: voorspeld ${review.predictedScore}, echte uitslag ${review.actualScore}. ` +
+    `${review.outcomeHit ? "De uitkomst zat goed" : "De uitkomst zat fout"} met ${Math.round((review.confidence || 0) * 100)}% confidence via ${model}. ` +
+    `${review.exactHit ? "De exacte score zat ook goed." : `Totale goal error ${review.totalGoalError}; leerpunt: ${signalText.length ? signalText.join(", ") : "geen dominant faalsignaal, model moet fijner worden gekalibreerd"}.`}`;
+}
+
 function buildTemplateAnalysis(match: any, prediction: any) {
+  const review = match.review || prediction.review;
+  if (String(match.status || "").toUpperCase() === "FT" && review) {
+    return buildPostMatchTemplate(match, prediction, review);
+  }
+
   const home = match.homeTeamName;
   const away = match.awayTeamName;
   const homeProb = Math.round((prediction.homeProb || 0) * 100);
@@ -38,26 +65,18 @@ function buildTemplateAnalysis(match: any, prediction: any) {
   if (context?.summary) signals.push(context.summary);
   if (aggregate?.active && aggregate.aggregateScore) signals.push(`aggregate ${aggregate.aggregateScore}`);
   if (h2h?.played >= 3) signals.push(`H2H ${h2h.homeWins}-${h2h.draws}-${h2h.awayWins}`);
-  if (weather?.riskLevel && weather.riskLevel !== "low") {
-    signals.push(`weerimpact ${weather.temperature ?? "?"}C en ${weather.precipitationProbability ?? "?"}% neerslagkans`);
-  }
+  if (weather?.riskLevel && weather.riskLevel !== "low") signals.push(`weerimpact ${weather.temperature ?? "?"}C en ${weather.precipitationProbability ?? "?"}% neerslagkans`);
   if (lineup?.confirmed) signals.push("bevestigde opstellingen");
   if (match.homeRecent?.strongestSide === "home") signals.push(`${home} presteert sterker thuis`);
   if (match.awayRecent?.strongestSide === "away") signals.push(`${away} presteert sterker uit`);
   if (match.homeInjuries?.injuredCount) signals.push(`${home} mist ${match.homeInjuries.injuredCount} speler(s)`);
   if (match.awayInjuries?.injuredCount) signals.push(`${away} mist ${match.awayInjuries.injuredCount} speler(s)`);
-  if (prediction.modelEdges?.clubEloDiff != null) {
-    signals.push(`ClubElo edge ${prediction.modelEdges.clubEloDiff > 0 ? home : away}`);
-  }
+  if (prediction.modelEdges?.clubEloDiff != null) signals.push(`ClubElo edge ${prediction.modelEdges.clubEloDiff > 0 ? home : away}`);
   if (prediction.modelEdges?.riskProfile) signals.push(`risico ${prediction.modelEdges.riskProfile}`);
-  if (prediction.modelEdges?.modelAgreement != null) {
-    signals.push(`model agreement ${Math.round(prediction.modelEdges.modelAgreement * 100)}%`);
-  }
+  if (prediction.modelEdges?.modelAgreement != null) signals.push(`model agreement ${Math.round(prediction.modelEdges.modelAgreement * 100)}%`);
   if (prediction.modelEdges?.tacticalMismatch?.summary) signals.push(prediction.modelEdges.tacticalMismatch.summary);
   if (prediction.modelEdges?.formShift?.summary) signals.push(prediction.modelEdges.formShift.summary);
-  if (match.homeTeamProfile?.setPieceScore || match.awayTeamProfile?.setPieceScore) {
-    signals.push(`set-piece ${match.homeTeamProfile?.setPieceScore ?? "-"}-${match.awayTeamProfile?.setPieceScore ?? "-"}`);
-  }
+  if (match.homeTeamProfile?.setPieceScore || match.awayTeamProfile?.setPieceScore) signals.push(`set-piece ${match.homeTeamProfile?.setPieceScore ?? "-"}-${match.awayTeamProfile?.setPieceScore ?? "-"}`);
   if (prediction.modelEdges?.travelEdge?.summary) signals.push(prediction.modelEdges.travelEdge.summary);
   if (prediction.modelEdges?.keeperEdge?.summary) signals.push(prediction.modelEdges.keeperEdge.summary);
   if (prediction.modelEdges?.lineupImpact?.summary) signals.push(prediction.modelEdges.lineupImpact.summary);
@@ -68,7 +87,6 @@ function buildTemplateAnalysis(match: any, prediction: any) {
   else if ((prediction.over25 || 0) >= 0.62) tip = "Over 2.5";
 
   const signalText = signals.length ? signals.slice(0, 3).join(", ") : "vorm, thuis-uit splits en modelkansen";
-
   return `${favorite} met ${homeProb}%-${drawProb}%-${awayProb}% en een verwacht scorebeeld van ${prediction.predHomeGoals}-${prediction.predAwayGoals} op basis van ${homeXG}-${awayXG} xG. Belangrijkste signalen: ${signalText}. Tip: ${tip}.`;
 }
 
@@ -110,6 +128,15 @@ export default async function handler(req: any, res: any) {
       return res.status(400).json({ error: "match en prediction verplicht" });
     }
 
+    const review = match.review || prediction.review || null;
+    if (String(match.status || "").toUpperCase() === "FT" && review) {
+      return res.status(200).json({
+        analysis: buildPostMatchTemplate(match, prediction, review),
+        engine: "template-review",
+        matchId: match.id,
+      });
+    }
+
     const h2h = match.h2h || prediction.h2h;
     const aggregate = match.aggregate || prediction.aggregate;
     const context = match.context || prediction.context;
@@ -131,7 +158,7 @@ ${recentSummary(match.awayTeamName, match.awayRecent)}
 RUSTDAGEN: ${match.homeRestDays ?? prediction.homeRestDays ?? "?"} - ${match.awayRestDays ?? prediction.awayRestDays ?? "?"}
 CLUB ELO: ${prediction.homeClubElo ?? match.homeClubElo ?? "?"} - ${prediction.awayClubElo ?? match.awayClubElo ?? "?"}
 BLESSURES: ${match.homeInjuries?.injuredCount || 0} - ${match.awayInjuries?.injuredCount || 0}
-STERKE KANT: ${match.homeTeamName} ${match.homeRecent?.strongestSide || "balanced"} | ${match.awayTeamName} ${match.awayRecent?.strongestSide || "balanced"}
+STERKE KANT: ${match.homeTeamProfile?.strongestSide || "balanced"} | ${match.awayTeamProfile?.strongestSide || "balanced"}
 MODEL: ${(prediction.ensembleMeta || match.ensembleMeta)?.active ? `${(prediction.ensembleMeta || match.ensembleMeta).baseModel} + ${(prediction.ensembleMeta || match.ensembleMeta).blendModel}` : "basis"}
 RISICO: ${prediction.modelEdges?.riskProfile || "onbekend"}
 AGREEMENT: ${prediction.modelEdges?.modelAgreement != null ? `${Math.round(prediction.modelEdges.modelAgreement * 100)}%` : "?"}

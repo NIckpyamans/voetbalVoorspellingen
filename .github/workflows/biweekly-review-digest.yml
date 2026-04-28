@@ -1,0 +1,38 @@
+name: biweekly-review-digest
+
+on:
+  schedule:
+    - cron: "15 6 * * 1"
+  workflow_dispatch:
+
+jobs:
+  build-digest:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: "24"
+          cache: "npm"
+
+      - name: Install
+        run: npm ci
+
+      - name: Build biweekly digest
+        run: npm run monitor:biweekly
+
+      - name: Commit digest
+        run: |
+          git config user.name "github-actions"
+          git config user.email "github-actions@github.com"
+          git add monitor/biweekly-review-digest.json monitor/biweekly-review-digest.md
+          git diff --cached --quiet && exit 0
+          git commit -m "update biweekly AI digest [skip vercel]"
+          git push

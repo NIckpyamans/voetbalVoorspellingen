@@ -1,9 +1,7 @@
 name: leren
 
 on:
-  schedule:
-    - cron: '0 */6 * * *'  # Elke 6 uur
-  workflow_dispatch:  # Handmatig kunnen triggeren
+  workflow_dispatch:
 
 permissions:
   contents: write
@@ -21,7 +19,7 @@ jobs:
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: '20'
+          node-version: '24'
           cache: 'npm'
       
       - name: Install dependencies
@@ -32,9 +30,11 @@ jobs:
       
       - name: Commit and push if changed
         run: |
+          BRANCH_NAME="${{ github.ref_name }}"
           git config user.name github-actions
           git config user.email github-actions@github.com
           git add server_data.json
-          git diff --quiet && git diff --staged --quiet || git commit -m "update learning data [skip vercel]"
-          git pull origin main --no-rebase --strategy-option=ours
-          git push
+          git diff --quiet && git diff --staged --quiet && echo "geen wijzigingen" && exit 0
+          git commit -m "update learning data [skip vercel]"
+          git pull --rebase origin "$BRANCH_NAME" || true
+          git push origin "$BRANCH_NAME"

@@ -1,6 +1,5 @@
-const GITHUB_RAW_URL =
-  process.env.DATA_URL ||
-  "https://raw.githubusercontent.com/NIckpyamans/voetbalVoorspellingen/main/server_data.json";
+import { fetchServerStore } from "./_dataSource.js";
+import { todayAmsterdamKey } from "../shared/date.js";
 
 function impliedOdds(prob: number | undefined) {
   const p = Number(prob || 0);
@@ -38,7 +37,7 @@ function buildValueFlags(prediction: any) {
   };
 }
 
-function enrichPrediction(prediction: any, matchMap: Record<string, any>) {
+function enrichPrediction(prediction: any, matchMap: Record<string, any>, store: any) {
   const match = matchMap[prediction.matchId] || null;
   return {
     ...prediction,
@@ -64,6 +63,9 @@ function enrichPrediction(prediction: any, matchMap: Record<string, any>) {
     awayTeamProfile: prediction.awayTeamProfile || match?.awayTeamProfile || null,
     featureVector: prediction.featureVector || match?.featureVector || null,
     ensembleMeta: prediction.ensembleMeta || match?.ensembleMeta || null,
+    learningSummary: prediction.learningSummary || match?.learningSummary || null,
+    marketCalibration: prediction.marketCalibration || match?.marketCalibration || null,
+    review: prediction.review || match?.review || store.postMatchReviews?.[prediction.matchId] || null,
     match,
   };
 }
@@ -74,34 +76,24 @@ export default async function handler(req: any, res: any) {
   res.setHeader("Cache-Control", "no-store");
 
   try {
-    const date = (req.query?.date as string) || new Date().toISOString().split("T")[0];
-    const response = await fetch(`${GITHUB_RAW_URL}?t=${Date.now()}`, {
-      headers: { "Cache-Control": "no-cache" },
-    });
-
-    if (!response.ok) {
-      return res.status(200).json({
-        date,
-        predictions: [],
-        source: "none",
-        error: `GitHub ${response.status}`,
-      });
-    }
-
-    const store = await response.json();
+    const date = (req.query?.date as string) || todayAmsterdamKey();
+    const { store, branch } = await fetchServerStore();
     const predictions: any[] = store.predictions?.[date] || [];
     const matches: any[] = store.matches?.[date] || [];
-    const matchMap = Object.fromEntries(matches.map((match: any) => [match.id, match]));
+    const matchMap = Object.fromEntries(matches.map((match: any) => [match.id, { ...match, review: store.postMatchReviews?.[match.id] || null }]));
 
     return res.status(200).json({
       date,
-      predictions: predictions.map((prediction) => enrichPrediction(prediction, matchMap)),
+      predictions: predictions.map((prediction) => enrichPrediction(prediction, matchMap, store)),
       total: predictions.length,
-      source: predictions.length ? "server-data-v4-ensemble" : "none",
+      source: predictions.length ? "server-data-v5-review-market" : "none",
+      sourceBranch: branch,
       lastRun: store.lastRun || null,
+      reviewCount: Object.keys(store.postMatchReviews || {}).length,
     });
   } catch (err: any) {
     console.error("[predict]", err);
     return res.status(500).json({ error: err?.message || "unknown" });
   }
 }
+

@@ -388,16 +388,98 @@ export interface Match {
       awayOutcomeHitRate?: number;
       homeBias?: number;
       awayBias?: number;
+      combinedReliability?: number;
+      homeAvgGoalError?: number;
+      awayAvgGoalError?: number;
+      homeFragility?: number;
+      awayFragility?: number;
     };
-    marketCalibration?: {
+    review?: {
+    matchId: string;
+    predictedScore: string;
+    actualScore: string;
+    predictedOutcome: string;
+    probabilityOutcome?: string;
+    actualOutcome: string;
+    confidence: number;
+    outcomeHit: boolean;
+    probabilityOutcomeHit?: boolean;
+    exactHit: boolean;
+    totalGoalError: number;
+    totalGoalBias: number;
+    homeGoalBias: number;
+    awayGoalBias: number;
+    failureSignals: string[];
+    createdAt: number;
+  };
+
+  marketCalibration?: {
       summary?: string;
       source?: string;
       homeImpliedPpg?: number | null;
       awayImpliedPpg?: number | null;
       overperformanceDiff?: number;
+      strength?: number;
+      closingLean?: string;
+      closingCoverage?: number;
+      bookmakerAgreement?: number;
+      bookmakerSignals?: Array<{
+        key?: string;
+        bookmaker?: string;
+        diff?: number;
+        strength?: number;
+        closingCoverage?: number;
+        lean?: string;
+      }>;
       homeGames?: number;
       awayGames?: number;
     };
+    leagueReliability?: {
+      summary?: string;
+      reliabilityScore?: number | null;
+      outcomeHitRate?: number | null;
+      exactHitRate?: number | null;
+      avgGoalError?: number | null;
+      matches?: number;
+    };
+    phaseReliability?: {
+      summary?: string;
+      reliabilityScore?: number | null;
+      outcomeHitRate?: number | null;
+      exactHitRate?: number | null;
+      avgGoalError?: number | null;
+      matches?: number;
+    };
+    refereeProfile?: {
+      id?: string;
+      name?: string;
+      country?: string | null;
+      cardsTrend?: number;
+      estimatedPenaltyRate?: number;
+      strictness?: string;
+      source?: string;
+      matches?: number;
+      summary?: string;
+    };
+  };
+
+  review?: {
+    matchId: string;
+    predictedScore: string;
+    actualScore: string;
+    predictedOutcome: string;
+    probabilityOutcome?: string;
+    actualOutcome: string;
+    confidence: number;
+    outcomeHit: boolean;
+    probabilityOutcomeHit?: boolean;
+    exactHit: boolean;
+    totalGoalError: number;
+    totalGoalBias: number;
+    homeGoalBias: number;
+    awayGoalBias: number;
+    failureSignals: string[];
+    createdAt: number;
   };
 
   marketCalibration?: {
@@ -406,6 +488,18 @@ export interface Match {
     homeImpliedPpg?: number | null;
     awayImpliedPpg?: number | null;
     overperformanceDiff?: number;
+    strength?: number;
+    closingLean?: string;
+    closingCoverage?: number;
+    bookmakerAgreement?: number;
+    bookmakerSignals?: Array<{
+      key?: string;
+      bookmaker?: string;
+      diff?: number;
+      strength?: number;
+      closingCoverage?: number;
+      lean?: string;
+    }>;
     homeGames?: number;
     awayGames?: number;
   };
@@ -415,6 +509,38 @@ export interface Match {
     awayOutcomeHitRate?: number;
     homeBias?: number;
     awayBias?: number;
+    combinedReliability?: number;
+    homeAvgGoalError?: number;
+    awayAvgGoalError?: number;
+    homeFragility?: number;
+    awayFragility?: number;
+  };
+  competitionReliability?: {
+    summary?: string;
+    reliabilityScore?: number | null;
+    outcomeHitRate?: number | null;
+    exactHitRate?: number | null;
+    avgGoalError?: number | null;
+    matches?: number;
+  };
+  phaseReliability?: {
+    summary?: string;
+    reliabilityScore?: number | null;
+    outcomeHitRate?: number | null;
+    exactHitRate?: number | null;
+    avgGoalError?: number | null;
+    matches?: number;
+  };
+  refereeProfile?: {
+    id?: string;
+    name?: string;
+    country?: string | null;
+    cardsTrend?: number;
+    estimatedPenaltyRate?: number;
+    strictness?: string;
+    source?: string;
+    matches?: number;
+    summary?: string;
   };
   
   // ========================================
@@ -536,6 +662,7 @@ export interface Prediction {
   ensembleMeta?: any;
   marketCalibration?: any;
   learningSummary?: any;
+  review?: any;
 }
 
 // ============================================================================
@@ -639,3 +766,29 @@ export interface MatchAnalysis {
   keyFactors?: string[];
   timestamp?: number;
 }
+
+export interface PredictionMemory {
+  matchId: string;
+  prediction: string;
+  actual: string;
+  wasCorrect: boolean;
+  winnerCorrect?: boolean;
+  predictedOutcome?: string | null;
+  actualOutcome?: string | null;
+  errorMargin: number;
+  timestamp: number;
+  homeTeam?: string | null;
+  awayTeam?: string | null;
+  league?: string | null;
+}
+
+export interface Team {
+  id: string;
+  name: string;
+  league: string;
+  elo: number;
+  attack: number;
+  defense: number;
+  logo?: string;
+}
+

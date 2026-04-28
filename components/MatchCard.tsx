@@ -1,22 +1,13 @@
 import React, { useEffect, useMemo, useRef, useState } from "react";
 import { Match } from "../types";
 import { FavoriteButton } from "./FavoriteTeams";
+import PostMatchReview from "./PostMatchReview";
+import { getLiveMinuteLabel } from "../shared/minute.js";
 
 interface MatchCardProps {
   match: Match;
   prediction?: any;
   onFavoriteChange?: () => void;
-}
-
-function parseMinuteValue(minute?: string | number | null, minuteValue?: number | null) {
-  if (typeof minuteValue === "number" && Number.isFinite(minuteValue)) return minuteValue;
-  if (typeof minute === "number" && Number.isFinite(minute)) return minute;
-  if (!minute) return null;
-  if (String(minute).toUpperCase() === "HT") return 45;
-  const plusMatch = String(minute).match(/(\d+)\s*\+\s*(\d+)/);
-  if (plusMatch) return Number(plusMatch[1]) + Number(plusMatch[2]);
-  const plainMatch = String(minute).match(/(\d+)/);
-  return plainMatch ? Number(plainMatch[1]) : null;
 }
 
 function useLiveMinute(match: any) {
@@ -28,16 +19,7 @@ function useLiveMinute(match: any) {
     return () => window.clearInterval(timer);
   }, [match?.status, match?.minute, match?.minuteValue, match?.liveUpdatedAt]);
 
-  return useMemo(() => {
-    const period = String(match?.period || "").toLowerCase();
-    if (period.includes("half time") || period.includes("halftime") || period.includes("break")) return "HT";
-    const base = parseMinuteValue(match?.minute, match?.minuteValue);
-    if (base == null) return String(match?.status || "").toUpperCase() === "LIVE" ? "LIVE" : null;
-    const updatedAt = Number(match?.liveUpdatedAt || 0) || 0;
-    const drift = updatedAt > 0 ? Math.max(0, Math.floor((now - updatedAt) / 60000)) : 0;
-    const total = base + drift;
-    return total > 90 ? `90+${total - 90}'` : `${total}'`;
-  }, [match, now]);
+  return useMemo(() => getLiveMinuteLabel(match, now), [match, now]);
 }
 
 function fmt(probability: number) {
@@ -226,6 +208,8 @@ function buildRecentH2HForm(h2h: any, currentHomeId?: string, currentAwayId?: st
 
 function getH2HSourceLabel(status?: string) {
   if (status === "all-competitions") return "laatste onderlinge duels uit alle competities";
+  if (status === "historical-competition") return "aangevuld uit historische competitiedata";
+  if (status === "merged-historical-competition") return "live bron + historische competitiedata";
   if (status === "loaded") return "laatste onderlinge duels in brondata";
   if (status === "fallback") return "aangevuld met vorige duel-fallback";
   return "geen recente onderlinge brondata";
@@ -245,6 +229,10 @@ function ExpandableInsights({ match, prediction }: { match: any; prediction: any
   const keeperEdge = prediction.modelEdges?.keeperEdge;
   const learningEdge = prediction.modelEdges?.learningEdge || match.learningSummary;
   const marketCalibration = prediction.modelEdges?.marketCalibration || match.marketCalibration;
+  const competitionReliability = prediction.modelEdges?.leagueReliability || match.competitionReliability;
+  const phaseReliability = prediction.modelEdges?.phaseReliability || match.phaseReliability;
+  const refereeProfile = prediction.modelEdges?.refereeProfile || match.refereeProfile;
+  const bookmakerSignals = Array.isArray(marketCalibration?.bookmakerSignals) ? marketCalibration.bookmakerSignals.slice(0, 3) : [];
 
   const riskTone =
     riskProfile === "laag"
@@ -312,6 +300,7 @@ function ExpandableInsights({ match, prediction }: { match: any; prediction: any
               <div>Continuity: <span className="font-black text-white">{lineupImpact?.homeContinuity ?? "-"} / {lineupImpact?.awayContinuity ?? "-"}</span></div>
               <div>Keeper edge: <span className="font-black text-white">{keeperEdge?.summary || "gelijk"}</span></div>
               <div>Travel edge: <span className="font-black text-white">{travelEdge?.summary || "geen"}</span></div>
+              <div>Scheids: <span className="font-black text-white">{refereeProfile?.summary || "niet gekoppeld"}</span></div>
               <div>Tactische mismatch: <span className="font-black text-white">{prediction.modelEdges?.tacticalMismatch?.summary || "gebalanceerd"}</span></div>
               <div>Form shift: <span className="font-black text-white">{prediction.modelEdges?.formShift?.summary || "stabiel"}</span></div>
             </div>
@@ -383,6 +372,7 @@ function ExpandableInsights({ match, prediction }: { match: any; prediction: any
               <div>Samenvatting: <span className="font-black text-white">{learningEdge?.summary || "nog geen reviewdata"}</span></div>
               <div>Hitrate thuis/uit: <span className="font-black text-white">{learningEdge?.homeOutcomeHitRate != null ? `${Math.round(learningEdge.homeOutcomeHitRate * 100)}%` : "-"} / {learningEdge?.awayOutcomeHitRate != null ? `${Math.round(learningEdge.awayOutcomeHitRate * 100)}%` : "-"}</span></div>
               <div>Bias thuis/uit: <span className="font-black text-white">{learningEdge?.homeBias ?? "-"} / {learningEdge?.awayBias ?? "-"}</span></div>
+              <div>Betrouwbaarheid: <span className="font-black text-white">{learningEdge?.combinedReliability != null ? `${Math.round(learningEdge.combinedReliability * 100)}%` : "-"}</span></div>
             </div>
           </div>
           <div className="rounded-xl border border-rose-500/15 bg-rose-950/20 p-2">
@@ -392,6 +382,11 @@ function ExpandableInsights({ match, prediction }: { match: any; prediction: any
               <div>Samenvatting: <span className="font-black text-white">{marketCalibration?.summary || "geen historische marktdata gekoppeld"}</span></div>
               <div>Implied PPG: <span className="font-black text-white">{marketCalibration?.homeImpliedPpg ?? "-"} / {marketCalibration?.awayImpliedPpg ?? "-"}</span></div>
               <div>Overperf diff: <span className="font-black text-white">{marketCalibration?.overperformanceDiff ?? "-"}</span></div>
+              <div>Closing-sterkte: <span className="font-black text-white">{marketCalibration?.strength != null ? `${Math.round(marketCalibration.strength * 100)}%` : "-"}</span></div>
+              <div>Closing-dekking: <span className="font-black text-white">{marketCalibration?.closingCoverage != null ? `${Math.round(marketCalibration.closingCoverage * 100)}%` : "-"}</span></div>
+              <div>Bookmaker-consensus: <span className="font-black text-white">{marketCalibration?.bookmakerAgreement != null ? `${Math.round(marketCalibration.bookmakerAgreement * 100)}%` : "-"}</span></div>
+              <div>Closing lean: <span className="font-black text-white">{marketCalibration?.closingLean || "-"}</span></div>
+              <div>Bookies: <span className="font-black text-white">{bookmakerSignals.length ? bookmakerSignals.map((item) => `${item.bookmaker}:${item.lean}`).join(" / ") : "-"}</span></div>
             </div>
           </div>
         </div>
@@ -407,11 +402,50 @@ function ExpandableInsights({ match, prediction }: { match: any; prediction: any
           </div>
         </div>
 
-        <div className="rounded-xl border border-amber-500/15 bg-amber-950/20 p-2">
-          <div className="text-[8px] font-black uppercase text-amber-300 mb-1">Extra info die we later nog kunnen toevoegen</div>
-          <div className="text-[8px] text-slate-300 leading-relaxed">
-            managerwissel, reisafstand, verwachte opstelling per positie, corners-trend, kaarten-trend, set-piece kracht,
-            marktvergelijking met historische odds en een aparte ML-score uit CatBoost of LightGBM.
+        <div className="grid grid-cols-2 gap-2">
+          <div className="rounded-xl border border-emerald-500/15 bg-emerald-950/20 p-2">
+            <div className="text-[8px] font-black uppercase text-emerald-300 mb-1">Competitiebetrouwbaarheid</div>
+            <div className="space-y-1 text-[8px] text-slate-300">
+              <div>Score: <span className="font-black text-white">{competitionReliability?.reliabilityScore != null ? `${Math.round(competitionReliability.reliabilityScore * 100)}%` : "-"}</span></div>
+              <div>1X2 hitrate: <span className="font-black text-white">{competitionReliability?.outcomeHitRate != null ? `${Math.round(competitionReliability.outcomeHitRate * 100)}%` : "-"}</span></div>
+              <div>Exact hitrate: <span className="font-black text-white">{competitionReliability?.exactHitRate != null ? `${Math.round(competitionReliability.exactHitRate * 100)}%` : "-"}</span></div>
+              <div>Gem. goal error: <span className="font-black text-white">{competitionReliability?.avgGoalError ?? "-"}</span></div>
+              <div>Bron: <span className="font-black text-white">{competitionReliability?.summary || "nog in opbouw"}</span></div>
+            </div>
+          </div>
+          <div className="rounded-xl border border-amber-500/15 bg-amber-950/20 p-2">
+            <div className="text-[8px] font-black uppercase text-amber-300 mb-1">Fasebetrouwbaarheid</div>
+            <div className="space-y-1 text-[8px] text-slate-300">
+              <div>Score: <span className="font-black text-white">{phaseReliability?.reliabilityScore != null ? `${Math.round(phaseReliability.reliabilityScore * 100)}%` : "-"}</span></div>
+              <div>1X2 hitrate: <span className="font-black text-white">{phaseReliability?.outcomeHitRate != null ? `${Math.round(phaseReliability.outcomeHitRate * 100)}%` : "-"}</span></div>
+              <div>Exact hitrate: <span className="font-black text-white">{phaseReliability?.exactHitRate != null ? `${Math.round(phaseReliability.exactHitRate * 100)}%` : "-"}</span></div>
+              <div>Gem. goal error: <span className="font-black text-white">{phaseReliability?.avgGoalError ?? "-"}</span></div>
+              <div>Bron: <span className="font-black text-white">{phaseReliability?.summary || "nog in opbouw"}</span></div>
+            </div>
+          </div>
+        </div>
+
+        <div className="grid grid-cols-2 gap-2">
+          <div className="rounded-xl border border-amber-500/15 bg-amber-950/20 p-2">
+            <div className="text-[8px] font-black uppercase text-amber-300 mb-1">Scheidsrechter-profiel</div>
+            <div className="space-y-1 text-[8px] text-slate-300">
+              <div>Naam: <span className="font-black text-white">{refereeProfile?.name || "onbekend"}</span></div>
+              <div>Land: <span className="font-black text-white">{refereeProfile?.country || "-"}</span></div>
+              <div>Bron: <span className="font-black text-white">{refereeProfile?.source || "-"}</span></div>
+              <div>Historische duels: <span className="font-black text-white">{refereeProfile?.matches ?? "-"}</span></div>
+              <div>Kaartenritme: <span className="font-black text-white">{refereeProfile?.cardsTrend != null ? refereeProfile.cardsTrend.toFixed(2) : "-"}</span></div>
+              <div>Penalty-kans: <span className="font-black text-white">{refereeProfile?.estimatedPenaltyRate != null ? `${Math.round(refereeProfile.estimatedPenaltyRate * 100)}%` : "-"}</span></div>
+              <div>Profiel: <span className="font-black text-white">{refereeProfile?.strictness || "-"}</span></div>
+            </div>
+          </div>
+          <div className="rounded-xl border border-slate-500/15 bg-slate-950/20 p-2">
+            <div className="text-[8px] font-black uppercase text-slate-300 mb-1">Bronkwaliteit</div>
+            <div className="space-y-1 text-[8px] text-slate-300">
+              <div>Closing-diepte: <span className="font-black text-white">{marketCalibration?.closingCoverage != null ? `${Math.round(marketCalibration.closingCoverage * 100)}%` : "-"}</span></div>
+              <div>Marktsterkte: <span className="font-black text-white">{marketCalibration?.strength != null ? `${Math.round(marketCalibration.strength * 100)}%` : "-"}</span></div>
+              <div>Competitie: <span className="font-black text-white">{competitionReliability?.reliabilityScore != null ? `${Math.round(competitionReliability.reliabilityScore * 100)}%` : "-"}</span></div>
+              <div>Fase: <span className="font-black text-white">{phaseReliability?.reliabilityScore != null ? `${Math.round(phaseReliability.reliabilityScore * 100)}%` : "-"}</span></div>
+            </div>
           </div>
         </div>
       </div>
@@ -430,6 +464,13 @@ function KeySignals({ match, prediction }: { match: any; prediction: any }) {
   }
   if (match.h2h?.played >= 3) signals.push(`H2H ${match.h2h.homeWins}-${match.h2h.draws}-${match.h2h.awayWins}`);
   if (match.lineupSummary?.confirmed) signals.push("opstellingen bevestigd");
+  if (match.competitionReliability?.reliabilityScore != null) {
+    signals.push(`competitiebetrouwbaarheid ${Math.round(match.competitionReliability.reliabilityScore * 100)}%`);
+  }
+  if (match.phaseReliability?.reliabilityScore != null) {
+    signals.push(`fase ${Math.round(match.phaseReliability.reliabilityScore * 100)}%`);
+  }
+  if (match.refereeProfile?.strictness) signals.push(`scheids ${match.refereeProfile.strictness}`);
 
   if (signals.length === 0) return null;
 
@@ -645,7 +686,20 @@ const MatchCard: React.FC<MatchCardProps> = ({ match, prediction, onFavoriteChan
     .slice(0, 6);
   const confidenceBase = prediction.confidence ?? Math.max(prediction.homeProb || 0, prediction.drawProb || 0, prediction.awayProb || 0);
   const confidencePct = Math.max(0, Math.min(99, Math.round((confidenceBase || 0) * 100)));
+  const review = match.review || prediction.review || null;
   const modelLabel = (prediction.ensembleMeta || match.ensembleMeta)?.active ? "Ensemble" : "Basis";
+  const phaseReliability = prediction.modelEdges?.phaseReliability || match.phaseReliability;
+  const modelScopeLabel =
+    String(match.league || "").startsWith("Europe -") && (
+      String(match.league || "").toLowerCase().includes("friendly") ||
+      String(match.league || "").toLowerCase().includes("qualification") ||
+      String(match.league || "").toLowerCase().includes("nations league") ||
+      String(match.league || "").toLowerCase().includes("international")
+    )
+      ? "Interland"
+      : "Club";
+  const scopeScore =
+    phaseReliability?.reliabilityScore != null ? `${Math.round(phaseReliability.reliabilityScore * 100)}%` : "-";
   const timingLabel = isLive
     ? liveMinute && liveMinute !== "LIVE"
       ? liveMinute
@@ -665,12 +719,6 @@ const MatchCard: React.FC<MatchCardProps> = ({ match, prediction, onFavoriteChan
             {match.kickoff ? new Date(match.kickoff).toLocaleString("nl-NL") : ""}
             {match.roundLabel ? ` · ${match.roundLabel}` : ""}
           </div>
-          {isLive && (
-            <div className="mt-1 inline-flex items-center gap-1 rounded-full bg-red-900/35 border border-red-500/25 px-2 py-0.5">
-              <span className="w-1.5 h-1.5 rounded-full bg-red-500 animate-pulse" />
-              <span className="text-[9px] font-black text-red-200">{liveMinute && liveMinute !== "LIVE" ? `LIVE ${liveMinute}` : "LIVE nu"}</span>
-            </div>
-          )}
         </div>
         <div className="flex items-center gap-1">
           {importantMatch && (
@@ -726,7 +774,7 @@ const MatchCard: React.FC<MatchCardProps> = ({ match, prediction, onFavoriteChan
         </div>
       </div>
 
-      <div className="grid grid-cols-3 gap-1 mb-2">
+      <div className="grid grid-cols-4 gap-1 mb-2">
         <div className="rounded-lg border border-blue-500/15 bg-blue-950/20 px-2 py-1.5 text-center">
           <div className="text-[7px] uppercase font-black text-blue-300/80">Vertrouwen</div>
           <div className="text-[11px] font-black text-white">{confidencePct}%</div>
@@ -738,6 +786,10 @@ const MatchCard: React.FC<MatchCardProps> = ({ match, prediction, onFavoriteChan
         <div className="rounded-lg border border-violet-500/15 bg-violet-950/20 px-2 py-1.5 text-center">
           <div className="text-[7px] uppercase font-black text-violet-300/80">Wedstrijdtijd</div>
           <div className="text-[11px] font-black text-white">{timingLabel}</div>
+        </div>
+        <div className="rounded-lg border border-emerald-500/15 bg-emerald-950/20 px-2 py-1.5 text-center">
+          <div className="text-[7px] uppercase font-black text-emerald-300/80">{modelScopeLabel}</div>
+          <div className="text-[11px] font-black text-white">{scopeScore}</div>
         </div>
       </div>
 
@@ -783,6 +835,7 @@ const MatchCard: React.FC<MatchCardProps> = ({ match, prediction, onFavoriteChan
 
       {tab === "analyse" && (
         <div className="space-y-2">
+          {review && <PostMatchReview review={review} prediction={prediction} />}
           <div className="bg-gradient-to-br from-blue-950/60 to-purple-950/40 border border-blue-500/20 rounded-xl p-2.5 min-h-[64px]">
             <div className="text-[7px] font-black text-blue-400 uppercase mb-1.5">AI Analyse</div>
             {aiAnalysis ? (
@@ -915,8 +968,8 @@ const MatchCard: React.FC<MatchCardProps> = ({ match, prediction, onFavoriteChan
             <Badge label="xG uit" value={(prediction.awayXG || 0).toFixed(2)} tone="red" />
             <Badge label="Schoten thuis" value={match.homeSeasonStats?.avgShotsOn != null ? Number(match.homeSeasonStats.avgShotsOn).toFixed(1) : "-"} tone="blue" />
             <Badge label="Schoten uit" value={match.awaySeasonStats?.avgShotsOn != null ? Number(match.awaySeasonStats.avgShotsOn).toFixed(1) : "-"} tone="red" />
-            <Badge label="Blessures thuis" value={`${match.homeInjuries?.injuredCount || 0}`} tone="amber" />
-            <Badge label="Blessures uit" value={`${match.awayInjuries?.injuredCount || 0}`} tone="amber" />
+            <Badge label="Blessures thuis" value={`${match.homeInjuries?.injuredCount || 0}/${match.homeInjuries?.suspendedCount || 0}`} tone="amber" />
+            <Badge label="Blessures uit" value={`${match.awayInjuries?.injuredCount || 0}/${match.awayInjuries?.suspendedCount || 0}`} tone="amber" />
             <Badge label="PPG thuis" value={match.homeTeamProfile?.pointsPerGame != null ? String(match.homeTeamProfile.pointsPerGame) : "-"} tone="blue" />
             <Badge label="PPG uit" value={match.awayTeamProfile?.pointsPerGame != null ? String(match.awayTeamProfile.pointsPerGame) : "-"} tone="red" />
             <Badge label="Clean sheet" value={match.homeRecent?.cleanSheetRate != null ? `${Math.round(match.homeRecent.cleanSheetRate * 100)}% / ${Math.round((match.awayRecent?.cleanSheetRate || 0) * 100)}%` : "-"} tone="green" />
@@ -942,3 +995,4 @@ const MatchCard: React.FC<MatchCardProps> = ({ match, prediction, onFavoriteChan
 };
 
 export default MatchCard;
+
