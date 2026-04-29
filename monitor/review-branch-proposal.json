@@ -1,22 +1,22 @@
 {
-  "generatedAt": "2026-04-28T23:10:47.248Z",
-  "date": "2026-04-29",
+  "generatedAt": "2026-04-29T23:11:27.838Z",
+  "date": "2026-04-30",
   "proposalOnly": true,
   "shouldPropose": true,
-  "branchName": "codex/review-20260429",
-  "summary": "AI reviewvoorstel voor 2026-04-29: 2 aandachtspunt(en) met patchadvies, niet automatisch live.",
+  "branchName": "codex/review-20260430",
+  "summary": "AI reviewvoorstel voor 2026-04-30: 1 aandachtspunt(en) met patchadvies, niet automatisch live.",
   "latestStats": {
-    "today": "2026-04-29",
+    "today": "2026-04-30",
     "dataPresent": true,
-    "lastRun": 1777415544807,
-    "ageMinutes": 38,
+    "lastRun": 1777501941114,
+    "ageMinutes": 39,
     "todayMatches": 0,
     "liveMatches": 0,
     "liveWithoutMinute": 0,
     "h2hFilled": 0,
     "h2hMissing": 0,
     "standingsCount": 29,
-    "cupSheetCount": 0,
+    "cupSheetCount": 2,
     "phaseReliabilityCount": 3
   },
   "findings": [
@@ -32,27 +32,12 @@
         "services/matchService.ts"
       ],
       "details": {}
-    },
-    {
-      "priority": 2,
-      "key": "cupsheets_empty",
-      "severity": "medium",
-      "message": "cupSheets is leeg.",
-      "whyItMatters": "Bekerschema of knock-out route wordt niet gevuld.",
-      "recommendedFiles": [
-        "scripts/server-worker.js",
-        "components/StandingsView.tsx",
-        "api/standings.ts"
-      ],
-      "details": {}
     }
   ],
   "recommendedFiles": [
     "scripts/server-worker.js",
     "api/Matches.ts",
-    "services/matchService.ts",
-    "components/StandingsView.tsx",
-    "api/standings.ts"
+    "services/matchService.ts"
   ],
   "nextStep": "Gebruik deze proposal om gericht een reviewbranch te maken en alleen na controle te mergen."
 }
