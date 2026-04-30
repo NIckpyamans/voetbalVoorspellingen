@@ -1,20 +1,20 @@
 {
-  "generatedAt": "2026-04-29T23:11:27.838Z",
-  "date": "2026-04-30",
+  "generatedAt": "2026-04-30T23:10:41.449Z",
+  "date": "2026-05-01",
   "proposalOnly": true,
   "shouldPropose": true,
-  "branchName": "codex/review-20260430",
-  "summary": "AI reviewvoorstel voor 2026-04-30: 1 aandachtspunt(en) met patchadvies, niet automatisch live.",
+  "branchName": "codex/review-20260501",
+  "summary": "AI reviewvoorstel voor 2026-05-01: 1 aandachtspunt(en) met patchadvies, niet automatisch live.",
   "latestStats": {
-    "today": "2026-04-30",
+    "today": "2026-05-01",
     "dataPresent": true,
-    "lastRun": 1777501941114,
-    "ageMinutes": 39,
-    "todayMatches": 0,
+    "lastRun": 1777590072212,
+    "ageMinutes": 9,
+    "todayMatches": 5,
     "liveMatches": 0,
     "liveWithoutMinute": 0,
-    "h2hFilled": 0,
-    "h2hMissing": 0,
+    "h2hFilled": 2,
+    "h2hMissing": 3,
     "standingsCount": 29,
     "cupSheetCount": 2,
     "phaseReliabilityCount": 3
@@ -22,22 +22,20 @@
   "findings": [
     {
       "priority": 1,
-      "key": "today_matches_empty",
-      "severity": "medium",
-      "message": "Er zijn geen wedstrijden voor vandaag in server_data.json.",
-      "whyItMatters": "Vandaag-data ontbreekt terwijl er wedstrijden verwacht worden.",
+      "key": "historical_referee_unmatched",
+      "severity": "low",
+      "message": "Geen enkele wedstrijd van vandaag gebruikt historische referee-data.",
+      "whyItMatters": "Historische scheidsrechterdata matcht nog te weinig.",
       "recommendedFiles": [
         "scripts/server-worker.js",
-        "api/Matches.ts",
-        "services/matchService.ts"
+        "components/MatchCard.tsx"
       ],
       "details": {}
     }
   ],
   "recommendedFiles": [
     "scripts/server-worker.js",
-    "api/Matches.ts",
-    "services/matchService.ts"
+    "components/MatchCard.tsx"
   ],
   "nextStep": "Gebruik deze proposal om gericht een reviewbranch te maken en alleen na controle te mergen."
 }
