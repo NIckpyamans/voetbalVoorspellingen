@@ -134,7 +134,7 @@ const App: React.FC = () => {
         const prediction = nextPredictions[match.id];
         if (!prediction) continue;
 
-        saveToMemory(match.id, `${prediction.predHomeGoals}-${prediction.predAwayGoals}`, match.score, match);
+        saveToMemory(match.id, `${prediction.predHomeGoals}-${prediction.predAwayGoals}`, match.score, match, prediction);
         const home = getOrCreateTeam({
           id: match.homeTeamId,
           name: match.homeTeamName,
@@ -253,7 +253,7 @@ const App: React.FC = () => {
     return Object.entries(predictions)
       .filter(([matchId]) => {
         const match = matches.find((match) => match.id === matchId);
-        return match && belongsToSelectedDate(match, selectedDate) && !isFinished(match);
+        return match && belongsToSelectedDate(match, selectedDate);
       })
       .map(([matchId, pred]) => {
         const match = matches.find((match) => match.id === matchId);
@@ -263,6 +263,8 @@ const App: React.FC = () => {
         const drawProb = pred.drawProb || 0;
         const awayProb = pred.awayProb || 0;
         const maxProb = Math.max(homeProb, drawProb, awayProb);
+        const exactScoreConfidence = Number((pred as any).exactScoreConfidence || (match as any).exactScoreConfidence || pred.exactProb || 0);
+        const rank = Number((pred as any).bestBetRank || (match as any).bestBetRank || 0) || null;
 
         return {
           matchId,
@@ -276,10 +278,20 @@ const App: React.FC = () => {
           awayProb,
           confidence: pred.confidence || maxProb,
           exactProb: pred.exactProb,
+          exactScoreConfidence,
+          bestBetRank: rank,
+          exactScoreReasons: (pred as any).exactScoreReasons || (match as any).exactScoreReasons || [],
+          status: match.status,
+          score: match.score,
         };
       })
       .filter((bet): bet is NonNullable<typeof bet> => bet !== null)
-      .sort((a, b) => (b.confidence || 0) - (a.confidence || 0))
+      .sort((a, b) => {
+        if (a.bestBetRank && b.bestBetRank) return a.bestBetRank - b.bestBetRank;
+        if (a.bestBetRank) return -1;
+        if (b.bestBetRank) return 1;
+        return (b.exactScoreConfidence || 0) - (a.exactScoreConfidence || 0) || (b.confidence || 0) - (a.confidence || 0);
+      })
       .slice(0, 5);
   }, [predictions, matches, selectedDate]);
 
@@ -417,7 +429,7 @@ const App: React.FC = () => {
                   <section>
                     <h2 className="text-sm font-black uppercase mb-3 flex items-center gap-2">
                       <span className="w-2 h-2 bg-yellow-400 rounded-full" />
-                      Top 5 meest zekere tips
+                      Top 5 exacte-score tips
                     </h2>
                     <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 gap-3">
                       {bestBets.map((bet: any) => (

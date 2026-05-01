@@ -2804,6 +2804,7 @@ function buildPostMatchReview(match, prediction) {
     probabilityOutcome,
     actualOutcome,
     confidence: Number(prediction.confidence || 0),
+    exactScoreConfidence: Number(prediction.exactScoreConfidence || prediction.exactProb || 0),
     outcomeHit: predictedOutcome === actualOutcome,
     probabilityOutcomeHit: probabilityOutcome === actualOutcome,
     exactHit: predHomeGoals === actualHomeGoals && predAwayGoals === actualAwayGoals,
@@ -2813,6 +2814,8 @@ function buildPostMatchReview(match, prediction) {
     awayGoalBias: Number((actualAwayGoals - predAwayGoals).toFixed(2)),
     bestBetRank: Number(prediction?.bestBetRank || 0) || null,
     topConfidencePick: Number(prediction?.bestBetRank || 0) > 0 && Number(prediction?.bestBetRank || 0) <= 5,
+    topExactScorePick: Number(prediction?.bestBetRank || 0) > 0 && Number(prediction?.bestBetRank || 0) <= 5,
+    topExactReasons: prediction?.exactScoreReasons || [],
     failureSignals,
     createdAt: Date.now(),
   };
@@ -2918,20 +2921,57 @@ function rebuildReviewsAndLearning(store) {
   store.featureDiagnostics = buildFeatureDiagnosticsFromReviews(reviews);
 }
 
+function buildExactScoreTipScore(prediction, match) {
+  const exactProb = Number(prediction?.exactProb || 0);
+  const confidence = Number(prediction?.confidence || 0);
+  const modelAgreement = Number(prediction?.modelEdges?.modelAgreement || 0);
+  const sourceQuality = Math.max(
+    Number(match?.homeSeasonStats?.sourceQuality || 0),
+    Number(match?.awaySeasonStats?.sourceQuality || 0),
+    Number(prediction?.modelEdges?.marketCalibration?.closingCoverage || 0)
+  );
+  const lineupBonus = prediction?.lineupSummary?.confirmed || match?.lineupSummary?.confirmed ? 0.025 : 0;
+  const h2hBonus = Number(match?.h2h?.played || prediction?.h2h?.played || 0) >= 3 ? 0.018 : 0;
+  const reliabilityBonus = clamp(
+    (Number(prediction?.modelEdges?.leagueReliability?.reliabilityScore || 0) +
+      Number(prediction?.modelEdges?.phaseReliability?.reliabilityScore || 0)) / 2,
+    0,
+    1
+  ) * 0.045;
+  const riskPenalty = prediction?.modelEdges?.riskProfile === "high" ? 0.055 : prediction?.modelEdges?.riskProfile === "medium" ? 0.025 : 0;
+  const score = clamp(
+    exactProb * 2.9 + confidence * 0.22 + modelAgreement * 0.12 + sourceQuality * 0.08 + lineupBonus + h2hBonus + reliabilityBonus - riskPenalty,
+    0,
+    0.99
+  );
+  const reasons = [];
+  if (exactProb >= 0.12) reasons.push("sterke exacte-score kans");
+  if (modelAgreement >= 0.68) reasons.push("modellen eensgezind");
+  if (sourceQuality >= 0.55) reasons.push("rijke brondata");
+  if (lineupBonus) reasons.push("opstellingen bevestigd");
+  if (h2hBonus) reasons.push("H2H gevuld");
+  if (reliabilityBonus >= 0.025) reasons.push("competitie/fase betrouwbaar");
+  if (riskPenalty) reasons.push("risico meegewogen");
+  return {
+    score: Number(score.toFixed(3)),
+    reasons: reasons.slice(0, 4),
+  };
+}
+
 function assignTopConfidenceRanks(dayMatches, dayPredictions) {
+  const matchMap = new Map((dayMatches || []).map((match) => [match.id, match]));
   const ranked = [...(dayPredictions || [])]
     .map((prediction) => {
-      const maxProb = Math.max(
-        Number(prediction?.homeProb || 0),
-        Number(prediction?.drawProb || 0),
-        Number(prediction?.awayProb || 0)
-      );
+      const match = matchMap.get(prediction.matchId);
+      const exactScoreTip = buildExactScoreTipScore(prediction, match);
+      prediction.exactScoreConfidence = exactScoreTip.score;
+      prediction.exactScoreReasons = exactScoreTip.reasons;
       return {
         matchId: prediction.matchId,
-        confidence: Number(prediction?.confidence || maxProb || 0),
+        exactScoreConfidence: exactScoreTip.score,
       };
     })
-    .sort((a, b) => b.confidence - a.confidence)
+    .sort((a, b) => b.exactScoreConfidence - a.exactScoreConfidence)
     .slice(0, 5);
 
   const rankMap = new Map(ranked.map((item, index) => [item.matchId, index + 1]));
@@ -2940,12 +2980,17 @@ function assignTopConfidenceRanks(dayMatches, dayPredictions) {
     const rank = rankMap.get(prediction.matchId) || null;
     prediction.bestBetRank = rank;
     prediction.topConfidencePick = rank != null;
+    prediction.topExactScorePick = rank != null;
   }
 
   for (const match of dayMatches || []) {
+    const prediction = (dayPredictions || []).find((item) => item.matchId === match.id);
     const rank = rankMap.get(match.id) || null;
     match.bestBetRank = rank;
     match.topConfidencePick = rank != null;
+    match.topExactScorePick = rank != null;
+    if (prediction?.exactScoreConfidence != null) match.exactScoreConfidence = prediction.exactScoreConfidence;
+    if (prediction?.exactScoreReasons) match.exactScoreReasons = prediction.exactScoreReasons;
   }
 }
 

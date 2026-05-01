@@ -206,6 +206,15 @@ function mapRawMatch(m: any): Match {
     // ========================================
     ...(m.coverage ? { coverage: m.coverage } : {}),
     ...(m.importance ? { importance: m.importance } : {}),
+
+    // ========================================
+    // TOP 5 EXACTE-SCORE SELECTIE
+    // ========================================
+    ...(m.bestBetRank != null ? { bestBetRank: m.bestBetRank } : {}),
+    ...(m.topConfidencePick != null ? { topConfidencePick: m.topConfidencePick } : {}),
+    ...(m.topExactScorePick != null ? { topExactScorePick: m.topExactScorePick } : {}),
+    ...(m.exactScoreConfidence != null ? { exactScoreConfidence: m.exactScoreConfidence } : {}),
+    ...(m.exactScoreReasons ? { exactScoreReasons: m.exactScoreReasons } : {}),
   } as Match;
 }
 
@@ -300,6 +309,11 @@ export async function fetchMatchesAndPredictions(
         ...(rawMatch.ensembleMeta ? { ensembleMeta: rawMatch.ensembleMeta } : {}),
         ...(rawMatch.homeForm ? { homeForm: rawMatch.homeForm } : {}),
         ...(rawMatch.awayForm ? { awayForm: rawMatch.awayForm } : {}),
+        ...(rawMatch.bestBetRank != null ? { bestBetRank: rawMatch.bestBetRank } : {}),
+        ...(rawMatch.topConfidencePick != null ? { topConfidencePick: rawMatch.topConfidencePick } : {}),
+        ...(rawMatch.topExactScorePick != null ? { topExactScorePick: rawMatch.topExactScorePick } : {}),
+        ...(rawMatch.exactScoreConfidence != null ? { exactScoreConfidence: rawMatch.exactScoreConfidence } : {}),
+        ...(rawMatch.exactScoreReasons ? { exactScoreReasons: rawMatch.exactScoreReasons } : {}),
       };
     }
 

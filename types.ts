@@ -544,6 +544,15 @@ export interface Match {
   };
   
   // ========================================
+  // TOP 5 EXACTE-SCORE SELECTIE
+  // ========================================
+  bestBetRank?: number | null;
+  topConfidencePick?: boolean;
+  topExactScorePick?: boolean;
+  exactScoreConfidence?: number;
+  exactScoreReasons?: string[];
+
+  // ========================================
   // MACHINE LEARNING FEATURES
   // ========================================
   featureVector?: {
@@ -631,6 +640,11 @@ export interface Prediction {
   
   // Confidence & edges
   confidence?: number;
+  exactScoreConfidence?: number;
+  exactScoreReasons?: string[];
+  bestBetRank?: number | null;
+  topConfidencePick?: boolean;
+  topExactScorePick?: boolean;
   edgeScore?: number;
   valueRating?: number;
   
@@ -749,7 +763,10 @@ export interface BestBet {
   drawProb: number;
   awayProb: number;
   exactProb?: number;
+  exactScoreConfidence?: number;
   confidence?: number;
+  bestBetRank?: number | null;
+  exactScoreReasons?: string[];
   tip?: string;
   edgeScore?: number;
 }
@@ -780,6 +797,12 @@ export interface PredictionMemory {
   homeTeam?: string | null;
   awayTeam?: string | null;
   league?: string | null;
+  confidence?: number;
+  exactScoreConfidence?: number;
+  bestBetRank?: number | null;
+  topConfidencePick?: boolean;
+  topExactScorePick?: boolean;
+  topExactReasons?: string[];
 }
 
 export interface Team {

@@ -31,6 +31,11 @@ function mapServerReview(review: any) {
     topChanceCorrect: !!review.probabilityOutcomeHit,
     phaseBucket: review.phaseBucket || null,
     confidence: Number(review.confidence || 0),
+    exactScoreConfidence: Number(review.exactScoreConfidence || 0),
+    bestBetRank: Number(review.bestBetRank || 0) || null,
+    topConfidencePick: !!review.topConfidencePick,
+    topExactScorePick: !!review.topExactScorePick,
+    topExactReasons: Array.isArray(review.topExactReasons) ? review.topExactReasons : [],
   };
 }
 

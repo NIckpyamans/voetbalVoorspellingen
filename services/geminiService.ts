@@ -68,6 +68,12 @@ function compactMemory(items: PredictionMemory[]) {
         predictedOutcome: (item as any).predictedOutcome || null,
         actualOutcome: (item as any).actualOutcome || null,
         winnerCorrect: !!(item as any).winnerCorrect,
+        confidence: Number((item as any).confidence || 0),
+        exactScoreConfidence: Number((item as any).exactScoreConfidence || 0),
+        bestBetRank: Number((item as any).bestBetRank || 0) || null,
+        topConfidencePick: !!(item as any).topConfidencePick,
+        topExactScorePick: !!(item as any).topExactScorePick,
+        topExactReasons: Array.isArray((item as any).topExactReasons) ? (item as any).topExactReasons.slice(0, 4) : [],
       } as PredictionMemory);
     }
   }
@@ -179,7 +185,7 @@ export async function getEnhancedPrediction(match: Match): Promise<Prediction> {
   };
 }
 
-export function saveToMemory(matchId: string, predScore: string, actualScore: string, match?: Partial<Match>) {
+export function saveToMemory(matchId: string, predScore: string, actualScore: string, match?: Partial<Match>, prediction?: Partial<Prediction>) {
   const memory = readMemory() as any[];
   const wasCorrect = predScore.trim() === actualScore.trim();
   const [pH, pA] = predScore.split("-").map(Number);
@@ -200,6 +206,12 @@ export function saveToMemory(matchId: string, predScore: string, actualScore: st
     homeTeam: match?.homeTeamName || null,
     awayTeam: match?.awayTeamName || null,
     league: match?.league || null,
+    confidence: Number(prediction?.confidence || 0),
+    exactScoreConfidence: Number((prediction as any)?.exactScoreConfidence || prediction?.exactProb || 0),
+    bestBetRank: Number((prediction as any)?.bestBetRank || 0) || null,
+    topConfidencePick: !!(prediction as any)?.topConfidencePick,
+    topExactScorePick: !!(prediction as any)?.topExactScorePick,
+    topExactReasons: Array.isArray((prediction as any)?.exactScoreReasons) ? (prediction as any).exactScoreReasons.slice(0, 4) : [],
   });
   writeMemory(memory as PredictionMemory[]);
 }

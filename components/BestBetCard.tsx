@@ -1,35 +1,68 @@
-
-import React from 'react';
-import { BestBet } from '../types';
+﻿import React from "react";
+import { BestBet } from "../types";
 
 interface BestBetCardProps {
-  bet: BestBet;
+  bet: BestBet & {
+    status?: string;
+    score?: string | null;
+    bestBetRank?: number | null;
+    exactScoreReasons?: string[];
+    exactScoreConfidence?: number;
+  };
 }
 
 const BestBetCard: React.FC<BestBetCardProps> = ({ bet }) => {
+  const exactScoreConfidence = Number(bet.exactScoreConfidence || bet.exactProb || 0);
+  const confidence = Number(bet.confidence || 0);
+  const isFinished = String(bet.status || "").toUpperCase() === "FT";
+  const scoreWasExact = isFinished && bet.score === `${bet.predHomeGoals}-${bet.predAwayGoals}`;
+  const reasons = Array.isArray(bet.exactScoreReasons) ? bet.exactScoreReasons.slice(0, 2) : [];
+
   return (
-    <div className="bg-gradient-to-br from-slate-900 to-slate-800 border border-yellow-500/20 rounded-2xl p-4 shadow-xl hover:border-yellow-500/50 transition-all group">
-      <div className="flex justify-between items-start mb-2">
-        <span className="text-[8px] font-black text-yellow-500 uppercase tracking-widest">{bet.league}</span>
-        <div className="w-6 h-6 rounded-full bg-yellow-500/10 flex items-center justify-center">
-          <i className="fas fa-star text-yellow-500 text-[8px]"></i>
+    <div className="relative overflow-hidden bg-gradient-to-br from-slate-900 via-slate-900 to-slate-800 border border-yellow-500/25 rounded-2xl p-4 shadow-xl hover:border-yellow-400/60 transition-all group">
+      <div className="absolute -right-8 -top-8 h-20 w-20 rounded-full bg-yellow-500/10 blur-xl" />
+      <div className="relative flex justify-between items-start mb-2">
+        <span className="text-[8px] font-black text-yellow-400 uppercase tracking-widest line-clamp-1">{bet.league}</span>
+        <div className="flex items-center gap-1">
+          {bet.bestBetRank && (
+            <span className="rounded-full bg-yellow-500 text-slate-950 px-2 py-0.5 text-[9px] font-black">#{bet.bestBetRank}</span>
+          )}
+          <div className="w-6 h-6 rounded-full bg-yellow-500/10 flex items-center justify-center">
+            <i className="fas fa-bullseye text-yellow-400 text-[8px]" />
+          </div>
         </div>
-      </div>
-      
-      <div className="text-center mb-3">
-        <div className="text-[10px] font-bold text-slate-400 line-clamp-1 mb-1">{bet.homeTeam} v {bet.awayTeam}</div>
-        <div className="text-2xl font-black text-white tracking-tighter">{bet.predHomeGoals}-{bet.predAwayGoals}</div>
       </div>
 
-      <div className="flex items-center justify-between mt-2 pt-2 border-t border-white/5">
-        <div className="flex flex-col">
-          <span className="text-[7px] text-slate-500 font-bold uppercase">Confidence</span>
-          <span className="text-xs font-black text-blue-400">{(bet.confidence * 100).toFixed(0)}%</span>
+      <div className="relative text-center mb-3">
+        <div className="text-[10px] font-bold text-slate-400 line-clamp-1 mb-1">{bet.homeTeam} v {bet.awayTeam}</div>
+        <div className="text-2xl font-black text-white tracking-tighter">{bet.predHomeGoals}-{bet.predAwayGoals}</div>
+        {isFinished && (
+          <div className={`mt-1 inline-flex rounded-full px-2 py-0.5 text-[8px] font-black ${scoreWasExact ? "bg-green-500/15 text-green-300" : "bg-red-500/15 text-red-300"}`}>
+            Uitslag {bet.score || "-"} ? {scoreWasExact ? "exact goed" : "niet exact"}
+          </div>
+        )}
+      </div>
+
+      <div className="relative grid grid-cols-2 gap-2 pt-2 border-t border-white/5">
+        <div>
+          <span className="text-[7px] text-slate-500 font-bold uppercase">Exact-score kans</span>
+          <span className="block text-xs font-black text-yellow-300">{Math.round(exactScoreConfidence * 100)}%</span>
         </div>
-        <div className="w-8 h-1.5 bg-slate-700 rounded-full overflow-hidden">
-          <div className="h-full bg-yellow-500" style={{ width: `${bet.confidence * 100}%` }}></div>
+        <div>
+          <span className="text-[7px] text-slate-500 font-bold uppercase">Vertrouwen</span>
+          <span className="block text-xs font-black text-blue-400">{Math.round(confidence * 100)}%</span>
         </div>
       </div>
+
+      {reasons.length > 0 && (
+        <div className="relative mt-2 flex flex-wrap gap-1">
+          {reasons.map((reason) => (
+            <span key={reason} className="rounded-full bg-slate-700/70 px-2 py-0.5 text-[8px] font-bold text-slate-300">
+              {reason}
+            </span>
+          ))}
+        </div>
+      )}
     </div>
   );
 };

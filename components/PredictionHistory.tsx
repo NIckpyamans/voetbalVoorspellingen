@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useRef, useState } from "react";
+﻿import React, { useEffect, useMemo, useRef, useState } from "react";
 
 interface HistoryItem {
   matchId: string;
@@ -16,6 +16,11 @@ interface HistoryItem {
   topChanceCorrect?: boolean;
   phaseBucket?: string | null;
   confidence?: number;
+  exactScoreConfidence?: number;
+  bestBetRank?: number | null;
+  topConfidencePick?: boolean;
+  topExactScorePick?: boolean;
+  topExactReasons?: string[];
 }
 
 function outcomeFromScore(score?: string | null) {
@@ -145,6 +150,38 @@ const PredictionHistory: React.FC = () => {
       .filter((item) => item.league !== "Onbekend")
       .sort((a, b) => b.exactPct - a.exactPct || b.outcomePct - a.outcomePct || b.total - a.total);
 
+    const topFiveItems = history.filter((item) => item.topExactScorePick || (Number(item.bestBetRank || 0) > 0 && Number(item.bestBetRank || 0) <= 5));
+    const topFiveTotal = topFiveItems.length;
+    const topFiveExact = topFiveItems.filter((item) => item.wasCorrect).length;
+    const topFiveOutcome = topFiveItems.filter((item) => item.winnerCorrect).length;
+    const topFiveAvgError = topFiveTotal
+      ? (topFiveItems.reduce((sum, item) => sum + Number(item.errorMargin || 0), 0) / topFiveTotal).toFixed(2)
+      : "0.00";
+
+    const clubMap = new Map<string, { team: string; total: number; exact: number; outcome: number; avgError: number }>();
+    for (const item of history) {
+      for (const team of [item.homeTeam, item.awayTeam]) {
+        const name = String(team || "").trim();
+        if (!name) continue;
+        const current = clubMap.get(name) || { team: name, total: 0, exact: 0, outcome: 0, avgError: 0 };
+        current.total += 1;
+        if (item.wasCorrect) current.exact += 1;
+        if (item.winnerCorrect) current.outcome += 1;
+        current.avgError += Number(item.errorMargin || 0);
+        clubMap.set(name, current);
+      }
+    }
+    const topClubs = [...clubMap.values()]
+      .filter((item) => item.total >= 2)
+      .map((item) => ({
+        ...item,
+        exactPct: Math.round((item.exact / item.total) * 100),
+        outcomePct: Math.round((item.outcome / item.total) * 100),
+        avgError: Number((item.avgError / item.total).toFixed(2)),
+      }))
+      .sort((a, b) => b.exactPct - a.exactPct || b.exact - a.exact || b.outcomePct - a.outcomePct || b.total - a.total)
+      .slice(0, 10);
+
     return {
       total,
       exactCorrect,
@@ -154,6 +191,15 @@ const PredictionHistory: React.FC = () => {
       avgError,
       bestStreak,
       byLeague,
+      topFive: {
+        total: topFiveTotal,
+        exact: topFiveExact,
+        outcome: topFiveOutcome,
+        exactPct: topFiveTotal ? ((topFiveExact / topFiveTotal) * 100).toFixed(1) : "0.0",
+        outcomePct: topFiveTotal ? ((topFiveOutcome / topFiveTotal) * 100).toFixed(1) : "0.0",
+        avgError: topFiveAvgError,
+      },
+      topClubs,
     };
   }, [history]);
 
@@ -235,6 +281,63 @@ const PredictionHistory: React.FC = () => {
         ))}
       </div>
 
+      <div className="grid grid-cols-1 xl:grid-cols-2 gap-4">
+        <div className="glass-card p-4 rounded-2xl border border-yellow-500/15 bg-yellow-500/5">
+          <div className="flex items-center justify-between gap-3 mb-3">
+            <div>
+              <div className="text-[10px] font-black text-yellow-300 uppercase">Top 5 exacte-score tips monitor</div>
+              <div className="text-[11px] text-slate-500 mt-0.5">Alle dagelijkse top-5 keuzes achteraf gecontroleerd</div>
+            </div>
+            <div className="rounded-full bg-yellow-500/15 px-3 py-1 text-[10px] font-black text-yellow-200">
+              {stats.topFive.total} reviews
+            </div>
+          </div>
+          <div className="grid grid-cols-3 gap-2">
+            <div className="rounded-xl bg-slate-950/40 border border-white/5 p-3">
+              <div className="text-[8px] font-black text-slate-500 uppercase">Juiste score</div>
+              <div className="text-2xl font-black text-white mt-1">{stats.topFive.exactPct}%</div>
+              <div className="text-[9px] text-slate-500">{stats.topFive.exact}/{stats.topFive.total}</div>
+            </div>
+            <div className="rounded-xl bg-slate-950/40 border border-white/5 p-3">
+              <div className="text-[8px] font-black text-slate-500 uppercase">Winnaar/gelijk</div>
+              <div className="text-2xl font-black text-white mt-1">{stats.topFive.outcomePct}%</div>
+              <div className="text-[9px] text-slate-500">{stats.topFive.outcome}/{stats.topFive.total}</div>
+            </div>
+            <div className="rounded-xl bg-slate-950/40 border border-white/5 p-3">
+              <div className="text-[8px] font-black text-slate-500 uppercase">Foutmarge</div>
+              <div className="text-2xl font-black text-white mt-1">{stats.topFive.avgError}</div>
+              <div className="text-[9px] text-slate-500">lager is beter</div>
+            </div>
+          </div>
+        </div>
+
+        <div className="glass-card p-4 rounded-2xl border border-blue-500/15 bg-blue-500/5">
+          <div className="flex items-center justify-between gap-3 mb-3">
+            <div>
+              <div className="text-[10px] font-black text-blue-300 uppercase">Top 10 clubs waar AI exact vaak goed zit</div>
+              <div className="text-[11px] text-slate-500 mt-0.5">Patroonherkenning per club/team op juiste uitslag</div>
+            </div>
+          </div>
+          {stats.topClubs.length === 0 ? (
+            <div className="text-[12px] text-slate-500 font-bold py-6">Nog te weinig clubdata om patronen betrouwbaar te tonen.</div>
+          ) : (
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+              {stats.topClubs.map((club, index) => (
+                <div key={club.team} className="rounded-xl bg-slate-950/40 border border-white/5 px-3 py-2">
+                  <div className="flex items-center justify-between gap-2">
+                    <div className="min-w-0">
+                      <div className="text-[10px] font-black text-white truncate">#{index + 1} {club.team}</div>
+                      <div className="text-[8px] text-slate-500">{club.exact}/{club.total} exact ? uitkomst {club.outcomePct}%</div>
+                    </div>
+                    <div className="text-sm font-black text-green-300">{club.exactPct}%</div>
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+      </div>
+
       {stats.byLeague.length > 0 && (
         <div className="glass-card p-4 rounded-2xl border border-white/5">
           <div className="flex items-center justify-between gap-3 mb-3">
@@ -274,7 +377,7 @@ const PredictionHistory: React.FC = () => {
                     </div>
                   </div>
                   <div className="mt-3 text-[8px] text-slate-500">
-                    Score goed {item.exact}/{item.total} · Uitkomst goed {item.outcome}/{item.total}
+                    Score goed {item.exact}/{item.total} Â· Uitkomst goed {item.outcome}/{item.total}
                   </div>
                 </button>
               ))}
@@ -347,7 +450,7 @@ const PredictionHistory: React.FC = () => {
                     <div>
                       <div className="text-[10px] font-black text-slate-400 uppercase">{league}</div>
                       <div className="text-[11px] text-slate-500 mt-0.5">
-                        {items.length} wedstrijden op deze pagina · Score {leagueStats?.exactPct ?? 0}% · Uitkomst {leagueStats?.outcomePct ?? 0}%
+                        {items.length} wedstrijden op deze pagina Â· Score {leagueStats?.exactPct ?? 0}% Â· Uitkomst {leagueStats?.outcomePct ?? 0}%
                       </div>
                     </div>
                     {activeLeague !== league && (
@@ -378,7 +481,7 @@ const PredictionHistory: React.FC = () => {
                               {item.homeTeam} vs {item.awayTeam}
                             </div>
                             <div className="text-[10px] text-slate-500 mt-0.5">
-                              {item.league} · {new Date(item.timestamp).toLocaleString("nl-NL")}
+                              {item.league} Â· {new Date(item.timestamp).toLocaleString("nl-NL")}
                             </div>
                           </div>
 
@@ -406,7 +509,7 @@ const PredictionHistory: React.FC = () => {
                             <div className="rounded-xl bg-slate-900/40 border border-white/5 px-3 py-2">
                               <div className="text-[8px] font-black text-slate-500 uppercase">Uitkomst</div>
                               <div className="text-[13px] font-black text-white mt-2">
-                                {item.predictedOutcome} → {item.actualOutcome}
+                                {item.predictedOutcome} â†’ {item.actualOutcome}
                               </div>
                             </div>
                             <div className="rounded-xl bg-slate-900/40 border border-white/5 px-3 py-2">
