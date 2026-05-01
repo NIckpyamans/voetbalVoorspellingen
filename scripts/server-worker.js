@@ -217,6 +217,11 @@ const SPORTSDB_NAME_TO_LABEL = {
   "Spanish La Liga": "Spain - LaLiga",
 };
 
+const OPENLIGADB_LEAGUES = {
+  bl1: "Germany - Bundesliga",
+  bl2: "Germany - 2. Bundesliga",
+};
+
 process.on("unhandledRejection", (err) => {
   console.error("[worker] unhandledRejection:", err?.message || err);
 });
@@ -1490,6 +1495,28 @@ async function fetchFallbackScheduledEventsFromMarket(dateISO) {
   return fallbackEvents;
 }
 
+function dedupeFallbackEvents(events) {
+  const seen = new Map();
+  for (const event of events || []) {
+    const kickoff = String(event?.startTimestamp || "");
+    const home = normalizeName(event?.homeTeam?.name || "");
+    const away = normalizeName(event?.awayTeam?.name || "");
+    const key = `${kickoff}|${home}|${away}`;
+    const current = seen.get(key);
+    if (!current) {
+      seen.set(key, event);
+      continue;
+    }
+
+    const nextScore = Number(event?.homeScore?.current ?? -1) + Number(event?.awayScore?.current ?? -1);
+    const currentScore = Number(current?.homeScore?.current ?? -1) + Number(current?.awayScore?.current ?? -1);
+    if (nextScore > currentScore) {
+      seen.set(key, event);
+    }
+  }
+  return [...seen.values()];
+}
+
 function getSportsDbSeasonLabel(dateISO) {
   const base = new Date(`${dateISO}T12:00:00Z`);
   const year = base.getUTCFullYear();
@@ -1586,6 +1613,75 @@ async function fetchSportsDbScheduledEvents(dateISO) {
       for (const event of Array.isArray(json?.events) ? json.events : []) {
         if (String(event?.dateEvent || "") !== dateISO) continue;
         appendEvent(event, leagueLabel);
+      }
+    } catch {}
+  }
+
+  return fallbackEvents;
+}
+
+async function fetchOpenLigaDbScheduledEvents(dateISO) {
+  const fallbackEvents = [];
+  const seen = new Set();
+
+  for (const [leagueKey, leagueLabel] of Object.entries(OPENLIGADB_LEAGUES)) {
+    try {
+      const response = await fetch(`https://api.openligadb.de/getmatchdata/${leagueKey}`, {
+        headers: {
+          Accept: "application/json",
+          "User-Agent":
+            "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 Chrome/123.0 Safari/537.36",
+        },
+      });
+      if (!response.ok) continue;
+
+      const rows = await response.json();
+      for (const row of Array.isArray(rows) ? rows : []) {
+        const kickoffText = row?.matchDateTime || row?.matchDateTimeUTC || null;
+        if (!kickoffText) continue;
+        if (toAmsterdamDateKey(kickoffText) !== dateISO) continue;
+
+        const homeName = String(row?.team1?.teamName || row?.team1?.shortName || "").trim();
+        const awayName = String(row?.team2?.teamName || row?.team2?.shortName || "").trim();
+        if (!homeName || !awayName) continue;
+        if (isWomenContext(leagueLabel, homeName, awayName) || isYouthContext(leagueLabel, homeName, awayName)) continue;
+
+        const uniqueKey = `${leagueLabel}|${normalizeName(homeName)}|${normalizeName(awayName)}|${kickoffText}`;
+        if (seen.has(uniqueKey)) continue;
+        seen.add(uniqueKey);
+
+        const homeGoals = toNumber(row?.matchResults?.[0]?.pointsTeam1);
+        const awayGoals = toNumber(row?.matchResults?.[0]?.pointsTeam2);
+        const finished = Boolean(row?.matchIsFinished) || (Number.isFinite(homeGoals) && Number.isFinite(awayGoals));
+
+        fallbackEvents.push({
+          id: `oldb-${row?.matchID || uniqueKey}`,
+          startTimestamp: Math.floor(new Date(kickoffText).getTime() / 1000),
+          homeTeam: {
+            id: "",
+            name: homeName,
+            country: { name: leagueLabel.split(" - ")[0] || "" },
+            logoUrl: String(row?.team1?.teamIconUrl || ""),
+          },
+          awayTeam: {
+            id: "",
+            name: awayName,
+            country: { name: leagueLabel.split(" - ")[0] || "" },
+            logoUrl: String(row?.team2?.teamIconUrl || ""),
+          },
+          uniqueTournament: { id: null, name: leagueLabel },
+          tournament: {
+            id: null,
+            name: leagueLabel,
+            category: { name: leagueLabel.split(" - ")[0] || "" },
+            uniqueTournament: { id: null },
+          },
+          season: { id: null },
+          status: { type: finished ? "finished" : "notstarted" },
+          homeScore: Number.isFinite(homeGoals) ? { current: homeGoals } : {},
+          awayScore: Number.isFinite(awayGoals) ? { current: awayGoals } : {},
+          source: "openligadb-fixture-fallback",
+        });
       }
     } catch {}
   }
@@ -2347,6 +2443,7 @@ function buildPostMatchReview(match, prediction) {
     matchId: match.id,
     date: match.date,
     league: match.league,
+    dataSource: match.dataSource || prediction?.dataSource || "sofascore",
     phaseBucket: getReliabilityBucket(match),
     homeTeamId: match.homeTeamId,
     awayTeamId: match.awayTeamId,
@@ -2365,6 +2462,8 @@ function buildPostMatchReview(match, prediction) {
     totalGoalBias,
     homeGoalBias: Number((actualHomeGoals - predHomeGoals).toFixed(2)),
     awayGoalBias: Number((actualAwayGoals - predAwayGoals).toFixed(2)),
+    bestBetRank: Number(prediction?.bestBetRank || 0) || null,
+    topConfidencePick: Number(prediction?.bestBetRank || 0) > 0 && Number(prediction?.bestBetRank || 0) <= 5,
     failureSignals,
     createdAt: Date.now(),
   };
@@ -2468,6 +2567,37 @@ function rebuildReviewsAndLearning(store) {
   store.leagueReliability = buildLeagueReliabilityFromReviews(reviews);
   store.phaseReliability = buildPhaseReliabilityFromReviews(reviews);
   store.featureDiagnostics = buildFeatureDiagnosticsFromReviews(reviews);
+}
+
+function assignTopConfidenceRanks(dayMatches, dayPredictions) {
+  const ranked = [...(dayPredictions || [])]
+    .map((prediction) => {
+      const maxProb = Math.max(
+        Number(prediction?.homeProb || 0),
+        Number(prediction?.drawProb || 0),
+        Number(prediction?.awayProb || 0)
+      );
+      return {
+        matchId: prediction.matchId,
+        confidence: Number(prediction?.confidence || maxProb || 0),
+      };
+    })
+    .sort((a, b) => b.confidence - a.confidence)
+    .slice(0, 5);
+
+  const rankMap = new Map(ranked.map((item, index) => [item.matchId, index + 1]));
+
+  for (const prediction of dayPredictions || []) {
+    const rank = rankMap.get(prediction.matchId) || null;
+    prediction.bestBetRank = rank;
+    prediction.topConfidencePick = rank != null;
+  }
+
+  for (const match of dayMatches || []) {
+    const rank = rankMap.get(match.id) || null;
+    match.bestBetRank = rank;
+    match.topConfidencePick = rank != null;
+  }
 }
 
 async function safeFetch(url) {
@@ -3030,6 +3160,16 @@ function buildFeatureDiagnosticsFromReviews(reviews) {
   const items = Object.values(reviews || {});
   const failureCounts = {};
   const phaseMap = {};
+  const topConfidence = {
+    matches: 0,
+    exactHits: 0,
+    outcomeHits: 0,
+    probabilityHits: 0,
+    totalGoalError: 0,
+    exactRank1Hits: 0,
+    outcomeRank1Hits: 0,
+    rank1Matches: 0,
+  };
   let exactHits = 0;
   let outcomeHits = 0;
   let probabilityHits = 0;
@@ -3040,6 +3180,19 @@ function buildFeatureDiagnosticsFromReviews(reviews) {
     if (review.outcomeHit) outcomeHits += 1;
     if (review.probabilityOutcomeHit) probabilityHits += 1;
     totalGoalError += Number(review.totalGoalError || 0);
+
+    if (review.topConfidencePick) {
+      topConfidence.matches += 1;
+      topConfidence.totalGoalError += Number(review.totalGoalError || 0);
+      if (review.exactHit) topConfidence.exactHits += 1;
+      if (review.outcomeHit) topConfidence.outcomeHits += 1;
+      if (review.probabilityOutcomeHit) topConfidence.probabilityHits += 1;
+      if (Number(review.bestBetRank || 0) === 1) {
+        topConfidence.rank1Matches += 1;
+        if (review.exactHit) topConfidence.exactRank1Hits += 1;
+        if (review.outcomeHit) topConfidence.outcomeRank1Hits += 1;
+      }
+    }
 
     const phase = String(review.phaseBucket || "unknown");
     if (!phaseMap[phase]) phaseMap[phase] = { phase, matches: 0, exactHits: 0, outcomeHits: 0 };
@@ -3071,6 +3224,21 @@ function buildFeatureDiagnosticsFromReviews(reviews) {
     outcomeHitRate: Number((outcomeHits / total).toFixed(3)),
     probabilityOutcomeHitRate: Number((probabilityHits / total).toFixed(3)),
     avgGoalError: Number((totalGoalError / total).toFixed(2)),
+    topConfidence: {
+      matches: topConfidence.matches,
+      exactHitRate: Number((topConfidence.exactHits / Math.max(topConfidence.matches, 1)).toFixed(3)),
+      outcomeHitRate: Number((topConfidence.outcomeHits / Math.max(topConfidence.matches, 1)).toFixed(3)),
+      probabilityOutcomeHitRate: Number((topConfidence.probabilityHits / Math.max(topConfidence.matches, 1)).toFixed(3)),
+      avgGoalError: Number((topConfidence.totalGoalError / Math.max(topConfidence.matches, 1)).toFixed(2)),
+      rank1ExactHitRate: Number((topConfidence.exactRank1Hits / Math.max(topConfidence.rank1Matches, 1)).toFixed(3)),
+      rank1OutcomeHitRate: Number((topConfidence.outcomeRank1Hits / Math.max(topConfidence.rank1Matches, 1)).toFixed(3)),
+      versusOverallOutcomeDelta: Number(
+        (
+          topConfidence.outcomeHits / Math.max(topConfidence.matches, 1) -
+          outcomeHits / Math.max(items.length, 1)
+        ).toFixed(3)
+      ),
+    },
     topFailureSignals,
     phaseBreakdown,
     summary:
@@ -3994,13 +4162,18 @@ function defaultStore() {
     sourceCoverage: null,
     aiAdvice: [],
     lastRun: null,
-    workerVersion: "v13-source-coverage",
+    workerVersion: "v15-backup-top5",
   };
 }
 
 function buildSourceCoverage(store, todayKey) {
   const todayMatches = Array.isArray(store.matches?.[todayKey]) ? store.matches[todayKey] : [];
   const total = Math.max(todayMatches.length, 1);
+  const sourceBreakdown = todayMatches.reduce((acc, match) => {
+    const key = String(match?.dataSource || "sofascore");
+    acc[key] = Number(acc[key] || 0) + 1;
+    return acc;
+  }, {});
   const bookmakerCovered = todayMatches.filter(
     (match) => Array.isArray(match?.marketCalibration?.bookmakerSignals) && match.marketCalibration.bookmakerSignals.length > 0
   ).length;
@@ -4014,13 +4187,51 @@ function buildSourceCoverage(store, todayKey) {
     refereeCoverage: Number((refereeCovered / total).toFixed(2)),
     h2hCoverage: Number((h2hCovered / total).toFixed(2)),
     marketProfiles: Object.keys(store.marketProfiles || {}).length,
+    sourceBreakdown,
+    backupSources: [
+      {
+        key: "sofascore",
+        name: "Sofascore",
+        role: "primair",
+        status: Number(sourceBreakdown.sofascore || 0) > 0 ? "actief" : "geblokkeerd/fallback",
+        note: "Primaire bron voor events, live-data en wedstrijddetails.",
+      },
+      {
+        key: "thesportsdb",
+        name: "TheSportsDB",
+        role: "backup",
+        status: Object.keys(sourceBreakdown).some((key) => key.includes("thesportsdb")) ? "actief" : "stand-by",
+        note: "Gratis fixturefallback voor internationale en geselecteerde competitiewedstrijden.",
+      },
+      {
+        key: "football-data",
+        name: "football-data.co.uk",
+        role: "backup + markt",
+        status: Object.keys(sourceBreakdown).some((key) => key.includes("football-data")) ? "actief" : "markt-only",
+        note: "Historische odds, closing-lijnen en fixturefallback uit gratis competitiebestanden.",
+      },
+      {
+        key: "openligadb",
+        name: "OpenLigaDB",
+        role: "backup",
+        status: Object.keys(sourceBreakdown).some((key) => key.includes("openligadb")) ? "actief" : "stand-by",
+        note: "Extra gratis fixturebron voor vooral Duitse competities wanneer de hoofdbron dun blijft.",
+      },
+      {
+        key: "openfootball",
+        name: "openfootball",
+        role: "historisch",
+        status: "onderzoek",
+        note: "Kansrijke open historiebasis voor extra H2H/backfill buiten live APIs.",
+      },
+    ],
     understat: {
       status: "pilot",
-      note: "Publieke Understat bron is bereikbaar, maar nog niet stabiel genoeg ingelezen voor productie-xG in alle competities.",
+      note: "Publieke Understat bron blijft kansrijk voor xG/xGA-profielen, maar vraagt eerst competitie-specifieke snapshotparsing.",
     },
     fbref: {
-      status: "rate-limited",
-      note: "FBref is inhoudelijk sterk, maar worker-fetches worden te vaak geblokkeerd. Daarom nu alleen als toekomstige uitbreidingsbron.",
+      status: "snapshot-aanpak nodig",
+      note: "FBref is inhoudelijk sterk voor shot- en splitdata, maar directe worker-fetches zijn te instabiel. Beter via periodieke snapshots.",
     },
   };
 }
@@ -4112,6 +4323,19 @@ function buildAiRecommendations(store, todayKey) {
     });
   }
 
+  const topConfidence = diagnostics?.topConfidence || null;
+  if (topConfidence && Number(topConfidence.matches || 0) > 0) {
+    issues.push({
+      title: "Top 5 zekere tips monitoren",
+      summary: `Top-5 tips scoren ${Math.round(Number(topConfidence.exactHitRate || 0) * 100)}% exact en ${Math.round(Number(topConfidence.outcomeHitRate || 0) * 100)}% op winnaar/gelijk over ${topConfidence.matches} reviews.`,
+      action:
+        Number(topConfidence.versusOverallOutcomeDelta || 0) < 0
+          ? "Top-5 selectie presteert slechter dan de totale pool. Verlaag pure confidence-weging en geef bronkwaliteit/marktdekking extra gewicht."
+          : "Top-5 selectie presteert minimaal gelijk of beter dan het totaal. Blijf exact-scorekalibratie binnen deze groep aanscherpen.",
+      priority: Number(topConfidence.versusOverallOutcomeDelta || 0) < 0 ? "high" : "medium",
+    });
+  }
+
   const topFailureSignals = diagnostics?.topFailureSignals || [];
   const modelAgreementFailure = topFailureSignals.find((item) => item.signal === "low_model_agreement");
   if (modelAgreementFailure) {
@@ -4143,14 +4367,14 @@ function buildAiRecommendations(store, todayKey) {
 
   issues.push({
     title: "Understat bronstatus",
-    summary: "Understat blijft technisch kansrijk voor gratis xG/xGA-profielen, maar is nog pilot en niet breed genoeg gekoppeld.",
-    action: "Volgende stap: per ondersteunde topcompetitie een gecontroleerde Understat parser toevoegen in plaats van alles tegelijk.",
+    summary: "Understat blijft technisch kansrijk voor gratis xG/xGA-profielen, maar is nog niet als stabiele snapshotbron ingelezen.",
+    action: "Volgende stap: per ondersteunde topcompetitie periodieke xG-snapshots opbouwen en pas daarna in de worker laten meelopen.",
     priority: "low",
   });
   issues.push({
     title: "FBref bronstatus",
-    summary: "FBref heeft sterke shot- en splitdata, maar worker-fetches worden nog te vaak geblokkeerd.",
-    action: "Gebruik FBref voorlopig als handmatige/periodieke verrijkingsbron of via vooraf gebouwde snapshots.",
+    summary: "FBref heeft sterke shot- en splitdata, maar directe worker-fetches worden te vaak geblokkeerd.",
+    action: "Gebruik FBref als tweewekelijkse snapshotbron voor home/away- en shot-splits in plaats van live scraping.",
     priority: "low",
   });
 
@@ -4229,17 +4453,21 @@ async function main() {
 
     if (!events.length) {
       const fallbackEvents = await fetchFallbackScheduledEventsFromMarket(date);
+      const sportsDbEvents = await fetchSportsDbScheduledEvents(date);
+      const openLigaDbEvents = await fetchOpenLigaDbScheduledEvents(date);
+      const combinedFallbacks = dedupeFallbackEvents([...fallbackEvents, ...sportsDbEvents, ...openLigaDbEvents]);
+
       if (fallbackEvents.length) {
         console.log(`[worker] ${date}: ${fallbackEvents.length} fallback events uit football-data.co.uk`);
-        events = fallbackEvents;
       }
-    }
-
-    if (!events.length) {
-      const sportsDbEvents = await fetchSportsDbScheduledEvents(date);
       if (sportsDbEvents.length) {
         console.log(`[worker] ${date}: ${sportsDbEvents.length} fallback events uit TheSportsDB`);
-        events = sportsDbEvents;
+      }
+      if (openLigaDbEvents.length) {
+        console.log(`[worker] ${date}: ${openLigaDbEvents.length} fallback events uit OpenLigaDB`);
+      }
+      if (combinedFallbacks.length) {
+        events = combinedFallbacks;
       }
     }
     
@@ -4583,6 +4811,7 @@ async function main() {
       const match = {
         id: matchId,
         sofaId: event.id,
+        dataSource: String(event.source || "sofascore"),
         date,
         kickoff,
         league: leagueInfo.label,
@@ -4634,6 +4863,7 @@ async function main() {
       dayMatches.push(match);
       dayPredictions.push({
         matchId,
+        dataSource: String(event.source || "sofascore"),
         homeTeam: homeName,
         awayTeam: awayName,
         league: leagueInfo.label,
@@ -4694,6 +4924,7 @@ async function main() {
       await sleep(40);
     }
 
+    assignTopConfidenceRanks(dayMatches, dayPredictions);
     store.matches[date] = dayMatches;
     store.predictions[date] = dayPredictions;
   }
@@ -4757,7 +4988,7 @@ async function main() {
   store.sourceCoverage = buildSourceCoverage(store, today);
   store.aiAdvice = buildAiRecommendations(store, today);
   store.lastRun = Date.now();
-  store.workerVersion = "v14-amsterdam-fallback";
+  store.workerVersion = "v15-backup-top5";
   
   // Log summary
   const totalMatches = Object.values(store.matches || {}).flat().length;

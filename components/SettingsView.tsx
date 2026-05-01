@@ -1,4 +1,5 @@
 import React, { useEffect, useState } from "react";
+import { todayAmsterdamKey } from "../shared/date.js";
 
 const SettingsView: React.FC = () => {
   const [historyCount, setHistoryCount] = useState(0);
@@ -30,7 +31,7 @@ const SettingsView: React.FC = () => {
     } catch {}
     setManualAdvice(localStorage.getItem("footypredict_manual_ai_advice") || "");
 
-    fetch(`/api/matches?date=${new Date().toISOString().split("T")[0]}`)
+    fetch(`/api/matches?date=${todayAmsterdamKey()}`)
       .then((response) => response.json())
       .then((data) => {
         if (data.lastRun) setLastWorker(new Date(data.lastRun).toLocaleString("nl-NL"));
@@ -269,6 +270,27 @@ const SettingsView: React.FC = () => {
                 {sourceCoverage.fbref?.note || "Nog geen status."}
               </div>
             </div>
+
+            {Array.isArray(sourceCoverage.backupSources) && sourceCoverage.backupSources.length > 0 && (
+              <div className="rounded-xl border border-white/5 bg-slate-900/30 p-3">
+                <div className="text-[10px] font-black text-slate-400 uppercase mb-2">Actieve backupbronnen</div>
+                <div className="space-y-2">
+                  {sourceCoverage.backupSources.map((item: any) => (
+                    <div key={item.key} className="rounded-lg border border-white/5 bg-slate-950/30 px-3 py-2">
+                      <div className="flex items-center justify-between gap-3">
+                        <div className="text-[10px] font-black text-white">{item.name}</div>
+                        <span className="text-[8px] font-black px-2 py-0.5 rounded-full bg-blue-900/30 text-blue-300">
+                          {item.status}
+                        </span>
+                      </div>
+                      <div className="text-[9px] text-slate-500 mt-1">
+                        {item.role} · {item.note}
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
           </div>
         ) : (
           <div className="text-[11px] text-slate-500">Bronkwaliteit wordt zichtbaar zodra de worker deze samenvatting opnieuw heeft opgebouwd.</div>
@@ -428,6 +450,32 @@ const SettingsView: React.FC = () => {
                 </div>
               </div>
             </div>
+
+            {featureDiagnostics.topConfidence && (
+              <div className="rounded-xl border border-blue-500/10 bg-blue-950/10 p-3">
+                <div className="text-[10px] font-black text-blue-300 uppercase mb-2">Top 5 meest zekere tips</div>
+                <div className="grid grid-cols-2 md:grid-cols-4 gap-2">
+                  {[
+                    { label: "Reviews", value: featureDiagnostics.topConfidence.matches || 0 },
+                    { label: "Juiste score", value: `${Math.round(Number(featureDiagnostics.topConfidence.exactHitRate || 0) * 100)}%` },
+                    { label: "Juiste winnaar/gelijk", value: `${Math.round(Number(featureDiagnostics.topConfidence.outcomeHitRate || 0) * 100)}%` },
+                    { label: "Nr. 1 winnaar/gelijk", value: `${Math.round(Number(featureDiagnostics.topConfidence.rank1OutcomeHitRate || 0) * 100)}%` },
+                  ].map((item) => (
+                    <div key={item.label} className="rounded-xl border border-white/5 bg-slate-950/30 px-3 py-2">
+                      <div className="text-[8px] font-black text-slate-500 uppercase">{item.label}</div>
+                      <div className="text-[15px] font-black text-white mt-1">{item.value}</div>
+                    </div>
+                  ))}
+                </div>
+                <div className="text-[10px] text-slate-300 mt-3">
+                  Gem. foutmarge {featureDiagnostics.topConfidence.avgGoalError} · verschil met totale uitkomst-hitrate{" "}
+                  <span className="font-black text-white">
+                    {Number(featureDiagnostics.topConfidence.versusOverallOutcomeDelta || 0) >= 0 ? "+" : ""}
+                    {Math.round(Number(featureDiagnostics.topConfidence.versusOverallOutcomeDelta || 0) * 100)}%
+                  </span>
+                </div>
+              </div>
+            )}
           </div>
         ) : (
           <div className="text-[11px] text-slate-500">Nog geen modelvalidatie opgebouwd uit reviewdata.</div>
@@ -444,6 +492,16 @@ const SettingsView: React.FC = () => {
               desc: "Blijft de sterkste gratis bron voor historische odds, closing-lijnen, bookmakerkolommen en veel competitiemeta.",
             },
             {
+              name: "TheSportsDB",
+              status: "gekoppeld",
+              desc: "Draait nu mee als gratis fixture-backup voor dagen waarop de hoofdbron wedstrijden niet teruggeeft.",
+            },
+            {
+              name: "OpenLigaDB",
+              status: "gekoppeld",
+              desc: "Extra gratis fallbackbron voor vooral Duitse competities, zodat wedstrijddagen minder snel leeg vallen.",
+            },
+            {
               name: "Understat",
               status: "aanbevolen",
               desc: "Kan extra xG/xGA-profielen voor topcompetities leveren en is vooral nuttig voor clubwedstrijden met veel schotdata.",
@@ -452,6 +510,11 @@ const SettingsView: React.FC = () => {
               name: "FBref",
               status: "aanbevolen",
               desc: "Kan geavanceerde teamstatistieken en home/away splits aanvullen waar de huidige feed dun blijft.",
+            },
+            {
+              name: "openfootball",
+              status: "aanbevolen",
+              desc: "Interessante open historische bron voor extra H2H/backfill, vooral wanneer live-bronnen te dun blijven.",
             },
             {
               name: "Transfermarkt",
