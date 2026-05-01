@@ -154,6 +154,8 @@ const WEATHER_TTL = 6 * 60 * 60 * 1000;
 const EVENT_TTL = 12 * 60 * 60 * 1000;
 const CLUB_ELO_TTL = 12 * 60 * 60 * 1000;
 const MARKET_TTL = 24 * 60 * 60 * 1000;
+const SNAPSHOT_TTL = 3 * 24 * 60 * 60 * 1000;
+const OPENFOOTBALL_TTL = 14 * 24 * 60 * 60 * 1000;
 const INTERNATIONAL_AVAILABILITY_TTL = 12 * 60 * 60 * 1000;
 const HISTORY_KEEP_DAYS_BACK = 12;
 const HISTORY_KEEP_DAYS_FORWARD = 4;
@@ -163,6 +165,8 @@ const MAX_EVENT_CACHE = 300;
 const MAX_H2H_CACHE = 500;
 const MAX_WEATHER_CACHE = 220;
 const MAX_MARKET_PROFILES = 64;
+const MAX_SNAPSHOT_CACHE = 48;
+const MAX_OPENFOOTBALL_CACHE = 48;
 const MAX_INTERNATIONAL_AVAILABILITY = 160;
 
 const MARKET_LEAGUE_CODES = {
@@ -220,6 +224,40 @@ const SPORTSDB_NAME_TO_LABEL = {
 const OPENLIGADB_LEAGUES = {
   bl1: "Germany - Bundesliga",
   bl2: "Germany - 2. Bundesliga",
+};
+
+const OPENFOOTBALL_COMPETITIONS = {
+  "England - Premier League": "eng.1",
+  "England - Championship": "eng.2",
+  "Germany - Bundesliga": "de.1",
+  "Germany - 2. Bundesliga": "de.2",
+  "Spain - LaLiga": "es.1",
+  "Spain - LaLiga2": "es.2",
+  "Spain - LaLiga 2": "es.2",
+  "Italy - Serie A": "it.1",
+  "Italy - Serie B": "it.2",
+  "France - Ligue 1": "fr.1",
+  "France - Ligue 2": "fr.2",
+  "Netherlands - Eredivisie": "nl.1",
+};
+
+const UNDERSTAT_LEAGUE_CODES = {
+  "England - Premier League": "EPL",
+  "Spain - LaLiga": "La_liga",
+  "Germany - Bundesliga": "Bundesliga",
+  "Italy - Serie A": "Serie_A",
+  "France - Ligue 1": "Ligue_1",
+};
+
+const FBREF_RELEASE_CODES = {
+  "England - Premier League": { country: "ENG", tier: "1st", advanced: true },
+  "England - Championship": { country: "ENG", tier: "2nd", advanced: false },
+  "Spain - LaLiga": { country: "ESP", tier: "1st", advanced: true },
+  "France - Ligue 1": { country: "FRA", tier: "1st", advanced: true },
+  "Germany - Bundesliga": { country: "GER", tier: "1st", advanced: true },
+  "Italy - Serie A": { country: "ITA", tier: "1st", advanced: true },
+  "Portugal - Liga Portugal": { country: "POR", tier: "1st", advanced: false },
+  "Netherlands - Eredivisie": { country: "NED", tier: "1st", advanced: false },
 };
 
 process.on("unhandledRejection", (err) => {
@@ -1303,56 +1341,35 @@ function getSeasonFolder(dateISO) {
 }
 
 function getSeasonFolders(dateISO, seasonsBack = 2) {
-  function getSeasonFolder(dateISO) {
-    const base = dateISO ? new Date(dateISO) : new Date();
-    const amsterdamString = base.toLocaleString("sv-SE", {
-      timeZone: "Europe/Amsterdam",
-      year: "numeric",
-      month: "numeric",
-    });
-    const [yearStr, monthStr] = amsterdamString.split('/');
-    const year = parseInt(yearStr, 10);
-    const month = parseInt(monthStr, 10) - 1;
-    const startYear = month >= 6 ? year : year - 1;
-    const endYear = startYear + 1;
-    return `${String(startYear).slice(-2)}${String(endYear).slice(-2)}`;
-  }
-  
-  function getSeasonFolders(dateISO, seasonsBack = 2) {
-    const base = dateISO ? new Date(dateISO) : new Date();
-    const amsterdamString = base.toLocaleString("en-US", {
-      timeZone: "Europe/Amsterdam",
-      year: "numeric",
-      month: "numeric",
-    });
-    const [monthStr, yearStr] = amsterdamString.split('/');
-    const year = parseInt(yearStr, 10);
-    const month = parseInt(monthStr, 10) - 1;
-    const startYear = month >= 6 ? year : year - 1;
-    const folders = [];
-    for (let offset = 0; offset < seasonsBack; offset += 1) {
-      const currentStart = startYear - offset;
-      const currentEnd = currentStart + 1;
-      folders.push(`${String(currentStart).slice(-2)}${String(currentEnd).slice(-2)}`);
-    }
-    return folders;
-  }  const base = dateISO ? new Date(dateISO) : new Date();
+  const base = dateISO ? new Date(dateISO) : new Date();
   const amsterdamString = base.toLocaleString("en-US", {
     timeZone: "Europe/Amsterdam",
     year: "numeric",
     month: "numeric",
   });
   const [monthStr, yearStr] = amsterdamString.split('/');
-  const year = parseInt(yearStr);
-  const month = parseInt(monthStr) - 1; 
+  const year = parseInt(yearStr, 10);
+  const month = parseInt(monthStr, 10) - 1;
   const startYear = month >= 6 ? year : year - 1;
   const folders = [];
-   for (let offset = 0; offset < seasonsBack; offset += 1) {
+  for (let offset = 0; offset < seasonsBack; offset += 1) {
     const currentStart = startYear - offset;
     const currentEnd = currentStart + 1;
     folders.push(`${String(currentStart).slice(-2)}${String(currentEnd).slice(-2)}`);
   }
-   return folders;
+  return folders;
+}
+
+function getOpenfootballSeasonTags(dateISO, seasonsBack = 2) {
+  const folder = getSeasonFolder(dateISO);
+  const startYear = 2000 + Number(folder.slice(0, 2));
+  const tags = [];
+  for (let offset = 0; offset < seasonsBack; offset += 1) {
+    const currentStart = startYear - offset;
+    const currentEnd = String(currentStart + 1).slice(-2);
+    tags.push(`${currentStart}-${currentEnd}`);
+  }
+  return tags;
 }
 
 async function fetchText(url) {
@@ -2179,6 +2196,338 @@ async function fetchHistoricalMarketProfile(leagueLabel, dateISO) {
   return buildMarketProfiles(allRows);
 }
 
+function buildH2HProfileFromResults(results, source) {
+  const h2hPairs = {};
+  for (const item of results || []) {
+    const home = String(item.home || "").trim();
+    const away = String(item.away || "").trim();
+    const homeGoals = toNumber(item.homeGoals);
+    const awayGoals = toNumber(item.awayGoals);
+    if (!home || !away || !Number.isFinite(homeGoals) || !Number.isFinite(awayGoals)) continue;
+    const pairKey = buildPairKey(home, away);
+    if (!h2hPairs[pairKey]) h2hPairs[pairKey] = [];
+    const winnerId = homeGoals > awayGoals ? normalizeName(home) : awayGoals > homeGoals ? normalizeName(away) : "";
+    h2hPairs[pairKey].push({
+      date: item.date || null,
+      home,
+      away,
+      homeTeamId: "",
+      awayTeamId: "",
+      score: `${homeGoals}-${awayGoals}`,
+      winnerId,
+      source,
+    });
+  }
+
+  return {
+    updatedAt: Date.now(),
+    source,
+    sampleSize: results.length,
+    h2hPairs: Object.fromEntries(
+      Object.entries(h2hPairs).map(([key, values]) => [
+        key,
+        values.sort((a, b) => String(a?.date || "").localeCompare(String(b?.date || ""))).slice(-16),
+      ])
+    ),
+  };
+}
+
+async function fetchOpenfootballProfile(leagueLabel, dateISO) {
+  const competitionCode = OPENFOOTBALL_COMPETITIONS[leagueLabel];
+  if (!competitionCode) return null;
+
+  const results = [];
+  for (const seasonTag of getOpenfootballSeasonTags(dateISO, 3)) {
+    const url = `https://raw.githubusercontent.com/openfootball/football.json/master/${seasonTag}/${competitionCode}.json`;
+    const json = await fetchExternalJson(url);
+    const matches = Array.isArray(json?.matches) ? json.matches : [];
+    for (const match of matches) {
+      const ft = match?.score?.ft;
+      if (!Array.isArray(ft) || ft.length < 2) continue;
+      const homeGoals = toNumber(ft[0]);
+      const awayGoals = toNumber(ft[1]);
+      if (!Number.isFinite(homeGoals) || !Number.isFinite(awayGoals)) continue;
+      results.push({
+        date: match.date || null,
+        home: match.team1 || match.homeTeam || "",
+        away: match.team2 || match.awayTeam || "",
+        homeGoals,
+        awayGoals,
+      });
+    }
+  }
+
+  if (!results.length) return null;
+  return buildH2HProfileFromResults(results, "openfootball");
+}
+
+function getUnderstatSeason(dateISO) {
+  const base = dateISO ? new Date(dateISO) : new Date();
+  const amsterdamString = base.toLocaleString("en-US", {
+    timeZone: "Europe/Amsterdam",
+    year: "numeric",
+    month: "numeric",
+  });
+  const [monthStr, yearStr] = amsterdamString.split('/');
+  const year = parseInt(yearStr, 10);
+  const month = parseInt(monthStr, 10) - 1;
+  return String(month >= 6 ? year : year - 1);
+}
+
+function average(values) {
+  const clean = values.map((value) => Number(value)).filter((value) => Number.isFinite(value));
+  if (!clean.length) return null;
+  return Number((clean.reduce((sum, value) => sum + value, 0) / clean.length).toFixed(2));
+}
+
+async function fetchUnderstatSnapshot(leagueLabel, dateISO) {
+  const code = UNDERSTAT_LEAGUE_CODES[leagueLabel];
+  if (!code) return null;
+
+  const season = getUnderstatSeason(dateISO);
+  const url = `https://understat.com/getLeagueData/${code}/${season}`;
+  const json = await fetchExternalJson(url, {
+    "X-Requested-With": "XMLHttpRequest",
+    Referer: `https://understat.com/league/${code}/${season}`,
+  });
+  const teamsData = json?.teams || null;
+  if (!teamsData || typeof teamsData !== "object") return null;
+
+  const teams = {};
+  for (const team of Object.values(teamsData)) {
+    const name = String(team?.title || "").trim();
+    const history = Array.isArray(team?.history) ? team.history : [];
+    if (!name || !history.length) continue;
+    const homeRows = history.filter((row) => row.h_a === "h");
+    const awayRows = history.filter((row) => row.h_a === "a");
+    teams[normalizeName(name)] = {
+      teamName: name,
+      games: history.length,
+      avgXG: average(history.map((row) => row.xG)),
+      avgXGA: average(history.map((row) => row.xGA)),
+      avgNpxG: average(history.map((row) => row.npxG)),
+      avgNpxGA: average(history.map((row) => row.npxGA)),
+      homeXG: average(homeRows.map((row) => row.xG)),
+      homeXGA: average(homeRows.map((row) => row.xGA)),
+      awayXG: average(awayRows.map((row) => row.xG)),
+      awayXGA: average(awayRows.map((row) => row.xGA)),
+      ppda: average(history.map((row) => Number(row?.ppda?.att || 0) / Math.max(1, Number(row?.ppda?.def || 0)))),
+      deep: average(history.map((row) => row.deep)),
+      source: "Understat",
+      season,
+    };
+  }
+
+  return {
+    updatedAt: Date.now(),
+    source: "Understat",
+    leagueLabel,
+    season,
+    sampleSize: Object.keys(teams).length,
+    teams,
+  };
+}
+
+function getFbrefSnapshotUrls(leagueLabel) {
+  const info = FBREF_RELEASE_CODES[leagueLabel];
+  if (!info) return [];
+  const baseName = `${info.country}_M_${info.tier}`;
+  const urls = [];
+  if (info.advanced) {
+    urls.push({
+      type: "advanced",
+      url: `https://github.com/JaseZiv/worldfootballR_data/releases/download/fb_advanced_match_stats/${baseName}_summary_team_advanced_match_stats.csv`,
+    });
+  }
+  urls.push({
+    type: "shooting",
+    url: `https://github.com/JaseZiv/worldfootballR_data/releases/download/fb_match_shooting/${baseName}_match_shooting.csv`,
+  });
+  return urls;
+}
+
+function incrementSnapshotTeam(bucket, values) {
+  bucket.games += Number(values.games || 0);
+  bucket.shots += Number(values.shots || 0);
+  bucket.shotsOn += Number(values.shotsOn || 0);
+  bucket.xG += Number(values.xG || 0);
+  bucket.npxG += Number(values.npxG || 0);
+  bucket.homeGames += Number(values.homeGames || 0);
+  bucket.awayGames += Number(values.awayGames || 0);
+  bucket.homeShots += Number(values.homeShots || 0);
+  bucket.awayShots += Number(values.awayShots || 0);
+  bucket.homeXG += Number(values.homeXG || 0);
+  bucket.awayXG += Number(values.awayXG || 0);
+}
+
+async function fetchFbrefSnapshot(leagueLabel, dateISO) {
+  const urls = getFbrefSnapshotUrls(leagueLabel);
+  if (!urls.length) return null;
+
+  const currentFolder = getSeasonFolder(dateISO);
+  const currentEndYear = 2000 + Number(currentFolder.slice(2));
+  const teams = {};
+  let sampleSize = 0;
+  let sourceType = null;
+
+  for (const item of urls) {
+    const csvText = await fetchText(item.url);
+    if (!csvText) continue;
+    const rows = parseCsv(csvText);
+    if (!rows.length) continue;
+    sourceType = item.type;
+    const seenShotMatches = new Set();
+
+    for (const row of rows) {
+      const seasonEnd = Number(row.Season_End_Year || row.season_end_year || 0);
+      if (seasonEnd && seasonEnd < currentEndYear - 2) continue;
+      if (String(row.Gender || "M") !== "M") continue;
+      const teamName = String(row.Team || row.Squad || "").trim();
+      if (!teamName) continue;
+      const key = normalizeName(teamName);
+      if (!teams[key]) {
+        teams[key] = {
+          teamName,
+          games: 0,
+          shots: 0,
+          shotsOn: 0,
+          xG: 0,
+          npxG: 0,
+          homeGames: 0,
+          awayGames: 0,
+          homeShots: 0,
+          awayShots: 0,
+          homeXG: 0,
+          awayXG: 0,
+        };
+      }
+
+      if (item.type === "advanced") {
+        const homeAway = String(row.Home_Away || "").toLowerCase();
+        const shots = Number(toNumber(row.Sh) || 0);
+        const shotsOn = Number(toNumber(row.SoT) || 0);
+        const xG = Number(toNumber(row.xG_Expected || row.Home_xG || row.Away_xG) || 0);
+        const npxG = Number(toNumber(row.npxG_Expected) || xG || 0);
+        incrementSnapshotTeam(teams[key], {
+          games: 1,
+          shots,
+          shotsOn,
+          xG,
+          npxG,
+          homeGames: homeAway === "home" ? 1 : 0,
+          awayGames: homeAway === "away" ? 1 : 0,
+          homeShots: homeAway === "home" ? shots : 0,
+          awayShots: homeAway === "away" ? shots : 0,
+          homeXG: homeAway === "home" ? xG : 0,
+          awayXG: homeAway === "away" ? xG : 0,
+        });
+      } else {
+        const homeAway = String(row.Home_Away || "").toLowerCase();
+        const xG = Number(toNumber(row.xG) || 0);
+        const onTarget = ["goal", "saved", "saved to post"].includes(String(row.Outcome || "").toLowerCase()) ? 1 : 0;
+        const matchKey = `${key}_${row.MatchURL || row.Date || sampleSize}`;
+        const firstShotForMatch = !seenShotMatches.has(matchKey);
+        seenShotMatches.add(matchKey);
+        incrementSnapshotTeam(teams[key], {
+          games: firstShotForMatch ? 1 : 0,
+          shots: 1,
+          shotsOn: onTarget,
+          xG,
+          npxG: xG,
+          homeGames: firstShotForMatch && homeAway === "home" ? 1 : 0,
+          awayGames: firstShotForMatch && homeAway === "away" ? 1 : 0,
+          homeShots: homeAway === "home" ? 1 : 0,
+          awayShots: homeAway === "away" ? 1 : 0,
+          homeXG: homeAway === "home" ? xG : 0,
+          awayXG: homeAway === "away" ? xG : 0,
+        });
+      }
+      sampleSize += 1;
+    }
+
+    if (Object.keys(teams).length) break;
+  }
+
+  if (!Object.keys(teams).length) return null;
+
+  const formattedTeams = {};
+  for (const [key, value] of Object.entries(teams)) {
+    const games = Math.max(Number(value.games || 0), 1);
+    const homeGames = Math.max(Number(value.homeGames || 0), 1);
+    const awayGames = Math.max(Number(value.awayGames || 0), 1);
+    formattedTeams[key] = {
+      teamName: value.teamName,
+      games: Number(value.games || 0),
+      avgShots: Number((Number(value.shots || 0) / games).toFixed(2)),
+      avgShotsOn: Number((Number(value.shotsOn || 0) / games).toFixed(2)),
+      avgXG: Number((Number(value.xG || 0) / games).toFixed(2)),
+      avgNpxG: Number((Number(value.npxG || 0) / games).toFixed(2)),
+      homeShots: Number((Number(value.homeShots || 0) / homeGames).toFixed(2)),
+      awayShots: Number((Number(value.awayShots || 0) / awayGames).toFixed(2)),
+      homeXG: Number((Number(value.homeXG || 0) / homeGames).toFixed(2)),
+      awayXG: Number((Number(value.awayXG || 0) / awayGames).toFixed(2)),
+      source: `FBref ${sourceType || "snapshot"}`,
+    };
+  }
+
+  return {
+    updatedAt: Date.now(),
+    source: "FBref",
+    leagueLabel,
+    sourceType,
+    sampleSize,
+    teams: formattedTeams,
+  };
+}
+
+function lookupSnapshotTeam(snapshot, teamName) {
+  const teams = snapshot?.teams || {};
+  for (const variant of buildPossibleNames(teamName)) {
+    if (teams[variant]) return teams[variant];
+  }
+  return null;
+}
+
+function mergeSeasonStatsWithSnapshots(baseStats, teamName, leagueLabel, store) {
+  const understat = lookupSnapshotTeam(store.understatSnapshots?.[leagueLabel], teamName);
+  const fbref = lookupSnapshotTeam(store.fbrefSnapshots?.[leagueLabel], teamName);
+  const externalSources = [];
+  const merged = { ...(baseStats || {}) };
+
+  if (understat) {
+    externalSources.push("Understat");
+    merged.xG = understat.avgXG ?? merged.xG ?? null;
+    merged.xGAgainst = understat.avgXGA ?? merged.xGAgainst ?? null;
+    merged.npxG = understat.avgNpxG ?? merged.npxG ?? null;
+    merged.npxGAgainst = understat.avgNpxGA ?? merged.npxGAgainst ?? null;
+    merged.homeXG = understat.homeXG ?? merged.homeXG ?? null;
+    merged.awayXG = understat.awayXG ?? merged.awayXG ?? null;
+    merged.homeXGA = understat.homeXGA ?? merged.homeXGA ?? null;
+    merged.awayXGA = understat.awayXGA ?? merged.awayXGA ?? null;
+    merged.ppda = understat.ppda ?? merged.ppda ?? null;
+    merged.deep = understat.deep ?? merged.deep ?? null;
+  }
+
+  if (fbref) {
+    externalSources.push("FBref");
+    merged.avgShots = merged.avgShots ?? fbref.avgShots ?? null;
+    merged.avgShotsOn = merged.avgShotsOn ?? fbref.avgShotsOn ?? null;
+    merged.xG = merged.xG ?? fbref.avgXG ?? null;
+    merged.npxG = merged.npxG ?? fbref.avgNpxG ?? null;
+    merged.homeShots = fbref.homeShots ?? merged.homeShots ?? null;
+    merged.awayShots = fbref.awayShots ?? merged.awayShots ?? null;
+    merged.homeXG = merged.homeXG ?? fbref.homeXG ?? null;
+    merged.awayXG = merged.awayXG ?? fbref.awayXG ?? null;
+  }
+
+  if (externalSources.length) {
+    merged.externalSources = Array.from(new Set([...(merged.externalSources || []), ...externalSources]));
+    merged.sourceQuality = Number(Math.min(1, 0.45 + merged.externalSources.length * 0.25).toFixed(2));
+  }
+
+  return Object.keys(merged).length ? merged : null;
+}
+
 function lookupHistoricalH2HBackfill(leagueMarketProfile, homeName, awayName, currentHomeId, currentAwayId) {
   const pairs = leagueMarketProfile?.h2hPairs || {};
   const pairKey = buildPairKey(homeName, awayName);
@@ -2216,7 +2565,7 @@ function lookupHistoricalH2HBackfill(leagueMarketProfile, homeName, awayName, cu
     sameCompetitionPlayed: results.length,
     weightedRecentBalance: calculateRecentH2HBalance({ results }, currentHomeId, currentAwayId),
     results,
-    status: "historical-competition",
+    status: leagueMarketProfile?.source === "openfootball" ? "openfootball-historical" : "historical-competition",
   };
 }
 
@@ -2634,6 +2983,23 @@ async function safeFetchText(url) {
     });
     if (!response.ok) return null;
     return await response.text();
+  } catch {
+    return null;
+  }
+}
+
+async function fetchExternalJson(url, headers = {}) {
+  try {
+    const response = await fetch(url, {
+      headers: {
+        Accept: "application/json,text/javascript,*/*;q=0.8",
+        "User-Agent":
+          "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 Chrome/123.0 Safari/53736",
+        ...headers,
+      },
+    });
+    if (!response.ok) return null;
+    return await response.json();
   } catch {
     return null;
   }
@@ -4113,6 +4479,9 @@ function compactStore(store, referenceDateKey, now) {
   pruneUpdatedMap(store, "teamSeasonStats", "teamSeasonStatsUpdated", SEASON_TTL, now, 600);
   pruneUpdatedMap(store, "eventCache", "eventCacheUpdated", EVENT_TTL, now, MAX_EVENT_CACHE);
   pruneUpdatedMap(store, "marketProfiles", "marketProfilesUpdated", MARKET_TTL, now, MAX_MARKET_PROFILES);
+  pruneUpdatedMap(store, "openfootballProfiles", "openfootballProfilesUpdated", OPENFOOTBALL_TTL, now, MAX_OPENFOOTBALL_CACHE);
+  pruneUpdatedMap(store, "understatSnapshots", "understatSnapshotsUpdated", SNAPSHOT_TTL, now, MAX_SNAPSHOT_CACHE);
+  pruneUpdatedMap(store, "fbrefSnapshots", "fbrefSnapshotsUpdated", SNAPSHOT_TTL, now, MAX_SNAPSHOT_CACHE);
   pruneEmbeddedUpdatedMap(store, "h2hCache", H2H_TTL, now, MAX_H2H_CACHE);
   pruneEmbeddedUpdatedMap(store, "weatherCache", WEATHER_TTL, now, MAX_WEATHER_CACHE);
 
@@ -4154,6 +4523,12 @@ function defaultStore() {
     clubEloUpdated: null,
     marketProfiles: {},
     marketProfilesUpdated: {},
+    openfootballProfiles: {},
+    openfootballProfilesUpdated: {},
+    understatSnapshots: {},
+    understatSnapshotsUpdated: {},
+    fbrefSnapshots: {},
+    fbrefSnapshotsUpdated: {},
     postMatchReviews: {},
     teamLearning: {},
     leagueReliability: {},
@@ -4162,7 +4537,7 @@ function defaultStore() {
     sourceCoverage: null,
     aiAdvice: [],
     lastRun: null,
-    workerVersion: "v15-backup-top5",
+    workerVersion: "v16-h2h-snapshots",
   };
 }
 
@@ -4181,12 +4556,32 @@ function buildSourceCoverage(store, todayKey) {
     (match) => Number(match?.refereeProfile?.matches || 0) > 0
   ).length;
   const h2hCovered = todayMatches.filter((match) => Number(match?.h2h?.played || 0) > 0).length;
+  const openfootballH2hCovered = todayMatches.filter((match) =>
+    (match?.h2h?.results || []).some((item) => String(item?.source || "").includes("openfootball"))
+  ).length;
+  const understatCovered = todayMatches.filter((match) =>
+    match?.homeSeasonStats?.externalSources?.includes?.("Understat") ||
+    match?.awaySeasonStats?.externalSources?.includes?.("Understat")
+  ).length;
+  const fbrefCovered = todayMatches.filter((match) =>
+    match?.homeSeasonStats?.externalSources?.includes?.("FBref") ||
+    match?.awaySeasonStats?.externalSources?.includes?.("FBref")
+  ).length;
+  const openfootballProfiles = Object.keys(store.openfootballProfiles || {}).length;
+  const understatSnapshots = Object.keys(store.understatSnapshots || {}).length;
+  const fbrefSnapshots = Object.keys(store.fbrefSnapshots || {}).length;
   return {
     todayMatches: todayMatches.length,
     bookmakerCoverage: Number((bookmakerCovered / total).toFixed(2)),
     refereeCoverage: Number((refereeCovered / total).toFixed(2)),
     h2hCoverage: Number((h2hCovered / total).toFixed(2)),
+    openfootballH2hCoverage: Number((openfootballH2hCovered / total).toFixed(2)),
+    understatCoverage: Number((understatCovered / total).toFixed(2)),
+    fbrefCoverage: Number((fbrefCovered / total).toFixed(2)),
     marketProfiles: Object.keys(store.marketProfiles || {}).length,
+    openfootballProfiles,
+    understatSnapshots,
+    fbrefSnapshots,
     sourceBreakdown,
     backupSources: [
       {
@@ -4220,18 +4615,26 @@ function buildSourceCoverage(store, todayKey) {
       {
         key: "openfootball",
         name: "openfootball",
-        role: "historisch",
-        status: "onderzoek",
-        note: "Kansrijke open historiebasis voor extra H2H/backfill buiten live APIs.",
+        role: "historisch H2H",
+        status: openfootballProfiles > 0 ? "gekoppeld" : "stand-by",
+        note: `${openfootballProfiles} competitieprofiel(en), ${Math.round((openfootballH2hCovered / total) * 100)}% van vandaag met openfootball-H2H.`,
       },
     ],
     understat: {
-      status: "pilot",
-      note: "Publieke Understat bron blijft kansrijk voor xG/xGA-profielen, maar vraagt eerst competitie-specifieke snapshotparsing.",
+      status: understatSnapshots > 0 ? "gekoppeld" : "stand-by",
+      snapshots: understatSnapshots,
+      coverage: Number((understatCovered / total).toFixed(2)),
+      note: understatSnapshots > 0
+        ? `${understatSnapshots} xG/xGA-snapshot(s), ${Math.round((understatCovered / total) * 100)}% van vandaag verrijkt.`
+        : "Geen actieve Understat-competitie op deze speeldag of bron tijdelijk niet bereikbaar.",
     },
     fbref: {
-      status: "snapshot-aanpak nodig",
-      note: "FBref is inhoudelijk sterk voor shot- en splitdata, maar directe worker-fetches zijn te instabiel. Beter via periodieke snapshots.",
+      status: fbrefSnapshots > 0 ? "gekoppeld" : "stand-by",
+      snapshots: fbrefSnapshots,
+      coverage: Number((fbrefCovered / total).toFixed(2)),
+      note: fbrefSnapshots > 0
+        ? `${fbrefSnapshots} shot/split-snapshot(s), ${Math.round((fbrefCovered / total) * 100)}% van vandaag verrijkt.`
+        : "Geen actieve FBref-snapshot voor deze speeldag of release tijdelijk niet bereikbaar.",
     },
   };
 }
@@ -4365,18 +4768,22 @@ function buildAiRecommendations(store, todayKey) {
     });
   }
 
-  issues.push({
-    title: "Understat bronstatus",
-    summary: "Understat blijft technisch kansrijk voor gratis xG/xGA-profielen, maar is nog niet als stabiele snapshotbron ingelezen.",
-    action: "Volgende stap: per ondersteunde topcompetitie periodieke xG-snapshots opbouwen en pas daarna in de worker laten meelopen.",
-    priority: "low",
-  });
-  issues.push({
-    title: "FBref bronstatus",
-    summary: "FBref heeft sterke shot- en splitdata, maar directe worker-fetches worden te vaak geblokkeerd.",
-    action: "Gebruik FBref als tweewekelijkse snapshotbron voor home/away- en shot-splits in plaats van live scraping.",
-    priority: "low",
-  });
+  if (sourceCoverage && Number(sourceCoverage.understatCoverage || 0) < 0.35 && Number(sourceCoverage.todayMatches || 0) > 0) {
+    issues.push({
+      title: "Understat xG-dekking bewaken",
+      summary: `Understat verrijkt ${Math.round(Number(sourceCoverage.understatCoverage || 0) * 100)}% van de actuele speeldag.`,
+      action: "Gebruik Understat vooral op Big-5 competities en blijf Sofascore/FBref gebruiken als xG-backup waar Understat geen competitie ondersteunt.",
+      priority: "low",
+    });
+  }
+  if (sourceCoverage && Number(sourceCoverage.fbrefCoverage || 0) < 0.35 && Number(sourceCoverage.todayMatches || 0) > 0) {
+    issues.push({
+      title: "FBref shot-snapshotdekking bewaken",
+      summary: `FBref verrijkt ${Math.round(Number(sourceCoverage.fbrefCoverage || 0) * 100)}% van de actuele speeldag.`,
+      action: "Houd FBref via release-snapshots draaien en gebruik de shot/splitvelden als correctielaag wanneer live teamstats dun zijn.",
+      priority: "low",
+    });
+  }
 
   return issues;
 }
@@ -4497,6 +4904,7 @@ async function main() {
           seasonId,
           teamName: homeName,
           tournamentName: event?.tournament?.name || event?.uniqueTournament?.name || "",
+          label: leagueInfo.label,
         });
       }
       if (awayId && tournamentId && seasonId) {
@@ -4505,6 +4913,7 @@ async function main() {
           seasonId,
           teamName: awayName,
           tournamentName: event?.tournament?.name || event?.uniqueTournament?.name || "",
+          label: leagueInfo.label,
         });
       }
       if (tournamentId && seasonId && leagueInfo) {
@@ -4513,14 +4922,15 @@ async function main() {
     }
   }
 
-  const activeLeagueLabels = [
+  const allActiveLeagueLabels = [
     ...new Set(
       Object.values(allEvents)
         .flat()
         .map((event) => getLeagueInfo(event)?.label)
         .filter(Boolean)
     ),
-  ].filter((label) => MARKET_LEAGUE_CODES[label]);
+  ];
+  const activeLeagueLabels = allActiveLeagueLabels.filter((label) => MARKET_LEAGUE_CODES[label]);
 
   for (const leagueLabel of activeLeagueLabels) {
     if (
@@ -4532,6 +4942,47 @@ async function main() {
         store.marketProfiles[leagueLabel] = marketProfile;
         store.marketProfilesUpdated[leagueLabel] = now;
         await sleep(50);
+      }
+    }
+  }
+
+  for (const leagueLabel of allActiveLeagueLabels) {
+    if (
+      OPENFOOTBALL_COMPETITIONS[leagueLabel] &&
+      (!store.openfootballProfiles[leagueLabel] ||
+        now - Number(store.openfootballProfilesUpdated?.[leagueLabel] || 0) > OPENFOOTBALL_TTL)
+    ) {
+      const openfootballProfile = await fetchOpenfootballProfile(leagueLabel, today);
+      if (openfootballProfile) {
+        store.openfootballProfiles[leagueLabel] = openfootballProfile;
+        store.openfootballProfilesUpdated[leagueLabel] = now;
+        await sleep(40);
+      }
+    }
+
+    if (
+      UNDERSTAT_LEAGUE_CODES[leagueLabel] &&
+      (!store.understatSnapshots[leagueLabel] ||
+        now - Number(store.understatSnapshotsUpdated?.[leagueLabel] || 0) > SNAPSHOT_TTL)
+    ) {
+      const understatSnapshot = await fetchUnderstatSnapshot(leagueLabel, today);
+      if (understatSnapshot) {
+        store.understatSnapshots[leagueLabel] = understatSnapshot;
+        store.understatSnapshotsUpdated[leagueLabel] = now;
+        await sleep(80);
+      }
+    }
+
+    if (
+      FBREF_RELEASE_CODES[leagueLabel] &&
+      (!store.fbrefSnapshots[leagueLabel] ||
+        now - Number(store.fbrefSnapshotsUpdated?.[leagueLabel] || 0) > SNAPSHOT_TTL)
+    ) {
+      const fbrefSnapshot = await fetchFbrefSnapshot(leagueLabel, today);
+      if (fbrefSnapshot) {
+        store.fbrefSnapshots[leagueLabel] = fbrefSnapshot;
+        store.fbrefSnapshotsUpdated[leagueLabel] = now;
+        await sleep(80);
       }
     }
   }
@@ -4557,13 +5008,33 @@ async function main() {
       await sleep(70);
     }
     const seasonInfo = teamTournamentMap.get(teamId);
-    if (
-      seasonInfo &&
-      (!store.teamSeasonStats[teamId] || now - Number(store.teamSeasonStatsUpdated?.[teamId] || 0) > SEASON_TTL)
-    ) {
-      store.teamSeasonStats[teamId] = await fetchSeasonStats(teamId, seasonInfo.tournamentId, seasonInfo.seasonId);
-      store.teamSeasonStatsUpdated[teamId] = now;
-      await sleep(70);
+    if (seasonInfo) {
+      const existingSeasonStats = store.teamSeasonStats[teamId] || null;
+      const seasonStatsStale =
+        !existingSeasonStats || now - Number(store.teamSeasonStatsUpdated?.[teamId] || 0) > SEASON_TTL;
+      const hasSnapshotMatch = Boolean(
+        lookupSnapshotTeam(store.understatSnapshots?.[seasonInfo.label], seasonInfo.teamName) ||
+          lookupSnapshotTeam(store.fbrefSnapshots?.[seasonInfo.label], seasonInfo.teamName)
+      );
+      const existingSources = Array.isArray(existingSeasonStats?.externalSources)
+        ? existingSeasonStats.externalSources.map((source) => String(source).toLowerCase())
+        : [];
+      const missingSnapshotMerge =
+        hasSnapshotMatch && !existingSources.some((source) => source === "understat" || source === "fbref");
+
+      if (seasonStatsStale || missingSnapshotMerge) {
+        const baseSeasonStats = seasonStatsStale
+          ? await fetchSeasonStats(teamId, seasonInfo.tournamentId, seasonInfo.seasonId)
+          : existingSeasonStats;
+        store.teamSeasonStats[teamId] = mergeSeasonStatsWithSnapshots(
+          baseSeasonStats,
+          seasonInfo.teamName,
+          seasonInfo.label,
+          store
+        );
+        store.teamSeasonStatsUpdated[teamId] = now;
+        if (seasonStatsStale) await sleep(70);
+      }
     }
   }
 
@@ -4675,19 +5146,25 @@ async function main() {
           status: h2h?.status || "loaded",
         };
       }
-      const historicalH2H = lookupHistoricalH2HBackfill(store.marketProfiles[leagueInfo.label] || null, homeName, awayName, homeId, awayId);
-      if ((!h2h || Number(h2h.played || 0) < 3) && historicalH2H) {
-        const mergedHistoricalResults = mergeH2HResultLists(h2h?.results || [], historicalH2H.results || []);
-        h2h = {
-          played: mergedHistoricalResults.length,
-          homeWins: mergedHistoricalResults.filter((item) => String(item.winnerId || "") === String(homeId || "")).length,
-          draws: mergedHistoricalResults.filter((item) => !item.winnerId).length,
-          awayWins: mergedHistoricalResults.filter((item) => String(item.winnerId || "") === String(awayId || "")).length,
-          sameCompetitionPlayed: Number(h2h?.sameCompetitionPlayed || 0) + Number(historicalH2H.sameCompetitionPlayed || 0),
-          weightedRecentBalance: calculateRecentH2HBalance({ results: mergedHistoricalResults }, homeId, awayId),
-          results: mergedHistoricalResults,
-          status: h2h?.played ? "merged-historical-competition" : "historical-competition",
-        };
+      const historicalBackfills = [
+        lookupHistoricalH2HBackfill(store.marketProfiles[leagueInfo.label] || null, homeName, awayName, homeId, awayId),
+        lookupHistoricalH2HBackfill(store.openfootballProfiles[leagueInfo.label] || null, homeName, awayName, homeId, awayId),
+      ].filter(Boolean);
+
+      for (const historicalH2H of historicalBackfills) {
+        if ((!h2h || Number(h2h.played || 0) < 5) && historicalH2H) {
+          const mergedHistoricalResults = mergeH2HResultLists(h2h?.results || [], historicalH2H.results || []);
+          h2h = {
+            played: mergedHistoricalResults.length,
+            homeWins: mergedHistoricalResults.filter((item) => String(item.winnerId || "") === String(homeId || "")).length,
+            draws: mergedHistoricalResults.filter((item) => !item.winnerId).length,
+            awayWins: mergedHistoricalResults.filter((item) => String(item.winnerId || "") === String(awayId || "")).length,
+            sameCompetitionPlayed: Number(h2h?.sameCompetitionPlayed || 0) + Number(historicalH2H.sameCompetitionPlayed || 0),
+            weightedRecentBalance: calculateRecentH2HBalance({ results: mergedHistoricalResults }, homeId, awayId),
+            results: mergedHistoricalResults,
+            status: h2h?.played ? `merged-${historicalH2H.status || "historical"}` : historicalH2H.status || "historical-competition",
+          };
+        }
       }
       const aggregate = buildAggregateInfo(event, eventDetails, h2h, fallbackPreviousLeg);
       const homeRestDays = calcRestDays(homeRecent?.lastMatchKickoff, kickoff);
@@ -4724,11 +5201,25 @@ async function main() {
       const phaseReliability = store.phaseReliability?.[phaseBucket] || null;
 
       const minuteState = resolveMinuteState(event, eventDetails);
+      const homeSeasonStats = mergeSeasonStatsWithSnapshots(
+        store.teamSeasonStats[homeId] || null,
+        homeName,
+        leagueInfo.label,
+        store
+      );
+      const awaySeasonStats = mergeSeasonStatsWithSnapshots(
+        store.teamSeasonStats[awayId] || null,
+        awayName,
+        leagueInfo.label,
+        store
+      );
+      if (homeId && homeSeasonStats?.externalSources?.length) store.teamSeasonStats[homeId] = homeSeasonStats;
+      if (awayId && awaySeasonStats?.externalSources?.length) store.teamSeasonStats[awayId] = awaySeasonStats;
 
       const homeTeamProfile = buildTeamProfile({
         teamName: homeName,
         recent: homeRecent,
-        seasonStats: store.teamSeasonStats[homeId] || null,
+        seasonStats: homeSeasonStats,
         injuries: store.teamInjuries[homeId] || null,
         clubElo: homeClubElo,
         standingPos: homePos,
@@ -4736,7 +5227,7 @@ async function main() {
       const awayTeamProfile = buildTeamProfile({
         teamName: awayName,
         recent: awayRecent,
-        seasonStats: store.teamSeasonStats[awayId] || null,
+        seasonStats: awaySeasonStats,
         injuries: store.teamInjuries[awayId] || null,
         clubElo: awayClubElo,
         standingPos: awayPos,
@@ -4775,8 +5266,8 @@ async function main() {
         awayTeamId: awayId,
         homeRecent,
         awayRecent,
-        homeSeasonStats: store.teamSeasonStats[homeId] || null,
-        awaySeasonStats: store.teamSeasonStats[awayId] || null,
+        homeSeasonStats,
+        awaySeasonStats,
         homeInjuries: store.teamInjuries[homeId] || null,
         awayInjuries: store.teamInjuries[awayId] || null,
         homeRestDays,
@@ -4832,8 +5323,8 @@ async function main() {
         awayForm: awayRecent?.form || "",
         homeRecent,
         awayRecent,
-        homeSeasonStats: store.teamSeasonStats[homeId] || null,
-        awaySeasonStats: store.teamSeasonStats[awayId] || null,
+        homeSeasonStats,
+        awaySeasonStats,
         homeInjuries: store.teamInjuries[homeId] || null,
         awayInjuries: store.teamInjuries[awayId] || null,
         homeRestDays,
@@ -4988,7 +5479,7 @@ async function main() {
   store.sourceCoverage = buildSourceCoverage(store, today);
   store.aiAdvice = buildAiRecommendations(store, today);
   store.lastRun = Date.now();
-  store.workerVersion = "v15-backup-top5";
+  store.workerVersion = "v16-h2h-snapshots";
   
   // Log summary
   const totalMatches = Object.values(store.matches || {}).flat().length;

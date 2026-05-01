@@ -247,6 +247,18 @@ const SettingsView: React.FC = () => {
                   label: "Historische marktprofielen",
                   value: Number(sourceCoverage.marketProfiles || 0).toLocaleString(),
                 },
+                {
+                  label: "Openfootball H2H",
+                  value: `${Math.round(Number(sourceCoverage.openfootballH2hCoverage || 0) * 100)}%`,
+                },
+                {
+                  label: "Understat xG",
+                  value: `${Math.round(Number(sourceCoverage.understatCoverage || 0) * 100)}%`,
+                },
+                {
+                  label: "FBref shots/splits",
+                  value: `${Math.round(Number(sourceCoverage.fbrefCoverage || 0) * 100)}%`,
+                },
               ].map((item) => (
                 <div key={item.label} className="rounded-xl border border-white/5 bg-slate-900/40 px-3 py-2">
                   <div className="text-[9px] font-black text-slate-500 uppercase">{item.label}</div>
@@ -261,6 +273,9 @@ const SettingsView: React.FC = () => {
                 <span className="font-black text-white mr-1">{sourceCoverage.understat?.status || "onbekend"}:</span>
                 {sourceCoverage.understat?.note || "Nog geen status."}
               </div>
+              <div className="text-[9px] text-slate-500 mt-1">
+                Snapshots {Number(sourceCoverage.understat?.snapshots || sourceCoverage.understatSnapshots || 0).toLocaleString()}
+              </div>
             </div>
 
             <div className="rounded-xl border border-amber-500/10 bg-amber-950/10 p-3">
@@ -268,6 +283,9 @@ const SettingsView: React.FC = () => {
               <div className="text-[10px] text-slate-300">
                 <span className="font-black text-white mr-1">{sourceCoverage.fbref?.status || "onbekend"}:</span>
                 {sourceCoverage.fbref?.note || "Nog geen status."}
+              </div>
+              <div className="text-[9px] text-slate-500 mt-1">
+                Snapshots {Number(sourceCoverage.fbref?.snapshots || sourceCoverage.fbrefSnapshots || 0).toLocaleString()}
               </div>
             </div>
 
