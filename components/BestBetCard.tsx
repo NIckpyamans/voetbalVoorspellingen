@@ -38,7 +38,7 @@ const BestBetCard: React.FC<BestBetCardProps> = ({ bet }) => {
         <div className="text-2xl font-black text-white tracking-tighter">{bet.predHomeGoals}-{bet.predAwayGoals}</div>
         {isFinished && (
           <div className={`mt-1 inline-flex rounded-full px-2 py-0.5 text-[8px] font-black ${scoreWasExact ? "bg-green-500/15 text-green-300" : "bg-red-500/15 text-red-300"}`}>
-            Uitslag {bet.score || "-"} ? {scoreWasExact ? "exact goed" : "niet exact"}
+            Uitslag {bet.score || "-"} - {scoreWasExact ? "exact goed" : "niet exact"}
           </div>
         )}
       </div>
