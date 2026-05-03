@@ -648,6 +648,7 @@ function showImportance(match: any) {
 
 const MatchCard: React.FC<MatchCardProps> = ({ match, prediction, onFavoriteChange }) => {
   const [tab, setTab] = useState<"analyse" | "h2h" | "vorm" | "markten" | "stats">("analyse");
+  const [detailsOpen, setDetailsOpen] = useState(false);
   const [aiAnalysis, setAiAnalysis] = useState<string | null>(null);
   const [aiLoading, setAiLoading] = useState(false);
   const triedRef = useRef(false);
@@ -813,6 +814,22 @@ const MatchCard: React.FC<MatchCardProps> = ({ match, prediction, onFavoriteChan
 
       <ExpandableMatchMeta match={match} prediction={prediction} weather={weather} h2h={h2h} />
 
+      <button
+        type="button"
+        onClick={() => setDetailsOpen((value) => !value)}
+        className="w-full mt-2 rounded-xl border border-white/10 bg-slate-900/70 px-3 py-2 text-left hover:border-blue-400/40 transition flex items-center justify-between gap-3"
+      >
+        <span>
+          <span className="block text-[8px] uppercase font-black text-slate-400">Analyse, H2H, vorm, markt en stats</span>
+          <span className="block text-[9px] text-slate-500">Uitklappen voor alle AI-details onder deze wedstrijd</span>
+        </span>
+        <span className="rounded-full bg-blue-500/15 px-2 py-1 text-[9px] font-black text-blue-200">
+          {detailsOpen ? "Sluiten" : "Meer info"}
+        </span>
+      </button>
+
+      {detailsOpen && (
+        <div className="mt-2 space-y-2">
       <div className="grid grid-cols-5 gap-0.5 mt-2 mb-2 pt-1 border-t border-white/5">
         {[
           { key: "analyse", label: "AI" },
@@ -988,6 +1005,8 @@ const MatchCard: React.FC<MatchCardProps> = ({ match, prediction, onFavoriteChan
               </div>
             </div>
           )}
+        </div>
+      )}
         </div>
       )}
     </div>

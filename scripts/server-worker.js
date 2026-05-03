@@ -3162,33 +3162,196 @@ function getZoneForPosition(meta, position) {
   return meta.zones.find((zone) => position >= zone.from && position <= zone.to) || null;
 }
 
-async function fetchStandings(tournamentId, seasonId, label) {
-  if (!tournamentId || !seasonId) return null;
-  const json = await safeFetch(
-    `${SOFA}/unique-tournament/${tournamentId}/season/${seasonId}/standings/total`
-  );
-  const rows = json?.standings?.[0]?.rows || [];
+function emptyStandingTeam(teamName, teamId = "") {
+  return {
+    team: teamName,
+    teamId: String(teamId || ""),
+    p: 0,
+    w: 0,
+    d: 0,
+    l: 0,
+    gf: 0,
+    ga: 0,
+    pts: 0,
+  };
+}
+
+function buildStandingFromResultRows(label, results, source) {
+  const table = new Map();
+  for (const item of results || []) {
+    const home = String(item.home || "").trim();
+    const away = String(item.away || "").trim();
+    const homeGoals = toNumber(item.homeGoals);
+    const awayGoals = toNumber(item.awayGoals);
+    if (!home || !away || !Number.isFinite(homeGoals) || !Number.isFinite(awayGoals)) continue;
+
+    const homeKey = normalizeName(home);
+    const awayKey = normalizeName(away);
+    if (!homeKey || !awayKey) continue;
+    const homeRow = table.get(homeKey) || emptyStandingTeam(home, item.homeTeamId || "");
+    const awayRow = table.get(awayKey) || emptyStandingTeam(away, item.awayTeamId || "");
+
+    homeRow.p += 1;
+    awayRow.p += 1;
+    homeRow.gf += homeGoals;
+    homeRow.ga += awayGoals;
+    awayRow.gf += awayGoals;
+    awayRow.ga += homeGoals;
+
+    if (homeGoals > awayGoals) {
+      homeRow.w += 1;
+      homeRow.pts += 3;
+      awayRow.l += 1;
+    } else if (awayGoals > homeGoals) {
+      awayRow.w += 1;
+      awayRow.pts += 3;
+      homeRow.l += 1;
+    } else {
+      homeRow.d += 1;
+      awayRow.d += 1;
+      homeRow.pts += 1;
+      awayRow.pts += 1;
+    }
+
+    table.set(homeKey, homeRow);
+    table.set(awayKey, awayRow);
+  }
+
+  const rows = [...table.values()]
+    .sort((a, b) => b.pts - a.pts || (b.gf - b.ga) - (a.gf - a.ga) || b.gf - a.gf || String(a.team).localeCompare(String(b.team)))
+    .map((row, index) => ({ ...row, pos: index + 1 }));
+
   if (!rows.length) return null;
-
-  const mapped = rows.map((row) => ({
-    pos: row.position,
-    team: row.team?.name,
-    teamId: String(row.team?.id || ""),
-    p: row.matches,
-    w: row.wins,
-    d: row.draws,
-    l: row.losses,
-    gf: row.scoresFor,
-    ga: row.scoresAgainst,
-    pts: row.points,
-  }));
-
   return {
     label,
-    rows: mapped,
+    rows,
     updated: Date.now(),
-    meta: deriveStandingMeta(label, mapped.length),
+    source,
+    sources: [{ source, rows: rows.length, totalPlayed: rows.reduce((sum, row) => sum + Number(row.p || 0), 0) }],
+    meta: deriveStandingMeta(label, rows.length),
   };
+}
+
+async function fetchFootballDataStandings(label, dateISO) {
+  const marketCode = MARKET_LEAGUE_CODES[label];
+  if (!marketCode) return null;
+  const results = [];
+  for (const seasonFolder of getSeasonFolders(dateISO, 2)) {
+    const csvText = await fetchText(`https://www.football-data.co.uk/mmz4281/${seasonFolder}/${marketCode}.csv`);
+    if (!csvText) continue;
+    for (const row of parseCsv(csvText)) {
+      const homeGoals = toNumber(row.FTHG);
+      const awayGoals = toNumber(row.FTAG);
+      if (!row.HomeTeam || !row.AwayTeam || !Number.isFinite(homeGoals) || !Number.isFinite(awayGoals)) continue;
+      results.push({
+        date: parseFootballDataDateKey(row.Date || row.date),
+        home: row.HomeTeam,
+        away: row.AwayTeam,
+        homeGoals,
+        awayGoals,
+      });
+    }
+    if (results.length) break;
+  }
+  return buildStandingFromResultRows(label, results, "football-data.co.uk");
+}
+
+async function fetchOpenfootballStandings(label, dateISO) {
+  const competitionCode = OPENFOOTBALL_COMPETITIONS[label];
+  if (!competitionCode) return null;
+  const results = [];
+  for (const seasonTag of getOpenfootballSeasonTags(dateISO, 2)) {
+    const json = await fetchExternalJson(`https://raw.githubusercontent.com/openfootball/football.json/master/${seasonTag}/${competitionCode}.json`);
+    const matches = Array.isArray(json?.matches) ? json.matches : [];
+    for (const match of matches) {
+      const ft = match?.score?.ft;
+      if (!Array.isArray(ft) || ft.length < 2) continue;
+      const homeGoals = toNumber(ft[0]);
+      const awayGoals = toNumber(ft[1]);
+      if (!Number.isFinite(homeGoals) || !Number.isFinite(awayGoals)) continue;
+      results.push({
+        date: match.date || null,
+        home: match.team1 || match.homeTeam || "",
+        away: match.team2 || match.awayTeam || "",
+        homeGoals,
+        awayGoals,
+      });
+    }
+    if (results.length) break;
+  }
+  return buildStandingFromResultRows(label, results, "openfootball");
+}
+
+function standingStrength(standing) {
+  if (!standing?.rows?.length) return 0;
+  return standing.rows.reduce((sum, row) => sum + Number(row.p || 0), 0) + standing.rows.length * 0.1;
+}
+
+function mergeStandingCandidates(label, candidates) {
+  const valid = candidates.filter((item) => item?.rows?.length);
+  if (!valid.length) return null;
+  const best = valid.sort((a, b) => standingStrength(b) - standingStrength(a))[0];
+  const sources = valid.map((item) => ({
+    source: item.source || "sofascore",
+    rows: item.rows.length,
+    totalPlayed: item.rows.reduce((sum, row) => sum + Number(row.p || 0), 0),
+  }));
+  return {
+    ...best,
+    label,
+    source: best.source || "sofascore",
+    sources,
+    updated: Date.now(),
+    meta: deriveStandingMeta(label, best.rows.length),
+  };
+}
+
+async function fetchStandings(tournamentId, seasonId, label, dateISO) {
+  const candidates = [];
+  if (tournamentId && seasonId) {
+    const json = await safeFetch(
+      `${SOFA}/unique-tournament/${tournamentId}/season/${seasonId}/standings/total`
+    );
+    const rows = json?.standings?.[0]?.rows || [];
+    if (rows.length) {
+      const mapped = rows.map((row) => ({
+        pos: row.position,
+        team: row.team?.name,
+        teamId: String(row.team?.id || ""),
+        p: row.matches,
+        w: row.wins,
+        d: row.draws,
+        l: row.losses,
+        gf: row.scoresFor,
+        ga: row.scoresAgainst,
+        pts: row.points,
+      }));
+      candidates.push({
+        label,
+        rows: mapped,
+        updated: Date.now(),
+        source: "sofascore",
+        sources: [{ source: "sofascore", rows: mapped.length, totalPlayed: mapped.reduce((sum, row) => sum + Number(row.p || 0), 0) }],
+        meta: deriveStandingMeta(label, mapped.length),
+      });
+    }
+  }
+
+  const [footballDataStanding, openfootballStanding] = await Promise.all([
+    fetchFootballDataStandings(label, dateISO),
+    fetchOpenfootballStandings(label, dateISO),
+  ]);
+  if (footballDataStanding) candidates.push(footballDataStanding);
+  if (openfootballStanding) candidates.push(openfootballStanding);
+  return mergeStandingCandidates(label, candidates);
+}
+
+function findStandingRow(standing, teamId, teamName) {
+  if (!standing?.rows?.length) return null;
+  const byId = teamId ? standing.rows.find((row) => String(row.teamId || "") === String(teamId || "")) : null;
+  if (byId) return byId;
+  const variants = buildPossibleNames(teamName);
+  return standing.rows.find((row) => buildPossibleNames(row.team).some((name) => variants.includes(name))) || null;
 }
 
 async function fetchLiveStats(eventId) {
@@ -5090,11 +5253,28 @@ async function main() {
       standingsByTournament[key] = cached;
       continue;
     }
-    const fresh = await fetchStandings(info.tournamentId, info.seasonId, info.label);
+    const fresh = await fetchStandings(info.tournamentId, info.seasonId, info.label, today);
     if (fresh) {
       store.standings[key] = fresh;
+      store.standings[`label:${info.label}`] = fresh;
       standingsByTournament[key] = fresh;
+      standingsByTournament[`label:${info.label}`] = fresh;
       await sleep(60);
+    }
+  }
+
+  for (const leagueLabel of allActiveLeagueLabels) {
+    const labelKey = `label:${leagueLabel}`;
+    const cached = store.standings[labelKey];
+    if (cached?.rows?.length && now - Number(cached.updated || 0) <= SEASON_TTL) {
+      standingsByTournament[labelKey] = cached;
+      continue;
+    }
+    const fresh = await fetchStandings(null, null, leagueLabel, today);
+    if (fresh) {
+      store.standings[labelKey] = fresh;
+      standingsByTournament[labelKey] = fresh;
+      await sleep(40);
     }
   }
 
@@ -5118,10 +5298,13 @@ async function main() {
         event.uniqueTournament?.id || event.tournament?.uniqueTournament?.id || event.tournament?.id || null;
       const seasonId = event.season?.id || null;
       const standingsKey = tournamentId && seasonId ? `${tournamentId}_${seasonId}` : "";
-      const standing = standingsByTournament[standingsKey] || store.standings[standingsKey] || null;
+      const labelStandingKey = `label:${leagueInfo.label}`;
+      const standing = standingsByTournament[standingsKey] || store.standings[standingsKey] || standingsByTournament[labelStandingKey] || store.standings[labelStandingKey] || null;
       const standingMeta = standing?.meta || null;
-      const homePos = standing?.rows?.find((row) => String(row.teamId || "") === homeId)?.pos ?? null;
-      const awayPos = standing?.rows?.find((row) => String(row.teamId || "") === awayId)?.pos ?? null;
+      const homeStandingRow = findStandingRow(standing, homeId, homeName);
+      const awayStandingRow = findStandingRow(standing, awayId, awayName);
+      const homePos = homeStandingRow?.pos ?? null;
+      const awayPos = awayStandingRow?.pos ?? null;
 
       getTeam(store.teams, homeId, homeName);
       getTeam(store.teams, awayId, awayName);

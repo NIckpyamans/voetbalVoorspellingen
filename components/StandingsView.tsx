@@ -118,7 +118,16 @@ const StandingsView: React.FC = () => {
   }, []);
 
   const sortedLeagueKeys = useMemo(() => {
-    return Object.keys(standings).sort((a, b) =>
+    const byLabel = new Map<string, string>();
+    for (const key of Object.keys(standings)) {
+      const label = String(standings[key]?.label || key);
+      const currentKey = byLabel.get(label);
+      const currentRows = currentKey ? standings[currentKey]?.rows?.length || 0 : 0;
+      const nextRows = standings[key]?.rows?.length || 0;
+      const prefersLabelKey = key.startsWith("label:") && !String(currentKey || "").startsWith("label:");
+      if (!currentKey || prefersLabelKey || nextRows > currentRows) byLabel.set(label, key);
+    }
+    return [...byLabel.values()].sort((a, b) =>
       String(standings[a]?.label || "").localeCompare(String(standings[b]?.label || ""))
     );
   }, [standings]);
@@ -126,6 +135,12 @@ const StandingsView: React.FC = () => {
   const sortedCupKeys = useMemo(() => {
     return Object.keys(cupSheets).sort((a, b) => a.localeCompare(b));
   }, [cupSheets]);
+
+  useEffect(() => {
+    if (sortedLeagueKeys.length > 0 && (!selectedLeague || !sortedLeagueKeys.includes(selectedLeague))) {
+      setSelectedLeague(sortedLeagueKeys[0]);
+    }
+  }, [selectedLeague, sortedLeagueKeys]);
 
   const currentStanding = selectedLeague ? standings[selectedLeague] : null;
   const currentCup = selectedCup ? cupSheets[selectedCup] : null;
@@ -258,6 +273,13 @@ const StandingsView: React.FC = () => {
                         {zone.label} ({zone.from}-{zone.to})
                       </span>
                     </div>
+                  ))}
+                </div>
+                <div className="flex flex-wrap gap-2">
+                  {((currentStanding as any).sources || [{ source: (currentStanding as any).source || "live", rows: currentStanding.rows.length }]).map((source: any, index: number) => (
+                    <span key={index} className="rounded-full bg-slate-800 px-2 py-1 text-[8px] font-black text-slate-300">
+                      bron: {source.source} {source.totalPlayed ? "- " + source.totalPlayed + " teamduels" : ""}
+                    </span>
                   ))}
                 </div>
                 {(currentStanding.meta?.notes || []).map((note, index) => (
