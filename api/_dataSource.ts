@@ -13,6 +13,15 @@ function candidateBranches() {
   ]);
 }
 
+function urlsForBranchPath(branch: string, relativePath: string) {
+  return branch.includes("/")
+    ? [
+        `${REPO_RAW_BASE}/refs/heads/${branch}/${relativePath}`,
+        `${REPO_RAW_BASE}/${branch}/${relativePath}`,
+      ]
+    : [`${REPO_RAW_BASE}/${branch}/${relativePath}`];
+}
+
 function urlsForBranch(branch: string) {
   return branch.includes("/")
     ? [
@@ -46,4 +55,28 @@ export async function fetchServerStore() {
   }
 
   throw new Error(lastError || "Kon server_data.json niet ophalen");
+}
+
+export async function fetchRepoJson(relativePath: string) {
+  const branches = candidateBranches();
+  let lastError: string | null = null;
+
+  for (const branch of branches) {
+    for (const url of urlsForBranchPath(branch, relativePath)) {
+      try {
+        const response = await fetch(`${url}?t=${Date.now()}`, {
+          headers: { "Cache-Control": "no-cache" },
+        });
+        if (!response.ok) {
+          lastError = `${branch}: GitHub ${response.status}`;
+          continue;
+        }
+        return { data: await response.json(), branch, sourceUrl: url };
+      } catch (err: any) {
+        lastError = `${branch}: ${err?.message || "unknown fetch error"}`;
+      }
+    }
+  }
+
+  throw new Error(lastError || `Kon ${relativePath} niet ophalen`);
 }

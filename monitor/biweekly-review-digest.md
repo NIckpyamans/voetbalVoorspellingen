@@ -4,7 +4,7 @@ Periode: 2026-04-21 t/m 2026-05-04
 
 AI bundel over de laatste 14 dagen: 4 hoofdthema's uit 14 monitorbevindingen.
 
-- Runs: 12
+- Runs: 15
 - Bevindingen: 14
 - Thema's: 4
 
@@ -19,8 +19,7 @@ AI bundel over de laatste 14 dagen: 4 hoofdthema's uit 14 monitorbevindingen.
   - Gebruik het reviewbranch-voorstel als veilige volgende patchronde.
 
 ## Reviewbranch voorstel
-- codex/review-20260504
-- AI reviewvoorstel voor 2026-05-04: 1 aandachtspunt(en) met patchadvies, niet automatisch live.
+- Geen voorstel nodig.
 
 ## Mailstatus
 - Mailverzending vereist nog aparte mailcredentials of een mailservice. De bundel wordt nu wel automatisch opgebouwd en opgeslagen.

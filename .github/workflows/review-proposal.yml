@@ -40,13 +40,17 @@ jobs:
       - name: Build review proposal
         run: node scripts/propose-review-branch.js
 
+      - name: Run Ruflo-style monitor
+        run: node scripts/ruflo-monitor.js
+
       - name: Commit and push proposal
         run: |
           BRANCH_NAME="${{ github.ref_name }}"
           git config user.name github-actions
           git config user.email github-actions@github.com
-          git add monitor/daily-findings.json monitor/review-branch-proposal.json
+          git add monitor/daily-findings.json monitor/review-branch-proposal.json monitor/ruflo-agent-report.json monitor/ruflo-agent-report.md
           git diff --staged --quiet && echo "geen wijzigingen" && exit 0
           git commit -m "update review proposal [skip vercel]"
           git pull --rebase origin "$BRANCH_NAME" || true
           git push origin "$BRANCH_NAME"
+
