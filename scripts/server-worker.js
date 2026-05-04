@@ -592,6 +592,8 @@ function buildPossibleNames(name) {
   if (normalized.includes(" afc")) variants.add(normalized.replace(" afc", "").trim());
   if (normalized.includes(" sc")) variants.add(normalized.replace(" sc", "").trim());
   if (normalized.includes(" ac")) variants.add(normalized.replace(" ac", "").trim());
+  if (normalized.includes("manchester ")) variants.add(normalized.replace("manchester ", "man ").trim());
+  if (normalized.includes("man ")) variants.add(normalized.replace("man ", "manchester ").trim());
   return [...variants].filter(Boolean);
 }
 
@@ -632,15 +634,22 @@ function finalizeSplit(split) {
   };
 }
 
+function calcTeamPressure(pos, totalTeams) {
+  if (!pos || !totalTeams) return 1;
+  const relegationStart = Math.max(totalTeams - 2, 1);
+
+  if (pos <= 2) return 1.1;
+  if (pos === 3) return 1.08;
+  if (pos <= 6) return 1.04;
+  if (pos >= relegationStart) return 1.08;
+  if (pos >= Math.max(totalTeams - 5, 1)) return 1.03;
+  return 1;
+}
+
 function calcMatchImportance(homePos, awayPos, totalTeams) {
   if (!homePos || !awayPos || !totalTeams) return 1;
-
-  const relegationStart = Math.max(totalTeams - 2, 1);
-  const homePressure =
-    homePos <= 3 || homePos >= relegationStart ? 1.08 : homePos <= 6 ? 1.03 : 1;
-  const awayPressure =
-    awayPos <= 3 || awayPos >= relegationStart ? 1.08 : awayPos <= 6 ? 1.03 : 1;
-
+  const homePressure = calcTeamPressure(homePos, totalTeams);
+  const awayPressure = calcTeamPressure(awayPos, totalTeams);
   return Number(Math.max(homePressure, awayPressure).toFixed(2));
 }
 
@@ -1770,7 +1779,9 @@ async function fetchOpenLigaDbScheduledEvents(dateISO) {
 }
 
 function toNumber(value) {
-  const numeric = Number(String(value ?? "").replace(",", "."));
+  const raw = String(value ?? "").trim();
+  if (!raw) return null;
+  const numeric = Number(raw.replace(",", "."));
   return Number.isFinite(numeric) ? numeric : null;
 }
 
@@ -4498,9 +4509,14 @@ function predict(input) {
     awayXG *= clamp(1 - balance * 0.05, 0.92, 1.08);
   }
 
-  if (input.matchImportance && input.matchImportance > 1) {
-    homeXG *= clamp(input.matchImportance, 1, 1.08);
-    awayXG *= clamp(input.matchImportance, 1, 1.08);
+  const homeStandingPressure = calcTeamPressure(input.homeStandingPos ?? input.homePos, input.standingTotalTeams);
+  const awayStandingPressure = calcTeamPressure(input.awayStandingPos ?? input.awayPos, input.standingTotalTeams);
+  if (homeStandingPressure > 1 || awayStandingPressure > 1) {
+    homeXG *= clamp(homeStandingPressure, 1, 1.1);
+    awayXG *= clamp(awayStandingPressure, 1, 1.1);
+  } else if (input.matchImportance && input.matchImportance > 1) {
+    homeXG *= clamp(input.matchImportance, 1, 1.05);
+    awayXG *= clamp(input.matchImportance, 1, 1.05);
   }
 
   const learningEdge = buildLearningEdge(input);
@@ -5654,6 +5670,9 @@ async function main() {
         awayCountry,
         leagueType: leagueInfo.type,
         context,
+        homeStandingPos: homePos,
+        awayStandingPos: awayPos,
+        standingTotalTeams: standing?.rows?.length || 20,
         matchImportance,
         homeMarketProfile,
         awayMarketProfile,
