@@ -1,8 +1,22 @@
-import { fetchServerStore } from "./_dataSource.js";
+import { fetchRepoJson, fetchServerStore } from "./_dataSource.js";
 import fs from "fs";
 import path from "path";
 import { addDaysToDateKey, todayAmsterdamKey } from "../shared/date.js";
 
+async function readRufloReport() {
+  try {
+    const remote = await fetchRepoJson("monitor/ruflo-agent-report.json");
+    return remote.data;
+  } catch {
+    try {
+      const reportPath = path.join(process.cwd(), "monitor", "ruflo-agent-report.json");
+      if (!fs.existsSync(reportPath)) return null;
+      return JSON.parse(fs.readFileSync(reportPath, "utf-8"));
+    } catch {
+      return null;
+    }
+  }
+}
 function readBiweeklyDigest() {
   try {
     const digestPath = path.join(process.cwd(), "monitor", "biweekly-review-digest.json");
@@ -38,6 +52,7 @@ export default async function handler(req: any, res: any) {
     const { store, branch } = await fetchServerStore();
     const lastRun = store.lastRun || null;
     const biweeklyDigest = readBiweeklyDigest();
+    const rufloReport = await readRufloReport();
 
     if (days && typeof days === "string") {
       const numDays = parseInt(days, 10);
@@ -63,6 +78,7 @@ export default async function handler(req: any, res: any) {
           featureDiagnostics: store.featureDiagnostics || null,
           sourceCoverage: store.sourceCoverage || null,
           biweeklyDigest,
+          rufloReport,
           sourceBranch: branch,
           source: "github-worker-v3-multiday",
         });
@@ -87,6 +103,7 @@ export default async function handler(req: any, res: any) {
       featureDiagnostics: store.featureDiagnostics || null,
       sourceCoverage: store.sourceCoverage || null,
       biweeklyDigest,
+      rufloReport,
       sourceBranch: branch,
       source: matches.length ? "github-worker-v3" : "no-matches-yet",
       message: matches.length ? null : "Nog geen wedstrijden gevonden voor deze dag in de actuele workerdata.",
@@ -101,4 +118,5 @@ export default async function handler(req: any, res: any) {
     });
   }
 }
+
 

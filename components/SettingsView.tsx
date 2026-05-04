@@ -14,6 +14,7 @@ const SettingsView: React.FC = () => {
   const [teamLearningCount, setTeamLearningCount] = useState(0);
   const [aiAdvice, setAiAdvice] = useState<any[]>([]);
   const [biweeklyDigest, setBiweeklyDigest] = useState<any | null>(null);
+  const [rufloReport, setRufloReport] = useState<any | null>(null);
   const [featureDiagnostics, setFeatureDiagnostics] = useState<any | null>(null);
   const [sourceCoverage, setSourceCoverage] = useState<any | null>(null);
   const [manualAdvice, setManualAdvice] = useState("");
@@ -41,6 +42,7 @@ const SettingsView: React.FC = () => {
         if (data.teamLearningCount != null) setTeamLearningCount(Number(data.teamLearningCount || 0));
         if (Array.isArray(data.aiAdvice)) setAiAdvice(data.aiAdvice);
         if (data.biweeklyDigest) setBiweeklyDigest(data.biweeklyDigest);
+        if (data.rufloReport) setRufloReport(data.rufloReport);
         if (data.featureDiagnostics) setFeatureDiagnostics(data.featureDiagnostics);
         if (data.sourceCoverage) setSourceCoverage(data.sourceCoverage);
       })
@@ -225,6 +227,84 @@ const SettingsView: React.FC = () => {
         )}
       </div>
 
+
+      <div className="glass-card rounded-2xl border border-cyan-500/10 p-5 bg-cyan-950/5">
+        <div className="flex items-start justify-between gap-3 mb-3">
+          <div>
+            <div className="text-[10px] font-black text-cyan-300 uppercase">Ruflo AI-agentlaag</div>
+            <div className="text-[11px] text-slate-400 mt-1">
+              Extra reviewlaag naast productie: leest monitor, data en reviews, zoekt gratis oplossingen en maakt patchadvies zonder blind live te gaan.
+            </div>
+          </div>
+          <span className="text-[8px] font-black px-2 py-0.5 rounded-full bg-cyan-900/30 text-cyan-300">
+            veilig naast app
+          </span>
+        </div>
+
+        {rufloReport ? (
+          <div className="space-y-3">
+            <div className="rounded-xl border border-white/5 bg-slate-900/40 p-3">
+              <div className="text-[11px] font-black text-white">{rufloReport.summary}</div>
+              <div className="text-[9px] text-slate-500 mt-1">
+                Laatste Ruflo-run {rufloReport.generatedAt ? new Date(rufloReport.generatedAt).toLocaleString("nl-NL") : "onbekend"}
+              </div>
+            </div>
+
+            <div className="grid md:grid-cols-3 gap-2">
+              {[
+                { key: "data", label: "Betere datalaag", agent: rufloReport.agents?.data, tone: "blue" },
+                { key: "learning", label: "Betere leerlaag", agent: rufloReport.agents?.learning, tone: "green" },
+                { key: "control", label: "Ontwikkelcontrole", agent: rufloReport.agents?.control, tone: "purple" },
+              ].map((item) => (
+                <div key={item.key} className="rounded-xl border border-white/5 bg-slate-900/40 p-3">
+                  <div className={`text-[9px] font-black uppercase ${item.tone === "green" ? "text-emerald-300" : item.tone === "purple" ? "text-purple-300" : "text-blue-300"}`}>
+                    {item.label}
+                  </div>
+                  <div className="text-[22px] font-black text-white mt-1">{Number(item.agent?.score || 0)}%</div>
+                  <div className="text-[9px] text-slate-500 mt-1 leading-relaxed">{item.agent?.summary || "Nog geen agentrapport."}</div>
+                </div>
+              ))}
+            </div>
+
+            <div className="rounded-xl border border-white/5 bg-slate-900/30 p-3">
+              <div className="text-[10px] font-black text-slate-400 uppercase mb-2">Gratis acties die Ruflo adviseert</div>
+              <div className="space-y-2 max-h-64 overflow-y-auto pr-1">
+                {(rufloReport.recommendedNextActions || []).slice(0, 10).map((item: any, index: number) => (
+                  <div key={`${item.title}-${index}`} className="rounded-lg border border-white/5 bg-slate-950/30 px-3 py-2">
+                    <div className="flex items-center justify-between gap-3">
+                      <div className="text-[10px] font-black text-white">{item.title}</div>
+                      <span className={`text-[8px] font-black px-2 py-0.5 rounded-full ${
+                        item.priority === "high"
+                          ? "bg-red-900/30 text-red-300"
+                          : item.priority === "medium"
+                            ? "bg-amber-900/30 text-amber-300"
+                            : "bg-green-900/30 text-green-300"
+                      }`}>
+                        {item.agent || "agent"} · {item.priority || "low"}
+                      </span>
+                    </div>
+                    <div className="text-[9px] text-slate-400 mt-1 leading-relaxed">{item.freeSolution}</div>
+                    {Array.isArray(item.files) && item.files.length > 0 && (
+                      <div className="text-[8px] text-slate-600 mt-1">Bestanden: {item.files.join(", ")}</div>
+                    )}
+                  </div>
+                ))}
+              </div>
+            </div>
+
+            <div className="rounded-xl border border-emerald-500/10 bg-emerald-950/10 p-3">
+              <div className="text-[10px] font-black text-emerald-300 uppercase mb-1">Gratis guardrails</div>
+              <div className="space-y-1">
+                {(rufloReport.freeOnlyGuardrails || []).map((item: string) => (
+                  <div key={item} className="text-[10px] text-slate-300">- {item}</div>
+                ))}
+              </div>
+            </div>
+          </div>
+        ) : (
+          <div className="text-[11px] text-slate-500">Nog geen Ruflo-agentrapport. Draai `npm run monitor:ruflo` of wacht op de review-workflow.</div>
+        )}
+      </div>
       <div className="glass-card rounded-2xl border border-white/5 p-5">
         <div className="text-[10px] font-black text-slate-400 uppercase mb-3">Bronkwaliteit van vandaag</div>
         {sourceCoverage ? (
@@ -593,3 +673,4 @@ const SettingsView: React.FC = () => {
 };
 
 export default SettingsView;
+

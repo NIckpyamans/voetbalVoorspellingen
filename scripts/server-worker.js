@@ -2938,9 +2938,27 @@ function buildExactScoreTipScore(prediction, match) {
     0,
     1
   ) * 0.045;
-  const riskPenalty = prediction?.modelEdges?.riskProfile === "high" ? 0.055 : prediction?.modelEdges?.riskProfile === "medium" ? 0.025 : 0;
+  const learningEdge = prediction?.modelEdges?.learningEdge || match?.learningSummary || null;
+  const learningGames = Number(learningEdge?.totalReviewedMatches || 0);
+  const learningReliability = Number(learningEdge?.combinedReliability || 0);
+  const learningBonus = learningGames >= 8 ? clamp((learningReliability - 0.48) * 0.12, -0.025, 0.035) : 0;
+  const marketCoverage = Number(prediction?.modelEdges?.marketCalibration?.closingCoverage || 0);
+  const marketBonus = marketCoverage >= 0.45 ? 0.018 : marketCoverage <= 0.05 ? -0.018 : 0;
+  const scoreSelectionReason = String(prediction?.modelEdges?.scoreSelection?.reason || "");
+  const adjustedScoreBonus = scoreSelectionReason.includes("aangepast") ? 0.012 : 0;
+  const riskPenalty = prediction?.modelEdges?.riskProfile === "high" ? 0.065 : prediction?.modelEdges?.riskProfile === "medium" ? 0.03 : 0;
   const score = clamp(
-    exactProb * 2.9 + confidence * 0.22 + modelAgreement * 0.12 + sourceQuality * 0.08 + lineupBonus + h2hBonus + reliabilityBonus - riskPenalty,
+    exactProb * 3.05 +
+      confidence * 0.18 +
+      modelAgreement * 0.16 +
+      sourceQuality * 0.1 +
+      lineupBonus +
+      h2hBonus +
+      reliabilityBonus +
+      learningBonus +
+      marketBonus +
+      adjustedScoreBonus -
+      riskPenalty,
     0,
     0.99
   );
@@ -2951,6 +2969,9 @@ function buildExactScoreTipScore(prediction, match) {
   if (lineupBonus) reasons.push("opstellingen bevestigd");
   if (h2hBonus) reasons.push("H2H gevuld");
   if (reliabilityBonus >= 0.025) reasons.push("competitie/fase betrouwbaar");
+  if (learningBonus >= 0.015) reasons.push("leerdata positief");
+  if (marketBonus > 0) reasons.push("marktdekking sterk");
+  if (adjustedScoreBonus) reasons.push("scoreselectie bijgestuurd");
   if (riskPenalty) reasons.push("risico meegewogen");
   return {
     score: Number(score.toFixed(3)),
@@ -4265,7 +4286,7 @@ function buildContext(matchInput) {
     homeZone: homeZone?.label || null,
     awayZone: awayZone?.label || null,
     rivalry,
-    summary: notes.length ? notes.join(" · ") : null,
+    summary: notes.length ? notes.join(" Â· ") : null,
     stakes:
       notes.length > 0
         ? notes.join(", ")
@@ -5770,3 +5791,4 @@ async function main() {
 }
 
 main();
+
