@@ -6,7 +6,7 @@ Ruflo draait als extra agentlaag naast de app: hij leest monitor/data/reviews, z
 
 ## Agents
 - Data: Datalaag: H2H 40%, bookmakers 100%, refs 0%.
-- Leren: Leerlaag: 270 reviews, exact 12%, winnaar/gelijk 46%, top-5 exact 4%.
+- Leren: Leerlaag: 270 reviews, exact 12%, winnaar/gelijk 46%, top-5 exact 8%.
 - Controle: Ontwikkelcontrole: 0 actieve monitorissues op 2026-05-04; digest 2026-04-21 t/m 2026-05-04.
 
 ## Gratis acties
