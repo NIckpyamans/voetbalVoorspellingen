@@ -10,12 +10,32 @@ import { getFavorites } from "./components/FavoriteTeams";
 import { Match } from "./types";
 import { velocityEngine } from "./services/velocityEngine";
 import { getOrCreateTeam, saveToMemory, updateTeamModelsFromResult } from "./services/geminiService";
+import { todayAmsterdamKey, toAmsterdamDateKey } from "./shared/date.js";
 
 type View = "dashboard" | "history" | "standings" | "settings";
 type FilterMode = "alle" | "favorieten" | "live" | "gepland" | "gespeeld";
 
+type DashboardHistoryItem = {
+  matchId: string;
+  prediction: string;
+  actual: string;
+  wasCorrect: boolean;
+  winnerCorrect?: boolean;
+  errorMargin?: number;
+  homeTeam?: string | null;
+  awayTeam?: string | null;
+  league?: string | null;
+  bestBetRank?: number | null;
+  topExactScorePick?: boolean;
+  exactScoreConfidence?: number;
+};
+
+function pct(part: number, total: number) {
+  return total > 0 ? Math.round((part / total) * 100) : 0;
+}
+
 function isoDate(date: Date) {
-  return date.toISOString().split("T")[0];
+  return toAmsterdamDateKey(date) || todayAmsterdamKey();
 }
 
 function formatDateLabel(dateISO: string) {
@@ -28,12 +48,7 @@ function formatDateLabel(dateISO: string) {
 }
 
 function formatAmsterdamDate(date: Date) {
-  return new Intl.DateTimeFormat("sv-SE", {
-    timeZone: "Europe/Amsterdam",
-    year: "numeric",
-    month: "2-digit",
-    day: "2-digit",
-  }).format(date);
+  return toAmsterdamDateKey(date) || isoDate(date);
 }
 
 function isLive(match: Match) {
@@ -98,10 +113,13 @@ const LEAGUE_ORDER = [
 
 const App: React.FC = () => {
   const [view, setView] = useState<View>("dashboard");
-  const [selectedDate, setSelectedDate] = useState<string>(isoDate(new Date()));
+  const [selectedDate, setSelectedDate] = useState<string>(() => {
+    return isoDate(new Date());
+  });
   const [matches, setMatches] = useState<Match[]>([]);
   const [predictions, setPredictions] = useState<Record<string, any>>({});
   const [standings, setStandings] = useState<Record<string, any>>({});
+  const [historyItems, setHistoryItems] = useState<DashboardHistoryItem[]>([]);
   const [loading, setLoading] = useState(true);
   const [syncStatus, setSyncStatus] = useState<"laden" | "klaar" | "fout">("laden");
   const [lastRun, setLastRun] = useState<number | null>(null);
@@ -115,6 +133,26 @@ const App: React.FC = () => {
       .then((response) => response.json())
       .then((data) => setStandings(data.standings || {}))
       .catch(() => {});
+  }, []);
+
+  useEffect(() => {
+    let cancelled = false;
+    fetch("/api/history", { cache: "no-store" })
+      .then((response) => response.json())
+      .then((data) => {
+        if (!cancelled) setHistoryItems(Array.isArray(data.items) ? data.items : []);
+      })
+      .catch(() => {
+        try {
+          const raw = localStorage.getItem("footypredict_memory");
+          if (!cancelled) setHistoryItems(raw ? JSON.parse(raw) : []);
+        } catch {
+          if (!cancelled) setHistoryItems([]);
+        }
+      });
+    return () => {
+      cancelled = true;
+    };
   }, []);
 
   useEffect(() => {
@@ -136,7 +174,7 @@ const App: React.FC = () => {
         const prediction = nextPredictions[match.id];
         if (!prediction) continue;
 
-        saveToMemory(match.id, `${prediction.predHomeGoals}-${prediction.predAwayGoals}`, match.score, match);
+        saveToMemory(match.id, `${prediction.predHomeGoals}-${prediction.predAwayGoals}`, match.score, match, prediction);
         const home = getOrCreateTeam({
           id: match.homeTeamId,
           name: match.homeTeamName,
@@ -255,7 +293,7 @@ const App: React.FC = () => {
     return Object.entries(predictions)
       .filter(([matchId]) => {
         const match = matches.find((match) => match.id === matchId);
-        return match && belongsToSelectedDate(match, selectedDate) && !isFinished(match);
+        return match && belongsToSelectedDate(match, selectedDate);
       })
       .map(([matchId, pred]) => {
         const match = matches.find((match) => match.id === matchId);
@@ -265,6 +303,8 @@ const App: React.FC = () => {
         const drawProb = pred.drawProb || 0;
         const awayProb = pred.awayProb || 0;
         const maxProb = Math.max(homeProb, drawProb, awayProb);
+        const exactScoreConfidence = Number((pred as any).exactScoreConfidence || (match as any).exactScoreConfidence || pred.exactProb || 0);
+        const rank = Number((pred as any).bestBetRank || (match as any).bestBetRank || 0) || null;
 
         return {
           matchId,
@@ -278,12 +318,72 @@ const App: React.FC = () => {
           awayProb,
           confidence: pred.confidence || maxProb,
           exactProb: pred.exactProb,
+          exactScoreConfidence,
+          bestBetRank: rank,
+          exactScoreReasons: (pred as any).exactScoreReasons || (match as any).exactScoreReasons || [],
+          status: match.status,
+          score: match.score,
         };
       })
       .filter((bet): bet is NonNullable<typeof bet> => bet !== null)
-      .sort((a, b) => (b.confidence || 0) - (a.confidence || 0))
+      .sort((a, b) => {
+        if (a.bestBetRank && b.bestBetRank) return a.bestBetRank - b.bestBetRank;
+        if (a.bestBetRank) return -1;
+        if (b.bestBetRank) return 1;
+        return (b.exactScoreConfidence || 0) - (a.exactScoreConfidence || 0) || (b.confidence || 0) - (a.confidence || 0);
+      })
       .slice(0, 5);
   }, [predictions, matches, selectedDate]);
+
+  const dashboardInsights = useMemo(() => {
+    const topFiveReviews = historyItems.filter((item) => item.topExactScorePick || (Number(item.bestBetRank || 0) > 0 && Number(item.bestBetRank || 0) <= 5));
+    const otherReviews = historyItems.filter((item) => !(item.topExactScorePick || (Number(item.bestBetRank || 0) > 0 && Number(item.bestBetRank || 0) <= 5)));
+    const topExact = topFiveReviews.filter((item) => item.wasCorrect).length;
+    const topOutcome = topFiveReviews.filter((item) => item.winnerCorrect).length;
+    const otherExact = otherReviews.filter((item) => item.wasCorrect).length;
+    const topAvgError = topFiveReviews.length
+      ? (topFiveReviews.reduce((sum, item) => sum + Number(item.errorMargin || 0), 0) / topFiveReviews.length).toFixed(2)
+      : "0.00";
+    const otherExactPct = pct(otherExact, otherReviews.length);
+    const topExactPct = pct(topExact, topFiveReviews.length);
+    const clubMap = new Map<string, { team: string; total: number; exact: number; outcome: number; avgError: number }>();
+    for (const item of historyItems) {
+      for (const team of [item.homeTeam, item.awayTeam]) {
+        const name = String(team || "").trim();
+        if (!name) continue;
+        const current = clubMap.get(name) || { team: name, total: 0, exact: 0, outcome: 0, avgError: 0 };
+        current.total += 1;
+        if (item.wasCorrect) current.exact += 1;
+        if (item.winnerCorrect) current.outcome += 1;
+        current.avgError += Number(item.errorMargin || 0);
+        clubMap.set(name, current);
+      }
+    }
+    const topClubs = [...clubMap.values()]
+      .filter((item) => item.total >= 2)
+      .map((item) => ({
+        ...item,
+        exactPct: pct(item.exact, item.total),
+        outcomePct: pct(item.outcome, item.total),
+        avgError: Number((item.avgError / Math.max(item.total, 1)).toFixed(2)),
+      }))
+      .sort((a, b) => b.exactPct - a.exactPct || b.exact - a.exact || b.outcomePct - a.outcomePct || b.total - a.total)
+      .slice(0, 10);
+
+    return {
+      topFiveTotal: topFiveReviews.length,
+      topFiveExact: topExact,
+      topFiveOutcome: topOutcome,
+      topFiveExactPct: topExactPct,
+      topFiveOutcomePct: pct(topOutcome, topFiveReviews.length),
+      topFiveAvgError: topAvgError,
+      otherExactPct,
+      otherExactCount: otherExact,
+      otherTotal: otherReviews.length,
+      topSelectionIsBetter: topExactPct >= otherExactPct,
+      topClubs,
+    };
+  }, [historyItems]);
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900">
@@ -378,6 +478,88 @@ const App: React.FC = () => {
               })}
             </div>
 
+            <div className="grid grid-cols-1 2xl:grid-cols-[minmax(0,1fr)_360px] gap-4 mb-6">
+              <section className="glass-card rounded-2xl border border-yellow-500/20 p-4 bg-yellow-500/5">
+                <div className="flex items-center justify-between gap-3 mb-3">
+                  <div>
+                    <h2 className="text-sm font-black uppercase text-white flex items-center gap-2">
+                      <span className="w-2 h-2 bg-yellow-400 rounded-full" />
+                      Top 5 exacte-score voorspellingen vandaag
+                    </h2>
+                    <p className="text-[11px] text-slate-500 mt-0.5">
+                      AI kiest deze 5 omdat de kans op de exacte uitslag het hoogst is. Deze picks worden achteraf apart gemonitord.
+                    </p>
+                  </div>
+                  <div className="hidden md:block rounded-full bg-yellow-500/15 px-3 py-1 text-[10px] font-black text-yellow-200">
+                    {bestBets.length}/5 gevuld
+                  </div>
+                </div>
+
+                {bestBets.length > 0 ? (
+                  <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-5 gap-3">
+                    {bestBets.map((bet: any) => (
+                      <BestBetCard key={bet.matchId} bet={bet} />
+                    ))}
+                  </div>
+                ) : (
+                  <div className="rounded-xl border border-dashed border-yellow-500/20 bg-slate-950/30 p-5 text-sm font-bold text-slate-400">
+                    Nog geen top-5 beschikbaar voor deze dag. Zodra de worker voorspellingen voor deze datum heeft, verschijnt dit blok automatisch.
+                  </div>
+                )}
+
+                <div className="mt-3 grid grid-cols-2 md:grid-cols-4 gap-2">
+                  <div className="rounded-xl bg-slate-950/40 border border-white/5 p-3">
+                    <div className="text-[8px] font-black text-slate-500 uppercase">Top-5 exact</div>
+                    <div className="text-xl font-black text-white">{dashboardInsights.topFiveExactPct}%</div>
+                    <div className="text-[9px] text-slate-500">{dashboardInsights.topFiveExact}/{dashboardInsights.topFiveTotal}</div>
+                  </div>
+                  <div className="rounded-xl bg-slate-950/40 border border-white/5 p-3">
+                    <div className="text-[8px] font-black text-slate-500 uppercase">Winnaar/gelijk</div>
+                    <div className="text-xl font-black text-white">{dashboardInsights.topFiveOutcomePct}%</div>
+                    <div className="text-[9px] text-slate-500">top-5 monitor</div>
+                  </div>
+                  <div className="rounded-xl bg-slate-950/40 border border-white/5 p-3">
+                    <div className="text-[8px] font-black text-slate-500 uppercase">Rest exact</div>
+                    <div className="text-xl font-black text-white">{dashboardInsights.otherExactPct}%</div>
+                    <div className="text-[9px] text-slate-500">{dashboardInsights.otherExactCount}/{dashboardInsights.otherTotal}</div>
+                  </div>
+                  <div className={`rounded-xl border p-3 ${dashboardInsights.topSelectionIsBetter ? "border-green-500/20 bg-green-500/10" : "border-amber-500/20 bg-amber-500/10"}`}>
+                    <div className="text-[8px] font-black text-slate-500 uppercase">Selectiecheck</div>
+                    <div className={`text-[12px] font-black mt-1 ${dashboardInsights.topSelectionIsBetter ? "text-green-300" : "text-amber-300"}`}>
+                      {dashboardInsights.topSelectionIsBetter ? "AI kiest beter" : "Bijsturen nodig"}
+                    </div>
+                    <div className="text-[9px] text-slate-500">foutmarge {dashboardInsights.topFiveAvgError}</div>
+                  </div>
+                </div>
+              </section>
+
+              <aside className="glass-card rounded-2xl border border-blue-500/20 p-4 bg-blue-500/5">
+                <div className="mb-3">
+                  <h2 className="text-sm font-black uppercase text-white">Top 10 clubs exact goed</h2>
+                  <p className="text-[11px] text-slate-500 mt-0.5">Teams waarbij AI historisch vaak de juiste uitslag raakt.</p>
+                </div>
+                {dashboardInsights.topClubs.length > 0 ? (
+                  <div className="space-y-2 max-h-[420px] overflow-y-auto pr-1">
+                    {dashboardInsights.topClubs.map((club, index) => (
+                      <div key={club.team} className="rounded-xl bg-slate-950/40 border border-white/5 px-3 py-2">
+                        <div className="flex items-center justify-between gap-2">
+                          <div className="min-w-0">
+                            <div className="text-[11px] font-black text-white truncate">#{index + 1} {club.team}</div>
+                            <div className="text-[9px] text-slate-500">{club.exact}/{club.total} exact - winnaar {club.outcomePct}%</div>
+                          </div>
+                          <div className="text-lg font-black text-green-300">{club.exactPct}%</div>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                ) : (
+                  <div className="rounded-xl border border-dashed border-blue-500/20 bg-slate-950/30 p-4 text-[12px] font-bold text-slate-400">
+                    Nog te weinig reviews voor een betrouwbare club top 10.
+                  </div>
+                )}
+              </aside>
+            </div>
+
             {loading ? (
               <div className={matchGridClass}>
                 {[1, 2, 3, 4, 5, 6].map((index) => (
@@ -410,20 +592,6 @@ const App: React.FC = () => {
                           prediction={predictions[match.id]}
                           onFavoriteChange={() => setFavRefresh((value) => value + 1)}
                         />
-                      ))}
-                    </div>
-                  </section>
-                )}
-
-                {selectedLeague === "alle" && activeFilter === "alle" && bestBets.length > 0 && (
-                  <section>
-                    <h2 className="text-sm font-black uppercase mb-3 flex items-center gap-2">
-                      <span className="w-2 h-2 bg-yellow-400 rounded-full" />
-                      Top 5 meest zekere tips
-                    </h2>
-                    <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 gap-3">
-                      {bestBets.map((bet: any) => (
-                        <BestBetCard key={bet.matchId} bet={bet} />
                       ))}
                     </div>
                   </section>

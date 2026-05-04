@@ -13,6 +13,8 @@
     "worker:loop": "bash -lc \"while true; do node scripts/server-worker.js; sleep 30; done\"",
     "monitor:health": "node scripts/health-check.js",
     "monitor:report": "node scripts/day-report.js",
+    "monitor:proposal": "node scripts/propose-review-branch.js",
+    "monitor:biweekly": "node scripts/biweekly-review-digest.js",
     "train:prepare": "node scripts/prepare-ensemble-data.js"
   },
   "dependencies": {

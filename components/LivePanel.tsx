@@ -1,34 +1,12 @@
 import React, { useEffect, useMemo, useState } from "react";
 import { Match } from "../types";
+import { getLiveMinuteLabel } from "../shared/minute.js";
 
 interface LivePanelProps {
   open: boolean;
   onClose: () => void;
   liveMatches: Match[];
   onJumpToLeague: (league: string) => void;
-}
-
-function parseMinuteValue(minute?: string | number | null, minuteValue?: number | null) {
-  if (typeof minuteValue === "number" && Number.isFinite(minuteValue)) return minuteValue;
-  if (typeof minute === "number" && Number.isFinite(minute)) return minute;
-  if (!minute) return null;
-  if (String(minute).toUpperCase() === "HT") return 45;
-  const plusMatch = String(minute).match(/(\d+)\s*\+\s*(\d+)/);
-  if (plusMatch) return Number(plusMatch[1]) + Number(plusMatch[2]);
-  const plainMatch = String(minute).match(/(\d+)/);
-  return plainMatch ? Number(plainMatch[1]) : null;
-}
-
-function getLiveMinuteLabel(match: any, now: number) {
-  const period = String(match?.period || "").toLowerCase();
-  if (period.includes("half time") || period.includes("halftime") || period.includes("break")) return "HT";
-  const base = parseMinuteValue(match?.minute, match?.minuteValue);
-  if (base == null) return "LIVE";
-  const updatedAt = Number(match?.liveUpdatedAt || 0) || 0;
-  const drift = updatedAt > 0 ? Math.max(0, Math.floor((now - updatedAt) / 60000)) : 0;
-  const total = base + drift;
-  if (total > 90) return `90+${total - 90}'`;
-  return `${total}'`;
 }
 
 const LivePanel: React.FC<LivePanelProps> = ({ open, onClose, liveMatches, onJumpToLeague }) => {

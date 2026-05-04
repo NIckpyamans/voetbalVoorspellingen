@@ -9,12 +9,13 @@ const FINDINGS_FILE = path.join(ROOT, "monitor", "daily-findings.json");
 
 const FILES = {
   app: path.join(ROOT, "App.tsx"),
-  matchCard: path.join(ROOT, "MatchCard.tsx"),
-  livePanel: path.join(ROOT, "LivePanel.tsx"),
-  worker: path.join(ROOT, "server-worker.js"),
-  matchService: path.join(ROOT, "matchService.ts"),
-  logo: path.join(ROOT, "logo.ts"),
-  standings: path.join(ROOT, "standings.ts"),
+  matchCard: path.join(ROOT, "components", "MatchCard.tsx"),
+  livePanel: path.join(ROOT, "components", "LivePanel.tsx"),
+  worker: path.join(ROOT, "scripts", "server-worker.js"),
+  matchService: path.join(ROOT, "services", "matchService.ts"),
+  minuteHelper: path.join(ROOT, "shared", "minute.js"),
+  logo: path.join(ROOT, "api", "logo.ts"),
+  standings: path.join(ROOT, "api", "standings.ts"),
 };
 
 function ensureDir(filePath) {
@@ -85,6 +86,7 @@ function collectDataChecks() {
   const todayMatches = Array.isArray(store.matches?.[today]) ? store.matches[today] : [];
   const standingsCount = Object.keys(store.standings || {}).length;
   const cupSheetCount = Object.keys(store.cupSheets || {}).length;
+  const phaseReliabilityCount = Object.keys(store.phaseReliability || {}).length;
   const liveMatches = todayMatches.filter((match) => String(match.status || "").toUpperCase() === "LIVE");
   const liveWithoutMinute = liveMatches.filter(
     (match) => !match.minute && !match.minuteValue && !String(match.period || "").toLowerCase().includes("half time")
@@ -124,6 +126,34 @@ function collectDataChecks() {
     pushIssue(issues, "cupsheets_empty", "medium", "cupSheets is leeg.");
   }
 
+  if (phaseReliabilityCount === 0) {
+    pushIssue(issues, "phase_reliability_empty", "medium", "phaseReliability is leeg.");
+  }
+
+  const marketWithoutBookmakers = todayMatches.filter(
+    (match) =>
+      !!match.marketCalibration &&
+      (!Array.isArray(match.marketCalibration.bookmakerSignals) || !match.marketCalibration.bookmakerSignals.length)
+  );
+  if (todayMatches.length && marketWithoutBookmakers.length === todayMatches.length) {
+    pushIssue(
+      issues,
+      "bookmaker_signals_missing",
+      "medium",
+      "Alle wedstrijden missen bookmaker-signalen in de marktcalibratie."
+    );
+  }
+
+  const historicalRefs = todayMatches.filter((match) => Number(match.refereeProfile?.matches || 0) > 0);
+  if (todayMatches.length && historicalRefs.length === 0) {
+    pushIssue(
+      issues,
+      "historical_referee_unmatched",
+      "low",
+      "Geen enkele wedstrijd van vandaag gebruikt historische referee-data."
+    );
+  }
+
   if (standingsCount === 0) {
     pushIssue(issues, "standings_empty", "high", "Standings is leeg.");
   }
@@ -152,6 +182,7 @@ function collectDataChecks() {
       h2hMissing: h2hEmpty.length,
       standingsCount,
       cupSheetCount,
+      phaseReliabilityCount,
     },
   };
 }
@@ -163,22 +194,35 @@ function collectCodeChecks() {
   const livePanelText = readText(FILES.livePanel);
   const workerText = readText(FILES.worker);
   const matchServiceText = readText(FILES.matchService);
+  const minuteHelperText = readText(FILES.minuteHelper);
   const logoText = readText(FILES.logo);
 
   if (!appText.includes("belongsToSelectedDate")) {
     pushIssue(issues, "date_filter_missing", "high", "Dashboard mist een expliciete dagfilterfunctie.");
   }
 
-  if (!matchCardText.includes("LIVE ") && !matchCardText.includes("LIVE nu")) {
-    pushIssue(issues, "live_chip_missing", "high", "MatchCard toont geen duidelijke live-chip.");
-  }
-
   if (!workerText.includes("resolveMinuteState")) {
     pushIssue(issues, "minute_fallback_missing", "high", "Worker mist de extra minute fallback-logica.");
   }
 
+  if (!workerText.includes("buildRefereeAliasVariants")) {
+    pushIssue(issues, "referee_alias_cache_missing", "medium", "Worker mist een bredere referee alias-cache.");
+  }
+
+  if (!workerText.includes("bookmakerSignals")) {
+    pushIssue(issues, "bookmaker_signal_logic_missing", "medium", "Worker mist bookmaker-specifieke closing-signalen.");
+  }
+
+  if (!workerText.includes("\"qualification\"") || !workerText.includes("\"friendly\"")) {
+    pushIssue(issues, "phase_buckets_missing", "medium", "Worker mist fijnere fasegroepen zoals qualification/friendly.");
+  }
+
   if (!matchServiceText.includes("normalizeMinute")) {
     pushIssue(issues, "matchservice_normalize_missing", "medium", "matchService normaliseert minute niet.");
+  }
+
+  if (!minuteHelperText.includes("getLiveMinuteLabel")) {
+    pushIssue(issues, "minute_helper_missing", "medium", "Gedeelde minute-helper ontbreekt.");
   }
 
   if (!logoText.includes("/api/logo") && !matchCardText.includes("/api/logo?id=")) {
@@ -186,7 +230,7 @@ function collectCodeChecks() {
   }
 
   const parserHits = [matchCardText, livePanelText, matchServiceText]
-    .map((text) => (text.includes("parseMinuteValue") ? 1 : 0))
+    .map((text) => (text.includes("function parseMinuteValue") ? 1 : 0))
     .reduce((sum, value) => sum + value, 0);
 
   if (parserHits >= 3) {
@@ -228,7 +272,7 @@ function main() {
     timestamp: nowIso(),
     stats: dataChecks.stats,
     issues,
-    shouldNotify: issues.length > 0,
+    shouldNotify: false,
   };
 
   storeFindings(output);

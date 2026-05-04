@@ -1,4 +1,5 @@
 import { fetchMatchesAndPredictions, MatchesUpdate } from "./matchService";
+import { todayAmsterdamKey } from "../shared/date.js";
 
 class VelocityEngine {
   private interval: number | null = null;
@@ -22,7 +23,7 @@ class VelocityEngine {
     this.currentDate = date;
     await this.fetch(date);
 
-    const isToday = date === new Date().toISOString().split("T")[0];
+    const isToday = date === todayAmsterdamKey();
     const ms = isToday ? 30_000 : 300_000;
 
     this.interval = window.setInterval(async () => {
