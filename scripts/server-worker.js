@@ -221,6 +221,31 @@ const SPORTSDB_NAME_TO_LABEL = {
   "Spanish La Liga": "Spain - LaLiga",
 };
 
+
+const CURATED_FIXTURE_BACKFILL = [
+  {
+    date: "2026-05-04",
+    time: "21:00",
+    league: "England - Premier League",
+    tournament: "Premier League",
+    country: "England",
+    home: "Everton",
+    away: "Manchester City",
+    sourceNote: "BBC fixtures backfill",
+  },
+  {
+    date: "2026-05-05",
+    time: "21:00",
+    league: "Europe - Champions League",
+    tournament: "Champions League",
+    country: "Europe",
+    home: "Arsenal",
+    away: "Atletico Madrid",
+    round: "Semi-finals",
+    aggregateLabel: "Aggregate 1-1",
+    sourceNote: "BBC fixtures backfill",
+  },
+];
 const OPENLIGADB_LEAGUES = {
   bl1: "Germany - Bundesliga",
   bl2: "Germany - 2. Bundesliga",
@@ -1541,6 +1566,44 @@ function getSportsDbSeasonLabel(dateISO) {
   return month >= 6 ? `${year}-${year + 1}` : `${year - 1}-${year}`;
 }
 
+
+function fetchCuratedFixtureBackfill(dateISO) {
+  return CURATED_FIXTURE_BACKFILL
+    .filter((item) => item.date === dateISO)
+    .map((item) => {
+      const leagueInfo = LEAGUES.find((league) => league.label === item.league) || {
+        label: item.league,
+        name: item.tournament,
+        country: item.country,
+        type: item.league.includes("Champions") ? "cup" : "league",
+      };
+      const kickoffIso = buildFootballDataKickoffIso(dateISO, item.time);
+      const id = `curated-${dateISO}-${normalizeName(item.home)}-${normalizeName(item.away)}`;
+      return {
+        id,
+        startTimestamp: Math.floor(new Date(kickoffIso).getTime() / 1000),
+        homeTeam: { id: "", name: item.home, country: { name: item.country || leagueInfo.country || "" } },
+        awayTeam: { id: "", name: item.away, country: { name: item.country || leagueInfo.country || "" } },
+        uniqueTournament: { id: null, name: item.tournament || leagueInfo.name },
+        tournament: {
+          id: null,
+          name: item.tournament || leagueInfo.name,
+          category: { name: item.country || leagueInfo.country || "" },
+          uniqueTournament: { id: null },
+        },
+        season: { id: null },
+        roundInfo: item.round ? { name: item.round, roundType: item.round } : null,
+        status: { type: "notstarted" },
+        homeScore: {},
+        awayScore: {},
+        curatedMeta: {
+          sourceNote: item.sourceNote || "curated fixture backfill",
+          aggregateLabel: item.aggregateLabel || null,
+        },
+        source: "curated-fixture-fallback",
+      };
+    });
+}
 async function fetchSportsDbScheduledEvents(dateISO) {
   const fallbackEvents = [];
   const seen = new Set();
@@ -4286,7 +4349,7 @@ function buildContext(matchInput) {
     homeZone: homeZone?.label || null,
     awayZone: awayZone?.label || null,
     rivalry,
-    summary: notes.length ? notes.join(" Â· ") : null,
+    summary: notes.length ? notes.join(" ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â· ") : null,
     stakes:
       notes.length > 0
         ? notes.join(", ")
@@ -4890,6 +4953,13 @@ function buildSourceCoverage(store, todayKey) {
         note: "Extra gratis fixturebron voor vooral Duitse competities wanneer de hoofdbron dun blijft.",
       },
       {
+        key: "curated-bbc",
+        name: "BBC fixture backfill",
+        role: "curated noodfallback",
+        status: Object.keys(sourceBreakdown).some((key) => key.includes("curated-fixture")) ? "actief" : "stand-by",
+        note: "Handmatige gratis veiligheidslaag voor bewezen topwedstrijden die alle automatische fallbackbronnen missen.",
+      },
+      {
         key: "openfootball",
         name: "openfootball",
         role: "historisch H2H",
@@ -5139,7 +5209,8 @@ async function main() {
       const fallbackEvents = await fetchFallbackScheduledEventsFromMarket(date);
       const sportsDbEvents = await fetchSportsDbScheduledEvents(date);
       const openLigaDbEvents = await fetchOpenLigaDbScheduledEvents(date);
-      const combinedFallbacks = dedupeFallbackEvents([...fallbackEvents, ...sportsDbEvents, ...openLigaDbEvents]);
+      const curatedEvents = fetchCuratedFixtureBackfill(date);
+      const combinedFallbacks = dedupeFallbackEvents([...fallbackEvents, ...sportsDbEvents, ...openLigaDbEvents, ...curatedEvents]);
 
       if (fallbackEvents.length) {
         console.log(`[worker] ${date}: ${fallbackEvents.length} fallback events uit football-data.co.uk`);
@@ -5149,6 +5220,9 @@ async function main() {
       }
       if (openLigaDbEvents.length) {
         console.log(`[worker] ${date}: ${openLigaDbEvents.length} fallback events uit OpenLigaDB`);
+      }
+      if (curatedEvents.length) {
+        console.log(`[worker] ${date}: ${curatedEvents.length} fallback events uit curated fixtures`);
       }
       if (combinedFallbacks.length) {
         events = combinedFallbacks;
@@ -5791,4 +5865,7 @@ async function main() {
 }
 
 main();
+
+
+
 
