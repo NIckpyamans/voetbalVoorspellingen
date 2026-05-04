@@ -638,6 +638,7 @@ function calcTeamPressure(pos, totalTeams) {
   if (!pos || !totalTeams) return 1;
   const relegationStart = Math.max(totalTeams - 2, 1);
 
+  if (pos === 1) return 1.12;
   if (pos <= 2) return 1.1;
   if (pos === 3) return 1.08;
   if (pos <= 6) return 1.04;
@@ -2999,6 +3000,8 @@ function buildExactScoreTipScore(prediction, match) {
   const exactProb = Number(prediction?.exactProb || 0);
   const confidence = Number(prediction?.confidence || 0);
   const modelAgreement = Number(prediction?.modelEdges?.modelAgreement || 0);
+  const leagueReliability = prediction?.modelEdges?.leagueReliability || match?.competitionReliability || null;
+  const phaseReliability = prediction?.modelEdges?.phaseReliability || match?.phaseReliability || null;
   const sourceQuality = Math.max(
     Number(match?.homeSeasonStats?.sourceQuality || 0),
     Number(match?.awaySeasonStats?.sourceQuality || 0),
@@ -3007,11 +3010,24 @@ function buildExactScoreTipScore(prediction, match) {
   const lineupBonus = prediction?.lineupSummary?.confirmed || match?.lineupSummary?.confirmed ? 0.025 : 0;
   const h2hBonus = Number(match?.h2h?.played || prediction?.h2h?.played || 0) >= 3 ? 0.018 : 0;
   const reliabilityBonus = clamp(
-    (Number(prediction?.modelEdges?.leagueReliability?.reliabilityScore || 0) +
-      Number(prediction?.modelEdges?.phaseReliability?.reliabilityScore || 0)) / 2,
+    (Number(leagueReliability?.reliabilityScore || 0) +
+      Number(phaseReliability?.reliabilityScore || 0)) / 2,
     0,
     1
   ) * 0.045;
+  const exactReliability = clamp(
+    (Number(leagueReliability?.exactHitRate || 0) + Number(phaseReliability?.exactHitRate || 0)) / 2,
+    0,
+    1
+  );
+  const exactReliabilityBonus = clamp((exactReliability - 0.12) * 0.24, -0.025, 0.05);
+  const avgGoalError = Number(
+    (
+      (Number(leagueReliability?.avgGoalError || 0) + Number(phaseReliability?.avgGoalError || 0)) /
+      ((leagueReliability?.avgGoalError != null ? 1 : 0) + (phaseReliability?.avgGoalError != null ? 1 : 0) || 1)
+    ).toFixed(2)
+  );
+  const goalErrorPenalty = clamp((avgGoalError - 1.55) * 0.026, 0, 0.06);
   const learningEdge = prediction?.modelEdges?.learningEdge || match?.learningSummary || null;
   const learningGames = Number(learningEdge?.totalReviewedMatches || 0);
   const learningReliability = Number(learningEdge?.combinedReliability || 0);
@@ -3021,6 +3037,7 @@ function buildExactScoreTipScore(prediction, match) {
   const scoreSelectionReason = String(prediction?.modelEdges?.scoreSelection?.reason || "");
   const adjustedScoreBonus = scoreSelectionReason.includes("aangepast") ? 0.012 : 0;
   const riskPenalty = prediction?.modelEdges?.riskProfile === "high" ? 0.065 : prediction?.modelEdges?.riskProfile === "medium" ? 0.03 : 0;
+  const agreementPenalty = modelAgreement < 0.42 ? 0.05 : modelAgreement < 0.55 ? 0.025 : 0;
   const score = clamp(
     exactProb * 3.05 +
       confidence * 0.18 +
@@ -3029,10 +3046,13 @@ function buildExactScoreTipScore(prediction, match) {
       lineupBonus +
       h2hBonus +
       reliabilityBonus +
+      exactReliabilityBonus +
       learningBonus +
       marketBonus +
       adjustedScoreBonus -
-      riskPenalty,
+      riskPenalty -
+      agreementPenalty -
+      goalErrorPenalty,
     0,
     0.99
   );
@@ -3043,10 +3063,13 @@ function buildExactScoreTipScore(prediction, match) {
   if (lineupBonus) reasons.push("opstellingen bevestigd");
   if (h2hBonus) reasons.push("H2H gevuld");
   if (reliabilityBonus >= 0.025) reasons.push("competitie/fase betrouwbaar");
+  if (exactReliabilityBonus >= 0.015) reasons.push("exact-score historie sterk");
   if (learningBonus >= 0.015) reasons.push("leerdata positief");
   if (marketBonus > 0) reasons.push("marktdekking sterk");
   if (adjustedScoreBonus) reasons.push("scoreselectie bijgestuurd");
   if (riskPenalty) reasons.push("risico meegewogen");
+  if (agreementPenalty) reasons.push("modeltwijfel afgestraft");
+  if (goalErrorPenalty) reasons.push("historische foutmarge meegewogen");
   return {
     score: Number(score.toFixed(3)),
     reasons: reasons.slice(0, 4),
@@ -4526,8 +4549,10 @@ function predict(input) {
   const refereeProfile = input.refereeProfile || null;
   const bookmakerSignals = Array.isArray(marketCalibration.bookmakerSignals) ? marketCalibration.bookmakerSignals : [];
 
-  if (learningEdge.combinedReliability) {
-    const learningWeight = 0.045 + Math.min(Number(learningEdge.totalReviewedMatches || 0) / 18, 1) * 0.03;
+  if (Number(learningEdge.totalReviewedMatches || 0) >= 6 && learningEdge.combinedReliability) {
+    const learningSampleStrength = clamp(Number(learningEdge.totalReviewedMatches || 0) / 24, 0.25, 1);
+    const reliabilityGate = clamp((Number(learningEdge.combinedReliability || 0) - 0.36) / 0.34, 0.15, 1);
+    const learningWeight = (0.035 + learningSampleStrength * 0.04) * reliabilityGate;
     const learningBiasShift = clamp((Number(learningEdge.homeBias || 0) - Number(learningEdge.awayBias || 0)) * learningWeight, -0.1, 0.1);
     homeXG *= clamp(1 + learningBiasShift, 0.94, 1.08);
     awayXG *= clamp(1 - learningBiasShift, 0.94, 1.08);
