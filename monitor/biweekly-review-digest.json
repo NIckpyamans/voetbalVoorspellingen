@@ -1,54 +1,70 @@
 {
-  "generatedAt": "2026-04-27T08:42:09.235Z",
+  "generatedAt": "2026-05-04T08:42:54.189Z",
   "range": {
-    "from": "2026-04-14",
-    "to": "2026-04-27",
-    "days": 7
+    "from": "2026-04-21",
+    "to": "2026-05-04",
+    "days": 11
   },
   "shouldNotify": false,
-  "shouldRefresh": true,
+  "shouldRefresh": false,
   "cadence": "tweewekelijks",
-  "summary": "AI bundel over de laatste 14 dagen: 2 hoofdthema's uit 11 monitorbevindingen.",
+  "summary": "AI bundel over de laatste 14 dagen: 4 hoofdthema's uit 14 monitorbevindingen.",
   "totals": {
-    "totalRuns": 9,
-    "totalIssues": 11,
-    "uniqueIssueTypes": 2
+    "totalRuns": 12,
+    "totalIssues": 14,
+    "uniqueIssueTypes": 4
   },
   "latestStats": {
-    "today": "2026-04-27",
+    "today": "2026-05-04",
     "dataPresent": true,
-    "lastRun": 1777243325920,
+    "lastRun": 1777848384004,
     "ageMinutes": 18,
     "todayMatches": 3,
     "liveMatches": 0,
     "liveWithoutMinute": 0,
     "h2hFilled": 2,
     "h2hMissing": 1,
-    "standingsCount": 29,
-    "cupSheetCount": 2,
+    "standingsCount": 36,
+    "cupSheetCount": 4,
     "phaseReliabilityCount": 3
   },
   "topFindings": [
     {
       "key": "historical_referee_unmatched",
       "title": "Historische scheidsdata matcht te weinig",
-      "count": 8,
+      "count": 10,
       "highestSeverity": "low",
       "sampleMessage": "Geen enkele wedstrijd van vandaag gebruikt historische referee-data.",
       "recommendation": "Trek bredere referee-archieven per land/competitie in cache en onderhoud aliasen."
     },
     {
-      "key": "bookmaker_signals_missing",
-      "title": "Bookmakersignalen missen",
-      "count": 3,
+      "key": "today_matches_empty",
+      "title": "Geen speeldagdata",
+      "count": 2,
       "highestSeverity": "medium",
-      "sampleMessage": "Alle wedstrijden missen bookmaker-signalen in de marktcalibratie.",
-      "recommendation": "Verbred de interland-oddsbron en toon dekking per bookmaker in de kaart."
+      "sampleMessage": "Er zijn geen wedstrijden voor vandaag in server_data.json.",
+      "recommendation": "Controleer brondekking en dagfilter in de worker voor vandaag + morgen."
+    },
+    {
+      "key": "h2h_empty",
+      "title": "H2H niet gevuld",
+      "count": 1,
+      "highestSeverity": "medium",
+      "sampleMessage": "Alle wedstrijden van vandaag hebben lege H2H-data.",
+      "recommendation": "Trek H2H verder uit historische competitiebestanden en bewaak fallbackdekking in de worker."
+    },
+    {
+      "key": "cupsheets_empty",
+      "title": "Bekerschema leeg",
+      "count": 1,
+      "highestSeverity": "medium",
+      "sampleMessage": "cupSheets is leeg.",
+      "recommendation": "Gebruik het reviewbranch-voorstel als veilige volgende patchronde."
     }
   ],
   "reviewProposal": {
-    "branchName": "codex/review-20260427",
-    "summary": "AI reviewvoorstel voor 2026-04-27: 1 aandachtspunt(en) met patchadvies, niet automatisch live.",
+    "branchName": "codex/review-20260504",
+    "summary": "AI reviewvoorstel voor 2026-05-04: 1 aandachtspunt(en) met patchadvies, niet automatisch live.",
     "recommendedFiles": [
       "scripts/server-worker.js",
       "components/MatchCard.tsx"
