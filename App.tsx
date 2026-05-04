@@ -22,6 +22,7 @@ type DashboardHistoryItem = {
   wasCorrect: boolean;
   winnerCorrect?: boolean;
   errorMargin?: number;
+  timestamp?: number;
   homeTeam?: string | null;
   awayTeam?: string | null;
   league?: string | null;
@@ -125,6 +126,7 @@ const App: React.FC = () => {
   const [lastRun, setLastRun] = useState<number | null>(null);
   const [activeFilter, setActiveFilter] = useState<FilterMode>("alle");
   const [selectedLeague, setSelectedLeague] = useState<string>("alle");
+  const [expandedTopClub, setExpandedTopClub] = useState<string | null>(null);
   const [favRefresh, setFavRefresh] = useState(0);
   const learnedRef = useRef<Set<string>>(new Set());
 
@@ -346,14 +348,24 @@ const App: React.FC = () => {
       : "0.00";
     const otherExactPct = pct(otherExact, otherReviews.length);
     const topExactPct = pct(topExact, topFiveReviews.length);
-    const clubMap = new Map<string, { team: string; total: number; exact: number; outcome: number; avgError: number }>();
+    const clubMap = new Map<string, {
+      team: string;
+      total: number;
+      exact: number;
+      outcome: number;
+      avgError: number;
+      exactMatches: DashboardHistoryItem[];
+    }>();
     for (const item of historyItems) {
       for (const team of [item.homeTeam, item.awayTeam]) {
         const name = String(team || "").trim();
         if (!name) continue;
-        const current = clubMap.get(name) || { team: name, total: 0, exact: 0, outcome: 0, avgError: 0 };
+        const current = clubMap.get(name) || { team: name, total: 0, exact: 0, outcome: 0, avgError: 0, exactMatches: [] };
         current.total += 1;
-        if (item.wasCorrect) current.exact += 1;
+        if (item.wasCorrect) {
+          current.exact += 1;
+          current.exactMatches.push(item);
+        }
         if (item.winnerCorrect) current.outcome += 1;
         current.avgError += Number(item.errorMargin || 0);
         clubMap.set(name, current);
@@ -542,13 +554,40 @@ const App: React.FC = () => {
                   <div className="space-y-2 max-h-[420px] overflow-y-auto pr-1">
                     {dashboardInsights.topClubs.map((club, index) => (
                       <div key={club.team} className="rounded-xl bg-slate-950/40 border border-white/5 px-3 py-2">
-                        <div className="flex items-center justify-between gap-2">
+                        <button
+                          type="button"
+                          onClick={() => setExpandedTopClub(expandedTopClub === club.team ? null : club.team)}
+                          className="w-full flex items-center justify-between gap-2 text-left"
+                        >
                           <div className="min-w-0">
                             <div className="text-[11px] font-black text-white truncate">#{index + 1} {club.team}</div>
-                            <div className="text-[9px] text-slate-500">{club.exact}/{club.total} exact - winnaar {club.outcomePct}%</div>
+                            <div className="text-[9px] text-slate-500">
+                              {club.exact}/{club.total} exact - winnaar {club.outcomePct}% - klik voor juiste duels
+                            </div>
                           </div>
-                          <div className="text-lg font-black text-green-300">{club.exactPct}%</div>
-                        </div>
+                          <div className="flex items-center gap-2">
+                            <div className="text-lg font-black text-green-300">{club.exactPct}%</div>
+                            <div className="text-[10px] text-slate-500">{expandedTopClub === club.team ? "▲" : "▼"}</div>
+                          </div>
+                        </button>
+                        {expandedTopClub === club.team && (
+                          <div className="mt-2 space-y-1 border-t border-white/5 pt-2">
+                            {club.exactMatches.length > 0 ? (
+                              club.exactMatches.slice(0, 8).map((item) => (
+                                <div key={`${club.team}-${item.matchId}`} className="rounded-lg bg-slate-900/70 px-2 py-1.5">
+                                  <div className="text-[9px] font-black text-white truncate">
+                                    {item.homeTeam} - {item.awayTeam}
+                                  </div>
+                                  <div className="text-[8px] text-slate-500">
+                                    {item.league || "Onbekend"} - voorspeld {item.prediction}, uitslag {item.actual}
+                                  </div>
+                                </div>
+                              ))
+                            ) : (
+                              <div className="text-[9px] text-slate-500">Geen exact-goed wedstrijden gevonden.</div>
+                            )}
+                          </div>
+                        )}
                       </div>
                     ))}
                   </div>

@@ -4492,6 +4492,11 @@ function predict(input) {
   let btts = 0;
   let bestScore = "1-1";
   let bestProb = 0;
+  const bestByOutcome = {
+    home: { score: "1-0", probability: 0 },
+    draw: { score: "1-1", probability: 0 },
+    away: { score: "0-1", probability: 0 },
+  };
   const scoreMatrix = {};
 
   for (let homeGoals = 0; homeGoals <= 6; homeGoals += 1) {
@@ -4510,6 +4515,14 @@ function predict(input) {
         bestScore = `${homeGoals}-${awayGoals}`;
       }
 
+      if (homeGoals > awayGoals && probability > bestByOutcome.home.probability) {
+        bestByOutcome.home = { score: `${homeGoals}-${awayGoals}`, probability };
+      } else if (homeGoals === awayGoals && probability > bestByOutcome.draw.probability) {
+        bestByOutcome.draw = { score: `${homeGoals}-${awayGoals}`, probability };
+      } else if (awayGoals > homeGoals && probability > bestByOutcome.away.probability) {
+        bestByOutcome.away = { score: `${homeGoals}-${awayGoals}`, probability };
+      }
+
       const totalGoals = homeGoals + awayGoals;
       if (totalGoals > 1.5) over15 += probability;
       if (totalGoals > 2.5) over25 += probability;
@@ -4524,7 +4537,6 @@ function predict(input) {
   drawProb /= totalProb;
   awayProb /= totalProb;
 
-  const [predHomeGoals, predAwayGoals] = bestScore.split("-").map(Number);
   const homeAwayEdge = buildHomeAwayEdge(input.homeRecent, input.awayRecent);
   const featureVector = buildFeatureVector(input);
   const heuristicModel = buildHeuristicEnsemble(featureVector);
@@ -4534,13 +4546,40 @@ function predict(input) {
     heuristicModel,
     0.78
   );
+  const outcomeEntries = [
+    { key: "home", prob: blended.homeProb },
+    { key: "draw", prob: blended.drawProb },
+    { key: "away", prob: blended.awayProb },
+  ].sort((a, b) => b.prob - a.prob);
+  const [rawBestHomeGoals, rawBestAwayGoals] = bestScore.split("-").map(Number);
+  const bestScoreOutcome =
+    rawBestHomeGoals > rawBestAwayGoals
+      ? "home"
+      : rawBestHomeGoals === rawBestAwayGoals
+        ? "draw"
+        : "away";
+  let selectedScore = bestScore;
+  let selectedExactProb = bestProb;
+  const dominantOutcome = outcomeEntries[0];
+  const outcomeEdge = Number((dominantOutcome.prob - outcomeEntries[1].prob).toFixed(4));
+  if (
+    dominantOutcome.key !== bestScoreOutcome &&
+    dominantOutcome.key !== "draw" &&
+    dominantOutcome.prob >= 0.4 &&
+    outcomeEdge >= 0.08 &&
+    bestByOutcome[dominantOutcome.key]?.probability > 0
+  ) {
+    selectedScore = bestByOutcome[dominantOutcome.key].score;
+    selectedExactProb = bestByOutcome[dominantOutcome.key].probability;
+  }
+  const [predHomeGoals, predAwayGoals] = selectedScore.split("-").map(Number);
   const modelAgreement = calcModelAgreement(baseModel, heuristicModel);
   const lineupImpact = buildLineupImpact(input);
   const tacticalMismatch = buildTacticalMismatch(input);
   const formShift = buildFormShift(input);
   const travelEdge = buildTravelEdge(input, featureVector);
   const keeperEdge = buildKeeperEdge(input, featureVector);
-  const baseConfidence = Math.min(0.93, bestProb * 3.5 + 0.24);
+  const baseConfidence = Math.min(0.93, selectedExactProb * 3.5 + 0.24);
   const reliabilityPenalty =
     learningEdge.combinedReliability && learningEdge.combinedReliability < 0.44
       ? 0.07
@@ -4603,7 +4642,7 @@ function predict(input) {
     awayXG: Number(awayXG.toFixed(2)),
     predHomeGoals,
     predAwayGoals,
-    exactProb: Number(bestProb.toFixed(4)),
+    exactProb: Number(selectedExactProb.toFixed(4)),
     confidence: Number(adjustedConfidence.toFixed(3)),
     over15: Number(over15.toFixed(3)),
     over25: Number(over25.toFixed(3)),
@@ -4627,6 +4666,15 @@ function predict(input) {
       phaseReliability,
       marketCalibration,
       refereeProfile,
+      scoreSelection: {
+        rawBestScore: bestScore,
+        selectedScore,
+        reason:
+          selectedScore === bestScore
+            ? "meest waarschijnlijke exacte score"
+            : `aangepast op dominante ${dominantOutcome.key === "home" ? "thuiswinst" : "uitwinst"}-kans`,
+        outcomeEdge,
+      },
       clubEloDiff: homeClubElo > 0 && awayClubElo > 0 ? Math.round(homeClubElo - awayClubElo) : null,
       stakes: input.context?.summary || null,
       matchImportance: input.matchImportance || 1,

@@ -144,8 +144,9 @@ function collectDataChecks() {
     );
   }
 
+  const matchesWithRefereeName = todayMatches.filter((match) => String(match.refereeProfile?.name || "").trim());
   const historicalRefs = todayMatches.filter((match) => Number(match.refereeProfile?.matches || 0) > 0);
-  if (todayMatches.length && historicalRefs.length === 0) {
+  if (matchesWithRefereeName.length >= 3 && historicalRefs.length === 0) {
     pushIssue(
       issues,
       "historical_referee_unmatched",

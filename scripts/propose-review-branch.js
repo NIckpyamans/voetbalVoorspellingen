@@ -102,9 +102,10 @@ function main() {
   const findings = readJsonSafe(FINDINGS_FILE, { days: {} });
   const date = amsterdamDate();
   const runs = findings.days?.[date]?.runs || [];
-  const latestStats = runs.at(-1)?.stats || {};
+  const latestRun = runs.at(-1) || {};
+  const latestStats = latestRun.stats || {};
   const flatIssues = uniqueBy(
-    runs.flatMap((run) => run.issues || []),
+    (latestRun.issues || []),
     (issue) => `${issue.key}::${issue.message}`
   ).sort((a, b) => severityWeight(b.severity) - severityWeight(a.severity));
 
