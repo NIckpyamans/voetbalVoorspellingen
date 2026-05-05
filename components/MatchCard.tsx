@@ -675,8 +675,10 @@ const MatchCard: React.FC<MatchCardProps> = ({ match, prediction, onFavoriteChan
     return <div className="glass-card rounded-2xl p-4 border border-white/5 animate-pulse h-72" />;
   }
 
-  const isLive = String(match.status || "").toUpperCase() === "LIVE" || !!liveMinute;
-  const isFinished = String(match.status || "").toUpperCase() === "FT";
+  const matchStatus = String(match.status || "").toUpperCase();
+  const isHalfTime = matchStatus === "HT";
+  const isLive = matchStatus === "LIVE" || isHalfTime || !!liveMinute;
+  const isFinished = matchStatus === "FT";
   const weather = match.weather || prediction.weather;
   const h2h = match.h2h || prediction.h2h;
   const aggregate = match.aggregate || prediction.aggregate;
@@ -702,7 +704,9 @@ const MatchCard: React.FC<MatchCardProps> = ({ match, prediction, onFavoriteChan
   const scopeScore =
     phaseReliability?.reliabilityScore != null ? `${Math.round(phaseReliability.reliabilityScore * 100)}%` : "-";
   const timingLabel = isLive
-    ? liveMinute && liveMinute !== "LIVE"
+    ? isHalfTime
+      ? "Rust"
+      : liveMinute && liveMinute !== "LIVE"
       ? liveMinute
       : "live"
     : isFinished

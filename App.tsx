@@ -54,7 +54,7 @@ function formatAmsterdamDate(date: Date) {
 
 function isLive(match: Match) {
   const status = String(match.status || "").toUpperCase();
-  return status === "LIVE" || !!(match as any).minute || !!(match as any).minuteValue;
+  return status === "LIVE" || status === "HT" || !!(match as any).minute || !!(match as any).minuteValue;
 }
 
 function isFinished(match: Match) {
