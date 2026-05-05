@@ -401,15 +401,15 @@ const App: React.FC = () => {
     <div className="relative min-h-screen overflow-hidden bg-slate-950">
       <div
         aria-hidden="true"
-        className="fixed inset-0 bg-[url('/footyai-preview.svg')] bg-cover bg-center bg-no-repeat opacity-30"
+        className="fixed inset-0 bg-[url('/footyai-stadium-bg.svg')] bg-cover bg-center bg-no-repeat opacity-48"
       />
       <div
         aria-hidden="true"
-        className="fixed inset-0 bg-gradient-to-br from-slate-950/95 via-slate-900/78 to-slate-950/92"
+        className="fixed inset-0 bg-gradient-to-br from-slate-950/92 via-slate-900/70 to-slate-950/90"
       />
       <div
         aria-hidden="true"
-        className="fixed inset-0 bg-[radial-gradient(circle_at_50%_0%,rgba(37,99,235,0.22),transparent_38%)]"
+        className="fixed inset-0 bg-[radial-gradient(circle_at_50%_0%,rgba(20,184,166,0.18),transparent_42%)]"
       />
       <div className="relative z-10">
       <Header 
