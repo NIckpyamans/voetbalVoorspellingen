@@ -222,6 +222,21 @@ const SPORTSDB_NAME_TO_LABEL = {
   "Spanish La Liga": "Spain - LaLiga",
 };
 
+const BBC_COMPETITION_TO_LABEL = {
+  "UEFA Champions League": "Europe - Champions League",
+  "UEFA Europa League": "Europe - Europa League",
+  "UEFA Conference League": "Europe - Conference League",
+  "Premier League": "England - Premier League",
+  "Championship": "England - Championship",
+  "Bundesliga": "Germany - Bundesliga",
+  "Spanish La Liga": "Spain - LaLiga",
+  "Italian Serie A": "Italy - Serie A",
+  "French Ligue 1": "France - Ligue 1",
+  "Dutch Eredivisie": "Netherlands - Eredivisie",
+  "Portuguese Primeira Liga": "Portugal - Liga Portugal",
+  "Belgian First Division A": "Belgium - Pro League",
+};
+
 
 const CURATED_FIXTURE_BACKFILL = [
   {
@@ -1681,6 +1696,75 @@ function fetchCuratedFixtureBackfill(dateISO) {
       };
     });
 }
+
+function decodeHtmlText(value) {
+  return String(value || "")
+    .replace(/&amp;/g, "&")
+    .replace(/&#x27;/g, "'")
+    .replace(/&#39;/g, "'")
+    .replace(/&quot;/g, '"')
+    .replace(/&nbsp;/g, " ")
+    .replace(/&lt;/g, "<")
+    .replace(/&gt;/g, ">")
+    .trim();
+}
+
+function getBbcLeagueLabel(html, index) {
+  const before = html.slice(Math.max(0, index - 5000), index);
+  const headings = [...before.matchAll(/<h2[^>]*>([\s\S]*?)<\/h2>/g)];
+  const headingName = decodeHtmlText(String(headings.at(-1)?.[1] || "").replace(/<[^>]+>/g, " ").replace(/\s+/g, " "));
+  if (BBC_COMPETITION_TO_LABEL[headingName]) return BBC_COMPETITION_TO_LABEL[headingName];
+  if (headingName) return null;
+
+  const matches = [...before.matchAll(/SignpostLink[^>]*>([^<]+)</g)];
+  const competitionName = decodeHtmlText(matches.at(-1)?.[1] || "");
+  return BBC_COMPETITION_TO_LABEL[competitionName] || null;
+}
+
+async function fetchBbcScheduledEvents(dateISO) {
+  const html = await fetchText(`https://www.bbc.co.uk/sport/football/scores-fixtures/${dateISO}`);
+  if (!html) return [];
+
+  const fallbackEvents = [];
+  const pattern = /<span class="visually-hidden[^"]*">([^<]+?) versus ([^<]+?) kick off ([0-9]{1,2}:[0-9]{2})<\/span>/g;
+  for (const match of html.matchAll(pattern)) {
+    const homeName = decodeHtmlText(match[1]);
+    const awayName = decodeHtmlText(match[2]);
+    const time = decodeHtmlText(match[3]);
+    const leagueLabel = getBbcLeagueLabel(html, match.index || 0);
+    if (!leagueLabel) continue;
+    if (isWomenContext(leagueLabel, homeName, awayName) || isYouthContext(leagueLabel, homeName, awayName)) continue;
+
+    const leagueInfo = LEAGUES.find((item) => item.label === leagueLabel) || {
+      label: leagueLabel,
+      name: leagueLabel.split(" - ").at(-1),
+      country: leagueLabel.split(" - ")[0],
+      type: leagueLabel.includes("Europe -") ? "cup" : "league",
+    };
+    const kickoffIso = buildFootballDataKickoffIso(dateISO, time);
+    fallbackEvents.push({
+      id: `bbc-${dateISO}-${normalizeName(homeName)}-${normalizeName(awayName)}`,
+      startTimestamp: Math.floor(new Date(kickoffIso).getTime() / 1000),
+      homeTeam: { id: "", name: homeName, country: { name: leagueInfo.country || "" } },
+      awayTeam: { id: "", name: awayName, country: { name: leagueInfo.country || "" } },
+      uniqueTournament: { id: null, name: leagueInfo.name },
+      tournament: {
+        id: null,
+        name: leagueInfo.name,
+        category: { name: leagueInfo.country || "" },
+        uniqueTournament: { id: null },
+      },
+      season: { id: null },
+      status: { type: "notstarted", description: "NS" },
+      homeScore: {},
+      awayScore: {},
+      source: "bbc-fixture-fallback",
+    });
+  }
+
+  return fallbackEvents;
+}
+
 async function fetchSportsDbScheduledEvents(dateISO) {
   const fallbackById = new Map();
   const appendEvent = (event, leagueLabel) => {
@@ -5479,28 +5563,37 @@ async function main() {
       })
       .filter((event) => getLeagueInfo(event));
 
-    if (!events.length) {
-      const fallbackEvents = await fetchFallbackScheduledEventsFromMarket(date);
-      const sportsDbEvents = await fetchSportsDbScheduledEvents(date);
-      const openLigaDbEvents = await fetchOpenLigaDbScheduledEvents(date);
-      const curatedEvents = fetchCuratedFixtureBackfill(date);
-      const combinedFallbacks = dedupeFallbackEvents([...fallbackEvents, ...sportsDbEvents, ...openLigaDbEvents, ...curatedEvents]);
+    const fallbackEvents = await fetchFallbackScheduledEventsFromMarket(date);
+    const sportsDbEvents = await fetchSportsDbScheduledEvents(date);
+    const openLigaDbEvents = await fetchOpenLigaDbScheduledEvents(date);
+    const bbcEvents = await fetchBbcScheduledEvents(date);
+    const curatedEvents = fetchCuratedFixtureBackfill(date);
+    const combinedFallbacks = dedupeFallbackEvents([
+      ...events,
+      ...fallbackEvents,
+      ...sportsDbEvents,
+      ...openLigaDbEvents,
+      ...bbcEvents,
+      ...curatedEvents,
+    ]);
 
-      if (fallbackEvents.length) {
-        console.log(`[worker] ${date}: ${fallbackEvents.length} fallback events uit football-data.co.uk`);
-      }
-      if (sportsDbEvents.length) {
-        console.log(`[worker] ${date}: ${sportsDbEvents.length} fallback events uit TheSportsDB`);
-      }
-      if (openLigaDbEvents.length) {
-        console.log(`[worker] ${date}: ${openLigaDbEvents.length} fallback events uit OpenLigaDB`);
-      }
-      if (curatedEvents.length) {
-        console.log(`[worker] ${date}: ${curatedEvents.length} fallback events uit curated fixtures`);
-      }
-      if (combinedFallbacks.length) {
-        events = combinedFallbacks;
-      }
+    if (fallbackEvents.length) {
+      console.log(`[worker] ${date}: ${fallbackEvents.length} fallback events uit football-data.co.uk`);
+    }
+    if (sportsDbEvents.length) {
+      console.log(`[worker] ${date}: ${sportsDbEvents.length} fallback events uit TheSportsDB`);
+    }
+    if (openLigaDbEvents.length) {
+      console.log(`[worker] ${date}: ${openLigaDbEvents.length} fallback events uit OpenLigaDB`);
+    }
+    if (bbcEvents.length) {
+      console.log(`[worker] ${date}: ${bbcEvents.length} fallback events uit BBC fixtures`);
+    }
+    if (curatedEvents.length) {
+      console.log(`[worker] ${date}: ${curatedEvents.length} fallback events uit curated fixtures`);
+    }
+    if (combinedFallbacks.length) {
+      events = combinedFallbacks;
     }
     
     if (events.length > 0) {
