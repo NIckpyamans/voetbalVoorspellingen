@@ -210,6 +210,9 @@ function getH2HSourceLabel(status?: string) {
   if (status === "all-competitions") return "laatste onderlinge duels uit alle competities";
   if (status === "historical-competition") return "aangevuld uit historische competitiedata";
   if (status === "merged-historical-competition") return "live bron + historische competitiedata";
+  if (status === "aggregate-backfill") return "aangevuld uit tweeluik/aggregate-bron";
+  if (status === "curated-h2h-backfill") return "laatste onderlinge duels uit H2H-backfill";
+  if (status === "merged-curated-h2h-backfill") return "aggregate + laatste H2H-backfill";
   if (status === "loaded") return "laatste onderlinge duels in brondata";
   if (status === "fallback") return "aangevuld met vorige duel-fallback";
   return "geen recente onderlinge brondata";

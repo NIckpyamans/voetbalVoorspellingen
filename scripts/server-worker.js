@@ -262,6 +262,32 @@ const CURATED_FIXTURE_BACKFILL = [
     sourceNote: "BBC fixtures backfill",
   },
 ];
+
+const CURATED_H2H_BACKFILL = {
+  "bayern munich__paris saint germain": [
+    {
+      date: "2024-11-26",
+      home: "Bayern Munich",
+      away: "Paris Saint-Germain",
+      score: "1-0",
+      source: "aiscore-h2h-backfill",
+    },
+    {
+      date: "2025-11-05",
+      home: "Paris Saint-Germain",
+      away: "Bayern Munich",
+      score: "1-2",
+      source: "aiscore-h2h-backfill",
+    },
+    {
+      date: "2025-07-06",
+      home: "Paris Saint-Germain",
+      away: "Bayern Munich",
+      score: "2-0",
+      source: "aiscore-h2h-backfill",
+    },
+  ],
+};
 const OPENLIGADB_LEAGUES = {
   bl1: "Germany - Bundesliga",
   bl2: "Germany - 2. Bundesliga",
@@ -860,6 +886,8 @@ function calculateRecentH2HBalance(h2h, currentHomeId, currentAwayId) {
 function buildFeatureVector(input) {
   const homeSplit = pickHomeStrength(input.homeRecent);
   const awaySplit = pickAwayStrength(input.awayRecent);
+  const homeCompareKey = String(input.homeTeamId || normalizeName(input.homeTeamName || ""));
+  const awayCompareKey = String(input.awayTeamId || normalizeName(input.awayTeamName || ""));
   const homePpg = toPointsPerGame(input.homeRecent?.wins, input.homeRecent?.draws, input.homeRecent?.gamesPlayed);
   const awayPpg = toPointsPerGame(input.awayRecent?.wins, input.awayRecent?.draws, input.awayRecent?.gamesPlayed);
   const lineupRatingDiff = Number(
@@ -910,7 +938,7 @@ function buildFeatureVector(input) {
             ).toFixed(2)
           )
         : 0,
-    h2h_recent_5_balance: calculateRecentH2HBalance(input.h2h, input.homeTeamId, input.awayTeamId),
+    h2h_recent_5_balance: calculateRecentH2HBalance(input.h2h, homeCompareKey, awayCompareKey),
     recent_h2h_balance:
       input.h2h?.results?.length >= 1
         ? Number(
@@ -919,8 +947,8 @@ function buildFeatureVector(input) {
               let homeWins = 0;
               let awayWins = 0;
               recent5.forEach(r => {
-                if (r.winnerId === input.homeTeamId) homeWins++;
-                else if (r.winnerId === input.awayTeamId) awayWins++;
+                if (String(r.winnerId || "") === homeCompareKey) homeWins++;
+                else if (String(r.winnerId || "") === awayCompareKey) awayWins++;
               });
               return ((homeWins - awayWins) / Math.max(recent5.length, 1)).toFixed(2);
             })()
@@ -1721,6 +1749,55 @@ function getBbcLeagueLabel(html, index) {
   return BBC_COMPETITION_TO_LABEL[competitionName] || null;
 }
 
+function parseBbcAggregate(block, homeName, awayName) {
+  const aggregateTextMatch = String(block || "").match(/Aggregate score\s+([^<]+?)<\/span>/i);
+  const aggregateText = decodeHtmlText(aggregateTextMatch?.[1] || "");
+  const numberMatch = aggregateText.match(/(.+?)\s+(\d+)\s*,\s*(.+?)\s+(\d+)/);
+  if (!numberMatch) return null;
+
+  const firstTeam = decodeHtmlText(numberMatch[1]);
+  const firstGoals = Number(numberMatch[2]);
+  const secondTeam = decodeHtmlText(numberMatch[3]);
+  const secondGoals = Number(numberMatch[4]);
+  if (!Number.isFinite(firstGoals) || !Number.isFinite(secondGoals)) return null;
+
+  const homeVariants = buildPossibleNames(homeName);
+  const awayVariants = buildPossibleNames(awayName);
+  const firstVariants = buildPossibleNames(firstTeam);
+  const secondVariants = buildPossibleNames(secondTeam);
+  const firstIsHome = firstVariants.some((variant) => homeVariants.includes(variant));
+  const secondIsAway = secondVariants.some((variant) => awayVariants.includes(variant));
+  const firstIsAway = firstVariants.some((variant) => awayVariants.includes(variant));
+  const secondIsHome = secondVariants.some((variant) => homeVariants.includes(variant));
+
+  if (firstIsHome && secondIsAway) {
+    return {
+      homeAggregateBeforeMatch: firstGoals,
+      awayAggregateBeforeMatch: secondGoals,
+      aggregateText,
+      previousLegScore: `${firstGoals}-${secondGoals}`,
+      previousLegText: `${homeName} ${firstGoals}-${secondGoals} ${awayName}`,
+    };
+  }
+  if (firstIsAway && secondIsHome) {
+    return {
+      homeAggregateBeforeMatch: secondGoals,
+      awayAggregateBeforeMatch: firstGoals,
+      aggregateText,
+      previousLegScore: `${secondGoals}-${firstGoals}`,
+      previousLegText: `${awayName} ${firstGoals}-${secondGoals} ${homeName}`,
+    };
+  }
+
+  return {
+    homeAggregateBeforeMatch: firstGoals,
+    awayAggregateBeforeMatch: secondGoals,
+    aggregateText,
+    previousLegScore: `${firstGoals}-${secondGoals}`,
+    previousLegText: `${firstTeam} ${firstGoals}-${secondGoals} ${secondTeam}`,
+  };
+}
+
 async function fetchBbcScheduledEvents(dateISO) {
   const html = await fetchText(`https://www.bbc.co.uk/sport/football/scores-fixtures/${dateISO}`);
   if (!html) return [];
@@ -1732,6 +1809,8 @@ async function fetchBbcScheduledEvents(dateISO) {
     const awayName = decodeHtmlText(match[2]);
     const time = decodeHtmlText(match[3]);
     const leagueLabel = getBbcLeagueLabel(html, match.index || 0);
+    const eventBlock = html.slice(match.index || 0, Math.min(html.length, (match.index || 0) + 3500));
+    const bbcAggregate = parseBbcAggregate(eventBlock, homeName, awayName);
     if (!leagueLabel) continue;
     if (isWomenContext(leagueLabel, homeName, awayName) || isYouthContext(leagueLabel, homeName, awayName)) continue;
 
@@ -1758,6 +1837,9 @@ async function fetchBbcScheduledEvents(dateISO) {
       status: { type: "notstarted", description: "NS" },
       homeScore: {},
       awayScore: {},
+      bbcMeta: {
+        aggregate: bbcAggregate,
+      },
       source: "bbc-fixture-fallback",
     });
   }
@@ -4590,6 +4672,7 @@ function extractRoundLabel(eventDetails) {
 }
 
 function buildAggregateInfo(event, eventDetails, h2h, fallbackPreviousLeg = null) {
+  const bbcAggregate = event?.bbcMeta?.aggregate || null;
   const results = h2h?.results || [];
   const currentEventId = Number(event.id || 0);
   const previousLeg = [...results]
@@ -4616,12 +4699,16 @@ function buildAggregateInfo(event, eventDetails, h2h, fallbackPreviousLeg = null
     label.includes("knockout") ||
     label.includes("qualif");
 
-  if (!previousLeg && !isKnockoutHint) return null;
+  if (!previousLeg && !isKnockoutHint && !bbcAggregate) return null;
 
   let firstLegHomeGoals = 0;
   let firstLegAwayGoals = 0;
   let firstLegText = null;
-  if (previousLeg?.score) {
+  if (bbcAggregate) {
+    firstLegHomeGoals = Number(bbcAggregate.homeAggregateBeforeMatch || 0);
+    firstLegAwayGoals = Number(bbcAggregate.awayAggregateBeforeMatch || 0);
+    firstLegText = bbcAggregate.previousLegText || bbcAggregate.aggregateText || null;
+  } else if (previousLeg?.score) {
     const [prevHomeGoals, prevAwayGoals] = previousLeg.score.split("-").map(Number);
     if (!Number.isNaN(prevHomeGoals) && !Number.isNaN(prevAwayGoals)) {
       const currentHomeId = String(event.homeTeam?.id || "");
@@ -4648,8 +4735,8 @@ function buildAggregateInfo(event, eventDetails, h2h, fallbackPreviousLeg = null
         : event.awayTeam?.name || null;
 
   return {
-    active: !!previousLeg || isKnockoutHint,
-    firstLegScore: previousLeg?.score || null,
+    active: !!previousLeg || isKnockoutHint || !!bbcAggregate,
+    firstLegScore: bbcAggregate?.previousLegScore || previousLeg?.score || null,
     firstLegText,
     aggregateScore: `${homeAggregate}-${awayAggregate}`,
     homeAggregate,
@@ -4659,7 +4746,7 @@ function buildAggregateInfo(event, eventDetails, h2h, fallbackPreviousLeg = null
     leader,
     roundLabel: extractRoundLabel(eventDetails),
     note:
-      leader && (currentHomeGoals > 0 || currentAwayGoals > 0 || previousLeg)
+      leader && (currentHomeGoals > 0 || currentAwayGoals > 0 || previousLeg || bbcAggregate)
         ? `${leader} ligt voor in het tweeluik`
         : "Tweeluik / knock-out context",
   };
@@ -4766,6 +4853,86 @@ function findPreviousLegFromRecent(
     home,
     away,
     score: `${goalsFor}-${goalsAgainst}`,
+  };
+}
+
+function buildH2HFromAggregateMeta(event, homeId, awayId, homeName, awayName, currentDate) {
+  const aggregate = event?.bbcMeta?.aggregate || event?.curatedMeta?.aggregate || null;
+  if (!aggregate?.previousLegScore) return null;
+  const [homeGoals, awayGoals] = String(aggregate.previousLegScore).split("-").map(Number);
+  if (!Number.isFinite(homeGoals) || !Number.isFinite(awayGoals)) return null;
+  return {
+    eventId: `${event?.id || "aggregate"}-previous-leg`,
+    date: addDaysToDateKey(currentDate, -7),
+    homeTeamId: String(homeId || ""),
+    awayTeamId: String(awayId || ""),
+    home: homeName,
+    away: awayName,
+    score: `${homeGoals}-${awayGoals}`,
+    winnerId: homeGoals === awayGoals ? "" : homeGoals > awayGoals ? String(homeId || normalizeName(homeName)) : String(awayId || normalizeName(awayName)),
+    source: "bbc-aggregate",
+  };
+}
+
+function lookupCuratedH2HBackfill(homeName, awayName, homeId, awayId) {
+  const pairKey = buildPairKey(homeName, awayName);
+  const raw = CURATED_H2H_BACKFILL[pairKey] || [];
+  if (!raw.length) return null;
+
+  const homeKey = String(homeId || normalizeName(homeName));
+  const awayKey = String(awayId || normalizeName(awayName));
+  const homeVariants = buildPossibleNames(homeName);
+  const awayVariants = buildPossibleNames(awayName);
+  const results = raw
+    .map((item) => {
+      const [homeGoals, awayGoals] = String(item.score || "").split("-").map(Number);
+      if (!Number.isFinite(homeGoals) || !Number.isFinite(awayGoals)) return null;
+      const itemHomeVariants = buildPossibleNames(item.home);
+      const itemAwayVariants = buildPossibleNames(item.away);
+      const itemHomeIsCurrentHome = itemHomeVariants.some((variant) => homeVariants.includes(variant));
+      const itemAwayIsCurrentAway = itemAwayVariants.some((variant) => awayVariants.includes(variant));
+      const itemHomeIsCurrentAway = itemHomeVariants.some((variant) => awayVariants.includes(variant));
+      const itemAwayIsCurrentHome = itemAwayVariants.some((variant) => homeVariants.includes(variant));
+      const winnerId =
+        homeGoals === awayGoals
+          ? ""
+          : homeGoals > awayGoals
+            ? itemHomeIsCurrentHome
+              ? homeKey
+              : itemHomeIsCurrentAway
+                ? awayKey
+                : normalizeName(item.home)
+            : itemAwayIsCurrentAway
+              ? awayKey
+              : itemAwayIsCurrentHome
+                ? homeKey
+                : normalizeName(item.away);
+
+      return {
+        date: item.date,
+        home: item.home,
+        away: item.away,
+        homeTeamId: itemHomeIsCurrentHome ? homeKey : itemHomeIsCurrentAway ? awayKey : "",
+        awayTeamId: itemAwayIsCurrentAway ? awayKey : itemAwayIsCurrentHome ? homeKey : "",
+        score: item.score,
+        winnerId,
+        source: item.source || "curated-h2h",
+      };
+    })
+    .filter(Boolean)
+    .sort((a, b) => String(a.date || "").localeCompare(String(b.date || "")))
+    .slice(-3);
+
+  if (!results.length) return null;
+  return {
+    played: results.length,
+    homeWins: results.filter((item) => String(item.winnerId || "") === homeKey).length,
+    draws: results.filter((item) => !item.winnerId).length,
+    awayWins: results.filter((item) => String(item.winnerId || "") === awayKey).length,
+    sameCompetitionPlayed: 0,
+    weightedRecentBalance: calculateRecentH2HBalance({ results }, homeKey, awayKey),
+    results,
+    status: "curated-h2h-backfill",
   };
 }
 
@@ -5866,27 +6033,53 @@ async function main() {
         seasonId,
         event.id
       );
-      if ((!h2h || !h2h.played) && fallbackPreviousLeg) {
+      const aggregatePreviousLeg = buildH2HFromAggregateMeta(event, homeId, awayId, homeName, awayName, date);
+      const h2hFallbackLegs = [fallbackPreviousLeg, aggregatePreviousLeg].filter(Boolean);
+      for (const h2hFallbackLeg of h2hFallbackLegs) {
+      const homeCompareKey = String(homeId || normalizeName(homeName));
+      const awayCompareKey = String(awayId || normalizeName(awayName));
+      if ((!h2h || !h2h.played) && h2hFallbackLeg) {
         h2h = {
           played: 1,
-          homeWins: 0,
-          draws: 0,
-          awayWins: 0,
-          results: [fallbackPreviousLeg],
-          weightedRecentBalance: calculateRecentH2HBalance({ results: [fallbackPreviousLeg] }, homeId, awayId),
-          status: "fallback",
+          homeWins: String(h2hFallbackLeg.winnerId || "") === homeCompareKey ? 1 : 0,
+          draws: !h2hFallbackLeg.winnerId ? 1 : 0,
+          awayWins: String(h2hFallbackLeg.winnerId || "") === awayCompareKey ? 1 : 0,
+          results: [h2hFallbackLeg],
+          weightedRecentBalance: calculateRecentH2HBalance({ results: [h2hFallbackLeg] }, homeCompareKey, awayCompareKey),
+          status: h2hFallbackLeg.source === "bbc-aggregate" ? "aggregate-backfill" : "fallback",
         };
-      } else if (fallbackPreviousLeg && !String(JSON.stringify(h2h?.results || [])).includes(String(fallbackPreviousLeg.score))) {
+      } else if (h2hFallbackLeg && !String(JSON.stringify(h2h?.results || [])).includes(String(h2hFallbackLeg.score))) {
+        const mergedFallbackResults = mergeH2HResultLists(h2h?.results || [], [h2hFallbackLeg]);
         h2h = {
           ...(h2h || {}),
-          results: [...(h2h?.results || []), fallbackPreviousLeg],
-          played: Number(h2h?.played || 0) + 1,
+          results: mergedFallbackResults,
+          played: mergedFallbackResults.length,
+          homeWins: mergedFallbackResults.filter((item) => String(item.winnerId || "") === homeCompareKey).length,
+          draws: mergedFallbackResults.filter((item) => !item.winnerId).length,
+          awayWins: mergedFallbackResults.filter((item) => String(item.winnerId || "") === awayCompareKey).length,
           weightedRecentBalance: calculateRecentH2HBalance(
-            { results: [...(h2h?.results || []), fallbackPreviousLeg] },
-            homeId,
-            awayId
+            { results: mergedFallbackResults },
+            homeCompareKey,
+            awayCompareKey
           ),
-          status: h2h?.status || "loaded",
+          status: h2h?.status || (h2hFallbackLeg.source === "bbc-aggregate" ? "aggregate-backfill" : "loaded"),
+        };
+      }
+      }
+      const curatedH2H = lookupCuratedH2HBackfill(homeName, awayName, homeId, awayId);
+      if (curatedH2H && (!h2h || Number(h2h.played || 0) < 3)) {
+        const mergedCuratedResults = mergeH2HResultLists(h2h?.results || [], curatedH2H.results || []).slice(-3);
+        const homeCompareKey = String(homeId || normalizeName(homeName));
+        const awayCompareKey = String(awayId || normalizeName(awayName));
+        h2h = {
+          played: mergedCuratedResults.length,
+          homeWins: mergedCuratedResults.filter((item) => String(item.winnerId || "") === homeCompareKey).length,
+          draws: mergedCuratedResults.filter((item) => !item.winnerId).length,
+          awayWins: mergedCuratedResults.filter((item) => String(item.winnerId || "") === awayCompareKey).length,
+          sameCompetitionPlayed: Number(h2h?.sameCompetitionPlayed || 0),
+          weightedRecentBalance: calculateRecentH2HBalance({ results: mergedCuratedResults }, homeCompareKey, awayCompareKey),
+          results: mergedCuratedResults,
+          status: h2h?.played ? `merged-${curatedH2H.status}` : curatedH2H.status,
         };
       }
       const historicalBackfills = [
@@ -6007,6 +6200,8 @@ async function main() {
       const prediction = predict({
         homeTeamId: homeId,
         awayTeamId: awayId,
+        homeTeamName: homeName,
+        awayTeamName: awayName,
         homeRecent,
         awayRecent,
         homeSeasonStats,
