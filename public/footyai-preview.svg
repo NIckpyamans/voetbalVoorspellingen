@@ -1,0 +1,74 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="630" viewBox="0 0 1200 630" role="img" aria-labelledby="title desc">
+  <title id="title">FootyAI voetbal voorspelling preview</title>
+  <desc id="desc">Een donkere stadionvisual met voetbal, lichtbundels en een scorebord met 2-1.</desc>
+  <defs>
+    <radialGradient id="stadiumGlow" cx="50%" cy="38%" r="72%">
+      <stop offset="0%" stop-color="#2563eb" stop-opacity=".55"/>
+      <stop offset="38%" stop-color="#0f2148" stop-opacity=".92"/>
+      <stop offset="100%" stop-color="#050510"/>
+    </radialGradient>
+    <linearGradient id="grass" x1="0" x2="1" y1="0" y2="1">
+      <stop offset="0%" stop-color="#0a2f1e"/>
+      <stop offset="52%" stop-color="#0f5132"/>
+      <stop offset="100%" stop-color="#06180f"/>
+    </linearGradient>
+    <linearGradient id="card" x1="0" x2="1">
+      <stop offset="0%" stop-color="#0f172a"/>
+      <stop offset="100%" stop-color="#172554"/>
+    </linearGradient>
+    <filter id="softShadow" x="-30%" y="-30%" width="160%" height="160%">
+      <feDropShadow dx="0" dy="18" stdDeviation="20" flood-color="#000" flood-opacity=".45"/>
+    </filter>
+    <filter id="ballShadow" x="-40%" y="-40%" width="180%" height="180%">
+      <feDropShadow dx="0" dy="18" stdDeviation="16" flood-color="#000" flood-opacity=".55"/>
+    </filter>
+  </defs>
+
+  <rect width="1200" height="630" fill="url(#stadiumGlow)"/>
+  <path d="M0 445 C230 375 425 392 604 438 C796 488 996 440 1200 384 L1200 630 L0 630 Z" fill="url(#grass)"/>
+  <path d="M0 478 C248 424 418 430 602 474 C800 520 980 490 1200 430" fill="none" stroke="#22c55e" stroke-opacity=".16" stroke-width="3"/>
+  <path d="M75 630 C250 540 950 540 1125 630" fill="none" stroke="#ffffff" stroke-opacity=".28" stroke-width="5"/>
+  <path d="M600 630 L600 500" stroke="#ffffff" stroke-opacity=".16" stroke-width="3"/>
+
+  <g opacity=".42">
+    <path d="M130 20 L255 430" stroke="#93c5fd" stroke-width="28" stroke-linecap="round" opacity=".12"/>
+    <path d="M1045 10 L900 418" stroke="#93c5fd" stroke-width="30" stroke-linecap="round" opacity=".12"/>
+    <path d="M410 0 L485 375" stroke="#60a5fa" stroke-width="18" stroke-linecap="round" opacity=".10"/>
+    <path d="M790 0 L715 378" stroke="#60a5fa" stroke-width="18" stroke-linecap="round" opacity=".10"/>
+  </g>
+
+  <g transform="translate(98 74)">
+    <rect x="0" y="0" width="128" height="52" rx="16" fill="#2563eb"/>
+    <circle cx="26" cy="26" r="14" fill="#e0f2fe"/>
+    <path d="M26 14 L31 22 L40 23 L34 30 L35 39 L26 35 L17 39 L18 30 L12 23 L21 22 Z" fill="#2563eb"/>
+    <text x="146" y="35" font-family="Plus Jakarta Sans, Arial, sans-serif" font-size="34" font-weight="800" fill="#fff">Footy<tspan fill="#60a5fa">AI</tspan></text>
+  </g>
+
+  <g transform="translate(322 86)" filter="url(#softShadow)">
+    <rect width="556" height="184" rx="34" fill="url(#card)" stroke="#3b82f6" stroke-opacity=".38"/>
+    <text x="278" y="45" text-anchor="middle" font-family="Plus Jakarta Sans, Arial, sans-serif" font-size="16" font-weight="800" fill="#facc15" letter-spacing="3">AI VOORSPELLING</text>
+    <text x="142" y="112" text-anchor="middle" font-family="Plus Jakarta Sans, Arial, sans-serif" font-size="28" font-weight="800" fill="#fff">Thuis</text>
+    <text x="414" y="112" text-anchor="middle" font-family="Plus Jakarta Sans, Arial, sans-serif" font-size="28" font-weight="800" fill="#fff">Uit</text>
+    <text x="278" y="128" text-anchor="middle" font-family="Plus Jakarta Sans, Arial, sans-serif" font-size="82" font-weight="900" fill="#fff">2-1</text>
+    <rect x="200" y="145" width="156" height="20" rx="10" fill="#2563eb"/>
+    <text x="278" y="160" text-anchor="middle" font-family="Plus Jakarta Sans, Arial, sans-serif" font-size="12" font-weight="800" fill="#dbeafe">hoogste scorekans</text>
+  </g>
+
+  <g transform="translate(506 352)" filter="url(#ballShadow)">
+    <circle cx="94" cy="94" r="86" fill="#f8fafc"/>
+    <path d="M94 34 L131 61 L117 105 L71 105 L57 61 Z" fill="#111827"/>
+    <path d="M94 34 L94 0 M131 61 L174 48 M117 105 L146 144 M71 105 L42 144 M57 61 L14 48" stroke="#111827" stroke-width="10" stroke-linecap="round"/>
+    <path d="M34 74 C44 37 65 16 96 8 M154 76 C146 38 122 16 94 8 M39 147 C64 173 124 174 150 146" fill="none" stroke="#111827" stroke-opacity=".9" stroke-width="9" stroke-linecap="round"/>
+    <circle cx="94" cy="94" r="86" fill="none" stroke="#dbeafe" stroke-width="6"/>
+  </g>
+
+  <g transform="translate(100 520)">
+    <text x="0" y="0" font-family="Plus Jakarta Sans, Arial, sans-serif" font-size="24" font-weight="800" fill="#fff">Slimmere voetbalvoorspellingen met gratis data</text>
+    <text x="0" y="34" font-family="Plus Jakarta Sans, Arial, sans-serif" font-size="17" font-weight="600" fill="#93a4bd">vorm, H2H, markt, stand, blessures en AI-review in een strak dashboard</text>
+  </g>
+
+  <g transform="translate(880 516)">
+    <rect width="220" height="48" rx="24" fill="#facc15"/>
+    <text x="110" y="31" text-anchor="middle" font-family="Plus Jakarta Sans, Arial, sans-serif" font-size="17" font-weight="900" fill="#111827">Exact-score focus</text>
+  </g>
+</svg>
