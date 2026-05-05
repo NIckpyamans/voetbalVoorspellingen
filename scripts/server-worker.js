@@ -149,6 +149,7 @@ function pruneEmbeddedUpdatedMap(store, valueKey, ttl, now, maxEntries = null) {
 const FORM_TTL = 6 * 60 * 60 * 1000;
 const INJURY_TTL = 4 * 60 * 60 * 1000;
 const SEASON_TTL = 12 * 60 * 60 * 1000;
+const STANDINGS_TTL = 60 * 60 * 1000;
 const H2H_TTL = 3 * 24 * 60 * 60 * 1000;
 const WEATHER_TTL = 6 * 60 * 60 * 1000;
 const EVENT_TTL = 12 * 60 * 60 * 1000;
@@ -5670,7 +5671,7 @@ async function main() {
   const standingsByTournament = {};
   for (const [key, info] of tournamentsMap.entries()) {
     const cached = store.standings[key];
-    if (cached?.rows?.length && now - Number(cached.updated || 0) <= SEASON_TTL) {
+    if (cached?.rows?.length && now - Number(cached.updated || 0) <= STANDINGS_TTL) {
       standingsByTournament[key] = cached;
       continue;
     }
@@ -5687,7 +5688,7 @@ async function main() {
   for (const leagueLabel of allActiveLeagueLabels) {
     const labelKey = `label:${leagueLabel}`;
     const cached = store.standings[labelKey];
-    if (cached?.rows?.length && now - Number(cached.updated || 0) <= SEASON_TTL) {
+    if (cached?.rows?.length && now - Number(cached.updated || 0) <= STANDINGS_TTL) {
       standingsByTournament[labelKey] = cached;
       continue;
     }
