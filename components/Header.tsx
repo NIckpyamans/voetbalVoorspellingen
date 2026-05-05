@@ -3,17 +3,20 @@ import React from 'react';
 type View = 'dashboard' | 'history' | 'standings' | 'settings';
 
 interface HeaderProps {
-  currentView: View;
+  view?: View;
+  currentView?: View;
   onViewChange: (view: View) => void;
 }
 
-const Header: React.FC<HeaderProps> = ({ currentView, onViewChange }) => {
+const Header: React.FC<HeaderProps> = ({ view, currentView, onViewChange }) => {
+  const activeView = view || currentView;
+
   return (
     <header className="sticky top-0 z-50 w-full glass-card border-b border-white/10 px-4 md:px-6 py-3 flex justify-between items-center backdrop-blur-xl">
       {/* Logo */}
       <div className="flex items-center gap-2 cursor-pointer" onClick={() => onViewChange('dashboard')}>
-        <div className="bg-blue-600 p-1.5 rounded-lg shadow-lg shadow-blue-600/20">
-          <i className="fas fa-futbol text-white text-base"></i>
+        <div className="h-9 w-9 overflow-hidden rounded-xl border border-cyan-300/30 bg-slate-950 shadow-lg shadow-cyan-500/20">
+          <img src="/favicon.svg" alt="FootyAI bal logo" className="h-full w-full object-cover" />
         </div>
         <h1 className="text-lg font-black tracking-tighter text-white">
           Footy<span className="text-blue-500">AI</span>
@@ -31,7 +34,7 @@ const Header: React.FC<HeaderProps> = ({ currentView, onViewChange }) => {
             <button key={key}
               onClick={() => onViewChange(key)}
               className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-[10px] font-black uppercase tracking-wider transition
-                ${currentView === key
+                ${activeView === key
                   ? 'bg-blue-600/20 text-blue-300 border border-blue-500/30'
                   : 'text-slate-500 hover:text-white hover:bg-white/5'}`}>
               <i className={`fas ${icon} text-[9px]`}></i>
@@ -46,7 +49,7 @@ const Header: React.FC<HeaderProps> = ({ currentView, onViewChange }) => {
         <button
           onClick={() => onViewChange('settings')}
           className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-[10px] font-black uppercase transition
-            ${currentView === 'settings'
+            ${activeView === 'settings'
               ? 'bg-slate-600/40 text-white border border-white/20'
               : 'bg-slate-800 text-slate-300 hover:bg-slate-700'}`}>
           <i className="fas fa-cog text-[9px]"></i>
