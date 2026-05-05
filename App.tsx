@@ -401,7 +401,7 @@ const App: React.FC = () => {
     <div className="relative min-h-screen overflow-hidden bg-slate-950">
       <div
         aria-hidden="true"
-        className="fixed inset-0 bg-[url('/footyai-stadium-bg.svg')] bg-cover bg-center bg-no-repeat opacity-48"
+        className="fixed inset-0 bg-[url('/footyai-stadium-bg.jpeg')] bg-cover bg-center bg-no-repeat opacity-55"
       />
       <div
         aria-hidden="true"
