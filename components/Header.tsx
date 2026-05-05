@@ -16,7 +16,7 @@ const Header: React.FC<HeaderProps> = ({ view, currentView, onViewChange }) => {
       {/* Logo */}
       <div className="flex items-center gap-2 cursor-pointer" onClick={() => onViewChange('dashboard')}>
         <div className="h-9 w-9 overflow-hidden rounded-xl border border-cyan-300/30 bg-slate-950 shadow-lg shadow-cyan-500/20">
-          <img src="/favicon.svg" alt="FootyAI bal logo" className="h-full w-full object-cover" />
+          <img src="/footyai-ball-logo.jpeg" alt="FootyAI 3D-bal logo" className="h-full w-full object-cover" />
         </div>
         <h1 className="text-lg font-black tracking-tighter text-white">
           Footy<span className="text-blue-500">AI</span>
