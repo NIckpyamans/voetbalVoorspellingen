@@ -349,6 +349,32 @@ function resolveMinuteState(eventLike, eventDetails) {
   };
 }
 
+function resolveAppStatus(eventLike) {
+  const type = String(eventLike?.status?.type || "").toLowerCase();
+  const description = String(eventLike?.status?.description || eventLike?.status?.status || "").toLowerCase();
+  const period = String(eventLike?.period || "").toLowerCase();
+
+  if (type === "finished" || description.includes("finished") || description === "ft" || description.includes("full time")) {
+    return "FT";
+  }
+
+  if (type === "halftime" || period === "ht" || description === "ht" || description.includes("half")) {
+    return "HT";
+  }
+
+  if (
+    type === "inprogress" ||
+    description.includes("live") ||
+    description.includes("progress") ||
+    description.includes("1st") ||
+    description.includes("2nd")
+  ) {
+    return "LIVE";
+  }
+
+  return "NS";
+}
+
 function normalizeName(name) {
   return String(name || "")
     .toLowerCase()
@@ -594,6 +620,16 @@ function buildPossibleNames(name) {
   if (normalized.includes(" ac")) variants.add(normalized.replace(" ac", "").trim());
   if (normalized.includes("manchester ")) variants.add(normalized.replace("manchester ", "man ").trim());
   if (normalized.includes("man ")) variants.add(normalized.replace("man ", "manchester ").trim());
+  if (normalized === "nottingham forest") variants.add("nott m forest");
+  if (normalized === "nott m forest") variants.add("nottingham forest");
+  if (normalized === "real sociedad") variants.add("sociedad");
+  if (normalized === "sociedad") variants.add("real sociedad");
+  if (normalized === "atletico madrid") variants.add("ath madrid");
+  if (normalized === "ath madrid") variants.add("atletico madrid");
+  if (normalized === "wolverhampton") variants.add("wolves");
+  if (normalized === "wolves") variants.add("wolverhampton");
+  if (normalized === "tottenham hotspur") variants.add("tottenham");
+  if (normalized === "tottenham") variants.add("tottenham hotspur");
   return [...variants].filter(Boolean);
 }
 
@@ -718,10 +754,19 @@ function buildTeamProfile({ teamName, recent, seasonStats, injuries, clubElo, st
     season: seasonStats
       ? {
           avgShotsOn: seasonStats.avgShotsOn ?? null,
+          avgShotsOnAgainst: seasonStats.avgShotsOnAgainst ?? null,
           avgShots: seasonStats.avgShots ?? null,
+          avgShotsAgainst: seasonStats.avgShotsAgainst ?? null,
           avgPossession: seasonStats.avgPossession ?? null,
           avgCorners: seasonStats.avgCorners ?? null,
+          avgCornersAgainst: seasonStats.avgCornersAgainst ?? null,
           cleanSheets: seasonStats.cleanSheets ?? null,
+          cleanSheetRate: seasonStats.cleanSheetRate ?? null,
+          failToScoreRate: seasonStats.failToScoreRate ?? null,
+          bttsRate: seasonStats.bttsRate ?? null,
+          over25Rate: seasonStats.over25Rate ?? null,
+          dominanceScore: seasonStats.dominanceScore ?? null,
+          historicalGames: seasonStats.historicalGames ?? null,
         }
       : null,
     injuries: {
@@ -886,6 +931,18 @@ function buildFeatureVector(input) {
     ),
     home_avg_corners: Number(input.homeSeasonStats?.avgCorners || 0),
     away_avg_corners: Number(input.awaySeasonStats?.avgCorners || 0),
+    home_avg_shots: Number(input.homeSeasonStats?.avgShots || 0),
+    away_avg_shots: Number(input.awaySeasonStats?.avgShots || 0),
+    home_avg_shots_against: Number(input.homeSeasonStats?.avgShotsAgainst || 0),
+    away_avg_shots_against: Number(input.awaySeasonStats?.avgShotsAgainst || 0),
+    home_avg_shots_on_against: Number(input.homeSeasonStats?.avgShotsOnAgainst || 0),
+    away_avg_shots_on_against: Number(input.awaySeasonStats?.avgShotsOnAgainst || 0),
+    dominance_diff: Number(
+      (
+        Number(input.homeSeasonStats?.dominanceScore || 0) -
+        Number(input.awaySeasonStats?.dominanceScore || 0)
+      ).toFixed(2)
+    ),
     set_piece_diff: Number(
       (
         Number(input.homeTeamProfile?.setPieceScore || 0) -
@@ -942,6 +999,10 @@ function buildHeuristicEnsemble(featureVector) {
   awayScore -= featureVector.set_piece_diff * 0.04;
   homeScore += (featureVector.home_avg_corners - featureVector.away_avg_corners) * 0.015;
   awayScore += (featureVector.away_avg_corners - featureVector.home_avg_corners) * 0.015;
+  homeScore += featureVector.dominance_diff * 0.08;
+  awayScore -= featureVector.dominance_diff * 0.08;
+  homeScore += (featureVector.home_avg_shots - featureVector.away_avg_shots_against) * 0.01;
+  awayScore += (featureVector.away_avg_shots - featureVector.home_avg_shots_against) * 0.01;
   homeScore += featureVector.lineups_avg_rating_diff * 0.05;
   awayScore -= featureVector.lineups_avg_rating_diff * 0.05;
   homeScore += featureVector.keeper_rating_diff * 0.035;
@@ -1550,10 +1611,13 @@ async function fetchFallbackScheduledEventsFromMarket(dateISO) {
 function dedupeFallbackEvents(events) {
   const seen = new Map();
   for (const event of events || []) {
-    const kickoff = String(event?.startTimestamp || "");
-    const home = normalizeName(event?.homeTeam?.name || "");
-    const away = normalizeName(event?.awayTeam?.name || "");
-    const key = `${kickoff}|${home}|${away}`;
+    const kickoff = Number(event?.startTimestamp || 0);
+    const dateKey = Number.isFinite(kickoff) && kickoff > 0
+      ? new Date(kickoff * 1000).toISOString().slice(0, 10)
+      : "";
+    const home = buildPossibleNames(event?.homeTeam?.name || "").sort((a, b) => b.length - a.length)[0] || "";
+    const away = buildPossibleNames(event?.awayTeam?.name || "").sort((a, b) => b.length - a.length)[0] || "";
+    const key = `${dateKey}|${home}|${away}`;
     const current = seen.get(key);
     if (!current) {
       seen.set(key, event);
@@ -1562,7 +1626,9 @@ function dedupeFallbackEvents(events) {
 
     const nextScore = Number(event?.homeScore?.current ?? -1) + Number(event?.awayScore?.current ?? -1);
     const currentScore = Number(current?.homeScore?.current ?? -1) + Number(current?.awayScore?.current ?? -1);
-    if (nextScore > currentScore) {
+    const nextLogoScore = Number(Boolean(event?.homeTeam?.logoUrl)) + Number(Boolean(event?.awayTeam?.logoUrl));
+    const currentLogoScore = Number(Boolean(current?.homeTeam?.logoUrl)) + Number(Boolean(current?.awayTeam?.logoUrl));
+    if (nextScore > currentScore || (nextScore === currentScore && nextLogoScore > currentLogoScore)) {
       seen.set(key, event);
     }
   }
@@ -1615,8 +1681,7 @@ function fetchCuratedFixtureBackfill(dateISO) {
     });
 }
 async function fetchSportsDbScheduledEvents(dateISO) {
-  const fallbackEvents = [];
-  const seen = new Set();
+  const fallbackById = new Map();
   const appendEvent = (event, leagueLabel) => {
     const leagueInfo = LEAGUES.find((item) => item.label === leagueLabel);
     if (!leagueInfo) return;
@@ -1626,8 +1691,6 @@ async function fetchSportsDbScheduledEvents(dateISO) {
     if (isWomenContext(leagueLabel, homeName, awayName) || isYouthContext(leagueLabel, homeName, awayName)) return;
 
     const eventId = `tsdb-${leagueLabel}-${event.idEvent || `${dateISO}-${normalizeName(homeName)}-${normalizeName(awayName)}`}`;
-    if (seen.has(eventId)) return;
-    seen.add(eventId);
 
     const kickoff = event?.strTimestamp
       ? new Date(String(event.strTimestamp).replace(" ", "T") + "Z")
@@ -1635,14 +1698,21 @@ async function fetchSportsDbScheduledEvents(dateISO) {
     const homeGoals = toNumber(event?.intHomeScore);
     const awayGoals = toNumber(event?.intAwayScore);
     const statusText = String(event?.strStatus || "").toLowerCase();
-    const finished = Number.isFinite(homeGoals) && Number.isFinite(awayGoals);
-    const statusType = finished || statusText.includes("finished")
+    const scoreAvailable = Number.isFinite(homeGoals) && Number.isFinite(awayGoals);
+    const finished =
+      statusText.includes("finished") ||
+      statusText === "ft" ||
+      statusText.includes("full time") ||
+      (scoreAvailable && kickoff.getTime() + 150 * 60 * 1000 < Date.now());
+    const statusType = finished
       ? "finished"
-      : statusText.includes("live") || statusText.includes("progress")
+      : statusText.includes("half")
+        ? "halftime"
+        : statusText.includes("live") || statusText.includes("progress") || statusText.includes("1st") || statusText.includes("2nd")
         ? "inprogress"
         : "notstarted";
 
-    fallbackEvents.push({
+    const mappedEvent = {
       id: eventId,
       startTimestamp: Math.floor(kickoff.getTime() / 1000),
       homeTeam: {
@@ -1665,11 +1735,24 @@ async function fetchSportsDbScheduledEvents(dateISO) {
         uniqueTournament: { id: null },
       },
       season: { id: null },
-      status: { type: statusType },
-      homeScore: finished ? { current: homeGoals } : {},
-      awayScore: finished ? { current: awayGoals } : {},
+      status: {
+        type: statusType,
+        description: statusType === "halftime" ? "HT" : event?.strStatus || "",
+      },
+      period: statusType === "halftime" ? "HT" : null,
+      homeScore: scoreAvailable ? { current: homeGoals } : {},
+      awayScore: scoreAvailable ? { current: awayGoals } : {},
       source: "thesportsdb-fixture-fallback",
-    });
+    };
+
+    const quality =
+      (scoreAvailable ? 20 : 0) +
+      (statusType === "finished" ? 12 : statusType === "halftime" ? 8 : statusType === "inprogress" ? 6 : 0) +
+      (event?.strTimestamp ? 2 : 0);
+    const existing = fallbackById.get(eventId);
+    if (!existing || quality > existing.quality) {
+      fallbackById.set(eventId, { quality, event: mappedEvent });
+    }
   };
 
   try {
@@ -1690,24 +1773,26 @@ async function fetchSportsDbScheduledEvents(dateISO) {
   } catch {}
 
   for (const [leagueLabel, leagueId] of Object.entries(SPORTSDB_LEAGUE_IDS)) {
-    try {
-      const response = await fetch(`https://www.thesportsdb.com/api/v1/json/123/eventsnextleague.php?id=${leagueId}`, {
-        headers: {
-          Accept: "application/json",
-          "User-Agent":
-            "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 Chrome/123.0 Safari/537.36",
-        },
-      });
-      if (!response.ok) continue;
-      const json = await response.json();
-      for (const event of Array.isArray(json?.events) ? json.events : []) {
-        if (String(event?.dateEvent || "") !== dateISO) continue;
-        appendEvent(event, leagueLabel);
-      }
-    } catch {}
+    for (const endpoint of ["eventsnextleague", "eventspastleague"]) {
+      try {
+        const response = await fetch(`https://www.thesportsdb.com/api/v1/json/123/${endpoint}.php?id=${leagueId}`, {
+          headers: {
+            Accept: "application/json",
+            "User-Agent":
+              "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 Chrome/123.0 Safari/537.36",
+          },
+        });
+        if (!response.ok) continue;
+        const json = await response.json();
+        for (const event of Array.isArray(json?.events) ? json.events : []) {
+          if (String(event?.dateEvent || "") !== dateISO) continue;
+          appendEvent(event, leagueLabel);
+        }
+      } catch {}
+    }
   }
 
-  return fallbackEvents;
+  return Array.from(fallbackById.values()).map((item) => item.event);
 }
 
 async function fetchOpenLigaDbScheduledEvents(dateISO) {
@@ -2045,6 +2130,19 @@ function buildMarketProfiles(rows) {
         awayActualPoints: 0,
         homeImpliedPoints: 0,
         awayImpliedPoints: 0,
+        shotsFor: 0,
+        shotsAgainst: 0,
+        shotsOnFor: 0,
+        shotsOnAgainst: 0,
+        cornersFor: 0,
+        cornersAgainst: 0,
+        yellowCards: 0,
+        redCards: 0,
+        cleanSheets: 0,
+        failedToScore: 0,
+        bttsMatches: 0,
+        over25Matches: 0,
+        statsRows: 0,
         bookmakers: {},
       };
     }
@@ -2058,6 +2156,19 @@ function buildMarketProfiles(rows) {
         awayActualPoints: 0,
         homeImpliedPoints: 0,
         awayImpliedPoints: 0,
+        shotsFor: 0,
+        shotsAgainst: 0,
+        shotsOnFor: 0,
+        shotsOnAgainst: 0,
+        cornersFor: 0,
+        cornersAgainst: 0,
+        yellowCards: 0,
+        redCards: 0,
+        cleanSheets: 0,
+        failedToScore: 0,
+        bttsMatches: 0,
+        over25Matches: 0,
+        statsRows: 0,
         bookmakers: {},
       };
     }
@@ -2071,6 +2182,60 @@ function buildMarketProfiles(rows) {
     teams[awayKey].totalGames += 1;
     teams[awayKey].awayActualPoints += actualAwayPoints;
     teams[awayKey].awayImpliedPoints += impliedAwayPoints;
+
+    const homeShots = toNumber(row.HS);
+    const awayShots = toNumber(row.AS);
+    const homeShotsOn = toNumber(row.HST);
+    const awayShotsOn = toNumber(row.AST);
+    const homeCorners = toNumber(row.HC);
+    const awayCorners = toNumber(row.AC);
+    const homeYellow = toNumber(row.HY);
+    const awayYellow = toNumber(row.AY);
+    const homeRed = toNumber(row.HR);
+    const awayRed = toNumber(row.AR);
+    const hasStats =
+      Number.isFinite(homeShots) ||
+      Number.isFinite(awayShots) ||
+      Number.isFinite(homeShotsOn) ||
+      Number.isFinite(awayShotsOn) ||
+      Number.isFinite(homeCorners) ||
+      Number.isFinite(awayCorners);
+
+    if (hasStats) {
+      teams[homeKey].statsRows += 1;
+      teams[awayKey].statsRows += 1;
+      teams[homeKey].shotsFor += Number(homeShots || 0);
+      teams[homeKey].shotsAgainst += Number(awayShots || 0);
+      teams[awayKey].shotsFor += Number(awayShots || 0);
+      teams[awayKey].shotsAgainst += Number(homeShots || 0);
+      teams[homeKey].shotsOnFor += Number(homeShotsOn || 0);
+      teams[homeKey].shotsOnAgainst += Number(awayShotsOn || 0);
+      teams[awayKey].shotsOnFor += Number(awayShotsOn || 0);
+      teams[awayKey].shotsOnAgainst += Number(homeShotsOn || 0);
+      teams[homeKey].cornersFor += Number(homeCorners || 0);
+      teams[homeKey].cornersAgainst += Number(awayCorners || 0);
+      teams[awayKey].cornersFor += Number(awayCorners || 0);
+      teams[awayKey].cornersAgainst += Number(homeCorners || 0);
+    }
+
+    teams[homeKey].yellowCards += Number(homeYellow || 0);
+    teams[awayKey].yellowCards += Number(awayYellow || 0);
+    teams[homeKey].redCards += Number(homeRed || 0);
+    teams[awayKey].redCards += Number(awayRed || 0);
+    if (Number.isFinite(homeGoals) && Number.isFinite(awayGoals)) {
+      if (awayGoals === 0) teams[homeKey].cleanSheets += 1;
+      if (homeGoals === 0) teams[awayKey].cleanSheets += 1;
+      if (homeGoals === 0) teams[homeKey].failedToScore += 1;
+      if (awayGoals === 0) teams[awayKey].failedToScore += 1;
+      if (homeGoals > 0 && awayGoals > 0) {
+        teams[homeKey].bttsMatches += 1;
+        teams[awayKey].bttsMatches += 1;
+      }
+      if (homeGoals + awayGoals > 2.5) {
+        teams[homeKey].over25Matches += 1;
+        teams[awayKey].over25Matches += 1;
+      }
+    }
 
     const pairKey = buildPairKey(homeTeam, awayTeam);
     if (!h2hPairs[pairKey]) h2hPairs[pairKey] = [];
@@ -2173,6 +2338,21 @@ function buildMarketProfiles(rows) {
     const awayActualPpg = value.awayGames ? value.awayActualPoints / value.awayGames : 0;
     const homeImpliedPpg = value.homeGames ? value.homeImpliedPoints / value.homeGames : 0;
     const awayImpliedPpg = value.awayGames ? value.awayImpliedPoints / value.awayGames : 0;
+    const statsRows = Math.max(Number(value.statsRows || 0), 1);
+    const games = Math.max(Number(value.totalGames || 0), 1);
+    const avgShots = Number((Number(value.shotsFor || 0) / statsRows).toFixed(2));
+    const avgShotsAgainst = Number((Number(value.shotsAgainst || 0) / statsRows).toFixed(2));
+    const avgShotsOn = Number((Number(value.shotsOnFor || 0) / statsRows).toFixed(2));
+    const avgShotsOnAgainst = Number((Number(value.shotsOnAgainst || 0) / statsRows).toFixed(2));
+    const avgCorners = Number((Number(value.cornersFor || 0) / statsRows).toFixed(2));
+    const avgCornersAgainst = Number((Number(value.cornersAgainst || 0) / statsRows).toFixed(2));
+    const dominanceScore = Number(
+      (
+        (avgShots - avgShotsAgainst) * 0.055 +
+        (avgShotsOn - avgShotsOnAgainst) * 0.13 +
+        (avgCorners - avgCornersAgainst) * 0.035
+      ).toFixed(2)
+    );
     formattedTeams[key] = {
       teamName: value.teamName,
       totalGames: value.totalGames,
@@ -2184,6 +2364,25 @@ function buildMarketProfiles(rows) {
       awayImpliedPpg: Number(awayImpliedPpg.toFixed(2)),
       homeOverperformance: Number((homeActualPpg - homeImpliedPpg).toFixed(2)),
       awayOverperformance: Number((awayActualPpg - awayImpliedPpg).toFixed(2)),
+      historicalStats: {
+        source: "football-data.co.uk",
+        seasons: 5,
+        games: Number(value.totalGames || 0),
+        statsRows: Number(value.statsRows || 0),
+        avgShots,
+        avgShotsAgainst,
+        avgShotsOn,
+        avgShotsOnAgainst,
+        avgCorners,
+        avgCornersAgainst,
+        yellowCardRate: Number((Number(value.yellowCards || 0) / games).toFixed(2)),
+        redCardRate: Number((Number(value.redCards || 0) / games).toFixed(2)),
+        cleanSheetRate: Number((Number(value.cleanSheets || 0) / games).toFixed(2)),
+        failToScoreRate: Number((Number(value.failedToScore || 0) / games).toFixed(2)),
+        bttsRate: Number((Number(value.bttsMatches || 0) / games).toFixed(2)),
+        over25Rate: Number((Number(value.over25Matches || 0) / games).toFixed(2)),
+        dominanceScore,
+      },
       bookmakers: Object.fromEntries(
         Object.entries(value.bookmakers || {}).map(([bookKey, bookValue]) => {
           const bookHomeActualPpg = bookValue.homeGames ? bookValue.homeActualPoints / bookValue.homeGames : 0;
@@ -2256,7 +2455,7 @@ async function fetchHistoricalMarketProfile(leagueLabel, dateISO) {
   const codes = getMarketLeagueFamilyCodes(leagueLabel);
   if (!codes.length) return null;
 
-  const seasonFolders = getSeasonFolders(dateISO, 2);
+  const seasonFolders = getSeasonFolders(dateISO, 5);
   const allRows = [];
   for (const seasonFolder of seasonFolders) {
     for (const code of codes) {
@@ -2566,8 +2765,28 @@ function lookupSnapshotTeam(snapshot, teamName) {
 function mergeSeasonStatsWithSnapshots(baseStats, teamName, leagueLabel, store) {
   const understat = lookupSnapshotTeam(store.understatSnapshots?.[leagueLabel], teamName);
   const fbref = lookupSnapshotTeam(store.fbrefSnapshots?.[leagueLabel], teamName);
+  const marketTeam = lookupMarketTeamProfile(store.marketProfiles?.[leagueLabel], teamName);
+  const historicalStats = marketTeam?.historicalStats || null;
   const externalSources = [];
   const merged = { ...(baseStats || {}) };
+
+  if (historicalStats && Number(historicalStats.statsRows || 0) >= 8) {
+    externalSources.push("football-data-history");
+    merged.avgShots = merged.avgShots ?? historicalStats.avgShots ?? null;
+    merged.avgShotsAgainst = merged.avgShotsAgainst ?? historicalStats.avgShotsAgainst ?? null;
+    merged.avgShotsOn = merged.avgShotsOn ?? historicalStats.avgShotsOn ?? null;
+    merged.avgShotsOnAgainst = merged.avgShotsOnAgainst ?? historicalStats.avgShotsOnAgainst ?? null;
+    merged.avgCorners = merged.avgCorners ?? historicalStats.avgCorners ?? null;
+    merged.avgCornersAgainst = merged.avgCornersAgainst ?? historicalStats.avgCornersAgainst ?? null;
+    merged.cleanSheetRate = merged.cleanSheetRate ?? historicalStats.cleanSheetRate ?? null;
+    merged.failToScoreRate = merged.failToScoreRate ?? historicalStats.failToScoreRate ?? null;
+    merged.bttsRate = merged.bttsRate ?? historicalStats.bttsRate ?? null;
+    merged.over25Rate = merged.over25Rate ?? historicalStats.over25Rate ?? null;
+    merged.yellowCardRate = merged.yellowCardRate ?? historicalStats.yellowCardRate ?? null;
+    merged.redCardRate = merged.redCardRate ?? historicalStats.redCardRate ?? null;
+    merged.dominanceScore = merged.dominanceScore ?? historicalStats.dominanceScore ?? null;
+    merged.historicalGames = historicalStats.games ?? merged.historicalGames ?? null;
+  }
 
   if (understat) {
     externalSources.push("Understat");
@@ -2597,7 +2816,7 @@ function mergeSeasonStatsWithSnapshots(baseStats, teamName, leagueLabel, store) 
 
   if (externalSources.length) {
     merged.externalSources = Array.from(new Set([...(merged.externalSources || []), ...externalSources]));
-    merged.sourceQuality = Number(Math.min(1, 0.45 + merged.externalSources.length * 0.25).toFixed(2));
+    merged.sourceQuality = Number(Math.min(1, 0.42 + merged.externalSources.length * 0.18 + Math.min(Number(merged.historicalGames || 0) / 120, 1) * 0.12).toFixed(2));
   }
 
   return Object.keys(merged).length ? merged : null;
@@ -4496,6 +4715,19 @@ function predict(input) {
     awayXG *= clamp(Number(input.awaySeasonStats.avgShotsOn || 0) / averageShots, 0.88, 1.14);
   }
 
+  if (input.homeSeasonStats?.dominanceScore != null && input.awaySeasonStats?.dominanceScore != null) {
+    const dominanceDiff = Number(input.homeSeasonStats.dominanceScore || 0) - Number(input.awaySeasonStats.dominanceScore || 0);
+    homeXG *= clamp(1 + dominanceDiff * 0.028, 0.92, 1.12);
+    awayXG *= clamp(1 - dominanceDiff * 0.028, 0.92, 1.12);
+  }
+
+  if (input.homeSeasonStats?.avgShots && input.awaySeasonStats?.avgShotsAgainst) {
+    homeXG *= clamp(Number(input.homeSeasonStats.avgShots || 0) / Math.max(Number(input.awaySeasonStats.avgShotsAgainst || 0), 1), 0.9, 1.1);
+  }
+  if (input.awaySeasonStats?.avgShots && input.homeSeasonStats?.avgShotsAgainst) {
+    awayXG *= clamp(Number(input.awaySeasonStats.avgShots || 0) / Math.max(Number(input.homeSeasonStats.avgShotsAgainst || 0), 1), 0.9, 1.1);
+  }
+
   if (input.homeRestDays != null && input.awayRestDays != null) {
     const diff = Number(input.homeRestDays) - Number(input.awayRestDays);
     homeXG *= clamp(1 + diff * 0.012, 0.93, 1.08);
@@ -5325,8 +5557,13 @@ async function main() {
   const activeLeagueLabels = allActiveLeagueLabels.filter((label) => MARKET_LEAGUE_CODES[label]);
 
   for (const leagueLabel of activeLeagueLabels) {
+    const existingMarketProfile = store.marketProfiles[leagueLabel] || null;
+    const missingHistoricalStats =
+      existingMarketProfile?.teams &&
+      !Object.values(existingMarketProfile.teams || {}).some((team) => team?.historicalStats?.statsRows);
     if (
-      !store.marketProfiles[leagueLabel] ||
+      !existingMarketProfile ||
+      missingHistoricalStats ||
       now - Number(store.marketProfilesUpdated?.[leagueLabel] || 0) > MARKET_TTL
     ) {
       const marketProfile = await fetchHistoricalMarketProfile(leagueLabel, today);
@@ -5714,6 +5951,7 @@ async function main() {
         event.homeScore?.current != null && event.awayScore?.current != null
           ? `${event.homeScore.current}-${event.awayScore.current}`
           : null;
+      const appStatus = resolveAppStatus(event);
       const match = {
         id: matchId,
         sofaId: event.id,
@@ -5727,13 +5965,13 @@ async function main() {
         awayTeamName: awayName,
         homeLogo: event.homeTeam?.logoUrl || (homeId ? `https://api.sofascore.app/api/v1/team/${homeId}/image` : ""),
         awayLogo: event.awayTeam?.logoUrl || (awayId ? `https://api.sofascore.app/api/v1/team/${awayId}/image` : ""),
-        status: event.status?.type === "inprogress" ? "LIVE" : event.status?.type === "finished" ? "FT" : "NS",
+        status: appStatus,
         score,
         minute: minuteState.minute,
         minuteValue: minuteState.minuteValue,
         extraTime: minuteState.extraTime,
         period: minuteState.period,
-        liveUpdatedAt: event.status?.type === "inprogress" ? now : null,
+        liveUpdatedAt: appStatus === "LIVE" || appStatus === "HT" ? now : null,
         homeForm: homeRecent?.form || "",
         awayForm: awayRecent?.form || "",
         homeRecent,
@@ -5809,7 +6047,7 @@ async function main() {
           awayTeamName: awayName,
           aggregate,
           score,
-          status: event.status?.type === "inprogress" ? "LIVE" : event.status?.type === "finished" ? "FT" : "NS",
+          status: appStatus,
         };
 
         store.knockoutOverview[date].push(knockoutItem);
@@ -5854,8 +6092,9 @@ async function main() {
     }
 
     const minuteState = resolveMinuteState(live, liveDetails);
+    const liveStatus = resolveAppStatus(live);
 
-    match.status = "LIVE";
+    match.status = liveStatus === "NS" ? "LIVE" : liveStatus;
     match.score =
       live.homeScore?.current != null && live.awayScore?.current != null
         ? `${live.homeScore.current}-${live.awayScore.current}`
@@ -5864,7 +6103,7 @@ async function main() {
     match.minuteValue = minuteState.minuteValue || match.minuteValue || null;
     match.extraTime = minuteState.extraTime || null;
     match.period = minuteState.period || match.period || null;
-    match.liveUpdatedAt = Date.now();
+    match.liveUpdatedAt = match.status === "LIVE" || match.status === "HT" ? Date.now() : match.liveUpdatedAt;
     match.liveStats = await fetchLiveStats(live.id);
 
     if (match.aggregate?.active) {
