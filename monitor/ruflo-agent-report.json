@@ -1,6 +1,6 @@
 {
-  "generatedAt": "2026-05-04T23:10:22.429Z",
-  "date": "2026-05-05",
+  "generatedAt": "2026-05-05T23:12:02.405Z",
+  "date": "2026-05-06",
   "name": "Ruflo-style gratis AI monitor",
   "mode": "naast-productie",
   "productionSafe": true,
@@ -8,7 +8,7 @@
   "agents": {
     "data": {
       "score": 20,
-      "summary": "Datalaag: H2H 0%, bookmakers 50%, refs 0%.",
+      "summary": "Datalaag: H2H 100%, bookmakers 0%, refs 0%.",
       "freeSources": [
         {
           "name": "SofaScore public endpoint",
@@ -56,21 +56,11 @@
           "name": "FBref snapshots",
           "role": "shots/home-away splits via snapshot-cache",
           "free": true,
-          "status": "deels actief",
+          "status": "rate-limited backup",
           "use": "Niet live scrapen op iedere run; alleen gecachte snapshots gebruiken."
         }
       ],
       "actions": [
-        {
-          "priority": "medium",
-          "title": "H2H-backfill verder vullen",
-          "freeSolution": "Gebruik openfootball en football-data rows per competitie als historische H2H fallback voordat de UI 'leeg' toont.",
-          "files": [
-            "scripts/server-worker.js",
-            "components/MatchCard.tsx"
-          ],
-          "status": "aanbevolen"
-        },
         {
           "priority": "medium",
           "title": "Bookmakerdekking vergroten zonder betaalde API",
@@ -93,46 +83,25 @@
       ]
     },
     "learning": {
-      "score": 13,
-      "summary": "Leerlaag: 277 reviews, exact 13%, winnaar/gelijk 47%, top-5 exact 8%.",
+      "score": 11,
+      "summary": "Leerlaag: 278 reviews, exact 11%, winnaar/gelijk 45%, top-5 exact 4%.",
       "topConfidence": {
-        "matches": 24,
-        "exactHitRate": 0.083,
-        "outcomeHitRate": 0.333,
-        "probabilityOutcomeHitRate": 0.542,
-        "avgGoalError": 1.83,
+        "matches": 28,
+        "exactHitRate": 0.036,
+        "outcomeHitRate": 0.321,
+        "probabilityOutcomeHitRate": 0.571,
+        "avgGoalError": 1.79,
         "rank1ExactHitRate": 0,
         "rank1OutcomeHitRate": 0,
-        "versusOverallOutcomeDelta": -0.132
+        "versusOverallOutcomeDelta": -0.125
       },
       "topClubs": [
-        {
-          "teamName": "Lazio",
-          "reviewedMatches": 2,
-          "exactHitRate": 1,
-          "outcomeHitRate": 1,
-          "avgGoalError": 0
-        },
         {
           "teamName": "Nottingham Forest",
           "reviewedMatches": 2,
           "exactHitRate": 1,
           "outcomeHitRate": 1,
           "avgGoalError": 0
-        },
-        {
-          "teamName": "Cremonese",
-          "reviewedMatches": 3,
-          "exactHitRate": 0.67,
-          "outcomeHitRate": 1,
-          "avgGoalError": 0.67
-        },
-        {
-          "teamName": "Sp Braga",
-          "reviewedMatches": 2,
-          "exactHitRate": 0.5,
-          "outcomeHitRate": 0.5,
-          "avgGoalError": 0.5
         },
         {
           "teamName": "Oviedo",
@@ -153,7 +122,7 @@
           "reviewedMatches": 2,
           "exactHitRate": 0.5,
           "outcomeHitRate": 0.5,
-          "avgGoalError": 1.5
+          "avgGoalError": 0.5
         },
         {
           "teamName": "Real Madrid",
@@ -175,6 +144,27 @@
           "exactHitRate": 0.5,
           "outcomeHitRate": 1,
           "avgGoalError": 1
+        },
+        {
+          "teamName": "FC Porto",
+          "reviewedMatches": 2,
+          "exactHitRate": 0.5,
+          "outcomeHitRate": 0.5,
+          "avgGoalError": 1
+        },
+        {
+          "teamName": "Aston Villa",
+          "reviewedMatches": 2,
+          "exactHitRate": 0.5,
+          "outcomeHitRate": 0.5,
+          "avgGoalError": 1
+        },
+        {
+          "teamName": "Roma",
+          "reviewedMatches": 3,
+          "exactHitRate": 0,
+          "outcomeHitRate": 1,
+          "avgGoalError": 2.67
         }
       ],
       "actions": [
@@ -211,14 +201,14 @@
     },
     "control": {
       "score": 60,
-      "summary": "Ontwikkelcontrole: 1 actieve monitorissues op 2026-05-05; digest 2026-04-21 t/m 2026-05-04.",
-      "latestDay": "2026-05-05",
+      "summary": "Ontwikkelcontrole: 1 actieve monitorissues op 2026-05-06; digest 2026-04-21 t/m 2026-05-04.",
+      "latestDay": "2026-05-06",
       "shouldPropose": true,
       "actions": [
         {
           "priority": "medium",
-          "title": "Alle wedstrijden van vandaag hebben lege H2H-data.",
-          "freeSolution": "Vul H2H uit openfootball/football-data competitiebestanden voordat de UI leeg toont.",
+          "title": "Alle wedstrijden missen bookmaker-signalen in de marktcalibratie.",
+          "freeSolution": "Gebruik gratis football-data odds-kolommen als per-bookmaker closing proxy.",
           "files": [
             "scripts/server-worker.js",
             "components/MatchCard.tsx"
@@ -228,10 +218,11 @@
         {
           "priority": "high",
           "title": "Reviewbranch klaarzetten, niet blind live",
-          "freeSolution": "Maak codex/review-20260505 alleen als patchvoorstel en merge pas na build + workercheck.",
+          "freeSolution": "Maak codex/review-20260506 alleen als patchvoorstel en merge pas na build + workercheck.",
           "files": [
             "scripts/server-worker.js",
-            "components/MatchCard.tsx"
+            "components/MatchCard.tsx",
+            "types.ts"
           ],
           "status": "proposal"
         }
@@ -264,14 +255,6 @@
       ]
     },
     {
-      "title": "H2H-backfill verder vullen",
-      "count": 1,
-      "priority": "medium",
-      "agents": [
-        "data"
-      ]
-    },
-    {
       "title": "Bookmakerdekking vergroten zonder betaalde API",
       "count": 1,
       "priority": "medium",
@@ -288,7 +271,7 @@
       ]
     },
     {
-      "title": "Alle wedstrijden van vandaag hebben lege H2H-data.",
+      "title": "Alle wedstrijden missen bookmaker-signalen in de marktcalibratie.",
       "count": 1,
       "priority": "medium",
       "agents": [
@@ -330,24 +313,14 @@
     {
       "priority": "high",
       "title": "Reviewbranch klaarzetten, niet blind live",
-      "freeSolution": "Maak codex/review-20260505 alleen als patchvoorstel en merge pas na build + workercheck.",
+      "freeSolution": "Maak codex/review-20260506 alleen als patchvoorstel en merge pas na build + workercheck.",
       "files": [
         "scripts/server-worker.js",
-        "components/MatchCard.tsx"
+        "components/MatchCard.tsx",
+        "types.ts"
       ],
       "status": "proposal",
       "agent": "control"
-    },
-    {
-      "priority": "medium",
-      "title": "H2H-backfill verder vullen",
-      "freeSolution": "Gebruik openfootball en football-data rows per competitie als historische H2H fallback voordat de UI 'leeg' toont.",
-      "files": [
-        "scripts/server-worker.js",
-        "components/MatchCard.tsx"
-      ],
-      "status": "aanbevolen",
-      "agent": "data"
     },
     {
       "priority": "medium",
@@ -372,8 +345,8 @@
     },
     {
       "priority": "medium",
-      "title": "Alle wedstrijden van vandaag hebben lege H2H-data.",
-      "freeSolution": "Vul H2H uit openfootball/football-data competitiebestanden voordat de UI leeg toont.",
+      "title": "Alle wedstrijden missen bookmaker-signalen in de marktcalibratie.",
+      "freeSolution": "Gebruik gratis football-data odds-kolommen als per-bookmaker closing proxy.",
       "files": [
         "scripts/server-worker.js",
         "components/MatchCard.tsx"

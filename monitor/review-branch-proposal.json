@@ -1,41 +1,43 @@
 {
-  "generatedAt": "2026-05-04T23:10:22.324Z",
-  "date": "2026-05-05",
+  "generatedAt": "2026-05-05T23:12:02.286Z",
+  "date": "2026-05-06",
   "proposalOnly": true,
   "shouldPropose": true,
-  "branchName": "codex/review-20260505",
-  "summary": "AI reviewvoorstel voor 2026-05-05: 1 aandachtspunt(en) met patchadvies, niet automatisch live.",
+  "branchName": "codex/review-20260506",
+  "summary": "AI reviewvoorstel voor 2026-05-06: 1 aandachtspunt(en) met patchadvies, niet automatisch live.",
   "latestStats": {
-    "today": "2026-05-05",
+    "today": "2026-05-06",
     "dataPresent": true,
-    "lastRun": 1777933992474,
-    "ageMinutes": 37,
-    "todayMatches": 2,
+    "lastRun": 1778020285252,
+    "ageMinutes": 41,
+    "todayMatches": 1,
     "liveMatches": 0,
     "liveWithoutMinute": 0,
-    "h2hFilled": 0,
-    "h2hMissing": 2,
+    "h2hFilled": 1,
+    "h2hMissing": 0,
     "standingsCount": 37,
-    "cupSheetCount": 4,
+    "cupSheetCount": 3,
     "phaseReliabilityCount": 3
   },
   "findings": [
     {
       "priority": 1,
-      "key": "h2h_empty",
+      "key": "bookmaker_signals_missing",
       "severity": "medium",
-      "message": "Alle wedstrijden van vandaag hebben lege H2H-data.",
-      "whyItMatters": "Onderlinge duels worden niet sterk genoeg gevuld.",
+      "message": "Alle wedstrijden missen bookmaker-signalen in de marktcalibratie.",
+      "whyItMatters": "Bookmaker-specifieke closing-signalen ontbreken nog in wedstrijden.",
       "recommendedFiles": [
         "scripts/server-worker.js",
-        "components/MatchCard.tsx"
+        "components/MatchCard.tsx",
+        "types.ts"
       ],
       "details": {}
     }
   ],
   "recommendedFiles": [
     "scripts/server-worker.js",
-    "components/MatchCard.tsx"
+    "components/MatchCard.tsx",
+    "types.ts"
   ],
   "nextStep": "Gebruik deze proposal om gericht een reviewbranch te maken en alleen na controle te mergen."
 }
