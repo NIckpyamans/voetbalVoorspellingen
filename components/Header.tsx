@@ -18,8 +18,18 @@ const Header: React.FC<HeaderProps> = ({ view, currentView, onViewChange }) => {
         <div className="h-9 w-9 overflow-hidden rounded-xl border border-cyan-300/30 bg-slate-950 shadow-lg shadow-cyan-500/20">
           <img src="/footyai-ball-logo.jpeg" alt="FootyAI 3D-bal logo" className="h-full w-full object-cover" />
         </div>
-        <h1 className="text-lg font-black tracking-tighter text-white">
-          Footy<span className="text-blue-500">AI</span>
+        <h1 className="text-lg font-black tracking-tight text-white">
+          <span className="text-transparent bg-clip-text bg-gradient-to-r from-amber-300 via-rose-400 to-cyan-300">
+            Voetbal
+          </span>
+          <span className="text-slate-300">-</span>
+          <span className="text-transparent bg-clip-text bg-gradient-to-r from-cyan-300 via-blue-400 to-rose-400">
+            Ai
+          </span>
+          <span className="text-slate-300">-</span>
+          <span className="text-transparent bg-clip-text bg-gradient-to-r from-rose-400 via-orange-300 to-cyan-300">
+            tactics
+          </span>
         </h1>
       </div>
 
