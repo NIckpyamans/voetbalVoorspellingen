@@ -398,18 +398,22 @@ const App: React.FC = () => {
   }, [historyItems]);
 
   return (
-    <div className="relative min-h-screen overflow-hidden bg-slate-950">
+    <div className="relative min-h-screen overflow-hidden bg-[#020817]">
       <div
         aria-hidden="true"
-        className="fixed inset-0 bg-[url('/footyai-stadium-bg.jpeg')] bg-cover bg-center bg-no-repeat opacity-55"
+        className="fixed inset-0 bg-[url('/footyai-stadium-bg.jpeg')] bg-contain bg-top bg-no-repeat opacity-60"
       />
       <div
         aria-hidden="true"
-        className="fixed inset-0 bg-gradient-to-br from-slate-950/92 via-slate-900/70 to-slate-950/90"
+        className="fixed inset-0 bg-gradient-to-r from-[#020817] via-slate-950/35 to-[#020817]"
       />
       <div
         aria-hidden="true"
-        className="fixed inset-0 bg-[radial-gradient(circle_at_50%_0%,rgba(20,184,166,0.18),transparent_42%)]"
+        className="fixed inset-0 bg-gradient-to-b from-slate-950/35 via-slate-950/70 to-slate-950/95"
+      />
+      <div
+        aria-hidden="true"
+        className="fixed inset-0 bg-[radial-gradient(circle_at_50%_0%,rgba(20,184,166,0.16),transparent_45%)]"
       />
       <div className="relative z-10">
       <Header 
