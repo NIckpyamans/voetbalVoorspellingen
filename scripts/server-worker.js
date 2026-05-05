@@ -264,6 +264,22 @@ const CURATED_FIXTURE_BACKFILL = [
 ];
 
 const CURATED_H2H_BACKFILL = {
+  "arsenal__atletico madrid": [
+    {
+      date: "2018-05-03",
+      home: "Atletico Madrid",
+      away: "Arsenal",
+      score: "1-0",
+      source: "aiscore-h2h-backfill",
+    },
+    {
+      date: "2025-10-21",
+      home: "Arsenal",
+      away: "Atletico Madrid",
+      score: "4-0",
+      source: "aiscore-h2h-backfill",
+    },
+  ],
   "bayern munich__paris saint germain": [
     {
       date: "2024-11-26",
