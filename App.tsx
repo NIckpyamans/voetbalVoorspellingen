@@ -415,6 +415,26 @@ const App: React.FC = () => {
           <SettingsView />
         ) : (
           <>
+            <section className="relative mb-5 overflow-hidden rounded-3xl border border-blue-500/20 bg-slate-950/60 shadow-2xl shadow-blue-950/30">
+              <img
+                src="/footyai-preview.svg"
+                alt="FootyAI voetbalvoorspelling met stadionlicht, bal en scorebord"
+                className="h-40 w-full object-cover opacity-95 md:h-52"
+              />
+              <div className="absolute inset-0 bg-gradient-to-r from-slate-950/70 via-slate-950/20 to-transparent" />
+              <div className="absolute left-5 top-5 max-w-md md:left-8 md:top-7">
+                <div className="mb-2 inline-flex rounded-full border border-yellow-400/30 bg-yellow-400/10 px-3 py-1 text-[10px] font-black uppercase tracking-[0.2em] text-yellow-200">
+                  FootyAI Preview
+                </div>
+                <h1 className="text-2xl font-black text-white md:text-4xl">
+                  Exact-score voorspellingen
+                </h1>
+                <p className="mt-2 hidden text-sm font-semibold text-slate-300 md:block">
+                  Vorm, H2H, stand, marktdata en AI-review in een strak voetbal-dashboard.
+                </p>
+              </div>
+            </section>
+
             {/* DATE NAVIGATION - NIEUW! */}
             <DateNavigation 
               selectedDate={selectedDate}
