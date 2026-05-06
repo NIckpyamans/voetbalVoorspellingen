@@ -433,19 +433,19 @@ const App: React.FC = () => {
     >
       <div
         aria-hidden="true"
-        className="fixed inset-0 bg-[url('/footyai-stadium-bg.jpeg')] bg-[length:min(96vw,1220px)_auto] bg-[position:center_-250px] md:bg-[position:center_-360px] xl:bg-[position:center_-430px] bg-no-repeat opacity-80 contrast-110 saturate-110"
+        className="fixed inset-0 bg-[url('/footyai-stadium-bg.jpeg')] bg-[length:min(108vw,1380px)_auto] bg-[position:center_-120px] md:bg-[position:center_-210px] xl:bg-[position:center_-260px] bg-no-repeat opacity-86 contrast-110 saturate-110"
       />
       <div
         aria-hidden="true"
-        className="fixed inset-0 bg-[radial-gradient(ellipse_at_center,transparent_34%,rgba(2,8,23,0.58)_68%,rgba(1,5,16,0.96)_100%)]"
+        className="fixed inset-0 bg-[radial-gradient(ellipse_at_center,transparent_40%,rgba(2,8,23,0.36)_72%,rgba(1,5,16,0.88)_100%)]"
       />
       <div
         aria-hidden="true"
-        className="fixed inset-0 bg-gradient-to-r from-[#020817] via-slate-950/8 to-[#020817]"
+        className="fixed inset-0 bg-gradient-to-r from-[#020817]/84 via-slate-950/0 to-[#020817]/84"
       />
       <div
         aria-hidden="true"
-        className="fixed inset-0 bg-gradient-to-b from-slate-950/18 via-slate-950/50 to-slate-950/92"
+        className="fixed inset-0 bg-gradient-to-b from-slate-950/10 via-slate-950/38 to-slate-950/88"
       />
       <div
         aria-hidden="true"
