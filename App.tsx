@@ -433,19 +433,27 @@ const App: React.FC = () => {
     >
       <div
         aria-hidden="true"
-        className="fixed inset-0 bg-[url('/footyai-stadium-bg.jpeg')] bg-[length:min(118vw,1500px)_auto] bg-[position:center_-420px] md:bg-[position:center_-560px] xl:bg-[position:center_-640px] bg-no-repeat opacity-90 contrast-125 saturate-125"
+        className="fixed inset-0 bg-[url('/footyai-stadium-bg.jpeg')] bg-[length:min(96vw,1220px)_auto] bg-[position:center_-250px] md:bg-[position:center_-360px] xl:bg-[position:center_-430px] bg-no-repeat opacity-80 contrast-110 saturate-110"
       />
       <div
         aria-hidden="true"
-        className="fixed inset-0 bg-gradient-to-r from-[#020817]/82 via-slate-950/10 to-[#020817]/82"
+        className="fixed inset-0 bg-[radial-gradient(ellipse_at_center,transparent_34%,rgba(2,8,23,0.58)_68%,rgba(1,5,16,0.96)_100%)]"
       />
       <div
         aria-hidden="true"
-        className="fixed inset-0 bg-gradient-to-b from-slate-950/5 via-slate-950/48 to-slate-950/88"
+        className="fixed inset-0 bg-gradient-to-r from-[#020817] via-slate-950/8 to-[#020817]"
       />
       <div
         aria-hidden="true"
-        className="fixed inset-0 bg-[radial-gradient(circle_at_50%_0%,rgba(20,184,166,0.16),transparent_45%)]"
+        className="fixed inset-0 bg-gradient-to-b from-slate-950/18 via-slate-950/50 to-slate-950/92"
+      />
+      <div
+        aria-hidden="true"
+        className="fixed inset-0 bg-[radial-gradient(circle_at_50%_33%,rgba(45,212,191,0.18),transparent_26%),radial-gradient(circle_at_50%_82%,rgba(37,99,235,0.18),transparent_35%)] mix-blend-screen"
+      />
+      <div
+        aria-hidden="true"
+        className="fixed inset-0 bg-[linear-gradient(115deg,rgba(255,255,255,0.05),transparent_24%,transparent_70%,rgba(20,184,166,0.06))]"
       />
       <div className="relative z-10">
       <Header 
