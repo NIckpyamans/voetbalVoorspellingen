@@ -59,7 +59,7 @@ function isLive(match: Match) {
 
 function isFinished(match: Match) {
   const status = String(match.status || "").toUpperCase();
-  return status === "FT" || status.includes("FINISH");
+  return status === "FT" || status === "RESULT_PENDING" || status.includes("FINISH");
 }
 
 function belongsToSelectedDate(match: Match, dateISO: string) {

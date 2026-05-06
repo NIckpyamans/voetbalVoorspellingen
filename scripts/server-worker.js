@@ -251,6 +251,16 @@ const CURATED_FIXTURE_BACKFILL = [
   },
   {
     date: "2026-05-05",
+    time: "18:45",
+    league: "Netherlands - Eredivisie",
+    tournament: "Eredivisie",
+    country: "Netherlands",
+    home: "RKC Waalwijk",
+    away: "Willem II",
+    sourceNote: "TheSportsDB result safety backfill",
+  },
+  {
+    date: "2026-05-05",
     time: "21:00",
     league: "Europe - Champions League",
     tournament: "Champions League",
@@ -260,6 +270,69 @@ const CURATED_FIXTURE_BACKFILL = [
     round: "Semi-finals",
     aggregateLabel: "Aggregate 1-1",
     sourceNote: "BBC fixtures backfill",
+  },
+  {
+    date: "2026-05-07",
+    time: "21:00",
+    league: "Europe - Europa League",
+    tournament: "Europa League",
+    country: "Europe",
+    home: "Freiburg",
+    away: "Sporting Braga",
+    round: "Semi-finals",
+    sourceNote: "UEFA fixtures backfill",
+  },
+  {
+    date: "2026-05-07",
+    time: "21:00",
+    league: "Europe - Europa League",
+    tournament: "Europa League",
+    country: "Europe",
+    home: "Aston Villa",
+    away: "Nottingham Forest",
+    round: "Semi-finals",
+    sourceNote: "UEFA fixtures backfill",
+  },
+  {
+    date: "2026-05-07",
+    time: "21:00",
+    league: "Europe - Conference League",
+    tournament: "Conference League",
+    country: "Europe",
+    home: "Crystal Palace",
+    away: "Shakhtar Donetsk",
+    round: "Semi-finals",
+    sourceNote: "UEFA fixtures backfill",
+  },
+  {
+    date: "2026-05-07",
+    time: "21:00",
+    league: "Europe - Conference League",
+    tournament: "Conference League",
+    country: "Europe",
+    home: "Strasbourg",
+    away: "Rayo Vallecano",
+    round: "Semi-finals",
+    sourceNote: "UEFA fixtures backfill",
+  },
+];
+
+const CURATED_RESULT_BACKFILL = [
+  {
+    date: "2026-05-05",
+    home: "RKC Waalwijk",
+    away: "Willem II",
+    score: "0-1",
+    status: "FT",
+    sourceNote: "TheSportsDB verified result backfill",
+  },
+  {
+    date: "2026-05-05",
+    home: "Arsenal",
+    away: "Atletico Madrid",
+    score: "2-1",
+    status: "FT",
+    sourceNote: "manual verified result backfill",
   },
 ];
 
@@ -277,6 +350,36 @@ const CURATED_H2H_BACKFILL = {
       home: "Arsenal",
       away: "Atletico Madrid",
       score: "4-0",
+      source: "aiscore-h2h-backfill",
+    },
+    {
+      date: "2026-04-28",
+      home: "Arsenal",
+      away: "Atletico Madrid",
+      score: "1-1",
+      source: "aiscore-h2h-backfill",
+    },
+  ],
+  "rkc waalwijk__willem ii": [
+    {
+      date: "2024-09-15",
+      home: "Willem II",
+      away: "RKC Waalwijk",
+      score: "3-0",
+      source: "aiscore-h2h-backfill",
+    },
+    {
+      date: "2025-01-26",
+      home: "RKC Waalwijk",
+      away: "Willem II",
+      score: "2-0",
+      source: "aiscore-h2h-backfill",
+    },
+    {
+      date: "2022-02-06",
+      home: "Willem II",
+      away: "RKC Waalwijk",
+      score: "3-1",
       source: "aiscore-h2h-backfill",
     },
   ],
@@ -1739,6 +1842,44 @@ function fetchCuratedFixtureBackfill(dateISO) {
         source: "curated-fixture-fallback",
       };
     });
+}
+
+function lookupCuratedResultBackfill(dateISO, homeName, awayName) {
+  const pairKey = buildPairKey(homeName, awayName);
+  return (
+    CURATED_RESULT_BACKFILL.find((item) => item.date === dateISO && buildPairKey(item.home, item.away) === pairKey) ||
+    null
+  );
+}
+
+function applyCuratedResultBackfill(event, dateISO) {
+  const result = lookupCuratedResultBackfill(
+    dateISO,
+    event?.homeTeam?.name || "",
+    event?.awayTeam?.name || ""
+  );
+  if (!result) return event;
+
+  const [homeGoals, awayGoals] = String(result.score || "").split("-").map(Number);
+  if (!Number.isFinite(homeGoals) || !Number.isFinite(awayGoals)) return event;
+
+  return {
+    ...event,
+    status: { ...(event.status || {}), type: "finished", description: "FT" },
+    homeScore: { ...(event.homeScore || {}), current: homeGoals },
+    awayScore: { ...(event.awayScore || {}), current: awayGoals },
+    resultBackfillMeta: {
+      sourceNote: result.sourceNote || "curated result backfill",
+    },
+    source: `${event.source || "unknown"}+result-backfill`,
+  };
+}
+
+function inferPostKickoffStatus(event, appStatus, score, nowMs) {
+  if (appStatus !== "NS" || score) return appStatus;
+  const kickoffMs = Number(event?.startTimestamp || 0) * 1000;
+  if (!Number.isFinite(kickoffMs) || kickoffMs <= 0) return appStatus;
+  return nowMs - kickoffMs > 150 * 60 * 1000 ? "RESULT_PENDING" : appStatus;
 }
 
 function decodeHtmlText(value) {
@@ -5776,7 +5917,7 @@ async function main() {
       console.log(`[worker] ${date}: ${curatedEvents.length} fallback events uit curated fixtures`);
     }
     if (combinedFallbacks.length) {
-      events = combinedFallbacks;
+      events = combinedFallbacks.map((event) => applyCuratedResultBackfill(event, date));
     }
     
     if (events.length > 0) {
@@ -6256,7 +6397,7 @@ async function main() {
         event.homeScore?.current != null && event.awayScore?.current != null
           ? `${event.homeScore.current}-${event.awayScore.current}`
           : null;
-      const appStatus = resolveAppStatus(event);
+      const appStatus = inferPostKickoffStatus(event, resolveAppStatus(event), score, now);
       const match = {
         id: matchId,
         sofaId: event.id,

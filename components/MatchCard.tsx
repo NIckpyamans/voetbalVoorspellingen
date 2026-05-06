@@ -681,7 +681,8 @@ const MatchCard: React.FC<MatchCardProps> = ({ match, prediction, onFavoriteChan
   const matchStatus = String(match.status || "").toUpperCase();
   const isHalfTime = matchStatus === "HT";
   const isLive = matchStatus === "LIVE" || isHalfTime || !!liveMinute;
-  const isFinished = matchStatus === "FT";
+  const isResultPending = matchStatus === "RESULT_PENDING";
+  const isFinished = matchStatus === "FT" || isResultPending;
   const weather = match.weather || prediction.weather;
   const h2h = match.h2h || prediction.h2h;
   const aggregate = match.aggregate || prediction.aggregate;
@@ -713,7 +714,9 @@ const MatchCard: React.FC<MatchCardProps> = ({ match, prediction, onFavoriteChan
       ? liveMinute
       : "live"
     : isFinished
-      ? "FT"
+      ? isResultPending
+        ? "Uitslag volgt"
+        : "FT"
       : match.kickoff
         ? new Date(match.kickoff).toLocaleTimeString("nl-NL", { hour: "2-digit", minute: "2-digit" })
         : "-";
