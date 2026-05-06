@@ -207,6 +207,8 @@ function buildRecentH2HForm(h2h: any, currentHomeId?: string, currentAwayId?: st
 }
 
 function getH2HSourceLabel(status?: string) {
+  if (status?.startsWith("h2h-agent:")) return "H2H-agent: live, historische en backfill-bronnen gecombineerd";
+  if (status === "h2h-agent-empty") return "H2H-agent vond nog geen betrouwbare onderlinge duels";
   if (status === "all-competitions") return "laatste onderlinge duels uit alle competities";
   if (status === "historical-competition") return "aangevuld uit historische competitiedata";
   if (status === "merged-historical-competition") return "live bron + historische competitiedata";
