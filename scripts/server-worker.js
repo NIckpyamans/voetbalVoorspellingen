@@ -330,7 +330,7 @@ const CURATED_RESULT_BACKFILL = [
     date: "2026-05-05",
     home: "Arsenal",
     away: "Atletico Madrid",
-    score: "2-1",
+    score: "1-0",
     status: "FT",
     sourceNote: "manual verified result backfill",
   },
