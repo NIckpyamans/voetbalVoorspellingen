@@ -114,6 +114,13 @@ const LEAGUE_ORDER = [
 
 const App: React.FC = () => {
   const [view, setView] = useState<View>("dashboard");
+  const [glassTransparency, setGlassTransparency] = useState<number>(() => {
+    try {
+      return Math.min(80, Math.max(15, Number(localStorage.getItem("footyai_glass_transparency") || 46)));
+    } catch {
+      return 46;
+    }
+  });
   const [selectedDate, setSelectedDate] = useState<string>(() => {
     return isoDate(new Date());
   });
@@ -129,6 +136,23 @@ const App: React.FC = () => {
   const [expandedTopClub, setExpandedTopClub] = useState<string | null>(null);
   const [favRefresh, setFavRefresh] = useState(0);
   const learnedRef = useRef<Set<string>>(new Set());
+
+  useEffect(() => {
+    const updateTransparency = () => {
+      try {
+        setGlassTransparency(Math.min(80, Math.max(15, Number(localStorage.getItem("footyai_glass_transparency") || 46))));
+      } catch {
+        setGlassTransparency(46);
+      }
+    };
+
+    window.addEventListener("storage", updateTransparency);
+    window.addEventListener("footyai-glass-change", updateTransparency);
+    return () => {
+      window.removeEventListener("storage", updateTransparency);
+      window.removeEventListener("footyai-glass-change", updateTransparency);
+    };
+  }, []);
 
   useEffect(() => {
     fetch("/api/standings")
@@ -398,18 +422,26 @@ const App: React.FC = () => {
   }, [historyItems]);
 
   return (
-    <div className="relative min-h-screen overflow-hidden bg-[#020817]">
+    <div
+      className="footyai-glass-scope relative min-h-screen overflow-hidden bg-[#020817]"
+      style={
+        {
+          "--footyai-card-alpha": String((100 - glassTransparency) / 100),
+          "--footyai-card-blur": `${Math.round(10 + glassTransparency / 4)}px`,
+        } as React.CSSProperties
+      }
+    >
       <div
         aria-hidden="true"
-        className="fixed inset-0 bg-[url('/footyai-stadium-bg.jpeg')] bg-[length:min(118vw,1500px)_auto] bg-top bg-no-repeat opacity-80 contrast-125 saturate-125"
+        className="fixed inset-0 bg-[url('/footyai-stadium-bg.jpeg')] bg-[length:min(126vw,1650px)_auto] bg-[position:center_-120px] bg-no-repeat opacity-90 contrast-125 saturate-125"
       />
       <div
         aria-hidden="true"
-        className="fixed inset-0 bg-gradient-to-r from-[#020817]/90 via-slate-950/20 to-[#020817]/90"
+        className="fixed inset-0 bg-gradient-to-r from-[#020817]/82 via-slate-950/10 to-[#020817]/82"
       />
       <div
         aria-hidden="true"
-        className="fixed inset-0 bg-gradient-to-b from-slate-950/15 via-slate-950/58 to-slate-950/92"
+        className="fixed inset-0 bg-gradient-to-b from-slate-950/5 via-slate-950/48 to-slate-950/88"
       />
       <div
         aria-hidden="true"

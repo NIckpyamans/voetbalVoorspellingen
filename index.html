@@ -28,9 +28,12 @@
         overflow-x: hidden;
       }
       .glass-card {
-        background: rgba(10, 10, 30, 0.6);
-        backdrop-filter: blur(20px);
+        background: rgba(10, 10, 30, var(--footyai-card-alpha, 0.54));
+        backdrop-filter: blur(var(--footyai-card-blur, 16px));
         border: 1px solid rgba(255, 255, 255, 0.05);
+      }
+      .footyai-glass-scope .glass-card {
+        box-shadow: 0 24px 80px rgba(0, 0, 0, calc(var(--footyai-card-alpha, 0.54) * 0.55));
       }
       .scrollbar-hide::-webkit-scrollbar {
         display: none;
