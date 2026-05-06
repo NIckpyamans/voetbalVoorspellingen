@@ -18,8 +18,12 @@ const SettingsView: React.FC = () => {
   const [featureDiagnostics, setFeatureDiagnostics] = useState<any | null>(null);
   const [sourceCoverage, setSourceCoverage] = useState<any | null>(null);
   const [manualAdvice, setManualAdvice] = useState("");
+  const [glassTransparency, setGlassTransparency] = useState(46);
 
   useEffect(() => {
+    try {
+      setGlassTransparency(Math.min(80, Math.max(15, Number(localStorage.getItem("footyai_glass_transparency") || 46))));
+    } catch {}
     try {
       const raw = localStorage.getItem("footypredict_memory") || "[]";
       setHistoryCount(JSON.parse(raw).length);
@@ -78,6 +82,13 @@ const SettingsView: React.FC = () => {
     localStorage.setItem("footypredict_manual_ai_advice", manualAdvice.trim());
   };
 
+  const updateGlassTransparency = (value: number) => {
+    const next = Math.min(80, Math.max(15, value));
+    setGlassTransparency(next);
+    localStorage.setItem("footyai_glass_transparency", String(next));
+    window.dispatchEvent(new Event("footyai-glass-change"));
+  };
+
   const bundleUpdatedAt = biweeklyDigest?.generatedAt
     ? new Date(biweeklyDigest.generatedAt).toLocaleString("nl-NL")
     : null;
@@ -111,6 +122,40 @@ const SettingsView: React.FC = () => {
             <span className="text-[11px] font-black text-white">{value}</span>
           </div>
         ))}
+      </div>
+
+      <div className="glass-card rounded-2xl border border-cyan-500/15 p-5 space-y-4">
+        <div>
+          <div className="text-[10px] font-black text-cyan-300 uppercase">Layout en achtergrond</div>
+          <p className="mt-1 text-[11px] text-slate-500">
+            Bepaal hoeveel van de stadionachtergrond door de kaarten heen zichtbaar is.
+          </p>
+        </div>
+        <div className="rounded-xl border border-white/5 bg-slate-950/25 p-4">
+          <div className="mb-3 flex items-center justify-between gap-3">
+            <div>
+              <div className="text-[11px] font-black text-white">Kaders doorzichtiger maken</div>
+              <div className="text-[9px] text-slate-500">Lager = rustiger, hoger = meer achtergrond zichtbaar.</div>
+            </div>
+            <span className="rounded-full bg-cyan-500/15 px-3 py-1 text-[11px] font-black text-cyan-200">
+              {glassTransparency}%
+            </span>
+          </div>
+          <input
+            type="range"
+            min="15"
+            max="80"
+            step="5"
+            value={glassTransparency}
+            onChange={(event) => updateGlassTransparency(Number(event.target.value))}
+            className="w-full accent-cyan-400"
+            aria-label="Doorzichtigheid van kaders"
+          />
+          <div className="mt-2 flex justify-between text-[8px] font-black uppercase text-slate-600">
+            <span>Donkerder</span>
+            <span>Meer beeld</span>
+          </div>
+        </div>
       </div>
 
       <div className="glass-card rounded-2xl border border-white/5 p-5">
