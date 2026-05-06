@@ -433,7 +433,7 @@ const App: React.FC = () => {
     >
       <div
         aria-hidden="true"
-        className="fixed inset-0 bg-[url('/footyai-stadium-bg.jpeg')] bg-[length:min(126vw,1650px)_auto] bg-[position:center_-120px] bg-no-repeat opacity-90 contrast-125 saturate-125"
+        className="fixed inset-0 bg-[url('/footyai-stadium-bg.jpeg')] bg-[length:min(118vw,1500px)_auto] bg-[position:center_-420px] md:bg-[position:center_-560px] xl:bg-[position:center_-640px] bg-no-repeat opacity-90 contrast-125 saturate-125"
       />
       <div
         aria-hidden="true"
