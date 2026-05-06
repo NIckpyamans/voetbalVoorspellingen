@@ -916,7 +916,10 @@ const MatchCard: React.FC<MatchCardProps> = ({ match, prediction, onFavoriteChan
           <div className="grid grid-cols-2 gap-2">
             <div className="rounded-lg p-2 bg-slate-900/60">
               <div className="text-[7px] font-black uppercase text-slate-400 mb-1">Laatste 5 onderling</div>
-              <div className="text-[8px] text-slate-500 mb-1">{getH2HSourceLabel(h2h?.status)}</div>
+              <div className="text-[8px] text-slate-500 mb-1">
+                {h2h?.targetPlayed ? `${h2h?.played || 0}/${h2h.targetPlayed} gevonden - ` : ""}
+                {getH2HSourceLabel(h2h?.status)}
+              </div>
               <div className="flex gap-1">
                 {buildRecentH2HForm(h2h, match.homeTeamId, match.awayTeamId).length ? (
                   buildRecentH2HForm(h2h, match.homeTeamId, match.awayTeamId).map((item) => (
