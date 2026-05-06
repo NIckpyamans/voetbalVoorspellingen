@@ -433,27 +433,31 @@ const App: React.FC = () => {
     >
       <div
         aria-hidden="true"
-        className="fixed inset-0 bg-[url('/footyai-stadium-bg.jpeg')] bg-[length:min(108vw,1380px)_auto] bg-[position:center_-120px] md:bg-[position:center_-210px] xl:bg-[position:center_-260px] bg-no-repeat opacity-86 contrast-110 saturate-110"
+        className="fixed inset-0 bg-[url('/footyai-stadium-bg.jpeg')] bg-[length:min(99vw,1260px)_auto] bg-[position:center_-72px] md:bg-[position:center_-150px] xl:bg-[position:center_-190px] bg-no-repeat opacity-78 contrast-105 saturate-105 brightness-90"
       />
       <div
         aria-hidden="true"
-        className="fixed inset-0 bg-[radial-gradient(ellipse_at_center,transparent_40%,rgba(2,8,23,0.36)_72%,rgba(1,5,16,0.88)_100%)]"
+        className="fixed inset-0 bg-[radial-gradient(ellipse_at_center,transparent_34%,rgba(20,184,166,0.18)_42%,rgba(2,8,23,0.46)_73%,rgba(1,5,16,0.92)_100%)]"
       />
       <div
         aria-hidden="true"
-        className="fixed inset-0 bg-gradient-to-r from-[#020817]/84 via-slate-950/0 to-[#020817]/84"
+        className="fixed inset-0 bg-gradient-to-r from-[#020817]/88 via-slate-950/12 to-[#020817]/88"
       />
       <div
         aria-hidden="true"
-        className="fixed inset-0 bg-gradient-to-b from-slate-950/10 via-slate-950/38 to-slate-950/88"
+        className="fixed inset-0 bg-gradient-to-b from-slate-950/18 via-slate-950/52 to-slate-950/92"
       />
       <div
         aria-hidden="true"
-        className="fixed inset-0 bg-[radial-gradient(circle_at_50%_33%,rgba(45,212,191,0.18),transparent_26%),radial-gradient(circle_at_50%_82%,rgba(37,99,235,0.18),transparent_35%)] mix-blend-screen"
+        className="fixed inset-0 bg-[radial-gradient(circle_at_51%_57%,rgba(103,232,249,0.28),transparent_20%),radial-gradient(circle_at_75%_50%,rgba(45,212,191,0.22),transparent_24%),radial-gradient(circle_at_38%_62%,rgba(34,211,238,0.16),transparent_22%)] mix-blend-screen blur-[1px]"
       />
       <div
         aria-hidden="true"
-        className="fixed inset-0 bg-[linear-gradient(115deg,rgba(255,255,255,0.05),transparent_24%,transparent_70%,rgba(20,184,166,0.06))]"
+        className="fixed inset-0 bg-[linear-gradient(115deg,rgba(255,255,255,0.035),transparent_22%,transparent_70%,rgba(20,184,166,0.08))]"
+      />
+      <div
+        aria-hidden="true"
+        className="fixed inset-0 bg-[radial-gradient(circle_at_50%_58%,transparent_0,transparent_18%,rgba(2,8,23,0.18)_38%,rgba(2,8,23,0.54)_100%)]"
       />
       <div className="relative z-10">
       <Header 
