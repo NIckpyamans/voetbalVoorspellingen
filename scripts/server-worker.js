@@ -362,6 +362,20 @@ const CURATED_H2H_BACKFILL = {
   ],
   "rkc waalwijk__willem ii": [
     {
+      date: "2026-02-08",
+      home: "Willem II",
+      away: "RKC Waalwijk",
+      score: "2-1",
+      source: "aiscore-h2h-backfill",
+    },
+    {
+      date: "2025-10-18",
+      home: "RKC Waalwijk",
+      away: "Willem II",
+      score: "2-3",
+      source: "aiscore-h2h-backfill",
+    },
+    {
       date: "2024-09-15",
       home: "Willem II",
       away: "RKC Waalwijk",
@@ -381,6 +395,43 @@ const CURATED_H2H_BACKFILL = {
       away: "RKC Waalwijk",
       score: "3-1",
       source: "aiscore-h2h-backfill",
+    },
+  ],
+  "aston villa__nottingham forest": [
+    {
+      date: "2026-04-12",
+      home: "Nottingham Forest",
+      away: "Aston Villa",
+      score: "1-1",
+      source: "sportsmole-h2h-backfill",
+    },
+    {
+      date: "2026-01-03",
+      home: "Aston Villa",
+      away: "Nottingham Forest",
+      score: "3-1",
+      source: "sportsmole-h2h-backfill",
+    },
+    {
+      date: "2025-04-05",
+      home: "Aston Villa",
+      away: "Nottingham Forest",
+      score: "2-1",
+      source: "avfc-history-h2h-backfill",
+    },
+    {
+      date: "2024-12-14",
+      home: "Nottingham Forest",
+      away: "Aston Villa",
+      score: "2-1",
+      source: "sportsmole-h2h-backfill",
+    },
+    {
+      date: "2024-02-24",
+      home: "Aston Villa",
+      away: "Nottingham Forest",
+      score: "4-2",
+      source: "avfc-history-h2h-backfill",
     },
   ],
   "bayern munich__paris saint germain": [
@@ -2432,7 +2483,7 @@ function summarizeH2HResults(results, homeName, awayName, homeId, awayId, status
     }))
     .filter((item) => item?.score)
     .sort((a, b) => String(a?.date || "").localeCompare(String(b?.date || "")))
-    .slice(-8);
+    .slice(-5);
 
   return {
     played: normalizedResults.length,
@@ -5117,7 +5168,7 @@ function lookupCuratedH2HBackfill(homeName, awayName, homeId, awayId) {
     })
     .filter(Boolean)
     .sort((a, b) => String(a.date || "").localeCompare(String(b.date || "")))
-    .slice(-3);
+    .slice(-5);
 
   if (!results.length) return null;
   return {
