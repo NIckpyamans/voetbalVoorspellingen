@@ -67,6 +67,15 @@ export interface Match {
     avgGoals?: number;
     status?: string;
     weightedRecentBalance?: number;
+    targetPlayed?: number;
+    coverage?: number;
+    agent?: {
+      name: string;
+      target: number;
+      filled: number;
+      complete: boolean;
+      sources: string[];
+    };
     lastMatches?: Array<{
       date: string;
       score: string;

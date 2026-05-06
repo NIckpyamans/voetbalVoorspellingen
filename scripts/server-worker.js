@@ -2407,6 +2407,45 @@ function mergeH2HResultLists(existingResults = [], extraResults = []) {
     .slice(-8);
 }
 
+function h2hCompareKeys(homeName, awayName, homeId, awayId) {
+  return {
+    home: String(homeId || normalizeName(homeName)),
+    away: String(awayId || normalizeName(awayName)),
+  };
+}
+
+function normalizeH2HWinnerId(item, homeName, awayName, homeId, awayId) {
+  const keys = h2hCompareKeys(homeName, awayName, homeId, awayId);
+  const winner = String(item?.winnerId || "");
+  if (!winner) return "";
+  if (winner === String(homeId || "") || winner === normalizeName(homeName)) return keys.home;
+  if (winner === String(awayId || "") || winner === normalizeName(awayName)) return keys.away;
+  return winner;
+}
+
+function summarizeH2HResults(results, homeName, awayName, homeId, awayId, status, sameCompetitionPlayed = 0) {
+  const keys = h2hCompareKeys(homeName, awayName, homeId, awayId);
+  const normalizedResults = (results || [])
+    .map((item) => ({
+      ...item,
+      winnerId: normalizeH2HWinnerId(item, homeName, awayName, homeId, awayId),
+    }))
+    .filter((item) => item?.score)
+    .sort((a, b) => String(a?.date || "").localeCompare(String(b?.date || "")))
+    .slice(-8);
+
+  return {
+    played: normalizedResults.length,
+    homeWins: normalizedResults.filter((item) => String(item.winnerId || "") === keys.home).length,
+    draws: normalizedResults.filter((item) => !item.winnerId).length,
+    awayWins: normalizedResults.filter((item) => String(item.winnerId || "") === keys.away).length,
+    sameCompetitionPlayed,
+    weightedRecentBalance: calculateRecentH2HBalance({ results: normalizedResults }, keys.home, keys.away),
+    results: normalizedResults,
+    status: status || "h2h-agent",
+  };
+}
+
 function buildMarketProfiles(rows) {
   const teams = {};
   const referees = {};
@@ -5093,6 +5132,76 @@ function lookupCuratedH2HBackfill(homeName, awayName, homeId, awayId) {
   };
 }
 
+function buildH2HAgentProfile({
+  baseH2H,
+  fallbackLegs = [],
+  marketProfile,
+  openFootballProfile,
+  homeName,
+  awayName,
+  homeId,
+  awayId,
+}) {
+  const sources = [];
+  let results = [];
+  let sameCompetitionPlayed = Number(baseH2H?.sameCompetitionPlayed || 0);
+
+  if (baseH2H?.results?.length) {
+    results = mergeH2HResultLists(results, baseH2H.results);
+    sources.push(baseH2H.status || "live-h2h");
+  }
+
+  for (const fallbackLeg of fallbackLegs || []) {
+    if (!fallbackLeg) continue;
+    results = mergeH2HResultLists(results, [fallbackLeg]);
+    sources.push(fallbackLeg.source === "bbc-aggregate" ? "aggregate-backfill" : "previous-leg");
+  }
+
+  const curatedH2H = lookupCuratedH2HBackfill(homeName, awayName, homeId, awayId);
+  if (curatedH2H?.results?.length) {
+    results = mergeH2HResultLists(results, curatedH2H.results);
+    sources.push(curatedH2H.status);
+    sameCompetitionPlayed += Number(curatedH2H.sameCompetitionPlayed || 0);
+  }
+
+  for (const historicalH2H of [
+    lookupHistoricalH2HBackfill(marketProfile || null, homeName, awayName, homeId, awayId),
+    lookupHistoricalH2HBackfill(openFootballProfile || null, homeName, awayName, homeId, awayId),
+  ]) {
+    if (!historicalH2H?.results?.length) continue;
+    results = mergeH2HResultLists(results, historicalH2H.results);
+    sources.push(historicalH2H.status || "historical-competition");
+    sameCompetitionPlayed += Number(historicalH2H.sameCompetitionPlayed || 0);
+  }
+
+  if (!results.length) {
+    return { played: 0, homeWins: 0, draws: 0, awayWins: 0, results: [], status: "h2h-agent-empty" };
+  }
+
+  const profile = summarizeH2HResults(
+    results,
+    homeName,
+    awayName,
+    homeId,
+    awayId,
+    sources.length > 1 ? `h2h-agent:${[...new Set(sources)].join("+")}` : sources[0] || "h2h-agent",
+    sameCompetitionPlayed
+  );
+
+  return {
+    ...profile,
+    targetPlayed: 5,
+    coverage: Math.min(1, Number(profile.played || 0) / 5),
+    agent: {
+      name: "H2H-agent",
+      target: 5,
+      filled: Number(profile.played || 0),
+      complete: Number(profile.played || 0) >= 5,
+      sources: [...new Set(sources)],
+    },
+  };
+}
+
 function predict(input) {
   const avgLeagueGoals = 1.35;
   const homeSplit = pickHomeStrength(input.homeRecent);
@@ -6192,73 +6301,16 @@ async function main() {
       );
       const aggregatePreviousLeg = buildH2HFromAggregateMeta(event, homeId, awayId, homeName, awayName, date);
       const h2hFallbackLegs = [fallbackPreviousLeg, aggregatePreviousLeg].filter(Boolean);
-      for (const h2hFallbackLeg of h2hFallbackLegs) {
-      const homeCompareKey = String(homeId || normalizeName(homeName));
-      const awayCompareKey = String(awayId || normalizeName(awayName));
-      if ((!h2h || !h2h.played) && h2hFallbackLeg) {
-        h2h = {
-          played: 1,
-          homeWins: String(h2hFallbackLeg.winnerId || "") === homeCompareKey ? 1 : 0,
-          draws: !h2hFallbackLeg.winnerId ? 1 : 0,
-          awayWins: String(h2hFallbackLeg.winnerId || "") === awayCompareKey ? 1 : 0,
-          results: [h2hFallbackLeg],
-          weightedRecentBalance: calculateRecentH2HBalance({ results: [h2hFallbackLeg] }, homeCompareKey, awayCompareKey),
-          status: h2hFallbackLeg.source === "bbc-aggregate" ? "aggregate-backfill" : "fallback",
-        };
-      } else if (h2hFallbackLeg && !String(JSON.stringify(h2h?.results || [])).includes(String(h2hFallbackLeg.score))) {
-        const mergedFallbackResults = mergeH2HResultLists(h2h?.results || [], [h2hFallbackLeg]);
-        h2h = {
-          ...(h2h || {}),
-          results: mergedFallbackResults,
-          played: mergedFallbackResults.length,
-          homeWins: mergedFallbackResults.filter((item) => String(item.winnerId || "") === homeCompareKey).length,
-          draws: mergedFallbackResults.filter((item) => !item.winnerId).length,
-          awayWins: mergedFallbackResults.filter((item) => String(item.winnerId || "") === awayCompareKey).length,
-          weightedRecentBalance: calculateRecentH2HBalance(
-            { results: mergedFallbackResults },
-            homeCompareKey,
-            awayCompareKey
-          ),
-          status: h2h?.status || (h2hFallbackLeg.source === "bbc-aggregate" ? "aggregate-backfill" : "loaded"),
-        };
-      }
-      }
-      const curatedH2H = lookupCuratedH2HBackfill(homeName, awayName, homeId, awayId);
-      if (curatedH2H && (!h2h || Number(h2h.played || 0) < 3)) {
-        const mergedCuratedResults = mergeH2HResultLists(h2h?.results || [], curatedH2H.results || []).slice(-3);
-        const homeCompareKey = String(homeId || normalizeName(homeName));
-        const awayCompareKey = String(awayId || normalizeName(awayName));
-        h2h = {
-          played: mergedCuratedResults.length,
-          homeWins: mergedCuratedResults.filter((item) => String(item.winnerId || "") === homeCompareKey).length,
-          draws: mergedCuratedResults.filter((item) => !item.winnerId).length,
-          awayWins: mergedCuratedResults.filter((item) => String(item.winnerId || "") === awayCompareKey).length,
-          sameCompetitionPlayed: Number(h2h?.sameCompetitionPlayed || 0),
-          weightedRecentBalance: calculateRecentH2HBalance({ results: mergedCuratedResults }, homeCompareKey, awayCompareKey),
-          results: mergedCuratedResults,
-          status: h2h?.played ? `merged-${curatedH2H.status}` : curatedH2H.status,
-        };
-      }
-      const historicalBackfills = [
-        lookupHistoricalH2HBackfill(store.marketProfiles[leagueInfo.label] || null, homeName, awayName, homeId, awayId),
-        lookupHistoricalH2HBackfill(store.openfootballProfiles[leagueInfo.label] || null, homeName, awayName, homeId, awayId),
-      ].filter(Boolean);
-
-      for (const historicalH2H of historicalBackfills) {
-        if ((!h2h || Number(h2h.played || 0) < 5) && historicalH2H) {
-          const mergedHistoricalResults = mergeH2HResultLists(h2h?.results || [], historicalH2H.results || []);
-          h2h = {
-            played: mergedHistoricalResults.length,
-            homeWins: mergedHistoricalResults.filter((item) => String(item.winnerId || "") === String(homeId || "")).length,
-            draws: mergedHistoricalResults.filter((item) => !item.winnerId).length,
-            awayWins: mergedHistoricalResults.filter((item) => String(item.winnerId || "") === String(awayId || "")).length,
-            sameCompetitionPlayed: Number(h2h?.sameCompetitionPlayed || 0) + Number(historicalH2H.sameCompetitionPlayed || 0),
-            weightedRecentBalance: calculateRecentH2HBalance({ results: mergedHistoricalResults }, homeId, awayId),
-            results: mergedHistoricalResults,
-            status: h2h?.played ? `merged-${historicalH2H.status || "historical"}` : historicalH2H.status || "historical-competition",
-          };
-        }
-      }
+      h2h = buildH2HAgentProfile({
+        baseH2H: h2h,
+        fallbackLegs: h2hFallbackLegs,
+        marketProfile: store.marketProfiles[leagueInfo.label] || null,
+        openFootballProfile: store.openfootballProfiles[leagueInfo.label] || null,
+        homeName,
+        awayName,
+        homeId,
+        awayId,
+      });
       const aggregate = buildAggregateInfo(event, eventDetails, h2h, fallbackPreviousLeg);
       const homeRestDays = calcRestDays(homeRecent?.lastMatchKickoff, kickoff);
       const awayRestDays = calcRestDays(awayRecent?.lastMatchKickoff, kickoff);
