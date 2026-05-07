@@ -845,6 +845,16 @@ function getInternationalLeagueInfo(event) {
 function buildPossibleNames(name) {
   const normalized = normalizeName(name);
   const variants = new Set([normalized]);
+  const withoutLeadingClubPrefix = normalized
+    .replace(/^(?:1\s+)?(?:fc|sc|dsc|ac|afc|cf)\s+/, "")
+    .trim();
+  if (withoutLeadingClubPrefix && withoutLeadingClubPrefix !== normalized) variants.add(withoutLeadingClubPrefix);
+  const withoutTrailingClubSuffix = normalized.replace(/\s+(?:fc|sc|afc|cf|ac)$/g, "").trim();
+  if (withoutTrailingClubSuffix && withoutTrailingClubSuffix !== normalized) variants.add(withoutTrailingClubSuffix);
+  const withoutTrailingNumber = withoutLeadingClubPrefix.replace(/\s+\d+$/g, "").trim();
+  if (withoutTrailingNumber && withoutTrailingNumber !== normalized) variants.add(withoutTrailingNumber);
+  const withoutCitySuffix = normalized.replace(/\s+city$/g, "").trim();
+  if (withoutCitySuffix && withoutCitySuffix !== normalized) variants.add(withoutCitySuffix);
   if (normalized.includes("fc ")) variants.add(normalized.replace("fc ", "").trim());
   if (normalized.includes(" cf")) variants.add(normalized.replace(" cf", "").trim());
   if (normalized.includes(" afc")) variants.add(normalized.replace(" afc", "").trim());
@@ -862,6 +872,29 @@ function buildPossibleNames(name) {
   if (normalized === "wolves") variants.add("wolverhampton");
   if (normalized === "tottenham hotspur") variants.add("tottenham");
   if (normalized === "tottenham") variants.add("tottenham hotspur");
+  if (normalized === "hull city") variants.add("hull");
+  if (normalized === "hull") variants.add("hull city");
+  if (normalized === "sc paderborn 07") variants.add("paderborn");
+  if (normalized === "paderborn") variants.add("sc paderborn 07");
+  if (normalized === "karlsruher sc") {
+    variants.add("karlsruher");
+    variants.add("karlsruhe");
+  }
+  if (normalized === "karlsruhe") variants.add("karlsruher sc");
+  if (normalized === "1 fc kaiserslautern") variants.add("kaiserslautern");
+  if (normalized === "kaiserslautern") variants.add("1 fc kaiserslautern");
+  if (normalized === "dsc arminia bielefeld") {
+    variants.add("arminia bielefeld");
+    variants.add("bielefeld");
+  }
+  if (normalized === "arminia bielefeld" || normalized === "bielefeld") variants.add("dsc arminia bielefeld");
+  if (normalized === "oh leuven") {
+    variants.add("oud heverlee leuven");
+    variants.add("oud heverlee");
+  }
+  if (normalized === "oud heverlee leuven") variants.add("oh leuven");
+  if (normalized === "standard liege") variants.add("standard");
+  if (normalized === "standard") variants.add("standard liege");
   return [...variants].filter(Boolean);
 }
 
@@ -3258,18 +3291,31 @@ function mergeSeasonStatsWithSnapshots(baseStats, teamName, leagueLabel, store) 
 
 function lookupHistoricalH2HBackfill(leagueMarketProfile, homeName, awayName, currentHomeId, currentAwayId) {
   const pairs = leagueMarketProfile?.h2hPairs || {};
-  const pairKey = buildPairKey(homeName, awayName);
-  const raw = Array.isArray(pairs[pairKey]) ? pairs[pairKey] : [];
+  const homeVariants = buildPossibleNames(homeName);
+  const awayVariants = buildPossibleNames(awayName);
+  let raw = [];
+  for (const homeVariant of homeVariants) {
+    for (const awayVariant of awayVariants) {
+      const variantKey = buildPairKey(homeVariant, awayVariant);
+      if (Array.isArray(pairs[variantKey]) && pairs[variantKey].length) {
+        raw = pairs[variantKey];
+        break;
+      }
+    }
+    if (raw.length) break;
+  }
+  const homeWinnerId = String(currentHomeId || normalizeName(homeName));
+  const awayWinnerId = String(currentAwayId || normalizeName(awayName));
   const results = raw
     .map((item) => ({
       ...item,
       homeTeamId: item.homeTeamId || "",
       awayTeamId: item.awayTeamId || "",
       winnerId:
-        item.winnerId === normalizeName(homeName)
-          ? String(currentHomeId || "")
-          : item.winnerId === normalizeName(awayName)
-            ? String(currentAwayId || "")
+        homeVariants.includes(String(item.winnerId || ""))
+          ? homeWinnerId
+          : awayVariants.includes(String(item.winnerId || ""))
+            ? awayWinnerId
             : "",
     }))
     .slice(-5);
