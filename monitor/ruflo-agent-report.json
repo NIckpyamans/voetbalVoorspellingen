@@ -1,6 +1,6 @@
 {
-  "generatedAt": "2026-05-05T23:12:02.405Z",
-  "date": "2026-05-06",
+  "generatedAt": "2026-05-06T23:06:55.426Z",
+  "date": "2026-05-07",
   "name": "Ruflo-style gratis AI monitor",
   "mode": "naast-productie",
   "productionSafe": true,
@@ -84,16 +84,16 @@
     },
     "learning": {
       "score": 11,
-      "summary": "Leerlaag: 278 reviews, exact 11%, winnaar/gelijk 45%, top-5 exact 4%.",
+      "summary": "Leerlaag: 280 reviews, exact 11%, winnaar/gelijk 45%, top-5 exact 3%.",
       "topConfidence": {
-        "matches": 28,
-        "exactHitRate": 0.036,
-        "outcomeHitRate": 0.321,
-        "probabilityOutcomeHitRate": 0.571,
-        "avgGoalError": 1.79,
+        "matches": 30,
+        "exactHitRate": 0.033,
+        "outcomeHitRate": 0.333,
+        "probabilityOutcomeHitRate": 0.6,
+        "avgGoalError": 1.8,
         "rank1ExactHitRate": 0,
         "rank1OutcomeHitRate": 0,
-        "versusOverallOutcomeDelta": -0.125
+        "versusOverallOutcomeDelta": -0.113
       },
       "topClubs": [
         {
@@ -102,6 +102,13 @@
           "exactHitRate": 1,
           "outcomeHitRate": 1,
           "avgGoalError": 0
+        },
+        {
+          "teamName": "RKC Waalwijk",
+          "reviewedMatches": 2,
+          "exactHitRate": 0.5,
+          "outcomeHitRate": 0.5,
+          "avgGoalError": 0.5
         },
         {
           "teamName": "Oviedo",
@@ -116,13 +123,6 @@
           "exactHitRate": 0.5,
           "outcomeHitRate": 1,
           "avgGoalError": 1
-        },
-        {
-          "teamName": "RKC Waalwijk",
-          "reviewedMatches": 2,
-          "exactHitRate": 0.5,
-          "outcomeHitRate": 0.5,
-          "avgGoalError": 0.5
         },
         {
           "teamName": "Real Madrid",
@@ -160,11 +160,11 @@
           "avgGoalError": 1
         },
         {
-          "teamName": "Roma",
+          "teamName": "Arsenal",
           "reviewedMatches": 3,
           "exactHitRate": 0,
-          "outcomeHitRate": 1,
-          "avgGoalError": 2.67
+          "outcomeHitRate": 0.67,
+          "avgGoalError": 2.33
         }
       ],
       "actions": [
@@ -201,8 +201,8 @@
     },
     "control": {
       "score": 60,
-      "summary": "Ontwikkelcontrole: 1 actieve monitorissues op 2026-05-06; digest 2026-04-21 t/m 2026-05-04.",
-      "latestDay": "2026-05-06",
+      "summary": "Ontwikkelcontrole: 1 actieve monitorissues op 2026-05-07; digest 2026-04-21 t/m 2026-05-04.",
+      "latestDay": "2026-05-07",
       "shouldPropose": true,
       "actions": [
         {
@@ -218,7 +218,7 @@
         {
           "priority": "high",
           "title": "Reviewbranch klaarzetten, niet blind live",
-          "freeSolution": "Maak codex/review-20260506 alleen als patchvoorstel en merge pas na build + workercheck.",
+          "freeSolution": "Maak codex/review-20260507 alleen als patchvoorstel en merge pas na build + workercheck.",
           "files": [
             "scripts/server-worker.js",
             "components/MatchCard.tsx",
@@ -313,7 +313,7 @@
     {
       "priority": "high",
       "title": "Reviewbranch klaarzetten, niet blind live",
-      "freeSolution": "Maak codex/review-20260506 alleen als patchvoorstel en merge pas na build + workercheck.",
+      "freeSolution": "Maak codex/review-20260507 alleen als patchvoorstel en merge pas na build + workercheck.",
       "files": [
         "scripts/server-worker.js",
         "components/MatchCard.tsx",
