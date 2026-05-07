@@ -169,6 +169,8 @@ const MAX_MARKET_PROFILES = 64;
 const MAX_SNAPSHOT_CACHE = 48;
 const MAX_OPENFOOTBALL_CACHE = 48;
 const MAX_INTERNATIONAL_AVAILABILITY = 160;
+const TEAM_RECENT_MATCH_WINDOW = 10;
+const TEAM_FORM_BADGE_WINDOW = 5;
 
 const MARKET_LEAGUE_CODES = {
   "England - Premier League": "E0",
@@ -199,6 +201,8 @@ const MARKET_LEAGUE_CODES = {
   "Norway - Eliteserien": "NOR",
   "Poland - Ekstraklasa": "POL",
 };
+
+const TEAM_FORM_HISTORY_LEAGUES = Object.keys(MARKET_LEAGUE_CODES);
 
 const SPORTSDB_LEAGUE_IDS = {
   "Belgium - Pro League": "4338",
@@ -895,6 +899,10 @@ function buildPossibleNames(name) {
   if (normalized === "oud heverlee leuven") variants.add("oh leuven");
   if (normalized === "standard liege") variants.add("standard");
   if (normalized === "standard") variants.add("standard liege");
+  if (normalized === "sporting braga") variants.add("sp braga");
+  if (normalized === "sp braga") variants.add("sporting braga");
+  if (normalized === "rayo vallecano") variants.add("vallecano");
+  if (normalized === "vallecano") variants.add("rayo vallecano");
   return [...variants].filter(Boolean);
 }
 
@@ -2702,6 +2710,7 @@ function buildMarketProfiles(rows) {
         bttsMatches: 0,
         over25Matches: 0,
         statsRows: 0,
+        recentMatches: [],
         bookmakers: {},
       };
     }
@@ -2728,6 +2737,7 @@ function buildMarketProfiles(rows) {
         bttsMatches: 0,
         over25Matches: 0,
         statsRows: 0,
+        recentMatches: [],
         bookmakers: {},
       };
     }
@@ -2794,6 +2804,32 @@ function buildMarketProfiles(rows) {
         teams[homeKey].over25Matches += 1;
         teams[awayKey].over25Matches += 1;
       }
+
+      const rowDate = parseHistoricalRowDate(row.Date);
+      teams[homeKey].recentMatches.push({
+        date: rowDate,
+        league: row.Div || row.League || null,
+        venue: "H",
+        opponent: awayTeam,
+        opponentId: "",
+        score: `${homeGoals}-${awayGoals}`,
+        goalsFor: homeGoals,
+        goalsAgainst: awayGoals,
+        result: homeGoals > awayGoals ? "W" : homeGoals === awayGoals ? "D" : "L",
+        source: "football-data.co.uk",
+      });
+      teams[awayKey].recentMatches.push({
+        date: rowDate,
+        league: row.Div || row.League || null,
+        venue: "A",
+        opponent: homeTeam,
+        opponentId: "",
+        score: `${awayGoals}-${homeGoals}`,
+        goalsFor: awayGoals,
+        goalsAgainst: homeGoals,
+        result: awayGoals > homeGoals ? "W" : awayGoals === homeGoals ? "D" : "L",
+        source: "football-data.co.uk",
+      });
     }
 
     const pairKey = buildPairKey(homeTeam, awayTeam);
@@ -2942,6 +2978,10 @@ function buildMarketProfiles(rows) {
         over25Rate: Number((Number(value.over25Matches || 0) / games).toFixed(2)),
         dominanceScore,
       },
+      recentMatches: (value.recentMatches || [])
+        .filter((item) => item?.score)
+        .sort((a, b) => String(a?.date || "").localeCompare(String(b?.date || "")))
+        .slice(-TEAM_RECENT_MATCH_WINDOW),
       bookmakers: Object.fromEntries(
         Object.entries(value.bookmakers || {}).map(([bookKey, bookValue]) => {
           const bookHomeActualPpg = bookValue.homeGames ? bookValue.homeActualPoints / bookValue.homeGames : 0;
@@ -3031,6 +3071,7 @@ async function fetchHistoricalMarketProfile(leagueLabel, dateISO) {
 
 function buildH2HProfileFromResults(results, source) {
   const h2hPairs = {};
+  const teams = {};
   for (const item of results || []) {
     const home = String(item.home || "").trim();
     const away = String(item.away || "").trim();
@@ -3039,6 +3080,8 @@ function buildH2HProfileFromResults(results, source) {
     if (!home || !away || !Number.isFinite(homeGoals) || !Number.isFinite(awayGoals)) continue;
     const pairKey = buildPairKey(home, away);
     if (!h2hPairs[pairKey]) h2hPairs[pairKey] = [];
+    const homeKey = normalizeName(home);
+    const awayKey = normalizeName(away);
     const winnerId = homeGoals > awayGoals ? normalizeName(home) : awayGoals > homeGoals ? normalizeName(away) : "";
     h2hPairs[pairKey].push({
       date: item.date || null,
@@ -3050,12 +3093,50 @@ function buildH2HProfileFromResults(results, source) {
       winnerId,
       source,
     });
+
+    if (!teams[homeKey]) teams[homeKey] = { teamName: home, recentMatches: [] };
+    if (!teams[awayKey]) teams[awayKey] = { teamName: away, recentMatches: [] };
+    teams[homeKey].recentMatches.push({
+      date: item.date || null,
+      league: item.league || null,
+      venue: "H",
+      opponent: away,
+      opponentId: "",
+      score: `${homeGoals}-${awayGoals}`,
+      goalsFor: homeGoals,
+      goalsAgainst: awayGoals,
+      result: homeGoals > awayGoals ? "W" : homeGoals === awayGoals ? "D" : "L",
+      source,
+    });
+    teams[awayKey].recentMatches.push({
+      date: item.date || null,
+      league: item.league || null,
+      venue: "A",
+      opponent: home,
+      opponentId: "",
+      score: `${awayGoals}-${homeGoals}`,
+      goalsFor: awayGoals,
+      goalsAgainst: homeGoals,
+      result: awayGoals > homeGoals ? "W" : awayGoals === homeGoals ? "D" : "L",
+      source,
+    });
   }
 
   return {
     updatedAt: Date.now(),
     source,
     sampleSize: results.length,
+    teams: Object.fromEntries(
+      Object.entries(teams).map(([key, value]) => [
+        key,
+        {
+          teamName: value.teamName,
+          recentMatches: value.recentMatches
+            .sort((a, b) => String(a?.date || "").localeCompare(String(b?.date || "")))
+            .slice(-TEAM_RECENT_MATCH_WINDOW),
+        },
+      ])
+    ),
     h2hPairs: Object.fromEntries(
       Object.entries(h2hPairs).map(([key, values]) => [
         key,
@@ -4289,6 +4370,212 @@ async function fetchLiveStats(eventId) {
   };
 }
 
+function buildEmptyTeamForm(source = "empty") {
+  return {
+    form: "",
+    avgScored: 1.35,
+    avgConceded: 1.35,
+    bttsRate: 0.5,
+    over15Rate: 0.5,
+    over25Rate: 0.45,
+    cleanSheetRate: 0.2,
+    failToScoreRate: 0.25,
+    yellowCardRate: 0,
+    redCardRate: 0,
+    gamesPlayed: 0,
+    wins: 0,
+    draws: 0,
+    losses: 0,
+    splits: { home: emptySplit(), away: emptySplit() },
+    recentMatches: [],
+    lastMatchKickoff: null,
+    strongestSide: "balanced",
+    source,
+  };
+}
+
+function buildTeamFormFromRecentMatches(matches, source = "historical-form") {
+  const sample = (matches || [])
+    .filter((item) => item && Number.isFinite(toNumber(item.goalsFor)) && Number.isFinite(toNumber(item.goalsAgainst)))
+    .sort((a, b) => String(a?.date || "").localeCompare(String(b?.date || "")))
+    .slice(-TEAM_RECENT_MATCH_WINDOW)
+    .map((item) => {
+      const gf = Number(toNumber(item.goalsFor));
+      const ga = Number(toNumber(item.goalsAgainst));
+      return {
+        date: item.date || null,
+        eventId: item.eventId || null,
+        league: item.league || null,
+        tournamentId: item.tournamentId || null,
+        seasonId: item.seasonId || null,
+        venue: item.venue === "A" ? "A" : "H",
+        opponent: item.opponent || "Opponent",
+        opponentId: item.opponentId || "",
+        score: item.score || `${gf}-${ga}`,
+        goalsFor: gf,
+        goalsAgainst: ga,
+        result: gf > ga ? "W" : gf === ga ? "D" : "L",
+        source: item.source || source,
+      };
+    });
+
+  if (!sample.length) return buildEmptyTeamForm(source);
+
+  let form = "";
+  let scored = 0;
+  let conceded = 0;
+  let btts = 0;
+  const splitState = {
+    home: { games: 0, scored: 0, conceded: 0, btts: 0, over15: 0, over25: 0, cleanSheets: 0, failToScore: 0, wins: 0, draws: 0, losses: 0 },
+    away: { games: 0, scored: 0, conceded: 0, btts: 0, over15: 0, over25: 0, cleanSheets: 0, failToScore: 0, wins: 0, draws: 0, losses: 0 },
+  };
+
+  for (const item of sample) {
+    const gf = Number(item.goalsFor);
+    const ga = Number(item.goalsAgainst);
+    scored += gf;
+    conceded += ga;
+    if (gf > 0 && ga > 0) btts += 1;
+    form += gf > ga ? "W" : gf === ga ? "D" : "L";
+
+    const target = item.venue === "A" ? splitState.away : splitState.home;
+    target.games += 1;
+    target.scored += gf;
+    target.conceded += ga;
+    if (gf > 0 && ga > 0) target.btts += 1;
+    if (gf + ga > 1) target.over15 += 1;
+    if (gf + ga > 2) target.over25 += 1;
+    if (ga === 0) target.cleanSheets += 1;
+    if (gf === 0) target.failToScore += 1;
+    if (gf > ga) target.wins += 1;
+    else if (gf === ga) target.draws += 1;
+    else target.losses += 1;
+  }
+
+  const homeSplit = finalizeSplit(splitState.home);
+  const awaySplit = finalizeSplit(splitState.away);
+  let strongestSide = "balanced";
+  if (homeSplit.avgScored > awaySplit.avgScored + 0.25) strongestSide = "home";
+  if (awaySplit.avgScored > homeSplit.avgScored + 0.25) strongestSide = "away";
+
+  return {
+    form: form.slice(-TEAM_FORM_BADGE_WINDOW),
+    avgScored: Number((scored / sample.length).toFixed(2)),
+    avgConceded: Number((conceded / sample.length).toFixed(2)),
+    bttsRate: Number((btts / sample.length).toFixed(2)),
+    over15Rate: Number((sample.filter((item) => Number(item.goalsFor) + Number(item.goalsAgainst) > 1).length / sample.length).toFixed(2)),
+    over25Rate: Number((sample.filter((item) => Number(item.goalsFor) + Number(item.goalsAgainst) > 2).length / sample.length).toFixed(2)),
+    cleanSheetRate: Number((sample.filter((item) => Number(item.goalsAgainst) === 0).length / sample.length).toFixed(2)),
+    failToScoreRate: Number((sample.filter((item) => Number(item.goalsFor) === 0).length / sample.length).toFixed(2)),
+    yellowCardRate: 0,
+    redCardRate: 0,
+    gamesPlayed: sample.length,
+    wins: (form.match(/W/g) || []).length,
+    draws: (form.match(/D/g) || []).length,
+    losses: (form.match(/L/g) || []).length,
+    splits: { home: homeSplit, away: awaySplit },
+    recentMatches: sample,
+    lastMatchKickoff: sample[sample.length - 1]?.date ? `${sample[sample.length - 1].date}T00:00:00.000Z` : null,
+    strongestSide,
+    source,
+  };
+}
+
+function collectHistoricalTeamMatches(teamName, profiles = []) {
+  const matches = [];
+  const seenProfiles = new Set();
+  for (const profile of profiles || []) {
+    if (!profile || seenProfiles.has(profile)) continue;
+    seenProfiles.add(profile);
+    const teamProfile = lookupMarketTeamProfile(profile, teamName);
+    if (Array.isArray(teamProfile?.recentMatches)) matches.push(...teamProfile.recentMatches);
+  }
+  return matches;
+}
+
+function mergeTeamFormWithHistorical(currentForm, leagueMarketProfile, openFootballProfile, teamName, extraProfiles = []) {
+  const currentMatches = Array.isArray(currentForm?.recentMatches) ? currentForm.recentMatches : [];
+  if (currentMatches.length >= TEAM_RECENT_MATCH_WINDOW) return currentForm;
+
+  const historicalMatches = [
+    ...collectHistoricalTeamMatches(teamName, [leagueMarketProfile, openFootballProfile, ...extraProfiles]),
+  ];
+  if (!historicalMatches.length) return currentForm || buildEmptyTeamForm("no-historical-form");
+
+  const byKey = new Map();
+  for (const item of [...historicalMatches, ...currentMatches]) {
+    const key = [
+      item?.date || "",
+      normalizeName(item?.opponent || ""),
+      item?.venue || "",
+      item?.score || "",
+    ].join("|");
+    if (!byKey.has(key)) byKey.set(key, item);
+  }
+
+  const mergedMatches = [...byKey.values()]
+    .sort((a, b) => String(a?.date || "").localeCompare(String(b?.date || "")))
+    .slice(-TEAM_RECENT_MATCH_WINDOW);
+  const source = currentMatches.length
+    ? "live+historical-team-form"
+    : historicalMatches.some((item) => String(item?.source || "").includes("football-data"))
+      ? "football-data-team-form"
+      : "openfootball-team-form";
+
+  return buildTeamFormFromRecentMatches(mergedMatches, source);
+}
+
+function buildTeamMatchesFromH2HResults(results, teamName) {
+  const variants = buildPossibleNames(teamName);
+  return (results || []).map((result) => {
+    const home = String(result?.home || "").trim();
+    const away = String(result?.away || "").trim();
+    const homeMatch = buildPossibleNames(home).some((name) => variants.includes(name));
+    const awayMatch = buildPossibleNames(away).some((name) => variants.includes(name));
+    if (!homeMatch && !awayMatch) return null;
+    const scoreParts = String(result?.score || "").match(/(\d+)\s*-\s*(\d+)/);
+    if (!scoreParts) return null;
+    const homeGoals = Number(scoreParts[1]);
+    const awayGoals = Number(scoreParts[2]);
+    if (!Number.isFinite(homeGoals) || !Number.isFinite(awayGoals)) return null;
+    const gf = homeMatch ? homeGoals : awayGoals;
+    const ga = homeMatch ? awayGoals : homeGoals;
+    return {
+      date: result?.date || null,
+      eventId: result?.eventId || null,
+      league: result?.source || "h2h",
+      tournamentId: result?.tournamentId || null,
+      seasonId: result?.seasonId || null,
+      venue: homeMatch ? "H" : "A",
+      opponent: homeMatch ? away : home,
+      opponentId: homeMatch ? result?.awayTeamId || "" : result?.homeTeamId || "",
+      score: `${gf}-${ga}`,
+      goalsFor: gf,
+      goalsAgainst: ga,
+      result: gf > ga ? "W" : gf === ga ? "D" : "L",
+      source: result?.source || "h2h-agent",
+    };
+  }).filter(Boolean);
+}
+
+function supplementTeamFormWithH2H(currentForm, h2h, teamName) {
+  const currentMatches = Array.isArray(currentForm?.recentMatches) ? currentForm.recentMatches : [];
+  if (currentMatches.length >= TEAM_RECENT_MATCH_WINDOW) return currentForm;
+  const h2hMatches = buildTeamMatchesFromH2HResults(h2h?.results || [], teamName);
+  if (!h2hMatches.length) return currentForm;
+  const byKey = new Map();
+  for (const item of [...currentMatches, ...h2hMatches]) {
+    const key = [
+      item?.date || "",
+      normalizeName(item?.opponent || ""),
+      item?.venue || "",
+      item?.score || "",
+    ].join("|");
+    if (!byKey.has(key)) byKey.set(key, item);
+  }
+  return buildTeamFormFromRecentMatches([...byKey.values()], currentMatches.length ? "historical+h2h-team-form" : "h2h-team-form");
+}
+
 async function fetchTeamForm(teamId, options = {}) {
   const json = await safeFetch(`${SOFA}/team/${teamId}/events/last/0`);
   const targetSegment =
@@ -4305,27 +4592,10 @@ async function fetchTeamForm(teamId, options = {}) {
     .sort((a, b) => Number(a.startTimestamp || 0) - Number(b.startTimestamp || 0));
 
   if (!finished.length) {
-    return {
-      form: "",
-      avgScored: 1.35,
-      avgConceded: 1.35,
-      bttsRate: 0.5,
-      over15Rate: 0.5,
-      over25Rate: 0.45,
-      cleanSheetRate: 0.2,
-      failToScoreRate: 0.25,
-      gamesPlayed: 0,
-      wins: 0,
-      draws: 0,
-      losses: 0,
-      splits: { home: emptySplit(), away: emptySplit() },
-      recentMatches: [],
-      lastMatchKickoff: null,
-      strongestSide: "balanced",
-    };
+    return buildEmptyTeamForm("sofascore-empty");
   }
 
-  const sample = finished.slice(-10);
+  const sample = finished.slice(-TEAM_RECENT_MATCH_WINDOW);
   let form = "";
   let scored = 0;
   let conceded = 0;
@@ -4337,7 +4607,7 @@ async function fetchTeamForm(teamId, options = {}) {
     away: { games: 0, scored: 0, conceded: 0, btts: 0, over15: 0, over25: 0, cleanSheets: 0, failToScore: 0, wins: 0, draws: 0, losses: 0 },
   };
 
-  const recentMatches = sample.slice(-5).map((event) => {
+  const recentMatches = sample.slice(-TEAM_RECENT_MATCH_WINDOW).map((event) => {
     const isHome = String(event.homeTeam?.id || "") === String(teamId);
     const gf = isHome ? event.homeScore?.current : event.awayScore?.current;
     const ga = isHome ? event.awayScore?.current : event.homeScore?.current;
@@ -4407,7 +4677,7 @@ async function fetchTeamForm(teamId, options = {}) {
   if (awaySplit.avgScored > homeSplit.avgScored + 0.25) strongestSide = "away";
 
   return {
-    form: form.slice(-5),
+    form: form.slice(-TEAM_FORM_BADGE_WINDOW),
     avgScored: Number((scored / sample.length).toFixed(2)),
     avgConceded: Number((conceded / sample.length).toFixed(2)),
     bttsRate: Number((btts / sample.length).toFixed(2)),
@@ -4445,6 +4715,7 @@ async function fetchTeamForm(teamId, options = {}) {
       ? new Date(sample[sample.length - 1].startTimestamp * 1000).toISOString()
       : null,
     strongestSide,
+    source: "sofascore-team-events",
   };
 }
 
@@ -6331,16 +6602,27 @@ async function main() {
         .filter(Boolean)
     ),
   ];
-  const activeLeagueLabels = allActiveLeagueLabels.filter((label) => MARKET_LEAGUE_CODES[label]);
+  const activeLeagueLabels = [
+    ...new Set([
+      ...allActiveLeagueLabels.filter((label) => MARKET_LEAGUE_CODES[label]),
+      ...TEAM_FORM_HISTORY_LEAGUES,
+    ]),
+  ];
 
   for (const leagueLabel of activeLeagueLabels) {
     const existingMarketProfile = store.marketProfiles[leagueLabel] || null;
     const missingHistoricalStats =
       existingMarketProfile?.teams &&
       !Object.values(existingMarketProfile.teams || {}).some((team) => team?.historicalStats?.statsRows);
+    const missingHistoricalTeamForm =
+      existingMarketProfile?.teams &&
+      !Object.values(existingMarketProfile.teams || {}).some(
+        (team) => Array.isArray(team?.recentMatches) && team.recentMatches.length
+      );
     if (
       !existingMarketProfile ||
       missingHistoricalStats ||
+      missingHistoricalTeamForm ||
       now - Number(store.marketProfilesUpdated?.[leagueLabel] || 0) > MARKET_TTL
     ) {
       const marketProfile = await fetchHistoricalMarketProfile(leagueLabel, today);
@@ -6353,9 +6635,16 @@ async function main() {
   }
 
   for (const leagueLabel of allActiveLeagueLabels) {
+    const existingOpenFootballProfile = store.openfootballProfiles[leagueLabel] || null;
+    const missingOpenFootballTeamForm =
+      existingOpenFootballProfile?.h2hPairs &&
+      !Object.values(existingOpenFootballProfile.teams || {}).some(
+        (team) => Array.isArray(team?.recentMatches) && team.recentMatches.length
+      );
     if (
       OPENFOOTBALL_COMPETITIONS[leagueLabel] &&
       (!store.openfootballProfiles[leagueLabel] ||
+        missingOpenFootballTeamForm ||
         now - Number(store.openfootballProfilesUpdated?.[leagueLabel] || 0) > OPENFOOTBALL_TTL)
     ) {
       const openfootballProfile = await fetchOpenfootballProfile(leagueLabel, today);
@@ -6536,8 +6825,34 @@ async function main() {
         store.weatherCache[weatherKey] = { updated: now, data: weather };
       }
 
-      const homeRecent = store.teamStats[homeId] || null;
-      const awayRecent = store.teamStats[awayId] || null;
+      const leagueMarketProfile = store.marketProfiles[leagueInfo.label] || null;
+      const openFootballProfile = store.openfootballProfiles[leagueInfo.label] || null;
+      const globalTeamFormProfiles = [
+        ...Object.values(store.marketProfiles || {}),
+        ...Object.values(store.openfootballProfiles || {}),
+      ];
+      let homeRecent = mergeTeamFormWithHistorical(
+        store.teamStats[homeId] || null,
+        leagueMarketProfile,
+        openFootballProfile,
+        homeName,
+        globalTeamFormProfiles
+      );
+      let awayRecent = mergeTeamFormWithHistorical(
+        store.teamStats[awayId] || null,
+        leagueMarketProfile,
+        openFootballProfile,
+        awayName,
+        globalTeamFormProfiles
+      );
+      if (homeId && (homeRecent?.recentMatches || []).length > (store.teamStats[homeId]?.recentMatches || []).length) {
+        store.teamStats[homeId] = homeRecent;
+        store.teamStatsUpdated[homeId] = now;
+      }
+      if (awayId && (awayRecent?.recentMatches || []).length > (store.teamStats[awayId]?.recentMatches || []).length) {
+        store.teamStats[awayId] = awayRecent;
+        store.teamStatsUpdated[awayId] = now;
+      }
       const fallbackPreviousLeg = findPreviousLegFromRecent(
         homeRecent,
         awayRecent,
@@ -6554,13 +6869,23 @@ async function main() {
       h2h = buildH2HAgentProfile({
         baseH2H: h2h,
         fallbackLegs: h2hFallbackLegs,
-        marketProfile: store.marketProfiles[leagueInfo.label] || null,
-        openFootballProfile: store.openfootballProfiles[leagueInfo.label] || null,
+        marketProfile: leagueMarketProfile,
+        openFootballProfile,
         homeName,
         awayName,
         homeId,
         awayId,
       });
+      homeRecent = supplementTeamFormWithH2H(homeRecent, h2h, homeName);
+      awayRecent = supplementTeamFormWithH2H(awayRecent, h2h, awayName);
+      if (homeId && (homeRecent?.recentMatches || []).length > (store.teamStats[homeId]?.recentMatches || []).length) {
+        store.teamStats[homeId] = homeRecent;
+        store.teamStatsUpdated[homeId] = now;
+      }
+      if (awayId && (awayRecent?.recentMatches || []).length > (store.teamStats[awayId]?.recentMatches || []).length) {
+        store.teamStats[awayId] = awayRecent;
+        store.teamStatsUpdated[awayId] = now;
+      }
       const aggregate = buildAggregateInfo(event, eventDetails, h2h, fallbackPreviousLeg);
       const homeRestDays = calcRestDays(homeRecent?.lastMatchKickoff, kickoff);
       const awayRestDays = calcRestDays(awayRecent?.lastMatchKickoff, kickoff);
@@ -6579,7 +6904,6 @@ async function main() {
 
       const homeClubElo = lookupClubElo(clubEloSnapshot, homeName);
       const awayClubElo = lookupClubElo(clubEloSnapshot, awayName);
-      const leagueMarketProfile = store.marketProfiles[leagueInfo.label] || null;
       const homeMarketProfile = lookupMarketTeamProfile(leagueMarketProfile, homeName);
       const awayMarketProfile = lookupMarketTeamProfile(leagueMarketProfile, awayName);
       const homeLearning = store.teamLearning[homeId ? `id:${homeId}` : `name:${normalizeName(homeName)}`] || null;

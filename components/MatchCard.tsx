@@ -118,9 +118,17 @@ function TeamMeta({
 
 function RecentList({ title, recent }: { title: string; recent: any }) {
   const items = recent?.recentMatches || [];
+  const sourceLabel = recent?.source ? String(recent.source).replace(/-/g, " ") : "";
   return (
     <div className="bg-slate-900/60 rounded-xl p-2">
-      <div className="text-[8px] font-black uppercase text-slate-400 mb-2">{title}</div>
+      <div className="flex items-start justify-between gap-2 mb-2">
+        <div className="text-[8px] font-black uppercase text-slate-400">{title}</div>
+        {sourceLabel ? (
+          <div className="shrink-0 rounded-full bg-slate-800 px-1.5 py-0.5 text-[7px] font-black text-slate-400">
+            {sourceLabel}
+          </div>
+        ) : null}
+      </div>
       {items.length === 0 ? (
         <div className="text-[9px] text-slate-500">Nog geen recente wedstrijden.</div>
       ) : (
@@ -994,8 +1002,8 @@ const MatchCard: React.FC<MatchCardProps> = ({ match, prediction, onFavoriteChan
       {tab === "vorm" && (
         <div className="space-y-2">
           <div className="grid grid-cols-2 gap-2">
-            <RecentList title={`${match.homeTeamName} laatste 5`} recent={match.homeRecent} />
-            <RecentList title={`${match.awayTeamName} laatste 5`} recent={match.awayRecent} />
+            <RecentList title={`${match.homeTeamName} laatste 10`} recent={match.homeRecent} />
+            <RecentList title={`${match.awayTeamName} laatste 10`} recent={match.awayRecent} />
           </div>
           <ExpandableInsights match={match} prediction={prediction} />
         </div>
