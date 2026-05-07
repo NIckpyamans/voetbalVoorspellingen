@@ -5451,7 +5451,7 @@ function buildContext(matchInput) {
     homeZone: homeZone?.label || null,
     awayZone: awayZone?.label || null,
     rivalry,
-    summary: notes.length ? notes.join(" ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â· ") : null,
+    summary: notes.length ? notes.join(" - ") : null,
     stakes:
       notes.length > 0
         ? notes.join(", ")

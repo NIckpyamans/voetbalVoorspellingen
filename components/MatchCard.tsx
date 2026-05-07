@@ -220,9 +220,9 @@ function getH2HSourceLabel(status?: string) {
   if (status === "all-competitions") return "laatste onderlinge duels uit alle competities";
   if (status === "historical-competition") return "aangevuld uit historische competitiedata";
   if (status === "merged-historical-competition") return "live bron + historische competitiedata";
-  if (status === "aggregate-backfill") return "aangevuld uit tweeluik/aggregate-bron";
+  if (status === "aggregate-backfill") return "aangevuld uit tweeluikbron";
   if (status === "curated-h2h-backfill") return "laatste onderlinge duels uit H2H-backfill";
-  if (status === "merged-curated-h2h-backfill") return "aggregate + laatste H2H-backfill";
+  if (status === "merged-curated-h2h-backfill") return "tweeluik + laatste H2H-backfill";
   if (status === "loaded") return "laatste onderlinge duels in brondata";
   if (status === "fallback") return "aangevuld met vorige duel-fallback";
   return "geen recente onderlinge brondata";
@@ -488,8 +488,9 @@ function ExpandableInsights({ match, prediction }: { match: any; prediction: any
 
 function KeySignals({ match, prediction }: { match: any; prediction: any }) {
   const signals: string[] = [];
-  if (match.context?.summary) signals.push(match.context.summary);
-  if (match.aggregate?.active && match.aggregate.aggregateScore) signals.push(`aggregate ${match.aggregate.aggregateScore}`);
+  const contextSummary = cleanSignalText(match.context?.summary);
+  if (contextSummary) signals.push(contextSummary);
+  if (match.aggregate?.active && match.aggregate.aggregateScore) signals.push(`totaalstand ${match.aggregate.aggregateScore}`);
   if (prediction.modelEdges?.clubEloDiff) signals.push(`ClubElo verschil ${prediction.modelEdges.clubEloDiff}`);
   if (prediction.modelEdges?.rest != null && Math.abs(prediction.modelEdges.rest) >= 1) {
     signals.push(`rustverschil ${prediction.modelEdges.rest > 0 ? "+" : ""}${prediction.modelEdges.rest}d`);
@@ -513,6 +514,52 @@ function KeySignals({ match, prediction }: { match: any; prediction: any }) {
           {signal}
         </span>
       ))}
+    </div>
+  );
+}
+
+function cleanSignalText(value: any): string {
+  const text = String(value || "").trim();
+  if (!text) return "";
+
+  const lower = text.toLowerCase();
+  if (lower.includes("tweeluik") && lower.includes("knock")) return "tweeluik - knock-out";
+
+  return text
+    .replace(/ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â·|ÃƒÆ’Ã‚Â·|ÃƒÂ·|Ã‚Â·|Â·/g, " - ")
+    .replace(/ÃƒÂ«/g, "ë")
+    .replace(/ÃƒÂ©|Ã©/g, "é")
+    .replace(/ÃƒÂ¨|Ã¨/g, "è")
+    .replace(/ÃƒÂ¶|Ã¶/g, "ö")
+    .replace(/\s+-\s+/g, " - ")
+    .replace(/\s+/g, " ")
+    .trim();
+}
+
+function ScoreMatrix({ topScores }: { topScores: any[] }) {
+  if (!topScores.length) return null;
+
+  return (
+    <div className="mb-2 rounded-xl border border-blue-400/10 bg-slate-950/45 p-2">
+      <div className="mb-1.5 flex items-center justify-between gap-2">
+        <div className="text-[7px] font-black uppercase text-slate-400">Meest waarschijnlijke exacte scores</div>
+        <div className="text-[7px] font-black uppercase text-blue-300">scorematrix</div>
+      </div>
+      <div className="flex flex-wrap gap-1">
+        {topScores.map(([score, prob]: any, index: number) => (
+          <div
+            key={score}
+            className={`rounded-lg px-2 py-1 text-[9px] font-black ${
+              index === 0
+                ? "bg-blue-500/20 text-white ring-1 ring-blue-300/20"
+                : "bg-slate-800/85 text-slate-300"
+            }`}
+            title={`Kans op ${score}: ${(Number(prob || 0) * 100).toFixed(0)}%`}
+          >
+            {score} <span className={index === 0 ? "text-blue-200" : "text-slate-500"}>{(Number(prob || 0) * 100).toFixed(0)}%</span>
+          </div>
+        ))}
+      </div>
     </div>
   );
 }
@@ -679,7 +726,7 @@ function showImportance(match: any) {
 }
 
 const MatchCard: React.FC<MatchCardProps> = ({ match, prediction, onFavoriteChange }) => {
-  const [tab, setTab] = useState<"analyse" | "h2h" | "vorm" | "markten" | "stats">("analyse");
+  const [tab, setTab] = useState<"analyse" | "h2h" | "vorm" | "markten">("analyse");
   const [detailsOpen, setDetailsOpen] = useState(false);
   const [aiAnalysis, setAiAnalysis] = useState<string | null>(null);
   const [aiLoading, setAiLoading] = useState(false);
@@ -847,6 +894,8 @@ const MatchCard: React.FC<MatchCardProps> = ({ match, prediction, onFavoriteChan
         ))}
       </div>
 
+      <ScoreMatrix topScores={topScores} />
+
       <div className="mb-2">
         <KeySignals match={match} prediction={prediction} />
       </div>
@@ -859,7 +908,7 @@ const MatchCard: React.FC<MatchCardProps> = ({ match, prediction, onFavoriteChan
         className="w-full mt-2 rounded-xl border border-white/10 bg-slate-900/70 px-3 py-2 text-left hover:border-blue-400/40 transition flex items-center justify-between gap-3"
       >
         <span>
-          <span className="block text-[8px] uppercase font-black text-slate-400">Analyse, H2H, vorm, markt en stats</span>
+          <span className="block text-[8px] uppercase font-black text-slate-400">Analyse, H2H, vorm en markt</span>
           <span className="block text-[9px] text-slate-500">Uitklappen voor alle AI-details onder deze wedstrijd</span>
         </span>
         <span className="rounded-full bg-blue-500/15 px-2 py-1 text-[9px] font-black text-blue-200">
@@ -869,13 +918,12 @@ const MatchCard: React.FC<MatchCardProps> = ({ match, prediction, onFavoriteChan
 
       {detailsOpen && (
         <div className="mt-2 space-y-2">
-      <div className="grid grid-cols-5 gap-0.5 mt-2 mb-2 pt-1 border-t border-white/5">
+      <div className="grid grid-cols-4 gap-0.5 mt-2 mb-2 pt-1 border-t border-white/5">
         {[
           { key: "analyse", label: "AI" },
           { key: "h2h", label: "H2H" },
           { key: "vorm", label: "Vorm" },
           { key: "markten", label: "Markt" },
-          { key: "stats", label: "Stats" },
         ].map((item) => (
           <button
             key={item.key}
@@ -1020,35 +1068,6 @@ const MatchCard: React.FC<MatchCardProps> = ({ match, prediction, onFavoriteChan
         </div>
       )}
 
-      {tab === "stats" && (
-        <div className="space-y-2">
-          <div className="grid grid-cols-2 gap-2">
-            <Badge label="xG thuis" value={(prediction.homeXG || 0).toFixed(2)} tone="blue" />
-            <Badge label="xG uit" value={(prediction.awayXG || 0).toFixed(2)} tone="red" />
-            <Badge label="Schoten thuis" value={match.homeSeasonStats?.avgShotsOn != null ? Number(match.homeSeasonStats.avgShotsOn).toFixed(1) : "-"} tone="blue" />
-            <Badge label="Schoten uit" value={match.awaySeasonStats?.avgShotsOn != null ? Number(match.awaySeasonStats.avgShotsOn).toFixed(1) : "-"} tone="red" />
-            <Badge label="Blessures thuis" value={`${match.homeInjuries?.injuredCount || 0}/${match.homeInjuries?.suspendedCount || 0}`} tone="amber" />
-            <Badge label="Blessures uit" value={`${match.awayInjuries?.injuredCount || 0}/${match.awayInjuries?.suspendedCount || 0}`} tone="amber" />
-            <Badge label="PPG thuis" value={match.homeTeamProfile?.pointsPerGame != null ? String(match.homeTeamProfile.pointsPerGame) : "-"} tone="blue" />
-            <Badge label="PPG uit" value={match.awayTeamProfile?.pointsPerGame != null ? String(match.awayTeamProfile.pointsPerGame) : "-"} tone="red" />
-            <Badge label="Clean sheet" value={match.homeRecent?.cleanSheetRate != null ? `${Math.round(match.homeRecent.cleanSheetRate * 100)}% / ${Math.round((match.awayRecent?.cleanSheetRate || 0) * 100)}%` : "-"} tone="green" />
-            <Badge label="Fail to score" value={match.homeRecent?.failToScoreRate != null ? `${Math.round(match.homeRecent.failToScoreRate * 100)}% / ${Math.round((match.awayRecent?.failToScoreRate || 0) * 100)}%` : "-"} tone="amber" />
-          </div>
-
-          {topScores.length > 0 && (
-            <div className="bg-slate-900/60 rounded-xl p-2">
-              <div className="text-[7px] text-slate-500 uppercase mb-1.5">Score matrix</div>
-              <div className="flex flex-wrap gap-1">
-                {topScores.map(([score, prob]: any) => (
-                  <div key={score} className="px-2 py-0.5 rounded-lg text-[9px] font-black bg-slate-800 text-slate-300">
-                    {score} <span className="opacity-60">{(prob * 100).toFixed(0)}%</span>
-                  </div>
-                ))}
-              </div>
-            </div>
-          )}
-        </div>
-      )}
         </div>
       )}
     </div>
