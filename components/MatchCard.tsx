@@ -238,6 +238,8 @@ function ExpandableInsights({ match, prediction }: { match: any; prediction: any
   const phaseReliability = prediction.modelEdges?.phaseReliability || match.phaseReliability;
   const refereeProfile = prediction.modelEdges?.refereeProfile || match.refereeProfile;
   const bookmakerSignals = Array.isArray(marketCalibration?.bookmakerSignals) ? marketCalibration.bookmakerSignals.slice(0, 3) : [];
+  const modelWarnings = Array.isArray(prediction.modelEdges?.modelWarnings) ? prediction.modelEdges.modelWarnings : [];
+  const lowAgreement = agreement != null && agreement < 0.55;
 
   const riskTone =
     riskProfile === "laag"
@@ -319,9 +321,26 @@ function ExpandableInsights({ match, prediction }: { match: any; prediction: any
               <div>Extra laag: <span className="font-black text-white">{ensemble?.blendModel || "-"}</span></div>
               <div>Gewicht basis: <span className="font-black text-white">{ensemble?.blendWeightBase != null ? `${Math.round(ensemble.blendWeightBase * 100)}%` : "-"}</span></div>
               <div>Agreement: <span className="font-black text-white">{agreement != null ? `${Math.round(agreement * 100)}%` : "-"}</span></div>
+              <div>Penalty: <span className="font-black text-white">{prediction.modelEdges?.modelAgreementPenalty != null ? `${Math.round(prediction.modelEdges.modelAgreementPenalty * 100)}pp` : "-"}</span></div>
             </div>
           </div>
         </div>
+
+        {(lowAgreement || modelWarnings.length > 0) && (
+          <div className="rounded-xl border border-amber-500/25 bg-amber-950/25 p-2 text-[8px] text-amber-100">
+            <div className="font-black uppercase text-amber-300 mb-1">Model-waarschuwing</div>
+            <div>
+              {lowAgreement
+                ? "Scoremodel en 1X2-model zitten niet dicht genoeg bij elkaar. Confidence is daarom automatisch verlaagd."
+                : "Er zijn modelwaarschuwingen actief."}
+            </div>
+            {modelWarnings.length > 0 && (
+              <div className="mt-1 text-slate-300">
+                Signalen: <span className="font-black text-white">{modelWarnings.join(", ")}</span>
+              </div>
+            )}
+          </div>
+        )}
 
         <div className="grid grid-cols-3 gap-2">
           <div className={`rounded-xl border p-2 ${riskTone}`}>
@@ -563,7 +582,7 @@ function ModelEdgeStrip({ match, prediction }: { match: any; prediction: any }) 
     <div className="grid grid-cols-4 gap-1.5 mb-2">
       <div className="rounded-xl border border-cyan-500/15 bg-cyan-950/20 px-2 py-1.5">
         <div className="text-[7px] uppercase font-black text-cyan-300/80">Model</div>
-        <div className="text-[10px] font-black text-white">
+        <div className={`text-[10px] font-black ${agreement != null && agreement < 0.55 ? "text-amber-300" : "text-white"}`}>
           {agreement != null ? `${Math.round(agreement * 100)}% sync` : "basis"}
         </div>
       </div>
