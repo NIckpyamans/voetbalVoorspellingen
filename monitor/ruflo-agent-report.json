@@ -1,13 +1,13 @@
 {
-  "generatedAt": "2026-05-07T10:43:58.624Z",
-  "date": "2026-05-07",
+  "generatedAt": "2026-05-07T23:11:47.096Z",
+  "date": "2026-05-08",
   "name": "Ruflo-style gratis AI monitor",
   "mode": "naast-productie",
   "productionSafe": true,
   "summary": "Ruflo draait als extra agentlaag naast de app: hij leest monitor/data/reviews, zoekt gratis oplossingen en maakt patchadvies zonder blind live te wijzigen.",
   "agents": {
     "data": {
-      "score": 40,
+      "score": 63,
       "summary": "Datalaag: H2H 100%, bookmakers 100%, refs 0%.",
       "freeSources": [
         {
@@ -49,14 +49,14 @@
           "name": "Understat snapshots",
           "role": "xG/xGA pilot voor topcompetities",
           "free": true,
-          "status": "pilot",
+          "status": "deels actief",
           "use": "Alleen gebruiken waar parse/snapshot stabiel is; geen harde dependency maken."
         },
         {
           "name": "FBref snapshots",
           "role": "shots/home-away splits via snapshot-cache",
           "free": true,
-          "status": "rate-limited backup",
+          "status": "deels actief",
           "use": "Niet live scrapen op iedere run; alleen gecachte snapshots gebruiken."
         }
       ],
@@ -151,8 +151,8 @@
     },
     "control": {
       "score": 100,
-      "summary": "Ontwikkelcontrole: 0 actieve monitorissues op 2026-05-07; digest 2026-04-21 t/m 2026-05-04.",
-      "latestDay": "2026-05-07",
+      "summary": "Ontwikkelcontrole: 0 actieve monitorissues op 2026-05-08; digest 2026-04-21 t/m 2026-05-04.",
+      "latestDay": "2026-05-08",
       "shouldPropose": false,
       "actions": []
     }
