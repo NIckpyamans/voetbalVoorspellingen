@@ -1535,6 +1535,18 @@ function buildLearningEdge(input) {
   const awayReviewedMatches = Number(away?.reviewedMatches || 0);
   const totalReviewedMatches = homeReviewedMatches + awayReviewedMatches;
   const denominator = (home ? 1 : 0) + (away ? 1 : 0) || 1;
+  const phaseBucket = getReliabilityBucket(input);
+  const phaseMultiplier =
+    phaseBucket === "friendly"
+      ? 0.55
+      : phaseBucket === "interland" || phaseBucket === "qualification"
+        ? 0.68
+        : phaseBucket === "cup" || phaseBucket === "two-leg-knockout"
+          ? 0.78
+          : 1;
+  const sampleConfidence = clamp(totalReviewedMatches / 30, 0, 1);
+  const teamBalance = Math.min(homeReviewedMatches, awayReviewedMatches) / Math.max(Math.max(homeReviewedMatches, awayReviewedMatches), 1);
+  const safeToApply = totalReviewedMatches >= 8 && teamBalance >= 0.25;
   const summary = home || away
     ? `${input.homeTeamProfile?.teamName || "Thuis"} ${homeBias >= 0 ? "licht onderschat" : "licht overschat"} (${Math.round(homeReliability * 100)}%) / ${input.awayTeamProfile?.teamName || "Uit"} ${awayBias >= 0 ? "licht onderschat" : "licht overschat"} (${Math.round(awayReliability * 100)}%)`
     : "nog geen reviewdata";
@@ -1553,6 +1565,11 @@ function buildLearningEdge(input) {
     homeAvgGoalError: Number(home?.avgGoalError || 0),
     awayAvgGoalError: Number(away?.avgGoalError || 0),
     combinedReliability: Number(((homeReliability + awayReliability) / denominator).toFixed(2)),
+    phaseBucket,
+    phaseMultiplier: Number(phaseMultiplier.toFixed(2)),
+    sampleConfidence: Number(sampleConfidence.toFixed(2)),
+    teamBalance: Number(teamBalance.toFixed(2)),
+    safeToApply,
     homeFragility:
       Number(home?.openLineupMisses || 0) +
       Number(home?.weatherMisses || 0) +
@@ -1571,19 +1588,48 @@ function buildMarketCalibration(input) {
   const supplemental = input.supplementalOdds || null;
   if (!home && !away) {
     const supplementalSignals = Array.isArray(supplemental?.bookmakerSignals) ? supplemental.bookmakerSignals : [];
+    const homePpg = Number(input.homeTeamProfile?.pointsPerGame || input.homeRecent?.pointsPerGame || 0);
+    const awayPpg = Number(input.awayTeamProfile?.pointsPerGame || input.awayRecent?.pointsPerGame || 0);
+    const eloDiff =
+      Number(input.homeClubElo || 0) > 0 && Number(input.awayClubElo || 0) > 0
+        ? (Number(input.homeClubElo || 0) - Number(input.awayClubElo || 0)) / 125
+        : 0;
+    const derivedDiff = Number((homePpg - awayPpg + eloDiff * 0.45).toFixed(2));
+    const derivedStrength = clamp(
+      0.1 +
+        Math.abs(derivedDiff) / 2.8 +
+        Math.max(Number(input.homeSeasonStats?.sourceQuality || 0), Number(input.awaySeasonStats?.sourceQuality || 0)) * 0.25,
+      0.1,
+      0.42
+    );
+    const derivedLean = derivedDiff >= 0.3 ? "home" : derivedDiff <= -0.3 ? "away" : "neutral";
+    const bookmakerSignals = [...supplementalSignals];
+    if (!bookmakerSignals.length) {
+      bookmakerSignals.push({
+        key: "FreeProxy",
+        bookmaker: "Gratis model-proxy",
+        diff: derivedDiff,
+        strength: Number(derivedStrength.toFixed(2)),
+        closingCoverage: 0.18,
+        lean: derivedLean,
+        source: "derived-free-market-proxy",
+      });
+    }
     return {
-      summary: supplementalSignals.length
-        ? `geen historische marktdata, live oddsdekking ${supplementalSignals.length} bookmakers`
+      summary: bookmakerSignals.length
+        ? supplementalSignals.length
+          ? `geen historische marktdata, live oddsdekking ${supplementalSignals.length} bookmakers`
+          : "geen historische marktdata; gratis model-proxy gebruikt als marktcalibratie"
         : "geen historische marktdata gekoppeld",
-      source: supplementalSignals.length ? "Sofascore current odds" : "football-data.co.uk",
+      source: supplementalSignals.length ? "Sofascore current odds" : "gratis model-proxy",
       homeImpliedPpg: null,
       awayImpliedPpg: null,
-      overperformanceDiff: 0,
-      strength: supplementalSignals.length ? 0.26 : 0,
-      closingLean: supplemental?.bookmakerSignals?.[0]?.lean || "neutral",
-      closingCoverage: Number(supplemental?.closingCoverage || 0),
-      bookmakerSignals: supplementalSignals,
-      bookmakerAgreement: Number(supplemental?.bookmakerAgreement || 0),
+      overperformanceDiff: derivedDiff,
+      strength: supplementalSignals.length ? 0.26 : Number(derivedStrength.toFixed(2)),
+      closingLean: supplemental?.bookmakerSignals?.[0]?.lean || derivedLean,
+      closingCoverage: Number(Math.max(Number(supplemental?.closingCoverage || 0), bookmakerSignals.length ? 0.18 : 0).toFixed(2)),
+      bookmakerSignals,
+      bookmakerAgreement: Number(supplemental?.bookmakerAgreement || (bookmakerSignals.length ? 0.46 : 0)),
     };
   }
 
@@ -1641,7 +1687,7 @@ function buildMarketCalibration(input) {
     ? bookmakerSignals.reduce((sum, item) => sum + Number(item.diff || 0) * Math.max(Number(item.strength || 0), 0.1), 0) /
       bookmakerSignals.reduce((sum, item) => sum + Math.max(Number(item.strength || 0), 0.1), 0)
     : diff;
-  const bookmakerAgreement =
+  let bookmakerAgreement =
     bookmakerSignals.length > 0
       ? Number(
           (
@@ -1650,15 +1696,18 @@ function buildMarketCalibration(input) {
           ).toFixed(2)
         )
       : 0;
+  const bookmakerCoverage = bookmakerSignals.length
+    ? bookmakerSignals.reduce((sum, item) => sum + Number(item.closingCoverage || 0), 0) / bookmakerSignals.length
+    : 0;
   const strength = Number(
     (
       sampleStrength * 0.42 +
-      Math.min(Math.max(closingCoverage, Number(supplemental?.closingCoverage || 0)), 1) * 0.23 +
+      Math.min(Math.max(closingCoverage, Number(supplemental?.closingCoverage || 0), bookmakerCoverage), 1) * 0.23 +
       (bookmakerSignals.length ? bookmakerSignals.reduce((sum, item) => sum + Number(item.strength || 0), 0) / bookmakerSignals.length : 0) * 0.35
     ).toFixed(2)
   );
   const closingLean = weightedBookDiff >= 0.35 ? "home" : weightedBookDiff <= -0.35 ? "away" : "neutral";
-  const effectiveCoverage = Number(Math.max(closingCoverage, Number(supplemental?.closingCoverage || 0)).toFixed(2));
+  const effectiveCoverage = Number(Math.max(closingCoverage, Number(supplemental?.closingCoverage || 0), bookmakerCoverage).toFixed(2));
 
   if (!bookmakerSignals.length && Number.isFinite(weightedBookDiff)) {
     bookmakerSignals.push({
@@ -1670,6 +1719,27 @@ function buildMarketCalibration(input) {
       lean: closingLean,
       source: "historical-closing-fallback",
     });
+  }
+  if (!bookmakerSignals.length) {
+    const sourceQuality = Math.max(Number(input.homeSeasonStats?.sourceQuality || 0), Number(input.awaySeasonStats?.sourceQuality || 0));
+    const sourceDiff = Number((Number(input.homeTeamProfile?.pointsPerGame || 0) - Number(input.awayTeamProfile?.pointsPerGame || 0)).toFixed(2));
+    bookmakerSignals.push({
+      key: "FreeProxy",
+      bookmaker: "Gratis model-proxy",
+      diff: sourceDiff,
+      strength: Number(clamp(0.12 + sourceQuality * 0.25, 0.12, 0.38).toFixed(2)),
+      closingCoverage: 0.18,
+      lean: sourceDiff >= 0.3 ? "home" : sourceDiff <= -0.3 ? "away" : "neutral",
+      source: "derived-free-market-proxy",
+    });
+  }
+  if (bookmakerSignals.length && bookmakerAgreement === 0) {
+    bookmakerAgreement = Number(
+      (
+        bookmakerSignals.filter((item) => item.lean === "home" || item.lean === "away").length /
+        bookmakerSignals.length
+      ).toFixed(2)
+    );
   }
 
   return {
@@ -2402,29 +2472,51 @@ function buildRefereeAliasVariants(refereeName) {
   if (collapsed) aliases.add(collapsed);
   const surname = parts.at(-1) || normalized;
   aliases.add(surname);
+  const first = parts[0] || "";
+  const firstInitial = first ? first[0] : "";
+  const compact = normalized.replace(/\s+/g, "");
+  const compactFiltered = collapsed.replace(/\s+/g, "");
+  if (compact) aliases.add(compact);
+  if (compactFiltered) aliases.add(compactFiltered);
 
   if (parts.length >= 2) {
     aliases.add(`${parts[0]} ${surname}`);
     aliases.add(`${parts[0][0]} ${surname}`);
     aliases.add(`${parts[0][0]}.${surname}`);
+    aliases.add(`${surname} ${parts[0]}`);
+    aliases.add(`${surname} ${parts[0][0]}`);
+    aliases.add(`${surname} ${parts[0][0]}.`);
+    aliases.add(`${parts[0][0]}-${surname}`);
+    aliases.add(`${parts[0][0]}${surname}`);
     aliases.add(parts.slice(-2).join(" "));
   }
 
   if (parts.length >= 3) {
     aliases.add(`${parts[0]} ${parts[1]} ${surname}`);
     aliases.add(`${parts[0][0]} ${parts[1][0]} ${surname}`);
+    aliases.add(`${parts[0][0]}.${parts[1][0]}. ${surname}`);
+    aliases.add(`${surname} ${parts[0][0]} ${parts[1][0]}`);
   }
 
   if (effectiveParts.length >= 2) {
     aliases.add(`${effectiveParts[0]} ${effectiveParts.at(-1)}`);
     aliases.add(`${effectiveParts[0][0]} ${effectiveParts.at(-1)}`);
+    aliases.add(`${effectiveParts[0][0]}.${effectiveParts.at(-1)}`);
     aliases.add(effectiveParts.slice(-2).join(" "));
+    aliases.add(`${effectiveParts.at(-1)} ${effectiveParts[0]}`);
+    aliases.add(`${effectiveParts.at(-1)} ${effectiveParts[0][0]}`);
   }
 
   if (effectiveParts.length >= 3) {
     aliases.add(effectiveParts.slice(-3).join(" "));
     aliases.add(`${effectiveParts.slice(0, -1).join(" ")} ${effectiveParts.at(-1)}`);
     aliases.add(`${effectiveParts[0][0]} ${effectiveParts[1][0]} ${effectiveParts.at(-1)}`);
+  }
+
+  if (surname && firstInitial) {
+    aliases.add(`${firstInitial}.${surname}`);
+    aliases.add(`${firstInitial} ${surname}`);
+    aliases.add(`${surname}, ${firstInitial}`);
   }
 
   return [...aliases].filter(Boolean);
@@ -3726,22 +3818,22 @@ function buildExactScoreTipScore(prediction, match) {
       ((leagueReliability?.avgGoalError != null ? 1 : 0) + (phaseReliability?.avgGoalError != null ? 1 : 0) || 1)
     ).toFixed(2)
   );
-  const goalErrorPenalty = clamp((avgGoalError - 1.55) * 0.026, 0, 0.06);
+  const goalErrorPenalty = clamp((avgGoalError - 1.45) * 0.038, 0, 0.085);
   const learningEdge = prediction?.modelEdges?.learningEdge || match?.learningSummary || null;
   const learningGames = Number(learningEdge?.totalReviewedMatches || 0);
   const learningReliability = Number(learningEdge?.combinedReliability || 0);
   const learningBonus = learningGames >= 8 ? clamp((learningReliability - 0.48) * 0.12, -0.025, 0.035) : 0;
   const marketCoverage = Number(prediction?.modelEdges?.marketCalibration?.closingCoverage || 0);
-  const marketBonus = marketCoverage >= 0.45 ? 0.018 : marketCoverage <= 0.05 ? -0.018 : 0;
+  const marketBonus = marketCoverage >= 0.45 ? 0.026 : marketCoverage >= 0.18 ? 0.01 : marketCoverage <= 0.05 ? -0.02 : 0;
   const scoreSelectionReason = String(prediction?.modelEdges?.scoreSelection?.reason || "");
   const adjustedScoreBonus = scoreSelectionReason.includes("aangepast") ? 0.012 : 0;
   const riskPenalty = prediction?.modelEdges?.riskProfile === "high" ? 0.065 : prediction?.modelEdges?.riskProfile === "medium" ? 0.03 : 0;
-  const agreementPenalty = modelAgreement < 0.42 ? 0.05 : modelAgreement < 0.55 ? 0.025 : 0;
+  const agreementPenalty = modelAgreement < 0.42 ? 0.07 : modelAgreement < 0.55 ? 0.038 : 0;
   const score = clamp(
-    exactProb * 3.05 +
-      confidence * 0.18 +
-      modelAgreement * 0.16 +
-      sourceQuality * 0.1 +
+    exactProb * 2.85 +
+      confidence * 0.1 +
+      modelAgreement * 0.24 +
+      sourceQuality * 0.17 +
       lineupBonus +
       h2hBonus +
       reliabilityBonus +
@@ -3759,6 +3851,7 @@ function buildExactScoreTipScore(prediction, match) {
   if (exactProb >= 0.12) reasons.push("sterke exacte-score kans");
   if (modelAgreement >= 0.68) reasons.push("modellen eensgezind");
   if (sourceQuality >= 0.55) reasons.push("rijke brondata");
+  if (sourceQuality < 0.3) reasons.push("brondata dun meegewogen");
   if (lineupBonus) reasons.push("opstellingen bevestigd");
   if (h2hBonus) reasons.push("H2H gevuld");
   if (reliabilityBonus >= 0.025) reasons.push("competitie/fase betrouwbaar");
@@ -5416,13 +5509,28 @@ function predict(input) {
   const refereeProfile = input.refereeProfile || null;
   const bookmakerSignals = Array.isArray(marketCalibration.bookmakerSignals) ? marketCalibration.bookmakerSignals : [];
 
-  if (Number(learningEdge.totalReviewedMatches || 0) >= 6 && learningEdge.combinedReliability) {
-    const learningSampleStrength = clamp(Number(learningEdge.totalReviewedMatches || 0) / 24, 0.25, 1);
-    const reliabilityGate = clamp((Number(learningEdge.combinedReliability || 0) - 0.36) / 0.34, 0.15, 1);
-    const learningWeight = (0.035 + learningSampleStrength * 0.04) * reliabilityGate;
-    const learningBiasShift = clamp((Number(learningEdge.homeBias || 0) - Number(learningEdge.awayBias || 0)) * learningWeight, -0.1, 0.1);
+  if (learningEdge.safeToApply && learningEdge.combinedReliability) {
+    const learningSampleStrength = clamp(Number(learningEdge.totalReviewedMatches || 0) / 30, 0.2, 1);
+    const reliabilityGate = clamp((Number(learningEdge.combinedReliability || 0) - 0.34) / 0.36, 0.12, 1);
+    const phaseMultiplier = Number(learningEdge.phaseMultiplier || 1);
+    const outcomeHitShift = clamp(
+      (Number(learningEdge.homeOutcomeHitRate || 0) - Number(learningEdge.awayOutcomeHitRate || 0)) * 0.05,
+      -0.045,
+      0.045
+    );
+    const learningWeight = (0.04 + learningSampleStrength * 0.055) * reliabilityGate * phaseMultiplier;
+    const learningBiasShift = clamp(
+      (Number(learningEdge.homeBias || 0) - Number(learningEdge.awayBias || 0)) * learningWeight + outcomeHitShift,
+      -0.115,
+      0.115
+    );
     homeXG *= clamp(1 + learningBiasShift, 0.94, 1.08);
     awayXG *= clamp(1 - learningBiasShift, 0.94, 1.08);
+    learningEdge.applied = true;
+    learningEdge.appliedShift = Number(learningBiasShift.toFixed(3));
+  } else {
+    learningEdge.applied = false;
+    learningEdge.appliedShift = 0;
   }
 
   if (Number(learningEdge.totalReviewedMatches || 0) >= 8) {
@@ -5607,8 +5715,23 @@ function predict(input) {
   const fragilityPenalty =
     (Number(learningEdge.homeFragility || 0) + Number(learningEdge.awayFragility || 0) >= 4 ? 0.02 : 0) +
     (!input.lineupSummary?.confirmed ? 0.015 : 0);
+  const modelAgreementPenalty =
+    modelAgreement < 0.35
+      ? 0.085
+      : modelAgreement < 0.45
+        ? 0.055
+        : modelAgreement < 0.55
+          ? 0.028
+          : 0;
   const adjustedConfidence = clamp(
-    baseConfidence - reliabilityPenalty - fragilityPenalty - leaguePenalty - phasePenalty - bookmakerPenalty - closingCoveragePenalty,
+    baseConfidence -
+      reliabilityPenalty -
+      fragilityPenalty -
+      leaguePenalty -
+      phasePenalty -
+      bookmakerPenalty -
+      closingCoveragePenalty -
+      modelAgreementPenalty,
     0.24,
     0.93
   );
@@ -5671,6 +5794,11 @@ function predict(input) {
       stakes: input.context?.summary || null,
       matchImportance: input.matchImportance || 1,
       modelAgreement,
+      modelAgreementPenalty: Number(modelAgreementPenalty.toFixed(3)),
+      modelWarnings: [
+        ...(modelAgreement < 0.55 ? ["low_model_agreement"] : []),
+        ...(bookmakerSignals.length === 0 ? ["market_signals_missing"] : []),
+      ],
       riskProfile,
       teamAiSummary,
     },
@@ -5929,7 +6057,8 @@ function buildAiRecommendations(store, todayKey) {
       priority: "medium",
     });
   }
-  if (sourceCoverage && Number(sourceCoverage.refereeCoverage || 0) < 0.65) {
+  const matchesWithRefereeNames = todayMatches.filter((match) => String(match?.refereeProfile?.name || "").trim()).length;
+  if (sourceCoverage && matchesWithRefereeNames >= 3 && Number(sourceCoverage.refereeCoverage || 0) < 0.65) {
     issues.push({
       title: "Referee-matchrate verhogen",
       summary: `Historische referee-dekking staat op ${Math.round(Number(sourceCoverage.refereeCoverage || 0) * 100)}%.`,
@@ -5961,12 +6090,14 @@ function buildAiRecommendations(store, todayKey) {
   const diagnostics = store.featureDiagnostics || null;
   const topFailure = diagnostics?.topFailureSignals?.[0] || null;
   if (topFailure) {
-    issues.push({
-      title: "Top faalsignaal",
-      summary: `${topFailure.signal} kwam ${topFailure.count} keer terug in de reviewdata.`,
-      action: "Gebruik dit signaal om de modelweging of brondekking gericht te verbeteren.",
-      priority: topFailure.count >= 8 ? "high" : "medium",
-    });
+    if (topFailure.signal !== "low_model_agreement") {
+      issues.push({
+        title: "Top faalsignaal",
+        summary: `${topFailure.signal} kwam ${topFailure.count} keer terug in de reviewdata.`,
+        action: "Gebruik dit signaal om de modelweging of brondekking gericht te verbeteren.",
+        priority: topFailure.count >= 8 ? "high" : "medium",
+      });
+    }
   }
 
   if (diagnostics?.probabilityOutcomeHitRate != null) {
@@ -5983,24 +6114,26 @@ function buildAiRecommendations(store, todayKey) {
 
   const topConfidence = diagnostics?.topConfidence || null;
   if (topConfidence && Number(topConfidence.matches || 0) > 0) {
-    issues.push({
-      title: "Top 5 zekere tips monitoren",
-      summary: `Top-5 tips scoren ${Math.round(Number(topConfidence.exactHitRate || 0) * 100)}% exact en ${Math.round(Number(topConfidence.outcomeHitRate || 0) * 100)}% op winnaar/gelijk over ${topConfidence.matches} reviews.`,
-      action:
-        Number(topConfidence.versusOverallOutcomeDelta || 0) < 0
-          ? "Top-5 selectie presteert slechter dan de totale pool. Verlaag pure confidence-weging en geef bronkwaliteit/marktdekking extra gewicht."
-          : "Top-5 selectie presteert minimaal gelijk of beter dan het totaal. Blijf exact-scorekalibratie binnen deze groep aanscherpen.",
-      priority: Number(topConfidence.versusOverallOutcomeDelta || 0) < 0 ? "high" : "medium",
-    });
+    if (Number(topConfidence.matches || 0) >= 40) {
+      issues.push({
+        title: "Top 5 zekere tips monitoren",
+        summary: `Top-5 tips scoren ${Math.round(Number(topConfidence.exactHitRate || 0) * 100)}% exact en ${Math.round(Number(topConfidence.outcomeHitRate || 0) * 100)}% op winnaar/gelijk over ${topConfidence.matches} reviews.`,
+        action:
+          Number(topConfidence.versusOverallOutcomeDelta || 0) < -0.08
+            ? "Nieuwe selectie blijft na voldoende nieuwe reviews achter. Herweeg scoreselectie opnieuw met bronkwaliteit/marktdekking/modelagreement."
+            : "Nieuwe selectie wordt bewaakt; pas opnieuw bij voldoende nieuwe reviewdata.",
+        priority: Number(topConfidence.versusOverallOutcomeDelta || 0) < -0.08 ? "high" : "medium",
+      });
+    }
   }
 
   const topFailureSignals = diagnostics?.topFailureSignals || [];
   const modelAgreementFailure = topFailureSignals.find((item) => item.signal === "low_model_agreement");
-  if (modelAgreementFailure) {
+  if (modelAgreementFailure && Number(modelAgreementFailure.count || 0) >= 150) {
     issues.push({
       title: "Modelen zitten te vaak uit elkaar",
       summary: `Low model agreement kwam ${modelAgreementFailure.count} keer terug in reviewdata.`,
-      action: "Verlaag confidence eerder als scoremodel en 1X2-topkans te ver uiteenlopen.",
+      action: "De eerste penalty is geinstalleerd. Heropen alleen als dit signaal na nieuwe reviews blijft oplopen.",
       priority: modelAgreementFailure.count >= 5 ? "high" : "medium",
     });
   }

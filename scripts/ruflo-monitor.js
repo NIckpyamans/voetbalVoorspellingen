@@ -8,6 +8,7 @@ const DATA_FILE = path.join(ROOT, "server_data.json");
 const FINDINGS_FILE = path.join(ROOT, "monitor", "daily-findings.json");
 const PROPOSAL_FILE = path.join(ROOT, "monitor", "review-branch-proposal.json");
 const DIGEST_FILE = path.join(ROOT, "monitor", "biweekly-review-digest.json");
+const RESOLVED_FILE = path.join(ROOT, "monitor", "resolved-recommendations.json");
 const OUTPUT_JSON = path.join(ROOT, "monitor", "ruflo-agent-report.json");
 const OUTPUT_MD = path.join(ROOT, "monitor", "ruflo-agent-report.md");
 
@@ -59,6 +60,15 @@ function severityScore(priority) {
 function issueKey(item) {
   const value = typeof item === "string" ? item : item?.key || item?.title || item?.message || "unknown";
   return String(value).toLowerCase().replace(/[^a-z0-9]+/g, "_").replace(/^_|_$/g, "");
+}
+
+function resolvedActionKeys() {
+  const resolved = readJsonSafe(RESOLVED_FILE, { resolved: [] });
+  return new Set((resolved.resolved || []).map((item) => issueKey(item.title || item)));
+}
+
+function filterResolvedActions(actions, resolvedKeys) {
+  return (actions || []).filter((action) => !resolvedKeys.has(issueKey(action.title)));
 }
 
 function latestMonitorRun(findings) {
@@ -301,10 +311,14 @@ function buildRufloReport() {
   const proposal = readJsonSafe(PROPOSAL_FILE, null);
   const digest = readJsonSafe(DIGEST_FILE, null);
   const { run } = latestMonitorRun(findings);
+  const resolvedKeys = resolvedActionKeys();
 
   const dataAgent = buildSourceAgents(store, run);
   const learningAgent = buildLearningAgents(store);
   const controlAgent = buildControlAgents(findings, proposal, digest);
+  dataAgent.actions = filterResolvedActions(dataAgent.actions, resolvedKeys);
+  learningAgent.actions = filterResolvedActions(learningAgent.actions, resolvedKeys);
+  controlAgent.actions = filterResolvedActions(controlAgent.actions, resolvedKeys);
   const allActions = [
     ...dataAgent.actions.map((item) => ({ ...item, agent: "data" })),
     ...learningAgent.actions.map((item) => ({ ...item, agent: "learning" })),
