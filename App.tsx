@@ -289,7 +289,7 @@ const App: React.FC = () => {
   }, [filteredMatches]);
 
   const allLeagues = useMemo(() => {
-    const uniqueLeagues = Array.from(new Set(dayMatches.map((match) => match.league)));
+    const uniqueLeagues = Array.from(new Set(dayMatches.map((match) => match.league))) as string[];
     return uniqueLeagues.sort((a, b) => {
       const aIdx = LEAGUE_ORDER.indexOf(a);
       const bIdx = LEAGUE_ORDER.indexOf(b);
@@ -319,7 +319,7 @@ const App: React.FC = () => {
   const finishedCount = dayMatches.filter(isFinished).length;
 
   const bestBets = useMemo(() => {
-    return Object.entries(predictions)
+    return Object.entries(predictions as Record<string, any>)
       .filter(([matchId]) => {
         const match = matches.find((match) => match.id === matchId);
         return match && belongsToSelectedDate(match, selectedDate);

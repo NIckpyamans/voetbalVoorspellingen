@@ -660,6 +660,7 @@ export interface Prediction {
   // Model info
   model?: string;
   modelVersion?: string;
+  analysis?: string;
   timestamp?: number;
   
   // Inherited van match (voor convenience)
@@ -822,5 +823,6 @@ export interface Team {
   attack: number;
   defense: number;
   logo?: string;
+  form?: string;
 }
 

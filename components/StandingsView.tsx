@@ -314,7 +314,7 @@ const StandingsView: React.FC = () => {
               <div className="text-sm font-black uppercase text-white mb-3">{currentCup.league}</div>
               <div className="overflow-x-auto scrollbar-hide pb-2">
                 <div className="flex gap-4 min-w-max">
-                  {Object.entries(currentCup.rounds)
+                  {(Object.entries(currentCup.rounds) as Array<[string, KnockoutItem[]]>)
                     .map(([round, items]) => [round, items.filter((item) => item.league === selectedCup)] as const)
                     .filter(([, items]) => items.length > 0)
                     .sort((a, b) => roundWeight(a[0]) - roundWeight(b[0]))
