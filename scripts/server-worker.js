@@ -358,6 +358,38 @@ const CURATED_RESULT_BACKFILL = [
     status: "FT",
     sourceNote: "manual verified result backfill",
   },
+  {
+    date: "2026-05-07",
+    home: "Freiburg",
+    away: "Sporting Braga",
+    score: "3-1",
+    status: "FT",
+    sourceNote: "UEFA verified semi-final result backfill",
+  },
+  {
+    date: "2026-05-07",
+    home: "Aston Villa",
+    away: "Nottingham Forest",
+    score: "4-0",
+    status: "FT",
+    sourceNote: "UEFA verified semi-final result backfill",
+  },
+  {
+    date: "2026-05-07",
+    home: "Crystal Palace",
+    away: "Shakhtar Donetsk",
+    score: "2-1",
+    status: "FT",
+    sourceNote: "UEFA verified semi-final result backfill",
+  },
+  {
+    date: "2026-05-07",
+    home: "Strasbourg",
+    away: "Rayo Vallecano",
+    score: "0-1",
+    status: "FT",
+    sourceNote: "UEFA verified semi-final result backfill",
+  },
 ];
 
 const CURATED_H2H_BACKFILL = {
@@ -2581,6 +2613,73 @@ function normalizeProbabilities(home, draw, away) {
 
 function buildPairKey(homeTeam, awayTeam) {
   return [normalizeName(homeTeam), normalizeName(awayTeam)].filter(Boolean).sort().join("__");
+}
+
+function hashString(value) {
+  const text = String(value || "");
+  let hash = 0;
+  for (let i = 0; i < text.length; i += 1) {
+    hash = (hash * 31 + text.charCodeAt(i)) >>> 0;
+  }
+  return hash;
+}
+
+function escapeSvgText(value) {
+  return String(value || "")
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;");
+}
+
+function getTeamInitials(name) {
+  const words = String(name || "Team")
+    .replace(/\b(fc|sc|sv|cf|afc|ac|as|cd|rc|ud|1\.|club|united|city)\b/gi, " ")
+    .split(/[^a-z0-9]+/i)
+    .filter(Boolean);
+  const initials = (words.length >= 2 ? words[0][0] + words[1][0] : (words[0] || "T").slice(0, 2)).toUpperCase();
+  return initials || "FC";
+}
+
+function createGeneratedTeamLogo(name) {
+  const cleanName = String(name || "Team").trim() || "Team";
+  const palettes = [
+    ["#11244d", "#37d5ff", "#f7c600"],
+    ["#141a3a", "#7cf6b2", "#f35b8f"],
+    ["#1d2240", "#f8b73e", "#47c7ff"],
+    ["#122b25", "#71f6c2", "#f8e25c"],
+    ["#251a3d", "#b47cff", "#50e3c2"],
+    ["#302018", "#ff8f3d", "#67d5ff"],
+  ];
+  const [bg, accent, accent2] = palettes[hashString(cleanName) % palettes.length];
+  const initials = escapeSvgText(getTeamInitials(cleanName));
+  const svg = `
+    <svg xmlns="http://www.w3.org/2000/svg" width="128" height="128" viewBox="0 0 128 128">
+      <defs>
+        <radialGradient id="g" cx="35%" cy="25%" r="75%">
+          <stop offset="0%" stop-color="${accent}" stop-opacity=".85"/>
+          <stop offset="48%" stop-color="${bg}"/>
+          <stop offset="100%" stop-color="#050914"/>
+        </radialGradient>
+        <filter id="glow" x="-25%" y="-25%" width="150%" height="150%">
+          <feGaussianBlur stdDeviation="3" result="blur"/>
+          <feMerge>
+            <feMergeNode in="blur"/>
+            <feMergeNode in="SourceGraphic"/>
+          </feMerge>
+        </filter>
+      </defs>
+      <circle cx="64" cy="64" r="59" fill="url(#g)" stroke="${accent}" stroke-width="3"/>
+      <path d="M28 42 Q64 18 100 42 L92 94 Q64 112 36 94 Z" fill="none" stroke="${accent2}" stroke-width="4" opacity=".45"/>
+      <text x="64" y="76" text-anchor="middle" font-family="Arial, Helvetica, sans-serif" font-size="42" font-weight="800" fill="#ffffff" filter="url(#glow)">${initials}</text>
+    </svg>`;
+  return `data:image/svg+xml;charset=UTF-8,${encodeURIComponent(svg.replace(/\s+/g, " ").trim())}`;
+}
+
+function resolveTeamLogoUrl(team, teamId, teamName) {
+  if (team?.logoUrl) return team.logoUrl;
+  if (teamId) return `https://api.sofascore.app/api/v1/team/${teamId}/image`;
+  return createGeneratedTeamLogo(team?.name || teamName || "Team");
 }
 
 function parseHistoricalRowDate(value) {
@@ -7038,8 +7137,8 @@ async function main() {
         awayTeamId: awayId,
         homeTeamName: homeName,
         awayTeamName: awayName,
-        homeLogo: event.homeTeam?.logoUrl || (homeId ? `https://api.sofascore.app/api/v1/team/${homeId}/image` : ""),
-        awayLogo: event.awayTeam?.logoUrl || (awayId ? `https://api.sofascore.app/api/v1/team/${awayId}/image` : ""),
+        homeLogo: resolveTeamLogoUrl(event.homeTeam, homeId, homeName),
+        awayLogo: resolveTeamLogoUrl(event.awayTeam, awayId, awayName),
         status: appStatus,
         score,
         minute: minuteState.minute,
