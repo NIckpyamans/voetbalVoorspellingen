@@ -6184,7 +6184,7 @@ function defaultStore() {
     sourceCoverage: null,
     aiAdvice: [],
     lastRun: null,
-    workerVersion: "v16-h2h-snapshots",
+    workerVersion: "v17-fresh-data-guard",
   };
 }
 
@@ -6461,7 +6461,10 @@ async function main() {
   const today = toAmsterdamDateKey(new Date());
   const yesterday = addDaysToDateKey(today, -1);
   const tomorrow = addDaysToDateKey(today, 1);
-  const dates = [yesterday, today, tomorrow];
+  const dayAfterTomorrow = addDaysToDateKey(today, 2);
+  // Houd bewust een extra dag vooruit vast. Als een geplande worker-run een
+  // keer wordt overgeslagen, blijft "morgen" in de app alsnog gevuld.
+  const dates = [yesterday, today, tomorrow, dayAfterTomorrow];
 
   if (!store.knockoutOverview) store.knockoutOverview = {};
   if (!store.cupSheets) store.cupSheets = {};
@@ -7205,7 +7208,7 @@ async function main() {
   store.sourceCoverage = buildSourceCoverage(store, today);
   store.aiAdvice = buildAiRecommendations(store, today);
   store.lastRun = Date.now();
-  store.workerVersion = "v16-h2h-snapshots";
+  store.workerVersion = "v17-fresh-data-guard";
   
   // Log summary
   const totalMatches = Object.values(store.matches || {}).flat().length;

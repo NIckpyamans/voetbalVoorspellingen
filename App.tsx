@@ -131,6 +131,7 @@ const App: React.FC = () => {
   const [loading, setLoading] = useState(true);
   const [syncStatus, setSyncStatus] = useState<"laden" | "klaar" | "fout">("laden");
   const [lastRun, setLastRun] = useState<number | null>(null);
+  const [workerNeeded, setWorkerNeeded] = useState(false);
   const [activeFilter, setActiveFilter] = useState<FilterMode>("alle");
   const [selectedLeague, setSelectedLeague] = useState<string>("alle");
   const [expandedTopClub, setExpandedTopClub] = useState<string | null>(null);
@@ -184,15 +185,17 @@ const App: React.FC = () => {
   useEffect(() => {
     setLoading(true);
     setSyncStatus("laden");
+    setWorkerNeeded(false);
     setMatches([]);
     setPredictions({});
     learnedRef.current.clear();
 
-    const unsubscribe = velocityEngine.subscribe(({ matches: nextMatches, predictions: nextPredictions, lastRun: nextLastRun }) => {
+    const unsubscribe = velocityEngine.subscribe(({ matches: nextMatches, predictions: nextPredictions, lastRun: nextLastRun, workerNeeded: nextWorkerNeeded }) => {
       setMatches(nextMatches);
       setPredictions(nextPredictions);
       setLoading(false);
       setSyncStatus("klaar");
+      setWorkerNeeded(!!nextWorkerNeeded);
       if (nextLastRun) setLastRun(nextLastRun);
 
       for (const match of nextMatches) {
@@ -755,9 +758,19 @@ const App: React.FC = () => {
                 )}
 
                 {!loading && dayMatches.length === 0 && (
-                  <div className="text-center py-16 text-slate-500">
+                  <div className="mx-auto max-w-xl rounded-3xl border border-white/10 bg-slate-950/55 px-8 py-10 text-center text-slate-300 shadow-2xl">
                     <div className="text-5xl mb-3">📅</div>
-                    <div className="font-bold">Geen wedstrijden gevonden voor {formatDateLabel(selectedDate)}</div>
+                    <div className="font-black text-white">Geen wedstrijden gevonden voor {formatDateLabel(selectedDate)}</div>
+                    <div className="mt-2 text-sm text-slate-400">
+                      {workerNeeded
+                        ? "De worker heeft voor deze dag nog geen verse data geleverd. De app controleert opnieuw bij de volgende refresh."
+                        : "Er zijn voor deze selectie geen wedstrijden beschikbaar."}
+                    </div>
+                    {lastRun && (
+                      <div className="mt-3 text-xs text-slate-500">
+                        Laatste worker-run: {new Date(lastRun).toLocaleString("nl-NL")}
+                      </div>
+                    )}
                   </div>
                 )}
               </div>

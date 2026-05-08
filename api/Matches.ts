@@ -36,6 +36,30 @@ function attachReview(match: any, store: any) {
   };
 }
 
+function normalizeServedMatchStatus(match: any) {
+  const status = String(match?.status || "NS").toUpperCase();
+  const hasScore = typeof match?.score === "string" && match.score.includes("-");
+  const settledStatuses = new Set(["FT", "AET", "PEN", "LIVE", "HT", "RESULT_PENDING"]);
+  if (hasScore || settledStatuses.has(status)) return match;
+
+  const kickoffMs = Date.parse(match?.kickoff || match?.date || "");
+  const isKickoffKnown = Number.isFinite(kickoffMs);
+  const isPastResultWindow = isKickoffKnown && Date.now() - kickoffMs > 150 * 60 * 1000;
+
+  if (!isPastResultWindow) return match;
+
+  return {
+    ...match,
+    status: "RESULT_PENDING",
+    resultPending: true,
+    resultPendingReason: "Wedstrijd is voorbij, maar de gratis bron heeft nog geen eindstand geleverd.",
+  };
+}
+
+function attachReviewAndNormalize(match: any, store: any) {
+  return normalizeServedMatchStatus(attachReview(match, store));
+}
+
 export default async function handler(req: any, res: any) {
   const { date, live, days } = req.query;
   const today = todayAmsterdamKey();
@@ -60,7 +84,7 @@ export default async function handler(req: any, res: any) {
         const multiDayMatches: any[] = [];
         for (let i = -Math.floor(numDays / 2); i <= Math.floor(numDays / 2); i++) {
           const dateStr = addDaysToDateKey(targetDate, i);
-          const dayMatches = (store.matches?.[dateStr] || []).map((match: any) => attachReview(match, store));
+          const dayMatches = (store.matches?.[dateStr] || []).map((match: any) => attachReviewAndNormalize(match, store));
           multiDayMatches.push(...dayMatches);
         }
 
@@ -85,7 +109,7 @@ export default async function handler(req: any, res: any) {
       }
     }
 
-    const baseMatches = (store.matches?.[targetDate] || []).map((match: any) => attachReview(match, store));
+    const baseMatches = (store.matches?.[targetDate] || []).map((match: any) => attachReviewAndNormalize(match, store));
     const matches = live === "true"
       ? baseMatches.filter((m: any) => String(m.status || "").toUpperCase() === "LIVE")
       : baseMatches;

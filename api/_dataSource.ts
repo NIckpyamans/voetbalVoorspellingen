@@ -5,11 +5,17 @@ function unique(values: Array<string | undefined | null>) {
 }
 
 function candidateBranches() {
+  const explicitDataBranch = process.env.DATA_BRANCH;
+  const deployBranch = process.env.VERCEL_GIT_COMMIT_REF;
+
+  // Scheduled GitHub Actions only run automatically on the default branch.
+  // Production deployments can come from a feature branch, but live match data
+  // must still prefer the branch that the worker refreshes every 10 minutes.
   return unique([
-    process.env.DATA_BRANCH,
-    process.env.VERCEL_GIT_COMMIT_REF,
-    "codex/step3b-layout",
+    explicitDataBranch,
     "main",
+    deployBranch,
+    "codex/step3b-layout",
   ]);
 }
 

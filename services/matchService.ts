@@ -7,7 +7,7 @@ import { Match, Prediction } from "../types";
 import { normalizeMinute, parseMinuteValue } from "../shared/minute.js";
 import { todayAmsterdamKey } from "../shared/date.js";
 
-const CACHE_VERSION = "v6_amsterdam_date_fix";
+const CACHE_VERSION = "v7_result_window_guard";
 const LIVE_CACHE_AGE_MS = 30_000;
 const TODAY_CACHE_AGE_MS = 90_000;
 const OTHER_CACHE_AGE_MS = 30 * 60_000;
@@ -73,8 +73,23 @@ function writeCache(dateISO: string, matches: Match[], predictions: Record<strin
 // MATCH MAPPING FUNCTIE - MET ALLE VELDEN
 // ============================================================================
 
+function normalizeMatchStatus(m: any) {
+  const rawStatus = String(m?.status || "NS").toUpperCase();
+  const hasScore = typeof m?.score === "string" && m.score.includes("-");
+  const settledStatuses = new Set(["FT", "AET", "PEN", "LIVE", "HT", "RESULT_PENDING"]);
+  if (hasScore || settledStatuses.has(rawStatus)) return rawStatus;
+
+  const kickoffMs = Date.parse(m?.kickoff || m?.date || "");
+  if (Number.isFinite(kickoffMs) && Date.now() - kickoffMs > 150 * 60 * 1000) {
+    return "RESULT_PENDING";
+  }
+
+  return rawStatus || "NS";
+}
+
 function mapRawMatch(m: any): Match {
   const minuteValue = parseMinuteValue(m.minute, m.minuteValue);
+  const status = normalizeMatchStatus(m);
 
   return {
     // ========================================
@@ -98,7 +113,7 @@ function mapRawMatch(m: any): Match {
     // ========================================
     // STATUS & SCORE
     // ========================================
-    status: m.status || "NS",
+    status,
     score: m.score || undefined,
     minute: normalizeMinute(m.minute, minuteValue, m.extraTime, m.period),
     ...(minuteValue != null ? { minuteValue } : {}),
