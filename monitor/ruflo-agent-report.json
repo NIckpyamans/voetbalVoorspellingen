@@ -1,14 +1,14 @@
 {
-  "generatedAt": "2026-05-07T23:11:47.096Z",
-  "date": "2026-05-08",
+  "generatedAt": "2026-05-08T23:11:06.451Z",
+  "date": "2026-05-09",
   "name": "Ruflo-style gratis AI monitor",
   "mode": "naast-productie",
   "productionSafe": true,
   "summary": "Ruflo draait als extra agentlaag naast de app: hij leest monitor/data/reviews, zoekt gratis oplossingen en maakt patchadvies zonder blind live te wijzigen.",
   "agents": {
     "data": {
-      "score": 63,
-      "summary": "Datalaag: H2H 100%, bookmakers 100%, refs 0%.",
+      "score": 60,
+      "summary": "Datalaag: H2H 86%, bookmakers 100%, refs 0%.",
       "freeSources": [
         {
           "name": "SofaScore public endpoint",
@@ -63,17 +63,17 @@
       "actions": []
     },
     "learning": {
-      "score": 11,
-      "summary": "Leerlaag: 281 reviews, exact 11%, winnaar/gelijk 45%, top-5 exact 3%.",
+      "score": 10,
+      "summary": "Leerlaag: 291 reviews, exact 10%, winnaar/gelijk 45%, top-5 exact 3%.",
       "topConfidence": {
-        "matches": 31,
-        "exactHitRate": 0.032,
-        "outcomeHitRate": 0.323,
-        "probabilityOutcomeHitRate": 0.548,
-        "avgGoalError": 1.84,
+        "matches": 39,
+        "exactHitRate": 0.026,
+        "outcomeHitRate": 0.333,
+        "probabilityOutcomeHitRate": 0.513,
+        "avgGoalError": 1.97,
         "rank1ExactHitRate": 0,
-        "rank1OutcomeHitRate": 0,
-        "versusOverallOutcomeDelta": -0.122
+        "rank1OutcomeHitRate": 0.091,
+        "versusOverallOutcomeDelta": -0.113
       },
       "topClubs": [
         {
@@ -140,19 +140,19 @@
           "avgGoalError": 1
         },
         {
-          "teamName": "Arsenal",
-          "reviewedMatches": 3,
+          "teamName": "Aston Villa",
+          "reviewedMatches": 4,
           "exactHitRate": 0,
-          "outcomeHitRate": 0.67,
-          "avgGoalError": 2.33
+          "outcomeHitRate": 0.25,
+          "avgGoalError": 2.5
         }
       ],
       "actions": []
     },
     "control": {
       "score": 100,
-      "summary": "Ontwikkelcontrole: 0 actieve monitorissues op 2026-05-08; digest 2026-04-21 t/m 2026-05-04.",
-      "latestDay": "2026-05-08",
+      "summary": "Ontwikkelcontrole: 0 actieve monitorissues op 2026-05-09; digest 2026-04-21 t/m 2026-05-04.",
+      "latestDay": "2026-05-09",
       "shouldPropose": false,
       "actions": []
     }
