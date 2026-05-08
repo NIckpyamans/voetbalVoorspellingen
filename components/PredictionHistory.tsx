@@ -23,6 +23,13 @@ interface HistoryItem {
   topExactReasons?: string[];
 }
 
+type LeagueHistoryStats = {
+  exact: number;
+  outcome: number;
+  total: number;
+  topChance: number;
+};
+
 function outcomeFromScore(score?: string | null) {
   const [home, away] = String(score || "").split("-").map(Number);
   if (!Number.isFinite(home) || !Number.isFinite(away)) return null;
@@ -126,7 +133,7 @@ const PredictionHistory: React.FC = () => {
       }
     }
 
-    const byLeague = Object.entries(
+    const byLeague = (Object.entries(
       history.reduce((acc: Record<string, { exact: number; outcome: number; total: number; topChance: number }>, item) => {
         const league = item.league || "Onbekend";
         if (!acc[league]) acc[league] = { exact: 0, outcome: 0, total: 0, topChance: 0 };
@@ -136,7 +143,7 @@ const PredictionHistory: React.FC = () => {
         if (item.topChanceCorrect) acc[league].topChance += 1;
         return acc;
       }, {})
-    )
+    ) as Array<[string, LeagueHistoryStats]>)
       .map(([league, value]) => ({
         league,
         total: value.total,
