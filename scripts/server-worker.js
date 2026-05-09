@@ -226,6 +226,16 @@ const SPORTSDB_NAME_TO_LABEL = {
   "Spanish La Liga": "Spain - LaLiga",
 };
 
+const ESPN_SCOREBOARD_LEAGUES = {
+  "Belgium - Pro League": "bel.1",
+  "England - Championship": "eng.2",
+  "England - Premier League": "eng.1",
+  "Germany - 2. Bundesliga": "ger.2",
+  "Germany - Bundesliga": "ger.1",
+  "Italy - Serie A": "ita.1",
+  "Spain - LaLiga": "esp.1",
+};
+
 const BBC_COMPETITION_TO_LABEL = {
   "UEFA Champions League": "Europe - Champions League",
   "UEFA Europa League": "Europe - Europa League",
@@ -882,10 +892,10 @@ function buildPossibleNames(name) {
   const normalized = normalizeName(name);
   const variants = new Set([normalized]);
   const withoutLeadingClubPrefix = normalized
-    .replace(/^(?:1\s+)?(?:fc|sc|dsc|ac|afc|cf)\s+/, "")
+    .replace(/^(?:1\s+)?(?:fc|sc|dsc|ac|afc|cf|sv|tsv)\s+/, "")
     .trim();
   if (withoutLeadingClubPrefix && withoutLeadingClubPrefix !== normalized) variants.add(withoutLeadingClubPrefix);
-  const withoutTrailingClubSuffix = normalized.replace(/\s+(?:fc|sc|afc|cf|ac)$/g, "").trim();
+  const withoutTrailingClubSuffix = normalized.replace(/\s+(?:fc|sc|afc|cf|ac|ksv|rfc)$/g, "").trim();
   if (withoutTrailingClubSuffix && withoutTrailingClubSuffix !== normalized) variants.add(withoutTrailingClubSuffix);
   const withoutTrailingNumber = withoutLeadingClubPrefix.replace(/\s+\d+$/g, "").trim();
   if (withoutTrailingNumber && withoutTrailingNumber !== normalized) variants.add(withoutTrailingNumber);
@@ -896,6 +906,9 @@ function buildPossibleNames(name) {
   if (normalized.includes(" afc")) variants.add(normalized.replace(" afc", "").trim());
   if (normalized.includes(" sc")) variants.add(normalized.replace(" sc", "").trim());
   if (normalized.includes(" ac")) variants.add(normalized.replace(" ac", "").trim());
+  if (normalized.includes(" ksv")) variants.add(normalized.replace(" ksv", "").trim());
+  if (normalized.includes(" rfc")) variants.add(normalized.replace(" rfc", "").trim());
+  if (normalized.includes(" and ")) variants.add(normalized.replace(/\s+and\s+/g, " ").trim());
   if (normalized.includes("manchester ")) variants.add(normalized.replace("manchester ", "man ").trim());
   if (normalized.includes("man ")) variants.add(normalized.replace("man ", "manchester ").trim());
   if (normalized === "nottingham forest") variants.add("nott m forest");
@@ -935,6 +948,25 @@ function buildPossibleNames(name) {
   if (normalized === "sp braga") variants.add("sporting braga");
   if (normalized === "rayo vallecano") variants.add("vallecano");
   if (normalized === "vallecano") variants.add("rayo vallecano");
+  if (normalized === "bayer 04 leverkusen") variants.add("bayer leverkusen");
+  if (normalized === "bayer leverkusen") variants.add("bayer 04 leverkusen");
+  if (normalized === "fc st pauli") variants.add("st pauli");
+  if (normalized === "st pauli") variants.add("fc st pauli");
+  if (normalized === "sv werder bremen") variants.add("werder bremen");
+  if (normalized === "werder bremen") variants.add("sv werder bremen");
+  if (normalized === "tsv eintracht braunschweig") variants.add("eintracht braunschweig");
+  if (normalized === "eintracht braunschweig") variants.add("tsv eintracht braunschweig");
+  if (normalized === "fc bayern munchen" || normalized === "bayern munchen") variants.add("bayern munich");
+  if (normalized === "bayern munich") {
+    variants.add("fc bayern munchen");
+    variants.add("bayern munchen");
+  }
+  if (normalized === "sint truidense") variants.add("sint truiden");
+  if (normalized === "sint truiden") variants.add("sint truidense");
+  if (normalized === "1 fsv mainz 05") variants.add("mainz");
+  if (normalized === "mainz") variants.add("1 fsv mainz 05");
+  if (normalized === "cercle brugge ksv") variants.add("cercle brugge");
+  if (normalized === "cercle brugge") variants.add("cercle brugge ksv");
   return [...variants].filter(Boolean);
 }
 
@@ -1986,14 +2018,32 @@ async function fetchFallbackScheduledEventsFromMarket(dateISO) {
 }
 
 function dedupeFallbackEvents(events) {
+  const canonicalEventName = (name) =>
+    buildPossibleNames(name || "")
+      .sort((a, b) => a.length - b.length || a.localeCompare(b))[0] || "";
+  const quality = (event) => {
+    const status = resolveAppStatus(event);
+    const statusScore = status === "FT" ? 60 : status === "LIVE" || status === "HT" ? 50 : status === "RESULT_PENDING" ? 15 : 0;
+    const hasScore = event?.homeScore?.current != null && event?.awayScore?.current != null;
+    const scoreQuality = hasScore ? 25 : 0;
+    const logoQuality = Number(Boolean(event?.homeTeam?.logoUrl)) + Number(Boolean(event?.awayTeam?.logoUrl));
+    const sourceQuality = String(event?.source || "").includes("espn")
+      ? 8
+      : String(event?.source || "").includes("thesportsdb")
+        ? 6
+        : String(event?.source || "").includes("openligadb")
+          ? 4
+          : 1;
+    return statusScore + scoreQuality + logoQuality + sourceQuality;
+  };
   const seen = new Map();
   for (const event of events || []) {
     const kickoff = Number(event?.startTimestamp || 0);
     const dateKey = Number.isFinite(kickoff) && kickoff > 0
       ? new Date(kickoff * 1000).toISOString().slice(0, 10)
       : "";
-    const home = buildPossibleNames(event?.homeTeam?.name || "").sort((a, b) => b.length - a.length)[0] || "";
-    const away = buildPossibleNames(event?.awayTeam?.name || "").sort((a, b) => b.length - a.length)[0] || "";
+    const home = canonicalEventName(event?.homeTeam?.name || "");
+    const away = canonicalEventName(event?.awayTeam?.name || "");
     const key = `${dateKey}|${home}|${away}`;
     const current = seen.get(key);
     if (!current) {
@@ -2001,11 +2051,7 @@ function dedupeFallbackEvents(events) {
       continue;
     }
 
-    const nextScore = Number(event?.homeScore?.current ?? -1) + Number(event?.awayScore?.current ?? -1);
-    const currentScore = Number(current?.homeScore?.current ?? -1) + Number(current?.awayScore?.current ?? -1);
-    const nextLogoScore = Number(Boolean(event?.homeTeam?.logoUrl)) + Number(Boolean(event?.awayTeam?.logoUrl));
-    const currentLogoScore = Number(Boolean(current?.homeTeam?.logoUrl)) + Number(Boolean(current?.awayTeam?.logoUrl));
-    if (nextScore > currentScore || (nextScore === currentScore && nextLogoScore > currentLogoScore)) {
+    if (quality(event) > quality(current)) {
       seen.set(key, event);
     }
   }
@@ -2236,19 +2282,25 @@ async function fetchSportsDbScheduledEvents(dateISO) {
     const homeGoals = toNumber(event?.intHomeScore);
     const awayGoals = toNumber(event?.intAwayScore);
     const statusText = String(event?.strStatus || "").toLowerCase();
-    const scoreAvailable = Number.isFinite(homeGoals) && Number.isFinite(awayGoals);
+    const rawScoreAvailable = Number.isFinite(homeGoals) && Number.isFinite(awayGoals);
     const finished =
       statusText.includes("finished") ||
       statusText === "ft" ||
       statusText.includes("full time") ||
-      (scoreAvailable && kickoff.getTime() + 150 * 60 * 1000 < Date.now());
+      (rawScoreAvailable && kickoff.getTime() + 150 * 60 * 1000 < Date.now());
     const statusType = finished
       ? "finished"
       : statusText.includes("half")
         ? "halftime"
-        : statusText.includes("live") || statusText.includes("progress") || statusText.includes("1st") || statusText.includes("2nd")
+        : statusText.includes("live") ||
+            statusText.includes("progress") ||
+            statusText.includes("1st") ||
+            statusText.includes("2nd") ||
+            statusText === "1h" ||
+            statusText === "2h"
         ? "inprogress"
         : "notstarted";
+    const scoreAvailable = rawScoreAvailable && statusType !== "notstarted";
 
     const mappedEvent = {
       id: eventId,
@@ -2331,6 +2383,113 @@ async function fetchSportsDbScheduledEvents(dateISO) {
   }
 
   return Array.from(fallbackById.values()).map((item) => item.event);
+}
+
+function getEspnCompetitor(competition, side) {
+  return (competition?.competitors || []).find((competitor) => competitor?.homeAway === side) || null;
+}
+
+function mapEspnStatus(statusType) {
+  const state = String(statusType?.state || "").toLowerCase();
+  const name = String(statusType?.name || "").toLowerCase();
+  const description = String(statusType?.description || statusType?.detail || statusType?.shortDetail || "").toLowerCase();
+  const completed = Boolean(statusType?.completed);
+  if (completed || state === "post" || name.includes("final") || description.includes("final") || description === "ft") {
+    return "finished";
+  }
+  if (state === "in" || description.includes("'") || description.includes("half")) {
+    return description.includes("half") && !description.match(/\d/) ? "halftime" : "inprogress";
+  }
+  return "notstarted";
+}
+
+function getEspnDisplayMinute(status) {
+  const detail = String(status?.type?.shortDetail || status?.type?.detail || status?.displayClock || "").trim();
+  const minute = parseMinuteFromDescription(detail);
+  if (minute?.current) return { current: minute.current, extra: minute.extra || 0, label: detail };
+  const clockSeconds = Number(status?.clock || 0);
+  if (clockSeconds > 0) {
+    const current = Math.max(1, Math.floor(clockSeconds / 60));
+    return { current, extra: 0, label: `${current}'` };
+  }
+  return { current: null, extra: 0, label: detail || null };
+}
+
+async function fetchEspnScoreboardEvents(dateISO) {
+  const fallbackEvents = [];
+  const yyyymmdd = String(dateISO || "").replace(/-/g, "");
+
+  for (const [leagueLabel, espnCode] of Object.entries(ESPN_SCOREBOARD_LEAGUES)) {
+    const leagueInfo = LEAGUES.find((item) => item.label === leagueLabel);
+    if (!leagueInfo) continue;
+
+    const json = await fetchExternalJson(
+      `https://site.api.espn.com/apis/site/v2/sports/soccer/${espnCode}/scoreboard?dates=${yyyymmdd}`
+    );
+    const events = Array.isArray(json?.events) ? json.events : [];
+    for (const event of events) {
+      const competition = event?.competitions?.[0] || {};
+      const home = getEspnCompetitor(competition, "home");
+      const away = getEspnCompetitor(competition, "away");
+      const homeName = String(home?.team?.displayName || home?.team?.name || "").trim();
+      const awayName = String(away?.team?.displayName || away?.team?.name || "").trim();
+      if (!homeName || !awayName) continue;
+      if (isWomenContext(leagueLabel, homeName, awayName) || isYouthContext(leagueLabel, homeName, awayName)) continue;
+
+      const kickoff = new Date(competition?.date || event?.date || "");
+      if (toAmsterdamDateKey(kickoff) !== dateISO) continue;
+
+      const statusType = competition?.status?.type || event?.status?.type || {};
+      const appStatusType = mapEspnStatus(statusType);
+      const homeGoals = toNumber(home?.score);
+      const awayGoals = toNumber(away?.score);
+      const scoreAvailable =
+        Number.isFinite(homeGoals) && Number.isFinite(awayGoals) && appStatusType !== "notstarted";
+      const minute = getEspnDisplayMinute(competition?.status || event?.status || {});
+
+      fallbackEvents.push({
+        id: `espn-${espnCode}-${event.id || `${dateISO}-${normalizeName(homeName)}-${normalizeName(awayName)}`}`,
+        startTimestamp: Math.floor(kickoff.getTime() / 1000),
+        homeTeam: {
+          id: String(home?.team?.id || ""),
+          name: homeName,
+          country: { name: leagueInfo.country || "" },
+          logoUrl: String(home?.team?.logo || ""),
+        },
+        awayTeam: {
+          id: String(away?.team?.id || ""),
+          name: awayName,
+          country: { name: leagueInfo.country || "" },
+          logoUrl: String(away?.team?.logo || ""),
+        },
+        uniqueTournament: { id: null, name: leagueInfo.name },
+        tournament: {
+          id: null,
+          name: leagueInfo.name,
+          category: { name: leagueInfo.country || "" },
+          uniqueTournament: { id: null },
+        },
+        season: { id: event?.season?.year || null },
+        status: {
+          type: appStatusType,
+          description: statusType.shortDetail || statusType.detail || statusType.description || "",
+        },
+        time: minute.current ? { current: minute.current, extra: minute.extra || 0 } : {},
+        period: appStatusType === "halftime" ? "HT" : null,
+        homeScore: scoreAvailable ? { current: homeGoals } : {},
+        awayScore: scoreAvailable ? { current: awayGoals } : {},
+        espnMeta: {
+          code: espnCode,
+          status: statusType.name || statusType.description || null,
+          minute: minute.label,
+        },
+        source: "espn-scoreboard-fallback",
+      });
+    }
+    await sleep(20);
+  }
+
+  return fallbackEvents;
 }
 
 async function fetchOpenLigaDbScheduledEvents(dateISO) {
@@ -4084,9 +4243,22 @@ function assignTopConfidenceRanks(dayMatches, dayPredictions) {
   }
 }
 
+async function fetchWithTimeout(url, options = {}, timeoutMs = 12000) {
+  const controller = new AbortController();
+  const timeout = setTimeout(() => controller.abort(), timeoutMs);
+  try {
+    return await fetch(url, {
+      ...options,
+      signal: controller.signal,
+    });
+  } finally {
+    clearTimeout(timeout);
+  }
+}
+
 async function safeFetch(url) {
   try {
-    const response = await fetch(url, {
+    const response = await fetchWithTimeout(url, {
       headers: {
         Accept: "application/json",
         "Accept-Language": "en-US,en;q=0.9",
@@ -4095,7 +4267,7 @@ async function safeFetch(url) {
         "User-Agent":
           "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 Chrome/123.0 Safari/537.36",
       },
-    });
+    }, 12000);
     if (!response.ok) {
       console.error(`[worker] API error ${response.status} voor ${url}`);
       return null;
@@ -4109,13 +4281,13 @@ async function safeFetch(url) {
 
 async function safeFetchText(url) {
   try {
-    const response = await fetch(url, {
+    const response = await fetchWithTimeout(url, {
       headers: {
         Accept: "text/plain,text/csv,*/*",
         "User-Agent":
           "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 Chrome/123.0 Safari/53736",
       },
-    });
+    }, 12000);
     if (!response.ok) return null;
     return await response.text();
   } catch {
@@ -4125,14 +4297,14 @@ async function safeFetchText(url) {
 
 async function fetchExternalJson(url, headers = {}) {
   try {
-    const response = await fetch(url, {
+    const response = await fetchWithTimeout(url, {
       headers: {
         Accept: "application/json,text/javascript,*/*;q=0.8",
         "User-Agent":
           "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 Chrome/123.0 Safari/53736",
         ...headers,
       },
-    });
+    }, 12000);
     if (!response.ok) return null;
     return await response.json();
   } catch {
@@ -6621,6 +6793,7 @@ async function main() {
 
     const fallbackEvents = await fetchFallbackScheduledEventsFromMarket(date);
     const sportsDbEvents = await fetchSportsDbScheduledEvents(date);
+    const espnEvents = await fetchEspnScoreboardEvents(date);
     const openLigaDbEvents = await fetchOpenLigaDbScheduledEvents(date);
     const bbcEvents = await fetchBbcScheduledEvents(date);
     const curatedEvents = fetchCuratedFixtureBackfill(date);
@@ -6628,6 +6801,7 @@ async function main() {
       ...events,
       ...fallbackEvents,
       ...sportsDbEvents,
+      ...espnEvents,
       ...openLigaDbEvents,
       ...bbcEvents,
       ...curatedEvents,
@@ -6638,6 +6812,9 @@ async function main() {
     }
     if (sportsDbEvents.length) {
       console.log(`[worker] ${date}: ${sportsDbEvents.length} fallback events uit TheSportsDB`);
+    }
+    if (espnEvents.length) {
+      console.log(`[worker] ${date}: ${espnEvents.length} fallback events uit ESPN scoreboard`);
     }
     if (openLigaDbEvents.length) {
       console.log(`[worker] ${date}: ${openLigaDbEvents.length} fallback events uit OpenLigaDB`);
