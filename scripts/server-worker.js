@@ -230,9 +230,15 @@ const ESPN_SCOREBOARD_LEAGUES = {
   "Belgium - Pro League": "bel.1",
   "England - Championship": "eng.2",
   "England - Premier League": "eng.1",
+  "Europe - Champions League": "uefa.champions",
+  "Europe - Conference League": "uefa.europa.conf",
+  "Europe - Europa League": "uefa.europa",
+  "France - Ligue 1": "fra.1",
   "Germany - 2. Bundesliga": "ger.2",
   "Germany - Bundesliga": "ger.1",
   "Italy - Serie A": "ita.1",
+  "Netherlands - Eredivisie": "ned.1",
+  "Portugal - Liga Portugal": "por.1",
   "Spain - LaLiga": "esp.1",
 };
 
@@ -892,7 +898,7 @@ function buildPossibleNames(name) {
   const normalized = normalizeName(name);
   const variants = new Set([normalized]);
   const withoutLeadingClubPrefix = normalized
-    .replace(/^(?:1\s+)?(?:fc|sc|dsc|ac|afc|cf|sv|tsv)\s+/, "")
+    .replace(/^(?:1\s+)?(?:fc|sc|dsc|ac|afc|cf|sv|tsv|kaa|kv|kvc)\s+/, "")
     .trim();
   if (withoutLeadingClubPrefix && withoutLeadingClubPrefix !== normalized) variants.add(withoutLeadingClubPrefix);
   const withoutTrailingClubSuffix = normalized.replace(/\s+(?:fc|sc|afc|cf|ac|ksv|rfc)$/g, "").trim();
@@ -967,6 +973,31 @@ function buildPossibleNames(name) {
   if (normalized === "mainz") variants.add("1 fsv mainz 05");
   if (normalized === "cercle brugge ksv") variants.add("cercle brugge");
   if (normalized === "cercle brugge") variants.add("cercle brugge ksv");
+  if (normalized === "ajax amsterdam") variants.add("ajax");
+  if (normalized === "ajax") variants.add("ajax amsterdam");
+  if (normalized === "fc utrecht") variants.add("utrecht");
+  if (normalized === "utrecht") variants.add("fc utrecht");
+  if (normalized === "fc volendam") variants.add("volendam");
+  if (normalized === "volendam") variants.add("fc volendam");
+  if (normalized === "union st gilloise") variants.add("union saint gilloise");
+  if (normalized === "union saint gilloise") variants.add("union st gilloise");
+  if (normalized === "kv mechelen") variants.add("mechelen");
+  if (normalized === "mechelen") variants.add("kv mechelen");
+  if (normalized === "angers sco") variants.add("angers");
+  if (normalized === "angers") variants.add("angers sco");
+  if (normalized === "aj auxerre") variants.add("auxerre");
+  if (normalized === "auxerre") variants.add("aj auxerre");
+  if (normalized === "ogc nice") variants.add("nice");
+  if (normalized === "nice") variants.add("ogc nice");
+  if (normalized === "fc porto") variants.add("porto");
+  if (normalized === "porto") variants.add("fc porto");
+  if (normalized === "sl benfica") variants.add("benfica");
+  if (normalized === "benfica") variants.add("sl benfica");
+  if (normalized === "braga") variants.add("sporting braga");
+  if (normalized === "sporting braga") variants.add("braga");
+  if (normalized === "famalicao") variants.add("famalicao");
+  if (normalized === "kaa gent") variants.add("gent");
+  if (normalized === "gent") variants.add("kaa gent");
   return [...variants].filter(Boolean);
 }
 
@@ -2215,6 +2246,52 @@ function parseBbcAggregate(block, homeName, awayName) {
   };
 }
 
+const espnTeamLogoCache = new Map();
+let espnTeamLogoCacheLoaded = false;
+
+function rememberEspnTeamLogo(team) {
+  const logo =
+    String(team?.logos?.[0]?.href || team?.logo || "").trim();
+  if (!logo) return;
+  const names = [
+    team?.displayName,
+    team?.name,
+    team?.shortDisplayName,
+    team?.location,
+    team?.nickname,
+    team?.abbreviation,
+  ].filter(Boolean);
+  for (const name of names) {
+    for (const variant of buildPossibleNames(name)) {
+      espnTeamLogoCache.set(normalizeName(variant), logo);
+    }
+  }
+}
+
+async function ensureEspnTeamLogoCache() {
+  if (espnTeamLogoCacheLoaded) return;
+  espnTeamLogoCacheLoaded = true;
+  const codes = [...new Set(Object.values(ESPN_SCOREBOARD_LEAGUES))];
+  for (const code of codes) {
+    const json = await fetchExternalJson(`https://site.api.espn.com/apis/site/v2/sports/soccer/${code}/teams`);
+    const teams = json?.sports?.[0]?.leagues?.[0]?.teams || json?.sports?.leagues?.teams || [];
+    for (const wrapper of teams || []) {
+      rememberEspnTeamLogo(wrapper?.team || wrapper);
+    }
+    await sleep(20);
+  }
+}
+
+async function resolveEspnTeamLogoByName(teamName) {
+  await ensureEspnTeamLogoCache();
+  const variants = buildPossibleNames(teamName);
+  for (const variant of variants) {
+    const logo = espnTeamLogoCache.get(normalizeName(variant));
+    if (logo) return logo;
+  }
+  return "";
+}
+
 async function fetchBbcScheduledEvents(dateISO) {
   const html = await fetchText(`https://www.bbc.co.uk/sport/football/scores-fixtures/${dateISO}`);
   if (!html) return [];
@@ -2238,11 +2315,15 @@ async function fetchBbcScheduledEvents(dateISO) {
       type: leagueLabel.includes("Europe -") ? "cup" : "league",
     };
     const kickoffIso = buildFootballDataKickoffIso(dateISO, time);
+    const [homeLogoUrl, awayLogoUrl] = await Promise.all([
+      resolveEspnTeamLogoByName(homeName),
+      resolveEspnTeamLogoByName(awayName),
+    ]);
     fallbackEvents.push({
       id: `bbc-${dateISO}-${normalizeName(homeName)}-${normalizeName(awayName)}`,
       startTimestamp: Math.floor(new Date(kickoffIso).getTime() / 1000),
-      homeTeam: { id: "", name: homeName, country: { name: leagueInfo.country || "" } },
-      awayTeam: { id: "", name: awayName, country: { name: leagueInfo.country || "" } },
+      homeTeam: { id: "", name: homeName, country: { name: leagueInfo.country || "" }, logoUrl: homeLogoUrl },
+      awayTeam: { id: "", name: awayName, country: { name: leagueInfo.country || "" }, logoUrl: awayLogoUrl },
       uniqueTournament: { id: null, name: leagueInfo.name },
       tournament: {
         id: null,
@@ -7302,6 +7383,8 @@ async function main() {
         event.homeScore?.current != null && event.awayScore?.current != null
           ? `${event.homeScore.current}-${event.awayScore.current}`
           : null;
+      const homeScore = event.homeScore?.current != null ? Number(event.homeScore.current) : null;
+      const awayScore = event.awayScore?.current != null ? Number(event.awayScore.current) : null;
       const appStatus = inferPostKickoffStatus(event, resolveAppStatus(event), score, now);
       const match = {
         id: matchId,
@@ -7318,6 +7401,8 @@ async function main() {
         awayLogo: resolveTeamLogoUrl(event.awayTeam, awayId, awayName),
         status: appStatus,
         score,
+        homeScore,
+        awayScore,
         minute: minuteState.minute,
         minuteValue: minuteState.minuteValue,
         extraTime: minuteState.extraTime,
