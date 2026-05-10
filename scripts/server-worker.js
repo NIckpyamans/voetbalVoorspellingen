@@ -242,6 +242,81 @@ const ESPN_SCOREBOARD_LEAGUES = {
   "Spain - LaLiga": "esp.1",
 };
 
+const DATA_SCOUT_SOURCES = [
+  {
+    key: "sofascore",
+    name: "Sofascore",
+    category: "fixtures/live",
+    freeUse: "publieke voetbaldata",
+    data: ["wedstrijden", "live status", "scores", "lineups", "standen"],
+    priority: "primair",
+  },
+  {
+    key: "espn-scoreboard",
+    name: "ESPN Scoreboard",
+    category: "scores/logo",
+    freeUse: "publieke scoreboard endpoint",
+    data: ["fixtures", "live/FT scores", "clublogo's", "competitiedekking"],
+    priority: "hoog",
+  },
+  {
+    key: "thesportsdb",
+    name: "TheSportsDB",
+    category: "fixtures/logo",
+    freeUse: "gratis API-laag",
+    data: ["fixtures", "teamlogo's", "basic events"],
+    priority: "hoog",
+  },
+  {
+    key: "football-data",
+    name: "football-data.co.uk",
+    category: "historie/odds",
+    freeUse: "gratis CSV-bestanden",
+    data: ["historische uitslagen", "closing odds", "shots", "cards", "referee"],
+    priority: "hoog",
+  },
+  {
+    key: "openligadb",
+    name: "OpenLigaDB",
+    category: "scores/logo",
+    freeUse: "gratis openbare API",
+    data: ["Duitse fixtures", "uitslagen", "teamlogo's"],
+    priority: "medium",
+  },
+  {
+    key: "openfootball",
+    name: "openfootball",
+    category: "historische H2H",
+    freeUse: "open GitHub datasets",
+    data: ["historische wedstrijden", "H2H-backfill", "competitiegeschiedenis"],
+    priority: "hoog",
+  },
+  {
+    key: "understat",
+    name: "Understat",
+    category: "xG-profielen",
+    freeUse: "publieke pagina snapshots",
+    data: ["xG", "xGA", "shotkwaliteit", "teamprofielen"],
+    priority: "pilot",
+  },
+  {
+    key: "fbref",
+    name: "FBref",
+    category: "shots/splits",
+    freeUse: "publieke pagina snapshots, rate-limited",
+    data: ["schoten", "home/away splits", "teamstatistieken"],
+    priority: "pilot",
+  },
+  {
+    key: "bbc-fixtures",
+    name: "BBC fixtures",
+    category: "fixture-check",
+    freeUse: "publieke fixturepagina's",
+    data: ["topwedstrijd controle", "noodbackfill"],
+    priority: "veiligheidsnet",
+  },
+];
+
 const BBC_COMPETITION_TO_LABEL = {
   "UEFA Champions League": "Europe - Champions League",
   "UEFA Europa League": "Europe - Europa League",
@@ -2052,11 +2127,12 @@ function dedupeFallbackEvents(events) {
   const canonicalEventName = (name) =>
     buildPossibleNames(name || "")
       .sort((a, b) => a.length - b.length || a.localeCompare(b))[0] || "";
+  const hasScore = (event) => event?.homeScore?.current != null && event?.awayScore?.current != null;
+  const hasLogos = (event) => Boolean(event?.homeTeam?.logoUrl) && Boolean(event?.awayTeam?.logoUrl);
   const quality = (event) => {
     const status = resolveAppStatus(event);
     const statusScore = status === "FT" ? 60 : status === "LIVE" || status === "HT" ? 50 : status === "RESULT_PENDING" ? 15 : 0;
-    const hasScore = event?.homeScore?.current != null && event?.awayScore?.current != null;
-    const scoreQuality = hasScore ? 25 : 0;
+    const scoreQuality = hasScore(event) ? 25 : 0;
     const logoQuality = Number(Boolean(event?.homeTeam?.logoUrl)) + Number(Boolean(event?.awayTeam?.logoUrl));
     const sourceQuality = String(event?.source || "").includes("espn")
       ? 8
@@ -2067,11 +2143,43 @@ function dedupeFallbackEvents(events) {
           : 1;
     return statusScore + scoreQuality + logoQuality + sourceQuality;
   };
+  const mergeEvent = (current, incoming) => {
+    const incomingPreferred = quality(incoming) > quality(current);
+    const preferred = incomingPreferred ? { ...incoming } : { ...current };
+    const fallback = incomingPreferred ? current : incoming;
+
+    preferred.homeTeam = {
+      ...(fallback?.homeTeam || {}),
+      ...(preferred?.homeTeam || {}),
+      logoUrl: preferred?.homeTeam?.logoUrl || fallback?.homeTeam?.logoUrl || "",
+    };
+    preferred.awayTeam = {
+      ...(fallback?.awayTeam || {}),
+      ...(preferred?.awayTeam || {}),
+      logoUrl: preferred?.awayTeam?.logoUrl || fallback?.awayTeam?.logoUrl || "",
+    };
+
+    if (!hasScore(preferred) && hasScore(fallback)) {
+      preferred.homeScore = fallback.homeScore;
+      preferred.awayScore = fallback.awayScore;
+      preferred.status = fallback.status || preferred.status;
+      preferred.time = fallback.time || preferred.time;
+      preferred.period = fallback.period || preferred.period;
+    }
+
+    if (!hasLogos(preferred) && hasLogos(fallback)) {
+      preferred.homeTeam.logoUrl = fallback.homeTeam.logoUrl;
+      preferred.awayTeam.logoUrl = fallback.awayTeam.logoUrl;
+    }
+
+    preferred.source = [...new Set([preferred.source, fallback?.source].filter(Boolean))].join("+");
+    return preferred;
+  };
   const seen = new Map();
   for (const event of events || []) {
     const kickoff = Number(event?.startTimestamp || 0);
     const dateKey = Number.isFinite(kickoff) && kickoff > 0
-      ? new Date(kickoff * 1000).toISOString().slice(0, 10)
+      ? toAmsterdamDateKey(new Date(kickoff * 1000))
       : "";
     const home = canonicalEventName(event?.homeTeam?.name || "");
     const away = canonicalEventName(event?.awayTeam?.name || "");
@@ -2082,9 +2190,7 @@ function dedupeFallbackEvents(events) {
       continue;
     }
 
-    if (quality(event) > quality(current)) {
-      seen.set(key, event);
-    }
+    seen.set(key, mergeEvent(current, event));
   }
   return [...seen.values()];
 }
@@ -2521,9 +2627,15 @@ async function fetchEspnScoreboardEvents(dateISO) {
       if (toAmsterdamDateKey(kickoff) !== dateISO) continue;
 
       const statusType = competition?.status?.type || event?.status?.type || {};
-      const appStatusType = mapEspnStatus(statusType);
       const homeGoals = toNumber(home?.score);
       const awayGoals = toNumber(away?.score);
+      let appStatusType = mapEspnStatus(statusType);
+      const hasNumericScore = Number.isFinite(homeGoals) && Number.isFinite(awayGoals);
+      const ageMs = Date.now() - kickoff.getTime();
+      if (hasNumericScore && appStatusType === "notstarted") {
+        if (ageMs > 130 * 60 * 1000) appStatusType = "finished";
+        else if (ageMs > 0) appStatusType = "inprogress";
+      }
       const scoreAvailable =
         Number.isFinite(homeGoals) && Number.isFinite(awayGoals) && appStatusType !== "notstarted";
       const minute = getEspnDisplayMinute(competition?.status || event?.status || {});
@@ -6534,9 +6646,10 @@ function defaultStore() {
     phaseReliability: {},
     featureDiagnostics: null,
     sourceCoverage: null,
+    dataScout: null,
     aiAdvice: [],
     lastRun: null,
-    workerVersion: "v17-fresh-data-guard",
+    workerVersion: "v18-score-data-scout",
   };
 }
 
@@ -6566,11 +6679,34 @@ function buildSourceCoverage(store, todayKey) {
     match?.homeSeasonStats?.externalSources?.includes?.("FBref") ||
     match?.awaySeasonStats?.externalSources?.includes?.("FBref")
   ).length;
+  const scoreRelevant = todayMatches.filter((match) => ["FT", "LIVE", "HT"].includes(String(match?.status || "").toUpperCase()));
+  const scoreRelevantTotal = Math.max(scoreRelevant.length, 1);
+  const finishedMatches = todayMatches.filter((match) => String(match?.status || "").toUpperCase() === "FT");
+  const liveMatches = todayMatches.filter((match) => ["LIVE", "HT"].includes(String(match?.status || "").toUpperCase()));
+  const finishedWithScore = finishedMatches.filter((match) => String(match?.score || "").includes("-")).length;
+  const liveWithScore = liveMatches.filter((match) => String(match?.score || "").includes("-")).length;
+  const scoreCovered = scoreRelevant.filter((match) => String(match?.score || "").includes("-")).length;
+  const logoCovered = todayMatches.filter((match) => match?.homeLogo && match?.awayLogo).length;
+  const statusBreakdown = todayMatches.reduce((acc, match) => {
+    const key = String(match?.status || "UNKNOWN").toUpperCase();
+    acc[key] = Number(acc[key] || 0) + 1;
+    return acc;
+  }, {});
   const openfootballProfiles = Object.keys(store.openfootballProfiles || {}).length;
   const understatSnapshots = Object.keys(store.understatSnapshots || {}).length;
   const fbrefSnapshots = Object.keys(store.fbrefSnapshots || {}).length;
   return {
     todayMatches: todayMatches.length,
+    scoreCoverage: Number((scoreCovered / scoreRelevantTotal).toFixed(2)),
+    finishedScoreCoverage: Number((finishedWithScore / Math.max(finishedMatches.length, 1)).toFixed(2)),
+    liveScoreCoverage: Number((liveWithScore / Math.max(liveMatches.length, 1)).toFixed(2)),
+    logoCoverage: Number((logoCovered / total).toFixed(2)),
+    finishedMatches: finishedMatches.length,
+    finishedWithScore,
+    liveMatches: liveMatches.length,
+    liveWithScore,
+    pendingFinishedCount: Math.max(0, finishedMatches.length - finishedWithScore),
+    statusBreakdown,
     bookmakerCoverage: Number((bookmakerCovered / total).toFixed(2)),
     refereeCoverage: Number((refereeCovered / total).toFixed(2)),
     h2hCoverage: Number((h2hCovered / total).toFixed(2)),
@@ -6589,6 +6725,13 @@ function buildSourceCoverage(store, todayKey) {
         role: "primair",
         status: Number(sourceBreakdown.sofascore || 0) > 0 ? "actief" : "geblokkeerd/fallback",
         note: "Primaire bron voor events, live-data en wedstrijddetails.",
+      },
+      {
+        key: "espn-scoreboard",
+        name: "ESPN Scoreboard",
+        role: "score + logo backup",
+        status: Object.keys(sourceBreakdown).some((key) => key.includes("espn")) ? "actief" : "stand-by",
+        note: "Tweede hoofdbron voor fixtures, live/FT scores en officiele clublogo's voor topcompetities.",
       },
       {
         key: "thesportsdb",
@@ -6645,6 +6788,101 @@ function buildSourceCoverage(store, todayKey) {
   };
 }
 
+function buildDataScoutReport(store, todayKey) {
+  const todayMatches = Array.isArray(store.matches?.[todayKey]) ? store.matches[todayKey] : [];
+  const tomorrowKey = addDaysToDateKey(todayKey, 1);
+  const yesterdayKey = addDaysToDateKey(todayKey, -1);
+  const tomorrowMatches = Array.isArray(store.matches?.[tomorrowKey]) ? store.matches[tomorrowKey] : [];
+  const yesterdayMatches = Array.isArray(store.matches?.[yesterdayKey]) ? store.matches[yesterdayKey] : [];
+  const sourceCoverage = store.sourceCoverage || buildSourceCoverage(store, todayKey);
+  const sourceBreakdown = sourceCoverage.sourceBreakdown || {};
+  const sourceIsActive = (sourceKey) => Object.keys(sourceBreakdown).some((key) => key.includes(sourceKey));
+  const finishedYesterday = yesterdayMatches.filter((match) => String(match?.status || "").toUpperCase() === "FT");
+  const yesterdayScoresFilled = finishedYesterday.filter((match) => String(match?.score || "").includes("-")).length;
+  const todaysFinished = todayMatches.filter((match) => String(match?.status || "").toUpperCase() === "FT");
+  const todaysLive = todayMatches.filter((match) => ["LIVE", "HT"].includes(String(match?.status || "").toUpperCase()));
+  const h2hFilled = todayMatches.filter((match) => Number(match?.h2h?.played || 0) > 0).length;
+  const logoFilled = todayMatches.filter((match) => match?.homeLogo && match?.awayLogo).length;
+
+  const sourceReports = DATA_SCOUT_SOURCES.map((source) => {
+    const hasCache =
+      (source.key === "openfootball" && Object.keys(store.openfootballProfiles || {}).length > 0) ||
+      (source.key === "understat" && Object.keys(store.understatSnapshots || {}).length > 0) ||
+      (source.key === "fbref" && Object.keys(store.fbrefSnapshots || {}).length > 0) ||
+      (source.key === "football-data" && Object.keys(store.marketProfiles || {}).length > 0);
+    const active = sourceIsActive(source.key) || hasCache || (source.key === "bbc-fixtures" && sourceIsActive("curated-fixture"));
+    return {
+      ...source,
+      status: active ? "actief/gekoppeld" : source.priority === "pilot" ? "pilot/stand-by" : "stand-by",
+      collected: active,
+    };
+  });
+
+  const gaps = [];
+  if (finishedYesterday.length > yesterdayScoresFilled) {
+    gaps.push({
+      title: "Uitslagen gisteren niet volledig",
+      count: finishedYesterday.length - yesterdayScoresFilled,
+      action: "ESPN, football-data en BBC fallback blijven elke worker-run opnieuw samenvoegen.",
+    });
+  }
+  if (todayMatches.length && logoFilled < todayMatches.length) {
+    gaps.push({
+      title: "Logo's ontbreken",
+      count: todayMatches.length - logoFilled,
+      action: "ESPN en TheSportsDB logo-cache vullen ontbrekende clubemblemen automatisch aan.",
+    });
+  }
+  if (todayMatches.length && h2hFilled < todayMatches.length) {
+    gaps.push({
+      title: "H2H nog niet overal gevuld",
+      count: todayMatches.length - h2hFilled,
+      action: "Openfootball en opgeslagen historische wedstrijden blijven onderlinge duels aanvullen.",
+    });
+  }
+  if (!tomorrowMatches.length) {
+    gaps.push({
+      title: "Morgen leeg",
+      count: 1,
+      action: "Worker haalt morgen via primaire bron plus ESPN/TheSportsDB/football-data fallback opnieuw op.",
+    });
+  }
+
+  return {
+    lastScan: new Date().toISOString(),
+    cadence: "worker elke 10 minuten",
+    mode: "gratis databronnen, geen API-key verplicht",
+    collected: {
+      todayDate: todayKey,
+      todayMatches: todayMatches.length,
+      tomorrowDate: tomorrowKey,
+      tomorrowMatches: tomorrowMatches.length,
+      yesterdayDate: yesterdayKey,
+      yesterdayMatches: yesterdayMatches.length,
+      yesterdayScoresFilled,
+      liveMatches: todaysLive.length,
+      finishedToday: todaysFinished.length,
+      finishedTodayWithScore: todaysFinished.filter((match) => String(match?.score || "").includes("-")).length,
+      logosFilledToday: logoFilled,
+      h2hFilledToday: h2hFilled,
+      reviews: Object.keys(store.postMatchReviews || {}).length,
+      teamsWithLearning: Object.keys(store.teamLearning || {}).length,
+      marketProfiles: Object.keys(store.marketProfiles || {}).length,
+      openfootballProfiles: Object.keys(store.openfootballProfiles || {}).length,
+      understatSnapshots: Object.keys(store.understatSnapshots || {}).length,
+      fbrefSnapshots: Object.keys(store.fbrefSnapshots || {}).length,
+    },
+    sources: sourceReports,
+    gaps,
+    recommendations: [
+      "Gebruik ESPN Scoreboard als vaste score/logo back-up naast de primaire bron.",
+      "Gebruik football-data.co.uk voor historische uitslagen, odds, shots en referee-signalen.",
+      "Gebruik openfootball voor H2H-backfill wanneer live bronnen geen onderlinge historie geven.",
+      "Gebruik Understat en FBref als pilot-signalen voor xG, shotdruk en home/away splits waar bereikbaar.",
+    ],
+  };
+}
+
 function buildAiRecommendations(store, todayKey) {
   const todayMatches = Array.isArray(store.matches?.[todayKey]) ? store.matches[todayKey] : [];
   const issues = [];
@@ -6672,6 +6910,22 @@ function buildAiRecommendations(store, todayKey) {
   }
 
   const sourceCoverage = store.sourceCoverage || null;
+  if (sourceCoverage && Number(sourceCoverage.pendingFinishedCount || 0) > 0) {
+    issues.push({
+      title: "Uitslagen direct vullen",
+      summary: `${Number(sourceCoverage.pendingFinishedCount || 0)} afgeronde wedstrijd(en) missen nog een score in de actuele speeldag.`,
+      action: "Laat ESPN Scoreboard, football-data en BBC fixturefallback de scorevelden blijven overschrijven wanneer de primaire bron leeg blijft.",
+      priority: "high",
+    });
+  }
+  if (sourceCoverage && Number(sourceCoverage.logoCoverage || 0) < 0.95) {
+    issues.push({
+      title: "Clublogo-cache uitbreiden",
+      summary: `Logo-dekking staat op ${Math.round(Number(sourceCoverage.logoCoverage || 0) * 100)}% voor de actuele speeldag.`,
+      action: "Gebruik ESPN en TheSportsDB als vaste logobronnen en cache de gevonden logo's per clubnaam/alias.",
+      priority: "medium",
+    });
+  }
   if (sourceCoverage && Number(sourceCoverage.bookmakerCoverage || 0) < 0.7) {
     issues.push({
       title: "Bronkwaliteit odds nog dun",
@@ -7567,9 +7821,10 @@ async function main() {
   compactStore(store, today, now);
   rebuildReviewsAndLearning(store);
   store.sourceCoverage = buildSourceCoverage(store, today);
+  store.dataScout = buildDataScoutReport(store, today);
   store.aiAdvice = buildAiRecommendations(store, today);
   store.lastRun = Date.now();
-  store.workerVersion = "v17-fresh-data-guard";
+  store.workerVersion = "v18-score-data-scout";
   
   // Log summary
   const totalMatches = Object.values(store.matches || {}).flat().length;

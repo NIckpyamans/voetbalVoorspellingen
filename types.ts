@@ -27,6 +27,8 @@ export interface Match {
   // ========================================
   status: string;
   score?: string;
+  homeScore?: number | null;
+  awayScore?: number | null;
   minute?: string;
   minuteValue?: number;
   period?: string;

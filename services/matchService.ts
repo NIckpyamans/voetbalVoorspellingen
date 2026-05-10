@@ -115,6 +115,8 @@ function mapRawMatch(m: any): Match {
     // ========================================
     status,
     score: m.score || undefined,
+    ...(m.homeScore != null ? { homeScore: Number(m.homeScore) } : {}),
+    ...(m.awayScore != null ? { awayScore: Number(m.awayScore) } : {}),
     minute: normalizeMinute(m.minute, minuteValue, m.extraTime, m.period),
     ...(minuteValue != null ? { minuteValue } : {}),
     ...(m.period != null ? { period: m.period } : {}),

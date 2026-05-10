@@ -17,6 +17,7 @@ const SettingsView: React.FC = () => {
   const [rufloReport, setRufloReport] = useState<any | null>(null);
   const [featureDiagnostics, setFeatureDiagnostics] = useState<any | null>(null);
   const [sourceCoverage, setSourceCoverage] = useState<any | null>(null);
+  const [dataScout, setDataScout] = useState<any | null>(null);
   const [manualAdvice, setManualAdvice] = useState("");
   const [glassTransparency, setGlassTransparency] = useState(46);
 
@@ -49,6 +50,7 @@ const SettingsView: React.FC = () => {
         if (data.rufloReport) setRufloReport(data.rufloReport);
         if (data.featureDiagnostics) setFeatureDiagnostics(data.featureDiagnostics);
         if (data.sourceCoverage) setSourceCoverage(data.sourceCoverage);
+        if (data.dataScout) setDataScout(data.dataScout);
       })
       .catch(() => {});
 
@@ -350,12 +352,110 @@ const SettingsView: React.FC = () => {
           <div className="text-[11px] text-slate-500">Nog geen Ruflo-agentrapport. Draai `npm run monitor:ruflo` of wacht op de review-workflow.</div>
         )}
       </div>
+
+      <div className="glass-card rounded-2xl border border-emerald-500/10 p-5 bg-emerald-950/5">
+        <div className="flex items-start justify-between gap-3 mb-3">
+          <div>
+            <div className="text-[10px] font-black text-emerald-300 uppercase">Footy data-scout AI</div>
+            <div className="text-[11px] text-slate-400 mt-1">
+              Gratis databronnen die de worker elke run controleert voor scores, logo's, H2H, xG, odds en clubhistorie.
+            </div>
+          </div>
+          <span className="text-[8px] font-black px-2 py-0.5 rounded-full bg-emerald-900/30 text-emerald-300">
+            {dataScout?.cadence || "worker"}
+          </span>
+        </div>
+
+        {dataScout ? (
+          <div className="space-y-3">
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-2">
+              {[
+                { label: "Vandaag", value: dataScout.collected?.todayMatches || 0 },
+                { label: "Morgen", value: dataScout.collected?.tomorrowMatches || 0 },
+                { label: "Live", value: dataScout.collected?.liveMatches || 0 },
+                { label: "Logo's gevuld", value: dataScout.collected?.logosFilledToday || 0 },
+                { label: "H2H gevuld", value: dataScout.collected?.h2hFilledToday || 0 },
+                { label: "Reviews", value: dataScout.collected?.reviews || 0 },
+                { label: "Teams leerdata", value: dataScout.collected?.teamsWithLearning || 0 },
+                { label: "Marktprofielen", value: dataScout.collected?.marketProfiles || 0 },
+              ].map((item) => (
+                <div key={item.label} className="rounded-xl border border-white/5 bg-slate-900/40 px-3 py-2">
+                  <div className="text-[9px] font-black text-slate-500 uppercase">{item.label}</div>
+                  <div className="text-[16px] font-black text-white mt-1">{Number(item.value || 0).toLocaleString()}</div>
+                </div>
+              ))}
+            </div>
+
+            {Array.isArray(dataScout.gaps) && dataScout.gaps.length > 0 && (
+              <div className="rounded-xl border border-amber-500/10 bg-amber-950/10 p-3">
+                <div className="text-[10px] font-black text-amber-300 uppercase mb-2">Waar de scout nog op let</div>
+                <div className="space-y-2">
+                  {dataScout.gaps.slice(0, 6).map((gap: any, index: number) => (
+                    <div key={`${gap.title}-${index}`} className="rounded-lg border border-white/5 bg-slate-950/30 px-3 py-2">
+                      <div className="flex items-center justify-between gap-3">
+                        <div className="text-[10px] font-black text-white">{gap.title}</div>
+                        <span className="text-[8px] font-black px-2 py-0.5 rounded-full bg-amber-900/30 text-amber-300">
+                          {gap.count}x
+                        </span>
+                      </div>
+                      <div className="text-[9px] text-slate-400 mt-1">{gap.action}</div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            <div className="rounded-xl border border-white/5 bg-slate-900/30 p-3">
+              <div className="text-[10px] font-black text-slate-400 uppercase mb-2">Gratis bronnen en wat ze leveren</div>
+              <div className="grid md:grid-cols-2 gap-2 max-h-80 overflow-y-auto pr-1">
+                {(dataScout.sources || []).map((source: any) => (
+                  <div key={source.key} className="rounded-lg border border-white/5 bg-slate-950/30 px-3 py-2">
+                    <div className="flex items-center justify-between gap-3">
+                      <div className="text-[10px] font-black text-white">{source.name}</div>
+                      <span className={`text-[8px] font-black px-2 py-0.5 rounded-full ${
+                        String(source.status || "").includes("actief")
+                          ? "bg-green-900/30 text-green-300"
+                          : "bg-slate-800 text-slate-400"
+                      }`}>
+                        {source.status}
+                      </span>
+                    </div>
+                    <div className="text-[9px] text-slate-500 mt-1">{source.category} - {source.freeUse}</div>
+                    <div className="text-[9px] text-slate-400 mt-1">{(source.data || []).join(", ")}</div>
+                  </div>
+                ))}
+              </div>
+            </div>
+
+            <div className="rounded-xl border border-cyan-500/10 bg-cyan-950/10 p-3">
+              <div className="text-[10px] font-black text-cyan-300 uppercase mb-1">Scout advies</div>
+              <div className="space-y-1">
+                {(dataScout.recommendations || []).map((item: string) => (
+                  <div key={item} className="text-[10px] text-slate-300">- {item}</div>
+                ))}
+              </div>
+            </div>
+          </div>
+        ) : (
+          <div className="text-[11px] text-slate-500">
+            Nog geen data-scout rapport. Na de volgende worker-run verschijnt hier welke gratis bronnen data hebben geleverd.
+          </div>
+        )}
+      </div>
       <div className="glass-card rounded-2xl border border-white/5 p-5">
         <div className="text-[10px] font-black text-slate-400 uppercase mb-3">Bronkwaliteit van vandaag</div>
         {sourceCoverage ? (
           <div className="space-y-3">
             <div className="grid grid-cols-2 gap-2">
               {[
+                {
+                  label: "Scoredekking FT/live",
+                  value: `${Math.round(Number(sourceCoverage.scoreCoverage || 0) * 100)}%`,
+                },
+                {
+                  label: "Logo-dekking",
+                  value: `${Math.round(Number(sourceCoverage.logoCoverage || 0) * 100)}%`,
+                },
                 {
                   label: "Bookmakerdekking",
                   value: `${Math.round(Number(sourceCoverage.bookmakerCoverage || 0) * 100)}%`,
