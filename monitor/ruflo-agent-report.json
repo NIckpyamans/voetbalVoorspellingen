@@ -1,14 +1,14 @@
 {
-  "generatedAt": "2026-05-09T23:05:43.813Z",
-  "date": "2026-05-10",
+  "generatedAt": "2026-05-10T23:09:48.596Z",
+  "date": "2026-05-11",
   "name": "Ruflo-style gratis AI monitor",
   "mode": "naast-productie",
   "productionSafe": true,
   "summary": "Ruflo draait als extra agentlaag naast de app: hij leest monitor/data/reviews, zoekt gratis oplossingen en maakt patchadvies zonder blind live te wijzigen.",
   "agents": {
     "data": {
-      "score": 57,
-      "summary": "Datalaag: H2H 57%, bookmakers 100%, refs 0%.",
+      "score": 60,
+      "summary": "Datalaag: H2H 75%, bookmakers 100%, refs 0%.",
       "freeSources": [
         {
           "name": "SofaScore public endpoint",
@@ -60,31 +60,20 @@
           "use": "Niet live scrapen op iedere run; alleen gecachte snapshots gebruiken."
         }
       ],
-      "actions": [
-        {
-          "priority": "medium",
-          "title": "H2H-backfill verder vullen",
-          "freeSolution": "Gebruik openfootball en football-data rows per competitie als historische H2H fallback voordat de UI 'leeg' toont.",
-          "files": [
-            "scripts/server-worker.js",
-            "components/MatchCard.tsx"
-          ],
-          "status": "aanbevolen"
-        }
-      ]
+      "actions": []
     },
     "learning": {
-      "score": 10,
-      "summary": "Leerlaag: 326 reviews, exact 10%, winnaar/gelijk 45%, top-5 exact 4%.",
+      "score": 11,
+      "summary": "Leerlaag: 377 reviews, exact 11%, winnaar/gelijk 46%, top-5 exact 8%.",
       "topConfidence": {
-        "matches": 48,
-        "exactHitRate": 0.042,
-        "outcomeHitRate": 0.396,
-        "probabilityOutcomeHitRate": 0.542,
-        "avgGoalError": 1.92,
-        "rank1ExactHitRate": 0,
-        "rank1OutcomeHitRate": 0.231,
-        "versusOverallOutcomeDelta": -0.055
+        "matches": 53,
+        "exactHitRate": 0.075,
+        "outcomeHitRate": 0.415,
+        "probabilityOutcomeHitRate": 0.528,
+        "avgGoalError": 1.83,
+        "rank1ExactHitRate": 0.071,
+        "rank1OutcomeHitRate": 0.286,
+        "versusOverallOutcomeDelta": -0.044
       },
       "topClubs": [
         {
@@ -95,6 +84,20 @@
           "avgGoalError": 0
         },
         {
+          "teamName": "1. FC Nürnberg",
+          "reviewedMatches": 2,
+          "exactHitRate": 0.5,
+          "outcomeHitRate": 0.5,
+          "avgGoalError": 1.5
+        },
+        {
+          "teamName": "RKC Waalwijk",
+          "reviewedMatches": 2,
+          "exactHitRate": 0.5,
+          "outcomeHitRate": 0.5,
+          "avgGoalError": 0.5
+        },
+        {
           "teamName": "Oviedo",
           "reviewedMatches": 2,
           "exactHitRate": 0.5,
@@ -103,6 +106,13 @@
         },
         {
           "teamName": "Feyenoord",
+          "reviewedMatches": 2,
+          "exactHitRate": 0.5,
+          "outcomeHitRate": 1,
+          "avgGoalError": 1
+        },
+        {
+          "teamName": "SpVgg Greuther Fürth",
           "reviewedMatches": 2,
           "exactHitRate": 0.5,
           "outcomeHitRate": 1,
@@ -135,62 +145,20 @@
           "exactHitRate": 0.5,
           "outcomeHitRate": 0.5,
           "avgGoalError": 1
-        },
-        {
-          "teamName": "Aston Villa",
-          "reviewedMatches": 2,
-          "exactHitRate": 0.5,
-          "outcomeHitRate": 0.5,
-          "avgGoalError": 1
-        },
-        {
-          "teamName": "RKC Waalwijk",
-          "reviewedMatches": 3,
-          "exactHitRate": 0.33,
-          "outcomeHitRate": 0.33,
-          "avgGoalError": 0.67
-        },
-        {
-          "teamName": "Aston Villa",
-          "reviewedMatches": 4,
-          "exactHitRate": 0,
-          "outcomeHitRate": 0.25,
-          "avgGoalError": 2.5
         }
       ],
       "actions": []
     },
     "control": {
       "score": 100,
-      "summary": "Ontwikkelcontrole: 0 actieve monitorissues op 2026-05-10; digest 2026-04-21 t/m 2026-05-04.",
-      "latestDay": "2026-05-10",
+      "summary": "Ontwikkelcontrole: 0 actieve monitorissues op 2026-05-11; digest 2026-04-21 t/m 2026-05-04.",
+      "latestDay": "2026-05-11",
       "shouldPropose": false,
       "actions": []
     }
   },
-  "topThemes": [
-    {
-      "title": "H2H-backfill verder vullen",
-      "count": 1,
-      "priority": "medium",
-      "agents": [
-        "data"
-      ]
-    }
-  ],
-  "recommendedNextActions": [
-    {
-      "priority": "medium",
-      "title": "H2H-backfill verder vullen",
-      "freeSolution": "Gebruik openfootball en football-data rows per competitie als historische H2H fallback voordat de UI 'leeg' toont.",
-      "files": [
-        "scripts/server-worker.js",
-        "components/MatchCard.tsx"
-      ],
-      "status": "aanbevolen",
-      "agent": "data"
-    }
-  ],
+  "topThemes": [],
+  "recommendedNextActions": [],
   "freeOnlyGuardrails": [
     "Geen betaalde API key verplicht maken.",
     "Geen externe AI blind laten pushen naar productie.",
