@@ -5,6 +5,7 @@ import path from "path";
 import { normalizeMinute, parseMinuteValue } from "../shared/minute.js";
 
 const SOFA = "https://api.sofascore.com/api/v1";
+const sofaFetchCircuit = { blocked: false, failures: 0, logged: false };
 const DATA_FILE = path.resolve(process.cwd(), "server_data.json");
 const TRAINING_SNAPSHOT_FILE = path.resolve(process.cwd(), "training", "training-snapshot.json");
 
@@ -246,10 +247,10 @@ const DATA_SCOUT_SOURCES = [
   {
     key: "sofascore",
     name: "Sofascore",
-    category: "fixtures/live",
+    category: "optionele live/details",
     freeUse: "publieke voetbaldata",
     data: ["wedstrijden", "live status", "scores", "lineups", "standen"],
-    priority: "primair",
+    priority: "optioneel",
   },
   {
     key: "espn-scoreboard",
@@ -743,6 +744,105 @@ function normalizeName(name) {
     .trim();
 }
 
+const TEAM_ALIAS_GROUPS = [
+  ["fc cologne", "1 fc koln", "1 fc koeln", "fc koln", "fc koeln", "koln", "koeln", "cologne"],
+  ["1 fc heidenheim 1846", "1 fc heidenheim", "fc heidenheim", "heidenheim"],
+  ["hamburg sv", "hamburger sv", "hsv"],
+  ["hertha bsc", "hertha berlin"],
+  ["spvgg greuther furth", "spvgg greuther fuerth", "greuther furth", "greuther fuerth"],
+  ["borussia monchengladbach", "borussia moenchengladbach", "monchengladbach", "moenchengladbach", "gladbach"],
+  ["bayern munich", "fc bayern munchen", "bayern munchen", "bayern"],
+  ["bayer leverkusen", "bayer 04 leverkusen", "leverkusen"],
+  ["borussia dortmund", "dortmund"],
+  ["rb leipzig", "rasenballsport leipzig", "leipzig"],
+  ["fc st pauli", "st pauli"],
+  ["werder bremen", "sv werder bremen"],
+  ["karlsruher sc", "karlsruhe", "karlsruher"],
+  ["dsc arminia bielefeld", "arminia bielefeld", "bielefeld"],
+  ["1 fc kaiserslautern", "kaiserslautern"],
+  ["sc paderborn 07", "paderborn"],
+  ["paris saint germain", "psg", "paris sg"],
+  ["internazionale", "inter milan", "inter"],
+  ["ac milan", "milan"],
+  ["as roma", "roma"],
+  ["ss lazio", "lazio"],
+  ["fiorentina", "acf fiorentina"],
+  ["atletico madrid", "ath madrid", "atletico"],
+  ["athletic club", "athletic bilbao"],
+  ["real sociedad", "sociedad"],
+  ["real betis", "betis"],
+  ["rayo vallecano", "vallecano"],
+  ["celta vigo", "rc celta", "celtavigo"],
+  ["girona", "girona fc"],
+  ["leeds united", "leeds"],
+  ["manchester city", "man city"],
+  ["manchester united", "man united"],
+  ["nottingham forest", "nott m forest", "nottm forest"],
+  ["wolverhampton wanderers", "wolverhampton", "wolves"],
+  ["brighton hove albion", "brighton and hove albion", "brighton"],
+  ["tottenham hotspur", "tottenham", "spurs"],
+  ["newcastle united", "newcastle"],
+  ["west ham united", "west ham"],
+  ["aston villa", "villa"],
+  ["sporting braga", "sp braga", "braga"],
+  ["sporting cp", "sporting lisbon"],
+  ["union st gilloise", "union saint gilloise", "royale union saint gilloise"],
+  ["standard liege", "standard"],
+  ["sint truidense", "sint truiden"],
+  ["oh leuven", "oud heverlee leuven", "oud heverlee"],
+  ["kv mechelen", "mechelen"],
+  ["kaa gent", "gent"],
+  ["sl benfica", "benfica"],
+  ["fc porto", "porto"],
+  ["ogc nice", "nice"],
+  ["aj auxerre", "auxerre"],
+  ["angers sco", "angers"],
+];
+
+const teamAliasLookup = new Map();
+for (const group of TEAM_ALIAS_GROUPS) {
+  const normalizedGroup = [...new Set(group.map(normalizeName).filter(Boolean))];
+  const canonical = normalizedGroup[0];
+  for (const alias of normalizedGroup) {
+    teamAliasLookup.set(alias, canonical);
+  }
+}
+
+const UNSAFE_LOGO_KEYS = new Set([
+  "city",
+  "united",
+  "real",
+  "sporting",
+  "athletic",
+  "inter",
+  "milan",
+  "racing",
+  "standard",
+  "union",
+  "wanderers",
+  "rovers",
+  "forest",
+  "villa",
+]);
+
+function canonicalTeamName(name) {
+  const normalized = normalizeName(name);
+  if (!normalized) return "";
+  return teamAliasLookup.get(normalized) || normalized.replace(/\s+and\s+/g, " ");
+}
+
+function buildLogoLookupNames(name) {
+  const normalized = normalizeName(name);
+  if (!normalized) return [];
+  const canonical = canonicalTeamName(normalized);
+  const groupAliases = TEAM_ALIAS_GROUPS.find((group) =>
+    group.map(normalizeName).includes(canonical)
+  ) || [];
+  return [...new Set([normalized, canonical, ...groupAliases.map(normalizeName)])]
+    .filter(Boolean)
+    .filter((key) => !UNSAFE_LOGO_KEYS.has(key));
+}
+
 function isWomenContext(...values) {
   const text = values
     .flatMap((value) => (value == null ? [] : [String(value)]))
@@ -972,6 +1072,15 @@ function getInternationalLeagueInfo(event) {
 function buildPossibleNames(name) {
   const normalized = normalizeName(name);
   const variants = new Set([normalized]);
+  const canonical = canonicalTeamName(normalized);
+  if (canonical && canonical !== normalized) variants.add(canonical);
+  for (const group of TEAM_ALIAS_GROUPS) {
+    const normalizedGroup = group.map(normalizeName);
+    if (normalizedGroup.includes(normalized) || normalizedGroup.includes(canonical)) {
+      normalizedGroup.forEach((alias) => variants.add(alias));
+      break;
+    }
+  }
   const withoutLeadingClubPrefix = normalized
     .replace(/^(?:1\s+)?(?:fc|sc|dsc|ac|afc|cf|sv|tsv|kaa|kv|kvc)\s+/, "")
     .trim();
@@ -2124,9 +2233,7 @@ async function fetchFallbackScheduledEventsFromMarket(dateISO) {
 }
 
 function dedupeFallbackEvents(events) {
-  const canonicalEventName = (name) =>
-    buildPossibleNames(name || "")
-      .sort((a, b) => a.length - b.length || a.localeCompare(b))[0] || "";
+  const canonicalEventName = (name) => canonicalTeamName(name || "");
   const hasScore = (event) => event?.homeScore?.current != null && event?.awayScore?.current != null;
   const hasLogos = (event) => Boolean(event?.homeTeam?.logoUrl) && Boolean(event?.awayTeam?.logoUrl);
   const quality = (event) => {
@@ -2368,7 +2475,7 @@ function rememberEspnTeamLogo(team) {
     team?.abbreviation,
   ].filter(Boolean);
   for (const name of names) {
-    for (const variant of buildPossibleNames(name)) {
+    for (const variant of buildLogoLookupNames(name)) {
       espnTeamLogoCache.set(normalizeName(variant), logo);
     }
   }
@@ -2390,7 +2497,7 @@ async function ensureEspnTeamLogoCache() {
 
 async function resolveEspnTeamLogoByName(teamName) {
   await ensureEspnTeamLogoCache();
-  const variants = buildPossibleNames(teamName);
+  const variants = buildLogoLookupNames(teamName);
   for (const variant of variants) {
     const logo = espnTeamLogoCache.get(normalizeName(variant));
     if (logo) return logo;
@@ -3032,6 +3139,21 @@ function resolveTeamLogoUrl(team, teamId, teamName) {
   if (team?.logoUrl) return team.logoUrl;
   if (teamId) return `https://api.sofascore.app/api/v1/team/${teamId}/image`;
   return createGeneratedTeamLogo(team?.name || teamName || "Team");
+}
+
+async function repairStoredLogos(store) {
+  const days = Object.keys(store.matches || {});
+  for (const day of days) {
+    const matches = Array.isArray(store.matches?.[day]) ? store.matches[day] : [];
+    for (const match of matches) {
+      const [homeOfficialLogo, awayOfficialLogo] = await Promise.all([
+        resolveEspnTeamLogoByName(match.homeTeamName),
+        resolveEspnTeamLogoByName(match.awayTeamName),
+      ]);
+      match.homeLogo = homeOfficialLogo || match.homeLogo || createGeneratedTeamLogo(match.homeTeamName);
+      match.awayLogo = awayOfficialLogo || match.awayLogo || createGeneratedTeamLogo(match.awayTeamName);
+    }
+  }
 }
 
 function parseHistoricalRowDate(value) {
@@ -4450,6 +4572,10 @@ async function fetchWithTimeout(url, options = {}, timeoutMs = 12000) {
 }
 
 async function safeFetch(url) {
+  const isSofaRequest = String(url || "").startsWith(SOFA);
+  if (isSofaRequest && sofaFetchCircuit.blocked) {
+    return null;
+  }
   try {
     const response = await fetchWithTimeout(url, {
       headers: {
@@ -4462,6 +4588,15 @@ async function safeFetch(url) {
       },
     }, 12000);
     if (!response.ok) {
+      if (isSofaRequest && response.status === 403) {
+        sofaFetchCircuit.failures += 1;
+        sofaFetchCircuit.blocked = true;
+        if (!sofaFetchCircuit.logged) {
+          console.error("[worker] Sofascore geeft 403; deze run gebruikt automatisch de gratis fallbackbronnen.");
+          sofaFetchCircuit.logged = true;
+        }
+        return null;
+      }
       console.error(`[worker] API error ${response.status} voor ${url}`);
       return null;
     }
@@ -6722,9 +6857,9 @@ function buildSourceCoverage(store, todayKey) {
       {
         key: "sofascore",
         name: "Sofascore",
-        role: "primair",
-        status: Number(sourceBreakdown.sofascore || 0) > 0 ? "actief" : "geblokkeerd/fallback",
-        note: "Primaire bron voor events, live-data en wedstrijddetails.",
+        role: "optionele live/detailbron",
+        status: Number(sourceBreakdown.sofascore || 0) > 0 ? "actief" : "403/uitgeschakeld deze run",
+        note: "Wordt alleen gebruikt als de publieke API bereikbaar is; ESPN, TheSportsDB en open data vullen scores/logo's bij 403.",
       },
       {
         key: "espn-scoreboard",
@@ -7081,6 +7216,7 @@ async function main() {
   if (!store.leagueReliability) store.leagueReliability = {};
   if (!store.phaseReliability) store.phaseReliability = {};
   purgeExcludedContent(store);
+  await repairStoredLogos(store);
   compactStore(store, today, now);
   for (const date of dates) store.knockoutOverview[date] = [];
   store.cupSheets = {};

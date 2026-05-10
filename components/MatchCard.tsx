@@ -50,9 +50,9 @@ function Badge({ label, value, tone = "slate" }: { label: string; value: string;
 function Logo({ teamId, directUrl, name }: { teamId: string; directUrl?: string; name: string }) {
   const [attempt, setAttempt] = useState(0);
   const sources = [
+    directUrl || null,
     teamId ? `/api/logo?id=${teamId}` : null,
     teamId ? `https://api.sofascore.app/api/v1/team/${teamId}/image` : null,
-    directUrl || null,
     `https://ui-avatars.com/api/?name=${encodeURIComponent(name[0] || "?")}&background=1e293b&color=60a5fa&size=80&bold=true&format=png`,
   ].filter(Boolean) as string[];
 
