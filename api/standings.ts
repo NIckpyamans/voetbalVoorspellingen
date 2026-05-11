@@ -39,7 +39,7 @@ function buildCupSheetsFromMatches(store: any) {
 
 export default async function handler(req: any, res: any) {
   res.setHeader("Access-Control-Allow-Origin", "*");
-  res.setHeader("Cache-Control", "s-maxage=180, stale-while-revalidate=60");
+  res.setHeader("Cache-Control", "no-store, max-age=0");
 
   try {
     const { store, branch } = await fetchServerStore();

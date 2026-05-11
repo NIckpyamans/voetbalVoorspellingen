@@ -145,7 +145,7 @@ const StandingsView: React.FC = () => {
   const [selectedLeague, setSelectedLeague] = useState<string | null>(null);
   const [selectedCup, setSelectedCup] = useState<string | null>(null);
   const [hiddenLeagueLabels, setHiddenLeagueLabels] = useState<string[]>(readHiddenStandings);
-  const [showLeagueManager, setShowLeagueManager] = useState(false);
+  const [showLeagueManager, setShowLeagueManager] = useState(true);
   const [favoriteStandingLabel, setFavoriteStandingLabel] = useState<string>(readFavoriteStanding);
 
   useEffect(() => {
@@ -166,7 +166,7 @@ const StandingsView: React.FC = () => {
   }, [favoriteStandingLabel]);
 
   useEffect(() => {
-    fetch("/api/standings")
+    fetch(`/api/standings?t=${Date.now()}`, { cache: "no-store" })
       .then((response) => response.json())
       .then((data) => {
         const nextStandings = data.standings || {};
@@ -282,7 +282,7 @@ const StandingsView: React.FC = () => {
               <div>
                 <div className="text-[10px] font-black uppercase text-slate-300">Competities kiezen</div>
                 <div className="text-[10px] text-slate-500">
-                  Zet competities aan of uit. Nieuwe competities worden standaard zichtbaar.
+                  Zet competities aan of uit. Klik op ★ om de favoriete competitie rechts op het dashboard te tonen.
                 </div>
               </div>
               <div className="flex gap-2">
@@ -298,6 +298,21 @@ const StandingsView: React.FC = () => {
                 >
                   Alles aan
                 </button>
+              </div>
+            </div>
+
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-2 text-[10px]">
+              <div className="rounded-xl border border-emerald-500/15 bg-emerald-500/10 p-2">
+                <div className="font-black text-emerald-200">Zichtbaar</div>
+                <div className="text-lg font-black text-white">{visibleLeagueKeys.length}</div>
+              </div>
+              <div className="rounded-xl border border-slate-500/15 bg-slate-500/10 p-2">
+                <div className="font-black text-slate-300">Verborgen</div>
+                <div className="text-lg font-black text-white">{hiddenLeagueKeys.length}</div>
+              </div>
+              <div className="rounded-xl border border-yellow-500/15 bg-yellow-500/10 p-2">
+                <div className="font-black text-yellow-200">Dashboard favoriet</div>
+                <div className="truncate text-sm font-black text-white">{favoriteStandingLabel}</div>
               </div>
             </div>
 

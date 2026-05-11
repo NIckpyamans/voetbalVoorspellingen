@@ -182,7 +182,7 @@ const App: React.FC = () => {
   }, []);
 
   useEffect(() => {
-    fetch("/api/standings")
+    fetch(`/api/standings?t=${Date.now()}`, { cache: "no-store" })
       .then((response) => response.json())
       .then((data) => setStandings(data.standings || {}))
       .catch(() => {});

@@ -757,6 +757,19 @@ const TEAM_ALIAS_GROUPS = [
   ["rb leipzig", "rasenballsport leipzig", "leipzig"],
   ["fc st pauli", "st pauli"],
   ["werder bremen", "sv werder bremen"],
+  ["ajax", "ajax amsterdam", "afc ajax"],
+  ["az alkmaar", "az"],
+  ["fc twente", "twente"],
+  ["fc utrecht", "utrecht"],
+  ["fc volendam", "volendam"],
+  ["nec nijmegen", "nijmegen", "nec"],
+  ["fortuna sittard", "for sittard"],
+  ["pec zwolle", "zwolle"],
+  ["fc groningen", "groningen"],
+  ["heracles almelo", "heracles"],
+  ["go ahead eagles", "ga eagles"],
+  ["psv eindhoven", "psv"],
+  ["feyenoord rotterdam", "feyenoord"],
   ["karlsruher sc", "karlsruhe", "karlsruher"],
   ["dsc arminia bielefeld", "arminia bielefeld", "bielefeld"],
   ["1 fc kaiserslautern", "kaiserslautern"],
@@ -4825,8 +4838,17 @@ function emptyStandingTeam(teamName, teamId = "") {
   };
 }
 
+function buildStandingResultTeamKey(teamName) {
+  const variants = buildPossibleNames(teamName)
+    .map(normalizeName)
+    .filter(Boolean)
+    .filter((name) => !UNSAFE_LOGO_KEYS.has(name))
+    .sort((a, b) => a.length - b.length || a.localeCompare(b));
+  return variants[0] || canonicalTeamName(teamName);
+}
+
 function buildStandingResultKey(date, home, away) {
-  return `${date || ""}|${canonicalTeamName(home)}|${canonicalTeamName(away)}`;
+  return `${date || ""}|${buildStandingResultTeamKey(home)}|${buildStandingResultTeamKey(away)}`;
 }
 
 function sortStandingRows(rows) {

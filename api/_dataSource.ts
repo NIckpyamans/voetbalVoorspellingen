@@ -8,14 +8,14 @@ function candidateBranches() {
   const explicitDataBranch = process.env.DATA_BRANCH;
   const deployBranch = process.env.VERCEL_GIT_COMMIT_REF;
 
-  // Scheduled GitHub Actions only run automatically on the default branch.
-  // Production deployments can come from a feature branch, but live match data
-  // must still prefer the branch that the worker refreshes every 10 minutes.
+  // Production can run from the active Codex branch while main still contains
+  // older server_data.json. Prefer the deployed branch first, then the active
+  // Codex data branch, and only use main as a fallback.
   return unique([
     explicitDataBranch,
-    "main",
     deployBranch,
     "codex/step3b-layout",
+    "main",
   ]);
 }
 
