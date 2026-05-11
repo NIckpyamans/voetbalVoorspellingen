@@ -1,14 +1,14 @@
 {
-  "generatedAt": "2026-05-10T23:09:48.596Z",
-  "date": "2026-05-11",
+  "generatedAt": "2026-05-11T23:12:38.727Z",
+  "date": "2026-05-12",
   "name": "Ruflo-style gratis AI monitor",
   "mode": "naast-productie",
   "productionSafe": true,
   "summary": "Ruflo draait als extra agentlaag naast de app: hij leest monitor/data/reviews, zoekt gratis oplossingen en maakt patchadvies zonder blind live te wijzigen.",
   "agents": {
     "data": {
-      "score": 60,
-      "summary": "Datalaag: H2H 75%, bookmakers 100%, refs 0%.",
+      "score": 64,
+      "summary": "Datalaag: H2H 80%, bookmakers 100%, refs 0%.",
       "freeSources": [
         {
           "name": "SofaScore public endpoint",
@@ -63,19 +63,26 @@
       "actions": []
     },
     "learning": {
-      "score": 11,
-      "summary": "Leerlaag: 377 reviews, exact 11%, winnaar/gelijk 46%, top-5 exact 8%.",
+      "score": 12,
+      "summary": "Leerlaag: 394 reviews, exact 12%, winnaar/gelijk 41%, top-5 exact 10%.",
       "topConfidence": {
-        "matches": 53,
-        "exactHitRate": 0.075,
-        "outcomeHitRate": 0.415,
-        "probabilityOutcomeHitRate": 0.528,
-        "avgGoalError": 1.83,
-        "rank1ExactHitRate": 0.071,
-        "rank1OutcomeHitRate": 0.286,
-        "versusOverallOutcomeDelta": -0.044
+        "matches": 58,
+        "exactHitRate": 0.103,
+        "outcomeHitRate": 0.328,
+        "probabilityOutcomeHitRate": 0.517,
+        "avgGoalError": 1.88,
+        "rank1ExactHitRate": 0.067,
+        "rank1OutcomeHitRate": 0.2,
+        "versusOverallOutcomeDelta": -0.086
       },
       "topClubs": [
+        {
+          "teamName": "Juventus",
+          "reviewedMatches": 2,
+          "exactHitRate": 1,
+          "outcomeHitRate": 1,
+          "avgGoalError": 0
+        },
         {
           "teamName": "Nottingham Forest",
           "reviewedMatches": 2,
@@ -88,7 +95,21 @@
           "reviewedMatches": 2,
           "exactHitRate": 0.5,
           "outcomeHitRate": 0.5,
+          "avgGoalError": 1
+        },
+        {
+          "teamName": "Wolfsburg",
+          "reviewedMatches": 2,
+          "exactHitRate": 0.5,
+          "outcomeHitRate": 1,
           "avgGoalError": 1.5
+        },
+        {
+          "teamName": "Freiburg",
+          "reviewedMatches": 2,
+          "exactHitRate": 0.5,
+          "outcomeHitRate": 0.5,
+          "avgGoalError": 1
         },
         {
           "teamName": "RKC Waalwijk",
@@ -98,18 +119,25 @@
           "avgGoalError": 0.5
         },
         {
-          "teamName": "Oviedo",
+          "teamName": "Hellas Verona",
           "reviewedMatches": 2,
           "exactHitRate": 0.5,
           "outcomeHitRate": 1,
           "avgGoalError": 1
         },
         {
-          "teamName": "Feyenoord",
+          "teamName": "Sp Braga",
           "reviewedMatches": 2,
           "exactHitRate": 0.5,
-          "outcomeHitRate": 1,
-          "avgGoalError": 1
+          "outcomeHitRate": 0.5,
+          "avgGoalError": 0.5
+        },
+        {
+          "teamName": "Oviedo",
+          "reviewedMatches": 2,
+          "exactHitRate": 0.5,
+          "outcomeHitRate": 0.5,
+          "avgGoalError": 1.5
         },
         {
           "teamName": "SpVgg Greuther Fürth",
@@ -117,42 +145,14 @@
           "exactHitRate": 0.5,
           "outcomeHitRate": 1,
           "avgGoalError": 1
-        },
-        {
-          "teamName": "Real Madrid",
-          "reviewedMatches": 2,
-          "exactHitRate": 0.5,
-          "outcomeHitRate": 0.5,
-          "avgGoalError": 2.5
-        },
-        {
-          "teamName": "Catanzaro",
-          "reviewedMatches": 2,
-          "exactHitRate": 0.5,
-          "outcomeHitRate": 1,
-          "avgGoalError": 1
-        },
-        {
-          "teamName": "Modena",
-          "reviewedMatches": 2,
-          "exactHitRate": 0.5,
-          "outcomeHitRate": 1,
-          "avgGoalError": 1
-        },
-        {
-          "teamName": "FC Porto",
-          "reviewedMatches": 2,
-          "exactHitRate": 0.5,
-          "outcomeHitRate": 0.5,
-          "avgGoalError": 1
         }
       ],
       "actions": []
     },
     "control": {
       "score": 100,
-      "summary": "Ontwikkelcontrole: 0 actieve monitorissues op 2026-05-11; digest 2026-04-21 t/m 2026-05-04.",
-      "latestDay": "2026-05-11",
+      "summary": "Ontwikkelcontrole: 0 actieve monitorissues op 2026-05-12; digest 2026-04-28 t/m 2026-05-11.",
+      "latestDay": "2026-05-12",
       "shouldPropose": false,
       "actions": []
     }
