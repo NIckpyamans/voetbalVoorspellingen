@@ -112,6 +112,21 @@ const LEAGUE_ORDER = [
   "Belgium - Challenger Pro League",
 ];
 
+const FAVORITE_STANDING_KEY = "footyai-favorite-standing";
+const DEFAULT_FAVORITE_STANDING_LABEL = "Netherlands - Eredivisie";
+
+function readFavoriteStandingLabel() {
+  try {
+    return localStorage.getItem(FAVORITE_STANDING_KEY) || DEFAULT_FAVORITE_STANDING_LABEL;
+  } catch {
+    return DEFAULT_FAVORITE_STANDING_LABEL;
+  }
+}
+
+function getStandingLabel(table: any, key: string) {
+  return String(table?.label || key || "");
+}
+
 const App: React.FC = () => {
   const [view, setView] = useState<View>("dashboard");
   const [glassTransparency, setGlassTransparency] = useState<number>(() => {
@@ -135,6 +150,7 @@ const App: React.FC = () => {
   const [activeFilter, setActiveFilter] = useState<FilterMode>("alle");
   const [selectedLeague, setSelectedLeague] = useState<string>("alle");
   const [expandedTopClub, setExpandedTopClub] = useState<string | null>(null);
+  const [favoriteStandingLabel, setFavoriteStandingLabel] = useState<string>(readFavoriteStandingLabel);
   const [favRefresh, setFavRefresh] = useState(0);
   const learnedRef = useRef<Set<string>>(new Set());
 
@@ -152,6 +168,16 @@ const App: React.FC = () => {
     return () => {
       window.removeEventListener("storage", updateTransparency);
       window.removeEventListener("footyai-glass-change", updateTransparency);
+    };
+  }, []);
+
+  useEffect(() => {
+    const updateFavoriteStanding = () => setFavoriteStandingLabel(readFavoriteStandingLabel());
+    window.addEventListener("storage", updateFavoriteStanding);
+    window.addEventListener("footyai-favorite-standing-change", updateFavoriteStanding);
+    return () => {
+      window.removeEventListener("storage", updateFavoriteStanding);
+      window.removeEventListener("footyai-favorite-standing-change", updateFavoriteStanding);
     };
   }, []);
 
@@ -239,6 +265,28 @@ const App: React.FC = () => {
     }
     return map;
   }, [standings]);
+
+  const favoriteStanding = useMemo(() => {
+    const entries = Object.entries(standings || {}) as Array<[string, any]>;
+    if (entries.length === 0) return null;
+
+    const exact =
+      entries.find(([key, table]) => getStandingLabel(table, key) === favoriteStandingLabel) ||
+      entries.find(([key, table]) => getStandingLabel(table, key) === DEFAULT_FAVORITE_STANDING_LABEL) ||
+      entries.find(([, table]) => String(table?.label || "").toLowerCase().includes("eredivisie")) ||
+      entries[0];
+
+    if (!exact) return null;
+    const [key, table] = exact;
+    return {
+      key,
+      label: getStandingLabel(table, key),
+      rows: Array.isArray(table?.rows) ? table.rows : [],
+      updated: table?.updated || null,
+      source: table?.source || "",
+      liveOverlay: table?.liveOverlay || null,
+    };
+  }, [favoriteStandingLabel, standings]);
 
   const enrichMatch = useCallback(
     (match: Match) => ({
@@ -660,6 +708,51 @@ const App: React.FC = () => {
                     Nog te weinig reviews voor een betrouwbare club top 10.
                   </div>
                 )}
+
+                <div className="mt-4 rounded-2xl border border-emerald-400/20 bg-emerald-500/5 p-3">
+                  <div className="mb-2 flex items-start justify-between gap-2">
+                    <div>
+                      <h3 className="text-[12px] font-black uppercase text-white">Favoriete stand</h3>
+                      <p className="text-[10px] text-slate-500">
+                        {favoriteStanding?.label || DEFAULT_FAVORITE_STANDING_LABEL}
+                      </p>
+                    </div>
+                    <button
+                      onClick={() => setView("standings")}
+                      className="rounded-lg bg-emerald-500/15 px-2 py-1 text-[9px] font-black text-emerald-200 hover:bg-emerald-500/25"
+                    >
+                      beheren
+                    </button>
+                  </div>
+
+                  {favoriteStanding?.rows?.length ? (
+                    <div className="max-h-80 overflow-y-auto rounded-xl border border-white/5 bg-slate-950/35">
+                      {favoriteStanding.rows.slice(0, 20).map((row: any) => {
+                        const goalDiff = Number(row.gf || 0) - Number(row.ga || 0);
+                        return (
+                          <div
+                            key={`${favoriteStanding.key}-${row.teamId || row.team}`}
+                            className="grid grid-cols-[28px_minmax(0,1fr)_44px_44px] items-center gap-2 border-b border-white/5 px-2 py-2 last:border-b-0"
+                          >
+                            <div className="text-[10px] font-black text-slate-400">{row.pos}</div>
+                            <div className="min-w-0">
+                              <div className="truncate text-[10px] font-black text-white">{row.team}</div>
+                              <div className="text-[8px] text-slate-500">{row.p || 0} gespeeld</div>
+                            </div>
+                            <div className={`text-right text-[10px] font-black ${goalDiff > 0 ? "text-green-300" : goalDiff < 0 ? "text-red-300" : "text-slate-400"}`}>
+                              {goalDiff > 0 ? `+${goalDiff}` : goalDiff}
+                            </div>
+                            <div className="text-right text-[12px] font-black text-white">{row.pts}</div>
+                          </div>
+                        );
+                      })}
+                    </div>
+                  ) : (
+                    <div className="rounded-xl border border-dashed border-emerald-500/20 bg-slate-950/30 p-4 text-[11px] font-bold text-slate-400">
+                      Nog geen standdata gevonden. Standaard probeert de app de Eredivisie te tonen.
+                    </div>
+                  )}
+                </div>
               </aside>
             </div>
 

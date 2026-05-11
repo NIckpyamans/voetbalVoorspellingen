@@ -840,7 +840,16 @@ function buildLogoLookupNames(name) {
   ) || [];
   return [...new Set([normalized, canonical, ...groupAliases.map(normalizeName)])]
     .filter(Boolean)
-    .filter((key) => !UNSAFE_LOGO_KEYS.has(key));
+    .filter(isSafeLogoLookupName);
+}
+
+function isSafeLogoLookupName(key) {
+  const normalized = normalizeName(key);
+  if (!normalized || UNSAFE_LOGO_KEYS.has(normalized)) return false;
+  const parts = normalized.split(" ").filter(Boolean);
+  if (parts.length === 1 && normalized.length < 5) return false;
+  if (parts.length === 1 && /^(fc|cf|sc|cd|ac|afc|sv|bk|ifk|rkc|psg|psv)$/i.test(normalized)) return false;
+  return true;
 }
 
 function isWomenContext(...values) {
@@ -2487,9 +2496,6 @@ function rememberEspnTeamLogo(team) {
     team?.displayName,
     team?.name,
     team?.shortDisplayName,
-    team?.location,
-    team?.nickname,
-    team?.abbreviation,
   ].filter(Boolean);
   for (const name of names) {
     for (const variant of buildLogoLookupNames(name)) {
@@ -3153,8 +3159,8 @@ function createGeneratedTeamLogo(name) {
 }
 
 function resolveTeamLogoUrl(team, teamId, teamName) {
+  if (teamId && /^\d+$/.test(String(teamId))) return `https://api.sofascore.app/api/v1/team/${teamId}/image`;
   if (team?.logoUrl) return team.logoUrl;
-  if (teamId) return `https://api.sofascore.app/api/v1/team/${teamId}/image`;
   return createGeneratedTeamLogo(team?.name || teamName || "Team");
 }
 
@@ -3167,10 +3173,46 @@ async function repairStoredLogos(store) {
         resolveEspnTeamLogoByName(match.homeTeamName),
         resolveEspnTeamLogoByName(match.awayTeamName),
       ]);
-      match.homeLogo = homeOfficialLogo || match.homeLogo || createGeneratedTeamLogo(match.homeTeamName);
-      match.awayLogo = awayOfficialLogo || match.awayLogo || createGeneratedTeamLogo(match.awayTeamName);
+      const homeSofaLogo = match.homeTeamId && /^\d+$/.test(String(match.homeTeamId))
+        ? `https://api.sofascore.app/api/v1/team/${match.homeTeamId}/image`
+        : "";
+      const awaySofaLogo = match.awayTeamId && /^\d+$/.test(String(match.awayTeamId))
+        ? `https://api.sofascore.app/api/v1/team/${match.awayTeamId}/image`
+        : "";
+      match.homeLogo = homeSofaLogo || match.homeLogo || homeOfficialLogo || createGeneratedTeamLogo(match.homeTeamName);
+      match.awayLogo = awaySofaLogo || match.awayLogo || awayOfficialLogo || createGeneratedTeamLogo(match.awayTeamName);
     }
   }
+}
+
+function repairStoredPredictionScoreSelections(store) {
+  let repaired = 0;
+  for (const predictions of Object.values(store.predictions || {})) {
+    if (!Array.isArray(predictions)) continue;
+    for (const prediction of predictions) {
+      const topScore = Object.entries(prediction?.scoreMatrix || {})
+        .sort((a, b) => Number(b[1] || 0) - Number(a[1] || 0))[0];
+      if (!topScore) continue;
+      const [score, probability] = topScore;
+      const [homeGoals, awayGoals] = score.split("-").map(Number);
+      if (!Number.isFinite(homeGoals) || !Number.isFinite(awayGoals)) continue;
+      const currentScore = `${Number(prediction.predHomeGoals || 0)}-${Number(prediction.predAwayGoals || 0)}`;
+      if (currentScore === score) continue;
+      prediction.predHomeGoals = homeGoals;
+      prediction.predAwayGoals = awayGoals;
+      prediction.exactProb = Number(probability || 0);
+      if (!prediction.modelEdges || typeof prediction.modelEdges !== "object") prediction.modelEdges = {};
+      prediction.modelEdges.scoreSelection = {
+        ...(prediction.modelEdges.scoreSelection || {}),
+        rawBestScore: score,
+        selectedScore: score,
+        reason: "hoogste exacte scorematrix-kans",
+        repairedFrom: currentScore,
+      };
+      repaired += 1;
+    }
+  }
+  if (repaired > 0) console.log(`[worker] ${repaired} oude voorspellingen gelijkgetrokken met scorematrix`);
 }
 
 function parseHistoricalRowDate(value) {
@@ -6765,20 +6807,10 @@ function predict(input) {
       : rawBestHomeGoals === rawBestAwayGoals
         ? "draw"
         : "away";
-  let selectedScore = bestScore;
-  let selectedExactProb = bestProb;
+  const selectedScore = bestScore;
+  const selectedExactProb = bestProb;
   const dominantOutcome = outcomeEntries[0];
   const outcomeEdge = Number((dominantOutcome.prob - outcomeEntries[1].prob).toFixed(4));
-  if (
-    dominantOutcome.key !== bestScoreOutcome &&
-    dominantOutcome.key !== "draw" &&
-    dominantOutcome.prob >= 0.4 &&
-    outcomeEdge >= 0.08 &&
-    bestByOutcome[dominantOutcome.key]?.probability > 0
-  ) {
-    selectedScore = bestByOutcome[dominantOutcome.key].score;
-    selectedExactProb = bestByOutcome[dominantOutcome.key].probability;
-  }
   const [predHomeGoals, predAwayGoals] = selectedScore.split("-").map(Number);
   const modelAgreement = calcModelAgreement(baseModel, heuristicModel);
   const lineupImpact = buildLineupImpact(input);
@@ -6892,9 +6924,9 @@ function predict(input) {
         rawBestScore: bestScore,
         selectedScore,
         reason:
-          selectedScore === bestScore
-            ? "meest waarschijnlijke exacte score"
-            : `aangepast op dominante ${dominantOutcome.key === "home" ? "thuiswinst" : "uitwinst"}-kans`,
+          dominantOutcome.key !== bestScoreOutcome
+            ? `hoogste exacte scorematrix-kans; 1X2 neigt naar ${dominantOutcome.key === "home" ? "thuiswinst" : dominantOutcome.key === "away" ? "uitwinst" : "gelijkspel"}`
+            : "hoogste exacte scorematrix-kans",
         outcomeEdge,
       },
       clubEloDiff: homeClubElo > 0 && awayClubElo > 0 ? Math.round(homeClubElo - awayClubElo) : null,
@@ -7454,6 +7486,7 @@ async function main() {
   if (!store.phaseReliability) store.phaseReliability = {};
   purgeExcludedContent(store);
   await repairStoredLogos(store);
+  repairStoredPredictionScoreSelections(store);
   compactStore(store, today, now);
   for (const date of dates) store.knockoutOverview[date] = [];
   store.cupSheets = {};

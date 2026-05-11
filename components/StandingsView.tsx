@@ -105,6 +105,8 @@ function nextRoundLabel(rounds: string[], currentIndex: number) {
 }
 
 const HIDDEN_STANDINGS_KEY = "footyai-hidden-standings";
+const FAVORITE_STANDING_KEY = "footyai-favorite-standing";
+const DEFAULT_FAVORITE_STANDING_LABEL = "Netherlands - Eredivisie";
 
 function readHiddenStandings() {
   if (typeof window === "undefined") return [];
@@ -113,6 +115,15 @@ function readHiddenStandings() {
     return Array.isArray(parsed) ? parsed.map(String) : [];
   } catch {
     return [];
+  }
+}
+
+function readFavoriteStanding() {
+  if (typeof window === "undefined") return DEFAULT_FAVORITE_STANDING_LABEL;
+  try {
+    return window.localStorage.getItem(FAVORITE_STANDING_KEY) || DEFAULT_FAVORITE_STANDING_LABEL;
+  } catch {
+    return DEFAULT_FAVORITE_STANDING_LABEL;
   }
 }
 
@@ -135,6 +146,7 @@ const StandingsView: React.FC = () => {
   const [selectedCup, setSelectedCup] = useState<string | null>(null);
   const [hiddenLeagueLabels, setHiddenLeagueLabels] = useState<string[]>(readHiddenStandings);
   const [showLeagueManager, setShowLeagueManager] = useState(false);
+  const [favoriteStandingLabel, setFavoriteStandingLabel] = useState<string>(readFavoriteStanding);
 
   useEffect(() => {
     try {
@@ -143,6 +155,15 @@ const StandingsView: React.FC = () => {
       // Local storage is optional; filters still work for the current session.
     }
   }, [hiddenLeagueLabels]);
+
+  useEffect(() => {
+    try {
+      window.localStorage.setItem(FAVORITE_STANDING_KEY, favoriteStandingLabel);
+      window.dispatchEvent(new Event("footyai-favorite-standing-change"));
+    } catch {
+      // Local storage is optional; favorite selection still works in session.
+    }
+  }, [favoriteStandingLabel]);
 
   useEffect(() => {
     fetch("/api/standings")
@@ -180,6 +201,11 @@ const StandingsView: React.FC = () => {
   const visibleLeagueKeys = useMemo(() => {
     const hidden = new Set(hiddenLeagueLabels);
     return sortedLeagueKeys.filter((key) => !hidden.has(String(standings[key]?.label || key)));
+  }, [hiddenLeagueLabels, sortedLeagueKeys, standings]);
+
+  const hiddenLeagueKeys = useMemo(() => {
+    const hidden = new Set(hiddenLeagueLabels);
+    return sortedLeagueKeys.filter((key) => hidden.has(String(standings[key]?.label || key)));
   }, [hiddenLeagueLabels, sortedLeagueKeys, standings]);
 
   const sortedCupKeys = useMemo(() => {
@@ -276,32 +302,69 @@ const StandingsView: React.FC = () => {
             </div>
 
             {showLeagueManager && (
-              <div className="max-h-32 overflow-y-auto rounded-xl border border-white/5 bg-slate-900/50 p-2">
-                <div className="flex flex-wrap gap-1.5">
-                  {sortedLeagueKeys.map((key) => {
-                    const label = String(standings[key]?.label || key);
-                    const hidden = hiddenLeagueLabels.includes(label);
-                    return (
-                      <button
-                        key={key}
-                        onClick={() =>
-                          setHiddenLeagueLabels((current) =>
-                            current.includes(label)
-                              ? current.filter((item) => item !== label)
-                              : [...current, label]
-                          )
-                        }
-                        className={`rounded-lg px-2.5 py-1 text-[9px] font-black transition ${
-                          hidden
-                            ? "bg-slate-800 text-slate-500 line-through"
-                            : "bg-emerald-500/15 text-emerald-300 border border-emerald-500/20"
-                        }`}
-                      >
-                        {hidden ? "+ " : "aan "} {label}
-                      </button>
-                    );
-                  })}
-                </div>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                {[
+                  { title: "Zichtbaar", keys: visibleLeagueKeys, empty: "Geen zichtbare competities." },
+                  { title: "Verborgen", keys: hiddenLeagueKeys, empty: "Nog niets verborgen." },
+                ].map((column) => (
+                  <div key={column.title} className="rounded-xl border border-white/5 bg-slate-900/55 p-2">
+                    <div className="mb-2 flex items-center justify-between">
+                      <div className="text-[10px] font-black uppercase text-white">{column.title}</div>
+                      <div className="rounded-full bg-slate-800 px-2 py-0.5 text-[9px] font-black text-slate-400">
+                        {column.keys.length}
+                      </div>
+                    </div>
+                    <div className="max-h-56 overflow-y-auto pr-1 space-y-1.5">
+                      {column.keys.length === 0 ? (
+                        <div className="rounded-lg border border-dashed border-white/10 px-3 py-4 text-[10px] font-bold text-slate-500">
+                          {column.empty}
+                        </div>
+                      ) : (
+                        column.keys.map((key) => {
+                          const label = String(standings[key]?.label || key);
+                          const hidden = hiddenLeagueLabels.includes(label);
+                          const favorite = favoriteStandingLabel === label;
+                          return (
+                            <div key={key} className="flex items-center gap-1 rounded-lg bg-slate-950/50 p-1">
+                              <button
+                                onClick={() =>
+                                  setHiddenLeagueLabels((current) =>
+                                    current.includes(label)
+                                      ? current.filter((item) => item !== label)
+                                      : [...current, label]
+                                  )
+                                }
+                                className={`flex-1 rounded-md px-2.5 py-1.5 text-left text-[9px] font-black transition ${
+                                  hidden
+                                    ? "bg-slate-800 text-slate-500 line-through"
+                                    : "bg-emerald-500/15 text-emerald-300 border border-emerald-500/20"
+                                }`}
+                              >
+                                {hidden ? "Verborgen" : "Zichtbaar"} - {label}
+                              </button>
+                              <button
+                                title="Maak favoriet op dashboard"
+                                onClick={() => {
+                                  setFavoriteStandingLabel(label);
+                                  if (hidden) {
+                                    setHiddenLeagueLabels((current) => current.filter((item) => item !== label));
+                                  }
+                                }}
+                                className={`h-7 w-8 rounded-md text-[11px] font-black ${
+                                  favorite
+                                    ? "bg-yellow-400 text-slate-950"
+                                    : "bg-slate-800 text-slate-400 hover:bg-yellow-400/20 hover:text-yellow-200"
+                                }`}
+                              >
+                                ★
+                              </button>
+                            </div>
+                          );
+                        })
+                      )}
+                    </div>
+                  </div>
+                ))}
               </div>
             )}
           </div>
@@ -335,6 +398,16 @@ const StandingsView: React.FC = () => {
                   </div>
                 </div>
                 <div className="flex flex-wrap gap-1.5">
+                  <button
+                    onClick={() => setFavoriteStandingLabel(currentStanding.label)}
+                    className={`rounded-full px-2 py-1 text-[9px] font-black border ${
+                      favoriteStandingLabel === currentStanding.label
+                        ? "bg-yellow-400 text-slate-950 border-yellow-300"
+                        : "bg-yellow-500/10 text-yellow-200 border-yellow-500/20 hover:bg-yellow-500/20"
+                    }`}
+                  >
+                    ★ dashboard favoriet
+                  </button>
                   {currentSources.map((source, index) => (
                     <span key={index} className="rounded-full bg-blue-500/10 px-2 py-1 text-[9px] font-black text-blue-200 border border-blue-500/20">
                       {sourceLabel(source.source)}
