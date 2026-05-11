@@ -25,6 +25,19 @@ interface LeagueStanding {
   label: string;
   rows: StandingRow[];
   updated: number;
+  source?: string;
+  sources?: Array<{
+    source: string;
+    rows?: number;
+    totalPlayed?: number;
+    liveApplied?: number;
+  }>;
+  liveOverlay?: {
+    applied?: number;
+    liveApplied?: number;
+    updated?: number;
+  };
+  lastResultDate?: string | null;
   meta?: {
     format?: string;
     zones?: StandingMetaZone[];
@@ -91,6 +104,28 @@ function nextRoundLabel(rounds: string[], currentIndex: number) {
   return rounds[currentIndex + 1];
 }
 
+const HIDDEN_STANDINGS_KEY = "footyai-hidden-standings";
+
+function readHiddenStandings() {
+  if (typeof window === "undefined") return [];
+  try {
+    const parsed = JSON.parse(window.localStorage.getItem(HIDDEN_STANDINGS_KEY) || "[]");
+    return Array.isArray(parsed) ? parsed.map(String) : [];
+  } catch {
+    return [];
+  }
+}
+
+function sourceLabel(source?: string) {
+  const value = String(source || "").toLowerCase();
+  if (value.includes("live-match-overlay")) return "Live berekend";
+  if (value.includes("football-data")) return "football-data.co.uk";
+  if (value.includes("openfootball")) return "openfootball";
+  if (value.includes("openligadb")) return "OpenLigaDB";
+  if (value.includes("sofascore")) return "Sofascore";
+  return source || "cache";
+}
+
 const StandingsView: React.FC = () => {
   const [standings, setStandings] = useState<Record<string, LeagueStanding>>({});
   const [cupSheets, setCupSheets] = useState<Record<string, CupSheet>>({});
@@ -98,6 +133,16 @@ const StandingsView: React.FC = () => {
   const [mode, setMode] = useState<"league" | "cup">("league");
   const [selectedLeague, setSelectedLeague] = useState<string | null>(null);
   const [selectedCup, setSelectedCup] = useState<string | null>(null);
+  const [hiddenLeagueLabels, setHiddenLeagueLabels] = useState<string[]>(readHiddenStandings);
+  const [showLeagueManager, setShowLeagueManager] = useState(false);
+
+  useEffect(() => {
+    try {
+      window.localStorage.setItem(HIDDEN_STANDINGS_KEY, JSON.stringify(hiddenLeagueLabels));
+    } catch {
+      // Local storage is optional; filters still work for the current session.
+    }
+  }, [hiddenLeagueLabels]);
 
   useEffect(() => {
     fetch("/api/standings")
@@ -132,18 +177,30 @@ const StandingsView: React.FC = () => {
     );
   }, [standings]);
 
+  const visibleLeagueKeys = useMemo(() => {
+    const hidden = new Set(hiddenLeagueLabels);
+    return sortedLeagueKeys.filter((key) => !hidden.has(String(standings[key]?.label || key)));
+  }, [hiddenLeagueLabels, sortedLeagueKeys, standings]);
+
   const sortedCupKeys = useMemo(() => {
     return Object.keys(cupSheets).sort((a, b) => a.localeCompare(b));
   }, [cupSheets]);
 
   useEffect(() => {
-    if (sortedLeagueKeys.length > 0 && (!selectedLeague || !sortedLeagueKeys.includes(selectedLeague))) {
-      setSelectedLeague(sortedLeagueKeys[0]);
+    const selectable = visibleLeagueKeys.length > 0 ? visibleLeagueKeys : sortedLeagueKeys;
+    if (selectable.length > 0 && (!selectedLeague || !selectable.includes(selectedLeague))) {
+      setSelectedLeague(selectable[0]);
     }
-  }, [selectedLeague, sortedLeagueKeys]);
+  }, [selectedLeague, sortedLeagueKeys, visibleLeagueKeys]);
 
   const currentStanding = selectedLeague ? standings[selectedLeague] : null;
   const currentCup = selectedCup ? cupSheets[selectedCup] : null;
+  const currentSources =
+    currentStanding?.sources?.length
+      ? currentStanding.sources
+      : currentStanding
+        ? [{ source: currentStanding.source || "cache", rows: currentStanding.rows.length }]
+        : [];
 
   if (loading) {
     return (
@@ -194,8 +251,63 @@ const StandingsView: React.FC = () => {
 
       {mode === "league" && sortedLeagueKeys.length > 0 && (
         <>
-          <div className="flex gap-1.5 overflow-x-auto scrollbar-hide pb-1">
-            {sortedLeagueKeys.map((key) => {
+          <div className="rounded-2xl border border-white/5 bg-slate-950/40 p-3 space-y-3">
+            <div className="flex flex-wrap items-center justify-between gap-2">
+              <div>
+                <div className="text-[10px] font-black uppercase text-slate-300">Competities kiezen</div>
+                <div className="text-[10px] text-slate-500">
+                  Zet competities aan of uit. Nieuwe competities worden standaard zichtbaar.
+                </div>
+              </div>
+              <div className="flex gap-2">
+                <button
+                  onClick={() => setShowLeagueManager((value) => !value)}
+                  className="rounded-lg bg-slate-800 px-3 py-1.5 text-[10px] font-black text-slate-200 hover:bg-slate-700"
+                >
+                  {showLeagueManager ? "Verberg beheer" : "Beheer competities"}
+                </button>
+                <button
+                  onClick={() => setHiddenLeagueLabels([])}
+                  className="rounded-lg bg-blue-600 px-3 py-1.5 text-[10px] font-black text-white hover:bg-blue-500"
+                >
+                  Alles aan
+                </button>
+              </div>
+            </div>
+
+            {showLeagueManager && (
+              <div className="max-h-32 overflow-y-auto rounded-xl border border-white/5 bg-slate-900/50 p-2">
+                <div className="flex flex-wrap gap-1.5">
+                  {sortedLeagueKeys.map((key) => {
+                    const label = String(standings[key]?.label || key);
+                    const hidden = hiddenLeagueLabels.includes(label);
+                    return (
+                      <button
+                        key={key}
+                        onClick={() =>
+                          setHiddenLeagueLabels((current) =>
+                            current.includes(label)
+                              ? current.filter((item) => item !== label)
+                              : [...current, label]
+                          )
+                        }
+                        className={`rounded-lg px-2.5 py-1 text-[9px] font-black transition ${
+                          hidden
+                            ? "bg-slate-800 text-slate-500 line-through"
+                            : "bg-emerald-500/15 text-emerald-300 border border-emerald-500/20"
+                        }`}
+                      >
+                        {hidden ? "+ " : "aan "} {label}
+                      </button>
+                    );
+                  })}
+                </div>
+              </div>
+            )}
+          </div>
+
+          <div className="flex gap-1.5 overflow-x-auto pb-2">
+            {(visibleLeagueKeys.length ? visibleLeagueKeys : sortedLeagueKeys).map((key) => {
               const label = standings[key]?.label || key;
               return (
                 <button
@@ -213,6 +325,24 @@ const StandingsView: React.FC = () => {
 
           {currentStanding && (
             <div className="glass-card rounded-2xl border border-white/5 overflow-hidden">
+              <div className="flex flex-wrap items-center justify-between gap-2 border-b border-white/5 bg-slate-950/40 px-4 py-3">
+                <div>
+                  <div className="text-sm font-black uppercase text-white">{currentStanding.label}</div>
+                  <div className="text-[10px] text-slate-500">
+                    Laatste resultaat: {currentStanding.lastResultDate || "onbekend"}
+                    {currentStanding.liveOverlay?.applied ? ` · overlay ${currentStanding.liveOverlay.applied} wedstrijd(en)` : ""}
+                    {currentStanding.liveOverlay?.liveApplied ? ` · live ${currentStanding.liveOverlay.liveApplied}` : ""}
+                  </div>
+                </div>
+                <div className="flex flex-wrap gap-1.5">
+                  {currentSources.map((source, index) => (
+                    <span key={index} className="rounded-full bg-blue-500/10 px-2 py-1 text-[9px] font-black text-blue-200 border border-blue-500/20">
+                      {sourceLabel(source.source)}
+                      {source.liveApplied ? ` · live ${source.liveApplied}` : source.totalPlayed ? ` · ${source.totalPlayed}` : ""}
+                    </span>
+                  ))}
+                </div>
+              </div>
               <div className="grid grid-cols-12 gap-1 px-4 py-2 bg-slate-900/60 text-[8px] font-black text-slate-400 uppercase">
                 <div className="col-span-1">#</div>
                 <div className="col-span-4">Club</div>
@@ -224,45 +354,49 @@ const StandingsView: React.FC = () => {
                 <div className="col-span-2 text-right text-white">Pnt</div>
               </div>
 
-              {currentStanding.rows.map((row, index) => {
-                const goalDiff = (row.gf || 0) - (row.ga || 0);
-                const zone =
-                  currentStanding.meta?.zones?.find(
-                    (item) => row.pos >= item.from && row.pos <= item.to
-                  ) || null;
+              <div className="max-h-[68vh] overflow-y-auto">
+                {currentStanding.rows.map((row, index) => {
+                  const goalDiff = (row.gf || 0) - (row.ga || 0);
+                  const zone =
+                    currentStanding.meta?.zones?.find(
+                      (item) => row.pos >= item.from && row.pos <= item.to
+                    ) || null;
 
-                return (
-                  <div
-                    key={row.teamId || index}
-                    className={`grid grid-cols-12 gap-1 px-4 py-2.5 border-b border-white/5 last:border-0 text-sm items-center hover:bg-white/3 transition border-l-2 ${zoneClasses(zone?.color)}`}
-                  >
-                    <div className="col-span-1 text-[11px] font-black">{row.pos}</div>
-                    <div className="col-span-4">
-                      <div className="flex items-center gap-2">
-                        <img
-                          src={`https://api.sofascore.app/api/v1/team/${row.teamId}/image`}
-                          className="w-5 h-5 object-contain"
-                          alt=""
-                          onError={(e) => {
-                            (e.target as HTMLImageElement).style.display = "none";
-                          }}
-                        />
-                        <span className="text-[11px] font-black text-white truncate">{row.team}</span>
+                  return (
+                    <div
+                      key={row.teamId || `${row.team}-${index}`}
+                      className={`grid grid-cols-12 gap-1 px-4 py-2.5 border-b border-white/5 last:border-0 text-sm items-center hover:bg-white/3 transition border-l-2 ${zoneClasses(zone?.color)}`}
+                    >
+                      <div className="col-span-1 text-[11px] font-black">{row.pos}</div>
+                      <div className="col-span-4">
+                        <div className="flex items-center gap-2">
+                          {row.teamId && (
+                            <img
+                              src={`https://api.sofascore.app/api/v1/team/${row.teamId}/image`}
+                              className="w-5 h-5 object-contain"
+                              alt=""
+                              onError={(e) => {
+                                (e.target as HTMLImageElement).style.display = "none";
+                              }}
+                            />
+                          )}
+                          <span className="text-[11px] font-black text-white truncate">{row.team}</span>
+                        </div>
+                      </div>
+                      <div className="col-span-1 text-center text-[11px] text-green-400 font-bold">{row.w}</div>
+                      <div className="col-span-1 text-center text-[11px] text-slate-400 font-bold">{row.d}</div>
+                      <div className="col-span-1 text-center text-[11px] text-red-400 font-bold">{row.l}</div>
+                      <div className={`col-span-1 text-center text-[11px] font-bold ${goalDiff > 0 ? "text-green-400" : goalDiff < 0 ? "text-red-400" : "text-slate-500"}`}>
+                        {goalDiff > 0 ? `+${goalDiff}` : goalDiff}
+                      </div>
+                      <div className="col-span-1 text-center text-[10px] text-slate-500">{row.p}</div>
+                      <div className="col-span-2 text-right">
+                        <span className="text-sm font-black text-white bg-slate-800 px-2 py-0.5 rounded-lg">{row.pts}</span>
                       </div>
                     </div>
-                    <div className="col-span-1 text-center text-[11px] text-green-400 font-bold">{row.w}</div>
-                    <div className="col-span-1 text-center text-[11px] text-slate-400 font-bold">{row.d}</div>
-                    <div className="col-span-1 text-center text-[11px] text-red-400 font-bold">{row.l}</div>
-                    <div className={`col-span-1 text-center text-[11px] font-bold ${goalDiff > 0 ? "text-green-400" : goalDiff < 0 ? "text-red-400" : "text-slate-500"}`}>
-                      {goalDiff > 0 ? `+${goalDiff}` : goalDiff}
-                    </div>
-                    <div className="col-span-1 text-center text-[10px] text-slate-500">{row.p}</div>
-                    <div className="col-span-2 text-right">
-                      <span className="text-sm font-black text-white bg-slate-800 px-2 py-0.5 rounded-lg">{row.pts}</span>
-                    </div>
-                  </div>
-                );
-              })}
+                  );
+                })}
+              </div>
 
               <div className="px-4 py-3 bg-slate-900/40 space-y-2">
                 <div className="flex flex-wrap gap-3">
@@ -275,12 +409,9 @@ const StandingsView: React.FC = () => {
                     </div>
                   ))}
                 </div>
-                <div className="flex flex-wrap gap-2">
-                  {((currentStanding as any).sources || [{ source: (currentStanding as any).source || "live", rows: currentStanding.rows.length }]).map((source: any, index: number) => (
-                    <span key={index} className="rounded-full bg-slate-800 px-2 py-1 text-[8px] font-black text-slate-300">
-                      bron: {source.source} {source.totalPlayed ? "- " + source.totalPlayed + " teamduels" : ""}
-                    </span>
-                  ))}
+                <div className="text-[10px] text-slate-500">
+                  Broncontrole: deze tabel wordt na elke worker-run opnieuw opgebouwd en daarna aangevuld met
+                  live/FT-wedstrijden uit de opgeslagen dagdata.
                 </div>
                 {(currentStanding.meta?.notes || []).map((note, index) => (
                   <div key={index} className="text-[10px] text-slate-500">

@@ -1417,6 +1417,13 @@ function buildFeatureVector(input) {
   const leagueReliability = input.leagueReliability || {};
   const phaseReliability = input.phaseReliability || {};
   const refereeProfile = input.refereeProfile || {};
+  const h2hSampleSize = Math.max(Number(input.h2h?.played || 0), Array.isArray(input.h2h?.results) ? input.h2h.results.length : 0);
+  const h2hReliability = h2hSampleSize >= 5 ? 1 : h2hSampleSize >= 3 ? 0.65 : h2hSampleSize >= 2 ? 0.35 : 0;
+  const isInternational =
+    isSeniorInternationalTournament(input.league) ||
+    String(input.phaseBucket || "").toLowerCase() === "interland" ||
+    String(input.leagueType || "").toLowerCase() === "international";
+  const clubEloScale = isInternational ? 0.35 : 1;
 
   return {
     home_avg_scored: Number(input.homeRecent?.avgScored || 1.35),
@@ -1433,12 +1440,16 @@ function buildFeatureVector(input) {
     home_rest_days: Number(input.homeRestDays ?? 0),
     away_rest_days: Number(input.awayRestDays ?? 0),
     rest_diff: Number((Number(input.homeRestDays ?? 0) - Number(input.awayRestDays ?? 0)).toFixed(2)),
-    club_elo_diff: Number((Number(input.homeClubElo || 0) - Number(input.awayClubElo || 0)).toFixed(0)),
+    club_elo_diff: Number(((Number(input.homeClubElo || 0) - Number(input.awayClubElo || 0)) * clubEloScale).toFixed(0)),
+    raw_club_elo_diff: Number((Number(input.homeClubElo || 0) - Number(input.awayClubElo || 0)).toFixed(0)),
+    club_elo_scale: clubEloScale,
     home_injuries: Number(input.homeInjuries?.injuredCount || 0),
     away_injuries: Number(input.awayInjuries?.injuredCount || 0),
     weather_risk:
       input.weather?.riskLevel === "high" ? 2 : input.weather?.riskLevel === "medium" ? 1 : 0,
     lineups_confirmed: input.lineupSummary?.confirmed ? 1 : 0,
+    h2h_sample_size: h2hSampleSize,
+    h2h_reliability: h2hReliability,
     h2h_balance:
       input.h2h?.played >= 1
         ? Number(
@@ -1579,11 +1590,12 @@ function buildHeuristicEnsemble(featureVector) {
   homeScore -= featureVector.home_cards_rate * 0.015;
   awayScore -= featureVector.away_cards_rate * 0.015;
   // H2H algemeen patroon (lichte weging)
-  homeScore += featureVector.h2h_balance * 0.08;
-  awayScore -= featureVector.h2h_balance * 0.08;
-  // H2H laatste 5 wedstrijden (zware weging voor recente onderlinge vorm)
-  homeScore += featureVector.h2h_recent_5_balance * 0.20;
-  awayScore -= featureVector.h2h_recent_5_balance * 0.20;
+  const h2hWeight = Number(featureVector.h2h_reliability || 0);
+  homeScore += featureVector.h2h_balance * 0.05 * h2hWeight;
+  awayScore -= featureVector.h2h_balance * 0.05 * h2hWeight;
+  // Recente onderlinge vorm weegt alleen stevig als er minimaal 3 betrouwbare duels zijn.
+  homeScore += featureVector.h2h_recent_5_balance * 0.12 * h2hWeight;
+  awayScore -= featureVector.h2h_recent_5_balance * 0.12 * h2hWeight;
   // Leermodel per team
   homeScore += featureVector.learning_outcome_bias_diff * 0.16;
   awayScore -= featureVector.learning_outcome_bias_diff * 0.16;
@@ -1877,9 +1889,14 @@ function buildMarketCalibration(input) {
     const supplementalSignals = Array.isArray(supplemental?.bookmakerSignals) ? supplemental.bookmakerSignals : [];
     const homePpg = Number(input.homeTeamProfile?.pointsPerGame || input.homeRecent?.pointsPerGame || 0);
     const awayPpg = Number(input.awayTeamProfile?.pointsPerGame || input.awayRecent?.pointsPerGame || 0);
+    const isInternational =
+      isSeniorInternationalTournament(input.league) ||
+      String(input.phaseBucket || "").toLowerCase() === "interland" ||
+      String(input.leagueType || "").toLowerCase() === "international";
+    const clubEloScale = isInternational ? 0.35 : 1;
     const eloDiff =
       Number(input.homeClubElo || 0) > 0 && Number(input.awayClubElo || 0) > 0
-        ? (Number(input.homeClubElo || 0) - Number(input.awayClubElo || 0)) / 125
+        ? ((Number(input.homeClubElo || 0) - Number(input.awayClubElo || 0)) * clubEloScale) / 125
         : 0;
     const derivedDiff = Number((homePpg - awayPpg + eloDiff * 0.45).toFixed(2));
     const derivedStrength = clamp(
@@ -4766,8 +4783,87 @@ function emptyStandingTeam(teamName, teamId = "") {
   };
 }
 
+function buildStandingResultKey(date, home, away) {
+  return `${date || ""}|${canonicalTeamName(home)}|${canonicalTeamName(away)}`;
+}
+
+function sortStandingRows(rows) {
+  return [...(rows || [])]
+    .sort((a, b) => {
+      const aGd = Number(a.gf || 0) - Number(a.ga || 0);
+      const bGd = Number(b.gf || 0) - Number(b.ga || 0);
+      return (
+        Number(b.pts || 0) - Number(a.pts || 0) ||
+        bGd - aGd ||
+        Number(b.gf || 0) - Number(a.gf || 0) ||
+        String(a.team || "").localeCompare(String(b.team || ""))
+      );
+    })
+    .map((row, index) => ({ ...row, pos: index + 1 }));
+}
+
+function findStandingRowIndex(rows, teamName, teamId = "") {
+  if (!Array.isArray(rows)) return -1;
+  if (teamId) {
+    const byId = rows.findIndex((row) => String(row.teamId || "") === String(teamId || ""));
+    if (byId >= 0) return byId;
+  }
+  const variants = buildPossibleNames(teamName);
+  return rows.findIndex((row) => buildPossibleNames(row.team).some((name) => variants.includes(name)));
+}
+
+function ensureStandingRow(rows, teamName, teamId = "") {
+  const index = findStandingRowIndex(rows, teamName, teamId);
+  if (index >= 0) return rows[index];
+  const next = emptyStandingTeam(teamName, teamId);
+  rows.push(next);
+  return next;
+}
+
+function applyResultToStandingRows(rows, item, options = {}) {
+  const home = String(item.home || item.homeTeamName || "").trim();
+  const away = String(item.away || item.awayTeamName || "").trim();
+  const homeGoals = toNumber(item.homeGoals);
+  const awayGoals = toNumber(item.awayGoals);
+  if (!home || !away || !Number.isFinite(homeGoals) || !Number.isFinite(awayGoals)) return false;
+
+  if (options.requireKnownTeams) {
+    const homeIndex = findStandingRowIndex(rows, home, item.homeTeamId || "");
+    const awayIndex = findStandingRowIndex(rows, away, item.awayTeamId || "");
+    if (homeIndex < 0 || awayIndex < 0) return false;
+  }
+
+  const homeRow = ensureStandingRow(rows, home, item.homeTeamId || "");
+  const awayRow = ensureStandingRow(rows, away, item.awayTeamId || "");
+
+  homeRow.p += 1;
+  awayRow.p += 1;
+  homeRow.gf += homeGoals;
+  homeRow.ga += awayGoals;
+  awayRow.gf += awayGoals;
+  awayRow.ga += homeGoals;
+
+  if (homeGoals > awayGoals) {
+    homeRow.w += 1;
+    homeRow.pts += 3;
+    awayRow.l += 1;
+  } else if (awayGoals > homeGoals) {
+    awayRow.w += 1;
+    awayRow.pts += 3;
+    homeRow.l += 1;
+  } else {
+    homeRow.d += 1;
+    awayRow.d += 1;
+    homeRow.pts += 1;
+    awayRow.pts += 1;
+  }
+  return true;
+}
+
 function buildStandingFromResultRows(label, results, source) {
   const table = new Map();
+  const resultKeys = new Set();
+  let lastResultDate = null;
   for (const item of results || []) {
     const home = String(item.home || "").trim();
     const away = String(item.away || "").trim();
@@ -4775,8 +4871,8 @@ function buildStandingFromResultRows(label, results, source) {
     const awayGoals = toNumber(item.awayGoals);
     if (!home || !away || !Number.isFinite(homeGoals) || !Number.isFinite(awayGoals)) continue;
 
-    const homeKey = normalizeName(home);
-    const awayKey = normalizeName(away);
+    const homeKey = canonicalTeamName(home);
+    const awayKey = canonicalTeamName(away);
     if (!homeKey || !awayKey) continue;
     const homeRow = table.get(homeKey) || emptyStandingTeam(home, item.homeTeamId || "");
     const awayRow = table.get(awayKey) || emptyStandingTeam(away, item.awayTeamId || "");
@@ -4805,11 +4901,11 @@ function buildStandingFromResultRows(label, results, source) {
 
     table.set(homeKey, homeRow);
     table.set(awayKey, awayRow);
+    resultKeys.add(buildStandingResultKey(item.date || "", home, away));
+    if (item.date && (!lastResultDate || String(item.date) > String(lastResultDate))) lastResultDate = item.date;
   }
 
-  const rows = [...table.values()]
-    .sort((a, b) => b.pts - a.pts || (b.gf - b.ga) - (a.gf - a.ga) || b.gf - a.gf || String(a.team).localeCompare(String(b.team)))
-    .map((row, index) => ({ ...row, pos: index + 1 }));
+  const rows = sortStandingRows([...table.values()]);
 
   if (!rows.length) return null;
   return {
@@ -4819,6 +4915,8 @@ function buildStandingFromResultRows(label, results, source) {
     source,
     sources: [{ source, rows: rows.length, totalPlayed: rows.reduce((sum, row) => sum + Number(row.p || 0), 0) }],
     meta: deriveStandingMeta(label, rows.length),
+    resultKeys: [...resultKeys],
+    lastResultDate,
   };
 }
 
@@ -4893,7 +4991,146 @@ function mergeStandingCandidates(label, candidates) {
     sources,
     updated: Date.now(),
     meta: deriveStandingMeta(label, best.rows.length),
+    resultKeys: Array.isArray(best.resultKeys) ? best.resultKeys : [],
+    lastResultDate: best.lastResultDate || null,
   };
+}
+
+function isStandingLeagueLabel(label) {
+  const text = normalizeName(label);
+  if (!text) return false;
+  const excluded = [
+    "champions league",
+    "europa league",
+    "conference league",
+    "beker",
+    "cup",
+    "qualification",
+    "qualificatie",
+    "friendly",
+    "vriendschapp",
+    "nations league",
+    "super cup",
+  ];
+  if (excluded.some((item) => text.includes(item))) return false;
+  return true;
+}
+
+function parseScoreToGoals(score) {
+  const match = String(score || "").match(/(\d+)\s*-\s*(\d+)/);
+  if (!match) return null;
+  return { homeGoals: Number(match[1]), awayGoals: Number(match[2]) };
+}
+
+function shouldApplyMatchToStanding(match, baseStanding) {
+  const status = String(match?.status || "").toUpperCase();
+  if (!["FT", "LIVE", "HT", "RESULT_PENDING"].includes(status)) return false;
+  if (!parseScoreToGoals(match?.score)) return false;
+  if (status === "FT" && !Array.isArray(baseStanding?.resultKeys)) return true;
+  return true;
+}
+
+function applyLiveMatchesToStanding(baseStanding, matches, label) {
+  const rows = (baseStanding?.rows || []).map((row) => ({
+    ...row,
+    p: Number(row.p || 0),
+    w: Number(row.w || 0),
+    d: Number(row.d || 0),
+    l: Number(row.l || 0),
+    gf: Number(row.gf || 0),
+    ga: Number(row.ga || 0),
+    pts: Number(row.pts || 0),
+  }));
+  const resultKeys = new Set(Array.isArray(baseStanding?.resultKeys) ? baseStanding.resultKeys : []);
+  let applied = 0;
+  let liveApplied = 0;
+  let lastResultDate = baseStanding?.lastResultDate || null;
+
+  for (const match of matches || []) {
+    if (String(match?.league || "") !== String(label || "")) continue;
+    if (!shouldApplyMatchToStanding(match, baseStanding)) continue;
+    const goals = parseScoreToGoals(match.score);
+    if (!goals) continue;
+    const resultKey = buildStandingResultKey(match.date || "", match.homeTeamName, match.awayTeamName);
+    if (resultKeys.has(resultKey)) continue;
+
+    const appliedResult = applyResultToStandingRows(rows, {
+      date: match.date || "",
+      home: match.homeTeamName,
+      away: match.awayTeamName,
+      homeTeamId: match.homeTeamId,
+      awayTeamId: match.awayTeamId,
+      homeGoals: goals.homeGoals,
+      awayGoals: goals.awayGoals,
+    }, { requireKnownTeams: (baseStanding?.rows || []).length >= 10 });
+    if (!appliedResult) continue;
+
+    resultKeys.add(resultKey);
+    applied += 1;
+    if (["LIVE", "HT"].includes(String(match.status || "").toUpperCase())) liveApplied += 1;
+    if (match.date && (!lastResultDate || String(match.date) > String(lastResultDate))) lastResultDate = match.date;
+  }
+
+  if (!rows.length) return null;
+  const sources = Array.isArray(baseStanding?.sources) ? [...baseStanding.sources] : [];
+  if (applied > 0) {
+    sources.push({
+      source: "live-match-overlay",
+      rows: rows.length,
+      totalPlayed: applied,
+      liveApplied,
+    });
+  }
+  return {
+    ...(baseStanding || {}),
+    label,
+    rows: sortStandingRows(rows),
+    updated: Date.now(),
+    source: applied > 0 ? `${baseStanding?.source || "stand"} + live-match-overlay` : baseStanding?.source || "stand",
+    sources,
+    meta: deriveStandingMeta(label, rows.length),
+    resultKeys: [...resultKeys],
+    lastResultDate,
+    liveOverlay: {
+      applied,
+      liveApplied,
+      updated: Date.now(),
+    },
+  };
+}
+
+function applyLiveStandingsOverlay(store) {
+  const allMatches = Object.values(store.matches || {}).flat();
+  const standingLabels = Object.values(store.standings || {})
+    .map((standing) => standing?.label)
+    .filter(Boolean);
+  const matchLabels = allMatches.map((match) => match?.league).filter(Boolean);
+  const labels = [...new Set([...standingLabels, ...matchLabels])].filter(isStandingLeagueLabel);
+
+  for (const label of labels) {
+    const labelKey = `label:${label}`;
+    const sameLabelEntries = Object.entries(store.standings || {}).filter(([, standing]) => standing?.label === label);
+    const base =
+      store.standings[labelKey] ||
+      sameLabelEntries
+        .map(([, standing]) => standing)
+        .sort((a, b) => standingStrength(b) - standingStrength(a))[0] ||
+      {
+        label,
+        rows: [],
+        updated: Date.now(),
+        source: "live-match-overlay",
+        sources: [],
+        meta: deriveStandingMeta(label, 0),
+        resultKeys: [],
+      };
+    const overlaid = applyLiveMatchesToStanding(base, allMatches, label);
+    if (!overlaid) continue;
+    store.standings[labelKey] = overlaid;
+    for (const [key, standing] of sameLabelEntries) {
+      if (standing?.rows?.length) store.standings[key] = overlaid;
+    }
+  }
 }
 
 async function fetchStandings(tournamentId, seasonId, label, dateISO) {
@@ -7485,8 +7722,10 @@ async function main() {
 
   const standingsByTournament = {};
   for (const [key, info] of tournamentsMap.entries()) {
+    if (!isStandingLeagueLabel(info.label)) continue;
     const cached = store.standings[key];
-    if (cached?.rows?.length && now - Number(cached.updated || 0) <= STANDINGS_TTL) {
+    const cachedIsOverlay = String(cached?.source || "").includes("live-match-overlay");
+    if (cached?.rows?.length && !cachedIsOverlay && now - Number(cached.updated || 0) <= STANDINGS_TTL) {
       standingsByTournament[key] = cached;
       continue;
     }
@@ -7500,10 +7739,11 @@ async function main() {
     }
   }
 
-  for (const leagueLabel of allActiveLeagueLabels) {
+  for (const leagueLabel of allActiveLeagueLabels.filter(isStandingLeagueLabel)) {
     const labelKey = `label:${leagueLabel}`;
     const cached = store.standings[labelKey];
-    if (cached?.rows?.length && now - Number(cached.updated || 0) <= STANDINGS_TTL) {
+    const cachedIsOverlay = String(cached?.source || "").includes("live-match-overlay");
+    if (cached?.rows?.length && !cachedIsOverlay && now - Number(cached.updated || 0) <= STANDINGS_TTL) {
       standingsByTournament[labelKey] = cached;
       continue;
     }
@@ -7954,6 +8194,7 @@ async function main() {
     await sleep(30);
   }
 
+  applyLiveStandingsOverlay(store);
   compactStore(store, today, now);
   rebuildReviewsAndLearning(store);
   store.sourceCoverage = buildSourceCoverage(store, today);
