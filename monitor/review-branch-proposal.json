@@ -1,25 +1,41 @@
 {
-  "generatedAt": "2026-05-11T23:12:38.414Z",
-  "date": "2026-05-12",
+  "generatedAt": "2026-05-12T23:19:17.040Z",
+  "date": "2026-05-13",
   "proposalOnly": true,
-  "shouldPropose": false,
-  "branchName": "codex/review-20260512",
-  "summary": "Geen reviewbranch nodig op 2026-05-12.",
+  "shouldPropose": true,
+  "branchName": "codex/review-20260513",
+  "summary": "AI reviewvoorstel voor 2026-05-13: 1 aandachtspunt(en) met patchadvies, niet automatisch live.",
   "latestStats": {
-    "today": "2026-05-12",
+    "today": "2026-05-13",
     "dataPresent": true,
-    "lastRun": 1778541071799,
+    "lastRun": 1778627892019,
     "ageMinutes": 1,
-    "todayMatches": 5,
+    "todayMatches": 7,
     "liveMatches": 0,
     "liveWithoutMinute": 0,
-    "h2hFilled": 4,
-    "h2hMissing": 1,
+    "h2hFilled": 7,
+    "h2hMissing": 0,
     "standingsCount": 41,
-    "cupSheetCount": 6,
+    "cupSheetCount": 5,
     "phaseReliabilityCount": 3
   },
-  "findings": [],
-  "recommendedFiles": [],
-  "nextStep": "Geen actie nodig; monitor blijft op de achtergrond doorlopen."
+  "findings": [
+    {
+      "priority": 1,
+      "key": "logo_fallback_missing",
+      "severity": "medium",
+      "message": "Logo fallback lijkt niet actief.",
+      "whyItMatters": "Clublogo fallback is niet stabiel genoeg.",
+      "recommendedFiles": [
+        "api/logo.ts",
+        "components/MatchCard.tsx"
+      ],
+      "details": {}
+    }
+  ],
+  "recommendedFiles": [
+    "api/logo.ts",
+    "components/MatchCard.tsx"
+  ],
+  "nextStep": "Gebruik deze proposal om gericht een reviewbranch te maken en alleen na controle te mergen."
 }

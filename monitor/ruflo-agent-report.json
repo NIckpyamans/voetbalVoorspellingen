@@ -1,14 +1,14 @@
 {
-  "generatedAt": "2026-05-11T23:12:38.727Z",
-  "date": "2026-05-12",
+  "generatedAt": "2026-05-12T23:19:17.300Z",
+  "date": "2026-05-13",
   "name": "Ruflo-style gratis AI monitor",
   "mode": "naast-productie",
   "productionSafe": true,
   "summary": "Ruflo draait als extra agentlaag naast de app: hij leest monitor/data/reviews, zoekt gratis oplossingen en maakt patchadvies zonder blind live te wijzigen.",
   "agents": {
     "data": {
-      "score": 64,
-      "summary": "Datalaag: H2H 80%, bookmakers 100%, refs 0%.",
+      "score": 80,
+      "summary": "Datalaag: H2H 100%, bookmakers 100%, refs 0%.",
       "freeSources": [
         {
           "name": "SofaScore public endpoint",
@@ -64,20 +64,20 @@
     },
     "learning": {
       "score": 12,
-      "summary": "Leerlaag: 394 reviews, exact 12%, winnaar/gelijk 41%, top-5 exact 10%.",
+      "summary": "Leerlaag: 478 reviews, exact 12%, winnaar/gelijk 40%, top-5 exact 14%.",
       "topConfidence": {
-        "matches": 58,
-        "exactHitRate": 0.103,
-        "outcomeHitRate": 0.328,
-        "probabilityOutcomeHitRate": 0.517,
-        "avgGoalError": 1.88,
-        "rank1ExactHitRate": 0.067,
-        "rank1OutcomeHitRate": 0.2,
-        "versusOverallOutcomeDelta": -0.086
+        "matches": 64,
+        "exactHitRate": 0.141,
+        "outcomeHitRate": 0.375,
+        "probabilityOutcomeHitRate": 0.563,
+        "avgGoalError": 1.73,
+        "rank1ExactHitRate": 0.125,
+        "rank1OutcomeHitRate": 0.25,
+        "versusOverallOutcomeDelta": -0.02
       },
       "topClubs": [
         {
-          "teamName": "Juventus",
+          "teamName": "Roda JC",
           "reviewedMatches": 2,
           "exactHitRate": 1,
           "outcomeHitRate": 1,
@@ -91,74 +91,134 @@
           "avgGoalError": 0
         },
         {
-          "teamName": "1. FC Nürnberg",
-          "reviewedMatches": 2,
-          "exactHitRate": 0.5,
-          "outcomeHitRate": 0.5,
-          "avgGoalError": 1
-        },
-        {
-          "teamName": "Wolfsburg",
-          "reviewedMatches": 2,
-          "exactHitRate": 0.5,
-          "outcomeHitRate": 1,
-          "avgGoalError": 1.5
-        },
-        {
-          "teamName": "Freiburg",
-          "reviewedMatches": 2,
-          "exactHitRate": 0.5,
-          "outcomeHitRate": 0.5,
-          "avgGoalError": 1
-        },
-        {
           "teamName": "RKC Waalwijk",
+          "reviewedMatches": 4,
+          "exactHitRate": 0.75,
+          "outcomeHitRate": 0.75,
+          "avgGoalError": 0.25
+        },
+        {
+          "teamName": "Juventus",
+          "reviewedMatches": 4,
+          "exactHitRate": 0.5,
+          "outcomeHitRate": 1,
+          "avgGoalError": 1
+        },
+        {
+          "teamName": "Real Madrid",
           "reviewedMatches": 2,
           "exactHitRate": 0.5,
           "outcomeHitRate": 0.5,
-          "avgGoalError": 0.5
+          "avgGoalError": 2.5
         },
         {
-          "teamName": "Hellas Verona",
+          "teamName": "Catanzaro",
           "reviewedMatches": 2,
           "exactHitRate": 0.5,
           "outcomeHitRate": 1,
           "avgGoalError": 1
         },
         {
-          "teamName": "Sp Braga",
+          "teamName": "Modena",
+          "reviewedMatches": 2,
+          "exactHitRate": 0.5,
+          "outcomeHitRate": 1,
+          "avgGoalError": 1
+        },
+        {
+          "teamName": "Estrela",
           "reviewedMatches": 2,
           "exactHitRate": 0.5,
           "outcomeHitRate": 0.5,
           "avgGoalError": 0.5
         },
         {
-          "teamName": "Oviedo",
+          "teamName": "Estoril",
           "reviewedMatches": 2,
           "exactHitRate": 0.5,
           "outcomeHitRate": 0.5,
-          "avgGoalError": 1.5
+          "avgGoalError": 0.5
         },
         {
-          "teamName": "SpVgg Greuther Fürth",
+          "teamName": "Famalicao",
           "reviewedMatches": 2,
           "exactHitRate": 0.5,
-          "outcomeHitRate": 1,
-          "avgGoalError": 1
+          "outcomeHitRate": 0.5,
+          "avgGoalError": 0.5
         }
       ],
-      "actions": []
+      "actions": [
+        {
+          "priority": "high",
+          "title": "Faalsignaal aanpakken: open_lineups",
+          "freeSolution": "Laat dit signaal terugkomen als penalty in confidence en als uitleg in de matchkaart.",
+          "files": [
+            "scripts/server-worker.js",
+            "components/MatchCard.tsx"
+          ],
+          "status": "reviewactie"
+        }
+      ]
     },
     "control": {
-      "score": 100,
-      "summary": "Ontwikkelcontrole: 0 actieve monitorissues op 2026-05-12; digest 2026-04-28 t/m 2026-05-11.",
-      "latestDay": "2026-05-12",
-      "shouldPropose": false,
-      "actions": []
+      "score": 60,
+      "summary": "Ontwikkelcontrole: 1 actieve monitorissues op 2026-05-13; digest 2026-04-28 t/m 2026-05-11.",
+      "latestDay": "2026-05-13",
+      "shouldPropose": true,
+      "actions": [
+        {
+          "priority": "medium",
+          "title": "Logo fallback lijkt niet actief.",
+          "freeSolution": "Gebruik bestaande gratis workerdata en maak een reviewbranch-voorstel in plaats van blind live wijzigen.",
+          "files": [
+            "scripts/server-worker.js"
+          ],
+          "status": "monitor"
+        }
+      ]
     }
   },
-  "topThemes": [],
-  "recommendedNextActions": [],
+  "topThemes": [
+    {
+      "title": "Faalsignaal aanpakken: open_lineups",
+      "count": 1,
+      "priority": "high",
+      "agents": [
+        "learning"
+      ]
+    },
+    {
+      "title": "Logo fallback lijkt niet actief.",
+      "count": 1,
+      "priority": "medium",
+      "agents": [
+        "control"
+      ]
+    }
+  ],
+  "recommendedNextActions": [
+    {
+      "priority": "high",
+      "title": "Faalsignaal aanpakken: open_lineups",
+      "freeSolution": "Laat dit signaal terugkomen als penalty in confidence en als uitleg in de matchkaart.",
+      "files": [
+        "scripts/server-worker.js",
+        "components/MatchCard.tsx"
+      ],
+      "status": "reviewactie",
+      "agent": "learning"
+    },
+    {
+      "priority": "medium",
+      "title": "Logo fallback lijkt niet actief.",
+      "freeSolution": "Gebruik bestaande gratis workerdata en maak een reviewbranch-voorstel in plaats van blind live wijzigen.",
+      "files": [
+        "scripts/server-worker.js"
+      ],
+      "status": "monitor",
+      "agent": "control"
+    }
+  ],
   "freeOnlyGuardrails": [
     "Geen betaalde API key verplicht maken.",
     "Geen externe AI blind laten pushen naar productie.",
