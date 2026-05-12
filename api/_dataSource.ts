@@ -8,13 +8,13 @@ function candidateBranches() {
   const explicitDataBranch = process.env.DATA_BRANCH;
   const deployBranch = process.env.VERCEL_GIT_COMMIT_REF;
 
-  // Production can run from the active Codex branch while main still contains
-  // older server_data.json. Prefer the deployed branch first, then the active
-  // Codex data branch, and only use main as a fallback.
+  // Production currently still deploys from main sometimes, while the freshest
+  // worker data lives on the active Codex branch. Prefer that data branch before
+  // the deploy branch, otherwise Vercel can accidentally read stale main data.
   return unique([
     explicitDataBranch,
-    deployBranch,
     "codex/step3b-layout",
+    deployBranch,
     "main",
   ]);
 }

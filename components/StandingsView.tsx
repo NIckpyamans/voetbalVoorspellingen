@@ -176,7 +176,12 @@ const StandingsView: React.FC = () => {
 
         const standingKeys = Object.keys(nextStandings);
         const cupKeys = Object.keys(nextCupSheets);
-        if (standingKeys.length > 0) setSelectedLeague(standingKeys[0]);
+        const preferredLeague =
+          standingKeys.find((key) => String(nextStandings[key]?.label || key) === readFavoriteStanding()) ||
+          standingKeys.find((key) => String(nextStandings[key]?.label || key) === DEFAULT_FAVORITE_STANDING_LABEL) ||
+          standingKeys.find((key) => String(nextStandings[key]?.label || key).toLowerCase().includes("eredivisie")) ||
+          standingKeys[0];
+        if (preferredLeague) setSelectedLeague(preferredLeague);
         if (cupKeys.length > 0) setSelectedCup(cupKeys[0]);
         if (standingKeys.length === 0 && cupKeys.length > 0) setMode("cup");
       })

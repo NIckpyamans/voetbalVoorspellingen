@@ -26,6 +26,8 @@ type DashboardHistoryItem = {
   homeTeam?: string | null;
   awayTeam?: string | null;
   league?: string | null;
+  predictedOutcome?: string | null;
+  actualOutcome?: string | null;
   bestBetRank?: number | null;
   topExactScorePick?: boolean;
   exactScoreConfidence?: number;
@@ -127,6 +129,41 @@ function getStandingLabel(table: any, key: string) {
   return String(table?.label || key || "");
 }
 
+function outcomeFromScore(score?: string | null) {
+  const [home, away] = String(score || "").split("-").map(Number);
+  if (!Number.isFinite(home) || !Number.isFinite(away)) return null;
+  if (home > away) return "Thuis";
+  if (away > home) return "Uit";
+  return "Gelijk";
+}
+
+function hydrateDashboardHistory(items: DashboardHistoryItem[]) {
+  return items.map((item) => {
+    const predictedOutcome = item.predictedOutcome || outcomeFromScore(item.prediction);
+    const actualOutcome = item.actualOutcome || outcomeFromScore(item.actual);
+    return {
+      ...item,
+      predictedOutcome,
+      actualOutcome,
+      winnerCorrect:
+        typeof item.winnerCorrect === "boolean" ? item.winnerCorrect : predictedOutcome === actualOutcome,
+      wasCorrect: String(item.prediction || "").trim() === String(item.actual || "").trim(),
+    };
+  });
+}
+
+function mergeDashboardHistory(localItems: DashboardHistoryItem[], serverItems: DashboardHistoryItem[]) {
+  const merged = new Map<string, DashboardHistoryItem>();
+  for (const item of [...serverItems, ...localItems]) {
+    if (!item?.matchId) continue;
+    const current = merged.get(item.matchId);
+    if (!current || Number(item.timestamp || 0) >= Number(current.timestamp || 0)) {
+      merged.set(item.matchId, item);
+    }
+  }
+  return [...merged.values()].sort((a, b) => Number(b.timestamp || 0) - Number(a.timestamp || 0));
+}
+
 const App: React.FC = () => {
   const [view, setView] = useState<View>("dashboard");
   const [glassTransparency, setGlassTransparency] = useState<number>(() => {
@@ -190,18 +227,25 @@ const App: React.FC = () => {
 
   useEffect(() => {
     let cancelled = false;
+
+    const readLocal = () => {
+      try {
+        const raw = localStorage.getItem("footypredict_memory");
+        return raw ? hydrateDashboardHistory(JSON.parse(raw)) : [];
+      } catch {
+        return [];
+      }
+    };
+
     fetch("/api/history", { cache: "no-store" })
       .then((response) => response.json())
       .then((data) => {
-        if (!cancelled) setHistoryItems(Array.isArray(data.items) ? data.items : []);
+        const serverItems = Array.isArray(data.items) ? hydrateDashboardHistory(data.items) : [];
+        const localItems = readLocal();
+        if (!cancelled) setHistoryItems(mergeDashboardHistory(localItems, serverItems));
       })
       .catch(() => {
-        try {
-          const raw = localStorage.getItem("footypredict_memory");
-          if (!cancelled) setHistoryItems(raw ? JSON.parse(raw) : []);
-        } catch {
-          if (!cancelled) setHistoryItems([]);
-        }
+        if (!cancelled) setHistoryItems(readLocal());
       });
     return () => {
       cancelled = true;
@@ -658,12 +702,57 @@ const App: React.FC = () => {
               </section>
 
               <aside className="glass-card rounded-2xl border border-blue-500/20 p-4 bg-blue-500/5">
+                <div className="mb-4 rounded-2xl border border-emerald-400/25 bg-emerald-500/10 p-3 shadow-[0_0_30px_rgba(16,185,129,0.08)]">
+                  <div className="mb-2 flex items-start justify-between gap-2">
+                    <div>
+                      <h2 className="text-sm font-black uppercase text-white">Favoriete competitie</h2>
+                      <p className="text-[11px] text-slate-400">
+                        {favoriteStanding?.label || DEFAULT_FAVORITE_STANDING_LABEL}
+                      </p>
+                    </div>
+                    <button
+                      onClick={() => setView("standings")}
+                      className="rounded-lg bg-emerald-500/15 px-2 py-1 text-[9px] font-black text-emerald-200 hover:bg-emerald-500/25"
+                    >
+                      beheren
+                    </button>
+                  </div>
+
+                  {favoriteStanding?.rows?.length ? (
+                    <div className="max-h-[360px] overflow-y-auto rounded-xl border border-white/5 bg-slate-950/45">
+                      {favoriteStanding.rows.slice(0, 20).map((row: any) => {
+                        const goalDiff = Number(row.gf || 0) - Number(row.ga || 0);
+                        return (
+                          <div
+                            key={`${favoriteStanding.key}-${row.teamId || row.team}`}
+                            className="grid grid-cols-[28px_minmax(0,1fr)_42px_42px] items-center gap-2 border-b border-white/5 px-2 py-2 last:border-b-0"
+                          >
+                            <div className="text-[10px] font-black text-slate-400">{row.pos}</div>
+                            <div className="min-w-0">
+                              <div className="truncate text-[10px] font-black text-white">{row.team}</div>
+                              <div className="text-[8px] text-slate-500">{row.p || 0} gespeeld</div>
+                            </div>
+                            <div className={`text-right text-[10px] font-black ${goalDiff > 0 ? "text-green-300" : goalDiff < 0 ? "text-red-300" : "text-slate-400"}`}>
+                              {goalDiff > 0 ? `+${goalDiff}` : goalDiff}
+                            </div>
+                            <div className="text-right text-[12px] font-black text-white">{row.pts}</div>
+                          </div>
+                        );
+                      })}
+                    </div>
+                  ) : (
+                    <div className="rounded-xl border border-dashed border-emerald-500/20 bg-slate-950/30 p-4 text-[11px] font-bold text-slate-400">
+                      Nog geen standdata gevonden. Standaard probeert de app de Eredivisie te tonen.
+                    </div>
+                  )}
+                </div>
+
                 <div className="mb-3">
                   <h2 className="text-sm font-black uppercase text-white">Top 10 clubs exact goed</h2>
                   <p className="text-[11px] text-slate-500 mt-0.5">Teams waarbij AI historisch vaak de juiste uitslag raakt.</p>
                 </div>
                 {dashboardInsights.topClubs.length > 0 ? (
-                  <div className="space-y-2 max-h-[420px] overflow-y-auto pr-1">
+                  <div className="space-y-2 max-h-[300px] overflow-y-auto pr-1">
                     {dashboardInsights.topClubs.map((club, index) => (
                       <div key={club.team} className="rounded-xl bg-slate-950/40 border border-white/5 px-3 py-2">
                         <button
@@ -709,50 +798,6 @@ const App: React.FC = () => {
                   </div>
                 )}
 
-                <div className="mt-4 rounded-2xl border border-emerald-400/20 bg-emerald-500/5 p-3">
-                  <div className="mb-2 flex items-start justify-between gap-2">
-                    <div>
-                      <h3 className="text-[12px] font-black uppercase text-white">Favoriete stand</h3>
-                      <p className="text-[10px] text-slate-500">
-                        {favoriteStanding?.label || DEFAULT_FAVORITE_STANDING_LABEL}
-                      </p>
-                    </div>
-                    <button
-                      onClick={() => setView("standings")}
-                      className="rounded-lg bg-emerald-500/15 px-2 py-1 text-[9px] font-black text-emerald-200 hover:bg-emerald-500/25"
-                    >
-                      beheren
-                    </button>
-                  </div>
-
-                  {favoriteStanding?.rows?.length ? (
-                    <div className="max-h-80 overflow-y-auto rounded-xl border border-white/5 bg-slate-950/35">
-                      {favoriteStanding.rows.slice(0, 20).map((row: any) => {
-                        const goalDiff = Number(row.gf || 0) - Number(row.ga || 0);
-                        return (
-                          <div
-                            key={`${favoriteStanding.key}-${row.teamId || row.team}`}
-                            className="grid grid-cols-[28px_minmax(0,1fr)_44px_44px] items-center gap-2 border-b border-white/5 px-2 py-2 last:border-b-0"
-                          >
-                            <div className="text-[10px] font-black text-slate-400">{row.pos}</div>
-                            <div className="min-w-0">
-                              <div className="truncate text-[10px] font-black text-white">{row.team}</div>
-                              <div className="text-[8px] text-slate-500">{row.p || 0} gespeeld</div>
-                            </div>
-                            <div className={`text-right text-[10px] font-black ${goalDiff > 0 ? "text-green-300" : goalDiff < 0 ? "text-red-300" : "text-slate-400"}`}>
-                              {goalDiff > 0 ? `+${goalDiff}` : goalDiff}
-                            </div>
-                            <div className="text-right text-[12px] font-black text-white">{row.pts}</div>
-                          </div>
-                        );
-                      })}
-                    </div>
-                  ) : (
-                    <div className="rounded-xl border border-dashed border-emerald-500/20 bg-slate-950/30 p-4 text-[11px] font-bold text-slate-400">
-                      Nog geen standdata gevonden. Standaard probeert de app de Eredivisie te tonen.
-                    </div>
-                  )}
-                </div>
               </aside>
             </div>
 
