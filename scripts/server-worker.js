@@ -159,8 +159,9 @@ const MARKET_TTL = 24 * 60 * 60 * 1000;
 const SNAPSHOT_TTL = 3 * 24 * 60 * 60 * 1000;
 const OPENFOOTBALL_TTL = 14 * 24 * 60 * 60 * 1000;
 const INTERNATIONAL_AVAILABILITY_TTL = 12 * 60 * 60 * 1000;
-const HISTORY_KEEP_DAYS_BACK = 12;
-const HISTORY_KEEP_DAYS_FORWARD = 4;
+// Bewaar gespeelde dagen ruim genoeg voor analyse, terugkijken en model-review.
+const HISTORY_KEEP_DAYS_BACK = 365;
+const HISTORY_KEEP_DAYS_FORWARD = 14;
 const MAX_REVIEWS = 2500;
 const MAX_SCORE_MATRIX_ENTRIES = 10;
 const MAX_EVENT_CACHE = 300;
