@@ -12,14 +12,16 @@ interface MatchCardProps {
 
 function useLiveMinute(match: any) {
   const [now, setNow] = useState(() => Date.now());
+  const status = String(match?.status || "").toUpperCase();
+  const isSettled = ["FT", "AET", "PEN", "RESULT_PENDING"].includes(status) || status.includes("FINISH");
 
   useEffect(() => {
-    if (String(match?.status || "").toUpperCase() !== "LIVE" && !match?.minute && !match?.minuteValue) return;
+    if (isSettled || (status !== "LIVE" && status !== "HT" && !match?.minuteValue)) return;
     const timer = window.setInterval(() => setNow(Date.now()), 30000);
     return () => window.clearInterval(timer);
-  }, [match?.status, match?.minute, match?.minuteValue, match?.liveUpdatedAt]);
+  }, [isSettled, status, match?.minuteValue, match?.liveUpdatedAt]);
 
-  return useMemo(() => getLiveMinuteLabel(match, now), [match, now]);
+  return useMemo(() => (isSettled ? null : getLiveMinuteLabel(match, now)), [isSettled, match, now]);
 }
 
 function fmt(probability: number) {
@@ -566,6 +568,54 @@ function ScoreMatrix({ topScores }: { topScores: any[] }) {
   );
 }
 
+function outcomeName(code?: string) {
+  if (code === "H") return "Thuis";
+  if (code === "A") return "Uit";
+  if (code === "D") return "Gelijk";
+  return "-";
+}
+
+function PredictionResultStrip({ review }: { review: any }) {
+  if (!review) return null;
+
+  const exactGood = Boolean(review.exactHit);
+  const outcomeGood = Boolean(review.outcomeHit || review.probabilityOutcomeHit);
+  const exactClass = exactGood
+    ? "border-emerald-400/25 bg-emerald-950/35 text-emerald-200"
+    : "border-rose-400/25 bg-rose-950/35 text-rose-200";
+  const outcomeClass = outcomeGood
+    ? "border-blue-400/25 bg-blue-950/35 text-blue-200"
+    : "border-amber-400/25 bg-amber-950/35 text-amber-200";
+
+  return (
+    <div className="mb-2 rounded-xl border border-white/10 bg-slate-950/45 p-2">
+      <div className="mb-1.5 flex items-center justify-between gap-2">
+        <div>
+          <div className="text-[7px] font-black uppercase text-slate-400">AI check na afloop</div>
+          <div className="text-[9px] text-slate-500">
+            Voorspeld {review.predictedScore || "-"} - werkelijk {review.actualScore || "-"}
+          </div>
+        </div>
+        <div className={`rounded-full px-2 py-0.5 text-[8px] font-black ${exactGood ? "bg-emerald-500/15 text-emerald-300" : "bg-rose-500/15 text-rose-300"}`}>
+          {exactGood ? "Exact goed" : "Exact fout"}
+        </div>
+      </div>
+      <div className="grid grid-cols-2 gap-1.5">
+        <div className={`rounded-lg border px-2 py-1.5 ${exactClass}`}>
+          <div className="text-[7px] font-black uppercase opacity-70">Juiste uitslag</div>
+          <div className="text-[11px] font-black">{exactGood ? "Ja" : "Nee"}</div>
+        </div>
+        <div className={`rounded-lg border px-2 py-1.5 ${outcomeClass}`}>
+          <div className="text-[7px] font-black uppercase opacity-70">Winnaar/gelijk</div>
+          <div className="text-[11px] font-black">
+            {outcomeGood ? "Goed" : "Fout"} - {outcomeName(review.actualOutcome)}
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 function ExpandableMatchMeta({
   match,
   prediction,
@@ -758,9 +808,9 @@ const MatchCard: React.FC<MatchCardProps> = ({ match, prediction, onFavoriteChan
 
   const matchStatus = String(match.status || "").toUpperCase();
   const isHalfTime = matchStatus === "HT";
-  const isLive = matchStatus === "LIVE" || isHalfTime || !!liveMinute;
   const isResultPending = matchStatus === "RESULT_PENDING";
-  const isFinished = matchStatus === "FT" || isResultPending;
+  const isFinished = matchStatus === "FT" || matchStatus === "AET" || matchStatus === "PEN" || isResultPending || matchStatus.includes("FINISH");
+  const isLive = !isFinished && (matchStatus === "LIVE" || isHalfTime || !!liveMinute);
   const weather = match.weather || prediction.weather;
   const h2h = match.h2h || prediction.h2h;
   const aggregate = match.aggregate || prediction.aggregate;
@@ -895,6 +945,8 @@ const MatchCard: React.FC<MatchCardProps> = ({ match, prediction, onFavoriteChan
           </div>
         ))}
       </div>
+
+      <PredictionResultStrip review={review} />
 
       <ScoreMatrix topScores={topScores} />
 

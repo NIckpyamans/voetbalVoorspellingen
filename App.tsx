@@ -56,12 +56,13 @@ function formatAmsterdamDate(date: Date) {
 
 function isLive(match: Match) {
   const status = String(match.status || "").toUpperCase();
-  return status === "LIVE" || status === "HT" || !!(match as any).minute || !!(match as any).minuteValue;
+  if (isFinished(match)) return false;
+  return status === "LIVE" || status === "HT" || !!(match as any).minuteValue;
 }
 
 function isFinished(match: Match) {
   const status = String(match.status || "").toUpperCase();
-  return status === "FT" || status === "RESULT_PENDING" || status.includes("FINISH");
+  return status === "FT" || status === "AET" || status === "PEN" || status === "RESULT_PENDING" || status.includes("FINISH");
 }
 
 function belongsToSelectedDate(match: Match, dateISO: string) {
@@ -191,6 +192,13 @@ const App: React.FC = () => {
   const [favRefresh, setFavRefresh] = useState(0);
   const learnedRef = useRef<Set<string>>(new Set());
 
+  const refreshStandings = useCallback(() => {
+    return fetch(`/api/standings?t=${Date.now()}`, { cache: "no-store" })
+      .then((response) => response.json())
+      .then((data) => setStandings(data.standings || {}))
+      .catch(() => {});
+  }, []);
+
   useEffect(() => {
     const updateTransparency = () => {
       try {
@@ -219,11 +227,10 @@ const App: React.FC = () => {
   }, []);
 
   useEffect(() => {
-    fetch(`/api/standings?t=${Date.now()}`, { cache: "no-store" })
-      .then((response) => response.json())
-      .then((data) => setStandings(data.standings || {}))
-      .catch(() => {});
-  }, []);
+    refreshStandings();
+    const timer = window.setInterval(refreshStandings, selectedDate === todayAmsterdamKey() ? 60_000 : 10 * 60_000);
+    return () => window.clearInterval(timer);
+  }, [refreshStandings, selectedDate]);
 
   useEffect(() => {
     let cancelled = false;
@@ -267,6 +274,9 @@ const App: React.FC = () => {
       setSyncStatus("klaar");
       setWorkerNeeded(!!nextWorkerNeeded);
       if (nextLastRun) setLastRun(nextLastRun);
+      if (nextMatches.some((match) => isLive(match) || isFinished(match))) {
+        refreshStandings();
+      }
 
       for (const match of nextMatches) {
         if (!isFinished(match) || !match.score?.includes("-") || learnedRef.current.has(match.id)) continue;

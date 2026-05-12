@@ -21,9 +21,11 @@ function storageKey(dateISO: string) {
 }
 
 function isLiveMatch(match: any) {
+  const status = String(match?.status || "").toUpperCase();
+  if (["FT", "AET", "PEN", "RESULT_PENDING"].includes(status) || status.includes("FINISH")) return false;
   return (
-    String(match?.status || "").toUpperCase() === "LIVE" ||
-    match?.minute != null ||
+    status === "LIVE" ||
+    status === "HT" ||
     match?.minuteValue != null
   );
 }
