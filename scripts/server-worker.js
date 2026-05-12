@@ -774,18 +774,21 @@ const TEAM_ALIAS_GROUPS = [
   ["dsc arminia bielefeld", "arminia bielefeld", "bielefeld"],
   ["1 fc kaiserslautern", "kaiserslautern"],
   ["sc paderborn 07", "paderborn"],
-  ["paris saint germain", "psg", "paris sg"],
+  ["paris saint germain", "psg", "paris sg", "paris saint-germain"],
   ["internazionale", "inter milan", "inter"],
   ["ac milan", "milan"],
   ["as roma", "roma"],
   ["ss lazio", "lazio"],
   ["fiorentina", "acf fiorentina"],
   ["atletico madrid", "ath madrid", "atletico"],
-  ["athletic club", "athletic bilbao"],
+  ["athletic club", "athletic bilbao", "ath bilbao", "athletic club bilbao"],
+  ["espanyol", "espanol", "rcd espanyol", "espanyol barcelona"],
+  ["barcelona", "fc barcelona", "barca"],
+  ["crystal palace", "crystal palace fc"],
   ["real sociedad", "sociedad"],
   ["real betis", "betis"],
   ["rayo vallecano", "vallecano"],
-  ["celta vigo", "rc celta", "celtavigo"],
+  ["celta vigo", "rc celta", "celtavigo", "celta"],
   ["girona", "girona fc"],
   ["leeds united", "leeds"],
   ["manchester city", "man city"],
@@ -3171,9 +3174,35 @@ function createGeneratedTeamLogo(name) {
   return `data:image/svg+xml;charset=UTF-8,${encodeURIComponent(svg.replace(/\s+/g, " ").trim())}`;
 }
 
-function resolveTeamLogoUrl(team, teamId, teamName) {
-  if (teamId && /^\d+$/.test(String(teamId))) return `https://api.sofascore.app/api/v1/team/${teamId}/image`;
-  if (team?.logoUrl) return team.logoUrl;
+function isEspnDataSource(source) {
+  return /espn/i.test(String(source || ""));
+}
+
+function isSofaScoreDataSource(source) {
+  const text = String(source || "");
+  return /sofascore|sofa-score/i.test(text) && !isEspnDataSource(text);
+}
+
+function isSofaScoreLogoUrl(url) {
+  return /api\.sofascore\.(?:app|com)\/api\/v1\/team\/\d+\/image/i.test(String(url || ""));
+}
+
+function resolveEspnTeamLogoById(teamId) {
+  const id = String(teamId || "").trim();
+  if (!/^\d+$/.test(id)) return "";
+  return `https://a.espncdn.com/i/teamlogos/soccer/500/${id}.png`;
+}
+
+function resolveTeamLogoUrl(team, teamId, teamName, source) {
+  const directLogo = String(team?.logoUrl || team?.logo || team?.logos?.[0]?.href || "").trim();
+  if (directLogo) return directLogo;
+  if (isEspnDataSource(source)) {
+    const espnLogo = resolveEspnTeamLogoById(teamId);
+    if (espnLogo) return espnLogo;
+  }
+  if (isSofaScoreDataSource(source) && teamId && /^\d+$/.test(String(teamId))) {
+    return `https://api.sofascore.app/api/v1/team/${teamId}/image`;
+  }
   return createGeneratedTeamLogo(team?.name || teamName || "Team");
 }
 
@@ -3186,14 +3215,27 @@ async function repairStoredLogos(store) {
         resolveEspnTeamLogoByName(match.homeTeamName),
         resolveEspnTeamLogoByName(match.awayTeamName),
       ]);
-      const homeSofaLogo = match.homeTeamId && /^\d+$/.test(String(match.homeTeamId))
+      const dataSource = String(match.dataSource || match.source || "");
+      const homeCurrentLogo = String(match.homeLogo || "").trim();
+      const awayCurrentLogo = String(match.awayLogo || "").trim();
+      const homeTrustedCurrentLogo = homeCurrentLogo && !(isEspnDataSource(dataSource) && isSofaScoreLogoUrl(homeCurrentLogo))
+        ? homeCurrentLogo
+        : "";
+      const awayTrustedCurrentLogo = awayCurrentLogo && !(isEspnDataSource(dataSource) && isSofaScoreLogoUrl(awayCurrentLogo))
+        ? awayCurrentLogo
+        : "";
+      const homeEspnLogo = isEspnDataSource(dataSource) ? resolveEspnTeamLogoById(match.homeTeamId) : "";
+      const awayEspnLogo = isEspnDataSource(dataSource) ? resolveEspnTeamLogoById(match.awayTeamId) : "";
+      const homeSofaLogo = isSofaScoreDataSource(dataSource) && match.homeTeamId && /^\d+$/.test(String(match.homeTeamId))
         ? `https://api.sofascore.app/api/v1/team/${match.homeTeamId}/image`
         : "";
-      const awaySofaLogo = match.awayTeamId && /^\d+$/.test(String(match.awayTeamId))
+      const awaySofaLogo = isSofaScoreDataSource(dataSource) && match.awayTeamId && /^\d+$/.test(String(match.awayTeamId))
         ? `https://api.sofascore.app/api/v1/team/${match.awayTeamId}/image`
         : "";
-      match.homeLogo = homeSofaLogo || match.homeLogo || homeOfficialLogo || createGeneratedTeamLogo(match.homeTeamName);
-      match.awayLogo = awaySofaLogo || match.awayLogo || awayOfficialLogo || createGeneratedTeamLogo(match.awayTeamName);
+      match.homeLogo =
+        homeEspnLogo || homeOfficialLogo || homeTrustedCurrentLogo || homeSofaLogo || createGeneratedTeamLogo(match.homeTeamName);
+      match.awayLogo =
+        awayEspnLogo || awayOfficialLogo || awayTrustedCurrentLogo || awaySofaLogo || createGeneratedTeamLogo(match.awayTeamName);
     }
   }
 }
@@ -8082,8 +8124,8 @@ async function main() {
         awayTeamId: awayId,
         homeTeamName: homeName,
         awayTeamName: awayName,
-        homeLogo: resolveTeamLogoUrl(event.homeTeam, homeId, homeName),
-        awayLogo: resolveTeamLogoUrl(event.awayTeam, awayId, awayName),
+        homeLogo: resolveTeamLogoUrl(event.homeTeam, homeId, homeName, event.source),
+        awayLogo: resolveTeamLogoUrl(event.awayTeam, awayId, awayName, event.source),
         status: appStatus,
         score,
         homeScore,
