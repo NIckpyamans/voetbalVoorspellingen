@@ -1,4 +1,4 @@
-import { fetchServerStore } from "./_dataSource.js";
+import { fetchDayData, fetchMetaData, fetchServerStore } from "./_dataSource.js";
 import { todayAmsterdamKey } from "../shared/date.js";
 
 function impliedOdds(prob: number | undefined) {
@@ -77,19 +77,48 @@ export default async function handler(req: any, res: any) {
 
   try {
     const date = (req.query?.date as string) || todayAmsterdamKey();
-    const { store, branch } = await fetchServerStore();
-    const predictions: any[] = store.predictions?.[date] || [];
-    const matches: any[] = store.matches?.[date] || [];
-    const matchMap = Object.fromEntries(matches.map((match: any) => [match.id, { ...match, review: store.postMatchReviews?.[match.id] || null }]));
+    let predictions: any[] = [];
+    let matches: any[] = [];
+    let reviews: Record<string, any> = {};
+    let branch = "split-data";
+    let lastRun: number | null = null;
+    let reviewCount = 0;
+
+    try {
+      const [dayResponse, metaResponse] = await Promise.all([
+        fetchDayData(date),
+        fetchMetaData().catch(() => ({ data: {}, branch: "split-data" })),
+      ]);
+      const day = dayResponse.data || {};
+      const meta = metaResponse.data || {};
+      predictions = Array.isArray(day.predictions) ? day.predictions : [];
+      matches = Array.isArray(day.matches) ? day.matches : [];
+      reviews = day.reviews || {};
+      branch = dayResponse.branch || branch;
+      lastRun = day.lastRun || meta.lastRun || null;
+      reviewCount = Number(meta.reviewCount || Object.keys(reviews).length || 0);
+    } catch {
+      const full = await fetchServerStore();
+      const store = full.store || {};
+      branch = full.branch;
+      predictions = store.predictions?.[date] || [];
+      matches = store.matches?.[date] || [];
+      reviews = store.postMatchReviews || {};
+      lastRun = store.lastRun || null;
+      reviewCount = Object.keys(reviews || {}).length;
+    }
+
+    const matchMap = Object.fromEntries(matches.map((match: any) => [match.id, { ...match, review: reviews?.[match.id] || null }]));
+    const splitStore = { postMatchReviews: reviews };
 
     return res.status(200).json({
       date,
-      predictions: predictions.map((prediction) => enrichPrediction(prediction, matchMap, store)),
+      predictions: predictions.map((prediction) => enrichPrediction(prediction, matchMap, splitStore)),
       total: predictions.length,
-      source: predictions.length ? "server-data-v5-review-market" : "none",
+      source: predictions.length ? "server-data-v6-split-review-market" : "none",
       sourceBranch: branch,
-      lastRun: store.lastRun || null,
-      reviewCount: Object.keys(store.postMatchReviews || {}).length,
+      lastRun,
+      reviewCount,
     });
   } catch (err: any) {
     console.error("[predict]", err);

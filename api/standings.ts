@@ -1,4 +1,4 @@
-import { fetchServerStore } from "./_dataSource.js";
+import { fetchStandingsData, fetchServerStore } from "./_dataSource.js";
 
 function buildCupSheetsFromMatches(store: any) {
   const sheets: Record<string, any> = {};
@@ -42,7 +42,19 @@ export default async function handler(req: any, res: any) {
   res.setHeader("Cache-Control", "no-store, max-age=0");
 
   try {
-    const { store, branch } = await fetchServerStore();
+    let store: any;
+    let branch = "split-data";
+
+    try {
+      const response = await fetchStandingsData();
+      store = response.data || {};
+      branch = response.branch || branch;
+    } catch {
+      const full = await fetchServerStore();
+      store = full.store || {};
+      branch = full.branch;
+    }
+
     const cupSheets =
       Object.keys(store.cupSheets || {}).length > 0
         ? store.cupSheets

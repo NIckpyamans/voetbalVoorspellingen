@@ -1,4 +1,4 @@
-import { fetchRepoJson, fetchServerStore } from "./_dataSource.js";
+import { fetchDayData, fetchMetaData, fetchRepoJson, fetchServerStore } from "./_dataSource.js";
 import fs from "fs";
 import path from "path";
 import { addDaysToDateKey, todayAmsterdamKey } from "../shared/date.js";
@@ -27,10 +27,11 @@ function readBiweeklyDigest() {
   }
 }
 
-function attachReview(match: any, store: any) {
+function attachReview(match: any, reviewsOrStore: any) {
+  const reviews = reviewsOrStore?.postMatchReviews || reviewsOrStore?.reviews || reviewsOrStore || {};
   return {
     ...match,
-    review: store.postMatchReviews?.[match.id] || null,
+    review: reviews?.[match.id] || null,
     learningSummary: match.learningSummary || null,
     marketCalibration: match.marketCalibration || null,
   };
@@ -60,6 +61,27 @@ function attachReviewAndNormalize(match: any, store: any) {
   return normalizeServedMatchStatus(attachReview(match, store));
 }
 
+async function readSplitMeta() {
+  try {
+    const { data } = await fetchMetaData();
+    return data || {};
+  } catch {
+    return {};
+  }
+}
+
+async function readSplitDay(dateKey: string) {
+  const { data, branch } = await fetchDayData(dateKey);
+  const day = data || {};
+  return {
+    matches: Array.isArray(day.matches) ? day.matches : [],
+    reviews: day.reviews || {},
+    lastRun: day.lastRun || null,
+    workerVersion: day.workerVersion || "unknown",
+    branch,
+  };
+}
+
 export default async function handler(req: any, res: any) {
   const { date, live, days } = req.query;
   const today = todayAmsterdamKey();
@@ -73,19 +95,31 @@ export default async function handler(req: any, res: any) {
   );
 
   try {
-    const { store, branch } = await fetchServerStore();
-    const lastRun = store.lastRun || null;
     const biweeklyDigest = readBiweeklyDigest();
     const rufloReport = await readRufloReport();
+    const meta = await readSplitMeta();
 
     if (days && typeof days === "string") {
       const numDays = parseInt(days, 10);
       if (!isNaN(numDays) && numDays > 0 && numDays <= 7) {
         const multiDayMatches: any[] = [];
-        for (let i = -Math.floor(numDays / 2); i <= Math.floor(numDays / 2); i++) {
-          const dateStr = addDaysToDateKey(targetDate, i);
-          const dayMatches = (store.matches?.[dateStr] || []).map((match: any) => attachReviewAndNormalize(match, store));
-          multiDayMatches.push(...dayMatches);
+        let sourceBranch = "split-data";
+
+        try {
+          for (let i = -Math.floor(numDays / 2); i <= Math.floor(numDays / 2); i++) {
+            const dateStr = addDaysToDateKey(targetDate, i);
+            const day = await readSplitDay(dateStr);
+            sourceBranch = day.branch || sourceBranch;
+            multiDayMatches.push(...day.matches.map((match: any) => attachReviewAndNormalize(match, day.reviews)));
+          }
+        } catch {
+          const { store, branch } = await fetchServerStore();
+          sourceBranch = branch;
+          for (let i = -Math.floor(numDays / 2); i <= Math.floor(numDays / 2); i++) {
+            const dateStr = addDaysToDateKey(targetDate, i);
+            const dayMatches = (store.matches?.[dateStr] || []).map((match: any) => attachReviewAndNormalize(match, store));
+            multiDayMatches.push(...dayMatches);
+          }
         }
 
         return res.status(200).json({
@@ -94,23 +128,41 @@ export default async function handler(req: any, res: any) {
           total: multiDayMatches.length,
           date: targetDate,
           dateRange: `${numDays} dagen`,
-          lastRun,
-          workerVersion: store.workerVersion || "unknown",
-          reviewCount: Object.keys(store.postMatchReviews || {}).length,
-          teamLearningCount: Object.keys(store.teamLearning || {}).length,
-          aiAdvice: store.aiAdvice || [],
-          featureDiagnostics: store.featureDiagnostics || null,
-          sourceCoverage: store.sourceCoverage || null,
-          dataScout: store.dataScout || null,
+          lastRun: meta.lastRun || null,
+          workerVersion: meta.workerVersion || "unknown",
+          reviewCount: meta.reviewCount || 0,
+          teamLearningCount: meta.teamLearningCount || 0,
+          aiAdvice: meta.aiAdvice || [],
+          featureDiagnostics: meta.featureDiagnostics || null,
+          sourceCoverage: meta.sourceCoverage || null,
+          dataScout: meta.dataScout || null,
           biweeklyDigest,
           rufloReport,
-          sourceBranch: branch,
-          source: "github-worker-v3-multiday",
+          sourceBranch,
+          source: "github-worker-v4-split-multiday",
         });
       }
     }
 
-    const baseMatches = (store.matches?.[targetDate] || []).map((match: any) => attachReviewAndNormalize(match, store));
+    let baseMatches: any[] = [];
+    let lastRun = meta.lastRun || null;
+    let workerVersion = meta.workerVersion || "unknown";
+    let sourceBranch = "split-data";
+
+    try {
+      const day = await readSplitDay(targetDate);
+      baseMatches = day.matches.map((match: any) => attachReviewAndNormalize(match, day.reviews));
+      lastRun = day.lastRun || lastRun;
+      workerVersion = day.workerVersion || workerVersion;
+      sourceBranch = day.branch || sourceBranch;
+    } catch {
+      const { store, branch } = await fetchServerStore();
+      baseMatches = (store.matches?.[targetDate] || []).map((match: any) => attachReviewAndNormalize(match, store));
+      lastRun = store.lastRun || lastRun;
+      workerVersion = store.workerVersion || workerVersion;
+      sourceBranch = branch;
+    }
+
     const matches = live === "true"
       ? baseMatches.filter((m: any) => String(m.status || "").toUpperCase() === "LIVE")
       : baseMatches;
@@ -121,17 +173,17 @@ export default async function handler(req: any, res: any) {
       total: matches.length,
       date: targetDate,
       lastRun,
-      workerVersion: store.workerVersion || "unknown",
-      reviewCount: Object.keys(store.postMatchReviews || {}).length,
-      teamLearningCount: Object.keys(store.teamLearning || {}).length,
-      aiAdvice: store.aiAdvice || [],
-      featureDiagnostics: store.featureDiagnostics || null,
-      sourceCoverage: store.sourceCoverage || null,
-      dataScout: store.dataScout || null,
+      workerVersion,
+      reviewCount: meta.reviewCount || 0,
+      teamLearningCount: meta.teamLearningCount || 0,
+      aiAdvice: meta.aiAdvice || [],
+      featureDiagnostics: meta.featureDiagnostics || null,
+      sourceCoverage: meta.sourceCoverage || null,
+      dataScout: meta.dataScout || null,
       biweeklyDigest,
       rufloReport,
-      sourceBranch: branch,
-      source: matches.length ? "github-worker-v3" : "no-matches-yet",
+      sourceBranch,
+      source: matches.length ? "github-worker-v4-split" : "no-matches-yet",
       message: matches.length ? null : "Nog geen wedstrijden gevonden voor deze dag in de actuele workerdata.",
     });
   } catch (err: any) {

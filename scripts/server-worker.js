@@ -7,6 +7,7 @@ import { normalizeMinute, parseMinuteValue } from "../shared/minute.js";
 const SOFA = "https://api.sofascore.com/api/v1";
 const sofaFetchCircuit = { blocked: false, failures: 0, logged: false };
 const DATA_FILE = path.resolve(process.cwd(), "server_data.json");
+const SPLIT_DATA_DIR = path.resolve(process.cwd(), "data");
 const TRAINING_SNAPSHOT_FILE = path.resolve(process.cwd(), "training", "training-snapshot.json");
 
 const LEAGUES = [
@@ -36,6 +37,74 @@ const LEAGUES = [
 
 const sleep = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
 const clamp = (value, min, max) => Math.max(min, Math.min(max, value));
+
+function writeJsonFile(filePath, data) {
+  fs.mkdirSync(path.dirname(filePath), { recursive: true });
+  fs.writeFileSync(filePath, JSON.stringify(data));
+}
+
+function pickReviewsForMatches(store, matches) {
+  const reviews = {};
+  for (const match of matches || []) {
+    if (store.postMatchReviews?.[match.id]) {
+      reviews[match.id] = store.postMatchReviews[match.id];
+    }
+  }
+  return reviews;
+}
+
+function buildSplitMeta(store) {
+  return {
+    lastRun: store.lastRun || null,
+    workerVersion: store.workerVersion || "unknown",
+    dates: Object.keys(store.matches || {}).sort(),
+    reviewCount: Object.keys(store.postMatchReviews || {}).length,
+    teamLearningCount: Object.keys(store.teamLearning || {}).length,
+    aiAdvice: store.aiAdvice || [],
+    featureDiagnostics: store.featureDiagnostics || null,
+    sourceCoverage: store.sourceCoverage || null,
+    dataScout: store.dataScout || null,
+    topExactScoreMonitor: store.topExactScoreMonitor || null,
+    topExactClubs: store.topExactClubs || null,
+  };
+}
+
+function writeSplitDataFiles(store) {
+  const daysDir = path.join(SPLIT_DATA_DIR, "days");
+  fs.mkdirSync(daysDir, { recursive: true });
+
+  for (const dateKey of Object.keys(store.matches || {})) {
+    const matches = store.matches?.[dateKey] || [];
+    writeJsonFile(path.join(daysDir, `${dateKey}.json`), {
+      date: dateKey,
+      matches,
+      predictions: store.predictions?.[dateKey] || [],
+      reviews: pickReviewsForMatches(store, matches),
+      lastRun: store.lastRun || null,
+      workerVersion: store.workerVersion || "unknown",
+    });
+  }
+
+  writeJsonFile(path.join(SPLIT_DATA_DIR, "meta.json"), buildSplitMeta(store));
+  writeJsonFile(path.join(SPLIT_DATA_DIR, "standings.json"), {
+    standings: store.standings || {},
+    knockoutOverview: store.knockoutOverview || {},
+    cupSheets: store.cupSheets || {},
+    lastRun: store.lastRun || null,
+    workerVersion: store.workerVersion || "unknown",
+    reviewCount: Object.keys(store.postMatchReviews || {}).length,
+    teamLearningCount: Object.keys(store.teamLearning || {}).length,
+  });
+  writeJsonFile(path.join(SPLIT_DATA_DIR, "history-summary.json"), {
+    postMatchReviews: store.postMatchReviews || {},
+    teamLearning: store.teamLearning || {},
+    leagueReliability: store.leagueReliability || {},
+    phaseReliability: store.phaseReliability || {},
+    topExactScoreMonitor: store.topExactScoreMonitor || null,
+    topExactClubs: store.topExactClubs || null,
+    lastRun: store.lastRun || null,
+  });
+}
 
 function toAmsterdamDateKey(dateLike) {
   const date = dateLike instanceof Date ? dateLike : new Date(dateLike);
@@ -8499,6 +8568,7 @@ async function main() {
   
   fs.mkdirSync(path.dirname(TRAINING_SNAPSHOT_FILE), { recursive: true });
   fs.writeFileSync(TRAINING_SNAPSHOT_FILE, JSON.stringify(buildTrainingSnapshot(store)));
+  writeSplitDataFiles(store);
   fs.writeFileSync(DATA_FILE, JSON.stringify(store));
   console.log("[worker] klaar");
 }
