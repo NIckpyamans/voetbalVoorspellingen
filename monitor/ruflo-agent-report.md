@@ -1,17 +1,17 @@
 # Ruflo-style AI monitor
 
-Datum: 2026-05-13
+Datum: 2026-05-14
 
 Ruflo draait als extra agentlaag naast de app: hij leest monitor/data/reviews, zoekt gratis oplossingen en maakt patchadvies zonder blind live te wijzigen.
 
 ## Agents
-- Data: Datalaag: H2H 100%, bookmakers 100%, refs 0%.
-- Leren: Leerlaag: 478 reviews, exact 12%, winnaar/gelijk 40%, top-5 exact 14%.
-- Controle: Ontwikkelcontrole: 1 actieve monitorissues op 2026-05-13; digest 2026-04-28 t/m 2026-05-11.
+- Data: Datalaag: H2H 67%, bookmakers 100%, refs 0%.
+- Leren: Leerlaag: 486 reviews, exact 12%, winnaar/gelijk 39%, top-5 exact 12%.
+- Controle: Ontwikkelcontrole: 0 actieve monitorissues op 2026-05-14; digest 2026-04-28 t/m 2026-05-11.
 
 ## Gratis acties
 1. [high] Faalsignaal aanpakken: open_lineups (learning) - Laat dit signaal terugkomen als penalty in confidence en als uitleg in de matchkaart.
-2. [medium] Logo fallback lijkt niet actief. (control) - Gebruik bestaande gratis workerdata en maak een reviewbranch-voorstel in plaats van blind live wijzigen.
+2. [medium] H2H-backfill verder vullen (data) - Gebruik openfootball en football-data rows per competitie als historische H2H fallback voordat de UI 'leeg' toont.
 
 ## Guardrails
 - Geen betaalde API key verplicht maken.
