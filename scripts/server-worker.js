@@ -70,11 +70,31 @@ function trimScoreMatrix(scoreMatrix, limit = MAX_SCORE_MATRIX_ENTRIES) {
   );
 }
 
+function compactMonteCarlo(monteCarlo) {
+  if (!monteCarlo || typeof monteCarlo !== "object") return null;
+  return {
+    active: !!monteCarlo.active,
+    simulations: Number(monteCarlo.simulations || 0),
+    weight: monteCarlo.weight != null ? Number(monteCarlo.weight) : null,
+    homeProb: monteCarlo.homeProb != null ? Number(monteCarlo.homeProb) : null,
+    drawProb: monteCarlo.drawProb != null ? Number(monteCarlo.drawProb) : null,
+    awayProb: monteCarlo.awayProb != null ? Number(monteCarlo.awayProb) : null,
+    bttsProb: monteCarlo.bttsProb != null ? Number(monteCarlo.bttsProb) : null,
+    over25Prob: monteCarlo.over25Prob != null ? Number(monteCarlo.over25Prob) : null,
+    under25Prob: monteCarlo.under25Prob != null ? Number(monteCarlo.under25Prob) : null,
+    topScore: monteCarlo.topScore || null,
+    topScoreProb: monteCarlo.topScoreProb != null ? Number(monteCarlo.topScoreProb) : null,
+    agreement: monteCarlo.agreement != null ? Number(monteCarlo.agreement) : null,
+    scoreMatrix: trimScoreMatrix(monteCarlo.scoreMatrix, 8),
+  };
+}
+
 function compactPredictionEntry(prediction, historical = false) {
   if (!prediction || typeof prediction !== "object") return prediction;
   const compact = {
     ...prediction,
     scoreMatrix: trimScoreMatrix(prediction.scoreMatrix),
+    ...(prediction.monteCarlo ? { monteCarlo: compactMonteCarlo(prediction.monteCarlo) } : {}),
   };
 
   if (historical) {
@@ -87,9 +107,11 @@ function compactPredictionEntry(prediction, historical = false) {
         blendModel: compact.ensembleMeta.blendModel,
         blendWeightBase: compact.ensembleMeta.blendWeightBase,
         blendWeightHeuristic: compact.ensembleMeta.blendWeightHeuristic,
+        blendWeightMonteCarlo: compact.ensembleMeta.blendWeightMonteCarlo,
         agreement: compact.ensembleMeta.agreement,
         baseProbabilities: compact.ensembleMeta.baseProbabilities,
         heuristicProbabilities: compact.ensembleMeta.heuristicProbabilities,
+        monteCarloProbabilities: compact.ensembleMeta.monteCarloProbabilities,
       };
     }
   }
@@ -165,6 +187,8 @@ const HISTORY_KEEP_DAYS_FORWARD = 14;
 const MAX_REVIEWS = 2500;
 const MAX_SCORE_MATRIX_ENTRIES = 10;
 const MAX_EVENT_CACHE = 300;
+const MONTE_CARLO_RUNS = 10000;
+const MONTE_CARLO_WEIGHT = 0.14;
 const MAX_H2H_CACHE = 500;
 const MAX_WEATHER_CACHE = 220;
 const MAX_MARKET_PROFILES = 64;
@@ -671,6 +695,133 @@ function dixonColesAdjustment(h, a, homeXG, awayXG, rho = -0.13) {
   if (h === 1 && a === 0) return 1 + awayXG * rho;
   if (h === 1 && a === 1) return 1 - rho;
   return 1;
+}
+
+function hashSeed(value) {
+  let hash = 2166136261;
+  for (const char of String(value || "")) {
+    hash ^= char.charCodeAt(0);
+    hash = Math.imul(hash, 16777619);
+  }
+  return hash >>> 0;
+}
+
+function seededRandom(seed) {
+  let state = seed >>> 0;
+  return () => {
+    state += 0x6d2b79f5;
+    let t = state;
+    t = Math.imul(t ^ (t >>> 15), t | 1);
+    t ^= t + Math.imul(t ^ (t >>> 7), t | 61);
+    return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
+  };
+}
+
+function samplePoisson(lambda, random) {
+  const safeLambda = clamp(Number(lambda || 0), 0.05, 7);
+  const threshold = Math.exp(-safeLambda);
+  let product = 1;
+  let goals = 0;
+
+  do {
+    goals += 1;
+    product *= random();
+  } while (product > threshold && goals < 10);
+
+  return Math.max(0, goals - 1);
+}
+
+function normalizeTriple(model) {
+  const homeProb = Math.max(0, Number(model?.homeProb || 0));
+  const drawProb = Math.max(0, Number(model?.drawProb || 0));
+  const awayProb = Math.max(0, Number(model?.awayProb || 0));
+  const total = homeProb + drawProb + awayProb || 1;
+  return {
+    homeProb: homeProb / total,
+    drawProb: drawProb / total,
+    awayProb: awayProb / total,
+  };
+}
+
+function blendTriple(base, extra, extraWeight) {
+  const safeBase = normalizeTriple(base);
+  const safeExtra = normalizeTriple(extra);
+  const weight = clamp(Number(extraWeight || 0), 0, 0.5);
+  return normalizeTriple({
+    homeProb: safeBase.homeProb * (1 - weight) + safeExtra.homeProb * weight,
+    drawProb: safeBase.drawProb * (1 - weight) + safeExtra.drawProb * weight,
+    awayProb: safeBase.awayProb * (1 - weight) + safeExtra.awayProb * weight,
+  });
+}
+
+function blendScoreMatrices(baseMatrix, simulationMatrix, simulationWeight = MONTE_CARLO_WEIGHT) {
+  const weight = clamp(Number(simulationWeight || 0), 0, 0.5);
+  const keys = new Set([
+    ...Object.keys(baseMatrix || {}),
+    ...Object.keys(simulationMatrix || {}),
+  ]);
+  const combined = {};
+  for (const key of keys) {
+    const value =
+      Number(baseMatrix?.[key] || 0) * (1 - weight) +
+      Number(simulationMatrix?.[key] || 0) * weight;
+    if (value > 0.004) combined[key] = Number(value.toFixed(4));
+  }
+  return combined;
+}
+
+function runMonteCarloSimulation({ homeXG, awayXG, seed, runs = MONTE_CARLO_RUNS }) {
+  const random = seededRandom(seed);
+  const scoreCounts = {};
+  let homeWins = 0;
+  let draws = 0;
+  let awayWins = 0;
+  let btts = 0;
+  let over25 = 0;
+  let over35 = 0;
+
+  for (let i = 0; i < runs; i += 1) {
+    const homeGoals = samplePoisson(homeXG, random);
+    const awayGoals = samplePoisson(awayXG, random);
+    const key = `${homeGoals}-${awayGoals}`;
+    scoreCounts[key] = (scoreCounts[key] || 0) + 1;
+
+    if (homeGoals > awayGoals) homeWins += 1;
+    else if (homeGoals === awayGoals) draws += 1;
+    else awayWins += 1;
+
+    if (homeGoals > 0 && awayGoals > 0) btts += 1;
+    if (homeGoals + awayGoals > 2.5) over25 += 1;
+    if (homeGoals + awayGoals > 3.5) over35 += 1;
+  }
+
+  const scoreMatrix = {};
+  let topScore = "1-1";
+  let topScoreCount = 0;
+  for (const [score, count] of Object.entries(scoreCounts)) {
+    const probability = Number((Number(count || 0) / runs).toFixed(4));
+    if (probability > 0.004) scoreMatrix[score] = probability;
+    if (Number(count || 0) > topScoreCount) {
+      topScore = score;
+      topScoreCount = Number(count || 0);
+    }
+  }
+
+  return {
+    active: true,
+    simulations: runs,
+    seed,
+    homeProb: Number((homeWins / runs).toFixed(4)),
+    drawProb: Number((draws / runs).toFixed(4)),
+    awayProb: Number((awayWins / runs).toFixed(4)),
+    bttsProb: Number((btts / runs).toFixed(4)),
+    over25Prob: Number((over25 / runs).toFixed(4)),
+    over35Prob: Number((over35 / runs).toFixed(4)),
+    under25Prob: Number((1 - over25 / runs).toFixed(4)),
+    topScore,
+    topScoreProb: Number((topScoreCount / runs).toFixed(4)),
+    scoreMatrix,
+  };
 }
 
 function parseMinuteFromDescription(description) {
@@ -1843,7 +1994,7 @@ function buildTrainingSnapshot(store) {
 
   return {
     generatedAt: new Date().toISOString(),
-    version: "v7-ref-market-league",
+    version: "v8-monte-carlo",
     reviewCount: Object.keys(store.postMatchReviews || {}).length,
     rows,
   };
@@ -6855,11 +7006,35 @@ function predict(input) {
   const featureVector = buildFeatureVector(input);
   const heuristicModel = buildHeuristicEnsemble(featureVector);
   const baseModel = { homeProb, drawProb, awayProb };
-  const blended = blendProbabilities(
+  const preSimulationBlend = blendProbabilities(
     baseModel,
     heuristicModel,
     0.78
   );
+  const monteCarloSeed = hashSeed([
+    input.homeTeamId,
+    input.awayTeamId,
+    input.homeTeamName,
+    input.awayTeamName,
+    input.leagueType,
+    homeXG.toFixed(3),
+    awayXG.toFixed(3),
+  ].join("|"));
+  const monteCarlo = runMonteCarloSimulation({
+    homeXG,
+    awayXG,
+    seed: monteCarloSeed,
+    runs: MONTE_CARLO_RUNS,
+  });
+  const blended = blendTriple(preSimulationBlend, monteCarlo, MONTE_CARLO_WEIGHT);
+  const combinedScoreMatrix = blendScoreMatrices(scoreMatrix, monteCarlo.scoreMatrix, MONTE_CARLO_WEIGHT);
+  const bestCombinedScore = Object.entries(combinedScoreMatrix)
+    .sort((a, b) => Number(b[1] || 0) - Number(a[1] || 0))[0] || [bestScore, bestProb];
+  bestScore = bestCombinedScore[0];
+  bestProb = Number(bestCombinedScore[1] || bestProb || 0);
+  const monteCarloAgreement = calcModelAgreement(preSimulationBlend, monteCarlo);
+  monteCarlo.weight = MONTE_CARLO_WEIGHT;
+  monteCarlo.agreement = monteCarloAgreement;
   const outcomeEntries = [
     { key: "home", prob: blended.homeProb },
     { key: "draw", prob: blended.drawProb },
@@ -6964,10 +7139,11 @@ function predict(input) {
     exactProb: Number(selectedExactProb.toFixed(4)),
     confidence: Number(adjustedConfidence.toFixed(3)),
     over15: Number(over15.toFixed(3)),
-    over25: Number(over25.toFixed(3)),
-    over35: Number(over35.toFixed(3)),
-    btts: Number(btts.toFixed(3)),
-    scoreMatrix,
+    over25: Number((over25 * (1 - MONTE_CARLO_WEIGHT) + monteCarlo.over25Prob * MONTE_CARLO_WEIGHT).toFixed(3)),
+    over35: Number((over35 * (1 - MONTE_CARLO_WEIGHT) + monteCarlo.over35Prob * MONTE_CARLO_WEIGHT).toFixed(3)),
+    btts: Number((btts * (1 - MONTE_CARLO_WEIGHT) + monteCarlo.bttsProb * MONTE_CARLO_WEIGHT).toFixed(3)),
+    scoreMatrix: combinedScoreMatrix,
+    monteCarlo: compactMonteCarlo(monteCarlo),
     modelEdges: {
       rest: input.homeRestDays != null && input.awayRestDays != null
         ? Number((Number(input.homeRestDays) - Number(input.awayRestDays)).toFixed(1))
@@ -6990,17 +7166,19 @@ function predict(input) {
         selectedScore,
         reason:
           dominantOutcome.key !== bestScoreOutcome
-            ? `hoogste exacte scorematrix-kans; 1X2 neigt naar ${dominantOutcome.key === "home" ? "thuiswinst" : dominantOutcome.key === "away" ? "uitwinst" : "gelijkspel"}`
-            : "hoogste exacte scorematrix-kans",
+            ? `hoogste exacte scorematrix-kans inclusief Monte Carlo; 1X2 neigt naar ${dominantOutcome.key === "home" ? "thuiswinst" : dominantOutcome.key === "away" ? "uitwinst" : "gelijkspel"}`
+            : "hoogste exacte scorematrix-kans inclusief Monte Carlo",
         outcomeEdge,
       },
       clubEloDiff: homeClubElo > 0 && awayClubElo > 0 ? Math.round(homeClubElo - awayClubElo) : null,
       stakes: input.context?.summary || null,
       matchImportance: input.matchImportance || 1,
       modelAgreement,
+      monteCarloAgreement,
       modelAgreementPenalty: Number(modelAgreementPenalty.toFixed(3)),
       modelWarnings: [
         ...(modelAgreement < 0.55 ? ["low_model_agreement"] : []),
+        ...(monteCarloAgreement < 0.55 ? ["monte_carlo_disagreement"] : []),
         ...(bookmakerSignals.length === 0 ? ["market_signals_missing"] : []),
       ],
       riskProfile,
@@ -7010,9 +7188,10 @@ function predict(input) {
     ensembleMeta: {
       active: true,
       baseModel: "dixon-coles-poisson",
-      blendModel: "heuristic-form-elo",
-      blendWeightBase: 0.78,
+      blendModel: "heuristic-form-elo+monte-carlo",
+      blendWeightBase: Number((0.78 * (1 - MONTE_CARLO_WEIGHT)).toFixed(3)),
       blendWeightHeuristic: 0.22,
+      blendWeightMonteCarlo: MONTE_CARLO_WEIGHT,
       trainingReady: true,
       suggestedNextModel: "CatBoost or LightGBM",
       baseProbabilities: {
@@ -7021,6 +7200,14 @@ function predict(input) {
         awayProb: Number(baseModel.awayProb.toFixed(4)),
       },
       heuristicProbabilities: heuristicModel,
+      monteCarloProbabilities: {
+        homeProb: monteCarlo.homeProb,
+        drawProb: monteCarlo.drawProb,
+        awayProb: monteCarlo.awayProb,
+        topScore: monteCarlo.topScore,
+        topScoreProb: monteCarlo.topScoreProb,
+        simulations: monteCarlo.simulations,
+      },
       agreement: modelAgreement,
     },
     matchImportance: input.matchImportance || 1,
@@ -8166,6 +8353,8 @@ async function main() {
         roundLabel,
         context,
         modelEdges: prediction.modelEdges,
+        monteCarlo: prediction.monteCarlo,
+        ensembleMeta: prediction.ensembleMeta,
       };
 
       dayMatches.push(match);
@@ -8197,6 +8386,7 @@ async function main() {
         matchImportance,
         featureVector: prediction.featureVector,
         ensembleMeta: prediction.ensembleMeta,
+        monteCarlo: prediction.monteCarlo,
         ...prediction,
       });
 

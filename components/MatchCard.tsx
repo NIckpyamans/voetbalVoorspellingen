@@ -568,6 +568,48 @@ function ScoreMatrix({ topScores }: { topScores: any[] }) {
   );
 }
 
+function MonteCarloPanel({ monteCarlo }: { monteCarlo: any }) {
+  if (!monteCarlo?.active) return null;
+
+  const pct = (value: any) => (value == null ? "-" : `${Math.round(Number(value || 0) * 100)}%`);
+  const simulations = Number(monteCarlo.simulations || 10000).toLocaleString("nl-NL");
+
+  return (
+    <div className="mb-2 rounded-xl border border-cyan-300/15 bg-cyan-950/20 p-2 shadow-[0_0_24px_rgba(34,211,238,0.08)]">
+      <div className="mb-1.5 flex items-center justify-between gap-2">
+        <div>
+          <div className="text-[7px] font-black uppercase text-cyan-300">Monte Carlo simulatie</div>
+          <div className="text-[8px] text-slate-400">{simulations} runs, meegewogen in score en 1X2</div>
+        </div>
+        <div className="rounded-full bg-cyan-400/15 px-2 py-0.5 text-[8px] font-black text-cyan-100">
+          {pct(monteCarlo.weight)} gewicht
+        </div>
+      </div>
+
+      <div className="grid grid-cols-3 gap-1.5">
+        <div className="rounded-lg bg-slate-950/45 px-2 py-1">
+          <div className="text-[7px] uppercase text-slate-500">Topscore</div>
+          <div className="text-[10px] font-black text-white">
+            {monteCarlo.topScore || "-"} <span className="text-cyan-200">{pct(monteCarlo.topScoreProb)}</span>
+          </div>
+        </div>
+        <div className="rounded-lg bg-slate-950/45 px-2 py-1">
+          <div className="text-[7px] uppercase text-slate-500">1X2 simulatie</div>
+          <div className="text-[10px] font-black text-white">
+            {pct(monteCarlo.homeProb)} / {pct(monteCarlo.drawProb)} / {pct(monteCarlo.awayProb)}
+          </div>
+        </div>
+        <div className="rounded-lg bg-slate-950/45 px-2 py-1">
+          <div className="text-[7px] uppercase text-slate-500">Goals</div>
+          <div className="text-[10px] font-black text-white">
+            BTTS {pct(monteCarlo.bttsProb)} · O2.5 {pct(monteCarlo.over25Prob)}
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 function outcomeName(code?: string) {
   if (code === "H") return "Thuis";
   if (code === "A") return "Uit";
@@ -819,6 +861,7 @@ const MatchCard: React.FC<MatchCardProps> = ({ match, prediction, onFavoriteChan
   const topScores = Object.entries(prediction.scoreMatrix || {})
     .sort((a: any, b: any) => b[1] - a[1])
     .slice(0, 6);
+  const monteCarlo = prediction.monteCarlo || (match as any).monteCarlo;
   const confidenceBase = prediction.confidence ?? Math.max(prediction.homeProb || 0, prediction.drawProb || 0, prediction.awayProb || 0);
   const confidencePct = Math.max(0, Math.min(99, Math.round((confidenceBase || 0) * 100)));
   const review = match.review || prediction.review || null;
@@ -949,6 +992,7 @@ const MatchCard: React.FC<MatchCardProps> = ({ match, prediction, onFavoriteChan
       <PredictionResultStrip review={review} />
 
       <ScoreMatrix topScores={topScores} />
+      <MonteCarloPanel monteCarlo={monteCarlo} />
 
       <div className="mb-2">
         <KeySignals match={match} prediction={prediction} />

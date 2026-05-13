@@ -3,6 +3,22 @@
 // Alle mogelijke velden voor wedstrijden en voorspellingen
 // ============================================================================
 
+export interface MonteCarloSimulation {
+  active?: boolean;
+  simulations?: number;
+  weight?: number | null;
+  homeProb?: number | null;
+  drawProb?: number | null;
+  awayProb?: number | null;
+  bttsProb?: number | null;
+  over25Prob?: number | null;
+  under25Prob?: number | null;
+  topScore?: string | null;
+  topScoreProb?: number | null;
+  agreement?: number | null;
+  scoreMatrix?: Record<string, number>;
+}
+
 export interface Match {
   // ========================================
   // BASIS WEDSTRIJD INFORMATIE
@@ -578,6 +594,7 @@ export interface Match {
       [key: string]: number;
     };
   };
+  monteCarlo?: MonteCarloSimulation | null;
   
   // ========================================
   // BETTING & MARKET DATA (OPTIONEEL)
@@ -686,6 +703,7 @@ export interface Prediction {
   awayTeamProfile?: any;
   featureVector?: any;
   ensembleMeta?: any;
+  monteCarlo?: MonteCarloSimulation | null;
   marketCalibration?: any;
   learningSummary?: any;
   review?: any;

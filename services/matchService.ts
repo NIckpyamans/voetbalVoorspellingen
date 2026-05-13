@@ -213,6 +213,7 @@ function mapRawMatch(m: any): Match {
     // ========================================
     ...(m.featureVector ? { featureVector: m.featureVector } : {}),
     ...(m.ensembleMeta ? { ensembleMeta: m.ensembleMeta } : {}),
+    ...(m.monteCarlo ? { monteCarlo: m.monteCarlo } : {}),
     
     // ========================================
     // BETTING DATA (OPTIONEEL)
@@ -326,6 +327,7 @@ export async function fetchMatchesAndPredictions(
         ...(rawMatch.marketCalibration ? { marketCalibration: rawMatch.marketCalibration } : {}),
         ...(rawMatch.review ? { review: rawMatch.review } : {}),
         ...(rawMatch.ensembleMeta ? { ensembleMeta: rawMatch.ensembleMeta } : {}),
+        ...(rawMatch.monteCarlo ? { monteCarlo: rawMatch.monteCarlo } : {}),
         ...(rawMatch.homeForm ? { homeForm: rawMatch.homeForm } : {}),
         ...(rawMatch.awayForm ? { awayForm: rawMatch.awayForm } : {}),
         ...(rawMatch.bestBetRank != null ? { bestBetRank: rawMatch.bestBetRank } : {}),
