@@ -33,7 +33,20 @@ function readJsonSafe(filePath, fallback) {
 
 function writeJson(filePath, value) {
   ensureDir(filePath);
-  fs.writeFileSync(filePath, JSON.stringify(value, null, 2));
+  const payload = JSON.stringify(value, null, 2);
+  let lastError = null;
+
+  for (let attempt = 0; attempt < 5; attempt += 1) {
+    try {
+      fs.writeFileSync(filePath, payload);
+      return;
+    } catch (error) {
+      lastError = error;
+      Atomics.wait(new Int32Array(new SharedArrayBuffer(4)), 0, 0, 150);
+    }
+  }
+
+  throw lastError;
 }
 
 function readText(filePath) {
