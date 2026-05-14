@@ -106,6 +106,9 @@ export function buildSystemHealth(mode = "health") {
       reviewCount: Number(meta?.reviewCount || 0),
       teamLearningCount: Number(meta?.teamLearningCount || 0),
       sourceCoverage: meta?.sourceCoverage || null,
+      modelPerformance: meta?.modelPerformance || null,
+      backtestSummary: meta?.backtestSummary || null,
+      anomalyReport: meta?.anomalyReport || null,
     },
     cache: {
       ttlMs: Number(process.env.DATA_CACHE_TTL_MS || 60_000),
@@ -116,6 +119,12 @@ export function buildSystemHealth(mode = "health") {
     externalSources: sourceStatus(meta),
     checks,
     issues,
+    warnings: {
+      dataQuality:
+        Number(meta?.anomalyReport?.criticalCount || 0) > 0
+          ? `${Number(meta?.anomalyReport?.criticalCount || 0)} kritische datakwaliteit-groep(en), zie anomalyReport.`
+          : null,
+    },
   };
 }
 

@@ -18,6 +18,9 @@ const SettingsView: React.FC = () => {
   const [featureDiagnostics, setFeatureDiagnostics] = useState<any | null>(null);
   const [sourceCoverage, setSourceCoverage] = useState<any | null>(null);
   const [dataScout, setDataScout] = useState<any | null>(null);
+  const [modelPerformance, setModelPerformance] = useState<any | null>(null);
+  const [backtestSummary, setBacktestSummary] = useState<any | null>(null);
+  const [anomalyReport, setAnomalyReport] = useState<any | null>(null);
   const [manualAdvice, setManualAdvice] = useState("");
   const [glassTransparency, setGlassTransparency] = useState(46);
 
@@ -51,6 +54,9 @@ const SettingsView: React.FC = () => {
         if (data.featureDiagnostics) setFeatureDiagnostics(data.featureDiagnostics);
         if (data.sourceCoverage) setSourceCoverage(data.sourceCoverage);
         if (data.dataScout) setDataScout(data.dataScout);
+        if (data.modelPerformance) setModelPerformance(data.modelPerformance);
+        if (data.backtestSummary) setBacktestSummary(data.backtestSummary);
+        if (data.anomalyReport) setAnomalyReport(data.anomalyReport);
       })
       .catch(() => {});
 
@@ -640,6 +646,112 @@ const SettingsView: React.FC = () => {
           <div><span className="font-black text-white">Referee-history:</span> historische kaarten- en penaltydata van scheidsrechters wordt waar mogelijk direct in de heuristiek gebruikt, met competitie-specifieke alias-cache.</div>
           <div><span className="font-black text-white">Bookmakerlaag:</span> closing-odds worden niet meer alleen samengesteld bekeken, maar ook per bookmaker gewogen in de calibratie.</div>
           <div><span className="font-black text-white">Reviewbranch generator:</span> dagelijkse monitorbevindingen worden automatisch samengevat in een patchvoorstel, zodat verbeteringen sneller maar veilig doorgezet kunnen worden.</div>
+        </div>
+      </div>
+
+      <div className="glass-card rounded-2xl border border-blue-500/10 p-5 bg-blue-950/5">
+        <div className="text-[10px] font-black text-blue-300 uppercase mb-3">Zelflerende modelcontrole</div>
+        {modelPerformance ? (
+          <div className="space-y-3">
+            <div className="text-[11px] text-slate-300">{modelPerformance.summary}</div>
+            <div className="grid grid-cols-2 md:grid-cols-5 gap-2">
+              {[
+                { label: "Reviews", value: modelPerformance.overall?.matches || 0 },
+                { label: "Score exact", value: `${Math.round(Number(modelPerformance.overall?.exactHitRate || 0) * 100)}%` },
+                { label: "Winnaar/gelijk", value: `${Math.round(Number(modelPerformance.overall?.outcomeHitRate || 0) * 100)}%` },
+                { label: "BTTS", value: `${Math.round(Number(modelPerformance.overall?.bttsHitRate || 0) * 100)}%` },
+                { label: "Over 2.5", value: `${Math.round(Number(modelPerformance.overall?.over25HitRate || 0) * 100)}%` },
+              ].map((item) => (
+                <div key={item.label} className="rounded-xl border border-white/5 bg-slate-950/35 px-3 py-2">
+                  <div className="text-[8px] font-black text-slate-500 uppercase">{item.label}</div>
+                  <div className="text-[15px] font-black text-white mt-1">{item.value}</div>
+                </div>
+              ))}
+            </div>
+            <div className="grid md:grid-cols-2 gap-3">
+              <div className="rounded-xl border border-white/5 bg-slate-900/30 p-3">
+                <div className="text-[10px] font-black text-slate-400 uppercase mb-2">Confidence kalibratie</div>
+                <div className="space-y-2">
+                  {(modelPerformance.confidenceBuckets || []).map((bucket: any) => (
+                    <div key={bucket.key} className="flex items-center justify-between gap-3 text-[10px]">
+                      <span className="text-slate-300">{bucket.key}</span>
+                      <span className="font-black text-white">
+                        {Math.round(Number(bucket.outcomeHitRate || 0) * 100)}% uitkomst, fout {bucket.avgGoalError}
+                      </span>
+                    </div>
+                  ))}
+                </div>
+              </div>
+              <div className="rounded-xl border border-white/5 bg-slate-900/30 p-3">
+                <div className="text-[10px] font-black text-slate-400 uppercase mb-2">Competities met meeste aandacht</div>
+                <div className="space-y-2">
+                  {(modelPerformance.weakestLeagues || []).slice(0, 5).map((league: any) => (
+                    <div key={league.key} className="text-[10px]">
+                      <div className="flex items-center justify-between gap-3">
+                        <span className="text-slate-300">{league.key}</span>
+                        <span className="font-black text-white">{Math.round(Number(league.outcomeHitRate || 0) * 100)}%</span>
+                      </div>
+                      <div className="text-[9px] text-slate-500">Reviews {league.matches}, foutmarge {league.avgGoalError}</div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            </div>
+          </div>
+        ) : (
+          <div className="text-[11px] text-slate-500">Modelcontrole verschijnt na de volgende worker-run.</div>
+        )}
+      </div>
+
+      <div className="glass-card rounded-2xl border border-amber-500/10 p-5 bg-amber-950/5">
+        <div className="text-[10px] font-black text-amber-300 uppercase mb-3">Backtest en datakwaliteit</div>
+        <div className="grid md:grid-cols-2 gap-3">
+          <div className="rounded-xl border border-white/5 bg-slate-900/30 p-3">
+            <div className="text-[11px] font-black text-white mb-1">Backtest uit opgeslagen reviews</div>
+            <div className="text-[10px] text-slate-400 mb-3">
+              {backtestSummary?.summary || "Nog geen backtestsamenvatting beschikbaar."}
+            </div>
+            <div className="space-y-2">
+              {(backtestSummary?.strategies || []).slice(0, 4).map((strategy: any) => (
+                <div key={strategy.key} className="flex items-center justify-between gap-3 text-[10px]">
+                  <span className="text-slate-300">{strategy.key}</span>
+                  <span className="font-black text-white">
+                    {Math.round(Number(strategy.outcomeHitRate || 0) * 100)}% / exact {Math.round(Number(strategy.exactHitRate || 0) * 100)}%
+                  </span>
+                </div>
+              ))}
+            </div>
+          </div>
+          <div className="rounded-xl border border-white/5 bg-slate-900/30 p-3">
+            <div className="flex items-center justify-between gap-3 mb-1">
+              <div className="text-[11px] font-black text-white">Anomaly-detectie</div>
+              <span className={`text-[8px] font-black px-2 py-0.5 rounded-full ${
+                Number(anomalyReport?.criticalCount || 0) > 0
+                  ? "bg-red-900/30 text-red-300"
+                  : "bg-green-900/30 text-green-300"
+              }`}>
+                {Number(anomalyReport?.criticalCount || 0)} kritisch
+              </span>
+            </div>
+            <div className="text-[10px] text-slate-400 mb-3">
+              {anomalyReport?.summary || "Nog geen datacontrole beschikbaar."}
+            </div>
+            <div className="space-y-2 max-h-48 overflow-y-auto pr-1">
+              {(anomalyReport?.anomalies || []).slice(0, 6).map((item: any) => (
+                <div key={item.type} className="rounded-lg border border-white/5 bg-slate-950/30 px-3 py-2">
+                  <div className="flex items-center justify-between gap-3">
+                    <div className="text-[10px] font-black text-white">{item.type}</div>
+                    <span className={`text-[8px] font-black px-2 py-0.5 rounded-full ${
+                      item.severity === "high" ? "bg-red-900/30 text-red-300" : item.severity === "medium" ? "bg-amber-900/30 text-amber-300" : "bg-slate-800 text-slate-300"
+                    }`}>
+                      {item.severity}
+                    </span>
+                  </div>
+                  <div className="text-[9px] text-slate-400 mt-1">{item.message}</div>
+                </div>
+              ))}
+            </div>
+          </div>
         </div>
       </div>
 

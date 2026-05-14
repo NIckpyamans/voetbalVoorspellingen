@@ -39,6 +39,15 @@ function mapServerReview(review: any) {
     topConfidencePick: !!review.topConfidencePick,
     topExactScorePick: !!review.topExactScorePick,
     topExactReasons: Array.isArray(review.topExactReasons) ? review.topExactReasons : [],
+    predictedBtts: review.predictedBtts ?? null,
+    actualBtts: review.actualBtts ?? null,
+    bttsHit: review.bttsHit ?? null,
+    predictedOver25: review.predictedOver25 ?? null,
+    actualOver25: review.actualOver25 ?? null,
+    over25Hit: review.over25Hit ?? null,
+    modelName: review.modelName || null,
+    modelAgreement: Number(review.modelAgreement || 0),
+    riskProfile: review.riskProfile || null,
   };
 }
 

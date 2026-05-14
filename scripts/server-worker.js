@@ -64,6 +64,9 @@ function buildSplitMeta(store) {
     featureDiagnostics: store.featureDiagnostics || null,
     sourceCoverage: store.sourceCoverage || null,
     dataScout: store.dataScout || null,
+    modelPerformance: store.modelPerformance || null,
+    backtestSummary: store.backtestSummary || null,
+    anomalyReport: store.anomalyReport || null,
     topExactScoreMonitor: store.topExactScoreMonitor || null,
     topExactClubs: store.topExactClubs || null,
   };
@@ -100,6 +103,9 @@ function writeSplitDataFiles(store) {
     teamLearning: store.teamLearning || {},
     leagueReliability: store.leagueReliability || {},
     phaseReliability: store.phaseReliability || {},
+    modelPerformance: store.modelPerformance || null,
+    backtestSummary: store.backtestSummary || null,
+    anomalyReport: store.anomalyReport || null,
     topExactScoreMonitor: store.topExactScoreMonitor || null,
     topExactClubs: store.topExactClubs || null,
     lastRun: store.lastRun || null,
@@ -4628,6 +4634,14 @@ function buildPostMatchReview(match, prediction) {
   const probabilityOutcome = getPredictedOutcome(prediction);
   const actualOutcome = outcomeFromGoals(actualHomeGoals, actualAwayGoals);
   const totalGoalError = Math.abs(predHomeGoals - actualHomeGoals) + Math.abs(predAwayGoals - actualAwayGoals);
+  const predictedTotalGoals = predHomeGoals + predAwayGoals;
+  const actualTotalGoals = actualHomeGoals + actualAwayGoals;
+  const predictedBtts =
+    prediction?.btts != null ? Number(prediction.btts) >= 0.5 : predHomeGoals > 0 && predAwayGoals > 0;
+  const actualBtts = actualHomeGoals > 0 && actualAwayGoals > 0;
+  const predictedOver25 =
+    prediction?.over25 != null ? Number(prediction.over25) >= 0.5 : predictedTotalGoals >= 3;
+  const actualOver25 = actualTotalGoals >= 3;
   const totalGoalBias = Number(
     ((actualHomeGoals + actualAwayGoals) - (predHomeGoals + predAwayGoals)).toFixed(2)
   );
@@ -4658,6 +4672,17 @@ function buildPostMatchReview(match, prediction) {
     predictedOutcome,
     probabilityOutcome,
     actualOutcome,
+    predictedBtts,
+    actualBtts,
+    bttsHit: predictedBtts === actualBtts,
+    predictedOver25,
+    actualOver25,
+    over25Hit: predictedOver25 === actualOver25,
+    predictedTotalGoals,
+    actualTotalGoals,
+    modelName: prediction?.modelEdges?.model || prediction?.modelEdges?.modelName || prediction?.modelLabel || "ensemble",
+    riskProfile: prediction?.modelEdges?.riskProfile || prediction?.riskProfile || "unknown",
+    modelAgreement: Number(prediction?.modelEdges?.modelAgreement || 0),
     confidence: Number(prediction.confidence || 0),
     exactScoreConfidence: Number(prediction.exactScoreConfidence || prediction.exactProb || 0),
     outcomeHit: predictedOutcome === actualOutcome,
@@ -4774,6 +4799,8 @@ function rebuildReviewsAndLearning(store) {
   store.leagueReliability = buildLeagueReliabilityFromReviews(reviews);
   store.phaseReliability = buildPhaseReliabilityFromReviews(reviews);
   store.featureDiagnostics = buildFeatureDiagnosticsFromReviews(reviews);
+  store.modelPerformance = buildModelPerformanceFromReviews(reviews);
+  store.backtestSummary = buildBacktestSummaryFromReviews(reviews);
 }
 
 function buildExactScoreTipScore(prediction, match) {
@@ -6166,6 +6193,183 @@ function buildFeatureDiagnosticsFromReviews(reviews) {
   };
 }
 
+function hitRate(hits, total) {
+  return Number((Number(hits || 0) / Math.max(Number(total || 0), 1)).toFixed(3));
+}
+
+function summarizeReviewGroup(key, reviews) {
+  const items = reviews || [];
+  const matches = items.length;
+  const exactHits = items.filter((item) => item.exactHit).length;
+  const outcomeHits = items.filter((item) => item.outcomeHit).length;
+  const probabilityHits = items.filter((item) => item.probabilityOutcomeHit).length;
+  const bttsReviews = items.filter((item) => item.bttsHit != null);
+  const over25Reviews = items.filter((item) => item.over25Hit != null);
+  const totalGoalError = items.reduce((sum, item) => sum + Number(item.totalGoalError || 0), 0);
+  const confidence = items.reduce((sum, item) => sum + Number(item.confidence || 0), 0);
+  const modelAgreement = items.reduce((sum, item) => sum + Number(item.modelAgreement || 0), 0);
+  return {
+    key,
+    matches,
+    exactHitRate: hitRate(exactHits, matches),
+    outcomeHitRate: hitRate(outcomeHits, matches),
+    probabilityOutcomeHitRate: hitRate(probabilityHits, matches),
+    bttsHitRate: hitRate(bttsReviews.filter((item) => item.bttsHit).length, bttsReviews.length),
+    over25HitRate: hitRate(over25Reviews.filter((item) => item.over25Hit).length, over25Reviews.length),
+    avgGoalError: Number((totalGoalError / Math.max(matches, 1)).toFixed(2)),
+    avgConfidence: Number((confidence / Math.max(matches, 1)).toFixed(2)),
+    avgModelAgreement: Number((modelAgreement / Math.max(matches, 1)).toFixed(2)),
+  };
+}
+
+function groupReviewsBy(items, getKey) {
+  const groups = {};
+  for (const item of items || []) {
+    const key = String(getKey(item) || "unknown");
+    if (!groups[key]) groups[key] = [];
+    groups[key].push(item);
+  }
+  return groups;
+}
+
+function buildModelPerformanceFromReviews(reviews) {
+  const items = Object.values(reviews || {});
+  const byLeague = Object.entries(groupReviewsBy(items, (item) => item.league))
+    .map(([key, group]) => summarizeReviewGroup(key, group))
+    .sort((a, b) => b.matches - a.matches || b.outcomeHitRate - a.outcomeHitRate);
+  const byPhase = Object.entries(groupReviewsBy(items, (item) => item.phaseBucket))
+    .map(([key, group]) => summarizeReviewGroup(key, group))
+    .sort((a, b) => b.matches - a.matches || b.outcomeHitRate - a.outcomeHitRate);
+  const byModel = Object.entries(groupReviewsBy(items, (item) => item.modelName || "ensemble"))
+    .map(([key, group]) => summarizeReviewGroup(key, group))
+    .sort((a, b) => b.matches - a.matches || b.outcomeHitRate - a.outcomeHitRate);
+  const confidenceBuckets = Object.entries(
+    groupReviewsBy(items, (item) => {
+      const confidence = Number(item.confidence || 0);
+      if (confidence >= 0.68) return "hoog";
+      if (confidence >= 0.52) return "gemiddeld";
+      return "laag";
+    })
+  )
+    .map(([key, group]) => summarizeReviewGroup(key, group))
+    .sort((a, b) => ({ hoog: 0, gemiddeld: 1, laag: 2 }[a.key] - { hoog: 0, gemiddeld: 1, laag: 2 }[b.key]));
+
+  const overall = summarizeReviewGroup("overall", items);
+  return {
+    generatedAt: new Date().toISOString(),
+    overall,
+    byLeague: byLeague.slice(0, 24),
+    byPhase,
+    byModel,
+    confidenceBuckets,
+    weakestLeagues: byLeague
+      .filter((item) => item.matches >= 5)
+      .sort((a, b) => a.outcomeHitRate - b.outcomeHitRate || b.avgGoalError - a.avgGoalError)
+      .slice(0, 8),
+    summary:
+      items.length > 0
+        ? `Modelperformance: ${Math.round(overall.outcomeHitRate * 100)}% winnaar/gelijk, ${Math.round(overall.exactHitRate * 100)}% exacte score, BTTS ${Math.round(overall.bttsHitRate * 100)}%, over 2.5 ${Math.round(overall.over25HitRate * 100)}%.`
+        : "Nog geen modelperformance beschikbaar.",
+  };
+}
+
+function buildBacktestSummaryFromReviews(reviews) {
+  const items = Object.values(reviews || {});
+  const byMonth = Object.entries(
+    groupReviewsBy(items, (item) => String(item.date || "").slice(0, 7) || "unknown")
+  )
+    .map(([key, group]) => summarizeReviewGroup(key, group))
+    .sort((a, b) => String(b.key).localeCompare(String(a.key)));
+  const topExactPicks = items.filter((item) => item.topExactScorePick);
+  const nonTopExactPicks = items.filter((item) => !item.topExactScorePick);
+  const highConfidence = items.filter((item) => Number(item.confidence || 0) >= 0.68);
+  const lowConfidence = items.filter((item) => Number(item.confidence || 0) < 0.52);
+  return {
+    generatedAt: new Date().toISOString(),
+    windows: byMonth.slice(0, 18),
+    strategies: [
+      summarizeReviewGroup("top-5 exact-score picks", topExactPicks),
+      summarizeReviewGroup("overige voorspellingen", nonTopExactPicks),
+      summarizeReviewGroup("hoog vertrouwen", highConfidence),
+      summarizeReviewGroup("laag vertrouwen", lowConfidence),
+    ],
+    summary:
+      items.length > 0
+        ? `Backtest uit opgeslagen reviews: ${items.length} wedstrijden, laatste venster ${byMonth[0]?.key || "onbekend"}.`
+        : "Nog geen backtestdata beschikbaar.",
+  };
+}
+
+function buildDataAnomalyReport(store, todayKey) {
+  const anomalies = [];
+  const seen = new Set();
+  const todayMs = Date.parse(`${todayKey}T12:00:00Z`);
+  const allMatches = Object.entries(store.matches || {}).flatMap(([date, matches]) =>
+    (matches || []).map((match) => ({ ...match, _dateKey: date }))
+  );
+
+  const add = (type, severity, message, sample) => {
+    anomalies.push({ type, severity, message, sample: (sample || []).slice(0, 8) });
+  };
+
+  const duplicateSample = [];
+  const missingPastScores = [];
+  const missingPredictions = [];
+  const missingH2h = [];
+  const missingLogos = [];
+  const unrealisticScores = [];
+
+  const predictionIds = new Set(
+    Object.values(store.predictions || {})
+      .flatMap((items) => (Array.isArray(items) ? items : []))
+      .map((prediction) => prediction?.matchId)
+      .filter(Boolean)
+  );
+
+  for (const match of allMatches) {
+    const key = `${match._dateKey}|${normalizeName(match.league)}|${normalizeName(match.homeTeamName)}|${normalizeName(match.awayTeamName)}`;
+    if (seen.has(key)) duplicateSample.push(`${match._dateKey}: ${match.homeTeamName} - ${match.awayTeamName}`);
+    seen.add(key);
+
+    const kickoffMs = Date.parse(match.kickoff || match.date || `${match._dateKey}T12:00:00Z`);
+    const isPast = Number.isFinite(kickoffMs) && kickoffMs < todayMs - 3 * 60 * 60 * 1000;
+    const status = String(match.status || "").toUpperCase();
+    const hasScore = String(match.score || "").includes("-");
+    if (isPast && !hasScore && status !== "POSTPONED" && status !== "CANCELLED") {
+      missingPastScores.push(`${match._dateKey}: ${match.homeTeamName} - ${match.awayTeamName}`);
+    }
+    if (!predictionIds.has(match.id)) missingPredictions.push(`${match._dateKey}: ${match.homeTeamName} - ${match.awayTeamName}`);
+    if (!match.h2h?.played) missingH2h.push(`${match._dateKey}: ${match.homeTeamName} - ${match.awayTeamName}`);
+    if (!match.homeLogo || !match.awayLogo) missingLogos.push(`${match._dateKey}: ${match.homeTeamName} - ${match.awayTeamName}`);
+    if (hasScore) {
+      const [home, away] = String(match.score).split("-").map(Number);
+      if (!Number.isFinite(home) || !Number.isFinite(away) || home > 12 || away > 12) {
+        unrealisticScores.push(`${match._dateKey}: ${match.homeTeamName} - ${match.awayTeamName} (${match.score})`);
+      }
+    }
+  }
+
+  if (duplicateSample.length) add("duplicates", "medium", `${duplicateSample.length} mogelijke dubbele wedstrijd(en).`, duplicateSample);
+  if (missingPastScores.length) add("missing_past_scores", "high", `${missingPastScores.length} gespeelde wedstrijd(en) missen nog eindstand.`, missingPastScores);
+  if (missingPredictions.length) add("missing_predictions", "medium", `${missingPredictions.length} wedstrijd(en) missen voorspelling.`, missingPredictions);
+  if (missingH2h.length) add("missing_h2h", "low", `${missingH2h.length} wedstrijd(en) missen H2H-historie.`, missingH2h);
+  if (missingLogos.length) add("missing_logos", "low", `${missingLogos.length} wedstrijd(en) missen minimaal een logo.`, missingLogos);
+  if (unrealisticScores.length) add("unrealistic_scores", "high", `${unrealisticScores.length} score(s) lijken onrealistisch of corrupt.`, unrealisticScores);
+
+  const criticalCount = anomalies.filter((item) => item.severity === "high").length;
+  return {
+    generatedAt: new Date().toISOString(),
+    totalMatches: allMatches.length,
+    totalAnomalies: anomalies.length,
+    criticalCount,
+    anomalies,
+    summary:
+      anomalies.length > 0
+        ? `Datacontrole: ${anomalies.length} issuegroep(en), ${criticalCount} kritisch.`
+        : "Datacontrole: geen opvallende anomalieën gevonden.",
+  };
+}
+
 function buildLeagueReliabilityEdge(input) {
   const reliability = input.leagueReliability || null;
   if (!reliability) {
@@ -7372,9 +7576,12 @@ function defaultStore() {
     featureDiagnostics: null,
     sourceCoverage: null,
     dataScout: null,
+    modelPerformance: null,
+    backtestSummary: null,
+    anomalyReport: null,
     aiAdvice: [],
     lastRun: null,
-    workerVersion: "v18-score-data-scout",
+    workerVersion: "v19-intelligence-layer",
   };
 }
 
@@ -7772,6 +7979,36 @@ function buildAiRecommendations(store, todayKey) {
       summary: `FBref verrijkt ${Math.round(Number(sourceCoverage.fbrefCoverage || 0) * 100)}% van de actuele speeldag.`,
       action: "Houd FBref via release-snapshots draaien en gebruik de shot/splitvelden als correctielaag wanneer live teamstats dun zijn.",
       priority: "low",
+    });
+  }
+
+  const performance = store.modelPerformance || null;
+  if (performance?.overall?.matches) {
+    if (Number(performance.overall.bttsHitRate || 0) < 0.48) {
+      issues.push({
+        title: "BTTS-model kalibreren",
+        summary: `BTTS-hitrate staat op ${Math.round(Number(performance.overall.bttsHitRate || 0) * 100)}% over ${performance.overall.matches} reviews.`,
+        action: "Laat BTTS zwaarder steunen op beide-teams-scoren trend, schotdruk en clean-sheet/fail-to-score splits.",
+        priority: "medium",
+      });
+    }
+    if (Number(performance.overall.over25HitRate || 0) < 0.5) {
+      issues.push({
+        title: "Over/under model bewaken",
+        summary: `Over 2.5-hitrate staat op ${Math.round(Number(performance.overall.over25HitRate || 0) * 100)}%.`,
+        action: "Gebruik xG, tempo, referee en markt-totalen nog strakker voor doelpuntverwachting.",
+        priority: "medium",
+      });
+    }
+  }
+
+  const anomalyReport = store.anomalyReport || null;
+  if (Number(anomalyReport?.criticalCount || 0) > 0) {
+    issues.push({
+      title: "Datakwaliteit kritisch",
+      summary: `${anomalyReport.criticalCount} kritische anomaly-groep(en) gevonden.`,
+      action: "Los eerst ontbrekende eindstanden of corrupte scores op voordat modelwegingen opnieuw worden aangescherpt.",
+      priority: "high",
     });
   }
 
@@ -8556,9 +8793,10 @@ async function main() {
   rebuildReviewsAndLearning(store);
   store.sourceCoverage = buildSourceCoverage(store, today);
   store.dataScout = buildDataScoutReport(store, today);
+  store.anomalyReport = buildDataAnomalyReport(store, today);
   store.aiAdvice = buildAiRecommendations(store, today);
   store.lastRun = Date.now();
-  store.workerVersion = "v18-score-data-scout";
+  store.workerVersion = "v19-intelligence-layer";
   
   // Log summary
   const totalMatches = Object.values(store.matches || {}).flat().length;
