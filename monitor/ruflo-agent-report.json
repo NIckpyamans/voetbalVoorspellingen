@@ -1,14 +1,14 @@
 {
-  "generatedAt": "2026-05-13T23:31:59.024Z",
-  "date": "2026-05-14",
+  "generatedAt": "2026-05-14T23:12:34.278Z",
+  "date": "2026-05-15",
   "name": "Ruflo-style gratis AI monitor",
   "mode": "naast-productie",
   "productionSafe": true,
   "summary": "Ruflo draait als extra agentlaag naast de app: hij leest monitor/data/reviews, zoekt gratis oplossingen en maakt patchadvies zonder blind live te wijzigen.",
   "agents": {
     "data": {
-      "score": 73,
-      "summary": "Datalaag: H2H 67%, bookmakers 100%, refs 0%.",
+      "score": 53,
+      "summary": "Datalaag: H2H 100%, bookmakers 100%, refs 0%.",
       "freeSources": [
         {
           "name": "SofaScore public endpoint",
@@ -60,31 +60,20 @@
           "use": "Niet live scrapen op iedere run; alleen gecachte snapshots gebruiken."
         }
       ],
-      "actions": [
-        {
-          "priority": "medium",
-          "title": "H2H-backfill verder vullen",
-          "freeSolution": "Gebruik openfootball en football-data rows per competitie als historische H2H fallback voordat de UI 'leeg' toont.",
-          "files": [
-            "scripts/server-worker.js",
-            "components/MatchCard.tsx"
-          ],
-          "status": "aanbevolen"
-        }
-      ]
+      "actions": []
     },
     "learning": {
       "score": 12,
-      "summary": "Leerlaag: 486 reviews, exact 12%, winnaar/gelijk 39%, top-5 exact 12%.",
+      "summary": "Leerlaag: 490 reviews, exact 12%, winnaar/gelijk 40%, top-5 exact 16%.",
       "topConfidence": {
-        "matches": 69,
-        "exactHitRate": 0.116,
-        "outcomeHitRate": 0.348,
-        "probabilityOutcomeHitRate": 0.58,
-        "avgGoalError": 1.77,
-        "rank1ExactHitRate": 0.059,
-        "rank1OutcomeHitRate": 0.176,
-        "versusOverallOutcomeDelta": -0.043
+        "matches": 74,
+        "exactHitRate": 0.162,
+        "outcomeHitRate": 0.392,
+        "probabilityOutcomeHitRate": 0.581,
+        "avgGoalError": 1.64,
+        "rank1ExactHitRate": 0.111,
+        "rank1OutcomeHitRate": 0.222,
+        "versusOverallOutcomeDelta": -0.004
       },
       "topClubs": [
         {
@@ -96,6 +85,13 @@
         },
         {
           "teamName": "Manchester City",
+          "reviewedMatches": 2,
+          "exactHitRate": 1,
+          "outcomeHitRate": 1,
+          "avgGoalError": 0
+        },
+        {
+          "teamName": "Real Oviedo",
           "reviewedMatches": 2,
           "exactHitRate": 1,
           "outcomeHitRate": 1,
@@ -149,13 +145,6 @@
           "exactHitRate": 0.5,
           "outcomeHitRate": 0.5,
           "avgGoalError": 0.5
-        },
-        {
-          "teamName": "Estoril",
-          "reviewedMatches": 2,
-          "exactHitRate": 0.5,
-          "outcomeHitRate": 0.5,
-          "avgGoalError": 0.5
         }
       ],
       "actions": [
@@ -173,8 +162,8 @@
     },
     "control": {
       "score": 100,
-      "summary": "Ontwikkelcontrole: 0 actieve monitorissues op 2026-05-14; digest 2026-04-28 t/m 2026-05-11.",
-      "latestDay": "2026-05-14",
+      "summary": "Ontwikkelcontrole: 0 actieve monitorissues op 2026-05-15; digest 2026-04-28 t/m 2026-05-11.",
+      "latestDay": "2026-05-15",
       "shouldPropose": false,
       "actions": []
     }
@@ -186,14 +175,6 @@
       "priority": "high",
       "agents": [
         "learning"
-      ]
-    },
-    {
-      "title": "H2H-backfill verder vullen",
-      "count": 1,
-      "priority": "medium",
-      "agents": [
-        "data"
       ]
     }
   ],
@@ -208,17 +189,6 @@
       ],
       "status": "reviewactie",
       "agent": "learning"
-    },
-    {
-      "priority": "medium",
-      "title": "H2H-backfill verder vullen",
-      "freeSolution": "Gebruik openfootball en football-data rows per competitie als historische H2H fallback voordat de UI 'leeg' toont.",
-      "files": [
-        "scripts/server-worker.js",
-        "components/MatchCard.tsx"
-      ],
-      "status": "aanbevolen",
-      "agent": "data"
     }
   ],
   "freeOnlyGuardrails": [
