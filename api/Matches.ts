@@ -2,6 +2,9 @@ import { fetchDayData, fetchMetaData, fetchRepoJson, fetchServerStore } from "./
 import fs from "fs";
 import path from "path";
 import { addDaysToDateKey, todayAmsterdamKey } from "../shared/date.js";
+import { createLogger, getErrorDetails } from "../shared/logger.js";
+
+const logger = createLogger("api.matches");
 
 async function readRufloReport() {
   try {
@@ -83,6 +86,7 @@ async function readSplitDay(dateKey: string) {
 }
 
 export default async function handler(req: any, res: any) {
+  const started = Date.now();
   const { date, live, days } = req.query;
   const today = todayAmsterdamKey();
   const targetDate = typeof date === "string" && date ? date : today;
@@ -123,6 +127,7 @@ export default async function handler(req: any, res: any) {
         }
 
         return res.status(200).json({
+          ok: true,
           matches: multiDayMatches,
           events: multiDayMatches,
           total: multiDayMatches.length,
@@ -140,6 +145,7 @@ export default async function handler(req: any, res: any) {
           rufloReport,
           sourceBranch,
           source: "github-worker-v4-split-multiday",
+          durationMs: Date.now() - started,
         });
       }
     }
@@ -168,6 +174,7 @@ export default async function handler(req: any, res: any) {
       : baseMatches;
 
     return res.status(200).json({
+      ok: true,
       matches,
       events: matches,
       total: matches.length,
@@ -185,14 +192,18 @@ export default async function handler(req: any, res: any) {
       sourceBranch,
       source: matches.length ? "github-worker-v4-split" : "no-matches-yet",
       message: matches.length ? null : "Nog geen wedstrijden gevonden voor deze dag in de actuele workerdata.",
+      durationMs: Date.now() - started,
     });
   } catch (err: any) {
-    console.error("[Matches]", err);
+    logger.error("matches_failed", { targetDate, live, days, durationMs: Date.now() - started, error: getErrorDetails(err) });
     return res.status(200).json({
+      ok: false,
       matches: [],
       events: [],
       lastRun: null,
+      workerNeeded: true,
       error: err?.message || "Unknown error",
+      durationMs: Date.now() - started,
     });
   }
 }

@@ -266,6 +266,9 @@ export async function fetchMatchesAndPredictions(
     const res = await fetch(`/api/matches?date=${dateISO}`, { signal, cache: "no-store" });
     if (!res.ok) throw new Error(`API ${res.status}`);
     const json = await res.json();
+    if (json?.ok === false) {
+      throw new Error(json.error || "Wedstrijddata tijdelijk niet beschikbaar");
+    }
 
     const lastRun: number | null = json.lastRun || null;
     const rawMatches: any[] = json.matches || json.events || [];
@@ -273,6 +276,9 @@ export async function fetchMatchesAndPredictions(
     // Fetch predictions
     const predRes = await fetch(`/api/predict?date=${dateISO}`, { signal, cache: "no-store" });
     const predJson = predRes.ok ? await predRes.json() : { predictions: [] };
+    if (predJson?.ok === false) {
+      console.warn("[matchService] predict endpoint gaf een fout terug", predJson.error || predJson);
+    }
     const rawPredictions: any[] = predJson.predictions || [];
 
     // Als er geen data is
@@ -350,11 +356,11 @@ export async function fetchMatchesAndPredictions(
     
   } catch (err) {
     console.error("[matchService]", err);
-    return { 
-      matches: [], 
-      predictions: {}, 
-      lastRun: null, 
-      workerNeeded: false 
+    return {
+      matches: [],
+      predictions: {},
+      lastRun: null,
+      workerNeeded: true
     };
   }
 }

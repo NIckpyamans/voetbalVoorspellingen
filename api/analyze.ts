@@ -1,6 +1,13 @@
+import { fetchWithRetry } from "../shared/http.js";
+import { createLogger, getErrorDetails } from "../shared/logger.js";
+
 const MAX_ANALYZE_BODY_CHARS = 40_000;
 const MAX_PROMPT_CHARS = 6_000;
 const MAX_AI_OUTPUT_CHARS = 900;
+const RATE_LIMIT_WINDOW_MS = 60_000;
+const RATE_LIMIT_MAX = Number(process.env.ANALYZE_RATE_LIMIT_PER_MINUTE || 18);
+const analyzeHits = new Map<string, number[]>();
+const logger = createLogger("api.analyze");
 
 function cleanText(value: any, max = 160) {
   return String(value ?? "")
@@ -125,13 +132,24 @@ function buildTemplateAnalysis(match: any, prediction: any) {
   return `${favorite} met ${homeProb}%-${drawProb}%-${awayProb}% en een verwacht scorebeeld van ${prediction.predHomeGoals}-${prediction.predAwayGoals} op basis van ${homeXG}-${awayXG} xG. Belangrijkste signalen: ${signalText}. Tip: ${tip}.`;
 }
 
+function getClientKey(req: any) {
+  const forwarded = String(req.headers?.["x-forwarded-for"] || "").split(",")[0].trim();
+  return forwarded || String(req.socket?.remoteAddress || "local");
+}
+
+function isRateLimited(req: any) {
+  const key = getClientKey(req);
+  const now = Date.now();
+  const recent = (analyzeHits.get(key) || []).filter((ts) => now - ts < RATE_LIMIT_WINDOW_MS);
+  recent.push(now);
+  analyzeHits.set(key, recent);
+  return recent.length > RATE_LIMIT_MAX;
+}
+
 async function tryOllama(prompt: string) {
-  const controller = new AbortController();
-  const timeout = setTimeout(() => controller.abort(), 4500);
   try {
-    const response = await fetch("http://127.0.0.1:11434/api/generate", {
+    const response = await fetchWithRetry("http://127.0.0.1:11434/api/generate", {
       method: "POST",
-      signal: controller.signal,
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
         model: process.env.OLLAMA_MODEL || "gpt-oss:20b",
@@ -139,13 +157,12 @@ async function tryOllama(prompt: string) {
         stream: false,
         options: { temperature: 0.25 },
       }),
-    });
-    clearTimeout(timeout);
+    }, { retries: 1, timeoutMs: 4_500, event: "analyze.ollama" });
     if (!response.ok) return null;
     const data = await response.json();
     return normalizeAiOutput(data?.response);
-  } catch {
-    clearTimeout(timeout);
+  } catch (error) {
+    logger.warning("ollama_unavailable", { error: getErrorDetails(error) });
     return null;
   }
 }
@@ -158,6 +175,10 @@ export default async function handler(req: any, res: any) {
 
   if (req.method === "OPTIONS") return res.status(200).end();
   if (req.method !== "POST") return res.status(405).json({ error: "Alleen POST" });
+  if (isRateLimited(req)) {
+    logger.warning("rate_limited", { client: getClientKey(req) });
+    return res.status(429).json({ error: "Te veel analyse-aanvragen kort achter elkaar" });
+  }
 
   try {
     const bodySize = Buffer.byteLength(JSON.stringify(req.body || {}), "utf8");
@@ -235,7 +256,11 @@ Regels:
       matchId: match.id,
     });
   } catch (err: any) {
-    console.error("[analyze]", err);
-    return res.status(200).json({ analysis: null, error: err?.message || "Unknown error" });
+    logger.error("analysis_failed", { error: getErrorDetails(err) });
+    return res.status(200).json({
+      ok: false,
+      analysis: null,
+      error: "Analyse tijdelijk niet beschikbaar; template fallback kan opnieuw worden geprobeerd.",
+    });
   }
 }

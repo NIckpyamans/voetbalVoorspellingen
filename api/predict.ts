@@ -1,5 +1,8 @@
 import { fetchDayData, fetchMetaData, fetchServerStore } from "./_dataSource.js";
 import { todayAmsterdamKey } from "../shared/date.js";
+import { createLogger, getErrorDetails } from "../shared/logger.js";
+
+const logger = createLogger("api.predict");
 
 function impliedOdds(prob: number | undefined) {
   const p = Number(prob || 0);
@@ -71,6 +74,7 @@ function enrichPrediction(prediction: any, matchMap: Record<string, any>, store:
 }
 
 export default async function handler(req: any, res: any) {
+  const started = Date.now();
   res.setHeader("Access-Control-Allow-Origin", "*");
   res.setHeader("Access-Control-Allow-Methods", "GET");
   res.setHeader("Cache-Control", "no-store");
@@ -112,6 +116,7 @@ export default async function handler(req: any, res: any) {
     const splitStore = { postMatchReviews: reviews };
 
     return res.status(200).json({
+      ok: true,
       date,
       predictions: predictions.map((prediction) => enrichPrediction(prediction, matchMap, splitStore)),
       total: predictions.length,
@@ -119,10 +124,11 @@ export default async function handler(req: any, res: any) {
       sourceBranch: branch,
       lastRun,
       reviewCount,
+      durationMs: Date.now() - started,
     });
   } catch (err: any) {
-    console.error("[predict]", err);
-    return res.status(500).json({ error: err?.message || "unknown" });
+    logger.error("predict_failed", { durationMs: Date.now() - started, error: getErrorDetails(err) });
+    return res.status(500).json({ ok: false, error: err?.message || "unknown", durationMs: Date.now() - started });
   }
 }
 

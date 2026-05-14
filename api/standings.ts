@@ -1,4 +1,7 @@
 import { fetchStandingsData, fetchServerStore } from "./_dataSource.js";
+import { createLogger, getErrorDetails } from "../shared/logger.js";
+
+const logger = createLogger("api.standings");
 
 function buildCupSheetsFromMatches(store: any) {
   const sheets: Record<string, any> = {};
@@ -38,6 +41,7 @@ function buildCupSheetsFromMatches(store: any) {
 }
 
 export default async function handler(req: any, res: any) {
+  const started = Date.now();
   res.setHeader("Access-Control-Allow-Origin", "*");
   res.setHeader("Cache-Control", "no-store, max-age=0");
 
@@ -61,6 +65,7 @@ export default async function handler(req: any, res: any) {
         : buildCupSheetsFromMatches(store);
 
     return res.status(200).json({
+      ok: true,
       standings: store.standings || {},
       knockoutOverview: store.knockoutOverview || {},
       cupSheets,
@@ -69,13 +74,17 @@ export default async function handler(req: any, res: any) {
       reviewCount: Object.keys(store.postMatchReviews || {}).length,
       teamLearningCount: Object.keys(store.teamLearning || {}).length,
       sourceBranch: branch,
+      durationMs: Date.now() - started,
     });
   } catch (err: any) {
+    logger.error("standings_failed", { durationMs: Date.now() - started, error: getErrorDetails(err) });
     return res.status(200).json({
+      ok: false,
       standings: {},
       knockoutOverview: {},
       cupSheets: {},
       error: err?.message || "Unknown error",
+      durationMs: Date.now() - started,
     });
   }
 }

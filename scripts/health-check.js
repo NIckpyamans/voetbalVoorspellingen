@@ -16,6 +16,11 @@ const FILES = {
   minuteHelper: path.join(ROOT, "shared", "minute.js"),
   logo: path.join(ROOT, "api", "logo.ts"),
   standings: path.join(ROOT, "api", "standings.ts"),
+  health: path.join(ROOT, "api", "health.ts"),
+  status: path.join(ROOT, "api", "status.ts"),
+  systemCheck: path.join(ROOT, "api", "system-check.ts"),
+  logger: path.join(ROOT, "shared", "logger.js"),
+  http: path.join(ROOT, "shared", "http.js"),
 };
 
 function ensureDir(filePath) {
@@ -210,6 +215,8 @@ function collectCodeChecks() {
   const matchServiceText = readText(FILES.matchService);
   const minuteHelperText = readText(FILES.minuteHelper);
   const logoText = readText(FILES.logo);
+  const loggerText = readText(FILES.logger);
+  const httpText = readText(FILES.http);
 
   if (!appText.includes("belongsToSelectedDate")) {
     pushIssue(issues, "date_filter_missing", "high", "Dashboard mist een expliciete dagfilterfunctie.");
@@ -241,6 +248,18 @@ function collectCodeChecks() {
 
   if (!logoText.includes("/api/logo") && !matchCardText.includes("/api/logo?id=")) {
     pushIssue(issues, "logo_fallback_missing", "medium", "Logo fallback lijkt niet actief.");
+  }
+
+  if (!loggerText.includes("createLogger")) {
+    pushIssue(issues, "structured_logging_missing", "medium", "Gedeelde structured logger ontbreekt.");
+  }
+
+  if (!httpText.includes("fetchWithRetry")) {
+    pushIssue(issues, "retry_helper_missing", "medium", "Gedeelde retry-helper ontbreekt.");
+  }
+
+  if (!readText(FILES.health).includes("sendSystemHealth") || !readText(FILES.systemCheck).includes("sendSystemHealth")) {
+    pushIssue(issues, "health_endpoints_missing", "high", "Health/status/system-check endpoints ontbreken of zijn niet gekoppeld.");
   }
 
   const parserHits = [matchCardText, livePanelText, matchServiceText]

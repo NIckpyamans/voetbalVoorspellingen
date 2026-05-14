@@ -1,5 +1,10 @@
+import { fetchWithRetry } from "../shared/http.js";
+import { createLogger, getErrorDetails } from "../shared/logger.js";
+
 const REPO_RAW_BASE = "https://raw.githubusercontent.com/NIckpyamans/voetbalVoorspellingen";
 const DATA_CACHE_TTL_MS = Number(process.env.DATA_CACHE_TTL_MS || 60_000);
+const logger = createLogger("api.data-source");
+const CACHE_BUST_RAW_DATA = process.env.DATA_CACHE_BUST === "true";
 
 type CachedJson = {
   ts: number;
@@ -63,6 +68,10 @@ function urlsForBranch(branch: string) {
     : [`${REPO_RAW_BASE}/${branch}/server_data.json`];
 }
 
+function withOptionalCacheBust(url: string) {
+  return CACHE_BUST_RAW_DATA ? `${url}?t=${Date.now()}` : url;
+}
+
 export async function fetchServerStore() {
   const cached = readCache("server_data.json");
   if (cached) {
@@ -80,9 +89,11 @@ export async function fetchServerStore() {
   for (const branch of branches) {
     for (const baseUrl of urlsForBranch(branch)) {
       try {
-        const response = await fetch(`${baseUrl}?t=${Date.now()}`, {
-          headers: { "Cache-Control": "no-cache" },
-        });
+        const response = await fetchWithRetry(
+          withOptionalCacheBust(baseUrl),
+          { headers: { "Cache-Control": CACHE_BUST_RAW_DATA ? "no-cache" : "max-age=60" } },
+          { retries: 1, timeoutMs: 8_000, event: "repo.server_store" }
+        );
         if (!response.ok) {
           lastError = `${branch}: GitHub ${response.status}`;
           continue;
@@ -97,6 +108,7 @@ export async function fetchServerStore() {
         return { store: cachedStore.data, branch, sourceUrl: baseUrl, cached: false };
       } catch (err: any) {
         lastError = `${branch}: ${err?.message || "unknown fetch error"}`;
+        logger.warning("server_store_fetch_failed", { branch, error: getErrorDetails(err) });
       }
     }
   }
@@ -121,9 +133,11 @@ export async function fetchRepoJson(relativePath: string) {
   for (const branch of branches) {
     for (const url of urlsForBranchPath(branch, relativePath)) {
       try {
-        const response = await fetch(`${url}?t=${Date.now()}`, {
-          headers: { "Cache-Control": "no-cache" },
-        });
+        const response = await fetchWithRetry(
+          withOptionalCacheBust(url),
+          { headers: { "Cache-Control": CACHE_BUST_RAW_DATA ? "no-cache" : "max-age=60" } },
+          { retries: 1, timeoutMs: 8_000, event: "repo.json" }
+        );
         if (!response.ok) {
           lastError = `${branch}: GitHub ${response.status}`;
           continue;
@@ -133,6 +147,7 @@ export async function fetchRepoJson(relativePath: string) {
         return { data: cachedJson.data, branch, sourceUrl: url, cached: false };
       } catch (err: any) {
         lastError = `${branch}: ${err?.message || "unknown fetch error"}`;
+        logger.warning("repo_json_fetch_failed", { branch, relativePath, error: getErrorDetails(err) });
       }
     }
   }

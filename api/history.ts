@@ -1,4 +1,7 @@
 import { fetchServerStore } from "./_dataSource.js";
+import { createLogger, getErrorDetails } from "../shared/logger.js";
+
+const logger = createLogger("api.history");
 
 function mapServerReview(review: any) {
   return {
@@ -40,6 +43,7 @@ function mapServerReview(review: any) {
 }
 
 export default async function handler(req: any, res: any) {
+  const started = Date.now();
   res.setHeader("Access-Control-Allow-Origin", "*");
   res.setHeader("Cache-Control", "s-maxage=120, stale-while-revalidate=60");
 
@@ -50,16 +54,21 @@ export default async function handler(req: any, res: any) {
       .sort((a: any, b: any) => Number(b.timestamp || 0) - Number(a.timestamp || 0));
 
     return res.status(200).json({
+      ok: true,
       items,
       total: items.length,
       sourceBranch: branch,
       workerVersion: store.workerVersion || "unknown",
+      durationMs: Date.now() - started,
     });
   } catch (err: any) {
+    logger.error("history_failed", { durationMs: Date.now() - started, error: getErrorDetails(err) });
     return res.status(200).json({
+      ok: false,
       items: [],
       total: 0,
       error: err?.message || "Unknown error",
+      durationMs: Date.now() - started,
     });
   }
 }
