@@ -1,23 +1,21 @@
 # FootyAI tweewekelijkse AI-digest
 
-Periode: 2026-04-28 t/m 2026-05-11
+Periode: 2026-05-05 t/m 2026-05-18
 
-AI bundel over de laatste 14 dagen: 5 hoofdthema's uit 14 monitorbevindingen.
+AI bundel over de laatste 14 dagen: 4 hoofdthema's uit 13 monitorbevindingen.
 
-- Runs: 25
-- Bevindingen: 14
-- Thema's: 5
+- Runs: 29
+- Bevindingen: 13
+- Thema's: 4
 
 ## Hoofdpunten
-- Historische scheidsdata matcht te weinig (5x, severity: low)
-  - Trek bredere referee-archieven per land/competitie in cache en onderhoud aliasen.
+- Logo fallback mist (7x, severity: medium)
+  - Gebruik het reviewbranch-voorstel als veilige volgende patchronde.
 - Bookmakersignalen missen (4x, severity: medium)
   - Verbred de interland-oddsbron en toon dekking per bookmaker in de kaart.
-- H2H niet gevuld (2x, severity: medium)
+- H2H niet gevuld (1x, severity: medium)
   - Trek H2H verder uit historische competitiebestanden en bewaak fallbackdekking in de worker.
-- Geen speeldagdata (2x, severity: medium)
-  - Controleer brondekking en dagfilter in de worker voor vandaag + morgen.
-- Bekerschema leeg (1x, severity: medium)
+- Workerdata verouderd (1x, severity: high)
   - Gebruik het reviewbranch-voorstel als veilige volgende patchronde.
 
 ## Reviewbranch voorstel
