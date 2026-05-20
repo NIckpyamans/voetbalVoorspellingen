@@ -1,6 +1,7 @@
 import { fetchDayData, fetchMetaData, fetchServerStore } from "./_dataSource.js";
 import { todayAmsterdamKey } from "../shared/date.js";
 import { createLogger, getErrorDetails } from "../shared/logger.js";
+import { setCorsHeaders } from "../shared/cors.js";
 
 const logger = createLogger("api.predict");
 
@@ -75,8 +76,7 @@ function enrichPrediction(prediction: any, matchMap: Record<string, any>, store:
 
 export default async function handler(req: any, res: any) {
   const started = Date.now();
-  res.setHeader("Access-Control-Allow-Origin", "*");
-  res.setHeader("Access-Control-Allow-Methods", "GET");
+  setCorsHeaders(req, res);
   res.setHeader("Cache-Control", "no-store");
 
   try {

@@ -10,159 +10,148 @@ import { getFavorites } from "./components/FavoriteTeams";
 import { Match } from "./types";
 import { velocityEngine } from "./services/velocityEngine";
 import { getOrCreateTeam, saveToMemory, updateTeamModelsFromResult } from "./services/geminiService";
-import { todayAmsterdamKey, toAmsterdamDateKey } from "./shared/date.js";
+import { todayAmsterdamKey } from "./shared/date.js";
+import { logClientWarning } from "./shared/clientLogger";
+import { isMatchFinished, isMatchLive } from "./shared/matchStatus.js";
+import {
+  DashboardHistoryItem,
+  DEFAULT_FAVORITE_STANDING_LABEL,
+  LEAGUE_ORDER,
+  belongsToSelectedDate,
+  formatDateLabel,
+  getStandingLabel,
+  hydrateDashboardHistory,
+  isoDate,
+  mergeDashboardHistory,
+  pct,
+  readFavoriteStandingLabel,
+  shortLeague,
+} from "./shared/dashboard.js";
 
 type View = "dashboard" | "history" | "standings" | "settings";
 type FilterMode = "alle" | "favorieten" | "live" | "gepland" | "gespeeld";
 
-type DashboardHistoryItem = {
-  matchId: string;
-  prediction: string;
-  actual: string;
-  wasCorrect: boolean;
-  winnerCorrect?: boolean;
-  errorMargin?: number;
-  timestamp?: number;
-  homeTeam?: string | null;
-  awayTeam?: string | null;
-  league?: string | null;
-  predictedOutcome?: string | null;
-  actualOutcome?: string | null;
-  bestBetRank?: number | null;
-  topExactScorePick?: boolean;
-  exactScoreConfidence?: number;
-};
-
-function pct(part: number, total: number) {
-  return total > 0 ? Math.round((part / total) * 100) : 0;
-}
-
-function isoDate(date: Date) {
-  return toAmsterdamDateKey(date) || todayAmsterdamKey();
-}
-
-function formatDateLabel(dateISO: string) {
-  return new Date(`${dateISO}T12:00:00`).toLocaleDateString("nl-NL", {
-    weekday: "long",
-    day: "2-digit",
-    month: "long",
-    year: "numeric",
-  });
-}
-
-function formatAmsterdamDate(date: Date) {
-  return toAmsterdamDateKey(date) || isoDate(date);
-}
-
 function isLive(match: Match) {
-  const status = String(match.status || "").toUpperCase();
-  if (isFinished(match)) return false;
-  return status === "LIVE" || status === "HT" || !!(match as any).minuteValue;
+  return isMatchLive(match);
 }
 
 function isFinished(match: Match) {
-  const status = String(match.status || "").toUpperCase();
-  return status === "FT" || status === "AET" || status === "PEN" || status === "RESULT_PENDING" || status.includes("FINISH");
+  return isMatchFinished(match);
 }
 
-function belongsToSelectedDate(match: Match, dateISO: string) {
-  if (String(match.date || "") === dateISO) {
-    return true;
-  }
+const DASHBOARD_TEAM_ALIASES: Record<string, string> = {
+  "sc freiburg": "freiburg",
+  "sport club freiburg": "freiburg",
+  freiburg: "freiburg",
+  "aston villa fc": "aston villa",
+  "aston villa": "aston villa",
+  "man city": "manchester city",
+  "manchester city fc": "manchester city",
+  "manchester city": "manchester city",
+  psg: "paris saint-germain",
+  "paris saint germain": "paris saint-germain",
+  "paris saint-germain": "paris saint-germain",
+  barca: "barcelona",
+  "fc barcelona": "barcelona",
+  barcelona: "barcelona",
+  "athletic bilbao": "athletic club",
+  "athletic club": "athletic club",
+  "crystal palace fc": "crystal palace",
+  "crystal palace": "crystal palace",
+};
 
-  if (match.kickoff) {
-    const parsed = new Date(match.kickoff);
-    if (!Number.isNaN(parsed.getTime())) {
-      return formatAmsterdamDate(parsed) === dateISO;
+function normalizeDashboardDedupeText(value: unknown) {
+  return String(value || "")
+    .toLowerCase()
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .replace(/&/g, " and ")
+    .replace(/\b(fc|cf|sc|afc|club|voetbalclub)\b/g, " ")
+    .replace(/[^a-z0-9]+/g, " ")
+    .trim()
+    .replace(/\s+/g, " ");
+}
+
+function canonicalDashboardTeam(value: unknown) {
+  const normalized = normalizeDashboardDedupeText(value);
+  return DASHBOARD_TEAM_ALIASES[normalized] || normalized;
+}
+
+function canonicalDashboardLeague(value: unknown) {
+  return normalizeDashboardDedupeText(value)
+    .replace(/\buefa\b/g, "")
+    .replace(/\beuropa\b/g, "europe")
+    .replace(/\s+/g, " ")
+    .trim();
+}
+
+function dashboardDateKey(value: unknown) {
+  const raw = String(value || "");
+  const direct = raw.slice(0, 10);
+  if (/^\d{4}-\d{2}-\d{2}$/.test(direct)) return direct;
+  const parsed = new Date(raw);
+  if (!Number.isNaN(parsed.getTime())) return parsed.toISOString().slice(0, 10);
+  return "";
+}
+
+function buildDashboardMatchKey(match: Pick<Match, "date" | "kickoff" | "league" | "homeTeamName" | "awayTeamName">) {
+  return [
+    dashboardDateKey(match.kickoff || match.date),
+    canonicalDashboardLeague(match.league),
+    canonicalDashboardTeam(match.homeTeamName),
+    canonicalDashboardTeam(match.awayTeamName),
+  ].join("|");
+}
+
+function dashboardMatchQuality(match: Match) {
+  let score = 0;
+  if (match.score && match.score !== "VS") score += 50;
+  if (isFinished(match)) score += 40;
+  if (isLive(match)) score += 30;
+  if (match.homeLogo && !match.homeLogo.startsWith("data:")) score += 5;
+  if (match.awayLogo && !match.awayLogo.startsWith("data:")) score += 5;
+  if (match.h2h?.results?.length || match.h2h?.lastMatches?.length) score += 10;
+  if ((match as any).dataCompletenessScore) score += Number((match as any).dataCompletenessScore);
+  return score;
+}
+
+function dedupeDashboardMatches(items: Match[]) {
+  const byFixture = new Map<string, Match>();
+  for (const match of items) {
+    const key = buildDashboardMatchKey(match);
+    const current = byFixture.get(key);
+    if (!current || dashboardMatchQuality(match) > dashboardMatchQuality(current)) {
+      byFixture.set(key, match);
     }
   }
-  return false;
+  return Array.from(byFixture.values());
 }
 
-function shortLeague(league: string) {
-  const parts = String(league || "").split(" - ");
-  if (parts.length >= 2) {
-    return `${parts[0]} - ${parts[1]}`;
-  }
-  return league;
+function buildDashboardBetKey(bet: { date?: string; league?: string; homeTeam?: string; awayTeam?: string }) {
+  return [
+    dashboardDateKey(bet.date),
+    canonicalDashboardLeague(bet.league),
+    canonicalDashboardTeam(bet.homeTeam),
+    canonicalDashboardTeam(bet.awayTeam),
+  ].join("|");
 }
 
-const LEAGUE_ORDER = [
-  "Europe - Champions League",
-  "Europe - Europa League",
-  "Europe - Conference League",
-  "Europe - UEFA Nations League",
-  "Europe - World Cup Qualification",
-  "Europe - Euro Qualification",
-  "Europe - European Championship",
-  "Europe - International Friendly",
-  "England - Premier League",
-  "England - Championship",
-  "Netherlands - Eredivisie",
-  "Netherlands - Eerste Divisie",
-  "Netherlands - KNVB Beker",
-  "Germany - Bundesliga",
-  "Germany - 2. Bundesliga",
-  "Spain - LaLiga",
-  "Spain - LaLiga 2",
-  "Italy - Serie A",
-  "Italy - Serie B",
-  "France - Ligue 1",
-  "France - Ligue 2",
-  "Portugal - Liga Portugal",
-  "Portugal - Liga Portugal 2",
-  "Belgium - Pro League",
-  "Belgium - Challenger Pro League",
-];
-
-const FAVORITE_STANDING_KEY = "footyai-favorite-standing";
-const DEFAULT_FAVORITE_STANDING_LABEL = "Netherlands - Eredivisie";
-
-function readFavoriteStandingLabel() {
-  try {
-    return localStorage.getItem(FAVORITE_STANDING_KEY) || DEFAULT_FAVORITE_STANDING_LABEL;
-  } catch {
-    return DEFAULT_FAVORITE_STANDING_LABEL;
-  }
+function dashboardBetQuality(bet: any) {
+  const rank = Number(bet.bestBetRank || 0);
+  const rankScore = rank > 0 ? 1000 - rank : 0;
+  return rankScore + Number(bet.exactScoreConfidence || 0) * 100 + Number(bet.confidence || 0) * 20;
 }
 
-function getStandingLabel(table: any, key: string) {
-  return String(table?.label || key || "");
-}
-
-function outcomeFromScore(score?: string | null) {
-  const [home, away] = String(score || "").split("-").map(Number);
-  if (!Number.isFinite(home) || !Number.isFinite(away)) return null;
-  if (home > away) return "Thuis";
-  if (away > home) return "Uit";
-  return "Gelijk";
-}
-
-function hydrateDashboardHistory(items: DashboardHistoryItem[]) {
-  return items.map((item) => {
-    const predictedOutcome = item.predictedOutcome || outcomeFromScore(item.prediction);
-    const actualOutcome = item.actualOutcome || outcomeFromScore(item.actual);
-    return {
-      ...item,
-      predictedOutcome,
-      actualOutcome,
-      winnerCorrect:
-        typeof item.winnerCorrect === "boolean" ? item.winnerCorrect : predictedOutcome === actualOutcome,
-      wasCorrect: String(item.prediction || "").trim() === String(item.actual || "").trim(),
-    };
-  });
-}
-
-function mergeDashboardHistory(localItems: DashboardHistoryItem[], serverItems: DashboardHistoryItem[]) {
-  const merged = new Map<string, DashboardHistoryItem>();
-  for (const item of [...serverItems, ...localItems]) {
-    if (!item?.matchId) continue;
-    const current = merged.get(item.matchId);
-    if (!current || Number(item.timestamp || 0) >= Number(current.timestamp || 0)) {
-      merged.set(item.matchId, item);
+function dedupeDashboardBets<T extends { date?: string; league?: string; homeTeam?: string; awayTeam?: string }>(items: T[]) {
+  const byFixture = new Map<string, T>();
+  for (const bet of items) {
+    const key = buildDashboardBetKey(bet);
+    const current = byFixture.get(key);
+    if (!current || dashboardBetQuality(bet) > dashboardBetQuality(current)) {
+      byFixture.set(key, bet);
     }
   }
-  return [...merged.values()].sort((a, b) => Number(b.timestamp || 0) - Number(a.timestamp || 0));
+  return Array.from(byFixture.values());
 }
 
 const App: React.FC = () => {
@@ -183,6 +172,7 @@ const App: React.FC = () => {
   const [historyItems, setHistoryItems] = useState<DashboardHistoryItem[]>([]);
   const [loading, setLoading] = useState(true);
   const [syncStatus, setSyncStatus] = useState<"laden" | "klaar" | "fout">("laden");
+  const [syncMessage, setSyncMessage] = useState<string | null>(null);
   const [lastRun, setLastRun] = useState<number | null>(null);
   const [workerNeeded, setWorkerNeeded] = useState(false);
   const [activeFilter, setActiveFilter] = useState<FilterMode>("alle");
@@ -194,9 +184,18 @@ const App: React.FC = () => {
 
   const refreshStandings = useCallback(() => {
     return fetch(`/api/standings?t=${Date.now()}`, { cache: "no-store" })
-      .then((response) => response.json())
-      .then((data) => setStandings(data.standings || {}))
-      .catch(() => {});
+      .then(async (response) => {
+        const data = await response.json().catch(() => ({}));
+        if (!response.ok || data.ok === false) {
+          throw new Error(data.error || `Standen ophalen mislukt (${response.status})`);
+        }
+        setStandings(data.standings || {});
+        setSyncMessage(null);
+      })
+      .catch((error) => {
+        logClientWarning("standings_refresh_failed", { error });
+        setSyncMessage("Standen konden niet worden ververst. De laatst bekende data blijft zichtbaar.");
+      });
   }, []);
 
   useEffect(() => {
@@ -245,13 +244,18 @@ const App: React.FC = () => {
     };
 
     fetch("/api/history", { cache: "no-store" })
-      .then((response) => response.json())
+      .then(async (response) => {
+        const data = await response.json().catch(() => ({}));
+        if (!response.ok || data.ok === false) throw new Error(data.error || `Historie ophalen mislukt (${response.status})`);
+        return data;
+      })
       .then((data) => {
         const serverItems = Array.isArray(data.items) ? hydrateDashboardHistory(data.items) : [];
         const localItems = readLocal();
         if (!cancelled) setHistoryItems(mergeDashboardHistory(localItems, serverItems));
       })
-      .catch(() => {
+      .catch((error) => {
+        logClientWarning("history_fetch_failed_local_fallback", { error });
         if (!cancelled) setHistoryItems(readLocal());
       });
     return () => {
@@ -262,6 +266,7 @@ const App: React.FC = () => {
   useEffect(() => {
     setLoading(true);
     setSyncStatus("laden");
+    setSyncMessage(null);
     setWorkerNeeded(false);
     setMatches([]);
     setPredictions({});
@@ -273,6 +278,7 @@ const App: React.FC = () => {
       setLoading(false);
       setSyncStatus("klaar");
       setWorkerNeeded(!!nextWorkerNeeded);
+      setSyncMessage(nextWorkerNeeded ? "Workerdata is nog niet compleet voor deze datum." : null);
       if (nextLastRun) setLastRun(nextLastRun);
       if (nextMatches.some((match) => isLive(match) || isFinished(match))) {
         refreshStandings();
@@ -354,7 +360,7 @@ const App: React.FC = () => {
   const favoriteTeams = useMemo(() => getFavorites(), [favRefresh]);
 
   const dayMatches = useMemo(
-    () => matches.filter((match) => belongsToSelectedDate(match, selectedDate)),
+    () => dedupeDashboardMatches(matches.filter((match) => belongsToSelectedDate(match, selectedDate))),
     [matches, selectedDate]
   );
 
@@ -421,13 +427,15 @@ const App: React.FC = () => {
   const finishedCount = dayMatches.filter(isFinished).length;
 
   const bestBets = useMemo(() => {
-    return Object.entries(predictions as Record<string, any>)
+    const matchById = new Map<string, Match>();
+    for (const match of dayMatches) matchById.set(match.id, match);
+    const candidates = Object.entries(predictions as Record<string, any>)
       .filter(([matchId]) => {
-        const match = matches.find((match) => match.id === matchId);
-        return match && belongsToSelectedDate(match, selectedDate);
+        const match = matchById.get(matchId);
+        return !!match;
       })
       .map(([matchId, pred]) => {
-        const match = matches.find((match) => match.id === matchId);
+        const match = matchById.get(matchId);
         if (!match) return null;
 
         const homeProb = pred.homeProb || 0;
@@ -439,6 +447,7 @@ const App: React.FC = () => {
 
         return {
           matchId,
+          date: match.kickoff || match.date,
           homeTeam: match.homeTeamName,
           awayTeam: match.awayTeamName,
           league: match.league,
@@ -456,7 +465,9 @@ const App: React.FC = () => {
           score: match.score,
         };
       })
-      .filter((bet): bet is NonNullable<typeof bet> => bet !== null)
+      .filter((bet): bet is NonNullable<typeof bet> => bet !== null);
+
+    return dedupeDashboardBets(candidates)
       .sort((a, b) => {
         if (a.bestBetRank && b.bestBetRank) return a.bestBetRank - b.bestBetRank;
         if (a.bestBetRank) return -1;
@@ -464,7 +475,7 @@ const App: React.FC = () => {
         return (b.exactScoreConfidence || 0) - (a.exactScoreConfidence || 0) || (b.confidence || 0) - (a.confidence || 0);
       })
       .slice(0, 5);
-  }, [predictions, matches, selectedDate]);
+  }, [predictions, dayMatches]);
 
   const dashboardInsights = useMemo(() => {
     const topFiveReviews = historyItems.filter((item) => item.topExactScorePick || (Number(item.bestBetRank || 0) > 0 && Number(item.bestBetRank || 0) <= 5));
@@ -914,6 +925,11 @@ const App: React.FC = () => {
                         ? "De worker heeft voor deze dag nog geen verse data geleverd. De app controleert opnieuw bij de volgende refresh."
                         : "Er zijn voor deze selectie geen wedstrijden beschikbaar."}
                     </div>
+                    {syncMessage && (
+                      <div className="mt-3 rounded-xl border border-amber-500/20 bg-amber-950/20 px-3 py-2 text-xs font-bold text-amber-200">
+                        {syncMessage}
+                      </div>
+                    )}
                     {lastRun && (
                       <div className="mt-3 text-xs text-slate-500">
                         Laatste worker-run: {new Date(lastRun).toLocaleString("nl-NL")}

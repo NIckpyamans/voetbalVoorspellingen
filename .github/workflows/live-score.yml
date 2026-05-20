@@ -2,7 +2,7 @@ name: Live Score Refresh
 
 on:
   schedule:
-    - cron: "*/10 * * * *"
+    - cron: "17 4 * * *"
   workflow_dispatch:
 
 concurrency:
@@ -15,6 +15,8 @@ permissions:
 env:
   TZ: Europe/Amsterdam
   FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: "true"
+  FOOTYAI_REFRESH_MODE: live-results
+  FOOTYAI_DATE_WINDOW: yesterday,today,tomorrow
 
 jobs:
   refresh-live-scores:

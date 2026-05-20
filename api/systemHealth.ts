@@ -2,6 +2,7 @@ import fs from "fs";
 import path from "path";
 import { addDaysToDateKey, todayAmsterdamKey } from "../shared/date.js";
 import { createLogger, getErrorDetails } from "../shared/logger.js";
+import { setCorsHeaders } from "../shared/cors.js";
 
 const logger = createLogger("api.system-health");
 const ROOT = process.cwd();
@@ -131,7 +132,7 @@ export function buildSystemHealth(mode = "health") {
 export function sendSystemHealth(_req: any, res: any, mode = "health") {
   try {
     const payload = buildSystemHealth(mode);
-    res.setHeader("Access-Control-Allow-Origin", "*");
+    setCorsHeaders(_req, res);
     res.setHeader("Cache-Control", mode === "health" ? "no-store" : "s-maxage=60, stale-while-revalidate=60");
     return res.status(payload.ok ? 200 : 503).json(payload);
   } catch (error) {

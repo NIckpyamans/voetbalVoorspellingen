@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from "react";
 import { todayAmsterdamKey } from "../shared/date.js";
+import { logClientWarning } from "../shared/clientLogger";
 
 const SettingsView: React.FC = () => {
   const [historyCount, setHistoryCount] = useState(0);
@@ -21,27 +22,40 @@ const SettingsView: React.FC = () => {
   const [modelPerformance, setModelPerformance] = useState<any | null>(null);
   const [backtestSummary, setBacktestSummary] = useState<any | null>(null);
   const [anomalyReport, setAnomalyReport] = useState<any | null>(null);
+  const [competitionArchiveIndex, setCompetitionArchiveIndex] = useState<any | null>(null);
+  const [teamSquadSummary, setTeamSquadSummary] = useState<any | null>(null);
   const [manualAdvice, setManualAdvice] = useState("");
   const [glassTransparency, setGlassTransparency] = useState(46);
+  const [settingsWarning, setSettingsWarning] = useState<string | null>(null);
 
   useEffect(() => {
     try {
       setGlassTransparency(Math.min(80, Math.max(15, Number(localStorage.getItem("footyai_glass_transparency") || 46))));
-    } catch {}
+    } catch (error) {
+      logClientWarning("settings_transparency_read_failed", { error });
+    }
     try {
       const raw = localStorage.getItem("footypredict_memory") || "[]";
       setHistoryCount(JSON.parse(raw).length);
       setHistorySizeKb(Math.round((new Blob([raw]).size / 1024) * 10) / 10);
-    } catch {}
+    } catch (error) {
+      logClientWarning("settings_history_read_failed", { error });
+    }
     try {
       const raw = localStorage.getItem("footypredict_team_store_v1") || "{}";
       setTeamCount(Object.keys(JSON.parse(raw)).length);
       setTeamStoreSizeKb(Math.round((new Blob([raw]).size / 1024) * 10) / 10);
-    } catch {}
+    } catch (error) {
+      logClientWarning("settings_team_store_read_failed", { error });
+    }
     setManualAdvice(localStorage.getItem("footypredict_manual_ai_advice") || "");
 
     fetch(`/api/matches?date=${todayAmsterdamKey()}`)
-      .then((response) => response.json())
+      .then(async (response) => {
+        const data = await response.json().catch(() => ({}));
+        if (!response.ok || data.ok === false) throw new Error(data.error || `Instellingen ophalen mislukt (${response.status})`);
+        return data;
+      })
       .then((data) => {
         if (data.lastRun) setLastWorker(new Date(data.lastRun).toLocaleString("nl-NL"));
         if (data.workerVersion) setWorkerVersion(data.workerVersion);
@@ -57,20 +71,15 @@ const SettingsView: React.FC = () => {
         if (data.modelPerformance) setModelPerformance(data.modelPerformance);
         if (data.backtestSummary) setBacktestSummary(data.backtestSummary);
         if (data.anomalyReport) setAnomalyReport(data.anomalyReport);
+        if (data.competitionArchiveIndex) setCompetitionArchiveIndex(data.competitionArchiveIndex);
+        if (data.teamSquadSummary) setTeamSquadSummary(data.teamSquadSummary);
+        setAnalysisEngine("template");
       })
-      .catch(() => {});
-
-    fetch("/api/analyze", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        match: { id: "test", homeTeamName: "Ajax", awayTeamName: "PSV", league: "Netherlands - Eredivisie" },
-        prediction: { homeProb: 0.44, drawProb: 0.26, awayProb: 0.3, homeXG: 1.4, awayXG: 1.1, predHomeGoals: 1, predAwayGoals: 1, over25: 0.52, btts: 0.57 },
-      }),
-    })
-      .then((response) => response.json())
-      .then((data) => setAnalysisEngine(data.engine === "ollama-local" ? "ollama" : "template"))
-      .catch(() => setAnalysisEngine("template"));
+      .catch((error) => {
+        logClientWarning("settings_metadata_fetch_failed", { error });
+        setSettingsWarning("Instellingen konden de actuele workerstatus niet ophalen. Laatst bekende browserdata blijft zichtbaar.");
+        setAnalysisEngine("template");
+      });
   }, []);
 
   const clearCache = () => {
@@ -108,6 +117,11 @@ const SettingsView: React.FC = () => {
         <p className="text-slate-500 text-xs mt-0.5">
           Modelstatus, workerdata, reviewlaag en controle van de huidige AI-opzet.
         </p>
+        {settingsWarning && (
+          <div className="mt-3 rounded-xl border border-amber-500/20 bg-amber-950/20 px-3 py-2 text-[11px] font-bold text-amber-200">
+            {settingsWarning}
+          </div>
+        )}
       </div>
 
       <div className="glass-card rounded-2xl border border-white/5 p-5 space-y-3">
@@ -122,6 +136,8 @@ const SettingsView: React.FC = () => {
           { label: "Databron branch", value: sourceBranch },
           { label: "Reviews opgeslagen", value: reviewCount.toLocaleString() },
           { label: "Teams met leerdata", value: teamLearningCount.toLocaleString() },
+          { label: "Competitie-archieven", value: `${Number(competitionArchiveIndex?.closedCount || 0).toLocaleString()} gesloten / ${Number(competitionArchiveIndex?.totalCompetitions || 0).toLocaleString()} totaal` },
+          { label: "Teams met selectieprofiel", value: Number(teamSquadSummary?.teams || 0).toLocaleString() },
           { label: "Senior-filter", value: "vrouwen + jeugd/U21 uitgesloten" },
           { label: "Analyse-engine", value: analysisEngine === "checking" ? "Controleren..." : analysisEngine === "ollama" ? "Ollama lokaal" : "Template/review fallback" },
         ].map(({ label, value }) => (
@@ -130,6 +146,97 @@ const SettingsView: React.FC = () => {
             <span className="text-[11px] font-black text-white">{value}</span>
           </div>
         ))}
+      </div>
+
+      <div className="glass-card rounded-2xl border border-emerald-500/10 p-5 bg-emerald-950/5">
+        <div className="flex items-start justify-between gap-3 mb-3">
+          <div>
+            <div className="text-[10px] font-black text-emerald-300 uppercase">Competitie-archief en teamselecties</div>
+            <div className="text-[11px] text-slate-400 mt-1">
+              Afgesloten competities blijven apart bewaard per seizoen. Gevulde spelerslijsten worden maandelijks gecontroleerd; tijdens transferwindows schakelt de worker naar snellere bewaking.
+            </div>
+          </div>
+          <span className="text-[8px] font-black px-2 py-0.5 rounded-full bg-emerald-900/30 text-emerald-300">
+            workerdata
+          </span>
+        </div>
+
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-2">
+          {[
+            { label: "Archieven totaal", value: Number(competitionArchiveIndex?.totalCompetitions || 0).toLocaleString() },
+            { label: "Actieve competities", value: Number(competitionArchiveIndex?.activeCount || 0).toLocaleString() },
+            { label: "Gesloten competities", value: Number(competitionArchiveIndex?.closedCount || 0).toLocaleString() },
+            { label: "Teams gevolgd", value: Number(teamSquadSummary?.teams || 0).toLocaleString() },
+            { label: "Spelerslijsten gevuld", value: Number(teamSquadSummary?.teamsWithPlayers || 0).toLocaleString() },
+            { label: "Selecties toe aan check", value: Number(teamSquadSummary?.rostersDueForRefresh || 0).toLocaleString() },
+            { label: "Transfers bewaakt", value: Number(teamSquadSummary?.transfersWatched || 0).toLocaleString() },
+            { label: "Transfer risico hoog", value: Number(teamSquadSummary?.highTransferRisk || 0).toLocaleString() },
+            { label: "Gem. teamrating", value: Number(teamSquadSummary?.averageRating || 0).toLocaleString("nl-NL") },
+          ].map((item) => (
+            <div key={item.label} className="rounded-xl border border-white/5 bg-slate-900/40 px-3 py-2">
+              <div className="text-[9px] font-black text-slate-500 uppercase">{item.label}</div>
+              <div className="text-[16px] font-black text-white mt-1">{item.value}</div>
+            </div>
+          ))}
+        </div>
+
+        <div className="mt-3 rounded-xl border border-cyan-400/10 bg-cyan-950/10 p-3">
+          <div className="flex flex-wrap items-center justify-between gap-2">
+            <div>
+              <div className="text-[10px] font-black text-cyan-200 uppercase">Transferwindow-bewaking</div>
+              <div className="text-[11px] text-slate-400">
+                Status: <span className="font-black text-white">{teamSquadSummary?.transferWindow?.label || "onbekend"}</span>
+                {teamSquadSummary?.transferWindow?.startAt && (
+                  <>
+                    {" "}· volgende/periode:{" "}
+                    {new Date(teamSquadSummary.transferWindow.startAt).toLocaleDateString("nl-NL")} t/m{" "}
+                    {teamSquadSummary?.transferWindow?.endAt
+                      ? new Date(teamSquadSummary.transferWindow.endAt).toLocaleDateString("nl-NL")
+                      : "onbekend"}
+                  </>
+                )}
+              </div>
+            </div>
+            <div className="flex gap-2">
+              <span className="rounded-full bg-slate-900/70 px-3 py-1 text-[9px] font-black text-slate-300">
+                normaal {Number(teamSquadSummary?.monthlyRefreshDays || 30)}d
+              </span>
+              <span className="rounded-full bg-emerald-900/30 px-3 py-1 text-[9px] font-black text-emerald-200">
+                transfer {Number(teamSquadSummary?.transferWindowRefreshDays || 3)}d
+              </span>
+            </div>
+          </div>
+        </div>
+
+        {Array.isArray(teamSquadSummary?.fallbackPolicy) && (
+          <div className="mt-3 rounded-xl border border-blue-400/10 bg-blue-950/10 p-3">
+            <div className="text-[10px] font-black text-blue-200 uppercase mb-2">Spelerslijst bronvolgorde</div>
+            <div className="grid md:grid-cols-2 gap-2">
+              {teamSquadSummary.fallbackPolicy.map((item: string) => (
+                <div key={item} className="rounded-lg border border-white/5 bg-slate-950/30 px-3 py-2 text-[10px] text-slate-300">
+                  {item}
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
+
+        {Array.isArray(teamSquadSummary?.strongestTeams) && teamSquadSummary.strongestTeams.length > 0 && (
+          <div className="mt-3 rounded-xl border border-white/5 bg-slate-900/30 p-3">
+            <div className="text-[10px] font-black text-slate-400 uppercase mb-2">Sterkste selectieprofielen</div>
+            <div className="grid md:grid-cols-2 gap-2 max-h-56 overflow-y-auto pr-1">
+              {teamSquadSummary.strongestTeams.map((team: any, index: number) => (
+                <div key={`${team.teamName}-${index}`} className="flex items-center justify-between rounded-lg border border-white/5 bg-slate-950/30 px-3 py-2">
+                  <div>
+                    <div className="text-[10px] font-black text-white">#{index + 1} {team.teamName}</div>
+                    <div className="text-[8px] text-slate-500">{Number(team.playerCount || 0)} spelers - {team.source}</div>
+                  </div>
+                  <div className="text-[16px] font-black text-emerald-300">{team.rating}</div>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
       </div>
 
       <div className="glass-card rounded-2xl border border-cyan-500/15 p-5 space-y-4">
@@ -850,6 +957,21 @@ const SettingsView: React.FC = () => {
               name: "TheSportsDB",
               status: "gekoppeld",
               desc: "Draait nu mee als gratis fixture-backup voor dagen waarop de hoofdbron wedstrijden niet teruggeeft.",
+            },
+            {
+              name: "Forza Football",
+              status: "fallback",
+              desc: "Nieuwe extra spelerslijstbron. Wordt alleen aangeroepen wanneer de eerste selectiebron niet genoeg spelers/statusinformatie geeft.",
+            },
+            {
+              name: "football-data.org",
+              status: "optioneel",
+              desc: "Staat klaar als officiële squad-API fallback met gratis token en veilige team-id mapping; zonder token blijft deze bron netjes uit.",
+            },
+            {
+              name: "Reep Football",
+              status: "fallback",
+              desc: "Wordt gebruikt als koppel-laag voor clubnamen, team-ID's en logo-matching zodra een REEP_TEAM_MAP beschikbaar is.",
             },
             {
               name: "OpenLigaDB",

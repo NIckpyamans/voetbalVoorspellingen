@@ -4,6 +4,11 @@
   "ignoreCommand": "node scripts/vercel-ignore-build.js",
   "buildCommand": "npm run build",
   "outputDirectory": "dist",
+  "env": {
+    "DATA_BRANCH": "codex/step3b-layout",
+    "VERCEL_PRODUCTION_BRANCH": "codex/step3b-layout",
+    "CORS_ALLOWED_ORIGINS": "https://voorspellingenprive.vercel.app"
+  },
   "rewrites": [
     { "source": "/api/matches",   "destination": "/api/Matches"  },
     { "source": "/api/analyze",   "destination": "/api/analyze"  },

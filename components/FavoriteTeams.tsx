@@ -1,10 +1,16 @@
 import React, { useEffect, useState, useMemo } from 'react';
 import { Match } from '../types';
+import { logClientWarning } from '../shared/clientLogger';
 
 const FAVORITES_KEY = 'footypredict_favorites_v1';
 
 export function getFavorites(): string[] {
-  try { return JSON.parse(localStorage.getItem(FAVORITES_KEY) || '[]'); } catch { return []; }
+  try {
+    return JSON.parse(localStorage.getItem(FAVORITES_KEY) || '[]');
+  } catch (error) {
+    logClientWarning("favorites_read_failed", { error });
+    return [];
+  }
 }
 
 export function toggleFavorite(teamId: string, teamName: string): boolean {
@@ -39,8 +45,10 @@ export const FavoriteButton: React.FC<FavoriteButtonProps> = ({ teamId, teamName
     onChange?.();
   };
 
+  const label = active ? 'Verwijder uit favorieten' : 'Voeg toe aan favorieten';
+
   return (
-    <button onClick={toggle} title={active ? 'Verwijder uit favorieten' : 'Voeg toe aan favorieten'}
+    <button onClick={toggle} title={label} aria-label={label}
       className={`w-5 h-5 flex items-center justify-center rounded transition text-[11px]
         ${active ? 'text-yellow-400 hover:text-yellow-300' : 'text-slate-600 hover:text-yellow-400'}`}>
       {active ? '★' : '☆'}

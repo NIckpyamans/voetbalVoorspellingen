@@ -8,6 +8,7 @@ const SOFA = "https://api.sofascore.com/api/v1";
 const sofaFetchCircuit = { blocked: false, failures: 0, logged: false };
 const DATA_FILE = path.resolve(process.cwd(), "server_data.json");
 const SPLIT_DATA_DIR = path.resolve(process.cwd(), "data");
+const COMPETITION_ARCHIVE_DIR = path.join(SPLIT_DATA_DIR, "competitions");
 const TRAINING_SNAPSHOT_FILE = path.resolve(process.cwd(), "training", "training-snapshot.json");
 
 const LEAGUES = [
@@ -69,6 +70,8 @@ function buildSplitMeta(store) {
     anomalyReport: store.anomalyReport || null,
     topExactScoreMonitor: store.topExactScoreMonitor || null,
     topExactClubs: store.topExactClubs || null,
+    competitionArchiveIndex: store.competitionArchiveIndex || null,
+    teamSquadSummary: store.teamSquadSummary || null,
   };
 }
 
@@ -108,8 +111,18 @@ function writeSplitDataFiles(store) {
     anomalyReport: store.anomalyReport || null,
     topExactScoreMonitor: store.topExactScoreMonitor || null,
     topExactClubs: store.topExactClubs || null,
+    competitionArchiveIndex: store.competitionArchiveIndex || null,
+    teamSquadSummary: store.teamSquadSummary || null,
     lastRun: store.lastRun || null,
   });
+  writeJsonFile(path.join(SPLIT_DATA_DIR, "teams.json"), {
+    teamSquads: store.teamSquads || {},
+    teamTransfers: store.teamTransfers || {},
+    teamSquadSummary: store.teamSquadSummary || null,
+    lastRun: store.lastRun || null,
+    workerVersion: store.workerVersion || "unknown",
+  });
+  writeCompetitionArchiveFiles(store);
 }
 
 function toAmsterdamDateKey(dateLike) {
@@ -256,6 +269,21 @@ const MARKET_TTL = 24 * 60 * 60 * 1000;
 const SNAPSHOT_TTL = 3 * 24 * 60 * 60 * 1000;
 const OPENFOOTBALL_TTL = 14 * 24 * 60 * 60 * 1000;
 const INTERNATIONAL_AVAILABILITY_TTL = 12 * 60 * 60 * 1000;
+const SQUAD_TTL = 30 * 24 * 60 * 60 * 1000;
+const EMPTY_SQUAD_RETRY_TTL = 12 * 60 * 60 * 1000;
+const TRANSFER_WINDOW_SQUAD_TTL = 3 * 24 * 60 * 60 * 1000;
+const TRANSFER_WATCH_TTL = 24 * 60 * 60 * 1000;
+const MAX_SQUAD_FETCHES_PER_RUN = 8;
+const SQUAD_FETCH_MIN_DELAY = 450;
+const ROSTER_BACKFILL_VERSION = "v5-fill-empty-rosters";
+const MAX_WIKIPEDIA_SQUAD_FETCHES_PER_RUN = 6;
+const MAX_WIKIDATA_SQUAD_FETCHES_PER_RUN = 4;
+const MAX_WIKIPEDIA_ROSTER_PLAYERS = 65;
+const MAX_FORZA_SQUAD_FETCHES_PER_RUN = 3;
+const MAX_FOOTBALL_DATA_SQUAD_FETCHES_PER_RUN = 3;
+const MAX_REEP_IDENTITY_FETCHES_PER_RUN = 2;
+const MIN_COMPLETE_ROSTER_PLAYERS = 22;
+const MIN_USABLE_ROSTER_PLAYERS = 16;
 // Bewaar gespeelde dagen ruim genoeg voor analyse, terugkijken en model-review.
 const HISTORY_KEEP_DAYS_BACK = 365;
 const HISTORY_KEEP_DAYS_FORWARD = 14;
@@ -270,8 +298,100 @@ const MAX_MARKET_PROFILES = 64;
 const MAX_SNAPSHOT_CACHE = 48;
 const MAX_OPENFOOTBALL_CACHE = 48;
 const MAX_INTERNATIONAL_AVAILABILITY = 160;
+const MAX_TEAM_SQUADS = 850;
+const MAX_TEAM_TRANSFERS = 850;
+const sportsDbSquadFetchState = {
+  count: 0,
+  lastAt: 0,
+  blockedUntil: 0,
+  loggedLimit: false,
+  loggedRateLimit: false,
+};
+const openSquadSourceState = {
+  wikidataCount: 0,
+  wikipediaCount: 0,
+  forzaCount: 0,
+  footballDataCount: 0,
+  reepCount: 0,
+  lastAt: 0,
+  loggedLimit: false,
+  loggedForzaBlocked: false,
+  loggedFootballDataConfig: false,
+  loggedReepBlocked: false,
+};
 const TEAM_RECENT_MATCH_WINDOW = 10;
 const TEAM_FORM_BADGE_WINDOW = 5;
+
+const TRANSFER_WINDOW_PERIODS = [
+  { label: "winter transferwindow", startMonth: 1, startDay: 1, endMonth: 2, endDay: 3 },
+  { label: "zomer transferwindow", startMonth: 6, startDay: 10, endMonth: 9, endDay: 2 },
+];
+const TRANSFER_WINDOW_WATCH_BUFFER_DAYS = 14;
+
+function addDays(date, days) {
+  const next = new Date(date.getTime());
+  next.setUTCDate(next.getUTCDate() + days);
+  return next;
+}
+
+function transferWindowBounds(year, period, bufferDays = 0) {
+  const start = addDays(new Date(Date.UTC(year, period.startMonth - 1, period.startDay, 0, 0, 0)), -bufferDays);
+  const end = addDays(new Date(Date.UTC(year, period.endMonth - 1, period.endDay, 23, 59, 59)), bufferDays);
+  if (end < start) end.setUTCFullYear(end.getUTCFullYear() + 1);
+  return { start, end };
+}
+
+function getTransferWindowState(now = Date.now()) {
+  const current = new Date(now);
+  const candidates = [];
+  for (const year of [current.getUTCFullYear() - 1, current.getUTCFullYear(), current.getUTCFullYear() + 1]) {
+    for (const period of TRANSFER_WINDOW_PERIODS) {
+      const active = transferWindowBounds(year, period, 0);
+      const watch = transferWindowBounds(year, period, TRANSFER_WINDOW_WATCH_BUFFER_DAYS);
+      candidates.push({ ...period, year, active, watch });
+    }
+  }
+
+  const activePeriod = candidates.find((period) => current >= period.active.start && current <= period.active.end);
+  if (activePeriod) {
+    return {
+      active: true,
+      watchMode: true,
+      label: activePeriod.label,
+      startAt: activePeriod.active.start.toISOString(),
+      endAt: activePeriod.active.end.toISOString(),
+      nextWindowLabel: activePeriod.label,
+      refreshEveryDays: Math.round(TRANSFER_WINDOW_SQUAD_TTL / (24 * 60 * 60 * 1000)),
+    };
+  }
+
+  const watchPeriod = candidates.find((period) => current >= period.watch.start && current <= period.watch.end);
+  if (watchPeriod) {
+    return {
+      active: false,
+      watchMode: true,
+      label: `${watchPeriod.label} bewaking`,
+      startAt: watchPeriod.active.start.toISOString(),
+      endAt: watchPeriod.active.end.toISOString(),
+      nextWindowLabel: watchPeriod.label,
+      refreshEveryDays: Math.round(TRANSFER_WINDOW_SQUAD_TTL / (24 * 60 * 60 * 1000)),
+    };
+  }
+
+  const nextPeriod = candidates
+    .filter((period) => period.active.start > current)
+    .sort((a, b) => a.active.start.getTime() - b.active.start.getTime())[0];
+
+  return {
+    active: false,
+    watchMode: false,
+    label: "buiten transferwindow",
+    startAt: nextPeriod?.active.start.toISOString() || null,
+    endAt: nextPeriod?.active.end.toISOString() || null,
+    nextWindowLabel: nextPeriod?.label || "onbekend",
+    refreshEveryDays: Math.round(SQUAD_TTL / (24 * 60 * 60 * 1000)),
+  };
+}
 
 const MARKET_LEAGUE_CODES = {
   "England - Premier League": "E0",
@@ -367,6 +487,30 @@ const DATA_SCOUT_SOURCES = [
     freeUse: "gratis API-laag",
     data: ["fixtures", "teamlogo's", "basic events"],
     priority: "hoog",
+  },
+  {
+    key: "forza-football",
+    name: "Forza Football",
+    category: "selecties/transfers",
+    freeUse: "publieke teampagina's, alleen als aanvullende fallback",
+    data: ["spelerslijsten", "posities", "unavailable spelers", "transfers"],
+    priority: "fallback",
+  },
+  {
+    key: "football-data-org",
+    name: "football-data.org",
+    category: "officiele API-selecties",
+    freeUse: "gratis API-tier met optionele token",
+    data: ["teams", "squads waar beschikbaar", "competitiemetadata"],
+    priority: "fallback",
+  },
+  {
+    key: "reep",
+    name: "Reep Football",
+    category: "team-ID koppeling",
+    freeUse: "open football ID-laag waar bereikbaar",
+    data: ["teamnamen", "alias/ID-koppeling", "bronmatching"],
+    priority: "fallback",
   },
   {
     key: "football-data",
@@ -971,6 +1115,165 @@ function normalizeName(name) {
     .trim();
 }
 
+function slugifyKey(value) {
+  return normalizeName(value).replace(/\s+/g, "-") || "unknown";
+}
+
+function buildTeamStoreKey(teamId, teamName) {
+  return teamId ? `id:${teamId}` : `name:${normalizeName(teamName)}`;
+}
+
+function getMatchDateKey(match) {
+  return match?.date || toAmsterdamDateKey(match?.kickoff || match?.startTimestamp || Date.now()) || "unknown";
+}
+
+function getMatchFinalStatus(match) {
+  const status = String(match?.status || "").toUpperCase();
+  return ["FT", "AET", "PEN"].includes(status);
+}
+
+function compactArchiveMatch(match) {
+  return {
+    id: match.id || "",
+    date: getMatchDateKey(match),
+    kickoff: match.kickoff || null,
+    league: match.league || "",
+    homeTeamId: match.homeTeamId || "",
+    awayTeamId: match.awayTeamId || "",
+    homeTeamName: match.homeTeamName || "",
+    awayTeamName: match.awayTeamName || "",
+    homeScore: match.homeScore ?? null,
+    awayScore: match.awayScore ?? null,
+    score: match.score || null,
+    status: match.status || "NS",
+    roundLabel: match.roundLabel || null,
+    aggregate: match.aggregate || null,
+    h2h: match.h2h?.played
+      ? {
+          played: match.h2h.played,
+          homeWins: match.h2h.homeWins || 0,
+          draws: match.h2h.draws || 0,
+          awayWins: match.h2h.awayWins || 0,
+          results: (match.h2h.results || []).slice(-5),
+        }
+      : null,
+    homePos: match.homePos ?? null,
+    awayPos: match.awayPos ?? null,
+    homeClubElo: match.homeClubElo ?? null,
+    awayClubElo: match.awayClubElo ?? null,
+    dataCompletenessScore: match.dataCompletenessScore ?? null,
+    dataSource: match.dataSource || "unknown",
+  };
+}
+
+function buildCompetitionArchives(store, todayKey) {
+  const grouped = new Map();
+  for (const matches of Object.values(store.matches || {})) {
+    for (const match of matches || []) {
+      if (!match?.league) continue;
+      const dateKey = getMatchDateKey(match);
+      const season = getSportsDbSeasonLabel(dateKey);
+      const slug = slugifyKey(match.league);
+      const key = `${season}__${slug}`;
+      if (!grouped.has(key)) {
+        grouped.set(key, {
+          key,
+          season,
+          league: match.league,
+          slug,
+          matches: [],
+          teams: new Set(),
+          firstMatchDate: dateKey,
+          lastMatchDate: dateKey,
+          finishedMatches: 0,
+          scheduledMatches: 0,
+          liveMatches: 0,
+        });
+      }
+      const entry = grouped.get(key);
+      entry.matches.push(compactArchiveMatch(match));
+      if (match.homeTeamName) entry.teams.add(match.homeTeamName);
+      if (match.awayTeamName) entry.teams.add(match.awayTeamName);
+      if (dateKey < entry.firstMatchDate) entry.firstMatchDate = dateKey;
+      if (dateKey > entry.lastMatchDate) entry.lastMatchDate = dateKey;
+      const status = String(match.status || "").toUpperCase();
+      if (getMatchFinalStatus(match)) entry.finishedMatches += 1;
+      else if (status === "LIVE" || status === "HT") entry.liveMatches += 1;
+      else entry.scheduledMatches += 1;
+    }
+  }
+
+  const archives = {};
+  const competitions = [...grouped.values()]
+    .map((entry) => {
+      const seasonEndYear = Number(String(entry.season).split("-")[1] || String(entry.season).slice(0, 4));
+      const seasonArchiveDate = Number.isFinite(seasonEndYear) ? `${seasonEndYear}-06-30` : entry.lastMatchDate;
+      const safelyPastSeason = todayKey > addDaysToDateKey(seasonArchiveDate, 21);
+      const inactiveForWeeks = entry.scheduledMatches === 0 && entry.liveMatches === 0 && entry.lastMatchDate <= addDaysToDateKey(todayKey, -21);
+      const status = safelyPastSeason || inactiveForWeeks ? "closed" : "active";
+      const archiveFile = `data/competitions/${entry.season}/${entry.slug}.json`;
+      const archive = {
+        key: entry.key,
+        season: entry.season,
+        league: entry.league,
+        slug: entry.slug,
+        status,
+        firstMatchDate: entry.firstMatchDate,
+        lastMatchDate: entry.lastMatchDate,
+        generatedAt: Date.now(),
+        teamCount: entry.teams.size,
+        teams: [...entry.teams].sort(),
+        totalMatches: entry.matches.length,
+        finishedMatches: entry.finishedMatches,
+        scheduledMatches: entry.scheduledMatches,
+        liveMatches: entry.liveMatches,
+        matches: entry.matches.sort((a, b) => String(a.date).localeCompare(String(b.date)) || String(a.kickoff || "").localeCompare(String(b.kickoff || ""))),
+      };
+      archives[entry.key] = archive;
+      return {
+        key: entry.key,
+        season: entry.season,
+        league: entry.league,
+        slug: entry.slug,
+        status,
+        totalMatches: entry.matches.length,
+        finishedMatches: entry.finishedMatches,
+        scheduledMatches: entry.scheduledMatches,
+        liveMatches: entry.liveMatches,
+        firstMatchDate: entry.firstMatchDate,
+        lastMatchDate: entry.lastMatchDate,
+        teamCount: entry.teams.size,
+        archiveFile,
+      };
+    })
+    .sort((a, b) => `${b.season} ${a.league}`.localeCompare(`${a.season} ${b.league}`));
+
+  return {
+    index: {
+      generatedAt: Date.now(),
+      totalCompetitions: competitions.length,
+      activeCount: competitions.filter((item) => item.status === "active").length,
+      closedCount: competitions.filter((item) => item.status === "closed").length,
+      competitions,
+    },
+    archives,
+  };
+}
+
+function buildCompetitionArchiveIndex(store, todayKey) {
+  return buildCompetitionArchives(store, todayKey).index;
+}
+
+function writeCompetitionArchiveFiles(store) {
+  const todayKey = toAmsterdamDateKey(new Date()) || new Date().toISOString().slice(0, 10);
+  const { index, archives } = buildCompetitionArchives(store, todayKey);
+  fs.mkdirSync(COMPETITION_ARCHIVE_DIR, { recursive: true });
+  writeJsonFile(path.join(COMPETITION_ARCHIVE_DIR, "index.json"), index);
+  for (const archive of Object.values(archives)) {
+    writeJsonFile(path.join(COMPETITION_ARCHIVE_DIR, archive.season, `${archive.slug}.json`), archive);
+  }
+}
+
 const TEAM_ALIAS_GROUPS = [
   ["fc cologne", "1 fc koln", "1 fc koeln", "fc koln", "fc koeln", "koln", "koeln", "cologne"],
   ["1 fc heidenheim 1846", "1 fc heidenheim", "fc heidenheim", "heidenheim"],
@@ -983,6 +1286,7 @@ const TEAM_ALIAS_GROUPS = [
   ["borussia dortmund", "dortmund"],
   ["rb leipzig", "rasenballsport leipzig", "leipzig"],
   ["fc st pauli", "st pauli"],
+  ["sc freiburg", "freiburg", "sport club freiburg"],
   ["werder bremen", "sv werder bremen"],
   ["ajax", "ajax amsterdam", "afc ajax"],
   ["az alkmaar", "az"],
@@ -1031,6 +1335,10 @@ const TEAM_ALIAS_GROUPS = [
   ["sporting cp", "sporting lisbon"],
   ["union st gilloise", "union saint gilloise", "royale union saint gilloise"],
   ["standard liege", "standard"],
+  ["kvc westerlo", "westerlo"],
+  ["racing genk", "krc genk", "genk"],
+  ["royal charleroi sc", "sporting charleroi", "charleroi"],
+  ["royal antwerp", "antwerp", "royal antwerp fc"],
   ["sint truidense", "sint truiden"],
   ["oh leuven", "oud heverlee leuven", "oud heverlee"],
   ["kv mechelen", "mechelen"],
@@ -1041,6 +1349,13 @@ const TEAM_ALIAS_GROUPS = [
   ["aj auxerre", "auxerre"],
   ["angers sco", "angers"],
 ];
+
+// Forza gebruikt numerieke team-id's in publieke squad-URL's. We houden deze lijst klein en veilig:
+// alleen bekende teams worden direct geprobeerd; andere teams vallen terug op Wikipedia/TheSportsDB/Wikidata.
+const FORZA_TEAM_PAGE_HINTS = {
+  "manchester city": "https://forzafootball.com/team/manchester-city-6803/squad",
+  "man city": "https://forzafootball.com/team/manchester-city-6803/squad",
+};
 
 const teamAliasLookup = new Map();
 for (const group of TEAM_ALIAS_GROUPS) {
@@ -1499,7 +1814,783 @@ function toPointsPerGame(wins, draws, games) {
   return Number((((wins || 0) * 3 + (draws || 0)) / games).toFixed(2));
 }
 
-function buildTeamProfile({ teamName, recent, seasonStats, injuries, clubElo, standingPos }) {
+async function fetchSportsDbSquadProfile(teamName) {
+  const normalized = normalizeName(teamName);
+  if (!normalized) return null;
+
+  const now = Date.now();
+  if (sportsDbSquadFetchState.blockedUntil > now) return null;
+  if (sportsDbSquadFetchState.count >= MAX_SQUAD_FETCHES_PER_RUN) {
+    if (!sportsDbSquadFetchState.loggedLimit) {
+      console.warn(
+        `[worker] Spelerslijst-fetch beperkt tot ${MAX_SQUAD_FETCHES_PER_RUN} teams per run om gratis bronnen te beschermen.`
+      );
+      sportsDbSquadFetchState.loggedLimit = true;
+    }
+    return null;
+  }
+
+  const waitMs = Math.max(0, SQUAD_FETCH_MIN_DELAY - (now - sportsDbSquadFetchState.lastAt));
+  if (waitMs) await sleep(waitMs);
+  sportsDbSquadFetchState.count += 1;
+  sportsDbSquadFetchState.lastAt = Date.now();
+
+  const json = await safeFetch(`https://www.thesportsdb.com/api/v1/json/3/searchplayers.php?t=${encodeURIComponent(teamName)}`);
+  const players = Array.isArray(json?.player) ? json.player : [];
+  if (!players.length) return null;
+  return {
+    source: "TheSportsDB",
+    sources: ["TheSportsDB"],
+    playerCount: players.length,
+    players: players.slice(0, 45).map((player) => ({
+      id: player.idPlayer || "",
+      name: player.strPlayer || "",
+      position: player.strPosition || "",
+      nationality: player.strNationality || "",
+      dateBorn: player.dateBorn || null,
+      dateSigned: player.dateSigned || null,
+      status: player.strStatus || "beschikbaar",
+      availability: player.strStatus || "beschikbaar",
+      loan: /loan|huur|verhuur/i.test(String(player.strStatus || "")),
+      source: "TheSportsDB",
+    })),
+  };
+}
+
+async function safeFetchPublicJson(url, timeout = 15000) {
+  try {
+    const response = await fetchWithTimeout(
+      url,
+      {
+        headers: {
+          Accept: "application/json",
+          "Accept-Language": "en-US,en;q=0.9",
+          "User-Agent":
+            "Voetbal-Ai-tactics/1.0 (personal football prediction app; free public data cache)",
+        },
+      },
+      timeout
+    );
+    if (!response.ok) {
+      console.warn(`[worker] Open squad source ${response.status} voor ${url}`);
+      if (response.status === 429 && /wikipedia\.org/i.test(url)) {
+        openSquadSourceState.wikipediaCount = MAX_WIKIPEDIA_SQUAD_FETCHES_PER_RUN;
+      }
+      if (response.status === 429 && /wikidata\.org/i.test(url)) {
+        openSquadSourceState.wikidataCount = MAX_WIKIDATA_SQUAD_FETCHES_PER_RUN;
+      }
+      return null;
+    }
+    return await response.json();
+  } catch (error) {
+    console.warn(`[worker] Open squad source mislukt voor ${url}: ${error?.message || error}`);
+    return null;
+  }
+}
+
+function cleanWikiPlayerName(value) {
+  let text = String(value || "");
+  text = text.replace(/\{\{sortname\|([^|{}]+)\|([^|{}]+)[^{}]*\}\}/gi, "$1 $2");
+  text = text.replace(/\{\{[^{}|]+\|([^{}|]+)\}\}/g, "$1");
+  text = text.replace(/\[\[[^|\]]+\|([^\]]+)\]\]/g, "$1");
+  text = text.replace(/\[\[([^\]]+)\]\]/g, "$1");
+  return text.replace(/<[^>]+>/g, "").replace(/&nbsp;/g, " ").replace(/\s+/g, " ").trim();
+}
+
+function wikiTitleMatchesTeam(title, teamName) {
+  const normalizeWikiTitle = (value) =>
+    normalizeName(value)
+      .replace(/\b(f\.?c\.?|football club|afc|cf|sc|sv|club|calcio|deportivo|atl[eé]tico|united|city)\b/g, " ")
+      .replace(/\s+/g, " ")
+      .trim();
+  const titleNorm = normalizeWikiTitle(title);
+  const teamNorm = normalizeWikiTitle(teamName);
+  const tokens = teamNorm.split(" ").filter((token) => token.length >= 4);
+  if (!tokens.length) return true;
+  return tokens.every((token) => titleNorm.includes(token)) || titleNorm.includes(teamNorm) || teamNorm.includes(titleNorm);
+}
+
+function parseTemplateParams(template) {
+  const params = {};
+  const keys = ["name", "player", "p", "pos", "position", "nat", "nationality"];
+  for (const key of keys) {
+    const regex = new RegExp(`(?:^|\\|)\\s*${key}\\s*=\\s*(\\[\\[[^\\]]+\\]\\]|[^|}]+)`, "i");
+    const match = regex.exec(template);
+    if (match?.[1]) params[key] = cleanWikiPlayerName(match[1]);
+  }
+  return params;
+}
+
+function mergeSquadProfiles(profiles) {
+  const valid = profiles.filter(Boolean);
+  if (!valid.length) return null;
+  const byName = new Map();
+  const sources = new Set();
+  const sourceIds = {};
+  const sourceUrls = {};
+  let forzaSquadUrl = "";
+  let footballDataTeamId = "";
+  let reepTeamId = "";
+
+  for (const profile of valid) {
+    for (const source of profile.sources || [profile.source].filter(Boolean)) sources.add(source);
+    Object.assign(sourceIds, profile.sourceIds || {});
+    Object.assign(sourceUrls, profile.sourceUrls || {});
+    if (profile.forzaSquadUrl) forzaSquadUrl = profile.forzaSquadUrl;
+    if (profile.footballDataTeamId) footballDataTeamId = String(profile.footballDataTeamId);
+    if (profile.reepTeamId) reepTeamId = String(profile.reepTeamId);
+    for (const player of profile.players || []) {
+      const name = cleanWikiPlayerName(player.name);
+      if (!name) continue;
+      const key = normalizeName(name);
+      const current = byName.get(key) || {};
+      byName.set(key, {
+        ...current,
+        ...player,
+        name,
+        position: current.position || player.position || "",
+        nationality: current.nationality || player.nationality || "",
+        status: player.status || current.status || "beschikbaar",
+        availability: player.availability || current.availability || "beschikbaar",
+        loan: Boolean(current.loan || player.loan),
+        sources: Array.from(new Set([...(current.sources || []), player.source || profile.source].filter(Boolean))),
+      });
+    }
+  }
+
+  const players = Array.from(byName.values())
+    .sort((a, b) => String(a.position || "").localeCompare(String(b.position || "")) || String(a.name).localeCompare(String(b.name)))
+    .slice(0, 60);
+
+  return {
+    source: Array.from(sources).join(" + ") || "open-squad-sources",
+    sources: Array.from(sources),
+    sourceIds,
+    sourceUrls,
+    ...(forzaSquadUrl ? { forzaSquadUrl } : {}),
+    ...(footballDataTeamId ? { footballDataTeamId } : {}),
+    ...(reepTeamId ? { reepTeamId } : {}),
+    playerCount: players.length,
+    players,
+  };
+}
+
+async function fetchWikidataSquadProfile(teamName) {
+  if (openSquadSourceState.wikidataCount >= MAX_WIKIDATA_SQUAD_FETCHES_PER_RUN) return null;
+  openSquadSourceState.wikidataCount += 1;
+  await sleep(250);
+
+  const search = await safeFetchPublicJson(
+    `https://www.wikidata.org/w/api.php?action=wbsearchentities&format=json&language=en&limit=3&search=${encodeURIComponent(teamName)}`
+  );
+  const entity = (search?.search || []).find((item) =>
+    /football|soccer|association football|club/i.test(`${item.description || ""} ${item.label || ""}`)
+  ) || search?.search?.[0];
+  const id = entity?.id;
+  if (!id) return null;
+
+  const query = `
+    SELECT ?player ?playerLabel ?positionLabel ?countryLabel WHERE {
+      ?player p:P54 ?membership .
+      ?membership ps:P54 wd:${id} .
+      OPTIONAL { ?membership pq:P580 ?startDate . }
+      OPTIONAL { ?membership pq:P582 ?endDate . }
+      FILTER(!BOUND(?endDate) || ?endDate > NOW())
+      FILTER(!BOUND(?startDate) || ?startDate > "2022-01-01T00:00:00Z"^^xsd:dateTime)
+      OPTIONAL { ?player wdt:P413 ?position . }
+      OPTIONAL { ?player wdt:P27 ?country . }
+      SERVICE wikibase:label { bd:serviceParam wikibase:language "en". }
+    }
+    LIMIT 80
+  `;
+  const data = await safeFetchPublicJson(
+    `https://query.wikidata.org/sparql?format=json&query=${encodeURIComponent(query)}`,
+    18000
+  );
+  const rows = data?.results?.bindings || [];
+  if (!rows.length) return null;
+  if (rows.length > 42) {
+    console.warn(`[worker] Wikidata selectie voor ${teamName} is te breed (${rows.length}); genegeerd als actuele selectie.`);
+    return null;
+  }
+  return {
+    source: "Wikidata",
+    sources: ["Wikidata"],
+    playerCount: rows.length,
+    players: rows.map((row) => ({
+      id: row.player?.value || "",
+      name: row.playerLabel?.value || "",
+      position: row.positionLabel?.value || "",
+      nationality: row.countryLabel?.value || "",
+      status: "beschikbaar",
+      availability: "beschikbaar",
+      loan: false,
+      source: "Wikidata",
+    })),
+  };
+}
+
+function extractWikipediaPlayers(wikitext) {
+  const lines = String(wikitext || "").split(/\r?\n/);
+  const players = [];
+  let loanSection = false;
+  for (const line of lines) {
+    if (/^=+.*(out on loan|on loan|verhuurd|uitgeleend).*=+/i.test(line)) loanSection = true;
+    if (/^=+/.test(line) && !/^=+.*(out on loan|on loan|verhuurd|uitgeleend).*=+/i.test(line)) loanSection = false;
+    if (!/\{\{\s*(fs player|football squad player)/i.test(line)) continue;
+    const params = parseTemplateParams(line);
+    const name = params.name || params.player || params.p || "";
+    if (!name) continue;
+    players.push({
+      id: "",
+      name,
+      position: params.pos || params.position || "",
+      nationality: params.nat || params.nationality || "",
+      status: loanSection ? "verhuurd" : "beschikbaar",
+      availability: loanSection ? "verhuurd" : "beschikbaar",
+      loan: loanSection,
+      source: "Wikipedia",
+    });
+  }
+  return players;
+}
+
+async function fetchWikipediaSquadProfile(teamName) {
+  if (openSquadSourceState.wikipediaCount >= MAX_WIKIPEDIA_SQUAD_FETCHES_PER_RUN) return null;
+  openSquadSourceState.wikipediaCount += 1;
+  await sleep(250);
+
+  async function parseWikipediaRoster(title) {
+    if (!title || /women|under-|u-?21|academy|reserve|youth|supporters|rivalry/i.test(title)) return null;
+    if (!wikiTitleMatchesTeam(title, teamName)) return null;
+    if (openSquadSourceState.wikipediaCount >= MAX_WIKIPEDIA_SQUAD_FETCHES_PER_RUN) return null;
+    const parsed = await safeFetchPublicJson(
+      `https://en.wikipedia.org/w/api.php?action=parse&format=json&prop=wikitext&page=${encodeURIComponent(title)}`
+    );
+    if (parsed?.error) return null;
+    const wikitext = parsed?.parse?.wikitext?.["*"];
+    const players = extractWikipediaPlayers(wikitext);
+    if (!players.length) return null;
+    if (players.length > MAX_WIKIPEDIA_ROSTER_PLAYERS) {
+      console.warn(`[worker] Wikipedia selectie voor ${teamName} via ${title} is te breed (${players.length}); genegeerd.`);
+      return null;
+    }
+    return {
+      source: "Wikipedia",
+      sources: ["Wikipedia"],
+      pageTitle: title,
+      playerCount: players.length,
+      players,
+    };
+  }
+
+  const directTitles = Array.from(new Set([`${teamName} F.C.`, `${teamName} FC`, teamName]));
+  for (const directTitle of directTitles) {
+    if (openSquadSourceState.wikipediaCount >= MAX_WIKIPEDIA_SQUAD_FETCHES_PER_RUN) break;
+    const directProfile = await parseWikipediaRoster(directTitle);
+    if (directProfile) return directProfile;
+    await sleep(120);
+  }
+
+  let titles = [];
+  for (const query of [`${teamName} F.C.`, `${teamName} football club`, teamName]) {
+    if (openSquadSourceState.wikipediaCount >= MAX_WIKIPEDIA_SQUAD_FETCHES_PER_RUN) break;
+    const search = await safeFetchPublicJson(
+      `https://en.wikipedia.org/w/api.php?action=opensearch&format=json&limit=5&search=${encodeURIComponent(query)}`
+    );
+    titles = Array.isArray(search?.[1]) ? search[1] : [];
+    if (titles.length) break;
+    await sleep(150);
+  }
+  const safeTitles = titles.filter((item) => !/women|under-|u-?21|academy|reserve|youth|supporters|rivalry/i.test(item));
+  const matchingTitles = safeTitles.filter((item) => wikiTitleMatchesTeam(item, teamName));
+  const title = matchingTitles.find((item) => /football|f\.c\.|fc|club|cf|afc|sc|sv|calcio|deportivo|atlético|atletico/i.test(item)) || matchingTitles[0];
+  if (!title) return null;
+  return parseWikipediaRoster(title);
+}
+
+function squadProfileHasUsefulStatus(profile) {
+  const players = Array.isArray(profile?.players) ? profile.players : [];
+  return players.some((player) =>
+    /injur|bless|suspend|schors|loan|huur|verhuur|unavailable|doubt|twijfel/i.test(
+      `${player.status || ""} ${player.availability || ""}`
+    )
+  );
+}
+
+function isCompleteSquadProfile(profile) {
+  const players = Array.isArray(profile?.players) ? profile.players : [];
+  const playerCount = Number(profile?.playerCount || players.length || 0);
+  const withPosition = players.filter((player) => String(player?.position || "").trim()).length;
+  return playerCount >= MIN_COMPLETE_ROSTER_PLAYERS && withPosition >= Math.min(14, Math.floor(playerCount * 0.55));
+}
+
+function shouldAskFallbackSquadSources(profile) {
+  if (!profile) return true;
+  const players = Array.isArray(profile?.players) ? profile.players : [];
+  const playerCount = Number(profile?.playerCount || players.length || 0);
+  if (playerCount < MIN_USABLE_ROSTER_PLAYERS) return true;
+  if (!isCompleteSquadProfile(profile)) return true;
+  return !squadProfileHasUsefulStatus(profile);
+}
+
+function readJsonEnv(name) {
+  const raw = process.env[name];
+  if (!raw) return null;
+  try {
+    return JSON.parse(raw);
+  } catch {
+    console.warn(`[worker] ${name} is geen geldige JSON; bron wordt overgeslagen.`);
+    return null;
+  }
+}
+
+function getConfiguredTeamSourceEntry(envName, teamName) {
+  const map = readJsonEnv(envName);
+  if (!map || typeof map !== "object") return null;
+  const aliases = buildTeamAliasVariants(teamName);
+  for (const alias of aliases) {
+    const entry = map[alias] || map[normalizeName(alias)] || map[canonicalTeamName(alias)];
+    if (entry) return entry;
+  }
+  return null;
+}
+
+function cleanHtmlFragment(value) {
+  return decodeHtmlText(String(value || "").replace(/<script[\s\S]*?<\/script>/gi, " ").replace(/<style[\s\S]*?<\/style>/gi, " ").replace(/<[^>]+>/g, " ").replace(/\s+/g, " ")).trim();
+}
+
+function inferPositionFromText(value) {
+  const text = String(value || "").toLowerCase();
+  if (/goalkeeper|keeper|doelman/.test(text)) return "Goalkeeper";
+  if (/defender|centre-back|full-back|left-back|right-back|verdediger/.test(text)) return "Defender";
+  if (/midfielder|middenvelder|winger/.test(text)) return "Midfielder";
+  if (/forward|striker|attacker|aanvaller/.test(text)) return "Forward";
+  return "";
+}
+
+function isLikelyPlayerName(value, teamName) {
+  const text = cleanWikiPlayerName(value);
+  const normalized = normalizeName(text);
+  if (!normalized || normalized.length < 5) return false;
+  if (normalizeName(teamName) === normalized) return false;
+  if (/squad|fixtures|standings|transfers|unavailable|table|scores|stats|matches|football|forza/i.test(text)) return false;
+  const parts = normalized.split(" ").filter(Boolean);
+  return parts.length >= 2 && parts.length <= 5;
+}
+
+function extractForzaPlayers(html, teamName) {
+  const text = String(html || "");
+  const players = [];
+  const seen = new Set();
+  const anchorRegex = /<a[^>]+href=["'][^"']*\/player\/[^"']+["'][^>]*>([\s\S]*?)<\/a>/gi;
+  for (const match of text.matchAll(anchorRegex)) {
+    const name = cleanHtmlFragment(match[1]);
+    if (!isLikelyPlayerName(name, teamName)) continue;
+    const key = normalizeName(name);
+    if (seen.has(key)) continue;
+    seen.add(key);
+    const context = text.slice(Math.max(0, Number(match.index || 0) - 450), Math.min(text.length, Number(match.index || 0) + 900));
+    const unavailable = /injur|suspend|unavailable|doubt|questionable|red card|yellow cards/i.test(context);
+    const loan = /loan|on loan|verhuurd/i.test(context);
+    players.push({
+      id: "",
+      name,
+      position: inferPositionFromText(context),
+      nationality: "",
+      status: loan ? "verhuurd" : unavailable ? "mogelijk niet beschikbaar" : "beschikbaar",
+      availability: loan ? "verhuurd" : unavailable ? "mogelijk niet beschikbaar" : "beschikbaar",
+      loan,
+      source: "Forza Football",
+    });
+  }
+  return players.slice(0, 60);
+}
+
+async function fetchForzaSquadProfile(teamName, existing = null) {
+  if (openSquadSourceState.forzaCount >= MAX_FORZA_SQUAD_FETCHES_PER_RUN) return null;
+  const configured = getConfiguredTeamSourceEntry("FORZA_TEAM_MAP", teamName);
+  const configuredUrl = typeof configured === "string" ? configured : configured?.url || configured?.squadUrl;
+  const hintUrl = FORZA_TEAM_PAGE_HINTS[canonicalTeamName(teamName)] || FORZA_TEAM_PAGE_HINTS[normalizeName(teamName)];
+  const existingUrl = existing?.forzaSquadUrl || existing?.sourceUrls?.forza || existing?.sourceUrl;
+  const candidates = [...new Set([existingUrl, configuredUrl, hintUrl].filter((url) => /^https:\/\/forzafootball\.com\/team\/.+\/squad/i.test(String(url || ""))))];
+  if (!candidates.length) return null;
+
+  openSquadSourceState.forzaCount += 1;
+  await sleep(400);
+
+  for (const url of candidates) {
+    const html = await safeFetchText(url);
+    if (!html) {
+      if (!openSquadSourceState.loggedForzaBlocked) {
+        console.warn("[worker] Forza Football selectiebron gaf geen HTML terug; bron blijft fallback en wordt later opnieuw geprobeerd.");
+        openSquadSourceState.loggedForzaBlocked = true;
+      }
+      continue;
+    }
+    const players = extractForzaPlayers(html, teamName);
+    if (players.length < 8) continue;
+    return {
+      source: "Forza Football",
+      sources: ["Forza Football"],
+      sourceUrls: { ...(existing?.sourceUrls || {}), forza: url },
+      forzaSquadUrl: url,
+      playerCount: players.length,
+      players,
+    };
+  }
+  return null;
+}
+
+async function fetchFootballDataOrgSquadProfile(teamName, existing = null) {
+  const token = process.env.FOOTBALL_DATA_TOKEN || process.env.FOOTBALL_DATA_API_KEY || "";
+  if (!token) {
+    if (!openSquadSourceState.loggedFootballDataConfig) {
+      console.warn("[worker] football-data.org squadbron staat klaar, maar FOOTBALL_DATA_TOKEN ontbreekt; bron blijft uit tot er een gratis token is.");
+      openSquadSourceState.loggedFootballDataConfig = true;
+    }
+    return null;
+  }
+  if (openSquadSourceState.footballDataCount >= MAX_FOOTBALL_DATA_SQUAD_FETCHES_PER_RUN) return null;
+
+  const configured = getConfiguredTeamSourceEntry("FOOTBALL_DATA_TEAM_MAP", teamName);
+  const footballDataTeamId = existing?.footballDataTeamId || existing?.sourceIds?.footballData || configured?.id || configured?.teamId || configured;
+  if (!footballDataTeamId || !/^\d+$/.test(String(footballDataTeamId))) return null;
+
+  openSquadSourceState.footballDataCount += 1;
+  await sleep(350);
+  const json = await fetchExternalJson(`https://api.football-data.org/v4/teams/${footballDataTeamId}`, { "X-Auth-Token": token });
+  const squad = Array.isArray(json?.squad) ? json.squad : [];
+  if (!squad.length) return null;
+  return {
+    source: "football-data.org",
+    sources: ["football-data.org"],
+    footballDataTeamId: String(footballDataTeamId),
+    sourceIds: { ...(existing?.sourceIds || {}), footballData: String(footballDataTeamId) },
+    playerCount: squad.length,
+    players: squad.slice(0, 60).map((player) => ({
+      id: player.id ? `football-data:${player.id}` : "",
+      name: player.name || "",
+      position: player.position || "",
+      nationality: player.nationality || "",
+      dateBorn: player.dateOfBirth || null,
+      status: "beschikbaar",
+      availability: "beschikbaar",
+      loan: false,
+      source: "football-data.org",
+    })),
+  };
+}
+
+async function fetchReepIdentityProfile(teamName, existing = null) {
+  if (openSquadSourceState.reepCount >= MAX_REEP_IDENTITY_FETCHES_PER_RUN) return null;
+  const configured = getConfiguredTeamSourceEntry("REEP_TEAM_MAP", teamName);
+  if (!configured) return null;
+  openSquadSourceState.reepCount += 1;
+  const reepId = typeof configured === "string" ? configured : configured.id || configured.teamId || configured.reepId || "";
+  if (!reepId) return null;
+  return {
+    ...(existing || {}),
+    source: existing?.source || "Reep Football identity",
+    sources: Array.from(new Set([...(existing?.sources || []), "Reep Football identity"])),
+    sourceIds: { ...(existing?.sourceIds || {}), reep: String(reepId) },
+    reepTeamId: String(reepId),
+    playerCount: Number(existing?.playerCount || existing?.players?.length || 0),
+    players: Array.isArray(existing?.players) ? existing.players : [],
+  };
+}
+
+async function fetchOpenSquadProfile(teamName, existing = null) {
+  const profiles = [];
+  const wikipedia = await fetchWikipediaSquadProfile(teamName);
+  if (wikipedia) profiles.push(wikipedia);
+  let merged = mergeSquadProfiles(profiles);
+
+  if (shouldAskFallbackSquadSources(merged)) {
+    const forza = await fetchForzaSquadProfile(teamName, existing || merged);
+    if (forza) {
+      profiles.push(forza);
+      merged = mergeSquadProfiles(profiles);
+    }
+  }
+
+  if (shouldAskFallbackSquadSources(merged)) {
+    const footballDataOrg = await fetchFootballDataOrgSquadProfile(teamName, existing || merged);
+    if (footballDataOrg) {
+      profiles.push(footballDataOrg);
+      merged = mergeSquadProfiles(profiles);
+    }
+  }
+
+  if (shouldAskFallbackSquadSources(merged)) {
+    const sportsDb = await fetchSportsDbSquadProfile(teamName);
+    if (sportsDb) {
+      profiles.push(sportsDb);
+      merged = mergeSquadProfiles(profiles);
+    }
+  }
+
+  if (shouldAskFallbackSquadSources(merged)) {
+    const wikidata = await fetchWikidataSquadProfile(teamName);
+    if (wikidata) {
+      profiles.push(wikidata);
+      merged = mergeSquadProfiles(profiles);
+    }
+  }
+
+  const withIdentity = await fetchReepIdentityProfile(teamName, existing || merged);
+  if (withIdentity) profiles.push(withIdentity);
+  return mergeSquadProfiles(profiles);
+}
+
+function buildDerivedSquadProfile({ teamId, teamName, recent, seasonStats, injuries, clubElo, standingPos, existing }) {
+  const ppg = toPointsPerGame(recent?.wins, recent?.draws, recent?.gamesPlayed);
+  const eloScore = clubElo ? clamp((Number(clubElo) - 1250) / 750, 0.15, 1) : 0.52;
+  const formScore = clamp(ppg / 3, 0.12, 1);
+  const dominanceScore =
+    seasonStats?.dominanceScore != null
+      ? clamp((Number(seasonStats.dominanceScore || 0) + 2) / 4, 0.12, 1)
+      : 0.5;
+  const standingScore = standingPos ? clamp(1 - (Number(standingPos) - 1) / 22, 0.12, 1) : 0.5;
+  const playerCount = Number(existing?.playerCount || existing?.players?.length || 0);
+  const rosterCoverage = playerCount ? clamp(playerCount / 24, 0.35, 1) : 0.25;
+  const injuryPenalty = clamp(Number(injuries?.injuredCount || 0) * 0.018 + Number(injuries?.injuredRating || 0) * 0.01, 0, 0.18);
+  const rating = Number(
+    clamp(
+      (eloScore * 0.34 + formScore * 0.28 + dominanceScore * 0.16 + standingScore * 0.14 + rosterCoverage * 0.08 - injuryPenalty) * 100,
+      22,
+      94
+    ).toFixed(1)
+  );
+
+  return {
+    ...(existing || {}),
+    key: buildTeamStoreKey(teamId, teamName),
+    teamId: teamId || existing?.teamId || "",
+    teamName: teamName || existing?.teamName || "",
+    rating,
+    ratingLabel: rating >= 76 ? "sterk" : rating >= 62 ? "boven gemiddeld" : rating >= 48 ? "gemiddeld" : "kwetsbaar",
+    playerCount,
+    players: Array.isArray(existing?.players) ? existing.players : [],
+    source: existing?.source || "derived-team-strength",
+    sources: Array.isArray(existing?.sources) && existing.sources.length ? existing.sources : [existing?.source || "derived-team-strength"],
+    injuredPlayers: injuries?.injuredPlayers || injuries?.players || [],
+    suspendedPlayers: injuries?.suspendedPlayers || [],
+    unavailableCount: Number(injuries?.injuredCount || 0) + Number(injuries?.suspendedCount || 0),
+    coverage: Number(rosterCoverage.toFixed(2)),
+    lastComputedAt: Date.now(),
+    factors: {
+      eloScore: Number(eloScore.toFixed(2)),
+      formScore: Number(formScore.toFixed(2)),
+      dominanceScore: Number(dominanceScore.toFixed(2)),
+      standingScore: Number(standingScore.toFixed(2)),
+      rosterCoverage: Number(rosterCoverage.toFixed(2)),
+      injuryPenalty: Number(injuryPenalty.toFixed(2)),
+    },
+  };
+}
+
+function buildTransferWatchProfile({ teamId, teamName, squadProfile, recent, injuries, existing, transferWindow }) {
+  const recentGames = Number(recent?.gamesPlayed || 0);
+  const formVolatility = recentGames
+    ? clamp(Math.abs(Number(recent?.avgScored || 1.35) - Number(recent?.avgConceded || 1.35)) / 4, 0, 0.35)
+    : 0.18;
+  const injuryDrag = clamp(Number(injuries?.injuredCount || 0) * 0.025, 0, 0.25);
+  const rosterBoost = Number(squadProfile?.playerCount || 0) >= 20 ? 0.03 : 0;
+  const netStrengthChange = Number(clamp(rosterBoost - injuryDrag + formVolatility * 0.12, -0.35, 0.35).toFixed(2));
+  const riskScore = clamp((Number(squadProfile?.coverage || 0.25) < 0.45 ? 0.22 : 0) + injuryDrag + formVolatility, 0, 1);
+
+  return {
+    ...(existing || {}),
+    key: buildTeamStoreKey(teamId, teamName),
+    teamId: teamId || existing?.teamId || "",
+    teamName: teamName || existing?.teamName || "",
+    incomingPlayers: Array.isArray(existing?.incomingPlayers) ? existing.incomingPlayers : [],
+    outgoingPlayers: Array.isArray(existing?.outgoingPlayers) ? existing.outgoingPlayers : [],
+    netStrengthChange,
+    riskScore: Number(riskScore.toFixed(2)),
+    riskLevel: riskScore >= 0.55 ? "hoog" : riskScore >= 0.3 ? "middel" : "laag",
+    source: existing?.source || "derived-transfer-watch",
+    lastCheckedAt: Date.now(),
+    transferWindow: transferWindow || getTransferWindowState(Date.now()),
+    note: transferWindow?.watchMode
+      ? "Transferwindow-bewaking actief: spelerslijsten worden vaker gecontroleerd omdat selecties kunnen wijzigen."
+      : "Buiten transferwindow: gevulde spelerslijsten worden rustig maandelijks gecontroleerd; lege teams blijven in backfill.",
+  };
+}
+
+async function updateTeamIntelligence(store, args) {
+  const { teamId, teamName, recent, seasonStats, injuries, clubElo, standingPos, now } = args;
+  const transferWindow = getTransferWindowState(now);
+  const key = buildTeamStoreKey(teamId, teamName);
+  if (!store.teamSquads) store.teamSquads = {};
+  if (!store.teamSquadsUpdated) store.teamSquadsUpdated = {};
+  if (!store.teamTransfers) store.teamTransfers = {};
+  if (!store.teamTransfersUpdated) store.teamTransfersUpdated = {};
+
+  let existingSquad = store.teamSquads[key] || null;
+  if (
+    existingSquad?.source === "Wikidata" &&
+    Number(existingSquad?.players?.length || existingSquad?.playerCount || 0) > 42
+  ) {
+    existingSquad = {
+      ...existingSquad,
+      players: [],
+      playerCount: 0,
+      source: "derived-team-strength",
+      sources: ["Wikidata-overbroad-rejected", "derived-team-strength"],
+      rejectedRosterSource: "Wikidata gaf waarschijnlijk historische spelers terug",
+      rosterBackfillAttemptedAt: 0,
+    };
+  }
+  if (Array.isArray(existingSquad?.players) && existingSquad.players.some((player) => /[\[\]{}]/.test(String(player?.name || "")))) {
+    existingSquad = {
+      ...existingSquad,
+      players: [],
+      playerCount: 0,
+      source: "derived-team-strength",
+      sources: ["roster-cleanup-required", "derived-team-strength"],
+      rejectedRosterSource: "Spelerslijst bevatte wiki-opmaak en wordt opnieuw opgehaald",
+      rosterBackfillAttemptedAt: 0,
+    };
+  }
+  const hasRosterPlayers = Number(existingSquad?.players?.length || existingSquad?.playerCount || 0) > 0;
+  const rosterSourceCheckedAt = Number(existingSquad?.rosterSourceCheckedAt || existingSquad?.fetchedAt || 0);
+  const rosterRefreshTtl = transferWindow.watchMode ? TRANSFER_WINDOW_SQUAD_TTL : SQUAD_TTL;
+  const rosterRefreshDue = !rosterSourceCheckedAt || now - rosterSourceCheckedAt > rosterRefreshTtl;
+  const rosterBackfillStale =
+    existingSquad?.rosterBackfillVersion !== ROSTER_BACKFILL_VERSION ||
+    (!hasRosterPlayers && now - Number(existingSquad?.rosterBackfillAttemptedAt || 0) > EMPTY_SQUAD_RETRY_TTL);
+  const shouldFetchRoster =
+    !existingSquad ||
+    rosterBackfillStale ||
+    (hasRosterPlayers && rosterRefreshDue);
+  if (shouldFetchRoster) {
+    const roster = await fetchOpenSquadProfile(teamName, existingSquad);
+    if (roster) {
+      existingSquad = {
+        ...(existingSquad || {}),
+        ...roster,
+        teamId: teamId || existingSquad?.teamId || "",
+        teamName,
+        fetchedAt: now,
+        rosterSourceCheckedAt: now,
+        rosterBackfillAttemptedAt: now,
+        rosterBackfillVersion: ROSTER_BACKFILL_VERSION,
+        rosterRefreshReason: hasRosterPlayers
+          ? transferWindow.watchMode
+            ? "transferwindow-controle"
+            : "maandelijkse-controle"
+          : "lege-selectie-backfill",
+        nextRosterRefreshAt: now + rosterRefreshTtl,
+        transferWindow,
+      };
+      await sleep(40);
+    } else if (existingSquad) {
+      existingSquad = {
+        ...existingSquad,
+        rosterBackfillAttemptedAt: now,
+        rosterRefreshReason: hasRosterPlayers ? "controle-mislukt-selectie-behouden" : "backfill-mislukt",
+        nextRosterRefreshAt: hasRosterPlayers ? now + 24 * 60 * 60 * 1000 : now + EMPTY_SQUAD_RETRY_TTL,
+        transferWindow,
+      };
+    } else {
+      existingSquad = {
+        key,
+        teamId: teamId || "",
+        teamName,
+        players: [],
+        playerCount: 0,
+        source: "derived-team-strength",
+        sources: ["roster-backfill-pending", "derived-team-strength"],
+        rosterBackfillAttemptedAt: now,
+        rosterRefreshReason: "backfill-mislukt",
+        nextRosterRefreshAt: now + EMPTY_SQUAD_RETRY_TTL,
+        transferWindow,
+      };
+    }
+  } else if (existingSquad) {
+    existingSquad = {
+      ...existingSquad,
+      nextRosterRefreshAt: (rosterSourceCheckedAt || now) + rosterRefreshTtl,
+      transferWindow,
+    };
+  }
+
+  const squadProfile = buildDerivedSquadProfile({
+    teamId,
+    teamName,
+    recent,
+    seasonStats,
+    injuries,
+    clubElo,
+    standingPos,
+    existing: existingSquad,
+  });
+  store.teamSquads[key] = squadProfile;
+  store.teamSquadsUpdated[key] = now;
+
+  const existingTransfer = store.teamTransfers[key] || null;
+  const transferProfile = buildTransferWatchProfile({
+    teamId,
+    teamName,
+    squadProfile,
+    recent,
+    injuries,
+    existing: existingTransfer,
+    transferWindow,
+  });
+  store.teamTransfers[key] = transferProfile;
+  store.teamTransfersUpdated[key] = now;
+
+  return { squadProfile, transferProfile };
+}
+
+function buildTeamSquadSummary(store) {
+  const squads = Object.values(store.teamSquads || {});
+  const transfers = Object.values(store.teamTransfers || {});
+  const transferWindow = getTransferWindowState(Date.now());
+  const rated = squads.filter((item) => Number(item?.rating || 0) > 0);
+  const averageRating = rated.length
+    ? Number((rated.reduce((sum, item) => sum + Number(item.rating || 0), 0) / rated.length).toFixed(1))
+    : 0;
+  const sourceBreakdown = squads.reduce((acc, item) => {
+    const sources = Array.isArray(item?.sources) && item.sources.length ? item.sources : [String(item?.source || "unknown")];
+    for (const source of sources) acc[source] = Number(acc[source] || 0) + 1;
+    return acc;
+  }, {});
+  return {
+    generatedAt: Date.now(),
+    teams: squads.length,
+    teamsWithPlayers: squads.filter((item) => Number(item?.playerCount || 0) > 0).length,
+    rostersDueForRefresh: squads.filter((item) => Number(item?.nextRosterRefreshAt || 0) <= Date.now()).length,
+    monthlyRefreshDays: Math.round(SQUAD_TTL / (24 * 60 * 60 * 1000)),
+    transferWindowRefreshDays: Math.round(TRANSFER_WINDOW_SQUAD_TTL / (24 * 60 * 60 * 1000)),
+    transferWindow,
+    transfersWatched: transfers.length,
+    highTransferRisk: transfers.filter((item) => item?.riskLevel === "hoog").length,
+    averageRating,
+    sourceBreakdown,
+    fallbackPolicy: [
+      "Wikipedia eerst: snel, gratis en meestal compleet.",
+      "Forza Football alleen als aanvullende fallback bij onvolledige spelerslijst of ontbrekende status/transferinformatie.",
+      "football-data.org alleen met gratis token en veilige team-id mapping, zodat er geen verkeerde clubs worden gekoppeld.",
+      "TheSportsDB en Wikidata blijven laatste backfill-bronnen om lege selecties geleidelijk te vullen.",
+      "Reep Football is een ID/alias-koppellaag voor betere clubnaam- en logomatching, geen primaire spelersbron.",
+    ],
+    strongestTeams: rated
+      .sort((a, b) => Number(b.rating || 0) - Number(a.rating || 0))
+      .slice(0, 10)
+      .map((item) => ({
+        teamName: item.teamName,
+        rating: item.rating,
+        playerCount: item.playerCount || 0,
+        source: item.source || "unknown",
+      })),
+  };
+}
+
+function buildTeamProfile({ teamName, recent, seasonStats, injuries, clubElo, standingPos, squadProfile, transferProfile }) {
   const homeSplit = recent?.splits?.home || emptySplit();
   const awaySplit = recent?.splits?.away || emptySplit();
   const strongestSide = recent?.strongestSide || "balanced";
@@ -1578,6 +2669,11 @@ function buildTeamProfile({ teamName, recent, seasonStats, injuries, clubElo, st
       ratingImpact: Number(injuries?.injuredRating || 0),
       keyPlayersMissing: injuries?.keyPlayersMissing || [],
     },
+    squad: squadProfile || null,
+    transferWatch: transferProfile || null,
+    teamStrengthRating: squadProfile?.rating ?? null,
+    squadRating: squadProfile?.rating ?? null,
+    transferImpact: transferProfile?.netStrengthChange ?? 0,
     discipline: {
       yellowRate: Number(recent?.yellowCardRate || 0),
       redRate: Number(recent?.redCardRate || 0),
@@ -1676,6 +2772,10 @@ function buildFeatureVector(input) {
     String(input.phaseBucket || "").toLowerCase() === "interland" ||
     String(input.leagueType || "").toLowerCase() === "international";
   const clubEloScale = isInternational ? 0.35 : 1;
+  const homeSquadRating = Number(input.homeTeamProfile?.squadRating || input.homeTeamProfile?.teamStrengthRating || 50);
+  const awaySquadRating = Number(input.awayTeamProfile?.squadRating || input.awayTeamProfile?.teamStrengthRating || 50);
+  const homeTransferImpact = Number(input.homeTeamProfile?.transferImpact || 0);
+  const awayTransferImpact = Number(input.awayTeamProfile?.transferImpact || 0);
 
   return {
     home_avg_scored: Number(input.homeRecent?.avgScored || 1.35),
@@ -1695,6 +2795,12 @@ function buildFeatureVector(input) {
     club_elo_diff: Number(((Number(input.homeClubElo || 0) - Number(input.awayClubElo || 0)) * clubEloScale).toFixed(0)),
     raw_club_elo_diff: Number((Number(input.homeClubElo || 0) - Number(input.awayClubElo || 0)).toFixed(0)),
     club_elo_scale: clubEloScale,
+    home_squad_rating: Number(homeSquadRating.toFixed(1)),
+    away_squad_rating: Number(awaySquadRating.toFixed(1)),
+    squad_rating_diff: Number(((homeSquadRating - awaySquadRating) / 10).toFixed(2)),
+    home_transfer_impact: Number(homeTransferImpact.toFixed(2)),
+    away_transfer_impact: Number(awayTransferImpact.toFixed(2)),
+    transfer_impact_diff: Number((homeTransferImpact - awayTransferImpact).toFixed(2)),
     home_injuries: Number(input.homeInjuries?.injuredCount || 0),
     away_injuries: Number(input.awayInjuries?.injuredCount || 0),
     weather_risk:
@@ -1808,6 +2914,10 @@ function buildHeuristicEnsemble(featureVector) {
   awayScore -= featureVector.ppg_diff * 0.22;
   homeScore += featureVector.club_elo_diff / 180 * 0.18;
   awayScore -= featureVector.club_elo_diff / 180 * 0.18;
+  homeScore += Number(featureVector.squad_rating_diff || 0) * 0.045;
+  awayScore -= Number(featureVector.squad_rating_diff || 0) * 0.045;
+  homeScore += Number(featureVector.transfer_impact_diff || 0) * 0.055;
+  awayScore -= Number(featureVector.transfer_impact_diff || 0) * 0.055;
   homeScore += featureVector.rest_diff * 0.08;
   awayScore -= featureVector.rest_diff * 0.08;
   homeScore += (featureVector.home_home_split_scored - featureVector.away_away_split_conceded) * 0.16;
@@ -2502,7 +3612,6 @@ async function fetchFallbackScheduledEventsFromMarket(dateISO) {
 }
 
 function dedupeFallbackEvents(events) {
-  const canonicalEventName = (name) => canonicalTeamName(name || "");
   const hasScore = (event) => event?.homeScore?.current != null && event?.awayScore?.current != null;
   const hasLogos = (event) => Boolean(event?.homeTeam?.logoUrl) && Boolean(event?.awayTeam?.logoUrl);
   const quality = (event) => {
@@ -2553,13 +3662,8 @@ function dedupeFallbackEvents(events) {
   };
   const seen = new Map();
   for (const event of events || []) {
-    const kickoff = Number(event?.startTimestamp || 0);
-    const dateKey = Number.isFinite(kickoff) && kickoff > 0
-      ? toAmsterdamDateKey(new Date(kickoff * 1000))
-      : "";
-    const home = canonicalEventName(event?.homeTeam?.name || "");
-    const away = canonicalEventName(event?.awayTeam?.name || "");
-    const key = `${dateKey}|${home}|${away}`;
+    const key = buildEventDedupeKey(event);
+    if (!key) continue;
     const current = seen.get(key);
     if (!current) {
       seen.set(key, event);
@@ -2569,6 +3673,122 @@ function dedupeFallbackEvents(events) {
     seen.set(key, mergeEvent(current, event));
   }
   return [...seen.values()];
+}
+
+function canonicalMatchTeamKey(name) {
+  let key = canonicalTeamName(name || "");
+  if (!key) return "";
+  key = key
+    .replace(/\b(afc|fc|cf|sc|cd|ac|as|rc|sv|vfl|vfb|bk|fk|ik|if|club de|club)\b/g, " ")
+    .replace(/\b1\s+fc\b/g, " ")
+    .replace(/\b&\b/g, " and ")
+    .replace(/[^a-z0-9]+/g, " ")
+    .replace(/\s+/g, " ")
+    .trim();
+  return teamAliasLookup.get(key) || key;
+}
+
+function canonicalLeagueKey(label) {
+  return normalizeName(label || "").replace(/\s+/g, " ").trim();
+}
+
+function buildEventDedupeKey(event) {
+  const kickoff = Number(event?.startTimestamp || 0);
+  const dateKey = Number.isFinite(kickoff) && kickoff > 0
+    ? toAmsterdamDateKey(new Date(kickoff * 1000))
+    : "";
+  const league = getLeagueInfo(event)?.label || event?.uniqueTournament?.name || event?.tournament?.name || "";
+  const home = canonicalMatchTeamKey(event?.homeTeam?.name || "");
+  const away = canonicalMatchTeamKey(event?.awayTeam?.name || "");
+  if (!dateKey || !home || !away) return "";
+  return `${dateKey}|${canonicalLeagueKey(league)}|${home}|${away}`;
+}
+
+function buildStoredMatchDedupeKey(match) {
+  const dateKey = String(match?.date || match?.kickoff || "").slice(0, 10);
+  const home = canonicalMatchTeamKey(match?.homeTeamName || match?.homeTeam || "");
+  const away = canonicalMatchTeamKey(match?.awayTeamName || match?.awayTeam || "");
+  if (!dateKey || !home || !away) return "";
+  return `${dateKey}|${canonicalLeagueKey(match?.league || "")}|${home}|${away}`;
+}
+
+function storedMatchQuality(match) {
+  const status = String(match?.status || "").toUpperCase();
+  const hasScore = Number.isFinite(Number(match?.homeScore)) && Number.isFinite(Number(match?.awayScore));
+  const statusScore =
+    status === "FT" ? 70 :
+    status === "LIVE" || status === "HT" ? 55 :
+    status === "RESULT_PENDING" ? 20 :
+    status === "NS" ? 8 :
+    0;
+  const scoreScore = hasScore ? 35 : 0;
+  const logoScore = Number(Boolean(match?.homeLogo)) + Number(Boolean(match?.awayLogo));
+  const sourceText = String(match?.dataSource || "");
+  const sourceScore =
+    /espn/i.test(sourceText) ? 9 :
+    /thesportsdb/i.test(sourceText) ? 7 :
+    /openligadb/i.test(sourceText) ? 5 :
+    /football-data/i.test(sourceText) ? 4 :
+    /bbc/i.test(sourceText) ? 2 :
+    1;
+  return statusScore + scoreScore + logoScore + sourceScore + Number(match?.dataCompletenessScore || 0) * 10;
+}
+
+function mergeStoredDuplicateMatch(current, incoming) {
+  const incomingPreferred = storedMatchQuality(incoming) > storedMatchQuality(current);
+  const preferred = incomingPreferred ? { ...incoming } : { ...current };
+  const fallback = incomingPreferred ? current : incoming;
+
+  preferred.homeLogo = preferred.homeLogo || fallback?.homeLogo || "";
+  preferred.awayLogo = preferred.awayLogo || fallback?.awayLogo || "";
+  preferred.homeTeamId = preferred.homeTeamId || fallback?.homeTeamId || "";
+  preferred.awayTeamId = preferred.awayTeamId || fallback?.awayTeamId || "";
+  preferred.h2h = Number(preferred?.h2h?.played || 0) >= Number(fallback?.h2h?.played || 0) ? preferred.h2h : fallback?.h2h;
+  preferred.homeRecent = preferred.homeRecent || fallback?.homeRecent || null;
+  preferred.awayRecent = preferred.awayRecent || fallback?.awayRecent || null;
+  preferred.dataSource = [...new Set([preferred.dataSource, fallback?.dataSource].filter(Boolean))].join("+");
+
+  const preferredHasScore = Number.isFinite(Number(preferred.homeScore)) && Number.isFinite(Number(preferred.awayScore));
+  const fallbackHasScore = Number.isFinite(Number(fallback?.homeScore)) && Number.isFinite(Number(fallback?.awayScore));
+  if (!preferredHasScore && fallbackHasScore) {
+    preferred.homeScore = fallback.homeScore;
+    preferred.awayScore = fallback.awayScore;
+    preferred.score = fallback.score;
+    preferred.status = fallback.status || preferred.status;
+  }
+  return preferred;
+}
+
+function dedupeStoredMatches(matches = []) {
+  const seen = new Map();
+  for (const match of matches || []) {
+    const key = buildStoredMatchDedupeKey(match);
+    if (!key) continue;
+    const current = seen.get(key);
+    seen.set(key, current ? mergeStoredDuplicateMatch(current, match) : match);
+  }
+  return [...seen.values()];
+}
+
+function dedupeStoredPredictions(predictions = [], matches = []) {
+  const keptMatchIds = new Set(matches.map((match) => String(match?.id || "")).filter(Boolean));
+  const byDedupeKey = new Map();
+  for (const match of matches) {
+    const key = buildStoredMatchDedupeKey(match);
+    if (key && match?.id) byDedupeKey.set(key, String(match.id));
+  }
+  const seen = new Set();
+  const output = [];
+  for (const prediction of predictions || []) {
+    const predictionKey = `${String(prediction?.date || "").slice(0, 10)}|${canonicalLeagueKey(prediction?.league || "")}|${canonicalMatchTeamKey(prediction?.homeTeam || prediction?.homeTeamName || "")}|${canonicalMatchTeamKey(prediction?.awayTeam || prediction?.awayTeamName || "")}`;
+    const canonicalMatchId = byDedupeKey.get(predictionKey) || prediction?.matchId;
+    if (canonicalMatchId && !keptMatchIds.has(String(canonicalMatchId))) continue;
+    const unique = canonicalMatchId || predictionKey || prediction?.matchId;
+    if (seen.has(unique)) continue;
+    seen.add(unique);
+    output.push({ ...prediction, matchId: canonicalMatchId || prediction.matchId });
+  }
+  return output;
 }
 
 function getSportsDbSeasonLabel(dateISO) {
@@ -2920,7 +4140,9 @@ async function fetchSportsDbScheduledEvents(dateISO) {
         if (leagueLabel) appendEvent(event, leagueLabel);
       }
     }
-  } catch {}
+  } catch (error) {
+    console.warn(`[worker] TheSportsDB eventsday fallback mislukt voor ${dateISO}: ${error?.message || error}`);
+  }
 
   for (const [leagueLabel, leagueId] of Object.entries(SPORTSDB_LEAGUE_IDS)) {
     for (const endpoint of ["eventsnextleague", "eventspastleague"]) {
@@ -2938,7 +4160,9 @@ async function fetchSportsDbScheduledEvents(dateISO) {
           if (String(event?.dateEvent || "") !== dateISO) continue;
           appendEvent(event, leagueLabel);
         }
-      } catch {}
+      } catch (error) {
+        console.warn(`[worker] TheSportsDB ${endpoint} fallback mislukt voor ${leagueLabel}: ${error?.message || error}`);
+      }
     }
   }
 
@@ -3121,7 +4345,9 @@ async function fetchOpenLigaDbScheduledEvents(dateISO) {
           source: "openligadb-fixture-fallback",
         });
       }
-    } catch {}
+    } catch (error) {
+      console.warn(`[worker] OpenLigaDB fallback mislukt voor ${leagueLabel}: ${error?.message || error}`);
+    }
   }
 
   return fallbackEvents;
@@ -4807,6 +6033,12 @@ function buildExactScoreTipScore(prediction, match) {
   const exactProb = Number(prediction?.exactProb || 0);
   const confidence = Number(prediction?.confidence || 0);
   const modelAgreement = Number(prediction?.modelEdges?.modelAgreement || 0);
+  const dataCompleteness = Number(
+    prediction?.dataCompletenessScore ??
+      prediction?.modelEdges?.dataCompleteness?.score ??
+      match?.dataCompletenessScore ??
+      0
+  );
   const leagueReliability = prediction?.modelEdges?.leagueReliability || match?.competitionReliability || null;
   const phaseReliability = prediction?.modelEdges?.phaseReliability || match?.phaseReliability || null;
   const sourceQuality = Math.max(
@@ -4843,6 +6075,8 @@ function buildExactScoreTipScore(prediction, match) {
   const marketBonus = marketCoverage >= 0.45 ? 0.026 : marketCoverage >= 0.18 ? 0.01 : marketCoverage <= 0.05 ? -0.02 : 0;
   const scoreSelectionReason = String(prediction?.modelEdges?.scoreSelection?.reason || "");
   const adjustedScoreBonus = scoreSelectionReason.includes("aangepast") ? 0.012 : 0;
+  const completenessBonus = clamp((dataCompleteness - 0.55) * 0.18, -0.07, 0.075);
+  const qualityGatePenalty = prediction?.qualityGate?.blockedHighConfidence || match?.qualityGate?.blockedHighConfidence ? 0.045 : 0;
   const riskPenalty = prediction?.modelEdges?.riskProfile === "high" ? 0.065 : prediction?.modelEdges?.riskProfile === "medium" ? 0.03 : 0;
   const agreementPenalty = modelAgreement < 0.42 ? 0.07 : modelAgreement < 0.55 ? 0.038 : 0;
   const score = clamp(
@@ -4856,7 +6090,9 @@ function buildExactScoreTipScore(prediction, match) {
       exactReliabilityBonus +
       learningBonus +
       marketBonus +
+      completenessBonus +
       adjustedScoreBonus -
+      qualityGatePenalty -
       riskPenalty -
       agreementPenalty -
       goalErrorPenalty,
@@ -4868,6 +6104,8 @@ function buildExactScoreTipScore(prediction, match) {
   if (modelAgreement >= 0.68) reasons.push("modellen eensgezind");
   if (sourceQuality >= 0.55) reasons.push("rijke brondata");
   if (sourceQuality < 0.3) reasons.push("brondata dun meegewogen");
+  if (dataCompleteness >= 0.68) reasons.push("kwaliteitsgate groen");
+  if (dataCompleteness < 0.5) reasons.push("bronkwaliteit beperkt");
   if (lineupBonus) reasons.push("opstellingen bevestigd");
   if (h2hBonus) reasons.push("H2H gevuld");
   if (reliabilityBonus >= 0.025) reasons.push("competitie/fase betrouwbaar");
@@ -4920,6 +6158,113 @@ function assignTopConfidenceRanks(dayMatches, dayPredictions) {
   }
 }
 
+function scoreDataCompleteness(input, edges = {}) {
+  const reasons = [];
+  const missing = [];
+  const add = (condition, weight, goodReason, missingReason, partial = 0) => {
+    if (condition) {
+      reasons.push(goodReason);
+      return weight;
+    }
+    if (partial > 0) {
+      reasons.push(`${missingReason} deels`);
+      return weight * partial;
+    }
+    missing.push(missingReason);
+    return 0;
+  };
+
+  const h2hPlayed = Math.max(Number(input?.h2h?.played || 0), Array.isArray(input?.h2h?.results) ? input.h2h.results.length : 0);
+  const homeFormGames = Number(input?.homeRecent?.gamesPlayed || 0);
+  const awayFormGames = Number(input?.awayRecent?.gamesPlayed || 0);
+  const homeSources = input?.homeSeasonStats?.externalSources || [];
+  const awaySources = input?.awaySeasonStats?.externalSources || [];
+  const hasXg =
+    input?.homeSeasonStats?.xG != null ||
+    input?.awaySeasonStats?.xG != null ||
+    homeSources.includes("Understat") ||
+    awaySources.includes("Understat");
+  const marketCalibration = edges.marketCalibration || input?.marketCalibration || {};
+  const bookmakerSignals = Array.isArray(marketCalibration.bookmakerSignals) ? marketCalibration.bookmakerSignals : [];
+  const marketCoverage = Number(marketCalibration.closingCoverage || 0);
+  const hasOdds = bookmakerSignals.length > 0 || marketCoverage >= 0.15;
+  const hasStanding = Number(input?.homeStandingPos || input?.homePos || 0) > 0 && Number(input?.awayStandingPos || input?.awayPos || 0) > 0;
+  const hasTeamIds = !!input?.homeTeamId && !!input?.awayTeamId;
+  const sourceQuality = Math.max(Number(input?.homeSeasonStats?.sourceQuality || 0), Number(input?.awaySeasonStats?.sourceQuality || 0));
+  const lineupsKnown = !!input?.lineupSummary?.confirmed;
+
+  const score =
+    add(h2hPlayed >= 3, 0.16, "H2H gevuld", "H2H ontbreekt", h2hPlayed >= 1 ? 0.45 : 0) +
+    add(homeFormGames >= 5 && awayFormGames >= 5, 0.16, "vormdata gevuld", "vormdata dun", homeFormGames >= 3 && awayFormGames >= 3 ? 0.65 : 0) +
+    add(hasStanding, 0.12, "stand/positie gevuld", "stand/positie ontbreekt") +
+    add(hasTeamIds, 0.1, "team-id match aanwezig", "team-id match ontbreekt") +
+    add(hasXg || sourceQuality >= 0.45, 0.18, "xG/shot-bronnen aanwezig", "xG/shot-bronnen dun", sourceQuality >= 0.25 ? 0.55 : 0) +
+    add(hasOdds, 0.14, "odds/marktdekking aanwezig", "odds/marktdekking dun", marketCoverage > 0 ? 0.45 : 0) +
+    add(lineupsKnown, 0.06, "opstellingsdata bevestigd", "opstellingsdata open", 0.35) +
+    add(edges.resultFresh !== false, 0.08, "uitslagbron actueel", "uitslagbron verouderd", edges.resultFresh == null ? 0.65 : 0);
+
+  const normalized = clamp(score, 0, 1);
+  const label = normalized >= 0.75 ? "hoog" : normalized >= 0.58 ? "voldoende" : normalized >= 0.42 ? "laag" : "kritiek";
+  return {
+    score: Number(normalized.toFixed(3)),
+    percent: Math.round(normalized * 100),
+    label,
+    reasons: reasons.slice(0, 6),
+    missing: missing.slice(0, 6),
+  };
+}
+
+function qualityGateForCompleteness(dataCompleteness) {
+  const score = Number(dataCompleteness?.score || 0);
+  const confidenceCap = score < 0.35 ? 0.42 : score < 0.5 ? 0.54 : score < 0.62 ? 0.66 : 0.93;
+  const penalty = score < 0.35 ? 0.14 : score < 0.5 ? 0.085 : score < 0.62 ? 0.04 : 0;
+  return {
+    blockedHighConfidence: score < 0.62,
+    confidenceCap,
+    penalty,
+    summary:
+      score < 0.35
+        ? "kwaliteitsgate blokkeert hoge zekerheid: cruciale data ontbreekt"
+        : score < 0.5
+          ? "kwaliteitsgate verlaagt confidence: brondata is dun"
+          : score < 0.62
+            ? "kwaliteitsgate beperkt confidence: niet alle kernbronnen zijn gevuld"
+            : "kwaliteitsgate akkoord",
+  };
+}
+
+function calibrateScoreMatrixWithReviewBias(scoreMatrix, input, selectedScore) {
+  const leagueReliability = input?.leagueReliability || {};
+  const phaseReliability = input?.phaseReliability || {};
+  const exactHitRate = Math.max(Number(leagueReliability.exactHitRate || 0), Number(phaseReliability.exactHitRate || 0));
+  const avgGoalError = Math.max(Number(leagueReliability.avgGoalError || 0), Number(phaseReliability.avgGoalError || 0));
+  const matrix = { ...(scoreMatrix || {}) };
+  const lowExactReliability = exactHitRate > 0 && exactHitRate < 0.1;
+  const highGoalError = avgGoalError >= 1.75;
+  const drawHeavyPick = ["0-0", "1-1"].includes(String(selectedScore || ""));
+
+  if (!drawHeavyPick || (!lowExactReliability && !highGoalError)) {
+    return {
+      matrix,
+      applied: false,
+      reason: "scorematrix ongewijzigd",
+    };
+  }
+
+  for (const score of ["0-0", "1-1"]) {
+    if (matrix[score] != null) matrix[score] = Number((Number(matrix[score]) * 0.92).toFixed(4));
+  }
+  for (const score of ["1-0", "0-1", "2-1", "1-2"]) {
+    if (matrix[score] != null) matrix[score] = Number((Number(matrix[score]) * 1.025).toFixed(4));
+  }
+
+  return {
+    matrix,
+    applied: true,
+    reason: "historische exact-score foutmarge stuurt lage draw-picks licht bij",
+  };
+}
+
 async function fetchWithTimeout(url, options = {}, timeoutMs = 12000) {
   const controller = new AbortController();
   const timeout = setTimeout(() => controller.abort(), timeoutMs);
@@ -4935,7 +6280,11 @@ async function fetchWithTimeout(url, options = {}, timeoutMs = 12000) {
 
 async function safeFetch(url) {
   const isSofaRequest = String(url || "").startsWith(SOFA);
+  const isSportsDbSquadRequest = String(url || "").includes("thesportsdb.com/api/v1/json/3/searchplayers.php");
   if (isSofaRequest && sofaFetchCircuit.blocked) {
+    return null;
+  }
+  if (isSportsDbSquadRequest && sportsDbSquadFetchState.blockedUntil > Date.now()) {
     return null;
   }
   try {
@@ -4956,6 +6305,14 @@ async function safeFetch(url) {
         if (!sofaFetchCircuit.logged) {
           console.error("[worker] Sofascore geeft 403; deze run gebruikt automatisch de gratis fallbackbronnen.");
           sofaFetchCircuit.logged = true;
+        }
+        return null;
+      }
+      if (isSportsDbSquadRequest && response.status === 429) {
+        sportsDbSquadFetchState.blockedUntil = Date.now() + 60 * 60 * 1000;
+        if (!sportsDbSquadFetchState.loggedRateLimit) {
+          console.warn("[worker] TheSportsDB spelerslijsten zijn tijdelijk rate-limited; worker gebruikt afgeleide teamsterkte.");
+          sportsDbSquadFetchState.loggedRateLimit = true;
         }
         return null;
       }
@@ -6255,12 +7612,21 @@ function buildModelPerformanceFromReviews(reviews) {
     .sort((a, b) => ({ hoog: 0, gemiddeld: 1, laag: 2 }[a.key] - { hoog: 0, gemiddeld: 1, laag: 2 }[b.key]));
 
   const overall = summarizeReviewGroup("overall", items);
+  const probabilityLayerBetter = Number(overall.probabilityOutcomeHitRate || 0) > Number(overall.outcomeHitRate || 0) + 0.03;
+  const modelComparisonStatus =
+    byModel.length <= 1
+      ? "Alle reviews staan nu op ensemble; losse submodellen worden nog niet apart als eigen model beoordeeld."
+      : `Beste model in reviews: ${byModel[0]?.key || "onbekend"}.`;
   return {
     generatedAt: new Date().toISOString(),
     overall,
     byLeague: byLeague.slice(0, 24),
     byPhase,
     byModel,
+    modelComparisonStatus,
+    modelSelectionAdvice: probabilityLayerBetter
+      ? "De 1X2-kanslaag scoort beter dan de uitkomst van de gekozen exacte score. Gebruik de scorematrix voor exacte score, maar laat winnaar/gelijk sterker door de 1X2-kanslaag bewaken."
+      : "De huidige ensemble-selectie ligt voldoende in lijn met de 1X2-kanslaag.",
     confidenceBuckets,
     weakestLeagues: byLeague
       .filter((item) => item.matches >= 5)
@@ -6268,7 +7634,7 @@ function buildModelPerformanceFromReviews(reviews) {
       .slice(0, 8),
     summary:
       items.length > 0
-        ? `Modelperformance: ${Math.round(overall.outcomeHitRate * 100)}% winnaar/gelijk, ${Math.round(overall.exactHitRate * 100)}% exacte score, BTTS ${Math.round(overall.bttsHitRate * 100)}%, over 2.5 ${Math.round(overall.over25HitRate * 100)}%.`
+        ? `Modelperformance: ${Math.round(overall.outcomeHitRate * 100)}% winnaar/gelijk, ${Math.round(overall.exactHitRate * 100)}% exacte score, BTTS ${Math.round(overall.bttsHitRate * 100)}%, over 2.5 ${Math.round(overall.over25HitRate * 100)}%. ${modelComparisonStatus}`
         : "Nog geen modelperformance beschikbaar.",
   };
 }
@@ -7074,6 +8440,17 @@ function predict(input) {
     awayXG *= clamp(1 - eloDiff / 1600, 0.9, 1.14);
   }
 
+  const homeSquadRating = Number(input.homeTeamProfile?.teamStrengthRating || input.homeTeamProfile?.squadRating || 50);
+  const awaySquadRating = Number(input.awayTeamProfile?.teamStrengthRating || input.awayTeamProfile?.squadRating || 50);
+  const squadRatingDiff = homeSquadRating - awaySquadRating;
+  homeXG *= clamp(1 + squadRatingDiff / 900, 0.94, 1.08);
+  awayXG *= clamp(1 - squadRatingDiff / 900, 0.94, 1.08);
+
+  const transferImpactDiff =
+    Number(input.homeTeamProfile?.transferImpact || 0) - Number(input.awayTeamProfile?.transferImpact || 0);
+  homeXG *= clamp(1 + transferImpactDiff * 0.015, 0.97, 1.04);
+  awayXG *= clamp(1 - transferImpactDiff * 0.015, 0.97, 1.04);
+
   if (input.homeSeasonStats?.avgShotsOn && input.awaySeasonStats?.avgShotsOn) {
     const averageShots =
       (Number(input.homeSeasonStats.avgShotsOn || 0) + Number(input.awaySeasonStats.avgShotsOn || 0)) / 2 || 1;
@@ -7300,9 +8677,13 @@ function predict(input) {
     runs: MONTE_CARLO_RUNS,
   });
   const blended = blendTriple(preSimulationBlend, monteCarlo, MONTE_CARLO_WEIGHT);
-  const combinedScoreMatrix = blendScoreMatrices(scoreMatrix, monteCarlo.scoreMatrix, MONTE_CARLO_WEIGHT);
-  const bestCombinedScore = Object.entries(combinedScoreMatrix)
+  let combinedScoreMatrix = blendScoreMatrices(scoreMatrix, monteCarlo.scoreMatrix, MONTE_CARLO_WEIGHT);
+  let bestCombinedScore = Object.entries(combinedScoreMatrix)
     .sort((a, b) => Number(b[1] || 0) - Number(a[1] || 0))[0] || [bestScore, bestProb];
+  const scoreCalibration = calibrateScoreMatrixWithReviewBias(combinedScoreMatrix, input, bestCombinedScore[0]);
+  combinedScoreMatrix = scoreCalibration.matrix;
+  bestCombinedScore = Object.entries(combinedScoreMatrix)
+    .sort((a, b) => Number(b[1] || 0) - Number(a[1] || 0))[0] || bestCombinedScore;
   bestScore = bestCombinedScore[0];
   bestProb = Number(bestCombinedScore[1] || bestProb || 0);
   const monteCarloAgreement = calcModelAgreement(preSimulationBlend, monteCarlo);
@@ -7364,6 +8745,13 @@ function predict(input) {
       : Number(marketCalibration.closingCoverage || 0) < 0.4
         ? 0.005
         : 0;
+  const dataCompleteness = scoreDataCompleteness(input, {
+    marketCalibration,
+    leagueReliability,
+    phaseReliability,
+    resultFresh: input.resultFresh,
+  });
+  const qualityGate = qualityGateForCompleteness(dataCompleteness);
   const fragilityPenalty =
     (Number(learningEdge.homeFragility || 0) + Number(learningEdge.awayFragility || 0) >= 4 ? 0.02 : 0) +
     (!input.lineupSummary?.confirmed ? 0.015 : 0);
@@ -7383,9 +8771,10 @@ function predict(input) {
       phasePenalty -
       bookmakerPenalty -
       closingCoveragePenalty -
+      qualityGate.penalty -
       modelAgreementPenalty,
     0.24,
-    0.93
+    qualityGate.confidenceCap
   );
   const riskProfile = buildRiskProfile({
     confidence: adjustedConfidence,
@@ -7438,11 +8827,16 @@ function predict(input) {
         rawBestScore: bestScore,
         selectedScore,
         reason:
-          dominantOutcome.key !== bestScoreOutcome
-            ? `hoogste exacte scorematrix-kans inclusief Monte Carlo; 1X2 neigt naar ${dominantOutcome.key === "home" ? "thuiswinst" : dominantOutcome.key === "away" ? "uitwinst" : "gelijkspel"}`
-            : "hoogste exacte scorematrix-kans inclusief Monte Carlo",
+          scoreCalibration.applied
+            ? `${scoreCalibration.reason}; scorematrix blijft leidend`
+            : dominantOutcome.key !== bestScoreOutcome
+              ? `hoogste exacte scorematrix-kans inclusief Monte Carlo; 1X2 neigt naar ${dominantOutcome.key === "home" ? "thuiswinst" : dominantOutcome.key === "away" ? "uitwinst" : "gelijkspel"}`
+              : "hoogste exacte scorematrix-kans inclusief Monte Carlo",
         outcomeEdge,
+        calibrationApplied: scoreCalibration.applied,
       },
+      dataCompleteness,
+      qualityGate,
       clubEloDiff: homeClubElo > 0 && awayClubElo > 0 ? Math.round(homeClubElo - awayClubElo) : null,
       stakes: input.context?.summary || null,
       matchImportance: input.matchImportance || 1,
@@ -7453,11 +8847,15 @@ function predict(input) {
         ...(modelAgreement < 0.55 ? ["low_model_agreement"] : []),
         ...(monteCarloAgreement < 0.55 ? ["monte_carlo_disagreement"] : []),
         ...(bookmakerSignals.length === 0 ? ["market_signals_missing"] : []),
+        ...(dataCompleteness.score < 0.58 ? ["data_completeness_low"] : []),
       ],
       riskProfile,
       teamAiSummary,
     },
     featureVector,
+    dataCompleteness,
+    dataCompletenessScore: dataCompleteness.score,
+    qualityGate,
     ensembleMeta: {
       active: true,
       baseModel: "dixon-coles-poisson",
@@ -7499,8 +8897,8 @@ function compactStore(store, referenceDateKey, now) {
       continue;
     }
 
-    store.matches[date] = (store.matches[date] || []).filter(Boolean);
-    store.predictions[date] = (store.predictions[date] || []).map((prediction) =>
+    store.matches[date] = dedupeStoredMatches((store.matches[date] || []).filter(Boolean));
+    store.predictions[date] = dedupeStoredPredictions(store.predictions?.[date] || [], store.matches[date]).map((prediction) =>
       compactPredictionEntry(prediction, date !== referenceDateKey && date !== addDaysToDateKey(referenceDateKey, 1))
     );
 
@@ -7517,6 +8915,8 @@ function compactStore(store, referenceDateKey, now) {
   pruneUpdatedMap(store, "teamStats", "teamStatsUpdated", FORM_TTL, now, 600);
   pruneUpdatedMap(store, "teamInjuries", "teamInjuriesUpdated", INJURY_TTL, now, 600);
   pruneUpdatedMap(store, "teamSeasonStats", "teamSeasonStatsUpdated", SEASON_TTL, now, 600);
+  pruneUpdatedMap(store, "teamSquads", "teamSquadsUpdated", SQUAD_TTL * 4, now, MAX_TEAM_SQUADS);
+  pruneUpdatedMap(store, "teamTransfers", "teamTransfersUpdated", TRANSFER_WATCH_TTL * 14, now, MAX_TEAM_TRANSFERS);
   pruneUpdatedMap(store, "eventCache", "eventCacheUpdated", EVENT_TTL, now, MAX_EVENT_CACHE);
   pruneUpdatedMap(store, "marketProfiles", "marketProfilesUpdated", MARKET_TTL, now, MAX_MARKET_PROFILES);
   pruneUpdatedMap(store, "openfootballProfiles", "openfootballProfilesUpdated", OPENFOOTBALL_TTL, now, MAX_OPENFOOTBALL_CACHE);
@@ -7555,6 +8955,10 @@ function defaultStore() {
     teamInjuriesUpdated: {},
     teamSeasonStats: {},
     teamSeasonStatsUpdated: {},
+    teamSquads: {},
+    teamSquadsUpdated: {},
+    teamTransfers: {},
+    teamTransfersUpdated: {},
     eventCache: {},
     eventCacheUpdated: {},
     h2hCache: {},
@@ -7580,6 +8984,8 @@ function defaultStore() {
     backtestSummary: null,
     anomalyReport: null,
     aiAdvice: [],
+    competitionArchiveIndex: null,
+    teamSquadSummary: null,
     lastRun: null,
     workerVersion: "v19-intelligence-layer",
   };
@@ -7619,6 +9025,13 @@ function buildSourceCoverage(store, todayKey) {
   const liveWithScore = liveMatches.filter((match) => String(match?.score || "").includes("-")).length;
   const scoreCovered = scoreRelevant.filter((match) => String(match?.score || "").includes("-")).length;
   const logoCovered = todayMatches.filter((match) => match?.homeLogo && match?.awayLogo).length;
+  const completenessScores = todayMatches
+    .map((match) => Number(match?.dataCompletenessScore ?? match?.dataCompleteness?.score ?? 0))
+    .filter((score) => score > 0);
+  const averageDataCompleteness =
+    completenessScores.length > 0
+      ? Number((completenessScores.reduce((sum, score) => sum + score, 0) / completenessScores.length).toFixed(2))
+      : 0;
   const statusBreakdown = todayMatches.reduce((acc, match) => {
     const key = String(match?.status || "UNKNOWN").toUpperCase();
     acc[key] = Number(acc[key] || 0) + 1;
@@ -7638,6 +9051,8 @@ function buildSourceCoverage(store, todayKey) {
     liveMatches: liveMatches.length,
     liveWithScore,
     pendingFinishedCount: Math.max(0, finishedMatches.length - finishedWithScore),
+    averageDataCompleteness,
+    lowCompletenessMatches: todayMatches.filter((match) => Number(match?.dataCompletenessScore ?? 0) < 0.5).length,
     statusBreakdown,
     bookmakerCoverage: Number((bookmakerCovered / total).toFixed(2)),
     refereeCoverage: Number((refereeCovered / total).toFixed(2)),
@@ -7671,6 +9086,27 @@ function buildSourceCoverage(store, todayKey) {
         role: "backup",
         status: Object.keys(sourceBreakdown).some((key) => key.includes("thesportsdb")) ? "actief" : "stand-by",
         note: "Gratis fixturefallback voor internationale en geselecteerde competitiewedstrijden.",
+      },
+      {
+        key: "forza-football",
+        name: "Forza Football",
+        role: "selectie fallback",
+        status: Object.values(store.teamSquads || {}).some((item) => (item?.sources || []).includes("Forza Football")) ? "gekoppeld" : "stand-by",
+        note: "Wordt pas geprobeerd als de eerste spelerslijstbron onvolledig is; gebruikt alleen bekende/geconfigureerde publieke squad-URL's.",
+      },
+      {
+        key: "football-data-org",
+        name: "football-data.org",
+        role: "selectie API fallback",
+        status: process.env.FOOTBALL_DATA_TOKEN || process.env.FOOTBALL_DATA_API_KEY ? "token aanwezig" : "klaar, token ontbreekt",
+        note: "Optionele gratis API-bron voor squads. Alleen actief met FOOTBALL_DATA_TOKEN en team-id mapping, zodat er geen verkeerde teams worden gematcht.",
+      },
+      {
+        key: "reep",
+        name: "Reep Football",
+        role: "team-ID koppeling",
+        status: Object.values(store.teamSquads || {}).some((item) => item?.reepTeamId || item?.sourceIds?.reep) ? "gekoppeld" : "stand-by",
+        note: "Wordt gebruikt als alias/ID-koppelvlak wanneer REEP_TEAM_MAP aanwezig is; voorkomt verkeerde clubnaam- en logo-matches.",
       },
       {
         key: "football-data",
@@ -7729,6 +9165,7 @@ function buildDataScoutReport(store, todayKey) {
   const sourceCoverage = store.sourceCoverage || buildSourceCoverage(store, todayKey);
   const sourceBreakdown = sourceCoverage.sourceBreakdown || {};
   const sourceIsActive = (sourceKey) => Object.keys(sourceBreakdown).some((key) => key.includes(sourceKey));
+  const teamSquadSources = Object.values(store.teamSquads || {}).flatMap((item) => item?.sources || []);
   const finishedYesterday = yesterdayMatches.filter((match) => String(match?.status || "").toUpperCase() === "FT");
   const yesterdayScoresFilled = finishedYesterday.filter((match) => String(match?.score || "").includes("-")).length;
   const todaysFinished = todayMatches.filter((match) => String(match?.status || "").toUpperCase() === "FT");
@@ -7741,7 +9178,10 @@ function buildDataScoutReport(store, todayKey) {
       (source.key === "openfootball" && Object.keys(store.openfootballProfiles || {}).length > 0) ||
       (source.key === "understat" && Object.keys(store.understatSnapshots || {}).length > 0) ||
       (source.key === "fbref" && Object.keys(store.fbrefSnapshots || {}).length > 0) ||
-      (source.key === "football-data" && Object.keys(store.marketProfiles || {}).length > 0);
+      (source.key === "football-data" && Object.keys(store.marketProfiles || {}).length > 0) ||
+      (source.key === "forza-football" && teamSquadSources.includes("Forza Football")) ||
+      (source.key === "football-data-org" && teamSquadSources.includes("football-data.org")) ||
+      (source.key === "reep" && teamSquadSources.includes("Reep Football identity"));
     const active = sourceIsActive(source.key) || hasCache || (source.key === "bbc-fixtures" && sourceIsActive("curated-fixture"));
     return {
       ...source,
@@ -7881,6 +9321,14 @@ function buildAiRecommendations(store, todayKey) {
       summary: `H2H-dekking staat op ${Math.round(Number(sourceCoverage.h2hCoverage || 0) * 100)}% voor de actuele speeldag.`,
       action: "Blijf competitiebackfill combineren met neutrale onderlinge fallback buiten de live bron.",
       priority: "medium",
+    });
+  }
+  if (sourceCoverage && Number(sourceCoverage.averageDataCompleteness || 0) > 0 && Number(sourceCoverage.averageDataCompleteness || 0) < 0.58) {
+    issues.push({
+      title: "Prediction quality gate actief",
+      summary: `Gemiddelde bronkwaliteit staat op ${Math.round(Number(sourceCoverage.averageDataCompleteness || 0) * 100)}%; hoge exact-score confidence wordt daarom automatisch afgekapt.`,
+      action: "Vul eerst H2H, vorm, actuele standen, xG/shotdata en marktdekking voordat top-5 picks zwaar meetellen.",
+      priority: "high",
     });
   }
 
@@ -8042,6 +9490,10 @@ async function main() {
   if (!store.teamLearning) store.teamLearning = {};
   if (!store.leagueReliability) store.leagueReliability = {};
   if (!store.phaseReliability) store.phaseReliability = {};
+  if (!store.teamSquads) store.teamSquads = {};
+  if (!store.teamSquadsUpdated) store.teamSquadsUpdated = {};
+  if (!store.teamTransfers) store.teamTransfers = {};
+  if (!store.teamTransfersUpdated) store.teamTransfersUpdated = {};
   purgeExcludedContent(store);
   await repairStoredLogos(store);
   repairStoredPredictionScoreSelections(store);
@@ -8516,6 +9968,27 @@ async function main() {
       if (homeId && homeSeasonStats?.externalSources?.length) store.teamSeasonStats[homeId] = homeSeasonStats;
       if (awayId && awaySeasonStats?.externalSources?.length) store.teamSeasonStats[awayId] = awaySeasonStats;
 
+      const homeIntelligence = await updateTeamIntelligence(store, {
+        teamId: homeId,
+        teamName: homeName,
+        recent: homeRecent,
+        seasonStats: homeSeasonStats,
+        injuries: store.teamInjuries[homeId] || null,
+        clubElo: homeClubElo,
+        standingPos: homePos,
+        now,
+      });
+      const awayIntelligence = await updateTeamIntelligence(store, {
+        teamId: awayId,
+        teamName: awayName,
+        recent: awayRecent,
+        seasonStats: awaySeasonStats,
+        injuries: store.teamInjuries[awayId] || null,
+        clubElo: awayClubElo,
+        standingPos: awayPos,
+        now,
+      });
+
       const homeTeamProfile = buildTeamProfile({
         teamName: homeName,
         recent: homeRecent,
@@ -8523,6 +9996,8 @@ async function main() {
         injuries: store.teamInjuries[homeId] || null,
         clubElo: homeClubElo,
         standingPos: homePos,
+        squadProfile: homeIntelligence.squadProfile,
+        transferProfile: homeIntelligence.transferProfile,
       });
       const awayTeamProfile = buildTeamProfile({
         teamName: awayName,
@@ -8531,6 +10006,8 @@ async function main() {
         injuries: store.teamInjuries[awayId] || null,
         clubElo: awayClubElo,
         standingPos: awayPos,
+        squadProfile: awayIntelligence.squadProfile,
+        transferProfile: awayIntelligence.transferProfile,
       });
       const referee = extractReferee(eventDetails);
       const historicalRefereeProfile = lookupHistoricalRefereeProfile(leagueMarketProfile, referee?.name, globalRefereeArchive);
@@ -8659,6 +10136,9 @@ async function main() {
         roundLabel,
         context,
         modelEdges: prediction.modelEdges,
+        dataCompleteness: prediction.dataCompleteness,
+        dataCompletenessScore: prediction.dataCompletenessScore,
+        qualityGate: prediction.qualityGate,
         monteCarlo: prediction.monteCarlo,
         ensembleMeta: prediction.ensembleMeta,
       };
@@ -8666,6 +10146,7 @@ async function main() {
       dayMatches.push(match);
       dayPredictions.push({
         matchId,
+        date,
         dataSource: String(event.source || "sofascore"),
         homeTeam: homeName,
         awayTeam: awayName,
@@ -8728,9 +10209,11 @@ async function main() {
       await sleep(40);
     }
 
-    assignTopConfidenceRanks(dayMatches, dayPredictions);
-    store.matches[date] = dayMatches;
-    store.predictions[date] = dayPredictions;
+    const uniqueDayMatches = dedupeStoredMatches(dayMatches);
+    const uniqueDayPredictions = dedupeStoredPredictions(dayPredictions, uniqueDayMatches);
+    assignTopConfidenceRanks(uniqueDayMatches, uniqueDayPredictions);
+    store.matches[date] = uniqueDayMatches;
+    store.predictions[date] = uniqueDayPredictions;
   }
 
   const liveJson = await safeFetch(`${SOFA}/sport/football/events/live`);
@@ -8795,8 +10278,10 @@ async function main() {
   store.dataScout = buildDataScoutReport(store, today);
   store.anomalyReport = buildDataAnomalyReport(store, today);
   store.aiAdvice = buildAiRecommendations(store, today);
+  store.competitionArchiveIndex = buildCompetitionArchiveIndex(store, today);
+  store.teamSquadSummary = buildTeamSquadSummary(store);
   store.lastRun = Date.now();
-  store.workerVersion = "v19-intelligence-layer";
+  store.workerVersion = "v20-competition-squad-archive";
   
   // Log summary
   const totalMatches = Object.values(store.matches || {}).flat().length;

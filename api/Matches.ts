@@ -3,6 +3,7 @@ import fs from "fs";
 import path from "path";
 import { addDaysToDateKey, todayAmsterdamKey } from "../shared/date.js";
 import { createLogger, getErrorDetails } from "../shared/logger.js";
+import { setCorsHeaders } from "../shared/cors.js";
 
 const logger = createLogger("api.matches");
 
@@ -38,6 +39,89 @@ function attachReview(match: any, reviewsOrStore: any) {
     learningSummary: match.learningSummary || null,
     marketCalibration: match.marketCalibration || null,
   };
+}
+
+const TEAM_DEDUPE_ALIASES: Record<string, string> = {
+  "freiburg": "freiburg",
+  "sc freiburg": "freiburg",
+  "sport club freiburg": "freiburg",
+  "aston villa": "aston villa",
+  "aston villa fc": "aston villa",
+  "man city": "manchester city",
+  "manchester city": "manchester city",
+  "manchester city fc": "manchester city",
+  "psg": "paris saint germain",
+  "paris sg": "paris saint germain",
+  "paris saint germain": "paris saint germain",
+  "paris saint-germain": "paris saint germain",
+  "fc barcelona": "barcelona",
+  "barcelona": "barcelona",
+};
+
+function normalizeDedupeText(value: unknown) {
+  return String(value || "")
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .toLowerCase()
+    .replace(/&/g, " and ")
+    .replace(/[^a-z0-9]+/g, " ")
+    .replace(/\b(afc|fc|cf|sc|cd|ac|as|rc|sv|vfl|vfb|bk|fk|ik|if|club de|club)\b/g, " ")
+    .replace(/\s+/g, " ")
+    .trim();
+}
+
+function canonicalDedupeTeam(value: unknown) {
+  const normalized = normalizeDedupeText(value);
+  return TEAM_DEDUPE_ALIASES[normalized] || normalized;
+}
+
+function buildServedMatchDedupeKey(match: any) {
+  const dateKey = String(match?.date || match?.kickoff || "").slice(0, 10);
+  const league = normalizeDedupeText(match?.league).replace(/\b(uefa|europe)\b/g, " ").replace(/\s+/g, " ").trim();
+  const home = canonicalDedupeTeam(match?.homeTeamName || match?.homeTeam);
+  const away = canonicalDedupeTeam(match?.awayTeamName || match?.awayTeam);
+  if (!dateKey || !home || !away) return "";
+  return `${dateKey}|${league}|${home}|${away}`;
+}
+
+function servedMatchQuality(match: any) {
+  const status = String(match?.status || "").toUpperCase();
+  const statusScore = ["FT", "AET", "PEN"].includes(status) ? 80 : ["LIVE", "HT"].includes(status) ? 70 : status === "RESULT_PENDING" ? 20 : 0;
+  const scoreScore = match?.score || match?.homeScore != null || match?.awayScore != null ? 30 : 0;
+  const logoScore = (match?.homeLogo ? 4 : 0) + (match?.awayLogo ? 4 : 0);
+  const detailScore = Number(match?.h2h?.played || 0) * 2 + (match?.homeRecent ? 3 : 0) + (match?.awayRecent ? 3 : 0);
+  return statusScore + scoreScore + logoScore + detailScore;
+}
+
+function dedupeServedMatches(matches: any[]) {
+  const seen = new Map<string, any>();
+  for (const match of matches || []) {
+    const key = buildServedMatchDedupeKey(match);
+    if (!key) {
+      seen.set(match?.id || `${seen.size}`, match);
+      continue;
+    }
+    const current = seen.get(key);
+    if (!current) {
+      seen.set(key, match);
+      continue;
+    }
+    const preferred = servedMatchQuality(match) > servedMatchQuality(current) ? match : current;
+    const fallback = preferred === match ? current : match;
+    seen.set(key, {
+      ...fallback,
+      ...preferred,
+      homeLogo: preferred.homeLogo || fallback.homeLogo,
+      awayLogo: preferred.awayLogo || fallback.awayLogo,
+      score: preferred.score || fallback.score,
+      homeScore: preferred.homeScore ?? fallback.homeScore,
+      awayScore: preferred.awayScore ?? fallback.awayScore,
+      h2h: preferred.h2h || fallback.h2h,
+      homeRecent: preferred.homeRecent || fallback.homeRecent,
+      awayRecent: preferred.awayRecent || fallback.awayRecent,
+    });
+  }
+  return [...seen.values()];
 }
 
 function normalizeServedMatchStatus(match: any) {
@@ -92,7 +176,7 @@ export default async function handler(req: any, res: any) {
   const targetDate = typeof date === "string" && date ? date : today;
   const isLiveSensitiveRequest = targetDate === today || live === "true";
 
-  res.setHeader("Access-Control-Allow-Origin", "*");
+  setCorsHeaders(req, res);
   res.setHeader(
     "Cache-Control",
     isLiveSensitiveRequest ? "no-store" : "s-maxage=120, stale-while-revalidate=60"
@@ -126,11 +210,13 @@ export default async function handler(req: any, res: any) {
           }
         }
 
+        const uniqueMultiDayMatches = dedupeServedMatches(multiDayMatches);
+
         return res.status(200).json({
           ok: true,
-          matches: multiDayMatches,
-          events: multiDayMatches,
-          total: multiDayMatches.length,
+          matches: uniqueMultiDayMatches,
+          events: uniqueMultiDayMatches,
+          total: uniqueMultiDayMatches.length,
           date: targetDate,
           dateRange: `${numDays} dagen`,
           lastRun: meta.lastRun || null,
@@ -144,6 +230,8 @@ export default async function handler(req: any, res: any) {
           modelPerformance: meta.modelPerformance || null,
           backtestSummary: meta.backtestSummary || null,
           anomalyReport: meta.anomalyReport || null,
+          competitionArchiveIndex: meta.competitionArchiveIndex || null,
+          teamSquadSummary: meta.teamSquadSummary || null,
           biweeklyDigest,
           rufloReport,
           sourceBranch,
@@ -172,9 +260,11 @@ export default async function handler(req: any, res: any) {
       sourceBranch = branch;
     }
 
+    const uniqueBaseMatches = dedupeServedMatches(baseMatches);
+
     const matches = live === "true"
-      ? baseMatches.filter((m: any) => String(m.status || "").toUpperCase() === "LIVE")
-      : baseMatches;
+      ? uniqueBaseMatches.filter((m: any) => String(m.status || "").toUpperCase() === "LIVE")
+      : uniqueBaseMatches;
 
     return res.status(200).json({
       ok: true,
@@ -193,6 +283,8 @@ export default async function handler(req: any, res: any) {
       modelPerformance: meta.modelPerformance || null,
       backtestSummary: meta.backtestSummary || null,
       anomalyReport: meta.anomalyReport || null,
+      competitionArchiveIndex: meta.competitionArchiveIndex || null,
+      teamSquadSummary: meta.teamSquadSummary || null,
       biweeklyDigest,
       rufloReport,
       sourceBranch,
@@ -202,7 +294,7 @@ export default async function handler(req: any, res: any) {
     });
   } catch (err: any) {
     logger.error("matches_failed", { targetDate, live, days, durationMs: Date.now() - started, error: getErrorDetails(err) });
-    return res.status(200).json({
+    return res.status(503).json({
       ok: false,
       matches: [],
       events: [],

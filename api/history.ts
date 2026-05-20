@@ -1,5 +1,6 @@
 import { fetchServerStore } from "./_dataSource.js";
 import { createLogger, getErrorDetails } from "../shared/logger.js";
+import { setCorsHeaders } from "../shared/cors.js";
 
 const logger = createLogger("api.history");
 
@@ -53,7 +54,7 @@ function mapServerReview(review: any) {
 
 export default async function handler(req: any, res: any) {
   const started = Date.now();
-  res.setHeader("Access-Control-Allow-Origin", "*");
+  setCorsHeaders(req, res);
   res.setHeader("Cache-Control", "s-maxage=120, stale-while-revalidate=60");
 
   try {
@@ -72,7 +73,7 @@ export default async function handler(req: any, res: any) {
     });
   } catch (err: any) {
     logger.error("history_failed", { durationMs: Date.now() - started, error: getErrorDetails(err) });
-    return res.status(200).json({
+    return res.status(503).json({
       ok: false,
       items: [],
       total: 0,

@@ -7,10 +7,145 @@ import { Match, Prediction } from "../types";
 import { normalizeMinute, parseMinuteValue } from "../shared/minute.js";
 import { todayAmsterdamKey } from "../shared/date.js";
 
-const CACHE_VERSION = "v7_result_window_guard";
+const CACHE_VERSION = "v8_client_dedupe_guard";
 const LIVE_CACHE_AGE_MS = 30_000;
 const TODAY_CACHE_AGE_MS = 90_000;
 const OTHER_CACHE_AGE_MS = 30 * 60_000;
+
+const TEAM_DEDUPE_ALIASES: Record<string, string> = {
+  "freiburg": "freiburg",
+  "sc freiburg": "freiburg",
+  "sport club freiburg": "freiburg",
+  "aston villa": "aston villa",
+  "aston villa fc": "aston villa",
+  "man city": "manchester city",
+  "manchester city": "manchester city",
+  "manchester city fc": "manchester city",
+  "psg": "paris saint germain",
+  "paris sg": "paris saint germain",
+  "paris saint germain": "paris saint germain",
+  "paris saint-germain": "paris saint germain",
+  "fc barcelona": "barcelona",
+  "barca": "barcelona",
+  "barcelona": "barcelona",
+  "athletic bilbao": "athletic club",
+  "athletic club": "athletic club",
+};
+
+function normalizeDedupeText(value: unknown) {
+  return String(value || "")
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .toLowerCase()
+    .replace(/&/g, " and ")
+    .replace(/[^a-z0-9]+/g, " ")
+    .replace(/\b(afc|fc|cf|sc|cd|ac|as|rc|sv|vfl|vfb|bk|fk|ik|if|club de|club)\b/g, " ")
+    .replace(/\s+/g, " ")
+    .trim();
+}
+
+function canonicalDedupeTeam(value: unknown) {
+  const normalized = normalizeDedupeText(value);
+  if (!normalized) return "";
+  return TEAM_DEDUPE_ALIASES[normalized] || normalized;
+}
+
+function canonicalDedupeLeague(value: unknown) {
+  return normalizeDedupeText(value).replace(/\b(uefa|europe)\b/g, " ").replace(/\s+/g, " ").trim();
+}
+
+function matchDateKey(match: any) {
+  const directDate = String(match?.date || match?.kickoff || "").slice(0, 10);
+  if (/^\d{4}-\d{2}-\d{2}$/.test(directDate)) return directDate;
+  const parsed = Date.parse(match?.kickoff || match?.date || "");
+  if (!Number.isFinite(parsed)) return "";
+  return new Date(parsed).toISOString().slice(0, 10);
+}
+
+function buildClientMatchDedupeKey(match: any) {
+  const dateKey = matchDateKey(match);
+  const league = canonicalDedupeLeague(match?.league);
+  const home = canonicalDedupeTeam(match?.homeTeamName || match?.homeTeam);
+  const away = canonicalDedupeTeam(match?.awayTeamName || match?.awayTeam);
+  if (!dateKey || !home || !away) return "";
+  return `${dateKey}|${league}|${home}|${away}`;
+}
+
+function matchQuality(match: any) {
+  const status = String(match?.status || "").toUpperCase();
+  const statusScore = ["FT", "AET", "PEN"].includes(status) ? 80 : ["LIVE", "HT"].includes(status) ? 70 : status === "RESULT_PENDING" ? 20 : 0;
+  const scoreScore = match?.score || match?.homeScore != null || match?.awayScore != null ? 30 : 0;
+  const logoScore = (match?.homeLogo ? 4 : 0) + (match?.awayLogo ? 4 : 0);
+  const h2hScore = Number(match?.h2h?.played || 0) * 2;
+  const recentScore = (match?.homeRecent ? 3 : 0) + (match?.awayRecent ? 3 : 0);
+  const positionScore = (match?.homePos != null ? 2 : 0) + (match?.awayPos != null ? 2 : 0);
+  const sourceScore = String(match?.id || "").includes("espn") ? 5 : String(match?.id || "").includes("sportsdb") ? 3 : 0;
+  return statusScore + scoreScore + logoScore + h2hScore + recentScore + positionScore + sourceScore;
+}
+
+function mergeDuplicateMatch(current: Match, incoming: Match): Match {
+  const incomingPreferred = matchQuality(incoming) > matchQuality(current);
+  const preferred = incomingPreferred ? { ...incoming } : { ...current };
+  const fallback = incomingPreferred ? current : incoming;
+
+  return {
+    ...fallback,
+    ...preferred,
+    id: preferred.id || fallback.id,
+    homeLogo: preferred.homeLogo || fallback.homeLogo,
+    awayLogo: preferred.awayLogo || fallback.awayLogo,
+    score: preferred.score || fallback.score,
+    homeScore: preferred.homeScore ?? fallback.homeScore,
+    awayScore: preferred.awayScore ?? fallback.awayScore,
+    minute: preferred.minute || fallback.minute,
+    minuteValue: preferred.minuteValue ?? fallback.minuteValue,
+    homePos: preferred.homePos ?? fallback.homePos,
+    awayPos: preferred.awayPos ?? fallback.awayPos,
+    h2h: preferred.h2h || fallback.h2h,
+    homeRecent: preferred.homeRecent || fallback.homeRecent,
+    awayRecent: preferred.awayRecent || fallback.awayRecent,
+    homeSeasonStats: preferred.homeSeasonStats || fallback.homeSeasonStats,
+    awaySeasonStats: preferred.awaySeasonStats || fallback.awaySeasonStats,
+    coverage: preferred.coverage || fallback.coverage,
+  };
+}
+
+function dedupeMatchesForDay(matches: Match[]) {
+  const seen = new Map<string, Match>();
+  const idRedirects = new Map<string, string>();
+
+  for (const match of matches || []) {
+    const key = buildClientMatchDedupeKey(match);
+    if (!key) {
+      seen.set(match.id || `${seen.size}`, match);
+      continue;
+    }
+
+    const current = seen.get(key);
+    if (!current) {
+      seen.set(key, match);
+      continue;
+    }
+
+    const merged = mergeDuplicateMatch(current, match);
+    seen.set(key, merged);
+    if (current.id && current.id !== merged.id) idRedirects.set(current.id, merged.id);
+    if (match.id && match.id !== merged.id) idRedirects.set(match.id, merged.id);
+  }
+
+  return { matches: [...seen.values()], idRedirects };
+}
+
+function dedupePredictionMap(predictions: Record<string, Prediction>, idRedirects: Map<string, string>) {
+  if (!idRedirects.size) return predictions;
+  const output: Record<string, Prediction> = { ...predictions };
+  for (const [fromId, toId] of idRedirects) {
+    if (!fromId || !toId || fromId === toId || !output[fromId]) continue;
+    output[toId] = { ...output[fromId], ...output[toId], matchId: toId } as Prediction;
+    delete output[fromId];
+  }
+  return output;
+}
 
 // ============================================================================
 // CACHE FUNCTIES
@@ -43,7 +178,7 @@ function readCache(dateISO: string) {
     if (!raw) return null;
 
     const parsed = JSON.parse(raw);
-    const matches = parsed.matches || [];
+    const { matches } = dedupeMatchesForDay(parsed.matches || []);
     const maxAge = getMaxCacheAge(dateISO, matches);
     if (!parsed?.ts || Date.now() - parsed.ts > maxAge) return null;
 
@@ -287,10 +422,11 @@ export async function fetchMatchesAndPredictions(
     }
 
     // Map matches met ALLE velden
-    const matches = rawMatches.map(mapRawMatch);
+    const mappedMatches = rawMatches.map(mapRawMatch);
+    const { matches, idRedirects } = dedupeMatchesForDay(mappedMatches);
     
     // Build prediction map
-    const predictionMap: Record<string, Prediction> = {};
+    let predictionMap: Record<string, Prediction> = {};
     
     for (const prediction of rawPredictions) {
       if (prediction.matchId) {
@@ -343,6 +479,8 @@ export async function fetchMatchesAndPredictions(
         ...(rawMatch.exactScoreReasons ? { exactScoreReasons: rawMatch.exactScoreReasons } : {}),
       };
     }
+
+    predictionMap = dedupePredictionMap(predictionMap, idRedirects);
 
     // Write to cache
     writeCache(dateISO, matches, predictionMap, lastRun);

@@ -38,14 +38,12 @@ function unique(values: Array<string | undefined | null>) {
 function candidateBranches() {
   const explicitDataBranch = process.env.DATA_BRANCH;
   const deployBranch = process.env.VERCEL_GIT_COMMIT_REF;
+  const productionBranch = process.env.VERCEL_PRODUCTION_BRANCH;
 
-  // Production currently still deploys from main sometimes, while the freshest
-  // worker data lives on the active Codex branch. Prefer that data branch before
-  // the deploy branch, otherwise Vercel can accidentally read stale main data.
   return unique([
     explicitDataBranch,
-    "codex/step3b-layout",
     deployBranch,
+    productionBranch,
     "main",
   ]);
 }

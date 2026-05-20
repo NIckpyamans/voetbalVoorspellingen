@@ -384,7 +384,7 @@ const PredictionHistory: React.FC = () => {
                     </div>
                   </div>
                   <div className="mt-3 text-[8px] text-slate-500">
-                    Score goed {item.exact}/{item.total} Â· Uitkomst goed {item.outcome}/{item.total}
+                    Score goed {item.exact}/{item.total} - Uitkomst goed {item.outcome}/{item.total}
                   </div>
                 </button>
               ))}
@@ -457,7 +457,7 @@ const PredictionHistory: React.FC = () => {
                     <div>
                       <div className="text-[10px] font-black text-slate-400 uppercase">{league}</div>
                       <div className="text-[11px] text-slate-500 mt-0.5">
-                        {items.length} wedstrijden op deze pagina Â· Score {leagueStats?.exactPct ?? 0}% Â· Uitkomst {leagueStats?.outcomePct ?? 0}%
+              {items.length} wedstrijden op deze pagina - Score {leagueStats?.exactPct ?? 0}% - Uitkomst {leagueStats?.outcomePct ?? 0}%
                       </div>
                     </div>
                     {activeLeague !== league && (
@@ -488,7 +488,7 @@ const PredictionHistory: React.FC = () => {
                               {item.homeTeam} vs {item.awayTeam}
                             </div>
                             <div className="text-[10px] text-slate-500 mt-0.5">
-                              {item.league} Â· {new Date(item.timestamp).toLocaleString("nl-NL")}
+                    {item.league} - {new Date(item.timestamp).toLocaleString("nl-NL")}
                             </div>
                           </div>
 
@@ -516,7 +516,7 @@ const PredictionHistory: React.FC = () => {
                             <div className="rounded-xl bg-slate-900/40 border border-white/5 px-3 py-2">
                               <div className="text-[8px] font-black text-slate-500 uppercase">Uitkomst</div>
                               <div className="text-[13px] font-black text-white mt-2">
-                                {item.predictedOutcome} â†’ {item.actualOutcome}
+                    {item.predictedOutcome} {"->"} {item.actualOutcome}
                               </div>
                             </div>
                             <div className="rounded-xl bg-slate-900/40 border border-white/5 px-3 py-2">

@@ -1,9 +1,11 @@
 import { fetchWithRetry } from "../shared/http.js";
 import { createLogger, getErrorDetails } from "../shared/logger.js";
+import { setCorsHeaders } from "../shared/cors.js";
 
 const logger = createLogger("api.logo");
 
 export default async function handler(req: any, res: any) {
+  setCorsHeaders(req, res);
   const id = (req.query.id || req.query.teamId) as string;
   if (!id || !/^\d+$/.test(id)) {
     return res.status(400).end();
@@ -39,7 +41,6 @@ export default async function handler(req: any, res: any) {
 
       res.setHeader("Content-Type", contentType);
       res.setHeader("Cache-Control", "public, max-age=86400, stale-while-revalidate=604800");
-      res.setHeader("Access-Control-Allow-Origin", "*");
       return res.status(200).send(Buffer.from(buffer));
     } catch (error) {
       logger.warning("logo_upstream_failed", { id, host: new URL(url).host, error: getErrorDetails(error) });

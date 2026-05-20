@@ -3,6 +3,8 @@ import { Match } from "../types";
 import { FavoriteButton } from "./FavoriteTeams";
 import PostMatchReview from "./PostMatchReview";
 import { getLiveMinuteLabel } from "../shared/minute.js";
+import { logClientWarning } from "../shared/clientLogger";
+import { cleanSignalText } from "../shared/matchText.js";
 
 interface MatchCardProps {
   match: Match;
@@ -199,6 +201,106 @@ function TeamDeepStats({
         <div className="text-slate-300">Sterke kant <span className="font-black text-white">{profile?.strongestSide || "-"}</span></div>
         <div className="text-slate-300">Blessures <span className="font-black text-white">{injuries?.injuredCount ?? injuries?.count ?? 0}</span></div>
       </div>
+    </div>
+  );
+}
+
+function collectAvailabilityNames(injuries: any) {
+  return [
+    ...(Array.isArray(injuries?.injuredPlayers) ? injuries.injuredPlayers : []),
+    ...(Array.isArray(injuries?.keyPlayersMissing) ? injuries.keyPlayersMissing : []),
+    ...(Array.isArray(injuries?.suspendedPlayers) ? injuries.suspendedPlayers : []),
+  ]
+    .map((item: any) => String(item?.name || item || "").trim())
+    .filter(Boolean);
+}
+
+function TeamSquadPanel({
+  title,
+  profile,
+  injuries,
+  onClose,
+}: {
+  title: string;
+  profile: any;
+  injuries: any;
+  onClose: () => void;
+}) {
+  const squad = profile?.squad || profile;
+  const unavailableNames = collectAvailabilityNames(injuries);
+  const unavailableSet = new Set(unavailableNames.map((name) => name.toLowerCase()));
+  const rawPlayers = Array.isArray(squad?.players) ? squad.players : [];
+  const players = rawPlayers.map((player: any) => {
+    const name = String(player?.name || "").trim();
+    const unavailable = unavailableSet.has(name.toLowerCase()) || /injur|bless|suspend|geschorst/i.test(String(player?.status || player?.availability || ""));
+    return {
+      ...player,
+      name,
+      availability: unavailable ? "niet beschikbaar" : player?.availability || player?.status || "beschikbaar",
+      unavailable,
+    };
+  });
+  const extraUnavailable = unavailableNames
+    .filter((name) => !players.some((player: any) => player.name.toLowerCase() === name.toLowerCase()))
+    .map((name) => ({ name, position: "-", nationality: "", availability: "niet beschikbaar", unavailable: true, source: "beschikbaarheidsbron" }));
+  const visiblePlayers = [...players, ...extraUnavailable].slice(0, 60);
+  const loaned = visiblePlayers.filter((player: any) => player.loan || /loan|verhuur|uitgeleend/i.test(String(player.availability || player.status || ""))).length;
+  const unavailable = visiblePlayers.filter((player: any) => player.unavailable).length;
+
+  return (
+    <div className="mb-3 rounded-2xl border border-cyan-400/25 bg-slate-950/70 p-3 shadow-[0_0_30px_rgba(34,211,238,0.08)]">
+      <div className="mb-2 flex items-start justify-between gap-2">
+        <div>
+          <div className="text-[10px] font-black uppercase text-cyan-200">Selectie {title}</div>
+          <div className="text-[8px] text-slate-500">
+            Bron: {Array.isArray(squad?.sources) ? squad.sources.join(" + ") : squad?.source || "afgeleide teamdata"} · rating {profile?.teamStrengthRating ?? squad?.rating ?? "-"}
+          </div>
+        </div>
+        <button type="button" onClick={onClose} className="rounded-full bg-slate-800 px-2 py-1 text-[8px] font-black text-slate-200">
+          Sluiten
+        </button>
+      </div>
+      <div className="mb-2 grid grid-cols-3 gap-1">
+        <div className="rounded-lg bg-slate-900/70 px-2 py-1">
+          <div className="text-[7px] font-black uppercase text-slate-500">Spelers</div>
+          <div className="text-[12px] font-black text-white">{visiblePlayers.length || squad?.playerCount || 0}</div>
+        </div>
+        <div className="rounded-lg bg-red-950/25 px-2 py-1">
+          <div className="text-[7px] font-black uppercase text-red-300">Niet fit</div>
+          <div className="text-[12px] font-black text-white">{unavailable}</div>
+        </div>
+        <div className="rounded-lg bg-amber-950/25 px-2 py-1">
+          <div className="text-[7px] font-black uppercase text-amber-300">Verhuurd</div>
+          <div className="text-[12px] font-black text-white">{loaned}</div>
+        </div>
+      </div>
+      {visiblePlayers.length ? (
+        <div className="max-h-56 space-y-1 overflow-y-auto pr-1">
+          {visiblePlayers.map((player: any, index: number) => (
+            <div key={`${player.name}-${index}`} className="grid grid-cols-[1fr_auto] gap-2 rounded-lg border border-white/5 bg-slate-900/45 px-2 py-1.5">
+              <div className="min-w-0">
+                <div className="truncate text-[9px] font-black text-white">{player.name}</div>
+                <div className="truncate text-[7px] text-slate-500">{player.position || "-"} {player.nationality ? `· ${player.nationality}` : ""}</div>
+              </div>
+              <span
+                className={`self-center rounded-full px-2 py-0.5 text-[7px] font-black ${
+                  player.unavailable
+                    ? "bg-red-900/40 text-red-200"
+                    : player.loan
+                      ? "bg-amber-900/40 text-amber-200"
+                      : "bg-emerald-900/35 text-emerald-200"
+                }`}
+              >
+                {player.availability || "beschikbaar"}
+              </span>
+            </div>
+          ))}
+        </div>
+      ) : (
+        <div className="rounded-xl border border-dashed border-white/10 bg-slate-900/30 p-3 text-[10px] text-slate-400">
+          Nog geen volledige spelerslijst gevonden. De voorspelling gebruikt voorlopig afgeleide teamsterkte uit vorm, Elo, stand en blessuredata.
+        </div>
+      )}
     </div>
   );
 }
@@ -509,6 +611,9 @@ function KeySignals({ match, prediction }: { match: any; prediction: any }) {
   if (match.phaseReliability?.reliabilityScore != null) {
     signals.push(`fase ${Math.round(match.phaseReliability.reliabilityScore * 100)}%`);
   }
+  const dataCompleteness = prediction.dataCompleteness || match.dataCompleteness || prediction.modelEdges?.dataCompleteness;
+  const dataCompletenessPct = dataCompleteness?.percent ?? (dataCompleteness?.score != null ? Math.round(dataCompleteness.score * 100) : null);
+  if (dataCompletenessPct != null) signals.push(`bronkwaliteit ${dataCompletenessPct}%`);
   if (match.refereeProfile?.strictness) signals.push(`scheids ${match.refereeProfile.strictness}`);
 
   if (signals.length === 0) return null;
@@ -522,24 +627,6 @@ function KeySignals({ match, prediction }: { match: any; prediction: any }) {
       ))}
     </div>
   );
-}
-
-function cleanSignalText(value: any): string {
-  const text = String(value || "").trim();
-  if (!text) return "";
-
-  const lower = text.toLowerCase();
-  if (lower.includes("tweeluik") && lower.includes("knock")) return "tweeluik - knock-out";
-
-  return text
-    .replace(/ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â·|ÃƒÆ’Ã‚Â·|ÃƒÂ·|Ã‚Â·|Â·/g, " - ")
-    .replace(/ÃƒÂ«/g, "ë")
-    .replace(/ÃƒÂ©|Ã©/g, "é")
-    .replace(/ÃƒÂ¨|Ã¨/g, "è")
-    .replace(/ÃƒÂ¶|Ã¶/g, "ö")
-    .replace(/\s+-\s+/g, " - ")
-    .replace(/\s+/g, " ")
-    .trim();
 }
 
 function ScoreMatrix({ topScores }: { topScores: any[] }) {
@@ -675,6 +762,8 @@ function ExpandableMatchMeta({
   const activeModel = (prediction.ensembleMeta || match.ensembleMeta)?.active ? "Ensemble" : "Basis";
   const agreement = (prediction.ensembleMeta || match.ensembleMeta)?.agreement ?? prediction.modelEdges?.modelAgreement;
   const risk = prediction.modelEdges?.riskProfile || "middel";
+  const dataCompleteness = prediction.dataCompleteness || match.dataCompleteness || prediction.modelEdges?.dataCompleteness;
+  const dataCompletenessPct = dataCompleteness?.percent ?? (dataCompleteness?.score != null ? Math.round(dataCompleteness.score * 100) : null);
   const [open, setOpen] = useState(false);
 
   return (
@@ -694,6 +783,9 @@ function ExpandableMatchMeta({
         <div className="flex items-center gap-2">
           <span className="rounded-full bg-slate-800 px-2 py-0.5 text-[8px] font-black text-slate-300">
             {agreement != null ? `${Math.round(agreement * 100)}%` : risk}
+          </span>
+          <span className={`rounded-full px-2 py-0.5 text-[8px] font-black ${dataCompletenessPct != null && dataCompletenessPct < 58 ? "bg-amber-500/15 text-amber-200" : "bg-emerald-500/15 text-emerald-200"}`}>
+            {dataCompletenessPct != null ? `${dataCompletenessPct}% data` : "data ?"}
           </span>
           <span className="rounded-full bg-slate-800 px-2 py-0.5 text-[8px] font-black text-slate-300">
             {activeModel}
@@ -728,9 +820,12 @@ function ModelEdgeStrip({ match, prediction }: { match: any; prediction: any }) 
   const risk = prediction.modelEdges?.riskProfile || "middel";
   const travel = prediction.modelEdges?.travelEdge?.summary || "geen reisimpact";
   const keeper = prediction.modelEdges?.keeperEdge?.summary || "keepers gelijk";
+  const dataCompleteness = prediction.dataCompleteness || match.dataCompleteness || prediction.modelEdges?.dataCompleteness;
+  const qualityGate = prediction.qualityGate || match.qualityGate || prediction.modelEdges?.qualityGate;
+  const dataCompletenessPct = dataCompleteness?.percent ?? (dataCompleteness?.score != null ? Math.round(dataCompleteness.score * 100) : null);
 
   return (
-    <div className="grid grid-cols-4 gap-1.5 mb-2">
+    <div className="grid grid-cols-5 gap-1.5 mb-2">
       <div className="rounded-xl border border-cyan-500/15 bg-cyan-950/20 px-2 py-1.5">
         <div className="text-[7px] uppercase font-black text-cyan-300/80">Model</div>
         <div className={`text-[10px] font-black ${agreement != null && agreement < 0.55 ? "text-amber-300" : "text-white"}`}>
@@ -748,6 +843,12 @@ function ModelEdgeStrip({ match, prediction }: { match: any; prediction: any }) 
       <div className="rounded-xl border border-emerald-500/15 bg-emerald-950/20 px-2 py-1.5">
         <div className="text-[7px] uppercase font-black text-emerald-300/80">Keeper</div>
         <div className="text-[10px] font-black text-white truncate">{keeper.replace("thuis", "H").replace("uit", "U")}</div>
+      </div>
+      <div className="rounded-xl border border-yellow-500/15 bg-yellow-950/20 px-2 py-1.5">
+        <div className="text-[7px] uppercase font-black text-yellow-300/80">Datagate</div>
+        <div className={`text-[10px] font-black truncate ${qualityGate?.blockedHighConfidence ? "text-amber-200" : "text-white"}`}>
+          {dataCompletenessPct != null ? `${dataCompletenessPct}%` : "n.v.t."}
+        </div>
       </div>
     </div>
   );
@@ -826,6 +927,7 @@ const MatchCard: React.FC<MatchCardProps> = ({ match, prediction, onFavoriteChan
   const [detailsOpen, setDetailsOpen] = useState(false);
   const [aiAnalysis, setAiAnalysis] = useState<string | null>(null);
   const [aiLoading, setAiLoading] = useState(false);
+  const [selectedSquadSide, setSelectedSquadSide] = useState<"home" | "away" | null>(null);
   const triedRef = useRef(false);
   const liveMinute = useLiveMinute(match as any);
 
@@ -842,7 +944,9 @@ const MatchCard: React.FC<MatchCardProps> = ({ match, prediction, onFavoriteChan
       .then((data) => {
         if (data.analysis) setAiAnalysis(data.analysis);
       })
-      .catch(() => {})
+      .catch((error) => {
+        logClientWarning("match_analysis_failed", { matchId: match.id, error });
+      })
       .finally(() => setAiLoading(false));
   }, [match, prediction]);
 
@@ -918,9 +1022,14 @@ const MatchCard: React.FC<MatchCardProps> = ({ match, prediction, onFavoriteChan
       <div className="flex items-center justify-between gap-2 mb-3">
         <div className="flex-1 text-center">
           <Logo teamId={match.homeTeamId || ""} directUrl={match.homeLogo} name={match.homeTeamName} />
-          <div className={`text-[10px] font-black ${loser === match.homeTeamName ? "text-slate-500 line-through" : "text-white"}`}>
+          <button
+            type="button"
+            onClick={() => setSelectedSquadSide(selectedSquadSide === "home" ? null : "home")}
+            className={`mx-auto block text-[10px] font-black underline-offset-2 hover:underline ${loser === match.homeTeamName ? "text-slate-500 line-through" : "text-white"}`}
+            aria-label={`Toon selectie van ${match.homeTeamName}`}
+          >
             {match.homeTeamName} {match.homePos ? `(#${match.homePos})` : ""}
-          </div>
+          </button>
           <div className="text-[7px] text-slate-500">ClubElo {match.homeClubElo ?? "-"}</div>
           <FormPills form={match.homeForm} />
           <div className="text-[8px] text-slate-500 mt-0.5">
@@ -947,9 +1056,14 @@ const MatchCard: React.FC<MatchCardProps> = ({ match, prediction, onFavoriteChan
 
         <div className="flex-1 text-center">
           <Logo teamId={match.awayTeamId || ""} directUrl={match.awayLogo} name={match.awayTeamName} />
-          <div className={`text-[10px] font-black ${loser === match.awayTeamName ? "text-slate-500 line-through" : "text-white"}`}>
+          <button
+            type="button"
+            onClick={() => setSelectedSquadSide(selectedSquadSide === "away" ? null : "away")}
+            className={`mx-auto block text-[10px] font-black underline-offset-2 hover:underline ${loser === match.awayTeamName ? "text-slate-500 line-through" : "text-white"}`}
+            aria-label={`Toon selectie van ${match.awayTeamName}`}
+          >
             {match.awayTeamName} {match.awayPos ? `(#${match.awayPos})` : ""}
-          </div>
+          </button>
           <div className="text-[7px] text-slate-500">ClubElo {match.awayClubElo ?? "-"}</div>
           <FormPills form={match.awayForm} />
           <div className="text-[8px] text-slate-500 mt-0.5">
@@ -957,6 +1071,23 @@ const MatchCard: React.FC<MatchCardProps> = ({ match, prediction, onFavoriteChan
           </div>
         </div>
       </div>
+
+      {selectedSquadSide === "home" && (
+        <TeamSquadPanel
+          title={match.homeTeamName}
+          profile={match.homeTeamProfile}
+          injuries={match.homeInjuries}
+          onClose={() => setSelectedSquadSide(null)}
+        />
+      )}
+      {selectedSquadSide === "away" && (
+        <TeamSquadPanel
+          title={match.awayTeamName}
+          profile={match.awayTeamProfile}
+          injuries={match.awayInjuries}
+          onClose={() => setSelectedSquadSide(null)}
+        />
+      )}
 
       <div className="grid grid-cols-4 gap-1 mb-2">
         <div className="rounded-lg border border-blue-500/15 bg-blue-950/20 px-2 py-1.5 text-center">
