@@ -1,25 +1,41 @@
 {
-  "generatedAt": "2026-05-19T23:33:40.973Z",
-  "date": "2026-05-20",
+  "generatedAt": "2026-05-20T23:40:00.109Z",
+  "date": "2026-05-21",
   "proposalOnly": true,
-  "shouldPropose": false,
-  "branchName": "codex/review-20260520",
-  "summary": "Geen reviewbranch nodig op 2026-05-20.",
+  "shouldPropose": true,
+  "branchName": "codex/review-20260521",
+  "summary": "AI reviewvoorstel voor 2026-05-21: 1 aandachtspunt(en) met patchadvies, niet automatisch live.",
   "latestStats": {
-    "today": "2026-05-20",
+    "today": "2026-05-21",
     "dataPresent": true,
-    "lastRun": 1779232137262,
-    "ageMinutes": 25,
-    "todayMatches": 2,
+    "lastRun": 1779286062394,
+    "ageMinutes": 572,
+    "todayMatches": 5,
     "liveMatches": 0,
     "liveWithoutMinute": 0,
-    "h2hFilled": 1,
-    "h2hMissing": 1,
+    "h2hFilled": 3,
+    "h2hMissing": 2,
     "standingsCount": 41,
     "cupSheetCount": 4,
     "phaseReliabilityCount": 3
   },
-  "findings": [],
-  "recommendedFiles": [],
-  "nextStep": "Geen actie nodig; monitor blijft op de achtergrond doorlopen."
+  "findings": [
+    {
+      "priority": 1,
+      "key": "worker_stale",
+      "severity": "high",
+      "message": "server_data.json is 572 minuten oud.",
+      "whyItMatters": "Workerdata is te oud en verdient een workflow- of broncheck.",
+      "recommendedFiles": [
+        ".github/workflows/worker.yml",
+        "scripts/server-worker.js"
+      ],
+      "details": {}
+    }
+  ],
+  "recommendedFiles": [
+    ".github/workflows/worker.yml",
+    "scripts/server-worker.js"
+  ],
+  "nextStep": "Gebruik deze proposal om gericht een reviewbranch te maken en alleen na controle te mergen."
 }
