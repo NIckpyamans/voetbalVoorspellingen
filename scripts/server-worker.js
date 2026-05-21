@@ -3676,20 +3676,55 @@ function dedupeFallbackEvents(events) {
 }
 
 function canonicalMatchTeamKey(name) {
-  let key = canonicalTeamName(name || "");
+  const raw = normalizeName(name || "");
+  let key = canonicalTeamName(raw);
   if (!key) return "";
+  const aliasBeforeCleanup = teamAliasLookup.get(key);
+  if (aliasBeforeCleanup) key = aliasBeforeCleanup;
   key = key
-    .replace(/\b(afc|fc|cf|sc|cd|ac|as|rc|sv|vfl|vfb|bk|fk|ik|if|club de|club)\b/g, " ")
+    .replace(/\b(afc|fc|cf|sc|cd|ac|as|rc|sv|vfl|vfb|bk|fk|ik|if|club de|club|sport club)\b/g, " ")
     .replace(/\b1\s+fc\b/g, " ")
     .replace(/\b&\b/g, " and ")
     .replace(/[^a-z0-9]+/g, " ")
     .replace(/\s+/g, " ")
     .trim();
-  return teamAliasLookup.get(key) || key;
+  const aliasAfterCleanup = teamAliasLookup.get(key);
+  if (aliasAfterCleanup) return aliasAfterCleanup;
+  if (raw && raw !== key) {
+    const rawAlias = teamAliasLookup.get(raw);
+    if (rawAlias) return rawAlias;
+  }
+  return key;
 }
 
+const LEAGUE_DEDUPE_ALIASES = new Map([
+  ["europe uefa europa league", "europe europa league"],
+  ["uefa europa league", "europe europa league"],
+  ["europa league", "europe europa league"],
+  ["europe uefa champions league", "europe champions league"],
+  ["uefa champions league", "europe champions league"],
+  ["champions league", "europe champions league"],
+  ["europe uefa conference league", "europe conference league"],
+  ["uefa conference league", "europe conference league"],
+  ["conference league", "europe conference league"],
+  ["england premier league", "england premier league"],
+  ["premier league", "england premier league"],
+  ["spain laliga", "spain laliga"],
+  ["la liga", "spain laliga"],
+  ["italy serie a", "italy serie a"],
+  ["serie a", "italy serie a"],
+  ["germany bundesliga", "germany bundesliga"],
+  ["bundesliga", "germany bundesliga"],
+  ["netherlands eredivisie", "netherlands eredivisie"],
+  ["eredivisie", "netherlands eredivisie"],
+]);
+
 function canonicalLeagueKey(label) {
-  return normalizeName(label || "").replace(/\s+/g, " ").trim();
+  const normalized = normalizeName(label || "")
+    .replace(/\buefa\b/g, " ")
+    .replace(/\s+/g, " ")
+    .trim();
+  return LEAGUE_DEDUPE_ALIASES.get(normalized) || normalized;
 }
 
 function buildEventDedupeKey(event) {
