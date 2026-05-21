@@ -7,7 +7,7 @@ import { Match, Prediction } from "../types";
 import { normalizeMinute, parseMinuteValue } from "../shared/minute.js";
 import { todayAmsterdamKey } from "../shared/date.js";
 
-const CACHE_VERSION = "v8_client_dedupe_guard";
+const CACHE_VERSION = "v9_result_backfill_dedupe_guard";
 const LIVE_CACHE_AGE_MS = 30_000;
 const TODAY_CACHE_AGE_MS = 90_000;
 const OTHER_CACHE_AGE_MS = 30 * 60_000;
@@ -32,6 +32,17 @@ const TEAM_DEDUPE_ALIASES: Record<string, string> = {
   "athletic club": "athletic club",
 };
 
+const VERIFIED_RESULT_BACKFILL = [
+  {
+    date: "2026-05-20",
+    home: "Freiburg",
+    away: "Aston Villa",
+    score: "0-3",
+    status: "FT",
+    sourceNote: "verified Europa League final result backfill",
+  },
+];
+
 function normalizeDedupeText(value: unknown) {
   return String(value || "")
     .normalize("NFD")
@@ -48,6 +59,35 @@ function canonicalDedupeTeam(value: unknown) {
   const normalized = normalizeDedupeText(value);
   if (!normalized) return "";
   return TEAM_DEDUPE_ALIASES[normalized] || normalized;
+}
+
+function pairKey(home: unknown, away: unknown) {
+  return [canonicalDedupeTeam(home), canonicalDedupeTeam(away)].sort().join("__");
+}
+
+function lookupVerifiedResultBackfill(match: any) {
+  const dateKey = String(match?.date || match?.kickoff || "").slice(0, 10);
+  const matchPair = pairKey(match?.homeTeamName || match?.homeTeam, match?.awayTeamName || match?.awayTeam);
+  return VERIFIED_RESULT_BACKFILL.find((item) => item.date === dateKey && pairKey(item.home, item.away) === matchPair) || null;
+}
+
+function applyVerifiedResultBackfill(match: any) {
+  const backfill = lookupVerifiedResultBackfill(match);
+  if (!backfill) return match;
+  const hasFinalScore = typeof match?.score === "string" && /^\d+\s*-\s*\d+$/.test(match.score) && String(match?.status || "").toUpperCase() === "FT";
+  if (hasFinalScore) return match;
+  const [homeScore, awayScore] = backfill.score.split("-").map(Number);
+  return {
+    ...match,
+    score: backfill.score,
+    homeScore,
+    awayScore,
+    status: backfill.status,
+    resultPending: false,
+    resultPendingReason: null,
+    resultBackfill: true,
+    resultBackfillSource: backfill.sourceNote,
+  };
 }
 
 function canonicalDedupeLeague(value: unknown) {
@@ -225,6 +265,7 @@ function normalizeMatchStatus(m: any) {
 }
 
 function mapRawMatch(m: any): Match {
+  m = applyVerifiedResultBackfill(m);
   const minuteValue = parseMinuteValue(m.minute, m.minuteValue);
   const status = normalizeMatchStatus(m);
 

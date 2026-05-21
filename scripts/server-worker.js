@@ -726,6 +726,14 @@ const CURATED_RESULT_BACKFILL = [
     status: "FT",
     sourceNote: "UEFA verified semi-final result backfill",
   },
+  {
+    date: "2026-05-20",
+    home: "Freiburg",
+    away: "Aston Villa",
+    score: "0-3",
+    status: "FT",
+    sourceNote: "verified Europa League final result backfill",
+  },
 ];
 
 const CURATED_H2H_BACKFILL = {

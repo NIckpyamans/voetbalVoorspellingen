@@ -58,6 +58,17 @@ const TEAM_DEDUPE_ALIASES: Record<string, string> = {
   "barcelona": "barcelona",
 };
 
+const VERIFIED_RESULT_BACKFILL = [
+  {
+    date: "2026-05-20",
+    home: "Freiburg",
+    away: "Aston Villa",
+    score: "0-3",
+    status: "FT",
+    sourceNote: "verified Europa League final result backfill",
+  },
+];
+
 function normalizeDedupeText(value: unknown) {
   return String(value || "")
     .normalize("NFD")
@@ -73,6 +84,36 @@ function normalizeDedupeText(value: unknown) {
 function canonicalDedupeTeam(value: unknown) {
   const normalized = normalizeDedupeText(value);
   return TEAM_DEDUPE_ALIASES[normalized] || normalized;
+}
+
+function pairKey(home: unknown, away: unknown) {
+  const teams = [canonicalDedupeTeam(home), canonicalDedupeTeam(away)].sort();
+  return teams.join("__");
+}
+
+function lookupVerifiedResultBackfill(match: any) {
+  const dateKey = String(match?.date || match?.kickoff || "").slice(0, 10);
+  const matchPair = pairKey(match?.homeTeamName || match?.homeTeam, match?.awayTeamName || match?.awayTeam);
+  return VERIFIED_RESULT_BACKFILL.find((item) => item.date === dateKey && pairKey(item.home, item.away) === matchPair) || null;
+}
+
+function applyVerifiedResultBackfill(match: any) {
+  const backfill = lookupVerifiedResultBackfill(match);
+  if (!backfill) return match;
+  const hasFinalScore = typeof match?.score === "string" && /^\d+\s*-\s*\d+$/.test(match.score) && String(match?.status || "").toUpperCase() === "FT";
+  if (hasFinalScore) return match;
+  const [homeScore, awayScore] = backfill.score.split("-").map(Number);
+  return {
+    ...match,
+    score: backfill.score,
+    homeScore,
+    awayScore,
+    status: backfill.status,
+    resultPending: false,
+    resultPendingReason: null,
+    resultBackfill: true,
+    resultBackfillSource: backfill.sourceNote,
+  };
 }
 
 function buildServedMatchDedupeKey(match: any) {
@@ -145,7 +186,7 @@ function normalizeServedMatchStatus(match: any) {
 }
 
 function attachReviewAndNormalize(match: any, store: any) {
-  return normalizeServedMatchStatus(attachReview(match, store));
+  return normalizeServedMatchStatus(applyVerifiedResultBackfill(attachReview(match, store)));
 }
 
 async function readSplitMeta() {
