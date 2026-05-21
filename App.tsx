@@ -78,11 +78,21 @@ function canonicalDashboardTeam(value: unknown) {
 }
 
 function canonicalDashboardLeague(value: unknown) {
-  return normalizeDashboardDedupeText(value)
-    .replace(/\buefa\b/g, "")
-    .replace(/\beuropa\b/g, "europe")
+  const normalized = normalizeDashboardDedupeText(value)
+    .replace(/\buefa\b/g, " ")
     .replace(/\s+/g, " ")
     .trim();
+
+  const aliases: Record<string, string> = {
+    "europe europa league": "europe europa league",
+    "europa league": "europe europa league",
+    "europe champions league": "europe champions league",
+    "champions league": "europe champions league",
+    "europe conference league": "europe conference league",
+    "conference league": "europe conference league",
+  };
+
+  return aliases[normalized] || normalized;
 }
 
 function dashboardDateKey(value: unknown) {
