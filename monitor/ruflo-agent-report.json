@@ -1,14 +1,14 @@
 {
-  "generatedAt": "2026-05-22T23:20:06.800Z",
-  "date": "2026-05-23",
+  "generatedAt": "2026-05-23T23:12:13.190Z",
+  "date": "2026-05-24",
   "name": "Ruflo-style gratis AI monitor",
   "mode": "naast-productie",
   "productionSafe": true,
   "summary": "Ruflo draait als extra agentlaag naast de app: hij leest monitor/data/reviews, zoekt gratis oplossingen en maakt patchadvies zonder blind live te wijzigen.",
   "agents": {
     "data": {
-      "score": 80,
-      "summary": "Datalaag: H2H 100%, bookmakers 100%, refs 0%.",
+      "score": 69,
+      "summary": "Datalaag: H2H 93%, bookmakers 100%, refs 0%.",
       "freeSources": [
         {
           "name": "SofaScore public endpoint",
@@ -64,16 +64,16 @@
     },
     "learning": {
       "score": 12,
-      "summary": "Leerlaag: 596 reviews, exact 12%, winnaar/gelijk 39%, top-5 exact 16%.",
+      "summary": "Leerlaag: 597 reviews, exact 12%, winnaar/gelijk 40%, top-5 exact 17%.",
       "topConfidence": {
-        "matches": 101,
-        "exactHitRate": 0.158,
-        "outcomeHitRate": 0.416,
-        "probabilityOutcomeHitRate": 0.545,
-        "avgGoalError": 1.65,
-        "rank1ExactHitRate": 0.08,
-        "rank1OutcomeHitRate": 0.32,
-        "versusOverallOutcomeDelta": 0.022
+        "matches": 102,
+        "exactHitRate": 0.167,
+        "outcomeHitRate": 0.422,
+        "probabilityOutcomeHitRate": 0.539,
+        "avgGoalError": 1.64,
+        "rank1ExactHitRate": 0.115,
+        "rank1OutcomeHitRate": 0.346,
+        "versusOverallOutcomeDelta": 0.026
       },
       "topClubs": [
         {
@@ -162,13 +162,13 @@
     },
     "control": {
       "score": 52,
-      "summary": "Ontwikkelcontrole: 1 actieve monitorissues op 2026-05-23; digest 2026-05-05 t/m 2026-05-18.",
-      "latestDay": "2026-05-23",
+      "summary": "Ontwikkelcontrole: 1 actieve monitorissues op 2026-05-24; digest 2026-05-05 t/m 2026-05-18.",
+      "latestDay": "2026-05-24",
       "shouldPropose": true,
       "actions": [
         {
           "priority": "high",
-          "title": "server_data.json is 887 minuten oud.",
+          "title": "server_data.json is 931 minuten oud.",
           "freeSolution": "Laat GitHub Actions schedule + manual dispatch draaien; geen mail nodig, alleen data committen.",
           "files": [
             ".github/workflows/worker.yml"
@@ -188,7 +188,7 @@
       ]
     },
     {
-      "title": "server_data.json is 887 minuten oud.",
+      "title": "server_data.json is 931 minuten oud.",
       "count": 1,
       "priority": "high",
       "agents": [
@@ -210,7 +210,7 @@
     },
     {
       "priority": "high",
-      "title": "server_data.json is 887 minuten oud.",
+      "title": "server_data.json is 931 minuten oud.",
       "freeSolution": "Laat GitHub Actions schedule + manual dispatch draaien; geen mail nodig, alleen data committen.",
       "files": [
         ".github/workflows/worker.yml"
