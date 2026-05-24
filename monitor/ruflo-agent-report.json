@@ -1,20 +1,20 @@
 {
-  "generatedAt": "2026-05-23T23:12:13.190Z",
-  "date": "2026-05-24",
+  "generatedAt": "2026-05-24T23:15:49.139Z",
+  "date": "2026-05-25",
   "name": "Ruflo-style gratis AI monitor",
   "mode": "naast-productie",
   "productionSafe": true,
   "summary": "Ruflo draait als extra agentlaag naast de app: hij leest monitor/data/reviews, zoekt gratis oplossingen en maakt patchadvies zonder blind live te wijzigen.",
   "agents": {
     "data": {
-      "score": 69,
-      "summary": "Datalaag: H2H 93%, bookmakers 100%, refs 0%.",
+      "score": 71,
+      "summary": "Datalaag: H2H 86%, bookmakers 100%, refs 0%.",
       "freeSources": [
         {
           "name": "SofaScore public endpoint",
           "role": "primaire wedstrijddagfeed",
           "free": true,
-          "status": "actief",
+          "status": "fallback nodig",
           "use": "Gebruik als eerste bron, maar behandel 403/lege dagen nooit als eindpunt."
         },
         {
@@ -60,20 +60,31 @@
           "use": "Niet live scrapen op iedere run; alleen gecachte snapshots gebruiken."
         }
       ],
-      "actions": []
+      "actions": [
+        {
+          "priority": "high",
+          "title": "Wedstrijddag fallbackketen strakker maken",
+          "freeSolution": "Laat de worker altijd meerdere gratis bronnen proberen: SofaScore -> TheSportsDB -> OpenLigaDB -> football-data/openfootball.",
+          "files": [
+            "scripts/server-worker.js",
+            "api/Matches.ts"
+          ],
+          "status": "bewaken"
+        }
+      ]
     },
     "learning": {
       "score": 12,
-      "summary": "Leerlaag: 597 reviews, exact 12%, winnaar/gelijk 40%, top-5 exact 17%.",
+      "summary": "Leerlaag: 613 reviews, exact 12%, winnaar/gelijk 40%, top-5 exact 16%.",
       "topConfidence": {
-        "matches": 102,
-        "exactHitRate": 0.167,
-        "outcomeHitRate": 0.422,
-        "probabilityOutcomeHitRate": 0.539,
-        "avgGoalError": 1.64,
-        "rank1ExactHitRate": 0.115,
-        "rank1OutcomeHitRate": 0.346,
-        "versusOverallOutcomeDelta": 0.026
+        "matches": 106,
+        "exactHitRate": 0.16,
+        "outcomeHitRate": 0.425,
+        "probabilityOutcomeHitRate": 0.547,
+        "avgGoalError": 1.65,
+        "rank1ExactHitRate": 0.111,
+        "rank1OutcomeHitRate": 0.37,
+        "versusOverallOutcomeDelta": 0.03
       },
       "topClubs": [
         {
@@ -126,25 +137,25 @@
           "avgGoalError": 0.67
         },
         {
-          "teamName": "Real Oviedo",
+          "teamName": "Fiorentina",
           "reviewedMatches": 3,
           "exactHitRate": 0.67,
           "outcomeHitRate": 0.67,
-          "avgGoalError": 0.33
+          "avgGoalError": 1.67
         },
         {
           "teamName": "Mallorca",
-          "reviewedMatches": 3,
-          "exactHitRate": 0.67,
-          "outcomeHitRate": 0.67,
-          "avgGoalError": 0.67
+          "reviewedMatches": 4,
+          "exactHitRate": 0.5,
+          "outcomeHitRate": 0.75,
+          "avgGoalError": 0.75
         },
         {
-          "teamName": "Getafe",
-          "reviewedMatches": 3,
-          "exactHitRate": 0.67,
-          "outcomeHitRate": 0.67,
-          "avgGoalError": 0.67
+          "teamName": "Real Oviedo",
+          "reviewedMatches": 4,
+          "exactHitRate": 0.5,
+          "outcomeHitRate": 0.75,
+          "avgGoalError": 0.5
         }
       ],
       "actions": [
@@ -161,17 +172,27 @@
       ]
     },
     "control": {
-      "score": 52,
-      "summary": "Ontwikkelcontrole: 1 actieve monitorissues op 2026-05-24; digest 2026-05-05 t/m 2026-05-18.",
-      "latestDay": "2026-05-24",
+      "score": 36,
+      "summary": "Ontwikkelcontrole: 2 actieve monitorissues op 2026-05-25; digest 2026-05-05 t/m 2026-05-18.",
+      "latestDay": "2026-05-25",
       "shouldPropose": true,
       "actions": [
         {
           "priority": "high",
-          "title": "server_data.json is 931 minuten oud.",
+          "title": "server_data.json is 921 minuten oud.",
           "freeSolution": "Laat GitHub Actions schedule + manual dispatch draaien; geen mail nodig, alleen data committen.",
           "files": [
             ".github/workflows/worker.yml"
+          ],
+          "status": "monitor"
+        },
+        {
+          "priority": "medium",
+          "title": "Er zijn geen wedstrijden voor vandaag in server_data.json.",
+          "freeSolution": "Gebruik gratis fallbackketen met TheSportsDB/OpenLigaDB/openfootball en toon bronstatus in Instellingen.",
+          "files": [
+            "scripts/server-worker.js",
+            "api/Matches.ts"
           ],
           "status": "monitor"
         }
@@ -179,6 +200,14 @@
     }
   },
   "topThemes": [
+    {
+      "title": "Wedstrijddag fallbackketen strakker maken",
+      "count": 1,
+      "priority": "high",
+      "agents": [
+        "data"
+      ]
+    },
     {
       "title": "Faalsignaal aanpakken: open_lineups",
       "count": 1,
@@ -188,15 +217,34 @@
       ]
     },
     {
-      "title": "server_data.json is 931 minuten oud.",
+      "title": "server_data.json is 921 minuten oud.",
       "count": 1,
       "priority": "high",
+      "agents": [
+        "control"
+      ]
+    },
+    {
+      "title": "Er zijn geen wedstrijden voor vandaag in server_data.json.",
+      "count": 1,
+      "priority": "medium",
       "agents": [
         "control"
       ]
     }
   ],
   "recommendedNextActions": [
+    {
+      "priority": "high",
+      "title": "Wedstrijddag fallbackketen strakker maken",
+      "freeSolution": "Laat de worker altijd meerdere gratis bronnen proberen: SofaScore -> TheSportsDB -> OpenLigaDB -> football-data/openfootball.",
+      "files": [
+        "scripts/server-worker.js",
+        "api/Matches.ts"
+      ],
+      "status": "bewaken",
+      "agent": "data"
+    },
     {
       "priority": "high",
       "title": "Faalsignaal aanpakken: open_lineups",
@@ -210,10 +258,21 @@
     },
     {
       "priority": "high",
-      "title": "server_data.json is 931 minuten oud.",
+      "title": "server_data.json is 921 minuten oud.",
       "freeSolution": "Laat GitHub Actions schedule + manual dispatch draaien; geen mail nodig, alleen data committen.",
       "files": [
         ".github/workflows/worker.yml"
+      ],
+      "status": "monitor",
+      "agent": "control"
+    },
+    {
+      "priority": "medium",
+      "title": "Er zijn geen wedstrijden voor vandaag in server_data.json.",
+      "freeSolution": "Gebruik gratis fallbackketen met TheSportsDB/OpenLigaDB/openfootball en toon bronstatus in Instellingen.",
+      "files": [
+        "scripts/server-worker.js",
+        "api/Matches.ts"
       ],
       "status": "monitor",
       "agent": "control"

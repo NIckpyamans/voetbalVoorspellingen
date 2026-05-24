@@ -1653,6 +1653,41 @@
           ]
         }
       ]
+    },
+    "2026-05-25": {
+      "runs": [
+        {
+          "timestamp": "2026-05-24T23:15:48.738Z",
+          "stats": {
+            "today": "2026-05-25",
+            "dataPresent": true,
+            "lastRun": 1779609275197,
+            "ageMinutes": 921,
+            "todayMatches": 0,
+            "liveMatches": 0,
+            "liveWithoutMinute": 0,
+            "h2hFilled": 0,
+            "h2hMissing": 0,
+            "standingsCount": 41,
+            "cupSheetCount": 5,
+            "phaseReliabilityCount": 3
+          },
+          "issues": [
+            {
+              "key": "worker_stale",
+              "severity": "high",
+              "message": "server_data.json is 921 minuten oud.",
+              "details": {}
+            },
+            {
+              "key": "today_matches_empty",
+              "severity": "medium",
+              "message": "Er zijn geen wedstrijden voor vandaag in server_data.json.",
+              "details": {}
+            }
+          ]
+        }
+      ]
     }
   }
 }
