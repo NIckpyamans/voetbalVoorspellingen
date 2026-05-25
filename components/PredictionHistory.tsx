@@ -2,6 +2,7 @@
 
 interface HistoryItem {
   matchId: string;
+  predictionId?: string | null;
   prediction: string;
   actual: string;
   wasCorrect: boolean;
@@ -21,6 +22,16 @@ interface HistoryItem {
   topConfidencePick?: boolean;
   topExactScorePick?: boolean;
   topExactReasons?: string[];
+  brierScore?: number | null;
+  logLoss?: number | null;
+  roi?: number | null;
+  clv?: number | null;
+  generatedAt?: string | null;
+  cutoffAt?: string | null;
+  modelVersion?: string | null;
+  featureSchemaVersion?: string | null;
+  evaluationSource?: string | null;
+  leakageRisk?: string | null;
 }
 
 type LeagueHistoryStats = {
@@ -121,6 +132,21 @@ const PredictionHistory: React.FC = () => {
     const avgError = total
       ? (history.reduce((sum, item) => sum + Number(item.errorMargin || 0), 0) / total).toFixed(2)
       : "0.00";
+    const withBrier = history.filter((item) => Number.isFinite(Number(item.brierScore)));
+    const avgBrier = withBrier.length
+      ? (withBrier.reduce((sum, item) => sum + Number(item.brierScore || 0), 0) / withBrier.length).toFixed(3)
+      : "-";
+    const withLogLoss = history.filter((item) => Number.isFinite(Number(item.logLoss)));
+    const avgLogLoss = withLogLoss.length
+      ? (withLogLoss.reduce((sum, item) => sum + Number(item.logLoss || 0), 0) / withLogLoss.length).toFixed(3)
+      : "-";
+    const withRoi = history.filter((item) => Number.isFinite(Number(item.roi)));
+    const roiTotal = withRoi.length
+      ? `${(withRoi.reduce((sum, item) => sum + Number(item.roi || 0), 0) * 100).toFixed(1)}%`
+      : "-";
+    const snapshotCoverage = total
+      ? `${((history.filter((item) => item.predictionId && item.evaluationSource === "prediction_snapshot").length / total) * 100).toFixed(0)}%`
+      : "0%";
 
     let streak = 0;
     let bestStreak = 0;
@@ -196,6 +222,10 @@ const PredictionHistory: React.FC = () => {
       exactPct: total ? ((exactCorrect / total) * 100).toFixed(1) : "0.0",
       outcomePct: total ? ((outcomeCorrect / total) * 100).toFixed(1) : "0.0",
       avgError,
+      avgBrier,
+      avgLogLoss,
+      roiTotal,
+      snapshotCoverage,
       bestStreak,
       byLeague,
       topFive: {
@@ -273,12 +303,16 @@ const PredictionHistory: React.FC = () => {
         </button>
       </div>
 
-      <div className="grid grid-cols-2 md:grid-cols-5 gap-3">
+      <div className="grid grid-cols-2 md:grid-cols-4 xl:grid-cols-9 gap-3">
         {[
           { label: "Totaal", value: stats.total.toLocaleString(), color: "text-blue-400" },
           { label: "Juiste score", value: `${stats.exactPct}%`, color: "text-green-400" },
           { label: "Juiste winnaar/gelijk", value: `${stats.outcomePct}%`, color: "text-emerald-400" },
           { label: "Gem. foutmarge", value: stats.avgError, color: "text-purple-400" },
+          { label: "Brier", value: stats.avgBrier, color: "text-cyan-400" },
+          { label: "Log loss", value: stats.avgLogLoss, color: "text-orange-300" },
+          { label: "ROI", value: stats.roiTotal, color: "text-lime-300" },
+          { label: "Snapshots", value: stats.snapshotCoverage, color: "text-sky-300" },
           { label: "Beste reeks", value: `${stats.bestStreak}`, color: "text-yellow-400" },
         ].map((item) => (
           <div key={item.label} className="glass-card p-4 rounded-2xl border border-white/5">
@@ -525,6 +559,36 @@ const PredictionHistory: React.FC = () => {
                             </div>
                           </div>
                         </div>
+                        {(item.brierScore != null || item.logLoss != null || item.predictionId) && (
+                          <div className="mt-3 grid grid-cols-2 md:grid-cols-5 gap-2">
+                            <div className="rounded-xl bg-slate-950/35 border border-white/5 px-3 py-2">
+                              <div className="text-[8px] font-black text-slate-500 uppercase">Brier</div>
+                              <div className="text-[13px] font-black text-cyan-200 mt-1">{item.brierScore ?? "-"}</div>
+                            </div>
+                            <div className="rounded-xl bg-slate-950/35 border border-white/5 px-3 py-2">
+                              <div className="text-[8px] font-black text-slate-500 uppercase">Log loss</div>
+                              <div className="text-[13px] font-black text-orange-200 mt-1">{item.logLoss ?? "-"}</div>
+                            </div>
+                            <div className="rounded-xl bg-slate-950/35 border border-white/5 px-3 py-2">
+                              <div className="text-[8px] font-black text-slate-500 uppercase">ROI</div>
+                              <div className="text-[13px] font-black text-lime-200 mt-1">
+                                {item.roi == null ? "-" : `${(Number(item.roi) * 100).toFixed(1)}%`}
+                              </div>
+                            </div>
+                            <div className="rounded-xl bg-slate-950/35 border border-white/5 px-3 py-2">
+                              <div className="text-[8px] font-black text-slate-500 uppercase">Snapshot</div>
+                              <div className="text-[11px] font-black text-sky-200 mt-1 truncate">
+                                {item.predictionId ? "vastgelegd" : "fallback"}
+                              </div>
+                            </div>
+                            <div className="rounded-xl bg-slate-950/35 border border-white/5 px-3 py-2">
+                              <div className="text-[8px] font-black text-slate-500 uppercase">Cutoff</div>
+                              <div className="text-[11px] font-black text-white mt-1 truncate">
+                                {item.cutoffAt ? new Date(item.cutoffAt).toLocaleString("nl-NL") : "-"}
+                              </div>
+                            </div>
+                          </div>
+                        )}
                       </div>
                     ))}
                   </div>

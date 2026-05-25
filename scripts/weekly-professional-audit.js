@@ -73,19 +73,20 @@ function summarizePredictions(predictions) {
   return {
     total: list.length,
     featureCoverage: list.length ? list.filter((item) => item?.featureVector).length / list.length : 0,
-    oddsCoverage: list.length ? list.filter((item) => item?.odds).length / list.length : 0,
+    oddsCoverage: list.length ? list.filter((item) => item?.odds || item?.oddsAtPrediction).length / list.length : 0,
     reviewCoverage: list.length ? list.filter((item) => item?.review).length / list.length : 0,
     averageCompleteness: completeness.length ? completeness.reduce((sum, value) => sum + value, 0) / completeness.length : null
   };
 }
 
-function buildStorageAudit(historyItems, predictions) {
+function buildStorageAudit(historyItems, predictions, snapshots) {
+  const snapshotItems = Array.isArray(snapshots) ? snapshots : [];
   return [
-    { field: "prediction_id", present: hasField(predictions, ["predictionId", "prediction_id"]), importance: "kritiek", advice: "Voeg een stabiele prediction_id toe per voorspelling." },
-    { field: "generated_at / cutoff_at", present: hasField(predictions, ["generatedAt", "generated_at", "cutoffAt", "cutoff_at", "timestamp"]), importance: "kritiek", advice: "Sla tijdstip en cutoff expliciet op zodat latere uitslagen geen input kunnen worden." },
-    { field: "featureVector", present: hasField(predictions, ["featureVector"]), importance: "hoog", advice: "Aanwezig waar predictions gevuld zijn; maak hem immutable per prediction_id." },
-    { field: "model_version", present: hasField(predictions, ["modelVersion", "model_version", "ensembleMeta"]), importance: "hoog", advice: "Gebruik naast ensembleMeta ook workerVersion en feature_schema_version." },
-    { field: "odds_at_prediction", present: hasField(predictions, ["odds", "oddsAtPrediction", "odds_at_prediction"]), importance: "hoog", advice: "Sla bookmaker, markt, odds en timestamp op." },
+    { field: "prediction_id", present: hasField(predictions, ["predictionId", "prediction_id"]) || hasField(historyItems, ["predictionId"]) || hasField(snapshotItems, ["predictionId"]), importance: "kritiek", advice: "Voeg een stabiele prediction_id toe per voorspelling." },
+    { field: "generated_at / cutoff_at", present: hasField(predictions, ["generatedAt", "generated_at", "cutoffAt", "cutoff_at", "timestamp"]) || hasField(historyItems, ["generatedAt", "cutoffAt"]) || hasField(snapshotItems, ["generatedAt", "cutoffAt"]), importance: "kritiek", advice: "Sla tijdstip en cutoff expliciet op zodat latere uitslagen geen input kunnen worden." },
+    { field: "featureVector", present: hasField(predictions, ["featureVector"]) || hasField(snapshotItems, ["features"]), importance: "hoog", advice: "Aanwezig waar predictions gevuld zijn; maak hem immutable per prediction_id." },
+    { field: "model_version", present: hasField(predictions, ["modelVersion", "model_version", "ensembleMeta"]) || hasField(historyItems, ["modelVersion"]) || hasField(snapshotItems, ["modelVersion"]), importance: "hoog", advice: "Gebruik naast ensembleMeta ook workerVersion en feature_schema_version." },
+    { field: "odds_at_prediction", present: hasField(predictions, ["odds", "oddsAtPrediction", "odds_at_prediction"]) || hasField(historyItems, ["oddsAtPrediction"]) || hasField(snapshotItems, ["oddsAtPrediction"]), importance: "hoog", advice: "Sla bookmaker, markt, odds en timestamp op." },
     { field: "Brier/log loss/ROI/CLV", present: hasField(historyItems, ["brierScore", "logLoss", "roi", "clv"]), importance: "kritiek", advice: "Voeg evaluatiemetrics toe aan postMatchReviews en /api/history." }
   ];
 }
@@ -108,6 +109,7 @@ function buildMarkdown(report) {
     `- Wedstrijden vandaag: ${report.live.matchesTotal}`,
     `- Voorspellingen vandaag: ${report.live.predictionsTotal}`,
     `- Reviews: ${report.live.reviewCount}`,
+    `- Prediction snapshots: ${report.live.predictionSnapshotCount}`,
     `- Worker: ${report.live.workerVersion || "onbekend"}`,
     `- Feature coverage: ${pct(report.predictions.featureCoverage)}`,
     `- Odds coverage: ${pct(report.predictions.oddsCoverage)}`,
@@ -126,16 +128,23 @@ function buildMarkdown(report) {
 }
 
 async function main() {
-  const [matchesJson, predictJson, historyJson] = await Promise.all([
+  const [matchesJson, predictJson, historyJson, snapshotsJson] = await Promise.all([
     fetchJson("/api/matches").catch((error) => ({ error: error.message, matches: [] })),
     fetchJson("/api/predict").catch((error) => ({ error: error.message, predictions: [] })),
-    fetchJson("/api/history").catch((error) => ({ error: error.message, items: [] }))
+    fetchJson("/api/history").catch((error) => ({ error: error.message, items: [] })),
+    fetchJson("/api/prediction-snapshots?limit=25").catch((error) => ({ error: error.message, items: [] }))
   ]);
 
   const predictions = Array.isArray(predictJson.predictions) ? predictJson.predictions : [];
   const historyItems = Array.isArray(historyJson.items) ? historyJson.items : [];
-  const fetchErrors = { matches: matchesJson.error || null, predict: predictJson.error || null, history: historyJson.error || null };
-  const storageAudit = buildStorageAudit(historyItems, predictions);
+  const snapshotItems = Array.isArray(snapshotsJson.items) ? snapshotsJson.items : [];
+  const fetchErrors = {
+    matches: matchesJson.error || null,
+    predict: predictJson.error || null,
+    history: historyJson.error || null,
+    snapshots: snapshotsJson.error || null
+  };
+  const storageAudit = buildStorageAudit(historyItems, predictions, snapshotItems);
   const criticalMissing = storageAudit.filter((item) => item.importance === "kritiek" && !item.present);
   const hasFetchErrors = Object.values(fetchErrors).some(Boolean);
 
@@ -158,8 +167,9 @@ async function main() {
       matchesTotal: Number(matchesJson.total || (matchesJson.matches || []).length || 0),
       predictionsTotal: Number(predictJson.total || predictions.length || 0),
       reviewCount: Number(matchesJson.reviewCount || predictJson.reviewCount || historyJson.total || 0),
+      predictionSnapshotCount: Number(snapshotsJson.total || snapshotItems.length || 0),
       workerVersion: matchesJson.workerVersion || historyJson.workerVersion || "unknown",
-      sourceBranch: matchesJson.sourceBranch || predictJson.sourceBranch || historyJson.sourceBranch || "unknown",
+      sourceBranch: matchesJson.sourceBranch || predictJson.sourceBranch || historyJson.sourceBranch || snapshotsJson.sourceBranch || "unknown",
       sourceCoverage: matchesJson.sourceCoverage || null,
       featureDiagnostics: matchesJson.featureDiagnostics || null,
       backtestSummary: matchesJson.backtestSummary || null,

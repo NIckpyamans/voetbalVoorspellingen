@@ -2,6 +2,7 @@
 
 import fs from "fs";
 import path from "path";
+import crypto from "crypto";
 import { normalizeMinute, parseMinuteValue } from "../shared/minute.js";
 
 const SOFA = "https://api.sofascore.com/api/v1";
@@ -54,6 +55,19 @@ function pickReviewsForMatches(store, matches) {
   return reviews;
 }
 
+function pickPredictionSnapshotsForMatches(store, matches) {
+  const snapshots = {};
+  for (const match of matches || []) {
+    const ids = store.predictionSnapshotIndex?.[match.id] || [];
+    for (const predictionId of ids) {
+      if (store.predictionSnapshots?.[predictionId]) {
+        snapshots[predictionId] = store.predictionSnapshots[predictionId];
+      }
+    }
+  }
+  return snapshots;
+}
+
 function buildSplitMeta(store) {
   return {
     lastRun: store.lastRun || null,
@@ -64,6 +78,8 @@ function buildSplitMeta(store) {
     aiAdvice: store.aiAdvice || [],
     featureDiagnostics: store.featureDiagnostics || null,
     sourceCoverage: store.sourceCoverage || null,
+    predictionSnapshotCount: Object.keys(store.predictionSnapshots || {}).length,
+    predictionSnapshotIndexCount: Object.keys(store.predictionSnapshotIndex || {}).length,
     dataScout: store.dataScout || null,
     modelPerformance: store.modelPerformance || null,
     backtestSummary: store.backtestSummary || null,
@@ -85,6 +101,7 @@ function writeSplitDataFiles(store) {
       date: dateKey,
       matches,
       predictions: store.predictions?.[dateKey] || [],
+      predictionSnapshots: pickPredictionSnapshotsForMatches(store, matches),
       reviews: pickReviewsForMatches(store, matches),
       lastRun: store.lastRun || null,
       workerVersion: store.workerVersion || "unknown",
@@ -103,6 +120,8 @@ function writeSplitDataFiles(store) {
   });
   writeJsonFile(path.join(SPLIT_DATA_DIR, "history-summary.json"), {
     postMatchReviews: store.postMatchReviews || {},
+    predictionSnapshots: store.predictionSnapshots || {},
+    predictionSnapshotIndex: store.predictionSnapshotIndex || {},
     teamLearning: store.teamLearning || {},
     leagueReliability: store.leagueReliability || {},
     phaseReliability: store.phaseReliability || {},
@@ -207,6 +226,278 @@ function compactPredictionEntry(prediction, historical = false) {
   return compact;
 }
 
+function stableDigest(value) {
+  return crypto.createHash("sha256").update(String(value)).digest("hex");
+}
+
+function hashObject(value) {
+  return stableDigest(JSON.stringify(value ?? null));
+}
+
+function isoFromMs(value) {
+  const ms = Number(value || 0);
+  return Number.isFinite(ms) && ms > 0 ? new Date(ms).toISOString() : null;
+}
+
+function getPredictionProbabilities(prediction) {
+  return {
+    home: Number(prediction?.homeProb || 0),
+    draw: Number(prediction?.drawProb || 0),
+    away: Number(prediction?.awayProb || 0),
+  };
+}
+
+function resolveOddsAtPrediction(prediction) {
+  const odds = prediction?.odds || prediction?.oddsAtPrediction || null;
+  if (!odds || typeof odds !== "object") return null;
+  const home = Number(odds.home);
+  const draw = Number(odds.draw);
+  const away = Number(odds.away);
+  if (![home, draw, away].some((value) => Number.isFinite(value) && value > 1)) return null;
+  return {
+    home: Number.isFinite(home) && home > 1 ? home : null,
+    draw: Number.isFinite(draw) && draw > 1 ? draw : null,
+    away: Number.isFinite(away) && away > 1 ? away : null,
+    bookmaker: odds.bookmaker || odds.source || null,
+    market: odds.market || "1X2",
+    capturedAt: odds.capturedAt || odds.timestamp || null,
+  };
+}
+
+function buildPredictionInputSnapshot(match, prediction) {
+  return {
+    matchId: match?.id || prediction?.matchId || null,
+    date: match?.date || prediction?.date || null,
+    kickoff: match?.kickoff || null,
+    league: match?.league || prediction?.league || null,
+    homeTeam: match?.homeTeamName || prediction?.homeTeam || null,
+    awayTeam: match?.awayTeamName || prediction?.awayTeam || null,
+    dataSource: match?.dataSource || prediction?.dataSource || null,
+    homeForm: match?.homeForm || prediction?.homeForm || null,
+    awayForm: match?.awayForm || prediction?.awayForm || null,
+    homeRestDays: match?.homeRestDays ?? prediction?.homeRestDays ?? null,
+    awayRestDays: match?.awayRestDays ?? prediction?.awayRestDays ?? null,
+    h2hStatus: match?.h2hStatus || prediction?.h2hStatus || null,
+    homePos: match?.homePos ?? null,
+    awayPos: match?.awayPos ?? null,
+    matchImportance: match?.matchImportance ?? prediction?.matchImportance ?? null,
+    dataCompleteness: prediction?.dataCompleteness || match?.dataCompleteness || null,
+    qualityGate: prediction?.qualityGate || match?.qualityGate || null,
+    marketCalibration: prediction?.marketCalibration || prediction?.modelEdges?.marketCalibration || match?.marketCalibration || null,
+    learningSummary: prediction?.learningSummary || prediction?.modelEdges?.learningEdge || match?.learningSummary || null,
+    competitionReliability: prediction?.competitionReliability || prediction?.modelEdges?.leagueReliability || match?.competitionReliability || null,
+    phaseReliability: prediction?.phaseReliability || prediction?.modelEdges?.phaseReliability || match?.phaseReliability || null,
+    refereeProfile: prediction?.refereeProfile || prediction?.modelEdges?.refereeProfile || match?.refereeProfile || null,
+  };
+}
+
+function ensurePredictionSnapshotStore(store) {
+  if (!store.predictionSnapshots) store.predictionSnapshots = {};
+  if (!store.predictionSnapshotIndex) store.predictionSnapshotIndex = {};
+}
+
+function registerPredictionSnapshot(store, match, prediction, generatedAtMs) {
+  ensurePredictionSnapshotStore(store);
+  const matchId = match?.id || prediction?.matchId;
+  if (!matchId || !prediction) return null;
+
+  const generatedAt = isoFromMs(generatedAtMs) || new Date().toISOString();
+  const kickoffMs = Date.parse(match?.kickoff || "");
+  const status = String(match?.status || "").toUpperCase();
+  const isPreMatchStatus = !["LIVE", "HT", "FT", "AET", "PEN"].includes(status);
+  const isBeforeKickoff = !Number.isFinite(kickoffMs) || Number(generatedAtMs || Date.now()) <= kickoffMs;
+  if (!isPreMatchStatus || !isBeforeKickoff) {
+    return {
+      predictionId: prediction.predictionId || null,
+      generatedAt,
+      cutoffAt: generatedAt,
+      snapshotStored: false,
+      snapshotStatus: "not_pre_match",
+    };
+  }
+
+  const inputSnapshot = buildPredictionInputSnapshot(match, prediction);
+  const inputSnapshotHash = hashObject(inputSnapshot);
+  const predictionId = `pred_${stableDigest(`${matchId}|${generatedAt}|${inputSnapshotHash}`).slice(0, 18)}`;
+  const oddsAtPrediction = resolveOddsAtPrediction(prediction);
+  const snapshot = {
+    predictionId,
+    matchId,
+    generatedAt,
+    cutoffAt: generatedAt,
+    kickoff: match?.kickoff || null,
+    status: "pre_match",
+    schemaVersion: PREDICTION_SNAPSHOT_SCHEMA_VERSION,
+    featureSchemaVersion: FEATURE_SCHEMA_VERSION,
+    modelVersion: MODEL_VERSION,
+    algorithmVersion: prediction?.ensembleMeta?.baseModel || "dixon-coles-poisson",
+    workerVersion: MODEL_VERSION,
+    date: match?.date || prediction?.date || null,
+    league: match?.league || prediction?.league || null,
+    season: match?.season || prediction?.season || null,
+    homeTeam: match?.homeTeamName || prediction?.homeTeam || null,
+    awayTeam: match?.awayTeamName || prediction?.awayTeam || null,
+    homeTeamId: match?.homeTeamId || null,
+    awayTeamId: match?.awayTeamId || null,
+    inputSnapshot,
+    inputSnapshotHash,
+    features: prediction?.featureVector || null,
+    probabilities: getPredictionProbabilities(prediction),
+    confidence: Number(prediction?.confidence || 0),
+    expectedScore: {
+      home: Number(prediction?.predHomeGoals || 0),
+      away: Number(prediction?.predAwayGoals || 0),
+      label: `${Number(prediction?.predHomeGoals || 0)}-${Number(prediction?.predAwayGoals || 0)}`,
+    },
+    explanation: {
+      modelEdges: prediction?.modelEdges || null,
+      exactScoreReasons: prediction?.exactScoreReasons || [],
+      riskProfile: prediction?.modelEdges?.riskProfile || prediction?.riskProfile || null,
+    },
+    oddsAtPrediction,
+    dataCompleteness: prediction?.dataCompleteness || null,
+    missingData: prediction?.dataCompleteness?.missing || [],
+    prediction: {
+      ...compactPredictionEntry(prediction, false),
+      predictionId,
+      generatedAt,
+      cutoffAt: generatedAt,
+      modelVersion: MODEL_VERSION,
+      featureSchemaVersion: FEATURE_SCHEMA_VERSION,
+      inputSnapshotHash,
+      oddsAtPrediction,
+    },
+  };
+
+  if (!store.predictionSnapshots[predictionId]) {
+    store.predictionSnapshots[predictionId] = snapshot;
+  }
+
+  const ids = Array.isArray(store.predictionSnapshotIndex[matchId])
+    ? store.predictionSnapshotIndex[matchId]
+    : [];
+  if (!ids.includes(predictionId)) ids.push(predictionId);
+  ids.sort((a, b) =>
+    Date.parse(store.predictionSnapshots[a]?.generatedAt || "") -
+    Date.parse(store.predictionSnapshots[b]?.generatedAt || "")
+  );
+  store.predictionSnapshotIndex[matchId] = ids;
+
+  return {
+    predictionId,
+    generatedAt,
+    cutoffAt: generatedAt,
+    modelVersion: MODEL_VERSION,
+    featureSchemaVersion: FEATURE_SCHEMA_VERSION,
+    inputSnapshotHash,
+    oddsAtPrediction,
+    snapshotStored: true,
+    snapshotStatus: "pre_match",
+  };
+}
+
+function compactPredictionSnapshots(store) {
+  ensurePredictionSnapshotStore(store);
+  const entries = Object.entries(store.predictionSnapshots || {})
+    .filter(([, snapshot]) => snapshot?.predictionId && snapshot?.matchId)
+    .sort((a, b) => Date.parse(b[1]?.generatedAt || "") - Date.parse(a[1]?.generatedAt || ""))
+    .slice(0, MAX_PREDICTION_SNAPSHOTS);
+  store.predictionSnapshots = Object.fromEntries(entries);
+
+  const index = {};
+  for (const snapshot of Object.values(store.predictionSnapshots || {})) {
+    if (!snapshot?.matchId || !snapshot?.predictionId) continue;
+    if (!index[snapshot.matchId]) index[snapshot.matchId] = [];
+    index[snapshot.matchId].push(snapshot.predictionId);
+  }
+  for (const ids of Object.values(index)) {
+    ids.sort((a, b) =>
+      Date.parse(store.predictionSnapshots[a]?.generatedAt || "") -
+      Date.parse(store.predictionSnapshots[b]?.generatedAt || "")
+    );
+  }
+  store.predictionSnapshotIndex = index;
+}
+
+function selectPredictionForReview(store, match, fallbackPrediction) {
+  const ids = store.predictionSnapshotIndex?.[match?.id] || [];
+  const kickoffMs = Date.parse(match?.kickoff || "");
+  const candidates = ids
+    .map((id) => store.predictionSnapshots?.[id])
+    .filter((snapshot) => snapshot?.prediction)
+    .filter((snapshot) => {
+      const generatedMs = Date.parse(snapshot.generatedAt || "");
+      return !Number.isFinite(kickoffMs) || !Number.isFinite(generatedMs) || generatedMs <= kickoffMs;
+    })
+    .sort((a, b) => Date.parse(b.generatedAt || "") - Date.parse(a.generatedAt || ""));
+
+  const snapshot = candidates[0] || null;
+  if (snapshot) {
+    return {
+      ...snapshot.prediction,
+      predictionId: snapshot.predictionId,
+      generatedAt: snapshot.generatedAt,
+      cutoffAt: snapshot.cutoffAt,
+      modelVersion: snapshot.modelVersion,
+      featureSchemaVersion: snapshot.featureSchemaVersion,
+      inputSnapshotHash: snapshot.inputSnapshotHash,
+      oddsAtPrediction: snapshot.oddsAtPrediction || snapshot.prediction?.oddsAtPrediction || null,
+      evaluationSource: "prediction_snapshot",
+    };
+  }
+
+  return fallbackPrediction
+    ? {
+        ...fallbackPrediction,
+        evaluationSource: "current_prediction_fallback",
+        leakageRisk: "possible_post_match_overwrite",
+      }
+    : null;
+}
+
+function probabilityForOutcome(prediction, outcome) {
+  const probabilities = {
+    H: Number(prediction?.homeProb || 0),
+    D: Number(prediction?.drawProb || 0),
+    A: Number(prediction?.awayProb || 0),
+  };
+  return Number(probabilities[outcome] || 0);
+}
+
+function calculateBrierScore(prediction, actualOutcome) {
+  const probabilities = {
+    H: Number(prediction?.homeProb || 0),
+    D: Number(prediction?.drawProb || 0),
+    A: Number(prediction?.awayProb || 0),
+  };
+  const score = Object.entries(probabilities).reduce((sum, [outcome, probability]) => {
+    const expected = outcome === actualOutcome ? 1 : 0;
+    return sum + Math.pow(probability - expected, 2);
+  }, 0);
+  return Number(score.toFixed(4));
+}
+
+function calculateLogLoss(prediction, actualOutcome) {
+  const probability = clamp(probabilityForOutcome(prediction, actualOutcome), 0.000001, 0.999999);
+  return Number((-Math.log(probability)).toFixed(4));
+}
+
+function oddForOutcome(oddsAtPrediction, outcome) {
+  if (!oddsAtPrediction) return null;
+  const value =
+    outcome === "H" ? oddsAtPrediction.home :
+    outcome === "D" ? oddsAtPrediction.draw :
+    oddsAtPrediction.away;
+  const odd = Number(value);
+  return Number.isFinite(odd) && odd > 1 ? odd : null;
+}
+
+function calculateRoi(prediction, predictedOutcome, actualOutcome) {
+  const odd = oddForOutcome(prediction?.oddsAtPrediction || prediction?.odds, predictedOutcome);
+  if (!odd) return null;
+  return Number((predictedOutcome === actualOutcome ? odd - 1 : -1).toFixed(4));
+}
+
 function pruneUpdatedMap(store, valueKey, updatedKey, ttl, now, maxEntries = null) {
   const values = store[valueKey] || {};
   const updated = store[updatedKey] || {};
@@ -288,7 +579,11 @@ const MIN_USABLE_ROSTER_PLAYERS = 16;
 const HISTORY_KEEP_DAYS_BACK = 365;
 const HISTORY_KEEP_DAYS_FORWARD = 14;
 const MAX_REVIEWS = 2500;
+const MAX_PREDICTION_SNAPSHOTS = 5000;
 const MAX_SCORE_MATRIX_ENTRIES = 10;
+const MODEL_VERSION = "v20-competition-squad-archive";
+const FEATURE_SCHEMA_VERSION = "feature-v1";
+const PREDICTION_SNAPSHOT_SCHEMA_VERSION = "prediction-snapshot-v1";
 const MAX_EVENT_CACHE = 300;
 const MONTE_CARLO_RUNS = 10000;
 const MONTE_CARLO_WEIGHT = 0.14;
@@ -3161,6 +3456,7 @@ function buildTrainingSnapshot(store) {
 
     for (const match of matches) {
       const prediction = predictions[match.id] || {};
+      const reviewPrediction = selectPredictionForReview(store, match, prediction);
       rows.push({
         date,
         matchId: match.id,
@@ -3178,8 +3474,11 @@ function buildTrainingSnapshot(store) {
                 return "D";
               })()
             : null,
-        featureVector: prediction.featureVector || null,
-        ensembleMeta: prediction.ensembleMeta || null,
+        predictionId: reviewPrediction?.predictionId || prediction.predictionId || null,
+        generatedAt: reviewPrediction?.generatedAt || prediction.generatedAt || null,
+        cutoffAt: reviewPrediction?.cutoffAt || prediction.cutoffAt || null,
+        featureVector: reviewPrediction?.featureVector || prediction.featureVector || null,
+        ensembleMeta: reviewPrediction?.ensembleMeta || prediction.ensembleMeta || null,
         review: store.postMatchReviews?.[match.id] || null,
       });
     }
@@ -5914,6 +6213,9 @@ function buildPostMatchReview(match, prediction) {
   const totalGoalBias = Number(
     ((actualHomeGoals + actualAwayGoals) - (predHomeGoals + predAwayGoals)).toFixed(2)
   );
+  const brierScore = calculateBrierScore(prediction, actualOutcome);
+  const logLoss = calculateLogLoss(prediction, actualOutcome);
+  const roi = calculateRoi(prediction, probabilityOutcome, actualOutcome);
 
   const failureSignals = [];
   if (predictedOutcome !== actualOutcome) {
@@ -5928,6 +6230,7 @@ function buildPostMatchReview(match, prediction) {
 
   return {
     matchId: match.id,
+    predictionId: prediction.predictionId || null,
     date: match.date,
     league: match.league,
     dataSource: match.dataSource || prediction?.dataSource || "sofascore",
@@ -5954,6 +6257,18 @@ function buildPostMatchReview(match, prediction) {
     modelAgreement: Number(prediction?.modelEdges?.modelAgreement || 0),
     confidence: Number(prediction.confidence || 0),
     exactScoreConfidence: Number(prediction.exactScoreConfidence || prediction.exactProb || 0),
+    brierScore,
+    logLoss,
+    roi,
+    clv: prediction?.clv ?? null,
+    oddsAtPrediction: prediction?.oddsAtPrediction || prediction?.odds || null,
+    modelVersion: prediction?.modelVersion || prediction?.ensembleMeta?.baseModel || null,
+    featureSchemaVersion: prediction?.featureSchemaVersion || null,
+    generatedAt: prediction?.generatedAt || null,
+    cutoffAt: prediction?.cutoffAt || null,
+    inputSnapshotHash: prediction?.inputSnapshotHash || null,
+    evaluationSource: prediction?.evaluationSource || "current_prediction",
+    leakageRisk: prediction?.leakageRisk || null,
     outcomeHit: predictedOutcome === actualOutcome,
     probabilityOutcomeHit: probabilityOutcome === actualOutcome,
     exactHit: predHomeGoals === actualHomeGoals && predAwayGoals === actualAwayGoals,
@@ -6058,7 +6373,8 @@ function rebuildReviewsAndLearning(store) {
     );
 
     for (const match of matches) {
-      const review = buildPostMatchReview(match, predictions[match.id]);
+      const reviewPrediction = selectPredictionForReview(store, match, predictions[match.id]);
+      const review = buildPostMatchReview(match, reviewPrediction);
       if (review) reviews[match.id] = review;
     }
   }
@@ -8954,6 +9270,7 @@ function compactStore(store, referenceDateKey, now) {
     .sort((a, b) => Number(b[1]?.createdAt || 0) - Number(a[1]?.createdAt || 0))
     .slice(0, MAX_REVIEWS);
   store.postMatchReviews = Object.fromEntries(reviewEntries);
+  compactPredictionSnapshots(store);
 
   pruneUpdatedMap(store, "teamStats", "teamStatsUpdated", FORM_TTL, now, 600);
   pruneUpdatedMap(store, "teamInjuries", "teamInjuriesUpdated", INJURY_TTL, now, 600);
@@ -9016,6 +9333,8 @@ function defaultStore() {
     understatSnapshotsUpdated: {},
     fbrefSnapshots: {},
     fbrefSnapshotsUpdated: {},
+    predictionSnapshots: {},
+    predictionSnapshotIndex: {},
     postMatchReviews: {},
     teamLearning: {},
     leagueReliability: {},
@@ -9530,6 +9849,8 @@ async function main() {
   if (!store.marketProfiles) store.marketProfiles = {};
   if (!store.marketProfilesUpdated) store.marketProfilesUpdated = {};
   if (!store.postMatchReviews) store.postMatchReviews = {};
+  if (!store.predictionSnapshots) store.predictionSnapshots = {};
+  if (!store.predictionSnapshotIndex) store.predictionSnapshotIndex = {};
   if (!store.teamLearning) store.teamLearning = {};
   if (!store.leagueReliability) store.leagueReliability = {};
   if (!store.phaseReliability) store.phaseReliability = {};
@@ -10187,7 +10508,7 @@ async function main() {
       };
 
       dayMatches.push(match);
-      dayPredictions.push({
+      const predictionRecord = {
         matchId,
         date,
         dataSource: String(event.source || "sofascore"),
@@ -10218,7 +10539,15 @@ async function main() {
         ensembleMeta: prediction.ensembleMeta,
         monteCarlo: prediction.monteCarlo,
         ...prediction,
-      });
+      };
+      const snapshotMeta = registerPredictionSnapshot(store, match, predictionRecord, now);
+      if (snapshotMeta) {
+        Object.assign(predictionRecord, snapshotMeta);
+        match.predictionId = snapshotMeta.predictionId;
+        match.predictionGeneratedAt = snapshotMeta.generatedAt;
+        match.predictionCutoffAt = snapshotMeta.cutoffAt;
+      }
+      dayPredictions.push(predictionRecord);
 
       if (leagueInfo.type === "cup" || aggregate?.active || context.summary?.includes("play-off")) {
         const knockoutItem = {
