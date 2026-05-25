@@ -1,0 +1,71 @@
+{
+  "registeredAi": {
+    "name": "FootyAI Professional Prediction Audit",
+    "role": "Wekelijkse senior engineering, data engineering en voetbaldata-analyse review",
+    "cadence": "weekly",
+    "owner": "Nick",
+    "status": "active"
+  },
+  "generatedAt": "2026-05-25T18:23:47.429Z",
+  "baseUrl": "https://voorspellingenprive.vercel.app",
+  "summary": "Professionele audit actief. Grootste aandachtspunt: prediction_id, generated_at / cutoff_at, Brier/log loss/ROI/CLV.",
+  "live": {
+    "matchesTotal": 1,
+    "predictionsTotal": 1,
+    "reviewCount": 660,
+    "workerVersion": "v20-competition-squad-archive",
+    "sourceBranch": "codex/step3b-layout",
+    "sourceCoverage": {
+      "averageDataCompleteness": 0.65,
+      "bookmakerCoverage": 1,
+      "h2hCoverage": 1,
+      "understatCoverage": 1,
+      "fbrefCoverage": 1,
+      "refereeCoverage": 0
+    },
+    "featureDiagnostics": {
+      "reviews": 660,
+      "exactHitRate": 0.121,
+      "outcomeHitRate": 0.415,
+      "probabilityOutcomeHitRate": 0.467,
+      "avgGoalError": 1.88,
+      "topFailureSignals": [
+        { "signal": "open_lineups", "count": 295 },
+        { "signal": "low_model_agreement", "count": 252 },
+        { "signal": "h2h_signal", "count": 220 },
+        { "signal": "clubelo_misread", "count": 82 },
+        { "signal": "rest_gap", "count": 37 },
+        { "signal": "market_misread", "count": 20 }
+      ],
+      "summary": "Reviewdiagnose: exact 12%, uitkomst 42%, topkans 47%."
+    },
+    "fetchErrors": {
+      "matches": null,
+      "predict": null,
+      "history": null
+    }
+  },
+  "predictions": {
+    "total": 1,
+    "featureCoverage": 1,
+    "oddsCoverage": 0,
+    "reviewCoverage": 0,
+    "averageCompleteness": 0.653
+  },
+  "storageAudit": [
+    { "field": "prediction_id", "present": false, "importance": "kritiek", "advice": "Voeg een stabiele prediction_id toe per voorspelling." },
+    { "field": "generated_at / cutoff_at", "present": false, "importance": "kritiek", "advice": "Sla tijdstip en cutoff expliciet op zodat latere uitslagen geen input kunnen worden." },
+    { "field": "featureVector", "present": true, "importance": "hoog", "advice": "Maak de featureVector immutable per prediction_id." },
+    { "field": "model_version", "present": true, "importance": "hoog", "advice": "Gebruik naast ensembleMeta ook workerVersion en feature_schema_version." },
+    { "field": "odds_at_prediction", "present": true, "importance": "hoog", "advice": "Sla bookmaker, markt, odds en timestamp op." },
+    { "field": "Brier/log loss/ROI/CLV", "present": false, "importance": "kritiek", "advice": "Voeg evaluatiemetrics toe aan postMatchReviews en /api/history." }
+  ],
+  "recommendations": [
+    { "key": "immutable_prediction_snapshots", "title": "Maak pre-match voorspellingen immutable", "impact": "zeer hoog", "difficulty": "middel", "files": ["scripts/server-worker.js", "data/predictions"], "advice": "Sla prediction_id, generated_at, cutoff_at, model_version, feature_schema_version, input_snapshot_hash en result_status op. Overschrijf deze records nooit bij latere worker-runs." },
+    { "key": "leakage_cutoff", "title": "Dwing data-cutoff voor kickoff af", "impact": "zeer hoog", "difficulty": "middel", "files": ["scripts/server-worker.js"], "advice": "Filter vorm, H2H, standings, odds, blessures en lineups op informatie die beschikbaar was voor generated_at/cutoff_at." },
+    { "key": "evaluation_metrics", "title": "Voeg Brier score, log loss, CLV en ROI toe", "impact": "zeer hoog", "difficulty": "laag-middel", "files": ["scripts/server-worker.js", "api/history.ts", "components/PredictionHistory.tsx"], "advice": "Bereken per review Brier score en log loss op 1X2. Voeg ROI en closing line value toe zodra odds_at_prediction en closing_odds gevuld zijn." },
+    { "key": "storage_backend", "title": "Bereid database-opslag voor", "impact": "hoog", "difficulty": "middel", "files": ["api/_dataSource.ts", "scripts/server-worker.js"], "advice": "Gebruik JSON/GitHub als exportlaag, maar ontwerp een schema voor matches, predictions, features, results en evaluations." },
+    { "key": "modular_worker", "title": "Splits de worker in domeinmodules", "impact": "hoog", "difficulty": "middel", "files": ["scripts/server-worker.js"], "advice": "Splits data sources, normalisatie, feature builder, model, evaluation en storage." }
+  ],
+  "nextAction": "Start met immutable prediction snapshots en Brier/log loss. Pas daarna zwaarder trainen of modelgewichten aanpassen."
+}
