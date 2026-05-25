@@ -1,40 +1,53 @@
-name: leren
+name: FootyAI learning
 
 on:
   workflow_dispatch:
 
+concurrency:
+  group: football-learning
+  cancel-in-progress: false
+
 permissions:
   contents: write
+
+env:
+  TZ: Europe/Amsterdam
+  FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: "true"
 
 jobs:
   learn:
     runs-on: ubuntu-latest
-    
+    timeout-minutes: 20
+
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
         with:
           fetch-depth: 0
-      
+          token: ${{ secrets.GITHUB_TOKEN }}
+
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: '24'
-          cache: 'npm'
-      
+          node-version: 24
+          cache: npm
+
       - name: Install dependencies
         run: npm ci
-      
-      - name: Run learning script
-        run: node scripts/server-worker.js
-      
-      - name: Commit and push if changed
+
+      - name: Refresh match data and reviews
+        run: npm run worker:once
+
+      - name: Prepare training export
+        run: npm run train:prepare
+
+      - name: Commit and push learning data
         run: |
           BRANCH_NAME="${{ github.ref_name }}"
           git config user.name github-actions
           git config user.email github-actions@github.com
-          git add server_data.json
-          git diff --quiet && git diff --staged --quiet && echo "geen wijzigingen" && exit 0
+          git add server_data.json data training
+          git diff --staged --quiet && echo "geen wijzigingen" && exit 0
           git commit -m "update learning data [skip vercel]"
           git pull --rebase origin "$BRANCH_NAME" || true
           git push origin "$BRANCH_NAME"
