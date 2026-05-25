@@ -1,14 +1,14 @@
 {
-  "generatedAt": "2026-05-24T23:15:49.139Z",
-  "date": "2026-05-25",
+  "generatedAt": "2026-05-25T23:32:53.742Z",
+  "date": "2026-05-26",
   "name": "Ruflo-style gratis AI monitor",
   "mode": "naast-productie",
   "productionSafe": true,
   "summary": "Ruflo draait als extra agentlaag naast de app: hij leest monitor/data/reviews, zoekt gratis oplossingen en maakt patchadvies zonder blind live te wijzigen.",
   "agents": {
     "data": {
-      "score": 71,
-      "summary": "Datalaag: H2H 86%, bookmakers 100%, refs 0%.",
+      "score": 80,
+      "summary": "Datalaag: H2H 100%, bookmakers 100%, refs 0%.",
       "freeSources": [
         {
           "name": "SofaScore public endpoint",
@@ -75,25 +75,18 @@
     },
     "learning": {
       "score": 12,
-      "summary": "Leerlaag: 613 reviews, exact 12%, winnaar/gelijk 40%, top-5 exact 16%.",
+      "summary": "Leerlaag: 660 reviews, exact 12%, winnaar/gelijk 42%, top-5 exact 15%.",
       "topConfidence": {
-        "matches": 106,
-        "exactHitRate": 0.16,
-        "outcomeHitRate": 0.425,
-        "probabilityOutcomeHitRate": 0.547,
-        "avgGoalError": 1.65,
-        "rank1ExactHitRate": 0.111,
-        "rank1OutcomeHitRate": 0.37,
-        "versusOverallOutcomeDelta": 0.03
+        "matches": 111,
+        "exactHitRate": 0.153,
+        "outcomeHitRate": 0.423,
+        "probabilityOutcomeHitRate": 0.541,
+        "avgGoalError": 1.64,
+        "rank1ExactHitRate": 0.107,
+        "rank1OutcomeHitRate": 0.357,
+        "versusOverallOutcomeDelta": 0.008
       },
       "topClubs": [
-        {
-          "teamName": "KAA Gent",
-          "reviewedMatches": 3,
-          "exactHitRate": 1,
-          "outcomeHitRate": 1,
-          "avgGoalError": 0
-        },
         {
           "teamName": "Angers",
           "reviewedMatches": 2,
@@ -116,11 +109,32 @@
           "avgGoalError": 0
         },
         {
+          "teamName": "Verona",
+          "reviewedMatches": 2,
+          "exactHitRate": 1,
+          "outcomeHitRate": 1,
+          "avgGoalError": 0
+        },
+        {
           "teamName": "Nottingham Forest",
           "reviewedMatches": 2,
           "exactHitRate": 1,
           "outcomeHitRate": 1,
           "avgGoalError": 0
+        },
+        {
+          "teamName": "Castellon",
+          "reviewedMatches": 2,
+          "exactHitRate": 1,
+          "outcomeHitRate": 1,
+          "avgGoalError": 0
+        },
+        {
+          "teamName": "KAA Gent",
+          "reviewedMatches": 4,
+          "exactHitRate": 0.75,
+          "outcomeHitRate": 1,
+          "avgGoalError": 0.5
         },
         {
           "teamName": "RKC Waalwijk",
@@ -130,13 +144,6 @@
           "avgGoalError": 0.25
         },
         {
-          "teamName": "Manchester City",
-          "reviewedMatches": 3,
-          "exactHitRate": 0.67,
-          "outcomeHitRate": 0.67,
-          "avgGoalError": 0.67
-        },
-        {
           "teamName": "Fiorentina",
           "reviewedMatches": 3,
           "exactHitRate": 0.67,
@@ -144,18 +151,11 @@
           "avgGoalError": 1.67
         },
         {
-          "teamName": "Mallorca",
-          "reviewedMatches": 4,
-          "exactHitRate": 0.5,
-          "outcomeHitRate": 0.75,
-          "avgGoalError": 0.75
-        },
-        {
-          "teamName": "Real Oviedo",
-          "reviewedMatches": 4,
-          "exactHitRate": 0.5,
-          "outcomeHitRate": 0.75,
-          "avgGoalError": 0.5
+          "teamName": "Nottingham Forest",
+          "reviewedMatches": 3,
+          "exactHitRate": 0.67,
+          "outcomeHitRate": 0.67,
+          "avgGoalError": 1
         }
       ],
       "actions": [
@@ -173,13 +173,13 @@
     },
     "control": {
       "score": 36,
-      "summary": "Ontwikkelcontrole: 2 actieve monitorissues op 2026-05-25; digest 2026-05-05 t/m 2026-05-18.",
-      "latestDay": "2026-05-25",
+      "summary": "Ontwikkelcontrole: 2 actieve monitorissues op 2026-05-26; digest 2026-05-12 t/m 2026-05-25.",
+      "latestDay": "2026-05-26",
       "shouldPropose": true,
       "actions": [
         {
           "priority": "high",
-          "title": "server_data.json is 921 minuten oud.",
+          "title": "server_data.json is 889 minuten oud.",
           "freeSolution": "Laat GitHub Actions schedule + manual dispatch draaien; geen mail nodig, alleen data committen.",
           "files": [
             ".github/workflows/worker.yml"
@@ -217,7 +217,7 @@
       ]
     },
     {
-      "title": "server_data.json is 921 minuten oud.",
+      "title": "server_data.json is 889 minuten oud.",
       "count": 1,
       "priority": "high",
       "agents": [
@@ -258,7 +258,7 @@
     },
     {
       "priority": "high",
-      "title": "server_data.json is 921 minuten oud.",
+      "title": "server_data.json is 889 minuten oud.",
       "freeSolution": "Laat GitHub Actions schedule + manual dispatch draaien; geen mail nodig, alleen data committen.",
       "files": [
         ".github/workflows/worker.yml"
