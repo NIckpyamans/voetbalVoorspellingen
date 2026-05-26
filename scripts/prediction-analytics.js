@@ -12,6 +12,10 @@ function numeric(value) {
   return Number.isFinite(number) ? number : null;
 }
 
+function clamp(value, min, max) {
+  return Math.max(min, Math.min(max, value));
+}
+
 function average(values, digits = 3) {
   const valid = values.map(numeric).filter((value) => value != null);
   if (!valid.length) return null;
@@ -51,6 +55,136 @@ function hasUsableOdds(item) {
 function confidenceBucketFor(value) {
   const confidence = Math.max(0, Math.min(1, Number(value || 0)));
   return CONFIDENCE_BUCKETS.find((bucket) => confidence >= bucket.min && confidence < bucket.max) || CONFIDENCE_BUCKETS[0];
+}
+
+export function calibrateOutcomeProbabilities(probabilities, modelPerformance, options = {}) {
+  const raw = {
+    homeProb: Number(probabilities?.homeProb || 0),
+    drawProb: Number(probabilities?.drawProb || 0),
+    awayProb: Number(probabilities?.awayProb || 0),
+  };
+  const total = raw.homeProb + raw.drawProb + raw.awayProb;
+  if (!Number.isFinite(total) || total <= 0) {
+    return {
+      probabilities: { homeProb: 0.3333, drawProb: 0.3333, awayProb: 0.3334 },
+      applied: false,
+      method: "fallback_normalization",
+      reason: "Geen geldige 1X2-kansen om te kalibreren.",
+    };
+  }
+
+  const normalized = {
+    homeProb: raw.homeProb / total,
+    drawProb: raw.drawProb / total,
+    awayProb: raw.awayProb / total,
+  };
+  const reviewMatches = Number(modelPerformance?.overall?.matches || 0);
+  const averageAbsoluteError = numeric(modelPerformance?.calibrationSummary?.averageAbsoluteError);
+  if (reviewMatches < Number(options.minReviews || 40) || averageAbsoluteError == null) {
+    return {
+      probabilities: {
+        homeProb: Number(normalized.homeProb.toFixed(4)),
+        drawProb: Number(normalized.drawProb.toFixed(4)),
+        awayProb: Number(normalized.awayProb.toFixed(4)),
+      },
+      applied: false,
+      method: "insufficient_review_calibration",
+      reviewMatches,
+      averageAbsoluteError,
+      reason: "Nog onvoldoende reviewdata voor probability shrinkage.",
+    };
+  }
+
+  const topProbability = Math.max(normalized.homeProb, normalized.drawProb, normalized.awayProb);
+  const highBucket = (modelPerformance?.calibrationBuckets || []).find((bucket) => bucket.key === "75-100");
+  const highBucketError = highBucket?.matches >= 10 ? Number(highBucket.calibrationError || 0) : 0;
+  const globalShrink = clamp((averageAbsoluteError - 0.08) * 0.45, 0, Number(options.maxShrinkage || 0.09));
+  const highConfidenceShrink = topProbability >= 0.62 && highBucketError < -0.08
+    ? clamp(Math.abs(highBucketError) * 0.12, 0, 0.035)
+    : 0;
+  const shrinkage = clamp(globalShrink + highConfidenceShrink, 0, Number(options.maxShrinkage || 0.1));
+  if (shrinkage <= 0.001) {
+    return {
+      probabilities: {
+        homeProb: Number(normalized.homeProb.toFixed(4)),
+        drawProb: Number(normalized.drawProb.toFixed(4)),
+        awayProb: Number(normalized.awayProb.toFixed(4)),
+      },
+      applied: false,
+      method: "calibration_within_tolerance",
+      reviewMatches,
+      averageAbsoluteError,
+      shrinkage: 0,
+      reason: "Historische kalibratiefout blijft binnen de ingestelde marge.",
+    };
+  }
+
+  const calibrated = {
+    homeProb: normalized.homeProb * (1 - shrinkage) + (1 / 3) * shrinkage,
+    drawProb: normalized.drawProb * (1 - shrinkage) + (1 / 3) * shrinkage,
+    awayProb: normalized.awayProb * (1 - shrinkage) + (1 / 3) * shrinkage,
+  };
+  const calibratedTotal = calibrated.homeProb + calibrated.drawProb + calibrated.awayProb;
+  return {
+    probabilities: {
+      homeProb: Number((calibrated.homeProb / calibratedTotal).toFixed(4)),
+      drawProb: Number((calibrated.drawProb / calibratedTotal).toFixed(4)),
+      awayProb: Number((calibrated.awayProb / calibratedTotal).toFixed(4)),
+    },
+    applied: true,
+    method: "review_based_probability_shrinkage",
+    reviewMatches,
+    averageAbsoluteError,
+    shrinkage: Number(shrinkage.toFixed(4)),
+    reason: "Backtest-kalibratie toont overconfidence; 1X2-kansen conservatief richting marktneutraal getrokken.",
+  };
+}
+
+export function calibrateConfidenceWithBacktest(confidence, modelPerformance, options = {}) {
+  const rawConfidence = clamp(Number(confidence || 0), 0, 1);
+  const reviewMatches = Number(modelPerformance?.overall?.matches || 0);
+  const bucket = confidenceBucketFor(rawConfidence);
+  const bucketStats = (modelPerformance?.calibrationBuckets || []).find((item) => item.key === bucket.key) || null;
+  const minBucketMatches = Number(options.minBucketMatches || 15);
+  const confidenceCap = Number.isFinite(Number(options.confidenceCap)) ? Number(options.confidenceCap) : 0.93;
+  const floor = Number.isFinite(Number(options.floor)) ? Number(options.floor) : 0.24;
+
+  if (reviewMatches < Number(options.minReviews || 40) || !bucketStats || Number(bucketStats.matches || 0) < minBucketMatches) {
+    return {
+      rawConfidence: Number(rawConfidence.toFixed(3)),
+      calibratedConfidence: Number(clamp(rawConfidence, floor, confidenceCap).toFixed(3)),
+      applied: false,
+      method: "insufficient_bucket_reviews",
+      bucket: bucket.key,
+      bucketMatches: Number(bucketStats?.matches || 0),
+      reviewMatches,
+      reason: "Niet genoeg historische reviews in deze confidencebucket.",
+    };
+  }
+
+  const calibrationError = Number(bucketStats.calibrationError || 0);
+  const sampleWeight = clamp(Number(bucketStats.matches || 0) / 80, 0.35, 1);
+  const correction = clamp(calibrationError * (0.45 + sampleWeight * 0.25), -0.12, 0.07);
+  const calibratedConfidence = clamp(rawConfidence + correction, floor, confidenceCap);
+  return {
+    rawConfidence: Number(rawConfidence.toFixed(3)),
+    calibratedConfidence: Number(calibratedConfidence.toFixed(3)),
+    applied: Math.abs(correction) >= 0.005,
+    method: "confidence_bucket_backtest_calibration",
+    bucket: bucket.key,
+    bucketMatches: Number(bucketStats.matches || 0),
+    avgBucketConfidence: bucketStats.avgConfidence,
+    observedOutcomeRate: bucketStats.observedOutcomeRate,
+    calibrationError,
+    correction: Number(correction.toFixed(3)),
+    reviewMatches,
+    reason:
+      correction < -0.005
+        ? "Historische bucket is overconfident; confidence verlaagd."
+        : correction > 0.005
+          ? "Historische bucket presteert beter dan confidence; confidence licht verhoogd."
+          : "Historische bucket ligt dicht genoeg bij de getoonde confidence.",
+  };
 }
 
 export function summarizeReviewGroup(key, reviews) {
@@ -297,6 +431,12 @@ export function buildDataCompletenessAudit(store, todayKey) {
     h2h: ({ match, prediction }) => Number(prediction?.h2h?.played || match?.h2h?.played || 0) > 0,
     form: ({ prediction }) => Number(prediction?.homeTeamProfile?.matches || prediction?.homeRecent?.gamesPlayed || 0) > 0,
     standings: ({ match, prediction }) => Number(prediction?.homePos || match?.homePos || 0) > 0 && Number(prediction?.awayPos || match?.awayPos || 0) > 0,
+    teamIdentity: ({ match, prediction }) =>
+      !!(
+        (prediction?.teamIdentity?.home?.key || match?.teamIdentity?.home?.key || prediction?.homeTeam || match?.homeTeamName) &&
+        (prediction?.teamIdentity?.away?.key || match?.teamIdentity?.away?.key || prediction?.awayTeam || match?.awayTeamName)
+      ),
+    providerTeamIds: ({ match }) => !!(match?.homeTeamId && match?.awayTeamId),
     xgShots: ({ match, prediction }) =>
       !!prediction?.homeTeamProfile?.xG ||
       !!match?.homeSeasonStats?.xG ||
@@ -305,7 +445,9 @@ export function buildDataCompletenessAudit(store, todayKey) {
     marketProfile: ({ match, prediction }) => !!(prediction?.marketCalibration || match?.marketCalibration),
     liveOdds: ({ prediction }) => hasUsableOdds(prediction),
     lineups: ({ match, prediction }) => !!(prediction?.lineupSummary?.confirmed || match?.lineupSummary?.confirmed),
+    lineupStatusKnown: ({ match, prediction }) => !!(prediction?.lineupStatus || match?.lineupStatus),
     referee: ({ match, prediction }) => Number(prediction?.refereeProfile?.matches || match?.refereeProfile?.matches || 0) > 0,
+    refereeStatusKnown: ({ match, prediction }) => !!(prediction?.refereeStatus || match?.refereeStatus),
     sourceMetadata: ({ prediction }) => !!prediction?.featureSourceMetadata,
   };
   const coverage = Object.fromEntries(
@@ -362,6 +504,7 @@ export function buildOddsIntegrationReadiness(store, todayKey) {
   const reviews = Object.values(store.postMatchReviews || {});
   const configuredProviders = [
     process.env.ODDS_API_KEY || process.env.THE_ODDS_API_KEY ? "the-odds-api" : null,
+    process.env.ODDS_API_URL_TEMPLATE ? "custom-url-template" : null,
     process.env.FOOTBALL_DATA_TOKEN || process.env.FOOTBALL_DATA_API_KEY ? "football-data.org" : null,
   ].filter(Boolean);
   const requiredFields = [
@@ -382,7 +525,7 @@ export function buildOddsIntegrationReadiness(store, todayKey) {
     date: todayKey,
     providerConfigured: configuredProviders.length > 0,
     configuredProviders,
-    environmentVariables: ["ODDS_API_KEY", "THE_ODDS_API_KEY", "FOOTBALL_DATA_TOKEN"],
+    environmentVariables: ["ODDS_PROVIDER_NAME", "ODDS_API_URL_TEMPLATE", "ODDS_API_KEY", "THE_ODDS_API_KEY", "FOOTBALL_DATA_TOKEN"],
     requiredFields,
     currentCoverage: {
       predictions: hitRate(todayPredictions.filter(hasUsableOdds).length, todayPredictions.length),

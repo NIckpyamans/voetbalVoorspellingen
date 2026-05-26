@@ -5,7 +5,8 @@ Doel: ROI en CLV alleen berekenen op echte bookmaker odds die voor de wedstrijd 
 ## Status
 
 - Historische football-data.co.uk marktprofielen zijn gekoppeld voor calibratie.
-- Echte `odds_at_prediction` staan nog niet in de dataset.
+- De worker heeft nu een provider-adapter voor echte `odds_at_prediction`.
+- Zonder geconfigureerde provider registreert de worker bewust `not_configured`; er wordt geen nep-odds gevuld.
 - `roiStatus` en `clvStatus` voorkomen dat ontbrekende odds als meetbare performance worden gezien.
 
 ## Vereiste velden
@@ -31,12 +32,25 @@ Elke odds snapshot moet minimaal deze velden hebben:
 5. Bereken CLV alleen wanneer pre-match odds en closing odds allebei beschikbaar zijn.
 6. Gebruik nooit odds die na `cutoffAt` zijn opgehaald als modelinput.
 
+De adapter accepteert alleen odds waarvan `capturedAt` voor `cutoffAt` en kickoff ligt. Odds na kickoff worden afgewezen met `rejected_after_cutoff`.
+
 ## Environment
 
 Ondersteunde voorbereidende env vars:
 
+- `ODDS_PROVIDER_NAME`
+- `ODDS_API_URL_TEMPLATE`
 - `ODDS_API_KEY`
 - `THE_ODDS_API_KEY`
 - `FOOTBALL_DATA_TOKEN`
 
-Zonder provider blijft `oddsStatus` bewust `historical_market_profile_only` of `missing`.
+`ODDS_API_URL_TEMPLATE` mag placeholders bevatten:
+
+- `{apiKey}`
+- `{homeTeam}`
+- `{awayTeam}`
+- `{league}`
+- `{kickoff}`
+- `{matchId}`
+
+Zonder provider blijft `oddsStatus` bewust `historical_market_profile_only` of `missing`, en `oddsProviderStatus` wordt `not_configured`.

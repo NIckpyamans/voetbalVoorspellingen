@@ -9,7 +9,10 @@ import {
   buildDataCompletenessAudit,
   buildModelPerformanceFromReviews,
   buildOddsIntegrationReadiness,
+  calibrateConfidenceWithBacktest,
+  calibrateOutcomeProbabilities,
 } from "./prediction-analytics.js";
+import { fetchOddsAtPrediction } from "./odds-provider.js";
 
 const SOFA = "https://api.sofascore.com/api/v1";
 const sofaFetchCircuit = { blocked: false, failures: 0, logged: false };
@@ -247,6 +250,15 @@ function isoFromMs(value) {
   return Number.isFinite(ms) && ms > 0 ? new Date(ms).toISOString() : null;
 }
 
+function isoFromTimestamp(value) {
+  if (value == null || value === "") return null;
+  if (typeof value === "string") {
+    const parsed = Date.parse(value);
+    return Number.isFinite(parsed) ? new Date(parsed).toISOString() : null;
+  }
+  return isoFromMs(value);
+}
+
 function getPredictionProbabilities(prediction) {
   return {
     home: Number(prediction?.homeProb || 0),
@@ -297,6 +309,42 @@ function resolveOddsAtPrediction(prediction) {
   return normalizeOddsAtPrediction(prediction).oddsAtPrediction;
 }
 
+function buildTeamIdentity(homeId, awayId, homeName, awayName, source = "unknown") {
+  const homeKey = homeId ? `id:${homeId}` : `name:${normalizeName(homeName)}`;
+  const awayKey = awayId ? `id:${awayId}` : `name:${normalizeName(awayName)}`;
+  const status = homeId && awayId ? "provider_ids" : homeKey && awayKey ? "name_fallback" : "incomplete";
+  return {
+    status,
+    source,
+    home: {
+      id: homeId || null,
+      name: homeName || null,
+      normalizedName: normalizeName(homeName),
+      key: homeKey || null,
+      identityType: homeId ? "provider_id" : "name_fallback",
+    },
+    away: {
+      id: awayId || null,
+      name: awayName || null,
+      normalizedName: normalizeName(awayName),
+      key: awayKey || null,
+      identityType: awayId ? "provider_id" : "name_fallback",
+    },
+  };
+}
+
+function resolveLineupStatus(lineupSummary) {
+  if (lineupSummary?.confirmed) return "confirmed";
+  if (lineupSummary?.home || lineupSummary?.away) return "partial";
+  return "missing";
+}
+
+function resolveRefereeStatus(refereeProfile) {
+  if (Number(refereeProfile?.matches || 0) > 0) return "historical_profile";
+  if (refereeProfile?.name) return "named_estimate";
+  return "missing";
+}
+
 function buildFeatureSourceMetadata(match, prediction, generatedAt, oddsDiagnostics = null) {
   const source = prediction?.dataSource || match?.dataSource || "unknown";
   const homeSources = match?.homeSeasonStats?.externalSources || prediction?.homeTeamProfile?.externalSources || [];
@@ -304,6 +352,8 @@ function buildFeatureSourceMetadata(match, prediction, generatedAt, oddsDiagnost
   const sourceList = [...new Set([...homeSources, ...awaySources])];
   const marketCalibration = prediction?.marketCalibration || prediction?.modelEdges?.marketCalibration || match?.marketCalibration || null;
   const oddsStatus = oddsDiagnostics?.oddsStatus || prediction?.oddsStatus || null;
+  const sourceAsOf = prediction?.sourceAsOf || match?.sourceAsOf || {};
+  const teamIdentity = prediction?.teamIdentity || match?.teamIdentity || null;
   const field = (available, fieldSource, asOf = null, sourceTimestampKnown = false, note = null) => ({
     available: !!available,
     source: fieldSource || source,
@@ -312,28 +362,43 @@ function buildFeatureSourceMetadata(match, prediction, generatedAt, oddsDiagnost
     note,
   });
   const fields = {
-    fixture: field(true, source, generatedAt, true, "Worker-run timestamp; fixturebron zelf geeft niet altijd published_at mee."),
+    fixture: field(true, source, sourceAsOf.fixture || generatedAt, true, "Worker-run as_of voor fixturedata."),
+    teamIdentity: field(
+      !!(teamIdentity?.home?.key && teamIdentity?.away?.key),
+      teamIdentity?.source || source,
+      sourceAsOf.fixture || generatedAt,
+      true,
+      teamIdentity?.status === "provider_ids"
+        ? "Provider team-id aanwezig voor beide teams."
+        : "Provider team-id ontbreekt deels; stabiele naam-key opgeslagen als fallback."
+    ),
     h2h: field(
       Number(prediction?.h2h?.played || match?.h2h?.played || 0) > 0,
       prediction?.h2h?.source || match?.h2h?.source || "historical results",
-      generatedAt,
-      false,
-      "Historische resultaten zijn pre-match gefilterd, maar losse bron-publicatietijden ontbreken nog."
+      sourceAsOf.h2h || generatedAt,
+      !!sourceAsOf.h2h,
+      sourceAsOf.h2h
+        ? "H2H-cache heeft expliciete as_of timestamp."
+        : "Historische resultaten zijn pre-match gefilterd, maar losse bron-publicatietijden ontbreken nog."
     ),
     form: field(
       Number(prediction?.homeTeamProfile?.matches || prediction?.homeRecent?.gamesPlayed || 0) > 0 ||
         Number(prediction?.awayTeamProfile?.matches || prediction?.awayRecent?.gamesPlayed || 0) > 0,
       "derived recent matches",
-      generatedAt,
-      false,
-      "Vorm is afgeleid uit opgeslagen wedstrijden; per bronrecord ontbreekt nog as_of."
+      sourceAsOf.homeForm && sourceAsOf.awayForm ? [sourceAsOf.homeForm, sourceAsOf.awayForm].sort().slice(-1)[0] : generatedAt,
+      !!(sourceAsOf.homeForm && sourceAsOf.awayForm),
+      sourceAsOf.homeForm && sourceAsOf.awayForm
+        ? "Teamvorm gebruikt cache-as_of per team."
+        : "Vorm is afgeleid uit opgeslagen wedstrijden; per bronrecord ontbreekt nog as_of."
     ),
     standings: field(
       Number(prediction?.homePos || match?.homePos || 0) > 0 && Number(prediction?.awayPos || match?.awayPos || 0) > 0,
       "standings snapshot",
-      generatedAt,
-      false,
-      "Standings worden als worker-snapshot opgeslagen, nog niet per competitie met source timestamp."
+      sourceAsOf.standings || generatedAt,
+      !!sourceAsOf.standings,
+      sourceAsOf.standings
+        ? "Standings-cache as_of vastgelegd."
+        : "Standings worden als worker-snapshot opgeslagen, nog niet per competitie met source timestamp."
     ),
     xgShots: field(
       sourceList.includes("Understat") ||
@@ -341,15 +406,17 @@ function buildFeatureSourceMetadata(match, prediction, generatedAt, oddsDiagnost
         prediction?.homeTeamProfile?.xG != null ||
         match?.homeSeasonStats?.xG != null,
       sourceList.filter((item) => item === "Understat" || item === "FBref").join(" + ") || "derived season stats",
-      generatedAt,
-      false,
-      "xG/shot snapshots hebben bronnaam, maar nog geen veldniveau published_at."
+      sourceAsOf.understat || sourceAsOf.fbref || sourceAsOf.homeSeasonStats || sourceAsOf.awaySeasonStats || generatedAt,
+      !!(sourceAsOf.understat || sourceAsOf.fbref || sourceAsOf.homeSeasonStats || sourceAsOf.awaySeasonStats),
+      sourceAsOf.understat || sourceAsOf.fbref
+        ? "xG/shot snapshot-cache as_of vastgelegd."
+        : "xG/shot snapshots hebben bronnaam, maar nog geen veldniveau published_at."
     ),
     marketProfile: field(
       !!marketCalibration,
       marketCalibration?.source || "football-data.co.uk historical market profile",
-      generatedAt,
-      false,
+      sourceAsOf.marketProfile || generatedAt,
+      !!sourceAsOf.marketProfile,
       oddsStatus === "available" ? "Actuele odds apart opgeslagen." : "Historisch marktprofiel; geen echte odds_at_prediction."
     ),
     oddsAtPrediction: field(
@@ -362,23 +429,26 @@ function buildFeatureSourceMetadata(match, prediction, generatedAt, oddsDiagnost
     lineups: field(
       !!(prediction?.lineupSummary?.confirmed || match?.lineupSummary?.confirmed),
       prediction?.lineupSummary?.source || match?.lineupSummary?.source || "lineup source",
-      generatedAt,
-      false,
+      sourceAsOf.lineups || generatedAt,
+      !!sourceAsOf.lineups,
       prediction?.lineupSummary?.confirmed || match?.lineupSummary?.confirmed ? "Bevestigd in worker-run." : "Nog open of niet beschikbaar."
     ),
     referee: field(
-      Number(prediction?.refereeProfile?.matches || match?.refereeProfile?.matches || 0) > 0,
+      Number(prediction?.refereeProfile?.matches || match?.refereeProfile?.matches || 0) > 0 ||
+        !!(prediction?.refereeProfile?.name || match?.refereeProfile?.name),
       prediction?.refereeProfile?.source || match?.refereeProfile?.source || "referee profile",
-      generatedAt,
-      false,
-      "Scheidsrechterprofiel is historisch samengevoegd; source timestamp ontbreekt nog."
+      sourceAsOf.referee || sourceAsOf.marketProfile || generatedAt,
+      !!(sourceAsOf.referee || sourceAsOf.marketProfile),
+      Number(prediction?.refereeProfile?.matches || match?.refereeProfile?.matches || 0) > 0
+        ? "Scheidsrechterprofiel is historisch samengevoegd met as_of van marktprofiel."
+        : "Scheidsrechternaam bekend, historisch profiel ontbreekt nog."
     ),
   };
   const values = Object.values(fields).filter((item) => item.available);
   const timestampKnown = values.filter((item) => item.sourceTimestampKnown);
   return {
     generatedAt,
-    schemaVersion: "feature-source-v1",
+    schemaVersion: "feature-source-v2",
     fields,
     coverage: {
       availableFields: values.length,
@@ -443,7 +513,9 @@ function buildPredictionInputSnapshot(match, prediction, metadata = {}) {
     league: match?.league || prediction?.league || null,
     homeTeam: match?.homeTeamName || prediction?.homeTeam || null,
     awayTeam: match?.awayTeamName || prediction?.awayTeam || null,
+    teamIdentity: match?.teamIdentity || prediction?.teamIdentity || null,
     dataSource: match?.dataSource || prediction?.dataSource || null,
+    sourceAsOf: prediction?.sourceAsOf || match?.sourceAsOf || null,
     homeForm: match?.homeForm || prediction?.homeForm || null,
     awayForm: match?.awayForm || prediction?.awayForm || null,
     homeRestDays: match?.homeRestDays ?? prediction?.homeRestDays ?? null,
@@ -454,6 +526,9 @@ function buildPredictionInputSnapshot(match, prediction, metadata = {}) {
     matchImportance: match?.matchImportance ?? prediction?.matchImportance ?? null,
     dataCompleteness: prediction?.dataCompleteness || match?.dataCompleteness || null,
     qualityGate: prediction?.qualityGate || match?.qualityGate || null,
+    lineupStatus: prediction?.lineupStatus || match?.lineupStatus || null,
+    refereeStatus: prediction?.refereeStatus || match?.refereeStatus || null,
+    oddsProviderStatus: prediction?.oddsProviderStatus || match?.oddsProviderStatus || null,
     marketCalibration: prediction?.marketCalibration || prediction?.modelEdges?.marketCalibration || match?.marketCalibration || null,
     learningSummary: prediction?.learningSummary || prediction?.modelEdges?.learningEdge || match?.learningSummary || null,
     competitionReliability: prediction?.competitionReliability || prediction?.modelEdges?.leagueReliability || match?.competitionReliability || null,
@@ -483,6 +558,8 @@ function registerPredictionSnapshot(store, match, prediction, generatedAtMs) {
       predictionId: prediction.predictionId || null,
       generatedAt,
       cutoffAt: generatedAt,
+      modelVersion: MODEL_VERSION,
+      featureSchemaVersion: FEATURE_SCHEMA_VERSION,
       snapshotStored: false,
       snapshotStatus: "not_pre_match",
     };
@@ -523,11 +600,17 @@ function registerPredictionSnapshot(store, match, prediction, generatedAtMs) {
     awayTeam: match?.awayTeamName || prediction?.awayTeam || null,
     homeTeamId: match?.homeTeamId || null,
     awayTeamId: match?.awayTeamId || null,
+    teamIdentity: match?.teamIdentity || prediction?.teamIdentity || null,
     inputSnapshot,
     inputSnapshotHash,
     features: prediction?.featureVector || null,
     probabilities: getPredictionProbabilities(prediction),
     confidence: Number(prediction?.confidence || 0),
+    confidenceRaw: Number(prediction?.confidenceRaw ?? prediction?.confidence ?? 0),
+    calibration: {
+      confidence: prediction?.modelEdges?.confidenceCalibration || null,
+      probabilities: prediction?.modelEdges?.probabilityCalibration || null,
+    },
     expectedScore: {
       home: Number(prediction?.predHomeGoals || 0),
       away: Number(prediction?.predAwayGoals || 0),
@@ -541,6 +624,8 @@ function registerPredictionSnapshot(store, match, prediction, generatedAtMs) {
     oddsAtPrediction,
     oddsStatus: oddsDiagnostics.oddsStatus,
     oddsMissingReason: oddsDiagnostics.oddsMissingReason,
+    oddsProviderStatus: prediction?.oddsProviderStatus || match?.oddsProviderStatus || oddsDiagnostics.oddsStatus,
+    oddsProviderDiagnostics: prediction?.oddsProviderDiagnostics || match?.oddsProviderDiagnostics || null,
     roiStatus: hasRoiOdd ? "pending_result" : "odds_missing",
     clvStatus: "closing_odds_missing",
     featureSourceMetadata,
@@ -801,9 +886,9 @@ const HISTORY_KEEP_DAYS_FORWARD = 14;
 const MAX_REVIEWS = 2500;
 const MAX_PREDICTION_SNAPSHOTS = 5000;
 const MAX_SCORE_MATRIX_ENTRIES = 10;
-const MODEL_VERSION = "v22-backtest-source-audit";
-const FEATURE_SCHEMA_VERSION = "feature-v1";
-const PREDICTION_SNAPSHOT_SCHEMA_VERSION = "prediction-snapshot-v3";
+const MODEL_VERSION = "v23-calibrated-odds-ledger";
+const FEATURE_SCHEMA_VERSION = "feature-v2";
+const PREDICTION_SNAPSHOT_SCHEMA_VERSION = "prediction-snapshot-v4";
 const MAX_EVENT_CACHE = 300;
 const MONTE_CARLO_RUNS = 10000;
 const MONTE_CARLO_WEIGHT = 0.14;
@@ -6785,6 +6870,13 @@ function scoreDataCompleteness(input, edges = {}) {
   const hasOdds = bookmakerSignals.length > 0 || marketCoverage >= 0.15;
   const hasStanding = Number(input?.homeStandingPos || input?.homePos || 0) > 0 && Number(input?.awayStandingPos || input?.awayPos || 0) > 0;
   const hasTeamIds = !!input?.homeTeamId && !!input?.awayTeamId;
+  const hasStableTeamIdentity =
+    hasTeamIds ||
+    !!(
+      input?.teamIdentity?.home?.key &&
+      input?.teamIdentity?.away?.key
+    ) ||
+    !!(normalizeName(input?.homeTeamName || input?.homeTeam) && normalizeName(input?.awayTeamName || input?.awayTeam));
   const sourceQuality = Math.max(Number(input?.homeSeasonStats?.sourceQuality || 0), Number(input?.awaySeasonStats?.sourceQuality || 0));
   const lineupsKnown = !!input?.lineupSummary?.confirmed;
 
@@ -6792,7 +6884,7 @@ function scoreDataCompleteness(input, edges = {}) {
     add(h2hPlayed >= 3, 0.16, "H2H gevuld", "H2H ontbreekt", h2hPlayed >= 1 ? 0.45 : 0) +
     add(homeFormGames >= 5 && awayFormGames >= 5, 0.16, "vormdata gevuld", "vormdata dun", homeFormGames >= 3 && awayFormGames >= 3 ? 0.65 : 0) +
     add(hasStanding, 0.12, "stand/positie gevuld", "stand/positie ontbreekt") +
-    add(hasTeamIds, 0.1, "team-id match aanwezig", "team-id match ontbreekt") +
+    add(hasTeamIds, 0.1, "team-id match aanwezig", "team-id match ontbreekt", hasStableTeamIdentity ? 0.55 : 0) +
     add(hasXg || sourceQuality >= 0.45, 0.18, "xG/shot-bronnen aanwezig", "xG/shot-bronnen dun", sourceQuality >= 0.25 ? 0.55 : 0) +
     add(hasOdds, 0.14, "odds/marktdekking aanwezig", "odds/marktdekking dun", marketCoverage > 0 ? 0.45 : 0) +
     add(lineupsKnown, 0.06, "opstellingsdata bevestigd", "opstellingsdata open", 0.35) +
@@ -9155,7 +9247,9 @@ function predict(input) {
     seed: monteCarloSeed,
     runs: MONTE_CARLO_RUNS,
   });
-  const blended = blendTriple(preSimulationBlend, monteCarlo, MONTE_CARLO_WEIGHT);
+  const rawBlended = blendTriple(preSimulationBlend, monteCarlo, MONTE_CARLO_WEIGHT);
+  const probabilityCalibration = calibrateOutcomeProbabilities(rawBlended, input.modelPerformance);
+  const blended = probabilityCalibration.probabilities;
   let combinedScoreMatrix = blendScoreMatrices(scoreMatrix, monteCarlo.scoreMatrix, MONTE_CARLO_WEIGHT);
   let bestCombinedScore = Object.entries(combinedScoreMatrix)
     .sort((a, b) => Number(b[1] || 0) - Number(a[1] || 0))[0] || [bestScore, bestProb];
@@ -9255,8 +9349,12 @@ function predict(input) {
     0.24,
     qualityGate.confidenceCap
   );
+  const confidenceCalibration = calibrateConfidenceWithBacktest(adjustedConfidence, input.modelPerformance, {
+    confidenceCap: qualityGate.confidenceCap,
+  });
+  const finalConfidence = Number(confidenceCalibration.calibratedConfidence ?? adjustedConfidence);
   const riskProfile = buildRiskProfile({
-    confidence: adjustedConfidence,
+    confidence: finalConfidence,
     agreement: modelAgreement,
     weatherRisk: input.weather?.riskLevel || "low",
     lineupConfirmed: !!input.lineupSummary?.confirmed,
@@ -9278,7 +9376,8 @@ function predict(input) {
     predHomeGoals,
     predAwayGoals,
     exactProb: Number(selectedExactProb.toFixed(4)),
-    confidence: Number(adjustedConfidence.toFixed(3)),
+    confidence: Number(finalConfidence.toFixed(3)),
+    confidenceRaw: Number(adjustedConfidence.toFixed(3)),
     over15: Number(over15.toFixed(3)),
     over25: Number((over25 * (1 - MONTE_CARLO_WEIGHT) + monteCarlo.over25Prob * MONTE_CARLO_WEIGHT).toFixed(3)),
     over35: Number((over35 * (1 - MONTE_CARLO_WEIGHT) + monteCarlo.over35Prob * MONTE_CARLO_WEIGHT).toFixed(3)),
@@ -9301,6 +9400,8 @@ function predict(input) {
       leagueReliability,
       phaseReliability,
       marketCalibration,
+      probabilityCalibration,
+      confidenceCalibration,
       refereeProfile,
       scoreSelection: {
         rawBestScore: bestScore,
@@ -9471,7 +9572,7 @@ function defaultStore() {
     competitionArchiveIndex: null,
     teamSquadSummary: null,
     lastRun: null,
-    workerVersion: "v19-intelligence-layer",
+    workerVersion: MODEL_VERSION,
   };
 }
 
@@ -9489,6 +9590,13 @@ function buildSourceCoverage(store, todayKey) {
   const refereeCovered = todayMatches.filter(
     (match) => Number(match?.refereeProfile?.matches || 0) > 0
   ).length;
+  const refereeStatusKnown = todayMatches.filter((match) => !!match?.refereeStatus).length;
+  const lineupStatusKnown = todayMatches.filter((match) => !!match?.lineupStatus).length;
+  const providerTeamIdsCovered = todayMatches.filter((match) => !!(match?.homeTeamId && match?.awayTeamId)).length;
+  const stableTeamIdentityCovered = todayMatches.filter((match) =>
+    !!(match?.teamIdentity?.home?.key && match?.teamIdentity?.away?.key)
+  ).length;
+  const actualOddsCovered = todayMatches.filter((match) => !!match?.oddsAtPrediction).length;
   const h2hCovered = todayMatches.filter((match) => Number(match?.h2h?.played || 0) > 0).length;
   const openfootballH2hCovered = todayMatches.filter((match) =>
     (match?.h2h?.results || []).some((item) => String(item?.source || "").includes("openfootball"))
@@ -9539,7 +9647,12 @@ function buildSourceCoverage(store, todayKey) {
     lowCompletenessMatches: todayMatches.filter((match) => Number(match?.dataCompletenessScore ?? 0) < 0.5).length,
     statusBreakdown,
     bookmakerCoverage: Number((bookmakerCovered / total).toFixed(2)),
+    actualOddsCoverage: Number((actualOddsCovered / total).toFixed(2)),
     refereeCoverage: Number((refereeCovered / total).toFixed(2)),
+    refereeStatusCoverage: Number((refereeStatusKnown / total).toFixed(2)),
+    lineupStatusCoverage: Number((lineupStatusKnown / total).toFixed(2)),
+    providerTeamIdCoverage: Number((providerTeamIdsCovered / total).toFixed(2)),
+    stableTeamIdentityCoverage: Number((stableTeamIdentityCovered / total).toFixed(2)),
     h2hCoverage: Number((h2hCovered / total).toFixed(2)),
     openfootballH2hCoverage: Number((openfootballH2hCovered / total).toFixed(2)),
     understatCoverage: Number((understatCovered / total).toFixed(2)),
@@ -10325,7 +10438,8 @@ async function main() {
         await sleep(60);
       }
 
-      const lineupSummary = isFallbackEvent ? null : await fetchLineupSummary(event.id);
+      let lineupSummary = isFallbackEvent ? null : await fetchLineupSummary(event.id);
+      if (lineupSummary) lineupSummary = { ...lineupSummary, source: "sofascore lineups" };
 
       const h2hKey = `${event.id}_${homeId}_${awayId}`;
       let h2h = isFallbackEvent ? null : store.h2hCache?.[h2hKey]?.data || null;
@@ -10523,12 +10637,37 @@ async function main() {
         marketCalibration,
         historicalRefereeProfile
       );
+      const teamIdentity = buildTeamIdentity(homeId, awayId, homeName, awayName, String(event.source || "sofascore"));
+      const lineupStatus = resolveLineupStatus(lineupSummary);
+      const refereeStatus = resolveRefereeStatus(refereeProfile);
+      const sourceAsOf = {
+        fixture: isoFromTimestamp(now),
+        h2h: isoFromTimestamp(store.h2hCache?.[h2hKey]?.updated),
+        weather: weatherKey ? isoFromTimestamp(store.weatherCache?.[weatherKey]?.updated) : null,
+        homeForm: homeId ? isoFromTimestamp(store.teamStatsUpdated?.[homeId]) : null,
+        awayForm: awayId ? isoFromTimestamp(store.teamStatsUpdated?.[awayId]) : null,
+        homeSeasonStats: homeId ? isoFromTimestamp(store.teamSeasonStatsUpdated?.[homeId]) : null,
+        awaySeasonStats: awayId ? isoFromTimestamp(store.teamSeasonStatsUpdated?.[awayId]) : null,
+        homeInjuries: homeId ? isoFromTimestamp(store.teamInjuriesUpdated?.[homeId]) : null,
+        awayInjuries: awayId ? isoFromTimestamp(store.teamInjuriesUpdated?.[awayId]) : null,
+        standings: isoFromTimestamp(standing?.updated || standingMeta?.updated || 0),
+        marketProfile: isoFromTimestamp(store.marketProfilesUpdated?.[leagueInfo.label]),
+        openfootballProfile: isoFromTimestamp(store.openfootballProfilesUpdated?.[leagueInfo.label]),
+        understat: isoFromTimestamp(store.understatSnapshotsUpdated?.[leagueInfo.label]),
+        fbref: isoFromTimestamp(store.fbrefSnapshotsUpdated?.[leagueInfo.label]),
+        lineups: lineupSummary ? isoFromTimestamp(now) : null,
+        referee: refereeProfile?.name ? isoFromTimestamp(store.marketProfilesUpdated?.[leagueInfo.label] || now) : null,
+      };
 
       const prediction = predict({
         homeTeamId: homeId,
         awayTeamId: awayId,
         homeTeamName: homeName,
         awayTeamName: awayName,
+        teamIdentity,
+        sourceAsOf,
+        lineupStatus,
+        refereeStatus,
         homeRecent,
         awayRecent,
         homeSeasonStats,
@@ -10560,9 +10699,25 @@ async function main() {
         phaseReliability,
         marketCalibration,
         refereeProfile,
+        modelPerformance: store.modelPerformance,
       });
 
       const matchId = `ss-${event.id}`;
+      const generatedAtIso = isoFromMs(now) || new Date(now).toISOString();
+      const oddsCapture = await fetchOddsAtPrediction(
+        {
+          matchId,
+          league: leagueInfo.label,
+          homeTeam: homeName,
+          awayTeam: awayName,
+          kickoff,
+        },
+        {
+          generatedAt: generatedAtIso,
+          cutoffAt: generatedAtIso,
+        }
+      );
+      const oddsAtPrediction = oddsCapture?.oddsAtPrediction || null;
       const score =
         event.homeScore?.current != null && event.awayScore?.current != null
           ? `${event.homeScore.current}-${event.awayScore.current}`
@@ -10579,6 +10734,7 @@ async function main() {
         league: leagueInfo.label,
         homeTeamId: homeId,
         awayTeamId: awayId,
+        teamIdentity,
         homeTeamName: homeName,
         awayTeamName: awayName,
         homeLogo: resolveTeamLogoUrl(event.homeTeam, homeId, homeName, event.source),
@@ -10604,15 +10760,21 @@ async function main() {
         awayRestDays,
         weather,
         lineupSummary,
+        lineupStatus,
         homeTeamProfile,
         awayTeamProfile,
         h2h,
         h2hStatus: h2h?.status || "empty",
+        sourceAsOf,
+        oddsAtPrediction,
+        oddsProviderStatus: oddsCapture?.status || "not_configured",
+        oddsProviderDiagnostics: oddsCapture,
         marketCalibration: prediction.modelEdges?.marketCalibration || null,
         learningSummary: prediction.modelEdges?.learningEdge || null,
         competitionReliability: prediction.modelEdges?.leagueReliability || null,
         phaseReliability: prediction.modelEdges?.phaseReliability || null,
         refereeProfile: prediction.modelEdges?.refereeProfile || refereeProfile || null,
+        refereeStatus,
         aggregate,
         homeClubElo,
         awayClubElo,
@@ -10637,21 +10799,29 @@ async function main() {
         homeTeam: homeName,
         awayTeam: awayName,
         league: leagueInfo.label,
+        teamIdentity,
         homeForm: homeRecent?.form || "",
         awayForm: awayRecent?.form || "",
         homeRestDays,
         awayRestDays,
         weather,
         lineupSummary,
+        lineupStatus,
         homeTeamProfile,
         awayTeamProfile,
         h2h,
         h2hStatus: h2h?.status || "empty",
+        sourceAsOf,
+        odds: oddsAtPrediction,
+        oddsAtPrediction,
+        oddsProviderStatus: oddsCapture?.status || "not_configured",
+        oddsProviderDiagnostics: oddsCapture,
         marketCalibration: prediction.modelEdges?.marketCalibration || null,
         learningSummary: prediction.modelEdges?.learningEdge || null,
         competitionReliability: prediction.modelEdges?.leagueReliability || null,
         phaseReliability: prediction.modelEdges?.phaseReliability || null,
         refereeProfile: prediction.modelEdges?.refereeProfile || refereeProfile || null,
+        refereeStatus,
         aggregate,
         context,
         homeClubElo,
