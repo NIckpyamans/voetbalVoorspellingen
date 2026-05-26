@@ -107,6 +107,8 @@ export function buildSystemHealth(mode = "health") {
       reviewCount: Number(meta?.reviewCount || 0),
       teamLearningCount: Number(meta?.teamLearningCount || 0),
       sourceCoverage: meta?.sourceCoverage || null,
+      dataCompletenessAudit: meta?.dataCompletenessAudit || null,
+      oddsIntegrationReadiness: meta?.oddsIntegrationReadiness || null,
       modelPerformance: meta?.modelPerformance || null,
       backtestSummary: meta?.backtestSummary || null,
       anomalyReport: meta?.anomalyReport || null,

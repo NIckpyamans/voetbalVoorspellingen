@@ -10,6 +10,7 @@ permissions:
 
 env:
   FOOTYAI_BASE_URL: https://voorspellingenprive.vercel.app
+  FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: "true"
 
 jobs:
   audit:
@@ -24,7 +25,7 @@ jobs:
 
       - uses: actions/setup-node@v4
         with:
-          node-version: 20
+          node-version: 24
 
       - name: Build professional AI audit
         run: node scripts/weekly-professional-audit.js

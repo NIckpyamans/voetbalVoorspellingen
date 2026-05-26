@@ -35,6 +35,7 @@ function compactSnapshot(snapshot: any) {
     oddsMissingReason: snapshot.oddsMissingReason || null,
     roiStatus: snapshot.roiStatus || null,
     clvStatus: snapshot.clvStatus || null,
+    featureSourceMetadata: snapshot.featureSourceMetadata || snapshot.inputSnapshot?.featureSourceMetadata || null,
     leakageGuard: snapshot.leakageGuard || null,
     dataCompleteness: snapshot.dataCompleteness || null,
     missingData: snapshot.missingData || [],

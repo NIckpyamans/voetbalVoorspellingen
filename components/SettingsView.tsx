@@ -19,6 +19,8 @@ const SettingsView: React.FC = () => {
   const [featureDiagnostics, setFeatureDiagnostics] = useState<any | null>(null);
   const [sourceCoverage, setSourceCoverage] = useState<any | null>(null);
   const [dataScout, setDataScout] = useState<any | null>(null);
+  const [dataCompletenessAudit, setDataCompletenessAudit] = useState<any | null>(null);
+  const [oddsIntegrationReadiness, setOddsIntegrationReadiness] = useState<any | null>(null);
   const [modelPerformance, setModelPerformance] = useState<any | null>(null);
   const [backtestSummary, setBacktestSummary] = useState<any | null>(null);
   const [anomalyReport, setAnomalyReport] = useState<any | null>(null);
@@ -68,6 +70,8 @@ const SettingsView: React.FC = () => {
         if (data.featureDiagnostics) setFeatureDiagnostics(data.featureDiagnostics);
         if (data.sourceCoverage) setSourceCoverage(data.sourceCoverage);
         if (data.dataScout) setDataScout(data.dataScout);
+        if (data.dataCompletenessAudit) setDataCompletenessAudit(data.dataCompletenessAudit);
+        if (data.oddsIntegrationReadiness) setOddsIntegrationReadiness(data.oddsIntegrationReadiness);
         if (data.modelPerformance) setModelPerformance(data.modelPerformance);
         if (data.backtestSummary) setBacktestSummary(data.backtestSummary);
         if (data.anomalyReport) setAnomalyReport(data.anomalyReport);
@@ -790,6 +794,21 @@ const SettingsView: React.FC = () => {
                 </div>
               </div>
               <div className="rounded-xl border border-white/5 bg-slate-900/30 p-3">
+                <div className="text-[10px] font-black text-slate-400 uppercase mb-2">Reliability bins</div>
+                <div className="space-y-2">
+                  {(modelPerformance.calibrationBuckets || []).filter((bucket: any) => Number(bucket.matches || 0) > 0).map((bucket: any) => (
+                    <div key={bucket.key} className="flex items-center justify-between gap-3 text-[10px]">
+                      <span className="text-slate-300">{bucket.label}</span>
+                      <span className="font-black text-white">
+                        {Math.round(Number(bucket.observedOutcomeRate || 0) * 100)}% echt, fout {bucket.calibrationError ?? "-"}
+                      </span>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            </div>
+            <div className="grid md:grid-cols-2 gap-3">
+              <div className="rounded-xl border border-white/5 bg-slate-900/30 p-3">
                 <div className="text-[10px] font-black text-slate-400 uppercase mb-2">Competities met meeste aandacht</div>
                 <div className="space-y-2">
                   {(modelPerformance.weakestLeagues || []).slice(0, 5).map((league: any) => (
@@ -812,7 +831,7 @@ const SettingsView: React.FC = () => {
 
       <div className="glass-card rounded-2xl border border-amber-500/10 p-5 bg-amber-950/5">
         <div className="text-[10px] font-black text-amber-300 uppercase mb-3">Backtest en datakwaliteit</div>
-        <div className="grid md:grid-cols-2 gap-3">
+        <div className="grid md:grid-cols-2 xl:grid-cols-4 gap-3">
           <div className="rounded-xl border border-white/5 bg-slate-900/30 p-3">
             <div className="text-[11px] font-black text-white mb-1">Backtest uit opgeslagen reviews</div>
             <div className="text-[10px] text-slate-400 mb-3">
@@ -825,6 +844,52 @@ const SettingsView: React.FC = () => {
                   <span className="font-black text-white">
                     {Math.round(Number(strategy.outcomeHitRate || 0) * 100)}% / exact {Math.round(Number(strategy.exactHitRate || 0) * 100)}%
                   </span>
+                </div>
+              ))}
+            </div>
+          </div>
+          <div className="rounded-xl border border-white/5 bg-slate-900/30 p-3">
+            <div className="text-[11px] font-black text-white mb-1">Datacompleetheid</div>
+            <div className="text-[10px] text-slate-400 mb-3">
+              {dataCompletenessAudit?.summary || "Nog geen datacompleetheid-audit beschikbaar."}
+            </div>
+            <div className="grid grid-cols-2 gap-2 mb-3">
+              {[
+                { label: "Gemiddeld", value: `${Math.round(Number(dataCompletenessAudit?.averageScore || 0) * 100)}%` },
+                { label: "Timestamp", value: `${Math.round(Number(dataCompletenessAudit?.sourceTimestampCoverage || 0) * 100)}%` },
+                { label: "Live odds", value: `${Math.round(Number(dataCompletenessAudit?.coverage?.liveOdds || 0) * 100)}%` },
+                { label: "Lineups", value: `${Math.round(Number(dataCompletenessAudit?.coverage?.lineups || 0) * 100)}%` },
+              ].map((item) => (
+                <div key={item.label} className="rounded-lg border border-white/5 bg-slate-950/30 px-2 py-2">
+                  <div className="text-[8px] font-black text-slate-500 uppercase">{item.label}</div>
+                  <div className="text-[13px] font-black text-white mt-1">{item.value}</div>
+                </div>
+              ))}
+            </div>
+            <div className="space-y-1">
+              {(dataCompletenessAudit?.missingReasons || []).slice(0, 4).map((item: any) => (
+                <div key={item.reason} className="flex items-center justify-between gap-2 text-[9px]">
+                  <span className="text-slate-400 truncate">{item.reason}</span>
+                  <span className="font-black text-white">{item.count}x</span>
+                </div>
+              ))}
+            </div>
+          </div>
+          <div className="rounded-xl border border-white/5 bg-slate-900/30 p-3">
+            <div className="text-[11px] font-black text-white mb-1">Odds readiness</div>
+            <div className="text-[10px] text-slate-400 mb-3">
+              {oddsIntegrationReadiness?.nextAction || "Nog geen odds readiness beschikbaar."}
+            </div>
+            <div className="space-y-2">
+              {[
+                { label: "Provider", value: oddsIntegrationReadiness?.providerConfigured ? "klaar" : "mist" },
+                { label: "Pred odds", value: `${Math.round(Number(oddsIntegrationReadiness?.currentCoverage?.predictions || 0) * 100)}%` },
+                { label: "Snapshots", value: `${Math.round(Number(oddsIntegrationReadiness?.currentCoverage?.snapshots || 0) * 100)}%` },
+                { label: "Historisch", value: `${Math.round(Number(oddsIntegrationReadiness?.currentCoverage?.historicalMarketOnly || 0) * 100)}%` },
+              ].map((item) => (
+                <div key={item.label} className="flex items-center justify-between gap-3 text-[10px]">
+                  <span className="text-slate-300">{item.label}</span>
+                  <span className="font-black text-white">{item.value}</span>
                 </div>
               ))}
             </div>

@@ -115,7 +115,8 @@ function buildStorageAudit(historyItems, predictions, snapshots) {
     { field: "odds_status / missing_reason", present: hasOddsStatus(allPredictionRecords) || hasField(allPredictionRecords, ["oddsMissingReason"]), importance: "hoog", advice: "Markeer per voorspelling of odds echt, deels, historisch-only of ontbrekend zijn." },
     { field: "Brier/log loss", present: hasNumericField(historyItems, ["brierScore"]) && hasNumericField(historyItems, ["logLoss"]), importance: "kritiek", advice: "Bereken evaluatiemetrics op 1X2 per postMatchReview." },
     { field: "ROI/CLV met echte odds", present: hasNumericField(historyItems, ["roi"]) || hasNumericField(historyItems, ["clv"]), importance: "hoog", advice: "Bereken ROI/CLV pas wanneer odds_at_prediction en closing_odds echt gevuld zijn." },
-    { field: "leakage_guard", present: hasField(predictions, ["leakageGuard"]) || hasField(historyItems, ["leakageGuard"]) || hasField(snapshotItems, ["leakageGuard"]), importance: "kritiek", advice: "Leg cutoff_before_kickoff, snapshot_backed en source_timestamp dekking vast." }
+    { field: "leakage_guard", present: hasField(predictions, ["leakageGuard"]) || hasField(historyItems, ["leakageGuard"]) || hasField(snapshotItems, ["leakageGuard"]), importance: "kritiek", advice: "Leg cutoff_before_kickoff, snapshot_backed en source_timestamp dekking vast." },
+    { field: "feature_source_metadata", present: hasField(predictions, ["featureSourceMetadata"]) || hasField(historyItems, ["featureSourceMetadata"]) || hasField(snapshotItems, ["featureSourceMetadata"]), importance: "hoog", advice: "Leg per feature bron, as_of en source_timestamp dekking vast." }
   ];
 }
 
@@ -143,6 +144,8 @@ function buildMarkdown(report) {
     `- Echte odds coverage: ${pct(report.predictions.oddsCoverage)}`,
     `- Alleen historisch marktprofiel: ${pct(report.predictions.historicalMarketOnly)}`,
     `- Gemiddelde datacompleetheid: ${pct(report.predictions.averageCompleteness)}`,
+    `- Datacompleetheid-audit: ${report.live.dataCompletenessAudit?.summary || "onbekend"}`,
+    `- Odds readiness: ${report.live.oddsIntegrationReadiness?.nextAction || "onbekend"}`,
     "",
     "## Opslag-audit",
     ...report.storageAudit.map((item) => `- ${item.field}: ${item.present ? "aanwezig" : "mist"} (${item.importance}) - ${item.advice}`),
@@ -203,6 +206,8 @@ async function main() {
       featureDiagnostics: matchesJson.featureDiagnostics || null,
       backtestSummary: matchesJson.backtestSummary || null,
       modelPerformance: matchesJson.modelPerformance || null,
+      dataCompletenessAudit: matchesJson.dataCompletenessAudit || null,
+      oddsIntegrationReadiness: matchesJson.oddsIntegrationReadiness || null,
       fetchErrors
     },
     predictions: summarizePredictions(predictions),

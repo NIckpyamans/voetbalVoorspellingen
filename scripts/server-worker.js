@@ -4,6 +4,12 @@ import fs from "fs";
 import path from "path";
 import crypto from "crypto";
 import { normalizeMinute, parseMinuteValue } from "../shared/minute.js";
+import {
+  buildBacktestSummaryFromReviews,
+  buildDataCompletenessAudit,
+  buildModelPerformanceFromReviews,
+  buildOddsIntegrationReadiness,
+} from "./prediction-analytics.js";
 
 const SOFA = "https://api.sofascore.com/api/v1";
 const sofaFetchCircuit = { blocked: false, failures: 0, logged: false };
@@ -81,6 +87,8 @@ function buildSplitMeta(store) {
     predictionSnapshotCount: Object.keys(store.predictionSnapshots || {}).length,
     predictionSnapshotIndexCount: Object.keys(store.predictionSnapshotIndex || {}).length,
     dataScout: store.dataScout || null,
+    dataCompletenessAudit: store.dataCompletenessAudit || null,
+    oddsIntegrationReadiness: store.oddsIntegrationReadiness || null,
     modelPerformance: store.modelPerformance || null,
     backtestSummary: store.backtestSummary || null,
     anomalyReport: store.anomalyReport || null,
@@ -289,6 +297,100 @@ function resolveOddsAtPrediction(prediction) {
   return normalizeOddsAtPrediction(prediction).oddsAtPrediction;
 }
 
+function buildFeatureSourceMetadata(match, prediction, generatedAt, oddsDiagnostics = null) {
+  const source = prediction?.dataSource || match?.dataSource || "unknown";
+  const homeSources = match?.homeSeasonStats?.externalSources || prediction?.homeTeamProfile?.externalSources || [];
+  const awaySources = match?.awaySeasonStats?.externalSources || prediction?.awayTeamProfile?.externalSources || [];
+  const sourceList = [...new Set([...homeSources, ...awaySources])];
+  const marketCalibration = prediction?.marketCalibration || prediction?.modelEdges?.marketCalibration || match?.marketCalibration || null;
+  const oddsStatus = oddsDiagnostics?.oddsStatus || prediction?.oddsStatus || null;
+  const field = (available, fieldSource, asOf = null, sourceTimestampKnown = false, note = null) => ({
+    available: !!available,
+    source: fieldSource || source,
+    asOf,
+    sourceTimestampKnown: !!sourceTimestampKnown,
+    note,
+  });
+  const fields = {
+    fixture: field(true, source, generatedAt, true, "Worker-run timestamp; fixturebron zelf geeft niet altijd published_at mee."),
+    h2h: field(
+      Number(prediction?.h2h?.played || match?.h2h?.played || 0) > 0,
+      prediction?.h2h?.source || match?.h2h?.source || "historical results",
+      generatedAt,
+      false,
+      "Historische resultaten zijn pre-match gefilterd, maar losse bron-publicatietijden ontbreken nog."
+    ),
+    form: field(
+      Number(prediction?.homeTeamProfile?.matches || prediction?.homeRecent?.gamesPlayed || 0) > 0 ||
+        Number(prediction?.awayTeamProfile?.matches || prediction?.awayRecent?.gamesPlayed || 0) > 0,
+      "derived recent matches",
+      generatedAt,
+      false,
+      "Vorm is afgeleid uit opgeslagen wedstrijden; per bronrecord ontbreekt nog as_of."
+    ),
+    standings: field(
+      Number(prediction?.homePos || match?.homePos || 0) > 0 && Number(prediction?.awayPos || match?.awayPos || 0) > 0,
+      "standings snapshot",
+      generatedAt,
+      false,
+      "Standings worden als worker-snapshot opgeslagen, nog niet per competitie met source timestamp."
+    ),
+    xgShots: field(
+      sourceList.includes("Understat") ||
+        sourceList.includes("FBref") ||
+        prediction?.homeTeamProfile?.xG != null ||
+        match?.homeSeasonStats?.xG != null,
+      sourceList.filter((item) => item === "Understat" || item === "FBref").join(" + ") || "derived season stats",
+      generatedAt,
+      false,
+      "xG/shot snapshots hebben bronnaam, maar nog geen veldniveau published_at."
+    ),
+    marketProfile: field(
+      !!marketCalibration,
+      marketCalibration?.source || "football-data.co.uk historical market profile",
+      generatedAt,
+      false,
+      oddsStatus === "available" ? "Actuele odds apart opgeslagen." : "Historisch marktprofiel; geen echte odds_at_prediction."
+    ),
+    oddsAtPrediction: field(
+      oddsStatus === "available" || oddsStatus === "partial",
+      prediction?.oddsAtPrediction?.bookmaker || prediction?.odds?.bookmaker || "bookmaker odds",
+      prediction?.oddsAtPrediction?.capturedAt || prediction?.odds?.capturedAt || null,
+      !!(prediction?.oddsAtPrediction?.capturedAt || prediction?.odds?.capturedAt),
+      oddsStatus || "missing"
+    ),
+    lineups: field(
+      !!(prediction?.lineupSummary?.confirmed || match?.lineupSummary?.confirmed),
+      prediction?.lineupSummary?.source || match?.lineupSummary?.source || "lineup source",
+      generatedAt,
+      false,
+      prediction?.lineupSummary?.confirmed || match?.lineupSummary?.confirmed ? "Bevestigd in worker-run." : "Nog open of niet beschikbaar."
+    ),
+    referee: field(
+      Number(prediction?.refereeProfile?.matches || match?.refereeProfile?.matches || 0) > 0,
+      prediction?.refereeProfile?.source || match?.refereeProfile?.source || "referee profile",
+      generatedAt,
+      false,
+      "Scheidsrechterprofiel is historisch samengevoegd; source timestamp ontbreekt nog."
+    ),
+  };
+  const values = Object.values(fields).filter((item) => item.available);
+  const timestampKnown = values.filter((item) => item.sourceTimestampKnown);
+  return {
+    generatedAt,
+    schemaVersion: "feature-source-v1",
+    fields,
+    coverage: {
+      availableFields: values.length,
+      timestampKnownFields: timestampKnown.length,
+      timestampCoverage: values.length ? Number((timestampKnown.length / values.length).toFixed(3)) : 0,
+      unknownTimestampFields: Object.entries(fields)
+        .filter(([, value]) => value.available && !value.sourceTimestampKnown)
+        .map(([key]) => key),
+    },
+  };
+}
+
 function buildLeakageGuard(match, prediction, options = {}) {
   const generatedAt = options.generatedAt || prediction?.generatedAt || null;
   const cutoffAt = options.cutoffAt || prediction?.cutoffAt || generatedAt || null;
@@ -298,7 +400,13 @@ function buildLeakageGuard(match, prediction, options = {}) {
   const cutoffBeforeKickoff =
     Number.isFinite(cutoffMs) && Number.isFinite(kickoffMs) ? cutoffMs <= kickoffMs : null;
   const snapshotBacked = !!options.snapshotBacked || prediction?.evaluationSource === "prediction_snapshot";
-  const sourceTimestampsKnown = !!prediction?.sourceTimestampsKnown || !!prediction?.inputSnapshot?.sourceTimestampsKnown;
+  const featureSourceMetadata =
+    options.featureSourceMetadata || prediction?.featureSourceMetadata || prediction?.inputSnapshot?.featureSourceMetadata || null;
+  const sourceTimestampCoverage = Number(featureSourceMetadata?.coverage?.timestampCoverage || 0);
+  const sourceTimestampsKnown =
+    !!prediction?.sourceTimestampsKnown ||
+    !!prediction?.inputSnapshot?.sourceTimestampsKnown ||
+    (!!featureSourceMetadata?.coverage?.availableFields && sourceTimestampCoverage >= 0.95);
   return {
     generatedAt,
     cutoffAt,
@@ -306,8 +414,10 @@ function buildLeakageGuard(match, prediction, options = {}) {
     cutoffBeforeKickoff,
     snapshotBacked,
     snapshotStatus: options.snapshotStatus || null,
-    fieldLevelAsOfTracked: sourceTimestampsKnown,
+    fieldLevelAsOfTracked: !!featureSourceMetadata,
     sourceTimestampsKnown,
+    sourceTimestampCoverage,
+    unknownTimestampFields: featureSourceMetadata?.coverage?.unknownTimestampFields || [],
     risk:
       cutoffBeforeKickoff === false
         ? "high"
@@ -325,7 +435,7 @@ function buildLeakageGuard(match, prediction, options = {}) {
   };
 }
 
-function buildPredictionInputSnapshot(match, prediction) {
+function buildPredictionInputSnapshot(match, prediction, metadata = {}) {
   return {
     matchId: match?.id || prediction?.matchId || null,
     date: match?.date || prediction?.date || null,
@@ -349,6 +459,7 @@ function buildPredictionInputSnapshot(match, prediction) {
     competitionReliability: prediction?.competitionReliability || prediction?.modelEdges?.leagueReliability || match?.competitionReliability || null,
     phaseReliability: prediction?.phaseReliability || prediction?.modelEdges?.phaseReliability || match?.phaseReliability || null,
     refereeProfile: prediction?.refereeProfile || prediction?.modelEdges?.refereeProfile || match?.refereeProfile || null,
+    featureSourceMetadata: metadata.featureSourceMetadata || prediction?.featureSourceMetadata || null,
   };
 }
 
@@ -377,16 +488,19 @@ function registerPredictionSnapshot(store, match, prediction, generatedAtMs) {
     };
   }
 
-  const inputSnapshot = buildPredictionInputSnapshot(match, prediction);
-  const inputSnapshotHash = hashObject(inputSnapshot);
-  const predictionId = `pred_${stableDigest(`${matchId}|${generatedAt}|${inputSnapshotHash}`).slice(0, 18)}`;
   const oddsDiagnostics = normalizeOddsAtPrediction(prediction);
   const oddsAtPrediction = oddsDiagnostics.oddsAtPrediction;
-  const leakageGuard = buildLeakageGuard(match, prediction, {
+  const featureSourceMetadata = buildFeatureSourceMetadata(match, prediction, generatedAt, oddsDiagnostics);
+  const inputSnapshot = buildPredictionInputSnapshot(match, prediction, { featureSourceMetadata });
+  const inputSnapshotHash = hashObject(inputSnapshot);
+  const predictionId = `pred_${stableDigest(`${matchId}|${generatedAt}|${inputSnapshotHash}`).slice(0, 18)}`;
+  const predictionWithSourceMetadata = { ...prediction, featureSourceMetadata, inputSnapshot };
+  const leakageGuard = buildLeakageGuard(match, predictionWithSourceMetadata, {
     generatedAt,
     cutoffAt: generatedAt,
     snapshotBacked: true,
     snapshotStatus: "pre_match",
+    featureSourceMetadata,
   });
   const predictedOutcome = getPredictedOutcome(prediction);
   const hasRoiOdd = !!oddForOutcome(oddsAtPrediction, predictedOutcome);
@@ -429,6 +543,7 @@ function registerPredictionSnapshot(store, match, prediction, generatedAtMs) {
     oddsMissingReason: oddsDiagnostics.oddsMissingReason,
     roiStatus: hasRoiOdd ? "pending_result" : "odds_missing",
     clvStatus: "closing_odds_missing",
+    featureSourceMetadata,
     leakageGuard,
     dataCompleteness: prediction?.dataCompleteness || null,
     missingData: prediction?.dataCompleteness?.missing || [],
@@ -445,6 +560,7 @@ function registerPredictionSnapshot(store, match, prediction, generatedAtMs) {
       oddsMissingReason: oddsDiagnostics.oddsMissingReason,
       roiStatus: hasRoiOdd ? "pending_result" : "odds_missing",
       clvStatus: "closing_odds_missing",
+      featureSourceMetadata,
       leakageGuard,
     },
   };
@@ -475,6 +591,7 @@ function registerPredictionSnapshot(store, match, prediction, generatedAtMs) {
     oddsMissingReason: oddsDiagnostics.oddsMissingReason,
     roiStatus: hasRoiOdd ? "pending_result" : "odds_missing",
     clvStatus: "closing_odds_missing",
+    featureSourceMetadata,
     leakageGuard,
     snapshotStored: true,
     snapshotStatus: "pre_match",
@@ -531,11 +648,13 @@ function selectPredictionForReview(store, match, fallbackPrediction) {
       oddsMissingReason: snapshot.oddsMissingReason || snapshot.prediction?.oddsMissingReason || null,
       roiStatus: snapshot.roiStatus || snapshot.prediction?.roiStatus || null,
       clvStatus: snapshot.clvStatus || snapshot.prediction?.clvStatus || null,
+      featureSourceMetadata: snapshot.featureSourceMetadata || snapshot.prediction?.featureSourceMetadata || snapshot.inputSnapshot?.featureSourceMetadata || null,
       leakageGuard: snapshot.leakageGuard || snapshot.prediction?.leakageGuard || buildLeakageGuard(match, snapshot.prediction, {
         generatedAt: snapshot.generatedAt,
         cutoffAt: snapshot.cutoffAt,
         snapshotBacked: true,
         snapshotStatus: snapshot.status || "pre_match",
+        featureSourceMetadata: snapshot.featureSourceMetadata || snapshot.inputSnapshot?.featureSourceMetadata || null,
       }),
       evaluationSource: "prediction_snapshot",
     };
@@ -682,9 +801,9 @@ const HISTORY_KEEP_DAYS_FORWARD = 14;
 const MAX_REVIEWS = 2500;
 const MAX_PREDICTION_SNAPSHOTS = 5000;
 const MAX_SCORE_MATRIX_ENTRIES = 10;
-const MODEL_VERSION = "v21-odds-leakage-guard";
+const MODEL_VERSION = "v22-backtest-source-audit";
 const FEATURE_SCHEMA_VERSION = "feature-v1";
-const PREDICTION_SNAPSHOT_SCHEMA_VERSION = "prediction-snapshot-v2";
+const PREDICTION_SNAPSHOT_SCHEMA_VERSION = "prediction-snapshot-v3";
 const MAX_EVENT_CACHE = 300;
 const MONTE_CARLO_RUNS = 10000;
 const MONTE_CARLO_WEIGHT = 0.14;
@@ -6324,6 +6443,7 @@ function buildPostMatchReview(match, prediction) {
     cutoffAt: prediction?.cutoffAt || prediction?.generatedAt || null,
     snapshotBacked: prediction?.evaluationSource === "prediction_snapshot",
     snapshotStatus: prediction?.evaluationSource === "prediction_snapshot" ? "pre_match" : "fallback",
+    featureSourceMetadata: prediction?.featureSourceMetadata || null,
   });
 
   const failureSignals = [];
@@ -6375,6 +6495,8 @@ function buildPostMatchReview(match, prediction) {
     oddsAtPrediction: oddsDiagnostics.oddsAtPrediction,
     oddsStatus: oddsDiagnostics.oddsStatus,
     oddsMissingReason: oddsDiagnostics.oddsMissingReason,
+    featureSourceMetadata: prediction?.featureSourceMetadata || null,
+    sourceTimestampCoverage: prediction?.featureSourceMetadata?.coverage?.timestampCoverage ?? null,
     modelVersion: prediction?.modelVersion || prediction?.ensembleMeta?.baseModel || null,
     featureSchemaVersion: prediction?.featureSchemaVersion || null,
     generatedAt: prediction?.generatedAt || null,
@@ -8023,122 +8145,6 @@ function buildFeatureDiagnosticsFromReviews(reviews) {
   };
 }
 
-function hitRate(hits, total) {
-  return Number((Number(hits || 0) / Math.max(Number(total || 0), 1)).toFixed(3));
-}
-
-function summarizeReviewGroup(key, reviews) {
-  const items = reviews || [];
-  const matches = items.length;
-  const exactHits = items.filter((item) => item.exactHit).length;
-  const outcomeHits = items.filter((item) => item.outcomeHit).length;
-  const probabilityHits = items.filter((item) => item.probabilityOutcomeHit).length;
-  const bttsReviews = items.filter((item) => item.bttsHit != null);
-  const over25Reviews = items.filter((item) => item.over25Hit != null);
-  const totalGoalError = items.reduce((sum, item) => sum + Number(item.totalGoalError || 0), 0);
-  const confidence = items.reduce((sum, item) => sum + Number(item.confidence || 0), 0);
-  const modelAgreement = items.reduce((sum, item) => sum + Number(item.modelAgreement || 0), 0);
-  return {
-    key,
-    matches,
-    exactHitRate: hitRate(exactHits, matches),
-    outcomeHitRate: hitRate(outcomeHits, matches),
-    probabilityOutcomeHitRate: hitRate(probabilityHits, matches),
-    bttsHitRate: hitRate(bttsReviews.filter((item) => item.bttsHit).length, bttsReviews.length),
-    over25HitRate: hitRate(over25Reviews.filter((item) => item.over25Hit).length, over25Reviews.length),
-    avgGoalError: Number((totalGoalError / Math.max(matches, 1)).toFixed(2)),
-    avgConfidence: Number((confidence / Math.max(matches, 1)).toFixed(2)),
-    avgModelAgreement: Number((modelAgreement / Math.max(matches, 1)).toFixed(2)),
-  };
-}
-
-function groupReviewsBy(items, getKey) {
-  const groups = {};
-  for (const item of items || []) {
-    const key = String(getKey(item) || "unknown");
-    if (!groups[key]) groups[key] = [];
-    groups[key].push(item);
-  }
-  return groups;
-}
-
-function buildModelPerformanceFromReviews(reviews) {
-  const items = Object.values(reviews || {});
-  const byLeague = Object.entries(groupReviewsBy(items, (item) => item.league))
-    .map(([key, group]) => summarizeReviewGroup(key, group))
-    .sort((a, b) => b.matches - a.matches || b.outcomeHitRate - a.outcomeHitRate);
-  const byPhase = Object.entries(groupReviewsBy(items, (item) => item.phaseBucket))
-    .map(([key, group]) => summarizeReviewGroup(key, group))
-    .sort((a, b) => b.matches - a.matches || b.outcomeHitRate - a.outcomeHitRate);
-  const byModel = Object.entries(groupReviewsBy(items, (item) => item.modelName || "ensemble"))
-    .map(([key, group]) => summarizeReviewGroup(key, group))
-    .sort((a, b) => b.matches - a.matches || b.outcomeHitRate - a.outcomeHitRate);
-  const confidenceBuckets = Object.entries(
-    groupReviewsBy(items, (item) => {
-      const confidence = Number(item.confidence || 0);
-      if (confidence >= 0.68) return "hoog";
-      if (confidence >= 0.52) return "gemiddeld";
-      return "laag";
-    })
-  )
-    .map(([key, group]) => summarizeReviewGroup(key, group))
-    .sort((a, b) => ({ hoog: 0, gemiddeld: 1, laag: 2 }[a.key] - { hoog: 0, gemiddeld: 1, laag: 2 }[b.key]));
-
-  const overall = summarizeReviewGroup("overall", items);
-  const probabilityLayerBetter = Number(overall.probabilityOutcomeHitRate || 0) > Number(overall.outcomeHitRate || 0) + 0.03;
-  const modelComparisonStatus =
-    byModel.length <= 1
-      ? "Alle reviews staan nu op ensemble; losse submodellen worden nog niet apart als eigen model beoordeeld."
-      : `Beste model in reviews: ${byModel[0]?.key || "onbekend"}.`;
-  return {
-    generatedAt: new Date().toISOString(),
-    overall,
-    byLeague: byLeague.slice(0, 24),
-    byPhase,
-    byModel,
-    modelComparisonStatus,
-    modelSelectionAdvice: probabilityLayerBetter
-      ? "De 1X2-kanslaag scoort beter dan de uitkomst van de gekozen exacte score. Gebruik de scorematrix voor exacte score, maar laat winnaar/gelijk sterker door de 1X2-kanslaag bewaken."
-      : "De huidige ensemble-selectie ligt voldoende in lijn met de 1X2-kanslaag.",
-    confidenceBuckets,
-    weakestLeagues: byLeague
-      .filter((item) => item.matches >= 5)
-      .sort((a, b) => a.outcomeHitRate - b.outcomeHitRate || b.avgGoalError - a.avgGoalError)
-      .slice(0, 8),
-    summary:
-      items.length > 0
-        ? `Modelperformance: ${Math.round(overall.outcomeHitRate * 100)}% winnaar/gelijk, ${Math.round(overall.exactHitRate * 100)}% exacte score, BTTS ${Math.round(overall.bttsHitRate * 100)}%, over 2.5 ${Math.round(overall.over25HitRate * 100)}%. ${modelComparisonStatus}`
-        : "Nog geen modelperformance beschikbaar.",
-  };
-}
-
-function buildBacktestSummaryFromReviews(reviews) {
-  const items = Object.values(reviews || {});
-  const byMonth = Object.entries(
-    groupReviewsBy(items, (item) => String(item.date || "").slice(0, 7) || "unknown")
-  )
-    .map(([key, group]) => summarizeReviewGroup(key, group))
-    .sort((a, b) => String(b.key).localeCompare(String(a.key)));
-  const topExactPicks = items.filter((item) => item.topExactScorePick);
-  const nonTopExactPicks = items.filter((item) => !item.topExactScorePick);
-  const highConfidence = items.filter((item) => Number(item.confidence || 0) >= 0.68);
-  const lowConfidence = items.filter((item) => Number(item.confidence || 0) < 0.52);
-  return {
-    generatedAt: new Date().toISOString(),
-    windows: byMonth.slice(0, 18),
-    strategies: [
-      summarizeReviewGroup("top-5 exact-score picks", topExactPicks),
-      summarizeReviewGroup("overige voorspellingen", nonTopExactPicks),
-      summarizeReviewGroup("hoog vertrouwen", highConfidence),
-      summarizeReviewGroup("laag vertrouwen", lowConfidence),
-    ],
-    summary:
-      items.length > 0
-        ? `Backtest uit opgeslagen reviews: ${items.length} wedstrijden, laatste venster ${byMonth[0]?.key || "onbekend"}.`
-        : "Nog geen backtestdata beschikbaar.",
-  };
-}
-
 function buildDataAnomalyReport(store, todayKey) {
   const anomalies = [];
   const seen = new Set();
@@ -9456,6 +9462,8 @@ function defaultStore() {
     featureDiagnostics: null,
     sourceCoverage: null,
     dataScout: null,
+    dataCompletenessAudit: null,
+    oddsIntegrationReadiness: null,
     modelPerformance: null,
     backtestSummary: null,
     anomalyReport: null,
@@ -10761,6 +10769,8 @@ async function main() {
   compactStore(store, today, now);
   rebuildReviewsAndLearning(store);
   store.sourceCoverage = buildSourceCoverage(store, today);
+  store.dataCompletenessAudit = buildDataCompletenessAudit(store, today);
+  store.oddsIntegrationReadiness = buildOddsIntegrationReadiness(store, today);
   store.dataScout = buildDataScoutReport(store, today);
   store.anomalyReport = buildDataAnomalyReport(store, today);
   store.aiAdvice = buildAiRecommendations(store, today);

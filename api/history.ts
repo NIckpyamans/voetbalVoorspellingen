@@ -54,6 +54,8 @@ function mapServerReview(review: any) {
     oddsAtPrediction: review.oddsAtPrediction || null,
     oddsStatus: review.oddsStatus || null,
     oddsMissingReason: review.oddsMissingReason || null,
+    featureSourceMetadata: review.featureSourceMetadata || null,
+    sourceTimestampCoverage: review.sourceTimestampCoverage ?? review.leakageGuard?.sourceTimestampCoverage ?? null,
     bestBetRank: Number(review.bestBetRank || 0) || null,
     topConfidencePick: !!review.topConfidencePick,
     topExactScorePick: !!review.topExactScorePick,
