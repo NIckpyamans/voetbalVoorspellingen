@@ -1,6 +1,6 @@
 # FootyAI professionele AI-audit
 
-Gegenereerd: 2026-05-26T08:04:59.025Z
+Gegenereerd: 2026-05-26T08:06:08.725Z
 Bron: https://voorspellingenprive.vercel.app
 
 ## Samenvatting
@@ -25,7 +25,7 @@ Professionele audit actief. Kritieke opslagvelden lijken aanwezig; blijf kalibra
 - odds_at_prediction: mist (hoog) - Sla echte bookmaker, markt, odds en timestamp op; historische marktprofielen tellen niet als ROI-basis.
 - odds_status / missing_reason: aanwezig (hoog) - Markeer per voorspelling of odds echt, deels, historisch-only of ontbrekend zijn.
 - Brier/log loss: aanwezig (kritiek) - Bereken evaluatiemetrics op 1X2 per postMatchReview.
-- ROI/CLV met echte odds: aanwezig (hoog) - Bereken ROI/CLV pas wanneer odds_at_prediction en closing_odds echt gevuld zijn.
+- ROI/CLV met echte odds: mist (hoog) - Bereken ROI/CLV pas wanneer odds_at_prediction en closing_odds echt gevuld zijn.
 - leakage_guard: aanwezig (kritiek) - Leg cutoff_before_kickoff, snapshot_backed en source_timestamp dekking vast.
 
 ## Top verbeteringen
