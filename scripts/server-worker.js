@@ -141,20 +141,81 @@ function getPredictionProbabilities(prediction) {
   };
 }
 
-function resolveOddsAtPrediction(prediction) {
+function normalizeOddsAtPrediction(prediction) {
   const odds = prediction?.odds || prediction?.oddsAtPrediction || null;
-  if (!odds || typeof odds !== "object") return null;
+  const marketCalibration = prediction?.marketCalibration || prediction?.modelEdges?.marketCalibration || null;
+  const hasMarketProfile =
+    !!marketCalibration &&
+    (
+      !!marketCalibration.source ||
+      Number(marketCalibration.closingCoverage || 0) > 0 ||
+      (Array.isArray(marketCalibration.bookmakerSignals) && marketCalibration.bookmakerSignals.length > 0)
+    );
+  const base = {
+    oddsAtPrediction: null,
+    oddsStatus: hasMarketProfile ? "historical_market_profile_only" : "missing",
+    oddsMissingReason: hasMarketProfile
+      ? "Historisch marktprofiel aanwezig, maar geen actuele bookmaker odds op voorspellingstijdstip."
+      : "Geen actuele bookmaker odds op voorspellingstijdstip.",
+  };
+  if (!odds || typeof odds !== "object") return base;
   const home = Number(odds.home);
   const draw = Number(odds.draw);
   const away = Number(odds.away);
-  if (![home, draw, away].some((value) => Number.isFinite(value) && value > 1)) return null;
-  return {
+  const validCount = [home, draw, away].filter((value) => Number.isFinite(value) && value > 1).length;
+  if (!validCount) return base;
+  const oddsAtPrediction = {
     home: Number.isFinite(home) && home > 1 ? home : null,
     draw: Number.isFinite(draw) && draw > 1 ? draw : null,
     away: Number.isFinite(away) && away > 1 ? away : null,
     bookmaker: odds.bookmaker || odds.source || null,
     market: odds.market || "1X2",
     capturedAt: odds.capturedAt || odds.timestamp || null,
+  };
+  return {
+    oddsAtPrediction,
+    oddsStatus: validCount === 3 ? "available" : "partial",
+    oddsMissingReason: validCount === 3 ? null : "Niet alle 1X2 odds waren beschikbaar op voorspellingstijdstip.",
+  };
+}
+
+function resolveOddsAtPrediction(prediction) {
+  return normalizeOddsAtPrediction(prediction).oddsAtPrediction;
+}
+
+function buildLeakageGuard(match, prediction, options = {}) {
+  const generatedAt = options.generatedAt || prediction?.generatedAt || null;
+  const cutoffAt = options.cutoffAt || prediction?.cutoffAt || generatedAt || null;
+  const kickoff = match?.kickoff || prediction?.kickoff || null;
+  const cutoffMs = Date.parse(cutoffAt || "");
+  const kickoffMs = Date.parse(kickoff || "");
+  const cutoffBeforeKickoff =
+    Number.isFinite(cutoffMs) && Number.isFinite(kickoffMs) ? cutoffMs <= kickoffMs : null;
+  const snapshotBacked = !!options.snapshotBacked || prediction?.evaluationSource === "prediction_snapshot";
+  const sourceTimestampsKnown = !!prediction?.sourceTimestampsKnown || !!prediction?.inputSnapshot?.sourceTimestampsKnown;
+  return {
+    generatedAt,
+    cutoffAt,
+    kickoff,
+    cutoffBeforeKickoff,
+    snapshotBacked,
+    snapshotStatus: options.snapshotStatus || null,
+    fieldLevelAsOfTracked: sourceTimestampsKnown,
+    sourceTimestampsKnown,
+    risk:
+      cutoffBeforeKickoff === false
+        ? "high"
+        : sourceTimestampsKnown
+          ? "low"
+          : snapshotBacked
+            ? "medium"
+            : "unknown",
+    note:
+      cutoffBeforeKickoff === false
+        ? "Cutoff ligt na kickoff; review mag niet als lekvrij gelden."
+        : sourceTimestampsKnown
+          ? "Bronvelden hebben expliciete as_of/source timestamps."
+          : "Pre-match snapshot bewaakt cutoff, maar bronvelden hebben nog geen volledig as_of spoor.",
   };
 }
 
@@ -213,7 +274,16 @@ function registerPredictionSnapshot(store, match, prediction, generatedAtMs) {
   const inputSnapshot = buildPredictionInputSnapshot(match, prediction);
   const inputSnapshotHash = hashObject(inputSnapshot);
   const predictionId = `pred_${stableDigest(`${matchId}|${generatedAt}|${inputSnapshotHash}`).slice(0, 18)}`;
-  const oddsAtPrediction = resolveOddsAtPrediction(prediction);
+  const oddsDiagnostics = normalizeOddsAtPrediction(prediction);
+  const oddsAtPrediction = oddsDiagnostics.oddsAtPrediction;
+  const leakageGuard = buildLeakageGuard(match, prediction, {
+    generatedAt,
+    cutoffAt: generatedAt,
+    snapshotBacked: true,
+    snapshotStatus: "pre_match",
+  });
+  const predictedOutcome = getPredictedOutcome(prediction);
+  const hasRoiOdd = !!oddForOutcome(oddsAtPrediction, predictedOutcome);
   const snapshot = {
     predictionId,
     matchId,
@@ -249,6 +319,11 @@ function registerPredictionSnapshot(store, match, prediction, generatedAtMs) {
       riskProfile: prediction?.modelEdges?.riskProfile || prediction?.riskProfile || null,
     },
     oddsAtPrediction,
+    oddsStatus: oddsDiagnostics.oddsStatus,
+    oddsMissingReason: oddsDiagnostics.oddsMissingReason,
+    roiStatus: hasRoiOdd ? "pending_result" : "odds_missing",
+    clvStatus: "closing_odds_missing",
+    leakageGuard,
     dataCompleteness: prediction?.dataCompleteness || null,
     missingData: prediction?.dataCompleteness?.missing || [],
     prediction: {
@@ -260,6 +335,11 @@ function registerPredictionSnapshot(store, match, prediction, generatedAtMs) {
       featureSchemaVersion: FEATURE_SCHEMA_VERSION,
       inputSnapshotHash,
       oddsAtPrediction,
+      oddsStatus: oddsDiagnostics.oddsStatus,
+      oddsMissingReason: oddsDiagnostics.oddsMissingReason,
+      roiStatus: hasRoiOdd ? "pending_result" : "odds_missing",
+      clvStatus: "closing_odds_missing",
+      leakageGuard,
     },
   };
 
@@ -285,6 +365,11 @@ function registerPredictionSnapshot(store, match, prediction, generatedAtMs) {
     featureSchemaVersion: FEATURE_SCHEMA_VERSION,
     inputSnapshotHash,
     oddsAtPrediction,
+    oddsStatus: oddsDiagnostics.oddsStatus,
+    oddsMissingReason: oddsDiagnostics.oddsMissingReason,
+    roiStatus: hasRoiOdd ? "pending_result" : "odds_missing",
+    clvStatus: "closing_odds_missing",
+    leakageGuard,
     snapshotStored: true,
     snapshotStatus: "pre_match",
   };
@@ -336,6 +421,16 @@ function selectPredictionForReview(store, match, fallbackPrediction) {
       featureSchemaVersion: snapshot.featureSchemaVersion,
       inputSnapshotHash: snapshot.inputSnapshotHash,
       oddsAtPrediction: snapshot.oddsAtPrediction || snapshot.prediction?.oddsAtPrediction || null,
+      oddsStatus: snapshot.oddsStatus || snapshot.prediction?.oddsStatus || null,
+      oddsMissingReason: snapshot.oddsMissingReason || snapshot.prediction?.oddsMissingReason || null,
+      roiStatus: snapshot.roiStatus || snapshot.prediction?.roiStatus || null,
+      clvStatus: snapshot.clvStatus || snapshot.prediction?.clvStatus || null,
+      leakageGuard: snapshot.leakageGuard || snapshot.prediction?.leakageGuard || buildLeakageGuard(match, snapshot.prediction, {
+        generatedAt: snapshot.generatedAt,
+        cutoffAt: snapshot.cutoffAt,
+        snapshotBacked: true,
+        snapshotStatus: snapshot.status || "pre_match",
+      }),
       evaluationSource: "prediction_snapshot",
     };
   }
@@ -345,6 +440,12 @@ function selectPredictionForReview(store, match, fallbackPrediction) {
         ...fallbackPrediction,
         evaluationSource: "current_prediction_fallback",
         leakageRisk: "possible_post_match_overwrite",
+        leakageGuard: buildLeakageGuard(match, fallbackPrediction, {
+          generatedAt: fallbackPrediction?.generatedAt || null,
+          cutoffAt: fallbackPrediction?.cutoffAt || fallbackPrediction?.generatedAt || null,
+          snapshotBacked: false,
+          snapshotStatus: "fallback",
+        }),
       }
     : null;
 }
@@ -460,9 +561,9 @@ const HISTORY_KEEP_DAYS_FORWARD = 14;
 const MAX_REVIEWS = 2500;
 const MAX_PREDICTION_SNAPSHOTS = 5000;
 const MAX_SCORE_MATRIX_ENTRIES = 10;
-const MODEL_VERSION = "v20-competition-squad-archive";
+const MODEL_VERSION = "v21-odds-leakage-guard";
 const FEATURE_SCHEMA_VERSION = "feature-v1";
-const PREDICTION_SNAPSHOT_SCHEMA_VERSION = "prediction-snapshot-v1";
+const PREDICTION_SNAPSHOT_SCHEMA_VERSION = "prediction-snapshot-v2";
 const MAX_EVENT_CACHE = 300;
 const MONTE_CARLO_RUNS = 10000;
 const MONTE_CARLO_WEIGHT = 0.14;
@@ -4843,9 +4944,17 @@ function buildPostMatchReview(match, prediction) {
   const totalGoalBias = Number(
     ((actualHomeGoals + actualAwayGoals) - (predHomeGoals + predAwayGoals)).toFixed(2)
   );
+  const oddsDiagnostics = normalizeOddsAtPrediction(prediction);
   const brierScore = calculateBrierScore(prediction, actualOutcome);
   const logLoss = calculateLogLoss(prediction, actualOutcome);
-  const roi = calculateRoi(prediction, probabilityOutcome, actualOutcome);
+  const roi = calculateRoi({ ...prediction, oddsAtPrediction: oddsDiagnostics.oddsAtPrediction }, probabilityOutcome, actualOutcome);
+  const clv = prediction?.clv ?? null;
+  const leakageGuard = prediction?.leakageGuard || buildLeakageGuard(match, prediction, {
+    generatedAt: prediction?.generatedAt || null,
+    cutoffAt: prediction?.cutoffAt || prediction?.generatedAt || null,
+    snapshotBacked: prediction?.evaluationSource === "prediction_snapshot",
+    snapshotStatus: prediction?.evaluationSource === "prediction_snapshot" ? "pre_match" : "fallback",
+  });
 
   const failureSignals = [];
   if (predictedOutcome !== actualOutcome) {
@@ -4879,8 +4988,12 @@ function buildPostMatchReview(match, prediction) {
     brierScore,
     logLoss,
     roi,
-    clv: prediction?.clv ?? null,
-    oddsAtPrediction: prediction?.oddsAtPrediction || prediction?.odds || null,
+    roiStatus: roi == null ? "odds_missing" : "settled",
+    clv,
+    clvStatus: clv == null ? "closing_odds_missing" : "settled",
+    oddsAtPrediction: oddsDiagnostics.oddsAtPrediction,
+    oddsStatus: oddsDiagnostics.oddsStatus,
+    oddsMissingReason: oddsDiagnostics.oddsMissingReason,
     modelVersion: prediction?.modelVersion || prediction?.ensembleMeta?.baseModel || null,
     featureSchemaVersion: prediction?.featureSchemaVersion || null,
     generatedAt: prediction?.generatedAt || null,
@@ -4888,6 +5001,7 @@ function buildPostMatchReview(match, prediction) {
     inputSnapshotHash: prediction?.inputSnapshotHash || null,
     evaluationSource: prediction?.evaluationSource || "current_prediction",
     leakageRisk: prediction?.leakageRisk || null,
+    leakageGuard,
     outcomeHit: predictedOutcome === actualOutcome,
     probabilityOutcomeHit: probabilityOutcome === actualOutcome,
     exactHit: predHomeGoals === actualHomeGoals && predAwayGoals === actualAwayGoals,

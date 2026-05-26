@@ -67,13 +67,35 @@ function hasField(items, fields) {
   return (items || []).some((item) => fields.some((field) => Object.prototype.hasOwnProperty.call(item || {}, field)));
 }
 
+function hasNumericField(items, fields) {
+  return (items || []).some((item) => fields.some((field) => Number.isFinite(Number(item?.[field]))));
+}
+
+function getOddsObject(item) {
+  return item?.oddsAtPrediction || item?.odds_at_prediction || item?.odds || null;
+}
+
+function hasUsableOdds(item) {
+  const odds = getOddsObject(item);
+  if (!odds || typeof odds !== "object") return false;
+  return ["home", "draw", "away"].some((field) => {
+    const value = Number(odds[field]);
+    return Number.isFinite(value) && value > 1.01;
+  });
+}
+
+function hasOddsStatus(items) {
+  return (items || []).some((item) => typeof item?.oddsStatus === "string" || typeof item?.odds_status === "string");
+}
+
 function summarizePredictions(predictions) {
   const list = Array.isArray(predictions) ? predictions : [];
   const completeness = list.map((item) => Number(item?.dataCompletenessScore ?? item?.dataCompleteness?.score)).filter(Number.isFinite);
   return {
     total: list.length,
     featureCoverage: list.length ? list.filter((item) => item?.featureVector).length / list.length : 0,
-    oddsCoverage: list.length ? list.filter((item) => item?.odds || item?.oddsAtPrediction).length / list.length : 0,
+    oddsCoverage: list.length ? list.filter(hasUsableOdds).length / list.length : 0,
+    historicalMarketOnly: list.length ? list.filter((item) => item?.oddsStatus === "historical_market_profile_only").length / list.length : 0,
     reviewCoverage: list.length ? list.filter((item) => item?.review).length / list.length : 0,
     averageCompleteness: completeness.length ? completeness.reduce((sum, value) => sum + value, 0) / completeness.length : null
   };
@@ -81,13 +103,17 @@ function summarizePredictions(predictions) {
 
 function buildStorageAudit(historyItems, predictions, snapshots) {
   const snapshotItems = Array.isArray(snapshots) ? snapshots : [];
+  const allPredictionRecords = [...(predictions || []), ...(historyItems || []), ...snapshotItems];
   return [
     { field: "prediction_id", present: hasField(predictions, ["predictionId", "prediction_id"]) || hasField(historyItems, ["predictionId"]) || hasField(snapshotItems, ["predictionId"]), importance: "kritiek", advice: "Voeg een stabiele prediction_id toe per voorspelling." },
     { field: "generated_at / cutoff_at", present: hasField(predictions, ["generatedAt", "generated_at", "cutoffAt", "cutoff_at", "timestamp"]) || hasField(historyItems, ["generatedAt", "cutoffAt"]) || hasField(snapshotItems, ["generatedAt", "cutoffAt"]), importance: "kritiek", advice: "Sla tijdstip en cutoff expliciet op zodat latere uitslagen geen input kunnen worden." },
     { field: "featureVector", present: hasField(predictions, ["featureVector"]) || hasField(snapshotItems, ["features"]), importance: "hoog", advice: "Aanwezig waar predictions gevuld zijn; maak hem immutable per prediction_id." },
     { field: "model_version", present: hasField(predictions, ["modelVersion", "model_version", "ensembleMeta"]) || hasField(historyItems, ["modelVersion"]) || hasField(snapshotItems, ["modelVersion"]), importance: "hoog", advice: "Gebruik naast ensembleMeta ook workerVersion en feature_schema_version." },
-    { field: "odds_at_prediction", present: hasField(predictions, ["odds", "oddsAtPrediction", "odds_at_prediction"]) || hasField(historyItems, ["oddsAtPrediction"]) || hasField(snapshotItems, ["oddsAtPrediction"]), importance: "hoog", advice: "Sla bookmaker, markt, odds en timestamp op." },
-    { field: "Brier/log loss/ROI/CLV", present: hasField(historyItems, ["brierScore", "logLoss", "roi", "clv"]), importance: "kritiek", advice: "Voeg evaluatiemetrics toe aan postMatchReviews en /api/history." }
+    { field: "odds_at_prediction", present: allPredictionRecords.some(hasUsableOdds), importance: "hoog", advice: "Sla echte bookmaker, markt, odds en timestamp op; historische marktprofielen tellen niet als ROI-basis." },
+    { field: "odds_status / missing_reason", present: hasOddsStatus(allPredictionRecords) || hasField(allPredictionRecords, ["oddsMissingReason"]), importance: "hoog", advice: "Markeer per voorspelling of odds echt, deels, historisch-only of ontbrekend zijn." },
+    { field: "Brier/log loss", present: hasNumericField(historyItems, ["brierScore"]) && hasNumericField(historyItems, ["logLoss"]), importance: "kritiek", advice: "Bereken evaluatiemetrics op 1X2 per postMatchReview." },
+    { field: "ROI/CLV met echte odds", present: hasNumericField(historyItems, ["roi"]) || hasNumericField(historyItems, ["clv"]), importance: "hoog", advice: "Bereken ROI/CLV pas wanneer odds_at_prediction en closing_odds echt gevuld zijn." },
+    { field: "leakage_guard", present: hasField(predictions, ["leakageGuard"]) || hasField(historyItems, ["leakageGuard"]) || hasField(snapshotItems, ["leakageGuard"]), importance: "kritiek", advice: "Leg cutoff_before_kickoff, snapshot_backed en source_timestamp dekking vast." }
   ];
 }
 
@@ -112,7 +138,8 @@ function buildMarkdown(report) {
     `- Prediction snapshots: ${report.live.predictionSnapshotCount}`,
     `- Worker: ${report.live.workerVersion || "onbekend"}`,
     `- Feature coverage: ${pct(report.predictions.featureCoverage)}`,
-    `- Odds coverage: ${pct(report.predictions.oddsCoverage)}`,
+    `- Echte odds coverage: ${pct(report.predictions.oddsCoverage)}`,
+    `- Alleen historisch marktprofiel: ${pct(report.predictions.historicalMarketOnly)}`,
     `- Gemiddelde datacompleetheid: ${pct(report.predictions.averageCompleteness)}`,
     "",
     "## Opslag-audit",
@@ -179,7 +206,7 @@ async function main() {
     predictions: summarizePredictions(predictions),
     storageAudit,
     recommendations,
-    nextAction: "Start met immutable prediction snapshots en Brier/log loss. Pas daarna zwaarder trainen of modelgewichten aanpassen."
+    nextAction: "Verbeter nu odds-inname en source_timestamp dekking; train pas zwaarder wanneer ROI/CLV op echte odds gebaseerd zijn."
   };
 
   fs.mkdirSync(path.dirname(OUTPUT_JSON), { recursive: true });
