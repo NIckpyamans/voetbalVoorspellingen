@@ -31,6 +31,11 @@ function compactSnapshot(snapshot: any) {
     expectedScore: snapshot.expectedScore || null,
     explanation: snapshot.explanation || null,
     oddsAtPrediction: snapshot.oddsAtPrediction || null,
+    oddsStatus: snapshot.oddsStatus || null,
+    oddsMissingReason: snapshot.oddsMissingReason || null,
+    roiStatus: snapshot.roiStatus || null,
+    clvStatus: snapshot.clvStatus || null,
+    leakageGuard: snapshot.leakageGuard || null,
     dataCompleteness: snapshot.dataCompleteness || null,
     missingData: snapshot.missingData || [],
   };

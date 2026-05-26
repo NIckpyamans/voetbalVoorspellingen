@@ -25,13 +25,23 @@ interface HistoryItem {
   brierScore?: number | null;
   logLoss?: number | null;
   roi?: number | null;
+  roiStatus?: string | null;
   clv?: number | null;
+  clvStatus?: string | null;
   generatedAt?: string | null;
   cutoffAt?: string | null;
   modelVersion?: string | null;
   featureSchemaVersion?: string | null;
   evaluationSource?: string | null;
   leakageRisk?: string | null;
+  leakageGuard?: {
+    cutoffBeforeKickoff?: boolean | null;
+    snapshotBacked?: boolean | null;
+    risk?: string | null;
+    note?: string | null;
+  } | null;
+  oddsStatus?: string | null;
+  oddsMissingReason?: string | null;
 }
 
 type LeagueHistoryStats = {
@@ -66,6 +76,27 @@ function hydrateHistory(items: HistoryItem[]) {
 }
 
 const PAGE_SIZE = 80;
+
+function formatRoi(item: HistoryItem) {
+  if (item.roi != null && Number.isFinite(Number(item.roi))) return `${(Number(item.roi) * 100).toFixed(1)}%`;
+  if (item.roiStatus === "odds_missing" || item.oddsStatus === "missing" || item.oddsStatus === "historical_market_profile_only") return "geen odds";
+  return "-";
+}
+
+function formatOddsStatus(item: HistoryItem) {
+  if (item.oddsStatus === "available") return "aanwezig";
+  if (item.oddsStatus === "partial") return "deels";
+  if (item.oddsStatus === "historical_market_profile_only") return "historisch";
+  if (item.oddsStatus === "missing") return "mist";
+  return item.roi == null ? "geen odds" : "aanwezig";
+}
+
+function formatSnapshotStatus(item: HistoryItem) {
+  if (item.evaluationSource === "prediction_snapshot") {
+    return item.leakageGuard?.cutoffBeforeKickoff === false ? "cutoff fout" : "snapshot";
+  }
+  return item.predictionId ? "vastgelegd" : "fallback";
+}
 
 function mergeHistory(localItems: HistoryItem[], serverItems: HistoryItem[]) {
   const merged = new Map<string, HistoryItem>();
@@ -143,7 +174,10 @@ const PredictionHistory: React.FC = () => {
     const withRoi = history.filter((item) => Number.isFinite(Number(item.roi)));
     const roiTotal = withRoi.length
       ? `${(withRoi.reduce((sum, item) => sum + Number(item.roi || 0), 0) * 100).toFixed(1)}%`
-      : "-";
+      : "geen odds";
+    const oddsCoverage = total
+      ? `${((history.filter((item) => item.oddsStatus === "available" || item.oddsStatus === "partial" || Number.isFinite(Number(item.roi))).length / total) * 100).toFixed(0)}%`
+      : "0%";
     const snapshotCoverage = total
       ? `${((history.filter((item) => item.predictionId && item.evaluationSource === "prediction_snapshot").length / total) * 100).toFixed(0)}%`
       : "0%";
@@ -225,6 +259,7 @@ const PredictionHistory: React.FC = () => {
       avgBrier,
       avgLogLoss,
       roiTotal,
+      oddsCoverage,
       snapshotCoverage,
       bestStreak,
       byLeague,
@@ -303,7 +338,7 @@ const PredictionHistory: React.FC = () => {
         </button>
       </div>
 
-      <div className="grid grid-cols-2 md:grid-cols-4 xl:grid-cols-9 gap-3">
+      <div className="grid grid-cols-2 md:grid-cols-5 xl:grid-cols-10 gap-3">
         {[
           { label: "Totaal", value: stats.total.toLocaleString(), color: "text-blue-400" },
           { label: "Juiste score", value: `${stats.exactPct}%`, color: "text-green-400" },
@@ -312,12 +347,13 @@ const PredictionHistory: React.FC = () => {
           { label: "Brier", value: stats.avgBrier, color: "text-cyan-400" },
           { label: "Log loss", value: stats.avgLogLoss, color: "text-orange-300" },
           { label: "ROI", value: stats.roiTotal, color: "text-lime-300" },
+          { label: "Odds", value: stats.oddsCoverage, color: "text-teal-300" },
           { label: "Snapshots", value: stats.snapshotCoverage, color: "text-sky-300" },
           { label: "Beste reeks", value: `${stats.bestStreak}`, color: "text-yellow-400" },
         ].map((item) => (
           <div key={item.label} className="glass-card p-4 rounded-2xl border border-white/5">
             <div className={`text-[9px] font-black uppercase mb-1 ${item.color}`}>{item.label}</div>
-            <div className="text-2xl font-black text-white">{item.value}</div>
+            <div className={`${String(item.value).length > 7 ? "text-lg" : "text-2xl"} font-black text-white truncate`}>{item.value}</div>
           </div>
         ))}
       </div>
@@ -559,8 +595,8 @@ const PredictionHistory: React.FC = () => {
                             </div>
                           </div>
                         </div>
-                        {(item.brierScore != null || item.logLoss != null || item.predictionId) && (
-                          <div className="mt-3 grid grid-cols-2 md:grid-cols-5 gap-2">
+                        {(item.brierScore != null || item.logLoss != null || item.predictionId || item.oddsStatus) && (
+                          <div className="mt-3 grid grid-cols-2 md:grid-cols-6 gap-2">
                             <div className="rounded-xl bg-slate-950/35 border border-white/5 px-3 py-2">
                               <div className="text-[8px] font-black text-slate-500 uppercase">Brier</div>
                               <div className="text-[13px] font-black text-cyan-200 mt-1">{item.brierScore ?? "-"}</div>
@@ -572,13 +608,19 @@ const PredictionHistory: React.FC = () => {
                             <div className="rounded-xl bg-slate-950/35 border border-white/5 px-3 py-2">
                               <div className="text-[8px] font-black text-slate-500 uppercase">ROI</div>
                               <div className="text-[13px] font-black text-lime-200 mt-1">
-                                {item.roi == null ? "-" : `${(Number(item.roi) * 100).toFixed(1)}%`}
+                                {formatRoi(item)}
+                              </div>
+                            </div>
+                            <div className="rounded-xl bg-slate-950/35 border border-white/5 px-3 py-2">
+                              <div className="text-[8px] font-black text-slate-500 uppercase">Odds</div>
+                              <div className="text-[11px] font-black text-teal-200 mt-1 truncate" title={item.oddsMissingReason || undefined}>
+                                {formatOddsStatus(item)}
                               </div>
                             </div>
                             <div className="rounded-xl bg-slate-950/35 border border-white/5 px-3 py-2">
                               <div className="text-[8px] font-black text-slate-500 uppercase">Snapshot</div>
                               <div className="text-[11px] font-black text-sky-200 mt-1 truncate">
-                                {item.predictionId ? "vastgelegd" : "fallback"}
+                                {formatSnapshotStatus(item)}
                               </div>
                             </div>
                             <div className="rounded-xl bg-slate-950/35 border border-white/5 px-3 py-2">
