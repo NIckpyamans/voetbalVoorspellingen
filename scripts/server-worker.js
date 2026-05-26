@@ -8914,7 +8914,7 @@ async function main() {
   store.dataScout = buildDataScoutReport(store, today);
   store.aiAdvice = buildAiRecommendations(store, today);
   store.lastRun = Date.now();
-  store.workerVersion = "v18-score-data-scout";
+  store.workerVersion = MODEL_VERSION;
   
   // Log summary
   const totalMatches = Object.values(store.matches || {}).flat().length;
