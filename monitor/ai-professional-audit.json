@@ -6,43 +6,207 @@
     "owner": "Nick",
     "status": "active"
   },
-  "generatedAt": "2026-05-25T18:23:47.429Z",
+  "generatedAt": "2026-05-26T05:35:55.121Z",
   "baseUrl": "https://voorspellingenprive.vercel.app",
-  "summary": "Professionele audit actief. Grootste aandachtspunt: prediction_id, generated_at / cutoff_at, Brier/log loss/ROI/CLV.",
+  "summary": "Professionele audit actief. Kritieke opslagvelden lijken aanwezig; blijf kalibratie en bronkwaliteit bewaken.",
   "live": {
     "matchesTotal": 1,
     "predictionsTotal": 1,
-    "reviewCount": 660,
+    "reviewCount": 661,
+    "predictionSnapshotCount": 2,
     "workerVersion": "v20-competition-squad-archive",
     "sourceBranch": "codex/step3b-layout",
     "sourceCoverage": {
-      "averageDataCompleteness": 0.65,
+      "todayMatches": 1,
+      "scoreCoverage": 0,
+      "finishedScoreCoverage": 0,
+      "liveScoreCoverage": 0,
+      "logoCoverage": 1,
+      "finishedMatches": 0,
+      "finishedWithScore": 0,
+      "liveMatches": 0,
+      "liveWithScore": 0,
+      "pendingFinishedCount": 0,
+      "averageDataCompleteness": 0.74,
+      "lowCompletenessMatches": 0,
+      "statusBreakdown": {
+        "NS": 1
+      },
       "bookmakerCoverage": 1,
+      "refereeCoverage": 0,
       "h2hCoverage": 1,
+      "openfootballH2hCoverage": 0,
       "understatCoverage": 1,
       "fbrefCoverage": 1,
-      "refereeCoverage": 0
+      "marketProfiles": 21,
+      "openfootballProfiles": 5,
+      "understatSnapshots": 5,
+      "fbrefSnapshots": 7,
+      "sourceBreakdown": {
+        "thesportsdb-fixture-fallback": 1
+      },
+      "backupSources": [
+        {
+          "key": "sofascore",
+          "name": "Sofascore",
+          "role": "optionele live/detailbron",
+          "status": "403/uitgeschakeld deze run",
+          "note": "Wordt alleen gebruikt als de publieke API bereikbaar is; ESPN, TheSportsDB en open data vullen scores/logo's bij 403."
+        },
+        {
+          "key": "espn-scoreboard",
+          "name": "ESPN Scoreboard",
+          "role": "score + logo backup",
+          "status": "stand-by",
+          "note": "Tweede hoofdbron voor fixtures, live/FT scores en officiele clublogo's voor topcompetities."
+        },
+        {
+          "key": "thesportsdb",
+          "name": "TheSportsDB",
+          "role": "backup",
+          "status": "actief",
+          "note": "Gratis fixturefallback voor internationale en geselecteerde competitiewedstrijden."
+        },
+        {
+          "key": "forza-football",
+          "name": "Forza Football",
+          "role": "selectie fallback",
+          "status": "stand-by",
+          "note": "Wordt pas geprobeerd als de eerste spelerslijstbron onvolledig is; gebruikt alleen bekende/geconfigureerde publieke squad-URL's."
+        },
+        {
+          "key": "football-data-org",
+          "name": "football-data.org",
+          "role": "selectie API fallback",
+          "status": "klaar, token ontbreekt",
+          "note": "Optionele gratis API-bron voor squads. Alleen actief met FOOTBALL_DATA_TOKEN en team-id mapping, zodat er geen verkeerde teams worden gematcht."
+        },
+        {
+          "key": "reep",
+          "name": "Reep Football",
+          "role": "team-ID koppeling",
+          "status": "stand-by",
+          "note": "Wordt gebruikt als alias/ID-koppelvlak wanneer REEP_TEAM_MAP aanwezig is; voorkomt verkeerde clubnaam- en logo-matches."
+        },
+        {
+          "key": "football-data",
+          "name": "football-data.co.uk",
+          "role": "backup + markt",
+          "status": "markt-only",
+          "note": "Historische odds, closing-lijnen en fixturefallback uit gratis competitiebestanden."
+        },
+        {
+          "key": "openligadb",
+          "name": "OpenLigaDB",
+          "role": "backup",
+          "status": "stand-by",
+          "note": "Extra gratis fixturebron voor vooral Duitse competities wanneer de hoofdbron dun blijft."
+        },
+        {
+          "key": "curated-bbc",
+          "name": "BBC fixture backfill",
+          "role": "curated noodfallback",
+          "status": "stand-by",
+          "note": "Handmatige gratis veiligheidslaag voor bewezen topwedstrijden die alle automatische fallbackbronnen missen."
+        },
+        {
+          "key": "openfootball",
+          "name": "openfootball",
+          "role": "historisch H2H",
+          "status": "gekoppeld",
+          "note": "5 competitieprofiel(en), 0% van vandaag met openfootball-H2H."
+        }
+      ],
+      "understat": {
+        "status": "gekoppeld",
+        "snapshots": 5,
+        "coverage": 1,
+        "note": "5 xG/xGA-snapshot(s), 100% van vandaag verrijkt."
+      },
+      "fbref": {
+        "status": "gekoppeld",
+        "snapshots": 7,
+        "coverage": 1,
+        "note": "7 shot/split-snapshot(s), 100% van vandaag verrijkt."
+      }
     },
     "featureDiagnostics": {
-      "reviews": 660,
+      "reviews": 661,
       "exactHitRate": 0.121,
-      "outcomeHitRate": 0.415,
+      "outcomeHitRate": 0.416,
       "probabilityOutcomeHitRate": 0.467,
       "avgGoalError": 1.88,
+      "topConfidence": {
+        "matches": 112,
+        "exactHitRate": 0.152,
+        "outcomeHitRate": 0.429,
+        "probabilityOutcomeHitRate": 0.545,
+        "avgGoalError": 1.63,
+        "rank1ExactHitRate": 0.103,
+        "rank1OutcomeHitRate": 0.379,
+        "versusOverallOutcomeDelta": 0.013
+      },
       "topFailureSignals": [
-        { "signal": "open_lineups", "count": 295 },
-        { "signal": "low_model_agreement", "count": 252 },
-        { "signal": "h2h_signal", "count": 220 },
-        { "signal": "clubelo_misread", "count": 82 },
-        { "signal": "rest_gap", "count": 37 },
-        { "signal": "market_misread", "count": 20 }
+        {
+          "signal": "open_lineups",
+          "count": 295
+        },
+        {
+          "signal": "low_model_agreement",
+          "count": 252
+        },
+        {
+          "signal": "h2h_signal",
+          "count": 220
+        },
+        {
+          "signal": "clubelo_misread",
+          "count": 82
+        },
+        {
+          "signal": "rest_gap",
+          "count": 37
+        },
+        {
+          "signal": "market_misread",
+          "count": 20
+        }
+      ],
+      "phaseBreakdown": [
+        {
+          "phase": "two-leg-knockout",
+          "matches": 313,
+          "exactHits": 31,
+          "outcomeHits": 126,
+          "exactHitRate": 0.1,
+          "outcomeHitRate": 0.4
+        },
+        {
+          "phase": "league",
+          "matches": 313,
+          "exactHits": 46,
+          "outcomeHits": 134,
+          "exactHitRate": 0.15,
+          "outcomeHitRate": 0.43
+        },
+        {
+          "phase": "cup",
+          "matches": 35,
+          "exactHits": 3,
+          "outcomeHits": 15,
+          "exactHitRate": 0.09,
+          "outcomeHitRate": 0.43
+        }
       ],
       "summary": "Reviewdiagnose: exact 12%, uitkomst 42%, topkans 47%."
     },
+    "backtestSummary": null,
+    "modelPerformance": null,
     "fetchErrors": {
       "matches": null,
       "predict": null,
-      "history": null
+      "history": null,
+      "snapshots": null
     }
   },
   "predictions": {
@@ -50,22 +214,101 @@
     "featureCoverage": 1,
     "oddsCoverage": 0,
     "reviewCoverage": 0,
-    "averageCompleteness": 0.653
+    "averageCompleteness": 0.741
   },
   "storageAudit": [
-    { "field": "prediction_id", "present": false, "importance": "kritiek", "advice": "Voeg een stabiele prediction_id toe per voorspelling." },
-    { "field": "generated_at / cutoff_at", "present": false, "importance": "kritiek", "advice": "Sla tijdstip en cutoff expliciet op zodat latere uitslagen geen input kunnen worden." },
-    { "field": "featureVector", "present": true, "importance": "hoog", "advice": "Maak de featureVector immutable per prediction_id." },
-    { "field": "model_version", "present": true, "importance": "hoog", "advice": "Gebruik naast ensembleMeta ook workerVersion en feature_schema_version." },
-    { "field": "odds_at_prediction", "present": true, "importance": "hoog", "advice": "Sla bookmaker, markt, odds en timestamp op." },
-    { "field": "Brier/log loss/ROI/CLV", "present": false, "importance": "kritiek", "advice": "Voeg evaluatiemetrics toe aan postMatchReviews en /api/history." }
+    {
+      "field": "prediction_id",
+      "present": true,
+      "importance": "kritiek",
+      "advice": "Voeg een stabiele prediction_id toe per voorspelling."
+    },
+    {
+      "field": "generated_at / cutoff_at",
+      "present": true,
+      "importance": "kritiek",
+      "advice": "Sla tijdstip en cutoff expliciet op zodat latere uitslagen geen input kunnen worden."
+    },
+    {
+      "field": "featureVector",
+      "present": true,
+      "importance": "hoog",
+      "advice": "Aanwezig waar predictions gevuld zijn; maak hem immutable per prediction_id."
+    },
+    {
+      "field": "model_version",
+      "present": true,
+      "importance": "hoog",
+      "advice": "Gebruik naast ensembleMeta ook workerVersion en feature_schema_version."
+    },
+    {
+      "field": "odds_at_prediction",
+      "present": true,
+      "importance": "hoog",
+      "advice": "Sla bookmaker, markt, odds en timestamp op."
+    },
+    {
+      "field": "Brier/log loss/ROI/CLV",
+      "present": true,
+      "importance": "kritiek",
+      "advice": "Voeg evaluatiemetrics toe aan postMatchReviews en /api/history."
+    }
   ],
   "recommendations": [
-    { "key": "immutable_prediction_snapshots", "title": "Maak pre-match voorspellingen immutable", "impact": "zeer hoog", "difficulty": "middel", "files": ["scripts/server-worker.js", "data/predictions"], "advice": "Sla prediction_id, generated_at, cutoff_at, model_version, feature_schema_version, input_snapshot_hash en result_status op. Overschrijf deze records nooit bij latere worker-runs." },
-    { "key": "leakage_cutoff", "title": "Dwing data-cutoff voor kickoff af", "impact": "zeer hoog", "difficulty": "middel", "files": ["scripts/server-worker.js"], "advice": "Filter vorm, H2H, standings, odds, blessures en lineups op informatie die beschikbaar was voor generated_at/cutoff_at." },
-    { "key": "evaluation_metrics", "title": "Voeg Brier score, log loss, CLV en ROI toe", "impact": "zeer hoog", "difficulty": "laag-middel", "files": ["scripts/server-worker.js", "api/history.ts", "components/PredictionHistory.tsx"], "advice": "Bereken per review Brier score en log loss op 1X2. Voeg ROI en closing line value toe zodra odds_at_prediction en closing_odds gevuld zijn." },
-    { "key": "storage_backend", "title": "Bereid database-opslag voor", "impact": "hoog", "difficulty": "middel", "files": ["api/_dataSource.ts", "scripts/server-worker.js"], "advice": "Gebruik JSON/GitHub als exportlaag, maar ontwerp een schema voor matches, predictions, features, results en evaluations." },
-    { "key": "modular_worker", "title": "Splits de worker in domeinmodules", "impact": "hoog", "difficulty": "middel", "files": ["scripts/server-worker.js"], "advice": "Splits data sources, normalisatie, feature builder, model, evaluation en storage." }
+    {
+      "key": "immutable_prediction_snapshots",
+      "title": "Maak pre-match voorspellingen immutable",
+      "impact": "zeer hoog",
+      "difficulty": "middel",
+      "files": [
+        "scripts/server-worker.js",
+        "data/predictions"
+      ],
+      "advice": "Sla prediction_id, generated_at, cutoff_at, model_version, feature_schema_version, input_snapshot_hash en result_status op. Overschrijf deze records nooit bij latere worker-runs."
+    },
+    {
+      "key": "leakage_cutoff",
+      "title": "Dwing data-cutoff voor kickoff af",
+      "impact": "zeer hoog",
+      "difficulty": "middel",
+      "files": [
+        "scripts/server-worker.js"
+      ],
+      "advice": "Filter vorm, H2H, standings, odds, blessures en lineups op informatie die beschikbaar was voor generated_at/cutoff_at. Markeer elk veld met source_timestamp en as_of."
+    },
+    {
+      "key": "evaluation_metrics",
+      "title": "Voeg Brier score, log loss, CLV en ROI toe",
+      "impact": "zeer hoog",
+      "difficulty": "laag-middel",
+      "files": [
+        "scripts/server-worker.js",
+        "api/history.ts",
+        "components/PredictionHistory.tsx"
+      ],
+      "advice": "Bereken per review Brier score en log loss op 1X2. Voeg ROI en closing line value toe zodra odds_at_prediction en closing_odds gevuld zijn."
+    },
+    {
+      "key": "storage_backend",
+      "title": "Bereid database-opslag voor",
+      "impact": "hoog",
+      "difficulty": "middel",
+      "files": [
+        "api/_dataSource.ts",
+        "scripts/server-worker.js"
+      ],
+      "advice": "Gebruik JSON/GitHub als exportlaag, maar ontwerp een schema voor matches, predictions, features, results en evaluations in Postgres of Supabase."
+    },
+    {
+      "key": "modular_worker",
+      "title": "Splits de worker in domeinmodules",
+      "impact": "hoog",
+      "difficulty": "middel",
+      "files": [
+        "scripts/server-worker.js"
+      ],
+      "advice": "Splits data sources, normalisatie, feature builder, model, evaluation en storage. Dit maakt competities, bronnen en modellen makkelijker uitbreidbaar."
+    }
   ],
   "nextAction": "Start met immutable prediction snapshots en Brier/log loss. Pas daarna zwaarder trainen of modelgewichten aanpassen."
 }
