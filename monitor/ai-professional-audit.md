@@ -1,6 +1,6 @@
 # FootyAI professionele AI-audit
 
-Gegenereerd: 2026-05-26T08:06:08.725Z
+Gegenereerd: 2026-05-26T10:59:57.055Z
 Bron: https://voorspellingenprive.vercel.app
 
 ## Samenvatting
@@ -10,12 +10,14 @@ Professionele audit actief. Kritieke opslagvelden lijken aanwezig; blijf kalibra
 - Wedstrijden vandaag: 1
 - Voorspellingen vandaag: 1
 - Reviews: 661
-- Prediction snapshots: 6
-- Worker: v21-odds-leakage-guard
+- Prediction snapshots: 12
+- Worker: v22-backtest-source-audit
 - Feature coverage: 100%
 - Echte odds coverage: 0%
 - Alleen historisch marktprofiel: 100%
 - Gemiddelde datacompleetheid: 74%
+- Datacompleetheid-audit: Datacompleetheid vandaag: 74%, laagste kwart 74%.
+- Odds readiness: Kies of configureer eerst een echte oddsprovider; historische football-data.co.uk profielen blijven alleen calibratie-input.
 
 ## Opslag-audit
 - prediction_id: aanwezig (kritiek) - Voeg een stabiele prediction_id toe per voorspelling.
@@ -27,6 +29,7 @@ Professionele audit actief. Kritieke opslagvelden lijken aanwezig; blijf kalibra
 - Brier/log loss: aanwezig (kritiek) - Bereken evaluatiemetrics op 1X2 per postMatchReview.
 - ROI/CLV met echte odds: mist (hoog) - Bereken ROI/CLV pas wanneer odds_at_prediction en closing_odds echt gevuld zijn.
 - leakage_guard: aanwezig (kritiek) - Leg cutoff_before_kickoff, snapshot_backed en source_timestamp dekking vast.
+- feature_source_metadata: aanwezig (hoog) - Leg per feature bron, as_of en source_timestamp dekking vast.
 
 ## Top verbeteringen
 1. Maak pre-match voorspellingen immutable - impact zeer hoog, moeite middel. Sla prediction_id, generated_at, cutoff_at, model_version, feature_schema_version, input_snapshot_hash en result_status op. Overschrijf deze records nooit bij latere worker-runs.
