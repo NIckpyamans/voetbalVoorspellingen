@@ -1,6 +1,6 @@
 {
-  "generatedAt": "2026-05-25T23:32:53.742Z",
-  "date": "2026-05-26",
+  "generatedAt": "2026-05-26T23:37:03.948Z",
+  "date": "2026-05-27",
   "name": "Ruflo-style gratis AI monitor",
   "mode": "naast-productie",
   "productionSafe": true,
@@ -14,7 +14,7 @@
           "name": "SofaScore public endpoint",
           "role": "primaire wedstrijddagfeed",
           "free": true,
-          "status": "fallback nodig",
+          "status": "actief",
           "use": "Gebruik als eerste bron, maar behandel 403/lege dagen nooit als eindpunt."
         },
         {
@@ -60,33 +60,36 @@
           "use": "Niet live scrapen op iedere run; alleen gecachte snapshots gebruiken."
         }
       ],
-      "actions": [
-        {
-          "priority": "high",
-          "title": "Wedstrijddag fallbackketen strakker maken",
-          "freeSolution": "Laat de worker altijd meerdere gratis bronnen proberen: SofaScore -> TheSportsDB -> OpenLigaDB -> football-data/openfootball.",
-          "files": [
-            "scripts/server-worker.js",
-            "api/Matches.ts"
-          ],
-          "status": "bewaken"
-        }
-      ]
+      "actions": []
     },
     "learning": {
       "score": 12,
-      "summary": "Leerlaag: 660 reviews, exact 12%, winnaar/gelijk 42%, top-5 exact 15%.",
+      "summary": "Leerlaag: 661 reviews, exact 12%, winnaar/gelijk 42%, top-5 exact 15%.",
       "topConfidence": {
-        "matches": 111,
-        "exactHitRate": 0.153,
-        "outcomeHitRate": 0.423,
-        "probabilityOutcomeHitRate": 0.541,
-        "avgGoalError": 1.64,
-        "rank1ExactHitRate": 0.107,
-        "rank1OutcomeHitRate": 0.357,
-        "versusOverallOutcomeDelta": 0.008
+        "matches": 112,
+        "exactHitRate": 0.152,
+        "outcomeHitRate": 0.429,
+        "probabilityOutcomeHitRate": 0.545,
+        "avgGoalError": 1.63,
+        "rank1ExactHitRate": 0.103,
+        "rank1OutcomeHitRate": 0.379,
+        "versusOverallOutcomeDelta": 0.013
       },
       "topClubs": [
+        {
+          "teamName": "Castellon",
+          "reviewedMatches": 2,
+          "exactHitRate": 1,
+          "outcomeHitRate": 1,
+          "avgGoalError": 0
+        },
+        {
+          "teamName": "Verona",
+          "reviewedMatches": 2,
+          "exactHitRate": 1,
+          "outcomeHitRate": 1,
+          "avgGoalError": 0
+        },
         {
           "teamName": "Angers",
           "reviewedMatches": 2,
@@ -109,21 +112,7 @@
           "avgGoalError": 0
         },
         {
-          "teamName": "Verona",
-          "reviewedMatches": 2,
-          "exactHitRate": 1,
-          "outcomeHitRate": 1,
-          "avgGoalError": 0
-        },
-        {
           "teamName": "Nottingham Forest",
-          "reviewedMatches": 2,
-          "exactHitRate": 1,
-          "outcomeHitRate": 1,
-          "avgGoalError": 0
-        },
-        {
-          "teamName": "Castellon",
           "reviewedMatches": 2,
           "exactHitRate": 1,
           "outcomeHitRate": 1,
@@ -144,18 +133,18 @@
           "avgGoalError": 0.25
         },
         {
-          "teamName": "Fiorentina",
-          "reviewedMatches": 3,
-          "exactHitRate": 0.67,
-          "outcomeHitRate": 0.67,
-          "avgGoalError": 1.67
-        },
-        {
           "teamName": "Nottingham Forest",
           "reviewedMatches": 3,
           "exactHitRate": 0.67,
           "outcomeHitRate": 0.67,
           "avgGoalError": 1
+        },
+        {
+          "teamName": "Fiorentina",
+          "reviewedMatches": 3,
+          "exactHitRate": 0.67,
+          "outcomeHitRate": 0.67,
+          "avgGoalError": 1.67
         }
       ],
       "actions": [
@@ -173,13 +162,13 @@
     },
     "control": {
       "score": 36,
-      "summary": "Ontwikkelcontrole: 2 actieve monitorissues op 2026-05-26; digest 2026-05-12 t/m 2026-05-25.",
-      "latestDay": "2026-05-26",
+      "summary": "Ontwikkelcontrole: 2 actieve monitorissues op 2026-05-27; digest 2026-05-12 t/m 2026-05-25.",
+      "latestDay": "2026-05-27",
       "shouldPropose": true,
       "actions": [
         {
           "priority": "high",
-          "title": "server_data.json is 889 minuten oud.",
+          "title": "server_data.json is 711 minuten oud.",
           "freeSolution": "Laat GitHub Actions schedule + manual dispatch draaien; geen mail nodig, alleen data committen.",
           "files": [
             ".github/workflows/worker.yml"
@@ -188,11 +177,11 @@
         },
         {
           "priority": "medium",
-          "title": "Er zijn geen wedstrijden voor vandaag in server_data.json.",
-          "freeSolution": "Gebruik gratis fallbackketen met TheSportsDB/OpenLigaDB/openfootball en toon bronstatus in Instellingen.",
+          "title": "Alle wedstrijden van vandaag hebben lege H2H-data.",
+          "freeSolution": "Vul H2H uit openfootball/football-data competitiebestanden voordat de UI leeg toont.",
           "files": [
             "scripts/server-worker.js",
-            "api/Matches.ts"
+            "components/MatchCard.tsx"
           ],
           "status": "monitor"
         }
@@ -200,14 +189,6 @@
     }
   },
   "topThemes": [
-    {
-      "title": "Wedstrijddag fallbackketen strakker maken",
-      "count": 1,
-      "priority": "high",
-      "agents": [
-        "data"
-      ]
-    },
     {
       "title": "Faalsignaal aanpakken: open_lineups",
       "count": 1,
@@ -217,7 +198,7 @@
       ]
     },
     {
-      "title": "server_data.json is 889 minuten oud.",
+      "title": "server_data.json is 711 minuten oud.",
       "count": 1,
       "priority": "high",
       "agents": [
@@ -225,7 +206,7 @@
       ]
     },
     {
-      "title": "Er zijn geen wedstrijden voor vandaag in server_data.json.",
+      "title": "Alle wedstrijden van vandaag hebben lege H2H-data.",
       "count": 1,
       "priority": "medium",
       "agents": [
@@ -234,17 +215,6 @@
     }
   ],
   "recommendedNextActions": [
-    {
-      "priority": "high",
-      "title": "Wedstrijddag fallbackketen strakker maken",
-      "freeSolution": "Laat de worker altijd meerdere gratis bronnen proberen: SofaScore -> TheSportsDB -> OpenLigaDB -> football-data/openfootball.",
-      "files": [
-        "scripts/server-worker.js",
-        "api/Matches.ts"
-      ],
-      "status": "bewaken",
-      "agent": "data"
-    },
     {
       "priority": "high",
       "title": "Faalsignaal aanpakken: open_lineups",
@@ -258,7 +228,7 @@
     },
     {
       "priority": "high",
-      "title": "server_data.json is 889 minuten oud.",
+      "title": "server_data.json is 711 minuten oud.",
       "freeSolution": "Laat GitHub Actions schedule + manual dispatch draaien; geen mail nodig, alleen data committen.",
       "files": [
         ".github/workflows/worker.yml"
@@ -268,11 +238,11 @@
     },
     {
       "priority": "medium",
-      "title": "Er zijn geen wedstrijden voor vandaag in server_data.json.",
-      "freeSolution": "Gebruik gratis fallbackketen met TheSportsDB/OpenLigaDB/openfootball en toon bronstatus in Instellingen.",
+      "title": "Alle wedstrijden van vandaag hebben lege H2H-data.",
+      "freeSolution": "Vul H2H uit openfootball/football-data competitiebestanden voordat de UI leeg toont.",
       "files": [
         "scripts/server-worker.js",
-        "api/Matches.ts"
+        "components/MatchCard.tsx"
       ],
       "status": "monitor",
       "agent": "control"
