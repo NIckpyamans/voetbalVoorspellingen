@@ -68,7 +68,9 @@ function hasField(items, fields) {
 }
 
 function hasNumericField(items, fields) {
-  return (items || []).some((item) => fields.some((field) => Number.isFinite(Number(item?.[field]))));
+  return (items || []).some((item) =>
+    fields.some((field) => item?.[field] != null && item?.[field] !== "" && Number.isFinite(Number(item[field])))
+  );
 }
 
 function getOddsObject(item) {
