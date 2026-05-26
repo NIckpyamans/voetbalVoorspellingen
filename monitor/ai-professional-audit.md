@@ -1,6 +1,6 @@
 # FootyAI professionele AI-audit
 
-Gegenereerd: 2026-05-26T05:35:55.121Z
+Gegenereerd: 2026-05-26T08:04:59.025Z
 Bron: https://voorspellingenprive.vercel.app
 
 ## Samenvatting
@@ -10,10 +10,11 @@ Professionele audit actief. Kritieke opslagvelden lijken aanwezig; blijf kalibra
 - Wedstrijden vandaag: 1
 - Voorspellingen vandaag: 1
 - Reviews: 661
-- Prediction snapshots: 2
-- Worker: v20-competition-squad-archive
+- Prediction snapshots: 6
+- Worker: v21-odds-leakage-guard
 - Feature coverage: 100%
-- Odds coverage: 0%
+- Echte odds coverage: 0%
+- Alleen historisch marktprofiel: 100%
 - Gemiddelde datacompleetheid: 74%
 
 ## Opslag-audit
@@ -21,8 +22,11 @@ Professionele audit actief. Kritieke opslagvelden lijken aanwezig; blijf kalibra
 - generated_at / cutoff_at: aanwezig (kritiek) - Sla tijdstip en cutoff expliciet op zodat latere uitslagen geen input kunnen worden.
 - featureVector: aanwezig (hoog) - Aanwezig waar predictions gevuld zijn; maak hem immutable per prediction_id.
 - model_version: aanwezig (hoog) - Gebruik naast ensembleMeta ook workerVersion en feature_schema_version.
-- odds_at_prediction: aanwezig (hoog) - Sla bookmaker, markt, odds en timestamp op.
-- Brier/log loss/ROI/CLV: aanwezig (kritiek) - Voeg evaluatiemetrics toe aan postMatchReviews en /api/history.
+- odds_at_prediction: mist (hoog) - Sla echte bookmaker, markt, odds en timestamp op; historische marktprofielen tellen niet als ROI-basis.
+- odds_status / missing_reason: aanwezig (hoog) - Markeer per voorspelling of odds echt, deels, historisch-only of ontbrekend zijn.
+- Brier/log loss: aanwezig (kritiek) - Bereken evaluatiemetrics op 1X2 per postMatchReview.
+- ROI/CLV met echte odds: aanwezig (hoog) - Bereken ROI/CLV pas wanneer odds_at_prediction en closing_odds echt gevuld zijn.
+- leakage_guard: aanwezig (kritiek) - Leg cutoff_before_kickoff, snapshot_backed en source_timestamp dekking vast.
 
 ## Top verbeteringen
 1. Maak pre-match voorspellingen immutable - impact zeer hoog, moeite middel. Sla prediction_id, generated_at, cutoff_at, model_version, feature_schema_version, input_snapshot_hash en result_status op. Overschrijf deze records nooit bij latere worker-runs.
@@ -32,4 +36,4 @@ Professionele audit actief. Kritieke opslagvelden lijken aanwezig; blijf kalibra
 5. Splits de worker in domeinmodules - impact hoog, moeite middel. Splits data sources, normalisatie, feature builder, model, evaluation en storage. Dit maakt competities, bronnen en modellen makkelijker uitbreidbaar.
 
 ## Volgende actie
-Start met immutable prediction snapshots en Brier/log loss. Pas daarna zwaarder trainen of modelgewichten aanpassen.
+Verbeter nu odds-inname en source_timestamp dekking; train pas zwaarder wanneer ROI/CLV op echte odds gebaseerd zijn.

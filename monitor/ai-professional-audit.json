@@ -6,15 +6,15 @@
     "owner": "Nick",
     "status": "active"
   },
-  "generatedAt": "2026-05-26T05:35:55.121Z",
+  "generatedAt": "2026-05-26T08:04:59.025Z",
   "baseUrl": "https://voorspellingenprive.vercel.app",
   "summary": "Professionele audit actief. Kritieke opslagvelden lijken aanwezig; blijf kalibratie en bronkwaliteit bewaken.",
   "live": {
     "matchesTotal": 1,
     "predictionsTotal": 1,
     "reviewCount": 661,
-    "predictionSnapshotCount": 2,
-    "workerVersion": "v20-competition-squad-archive",
+    "predictionSnapshotCount": 6,
+    "workerVersion": "v21-odds-leakage-guard",
     "sourceBranch": "codex/step3b-layout",
     "sourceCoverage": {
       "todayMatches": 1,
@@ -213,6 +213,7 @@
     "total": 1,
     "featureCoverage": 1,
     "oddsCoverage": 0,
+    "historicalMarketOnly": 1,
     "reviewCoverage": 0,
     "averageCompleteness": 0.741
   },
@@ -243,15 +244,33 @@
     },
     {
       "field": "odds_at_prediction",
-      "present": true,
+      "present": false,
       "importance": "hoog",
-      "advice": "Sla bookmaker, markt, odds en timestamp op."
+      "advice": "Sla echte bookmaker, markt, odds en timestamp op; historische marktprofielen tellen niet als ROI-basis."
     },
     {
-      "field": "Brier/log loss/ROI/CLV",
+      "field": "odds_status / missing_reason",
+      "present": true,
+      "importance": "hoog",
+      "advice": "Markeer per voorspelling of odds echt, deels, historisch-only of ontbrekend zijn."
+    },
+    {
+      "field": "Brier/log loss",
       "present": true,
       "importance": "kritiek",
-      "advice": "Voeg evaluatiemetrics toe aan postMatchReviews en /api/history."
+      "advice": "Bereken evaluatiemetrics op 1X2 per postMatchReview."
+    },
+    {
+      "field": "ROI/CLV met echte odds",
+      "present": true,
+      "importance": "hoog",
+      "advice": "Bereken ROI/CLV pas wanneer odds_at_prediction en closing_odds echt gevuld zijn."
+    },
+    {
+      "field": "leakage_guard",
+      "present": true,
+      "importance": "kritiek",
+      "advice": "Leg cutoff_before_kickoff, snapshot_backed en source_timestamp dekking vast."
     }
   ],
   "recommendations": [
@@ -310,5 +329,5 @@
       "advice": "Splits data sources, normalisatie, feature builder, model, evaluation en storage. Dit maakt competities, bronnen en modellen makkelijker uitbreidbaar."
     }
   ],
-  "nextAction": "Start met immutable prediction snapshots en Brier/log loss. Pas daarna zwaarder trainen of modelgewichten aanpassen."
+  "nextAction": "Verbeter nu odds-inname en source_timestamp dekking; train pas zwaarder wanneer ROI/CLV op echte odds gebaseerd zijn."
 }
