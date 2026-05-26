@@ -10767,7 +10767,7 @@ async function main() {
   store.competitionArchiveIndex = buildCompetitionArchiveIndex(store, today);
   store.teamSquadSummary = buildTeamSquadSummary(store);
   store.lastRun = Date.now();
-  store.workerVersion = "v20-competition-squad-archive";
+  store.workerVersion = MODEL_VERSION;
   
   // Log summary
   const totalMatches = Object.values(store.matches || {}).flat().length;
