@@ -294,9 +294,13 @@ function normalizeOddsAtPrediction(prediction) {
     home: Number.isFinite(home) && home > 1 ? home : null,
     draw: Number.isFinite(draw) && draw > 1 ? draw : null,
     away: Number.isFinite(away) && away > 1 ? away : null,
+    closingHome: Number(odds.closingHome) > 1 ? Number(odds.closingHome) : null,
+    closingDraw: Number(odds.closingDraw) > 1 ? Number(odds.closingDraw) : null,
+    closingAway: Number(odds.closingAway) > 1 ? Number(odds.closingAway) : null,
     bookmaker: odds.bookmaker || odds.source || null,
     market: odds.market || "1X2",
     capturedAt: odds.capturedAt || odds.timestamp || null,
+    closingCapturedAt: odds.closingCapturedAt || odds.closingTimestamp || null,
   };
   return {
     oddsAtPrediction,
@@ -801,6 +805,24 @@ function calculateRoi(prediction, predictedOutcome, actualOutcome) {
   const odd = oddForOutcome(prediction?.oddsAtPrediction || prediction?.odds, predictedOutcome);
   if (!odd) return null;
   return Number((predictedOutcome === actualOutcome ? odd - 1 : -1).toFixed(4));
+}
+
+function closingOddForOutcome(oddsAtPrediction, outcome) {
+  if (!oddsAtPrediction) return null;
+  const value =
+    outcome === "H" ? oddsAtPrediction.closingHome :
+    outcome === "D" ? oddsAtPrediction.closingDraw :
+    oddsAtPrediction.closingAway;
+  const odd = Number(value);
+  return Number.isFinite(odd) && odd > 1 ? odd : null;
+}
+
+function calculateClv(prediction, predictedOutcome) {
+  const odds = prediction?.oddsAtPrediction || prediction?.odds;
+  const preMatchOdd = oddForOutcome(odds, predictedOutcome);
+  const closingOdd = closingOddForOutcome(odds, predictedOutcome);
+  if (!preMatchOdd || !closingOdd) return null;
+  return Number(((preMatchOdd - closingOdd) / closingOdd).toFixed(4));
 }
 
 function pruneUpdatedMap(store, valueKey, updatedKey, ttl, now, maxEntries = null) {
@@ -6522,7 +6544,7 @@ function buildPostMatchReview(match, prediction) {
   const brierScore = calculateBrierScore(prediction, actualOutcome);
   const logLoss = calculateLogLoss(prediction, actualOutcome);
   const roi = calculateRoi({ ...prediction, oddsAtPrediction: oddsDiagnostics.oddsAtPrediction }, probabilityOutcome, actualOutcome);
-  const clv = prediction?.clv ?? null;
+  const clv = prediction?.clv ?? calculateClv({ ...prediction, oddsAtPrediction: oddsDiagnostics.oddsAtPrediction }, probabilityOutcome);
   const leakageGuard = prediction?.leakageGuard || buildLeakageGuard(match, prediction, {
     generatedAt: prediction?.generatedAt || null,
     cutoffAt: prediction?.cutoffAt || prediction?.generatedAt || null,
@@ -9592,6 +9614,9 @@ function buildSourceCoverage(store, todayKey) {
   ).length;
   const refereeStatusKnown = todayMatches.filter((match) => !!match?.refereeStatus).length;
   const lineupStatusKnown = todayMatches.filter((match) => !!match?.lineupStatus).length;
+  const lineupConfirmed = todayMatches.filter((match) => !!match?.lineupSummary?.confirmed).length;
+  const availabilityCovered = todayMatches.filter((match) => !!(match?.homeInjuries && match?.awayInjuries)).length;
+  const squadCovered = todayMatches.filter((match) => !!(match?.homeTeamProfile?.squad && match?.awayTeamProfile?.squad)).length;
   const providerTeamIdsCovered = todayMatches.filter((match) => !!(match?.homeTeamId && match?.awayTeamId)).length;
   const stableTeamIdentityCovered = todayMatches.filter((match) =>
     !!(match?.teamIdentity?.home?.key && match?.teamIdentity?.away?.key)
@@ -9632,6 +9657,40 @@ function buildSourceCoverage(store, todayKey) {
   const openfootballProfiles = Object.keys(store.openfootballProfiles || {}).length;
   const understatSnapshots = Object.keys(store.understatSnapshots || {}).length;
   const fbrefSnapshots = Object.keys(store.fbrefSnapshots || {}).length;
+  const coverageImprovementPlan = [
+    {
+      key: "provider_team_ids",
+      label: "Provider team-IDs",
+      coverage: Number((providerTeamIdsCovered / total).toFixed(2)),
+      target: 0.9,
+      status: providerTeamIdsCovered / total >= 0.9 ? "ok" : "needs_mapping",
+      action: "Vul REEP_TEAM_MAP/football-data.org team mapping aan voor wedstrijden die uit naamfallback-bronnen komen.",
+    },
+    {
+      key: "lineups",
+      label: "Bevestigde opstellingen",
+      coverage: Number((lineupConfirmed / total).toFixed(2)),
+      target: 0.45,
+      status: lineupConfirmed / total >= 0.45 ? "ok" : "pre_match_pending",
+      action: "Blijf lineups vlak voor kickoff verversen; open lineups blijven confidence-penalty en faalsignaal.",
+    },
+    {
+      key: "referee_history",
+      label: "Historische scheidsprofielen",
+      coverage: Number((refereeCovered / total).toFixed(2)),
+      target: 0.65,
+      status: refereeCovered / total >= 0.65 ? "ok" : "needs_aliases",
+      action: "Breid referee aliasen en football-data.co.uk archieven per competitiefamilie uit.",
+    },
+    {
+      key: "availability",
+      label: "Blessures/schorsingen",
+      coverage: Number((availabilityCovered / total).toFixed(2)),
+      target: 0.75,
+      status: availabilityCovered / total >= 0.75 ? "ok" : "needs_source_depth",
+      action: "Gebruik Sofascore spelersstatus eerst, daarna Transfermarkt/football-data.org squad fallback met veilige team-id mapping.",
+    },
+  ];
   return {
     todayMatches: todayMatches.length,
     scoreCoverage: Number((scoreCovered / scoreRelevantTotal).toFixed(2)),
@@ -9651,6 +9710,9 @@ function buildSourceCoverage(store, todayKey) {
     refereeCoverage: Number((refereeCovered / total).toFixed(2)),
     refereeStatusCoverage: Number((refereeStatusKnown / total).toFixed(2)),
     lineupStatusCoverage: Number((lineupStatusKnown / total).toFixed(2)),
+    lineupConfirmedCoverage: Number((lineupConfirmed / total).toFixed(2)),
+    availabilityCoverage: Number((availabilityCovered / total).toFixed(2)),
+    squadCoverage: Number((squadCovered / total).toFixed(2)),
     providerTeamIdCoverage: Number((providerTeamIdsCovered / total).toFixed(2)),
     stableTeamIdentityCoverage: Number((stableTeamIdentityCovered / total).toFixed(2)),
     h2hCoverage: Number((h2hCovered / total).toFixed(2)),
@@ -9662,6 +9724,7 @@ function buildSourceCoverage(store, todayKey) {
     understatSnapshots,
     fbrefSnapshots,
     sourceBreakdown,
+    coverageImprovementPlan,
     backupSources: [
       {
         key: "sofascore",

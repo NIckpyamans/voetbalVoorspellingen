@@ -2,6 +2,8 @@
 
 Doel: elke voorspelling later exact kunnen reconstrueren, evalueren en gebruiken als trainingsdata zonder data leakage.
 
+De uitvoerbare Postgres DDL staat in `database/schema.sql`.
+
 ## Tabellen
 
 ### `matches`

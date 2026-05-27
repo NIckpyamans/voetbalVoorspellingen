@@ -8,6 +8,7 @@ Doel: ROI en CLV alleen berekenen op echte bookmaker odds die voor de wedstrijd 
 - De worker heeft nu een provider-adapter voor echte `odds_at_prediction`.
 - Zonder geconfigureerde provider registreert de worker bewust `not_configured`; er wordt geen nep-odds gevuld.
 - `roiStatus` en `clvStatus` voorkomen dat ontbrekende odds als meetbare performance worden gezien.
+- Als de provider `closingHome`, `closingDraw`, `closingAway` en `closingCapturedAt` meegeeft, berekent de evaluatie automatisch CLV op de gespeelde voorspelling.
 
 ## Vereiste velden
 
@@ -54,3 +55,14 @@ Ondersteunde voorbereidende env vars:
 - `{matchId}`
 
 Zonder provider blijft `oddsStatus` bewust `historical_market_profile_only` of `missing`, en `oddsProviderStatus` wordt `not_configured`.
+
+## Geaccepteerde closing-velden
+
+De provider mag closing odds direct in dezelfde response meesturen met een van deze namen:
+
+- `closingHome`, `closingDraw`, `closingAway`
+- `homeClosing`, `drawClosing`, `awayClosing`
+- `closeHome`, `closeDraw`, `closeAway`
+- `home_close`, `draw_close`, `away_close`
+
+Pre-match odds blijven alleen geldig als `capturedAt <= cutoffAt <= kickoff`. Closing odds worden opgeslagen voor evaluatie/CLV, maar worden niet als pre-match modelinput behandeld.

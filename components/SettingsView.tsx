@@ -138,7 +138,8 @@ const SettingsView: React.FC = () => {
   const snapshotCoverage = Number(backtestSummary?.leakageSummary?.snapshotCoverage || modelPerformance?.metricCoverage?.snapshots || 0);
   const providerTeamIdCoverage = Number(dataCompletenessAudit?.coverage?.providerTeamIds ?? sourceCoverage?.providerTeamIdCoverage ?? 0);
   const xgCoverage = Number(dataCompletenessAudit?.coverage?.xgShots ?? Math.max(Number(sourceCoverage?.understatCoverage || 0), Number(sourceCoverage?.fbrefCoverage || 0)));
-  const lineupCoverage = Number(dataCompletenessAudit?.coverage?.lineups || 0);
+  const lineupCoverage = Number(sourceCoverage?.lineupConfirmedCoverage ?? dataCompletenessAudit?.coverage?.lineups ?? 0);
+  const availabilityCoverage = Number(sourceCoverage?.availabilityCoverage ?? 0);
   const criticalAnomalies = Number(anomalyReport?.criticalCount || 0);
   const healthParts = [
     dataScore,
@@ -207,8 +208,8 @@ const SettingsView: React.FC = () => {
       title: "xG, lineups en referee dieper vullen",
       impact: "middel",
       effort: "middel",
-      status: xgCoverage >= 0.7 && lineupCoverage >= 0.5 ? "geborgd" : "open",
-      detail: `xG/shot dekking ${Math.round(xgCoverage * 100)}%, bevestigde lineups ${Math.round(lineupCoverage * 100)}%.`,
+      status: xgCoverage >= 0.7 && lineupCoverage >= 0.45 && availabilityCoverage >= 0.7 ? "geborgd" : "open",
+      detail: `xG/shot dekking ${Math.round(xgCoverage * 100)}%, bevestigde lineups ${Math.round(lineupCoverage * 100)}%, blessures/schorsingen ${Math.round(availabilityCoverage * 100)}%.`,
     },
     {
       title: "Database als bron van waarheid",
@@ -218,6 +219,42 @@ const SettingsView: React.FC = () => {
       detail: "De ledger is klaar; de volgende volwassenheidsstap is Postgres/Supabase met immutable snapshots en evaluaties.",
     },
   ];
+  const coveragePlan = Array.isArray(sourceCoverage?.coverageImprovementPlan)
+    ? sourceCoverage.coverageImprovementPlan
+    : [
+        {
+          key: "provider_team_ids",
+          label: "Provider team-IDs",
+          coverage: providerTeamIdCoverage,
+          target: 0.9,
+          status: providerTeamIdCoverage >= 0.9 ? "ok" : "needs_mapping",
+          action: "Vul REEP_TEAM_MAP/football-data.org team mapping aan voor wedstrijden uit naamfallback-bronnen.",
+        },
+        {
+          key: "lineups",
+          label: "Bevestigde opstellingen",
+          coverage: lineupCoverage,
+          target: 0.45,
+          status: lineupCoverage >= 0.45 ? "ok" : "pre_match_pending",
+          action: "Blijf lineups vlak voor kickoff verversen; open lineups blijven confidence-penalty.",
+        },
+        {
+          key: "referee_history",
+          label: "Historische scheidsprofielen",
+          coverage: Number(sourceCoverage?.refereeCoverage || 0),
+          target: 0.65,
+          status: Number(sourceCoverage?.refereeCoverage || 0) >= 0.65 ? "ok" : "needs_aliases",
+          action: "Breid referee aliasen en football-data.co.uk archieven per competitie uit.",
+        },
+        {
+          key: "availability",
+          label: "Blessures/schorsingen",
+          coverage: availabilityCoverage,
+          target: 0.75,
+          status: availabilityCoverage >= 0.75 ? "ok" : "needs_source_depth",
+          action: "Gebruik Sofascore spelersstatus eerst, daarna Transfermarkt/football-data.org fallback.",
+        },
+      ];
 
   return (
     <div className="max-w-5xl space-y-5">
@@ -303,6 +340,44 @@ const SettingsView: React.FC = () => {
           </div>
         </div>
       </div>
+
+      {coveragePlan.length > 0 && (
+        <div className="glass-card rounded-2xl border border-white/5 p-5">
+          <div className="flex items-start justify-between gap-3 mb-4">
+            <div>
+              <div className="text-[10px] font-black text-slate-400 uppercase">Dekkingsplan databronnen</div>
+              <div className="text-[11px] text-slate-500 mt-1">Lineups, scheidsrechters, team-ID's en beschikbaarheid met doelpercentage per bronlaag.</div>
+            </div>
+            <span className="text-[9px] font-black px-2.5 py-1 rounded-full bg-slate-900/80 text-slate-300">
+              {coveragePlan.filter((item: any) => item.status !== "ok").length} aandacht
+            </span>
+          </div>
+          <div className="grid md:grid-cols-2 gap-2">
+            {coveragePlan.map((item: any) => {
+              const coverage = Number(item.coverage || 0);
+              const target = Number(item.target || 0);
+              return (
+                <div key={item.key || item.label} className="rounded-xl border border-white/5 bg-slate-950/30 px-3 py-3">
+                  <div className="flex items-center justify-between gap-3">
+                    <div className="text-[12px] font-black text-white">{item.label || item.key}</div>
+                    <div className={coverage >= target ? "text-[12px] font-black text-emerald-300" : "text-[12px] font-black text-amber-300"}>
+                      {Math.round(coverage * 100)}%
+                    </div>
+                  </div>
+                  <div className="mt-2 h-1.5 rounded-full bg-slate-950/80 overflow-hidden">
+                    <div
+                      className={coverage >= target ? "h-full bg-emerald-400" : "h-full bg-amber-400"}
+                      style={{ width: `${Math.max(4, Math.min(100, coverage * 100))}%` }}
+                    />
+                  </div>
+                  <div className="mt-2 text-[10px] text-slate-400 leading-relaxed">{item.action}</div>
+                  <div className="mt-2 text-[8px] font-black uppercase text-slate-500">doel {Math.round(target * 100)}% - {item.status}</div>
+                </div>
+              );
+            })}
+          </div>
+        </div>
+      )}
 
       <div className="glass-card rounded-2xl border border-white/5 p-5 space-y-3">
         <div className="text-[10px] font-black text-slate-400 uppercase">App informatie</div>

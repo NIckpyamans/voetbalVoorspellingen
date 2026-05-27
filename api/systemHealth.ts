@@ -142,6 +142,9 @@ export async function buildSystemHealth(mode = "health") {
     worker: {
       lastRun,
       ageMinutes,
+      maxFreshAgeMinutes: MAX_FRESH_AGE_MINUTES,
+      freshnessStatus: checks.workerFresh ? "fresh" : "stale",
+      refreshCadence: "live-score elke 2 uur, volledige worker 2x per dag",
       workerVersion: meta?.workerVersion || "unknown",
       sourceBranch: meta?.sourceBranch || remoteMeta.branch || process.env.DATA_BRANCH || process.env.VERCEL_GIT_COMMIT_REF || "unknown",
     },

@@ -6,6 +6,7 @@ import path from "path";
 const ROOT = process.cwd();
 const DATA_FILE = path.join(ROOT, "server_data.json");
 const FINDINGS_FILE = path.join(ROOT, "monitor", "daily-findings.json");
+const MAX_WORKER_AGE_MINUTES = Number(process.env.HEALTH_MAX_WORKER_AGE_MINUTES || 180);
 
 const FILES = {
   app: path.join(ROOT, "App.tsx"),
@@ -118,7 +119,7 @@ function collectDataChecks() {
 
   if (!lastRun) {
     pushIssue(issues, "worker_last_run_missing", "high", "Worker heeft geen lastRun opgeslagen.");
-  } else if (ageMinutes != null && ageMinutes > 90) {
+  } else if (ageMinutes != null && ageMinutes > MAX_WORKER_AGE_MINUTES) {
     pushIssue(issues, "worker_stale", "high", `server_data.json is ${ageMinutes} minuten oud.`);
   }
 
@@ -194,6 +195,7 @@ function collectDataChecks() {
       dataPresent: true,
       lastRun,
       ageMinutes,
+      maxWorkerAgeMinutes: MAX_WORKER_AGE_MINUTES,
       todayMatches: todayMatches.length,
       liveMatches: liveMatches.length,
       liveWithoutMinute: liveWithoutMinute.length,

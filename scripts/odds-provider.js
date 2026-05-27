@@ -32,14 +32,21 @@ function pickFlatOdds(node) {
   const home = numberOrNull(odds.home ?? odds.homeOdds ?? odds.oddsHome ?? odds.choice1?.value);
   const draw = numberOrNull(odds.draw ?? odds.drawOdds ?? odds.oddsDraw ?? odds.choiceX?.value);
   const away = numberOrNull(odds.away ?? odds.awayOdds ?? odds.oddsAway ?? odds.choice2?.value);
+  const closingHome = numberOrNull(odds.closingHome ?? odds.homeClosing ?? odds.closeHome ?? odds.home_close);
+  const closingDraw = numberOrNull(odds.closingDraw ?? odds.drawClosing ?? odds.closeDraw ?? odds.draw_close);
+  const closingAway = numberOrNull(odds.closingAway ?? odds.awayClosing ?? odds.closeAway ?? odds.away_close);
   if (!home && !draw && !away) return null;
   return {
     home,
     draw,
     away,
+    closingHome,
+    closingDraw,
+    closingAway,
     bookmaker: odds.bookmaker || odds.source || node.bookmaker || node.source || null,
     market: odds.market || node.market || "1X2",
     capturedAt: odds.capturedAt || odds.timestamp || node.capturedAt || node.timestamp || null,
+    closingCapturedAt: odds.closingCapturedAt || odds.closingTimestamp || node.closingCapturedAt || node.closingTimestamp || null,
   };
 }
 
@@ -115,7 +122,12 @@ export function normalizeOddsSnapshot(raw, match, options = {}) {
       draw: snapshot.draw,
       away: snapshot.away,
       capturedAt,
+      closingHome: snapshot.closingHome,
+      closingDraw: snapshot.closingDraw,
+      closingAway: snapshot.closingAway,
+      closingCapturedAt: snapshot.closingCapturedAt || null,
     },
+    closingStatus: [snapshot.closingHome, snapshot.closingDraw, snapshot.closingAway].filter(Boolean).length === 3 ? "available" : "missing",
     reason: validCount === 3 ? null : "Niet alle 1X2 oddsvelden waren beschikbaar.",
   };
 }
