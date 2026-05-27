@@ -72,9 +72,19 @@ function getFileInfo(relativePath: string) {
 
 function sourceStatus(meta: any) {
   const scout = meta?.dataScout || {};
-  const sources = scout?.sources || {};
-  return Object.entries(sources).map(([name, value]: [string, any]) => ({
-    name,
+  const sources = scout?.sources || meta?.sourceCoverage?.backupSources || {};
+  const normalizedSources = Array.isArray(sources)
+    ? sources.map((value: any, index: number) => ({
+        name: value?.name || value?.key || `source-${index + 1}`,
+        ...value,
+      }))
+    : Object.entries(sources).map(([name, value]: [string, any]) => ({
+        name,
+        ...value,
+      }));
+
+  return normalizedSources.map((value: any) => ({
+    name: value?.name || value?.key || "unknown",
     status: value?.status || "unknown",
     note: value?.note || null,
     lastOk: value?.lastOk || null,
