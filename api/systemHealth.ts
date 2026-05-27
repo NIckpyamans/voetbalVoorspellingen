@@ -1,5 +1,6 @@
 import fs from "fs";
 import path from "path";
+import { fetchDayData, fetchMetaData, fetchStandingsData } from "./_dataSource.js";
 import { addDaysToDateKey, todayAmsterdamKey } from "../shared/date.js";
 import { createLogger, getErrorDetails } from "../shared/logger.js";
 import { setCorsHeaders } from "../shared/cors.js";
@@ -19,12 +20,40 @@ function readJsonSafe(relativePath: string, fallback: any) {
   }
 }
 
-function countDay(dateKey: string) {
+function readLocalDay(dateKey: string) {
   const day = readJsonSafe(path.join("data", "days", `${dateKey}.json`), null);
-  if (Array.isArray(day?.matches)) return day.matches.length;
+  if (Array.isArray(day?.matches)) return day;
 
   const store = readJsonSafe("server_data.json", null);
-  return Array.isArray(store?.matches?.[dateKey]) ? store.matches[dateKey].length : 0;
+  return Array.isArray(store?.matches?.[dateKey]) ? { matches: store.matches[dateKey] } : null;
+}
+
+function countMatches(day: any) {
+  return Array.isArray(day?.matches) ? day.matches.length : 0;
+}
+
+async function fetchHealthJson(label: string, loader: () => Promise<any>, fallback: any) {
+  try {
+    const result = await loader();
+    return {
+      available: true,
+      data: result?.data ?? fallback,
+      branch: result?.branch || null,
+      sourceUrl: result?.sourceUrl || null,
+      cached: !!result?.cached,
+      error: null,
+    };
+  } catch (error) {
+    logger.warning("health_repo_fetch_failed", { label, error: getErrorDetails(error) });
+    return {
+      available: false,
+      data: fallback,
+      branch: null,
+      sourceUrl: null,
+      cached: false,
+      error: getErrorDetails(error),
+    };
+  }
 }
 
 function getFileInfo(relativePath: string) {
@@ -52,13 +81,20 @@ function sourceStatus(meta: any) {
   }));
 }
 
-export function buildSystemHealth(mode = "health") {
+export async function buildSystemHealth(mode = "health") {
   const started = Date.now();
   const today = todayAmsterdamKey();
   const yesterday = addDaysToDateKey(today, -1);
   const tomorrow = addDaysToDateKey(today, 1);
-  const meta = readJsonSafe(path.join("data", "meta.json"), {});
-  const standings = readJsonSafe(path.join("data", "standings.json"), {});
+  const [remoteMeta, remoteStandings, remoteYesterday, remoteToday, remoteTomorrow] = await Promise.all([
+    fetchHealthJson("meta", fetchMetaData, {}),
+    fetchHealthJson("standings", fetchStandingsData, {}),
+    fetchHealthJson(`day:${yesterday}`, () => fetchDayData(yesterday), null),
+    fetchHealthJson(`day:${today}`, () => fetchDayData(today), null),
+    fetchHealthJson(`day:${tomorrow}`, () => fetchDayData(tomorrow), null),
+  ]);
+  const meta = remoteMeta.available ? remoteMeta.data : readJsonSafe(path.join("data", "meta.json"), {});
+  const standings = remoteStandings.available ? remoteStandings.data : readJsonSafe(path.join("data", "standings.json"), {});
   const findings = readJsonSafe(path.join("monitor", "daily-findings.json"), { days: {} });
   const serverDataInfo = getFileInfo("server_data.json");
   const metaInfo = getFileInfo(path.join("data", "meta.json"));
@@ -67,14 +103,14 @@ export function buildSystemHealth(mode = "health") {
   const lastRun = Number(meta?.lastRun || 0);
   const ageMinutes = lastRun ? Math.round((Date.now() - lastRun) / 60_000) : null;
   const counts = {
-    yesterday: countDay(yesterday),
-    today: countDay(today),
-    tomorrow: countDay(tomorrow),
+    yesterday: countMatches(remoteYesterday.available ? remoteYesterday.data : readLocalDay(yesterday)),
+    today: countMatches(remoteToday.available ? remoteToday.data : readLocalDay(today)),
+    tomorrow: countMatches(remoteTomorrow.available ? remoteTomorrow.data : readLocalDay(tomorrow)),
   };
 
   const checks = {
-    storage: serverDataInfo.exists || metaInfo.exists,
-    splitData: metaInfo.exists && standingsInfo.exists,
+    storage: serverDataInfo.exists || metaInfo.exists || remoteMeta.available,
+    splitData: remoteMeta.available && remoteStandings.available && (remoteYesterday.available || remoteToday.available || remoteTomorrow.available),
     workerFresh: !!lastRun && ageMinutes != null && ageMinutes <= MAX_FRESH_AGE_MINUTES,
     todayOrTomorrowData: counts.today > 0 || counts.tomorrow > 0,
     standings: Object.keys(standings?.standings || {}).length > 0,
@@ -97,7 +133,7 @@ export function buildSystemHealth(mode = "health") {
       lastRun,
       ageMinutes,
       workerVersion: meta?.workerVersion || "unknown",
-      sourceBranch: meta?.sourceBranch || process.env.DATA_BRANCH || process.env.VERCEL_GIT_COMMIT_REF || "unknown",
+      sourceBranch: meta?.sourceBranch || remoteMeta.branch || process.env.DATA_BRANCH || process.env.VERCEL_GIT_COMMIT_REF || "unknown",
     },
     data: {
       dates: { yesterday, today, tomorrow },
@@ -118,6 +154,15 @@ export function buildSystemHealth(mode = "health") {
       serverData: serverDataInfo,
       meta: metaInfo,
       standings: standingsInfo,
+      repository: {
+        meta: { available: remoteMeta.available, branch: remoteMeta.branch, cached: remoteMeta.cached, sourceUrl: remoteMeta.sourceUrl },
+        standings: { available: remoteStandings.available, branch: remoteStandings.branch, cached: remoteStandings.cached, sourceUrl: remoteStandings.sourceUrl },
+        days: {
+          yesterday: { available: remoteYesterday.available, branch: remoteYesterday.branch, cached: remoteYesterday.cached },
+          today: { available: remoteToday.available, branch: remoteToday.branch, cached: remoteToday.cached },
+          tomorrow: { available: remoteTomorrow.available, branch: remoteTomorrow.branch, cached: remoteTomorrow.cached },
+        },
+      },
     },
     externalSources: sourceStatus(meta),
     checks,
@@ -131,12 +176,13 @@ export function buildSystemHealth(mode = "health") {
   };
 }
 
-export function sendSystemHealth(_req: any, res: any, mode = "health") {
+export async function sendSystemHealth(_req: any, res: any, mode = "health") {
   try {
-    const payload = buildSystemHealth(mode);
+    const payload = await buildSystemHealth(mode);
     setCorsHeaders(_req, res);
     res.setHeader("Cache-Control", mode === "health" ? "no-store" : "s-maxage=60, stale-while-revalidate=60");
-    return res.status(payload.ok ? 200 : 503).json(payload);
+    const statusCode = payload.ok || mode === "health" || mode === "status" ? 200 : 503;
+    return res.status(statusCode).json(payload);
   } catch (error) {
     logger.error("system_health_failed", { error: getErrorDetails(error) });
     return res.status(500).json({
