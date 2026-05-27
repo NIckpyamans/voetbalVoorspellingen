@@ -43,6 +43,8 @@ const Header: React.FC<HeaderProps> = ({ view, currentView, onViewChange }) => {
           ] as const).map(({ key, label, icon }) => (
             <button key={key}
               onClick={() => onViewChange(key)}
+              aria-label={label}
+              title={label}
               className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-[10px] font-black uppercase tracking-wider transition
                 ${activeView === key
                   ? 'bg-blue-600/20 text-blue-300 border border-blue-500/30'
@@ -58,6 +60,8 @@ const Header: React.FC<HeaderProps> = ({ view, currentView, onViewChange }) => {
         {/* Instellingen knop */}
         <button
           onClick={() => onViewChange('settings')}
+          aria-label="Instellingen"
+          title="Instellingen"
           className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-[10px] font-black uppercase transition
             ${activeView === 'settings'
               ? 'bg-slate-600/40 text-white border border-white/20'

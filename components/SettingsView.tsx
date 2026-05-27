@@ -31,6 +31,48 @@ const SettingsView: React.FC = () => {
   const [settingsWarning, setSettingsWarning] = useState<string | null>(null);
 
   useEffect(() => {
+    const fetchSettingsMetadata = async () => {
+      try {
+        const response = await fetch(`/api/matches?date=${todayAmsterdamKey()}`);
+        const contentType = response.headers.get("content-type") || "";
+        if (!response.ok || !contentType.includes("json")) {
+          throw new Error(`Instellingen ophalen mislukt (${response.status})`);
+        }
+        const data = await response.json().catch(() => ({}));
+        if (data.ok === false) throw new Error(data.error || `Instellingen ophalen mislukt (${response.status})`);
+        return data;
+      } catch {
+        const fallback = await fetch(`/data/meta.json?t=${Date.now()}`, { cache: "no-store" });
+        const data = await fallback.json().catch(() => ({}));
+        if (!fallback.ok || !data?.workerVersion) {
+          throw new Error(`Lokale metadata ophalen mislukt (${fallback.status})`);
+        }
+        return { ...data, sourceBranch: "lokale data-snapshot" };
+      }
+    };
+
+    const applyMetadata = (data: any) => {
+      if (data.lastRun) setLastWorker(new Date(data.lastRun).toLocaleString("nl-NL"));
+      if (data.workerVersion) setWorkerVersion(data.workerVersion);
+      if (data.sourceBranch) setSourceBranch(data.sourceBranch);
+      if (data.reviewCount != null) setReviewCount(Number(data.reviewCount || 0));
+      if (data.teamLearningCount != null) setTeamLearningCount(Number(data.teamLearningCount || 0));
+      if (Array.isArray(data.aiAdvice)) setAiAdvice(data.aiAdvice);
+      if (data.biweeklyDigest) setBiweeklyDigest(data.biweeklyDigest);
+      if (data.rufloReport) setRufloReport(data.rufloReport);
+      if (data.featureDiagnostics) setFeatureDiagnostics(data.featureDiagnostics);
+      if (data.sourceCoverage) setSourceCoverage(data.sourceCoverage);
+      if (data.dataScout) setDataScout(data.dataScout);
+      if (data.dataCompletenessAudit) setDataCompletenessAudit(data.dataCompletenessAudit);
+      if (data.oddsIntegrationReadiness) setOddsIntegrationReadiness(data.oddsIntegrationReadiness);
+      if (data.modelPerformance) setModelPerformance(data.modelPerformance);
+      if (data.backtestSummary) setBacktestSummary(data.backtestSummary);
+      if (data.anomalyReport) setAnomalyReport(data.anomalyReport);
+      if (data.competitionArchiveIndex) setCompetitionArchiveIndex(data.competitionArchiveIndex);
+      if (data.teamSquadSummary) setTeamSquadSummary(data.teamSquadSummary);
+      setAnalysisEngine("template");
+    };
+
     try {
       setGlassTransparency(Math.min(80, Math.max(15, Number(localStorage.getItem("footyai_glass_transparency") || 46))));
     } catch (error) {
@@ -52,33 +94,8 @@ const SettingsView: React.FC = () => {
     }
     setManualAdvice(localStorage.getItem("footypredict_manual_ai_advice") || "");
 
-    fetch(`/api/matches?date=${todayAmsterdamKey()}`)
-      .then(async (response) => {
-        const data = await response.json().catch(() => ({}));
-        if (!response.ok || data.ok === false) throw new Error(data.error || `Instellingen ophalen mislukt (${response.status})`);
-        return data;
-      })
-      .then((data) => {
-        if (data.lastRun) setLastWorker(new Date(data.lastRun).toLocaleString("nl-NL"));
-        if (data.workerVersion) setWorkerVersion(data.workerVersion);
-        if (data.sourceBranch) setSourceBranch(data.sourceBranch);
-        if (data.reviewCount != null) setReviewCount(Number(data.reviewCount || 0));
-        if (data.teamLearningCount != null) setTeamLearningCount(Number(data.teamLearningCount || 0));
-        if (Array.isArray(data.aiAdvice)) setAiAdvice(data.aiAdvice);
-        if (data.biweeklyDigest) setBiweeklyDigest(data.biweeklyDigest);
-        if (data.rufloReport) setRufloReport(data.rufloReport);
-        if (data.featureDiagnostics) setFeatureDiagnostics(data.featureDiagnostics);
-        if (data.sourceCoverage) setSourceCoverage(data.sourceCoverage);
-        if (data.dataScout) setDataScout(data.dataScout);
-        if (data.dataCompletenessAudit) setDataCompletenessAudit(data.dataCompletenessAudit);
-        if (data.oddsIntegrationReadiness) setOddsIntegrationReadiness(data.oddsIntegrationReadiness);
-        if (data.modelPerformance) setModelPerformance(data.modelPerformance);
-        if (data.backtestSummary) setBacktestSummary(data.backtestSummary);
-        if (data.anomalyReport) setAnomalyReport(data.anomalyReport);
-        if (data.competitionArchiveIndex) setCompetitionArchiveIndex(data.competitionArchiveIndex);
-        if (data.teamSquadSummary) setTeamSquadSummary(data.teamSquadSummary);
-        setAnalysisEngine("template");
-      })
+    fetchSettingsMetadata()
+      .then(applyMetadata)
       .catch((error) => {
         logClientWarning("settings_metadata_fetch_failed", { error });
         setSettingsWarning("Instellingen konden de actuele workerstatus niet ophalen. Laatst bekende browserdata blijft zichtbaar.");
@@ -113,9 +130,97 @@ const SettingsView: React.FC = () => {
   const bundleUpdatedAt = biweeklyDigest?.generatedAt
     ? new Date(biweeklyDigest.generatedAt).toLocaleString("nl-NL")
     : null;
+  const dataScore = Number(dataCompletenessAudit?.averageScore || 0);
+  const timestampCoverage = Number(dataCompletenessAudit?.sourceTimestampCoverage || 0);
+  const calibrationError = Number(modelPerformance?.calibrationSummary?.averageAbsoluteError || 0);
+  const oddsProviderConfigured = !!oddsIntegrationReadiness?.providerConfigured;
+  const liveOddsCoverage = Number(oddsIntegrationReadiness?.currentCoverage?.predictions || 0);
+  const snapshotCoverage = Number(backtestSummary?.leakageSummary?.snapshotCoverage || modelPerformance?.metricCoverage?.snapshots || 0);
+  const providerTeamIdCoverage = Number(dataCompletenessAudit?.coverage?.providerTeamIds ?? sourceCoverage?.providerTeamIdCoverage ?? 0);
+  const xgCoverage = Number(dataCompletenessAudit?.coverage?.xgShots ?? Math.max(Number(sourceCoverage?.understatCoverage || 0), Number(sourceCoverage?.fbrefCoverage || 0)));
+  const lineupCoverage = Number(dataCompletenessAudit?.coverage?.lineups || 0);
+  const criticalAnomalies = Number(anomalyReport?.criticalCount || 0);
+  const healthParts = [
+    dataScore,
+    timestampCoverage,
+    calibrationError ? Math.max(0, 1 - calibrationError / 0.28) : 0.45,
+    oddsProviderConfigured ? Math.max(0.55, liveOddsCoverage) : 0,
+    Math.max(snapshotCoverage, 0.2),
+    criticalAnomalies > 0 ? 0.2 : 1,
+  ];
+  const professionalScore = Math.round((healthParts.reduce((sum, value) => sum + value, 0) / healthParts.length) * 100);
+  const professionalLevel =
+    professionalScore >= 82
+      ? "productierijp"
+      : professionalScore >= 68
+        ? "serieus fundament"
+        : professionalScore >= 50
+          ? "professionaliseren"
+          : "hoog risico";
+  const healthSignals = [
+    {
+      label: "Datacompleetheid",
+      value: `${Math.round(dataScore * 100)}%`,
+      tone: dataScore >= 0.75 ? "good" : dataScore >= 0.58 ? "warn" : "bad",
+    },
+    {
+      label: "Source timestamps",
+      value: `${Math.round(timestampCoverage * 100)}%`,
+      tone: timestampCoverage >= 0.9 ? "good" : timestampCoverage >= 0.65 ? "warn" : "bad",
+    },
+    {
+      label: "Kalibratiefout",
+      value: calibrationError ? calibrationError.toFixed(3) : "onbekend",
+      tone: calibrationError && calibrationError <= 0.08 ? "good" : calibrationError <= 0.14 ? "warn" : "bad",
+    },
+    {
+      label: "Echte odds",
+      value: oddsProviderConfigured ? `${Math.round(liveOddsCoverage * 100)}%` : "provider mist",
+      tone: oddsProviderConfigured && liveOddsCoverage >= 0.5 ? "good" : "bad",
+    },
+  ];
+  const improvementQueue = [
+    {
+      title: "Echte odds + closing odds koppelen",
+      impact: "hoog",
+      effort: "middel",
+      status: oddsProviderConfigured ? "geborgd" : "open",
+      detail: oddsProviderConfigured
+        ? `Provider actief, huidige pred-odds dekking ${Math.round(liveOddsCoverage * 100)}%.`
+        : "ROI, CLV en value-bets blijven niet professioneel meetbaar zonder pre-match en closing odds.",
+    },
+    {
+      title: "Provider team-ID dekking verhogen",
+      impact: "hoog",
+      effort: "middel",
+      status: providerTeamIdCoverage >= 0.85 ? "geborgd" : "open",
+      detail: `Dekking staat op ${Math.round(providerTeamIdCoverage * 100)}%; naamfallback werkt, maar is kwetsbaarder bij clubs met aliassen.`,
+    },
+    {
+      title: "Snapshot-backed training versnellen",
+      impact: "hoog",
+      effort: "laag",
+      status: snapshotCoverage >= 0.6 ? "geborgd" : "open",
+      detail: `Snapshotdekking in reviews staat op ${Math.round(snapshotCoverage * 100)}%; nieuwe voorspellingen moeten eerst eindigen voor lekvrije trainingsrijen.`,
+    },
+    {
+      title: "xG, lineups en referee dieper vullen",
+      impact: "middel",
+      effort: "middel",
+      status: xgCoverage >= 0.7 && lineupCoverage >= 0.5 ? "geborgd" : "open",
+      detail: `xG/shot dekking ${Math.round(xgCoverage * 100)}%, bevestigde lineups ${Math.round(lineupCoverage * 100)}%.`,
+    },
+    {
+      title: "Database als bron van waarheid",
+      impact: "hoog",
+      effort: "hoog",
+      status: "open",
+      detail: "De ledger is klaar; de volgende volwassenheidsstap is Postgres/Supabase met immutable snapshots en evaluaties.",
+    },
+  ];
 
   return (
-    <div className="max-w-3xl space-y-5">
+    <div className="max-w-5xl space-y-5">
       <div>
         <h2 className="text-2xl font-black text-white uppercase tracking-tight">Instellingen</h2>
         <p className="text-slate-500 text-xs mt-0.5">
@@ -126,6 +231,77 @@ const SettingsView: React.FC = () => {
             {settingsWarning}
           </div>
         )}
+      </div>
+
+      <div className="grid xl:grid-cols-[0.9fr_1.1fr] gap-4">
+        <div className="glass-card rounded-2xl border border-cyan-500/10 p-5 bg-cyan-950/5">
+          <div className="flex items-start justify-between gap-4">
+            <div>
+              <div className="text-[10px] font-black text-cyan-300 uppercase">Professionele systeemscore</div>
+              <div className="text-[11px] text-slate-400 mt-1">Gebaseerd op data, kalibratie, odds, snapshots en datarisco's.</div>
+            </div>
+            <span className={`text-[9px] font-black px-2.5 py-1 rounded-full ${
+              professionalScore >= 68 ? "bg-emerald-900/30 text-emerald-300" : professionalScore >= 50 ? "bg-amber-900/30 text-amber-300" : "bg-red-900/30 text-red-300"
+            }`}>
+              {professionalLevel}
+            </span>
+          </div>
+          <div className="mt-5 flex items-end gap-3">
+            <div className="text-5xl font-black text-white leading-none">{professionalScore}</div>
+            <div className="pb-1 text-[11px] font-black text-slate-400 uppercase">/ 100</div>
+          </div>
+          <div className="mt-4 h-2 rounded-full bg-slate-950/70 overflow-hidden">
+            <div
+              className={`h-full rounded-full ${professionalScore >= 68 ? "bg-emerald-400" : professionalScore >= 50 ? "bg-amber-400" : "bg-red-400"}`}
+              style={{ width: `${Math.max(4, Math.min(100, professionalScore))}%` }}
+            />
+          </div>
+          <div className="grid grid-cols-2 gap-2 mt-4">
+            {healthSignals.map((signal) => (
+              <div key={signal.label} className="rounded-xl border border-white/5 bg-slate-950/35 px-3 py-2">
+                <div className="text-[8px] font-black text-slate-500 uppercase">{signal.label}</div>
+                <div className={`text-[14px] font-black mt-1 ${
+                  signal.tone === "good" ? "text-emerald-300" : signal.tone === "warn" ? "text-amber-300" : "text-red-300"
+                }`}>
+                  {signal.value}
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+
+        <div className="glass-card rounded-2xl border border-white/5 p-5">
+          <div className="flex items-start justify-between gap-3 mb-4">
+            <div>
+              <div className="text-[10px] font-black text-slate-400 uppercase">Wat nu beter kan</div>
+              <div className="text-[11px] text-slate-500 mt-1">Prioriteiten uit de laatste professionele audit, gesorteerd op waarde voor betrouwbaarheid.</div>
+            </div>
+            <span className="text-[9px] font-black px-2.5 py-1 rounded-full bg-slate-900/80 text-slate-300">
+              {improvementQueue.filter((item) => item.status === "open").length} open
+            </span>
+          </div>
+          <div className="space-y-2">
+            {improvementQueue.map((item) => (
+              <div key={item.title} className="rounded-xl border border-white/5 bg-slate-950/30 px-3 py-3">
+                <div className="flex items-start justify-between gap-3">
+                  <div className="min-w-0">
+                    <div className="text-[12px] font-black text-white">{item.title}</div>
+                    <div className="text-[10px] text-slate-400 mt-1 leading-relaxed">{item.detail}</div>
+                  </div>
+                  <span className={`shrink-0 text-[8px] font-black px-2 py-0.5 rounded-full ${
+                    item.status === "geborgd" ? "bg-emerald-900/30 text-emerald-300" : "bg-amber-900/30 text-amber-300"
+                  }`}>
+                    {item.status}
+                  </span>
+                </div>
+                <div className="mt-2 flex flex-wrap gap-2 text-[8px] font-black uppercase">
+                  <span className="rounded-full bg-white/5 px-2 py-0.5 text-slate-400">impact {item.impact}</span>
+                  <span className="rounded-full bg-white/5 px-2 py-0.5 text-slate-400">moeite {item.effort}</span>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
       </div>
 
       <div className="glass-card rounded-2xl border border-white/5 p-5 space-y-3">

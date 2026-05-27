@@ -246,6 +246,100 @@ function writeCache(dateISO: string, matches: Match[], predictions: Record<strin
   } catch {}
 }
 
+async function fetchJsonEndpoint(url: string, signal?: AbortSignal) {
+  const response = await fetch(url, { signal, cache: "no-store" });
+  if (!response.ok) throw new Error(`API ${response.status}`);
+  const contentType = response.headers.get("content-type") || "";
+  if (!contentType.includes("json")) {
+    const preview = (await response.text()).slice(0, 60).replace(/\s+/g, " ");
+    throw new Error(`Geen JSON-response voor ${url}: ${preview}`);
+  }
+  return response.json();
+}
+
+async function fetchStaticDayData(dateISO: string, signal?: AbortSignal) {
+  try {
+    const response = await fetch(`/data/days/${dateISO}.json?t=${Date.now()}`, { signal, cache: "no-store" });
+    if (!response.ok) return null;
+    const contentType = response.headers.get("content-type") || "";
+    if (!contentType.includes("json")) return null;
+    return response.json();
+  } catch {
+    return null;
+  }
+}
+
+function buildMatchesUpdateFromPayload(
+  rawMatches: any[],
+  rawPredictions: any[],
+  lastRun: number | null
+): MatchesUpdate {
+  if (rawMatches.length === 0 && rawPredictions.length === 0) {
+    return { matches: [], predictions: {}, lastRun, workerNeeded: true };
+  }
+
+  const mappedMatches = rawMatches.map(mapRawMatch);
+  const { matches, idRedirects } = dedupeMatchesForDay(mappedMatches);
+  let predictionMap: Record<string, Prediction> = {};
+
+  for (const prediction of rawPredictions) {
+    if (prediction.matchId) {
+      predictionMap[prediction.matchId] = prediction;
+    }
+  }
+
+  for (const rawMatch of rawMatches) {
+    if (!rawMatch.id) continue;
+
+    if (!predictionMap[rawMatch.id]) {
+      predictionMap[rawMatch.id] = {} as Prediction;
+    }
+
+    predictionMap[rawMatch.id] = {
+      ...predictionMap[rawMatch.id],
+      matchId: rawMatch.id,
+
+      ...(rawMatch.h2h ? { h2h: rawMatch.h2h } : {}),
+      ...(rawMatch.h2hStatus ? { h2hStatus: rawMatch.h2hStatus } : {}),
+      ...(rawMatch.aggregate ? { aggregate: rawMatch.aggregate } : {}),
+      ...(rawMatch.context ? { context: rawMatch.context } : {}),
+      ...(rawMatch.homePos != null ? { homePos: rawMatch.homePos } : {}),
+      ...(rawMatch.awayPos != null ? { awayPos: rawMatch.awayPos } : {}),
+      ...(rawMatch.matchImportance != null ? { matchImportance: rawMatch.matchImportance } : {}),
+      ...(rawMatch.homeRestDays != null ? { homeRestDays: rawMatch.homeRestDays } : {}),
+      ...(rawMatch.awayRestDays != null ? { awayRestDays: rawMatch.awayRestDays } : {}),
+      ...(rawMatch.weather ? { weather: rawMatch.weather } : {}),
+      ...(rawMatch.lineupSummary ? { lineupSummary: rawMatch.lineupSummary } : {}),
+      ...(rawMatch.modelEdges ? { modelEdges: rawMatch.modelEdges } : {}),
+      ...(rawMatch.homeClubElo != null ? { homeClubElo: rawMatch.homeClubElo } : {}),
+      ...(rawMatch.awayClubElo != null ? { awayClubElo: rawMatch.awayClubElo } : {}),
+      ...(rawMatch.homeTeamProfile ? { homeTeamProfile: rawMatch.homeTeamProfile } : {}),
+      ...(rawMatch.awayTeamProfile ? { awayTeamProfile: rawMatch.awayTeamProfile } : {}),
+      ...(rawMatch.featureVector ? { featureVector: rawMatch.featureVector } : {}),
+      ...(rawMatch.learningSummary ? { learningSummary: rawMatch.learningSummary } : {}),
+      ...(rawMatch.marketCalibration ? { marketCalibration: rawMatch.marketCalibration } : {}),
+      ...(rawMatch.review ? { review: rawMatch.review } : {}),
+      ...(rawMatch.ensembleMeta ? { ensembleMeta: rawMatch.ensembleMeta } : {}),
+      ...(rawMatch.monteCarlo ? { monteCarlo: rawMatch.monteCarlo } : {}),
+      ...(rawMatch.homeForm ? { homeForm: rawMatch.homeForm } : {}),
+      ...(rawMatch.awayForm ? { awayForm: rawMatch.awayForm } : {}),
+      ...(rawMatch.bestBetRank != null ? { bestBetRank: rawMatch.bestBetRank } : {}),
+      ...(rawMatch.topConfidencePick != null ? { topConfidencePick: rawMatch.topConfidencePick } : {}),
+      ...(rawMatch.topExactScorePick != null ? { topExactScorePick: rawMatch.topExactScorePick } : {}),
+      ...(rawMatch.exactScoreConfidence != null ? { exactScoreConfidence: rawMatch.exactScoreConfidence } : {}),
+      ...(rawMatch.exactScoreReasons ? { exactScoreReasons: rawMatch.exactScoreReasons } : {}),
+    };
+  }
+
+  predictionMap = dedupePredictionMap(predictionMap, idRedirects);
+  return {
+    matches,
+    predictions: predictionMap,
+    lastRun,
+    workerNeeded: false,
+  };
+}
+
 // ============================================================================
 // MATCH MAPPING FUNCTIE - MET ALLE VELDEN
 // ============================================================================
@@ -438,10 +532,7 @@ export async function fetchMatchesAndPredictions(
   if (cached) return { ...cached, workerNeeded: false };
 
   try {
-    // Fetch matches
-    const res = await fetch(`/api/matches?date=${dateISO}`, { signal, cache: "no-store" });
-    if (!res.ok) throw new Error(`API ${res.status}`);
-    const json = await res.json();
+    const json = await fetchJsonEndpoint(`/api/matches?date=${dateISO}`, signal);
     if (json?.ok === false) {
       throw new Error(json.error || "Wedstrijddata tijdelijk niet beschikbaar");
     }
@@ -449,91 +540,29 @@ export async function fetchMatchesAndPredictions(
     const lastRun: number | null = json.lastRun || null;
     const rawMatches: any[] = json.matches || json.events || [];
 
-    // Fetch predictions
-    const predRes = await fetch(`/api/predict?date=${dateISO}`, { signal, cache: "no-store" });
-    const predJson = predRes.ok ? await predRes.json() : { predictions: [] };
+    let predJson: any = { predictions: [] };
+    try {
+      predJson = await fetchJsonEndpoint(`/api/predict?date=${dateISO}`, signal);
+    } catch {
+      predJson = { predictions: [] };
+    }
     if (predJson?.ok === false) {
       console.warn("[matchService] predict endpoint gaf een fout terug", predJson.error || predJson);
     }
     const rawPredictions: any[] = predJson.predictions || [];
-
-    // Als er geen data is
-    if (rawMatches.length === 0 && rawPredictions.length === 0) {
-      return { matches: [], predictions: {}, lastRun, workerNeeded: true };
-    }
-
-    // Map matches met ALLE velden
-    const mappedMatches = rawMatches.map(mapRawMatch);
-    const { matches, idRedirects } = dedupeMatchesForDay(mappedMatches);
+    const update = buildMatchesUpdateFromPayload(rawMatches, rawPredictions, lastRun);
+    writeCache(dateISO, update.matches, update.predictions, lastRun);
     
-    // Build prediction map
-    let predictionMap: Record<string, Prediction> = {};
-    
-    for (const prediction of rawPredictions) {
-      if (prediction.matchId) {
-        predictionMap[prediction.matchId] = prediction;
-      }
-    }
-
-    // Merge match data into predictions voor convenience
-    for (const rawMatch of rawMatches) {
-      if (!rawMatch.id) continue;
-      
-      if (!predictionMap[rawMatch.id]) {
-        predictionMap[rawMatch.id] = {} as Prediction;
-      }
-      
-      // Voeg relevante match data toe aan prediction
-      predictionMap[rawMatch.id] = {
-        ...predictionMap[rawMatch.id],
-        matchId: rawMatch.id,
-        
-        // Kopieer nuttige velden voor convenience in predictions
-        ...(rawMatch.h2h ? { h2h: rawMatch.h2h } : {}),
-        ...(rawMatch.h2hStatus ? { h2hStatus: rawMatch.h2hStatus } : {}),
-        ...(rawMatch.aggregate ? { aggregate: rawMatch.aggregate } : {}),
-        ...(rawMatch.context ? { context: rawMatch.context } : {}),
-        ...(rawMatch.homePos != null ? { homePos: rawMatch.homePos } : {}),
-        ...(rawMatch.awayPos != null ? { awayPos: rawMatch.awayPos } : {}),
-        ...(rawMatch.matchImportance != null ? { matchImportance: rawMatch.matchImportance } : {}),
-        ...(rawMatch.homeRestDays != null ? { homeRestDays: rawMatch.homeRestDays } : {}),
-        ...(rawMatch.awayRestDays != null ? { awayRestDays: rawMatch.awayRestDays } : {}),
-        ...(rawMatch.weather ? { weather: rawMatch.weather } : {}),
-        ...(rawMatch.lineupSummary ? { lineupSummary: rawMatch.lineupSummary } : {}),
-        ...(rawMatch.modelEdges ? { modelEdges: rawMatch.modelEdges } : {}),
-        ...(rawMatch.homeClubElo != null ? { homeClubElo: rawMatch.homeClubElo } : {}),
-        ...(rawMatch.awayClubElo != null ? { awayClubElo: rawMatch.awayClubElo } : {}),
-        ...(rawMatch.homeTeamProfile ? { homeTeamProfile: rawMatch.homeTeamProfile } : {}),
-        ...(rawMatch.awayTeamProfile ? { awayTeamProfile: rawMatch.awayTeamProfile } : {}),
-        ...(rawMatch.featureVector ? { featureVector: rawMatch.featureVector } : {}),
-        ...(rawMatch.learningSummary ? { learningSummary: rawMatch.learningSummary } : {}),
-        ...(rawMatch.marketCalibration ? { marketCalibration: rawMatch.marketCalibration } : {}),
-        ...(rawMatch.review ? { review: rawMatch.review } : {}),
-        ...(rawMatch.ensembleMeta ? { ensembleMeta: rawMatch.ensembleMeta } : {}),
-        ...(rawMatch.monteCarlo ? { monteCarlo: rawMatch.monteCarlo } : {}),
-        ...(rawMatch.homeForm ? { homeForm: rawMatch.homeForm } : {}),
-        ...(rawMatch.awayForm ? { awayForm: rawMatch.awayForm } : {}),
-        ...(rawMatch.bestBetRank != null ? { bestBetRank: rawMatch.bestBetRank } : {}),
-        ...(rawMatch.topConfidencePick != null ? { topConfidencePick: rawMatch.topConfidencePick } : {}),
-        ...(rawMatch.topExactScorePick != null ? { topExactScorePick: rawMatch.topExactScorePick } : {}),
-        ...(rawMatch.exactScoreConfidence != null ? { exactScoreConfidence: rawMatch.exactScoreConfidence } : {}),
-        ...(rawMatch.exactScoreReasons ? { exactScoreReasons: rawMatch.exactScoreReasons } : {}),
-      };
-    }
-
-    predictionMap = dedupePredictionMap(predictionMap, idRedirects);
-
-    // Write to cache
-    writeCache(dateISO, matches, predictionMap, lastRun);
-    
-    return { 
-      matches, 
-      predictions: predictionMap, 
-      lastRun, 
-      workerNeeded: false 
-    };
+    return update;
     
   } catch (err) {
+    const fallback = await fetchStaticDayData(dateISO, signal);
+    if (fallback) {
+      const lastRun: number | null = fallback.lastRun || null;
+      const update = buildMatchesUpdateFromPayload(fallback.matches || [], fallback.predictions || [], lastRun);
+      writeCache(dateISO, update.matches, update.predictions, lastRun);
+      return update;
+    }
     console.error("[matchService]", err);
     return {
       matches: [],

@@ -3,7 +3,6 @@ import { Match } from "../types";
 import { FavoriteButton } from "./FavoriteTeams";
 import PostMatchReview from "./PostMatchReview";
 import { getLiveMinuteLabel } from "../shared/minute.js";
-import { logClientWarning } from "../shared/clientLogger";
 import { cleanSignalText } from "../shared/matchText.js";
 
 interface MatchCardProps {
@@ -922,6 +921,23 @@ function showImportance(match: any) {
   return importance > 1.02 || topOrBottom;
 }
 
+function buildLocalAiAnalysis(match: any, prediction: any) {
+  const score = `${Number(prediction?.predHomeGoals || 0)}-${Number(prediction?.predAwayGoals || 0)}`;
+  const confidence = Math.round(Number(prediction?.confidence || 0) * 100);
+  const dataQuality = Math.round(Number(prediction?.dataCompletenessScore ?? prediction?.dataCompleteness?.score ?? match?.dataCompletenessScore ?? 0) * 100);
+  const probability = [
+    { label: "thuis", value: Number(prediction?.homeProb || 0) },
+    { label: "gelijk", value: Number(prediction?.drawProb || 0) },
+    { label: "uit", value: Number(prediction?.awayProb || 0) },
+  ].sort((a, b) => b.value - a.value)[0];
+  const risk = prediction?.modelEdges?.riskProfile || prediction?.riskProfile || "middel";
+  const calibration = prediction?.modelEdges?.confidenceCalibration?.applied ? "gekalibreerd met reviewdata" : "basisconfidence";
+  const warnings = Array.isArray(prediction?.modelEdges?.modelWarnings) && prediction.modelEdges.modelWarnings.length
+    ? ` Let op: ${prediction.modelEdges.modelWarnings.slice(0, 2).join(", ")}.`
+    : "";
+  return `Model kiest ${score}; 1X2 neigt naar ${probability.label} (${Math.round(probability.value * 100)}%). Confidence ${confidence}%, datakwaliteit ${dataQuality}%, risico ${risk}; ${calibration}.${warnings}`;
+}
+
 const MatchCard: React.FC<MatchCardProps> = ({ match, prediction, onFavoriteChange }) => {
   const [tab, setTab] = useState<"analyse" | "h2h" | "vorm" | "markten">("analyse");
   const [detailsOpen, setDetailsOpen] = useState(false);
@@ -934,19 +950,21 @@ const MatchCard: React.FC<MatchCardProps> = ({ match, prediction, onFavoriteChan
   useEffect(() => {
     if (triedRef.current || !prediction) return;
     triedRef.current = true;
-    setAiLoading(true);
+    setAiAnalysis(buildLocalAiAnalysis(match, prediction));
     fetch("/api/analyze", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ match, prediction }),
     })
-      .then((response) => response.json())
+      .then(async (response) => {
+        const contentType = response.headers.get("content-type") || "";
+        if (!response.ok || !contentType.includes("json")) return null;
+        return response.json();
+      })
       .then((data) => {
         if (data.analysis) setAiAnalysis(data.analysis);
       })
-      .catch((error) => {
-        logClientWarning("match_analysis_failed", { matchId: match.id, error });
-      })
+      .catch(() => {})
       .finally(() => setAiLoading(false));
   }, [match, prediction]);
 
