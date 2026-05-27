@@ -66,8 +66,8 @@ function urlsForBranch(branch: string) {
     : [`${REPO_RAW_BASE}/${branch}/server_data.json`];
 }
 
-function withOptionalCacheBust(url: string) {
-  return CACHE_BUST_RAW_DATA ? `${url}?t=${Date.now()}` : url;
+function withOptionalCacheBust(url: string, force = false) {
+  return CACHE_BUST_RAW_DATA || force ? `${url}?t=${Date.now()}` : url;
 }
 
 export async function fetchServerStore() {
@@ -114,9 +114,9 @@ export async function fetchServerStore() {
   throw new Error(lastError || "Kon server_data.json niet ophalen");
 }
 
-export async function fetchRepoJson(relativePath: string) {
+export async function fetchRepoJson(relativePath: string, options: { cacheBust?: boolean; bypassMemoryCache?: boolean } = {}) {
   const cached = readCache(relativePath);
-  if (cached) {
+  if (cached && !options.bypassMemoryCache && !options.cacheBust) {
     return {
       data: cached.data,
       branch: cached.branch,
@@ -132,8 +132,8 @@ export async function fetchRepoJson(relativePath: string) {
     for (const url of urlsForBranchPath(branch, relativePath)) {
       try {
         const response = await fetchWithRetry(
-          withOptionalCacheBust(url),
-          { headers: { "Cache-Control": CACHE_BUST_RAW_DATA ? "no-cache" : "max-age=60" } },
+          withOptionalCacheBust(url, !!options.cacheBust),
+          { headers: { "Cache-Control": CACHE_BUST_RAW_DATA || options.cacheBust ? "no-cache" : "max-age=60" } },
           { retries: 1, timeoutMs: 8_000, event: "repo.json" }
         );
         if (!response.ok) {
@@ -153,14 +153,14 @@ export async function fetchRepoJson(relativePath: string) {
   throw new Error(lastError || `Kon ${relativePath} niet ophalen`);
 }
 
-export async function fetchDayData(dateKey: string) {
-  return fetchRepoJson(`data/days/${dateKey}.json`);
+export async function fetchDayData(dateKey: string, options: { cacheBust?: boolean; bypassMemoryCache?: boolean } = {}) {
+  return fetchRepoJson(`data/days/${dateKey}.json`, options);
 }
 
-export async function fetchMetaData() {
-  return fetchRepoJson("data/meta.json");
+export async function fetchMetaData(options: { cacheBust?: boolean; bypassMemoryCache?: boolean } = {}) {
+  return fetchRepoJson("data/meta.json", options);
 }
 
-export async function fetchStandingsData() {
-  return fetchRepoJson("data/standings.json");
+export async function fetchStandingsData(options: { cacheBust?: boolean; bypassMemoryCache?: boolean } = {}) {
+  return fetchRepoJson("data/standings.json", options);
 }

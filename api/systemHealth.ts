@@ -96,12 +96,13 @@ export async function buildSystemHealth(mode = "health") {
   const today = todayAmsterdamKey();
   const yesterday = addDaysToDateKey(today, -1);
   const tomorrow = addDaysToDateKey(today, 1);
+  const freshRepoOptions = { cacheBust: true, bypassMemoryCache: true };
   const [remoteMeta, remoteStandings, remoteYesterday, remoteToday, remoteTomorrow] = await Promise.all([
-    fetchHealthJson("meta", fetchMetaData, {}),
-    fetchHealthJson("standings", fetchStandingsData, {}),
-    fetchHealthJson(`day:${yesterday}`, () => fetchDayData(yesterday), null),
-    fetchHealthJson(`day:${today}`, () => fetchDayData(today), null),
-    fetchHealthJson(`day:${tomorrow}`, () => fetchDayData(tomorrow), null),
+    fetchHealthJson("meta", () => fetchMetaData(freshRepoOptions), {}),
+    fetchHealthJson("standings", () => fetchStandingsData(freshRepoOptions), {}),
+    fetchHealthJson(`day:${yesterday}`, () => fetchDayData(yesterday, freshRepoOptions), null),
+    fetchHealthJson(`day:${today}`, () => fetchDayData(today, freshRepoOptions), null),
+    fetchHealthJson(`day:${tomorrow}`, () => fetchDayData(tomorrow, freshRepoOptions), null),
   ]);
   const meta = remoteMeta.available ? remoteMeta.data : readJsonSafe(path.join("data", "meta.json"), {});
   const standings = remoteStandings.available ? remoteStandings.data : readJsonSafe(path.join("data", "standings.json"), {});
