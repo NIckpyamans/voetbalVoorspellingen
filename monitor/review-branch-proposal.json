@@ -1,17 +1,35 @@
 {
-  "generatedAt": "2026-05-27T23:38:36.186Z",
-  "date": "2026-05-28",
+  "generatedAt": "2026-05-28T23:43:34.527Z",
+  "date": "2026-05-29",
   "proposalOnly": true,
   "shouldPropose": true,
-  "branchName": "codex/review-20260528",
-  "summary": "AI reviewvoorstel voor 2026-05-28: 1 aandachtspunt(en) met patchadvies, niet automatisch live.",
+  "branchName": "codex/review-20260529",
+  "summary": "AI reviewvoorstel voor 2026-05-29: 1 aandachtspunt(en) met patchadvies, niet automatisch live.",
   "latestStats": {
-    "today": "2026-05-28",
+    "today": "2026-05-29",
+    "tomorrow": "2026-05-30",
     "dataPresent": true,
-    "lastRun": 1779919925412,
-    "ageMinutes": 87,
+    "lastRun": 1780000720697,
+    "ageMinutes": 185,
     "maxWorkerAgeMinutes": 180,
     "todayMatches": 0,
+    "tomorrowMatches": 1,
+    "fixtureCalendar": {
+      "status": "has_current_matches",
+      "healthy": true,
+      "emptyWindowOk": true,
+      "severity": "none",
+      "todayCount": 0,
+      "tomorrowCount": 1,
+      "windowDays": 7,
+      "checkedDates": [
+        "2026-05-29",
+        "2026-05-30"
+      ],
+      "nextMatchDate": "2026-05-30",
+      "nextMatchCount": 1,
+      "explanation": "Vandaag of morgen staan er wedstrijden in de actuele data."
+    },
     "liveMatches": 0,
     "liveWithoutMinute": 0,
     "h2hFilled": 0,
@@ -23,22 +41,20 @@
   "findings": [
     {
       "priority": 1,
-      "key": "today_matches_empty",
-      "severity": "medium",
-      "message": "Er zijn geen wedstrijden voor vandaag in server_data.json.",
-      "whyItMatters": "Vandaag-data ontbreekt terwijl er wedstrijden verwacht worden.",
+      "key": "worker_stale",
+      "severity": "high",
+      "message": "server_data.json is 185 minuten oud.",
+      "whyItMatters": "Workerdata is te oud en verdient een workflow- of broncheck.",
       "recommendedFiles": [
-        "scripts/server-worker.js",
-        "api/Matches.ts",
-        "services/matchService.ts"
+        ".github/workflows/worker.yml",
+        "scripts/server-worker.js"
       ],
       "details": {}
     }
   ],
   "recommendedFiles": [
-    "scripts/server-worker.js",
-    "api/Matches.ts",
-    "services/matchService.ts"
+    ".github/workflows/worker.yml",
+    "scripts/server-worker.js"
   ],
   "nextStep": "Gebruik deze proposal om gericht een reviewbranch te maken en alleen na controle te mergen."
 }

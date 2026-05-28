@@ -1788,6 +1788,54 @@
           ]
         }
       ]
+    },
+    "2026-05-29": {
+      "runs": [
+        {
+          "timestamp": "2026-05-28T23:43:34.399Z",
+          "stats": {
+            "today": "2026-05-29",
+            "tomorrow": "2026-05-30",
+            "dataPresent": true,
+            "lastRun": 1780000720697,
+            "ageMinutes": 185,
+            "maxWorkerAgeMinutes": 180,
+            "todayMatches": 0,
+            "tomorrowMatches": 1,
+            "fixtureCalendar": {
+              "status": "has_current_matches",
+              "healthy": true,
+              "emptyWindowOk": true,
+              "severity": "none",
+              "todayCount": 0,
+              "tomorrowCount": 1,
+              "windowDays": 7,
+              "checkedDates": [
+                "2026-05-29",
+                "2026-05-30"
+              ],
+              "nextMatchDate": "2026-05-30",
+              "nextMatchCount": 1,
+              "explanation": "Vandaag of morgen staan er wedstrijden in de actuele data."
+            },
+            "liveMatches": 0,
+            "liveWithoutMinute": 0,
+            "h2hFilled": 0,
+            "h2hMissing": 0,
+            "standingsCount": 41,
+            "cupSheetCount": 2,
+            "phaseReliabilityCount": 3
+          },
+          "issues": [
+            {
+              "key": "worker_stale",
+              "severity": "high",
+              "message": "server_data.json is 185 minuten oud.",
+              "details": {}
+            }
+          ]
+        }
+      ]
     }
   }
 }

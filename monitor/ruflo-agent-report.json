@@ -1,6 +1,6 @@
 {
-  "generatedAt": "2026-05-27T23:38:36.496Z",
-  "date": "2026-05-28",
+  "generatedAt": "2026-05-28T23:43:34.841Z",
+  "date": "2026-05-29",
   "name": "Ruflo-style gratis AI monitor",
   "mode": "naast-productie",
   "productionSafe": true,
@@ -182,18 +182,17 @@
       ]
     },
     "control": {
-      "score": 60,
-      "summary": "Ontwikkelcontrole: 1 actieve monitorissues op 2026-05-28; digest 2026-05-12 t/m 2026-05-25.",
-      "latestDay": "2026-05-28",
+      "score": 52,
+      "summary": "Ontwikkelcontrole: 1 actieve monitorissues op 2026-05-29; digest 2026-05-12 t/m 2026-05-25.",
+      "latestDay": "2026-05-29",
       "shouldPropose": true,
       "actions": [
         {
-          "priority": "medium",
-          "title": "Er zijn geen wedstrijden voor vandaag in server_data.json.",
-          "freeSolution": "Gebruik gratis fallbackketen met TheSportsDB/OpenLigaDB/openfootball en toon bronstatus in Instellingen.",
+          "priority": "high",
+          "title": "server_data.json is 185 minuten oud.",
+          "freeSolution": "Laat GitHub Actions schedule + manual dispatch draaien; geen mail nodig, alleen data committen.",
           "files": [
-            "scripts/server-worker.js",
-            "api/Matches.ts"
+            ".github/workflows/worker.yml"
           ],
           "status": "monitor"
         }
@@ -218,19 +217,19 @@
       ]
     },
     {
+      "title": "server_data.json is 185 minuten oud.",
+      "count": 1,
+      "priority": "high",
+      "agents": [
+        "control"
+      ]
+    },
+    {
       "title": "H2H-backfill verder vullen",
       "count": 1,
       "priority": "medium",
       "agents": [
         "data"
-      ]
-    },
-    {
-      "title": "Er zijn geen wedstrijden voor vandaag in server_data.json.",
-      "count": 1,
-      "priority": "medium",
-      "agents": [
-        "control"
       ]
     }
   ],
@@ -258,6 +257,16 @@
       "agent": "learning"
     },
     {
+      "priority": "high",
+      "title": "server_data.json is 185 minuten oud.",
+      "freeSolution": "Laat GitHub Actions schedule + manual dispatch draaien; geen mail nodig, alleen data committen.",
+      "files": [
+        ".github/workflows/worker.yml"
+      ],
+      "status": "monitor",
+      "agent": "control"
+    },
+    {
       "priority": "medium",
       "title": "H2H-backfill verder vullen",
       "freeSolution": "Gebruik openfootball en football-data rows per competitie als historische H2H fallback voordat de UI 'leeg' toont.",
@@ -267,17 +276,6 @@
       ],
       "status": "aanbevolen",
       "agent": "data"
-    },
-    {
-      "priority": "medium",
-      "title": "Er zijn geen wedstrijden voor vandaag in server_data.json.",
-      "freeSolution": "Gebruik gratis fallbackketen met TheSportsDB/OpenLigaDB/openfootball en toon bronstatus in Instellingen.",
-      "files": [
-        "scripts/server-worker.js",
-        "api/Matches.ts"
-      ],
-      "status": "monitor",
-      "agent": "control"
     }
   ],
   "freeOnlyGuardrails": [
