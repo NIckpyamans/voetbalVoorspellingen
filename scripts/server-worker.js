@@ -4,7 +4,14 @@ import fs from "fs";
 import path from "path";
 import crypto from "crypto";
 import { normalizeMinute, parseMinuteValue } from "../shared/minute.js";
-import { WORLD_CUP_LEAGUE, WORLD_FRIENDLY_LEAGUE, isWorldCup2026Team } from "../shared/worldCup2026.js";
+import {
+  WORLD_CUP_LEAGUE,
+  WORLD_FRIENDLY_LEAGUE,
+  TEAMS as WORLD_CUP_TEAMS,
+  buildWorldCup2026ProjectionFromStore,
+  buildWorldCup2026ReadinessFromStore,
+  isWorldCup2026Team,
+} from "../shared/worldCup2026.js";
 import {
   buildBacktestSummaryFromReviews,
   buildDataCompletenessAudit,
@@ -100,6 +107,9 @@ function buildSplitMeta(store) {
     topExactClubs: store.topExactClubs || null,
     competitionArchiveIndex: store.competitionArchiveIndex || null,
     teamSquadSummary: store.teamSquadSummary || null,
+    worldCup2026Readiness: store.worldCup2026Readiness || null,
+    worldCup2026Projection: store.worldCup2026Projection || null,
+    worldCup2026Ratings: store.worldCup2026Ratings || null,
   };
 }
 
@@ -144,12 +154,16 @@ function writeSplitDataFiles(store) {
     topExactClubs: store.topExactClubs || null,
     competitionArchiveIndex: store.competitionArchiveIndex || null,
     teamSquadSummary: store.teamSquadSummary || null,
+    worldCup2026Readiness: store.worldCup2026Readiness || null,
+    worldCup2026Projection: store.worldCup2026Projection || null,
+    worldCup2026Ratings: store.worldCup2026Ratings || null,
     lastRun: store.lastRun || null,
   });
   writeJsonFile(path.join(SPLIT_DATA_DIR, "teams.json"), {
     teamSquads: store.teamSquads || {},
     teamTransfers: store.teamTransfers || {},
     teamSquadSummary: store.teamSquadSummary || null,
+    worldCup2026Ratings: store.worldCup2026Ratings || null,
     lastRun: store.lastRun || null,
     workerVersion: store.workerVersion || "unknown",
   });
@@ -9610,8 +9624,50 @@ function defaultStore() {
     aiAdvice: [],
     competitionArchiveIndex: null,
     teamSquadSummary: null,
+    worldCup2026Readiness: null,
+    worldCup2026Projection: null,
+    worldCup2026Ratings: null,
     lastRun: null,
     workerVersion: MODEL_VERSION,
+  };
+}
+
+async function refreshWorldCupNationalRatings(store, now) {
+  const previous = store.worldCup2026Ratings || {};
+  const currentRatings = {};
+  for (const [code, team] of Object.entries(WORLD_CUP_TEAMS || {})) {
+    const seeded = Number(team?.strength || 65);
+    currentRatings[code] = {
+      code,
+      teamName: String(team?.name || code),
+      rating: Number((seeded * 20).toFixed(0)),
+      source: "seeded_country_strength",
+    };
+  }
+
+  const feedUrl = process.env.NATIONAL_ELO_FEED_URL || "";
+  if (feedUrl) {
+    const external = await fetchExternalJson(feedUrl);
+    const list = Array.isArray(external?.teams) ? external.teams : Array.isArray(external) ? external : [];
+    for (const item of list) {
+      const code = String(item?.code || "").toUpperCase();
+      if (!currentRatings[code]) continue;
+      const rating = Number(item?.rating || item?.elo || item?.points || 0);
+      if (!Number.isFinite(rating) || rating <= 0) continue;
+      currentRatings[code] = {
+        ...currentRatings[code],
+        rating: Number(rating.toFixed(0)),
+        source: String(item?.source || "external_elo_feed"),
+      };
+    }
+  }
+
+  store.worldCup2026Ratings = {
+    updatedAt: new Date(now).toISOString(),
+    sourceMode: feedUrl ? "seeded_plus_external" : "seed_only",
+    ratings: currentRatings,
+    refreshedBy: "worker",
+    previousUpdatedAt: previous?.updatedAt || null,
   };
 }
 
@@ -11016,6 +11072,9 @@ async function main() {
   }
 
   applyLiveStandingsOverlay(store);
+  await refreshWorldCupNationalRatings(store, now);
+  store.worldCup2026Projection = buildWorldCup2026ProjectionFromStore(store);
+  store.worldCup2026Readiness = buildWorldCup2026ReadinessFromStore(store);
   compactStore(store, today, now);
   rebuildReviewsAndLearning(store);
   store.sourceCoverage = buildSourceCoverage(store, today);

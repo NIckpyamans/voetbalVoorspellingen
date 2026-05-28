@@ -16,6 +16,9 @@ permissions:
 env:
   TZ: Europe/Amsterdam
   FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: "true"
+  FOOTBALL_DATA_TOKEN: ${{ secrets.FOOTBALL_DATA_TOKEN }}
+  FOOTBALL_DATA_TEAM_MAP: ${{ secrets.FOOTBALL_DATA_TEAM_MAP }}
+  NATIONAL_ELO_FEED_URL: ${{ secrets.NATIONAL_ELO_FEED_URL }}
 
 jobs:
   learn:

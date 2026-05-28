@@ -548,6 +548,234 @@ function dateKeyFromValue(value) {
   return String(value || "").slice(0, 10);
 }
 
+function toNumber(value) {
+  const n = Number(value);
+  return Number.isFinite(n) ? n : null;
+}
+
+function parseScore(score) {
+  const match = String(score || "").match(/(\d+)\s*-\s*(\d+)/);
+  if (!match) return null;
+  return { home: Number(match[1]), away: Number(match[2]) };
+}
+
+function isSettledStatus(status) {
+  const value = String(status || "").toUpperCase();
+  return value === "FT" || value === "AET" || value === "PEN";
+}
+
+function initGroupRow(teamCode) {
+  const team = TEAMS[teamCode];
+  return {
+    teamCode,
+    teamName: team?.name || teamCode,
+    played: 0,
+    won: 0,
+    draw: 0,
+    lost: 0,
+    gf: 0,
+    ga: 0,
+    gd: 0,
+    points: 0,
+    strength: Number(team?.strength || 50),
+  };
+}
+
+function sortGroupRows(rows) {
+  return [...rows].sort((a, b) =>
+    b.points - a.points ||
+    b.gd - a.gd ||
+    b.gf - a.gf ||
+    b.strength - a.strength ||
+    a.teamName.localeCompare(b.teamName)
+  );
+}
+
+function buildGroupSeedRows() {
+  const groups = {};
+  for (const [code, team] of Object.entries(TEAMS)) {
+    if (!team?.group || !/^[A-L]$/.test(team.group)) continue;
+    if (!groups[team.group]) groups[team.group] = [];
+    groups[team.group].push(initGroupRow(code));
+  }
+  for (const group of Object.keys(groups)) {
+    groups[group] = sortGroupRows(groups[group]);
+  }
+  return groups;
+}
+
+function teamCodeByName(name) {
+  return toCode(name);
+}
+
+function resolveRoundOf32Pairing(homeLabel, awayLabel, groupRows, thirdPlaceRanking) {
+  const resolve = (label) => {
+    const winner = String(label || "").match(/^winner group ([a-l])$/i);
+    if (winner) return groupRows[winner[1].toUpperCase()]?.[0]?.teamName || label;
+    const runnerUp = String(label || "").match(/^runner-up group ([a-l])$/i);
+    if (runnerUp) return groupRows[runnerUp[1].toUpperCase()]?.[1]?.teamName || label;
+    const third = String(label || "").match(/^third-place group ([a-l](?:\/[a-l])+?)$/i);
+    if (third) {
+      const allowed = third[1]
+        .split("/")
+        .map((item) => item.trim().toUpperCase())
+        .filter(Boolean);
+      const best = (thirdPlaceRanking || []).find((row) => allowed.includes(String(row.group || "").toUpperCase()));
+      return best?.teamName || label;
+    }
+    return label;
+  };
+
+  return { home: resolve(homeLabel), away: resolve(awayLabel) };
+}
+
+export function buildWorldCup2026ProjectionFromStore(store) {
+  const groups = buildGroupSeedRows();
+  const matchEntries = Object.entries(store?.matches || {}).sort((a, b) => String(a[0]).localeCompare(String(b[0])));
+  const allMatches = matchEntries.flatMap(([, dayMatches]) => (Array.isArray(dayMatches) ? dayMatches : []));
+  const worldCupMatches = allMatches.filter((match) => String(match?.league || "") === WORLD_CUP_LEAGUE);
+
+  for (const match of worldCupMatches) {
+    const group = String(match?.worldCup2026?.group || "").toUpperCase();
+    if (!/^[A-L]$/.test(group)) continue;
+    if (!isSettledStatus(match?.status)) continue;
+    const parsed = parseScore(match?.score);
+    if (!parsed) continue;
+    const homeCode = teamCodeByName(match?.homeTeamName);
+    const awayCode = teamCodeByName(match?.awayTeamName);
+    if (!homeCode || !awayCode) continue;
+
+    const rowMap = new Map((groups[group] || []).map((row) => [row.teamCode, row]));
+    const home = rowMap.get(homeCode);
+    const away = rowMap.get(awayCode);
+    if (!home || !away) continue;
+
+    home.played += 1;
+    away.played += 1;
+    home.gf += parsed.home;
+    home.ga += parsed.away;
+    away.gf += parsed.away;
+    away.ga += parsed.home;
+    home.gd = home.gf - home.ga;
+    away.gd = away.gf - away.ga;
+
+    if (parsed.home > parsed.away) {
+      home.won += 1;
+      away.lost += 1;
+      home.points += 3;
+    } else if (parsed.home < parsed.away) {
+      away.won += 1;
+      home.lost += 1;
+      away.points += 3;
+    } else {
+      home.draw += 1;
+      away.draw += 1;
+      home.points += 1;
+      away.points += 1;
+    }
+
+    groups[group] = sortGroupRows([...rowMap.values()]);
+  }
+
+  const thirdPlaceRanking = Object.entries(groups)
+    .map(([group, rows]) => ({ group, ...rows[2] }))
+    .sort((a, b) =>
+      b.points - a.points ||
+      b.gd - a.gd ||
+      b.gf - a.gf ||
+      b.strength - a.strength ||
+      a.teamName.localeCompare(b.teamName)
+    );
+
+  const bestThird = thirdPlaceRanking.slice(0, 8);
+  const roundOf32 = FIXTURES.filter((fixture) => fixture.matchNumber >= 73 && fixture.matchNumber <= 88).map((fixture) => {
+    const pairing = resolveRoundOf32Pairing(fixture.homeTeamName, fixture.awayTeamName, groups, bestThird);
+    return {
+      matchNumber: fixture.matchNumber,
+      date: fixture.date,
+      home: pairing.home,
+      away: pairing.away,
+      seededHome: fixture.homeTeamName,
+      seededAway: fixture.awayTeamName,
+    };
+  });
+
+  const completedGroupMatches = worldCupMatches.filter((match) => {
+    const group = String(match?.worldCup2026?.group || "").toUpperCase();
+    return /^[A-L]$/.test(group) && isSettledStatus(match?.status) && !!parseScore(match?.score);
+  }).length;
+  const totalGroupMatches = 72;
+
+  return {
+    generatedAt: new Date().toISOString(),
+    completedGroupMatches,
+    totalGroupMatches,
+    groups,
+    thirdPlaceRanking,
+    bestThird,
+    roundOf32,
+    status: completedGroupMatches > 0 ? "live_results_applied" : "seed_only",
+  };
+}
+
+export function buildWorldCup2026ReadinessFromStore(store) {
+  const teams = Object.values(TEAMS).filter((team) => /^[A-L]$/.test(String(team.group || "")));
+  const teamNames = new Set(teams.map((team) => normalizeTeamName(team.name)));
+  const squads = Object.values(store?.teamSquads || {}).filter((item) => teamNames.has(normalizeTeamName(item?.teamName || "")));
+  const injuries = Object.values(store?.teamInjuries || {}).filter((item) => teamNames.has(normalizeTeamName(item?.teamName || item?.name || "")));
+  const providerSquads = squads.filter((item) =>
+    Array.isArray(item?.sources) && item.sources.some((source) => /football-data|forza|sportsdb|wikidata|wikipedia/i.test(String(source || "")))
+  );
+  const topFormSignals = squads.filter((item) => {
+    const players = Array.isArray(item?.players) ? item.players : [];
+    return players.some((player) => {
+      const goals = toNumber(player?.goals);
+      const assists = toNumber(player?.assists);
+      const minutes = toNumber(player?.minutes);
+      return (goals != null && goals > 0) || (assists != null && assists > 0) || (minutes != null && minutes > 0);
+    });
+  });
+  const nationalRatings = Object.keys(store?.worldCup2026Ratings?.ratings || {}).length;
+  const projection = store?.worldCup2026Projection || null;
+
+  const squadCoverage = teams.length ? providerSquads.length / teams.length : 0;
+  const injuryCoverage = teams.length ? injuries.length / teams.length : 0;
+  const topFormCoverage = teams.length ? topFormSignals.length / teams.length : 0;
+
+  return {
+    squads: {
+      status: squadCoverage >= 0.75 ? "live_provider_connected" : squadCoverage > 0 ? "partial_live_provider" : "provider_required",
+      detail: `Provider squads voor ${providerSquads.length}/${teams.length} WK-landen.`,
+      coverage: Number(squadCoverage.toFixed(2)),
+    },
+    injuries: {
+      status: injuryCoverage >= 0.7 ? "live_provider_connected" : injuryCoverage > 0 ? "partial_live_provider" : "provider_required",
+      detail: `Blessure/schorsingsdekking voor ${injuries.length}/${teams.length} WK-landen.`,
+      coverage: Number(injuryCoverage.toFixed(2)),
+    },
+    friendlies: {
+      status: "seeded_with_live_gap",
+      detail: "Oefenduels seeded + live feed waar beschikbaar; providerdekking groeit per run.",
+    },
+    playerTopForm: {
+      status: topFormCoverage >= 0.45 ? "live_provider_connected" : topFormCoverage > 0 ? "partial_live_provider" : "provider_required",
+      detail: `Topvorm-signalen (goals/assists/minutes) aanwezig voor ${topFormSignals.length}/${teams.length} landen.`,
+      coverage: Number(topFormCoverage.toFixed(2)),
+    },
+    fifaRankingElo: {
+      status: nationalRatings >= 24 ? "auto_refresh_active" : nationalRatings > 0 ? "partial_refresh" : "seed_only",
+      detail: `Auto ratings beschikbaar voor ${nationalRatings} teams.`,
+      updatedAt: store?.worldCup2026Ratings?.updatedAt || null,
+    },
+    groupAndKnockoutProjection: {
+      status: projection?.completedGroupMatches > 0 ? "live_projection_active" : "seeded_fixture_only",
+      detail: projection?.completedGroupMatches > 0
+        ? `${projection.completedGroupMatches}/${projection.totalGroupMatches} groepsduels verwerkt in projectie.`
+        : "Nog geen afgeronde groepsduels; schema staat seeded klaar.",
+    },
+  };
+}
+
 export function isWorldCup2026League(league) {
   return String(league || "") === WORLD_CUP_LEAGUE;
 }
@@ -622,4 +850,4 @@ export function getWorldCup2026ReadinessSnapshot() {
   };
 }
 
-export { WORLD_CUP_LEAGUE, WORLD_FRIENDLY_LEAGUE };
+export { WORLD_CUP_LEAGUE, WORLD_FRIENDLY_LEAGUE, TEAMS };
