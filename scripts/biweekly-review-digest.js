@@ -68,6 +68,7 @@ function toTitle(key) {
     worker_stale: "Workerdata verouderd",
     worker_last_run_missing: "Laatste worker-run ontbreekt",
     today_matches_empty: "Geen speeldagdata",
+    fixture_calendar_source_gap: "Fixturekalender onzeker",
     server_data_missing: "server_data ontbreekt",
     minute_helper_missing: "Minute-helper ontbreekt",
   };
@@ -81,6 +82,7 @@ function recommendationFor(key) {
     historical_referee_unmatched: "Trek bredere referee-archieven per land/competitie in cache en onderhoud aliasen.",
     duplicate_minute_logic: "Houd minute parsing centraal in de helper en verwijder resterende duplicaten.",
     today_matches_empty: "Controleer brondekking en dagfilter in de worker voor vandaag + morgen.",
+    fixture_calendar_source_gap: "Controleer kalenderfallbacks; 0 wedstrijden is alleen ok als de worker dat kan verklaren.",
   };
   return map[key] || "Gebruik het reviewbranch-voorstel als veilige volgende patchronde.";
 }

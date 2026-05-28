@@ -2,6 +2,7 @@ import fs from "fs";
 import path from "path";
 import { fetchDayData, fetchMetaData, fetchStandingsData } from "./_dataSource.js";
 import { addDaysToDateKey, todayAmsterdamKey } from "../shared/date.js";
+import { buildFixtureCalendarStatus } from "../shared/fixtureCalendar.js";
 import { createLogger, getErrorDetails } from "../shared/logger.js";
 import { setCorsHeaders } from "../shared/cors.js";
 
@@ -118,12 +119,35 @@ export async function buildSystemHealth(mode = "health") {
     today: countMatches(remoteToday.available ? remoteToday.data : readLocalDay(today)),
     tomorrow: countMatches(remoteTomorrow.available ? remoteTomorrow.data : readLocalDay(tomorrow)),
   };
+  const lastRunFresh = !!lastRun && ageMinutes != null && ageMinutes <= MAX_FRESH_AGE_MINUTES;
+  const knownDates = Array.isArray(meta?.dates) ? meta.dates : [yesterday, today, tomorrow];
+  const fixtureDays = Object.fromEntries(
+    knownDates.map((dateKey: string) => {
+      const remoteDay =
+        dateKey === yesterday
+          ? remoteYesterday
+          : dateKey === today
+            ? remoteToday
+            : dateKey === tomorrow
+              ? remoteTomorrow
+              : null;
+      const day = remoteDay?.available ? remoteDay.data : readLocalDay(dateKey);
+      return [dateKey, day || { matches: [] }];
+    })
+  );
+  const fixtureCalendar = buildFixtureCalendarStatus({
+    today,
+    days: fixtureDays,
+    meta,
+    lastRunFresh,
+  });
 
   const checks = {
     storage: serverDataInfo.exists || metaInfo.exists || remoteMeta.available,
     splitData: remoteMeta.available && remoteStandings.available && (remoteYesterday.available || remoteToday.available || remoteTomorrow.available),
-    workerFresh: !!lastRun && ageMinutes != null && ageMinutes <= MAX_FRESH_AGE_MINUTES,
-    todayOrTomorrowData: counts.today > 0 || counts.tomorrow > 0,
+    workerFresh: lastRunFresh,
+    todayOrTomorrowData: counts.today > 0 || counts.tomorrow > 0 || fixtureCalendar.emptyWindowOk,
+    fixtureCalendar: fixtureCalendar.healthy,
     standings: Object.keys(standings?.standings || {}).length > 0,
     monitor: !!findings?.days,
   };
@@ -152,6 +176,7 @@ export async function buildSystemHealth(mode = "health") {
     data: {
       dates: { yesterday, today, tomorrow },
       matchCounts: counts,
+      fixtureCalendar,
       standingsCount: Object.keys(standings?.standings || {}).length,
       cupSheetCount: Object.keys(standings?.cupSheets || {}).length,
       reviewCount: Number(meta?.reviewCount || 0),
@@ -186,6 +211,7 @@ export async function buildSystemHealth(mode = "health") {
         Number(meta?.anomalyReport?.criticalCount || 0) > 0
           ? `${Number(meta?.anomalyReport?.criticalCount || 0)} kritische datakwaliteit-groep(en), zie anomalyReport.`
           : null,
+      fixtureCalendar: fixtureCalendar.severity === "none" ? null : fixtureCalendar.explanation,
     },
   };
 }

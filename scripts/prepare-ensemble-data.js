@@ -8,6 +8,7 @@ const SNAPSHOT_FILE = path.join(ROOT, "training", "training-snapshot.json");
 const EXPORT_FILE = path.join(ROOT, "training", "catboost-ready.json");
 const EXPORT_CSV_FILE = path.join(ROOT, "training", "catboost-ready.csv");
 const CONFIG_FILE = path.join(ROOT, "training", "ensemble-config.json");
+const MIN_SNAPSHOT_ROWS = Number(process.env.SNAPSHOT_MIN_TRAINING_ROWS || 50);
 
 const DERIVED_REVIEW_FEATURES = [
   "prob_home_base",
@@ -108,13 +109,28 @@ function buildFeaturePayload(row, primaryFeatures) {
   };
 }
 
+function buildTrainingPolicy(snapshotBackedRows) {
+  const mature = snapshotBackedRows >= MIN_SNAPSHOT_ROWS;
+  return {
+    minSnapshotRows: MIN_SNAPSHOT_ROWS,
+    snapshotBackedRows,
+    maturity: mature ? "mature" : "warming_up",
+    snapshotBoostActive: mature,
+    snapshotWeight: mature ? 1 : 0.65,
+    fallbackWeight: mature ? 0.25 : 0.35,
+    note: mature
+      ? "Snapshot-backed rows zijn voldoende aanwezig en mogen zwaarder meewegen dan fallback rows."
+      : `Snapshot-backed rows blijven conservatief gewogen tot minimaal ${MIN_SNAPSHOT_ROWS} afgeronde snapshotvoorspellingen beschikbaar zijn.`,
+  };
+}
+
 function main() {
   const snapshot = readJsonSafe(SNAPSHOT_FILE, { rows: [] });
   const config = readJsonSafe(CONFIG_FILE, { primaryFeatures: [] });
   const rows = Array.isArray(snapshot.rows) ? snapshot.rows : [];
   const featureNames = [...(config.primaryFeatures || []), ...DERIVED_REVIEW_FEATURES];
 
-  const exportRows = rows
+  const rawExportRows = rows
     .map((row) => {
       const payload = buildFeaturePayload(row, config.primaryFeatures || []);
       if (!payload || !row.label) return null;
@@ -131,6 +147,14 @@ function main() {
       };
     })
     .filter(Boolean);
+  const snapshotBackedRows = rawExportRows.filter((row) => row.snapshotBacked).length;
+  const trainingPolicy = buildTrainingPolicy(snapshotBackedRows);
+  const exportRows = rawExportRows.map((row) => ({
+    ...row,
+    trainingWeight: row.snapshotBacked ? trainingPolicy.snapshotWeight : trainingPolicy.fallbackWeight,
+    trainingGroup: row.snapshotBacked ? "snapshot_backed" : "fallback_review",
+    snapshotMaturity: trainingPolicy.maturity,
+  }));
 
   fs.mkdirSync(path.dirname(EXPORT_FILE), { recursive: true });
   fs.writeFileSync(
@@ -140,11 +164,12 @@ function main() {
         generatedAt: new Date().toISOString(),
         modelTarget: config.target || "1X2",
         totalRows: exportRows.length,
-        snapshotBackedRows: exportRows.filter((row) => row.snapshotBacked).length,
+        snapshotBackedRows,
         fallbackRows: exportRows.filter((row) => !row.snapshotBacked).length,
+        trainingPolicy,
         featureNames,
         leakageNote:
-          "snapshotBackedRows zijn lekvrijer. fallbackRows gebruiken alleen opgeslagen prediction/review-signalen en blijven gemarkeerd als fallback tot prediction snapshots met featureVector beschikbaar zijn.",
+          "snapshotBackedRows zijn lekvrijer. fallbackRows gebruiken alleen opgeslagen prediction/review-signalen en blijven gemarkeerd als fallback tot prediction snapshots met featureVector beschikbaar zijn. trainingWeight voorkomt dat een te kleine snapshotgroep te vroeg dominant wordt.",
         rows: exportRows,
       },
       null,
@@ -153,7 +178,20 @@ function main() {
   );
 
   const csvLines = [
-    ["matchId", "date", "league", "label", "predictionId", "featureSource", "snapshotBacked", "leakageRisk", ...featureNames].join(","),
+    [
+      "matchId",
+      "date",
+      "league",
+      "label",
+      "predictionId",
+      "featureSource",
+      "snapshotBacked",
+      "leakageRisk",
+      "trainingWeight",
+      "trainingGroup",
+      "snapshotMaturity",
+      ...featureNames,
+    ].join(","),
     ...exportRows.map((row) =>
       [
         row.matchId,
@@ -164,6 +202,9 @@ function main() {
         row.featureSource,
         row.snapshotBacked ? 1 : 0,
         row.leakageRisk || "",
+        row.trainingWeight,
+        row.trainingGroup,
+        row.snapshotMaturity,
         ...featureNames.map((name) => Number(row.features?.[name] || 0)),
       ].join(",")
     ),
@@ -175,6 +216,8 @@ function main() {
       {
         ok: true,
         totalRows: exportRows.length,
+        snapshotBackedRows,
+        trainingPolicy,
         output: EXPORT_FILE,
         csvOutput: EXPORT_CSV_FILE,
       },

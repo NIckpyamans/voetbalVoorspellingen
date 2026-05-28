@@ -2,11 +2,14 @@
 
 import fs from "fs";
 import path from "path";
+import { addDaysToDateKey } from "../shared/date.js";
+import { buildFixtureCalendarStatus } from "../shared/fixtureCalendar.js";
 
 const ROOT = process.cwd();
 const DATA_FILE = path.join(ROOT, "server_data.json");
 const FINDINGS_FILE = path.join(ROOT, "monitor", "daily-findings.json");
 const MAX_WORKER_AGE_MINUTES = Number(process.env.HEALTH_MAX_WORKER_AGE_MINUTES || 180);
+const WRITE_FINDINGS = process.env.HEALTH_WRITE_FINDINGS !== "false";
 
 const FILES = {
   app: path.join(ROOT, "App.tsx"),
@@ -93,6 +96,7 @@ function uniqueIssues(issues) {
 function collectDataChecks() {
   const issues = [];
   const today = amsterdamDate();
+  const tomorrow = addDaysToDateKey(today, 1);
   const store = readJsonSafe(DATA_FILE, null);
 
   if (!store) {
@@ -103,6 +107,19 @@ function collectDataChecks() {
   const lastRun = Number(store.lastRun || 0);
   const ageMinutes = lastRun ? Math.round((Date.now() - lastRun) / 60000) : null;
   const todayMatches = Array.isArray(store.matches?.[today]) ? store.matches[today] : [];
+  const tomorrowMatches = Array.isArray(store.matches?.[tomorrow]) ? store.matches[tomorrow] : [];
+  const lastRunFresh = !!lastRun && ageMinutes != null && ageMinutes <= MAX_WORKER_AGE_MINUTES;
+  const fixtureDays = Object.fromEntries(
+    Array.isArray(store.dates)
+      ? store.dates.map((dateKey) => [dateKey, store.matches?.[dateKey] || []])
+      : Object.entries(store.matches || {})
+  );
+  const fixtureCalendar = buildFixtureCalendarStatus({
+    today,
+    days: fixtureDays,
+    meta: store,
+    lastRunFresh,
+  });
   const standingsCount = Object.keys(store.standings || {}).length;
   const cupSheetCount = Object.keys(store.cupSheets || {}).length;
   const phaseReliabilityCount = Object.keys(store.phaseReliability || {}).length;
@@ -119,12 +136,19 @@ function collectDataChecks() {
 
   if (!lastRun) {
     pushIssue(issues, "worker_last_run_missing", "high", "Worker heeft geen lastRun opgeslagen.");
-  } else if (ageMinutes != null && ageMinutes > MAX_WORKER_AGE_MINUTES) {
+  } else if (!lastRunFresh) {
     pushIssue(issues, "worker_stale", "high", `server_data.json is ${ageMinutes} minuten oud.`);
   }
 
-  if (!todayMatches.length) {
+  if (!todayMatches.length && !fixtureCalendar.emptyWindowOk) {
     pushIssue(issues, "today_matches_empty", "medium", "Er zijn geen wedstrijden voor vandaag in server_data.json.");
+  }
+
+  if (!fixtureCalendar.healthy) {
+    pushIssue(issues, "fixture_calendar_source_gap", "medium", fixtureCalendar.explanation, {
+      checkedDates: fixtureCalendar.checkedDates,
+      nextMatchDate: fixtureCalendar.nextMatchDate,
+    });
   }
 
   if (liveMatches.length && liveWithoutMinute.length) {
@@ -192,11 +216,14 @@ function collectDataChecks() {
     issues,
     stats: {
       today,
+      tomorrow,
       dataPresent: true,
       lastRun,
       ageMinutes,
       maxWorkerAgeMinutes: MAX_WORKER_AGE_MINUTES,
       todayMatches: todayMatches.length,
+      tomorrowMatches: tomorrowMatches.length,
+      fixtureCalendar,
       liveMatches: liveMatches.length,
       liveWithoutMinute: liveWithoutMinute.length,
       h2hFilled: todayMatches.length - h2hEmpty.length,
@@ -310,7 +337,7 @@ function main() {
     shouldNotify: false,
   };
 
-  storeFindings(output);
+  if (WRITE_FINDINGS) storeFindings(output);
   process.stdout.write(`${JSON.stringify(output, null, 2)}\n`);
 }
 

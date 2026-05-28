@@ -1,9 +1,18 @@
 {
-  "generatedAt": "2026-05-28T06:47:52.314Z",
+  "generatedAt": "2026-05-28T07:15:15.366Z",
   "modelTarget": "1X2",
   "totalRows": 451,
   "snapshotBackedRows": 2,
   "fallbackRows": 449,
+  "trainingPolicy": {
+    "minSnapshotRows": 50,
+    "snapshotBackedRows": 2,
+    "maturity": "warming_up",
+    "snapshotBoostActive": false,
+    "snapshotWeight": 0.65,
+    "fallbackWeight": 0.35,
+    "note": "Snapshot-backed rows blijven conservatief gewogen tot minimaal 50 afgeronde snapshotvoorspellingen beschikbaar zijn."
+  },
   "featureNames": [
     "home_avg_scored",
     "away_avg_scored",
@@ -58,7 +67,7 @@
     "odds_available",
     "source_timestamp_coverage"
   ],
-  "leakageNote": "snapshotBackedRows zijn lekvrijer. fallbackRows gebruiken alleen opgeslagen prediction/review-signalen en blijven gemarkeerd als fallback tot prediction snapshots met featureVector beschikbaar zijn.",
+  "leakageNote": "snapshotBackedRows zijn lekvrijer. fallbackRows gebruiken alleen opgeslagen prediction/review-signalen en blijven gemarkeerd als fallback tot prediction snapshots met featureVector beschikbaar zijn. trainingWeight voorkomt dat een te kleine snapshotgroep te vroeg dominant wordt.",
   "rows": [
     {
       "matchId": "ss-tsdb-Italy - Serie A-2265382",
@@ -122,7 +131,10 @@
         "phase_knockout": 1,
         "odds_available": 0,
         "source_timestamp_coverage": 0
-      }
+      },
+      "trainingWeight": 0.35,
+      "trainingGroup": "fallback_review",
+      "snapshotMaturity": "warming_up"
     },
     {
       "matchId": "ss-tsdb-England - Premier League-2267419",
@@ -186,7 +198,10 @@
         "phase_knockout": 0,
         "odds_available": 0,
         "source_timestamp_coverage": 0
-      }
+      },
+      "trainingWeight": 0.35,
+      "trainingGroup": "fallback_review",
+      "snapshotMaturity": "warming_up"
     },
     {
       "matchId": "ss-tsdb-Belgium - Pro League-2455096",
@@ -250,7 +265,10 @@
         "phase_knockout": 0,
         "odds_available": 0,
         "source_timestamp_coverage": 0
-      }
+      },
+      "trainingWeight": 0.35,
+      "trainingGroup": "fallback_review",
+      "snapshotMaturity": "warming_up"
     },
     {
       "matchId": "ss-tsdb-Netherlands - Eredivisie-2468346",
@@ -314,7 +332,10 @@
         "phase_knockout": 0,
         "odds_available": 0,
         "source_timestamp_coverage": 0
-      }
+      },
+      "trainingWeight": 0.35,
+      "trainingGroup": "fallback_review",
+      "snapshotMaturity": "warming_up"
     },
     {
       "matchId": "ss-tsdb-Spain - LaLiga-2279729",
@@ -378,7 +399,10 @@
         "phase_knockout": 1,
         "odds_available": 0,
         "source_timestamp_coverage": 0
-      }
+      },
+      "trainingWeight": 0.35,
+      "trainingGroup": "fallback_review",
+      "snapshotMaturity": "warming_up"
     },
     {
       "matchId": "ss-tsdb-Italy - Serie A-2265376",
@@ -442,7 +466,10 @@
         "phase_knockout": 1,
         "odds_available": 0,
         "source_timestamp_coverage": 0
-      }
+      },
+      "trainingWeight": 0.35,
+      "trainingGroup": "fallback_review",
+      "snapshotMaturity": "warming_up"
     },
     {
       "matchId": "ss-tsdb-Italy - Serie A-2265378",
@@ -506,7 +533,10 @@
         "phase_knockout": 0,
         "odds_available": 0,
         "source_timestamp_coverage": 0
-      }
+      },
+      "trainingWeight": 0.35,
+      "trainingGroup": "fallback_review",
+      "snapshotMaturity": "warming_up"
     },
     {
       "matchId": "ss-tsdb-Italy - Serie A-2265385",
@@ -570,7 +600,10 @@
         "phase_knockout": 1,
         "odds_available": 0,
         "source_timestamp_coverage": 0
-      }
+      },
+      "trainingWeight": 0.35,
+      "trainingGroup": "fallback_review",
+      "snapshotMaturity": "warming_up"
     },
     {
       "matchId": "ss-oldb-77536",
@@ -634,7 +667,10 @@
         "phase_knockout": 1,
         "odds_available": 0,
         "source_timestamp_coverage": 0
-      }
+      },
+      "trainingWeight": 0.35,
+      "trainingGroup": "fallback_review",
+      "snapshotMaturity": "warming_up"
     },
     {
       "matchId": "ss-oldb-77538",
@@ -698,7 +734,10 @@
         "phase_knockout": 1,
         "odds_available": 0,
         "source_timestamp_coverage": 0
-      }
+      },
+      "trainingWeight": 0.35,
+      "trainingGroup": "fallback_review",
+      "snapshotMaturity": "warming_up"
     },
     {
       "matchId": "ss-oldb-77540",
@@ -762,7 +801,10 @@
         "phase_knockout": 1,
         "odds_available": 0,
         "source_timestamp_coverage": 0
-      }
+      },
+      "trainingWeight": 0.35,
+      "trainingGroup": "fallback_review",
+      "snapshotMaturity": "warming_up"
     },
     {
       "matchId": "ss-oldb-77542",
@@ -826,7 +868,10 @@
         "phase_knockout": 1,
         "odds_available": 0,
         "source_timestamp_coverage": 0
-      }
+      },
+      "trainingWeight": 0.35,
+      "trainingGroup": "fallback_review",
+      "snapshotMaturity": "warming_up"
     },
     {
       "matchId": "ss-oldb-77544",
@@ -890,7 +935,10 @@
         "phase_knockout": 0,
         "odds_available": 0,
         "source_timestamp_coverage": 0
-      }
+      },
+      "trainingWeight": 0.35,
+      "trainingGroup": "fallback_review",
+      "snapshotMaturity": "warming_up"
     },
     {
       "matchId": "ss-tsdb-Germany - Bundesliga-2276917",
@@ -954,7 +1002,10 @@
         "phase_knockout": 0,
         "odds_available": 0,
         "source_timestamp_coverage": 0
-      }
+      },
+      "trainingWeight": 0.35,
+      "trainingGroup": "fallback_review",
+      "snapshotMaturity": "warming_up"
     },
     {
       "matchId": "ss-oldb-78226",
@@ -1018,7 +1069,10 @@
         "phase_knockout": 0,
         "odds_available": 0,
         "source_timestamp_coverage": 0
-      }
+      },
+      "trainingWeight": 0.35,
+      "trainingGroup": "fallback_review",
+      "snapshotMaturity": "warming_up"
     },
     {
       "matchId": "ss-oldb-78233",
@@ -1082,7 +1136,10 @@
         "phase_knockout": 0,
         "odds_available": 0,
         "source_timestamp_coverage": 0
-      }
+      },
+      "trainingWeight": 0.35,
+      "trainingGroup": "fallback_review",
+      "snapshotMaturity": "warming_up"
     },
     {
       "matchId": "ss-oldb-78234",
@@ -1146,7 +1203,10 @@
         "phase_knockout": 0,
         "odds_available": 0,
         "source_timestamp_coverage": 0
-      }
+      },
+      "trainingWeight": 0.35,
+      "trainingGroup": "fallback_review",
+      "snapshotMaturity": "warming_up"
     },
     {
       "matchId": "ss-oldb-78232",
@@ -1210,7 +1270,10 @@
         "phase_knockout": 0,
         "odds_available": 0,
         "source_timestamp_coverage": 0
-      }
+      },
+      "trainingWeight": 0.35,
+      "trainingGroup": "fallback_review",
+      "snapshotMaturity": "warming_up"
     },
     {
       "matchId": "ss-tsdb-Belgium - Pro League-2455097",
@@ -1274,7 +1337,10 @@
         "phase_knockout": 1,
         "odds_available": 0,
         "source_timestamp_coverage": 0
-      }
+      },
+      "trainingWeight": 0.35,
+      "trainingGroup": "fallback_review",
+      "snapshotMaturity": "warming_up"
     },
     {
       "matchId": "ss-tsdb-England - Championship-2275730",
@@ -1338,7 +1404,10 @@
         "phase_knockout": 0,
         "odds_available": 0,
         "source_timestamp_coverage": 0
-      }
+      },
+      "trainingWeight": 0.35,
+      "trainingGroup": "fallback_review",
+      "snapshotMaturity": "warming_up"
     },
     {
       "matchId": "ss-tsdb-England - Premier League-2267413",
@@ -1402,7 +1471,10 @@
         "phase_knockout": 0,
         "odds_available": 0,
         "source_timestamp_coverage": 0
-      }
+      },
+      "trainingWeight": 0.35,
+      "trainingGroup": "fallback_review",
+      "snapshotMaturity": "warming_up"
     },
     {
       "matchId": "ss-tsdb-France - Ligue 1-2278391",
@@ -1466,7 +1538,10 @@
         "phase_knockout": 0,
         "odds_available": 0,
         "source_timestamp_coverage": 0
-      }
+      },
+      "trainingWeight": 0.35,
+      "trainingGroup": "fallback_review",
+      "snapshotMaturity": "warming_up"
     },
     {
       "matchId": "ss-tsdb-Netherlands - Eredivisie-2268432",
@@ -1530,7 +1605,10 @@
         "phase_knockout": 0,
         "odds_available": 0,
         "source_timestamp_coverage": 0
-      }
+      },
+      "trainingWeight": 0.35,
+      "trainingGroup": "fallback_review",
+      "snapshotMaturity": "warming_up"
     },
     {
       "matchId": "ss-tsdb-Spain - LaLiga-2279724",
@@ -1594,7 +1672,10 @@
         "phase_knockout": 0,
         "odds_available": 0,
         "source_timestamp_coverage": 0
-      }
+      },
+      "trainingWeight": 0.35,
+      "trainingGroup": "fallback_review",
+      "snapshotMaturity": "warming_up"
     },
     {
       "matchId": "ss-fd-N1-2026-05-03-volendam-heerenveen",
@@ -1658,7 +1739,10 @@
         "phase_knockout": 1,
         "odds_available": 0,
         "source_timestamp_coverage": 0
-      }
+      },
+      "trainingWeight": 0.35,
+      "trainingGroup": "fallback_review",
+      "snapshotMaturity": "warming_up"
     },
     {
       "matchId": "ss-fd-N1-2026-05-03-for sittard-feyenoord",
@@ -1722,7 +1806,10 @@
         "phase_knockout": 1,
         "odds_available": 0,
         "source_timestamp_coverage": 0
-      }
+      },
+      "trainingWeight": 0.35,
+      "trainingGroup": "fallback_review",
+      "snapshotMaturity": "warming_up"
     },
     {
       "matchId": "ss-fd-N1-2026-05-03-zwolle-heracles",
@@ -1786,7 +1873,10 @@
         "phase_knockout": 1,
         "odds_available": 0,
         "source_timestamp_coverage": 0
-      }
+      },
+      "trainingWeight": 0.35,
+      "trainingGroup": "fallback_review",
+      "snapshotMaturity": "warming_up"
     },
     {
       "matchId": "ss-tsdb-Netherlands - Eredivisie-2268433",
@@ -1850,7 +1940,10 @@
         "phase_knockout": 1,
         "odds_available": 0,
         "source_timestamp_coverage": 0
-      }
+      },
+      "trainingWeight": 0.35,
+      "trainingGroup": "fallback_review",
+      "snapshotMaturity": "warming_up"
     },
     {
       "matchId": "ss-fd-N1-2026-05-03-sparta rotterdam-go ahead eagles",
@@ -1914,7 +2007,10 @@
         "phase_knockout": 1,
         "odds_available": 0,
         "source_timestamp_coverage": 0
-      }
+      },
+      "trainingWeight": 0.35,
+      "trainingGroup": "fallback_review",
+      "snapshotMaturity": "warming_up"
     },
     {
       "matchId": "ss-fd-E0-2026-05-03-bournemouth-crystal palace",
@@ -1978,7 +2074,10 @@
         "phase_knockout": 1,
         "odds_available": 0,
         "source_timestamp_coverage": 0
-      }
+      },
+      "trainingWeight": 0.35,
+      "trainingGroup": "fallback_review",
+      "snapshotMaturity": "warming_up"
     },
     {
       "matchId": "ss-fd-E0-2026-05-03-man united-liverpool",
@@ -2042,7 +2141,10 @@
         "phase_knockout": 1,
         "odds_available": 0,
         "source_timestamp_coverage": 0
-      }
+      },
+      "trainingWeight": 0.35,
+      "trainingGroup": "fallback_review",
+      "snapshotMaturity": "warming_up"
     },
     {
       "matchId": "ss-tsdb-England - Premier League-2267414",
@@ -2106,7 +2208,10 @@
         "phase_knockout": 0,
         "odds_available": 0,
         "source_timestamp_coverage": 0
-      }
+      },
+      "trainingWeight": 0.35,
+      "trainingGroup": "fallback_review",
+      "snapshotMaturity": "warming_up"
     },
     {
       "matchId": "ss-fd-D1-2026-05-03-st pauli-mainz",
@@ -2170,7 +2275,10 @@
         "phase_knockout": 1,
         "odds_available": 0,
         "source_timestamp_coverage": 0
-      }
+      },
+      "trainingWeight": 0.35,
+      "trainingGroup": "fallback_review",
+      "snapshotMaturity": "warming_up"
     },
     {
       "matchId": "ss-fd-D1-2026-05-03-m gladbach-dortmund",
@@ -2234,7 +2342,10 @@
         "phase_knockout": 1,
         "odds_available": 0,
         "source_timestamp_coverage": 0
-      }
+      },
+      "trainingWeight": 0.35,
+      "trainingGroup": "fallback_review",
+      "snapshotMaturity": "warming_up"
     },
     {
       "matchId": "ss-oldb-77539",
@@ -2298,7 +2409,10 @@
         "phase_knockout": 1,
         "odds_available": 0,
         "source_timestamp_coverage": 0
-      }
+      },
+      "trainingWeight": 0.35,
+      "trainingGroup": "fallback_review",
+      "snapshotMaturity": "warming_up"
     },
     {
       "matchId": "ss-fd-D2-2026-05-03-elversberg-paderborn",
@@ -2362,7 +2476,10 @@
         "phase_knockout": 1,
         "odds_available": 0,
         "source_timestamp_coverage": 0
-      }
+      },
+      "trainingWeight": 0.35,
+      "trainingGroup": "fallback_review",
+      "snapshotMaturity": "warming_up"
     },
     {
       "matchId": "ss-fd-D2-2026-05-03-greuther furth-nurnberg",
@@ -2426,7 +2543,10 @@
         "phase_knockout": 1,
         "odds_available": 0,
         "source_timestamp_coverage": 0
-      }
+      },
+      "trainingWeight": 0.35,
+      "trainingGroup": "fallback_review",
+      "snapshotMaturity": "warming_up"
     },
     {
       "matchId": "ss-fd-D2-2026-05-03-hannover-preu en munster",
@@ -2490,7 +2610,10 @@
         "phase_knockout": 1,
         "odds_available": 0,
         "source_timestamp_coverage": 0
-      }
+      },
+      "trainingWeight": 0.35,
+      "trainingGroup": "fallback_review",
+      "snapshotMaturity": "warming_up"
     },
     {
       "matchId": "ss-fd-D2-2026-05-03-karlsruhe-darmstadt",
@@ -2554,7 +2677,10 @@
         "phase_knockout": 1,
         "odds_available": 0,
         "source_timestamp_coverage": 0
-      }
+      },
+      "trainingWeight": 0.35,
+      "trainingGroup": "fallback_review",
+      "snapshotMaturity": "warming_up"
     },
     {
       "matchId": "ss-fd-D2-2026-05-03-magdeburg-hertha",
@@ -2618,7 +2744,10 @@
         "phase_knockout": 1,
         "odds_available": 0,
         "source_timestamp_coverage": 0
-      }
+      },
+      "trainingWeight": 0.35,
+      "trainingGroup": "fallback_review",
+      "snapshotMaturity": "warming_up"
     },
     {
       "matchId": "ss-fd-SP1-2026-05-03-celta-elche",
@@ -2682,7 +2811,10 @@
         "phase_knockout": 1,
         "odds_available": 0,
         "source_timestamp_coverage": 0
-      }
+      },
+      "trainingWeight": 0.35,
+      "trainingGroup": "fallback_review",
+      "snapshotMaturity": "warming_up"
     },
     {
       "matchId": "ss-fd-SP1-2026-05-03-getafe-vallecano",
@@ -2746,7 +2878,10 @@
         "phase_knockout": 1,
         "odds_available": 0,
         "source_timestamp_coverage": 0
-      }
+      },
+      "trainingWeight": 0.35,
+      "trainingGroup": "fallback_review",
+      "snapshotMaturity": "warming_up"
     },
     {
       "matchId": "ss-fd-SP1-2026-05-03-betis-oviedo",
@@ -2810,7 +2945,10 @@
         "phase_knockout": 1,
         "odds_available": 0,
         "source_timestamp_coverage": 0
-      }
+      },
+      "trainingWeight": 0.35,
+      "trainingGroup": "fallback_review",
+      "snapshotMaturity": "warming_up"
     },
     {
       "matchId": "ss-fd-SP1-2026-05-03-espanol-real madrid",
@@ -2874,7 +3012,10 @@
         "phase_knockout": 1,
         "odds_available": 0,
         "source_timestamp_coverage": 0
-      }
+      },
+      "trainingWeight": 0.35,
+      "trainingGroup": "fallback_review",
+      "snapshotMaturity": "warming_up"
     },
     {
       "matchId": "ss-fd-SP2-2026-05-03-santander-huesca",
@@ -2938,7 +3079,10 @@
         "phase_knockout": 1,
         "odds_available": 0,
         "source_timestamp_coverage": 0
-      }
+      },
+      "trainingWeight": 0.35,
+      "trainingGroup": "fallback_review",
+      "snapshotMaturity": "warming_up"
     },
     {
       "matchId": "ss-fd-SP2-2026-05-03-sp gijon-ceuta",
@@ -3002,7 +3146,10 @@
         "phase_knockout": 1,
         "odds_available": 0,
         "source_timestamp_coverage": 0
-      }
+      },
+      "trainingWeight": 0.35,
+      "trainingGroup": "fallback_review",
+      "snapshotMaturity": "warming_up"
     },
     {
       "matchId": "ss-fd-SP2-2026-05-03-sociedad b-burgos",
@@ -3066,7 +3213,10 @@
         "phase_knockout": 1,
         "odds_available": 0,
         "source_timestamp_coverage": 0
-      }
+      },
+      "trainingWeight": 0.35,
+      "trainingGroup": "fallback_review",
+      "snapshotMaturity": "warming_up"
     },
     {
       "matchId": "ss-fd-SP2-2026-05-03-las palmas-valladolid",
@@ -3130,7 +3280,10 @@
         "phase_knockout": 1,
         "odds_available": 0,
         "source_timestamp_coverage": 0
-      }
+      },
+      "trainingWeight": 0.35,
+      "trainingGroup": "fallback_review",
+      "snapshotMaturity": "warming_up"
     },
     {
       "matchId": "ss-tsdb-Italy - Serie A-2265377",
@@ -3194,7 +3347,10 @@
         "phase_knockout": 1,
         "odds_available": 0,
         "source_timestamp_coverage": 0
-      }
+      },
+      "trainingWeight": 0.35,
+      "trainingGroup": "fallback_review",
+      "snapshotMaturity": "warming_up"
     },
     {
       "matchId": "ss-fd-I1-2026-05-03-sassuolo-milan",
@@ -3258,7 +3414,10 @@
         "phase_knockout": 1,
         "odds_available": 0,
         "source_timestamp_coverage": 0
-      }
+      },
+      "trainingWeight": 0.35,
+      "trainingGroup": "fallback_review",
+      "snapshotMaturity": "warming_up"
     },
     {
       "matchId": "ss-fd-I1-2026-05-03-juventus-verona",
@@ -3322,7 +3481,10 @@
         "phase_knockout": 1,
         "odds_available": 0,
         "source_timestamp_coverage": 0
-      }
+      },
+      "trainingWeight": 0.35,
+      "trainingGroup": "fallback_review",
+      "snapshotMaturity": "warming_up"
     },
     {
       "matchId": "ss-tsdb-Italy - Serie A-2265380",
@@ -3386,7 +3548,10 @@
         "phase_knockout": 0,
         "odds_available": 0,
         "source_timestamp_coverage": 0
-      }
+      },
+      "trainingWeight": 0.35,
+      "trainingGroup": "fallback_review",
+      "snapshotMaturity": "warming_up"
     },
     {
       "matchId": "ss-fd-F1-2026-05-03-lille-le havre",
@@ -3450,7 +3615,10 @@
         "phase_knockout": 1,
         "odds_available": 0,
         "source_timestamp_coverage": 0
-      }
+      },
+      "trainingWeight": 0.35,
+      "trainingGroup": "fallback_review",
+      "snapshotMaturity": "warming_up"
     },
     {
       "matchId": "ss-tsdb-France - Ligue 1-2278388",
@@ -3514,7 +3682,10 @@
         "phase_knockout": 0,
         "odds_available": 0,
         "source_timestamp_coverage": 0
-      }
+      },
+      "trainingWeight": 0.35,
+      "trainingGroup": "fallback_review",
+      "snapshotMaturity": "warming_up"
     },
     {
       "matchId": "ss-fd-F1-2026-05-03-paris fc-brest",
@@ -3578,7 +3749,10 @@
         "phase_knockout": 1,
         "odds_available": 0,
         "source_timestamp_coverage": 0
-      }
+      },
+      "trainingWeight": 0.35,
+      "trainingGroup": "fallback_review",
+      "snapshotMaturity": "warming_up"
     },
     {
       "matchId": "ss-fd-F1-2026-05-03-strasbourg-toulouse",
@@ -3642,7 +3816,10 @@
         "phase_knockout": 1,
         "odds_available": 0,
         "source_timestamp_coverage": 0
-      }
+      },
+      "trainingWeight": 0.35,
+      "trainingGroup": "fallback_review",
+      "snapshotMaturity": "warming_up"
     },
     {
       "matchId": "ss-fd-F1-2026-05-03-lyon-rennes",
@@ -3706,7 +3883,10 @@
         "phase_knockout": 1,
         "odds_available": 0,
         "source_timestamp_coverage": 0
-      }
+      },
+      "trainingWeight": 0.35,
+      "trainingGroup": "fallback_review",
+      "snapshotMaturity": "warming_up"
     },
     {
       "matchId": "ss-fd-P1-2026-05-03-casa pia-tondela",
@@ -3770,7 +3950,10 @@
         "phase_knockout": 1,
         "odds_available": 0,
         "source_timestamp_coverage": 0
-      }
+      },
+      "trainingWeight": 0.35,
+      "trainingGroup": "fallback_review",
+      "snapshotMaturity": "warming_up"
     },
     {
       "matchId": "ss-fd-P1-2026-05-03-sp braga-estoril",
@@ -3834,7 +4017,10 @@
         "phase_knockout": 1,
         "odds_available": 0,
         "source_timestamp_coverage": 0
-      }
+      },
+      "trainingWeight": 0.35,
+      "trainingGroup": "fallback_review",
+      "snapshotMaturity": "warming_up"
     },
     {
       "matchId": "ss-fd-P1-2026-05-03-rio ave-gil vicente",
@@ -3898,7 +4084,10 @@
         "phase_knockout": 1,
         "odds_available": 0,
         "source_timestamp_coverage": 0
-      }
+      },
+      "trainingWeight": 0.35,
+      "trainingGroup": "fallback_review",
+      "snapshotMaturity": "warming_up"
     },
     {
       "matchId": "ss-tsdb-Belgium - Pro League-2455100",
@@ -3962,7 +4151,10 @@
         "phase_knockout": 1,
         "odds_available": 0,
         "source_timestamp_coverage": 0
-      }
+      },
+      "trainingWeight": 0.35,
+      "trainingGroup": "fallback_review",
+      "snapshotMaturity": "warming_up"
     },
     {
       "matchId": "ss-fd-B1-2026-05-03-antwerp-standard",
@@ -4026,7 +4218,10 @@
         "phase_knockout": 1,
         "odds_available": 0,
         "source_timestamp_coverage": 0
-      }
+      },
+      "trainingWeight": 0.35,
+      "trainingGroup": "fallback_review",
+      "snapshotMaturity": "warming_up"
     },
     {
       "matchId": "ss-fd-B1-2026-05-03-anderlecht-club brugge",
@@ -4090,7 +4285,10 @@
         "phase_knockout": 1,
         "odds_available": 0,
         "source_timestamp_coverage": 0
-      }
+      },
+      "trainingWeight": 0.35,
+      "trainingGroup": "fallback_review",
+      "snapshotMaturity": "warming_up"
     },
     {
       "matchId": "ss-tsdb-Italy - Serie A-2265381",
@@ -4154,7 +4352,10 @@
         "phase_knockout": 0,
         "odds_available": 0,
         "source_timestamp_coverage": 0
-      }
+      },
+      "trainingWeight": 0.35,
+      "trainingGroup": "fallback_review",
+      "snapshotMaturity": "warming_up"
     },
     {
       "matchId": "ss-oldb-77543",
@@ -4218,7 +4419,10 @@
         "phase_knockout": 0,
         "odds_available": 0,
         "source_timestamp_coverage": 0
-      }
+      },
+      "trainingWeight": 0.35,
+      "trainingGroup": "fallback_review",
+      "snapshotMaturity": "warming_up"
     },
     {
       "matchId": "ss-tsdb-Germany - Bundesliga-2276919",
@@ -4282,7 +4486,10 @@
         "phase_knockout": 1,
         "odds_available": 0,
         "source_timestamp_coverage": 0
-      }
+      },
+      "trainingWeight": 0.35,
+      "trainingGroup": "fallback_review",
+      "snapshotMaturity": "warming_up"
     },
     {
       "matchId": "ss-oldb-78227",
@@ -4346,7 +4553,10 @@
         "phase_knockout": 0,
         "odds_available": 0,
         "source_timestamp_coverage": 0
-      }
+      },
+      "trainingWeight": 0.35,
+      "trainingGroup": "fallback_review",
+      "snapshotMaturity": "warming_up"
     },
     {
       "matchId": "ss-oldb-78228",
@@ -4410,7 +4620,10 @@
         "phase_knockout": 0,
         "odds_available": 0,
         "source_timestamp_coverage": 0
-      }
+      },
+      "trainingWeight": 0.35,
+      "trainingGroup": "fallback_review",
+      "snapshotMaturity": "warming_up"
     },
     {
       "matchId": "ss-oldb-78229",
@@ -4474,7 +4687,10 @@
         "phase_knockout": 0,
         "odds_available": 0,
         "source_timestamp_coverage": 0
-      }
+      },
+      "trainingWeight": 0.35,
+      "trainingGroup": "fallback_review",
+      "snapshotMaturity": "warming_up"
     },
     {
       "matchId": "ss-oldb-78230",
@@ -4538,7 +4754,10 @@
         "phase_knockout": 0,
         "odds_available": 0,
         "source_timestamp_coverage": 0
-      }
+      },
+      "trainingWeight": 0.35,
+      "trainingGroup": "fallback_review",
+      "snapshotMaturity": "warming_up"
     },
     {
       "matchId": "ss-oldb-78231",
@@ -4602,7 +4821,10 @@
         "phase_knockout": 0,
         "odds_available": 0,
         "source_timestamp_coverage": 0
-      }
+      },
+      "trainingWeight": 0.35,
+      "trainingGroup": "fallback_review",
+      "snapshotMaturity": "warming_up"
     },
     {
       "matchId": "ss-tsdb-Spain - LaLiga-2279725",
@@ -4666,7 +4888,10 @@
         "phase_knockout": 0,
         "odds_available": 0,
         "source_timestamp_coverage": 0
-      }
+      },
+      "trainingWeight": 0.35,
+      "trainingGroup": "fallback_review",
+      "snapshotMaturity": "warming_up"
     },
     {
       "matchId": "ss-tsdb-England - Premier League-2267417",
@@ -4730,7 +4955,10 @@
         "phase_knockout": 0,
         "odds_available": 0,
         "source_timestamp_coverage": 0
-      }
+      },
+      "trainingWeight": 0.35,
+      "trainingGroup": "fallback_review",
+      "snapshotMaturity": "warming_up"
     },
     {
       "matchId": "ss-tsdb-England - Premier League-2267418",
@@ -4794,7 +5022,10 @@
         "phase_knockout": 0,
         "odds_available": 0,
         "source_timestamp_coverage": 0
-      }
+      },
+      "trainingWeight": 0.35,
+      "trainingGroup": "fallback_review",
+      "snapshotMaturity": "warming_up"
     },
     {
       "matchId": "ss-tsdb-Spain - LaLiga-2279731",
@@ -4858,7 +5089,10 @@
         "phase_knockout": 0,
         "odds_available": 0,
         "source_timestamp_coverage": 0
-      }
+      },
+      "trainingWeight": 0.35,
+      "trainingGroup": "fallback_review",
+      "snapshotMaturity": "warming_up"
     },
     {
       "matchId": "ss-fd-SP2-2026-05-04-almeria-mirandes",
@@ -4922,7 +5156,10 @@
         "phase_knockout": 1,
         "odds_available": 0,
         "source_timestamp_coverage": 0
-      }
+      },
+      "trainingWeight": 0.35,
+      "trainingGroup": "fallback_review",
+      "snapshotMaturity": "warming_up"
     },
     {
       "matchId": "ss-tsdb-Italy - Serie A-2265379",
@@ -4986,7 +5223,10 @@
         "phase_knockout": 1,
         "odds_available": 0,
         "source_timestamp_coverage": 0
-      }
+      },
+      "trainingWeight": 0.35,
+      "trainingGroup": "fallback_review",
+      "snapshotMaturity": "warming_up"
     },
     {
       "matchId": "ss-tsdb-Italy - Serie A-2265383",
@@ -5050,7 +5290,10 @@
         "phase_knockout": 1,
         "odds_available": 0,
         "source_timestamp_coverage": 0
-      }
+      },
+      "trainingWeight": 0.35,
+      "trainingGroup": "fallback_review",
+      "snapshotMaturity": "warming_up"
     },
     {
       "matchId": "ss-fd-P1-2026-05-04-sp lisbon-guimaraes",
@@ -5114,7 +5357,10 @@
         "phase_knockout": 1,
         "odds_available": 0,
         "source_timestamp_coverage": 0
-      }
+      },
+      "trainingWeight": 0.35,
+      "trainingGroup": "fallback_review",
+      "snapshotMaturity": "warming_up"
     },
     {
       "matchId": "ss-tsdb-Netherlands - Eredivisie-2469475",
@@ -5178,7 +5424,10 @@
         "phase_knockout": 1,
         "odds_available": 0,
         "source_timestamp_coverage": 0
-      }
+      },
+      "trainingWeight": 0.35,
+      "trainingGroup": "fallback_review",
+      "snapshotMaturity": "warming_up"
     },
     {
       "matchId": "ss-curated-2026-05-05-arsenal-atletico madrid",
@@ -5242,7 +5491,10 @@
         "phase_knockout": 1,
         "odds_available": 0,
         "source_timestamp_coverage": 0
-      }
+      },
+      "trainingWeight": 0.35,
+      "trainingGroup": "fallback_review",
+      "snapshotMaturity": "warming_up"
     },
     {
       "matchId": "ss-tsdb-Netherlands - Eredivisie-2469522",
@@ -5306,7 +5558,10 @@
         "phase_knockout": 1,
         "odds_available": 0,
         "source_timestamp_coverage": 0
-      }
+      },
+      "trainingWeight": 0.35,
+      "trainingGroup": "fallback_review",
+      "snapshotMaturity": "warming_up"
     },
     {
       "matchId": "ss-curated-2026-05-06-bayern munich-paris saint germain",
@@ -5370,7 +5625,10 @@
         "phase_knockout": 1,
         "odds_available": 0,
         "source_timestamp_coverage": 0
-      }
+      },
+      "trainingWeight": 0.35,
+      "trainingGroup": "fallback_review",
+      "snapshotMaturity": "warming_up"
     },
     {
       "matchId": "ss-curated-2026-05-07-freiburg-sporting braga",
@@ -5434,7 +5692,10 @@
         "phase_knockout": 1,
         "odds_available": 0,
         "source_timestamp_coverage": 0
-      }
+      },
+      "trainingWeight": 0.35,
+      "trainingGroup": "fallback_review",
+      "snapshotMaturity": "warming_up"
     },
     {
       "matchId": "ss-curated-2026-05-07-aston villa-nottingham forest",
@@ -5498,7 +5759,10 @@
         "phase_knockout": 1,
         "odds_available": 0,
         "source_timestamp_coverage": 0
-      }
+      },
+      "trainingWeight": 0.35,
+      "trainingGroup": "fallback_review",
+      "snapshotMaturity": "warming_up"
     },
     {
       "matchId": "ss-curated-2026-05-07-crystal palace-shakhtar donetsk",
@@ -5562,7 +5826,10 @@
         "phase_knockout": 1,
         "odds_available": 0,
         "source_timestamp_coverage": 0
-      }
+      },
+      "trainingWeight": 0.35,
+      "trainingGroup": "fallback_review",
+      "snapshotMaturity": "warming_up"
     },
     {
       "matchId": "ss-curated-2026-05-07-strasbourg-rayo vallecano",
@@ -5626,7 +5893,10 @@
         "phase_knockout": 1,
         "odds_available": 0,
         "source_timestamp_coverage": 0
-      }
+      },
+      "trainingWeight": 0.35,
+      "trainingGroup": "fallback_review",
+      "snapshotMaturity": "warming_up"
     },
     {
       "matchId": "ss-espn-ita.1-737143",
@@ -5690,7 +5960,10 @@
         "phase_knockout": 1,
         "odds_available": 0,
         "source_timestamp_coverage": 0
-      }
+      },
+      "trainingWeight": 0.35,
+      "trainingGroup": "fallback_review",
+      "snapshotMaturity": "warming_up"
     },
     {
       "matchId": "ss-espn-bel.1-401866307",
@@ -5754,7 +6027,10 @@
         "phase_knockout": 1,
         "odds_available": 0,
         "source_timestamp_coverage": 0
-      }
+      },
+      "trainingWeight": 0.35,
+      "trainingGroup": "fallback_review",
+      "snapshotMaturity": "warming_up"
     },
     {
       "matchId": "ss-espn-eng.2-401871353",
@@ -5818,7 +6094,10 @@
         "phase_knockout": 1,
         "odds_available": 0,
         "source_timestamp_coverage": 0
-      }
+      },
+      "trainingWeight": 0.35,
+      "trainingGroup": "fallback_review",
+      "snapshotMaturity": "warming_up"
     },
     {
       "matchId": "ss-tsdb-France - Ligue 1-2278400",
@@ -5882,7 +6161,10 @@
         "phase_knockout": 1,
         "odds_available": 0,
         "source_timestamp_coverage": 0
-      }
+      },
+      "trainingWeight": 0.35,
+      "trainingGroup": "fallback_review",
+      "snapshotMaturity": "warming_up"
     },
     {
       "matchId": "ss-espn-ger.1-747008",
@@ -5946,7 +6228,10 @@
         "phase_knockout": 1,
         "odds_available": 0,
         "source_timestamp_coverage": 0
-      }
+      },
+      "trainingWeight": 0.35,
+      "trainingGroup": "fallback_review",
+      "snapshotMaturity": "warming_up"
     },
     {
       "matchId": "ss-espn-esp.1-748491",
@@ -6010,7 +6295,10 @@
         "phase_knockout": 1,
         "odds_available": 0,
         "source_timestamp_coverage": 0
-      }
+      },
+      "trainingWeight": 0.35,
+      "trainingGroup": "fallback_review",
+      "snapshotMaturity": "warming_up"
     },
     {
       "matchId": "ss-espn-ger.2-747319",
@@ -6074,7 +6362,10 @@
         "phase_knockout": 0,
         "odds_available": 0,
         "source_timestamp_coverage": 0
-      }
+      },
+      "trainingWeight": 0.35,
+      "trainingGroup": "fallback_review",
+      "snapshotMaturity": "warming_up"
     },
     {
       "matchId": "ss-espn-ger.2-747317",
@@ -6138,7 +6429,10 @@
         "phase_knockout": 1,
         "odds_available": 0,
         "source_timestamp_coverage": 0
-      }
+      },
+      "trainingWeight": 0.35,
+      "trainingGroup": "fallback_review",
+      "snapshotMaturity": "warming_up"
     },
     {
       "matchId": "ss-espn-ita.1-737142",
@@ -6202,7 +6496,10 @@
         "phase_knockout": 0,
         "odds_available": 0,
         "source_timestamp_coverage": 0
-      }
+      },
+      "trainingWeight": 0.35,
+      "trainingGroup": "fallback_review",
+      "snapshotMaturity": "warming_up"
     },
     {
       "matchId": "ss-espn-ita.1-737138",
@@ -6266,7 +6563,10 @@
         "phase_knockout": 0,
         "odds_available": 0,
         "source_timestamp_coverage": 0
-      }
+      },
+      "trainingWeight": 0.35,
+      "trainingGroup": "fallback_review",
+      "snapshotMaturity": "warming_up"
     },
     {
       "matchId": "ss-espn-ita.1-737137",
@@ -6330,7 +6630,10 @@
         "phase_knockout": 1,
         "odds_available": 0,
         "source_timestamp_coverage": 0
-      }
+      },
+      "trainingWeight": 0.35,
+      "trainingGroup": "fallback_review",
+      "snapshotMaturity": "warming_up"
     },
     {
       "matchId": "ss-tsdb-Belgium - Pro League-2468844",
@@ -6394,7 +6697,10 @@
         "phase_knockout": 0,
         "odds_available": 0,
         "source_timestamp_coverage": 0
-      }
+      },
+      "trainingWeight": 0.35,
+      "trainingGroup": "fallback_review",
+      "snapshotMaturity": "warming_up"
     },
     {
       "matchId": "ss-espn-eng.2-401871354",
@@ -6458,7 +6764,10 @@
         "phase_knockout": 1,
         "odds_available": 0,
         "source_timestamp_coverage": 0
-      }
+      },
+      "trainingWeight": 0.35,
+      "trainingGroup": "fallback_review",
+      "snapshotMaturity": "warming_up"
     },
     {
       "matchId": "ss-espn-eng.1-740953",
@@ -6522,7 +6831,10 @@
         "phase_knockout": 0,
         "odds_available": 0,
         "source_timestamp_coverage": 0
-      }
+      },
+      "trainingWeight": 0.35,
+      "trainingGroup": "fallback_review",
+      "snapshotMaturity": "warming_up"
     },
     {
       "matchId": "ss-espn-ger.1-747014",
@@ -6586,7 +6898,10 @@
         "phase_knockout": 1,
         "odds_available": 0,
         "source_timestamp_coverage": 0
-      }
+      },
+      "trainingWeight": 0.35,
+      "trainingGroup": "fallback_review",
+      "snapshotMaturity": "warming_up"
     },
     {
       "matchId": "ss-tsdb-Netherlands - Eredivisie-2469523",
@@ -6650,7 +6965,10 @@
         "phase_knockout": 1,
         "odds_available": 0,
         "source_timestamp_coverage": 0
-      }
+      },
+      "trainingWeight": 0.35,
+      "trainingGroup": "fallback_review",
+      "snapshotMaturity": "warming_up"
     },
     {
       "matchId": "ss-espn-esp.1-748486",
@@ -6714,7 +7032,10 @@
         "phase_knockout": 0,
         "odds_available": 0,
         "source_timestamp_coverage": 0
-      }
+      },
+      "trainingWeight": 0.35,
+      "trainingGroup": "fallback_review",
+      "snapshotMaturity": "warming_up"
     },
     {
       "matchId": "ss-espn-bel.1-401866308",
@@ -6778,7 +7099,10 @@
         "phase_knockout": 1,
         "odds_available": 0,
         "source_timestamp_coverage": 0
-      }
+      },
+      "trainingWeight": 0.35,
+      "trainingGroup": "fallback_review",
+      "snapshotMaturity": "warming_up"
     },
     {
       "matchId": "ss-espn-bel.1-401866309",
@@ -6842,7 +7166,10 @@
         "phase_knockout": 0,
         "odds_available": 0,
         "source_timestamp_coverage": 0
-      }
+      },
+      "trainingWeight": 0.35,
+      "trainingGroup": "fallback_review",
+      "snapshotMaturity": "warming_up"
     },
     {
       "matchId": "ss-espn-bel.1-401866310",
@@ -6906,7 +7233,10 @@
         "phase_knockout": 0,
         "odds_available": 0,
         "source_timestamp_coverage": 0
-      }
+      },
+      "trainingWeight": 0.35,
+      "trainingGroup": "fallback_review",
+      "snapshotMaturity": "warming_up"
     },
     {
       "matchId": "ss-espn-eng.1-740950",
@@ -6970,7 +7300,10 @@
         "phase_knockout": 0,
         "odds_available": 0,
         "source_timestamp_coverage": 0
-      }
+      },
+      "trainingWeight": 0.35,
+      "trainingGroup": "fallback_review",
+      "snapshotMaturity": "warming_up"
     },
     {
       "matchId": "ss-espn-eng.1-740946",
@@ -7034,7 +7367,10 @@
         "phase_knockout": 0,
         "odds_available": 0,
         "source_timestamp_coverage": 0
-      }
+      },
+      "trainingWeight": 0.35,
+      "trainingGroup": "fallback_review",
+      "snapshotMaturity": "warming_up"
     },
     {
       "matchId": "ss-espn-eng.1-740949",
@@ -7098,7 +7434,10 @@
         "phase_knockout": 0,
         "odds_available": 0,
         "source_timestamp_coverage": 0
-      }
+      },
+      "trainingWeight": 0.35,
+      "trainingGroup": "fallback_review",
+      "snapshotMaturity": "warming_up"
     },
     {
       "matchId": "ss-espn-eng.1-740951",
@@ -7162,7 +7501,10 @@
         "phase_knockout": 0,
         "odds_available": 0,
         "source_timestamp_coverage": 0
-      }
+      },
+      "trainingWeight": 0.35,
+      "trainingGroup": "fallback_review",
+      "snapshotMaturity": "warming_up"
     },
     {
       "matchId": "ss-espn-ger.2-747318",
@@ -7226,7 +7568,10 @@
         "phase_knockout": 1,
         "odds_available": 0,
         "source_timestamp_coverage": 0
-      }
+      },
+      "trainingWeight": 0.35,
+      "trainingGroup": "fallback_review",
+      "snapshotMaturity": "warming_up"
     },
     {
       "matchId": "ss-espn-ger.2-747320",
@@ -7290,7 +7635,10 @@
         "phase_knockout": 0,
         "odds_available": 0,
         "source_timestamp_coverage": 0
-      }
+      },
+      "trainingWeight": 0.35,
+      "trainingGroup": "fallback_review",
+      "snapshotMaturity": "warming_up"
     },
     {
       "matchId": "ss-espn-ger.2-747315",
@@ -7354,7 +7702,10 @@
         "phase_knockout": 0,
         "odds_available": 0,
         "source_timestamp_coverage": 0
-      }
+      },
+      "trainingWeight": 0.35,
+      "trainingGroup": "fallback_review",
+      "snapshotMaturity": "warming_up"
     },
     {
       "matchId": "ss-espn-ger.2-747312",
@@ -7418,7 +7769,10 @@
         "phase_knockout": 1,
         "odds_available": 0,
         "source_timestamp_coverage": 0
-      }
+      },
+      "trainingWeight": 0.35,
+      "trainingGroup": "fallback_review",
+      "snapshotMaturity": "warming_up"
     },
     {
       "matchId": "ss-espn-ger.1-747009",
@@ -7482,7 +7836,10 @@
         "phase_knockout": 1,
         "odds_available": 0,
         "source_timestamp_coverage": 0
-      }
+      },
+      "trainingWeight": 0.35,
+      "trainingGroup": "fallback_review",
+      "snapshotMaturity": "warming_up"
     },
     {
       "matchId": "ss-espn-ger.1-747011",
@@ -7546,7 +7903,10 @@
         "phase_knockout": 1,
         "odds_available": 0,
         "source_timestamp_coverage": 0
-      }
+      },
+      "trainingWeight": 0.35,
+      "trainingGroup": "fallback_review",
+      "snapshotMaturity": "warming_up"
     },
     {
       "matchId": "ss-espn-ger.1-747012",
@@ -7610,7 +7970,10 @@
         "phase_knockout": 0,
         "odds_available": 0,
         "source_timestamp_coverage": 0
-      }
+      },
+      "trainingWeight": 0.35,
+      "trainingGroup": "fallback_review",
+      "snapshotMaturity": "warming_up"
     },
     {
       "matchId": "ss-espn-ger.1-747013",
@@ -7674,7 +8037,10 @@
         "phase_knockout": 1,
         "odds_available": 0,
         "source_timestamp_coverage": 0
-      }
+      },
+      "trainingWeight": 0.35,
+      "trainingGroup": "fallback_review",
+      "snapshotMaturity": "warming_up"
     },
     {
       "matchId": "ss-espn-esp.1-748492",
@@ -7738,7 +8104,10 @@
         "phase_knockout": 0,
         "odds_available": 0,
         "source_timestamp_coverage": 0
-      }
+      },
+      "trainingWeight": 0.35,
+      "trainingGroup": "fallback_review",
+      "snapshotMaturity": "warming_up"
     },
     {
       "matchId": "ss-espn-esp.1-748487",
@@ -7802,7 +8171,10 @@
         "phase_knockout": 0,
         "odds_available": 0,
         "source_timestamp_coverage": 0
-      }
+      },
+      "trainingWeight": 0.35,
+      "trainingGroup": "fallback_review",
+      "snapshotMaturity": "warming_up"
     },
     {
       "matchId": "ss-espn-esp.1-748485",
@@ -7866,7 +8238,10 @@
         "phase_knockout": 0,
         "odds_available": 0,
         "source_timestamp_coverage": 0
-      }
+      },
+      "trainingWeight": 0.35,
+      "trainingGroup": "fallback_review",
+      "snapshotMaturity": "warming_up"
     },
     {
       "matchId": "ss-oldb-78243",
@@ -7930,7 +8305,10 @@
         "phase_knockout": 0,
         "odds_available": 0,
         "source_timestamp_coverage": 0
-      }
+      },
+      "trainingWeight": 0.35,
+      "trainingGroup": "fallback_review",
+      "snapshotMaturity": "warming_up"
     },
     {
       "matchId": "ss-tsdb-Netherlands - Eredivisie-2469476",
@@ -7994,7 +8372,10 @@
         "phase_knockout": 1,
         "odds_available": 0,
         "source_timestamp_coverage": 0
-      }
+      },
+      "trainingWeight": 0.35,
+      "trainingGroup": "fallback_review",
+      "snapshotMaturity": "warming_up"
     },
     {
       "matchId": "ss-espn-ita.1-737141",
@@ -8058,7 +8439,10 @@
         "phase_knockout": 0,
         "odds_available": 0,
         "source_timestamp_coverage": 0
-      }
+      },
+      "trainingWeight": 0.35,
+      "trainingGroup": "fallback_review",
+      "snapshotMaturity": "warming_up"
     },
     {
       "matchId": "ss-espn-ita.1-737140",
@@ -8122,7 +8506,10 @@
         "phase_knockout": 0,
         "odds_available": 0,
         "source_timestamp_coverage": 0
-      }
+      },
+      "trainingWeight": 0.35,
+      "trainingGroup": "fallback_review",
+      "snapshotMaturity": "warming_up"
     },
     {
       "matchId": "ss-espn-ita.1-737136",
@@ -8186,7 +8573,10 @@
         "phase_knockout": 0,
         "odds_available": 0,
         "source_timestamp_coverage": 0
-      }
+      },
+      "trainingWeight": 0.35,
+      "trainingGroup": "fallback_review",
+      "snapshotMaturity": "warming_up"
     },
     {
       "matchId": "ss-espn-bel.1-401866314",
@@ -8250,7 +8640,10 @@
         "phase_knockout": 0,
         "odds_available": 0,
         "source_timestamp_coverage": 0
-      }
+      },
+      "trainingWeight": 0.35,
+      "trainingGroup": "fallback_review",
+      "snapshotMaturity": "warming_up"
     },
     {
       "matchId": "ss-espn-eng.1-740955",
@@ -8314,7 +8707,10 @@
         "phase_knockout": 0,
         "odds_available": 0,
         "source_timestamp_coverage": 0
-      }
+      },
+      "trainingWeight": 0.35,
+      "trainingGroup": "fallback_review",
+      "snapshotMaturity": "warming_up"
     },
     {
       "matchId": "ss-espn-fra.1-746707",
@@ -8378,7 +8774,10 @@
         "phase_knockout": 0,
         "odds_available": 0,
         "source_timestamp_coverage": 0
-      }
+      },
+      "trainingWeight": 0.35,
+      "trainingGroup": "fallback_review",
+      "snapshotMaturity": "warming_up"
     },
     {
       "matchId": "ss-tsdb-Germany - Bundesliga-2276931",
@@ -8442,7 +8841,10 @@
         "phase_knockout": 1,
         "odds_available": 0,
         "source_timestamp_coverage": 0
-      }
+      },
+      "trainingWeight": 0.35,
+      "trainingGroup": "fallback_review",
+      "snapshotMaturity": "warming_up"
     },
     {
       "matchId": "ss-espn-ita.1-737139",
@@ -8506,7 +8908,10 @@
         "phase_knockout": 0,
         "odds_available": 0,
         "source_timestamp_coverage": 0
-      }
+      },
+      "trainingWeight": 0.35,
+      "trainingGroup": "fallback_review",
+      "snapshotMaturity": "warming_up"
     },
     {
       "matchId": "ss-espn-ned.1-741269",
@@ -8570,7 +8975,10 @@
         "phase_knockout": 0,
         "odds_available": 0,
         "source_timestamp_coverage": 0
-      }
+      },
+      "trainingWeight": 0.35,
+      "trainingGroup": "fallback_review",
+      "snapshotMaturity": "warming_up"
     },
     {
       "matchId": "ss-espn-esp.1-748493",
@@ -8634,7 +9042,10 @@
         "phase_knockout": 0,
         "odds_available": 0,
         "source_timestamp_coverage": 0
-      }
+      },
+      "trainingWeight": 0.35,
+      "trainingGroup": "fallback_review",
+      "snapshotMaturity": "warming_up"
     },
     {
       "matchId": "ss-espn-bel.1-401866311",
@@ -8698,7 +9109,10 @@
         "phase_knockout": 1,
         "odds_available": 0,
         "source_timestamp_coverage": 0
-      }
+      },
+      "trainingWeight": 0.35,
+      "trainingGroup": "fallback_review",
+      "snapshotMaturity": "warming_up"
     },
     {
       "matchId": "ss-espn-bel.1-401866312",
@@ -8762,7 +9176,10 @@
         "phase_knockout": 0,
         "odds_available": 0,
         "source_timestamp_coverage": 0
-      }
+      },
+      "trainingWeight": 0.35,
+      "trainingGroup": "fallback_review",
+      "snapshotMaturity": "warming_up"
     },
     {
       "matchId": "ss-espn-bel.1-401866313",
@@ -8826,7 +9243,10 @@
         "phase_knockout": 0,
         "odds_available": 0,
         "source_timestamp_coverage": 0
-      }
+      },
+      "trainingWeight": 0.35,
+      "trainingGroup": "fallback_review",
+      "snapshotMaturity": "warming_up"
     },
     {
       "matchId": "ss-espn-eng.1-740947",
@@ -8890,7 +9310,10 @@
         "phase_knockout": 0,
         "odds_available": 0,
         "source_timestamp_coverage": 0
-      }
+      },
+      "trainingWeight": 0.35,
+      "trainingGroup": "fallback_review",
+      "snapshotMaturity": "warming_up"
     },
     {
       "matchId": "ss-espn-eng.1-740948",
@@ -8954,7 +9377,10 @@
         "phase_knockout": 0,
         "odds_available": 0,
         "source_timestamp_coverage": 0
-      }
+      },
+      "trainingWeight": 0.35,
+      "trainingGroup": "fallback_review",
+      "snapshotMaturity": "warming_up"
     },
     {
       "matchId": "ss-espn-eng.1-740952",
@@ -9018,7 +9444,10 @@
         "phase_knockout": 0,
         "odds_available": 0,
         "source_timestamp_coverage": 0
-      }
+      },
+      "trainingWeight": 0.35,
+      "trainingGroup": "fallback_review",
+      "snapshotMaturity": "warming_up"
     },
     {
       "matchId": "ss-espn-fra.1-746700",
@@ -9082,7 +9511,10 @@
         "phase_knockout": 0,
         "odds_available": 0,
         "source_timestamp_coverage": 0
-      }
+      },
+      "trainingWeight": 0.35,
+      "trainingGroup": "fallback_review",
+      "snapshotMaturity": "warming_up"
     },
     {
       "matchId": "ss-espn-fra.1-746704",
@@ -9146,7 +9578,10 @@
         "phase_knockout": 0,
         "odds_available": 0,
         "source_timestamp_coverage": 0
-      }
+      },
+      "trainingWeight": 0.35,
+      "trainingGroup": "fallback_review",
+      "snapshotMaturity": "warming_up"
     },
     {
       "matchId": "ss-espn-fra.1-746703",
@@ -9210,7 +9645,10 @@
         "phase_knockout": 0,
         "odds_available": 0,
         "source_timestamp_coverage": 0
-      }
+      },
+      "trainingWeight": 0.35,
+      "trainingGroup": "fallback_review",
+      "snapshotMaturity": "warming_up"
     },
     {
       "matchId": "ss-espn-fra.1-746701",
@@ -9274,7 +9712,10 @@
         "phase_knockout": 0,
         "odds_available": 0,
         "source_timestamp_coverage": 0
-      }
+      },
+      "trainingWeight": 0.35,
+      "trainingGroup": "fallback_review",
+      "snapshotMaturity": "warming_up"
     },
     {
       "matchId": "ss-espn-fra.1-746708",
@@ -9338,7 +9779,10 @@
         "phase_knockout": 1,
         "odds_available": 0,
         "source_timestamp_coverage": 0
-      }
+      },
+      "trainingWeight": 0.35,
+      "trainingGroup": "fallback_review",
+      "snapshotMaturity": "warming_up"
     },
     {
       "matchId": "ss-espn-fra.1-746705",
@@ -9402,7 +9846,10 @@
         "phase_knockout": 0,
         "odds_available": 0,
         "source_timestamp_coverage": 0
-      }
+      },
+      "trainingWeight": 0.35,
+      "trainingGroup": "fallback_review",
+      "snapshotMaturity": "warming_up"
     },
     {
       "matchId": "ss-espn-fra.1-746706",
@@ -9466,7 +9913,10 @@
         "phase_knockout": 0,
         "odds_available": 0,
         "source_timestamp_coverage": 0
-      }
+      },
+      "trainingWeight": 0.35,
+      "trainingGroup": "fallback_review",
+      "snapshotMaturity": "warming_up"
     },
     {
       "matchId": "ss-espn-ger.2-747313",
@@ -9530,7 +9980,10 @@
         "phase_knockout": 0,
         "odds_available": 0,
         "source_timestamp_coverage": 0
-      }
+      },
+      "trainingWeight": 0.35,
+      "trainingGroup": "fallback_review",
+      "snapshotMaturity": "warming_up"
     },
     {
       "matchId": "ss-espn-ger.2-747314",
@@ -9594,7 +10047,10 @@
         "phase_knockout": 0,
         "odds_available": 0,
         "source_timestamp_coverage": 0
-      }
+      },
+      "trainingWeight": 0.35,
+      "trainingGroup": "fallback_review",
+      "snapshotMaturity": "warming_up"
     },
     {
       "matchId": "ss-espn-ger.2-747316",
@@ -9658,7 +10114,10 @@
         "phase_knockout": 1,
         "odds_available": 0,
         "source_timestamp_coverage": 0
-      }
+      },
+      "trainingWeight": 0.35,
+      "trainingGroup": "fallback_review",
+      "snapshotMaturity": "warming_up"
     },
     {
       "matchId": "ss-espn-ger.1-747010",
@@ -9722,7 +10181,10 @@
         "phase_knockout": 1,
         "odds_available": 0,
         "source_timestamp_coverage": 0
-      }
+      },
+      "trainingWeight": 0.35,
+      "trainingGroup": "fallback_review",
+      "snapshotMaturity": "warming_up"
     },
     {
       "matchId": "ss-espn-ger.1-747006",
@@ -9786,7 +10248,10 @@
         "phase_knockout": 1,
         "odds_available": 0,
         "source_timestamp_coverage": 0
-      }
+      },
+      "trainingWeight": 0.35,
+      "trainingGroup": "fallback_review",
+      "snapshotMaturity": "warming_up"
     },
     {
       "matchId": "ss-espn-ger.1-747007",
@@ -9850,7 +10315,10 @@
         "phase_knockout": 1,
         "odds_available": 0,
         "source_timestamp_coverage": 0
-      }
+      },
+      "trainingWeight": 0.35,
+      "trainingGroup": "fallback_review",
+      "snapshotMaturity": "warming_up"
     },
     {
       "matchId": "ss-espn-ita.1-737134",
@@ -9914,7 +10382,10 @@
         "phase_knockout": 0,
         "odds_available": 0,
         "source_timestamp_coverage": 0
-      }
+      },
+      "trainingWeight": 0.35,
+      "trainingGroup": "fallback_review",
+      "snapshotMaturity": "warming_up"
     },
     {
       "matchId": "ss-espn-ned.1-741272",
@@ -9978,7 +10449,10 @@
         "phase_knockout": 0,
         "odds_available": 0,
         "source_timestamp_coverage": 0
-      }
+      },
+      "trainingWeight": 0.35,
+      "trainingGroup": "fallback_review",
+      "snapshotMaturity": "warming_up"
     },
     {
       "matchId": "ss-espn-ned.1-741271",
@@ -10042,7 +10516,10 @@
         "phase_knockout": 0,
         "odds_available": 0,
         "source_timestamp_coverage": 0
-      }
+      },
+      "trainingWeight": 0.35,
+      "trainingGroup": "fallback_review",
+      "snapshotMaturity": "warming_up"
     },
     {
       "matchId": "ss-espn-ned.1-741270",
@@ -10106,7 +10583,10 @@
         "phase_knockout": 0,
         "odds_available": 0,
         "source_timestamp_coverage": 0
-      }
+      },
+      "trainingWeight": 0.35,
+      "trainingGroup": "fallback_review",
+      "snapshotMaturity": "warming_up"
     },
     {
       "matchId": "ss-espn-ned.1-741268",
@@ -10170,7 +10650,10 @@
         "phase_knockout": 0,
         "odds_available": 0,
         "source_timestamp_coverage": 0
-      }
+      },
+      "trainingWeight": 0.35,
+      "trainingGroup": "fallback_review",
+      "snapshotMaturity": "warming_up"
     },
     {
       "matchId": "ss-espn-ned.1-741265",
@@ -10234,7 +10717,10 @@
         "phase_knockout": 1,
         "odds_available": 0,
         "source_timestamp_coverage": 0
-      }
+      },
+      "trainingWeight": 0.35,
+      "trainingGroup": "fallback_review",
+      "snapshotMaturity": "warming_up"
     },
     {
       "matchId": "ss-espn-ned.1-741266",
@@ -10298,7 +10784,10 @@
         "phase_knockout": 0,
         "odds_available": 0,
         "source_timestamp_coverage": 0
-      }
+      },
+      "trainingWeight": 0.35,
+      "trainingGroup": "fallback_review",
+      "snapshotMaturity": "warming_up"
     },
     {
       "matchId": "ss-espn-ned.1-741264",
@@ -10362,7 +10851,10 @@
         "phase_knockout": 1,
         "odds_available": 0,
         "source_timestamp_coverage": 0
-      }
+      },
+      "trainingWeight": 0.35,
+      "trainingGroup": "fallback_review",
+      "snapshotMaturity": "warming_up"
     },
     {
       "matchId": "ss-espn-por.1-750537",
@@ -10426,7 +10918,10 @@
         "phase_knockout": 1,
         "odds_available": 0,
         "source_timestamp_coverage": 0
-      }
+      },
+      "trainingWeight": 0.35,
+      "trainingGroup": "fallback_review",
+      "snapshotMaturity": "warming_up"
     },
     {
       "matchId": "ss-espn-por.1-750536",
@@ -10490,7 +10985,10 @@
         "phase_knockout": 1,
         "odds_available": 0,
         "source_timestamp_coverage": 0
-      }
+      },
+      "trainingWeight": 0.35,
+      "trainingGroup": "fallback_review",
+      "snapshotMaturity": "warming_up"
     },
     {
       "matchId": "ss-espn-esp.1-748490",
@@ -10554,7 +11052,10 @@
         "phase_knockout": 0,
         "odds_available": 0,
         "source_timestamp_coverage": 0
-      }
+      },
+      "trainingWeight": 0.35,
+      "trainingGroup": "fallback_review",
+      "snapshotMaturity": "warming_up"
     },
     {
       "matchId": "ss-espn-esp.1-748488",
@@ -10618,7 +11119,10 @@
         "phase_knockout": 0,
         "odds_available": 0,
         "source_timestamp_coverage": 0
-      }
+      },
+      "trainingWeight": 0.35,
+      "trainingGroup": "fallback_review",
+      "snapshotMaturity": "warming_up"
     },
     {
       "matchId": "ss-espn-esp.1-748484",
@@ -10682,7 +11186,10 @@
         "phase_knockout": 0,
         "odds_available": 0,
         "source_timestamp_coverage": 0
-      }
+      },
+      "trainingWeight": 0.35,
+      "trainingGroup": "fallback_review",
+      "snapshotMaturity": "warming_up"
     },
     {
       "matchId": "ss-oldb-77546",
@@ -10746,7 +11253,10 @@
         "phase_knockout": 1,
         "odds_available": 0,
         "source_timestamp_coverage": 0
-      }
+      },
+      "trainingWeight": 0.35,
+      "trainingGroup": "fallback_review",
+      "snapshotMaturity": "warming_up"
     },
     {
       "matchId": "ss-espn-ned.1-741267",
@@ -10810,7 +11320,10 @@
         "phase_knockout": 1,
         "odds_available": 0,
         "source_timestamp_coverage": 0
-      }
+      },
+      "trainingWeight": 0.35,
+      "trainingGroup": "fallback_review",
+      "snapshotMaturity": "warming_up"
     },
     {
       "matchId": "ss-espn-eng.1-740954",
@@ -10874,7 +11387,10 @@
         "phase_knockout": 1,
         "odds_available": 0,
         "source_timestamp_coverage": 0
-      }
+      },
+      "trainingWeight": 0.35,
+      "trainingGroup": "fallback_review",
+      "snapshotMaturity": "warming_up"
     },
     {
       "matchId": "ss-espn-esp.1-748489",
@@ -10938,7 +11454,10 @@
         "phase_knockout": 1,
         "odds_available": 0,
         "source_timestamp_coverage": 0
-      }
+      },
+      "trainingWeight": 0.35,
+      "trainingGroup": "fallback_review",
+      "snapshotMaturity": "warming_up"
     },
     {
       "matchId": "ss-fd-SP2-2026-05-11-huesca-sociedad b",
@@ -11002,7 +11521,10 @@
         "phase_knockout": 1,
         "odds_available": 0,
         "source_timestamp_coverage": 0
-      }
+      },
+      "trainingWeight": 0.35,
+      "trainingGroup": "fallback_review",
+      "snapshotMaturity": "warming_up"
     },
     {
       "matchId": "ss-espn-ita.1-737135",
@@ -11066,7 +11588,10 @@
         "phase_knockout": 1,
         "odds_available": 0,
         "source_timestamp_coverage": 0
-      }
+      },
+      "trainingWeight": 0.35,
+      "trainingGroup": "fallback_review",
+      "snapshotMaturity": "warming_up"
     },
     {
       "matchId": "ss-espn-por.1-750539",
@@ -11130,7 +11655,10 @@
         "phase_knockout": 1,
         "odds_available": 0,
         "source_timestamp_coverage": 0
-      }
+      },
+      "trainingWeight": 0.35,
+      "trainingGroup": "fallback_review",
+      "snapshotMaturity": "warming_up"
     },
     {
       "matchId": "ss-espn-por.1-750540",
@@ -11194,7 +11722,10 @@
         "phase_knockout": 1,
         "odds_available": 0,
         "source_timestamp_coverage": 0
-      }
+      },
+      "trainingWeight": 0.35,
+      "trainingGroup": "fallback_review",
+      "snapshotMaturity": "warming_up"
     },
     {
       "matchId": "ss-espn-por.1-750541",
@@ -11258,7 +11789,10 @@
         "phase_knockout": 1,
         "odds_available": 0,
         "source_timestamp_coverage": 0
-      }
+      },
+      "trainingWeight": 0.35,
+      "trainingGroup": "fallback_review",
+      "snapshotMaturity": "warming_up"
     },
     {
       "matchId": "ss-fd-P1-2026-05-11-guimaraes-casa pia",
@@ -11322,7 +11856,10 @@
         "phase_knockout": 1,
         "odds_available": 0,
         "source_timestamp_coverage": 0
-      }
+      },
+      "trainingWeight": 0.35,
+      "trainingGroup": "fallback_review",
+      "snapshotMaturity": "warming_up"
     },
     {
       "matchId": "ss-fd-P1-2026-05-11-rio ave-sp lisbon",
@@ -11386,7 +11923,10 @@
         "phase_knockout": 1,
         "odds_available": 0,
         "source_timestamp_coverage": 0
-      }
+      },
+      "trainingWeight": 0.35,
+      "trainingGroup": "fallback_review",
+      "snapshotMaturity": "warming_up"
     },
     {
       "matchId": "ss-fd-P1-2026-05-11-santa clara-nacional",
@@ -11450,7 +11990,10 @@
         "phase_knockout": 1,
         "odds_available": 0,
         "source_timestamp_coverage": 0
-      }
+      },
+      "trainingWeight": 0.35,
+      "trainingGroup": "fallback_review",
+      "snapshotMaturity": "warming_up"
     },
     {
       "matchId": "ss-espn-por.1-750534",
@@ -11514,7 +12057,10 @@
         "phase_knockout": 1,
         "odds_available": 0,
         "source_timestamp_coverage": 0
-      }
+      },
+      "trainingWeight": 0.35,
+      "trainingGroup": "fallback_review",
+      "snapshotMaturity": "warming_up"
     },
     {
       "matchId": "ss-espn-eng.2-401871355",
@@ -11578,7 +12124,10 @@
         "phase_knockout": 1,
         "odds_available": 0,
         "source_timestamp_coverage": 0
-      }
+      },
+      "trainingWeight": 0.35,
+      "trainingGroup": "fallback_review",
+      "snapshotMaturity": "warming_up"
     },
     {
       "matchId": "ss-espn-ned.1-741267",
@@ -11642,7 +12191,10 @@
         "phase_knockout": 1,
         "odds_available": 0,
         "source_timestamp_coverage": 0
-      }
+      },
+      "trainingWeight": 0.35,
+      "trainingGroup": "fallback_review",
+      "snapshotMaturity": "warming_up"
     },
     {
       "matchId": "ss-espn-por.1-750542",
@@ -11706,7 +12258,10 @@
         "phase_knockout": 0,
         "odds_available": 0,
         "source_timestamp_coverage": 0
-      }
+      },
+      "trainingWeight": 0.35,
+      "trainingGroup": "fallback_review",
+      "snapshotMaturity": "warming_up"
     },
     {
       "matchId": "ss-espn-por.1-750538",
@@ -11770,7 +12325,10 @@
         "phase_knockout": 0,
         "odds_available": 0,
         "source_timestamp_coverage": 0
-      }
+      },
+      "trainingWeight": 0.35,
+      "trainingGroup": "fallback_review",
+      "snapshotMaturity": "warming_up"
     },
     {
       "matchId": "ss-espn-por.1-750535",
@@ -11834,7 +12392,10 @@
         "phase_knockout": 0,
         "odds_available": 0,
         "source_timestamp_coverage": 0
-      }
+      },
+      "trainingWeight": 0.35,
+      "trainingGroup": "fallback_review",
+      "snapshotMaturity": "warming_up"
     },
     {
       "matchId": "ss-espn-esp.1-748499",
@@ -11898,7 +12459,10 @@
         "phase_knockout": 0,
         "odds_available": 0,
         "source_timestamp_coverage": 0
-      }
+      },
+      "trainingWeight": 0.35,
+      "trainingGroup": "fallback_review",
+      "snapshotMaturity": "warming_up"
     },
     {
       "matchId": "ss-espn-esp.1-748500",
@@ -11962,7 +12526,10 @@
         "phase_knockout": 0,
         "odds_available": 0,
         "source_timestamp_coverage": 0
-      }
+      },
+      "trainingWeight": 0.35,
+      "trainingGroup": "fallback_review",
+      "snapshotMaturity": "warming_up"
     },
     {
       "matchId": "ss-espn-esp.1-748494",
@@ -12026,7 +12593,10 @@
         "phase_knockout": 0,
         "odds_available": 0,
         "source_timestamp_coverage": 0
-      }
+      },
+      "trainingWeight": 0.35,
+      "trainingGroup": "fallback_review",
+      "snapshotMaturity": "warming_up"
     },
     {
       "matchId": "ss-espn-eng.2-401871356",
@@ -12090,7 +12660,10 @@
         "phase_knockout": 1,
         "odds_available": 0,
         "source_timestamp_coverage": 0
-      }
+      },
+      "trainingWeight": 0.35,
+      "trainingGroup": "fallback_review",
+      "snapshotMaturity": "warming_up"
     },
     {
       "matchId": "ss-tsdb-France - Ligue 1-2472200",
@@ -12154,7 +12727,10 @@
         "phase_knockout": 1,
         "odds_available": 0,
         "source_timestamp_coverage": 0
-      }
+      },
+      "trainingWeight": 0.35,
+      "trainingGroup": "fallback_review",
+      "snapshotMaturity": "warming_up"
     },
     {
       "matchId": "ss-espn-eng.1-740902",
@@ -12218,7 +12794,10 @@
         "phase_knockout": 1,
         "odds_available": 0,
         "source_timestamp_coverage": 0
-      }
+      },
+      "trainingWeight": 0.35,
+      "trainingGroup": "fallback_review",
+      "snapshotMaturity": "warming_up"
     },
     {
       "matchId": "ss-espn-esp.1-748497",
@@ -12282,7 +12861,10 @@
         "phase_knockout": 1,
         "odds_available": 0,
         "source_timestamp_coverage": 0
-      }
+      },
+      "trainingWeight": 0.35,
+      "trainingGroup": "fallback_review",
+      "snapshotMaturity": "warming_up"
     },
     {
       "matchId": "ss-espn-esp.1-748501",
@@ -12346,7 +12928,10 @@
         "phase_knockout": 0,
         "odds_available": 0,
         "source_timestamp_coverage": 0
-      }
+      },
+      "trainingWeight": 0.35,
+      "trainingGroup": "fallback_review",
+      "snapshotMaturity": "warming_up"
     },
     {
       "matchId": "ss-espn-esp.1-748498",
@@ -12410,7 +12995,10 @@
         "phase_knockout": 0,
         "odds_available": 0,
         "source_timestamp_coverage": 0
-      }
+      },
+      "trainingWeight": 0.35,
+      "trainingGroup": "fallback_review",
+      "snapshotMaturity": "warming_up"
     },
     {
       "matchId": "ss-espn-esp.1-748496",
@@ -12474,7 +13062,10 @@
         "phase_knockout": 0,
         "odds_available": 0,
         "source_timestamp_coverage": 0
-      }
+      },
+      "trainingWeight": 0.35,
+      "trainingGroup": "fallback_review",
+      "snapshotMaturity": "warming_up"
     },
     {
       "matchId": "ss-espn-fra.1-746665",
@@ -12538,7 +13129,10 @@
         "phase_knockout": 0,
         "odds_available": 0,
         "source_timestamp_coverage": 0
-      }
+      },
+      "trainingWeight": 0.35,
+      "trainingGroup": "fallback_review",
+      "snapshotMaturity": "warming_up"
     },
     {
       "matchId": "ss-espn-fra.1-746666",
@@ -12602,7 +13196,10 @@
         "phase_knockout": 0,
         "odds_available": 0,
         "source_timestamp_coverage": 0
-      }
+      },
+      "trainingWeight": 0.35,
+      "trainingGroup": "fallback_review",
+      "snapshotMaturity": "warming_up"
     },
     {
       "matchId": "ss-espn-esp.1-748502",
@@ -12666,7 +13263,10 @@
         "phase_knockout": 1,
         "odds_available": 0,
         "source_timestamp_coverage": 0
-      }
+      },
+      "trainingWeight": 0.35,
+      "trainingGroup": "fallback_review",
+      "snapshotMaturity": "warming_up"
     },
     {
       "matchId": "ss-espn-esp.1-748495",
@@ -12730,7 +13330,10 @@
         "phase_knockout": 1,
         "odds_available": 0,
         "source_timestamp_coverage": 0
-      }
+      },
+      "trainingWeight": 0.35,
+      "trainingGroup": "fallback_review",
+      "snapshotMaturity": "warming_up"
     },
     {
       "matchId": "ss-fd-SP1-2026-05-14-real madrid-oviedo",
@@ -12794,7 +13397,10 @@
         "phase_knockout": 1,
         "odds_available": 0,
         "source_timestamp_coverage": 0
-      }
+      },
+      "trainingWeight": 0.35,
+      "trainingGroup": "fallback_review",
+      "snapshotMaturity": "warming_up"
     },
     {
       "matchId": "ss-espn-esp.1-748503",
@@ -12858,7 +13464,10 @@
         "phase_knockout": 0,
         "odds_available": 0,
         "source_timestamp_coverage": 0
-      }
+      },
+      "trainingWeight": 0.35,
+      "trainingGroup": "fallback_review",
+      "snapshotMaturity": "warming_up"
     },
     {
       "matchId": "ss-tsdb-Italy - Serie A-2265366",
@@ -12922,7 +13531,10 @@
         "phase_knockout": 0,
         "odds_available": 0,
         "source_timestamp_coverage": 0
-      }
+      },
+      "trainingWeight": 0.35,
+      "trainingGroup": "fallback_review",
+      "snapshotMaturity": "warming_up"
     },
     {
       "matchId": "ss-tsdb-Italy - Serie A-2265373",
@@ -12986,7 +13598,10 @@
         "phase_knockout": 1,
         "odds_available": 0,
         "source_timestamp_coverage": 0
-      }
+      },
+      "trainingWeight": 0.35,
+      "trainingGroup": "fallback_review",
+      "snapshotMaturity": "warming_up"
     },
     {
       "matchId": "ss-tsdb-Italy - Serie A-2265375",
@@ -13050,7 +13665,10 @@
         "phase_knockout": 0,
         "odds_available": 0,
         "source_timestamp_coverage": 0
-      }
+      },
+      "trainingWeight": 0.35,
+      "trainingGroup": "fallback_review",
+      "snapshotMaturity": "warming_up"
     },
     {
       "matchId": "ss-tsdb-England - Premier League-2267403",
@@ -13114,7 +13732,10 @@
         "phase_knockout": 0,
         "odds_available": 0,
         "source_timestamp_coverage": 0
-      }
+      },
+      "trainingWeight": 0.35,
+      "trainingGroup": "fallback_review",
+      "snapshotMaturity": "warming_up"
     },
     {
       "matchId": "ss-tsdb-England - Premier League-2267407",
@@ -13178,7 +13799,10 @@
         "phase_knockout": 0,
         "odds_available": 0,
         "source_timestamp_coverage": 0
-      }
+      },
+      "trainingWeight": 0.35,
+      "trainingGroup": "fallback_review",
+      "snapshotMaturity": "warming_up"
     },
     {
       "matchId": "ss-tsdb-Netherlands - Eredivisie-2268424",
@@ -13242,7 +13866,10 @@
         "phase_knockout": 0,
         "odds_available": 0,
         "source_timestamp_coverage": 0
-      }
+      },
+      "trainingWeight": 0.35,
+      "trainingGroup": "fallback_review",
+      "snapshotMaturity": "warming_up"
     },
     {
       "matchId": "ss-tsdb-Italy - Serie A-2265372",
@@ -13306,7 +13933,10 @@
         "phase_knockout": 1,
         "odds_available": 0,
         "source_timestamp_coverage": 0
-      }
+      },
+      "trainingWeight": 0.35,
+      "trainingGroup": "fallback_review",
+      "snapshotMaturity": "warming_up"
     },
     {
       "matchId": "ss-tsdb-England - Premier League-2267410",
@@ -13370,7 +14000,10 @@
         "phase_knockout": 0,
         "odds_available": 0,
         "source_timestamp_coverage": 0
-      }
+      },
+      "trainingWeight": 0.35,
+      "trainingGroup": "fallback_review",
+      "snapshotMaturity": "warming_up"
     },
     {
       "matchId": "ss-tsdb-Belgium - Pro League-2455088",
@@ -13434,7 +14067,10 @@
         "phase_knockout": 1,
         "odds_available": 0,
         "source_timestamp_coverage": 0
-      }
+      },
+      "trainingWeight": 0.35,
+      "trainingGroup": "fallback_review",
+      "snapshotMaturity": "warming_up"
     },
     {
       "matchId": "ss-tsdb-England - Championship-2275719",
@@ -13498,7 +14134,10 @@
         "phase_knockout": 0,
         "odds_available": 0,
         "source_timestamp_coverage": 0
-      }
+      },
+      "trainingWeight": 0.35,
+      "trainingGroup": "fallback_review",
+      "snapshotMaturity": "warming_up"
     },
     {
       "matchId": "ss-tsdb-France - Ligue 1-2278380",
@@ -13562,7 +14201,10 @@
         "phase_knockout": 0,
         "odds_available": 0,
         "source_timestamp_coverage": 0
-      }
+      },
+      "trainingWeight": 0.35,
+      "trainingGroup": "fallback_review",
+      "snapshotMaturity": "warming_up"
     },
     {
       "matchId": "ss-tsdb-Germany - Bundesliga-2276914",
@@ -13626,7 +14268,10 @@
         "phase_knockout": 1,
         "odds_available": 0,
         "source_timestamp_coverage": 0
-      }
+      },
+      "trainingWeight": 0.35,
+      "trainingGroup": "fallback_review",
+      "snapshotMaturity": "warming_up"
     },
     {
       "matchId": "ss-tsdb-Spain - LaLiga-2279706",
@@ -13690,7 +14335,10 @@
         "phase_knockout": 0,
         "odds_available": 0,
         "source_timestamp_coverage": 0
-      }
+      },
+      "trainingWeight": 0.35,
+      "trainingGroup": "fallback_review",
+      "snapshotMaturity": "warming_up"
     },
     {
       "matchId": "ss-fd-N1-2026-04-23-go ahead eagles-az alkmaar",
@@ -13754,7 +14402,10 @@
         "phase_knockout": 1,
         "odds_available": 0,
         "source_timestamp_coverage": 0
-      }
+      },
+      "trainingWeight": 0.35,
+      "trainingGroup": "fallback_review",
+      "snapshotMaturity": "warming_up"
     },
     {
       "matchId": "ss-fd-N1-2026-04-23-psv eindhoven-zwolle",
@@ -13818,7 +14469,10 @@
         "phase_knockout": 1,
         "odds_available": 0,
         "source_timestamp_coverage": 0
-      }
+      },
+      "trainingWeight": 0.35,
+      "trainingGroup": "fallback_review",
+      "snapshotMaturity": "warming_up"
     },
     {
       "matchId": "ss-fd-SP1-2026-04-23-levante-sevilla",
@@ -13882,7 +14536,10 @@
         "phase_knockout": 1,
         "odds_available": 0,
         "source_timestamp_coverage": 0
-      }
+      },
+      "trainingWeight": 0.35,
+      "trainingGroup": "fallback_review",
+      "snapshotMaturity": "warming_up"
     },
     {
       "matchId": "ss-fd-SP1-2026-04-23-vallecano-espanol",
@@ -13946,7 +14603,10 @@
         "phase_knockout": 1,
         "odds_available": 0,
         "source_timestamp_coverage": 0
-      }
+      },
+      "trainingWeight": 0.35,
+      "trainingGroup": "fallback_review",
+      "snapshotMaturity": "warming_up"
     },
     {
       "matchId": "ss-fd-SP1-2026-04-23-oviedo-villarreal",
@@ -14010,7 +14670,10 @@
         "phase_knockout": 1,
         "odds_available": 0,
         "source_timestamp_coverage": 0
-      }
+      },
+      "trainingWeight": 0.35,
+      "trainingGroup": "fallback_review",
+      "snapshotMaturity": "warming_up"
     },
     {
       "matchId": "ss-fd-P1-2026-04-23-casa pia-sp braga",
@@ -14074,7 +14737,10 @@
         "phase_knockout": 1,
         "odds_available": 0,
         "source_timestamp_coverage": 0
-      }
+      },
+      "trainingWeight": 0.35,
+      "trainingGroup": "fallback_review",
+      "snapshotMaturity": "warming_up"
     },
     {
       "matchId": "ss-fd-B1-2026-04-23-st truiden-anderlecht",
@@ -14138,7 +14804,10 @@
         "phase_knockout": 1,
         "odds_available": 0,
         "source_timestamp_coverage": 0
-      }
+      },
+      "trainingWeight": 0.35,
+      "trainingGroup": "fallback_review",
+      "snapshotMaturity": "warming_up"
     },
     {
       "matchId": "ss-fd-N1-2026-04-26-excelsior-utrecht",
@@ -14202,7 +14871,10 @@
         "phase_knockout": 0,
         "odds_available": 0,
         "source_timestamp_coverage": 0
-      }
+      },
+      "trainingWeight": 0.35,
+      "trainingGroup": "fallback_review",
+      "snapshotMaturity": "warming_up"
     },
     {
       "matchId": "ss-fd-N1-2026-04-26-heracles-volendam",
@@ -14266,7 +14938,10 @@
         "phase_knockout": 0,
         "odds_available": 0,
         "source_timestamp_coverage": 0
-      }
+      },
+      "trainingWeight": 0.35,
+      "trainingGroup": "fallback_review",
+      "snapshotMaturity": "warming_up"
     },
     {
       "matchId": "ss-fd-E1-2026-04-26-coventry-wrexham",
@@ -14330,7 +15005,10 @@
         "phase_knockout": 0,
         "odds_available": 0,
         "source_timestamp_coverage": 0
-      }
+      },
+      "trainingWeight": 0.35,
+      "trainingGroup": "fallback_review",
+      "snapshotMaturity": "warming_up"
     },
     {
       "matchId": "ss-fd-D1-2026-04-26-stuttgart-werder bremen",
@@ -14394,7 +15072,10 @@
         "phase_knockout": 1,
         "odds_available": 0,
         "source_timestamp_coverage": 0
-      }
+      },
+      "trainingWeight": 0.35,
+      "trainingGroup": "fallback_review",
+      "snapshotMaturity": "warming_up"
     },
     {
       "matchId": "ss-fd-D1-2026-04-26-dortmund-freiburg",
@@ -14458,7 +15139,10 @@
         "phase_knockout": 1,
         "odds_available": 0,
         "source_timestamp_coverage": 0
-      }
+      },
+      "trainingWeight": 0.35,
+      "trainingGroup": "fallback_review",
+      "snapshotMaturity": "warming_up"
     },
     {
       "matchId": "ss-fd-D2-2026-04-26-bochum-greuther furth",
@@ -14522,7 +15206,10 @@
         "phase_knockout": 1,
         "odds_available": 0,
         "source_timestamp_coverage": 0
-      }
+      },
+      "trainingWeight": 0.35,
+      "trainingGroup": "fallback_review",
+      "snapshotMaturity": "warming_up"
     },
     {
       "matchId": "ss-fd-D2-2026-04-26-nurnberg-magdeburg",
@@ -14586,7 +15273,10 @@
         "phase_knockout": 1,
         "odds_available": 0,
         "source_timestamp_coverage": 0
-      }
+      },
+      "trainingWeight": 0.35,
+      "trainingGroup": "fallback_review",
+      "snapshotMaturity": "warming_up"
     },
     {
       "matchId": "ss-fd-D2-2026-04-26-paderborn-schalke 04",
@@ -14650,7 +15340,10 @@
         "phase_knockout": 1,
         "odds_available": 0,
         "source_timestamp_coverage": 0
-      }
+      },
+      "trainingWeight": 0.35,
+      "trainingGroup": "fallback_review",
+      "snapshotMaturity": "warming_up"
     },
     {
       "matchId": "ss-fd-SP1-2026-04-26-vallecano-sociedad",
@@ -14714,7 +15407,10 @@
         "phase_knockout": 0,
         "odds_available": 0,
         "source_timestamp_coverage": 0
-      }
+      },
+      "trainingWeight": 0.35,
+      "trainingGroup": "fallback_review",
+      "snapshotMaturity": "warming_up"
     },
     {
       "matchId": "ss-fd-SP1-2026-04-26-oviedo-elche",
@@ -14778,7 +15474,10 @@
         "phase_knockout": 0,
         "odds_available": 0,
         "source_timestamp_coverage": 0
-      }
+      },
+      "trainingWeight": 0.35,
+      "trainingGroup": "fallback_review",
+      "snapshotMaturity": "warming_up"
     },
     {
       "matchId": "ss-fd-SP1-2026-04-26-osasuna-sevilla",
@@ -14842,7 +15541,10 @@
         "phase_knockout": 0,
         "odds_available": 0,
         "source_timestamp_coverage": 0
-      }
+      },
+      "trainingWeight": 0.35,
+      "trainingGroup": "fallback_review",
+      "snapshotMaturity": "warming_up"
     },
     {
       "matchId": "ss-fd-SP1-2026-04-26-villarreal-celta",
@@ -14906,7 +15608,10 @@
         "phase_knockout": 0,
         "odds_available": 0,
         "source_timestamp_coverage": 0
-      }
+      },
+      "trainingWeight": 0.35,
+      "trainingGroup": "fallback_review",
+      "snapshotMaturity": "warming_up"
     },
     {
       "matchId": "ss-fd-SP2-2026-04-26-cordoba-sp gijon",
@@ -14970,7 +15675,10 @@
         "phase_knockout": 0,
         "odds_available": 0,
         "source_timestamp_coverage": 0
-      }
+      },
+      "trainingWeight": 0.35,
+      "trainingGroup": "fallback_review",
+      "snapshotMaturity": "warming_up"
     },
     {
       "matchId": "ss-fd-SP2-2026-04-26-granada-almeria",
@@ -15034,7 +15742,10 @@
         "phase_knockout": 1,
         "odds_available": 0,
         "source_timestamp_coverage": 0
-      }
+      },
+      "trainingWeight": 0.35,
+      "trainingGroup": "fallback_review",
+      "snapshotMaturity": "warming_up"
     },
     {
       "matchId": "ss-fd-SP2-2026-04-26-mirandes-cultural leonesa",
@@ -15098,7 +15809,10 @@
         "phase_knockout": 0,
         "odds_available": 0,
         "source_timestamp_coverage": 0
-      }
+      },
+      "trainingWeight": 0.35,
+      "trainingGroup": "fallback_review",
+      "snapshotMaturity": "warming_up"
     },
     {
       "matchId": "ss-fd-SP2-2026-04-26-huesca-zaragoza",
@@ -15162,7 +15876,10 @@
         "phase_knockout": 0,
         "odds_available": 0,
         "source_timestamp_coverage": 0
-      }
+      },
+      "trainingWeight": 0.35,
+      "trainingGroup": "fallback_review",
+      "snapshotMaturity": "warming_up"
     },
     {
       "matchId": "ss-fd-SP2-2026-04-26-leganes-andorra",
@@ -15226,7 +15943,10 @@
         "phase_knockout": 0,
         "odds_available": 0,
         "source_timestamp_coverage": 0
-      }
+      },
+      "trainingWeight": 0.35,
+      "trainingGroup": "fallback_review",
+      "snapshotMaturity": "warming_up"
     },
     {
       "matchId": "ss-fd-SP2-2026-04-26-ceuta-santander",
@@ -15290,7 +16010,10 @@
         "phase_knockout": 0,
         "odds_available": 0,
         "source_timestamp_coverage": 0
-      }
+      },
+      "trainingWeight": 0.35,
+      "trainingGroup": "fallback_review",
+      "snapshotMaturity": "warming_up"
     },
     {
       "matchId": "ss-fd-I1-2026-04-26-fiorentina-sassuolo",
@@ -15354,7 +16077,10 @@
         "phase_knockout": 1,
         "odds_available": 0,
         "source_timestamp_coverage": 0
-      }
+      },
+      "trainingWeight": 0.35,
+      "trainingGroup": "fallback_review",
+      "snapshotMaturity": "warming_up"
     },
     {
       "matchId": "ss-fd-I1-2026-04-26-genoa-como",
@@ -15418,7 +16144,10 @@
         "phase_knockout": 0,
         "odds_available": 0,
         "source_timestamp_coverage": 0
-      }
+      },
+      "trainingWeight": 0.35,
+      "trainingGroup": "fallback_review",
+      "snapshotMaturity": "warming_up"
     },
     {
       "matchId": "ss-fd-I1-2026-04-26-torino-inter",
@@ -15482,7 +16211,10 @@
         "phase_knockout": 0,
         "odds_available": 0,
         "source_timestamp_coverage": 0
-      }
+      },
+      "trainingWeight": 0.35,
+      "trainingGroup": "fallback_review",
+      "snapshotMaturity": "warming_up"
     },
     {
       "matchId": "ss-fd-I1-2026-04-26-milan-juventus",
@@ -15546,7 +16278,10 @@
         "phase_knockout": 0,
         "odds_available": 0,
         "source_timestamp_coverage": 0
-      }
+      },
+      "trainingWeight": 0.35,
+      "trainingGroup": "fallback_review",
+      "snapshotMaturity": "warming_up"
     },
     {
       "matchId": "ss-fd-F1-2026-04-26-lorient-strasbourg",
@@ -15610,7 +16345,10 @@
         "phase_knockout": 1,
         "odds_available": 0,
         "source_timestamp_coverage": 0
-      }
+      },
+      "trainingWeight": 0.35,
+      "trainingGroup": "fallback_review",
+      "snapshotMaturity": "warming_up"
     },
     {
       "matchId": "ss-fd-F1-2026-04-26-le havre-metz",
@@ -15674,7 +16412,10 @@
         "phase_knockout": 1,
         "odds_available": 0,
         "source_timestamp_coverage": 0
-      }
+      },
+      "trainingWeight": 0.35,
+      "trainingGroup": "fallback_review",
+      "snapshotMaturity": "warming_up"
     },
     {
       "matchId": "ss-fd-F1-2026-04-26-paris fc-lille",
@@ -15738,7 +16479,10 @@
         "phase_knockout": 1,
         "odds_available": 0,
         "source_timestamp_coverage": 0
-      }
+      },
+      "trainingWeight": 0.35,
+      "trainingGroup": "fallback_review",
+      "snapshotMaturity": "warming_up"
     },
     {
       "matchId": "ss-fd-F1-2026-04-26-rennes-nantes",
@@ -15802,7 +16546,10 @@
         "phase_knockout": 1,
         "odds_available": 0,
         "source_timestamp_coverage": 0
-      }
+      },
+      "trainingWeight": 0.35,
+      "trainingGroup": "fallback_review",
+      "snapshotMaturity": "warming_up"
     },
     {
       "matchId": "ss-fd-F1-2026-04-26-marseille-nice",
@@ -15866,7 +16613,10 @@
         "phase_knockout": 1,
         "odds_available": 0,
         "source_timestamp_coverage": 0
-      }
+      },
+      "trainingWeight": 0.35,
+      "trainingGroup": "fallback_review",
+      "snapshotMaturity": "warming_up"
     },
     {
       "matchId": "ss-fd-P1-2026-04-26-estoril-famalicao",
@@ -15930,7 +16680,10 @@
         "phase_knockout": 1,
         "odds_available": 0,
         "source_timestamp_coverage": 0
-      }
+      },
+      "trainingWeight": 0.35,
+      "trainingGroup": "fallback_review",
+      "snapshotMaturity": "warming_up"
     },
     {
       "matchId": "ss-fd-P1-2026-04-26-estrela-porto",
@@ -15994,7 +16747,10 @@
         "phase_knockout": 1,
         "odds_available": 0,
         "source_timestamp_coverage": 0
-      }
+      },
+      "trainingWeight": 0.35,
+      "trainingGroup": "fallback_review",
+      "snapshotMaturity": "warming_up"
     },
     {
       "matchId": "ss-fd-P1-2026-04-26-santa clara-sp braga",
@@ -16058,7 +16814,10 @@
         "phase_knockout": 1,
         "odds_available": 0,
         "source_timestamp_coverage": 0
-      }
+      },
+      "trainingWeight": 0.35,
+      "trainingGroup": "fallback_review",
+      "snapshotMaturity": "warming_up"
     },
     {
       "matchId": "ss-fd-P1-2026-04-26-avs-sp lisbon",
@@ -16122,7 +16881,10 @@
         "phase_knockout": 1,
         "odds_available": 0,
         "source_timestamp_coverage": 0
-      }
+      },
+      "trainingWeight": 0.35,
+      "trainingGroup": "fallback_review",
+      "snapshotMaturity": "warming_up"
     },
     {
       "matchId": "ss-fd-P2-2026-04-26-cordoba-sp gijon",
@@ -16186,7 +16948,10 @@
         "phase_knockout": 1,
         "odds_available": 0,
         "source_timestamp_coverage": 0
-      }
+      },
+      "trainingWeight": 0.35,
+      "trainingGroup": "fallback_review",
+      "snapshotMaturity": "warming_up"
     },
     {
       "matchId": "ss-fd-P2-2026-04-26-granada-almeria",
@@ -16250,7 +17015,10 @@
         "phase_knockout": 1,
         "odds_available": 0,
         "source_timestamp_coverage": 0
-      }
+      },
+      "trainingWeight": 0.35,
+      "trainingGroup": "fallback_review",
+      "snapshotMaturity": "warming_up"
     },
     {
       "matchId": "ss-fd-P2-2026-04-26-mirandes-cultural leonesa",
@@ -16314,7 +17082,10 @@
         "phase_knockout": 1,
         "odds_available": 0,
         "source_timestamp_coverage": 0
-      }
+      },
+      "trainingWeight": 0.35,
+      "trainingGroup": "fallback_review",
+      "snapshotMaturity": "warming_up"
     },
     {
       "matchId": "ss-fd-P2-2026-04-26-huesca-zaragoza",
@@ -16378,7 +17149,10 @@
         "phase_knockout": 1,
         "odds_available": 0,
         "source_timestamp_coverage": 0
-      }
+      },
+      "trainingWeight": 0.35,
+      "trainingGroup": "fallback_review",
+      "snapshotMaturity": "warming_up"
     },
     {
       "matchId": "ss-fd-P2-2026-04-26-leganes-andorra",
@@ -16442,7 +17216,10 @@
         "phase_knockout": 1,
         "odds_available": 0,
         "source_timestamp_coverage": 0
-      }
+      },
+      "trainingWeight": 0.35,
+      "trainingGroup": "fallback_review",
+      "snapshotMaturity": "warming_up"
     },
     {
       "matchId": "ss-fd-P2-2026-04-26-ceuta-santander",
@@ -16506,7 +17283,10 @@
         "phase_knockout": 1,
         "odds_available": 0,
         "source_timestamp_coverage": 0
-      }
+      },
+      "trainingWeight": 0.35,
+      "trainingGroup": "fallback_review",
+      "snapshotMaturity": "warming_up"
     },
     {
       "matchId": "ss-fd-B1-2026-04-26-gent-club brugge",
@@ -16570,7 +17350,10 @@
         "phase_knockout": 1,
         "odds_available": 0,
         "source_timestamp_coverage": 0
-      }
+      },
+      "trainingWeight": 0.35,
+      "trainingGroup": "fallback_review",
+      "snapshotMaturity": "warming_up"
     },
     {
       "matchId": "ss-fd-B1-2026-04-26-mechelen-st truiden",
@@ -16634,7 +17417,10 @@
         "phase_knockout": 1,
         "odds_available": 0,
         "source_timestamp_coverage": 0
-      }
+      },
+      "trainingWeight": 0.35,
+      "trainingGroup": "fallback_review",
+      "snapshotMaturity": "warming_up"
     },
     {
       "matchId": "ss-fd-B1-2026-04-26-anderlecht-st gilloise",
@@ -16698,7 +17484,10 @@
         "phase_knockout": 1,
         "odds_available": 0,
         "source_timestamp_coverage": 0
-      }
+      },
+      "trainingWeight": 0.35,
+      "trainingGroup": "fallback_review",
+      "snapshotMaturity": "warming_up"
     },
     {
       "matchId": "ss-fd-B1-2026-04-26-waregem-raal la louviere",
@@ -16762,7 +17551,10 @@
         "phase_knockout": 1,
         "odds_available": 0,
         "source_timestamp_coverage": 0
-      }
+      },
+      "trainingWeight": 0.35,
+      "trainingGroup": "fallback_review",
+      "snapshotMaturity": "warming_up"
     },
     {
       "matchId": "ss-tsdb-England - Championship-2275722",
@@ -16826,7 +17618,10 @@
         "phase_knockout": 0,
         "odds_available": 0,
         "source_timestamp_coverage": 0
-      }
+      },
+      "trainingWeight": 0.35,
+      "trainingGroup": "fallback_review",
+      "snapshotMaturity": "warming_up"
     },
     {
       "matchId": "ss-fd-E0-2026-04-27-man united-brentford",
@@ -16890,7 +17685,10 @@
         "phase_knockout": 1,
         "odds_available": 0,
         "source_timestamp_coverage": 0
-      }
+      },
+      "trainingWeight": 0.35,
+      "trainingGroup": "fallback_review",
+      "snapshotMaturity": "warming_up"
     },
     {
       "matchId": "ss-fd-SP1-2026-04-27-espanol-levante",
@@ -16954,7 +17752,10 @@
         "phase_knockout": 1,
         "odds_available": 0,
         "source_timestamp_coverage": 0
-      }
+      },
+      "trainingWeight": 0.35,
+      "trainingGroup": "fallback_review",
+      "snapshotMaturity": "warming_up"
     },
     {
       "matchId": "ss-fd-SP2-2026-04-27-cadiz-las palmas",
@@ -17018,7 +17819,10 @@
         "phase_knockout": 1,
         "odds_available": 0,
         "source_timestamp_coverage": 0
-      }
+      },
+      "trainingWeight": 0.35,
+      "trainingGroup": "fallback_review",
+      "snapshotMaturity": "warming_up"
     },
     {
       "matchId": "ss-fd-I1-2026-04-27-cagliari-atalanta",
@@ -17082,7 +17886,10 @@
         "phase_knockout": 1,
         "odds_available": 0,
         "source_timestamp_coverage": 0
-      }
+      },
+      "trainingWeight": 0.35,
+      "trainingGroup": "fallback_review",
+      "snapshotMaturity": "warming_up"
     },
     {
       "matchId": "ss-fd-I1-2026-04-27-lazio-udinese",
@@ -17146,7 +17953,10 @@
         "phase_knockout": 1,
         "odds_available": 0,
         "source_timestamp_coverage": 0
-      }
+      },
+      "trainingWeight": 0.35,
+      "trainingGroup": "fallback_review",
+      "snapshotMaturity": "warming_up"
     },
     {
       "matchId": "ss-fd-F2-2026-04-27-boulogne-dunkerque",
@@ -17210,7 +18020,10 @@
         "phase_knockout": 1,
         "odds_available": 0,
         "source_timestamp_coverage": 0
-      }
+      },
+      "trainingWeight": 0.35,
+      "trainingGroup": "fallback_review",
+      "snapshotMaturity": "warming_up"
     },
     {
       "matchId": "ss-fd-P1-2026-04-27-gil vicente-casa pia",
@@ -17274,7 +18087,10 @@
         "phase_knockout": 1,
         "odds_available": 0,
         "source_timestamp_coverage": 0
-      }
+      },
+      "trainingWeight": 0.35,
+      "trainingGroup": "fallback_review",
+      "snapshotMaturity": "warming_up"
     },
     {
       "matchId": "ss-fd-P2-2026-04-27-cadiz-las palmas",
@@ -17338,7 +18154,10 @@
         "phase_knockout": 1,
         "odds_available": 0,
         "source_timestamp_coverage": 0
-      }
+      },
+      "trainingWeight": 0.35,
+      "trainingGroup": "fallback_review",
+      "snapshotMaturity": "warming_up"
     },
     {
       "matchId": "ss-tsdb-Belgium - Pro League-2467141",
@@ -17402,7 +18221,10 @@
         "phase_knockout": 0,
         "odds_available": 0,
         "source_timestamp_coverage": 0
-      }
+      },
+      "trainingWeight": 0.35,
+      "trainingGroup": "fallback_review",
+      "snapshotMaturity": "warming_up"
     },
     {
       "matchId": "ss-fd-E1-2026-04-28-southampton-ipswich",
@@ -17466,7 +18288,10 @@
         "phase_knockout": 1,
         "odds_available": 0,
         "source_timestamp_coverage": 0
-      }
+      },
+      "trainingWeight": 0.35,
+      "trainingGroup": "fallback_review",
+      "snapshotMaturity": "warming_up"
     },
     {
       "matchId": "ss-tsdb-England - Championship-2275667",
@@ -17530,7 +18355,10 @@
         "phase_knockout": 0,
         "odds_available": 0,
         "source_timestamp_coverage": 0
-      }
+      },
+      "trainingWeight": 0.35,
+      "trainingGroup": "fallback_review",
+      "snapshotMaturity": "warming_up"
     },
     {
       "matchId": "ss-tsdb-Netherlands - Eredivisie-2468344",
@@ -17594,7 +18422,10 @@
         "phase_knockout": 0,
         "odds_available": 0,
         "source_timestamp_coverage": 0
-      }
+      },
+      "trainingWeight": 0.35,
+      "trainingGroup": "fallback_review",
+      "snapshotMaturity": "warming_up"
     },
     {
       "matchId": "ss-fd-P1-2026-04-29-sp lisbon-tondela",
@@ -17658,7 +18489,10 @@
         "phase_knockout": 1,
         "odds_available": 0,
         "source_timestamp_coverage": 0
-      }
+      },
+      "trainingWeight": 0.35,
+      "trainingGroup": "fallback_review",
+      "snapshotMaturity": "warming_up"
     },
     {
       "matchId": "ss-tsdb-Netherlands - Eredivisie-2468345",
@@ -17722,7 +18556,10 @@
         "phase_knockout": 0,
         "odds_available": 0,
         "source_timestamp_coverage": 0
-      }
+      },
+      "trainingWeight": 0.35,
+      "trainingGroup": "fallback_review",
+      "snapshotMaturity": "warming_up"
     },
     {
       "matchId": "ss-15632631",
@@ -17786,7 +18623,10 @@
         "phase_knockout": 1,
         "odds_available": 0,
         "source_timestamp_coverage": 0
-      }
+      },
+      "trainingWeight": 0.35,
+      "trainingGroup": "fallback_review",
+      "snapshotMaturity": "warming_up"
     },
     {
       "matchId": "ss-15632088",
@@ -17850,7 +18690,10 @@
         "phase_knockout": 1,
         "odds_available": 0,
         "source_timestamp_coverage": 0
-      }
+      },
+      "trainingWeight": 0.35,
+      "trainingGroup": "fallback_review",
+      "snapshotMaturity": "warming_up"
     },
     {
       "matchId": "ss-15471597",
@@ -17914,7 +18757,10 @@
         "phase_knockout": 1,
         "odds_available": 0,
         "source_timestamp_coverage": 0
-      }
+      },
+      "trainingWeight": 0.35,
+      "trainingGroup": "fallback_review",
+      "snapshotMaturity": "warming_up"
     },
     {
       "matchId": "ss-15632089",
@@ -17978,7 +18824,10 @@
         "phase_knockout": 1,
         "odds_available": 0,
         "source_timestamp_coverage": 0
-      }
+      },
+      "trainingWeight": 0.35,
+      "trainingGroup": "fallback_review",
+      "snapshotMaturity": "warming_up"
     },
     {
       "matchId": "ss-15632087",
@@ -18042,7 +18891,10 @@
         "phase_knockout": 1,
         "odds_available": 0,
         "source_timestamp_coverage": 0
-      }
+      },
+      "trainingWeight": 0.35,
+      "trainingGroup": "fallback_review",
+      "snapshotMaturity": "warming_up"
     },
     {
       "matchId": "ss-15884780",
@@ -18106,7 +18958,10 @@
         "phase_knockout": 0,
         "odds_available": 0,
         "source_timestamp_coverage": 0
-      }
+      },
+      "trainingWeight": 0.35,
+      "trainingGroup": "fallback_review",
+      "snapshotMaturity": "warming_up"
     },
     {
       "matchId": "ss-15884781",
@@ -18170,7 +19025,10 @@
         "phase_knockout": 0,
         "odds_available": 0,
         "source_timestamp_coverage": 0
-      }
+      },
+      "trainingWeight": 0.35,
+      "trainingGroup": "fallback_review",
+      "snapshotMaturity": "warming_up"
     },
     {
       "matchId": "ss-15715158",
@@ -18234,7 +19092,10 @@
         "phase_knockout": 0,
         "odds_available": 0,
         "source_timestamp_coverage": 0
-      }
+      },
+      "trainingWeight": 0.35,
+      "trainingGroup": "fallback_review",
+      "snapshotMaturity": "warming_up"
     },
     {
       "matchId": "ss-14059984",
@@ -18298,7 +19159,10 @@
         "phase_knockout": 0,
         "odds_available": 0,
         "source_timestamp_coverage": 0
-      }
+      },
+      "trainingWeight": 0.35,
+      "trainingGroup": "fallback_review",
+      "snapshotMaturity": "warming_up"
     },
     {
       "matchId": "ss-15853513",
@@ -18362,7 +19226,10 @@
         "phase_knockout": 1,
         "odds_available": 0,
         "source_timestamp_coverage": 0
-      }
+      },
+      "trainingWeight": 0.35,
+      "trainingGroup": "fallback_review",
+      "snapshotMaturity": "warming_up"
     },
     {
       "matchId": "ss-espn-eng.1-740957",
@@ -18426,7 +19293,10 @@
         "phase_knockout": 0,
         "odds_available": 0,
         "source_timestamp_coverage": 0
-      }
+      },
+      "trainingWeight": 0.35,
+      "trainingGroup": "fallback_review",
+      "snapshotMaturity": "warming_up"
     },
     {
       "matchId": "ss-espn-bel.1-401866315",
@@ -18490,7 +19360,10 @@
         "phase_knockout": 1,
         "odds_available": 0,
         "source_timestamp_coverage": 0
-      }
+      },
+      "trainingWeight": 0.35,
+      "trainingGroup": "fallback_review",
+      "snapshotMaturity": "warming_up"
     },
     {
       "matchId": "ss-tsdb-France - Ligue 1-2472610",
@@ -18554,7 +19427,10 @@
         "phase_knockout": 1,
         "odds_available": 0,
         "source_timestamp_coverage": 0
-      }
+      },
+      "trainingWeight": 0.35,
+      "trainingGroup": "fallback_review",
+      "snapshotMaturity": "warming_up"
     },
     {
       "matchId": "ss-espn-bel.1-401866318",
@@ -18618,7 +19494,10 @@
         "phase_knockout": 0,
         "odds_available": 0,
         "source_timestamp_coverage": 0
-      }
+      },
+      "trainingWeight": 0.35,
+      "trainingGroup": "fallback_review",
+      "snapshotMaturity": "warming_up"
     },
     {
       "matchId": "ss-espn-ger.1-747022",
@@ -18682,7 +19561,10 @@
         "phase_knockout": 1,
         "odds_available": 0,
         "source_timestamp_coverage": 0
-      }
+      },
+      "trainingWeight": 0.35,
+      "trainingGroup": "fallback_review",
+      "snapshotMaturity": "warming_up"
     },
     {
       "matchId": "ss-espn-bel.1-401866316",
@@ -18746,7 +19628,10 @@
         "phase_knockout": 0,
         "odds_available": 0,
         "source_timestamp_coverage": 0
-      }
+      },
+      "trainingWeight": 0.35,
+      "trainingGroup": "fallback_review",
+      "snapshotMaturity": "warming_up"
     },
     {
       "matchId": "ss-espn-bel.1-401866317",
@@ -18810,7 +19695,10 @@
         "phase_knockout": 0,
         "odds_available": 0,
         "source_timestamp_coverage": 0
-      }
+      },
+      "trainingWeight": 0.35,
+      "trainingGroup": "fallback_review",
+      "snapshotMaturity": "warming_up"
     },
     {
       "matchId": "ss-espn-ger.1-747015",
@@ -18874,7 +19762,10 @@
         "phase_knockout": 1,
         "odds_available": 0,
         "source_timestamp_coverage": 0
-      }
+      },
+      "trainingWeight": 0.35,
+      "trainingGroup": "fallback_review",
+      "snapshotMaturity": "warming_up"
     },
     {
       "matchId": "ss-espn-ger.1-747016",
@@ -18938,7 +19829,10 @@
         "phase_knockout": 1,
         "odds_available": 0,
         "source_timestamp_coverage": 0
-      }
+      },
+      "trainingWeight": 0.35,
+      "trainingGroup": "fallback_review",
+      "snapshotMaturity": "warming_up"
     },
     {
       "matchId": "ss-espn-ger.1-747017",
@@ -19002,7 +19896,10 @@
         "phase_knockout": 1,
         "odds_available": 0,
         "source_timestamp_coverage": 0
-      }
+      },
+      "trainingWeight": 0.35,
+      "trainingGroup": "fallback_review",
+      "snapshotMaturity": "warming_up"
     },
     {
       "matchId": "ss-espn-ger.1-747020",
@@ -19066,7 +19963,10 @@
         "phase_knockout": 1,
         "odds_available": 0,
         "source_timestamp_coverage": 0
-      }
+      },
+      "trainingWeight": 0.35,
+      "trainingGroup": "fallback_review",
+      "snapshotMaturity": "warming_up"
     },
     {
       "matchId": "ss-espn-ger.1-747018",
@@ -19130,7 +20030,10 @@
         "phase_knockout": 0,
         "odds_available": 0,
         "source_timestamp_coverage": 0
-      }
+      },
+      "trainingWeight": 0.35,
+      "trainingGroup": "fallback_review",
+      "snapshotMaturity": "warming_up"
     },
     {
       "matchId": "ss-espn-ger.1-747023",
@@ -19194,7 +20097,10 @@
         "phase_knockout": 1,
         "odds_available": 0,
         "source_timestamp_coverage": 0
-      }
+      },
+      "trainingWeight": 0.35,
+      "trainingGroup": "fallback_review",
+      "snapshotMaturity": "warming_up"
     },
     {
       "matchId": "ss-espn-ger.1-747019",
@@ -19258,7 +20164,10 @@
         "phase_knockout": 1,
         "odds_available": 0,
         "source_timestamp_coverage": 0
-      }
+      },
+      "trainingWeight": 0.35,
+      "trainingGroup": "fallback_review",
+      "snapshotMaturity": "warming_up"
     },
     {
       "matchId": "ss-espn-ger.1-747021",
@@ -19322,7 +20231,10 @@
         "phase_knockout": 0,
         "odds_available": 0,
         "source_timestamp_coverage": 0
-      }
+      },
+      "trainingWeight": 0.35,
+      "trainingGroup": "fallback_review",
+      "snapshotMaturity": "warming_up"
     },
     {
       "matchId": "ss-espn-por.1-750544",
@@ -19386,7 +20298,10 @@
         "phase_knockout": 1,
         "odds_available": 0,
         "source_timestamp_coverage": 0
-      }
+      },
+      "trainingWeight": 0.35,
+      "trainingGroup": "fallback_review",
+      "snapshotMaturity": "warming_up"
     },
     {
       "matchId": "ss-espn-por.1-750546",
@@ -19450,7 +20365,10 @@
         "phase_knockout": 1,
         "odds_available": 0,
         "source_timestamp_coverage": 0
-      }
+      },
+      "trainingWeight": 0.35,
+      "trainingGroup": "fallback_review",
+      "snapshotMaturity": "warming_up"
     },
     {
       "matchId": "ss-espn-por.1-750543",
@@ -19514,7 +20432,10 @@
         "phase_knockout": 1,
         "odds_available": 0,
         "source_timestamp_coverage": 0
-      }
+      },
+      "trainingWeight": 0.35,
+      "trainingGroup": "fallback_review",
+      "snapshotMaturity": "warming_up"
     },
     {
       "matchId": "ss-espn-por.1-750547",
@@ -19578,7 +20499,10 @@
         "phase_knockout": 1,
         "odds_available": 0,
         "source_timestamp_coverage": 0
-      }
+      },
+      "trainingWeight": 0.35,
+      "trainingGroup": "fallback_review",
+      "snapshotMaturity": "warming_up"
     },
     {
       "matchId": "ss-espn-por.1-750551",
@@ -19642,7 +20566,10 @@
         "phase_knockout": 0,
         "odds_available": 0,
         "source_timestamp_coverage": 0
-      }
+      },
+      "trainingWeight": 0.35,
+      "trainingGroup": "fallback_review",
+      "snapshotMaturity": "warming_up"
     },
     {
       "matchId": "ss-espn-por.1-750548",
@@ -19706,7 +20633,10 @@
         "phase_knockout": 1,
         "odds_available": 0,
         "source_timestamp_coverage": 0
-      }
+      },
+      "trainingWeight": 0.35,
+      "trainingGroup": "fallback_review",
+      "snapshotMaturity": "warming_up"
     },
     {
       "matchId": "ss-espn-por.1-750549",
@@ -19770,7 +20700,10 @@
         "phase_knockout": 1,
         "odds_available": 0,
         "source_timestamp_coverage": 0
-      }
+      },
+      "trainingWeight": 0.35,
+      "trainingGroup": "fallback_review",
+      "snapshotMaturity": "warming_up"
     },
     {
       "matchId": "ss-espn-por.1-750545",
@@ -19834,7 +20767,10 @@
         "phase_knockout": 1,
         "odds_available": 0,
         "source_timestamp_coverage": 0
-      }
+      },
+      "trainingWeight": 0.35,
+      "trainingGroup": "fallback_review",
+      "snapshotMaturity": "warming_up"
     },
     {
       "matchId": "ss-espn-por.1-750550",
@@ -19898,7 +20834,10 @@
         "phase_knockout": 0,
         "odds_available": 0,
         "source_timestamp_coverage": 0
-      }
+      },
+      "trainingWeight": 0.35,
+      "trainingGroup": "fallback_review",
+      "snapshotMaturity": "warming_up"
     },
     {
       "matchId": "ss-oldb-77562",
@@ -19962,7 +20901,10 @@
         "phase_knockout": 1,
         "odds_available": 0,
         "source_timestamp_coverage": 0
-      }
+      },
+      "trainingWeight": 0.35,
+      "trainingGroup": "fallback_review",
+      "snapshotMaturity": "warming_up"
     },
     {
       "matchId": "ss-espn-ita.1-737144",
@@ -20026,7 +20968,10 @@
         "phase_knockout": 1,
         "odds_available": 0,
         "source_timestamp_coverage": 0
-      }
+      },
+      "trainingWeight": 0.35,
+      "trainingGroup": "fallback_review",
+      "snapshotMaturity": "warming_up"
     },
     {
       "matchId": "ss-espn-ita.1-737145",
@@ -20090,7 +21035,10 @@
         "phase_knockout": 1,
         "odds_available": 0,
         "source_timestamp_coverage": 0
-      }
+      },
+      "trainingWeight": 0.35,
+      "trainingGroup": "fallback_review",
+      "snapshotMaturity": "warming_up"
     },
     {
       "matchId": "ss-espn-ita.1-737153",
@@ -20154,7 +21102,10 @@
         "phase_knockout": 0,
         "odds_available": 0,
         "source_timestamp_coverage": 0
-      }
+      },
+      "trainingWeight": 0.35,
+      "trainingGroup": "fallback_review",
+      "snapshotMaturity": "warming_up"
     },
     {
       "matchId": "ss-tsdb-Belgium - Pro League-2472301",
@@ -20218,7 +21169,10 @@
         "phase_knockout": 1,
         "odds_available": 0,
         "source_timestamp_coverage": 0
-      }
+      },
+      "trainingWeight": 0.35,
+      "trainingGroup": "fallback_review",
+      "snapshotMaturity": "warming_up"
     },
     {
       "matchId": "ss-espn-eng.1-740965",
@@ -20282,7 +21236,10 @@
         "phase_knockout": 0,
         "odds_available": 0,
         "source_timestamp_coverage": 0
-      }
+      },
+      "trainingWeight": 0.35,
+      "trainingGroup": "fallback_review",
+      "snapshotMaturity": "warming_up"
     },
     {
       "matchId": "ss-espn-fra.1-746716",
@@ -20346,7 +21303,10 @@
         "phase_knockout": 0,
         "odds_available": 0,
         "source_timestamp_coverage": 0
-      }
+      },
+      "trainingWeight": 0.35,
+      "trainingGroup": "fallback_review",
+      "snapshotMaturity": "warming_up"
     },
     {
       "matchId": "ss-espn-ita.1-737146",
@@ -20410,7 +21370,10 @@
         "phase_knockout": 0,
         "odds_available": 0,
         "source_timestamp_coverage": 0
-      }
+      },
+      "trainingWeight": 0.35,
+      "trainingGroup": "fallback_review",
+      "snapshotMaturity": "warming_up"
     },
     {
       "matchId": "ss-espn-ned.1-741278",
@@ -20474,7 +21437,10 @@
         "phase_knockout": 0,
         "odds_available": 0,
         "source_timestamp_coverage": 0
-      }
+      },
+      "trainingWeight": 0.35,
+      "trainingGroup": "fallback_review",
+      "snapshotMaturity": "warming_up"
     },
     {
       "matchId": "ss-espn-esp.1-748504",
@@ -20538,7 +21504,10 @@
         "phase_knockout": 1,
         "odds_available": 0,
         "source_timestamp_coverage": 0
-      }
+      },
+      "trainingWeight": 0.35,
+      "trainingGroup": "fallback_review",
+      "snapshotMaturity": "warming_up"
     },
     {
       "matchId": "ss-espn-bel.1-401866319",
@@ -20602,7 +21571,10 @@
         "phase_knockout": 1,
         "odds_available": 0,
         "source_timestamp_coverage": 0
-      }
+      },
+      "trainingWeight": 0.35,
+      "trainingGroup": "fallback_review",
+      "snapshotMaturity": "warming_up"
     },
     {
       "matchId": "ss-espn-bel.1-401866320",
@@ -20666,7 +21638,10 @@
         "phase_knockout": 0,
         "odds_available": 0,
         "source_timestamp_coverage": 0
-      }
+      },
+      "trainingWeight": 0.35,
+      "trainingGroup": "fallback_review",
+      "snapshotMaturity": "warming_up"
     },
     {
       "matchId": "ss-espn-eng.1-740963",
@@ -20730,7 +21705,10 @@
         "phase_knockout": 0,
         "odds_available": 0,
         "source_timestamp_coverage": 0
-      }
+      },
+      "trainingWeight": 0.35,
+      "trainingGroup": "fallback_review",
+      "snapshotMaturity": "warming_up"
     },
     {
       "matchId": "ss-espn-eng.1-740959",
@@ -20794,7 +21772,10 @@
         "phase_knockout": 0,
         "odds_available": 0,
         "source_timestamp_coverage": 0
-      }
+      },
+      "trainingWeight": 0.35,
+      "trainingGroup": "fallback_review",
+      "snapshotMaturity": "warming_up"
     },
     {
       "matchId": "ss-espn-eng.1-740961",
@@ -20858,7 +21839,10 @@
         "phase_knockout": 0,
         "odds_available": 0,
         "source_timestamp_coverage": 0
-      }
+      },
+      "trainingWeight": 0.35,
+      "trainingGroup": "fallback_review",
+      "snapshotMaturity": "warming_up"
     },
     {
       "matchId": "ss-espn-eng.1-740962",
@@ -20922,7 +21906,10 @@
         "phase_knockout": 0,
         "odds_available": 0,
         "source_timestamp_coverage": 0
-      }
+      },
+      "trainingWeight": 0.35,
+      "trainingGroup": "fallback_review",
+      "snapshotMaturity": "warming_up"
     },
     {
       "matchId": "ss-espn-eng.1-740964",
@@ -20986,7 +21973,10 @@
         "phase_knockout": 0,
         "odds_available": 0,
         "source_timestamp_coverage": 0
-      }
+      },
+      "trainingWeight": 0.35,
+      "trainingGroup": "fallback_review",
+      "snapshotMaturity": "warming_up"
     },
     {
       "matchId": "ss-espn-fra.1-746709",
@@ -21050,7 +22040,10 @@
         "phase_knockout": 0,
         "odds_available": 0,
         "source_timestamp_coverage": 0
-      }
+      },
+      "trainingWeight": 0.35,
+      "trainingGroup": "fallback_review",
+      "snapshotMaturity": "warming_up"
     },
     {
       "matchId": "ss-espn-fra.1-746710",
@@ -21114,7 +22107,10 @@
         "phase_knockout": 1,
         "odds_available": 0,
         "source_timestamp_coverage": 0
-      }
+      },
+      "trainingWeight": 0.35,
+      "trainingGroup": "fallback_review",
+      "snapshotMaturity": "warming_up"
     },
     {
       "matchId": "ss-espn-fra.1-746711",
@@ -21178,7 +22174,10 @@
         "phase_knockout": 0,
         "odds_available": 0,
         "source_timestamp_coverage": 0
-      }
+      },
+      "trainingWeight": 0.35,
+      "trainingGroup": "fallback_review",
+      "snapshotMaturity": "warming_up"
     },
     {
       "matchId": "ss-espn-fra.1-746712",
@@ -21242,7 +22241,10 @@
         "phase_knockout": 0,
         "odds_available": 0,
         "source_timestamp_coverage": 0
-      }
+      },
+      "trainingWeight": 0.35,
+      "trainingGroup": "fallback_review",
+      "snapshotMaturity": "warming_up"
     },
     {
       "matchId": "ss-espn-fra.1-746717",
@@ -21306,7 +22308,10 @@
         "phase_knockout": 0,
         "odds_available": 0,
         "source_timestamp_coverage": 0
-      }
+      },
+      "trainingWeight": 0.35,
+      "trainingGroup": "fallback_review",
+      "snapshotMaturity": "warming_up"
     },
     {
       "matchId": "ss-espn-fra.1-746714",
@@ -21370,7 +22375,10 @@
         "phase_knockout": 0,
         "odds_available": 0,
         "source_timestamp_coverage": 0
-      }
+      },
+      "trainingWeight": 0.35,
+      "trainingGroup": "fallback_review",
+      "snapshotMaturity": "warming_up"
     },
     {
       "matchId": "ss-espn-fra.1-746715",
@@ -21434,7 +22442,10 @@
         "phase_knockout": 0,
         "odds_available": 0,
         "source_timestamp_coverage": 0
-      }
+      },
+      "trainingWeight": 0.35,
+      "trainingGroup": "fallback_review",
+      "snapshotMaturity": "warming_up"
     },
     {
       "matchId": "ss-espn-fra.1-746713",
@@ -21498,7 +22509,10 @@
         "phase_knockout": 1,
         "odds_available": 0,
         "source_timestamp_coverage": 0
-      }
+      },
+      "trainingWeight": 0.35,
+      "trainingGroup": "fallback_review",
+      "snapshotMaturity": "warming_up"
     },
     {
       "matchId": "ss-espn-ger.2-747325",
@@ -21562,7 +22576,10 @@
         "phase_knockout": 1,
         "odds_available": 0,
         "source_timestamp_coverage": 0
-      }
+      },
+      "trainingWeight": 0.35,
+      "trainingGroup": "fallback_review",
+      "snapshotMaturity": "warming_up"
     },
     {
       "matchId": "ss-espn-ger.2-747328",
@@ -21626,7 +22643,10 @@
         "phase_knockout": 0,
         "odds_available": 0,
         "source_timestamp_coverage": 0
-      }
+      },
+      "trainingWeight": 0.35,
+      "trainingGroup": "fallback_review",
+      "snapshotMaturity": "warming_up"
     },
     {
       "matchId": "ss-espn-ger.2-747329",
@@ -21690,7 +22710,10 @@
         "phase_knockout": 0,
         "odds_available": 0,
         "source_timestamp_coverage": 0
-      }
+      },
+      "trainingWeight": 0.35,
+      "trainingGroup": "fallback_review",
+      "snapshotMaturity": "warming_up"
     },
     {
       "matchId": "ss-espn-ger.2-747322",
@@ -21754,7 +22777,10 @@
         "phase_knockout": 1,
         "odds_available": 0,
         "source_timestamp_coverage": 0
-      }
+      },
+      "trainingWeight": 0.35,
+      "trainingGroup": "fallback_review",
+      "snapshotMaturity": "warming_up"
     },
     {
       "matchId": "ss-espn-ger.2-747326",
@@ -21818,7 +22844,10 @@
         "phase_knockout": 0,
         "odds_available": 0,
         "source_timestamp_coverage": 0
-      }
+      },
+      "trainingWeight": 0.35,
+      "trainingGroup": "fallback_review",
+      "snapshotMaturity": "warming_up"
     },
     {
       "matchId": "ss-espn-ger.2-747321",
@@ -21882,7 +22911,10 @@
         "phase_knockout": 0,
         "odds_available": 0,
         "source_timestamp_coverage": 0
-      }
+      },
+      "trainingWeight": 0.35,
+      "trainingGroup": "fallback_review",
+      "snapshotMaturity": "warming_up"
     },
     {
       "matchId": "ss-espn-ger.2-747323",
@@ -21946,7 +22978,10 @@
         "phase_knockout": 1,
         "odds_available": 0,
         "source_timestamp_coverage": 0
-      }
+      },
+      "trainingWeight": 0.35,
+      "trainingGroup": "fallback_review",
+      "snapshotMaturity": "warming_up"
     },
     {
       "matchId": "ss-espn-ger.2-747324",
@@ -22010,7 +23045,10 @@
         "phase_knockout": 0,
         "odds_available": 0,
         "source_timestamp_coverage": 0
-      }
+      },
+      "trainingWeight": 0.35,
+      "trainingGroup": "fallback_review",
+      "snapshotMaturity": "warming_up"
     },
     {
       "matchId": "ss-espn-ger.2-747327",
@@ -22074,7 +23112,10 @@
         "phase_knockout": 1,
         "odds_available": 0,
         "source_timestamp_coverage": 0
-      }
+      },
+      "trainingWeight": 0.35,
+      "trainingGroup": "fallback_review",
+      "snapshotMaturity": "warming_up"
     },
     {
       "matchId": "ss-espn-ita.1-737148",
@@ -22138,7 +23179,10 @@
         "phase_knockout": 0,
         "odds_available": 0,
         "source_timestamp_coverage": 0
-      }
+      },
+      "trainingWeight": 0.35,
+      "trainingGroup": "fallback_review",
+      "snapshotMaturity": "warming_up"
     },
     {
       "matchId": "ss-espn-ita.1-737152",
@@ -22202,7 +23246,10 @@
         "phase_knockout": 1,
         "odds_available": 0,
         "source_timestamp_coverage": 0
-      }
+      },
+      "trainingWeight": 0.35,
+      "trainingGroup": "fallback_review",
+      "snapshotMaturity": "warming_up"
     },
     {
       "matchId": "ss-espn-ita.1-737150",
@@ -22266,7 +23313,10 @@
         "phase_knockout": 0,
         "odds_available": 0,
         "source_timestamp_coverage": 0
-      }
+      },
+      "trainingWeight": 0.35,
+      "trainingGroup": "fallback_review",
+      "snapshotMaturity": "warming_up"
     },
     {
       "matchId": "ss-espn-ita.1-737149",
@@ -22330,7 +23380,10 @@
         "phase_knockout": 0,
         "odds_available": 0,
         "source_timestamp_coverage": 0
-      }
+      },
+      "trainingWeight": 0.35,
+      "trainingGroup": "fallback_review",
+      "snapshotMaturity": "warming_up"
     },
     {
       "matchId": "ss-espn-ita.1-737151",
@@ -22394,7 +23447,10 @@
         "phase_knockout": 0,
         "odds_available": 0,
         "source_timestamp_coverage": 0
-      }
+      },
+      "trainingWeight": 0.35,
+      "trainingGroup": "fallback_review",
+      "snapshotMaturity": "warming_up"
     },
     {
       "matchId": "ss-espn-ita.1-737147",
@@ -22458,7 +23514,10 @@
         "phase_knockout": 0,
         "odds_available": 0,
         "source_timestamp_coverage": 0
-      }
+      },
+      "trainingWeight": 0.35,
+      "trainingGroup": "fallback_review",
+      "snapshotMaturity": "warming_up"
     },
     {
       "matchId": "ss-espn-ned.1-741275",
@@ -22522,7 +23581,10 @@
         "phase_knockout": 0,
         "odds_available": 0,
         "source_timestamp_coverage": 0
-      }
+      },
+      "trainingWeight": 0.35,
+      "trainingGroup": "fallback_review",
+      "snapshotMaturity": "warming_up"
     },
     {
       "matchId": "ss-espn-ned.1-741274",
@@ -22586,7 +23648,10 @@
         "phase_knockout": 0,
         "odds_available": 0,
         "source_timestamp_coverage": 0
-      }
+      },
+      "trainingWeight": 0.35,
+      "trainingGroup": "fallback_review",
+      "snapshotMaturity": "warming_up"
     },
     {
       "matchId": "ss-espn-ned.1-741273",
@@ -22650,7 +23715,10 @@
         "phase_knockout": 0,
         "odds_available": 0,
         "source_timestamp_coverage": 0
-      }
+      },
+      "trainingWeight": 0.35,
+      "trainingGroup": "fallback_review",
+      "snapshotMaturity": "warming_up"
     },
     {
       "matchId": "ss-espn-ned.1-741277",
@@ -22714,7 +23782,10 @@
         "phase_knockout": 0,
         "odds_available": 0,
         "source_timestamp_coverage": 0
-      }
+      },
+      "trainingWeight": 0.35,
+      "trainingGroup": "fallback_review",
+      "snapshotMaturity": "warming_up"
     },
     {
       "matchId": "ss-espn-ned.1-741276",
@@ -22778,7 +23849,10 @@
         "phase_knockout": 0,
         "odds_available": 0,
         "source_timestamp_coverage": 0
-      }
+      },
+      "trainingWeight": 0.35,
+      "trainingGroup": "fallback_review",
+      "snapshotMaturity": "warming_up"
     },
     {
       "matchId": "ss-espn-ned.1-741281",
@@ -22842,7 +23916,10 @@
         "phase_knockout": 0,
         "odds_available": 0,
         "source_timestamp_coverage": 0
-      }
+      },
+      "trainingWeight": 0.35,
+      "trainingGroup": "fallback_review",
+      "snapshotMaturity": "warming_up"
     },
     {
       "matchId": "ss-espn-ned.1-741279",
@@ -22906,7 +23983,10 @@
         "phase_knockout": 0,
         "odds_available": 0,
         "source_timestamp_coverage": 0
-      }
+      },
+      "trainingWeight": 0.35,
+      "trainingGroup": "fallback_review",
+      "snapshotMaturity": "warming_up"
     },
     {
       "matchId": "ss-espn-ned.1-741280",
@@ -22970,7 +24050,10 @@
         "phase_knockout": 0,
         "odds_available": 0,
         "source_timestamp_coverage": 0
-      }
+      },
+      "trainingWeight": 0.35,
+      "trainingGroup": "fallback_review",
+      "snapshotMaturity": "warming_up"
     },
     {
       "matchId": "ss-espn-esp.1-748506",
@@ -23034,7 +24117,10 @@
         "phase_knockout": 1,
         "odds_available": 0,
         "source_timestamp_coverage": 0
-      }
+      },
+      "trainingWeight": 0.35,
+      "trainingGroup": "fallback_review",
+      "snapshotMaturity": "warming_up"
     },
     {
       "matchId": "ss-espn-esp.1-748509",
@@ -23098,7 +24184,10 @@
         "phase_knockout": 1,
         "odds_available": 0,
         "source_timestamp_coverage": 0
-      }
+      },
+      "trainingWeight": 0.35,
+      "trainingGroup": "fallback_review",
+      "snapshotMaturity": "warming_up"
     },
     {
       "matchId": "ss-espn-esp.1-748507",
@@ -23162,7 +24251,10 @@
         "phase_knockout": 0,
         "odds_available": 0,
         "source_timestamp_coverage": 0
-      }
+      },
+      "trainingWeight": 0.35,
+      "trainingGroup": "fallback_review",
+      "snapshotMaturity": "warming_up"
     },
     {
       "matchId": "ss-espn-esp.1-748510",
@@ -23226,7 +24318,10 @@
         "phase_knockout": 0,
         "odds_available": 0,
         "source_timestamp_coverage": 0
-      }
+      },
+      "trainingWeight": 0.35,
+      "trainingGroup": "fallback_review",
+      "snapshotMaturity": "warming_up"
     },
     {
       "matchId": "ss-espn-esp.1-748511",
@@ -23290,7 +24385,10 @@
         "phase_knockout": 0,
         "odds_available": 0,
         "source_timestamp_coverage": 0
-      }
+      },
+      "trainingWeight": 0.35,
+      "trainingGroup": "fallback_review",
+      "snapshotMaturity": "warming_up"
     },
     {
       "matchId": "ss-espn-esp.1-748512",
@@ -23354,7 +24452,10 @@
         "phase_knockout": 0,
         "odds_available": 0,
         "source_timestamp_coverage": 0
-      }
+      },
+      "trainingWeight": 0.35,
+      "trainingGroup": "fallback_review",
+      "snapshotMaturity": "warming_up"
     },
     {
       "matchId": "ss-espn-esp.1-748513",
@@ -23418,7 +24519,10 @@
         "phase_knockout": 0,
         "odds_available": 0,
         "source_timestamp_coverage": 0
-      }
+      },
+      "trainingWeight": 0.35,
+      "trainingGroup": "fallback_review",
+      "snapshotMaturity": "warming_up"
     },
     {
       "matchId": "ss-espn-esp.1-748505",
@@ -23482,7 +24586,10 @@
         "phase_knockout": 0,
         "odds_available": 0,
         "source_timestamp_coverage": 0
-      }
+      },
+      "trainingWeight": 0.35,
+      "trainingGroup": "fallback_review",
+      "snapshotMaturity": "warming_up"
     },
     {
       "matchId": "ss-espn-esp.1-748508",
@@ -23546,7 +24653,10 @@
         "phase_knockout": 0,
         "odds_available": 0,
         "source_timestamp_coverage": 0
-      }
+      },
+      "trainingWeight": 0.35,
+      "trainingGroup": "fallback_review",
+      "snapshotMaturity": "warming_up"
     },
     {
       "matchId": "ss-oldb-78250",
@@ -23610,7 +24720,10 @@
         "phase_knockout": 1,
         "odds_available": 0,
         "source_timestamp_coverage": 0
-      }
+      },
+      "trainingWeight": 0.35,
+      "trainingGroup": "fallback_review",
+      "snapshotMaturity": "warming_up"
     },
     {
       "matchId": "ss-espn-eng.1-740956",
@@ -23674,7 +24787,10 @@
         "phase_knockout": 1,
         "odds_available": 0,
         "source_timestamp_coverage": 0
-      }
+      },
+      "trainingWeight": 0.35,
+      "trainingGroup": "fallback_review",
+      "snapshotMaturity": "warming_up"
     },
     {
       "matchId": "ss-fd-SP2-2026-05-18-leganes-huesca",
@@ -23738,7 +24854,10 @@
         "phase_knockout": 1,
         "odds_available": 0,
         "source_timestamp_coverage": 0
-      }
+      },
+      "trainingWeight": 0.35,
+      "trainingGroup": "fallback_review",
+      "snapshotMaturity": "warming_up"
     },
     {
       "matchId": "ss-espn-eng.1-740958",
@@ -23802,7 +24921,10 @@
         "phase_knockout": 0,
         "odds_available": 0,
         "source_timestamp_coverage": 0
-      }
+      },
+      "trainingWeight": 0.35,
+      "trainingGroup": "fallback_review",
+      "snapshotMaturity": "warming_up"
     },
     {
       "matchId": "ss-espn-eng.1-740960",
@@ -23866,7 +24988,10 @@
         "phase_knockout": 0,
         "odds_available": 0,
         "source_timestamp_coverage": 0
-      }
+      },
+      "trainingWeight": 0.35,
+      "trainingGroup": "fallback_review",
+      "snapshotMaturity": "warming_up"
     },
     {
       "matchId": "ss-espn-bel.1-401866322",
@@ -23930,7 +25055,10 @@
         "phase_knockout": 0,
         "odds_available": 0,
         "source_timestamp_coverage": 0
-      }
+      },
+      "trainingWeight": 0.35,
+      "trainingGroup": "fallback_review",
+      "snapshotMaturity": "warming_up"
     },
     {
       "matchId": "ss-espn-bel.1-401866323",
@@ -23994,7 +25122,10 @@
         "phase_knockout": 0,
         "odds_available": 0,
         "source_timestamp_coverage": 0
-      }
+      },
+      "trainingWeight": 0.35,
+      "trainingGroup": "fallback_review",
+      "snapshotMaturity": "warming_up"
     },
     {
       "matchId": "ss-espn-bel.1-401866321",
@@ -24058,7 +25189,10 @@
         "phase_knockout": 1,
         "odds_available": 0,
         "source_timestamp_coverage": 0
-      }
+      },
+      "trainingWeight": 0.35,
+      "trainingGroup": "fallback_review",
+      "snapshotMaturity": "warming_up"
     },
     {
       "matchId": "ss-espn-uefa.europa-401862911",
@@ -24122,7 +25256,10 @@
         "phase_knockout": 0,
         "odds_available": 0,
         "source_timestamp_coverage": 0
-      }
+      },
+      "trainingWeight": 0.35,
+      "trainingGroup": "fallback_review",
+      "snapshotMaturity": "warming_up"
     },
     {
       "matchId": "ss-fd-B1-2026-05-21-anderlecht-st truiden",
@@ -24186,7 +25323,10 @@
         "phase_knockout": 1,
         "odds_available": 0,
         "source_timestamp_coverage": 0
-      }
+      },
+      "trainingWeight": 0.35,
+      "trainingGroup": "fallback_review",
+      "snapshotMaturity": "warming_up"
     },
     {
       "matchId": "ss-fd-B1-2026-05-21-gent-st gilloise",
@@ -24250,7 +25390,10 @@
         "phase_knockout": 1,
         "odds_available": 0,
         "source_timestamp_coverage": 0
-      }
+      },
+      "trainingWeight": 0.35,
+      "trainingGroup": "fallback_review",
+      "snapshotMaturity": "warming_up"
     },
     {
       "matchId": "ss-espn-bel.1-401866324",
@@ -24314,7 +25457,10 @@
         "phase_knockout": 1,
         "odds_available": 0,
         "source_timestamp_coverage": 0
-      }
+      },
+      "trainingWeight": 0.35,
+      "trainingGroup": "fallback_review",
+      "snapshotMaturity": "warming_up"
     },
     {
       "matchId": "ss-espn-bel.1-401866325",
@@ -24378,7 +25524,10 @@
         "phase_knockout": 0,
         "odds_available": 0,
         "source_timestamp_coverage": 0
-      }
+      },
+      "trainingWeight": 0.35,
+      "trainingGroup": "fallback_review",
+      "snapshotMaturity": "warming_up"
     },
     {
       "matchId": "ss-tsdb-Germany - Bundesliga-2475152",
@@ -24442,7 +25591,10 @@
         "phase_knockout": 1,
         "odds_available": 0,
         "source_timestamp_coverage": 0
-      }
+      },
+      "trainingWeight": 0.35,
+      "trainingGroup": "fallback_review",
+      "snapshotMaturity": "warming_up"
     },
     {
       "matchId": "ss-espn-ned.1-401873226",
@@ -24506,7 +25658,10 @@
         "phase_knockout": 1,
         "odds_available": 0,
         "source_timestamp_coverage": 0
-      }
+      },
+      "trainingWeight": 0.35,
+      "trainingGroup": "fallback_review",
+      "snapshotMaturity": "warming_up"
     },
     {
       "matchId": "ss-espn-bel.1-401866326",
@@ -24570,7 +25725,10 @@
         "phase_knockout": 0,
         "odds_available": 0,
         "source_timestamp_coverage": 0
-      }
+      },
+      "trainingWeight": 0.35,
+      "trainingGroup": "fallback_review",
+      "snapshotMaturity": "warming_up"
     },
     {
       "matchId": "ss-espn-ned.1-401873225",
@@ -24634,7 +25792,10 @@
         "phase_knockout": 1,
         "odds_available": 0,
         "source_timestamp_coverage": 0
-      }
+      },
+      "trainingWeight": 0.35,
+      "trainingGroup": "fallback_review",
+      "snapshotMaturity": "warming_up"
     },
     {
       "matchId": "ss-espn-ita.1-737161",
@@ -24698,7 +25859,10 @@
         "phase_knockout": 0,
         "odds_available": 0,
         "source_timestamp_coverage": 0
-      }
+      },
+      "trainingWeight": 0.35,
+      "trainingGroup": "fallback_review",
+      "snapshotMaturity": "warming_up"
     },
     {
       "matchId": "ss-espn-ita.1-737154",
@@ -24762,7 +25926,10 @@
         "phase_knockout": 1,
         "odds_available": 0,
         "source_timestamp_coverage": 0
-      }
+      },
+      "trainingWeight": 0.35,
+      "trainingGroup": "fallback_review",
+      "snapshotMaturity": "warming_up"
     },
     {
       "matchId": "ss-espn-ita.1-737159",
@@ -24826,7 +25993,10 @@
         "phase_knockout": 0,
         "odds_available": 0,
         "source_timestamp_coverage": 0
-      }
+      },
+      "trainingWeight": 0.35,
+      "trainingGroup": "fallback_review",
+      "snapshotMaturity": "warming_up"
     },
     {
       "matchId": "ss-tsdb-Belgium - Pro League-2472302",
@@ -24890,7 +26060,10 @@
         "phase_knockout": 1,
         "odds_available": 0,
         "source_timestamp_coverage": 0
-      }
+      },
+      "trainingWeight": 0.35,
+      "trainingGroup": "fallback_review",
+      "snapshotMaturity": "warming_up"
     },
     {
       "matchId": "ss-espn-esp.1-748519",
@@ -24954,7 +26127,10 @@
         "phase_knockout": 0,
         "odds_available": 0,
         "source_timestamp_coverage": 0
-      }
+      },
+      "trainingWeight": 0.35,
+      "trainingGroup": "fallback_review",
+      "snapshotMaturity": "warming_up"
     },
     {
       "matchId": "ss-espn-bel.1-401866329",
@@ -25018,7 +26194,10 @@
         "phase_knockout": 1,
         "odds_available": 0,
         "source_timestamp_coverage": 0
-      }
+      },
+      "trainingWeight": 0.35,
+      "trainingGroup": "fallback_review",
+      "snapshotMaturity": "warming_up"
     },
     {
       "matchId": "ss-espn-bel.1-401866327",
@@ -25082,7 +26261,10 @@
         "phase_knockout": 1,
         "odds_available": 0,
         "source_timestamp_coverage": 0
-      }
+      },
+      "trainingWeight": 0.35,
+      "trainingGroup": "fallback_review",
+      "snapshotMaturity": "warming_up"
     },
     {
       "matchId": "ss-espn-bel.1-401866328",
@@ -25146,7 +26328,10 @@
         "phase_knockout": 1,
         "odds_available": 0,
         "source_timestamp_coverage": 0
-      }
+      },
+      "trainingWeight": 0.35,
+      "trainingGroup": "fallback_review",
+      "snapshotMaturity": "warming_up"
     },
     {
       "matchId": "ss-espn-eng.2-401872576",
@@ -25210,7 +26395,10 @@
         "phase_knockout": 1,
         "odds_available": 0,
         "source_timestamp_coverage": 0
-      }
+      },
+      "trainingWeight": 0.35,
+      "trainingGroup": "fallback_review",
+      "snapshotMaturity": "warming_up"
     },
     {
       "matchId": "ss-espn-esp.1-748523",
@@ -25274,7 +26462,10 @@
         "phase_knockout": 0,
         "odds_available": 0,
         "source_timestamp_coverage": 0
-      }
+      },
+      "trainingWeight": 0.35,
+      "trainingGroup": "fallback_review",
+      "snapshotMaturity": "warming_up"
     },
     {
       "matchId": "ss-espn-esp.1-748517",
@@ -25338,7 +26529,10 @@
         "phase_knockout": 1,
         "odds_available": 0,
         "source_timestamp_coverage": 0
-      }
+      },
+      "trainingWeight": 0.35,
+      "trainingGroup": "fallback_review",
+      "snapshotMaturity": "warming_up"
     },
     {
       "matchId": "ss-espn-esp.1-748516",
@@ -25402,7 +26596,10 @@
         "phase_knockout": 0,
         "odds_available": 0,
         "source_timestamp_coverage": 0
-      }
+      },
+      "trainingWeight": 0.35,
+      "trainingGroup": "fallback_review",
+      "snapshotMaturity": "warming_up"
     },
     {
       "matchId": "ss-espn-esp.1-748518",
@@ -25466,7 +26663,10 @@
         "phase_knockout": 0,
         "odds_available": 0,
         "source_timestamp_coverage": 0
-      }
+      },
+      "trainingWeight": 0.35,
+      "trainingGroup": "fallback_review",
+      "snapshotMaturity": "warming_up"
     },
     {
       "matchId": "ss-espn-esp.1-748520",
@@ -25530,7 +26730,10 @@
         "phase_knockout": 0,
         "odds_available": 0,
         "source_timestamp_coverage": 0
-      }
+      },
+      "trainingWeight": 0.35,
+      "trainingGroup": "fallback_review",
+      "snapshotMaturity": "warming_up"
     },
     {
       "matchId": "ss-espn-esp.1-748521",
@@ -25594,7 +26797,10 @@
         "phase_knockout": 0,
         "odds_available": 0,
         "source_timestamp_coverage": 0
-      }
+      },
+      "trainingWeight": 0.35,
+      "trainingGroup": "fallback_review",
+      "snapshotMaturity": "warming_up"
     },
     {
       "matchId": "ss-espn-esp.1-748522",
@@ -25658,7 +26864,10 @@
         "phase_knockout": 0,
         "odds_available": 0,
         "source_timestamp_coverage": 0
-      }
+      },
+      "trainingWeight": 0.35,
+      "trainingGroup": "fallback_review",
+      "snapshotMaturity": "warming_up"
     },
     {
       "matchId": "ss-espn-esp.1-748514",
@@ -25722,7 +26931,10 @@
         "phase_knockout": 0,
         "odds_available": 0,
         "source_timestamp_coverage": 0
-      }
+      },
+      "trainingWeight": 0.35,
+      "trainingGroup": "fallback_review",
+      "snapshotMaturity": "warming_up"
     },
     {
       "matchId": "ss-espn-eng.1-740966",
@@ -25786,7 +26998,10 @@
         "phase_knockout": 1,
         "odds_available": 0,
         "source_timestamp_coverage": 0
-      }
+      },
+      "trainingWeight": 0.35,
+      "trainingGroup": "fallback_review",
+      "snapshotMaturity": "warming_up"
     },
     {
       "matchId": "ss-espn-eng.1-740967",
@@ -25850,7 +27065,10 @@
         "phase_knockout": 1,
         "odds_available": 0,
         "source_timestamp_coverage": 0
-      }
+      },
+      "trainingWeight": 0.35,
+      "trainingGroup": "fallback_review",
+      "snapshotMaturity": "warming_up"
     },
     {
       "matchId": "ss-espn-eng.1-740968",
@@ -25914,7 +27132,10 @@
         "phase_knockout": 1,
         "odds_available": 0,
         "source_timestamp_coverage": 0
-      }
+      },
+      "trainingWeight": 0.35,
+      "trainingGroup": "fallback_review",
+      "snapshotMaturity": "warming_up"
     },
     {
       "matchId": "ss-espn-eng.1-740969",
@@ -25978,7 +27199,10 @@
         "phase_knockout": 1,
         "odds_available": 0,
         "source_timestamp_coverage": 0
-      }
+      },
+      "trainingWeight": 0.35,
+      "trainingGroup": "fallback_review",
+      "snapshotMaturity": "warming_up"
     },
     {
       "matchId": "ss-espn-eng.1-740975",
@@ -26042,7 +27266,10 @@
         "phase_knockout": 1,
         "odds_available": 0,
         "source_timestamp_coverage": 0
-      }
+      },
+      "trainingWeight": 0.35,
+      "trainingGroup": "fallback_review",
+      "snapshotMaturity": "warming_up"
     },
     {
       "matchId": "ss-espn-eng.1-740970",
@@ -26106,7 +27333,10 @@
         "phase_knockout": 1,
         "odds_available": 0,
         "source_timestamp_coverage": 0
-      }
+      },
+      "trainingWeight": 0.35,
+      "trainingGroup": "fallback_review",
+      "snapshotMaturity": "warming_up"
     },
     {
       "matchId": "ss-espn-eng.1-740972",
@@ -26170,7 +27400,10 @@
         "phase_knockout": 1,
         "odds_available": 0,
         "source_timestamp_coverage": 0
-      }
+      },
+      "trainingWeight": 0.35,
+      "trainingGroup": "fallback_review",
+      "snapshotMaturity": "warming_up"
     },
     {
       "matchId": "ss-espn-eng.1-740973",
@@ -26234,7 +27467,10 @@
         "phase_knockout": 1,
         "odds_available": 0,
         "source_timestamp_coverage": 0
-      }
+      },
+      "trainingWeight": 0.35,
+      "trainingGroup": "fallback_review",
+      "snapshotMaturity": "warming_up"
     },
     {
       "matchId": "ss-espn-eng.1-740974",
@@ -26298,7 +27534,10 @@
         "phase_knockout": 1,
         "odds_available": 0,
         "source_timestamp_coverage": 0
-      }
+      },
+      "trainingWeight": 0.35,
+      "trainingGroup": "fallback_review",
+      "snapshotMaturity": "warming_up"
     },
     {
       "matchId": "ss-espn-eng.1-740971",
@@ -26362,7 +27601,10 @@
         "phase_knockout": 1,
         "odds_available": 0,
         "source_timestamp_coverage": 0
-      }
+      },
+      "trainingWeight": 0.35,
+      "trainingGroup": "fallback_review",
+      "snapshotMaturity": "warming_up"
     },
     {
       "matchId": "ss-espn-esp.1-748515",
@@ -26426,7 +27668,10 @@
         "phase_knockout": 1,
         "odds_available": 0,
         "source_timestamp_coverage": 0
-      }
+      },
+      "trainingWeight": 0.35,
+      "trainingGroup": "fallback_review",
+      "snapshotMaturity": "warming_up"
     },
     {
       "matchId": "ss-fd-SP2-2026-05-24-albacete-sociedad b",
@@ -26490,7 +27735,10 @@
         "phase_knockout": 1,
         "odds_available": 0,
         "source_timestamp_coverage": 0
-      }
+      },
+      "trainingWeight": 0.35,
+      "trainingGroup": "fallback_review",
+      "snapshotMaturity": "warming_up"
     },
     {
       "matchId": "ss-fd-SP2-2026-05-24-andorra-ceuta",
@@ -26554,7 +27802,10 @@
         "phase_knockout": 1,
         "odds_available": 0,
         "source_timestamp_coverage": 0
-      }
+      },
+      "trainingWeight": 0.35,
+      "trainingGroup": "fallback_review",
+      "snapshotMaturity": "warming_up"
     },
     {
       "matchId": "ss-fd-SP2-2026-05-24-cadiz-leganes",
@@ -26618,7 +27869,10 @@
         "phase_knockout": 1,
         "odds_available": 0,
         "source_timestamp_coverage": 0
-      }
+      },
+      "trainingWeight": 0.35,
+      "trainingGroup": "fallback_review",
+      "snapshotMaturity": "warming_up"
     },
     {
       "matchId": "ss-fd-SP2-2026-05-24-cultural leonesa-burgos",
@@ -26682,7 +27936,10 @@
         "phase_knockout": 1,
         "odds_available": 0,
         "source_timestamp_coverage": 0
-      }
+      },
+      "trainingWeight": 0.35,
+      "trainingGroup": "fallback_review",
+      "snapshotMaturity": "warming_up"
     },
     {
       "matchId": "ss-fd-SP2-2026-05-24-eibar-cordoba",
@@ -26746,7 +28003,10 @@
         "phase_knockout": 1,
         "odds_available": 0,
         "source_timestamp_coverage": 0
-      }
+      },
+      "trainingWeight": 0.35,
+      "trainingGroup": "fallback_review",
+      "snapshotMaturity": "warming_up"
     },
     {
       "matchId": "ss-fd-SP2-2026-05-24-huesca-castellon",
@@ -26810,7 +28070,10 @@
         "phase_knockout": 1,
         "odds_available": 0,
         "source_timestamp_coverage": 0
-      }
+      },
+      "trainingWeight": 0.35,
+      "trainingGroup": "fallback_review",
+      "snapshotMaturity": "warming_up"
     },
     {
       "matchId": "ss-fd-SP2-2026-05-24-las palmas-zaragoza",
@@ -26874,7 +28137,10 @@
         "phase_knockout": 1,
         "odds_available": 0,
         "source_timestamp_coverage": 0
-      }
+      },
+      "trainingWeight": 0.35,
+      "trainingGroup": "fallback_review",
+      "snapshotMaturity": "warming_up"
     },
     {
       "matchId": "ss-fd-SP2-2026-05-24-malaga-santander",
@@ -26938,7 +28204,10 @@
         "phase_knockout": 1,
         "odds_available": 0,
         "source_timestamp_coverage": 0
-      }
+      },
+      "trainingWeight": 0.35,
+      "trainingGroup": "fallback_review",
+      "snapshotMaturity": "warming_up"
     },
     {
       "matchId": "ss-fd-SP2-2026-05-24-mirandes-granada",
@@ -27002,7 +28271,10 @@
         "phase_knockout": 1,
         "odds_available": 0,
         "source_timestamp_coverage": 0
-      }
+      },
+      "trainingWeight": 0.35,
+      "trainingGroup": "fallback_review",
+      "snapshotMaturity": "warming_up"
     },
     {
       "matchId": "ss-fd-SP2-2026-05-24-sp gijon-almeria",
@@ -27066,7 +28338,10 @@
         "phase_knockout": 1,
         "odds_available": 0,
         "source_timestamp_coverage": 0
-      }
+      },
+      "trainingWeight": 0.35,
+      "trainingGroup": "fallback_review",
+      "snapshotMaturity": "warming_up"
     },
     {
       "matchId": "ss-fd-SP2-2026-05-24-valladolid-la coruna",
@@ -27130,7 +28405,10 @@
         "phase_knockout": 1,
         "odds_available": 0,
         "source_timestamp_coverage": 0
-      }
+      },
+      "trainingWeight": 0.35,
+      "trainingGroup": "fallback_review",
+      "snapshotMaturity": "warming_up"
     },
     {
       "matchId": "ss-espn-ita.1-737155",
@@ -27194,7 +28472,10 @@
         "phase_knockout": 1,
         "odds_available": 0,
         "source_timestamp_coverage": 0
-      }
+      },
+      "trainingWeight": 0.35,
+      "trainingGroup": "fallback_review",
+      "snapshotMaturity": "warming_up"
     },
     {
       "matchId": "ss-espn-ita.1-737156",
@@ -27258,7 +28539,10 @@
         "phase_knockout": 1,
         "odds_available": 0,
         "source_timestamp_coverage": 0
-      }
+      },
+      "trainingWeight": 0.35,
+      "trainingGroup": "fallback_review",
+      "snapshotMaturity": "warming_up"
     },
     {
       "matchId": "ss-espn-ita.1-737162",
@@ -27322,7 +28606,10 @@
         "phase_knockout": 1,
         "odds_available": 0,
         "source_timestamp_coverage": 0
-      }
+      },
+      "trainingWeight": 0.35,
+      "trainingGroup": "fallback_review",
+      "snapshotMaturity": "warming_up"
     },
     {
       "matchId": "ss-espn-ita.1-737163",
@@ -27386,7 +28673,10 @@
         "phase_knockout": 1,
         "odds_available": 0,
         "source_timestamp_coverage": 0
-      }
+      },
+      "trainingWeight": 0.35,
+      "trainingGroup": "fallback_review",
+      "snapshotMaturity": "warming_up"
     },
     {
       "matchId": "ss-espn-ita.1-737157",
@@ -27450,7 +28740,10 @@
         "phase_knockout": 1,
         "odds_available": 0,
         "source_timestamp_coverage": 0
-      }
+      },
+      "trainingWeight": 0.35,
+      "trainingGroup": "fallback_review",
+      "snapshotMaturity": "warming_up"
     },
     {
       "matchId": "ss-espn-ita.1-737158",
@@ -27514,7 +28807,10 @@
         "phase_knockout": 1,
         "odds_available": 0,
         "source_timestamp_coverage": 0
-      }
+      },
+      "trainingWeight": 0.35,
+      "trainingGroup": "fallback_review",
+      "snapshotMaturity": "warming_up"
     },
     {
       "matchId": "ss-fd-I1-2026-05-24-verona-roma",
@@ -27578,7 +28874,10 @@
         "phase_knockout": 1,
         "odds_available": 0,
         "source_timestamp_coverage": 0
-      }
+      },
+      "trainingWeight": 0.35,
+      "trainingGroup": "fallback_review",
+      "snapshotMaturity": "warming_up"
     },
     {
       "matchId": "ss-fd-P2-2026-05-24-albacete-sociedad b",
@@ -27642,7 +28941,10 @@
         "phase_knockout": 1,
         "odds_available": 0,
         "source_timestamp_coverage": 0
-      }
+      },
+      "trainingWeight": 0.35,
+      "trainingGroup": "fallback_review",
+      "snapshotMaturity": "warming_up"
     },
     {
       "matchId": "ss-fd-P2-2026-05-24-andorra-ceuta",
@@ -27706,7 +29008,10 @@
         "phase_knockout": 1,
         "odds_available": 0,
         "source_timestamp_coverage": 0
-      }
+      },
+      "trainingWeight": 0.35,
+      "trainingGroup": "fallback_review",
+      "snapshotMaturity": "warming_up"
     },
     {
       "matchId": "ss-fd-P2-2026-05-24-cadiz-leganes",
@@ -27770,7 +29075,10 @@
         "phase_knockout": 1,
         "odds_available": 0,
         "source_timestamp_coverage": 0
-      }
+      },
+      "trainingWeight": 0.35,
+      "trainingGroup": "fallback_review",
+      "snapshotMaturity": "warming_up"
     },
     {
       "matchId": "ss-fd-P2-2026-05-24-cultural leonesa-burgos",
@@ -27834,7 +29142,10 @@
         "phase_knockout": 1,
         "odds_available": 0,
         "source_timestamp_coverage": 0
-      }
+      },
+      "trainingWeight": 0.35,
+      "trainingGroup": "fallback_review",
+      "snapshotMaturity": "warming_up"
     },
     {
       "matchId": "ss-fd-P2-2026-05-24-eibar-cordoba",
@@ -27898,7 +29209,10 @@
         "phase_knockout": 1,
         "odds_available": 0,
         "source_timestamp_coverage": 0
-      }
+      },
+      "trainingWeight": 0.35,
+      "trainingGroup": "fallback_review",
+      "snapshotMaturity": "warming_up"
     },
     {
       "matchId": "ss-fd-P2-2026-05-24-huesca-castellon",
@@ -27962,7 +29276,10 @@
         "phase_knockout": 1,
         "odds_available": 0,
         "source_timestamp_coverage": 0
-      }
+      },
+      "trainingWeight": 0.35,
+      "trainingGroup": "fallback_review",
+      "snapshotMaturity": "warming_up"
     },
     {
       "matchId": "ss-fd-P2-2026-05-24-las palmas-zaragoza",
@@ -28026,7 +29343,10 @@
         "phase_knockout": 1,
         "odds_available": 0,
         "source_timestamp_coverage": 0
-      }
+      },
+      "trainingWeight": 0.35,
+      "trainingGroup": "fallback_review",
+      "snapshotMaturity": "warming_up"
     },
     {
       "matchId": "ss-fd-P2-2026-05-24-malaga-santander",
@@ -28090,7 +29410,10 @@
         "phase_knockout": 1,
         "odds_available": 0,
         "source_timestamp_coverage": 0
-      }
+      },
+      "trainingWeight": 0.35,
+      "trainingGroup": "fallback_review",
+      "snapshotMaturity": "warming_up"
     },
     {
       "matchId": "ss-fd-P2-2026-05-24-mirandes-granada",
@@ -28154,7 +29477,10 @@
         "phase_knockout": 1,
         "odds_available": 0,
         "source_timestamp_coverage": 0
-      }
+      },
+      "trainingWeight": 0.35,
+      "trainingGroup": "fallback_review",
+      "snapshotMaturity": "warming_up"
     },
     {
       "matchId": "ss-fd-P2-2026-05-24-sp gijon-almeria",
@@ -28218,7 +29544,10 @@
         "phase_knockout": 1,
         "odds_available": 0,
         "source_timestamp_coverage": 0
-      }
+      },
+      "trainingWeight": 0.35,
+      "trainingGroup": "fallback_review",
+      "snapshotMaturity": "warming_up"
     },
     {
       "matchId": "ss-fd-P2-2026-05-24-valladolid-la coruna",
@@ -28282,7 +29611,10 @@
         "phase_knockout": 1,
         "odds_available": 0,
         "source_timestamp_coverage": 0
-      }
+      },
+      "trainingWeight": 0.35,
+      "trainingGroup": "fallback_review",
+      "snapshotMaturity": "warming_up"
     },
     {
       "matchId": "ss-espn-bel.1-401866330",
@@ -28346,7 +29678,10 @@
         "phase_knockout": 1,
         "odds_available": 0,
         "source_timestamp_coverage": 0
-      }
+      },
+      "trainingWeight": 0.35,
+      "trainingGroup": "fallback_review",
+      "snapshotMaturity": "warming_up"
     },
     {
       "matchId": "ss-fd-B1-2026-05-24-st truiden-mechelen",
@@ -28410,7 +29745,10 @@
         "phase_knockout": 1,
         "odds_available": 0,
         "source_timestamp_coverage": 0
-      }
+      },
+      "trainingWeight": 0.35,
+      "trainingGroup": "fallback_review",
+      "snapshotMaturity": "warming_up"
     },
     {
       "matchId": "ss-fd-B1-2026-05-24-st gilloise-anderlecht",
@@ -28474,7 +29812,10 @@
         "phase_knockout": 1,
         "odds_available": 0,
         "source_timestamp_coverage": 0
-      }
+      },
+      "trainingWeight": 0.35,
+      "trainingGroup": "fallback_review",
+      "snapshotMaturity": "warming_up"
     },
     {
       "matchId": "ss-espn-bel.1-401866332",
@@ -28538,7 +29879,10 @@
         "phase_knockout": 0,
         "odds_available": 0,
         "source_timestamp_coverage": 0
-      }
+      },
+      "trainingWeight": 0.35,
+      "trainingGroup": "fallback_review",
+      "snapshotMaturity": "warming_up"
     },
     {
       "matchId": "ss-espn-ita.1-737160",
@@ -28602,7 +29946,10 @@
         "phase_knockout": 0,
         "odds_available": 0,
         "source_timestamp_coverage": 0
-      }
+      },
+      "trainingWeight": 0.35,
+      "trainingGroup": "fallback_review",
+      "snapshotMaturity": "warming_up"
     },
     {
       "matchId": "ss-espn-ned.1-401873227",
@@ -28666,7 +30013,10 @@
         "phase_knockout": 1,
         "odds_available": 0,
         "source_timestamp_coverage": 0
-      }
+      },
+      "trainingWeight": 0.35,
+      "trainingGroup": "fallback_review",
+      "snapshotMaturity": "warming_up"
     },
     {
       "matchId": "ss-espn-bel.1-401866331",
@@ -28730,7 +30080,10 @@
         "phase_knockout": 0,
         "odds_available": 0,
         "source_timestamp_coverage": 0
-      }
+      },
+      "trainingWeight": 0.35,
+      "trainingGroup": "fallback_review",
+      "snapshotMaturity": "warming_up"
     },
     {
       "matchId": "ss-tsdb-Germany - Bundesliga-2475153",
@@ -28794,7 +30147,10 @@
         "phase_knockout": 1,
         "odds_available": 0,
         "source_timestamp_coverage": 0
-      }
+      },
+      "trainingWeight": 0.35,
+      "trainingGroup": "fallback_review",
+      "snapshotMaturity": "warming_up"
     },
     {
       "matchId": "ss-tsdb-France - Ligue 1-2475111",
@@ -28858,7 +30214,10 @@
         "phase_knockout": 1,
         "odds_available": 0,
         "source_timestamp_coverage": 0.8
-      }
+      },
+      "trainingWeight": 0.65,
+      "trainingGroup": "snapshot_backed",
+      "snapshotMaturity": "warming_up"
     },
     {
       "matchId": "ss-espn-uefa.europa.conf-401862929",
@@ -28922,7 +30281,10 @@
         "phase_knockout": 0,
         "odds_available": 0,
         "source_timestamp_coverage": 0.5
-      }
+      },
+      "trainingWeight": 0.65,
+      "trainingGroup": "snapshot_backed",
+      "snapshotMaturity": "warming_up"
     }
   ]
 }

@@ -2,8 +2,11 @@
 
 import fs from "fs";
 import path from "path";
+import { todayAmsterdamKey } from "../shared/date.js";
+import { buildFixtureCalendarStatus } from "../shared/fixtureCalendar.js";
 
 const ROOT = process.cwd();
+const DEFAULT_MIN_SNAPSHOT_ROWS = Number(process.env.SNAPSHOT_MIN_TRAINING_ROWS || 50);
 
 function readJsonSafe(relativePath, fallback) {
   try {
@@ -33,9 +36,24 @@ function configured(...names) {
 
 const packageJson = readJsonSafe("package.json", {});
 const trainingExport = readJsonSafe(path.join("training", "catboost-ready.json"), {});
+const meta = readJsonSafe(path.join("data", "meta.json"), {});
 const indexHtml = readTextSafe("index.html");
 const indexTsx = readTextSafe("index.tsx");
 const learnWorkflow = readTextSafe(path.join(".github", "workflows", "learn.yml"));
+const today = todayAmsterdamKey();
+const fixtureDays = Object.fromEntries(
+  (Array.isArray(meta.dates) ? meta.dates : []).map((dateKey) => [
+    dateKey,
+    readJsonSafe(path.join("data", "days", `${dateKey}.json`), { matches: [] }),
+  ])
+);
+const lastRun = Number(meta?.lastRun || 0);
+const fixtureCalendar = buildFixtureCalendarStatus({
+  today,
+  days: fixtureDays,
+  meta,
+  lastRunFresh: !!lastRun && Date.now() - lastRun <= 180 * 60_000,
+});
 
 const oddsKeyConfigured = configured("ODDS_API_KEY", "THE_ODDS_API_KEY");
 const oddsTemplateConfigured = configured("ODDS_API_URL_TEMPLATE");
@@ -63,9 +81,30 @@ const report = {
     totalRows: Number(trainingExport.totalRows || 0),
     snapshotBackedRows: Number(trainingExport.snapshotBackedRows || 0),
     fallbackRows: Number(trainingExport.fallbackRows || 0),
+    minSnapshotRows: Number(trainingExport.trainingPolicy?.minSnapshotRows || DEFAULT_MIN_SNAPSHOT_ROWS),
+    snapshotBoostActive: Boolean(trainingExport.trainingPolicy?.snapshotBoostActive),
+    snapshotMaturity: trainingExport.trainingPolicy?.maturity || "unknown",
+    snapshotWeight: trainingExport.trainingPolicy?.snapshotWeight ?? null,
+    fallbackWeight: trainingExport.trainingPolicy?.fallbackWeight ?? null,
     generatedAt: trainingExport.generatedAt || null,
     scheduledLearning: learnWorkflow.includes("schedule:"),
-    status: Number(trainingExport.snapshotBackedRows || 0) > 0 ? "snapshot_rows_available" : "waiting_for_finished_snapshot_predictions",
+    status:
+      Number(trainingExport.snapshotBackedRows || 0) >= Number(trainingExport.trainingPolicy?.minSnapshotRows || DEFAULT_MIN_SNAPSHOT_ROWS)
+        ? "snapshot_training_mature"
+        : Number(trainingExport.snapshotBackedRows || 0) > 0
+          ? "snapshot_training_warming_up"
+          : "waiting_for_finished_snapshot_predictions",
+  },
+  fixtureCalendar: {
+    today,
+    status: fixtureCalendar.status,
+    healthy: fixtureCalendar.healthy,
+    emptyWindowOk: fixtureCalendar.emptyWindowOk,
+    todayCount: fixtureCalendar.todayCount,
+    tomorrowCount: fixtureCalendar.tomorrowCount,
+    nextMatchDate: fixtureCalendar.nextMatchDate,
+    nextMatchCount: fixtureCalendar.nextMatchCount,
+    explanation: fixtureCalendar.explanation,
   },
   frontend: {
     tailwindDependency: Boolean(packageJson.devDependencies?.tailwindcss),
