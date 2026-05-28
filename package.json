@@ -17,7 +17,9 @@
     "monitor:biweekly": "node scripts/biweekly-review-digest.js",
     "train:prepare": "node scripts/prepare-ensemble-data.js",
     "export:ledger": "node scripts/export-prediction-ledger.js",
-    "monitor:ruflo": "node scripts/ruflo-monitor.js"
+    "monitor:ruflo": "node scripts/ruflo-monitor.js",
+    "readiness": "node scripts/readiness-check.js",
+    "db:schema:apply": "node scripts/apply-database-schema.js"
   },
   "dependencies": {
     "react": "^19.2.4",
@@ -26,6 +28,8 @@
   "devDependencies": {
     "@types/node": "^22.14.0",
     "@vitejs/plugin-react": "^5.0.0",
+    "autoprefixer": "^10.4.20",
+    "tailwindcss": "^3.4.17",
     "typescript": "~5.8.2",
     "vite": "^6.2.0"
   }

@@ -22,6 +22,9 @@ View your app in AI Studio: https://ai.studio/apps/drive/1flTlewPJ1rfoPRvL7a_rL_
 
 - **No API keys needed.** Match data is pulled from a public (unofficial) SofaScore JSON feed.
 - Predictions run **fully locally** (Elo + Poisson) and the model **learns in your browser** by storing finished results in `localStorage`.
+- Tailwind draait via de lokale Vite/PostCSS build; de productie-app gebruikt geen `cdn.tailwindcss.com` meer.
+- Optionele productiechecks staan in `.env.example` en `npm run readiness`. Zonder odds-key of database URL blijft de app eerlijk in no-key mode.
+- Postgres/Supabase is voorbereid via `database/schema.sql`; uitvoeren kan later met `npm run db:schema:apply` zodra er een database URL is.
 
 Server-side learning (optional):
 - A simple server-side worker and GitHub Action were added to allow scheduled learning and predictions stored in `server_data.json`.

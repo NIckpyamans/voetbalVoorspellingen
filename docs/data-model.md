@@ -4,6 +4,8 @@ Doel: elke voorspelling later exact kunnen reconstrueren, evalueren en gebruiken
 
 De uitvoerbare Postgres DDL staat in `database/schema.sql`.
 
+Zonder database credentials blijft de app bewust op JSON/JSONL draaien. Met een lokale Postgres/Supabase URL kan het schema worden toegepast met `npm run db:schema:apply`; de statuscontrole staat in `npm run readiness`.
+
 ## Tabellen
 
 ### `matches`

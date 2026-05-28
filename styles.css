@@ -1,0 +1,40 @@
+@import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap');
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  body {
+    font-family: 'Plus Jakarta Sans', sans-serif;
+    background-color: #050510;
+    color: #f8fafc;
+    overflow-x: hidden;
+  }
+
+  ::selection {
+    background: #3b82f6;
+    color: white;
+  }
+}
+
+@layer components {
+  .glass-card {
+    background: rgba(10, 10, 30, var(--footyai-card-alpha, 0.54));
+    backdrop-filter: blur(var(--footyai-card-blur, 16px));
+    border: 1px solid rgba(255, 255, 255, 0.05);
+  }
+
+  .footyai-glass-scope .glass-card {
+    box-shadow: 0 24px 80px rgba(0, 0, 0, calc(var(--footyai-card-alpha, 0.54) * 0.55));
+  }
+
+  .scrollbar-hide::-webkit-scrollbar {
+    display: none;
+  }
+
+  .scrollbar-hide {
+    -ms-overflow-style: none;
+    scrollbar-width: none;
+  }
+}

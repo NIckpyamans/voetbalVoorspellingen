@@ -56,6 +56,8 @@ Ondersteunde voorbereidende env vars:
 
 Zonder provider blijft `oddsStatus` bewust `historical_market_profile_only` of `missing`, en `oddsProviderStatus` wordt `not_configured`.
 
+Gebruik `npm run readiness` om te controleren of de env vars gezet zijn zonder geheime waarden te loggen.
+
 ## Geaccepteerde closing-velden
 
 De provider mag closing odds direct in dezelfde response meesturen met een van deze namen:

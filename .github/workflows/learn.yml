@@ -2,6 +2,9 @@ name: FootyAI learning
 
 on:
   workflow_dispatch:
+  schedule:
+    # Dagelijkse learning-export nadat de vroege worker klaar hoort te zijn.
+    - cron: "37 6 * * *"
 
 concurrency:
   group: football-learning
