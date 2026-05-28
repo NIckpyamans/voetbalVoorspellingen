@@ -4,6 +4,7 @@ import fs from "fs";
 import path from "path";
 import crypto from "crypto";
 import { normalizeMinute, parseMinuteValue } from "../shared/minute.js";
+import { WORLD_CUP_LEAGUE, WORLD_FRIENDLY_LEAGUE, isWorldCup2026Team } from "../shared/worldCup2026.js";
 import {
   buildBacktestSummaryFromReviews,
   buildDataCompletenessAudit,
@@ -2187,8 +2188,11 @@ function getInternationalLeagueInfo(event) {
   const categoryNorm = normalizeName(event?.tournament?.category?.name || "");
   const homeCountryNorm = normalizeName(event?.homeTeam?.country?.name || "");
   const awayCountryNorm = normalizeName(event?.awayTeam?.country?.name || "");
+  const homeName = event?.homeTeam?.name || "";
+  const awayName = event?.awayTeam?.name || "";
   const hasEuropeanTeam =
     isEuropeanCountryName(homeCountryNorm) || isEuropeanCountryName(awayCountryNorm);
+  const hasWorldCup2026Team = isWorldCup2026Team(homeName) || isWorldCup2026Team(awayName);
   const europeanPair =
     isEuropeanCountryName(homeCountryNorm) && isEuropeanCountryName(awayCountryNorm);
 
@@ -2209,6 +2213,19 @@ function getInternationalLeagueInfo(event) {
         type: "league",
       };
     }
+  }
+
+  if (
+    tournamentNorm.includes("world cup") &&
+    !tournamentNorm.includes("qualification") &&
+    !tournamentNorm.includes("qual")
+  ) {
+    return {
+      country: "",
+      name: tournamentNorm,
+      label: WORLD_CUP_LEAGUE,
+      type: "cup",
+    };
   }
 
   if (
@@ -2253,11 +2270,11 @@ function getInternationalLeagueInfo(event) {
     (tournamentNorm.includes("friendly games") || tournamentNorm.includes("international friendly")) &&
     !tournamentNorm.includes("club")
   ) {
-    if (hasEuropeanTeam) {
+    if (hasEuropeanTeam || hasWorldCup2026Team || categoryNorm.includes("international") || categoryNorm.includes("world")) {
       return {
         country: "",
         name: tournamentNorm,
-        label: "Europe - International Friendly",
+        label: hasEuropeanTeam && !hasWorldCup2026Team ? "Europe - International Friendly" : WORLD_FRIENDLY_LEAGUE,
         type: "league",
       };
     }

@@ -2,6 +2,7 @@ import { fetchDayData, fetchMetaData, fetchRepoJson, fetchServerStore } from "./
 import fs from "fs";
 import path from "path";
 import { addDaysToDateKey, todayAmsterdamKey } from "../shared/date.js";
+import { buildWorldCup2026DayData } from "../shared/worldCup2026.js";
 import { createLogger, getErrorDetails } from "../shared/logger.js";
 import { setCorsHeaders } from "../shared/cors.js";
 
@@ -165,6 +166,12 @@ function dedupeServedMatches(matches: any[]) {
   return [...seen.values()];
 }
 
+function mergeWorldCupSeed(dateKey: string, matches: any[]) {
+  const worldCup = buildWorldCup2026DayData(dateKey);
+  if (!worldCup.matches.length) return matches;
+  return dedupeServedMatches([...matches, ...worldCup.matches]);
+}
+
 function normalizeServedMatchStatus(match: any) {
   const status = String(match?.status || "NS").toUpperCase();
   const hasScore = typeof match?.score === "string" && match.score.includes("-");
@@ -303,7 +310,7 @@ export default async function handler(req: any, res: any) {
       sourceBranch = branch;
     }
 
-    const uniqueBaseMatches = dedupeServedMatches(baseMatches);
+    const uniqueBaseMatches = mergeWorldCupSeed(targetDate, baseMatches);
 
     const matches = live === "true"
       ? uniqueBaseMatches.filter((m: any) => String(m.status || "").toUpperCase() === "LIVE")

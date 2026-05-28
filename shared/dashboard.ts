@@ -21,6 +21,8 @@ export type DashboardHistoryItem = {
 };
 
 export const LEAGUE_ORDER = [
+  "World - FIFA World Cup 2026",
+  "World - International Friendly",
   "Europe - Champions League",
   "Europe - Europa League",
   "Europe - Conference League",

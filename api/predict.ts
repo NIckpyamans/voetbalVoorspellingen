@@ -1,5 +1,6 @@
 import { fetchDayData, fetchMetaData, fetchServerStore } from "./_dataSource.js";
 import { todayAmsterdamKey } from "../shared/date.js";
+import { buildWorldCup2026DayData } from "../shared/worldCup2026.js";
 import { createLogger, getErrorDetails } from "../shared/logger.js";
 import { setCorsHeaders } from "../shared/cors.js";
 
@@ -74,6 +75,24 @@ function enrichPrediction(prediction: any, matchMap: Record<string, any>, store:
   };
 }
 
+function mergeWorldCupPredictions(date: string, matches: any[], predictions: any[]) {
+  const worldCup = buildWorldCup2026DayData(date);
+  if (!worldCup.matches.length) return { matches, predictions };
+
+  const matchById = new Map<string, any>();
+  for (const match of [...matches, ...worldCup.matches]) matchById.set(match.id, match);
+
+  const predictionById = new Map<string, any>();
+  for (const prediction of [...worldCup.predictions, ...predictions]) {
+    if (prediction?.matchId) predictionById.set(prediction.matchId, prediction);
+  }
+
+  return {
+    matches: [...matchById.values()],
+    predictions: [...predictionById.values()],
+  };
+}
+
 export default async function handler(req: any, res: any) {
   const started = Date.now();
   setCorsHeaders(req, res);
@@ -111,6 +130,10 @@ export default async function handler(req: any, res: any) {
       lastRun = store.lastRun || null;
       reviewCount = Object.keys(reviews || {}).length;
     }
+
+    const merged = mergeWorldCupPredictions(date, matches, predictions);
+    matches = merged.matches;
+    predictions = merged.predictions;
 
     const matchMap = Object.fromEntries(matches.map((match: any) => [match.id, { ...match, review: reviews?.[match.id] || null }]));
     const splitStore = { postMatchReviews: reviews };

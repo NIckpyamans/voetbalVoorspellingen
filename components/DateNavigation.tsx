@@ -43,6 +43,12 @@ function formatDateLabel(dateISO: string) {
 const DateNavigation: React.FC<DateNavigationProps> = ({ selectedDate, onDateChange }) => {
   const today = todayAmsterdamKey();
   const isToday = selectedDate === today;
+  const quickDates = [
+    { label: "WK start", date: "2026-06-11" },
+    { label: "Nederland", date: "2026-06-14" },
+    { label: "Knock-out", date: "2026-06-28" },
+    { label: "Finale", date: "2026-07-19" },
+  ];
 
   const goToPreviousDay = () => {
     onDateChange(addDaysToDateKey(selectedDate, -1));
@@ -105,6 +111,22 @@ const DateNavigation: React.FC<DateNavigationProps> = ({ selectedDate, onDateCha
       {/* Mobile: Swipe indicator */}
       <div className="sm:hidden mt-3 flex items-center justify-center gap-2 text-[10px] text-slate-500">
         <span>← Swipe →</span>
+      </div>
+      <div className="mt-3 flex flex-wrap items-center justify-center gap-2 border-t border-white/5 pt-3">
+        {quickDates.map((item) => (
+          <button
+            key={item.date}
+            type="button"
+            onClick={() => onDateChange(item.date)}
+            className={`rounded-lg px-2.5 py-1 text-[10px] font-black transition ${
+              selectedDate === item.date
+                ? "bg-cyan-400 text-slate-950"
+                : "bg-slate-800/70 text-slate-300 hover:bg-slate-700"
+            }`}
+          >
+            {item.label}
+          </button>
+        ))}
       </div>
     </div>
   );

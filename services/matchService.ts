@@ -496,6 +496,11 @@ function mapRawMatch(m: any): Match {
     // ========================================
     ...(m.coverage ? { coverage: m.coverage } : {}),
     ...(m.importance ? { importance: m.importance } : {}),
+    ...(m.worldCup2026 ? { worldCup2026: m.worldCup2026 } : {}),
+    ...(m.dataCompleteness ? { dataCompleteness: m.dataCompleteness } : {}),
+    ...(m.dataCompletenessScore != null ? { dataCompletenessScore: m.dataCompletenessScore } : {}),
+    ...(m.phaseBucket ? { phaseBucket: m.phaseBucket } : {}),
+    ...(m.leagueType ? { leagueType: m.leagueType } : {}),
 
     // ========================================
     // TOP 5 EXACTE-SCORE SELECTIE
