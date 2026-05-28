@@ -61,7 +61,16 @@ const TEAMS = {
   CRO: { name: "Croatia", group: "L", strength: 79 },
   GHA: { name: "Ghana", group: "L", strength: 72 },
   PAN: { name: "Panama", group: "L", strength: 67 },
+  IRL: { name: "Republic of Ireland", group: null, strength: 73 },
+  SUD: { name: "Sudan", group: null, strength: 60 },
+  SLV: { name: "El Salvador", group: null, strength: 64 },
 };
+
+const WORLD_CUP_FRIENDLY_ROWS = [
+  "wf-2026-05-22-qatar-sudan|2026-05-22|17:00|Qatar|Sudan|Doha, Qatar",
+  "wf-2026-05-28-ireland-qatar|2026-05-28|18:45|Republic of Ireland|Qatar|Dublin, Ireland",
+  "wf-2026-06-06-qatar-elsalvador|2026-06-06|16:00|Qatar|El Salvador|Doha, Qatar",
+];
 
 const FIXTURE_ROWS = [
   "1|2026-06-11|20:00|A|Mexico|South Africa|Mexico City, Mexico",
@@ -197,6 +206,11 @@ function parseFixtureRow(row) {
   };
 }
 
+function parseFriendlyRow(row) {
+  const [id, date, ukTime, home, away, venue] = row.split("|");
+  return { id, date, ukTime, home, away, venue };
+}
+
 function ukKickoffToIso(dateKey, time) {
   const [year, month, day] = dateKey.split("-").map(Number);
   const [hour, minute] = time.split(":").map(Number);
@@ -318,6 +332,73 @@ function buildPrediction(match) {
   };
 }
 
+function buildFriendlyPrediction(match) {
+  const home = TEAM_BY_NAME.get(normalizeTeamName(match.homeTeamName));
+  const away = TEAM_BY_NAME.get(normalizeTeamName(match.awayTeamName));
+  const homeStrength = Number(home?.strength || 68);
+  const awayStrength = Number(away?.strength || 68);
+  const diff = homeStrength - awayStrength;
+  const homeWin = clamp(sigmoid(diff / 11) * 0.66, 0.2, 0.7);
+  const awayWin = clamp(sigmoid(-diff / 11) * 0.66, 0.2, 0.7);
+  const draw = clamp(0.31 - Math.min(Math.abs(diff), 22) * 0.004, 0.18, 0.32);
+  const total = homeWin + draw + awayWin;
+  const homeProb = Number((homeWin / total).toFixed(3));
+  const drawProb = Number((draw / total).toFixed(3));
+  const awayProb = Number((awayWin / total).toFixed(3));
+  const homeXG = clamp(1.2 + diff / 34, 0.55, 2.4);
+  const awayXG = clamp(1.15 - diff / 36, 0.55, 2.35);
+
+  return {
+    matchId: match.id,
+    predictionId: `wf-seed-${match.id}`,
+    date: match.date,
+    dataSource: "world-cup-2026-friendly-seed",
+    homeTeam: match.homeTeamName,
+    awayTeam: match.awayTeamName,
+    league: match.league,
+    predHomeGoals: Math.max(0, Math.round(homeXG)),
+    predAwayGoals: Math.max(0, Math.round(awayXG)),
+    homeProb,
+    drawProb,
+    awayProb,
+    homeXG: Number(homeXG.toFixed(2)),
+    awayXG: Number(awayXG.toFixed(2)),
+    btts: Number((Math.min(homeXG, awayXG) / 2.05).toFixed(3)),
+    over25: Number((clamp((homeXG + awayXG - 1.75) / 2.15, 0.18, 0.72)).toFixed(3)),
+    confidence: Number(Math.max(homeProb, drawProb, awayProb).toFixed(3)),
+    exactProb: 0.1,
+    modelVersion: "wk2026-friendly-country-strength-v1",
+    featureSchemaVersion: "wk2026-friendly-seed-v1",
+    generatedAt: SOURCE.verifiedAt,
+    cutoffAt: SOURCE.verifiedAt,
+    dataCompletenessScore: 0.5,
+    dataCompleteness: {
+      score: 0.5,
+      missing: [
+        "official_final_squad_snapshot",
+        "current_player_top_form",
+        "injuries_suspensions",
+        "confirmed_lineups",
+        "live_odds_closing_odds",
+      ],
+      available: ["friendly_fixture", "country_strength_seed"],
+    },
+    modelEdges: {
+      model: "wk2026-friendly-country-strength-v1",
+      riskProfile: "middel",
+      modelAgreement: 0.48,
+      clubEloDiff: diff,
+      dataCompleteness: { score: 0.5, status: "friendly_seed_needs_live_enrichment" },
+    },
+    worldCup2026: {
+      source: SOURCE,
+      squadStatus: "not_verified_in_app",
+      playerTopFormStatus: "provider_required",
+      friendlyCoverageStatus: "seeded",
+    },
+  };
+}
+
 function buildMatch(fixture) {
   const homeCode = toCode(fixture.home);
   const awayCode = toCode(fixture.away);
@@ -412,6 +493,56 @@ function buildMatch(fixture) {
 
 const FIXTURES = FIXTURE_ROWS.map(parseFixtureRow).map(buildMatch);
 const PREDICTIONS = FIXTURES.map(buildPrediction);
+const FRIENDLIES = WORLD_CUP_FRIENDLY_ROWS.map(parseFriendlyRow).map((fixture) => {
+  const homeCode = toCode(fixture.home);
+  const awayCode = toCode(fixture.away);
+  const match = {
+    id: fixture.id,
+    dataSource: "world-cup-2026-friendly-seed",
+    date: fixture.date,
+    kickoff: ukKickoffToIso(fixture.date, fixture.ukTime),
+    league: WORLD_FRIENDLY_LEAGUE,
+    homeTeamId: homeCode ? `country-${homeCode}` : `wf-${fixture.id}-home`,
+    awayTeamId: awayCode ? `country-${awayCode}` : `wf-${fixture.id}-away`,
+    homeTeamName: fixture.home,
+    awayTeamName: fixture.away,
+    homeLogo: "",
+    awayLogo: "",
+    status: "NS",
+    score: null,
+    roundLabel: "Friendly",
+    matchImportance: 0.92,
+    phaseBucket: "friendly",
+    leagueType: "international",
+    venue: { name: fixture.venue },
+    context: {
+      type: "friendly",
+      summary: "interland oefenwedstrijd",
+      stakes: "WK voorbereiding",
+    },
+    worldCup2026: {
+      source: SOURCE,
+      squadStatus: "not_verified_in_app",
+      playerTopFormStatus: "provider_required",
+      previousMatchesStatus: "provider_required",
+      friendlyCoverageStatus: "seeded",
+    },
+    dataCompletenessScore: 0.5,
+    dataCompleteness: {
+      score: 0.5,
+      missing: [
+        "official_final_squad_snapshot",
+        "current_player_top_form",
+        "injuries_suspensions",
+        "confirmed_lineups",
+        "live_odds_closing_odds",
+      ],
+    },
+  };
+  const prediction = buildFriendlyPrediction(match);
+  return { ...match, predictionId: prediction.predictionId, modelEdges: prediction.modelEdges };
+});
+const FRIENDLY_PREDICTIONS = FRIENDLIES.map(buildFriendlyPrediction);
 
 function dateKeyFromValue(value) {
   return String(value || "").slice(0, 10);
@@ -431,6 +562,10 @@ export function getWorldCup2026Teams() {
 
 export function getWorldCup2026Fixtures() {
   return FIXTURES.map((match) => ({ ...match }));
+}
+
+export function getWorldCup2026Friendlies() {
+  return FRIENDLIES.map((match) => ({ ...match }));
 }
 
 export function buildWorldCup2026DayData(dateKey) {
@@ -460,6 +595,30 @@ export function buildWorldCup2026DayData(dateKey) {
         friendlies: "provider_required",
       },
     },
+  };
+}
+
+export function buildWorldCup2026FriendlyDayData(dateKey) {
+  const matches = FRIENDLIES.filter((match) => dateKeyFromValue(match.date) === dateKey).map((match) => ({ ...match }));
+  const matchIds = new Set(matches.map((match) => match.id));
+  const predictions = FRIENDLY_PREDICTIONS.filter((prediction) => matchIds.has(prediction.matchId)).map((prediction) => ({ ...prediction }));
+  return {
+    ok: true,
+    date: dateKey,
+    matches,
+    predictions,
+    total: matches.length,
+    source: matches.length ? "world-cup-2026-friendly-seed" : "none",
+  };
+}
+
+export function getWorldCup2026ReadinessSnapshot() {
+  return {
+    squads: { status: "provider_required", detail: "Echte nationale selecties koppelen (live provider)." },
+    friendlies: { status: "seeded_with_live_gap", detail: "Recente interlands/oefenduels deels seeded, live provider uitbreiden." },
+    playerTopForm: { status: "provider_required", detail: "Clubvorm/minuten/goals/assists nog live koppelen." },
+    fifaRankingElo: { status: "partially_seeded", detail: "Landensterkte seeded, automatische FIFA/Elo refresh nog open." },
+    groupAndKnockoutProjection: { status: "seeded_fixture_only", detail: "Schema staat klaar; groepsstanden/doorrekening nog uitbouwen." },
   };
 }
 

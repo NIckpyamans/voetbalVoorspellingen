@@ -2,7 +2,7 @@ import { fetchDayData, fetchMetaData, fetchRepoJson, fetchServerStore } from "./
 import fs from "fs";
 import path from "path";
 import { addDaysToDateKey, todayAmsterdamKey } from "../shared/date.js";
-import { buildWorldCup2026DayData } from "../shared/worldCup2026.js";
+import { buildWorldCup2026DayData, buildWorldCup2026FriendlyDayData, getWorldCup2026ReadinessSnapshot } from "../shared/worldCup2026.js";
 import { createLogger, getErrorDetails } from "../shared/logger.js";
 import { setCorsHeaders } from "../shared/cors.js";
 
@@ -168,8 +168,9 @@ function dedupeServedMatches(matches: any[]) {
 
 function mergeWorldCupSeed(dateKey: string, matches: any[]) {
   const worldCup = buildWorldCup2026DayData(dateKey);
-  if (!worldCup.matches.length) return matches;
-  return dedupeServedMatches([...matches, ...worldCup.matches]);
+  const friendly = buildWorldCup2026FriendlyDayData(dateKey);
+  if (!worldCup.matches.length && !friendly.matches.length) return matches;
+  return dedupeServedMatches([...matches, ...worldCup.matches, ...friendly.matches]);
 }
 
 function normalizeServedMatchStatus(match: any) {
@@ -260,7 +261,7 @@ export default async function handler(req: any, res: any) {
 
         const uniqueMultiDayMatches = dedupeServedMatches(multiDayMatches);
 
-        return res.status(200).json({
+      return res.status(200).json({
           ok: true,
           matches: uniqueMultiDayMatches,
           events: uniqueMultiDayMatches,
@@ -282,6 +283,7 @@ export default async function handler(req: any, res: any) {
           anomalyReport: meta.anomalyReport || null,
           competitionArchiveIndex: meta.competitionArchiveIndex || null,
           teamSquadSummary: meta.teamSquadSummary || null,
+          worldCup2026Readiness: getWorldCup2026ReadinessSnapshot(),
           biweeklyDigest,
           rufloReport,
           sourceBranch,
@@ -337,6 +339,7 @@ export default async function handler(req: any, res: any) {
       anomalyReport: meta.anomalyReport || null,
       competitionArchiveIndex: meta.competitionArchiveIndex || null,
       teamSquadSummary: meta.teamSquadSummary || null,
+      worldCup2026Readiness: getWorldCup2026ReadinessSnapshot(),
       biweeklyDigest,
       rufloReport,
       sourceBranch,

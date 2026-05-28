@@ -1,6 +1,6 @@
 import { fetchDayData, fetchMetaData, fetchServerStore } from "./_dataSource.js";
 import { todayAmsterdamKey } from "../shared/date.js";
-import { buildWorldCup2026DayData } from "../shared/worldCup2026.js";
+import { buildWorldCup2026DayData, buildWorldCup2026FriendlyDayData } from "../shared/worldCup2026.js";
 import { createLogger, getErrorDetails } from "../shared/logger.js";
 import { setCorsHeaders } from "../shared/cors.js";
 
@@ -77,13 +77,14 @@ function enrichPrediction(prediction: any, matchMap: Record<string, any>, store:
 
 function mergeWorldCupPredictions(date: string, matches: any[], predictions: any[]) {
   const worldCup = buildWorldCup2026DayData(date);
-  if (!worldCup.matches.length) return { matches, predictions };
+  const friendlies = buildWorldCup2026FriendlyDayData(date);
+  if (!worldCup.matches.length && !friendlies.matches.length) return { matches, predictions };
 
   const matchById = new Map<string, any>();
-  for (const match of [...matches, ...worldCup.matches]) matchById.set(match.id, match);
+  for (const match of [...matches, ...worldCup.matches, ...friendlies.matches]) matchById.set(match.id, match);
 
   const predictionById = new Map<string, any>();
-  for (const prediction of [...worldCup.predictions, ...predictions]) {
+  for (const prediction of [...worldCup.predictions, ...friendlies.predictions, ...predictions]) {
     if (prediction?.matchId) predictionById.set(prediction.matchId, prediction);
   }
 
