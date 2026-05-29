@@ -1,30 +1,30 @@
 {
-  "generatedAt": "2026-05-28T23:43:34.527Z",
-  "date": "2026-05-29",
+  "generatedAt": "2026-05-29T23:42:25.606Z",
+  "date": "2026-05-30",
   "proposalOnly": true,
   "shouldPropose": true,
-  "branchName": "codex/review-20260529",
-  "summary": "AI reviewvoorstel voor 2026-05-29: 1 aandachtspunt(en) met patchadvies, niet automatisch live.",
+  "branchName": "codex/review-20260530",
+  "summary": "AI reviewvoorstel voor 2026-05-30: 2 aandachtspunt(en) met patchadvies, niet automatisch live.",
   "latestStats": {
-    "today": "2026-05-29",
-    "tomorrow": "2026-05-30",
+    "today": "2026-05-30",
+    "tomorrow": "2026-05-31",
     "dataPresent": true,
-    "lastRun": 1780000720697,
-    "ageMinutes": 185,
+    "lastRun": 1780087219465,
+    "ageMinutes": 182,
     "maxWorkerAgeMinutes": 180,
-    "todayMatches": 0,
+    "todayMatches": 1,
     "tomorrowMatches": 1,
     "fixtureCalendar": {
       "status": "has_current_matches",
       "healthy": true,
       "emptyWindowOk": true,
       "severity": "none",
-      "todayCount": 0,
+      "todayCount": 1,
       "tomorrowCount": 1,
       "windowDays": 7,
       "checkedDates": [
-        "2026-05-29",
-        "2026-05-30"
+        "2026-05-30",
+        "2026-05-31"
       ],
       "nextMatchDate": "2026-05-30",
       "nextMatchCount": 1,
@@ -33,9 +33,9 @@
     "liveMatches": 0,
     "liveWithoutMinute": 0,
     "h2hFilled": 0,
-    "h2hMissing": 0,
+    "h2hMissing": 1,
     "standingsCount": 41,
-    "cupSheetCount": 2,
+    "cupSheetCount": 3,
     "phaseReliabilityCount": 3
   },
   "findings": [
@@ -43,18 +43,31 @@
       "priority": 1,
       "key": "worker_stale",
       "severity": "high",
-      "message": "server_data.json is 185 minuten oud.",
+      "message": "server_data.json is 182 minuten oud.",
       "whyItMatters": "Workerdata is te oud en verdient een workflow- of broncheck.",
       "recommendedFiles": [
         ".github/workflows/worker.yml",
         "scripts/server-worker.js"
       ],
       "details": {}
+    },
+    {
+      "priority": 2,
+      "key": "h2h_empty",
+      "severity": "medium",
+      "message": "Alle wedstrijden van vandaag hebben lege H2H-data.",
+      "whyItMatters": "Onderlinge duels worden niet sterk genoeg gevuld.",
+      "recommendedFiles": [
+        "scripts/server-worker.js",
+        "components/MatchCard.tsx"
+      ],
+      "details": {}
     }
   ],
   "recommendedFiles": [
     ".github/workflows/worker.yml",
-    "scripts/server-worker.js"
+    "scripts/server-worker.js",
+    "components/MatchCard.tsx"
   ],
   "nextStep": "Gebruik deze proposal om gericht een reviewbranch te maken en alleen na controle te mergen."
 }

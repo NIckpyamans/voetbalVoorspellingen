@@ -1,20 +1,20 @@
 {
-  "generatedAt": "2026-05-28T23:43:34.841Z",
-  "date": "2026-05-29",
+  "generatedAt": "2026-05-29T23:42:25.957Z",
+  "date": "2026-05-30",
   "name": "Ruflo-style gratis AI monitor",
   "mode": "naast-productie",
   "productionSafe": true,
   "summary": "Ruflo draait als extra agentlaag naast de app: hij leest monitor/data/reviews, zoekt gratis oplossingen en maakt patchadvies zonder blind live te wijzigen.",
   "agents": {
     "data": {
-      "score": 0,
-      "summary": "Datalaag: H2H 0%, bookmakers 0%, refs 0%.",
+      "score": 80,
+      "summary": "Datalaag: H2H 100%, bookmakers 100%, refs 0%.",
       "freeSources": [
         {
           "name": "SofaScore public endpoint",
           "role": "primaire wedstrijddagfeed",
           "free": true,
-          "status": "fallback nodig",
+          "status": "actief",
           "use": "Gebruik als eerste bron, maar behandel 403/lege dagen nooit als eindpunt."
         },
         {
@@ -49,39 +49,18 @@
           "name": "Understat snapshots",
           "role": "xG/xGA pilot voor topcompetities",
           "free": true,
-          "status": "pilot",
+          "status": "deels actief",
           "use": "Alleen gebruiken waar parse/snapshot stabiel is; geen harde dependency maken."
         },
         {
           "name": "FBref snapshots",
           "role": "shots/home-away splits via snapshot-cache",
           "free": true,
-          "status": "rate-limited backup",
+          "status": "deels actief",
           "use": "Niet live scrapen op iedere run; alleen gecachte snapshots gebruiken."
         }
       ],
-      "actions": [
-        {
-          "priority": "high",
-          "title": "Wedstrijddag fallbackketen strakker maken",
-          "freeSolution": "Laat de worker altijd meerdere gratis bronnen proberen: SofaScore -> TheSportsDB -> OpenLigaDB -> football-data/openfootball.",
-          "files": [
-            "scripts/server-worker.js",
-            "api/Matches.ts"
-          ],
-          "status": "bewaken"
-        },
-        {
-          "priority": "medium",
-          "title": "H2H-backfill verder vullen",
-          "freeSolution": "Gebruik openfootball en football-data rows per competitie als historische H2H fallback voordat de UI 'leeg' toont.",
-          "files": [
-            "scripts/server-worker.js",
-            "components/MatchCard.tsx"
-          ],
-          "status": "aanbevolen"
-        }
-      ]
+      "actions": []
     },
     "learning": {
       "score": 12,
@@ -182,17 +161,27 @@
       ]
     },
     "control": {
-      "score": 52,
-      "summary": "Ontwikkelcontrole: 1 actieve monitorissues op 2026-05-29; digest 2026-05-12 t/m 2026-05-25.",
-      "latestDay": "2026-05-29",
+      "score": 36,
+      "summary": "Ontwikkelcontrole: 2 actieve monitorissues op 2026-05-30; digest 2026-05-12 t/m 2026-05-25.",
+      "latestDay": "2026-05-30",
       "shouldPropose": true,
       "actions": [
         {
           "priority": "high",
-          "title": "server_data.json is 185 minuten oud.",
+          "title": "server_data.json is 182 minuten oud.",
           "freeSolution": "Laat GitHub Actions schedule + manual dispatch draaien; geen mail nodig, alleen data committen.",
           "files": [
             ".github/workflows/worker.yml"
+          ],
+          "status": "monitor"
+        },
+        {
+          "priority": "medium",
+          "title": "Alle wedstrijden van vandaag hebben lege H2H-data.",
+          "freeSolution": "Vul H2H uit openfootball/football-data competitiebestanden voordat de UI leeg toont.",
+          "files": [
+            "scripts/server-worker.js",
+            "components/MatchCard.tsx"
           ],
           "status": "monitor"
         }
@@ -200,14 +189,6 @@
     }
   },
   "topThemes": [
-    {
-      "title": "Wedstrijddag fallbackketen strakker maken",
-      "count": 1,
-      "priority": "high",
-      "agents": [
-        "data"
-      ]
-    },
     {
       "title": "Faalsignaal aanpakken: open_lineups",
       "count": 1,
@@ -217,7 +198,7 @@
       ]
     },
     {
-      "title": "server_data.json is 185 minuten oud.",
+      "title": "server_data.json is 182 minuten oud.",
       "count": 1,
       "priority": "high",
       "agents": [
@@ -225,26 +206,15 @@
       ]
     },
     {
-      "title": "H2H-backfill verder vullen",
+      "title": "Alle wedstrijden van vandaag hebben lege H2H-data.",
       "count": 1,
       "priority": "medium",
       "agents": [
-        "data"
+        "control"
       ]
     }
   ],
   "recommendedNextActions": [
-    {
-      "priority": "high",
-      "title": "Wedstrijddag fallbackketen strakker maken",
-      "freeSolution": "Laat de worker altijd meerdere gratis bronnen proberen: SofaScore -> TheSportsDB -> OpenLigaDB -> football-data/openfootball.",
-      "files": [
-        "scripts/server-worker.js",
-        "api/Matches.ts"
-      ],
-      "status": "bewaken",
-      "agent": "data"
-    },
     {
       "priority": "high",
       "title": "Faalsignaal aanpakken: open_lineups",
@@ -258,7 +228,7 @@
     },
     {
       "priority": "high",
-      "title": "server_data.json is 185 minuten oud.",
+      "title": "server_data.json is 182 minuten oud.",
       "freeSolution": "Laat GitHub Actions schedule + manual dispatch draaien; geen mail nodig, alleen data committen.",
       "files": [
         ".github/workflows/worker.yml"
@@ -268,14 +238,14 @@
     },
     {
       "priority": "medium",
-      "title": "H2H-backfill verder vullen",
-      "freeSolution": "Gebruik openfootball en football-data rows per competitie als historische H2H fallback voordat de UI 'leeg' toont.",
+      "title": "Alle wedstrijden van vandaag hebben lege H2H-data.",
+      "freeSolution": "Vul H2H uit openfootball/football-data competitiebestanden voordat de UI leeg toont.",
       "files": [
         "scripts/server-worker.js",
         "components/MatchCard.tsx"
       ],
-      "status": "aanbevolen",
-      "agent": "data"
+      "status": "monitor",
+      "agent": "control"
     }
   ],
   "freeOnlyGuardrails": [
