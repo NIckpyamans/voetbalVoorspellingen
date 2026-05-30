@@ -1,14 +1,14 @@
 {
-  "generatedAt": "2026-05-29T23:42:25.957Z",
-  "date": "2026-05-30",
+  "generatedAt": "2026-05-30T23:15:36.563Z",
+  "date": "2026-05-31",
   "name": "Ruflo-style gratis AI monitor",
   "mode": "naast-productie",
   "productionSafe": true,
   "summary": "Ruflo draait als extra agentlaag naast de app: hij leest monitor/data/reviews, zoekt gratis oplossingen en maakt patchadvies zonder blind live te wijzigen.",
   "agents": {
     "data": {
-      "score": 80,
-      "summary": "Datalaag: H2H 100%, bookmakers 100%, refs 0%.",
+      "score": 60,
+      "summary": "Datalaag: H2H 0%, bookmakers 100%, refs 0%.",
       "freeSources": [
         {
           "name": "SofaScore public endpoint",
@@ -60,11 +60,22 @@
           "use": "Niet live scrapen op iedere run; alleen gecachte snapshots gebruiken."
         }
       ],
-      "actions": []
+      "actions": [
+        {
+          "priority": "medium",
+          "title": "H2H-backfill verder vullen",
+          "freeSolution": "Gebruik openfootball en football-data rows per competitie als historische H2H fallback voordat de UI 'leeg' toont.",
+          "files": [
+            "scripts/server-worker.js",
+            "components/MatchCard.tsx"
+          ],
+          "status": "aanbevolen"
+        }
+      ]
     },
     "learning": {
       "score": 12,
-      "summary": "Leerlaag: 663 reviews, exact 12%, winnaar/gelijk 42%, top-5 exact 15%.",
+      "summary": "Leerlaag: 665 reviews, exact 12%, winnaar/gelijk 41%, top-5 exact 15%.",
       "topConfidence": {
         "matches": 112,
         "exactHitRate": 0.152,
@@ -73,7 +84,7 @@
         "avgGoalError": 1.63,
         "rank1ExactHitRate": 0.103,
         "rank1OutcomeHitRate": 0.379,
-        "versusOverallOutcomeDelta": 0.014
+        "versusOverallOutcomeDelta": 0.015
       },
       "topClubs": [
         {
@@ -161,31 +172,11 @@
       ]
     },
     "control": {
-      "score": 36,
-      "summary": "Ontwikkelcontrole: 2 actieve monitorissues op 2026-05-30; digest 2026-05-12 t/m 2026-05-25.",
-      "latestDay": "2026-05-30",
-      "shouldPropose": true,
-      "actions": [
-        {
-          "priority": "high",
-          "title": "server_data.json is 182 minuten oud.",
-          "freeSolution": "Laat GitHub Actions schedule + manual dispatch draaien; geen mail nodig, alleen data committen.",
-          "files": [
-            ".github/workflows/worker.yml"
-          ],
-          "status": "monitor"
-        },
-        {
-          "priority": "medium",
-          "title": "Alle wedstrijden van vandaag hebben lege H2H-data.",
-          "freeSolution": "Vul H2H uit openfootball/football-data competitiebestanden voordat de UI leeg toont.",
-          "files": [
-            "scripts/server-worker.js",
-            "components/MatchCard.tsx"
-          ],
-          "status": "monitor"
-        }
-      ]
+      "score": 100,
+      "summary": "Ontwikkelcontrole: 0 actieve monitorissues op 2026-05-31; digest 2026-05-12 t/m 2026-05-25.",
+      "latestDay": "2026-05-31",
+      "shouldPropose": false,
+      "actions": []
     }
   },
   "topThemes": [
@@ -198,19 +189,11 @@
       ]
     },
     {
-      "title": "server_data.json is 182 minuten oud.",
-      "count": 1,
-      "priority": "high",
-      "agents": [
-        "control"
-      ]
-    },
-    {
-      "title": "Alle wedstrijden van vandaag hebben lege H2H-data.",
+      "title": "H2H-backfill verder vullen",
       "count": 1,
       "priority": "medium",
       "agents": [
-        "control"
+        "data"
       ]
     }
   ],
@@ -227,25 +210,15 @@
       "agent": "learning"
     },
     {
-      "priority": "high",
-      "title": "server_data.json is 182 minuten oud.",
-      "freeSolution": "Laat GitHub Actions schedule + manual dispatch draaien; geen mail nodig, alleen data committen.",
-      "files": [
-        ".github/workflows/worker.yml"
-      ],
-      "status": "monitor",
-      "agent": "control"
-    },
-    {
       "priority": "medium",
-      "title": "Alle wedstrijden van vandaag hebben lege H2H-data.",
-      "freeSolution": "Vul H2H uit openfootball/football-data competitiebestanden voordat de UI leeg toont.",
+      "title": "H2H-backfill verder vullen",
+      "freeSolution": "Gebruik openfootball en football-data rows per competitie als historische H2H fallback voordat de UI 'leeg' toont.",
       "files": [
         "scripts/server-worker.js",
         "components/MatchCard.tsx"
       ],
-      "status": "monitor",
-      "agent": "control"
+      "status": "aanbevolen",
+      "agent": "data"
     }
   ],
   "freeOnlyGuardrails": [
