@@ -1,20 +1,20 @@
 {
-  "generatedAt": "2026-05-30T23:15:36.563Z",
-  "date": "2026-05-31",
+  "generatedAt": "2026-05-31T23:18:12.812Z",
+  "date": "2026-06-01",
   "name": "Ruflo-style gratis AI monitor",
   "mode": "naast-productie",
   "productionSafe": true,
   "summary": "Ruflo draait als extra agentlaag naast de app: hij leest monitor/data/reviews, zoekt gratis oplossingen en maakt patchadvies zonder blind live te wijzigen.",
   "agents": {
     "data": {
-      "score": 60,
-      "summary": "Datalaag: H2H 0%, bookmakers 100%, refs 0%.",
+      "score": 40,
+      "summary": "Datalaag: H2H 100%, bookmakers 100%, refs 0%.",
       "freeSources": [
         {
           "name": "SofaScore public endpoint",
           "role": "primaire wedstrijddagfeed",
           "free": true,
-          "status": "actief",
+          "status": "fallback nodig",
           "use": "Gebruik als eerste bron, maar behandel 403/lege dagen nooit als eindpunt."
         },
         {
@@ -49,33 +49,33 @@
           "name": "Understat snapshots",
           "role": "xG/xGA pilot voor topcompetities",
           "free": true,
-          "status": "deels actief",
+          "status": "pilot",
           "use": "Alleen gebruiken waar parse/snapshot stabiel is; geen harde dependency maken."
         },
         {
           "name": "FBref snapshots",
           "role": "shots/home-away splits via snapshot-cache",
           "free": true,
-          "status": "deels actief",
+          "status": "rate-limited backup",
           "use": "Niet live scrapen op iedere run; alleen gecachte snapshots gebruiken."
         }
       ],
       "actions": [
         {
-          "priority": "medium",
-          "title": "H2H-backfill verder vullen",
-          "freeSolution": "Gebruik openfootball en football-data rows per competitie als historische H2H fallback voordat de UI 'leeg' toont.",
+          "priority": "high",
+          "title": "Wedstrijddag fallbackketen strakker maken",
+          "freeSolution": "Laat de worker altijd meerdere gratis bronnen proberen: SofaScore -> TheSportsDB -> OpenLigaDB -> football-data/openfootball.",
           "files": [
             "scripts/server-worker.js",
-            "components/MatchCard.tsx"
+            "api/Matches.ts"
           ],
-          "status": "aanbevolen"
+          "status": "bewaken"
         }
       ]
     },
     "learning": {
       "score": 12,
-      "summary": "Leerlaag: 665 reviews, exact 12%, winnaar/gelijk 41%, top-5 exact 15%.",
+      "summary": "Leerlaag: 666 reviews, exact 12%, winnaar/gelijk 41%, top-5 exact 15%.",
       "topConfidence": {
         "matches": 112,
         "exactHitRate": 0.152,
@@ -84,7 +84,7 @@
         "avgGoalError": 1.63,
         "rank1ExactHitRate": 0.103,
         "rank1OutcomeHitRate": 0.379,
-        "versusOverallOutcomeDelta": 0.015
+        "versusOverallOutcomeDelta": 0.014
       },
       "topClubs": [
         {
@@ -130,13 +130,6 @@
           "avgGoalError": 0
         },
         {
-          "teamName": "KAA Gent",
-          "reviewedMatches": 4,
-          "exactHitRate": 0.75,
-          "outcomeHitRate": 1,
-          "avgGoalError": 0.5
-        },
-        {
           "teamName": "RKC Waalwijk",
           "reviewedMatches": 4,
           "exactHitRate": 0.75,
@@ -156,6 +149,13 @@
           "exactHitRate": 0.67,
           "outcomeHitRate": 0.67,
           "avgGoalError": 1.67
+        },
+        {
+          "teamName": "KAA Gent",
+          "reviewedMatches": 5,
+          "exactHitRate": 0.6,
+          "outcomeHitRate": 1,
+          "avgGoalError": 0.8
         }
       ],
       "actions": [
@@ -173,13 +173,21 @@
     },
     "control": {
       "score": 100,
-      "summary": "Ontwikkelcontrole: 0 actieve monitorissues op 2026-05-31; digest 2026-05-12 t/m 2026-05-25.",
-      "latestDay": "2026-05-31",
+      "summary": "Ontwikkelcontrole: 0 actieve monitorissues op 2026-06-01; digest 2026-05-12 t/m 2026-05-25.",
+      "latestDay": "2026-06-01",
       "shouldPropose": false,
       "actions": []
     }
   },
   "topThemes": [
+    {
+      "title": "Wedstrijddag fallbackketen strakker maken",
+      "count": 1,
+      "priority": "high",
+      "agents": [
+        "data"
+      ]
+    },
     {
       "title": "Faalsignaal aanpakken: open_lineups",
       "count": 1,
@@ -187,17 +195,20 @@
       "agents": [
         "learning"
       ]
-    },
-    {
-      "title": "H2H-backfill verder vullen",
-      "count": 1,
-      "priority": "medium",
-      "agents": [
-        "data"
-      ]
     }
   ],
   "recommendedNextActions": [
+    {
+      "priority": "high",
+      "title": "Wedstrijddag fallbackketen strakker maken",
+      "freeSolution": "Laat de worker altijd meerdere gratis bronnen proberen: SofaScore -> TheSportsDB -> OpenLigaDB -> football-data/openfootball.",
+      "files": [
+        "scripts/server-worker.js",
+        "api/Matches.ts"
+      ],
+      "status": "bewaken",
+      "agent": "data"
+    },
     {
       "priority": "high",
       "title": "Faalsignaal aanpakken: open_lineups",
@@ -208,17 +219,6 @@
       ],
       "status": "reviewactie",
       "agent": "learning"
-    },
-    {
-      "priority": "medium",
-      "title": "H2H-backfill verder vullen",
-      "freeSolution": "Gebruik openfootball en football-data rows per competitie als historische H2H fallback voordat de UI 'leeg' toont.",
-      "files": [
-        "scripts/server-worker.js",
-        "components/MatchCard.tsx"
-      ],
-      "status": "aanbevolen",
-      "agent": "data"
     }
   ],
   "freeOnlyGuardrails": [
