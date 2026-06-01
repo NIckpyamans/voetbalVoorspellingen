@@ -7057,6 +7057,8 @@ function scoreDataCompleteness(input, edges = {}) {
     !!(normalizeName(input?.homeTeamName || input?.homeTeam) && normalizeName(input?.awayTeamName || input?.awayTeam));
   const sourceQuality = Math.max(Number(input?.homeSeasonStats?.sourceQuality || 0), Number(input?.awaySeasonStats?.sourceQuality || 0));
   const lineupsKnown = !!input?.lineupSummary?.confirmed;
+  const postMatchCoverage = Number(input?.postMatchStats?.coverageScore || 0);
+  const postMatchPresent = Number(postMatchCoverage || 0) > 0;
 
   const score =
     add(h2hPlayed >= 3, 0.16, "H2H gevuld", "H2H ontbreekt", h2hPlayed >= 1 ? 0.45 : 0) +
@@ -7066,7 +7068,8 @@ function scoreDataCompleteness(input, edges = {}) {
     add(hasXg || sourceQuality >= 0.45, 0.18, "xG/shot-bronnen aanwezig", "xG/shot-bronnen dun", sourceQuality >= 0.25 ? 0.55 : 0) +
     add(hasOdds, 0.14, "odds/marktdekking aanwezig", "odds/marktdekking dun", marketCoverage > 0 ? 0.45 : 0) +
     add(lineupsKnown, 0.06, "opstellingsdata bevestigd", "opstellingsdata open", 0.35) +
-    add(edges.resultFresh !== false, 0.08, "uitslagbron actueel", "uitslagbron verouderd", edges.resultFresh == null ? 0.65 : 0);
+    add(edges.resultFresh !== false, 0.08, "uitslagbron actueel", "uitslagbron verouderd", edges.resultFresh == null ? 0.65 : 0) +
+    add(postMatchPresent, 0.06, "post-match stats verrijkt", "post-match stats ontbreken", 0);
 
   const normalized = clamp(score, 0, 1);
   const label = normalized >= 0.75 ? "hoog" : normalized >= 0.58 ? "voldoende" : normalized >= 0.42 ? "laag" : "kritiek";
@@ -7079,12 +7082,45 @@ function scoreDataCompleteness(input, edges = {}) {
   };
 }
 
+function sourceReliabilityScore(input, dataCompleteness) {
+  const h2hPlayed = Number(input?.h2h?.played || 0);
+  const h2hQuality = h2hPlayed >= 5 ? 1 : h2hPlayed >= 3 ? 0.72 : h2hPlayed >= 1 ? 0.38 : 0.15;
+  const sourceQuality = Math.max(
+    Number(input?.homeSeasonStats?.sourceQuality || 0),
+    Number(input?.awaySeasonStats?.sourceQuality || 0),
+    0
+  );
+  const hasLineups = input?.lineupSummary?.confirmed ? 1 : 0.45;
+  const marketCoverage = Number(input?.marketCalibration?.closingCoverage || 0);
+  const postMatchCoverage = Number(input?.postMatchStats?.coverageScore || 0);
+  const completeness = Number(dataCompleteness?.score || 0);
+  const reliability = clamp(
+    completeness * 0.36 +
+      sourceQuality * 0.22 +
+      h2hQuality * 0.16 +
+      hasLineups * 0.12 +
+      clamp(marketCoverage, 0, 1) * 0.1 +
+      clamp(postMatchCoverage, 0, 1) * 0.04,
+    0,
+    1
+  );
+  const blendWeight = clamp(0.55 + reliability * 0.45, 0.55, 1);
+  return {
+    score: Number(reliability.toFixed(3)),
+    blendWeight: Number(blendWeight.toFixed(3)),
+    penalty: Number((1 - reliability).toFixed(3)),
+    label: reliability >= 0.72 ? "strong" : reliability >= 0.54 ? "moderate" : reliability >= 0.4 ? "weak" : "critical",
+  };
+}
+
 function qualityGateForCompleteness(dataCompleteness) {
   const score = Number(dataCompleteness?.score || 0);
-  const confidenceCap = score < 0.35 ? 0.42 : score < 0.5 ? 0.54 : score < 0.62 ? 0.66 : 0.93;
-  const penalty = score < 0.35 ? 0.14 : score < 0.5 ? 0.085 : score < 0.62 ? 0.04 : 0;
+  const modelReady = score >= 0.6;
+  const confidenceCap = score < 0.35 ? 0.4 : score < 0.5 ? 0.52 : score < 0.6 ? 0.62 : score < 0.7 ? 0.74 : 0.93;
+  const penalty = score < 0.35 ? 0.16 : score < 0.5 ? 0.1 : score < 0.6 ? 0.06 : score < 0.7 ? 0.025 : 0;
   return {
-    blockedHighConfidence: score < 0.62,
+    blockedHighConfidence: score < 0.7,
+    modelReady,
     confidenceCap,
     penalty,
     summary:
@@ -7092,9 +7128,11 @@ function qualityGateForCompleteness(dataCompleteness) {
         ? "kwaliteitsgate blokkeert hoge zekerheid: cruciale data ontbreekt"
         : score < 0.5
           ? "kwaliteitsgate verlaagt confidence: brondata is dun"
-          : score < 0.62
+          : score < 0.6
             ? "kwaliteitsgate beperkt confidence: niet alle kernbronnen zijn gevuld"
-            : "kwaliteitsgate akkoord",
+            : score < 0.7
+              ? "kwaliteitsgate voorzichtig: model-ready maar nog niet topkwaliteit"
+              : "kwaliteitsgate akkoord",
   };
 }
 
@@ -9791,6 +9829,13 @@ function predict(input) {
     resultFresh: input.resultFresh,
   });
   const qualityGate = qualityGateForCompleteness(dataCompleteness);
+  const sourceReliability = sourceReliabilityScore(
+    {
+      ...input,
+      marketCalibration,
+    },
+    dataCompleteness
+  );
   const fragilityPenalty =
     (Number(learningEdge.homeFragility || 0) + Number(learningEdge.awayFragility || 0) >= 4 ? 0.02 : 0) +
     (!input.lineupSummary?.confirmed ? 0.015 : 0);
@@ -9802,6 +9847,8 @@ function predict(input) {
         : modelAgreement < 0.55
           ? 0.028
           : 0;
+  const reliabilityPenaltyExtra =
+    sourceReliability.score < 0.35 ? 0.06 : sourceReliability.score < 0.5 ? 0.035 : sourceReliability.score < 0.62 ? 0.018 : 0;
   const adjustedConfidence = clamp(
     baseConfidence -
       reliabilityPenalty -
@@ -9811,6 +9858,7 @@ function predict(input) {
       bookmakerPenalty -
       closingCoveragePenalty -
       qualityGate.penalty -
+      reliabilityPenaltyExtra -
       modelAgreementPenalty,
     0.24,
     qualityGate.confidenceCap
@@ -9819,6 +9867,13 @@ function predict(input) {
     confidenceCap: qualityGate.confidenceCap,
   });
   const finalConfidence = Number(confidenceCalibration.calibratedConfidence ?? adjustedConfidence);
+  const neutral = { homeProb: 0.3333, drawProb: 0.3334, awayProb: 0.3333 };
+  const reliabilityWeighted = blendProbabilities(blended, neutral, sourceReliability.blendWeight);
+  const finalProbabilities = {
+    homeProb: reliabilityWeighted.homeProb,
+    drawProb: reliabilityWeighted.drawProb,
+    awayProb: reliabilityWeighted.awayProb,
+  };
   const riskProfile = buildRiskProfile({
     confidence: finalConfidence,
     agreement: modelAgreement,
@@ -9834,9 +9889,9 @@ function predict(input) {
   };
 
   return {
-    homeProb: blended.homeProb,
-    drawProb: blended.drawProb,
-    awayProb: blended.awayProb,
+    homeProb: finalProbabilities.homeProb,
+    drawProb: finalProbabilities.drawProb,
+    awayProb: finalProbabilities.awayProb,
     homeXG: Number(homeXG.toFixed(2)),
     awayXG: Number(awayXG.toFixed(2)),
     predHomeGoals,
@@ -9883,6 +9938,7 @@ function predict(input) {
       },
       dataCompleteness,
       qualityGate,
+      sourceReliability,
       clubEloDiff: homeClubElo > 0 && awayClubElo > 0 ? Math.round(homeClubElo - awayClubElo) : null,
       stakes: input.context?.summary || null,
       matchImportance: input.matchImportance || 1,
@@ -9894,6 +9950,7 @@ function predict(input) {
         ...(monteCarloAgreement < 0.55 ? ["monte_carlo_disagreement"] : []),
         ...(bookmakerSignals.length === 0 ? ["market_signals_missing"] : []),
         ...(dataCompleteness.score < 0.58 ? ["data_completeness_low"] : []),
+        ...(sourceReliability.score < 0.5 ? ["source_reliability_low"] : []),
       ],
       riskProfile,
       teamAiSummary,
@@ -10383,6 +10440,12 @@ function buildDataScoutReport(store, todayKey) {
   const todaysLive = todayMatches.filter((match) => ["LIVE", "HT"].includes(String(match?.status || "").toUpperCase()));
   const h2hFilled = todayMatches.filter((match) => Number(match?.h2h?.played || 0) > 0).length;
   const logoFilled = todayMatches.filter((match) => match?.homeLogo && match?.awayLogo).length;
+  const outOfDayMatches = todayMatches.filter((match) => String(match?.date || "") !== String(todayKey)).length;
+  const liveMatchesWithMinuteOrFallback = todaysLive.filter(
+    (match) => !!match?.minute || Number.isFinite(Number(match?.minuteValue)) || !!match?.liveUpdatedAt
+  ).length;
+  const standingsCount = Object.keys(store.standings || {}).length;
+  const cupSheetCount = Object.keys(store.cupSheets || {}).length;
 
   const sourceReports = DATA_SCOUT_SOURCES.map((source) => {
     const hasCache =
@@ -10431,6 +10494,54 @@ function buildDataScoutReport(store, todayKey) {
     });
   }
 
+  const regressionAssertions = [
+    {
+      key: "live_minute_present",
+      passed: todaysLive.length === 0 || liveMatchesWithMinuteOrFallback === todaysLive.length,
+      detail: todaysLive.length
+        ? `${liveMatchesWithMinuteOrFallback}/${todaysLive.length} live matches met minuut/fallback`
+        : "geen live matches",
+      severity: "high",
+    },
+    {
+      key: "h2h_not_empty",
+      passed: todayMatches.length === 0 || h2hFilled === todayMatches.length,
+      detail: `${h2hFilled}/${todayMatches.length || 0} met H2H`,
+      severity: "high",
+    },
+    {
+      key: "first_leg_for_aggregate",
+      passed: todayMatches.filter((m) => m?.aggregate?.active && m?.aggregate?.firstLegScore).length === todayMatches.filter((m) => m?.aggregate?.active).length,
+      detail: `${todayMatches.filter((m) => m?.aggregate?.active && m?.aggregate?.firstLegScore).length}/${todayMatches.filter((m) => m?.aggregate?.active).length} aggregate met first-leg`,
+      severity: "high",
+    },
+    {
+      key: "cupsheets_filled",
+      passed: cupSheetCount > 0 || todayMatches.filter((m) => m?.aggregate?.active || String(m?.league || "").toLowerCase().includes("cup")).length === 0,
+      detail: `cupSheets=${cupSheetCount}`,
+      severity: "medium",
+    },
+    {
+      key: "standings_present",
+      passed: standingsCount > 0,
+      detail: `standings=${standingsCount}`,
+      severity: "high",
+    },
+    {
+      key: "dashboard_selected_matchday_only",
+      passed: outOfDayMatches === 0,
+      detail: outOfDayMatches === 0 ? "alle matches op gekozen speeldag" : `${outOfDayMatches} match(es) buiten geselecteerde speeldag`,
+      severity: "high",
+    },
+    {
+      key: "logos_with_fallback",
+      passed: todayMatches.length === 0 || logoFilled === todayMatches.length,
+      detail: `${logoFilled}/${todayMatches.length || 0} met logo`,
+      severity: "medium",
+    },
+  ];
+  const degraded = regressionAssertions.some((item) => !item.passed && item.severity === "high");
+
   return {
     lastScan: new Date().toISOString(),
     cadence: "worker elke 10 minuten",
@@ -10457,6 +10568,8 @@ function buildDataScoutReport(store, todayKey) {
     },
     sources: sourceReports,
     gaps,
+    regressionAssertions,
+    degraded,
     recommendations: [
       "Gebruik ESPN Scoreboard als vaste score/logo back-up naast de primaire bron.",
       "Gebruik football-data.co.uk voor historische uitslagen, odds, shots en referee-signalen.",
@@ -10493,6 +10606,16 @@ function buildAiRecommendations(store, todayKey) {
   }
 
   const sourceCoverage = store.sourceCoverage || null;
+  const scout = store.dataScout || null;
+  const failedAssertions = (scout?.regressionAssertions || []).filter((item) => !item.passed);
+  if (failedAssertions.length) {
+    issues.push({
+      title: "Regressie-checks gefaald",
+      summary: `${failedAssertions.length} harde assertion(s) faalden in de laatste worker-run.`,
+      action: failedAssertions.slice(0, 3).map((item) => `${item.key}: ${item.detail}`).join(" | "),
+      priority: failedAssertions.some((item) => item.severity === "high") ? "high" : "medium",
+    });
+  }
   if (sourceCoverage && Number(sourceCoverage.pendingFinishedCount || 0) > 0) {
     issues.push({
       title: "Uitslagen direct vullen",
