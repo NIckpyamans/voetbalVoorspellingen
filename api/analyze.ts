@@ -39,11 +39,50 @@ function normalizeAiOutput(value: any) {
     .join(" ");
 }
 
-function recentSummary(teamName: string, recent: any) {
+function deriveFormMatchesFromH2H(teamName: string, h2h: any) {
+  const normalized = cleanText(teamName, 80).toLowerCase();
+  return (h2h?.results || [])
+    .map((item: any) => {
+      const home = cleanText(item?.home, 80);
+      const away = cleanText(item?.away, 80);
+      const score = cleanText(item?.score, 24);
+      const isHome = home.toLowerCase() === normalized;
+      const isAway = away.toLowerCase() === normalized;
+      if (!isHome && !isAway) return null;
+      const parsed = score.match(/(\d+)\s*-\s*(\d+)/);
+      const gf = parsed ? Number(isHome ? parsed[1] : parsed[2]) : null;
+      const ga = parsed ? Number(isHome ? parsed[2] : parsed[1]) : null;
+      const result = gf == null || ga == null ? "?" : gf > ga ? "W" : gf === ga ? "D" : "L";
+      return {
+        venue: isHome ? "H" : "A",
+        result,
+        score,
+        date: item?.date || null,
+      };
+    })
+    .filter(Boolean);
+}
+
+function mergeRecentWithFallback(teamName: string, recent: any, h2h: any) {
+  const current = Array.isArray(recent?.recentMatches) ? recent.recentMatches : [];
+  if (current.length >= 10) return { ...recent, recentMatches: current.slice(-10) };
+  const fallback = deriveFormMatchesFromH2H(teamName, h2h);
+  const byKey = new Map<string, any>();
+  for (const item of [...current, ...fallback]) {
+    const key = `${cleanText(item?.date || "", 32)}|${cleanText(item?.venue || "", 8)}|${cleanText(item?.score || "", 24)}`;
+    if (!byKey.has(key)) byKey.set(key, item);
+  }
+  const recentMatches = [...byKey.values()].slice(-10);
+  return { ...(recent || {}), recentMatches };
+}
+
+function recentSummary(teamName: string, recent: any, h2h: any) {
   const safeTeamName = cleanText(teamName, 80) || "Team";
   const form = cleanText(recent?.form || "onbekend", 80);
-  const lastFive = (recent?.recentMatches || [])
-    .slice(0, 5)
+  const merged = mergeRecentWithFallback(teamName, recent, h2h);
+  const lastTen = (merged?.recentMatches || [])
+    .slice(-10)
+    .reverse()
     .map((item: any) => `${cleanText(item.venue || "?", 8)}${cleanText(item.result || "?", 8)} ${cleanText(item.score || "-", 16)}`)
     .join(" | ");
   const homeSplit = recent?.splits?.home;
@@ -52,7 +91,7 @@ function recentSummary(teamName: string, recent: any) {
     homeSplit || awaySplit
       ? `, thuis ${homeSplit ? `${homeSplit.avgScored}-${homeSplit.avgConceded}` : "-"}, uit ${awaySplit ? `${awaySplit.avgScored}-${awaySplit.avgConceded}` : "-"}`
       : "";
-  return `${safeTeamName}: vorm ${form}${splitText}${lastFive ? `, laatste 5 ${lastFive}` : ""}`;
+  return `${safeTeamName}: vorm ${form}${splitText}${lastTen ? `, laatste 10 ${lastTen}` : ""}`;
 }
 
 function formatFailureSignals(review: any) {
@@ -107,7 +146,8 @@ function buildTemplateAnalysis(match: any, prediction: any) {
 
   if (context?.summary) signals.push(cleanText(context.summary, 120));
   if (aggregate?.active && aggregate.aggregateScore) signals.push(`aggregate ${cleanText(aggregate.aggregateScore, 30)}`);
-  if (h2h?.played >= 3) signals.push(`H2H ${h2h.homeWins}-${h2h.draws}-${h2h.awayWins}`);
+  if (h2h) signals.push(`H2H ${safeNumber(h2h.homeWins)}-${safeNumber(h2h.draws)}-${safeNumber(h2h.awayWins)} (${safeNumber(h2h.played)} duels)`);
+  else signals.push("H2H nog niet beschikbaar (fallback actief)");
   if (weather?.riskLevel && weather.riskLevel !== "low") signals.push(`weerimpact ${weather.temperature ?? "?"}C en ${weather.precipitationProbability ?? "?"}% neerslagkans`);
   if (lineup?.confirmed) signals.push("bevestigde opstellingen");
   if (match.homeRecent?.strongestSide === "home") signals.push(`${home} presteert sterker thuis`);
@@ -216,8 +256,8 @@ OVER 2.5: ${safePct(prediction.over25)}%
 BTTS: ${safePct(prediction.btts)}%
 THUIS VORM: ${cleanText(prediction.homeForm || match.homeForm || "onbekend", 80)}
 UIT VORM: ${cleanText(prediction.awayForm || match.awayForm || "onbekend", 80)}
-${recentSummary(match.homeTeamName, match.homeRecent)}
-${recentSummary(match.awayTeamName, match.awayRecent)}
+${recentSummary(match.homeTeamName, match.homeRecent || prediction.homeRecent, h2h)}
+${recentSummary(match.awayTeamName, match.awayRecent || prediction.awayRecent, h2h)}
 RUSTDAGEN: ${match.homeRestDays ?? prediction.homeRestDays ?? "?"} - ${match.awayRestDays ?? prediction.awayRestDays ?? "?"}
 CLUB ELO: ${prediction.homeClubElo ?? match.homeClubElo ?? "?"} - ${prediction.awayClubElo ?? match.awayClubElo ?? "?"}
 BLESSURES: ${match.homeInjuries?.injuredCount || 0} - ${match.awayInjuries?.injuredCount || 0}
@@ -236,7 +276,7 @@ TRAVEL: ${cleanText(prediction.modelEdges?.travelEdge?.summary || "beperkt", 120
 CONTINUITY: ${prediction.modelEdges?.lineupImpact?.homeContinuity ?? "?"} - ${prediction.modelEdges?.lineupImpact?.awayContinuity ?? "?"}
 WEER: ${weather ? `${weather.temperature ?? "?"}C, wind ${weather.windSpeed ?? "?"}, regenkans ${weather.precipitationProbability ?? "?"}%` : "onbekend"}
 LINEUPS: ${lineup?.confirmed ? "bevestigd" : "open"}
-${h2h?.played >= 2 ? `H2H: ${h2h.homeWins}-${h2h.draws}-${h2h.awayWins}` : ""}
+${h2h ? `H2H: ${safeNumber(h2h.homeWins)}-${safeNumber(h2h.draws)}-${safeNumber(h2h.awayWins)} (gespeeld ${safeNumber(h2h.played)})` : "H2H: fallback geen betrouwbare wedstrijden"}
 ${aggregate?.active ? `TWEELUIK: eerste duel ${cleanText(aggregate.firstLegScore || "?", 30)}, aggregate ${cleanText(aggregate.aggregateScore || "?", 30)}` : ""}
 ${context?.summary ? `CONTEXT: ${cleanText(context.summary, 140)}` : ""}
 Regels:

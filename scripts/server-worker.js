@@ -372,6 +372,7 @@ function buildFeatureSourceMetadata(match, prediction, generatedAt, oddsDiagnost
   const marketCalibration = prediction?.marketCalibration || prediction?.modelEdges?.marketCalibration || match?.marketCalibration || null;
   const oddsStatus = oddsDiagnostics?.oddsStatus || prediction?.oddsStatus || null;
   const sourceAsOf = prediction?.sourceAsOf || match?.sourceAsOf || {};
+  const h2hAsOf = prediction?.h2h?.asOf || prediction?.h2h?.sourceTimestamp || match?.h2h?.asOf || match?.h2h?.sourceTimestamp || sourceAsOf.h2h;
   const teamIdentity = prediction?.teamIdentity || match?.teamIdentity || null;
   const field = (available, fieldSource, asOf = null, sourceTimestampKnown = false, note = null) => ({
     available: !!available,
@@ -394,10 +395,10 @@ function buildFeatureSourceMetadata(match, prediction, generatedAt, oddsDiagnost
     h2h: field(
       Number(prediction?.h2h?.played || match?.h2h?.played || 0) > 0,
       prediction?.h2h?.source || match?.h2h?.source || "historical results",
-      sourceAsOf.h2h || generatedAt,
-      !!sourceAsOf.h2h,
-      sourceAsOf.h2h
-        ? "H2H-cache heeft expliciete as_of timestamp."
+      h2hAsOf || generatedAt,
+      !!h2hAsOf,
+      h2hAsOf
+        ? "H2H-profiel heeft een expliciete as_of/source timestamp."
         : "Historische resultaten zijn pre-match gefilterd, maar losse bron-publicatietijden ontbreken nog."
     ),
     form: field(
@@ -4491,6 +4492,74 @@ function dedupeStoredPredictions(predictions = [], matches = []) {
   return output;
 }
 
+function matchHasFinalScore(match) {
+  return (
+    String(match?.score || "").includes("-") ||
+    (Number.isFinite(Number(match?.homeScore)) && Number.isFinite(Number(match?.awayScore)))
+  );
+}
+
+function normalizeStoredMatchReliability(match, dateKey, now) {
+  if (!match || typeof match !== "object") return match;
+  const next = { ...match };
+  const result = lookupCuratedResultBackfill(dateKey, next.homeTeamName || next.homeTeam, next.awayTeamName || next.awayTeam);
+  if (result && !matchHasFinalScore(next)) {
+    const [homeScore, awayScore] = String(result.score || "").split("-").map(Number);
+    if (Number.isFinite(homeScore) && Number.isFinite(awayScore)) {
+      next.homeScore = homeScore;
+      next.awayScore = awayScore;
+      next.score = result.score;
+      next.status = result.status || "FT";
+      next.resultBackfill = true;
+      next.resultBackfillSource = result.sourceNote || "curated result backfill";
+      next.resultPending = false;
+      next.resultPendingReason = null;
+    }
+  }
+
+  const kickoffMs = Date.parse(next.kickoff || next.date || `${dateKey}T12:00:00Z`);
+  const status = String(next.status || "").toUpperCase();
+  const isPastResultWindow = Number.isFinite(kickoffMs) && now - kickoffMs > 150 * 60 * 1000;
+  if (
+    isPastResultWindow &&
+    !matchHasFinalScore(next) &&
+    !["POSTPONED", "CANCELLED", "ABANDONED"].includes(status)
+  ) {
+    next.status = "RESULT_PENDING";
+    next.resultPending = true;
+    next.resultPendingReason =
+      next.resultPendingReason || "Wedstrijd is voorbij, maar geen betrouwbare eindstand gevonden in de gratis bronnen.";
+  }
+
+  const sourceAsOf = { ...(next.sourceAsOf || {}) };
+  if (!sourceAsOf.fixture) sourceAsOf.fixture = isoFromMs(now);
+  if (next.resultBackfill && !sourceAsOf.result) sourceAsOf.result = isoFromMs(now);
+  if (Number(next.h2h?.played || 0) > 0) {
+    const h2hAsOf =
+      next.h2h.asOf ||
+      next.h2h.sourceTimestamp ||
+      sourceAsOf.h2h ||
+      sourceAsOf.openfootballProfile ||
+      sourceAsOf.marketProfile ||
+      isoFromMs(now);
+    next.h2h = {
+      ...next.h2h,
+      source: next.h2h.source || next.h2h.status || "h2h-agent",
+      asOf: h2hAsOf,
+      sourceTimestamp: h2hAsOf,
+    };
+    sourceAsOf.h2h = h2hAsOf;
+  }
+  next.sourceAsOf = sourceAsOf;
+  next.dataReliability = {
+    ...(next.dataReliability || {}),
+    resultStatus: matchHasFinalScore(next) ? "final_score" : next.resultPending ? "result_pending_backfill" : "pre_match",
+    h2hTimestampKnown: Number(next.h2h?.played || 0) > 0 ? !!(next.h2h?.asOf || next.h2h?.sourceTimestamp) : false,
+    checkedAt: isoFromMs(now),
+  };
+  return next;
+}
+
 function getSportsDbSeasonLabel(dateISO) {
   const base = new Date(`${dateISO}T12:00:00Z`);
   const year = base.getUTCFullYear();
@@ -5469,6 +5538,10 @@ function normalizeH2HWinnerId(item, homeName, awayName, homeId, awayId) {
 
 function summarizeH2HResults(results, homeName, awayName, homeId, awayId, status, sameCompetitionPlayed = 0) {
   const keys = h2hCompareKeys(homeName, awayName, homeId, awayId);
+  const asOf =
+    (results || []).find((item) => item?.sourceTimestamp || item?.asOf)?.sourceTimestamp ||
+    (results || []).find((item) => item?.sourceTimestamp || item?.asOf)?.asOf ||
+    new Date().toISOString();
   const normalizedResults = (results || [])
     .map((item) => ({
       ...item,
@@ -5487,6 +5560,9 @@ function summarizeH2HResults(results, homeName, awayName, homeId, awayId, status
     weightedRecentBalance: calculateRecentH2HBalance({ results: normalizedResults }, keys.home, keys.away),
     results: normalizedResults,
     status: status || "h2h-agent",
+    source: status || "h2h-agent",
+    asOf,
+    sourceTimestamp: asOf,
   };
 }
 
@@ -7863,6 +7939,64 @@ function supplementTeamFormWithH2H(currentForm, h2h, teamName) {
   return buildTeamFormFromRecentMatches([...byKey.values()], currentMatches.length ? "historical+h2h-team-form" : "h2h-team-form");
 }
 
+function buildEmptyH2HContract(homeId, awayId) {
+  return {
+    played: 0,
+    homeWins: 0,
+    draws: 0,
+    awayWins: 0,
+    sameCompetitionPlayed: 0,
+    weightedRecentBalance: 0,
+    results: [],
+    homeTeamId: homeId || null,
+    awayTeamId: awayId || null,
+    status: "h2h-agent-empty",
+    source: "contract-fallback",
+  };
+}
+
+function ensureH2HContract(h2h, homeId, awayId) {
+  const base = h2h && typeof h2h === "object" ? h2h : buildEmptyH2HContract(homeId, awayId);
+  const results = Array.isArray(base.results) ? base.results.filter(Boolean) : [];
+  return {
+    ...buildEmptyH2HContract(homeId, awayId),
+    ...base,
+    results,
+    played: Number(base.played || results.length || 0),
+    homeWins: Number(base.homeWins || 0),
+    draws: Number(base.draws || 0),
+    awayWins: Number(base.awayWins || 0),
+    status: base.status || (results.length ? "h2h-agent" : "h2h-agent-empty"),
+  };
+}
+
+function ensureRecentFormContract(currentForm, fallbackTeamName, h2h, teamId, oppositeTeamId) {
+  const base = currentForm && typeof currentForm === "object" ? currentForm : buildEmptyTeamForm("contract-fallback");
+  const sourceMatches = Array.isArray(base.recentMatches) ? base.recentMatches : [];
+  let recentMatches = sourceMatches.slice(-TEAM_RECENT_MATCH_WINDOW);
+  if (recentMatches.length < TEAM_RECENT_MATCH_WINDOW) {
+    const h2hBackfill = buildTeamMatchesFromH2HResults(h2h?.results || [], fallbackTeamName)
+      .filter((row) => {
+        if (!row) return false;
+        if (teamId && String(row.teamId || "") === String(teamId)) return true;
+        if (oppositeTeamId && String(row.opponentId || "") === String(oppositeTeamId)) return true;
+        return true;
+      });
+    const byKey = new Map();
+    for (const item of [...recentMatches, ...h2hBackfill]) {
+      const key = `${item?.date || ""}|${normalizeName(item?.opponent || "")}|${item?.venue || ""}|${item?.score || ""}`;
+      if (!byKey.has(key)) byKey.set(key, item);
+    }
+    recentMatches = [...byKey.values()].slice(-TEAM_RECENT_MATCH_WINDOW);
+  }
+  const merged = buildTeamFormFromRecentMatches(recentMatches, base.source || (recentMatches.length ? "h2h-team-form" : "contract-fallback"));
+  return {
+    ...merged,
+    source: merged?.source || base.source || "contract-fallback",
+    recentMatches,
+  };
+}
+
 async function fetchTeamForm(teamId, options = {}) {
   const json = await safeFetch(`${SOFA}/team/${teamId}/events/last/0`);
   const targetSegment =
@@ -8304,6 +8438,7 @@ function buildDataAnomalyReport(store, todayKey) {
 
   const duplicateSample = [];
   const missingPastScores = [];
+  const pendingResultBackfill = [];
   const missingPredictions = [];
   const missingH2h = [];
   const missingLogos = [];
@@ -8325,7 +8460,9 @@ function buildDataAnomalyReport(store, todayKey) {
     const isPast = Number.isFinite(kickoffMs) && kickoffMs < todayMs - 3 * 60 * 60 * 1000;
     const status = String(match.status || "").toUpperCase();
     const hasScore = String(match.score || "").includes("-");
-    if (isPast && !hasScore && status !== "POSTPONED" && status !== "CANCELLED") {
+    if (isPast && !hasScore && match.resultPending) {
+      pendingResultBackfill.push(`${match._dateKey}: ${match.homeTeamName} - ${match.awayTeamName}`);
+    } else if (isPast && !hasScore && status !== "POSTPONED" && status !== "CANCELLED") {
       missingPastScores.push(`${match._dateKey}: ${match.homeTeamName} - ${match.awayTeamName}`);
     }
     if (!predictionIds.has(match.id)) missingPredictions.push(`${match._dateKey}: ${match.homeTeamName} - ${match.awayTeamName}`);
@@ -8341,6 +8478,7 @@ function buildDataAnomalyReport(store, todayKey) {
 
   if (duplicateSample.length) add("duplicates", "medium", `${duplicateSample.length} mogelijke dubbele wedstrijd(en).`, duplicateSample);
   if (missingPastScores.length) add("missing_past_scores", "high", `${missingPastScores.length} gespeelde wedstrijd(en) missen nog eindstand.`, missingPastScores);
+  if (pendingResultBackfill.length) add("pending_result_backfill", "medium", `${pendingResultBackfill.length} oude wedstrijd(en) wachten op betrouwbare resultaatbackfill.`, pendingResultBackfill);
   if (missingPredictions.length) add("missing_predictions", "medium", `${missingPredictions.length} wedstrijd(en) missen voorspelling.`, missingPredictions);
   if (missingH2h.length) add("missing_h2h", "low", `${missingH2h.length} wedstrijd(en) missen H2H-historie.`, missingH2h);
   if (missingLogos.length) add("missing_logos", "low", `${missingLogos.length} wedstrijd(en) missen minimaal een logo.`, missingLogos);
@@ -9530,7 +9668,11 @@ function compactStore(store, referenceDateKey, now) {
       continue;
     }
 
-    store.matches[date] = dedupeStoredMatches((store.matches[date] || []).filter(Boolean));
+    store.matches[date] = dedupeStoredMatches(
+      (store.matches[date] || [])
+        .filter(Boolean)
+        .map((match) => normalizeStoredMatchReliability(match, date, now))
+    );
     store.predictions[date] = dedupeStoredPredictions(store.predictions?.[date] || [], store.matches[date]).map((prediction) =>
       compactPredictionEntry(prediction, date !== referenceDateKey && date !== addDaysToDateKey(referenceDateKey, 1))
     );
@@ -10645,8 +10787,26 @@ async function main() {
         homeId,
         awayId,
       });
-      homeRecent = supplementTeamFormWithH2H(homeRecent, h2h, homeName);
-      awayRecent = supplementTeamFormWithH2H(awayRecent, h2h, awayName);
+      h2h = ensureH2HContract(h2h, homeId, awayId);
+      homeRecent = ensureRecentFormContract(supplementTeamFormWithH2H(homeRecent, h2h, homeName), homeName, h2h, homeId, awayId);
+      awayRecent = ensureRecentFormContract(supplementTeamFormWithH2H(awayRecent, h2h, awayName), awayName, h2h, awayId, homeId);
+      const formQualityWarnings = [];
+      if (!Number.isFinite(Number(h2h?.played)) || Number(h2h?.played || 0) <= 0) formQualityWarnings.push("h2h_empty");
+      if (Number(homeRecent?.gamesPlayed || 0) < 10) formQualityWarnings.push(`home_form_lt10:${Number(homeRecent?.gamesPlayed || 0)}`);
+      if (Number(awayRecent?.gamesPlayed || 0) < 10) formQualityWarnings.push(`away_form_lt10:${Number(awayRecent?.gamesPlayed || 0)}`);
+      if (formQualityWarnings.length) {
+        console.warn("[worker:data-quality]", {
+          matchId: `ss-${event.id}`,
+          league: leagueInfo.label,
+          homeTeam: homeName,
+          awayTeam: awayName,
+          warnings: formQualityWarnings,
+          h2hStatus: h2h?.status || null,
+          h2hSource: h2h?.source || null,
+          homeFormSource: homeRecent?.source || null,
+          awayFormSource: awayRecent?.source || null,
+        });
+      }
       if (homeId && (homeRecent?.recentMatches || []).length > (store.teamStats[homeId]?.recentMatches || []).length) {
         store.teamStats[homeId] = homeRecent;
         store.teamStatsUpdated[homeId] = now;
@@ -10901,6 +11061,14 @@ async function main() {
         awayTeamProfile,
         h2h,
         h2hStatus: h2h?.status || "empty",
+        formDataQuality: {
+          homeGames: Number(homeRecent?.gamesPlayed || 0),
+          awayGames: Number(awayRecent?.gamesPlayed || 0),
+          homeSource: homeRecent?.source || null,
+          awaySource: awayRecent?.source || null,
+          h2hSource: h2h?.source || null,
+          warnings: formQualityWarnings,
+        },
         sourceAsOf,
         oddsAtPrediction,
         oddsProviderStatus: oddsCapture?.status || "not_configured",
@@ -10947,6 +11115,14 @@ async function main() {
         awayTeamProfile,
         h2h,
         h2hStatus: h2h?.status || "empty",
+        formDataQuality: {
+          homeGames: Number(homeRecent?.gamesPlayed || 0),
+          awayGames: Number(awayRecent?.gamesPlayed || 0),
+          homeSource: homeRecent?.source || null,
+          awaySource: awayRecent?.source || null,
+          h2hSource: h2h?.source || null,
+          warnings: formQualityWarnings,
+        },
         sourceAsOf,
         odds: oddsAtPrediction,
         oddsAtPrediction,
