@@ -56,6 +56,16 @@ const LEAGUES = [
   { country: "", name: "conference league", label: "Europe - Conference League", type: "cup" },
 ];
 
+const LEAGUE_CALIBRATION_PROFILES = {
+  "England - Premier League": { confidenceBias: 0.01, drawBias: -0.01, homeBias: 0 },
+  "Spain - LaLiga": { confidenceBias: 0.008, drawBias: 0.006, homeBias: 0 },
+  "Italy - Serie A": { confidenceBias: 0.006, drawBias: 0.012, homeBias: 0 },
+  "Germany - Bundesliga": { confidenceBias: 0.004, drawBias: -0.008, homeBias: 0.004 },
+  "France - Ligue 1": { confidenceBias: 0.005, drawBias: 0.004, homeBias: 0 },
+  "Netherlands - Eredivisie": { confidenceBias: 0.007, drawBias: -0.01, homeBias: 0.003 },
+  default: { confidenceBias: 0, drawBias: 0, homeBias: 0 },
+};
+
 const sleep = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
 const clamp = (value, min, max) => Math.max(min, Math.min(max, value));
 const toFiniteNumber = (value, fallback = null) => {
@@ -209,6 +219,29 @@ function trimScoreMatrix(scoreMatrix, limit = MAX_SCORE_MATRIX_ENTRIES) {
       .sort((a, b) => Number(b[1] || 0) - Number(a[1] || 0))
       .slice(0, limit)
   );
+}
+
+function getLeagueCalibrationProfile(leagueLabel) {
+  return LEAGUE_CALIBRATION_PROFILES[leagueLabel] || LEAGUE_CALIBRATION_PROFILES.default;
+}
+
+function applyLeagueCalibration(probabilities, leagueLabel) {
+  const profile = getLeagueCalibrationProfile(leagueLabel);
+  const home = clamp(Number(probabilities?.homeProb || 0) + Number(profile.homeBias || 0), 0.01, 0.98);
+  const draw = clamp(Number(probabilities?.drawProb || 0) + Number(profile.drawBias || 0), 0.01, 0.98);
+  const away = clamp(Number(probabilities?.awayProb || 0) - Number(profile.homeBias || 0), 0.01, 0.98);
+  const total = home + draw + away;
+  const featureImportance = buildFeatureImportance(featureVector, {
+    sourceReliability,
+    dataCompleteness,
+  });
+
+  return {
+    homeProb: Number((home / total).toFixed(4)),
+    drawProb: Number((draw / total).toFixed(4)),
+    awayProb: Number((away / total).toFixed(4)),
+    profile,
+  };
 }
 
 function quarterBucketFromMinute(minuteLike) {
@@ -3337,6 +3370,23 @@ function buildTeamProfile({ teamName, recent, seasonStats, postMatchStatsProfile
       Math.max(0, attackTrend) * 0.2
     ).toFixed(2)
   );
+  const rolling = postMatchStatsProfile?.rolling || {};
+  const blendedSeason = {
+    avgShotsOn: seasonStats?.avgShotsOn ?? rolling.shotsOnTarget ?? null,
+    avgShotsOnAgainst: seasonStats?.avgShotsOnAgainst ?? null,
+    avgShots: seasonStats?.avgShots ?? null,
+    avgShotsAgainst: seasonStats?.avgShotsAgainst ?? null,
+    avgPossession: seasonStats?.avgPossession ?? rolling.possession ?? null,
+    avgCorners: seasonStats?.avgCorners ?? rolling.corners ?? null,
+    avgCornersAgainst: seasonStats?.avgCornersAgainst ?? null,
+    cleanSheets: seasonStats?.cleanSheets ?? null,
+    cleanSheetRate: seasonStats?.cleanSheetRate ?? null,
+    failToScoreRate: seasonStats?.failToScoreRate ?? null,
+    bttsRate: seasonStats?.bttsRate ?? null,
+    over25Rate: seasonStats?.over25Rate ?? null,
+    dominanceScore: seasonStats?.dominanceScore ?? null,
+    historicalGames: seasonStats?.historicalGames ?? null,
+  };
 
   return {
     teamName,
@@ -7082,6 +7132,28 @@ function scoreDataCompleteness(input, edges = {}) {
   };
 }
 
+function buildFeatureImportance(featureVector = {}, modelEdges = {}) {
+  const candidates = [
+    { key: "ppg_diff", value: Math.abs(Number(featureVector.ppg_diff || 0)), label: "vorm/points-per-game verschil" },
+    { key: "club_elo_diff", value: Math.abs(Number(featureVector.club_elo_diff || 0) / 100), label: "ClubElo verschil" },
+    { key: "h2h_recent_5_balance", value: Math.abs(Number(featureVector.h2h_recent_5_balance || 0) * 10), label: "recente H2H balans" },
+    { key: "lineups_avg_rating_diff", value: Math.abs(Number(featureVector.lineups_avg_rating_diff || 0)), label: "opstelling ratingverschil" },
+    { key: "keeper_rating_diff", value: Math.abs(Number(featureVector.keeper_rating_diff || 0)), label: "keeper edge" },
+    { key: "market_overperformance_diff", value: Math.abs(Number(featureVector.market_overperformance_diff || 0) * 10), label: "markt-overperformance" },
+    { key: "away_travel_penalty", value: Math.abs(Number(featureVector.away_travel_penalty || 0) * 10), label: "reisbelasting uitteam" },
+    { key: "source_reliability", value: Math.abs(Number(modelEdges?.sourceReliability?.score || 0) * 10), label: "bronbetrouwbaarheid" },
+    { key: "data_completeness", value: Math.abs(Number(modelEdges?.dataCompleteness?.score || 0) * 10), label: "datacompleteness" },
+  ];
+  return candidates
+    .sort((a, b) => b.value - a.value)
+    .slice(0, 6)
+    .map((item) => ({
+      key: item.key,
+      label: item.label,
+      score: Number(item.value.toFixed(3)),
+    }));
+}
+
 function sourceReliabilityScore(input, dataCompleteness) {
   const h2hPlayed = Number(input?.h2h?.played || 0);
   const h2hQuality = h2hPlayed >= 5 ? 1 : h2hPlayed >= 3 ? 0.72 : h2hPlayed >= 1 ? 0.38 : 0.15;
@@ -9866,14 +9938,20 @@ function predict(input) {
   const confidenceCalibration = calibrateConfidenceWithBacktest(adjustedConfidence, input.modelPerformance, {
     confidenceCap: qualityGate.confidenceCap,
   });
-  const finalConfidence = Number(confidenceCalibration.calibratedConfidence ?? adjustedConfidence);
+  const finalConfidenceRaw = Number(confidenceCalibration.calibratedConfidence ?? adjustedConfidence);
   const neutral = { homeProb: 0.3333, drawProb: 0.3334, awayProb: 0.3333 };
   const reliabilityWeighted = blendProbabilities(blended, neutral, sourceReliability.blendWeight);
+  const leagueCalibrated = applyLeagueCalibration(reliabilityWeighted, input.league);
   const finalProbabilities = {
-    homeProb: reliabilityWeighted.homeProb,
-    drawProb: reliabilityWeighted.drawProb,
-    awayProb: reliabilityWeighted.awayProb,
+    homeProb: leagueCalibrated.homeProb,
+    drawProb: leagueCalibrated.drawProb,
+    awayProb: leagueCalibrated.awayProb,
   };
+  const finalConfidence = clamp(
+    finalConfidenceRaw + Number(leagueCalibrated.profile?.confidenceBias || 0),
+    0.24,
+    qualityGate.confidenceCap
+  );
   const riskProfile = buildRiskProfile({
     confidence: finalConfidence,
     agreement: modelAgreement,
@@ -9939,6 +10017,10 @@ function predict(input) {
       dataCompleteness,
       qualityGate,
       sourceReliability,
+      leagueCalibration: {
+        league: input.league || "unknown",
+        profile: leagueCalibrated.profile,
+      },
       clubEloDiff: homeClubElo > 0 && awayClubElo > 0 ? Math.round(homeClubElo - awayClubElo) : null,
       stakes: input.context?.summary || null,
       matchImportance: input.matchImportance || 1,
@@ -9954,8 +10036,10 @@ function predict(input) {
       ],
       riskProfile,
       teamAiSummary,
+      featureImportance,
     },
     featureVector,
+    featureImportance,
     dataCompleteness,
     dataCompletenessScore: dataCompleteness.score,
     qualityGate,
@@ -10577,6 +10661,77 @@ function buildDataScoutReport(store, todayKey) {
       "Gebruik Understat en FBref als pilot-signalen voor xG, shotdruk en home/away splits waar bereikbaar.",
     ],
   };
+}
+
+async function runSelfHealingRetries(store, todayKey, now) {
+  const todayMatches = Array.isArray(store.matches?.[todayKey]) ? store.matches[todayKey] : [];
+  const result = {
+    attempted: 0,
+    healed: 0,
+    details: [],
+  };
+  for (const match of todayMatches) {
+    const problems = [];
+    const isLive = ["LIVE", "HT"].includes(String(match?.status || "").toUpperCase());
+    if (isLive && !match?.minute && !Number.isFinite(Number(match?.minuteValue))) problems.push("live_minute_present");
+    if (Number(match?.h2h?.played || 0) <= 0) problems.push("h2h_not_empty");
+    if (match?.aggregate?.active && !match?.aggregate?.firstLegScore) problems.push("first_leg_for_aggregate");
+    if (!match?.homeLogo || !match?.awayLogo) problems.push("logos_with_fallback");
+    if (!problems.length) continue;
+    result.attempted += 1;
+    let changed = false;
+    const eventId = String(match?.sofaId || "").replace(/^ss-/, "");
+    if (eventId && (problems.includes("live_minute_present") || problems.includes("first_leg_for_aggregate") || problems.includes("logos_with_fallback"))) {
+      const details = await fetchEventDetails(eventId);
+      if (details) {
+        const minuteState = resolveMinuteState(
+          { status: details?.status || {}, homeScore: details?.homeScore || {}, awayScore: details?.awayScore || {} },
+          details
+        );
+        if (!match?.minute && (minuteState?.minute || Number.isFinite(Number(minuteState?.minuteValue)))) {
+          match.minute = minuteState.minute || match.minute;
+          match.minuteValue = minuteState.minuteValue ?? match.minuteValue;
+          changed = true;
+        }
+        if ((!match?.homeLogo || !match?.awayLogo) && details?.homeTeam && details?.awayTeam) {
+          const homeLogo = resolveTeamLogoUrl(details.homeTeam, match.homeTeamId, match.homeTeamName, "sofascore");
+          const awayLogo = resolveTeamLogoUrl(details.awayTeam, match.awayTeamId, match.awayTeamName, "sofascore");
+          if (homeLogo && !match.homeLogo) {
+            match.homeLogo = homeLogo;
+            changed = true;
+          }
+          if (awayLogo && !match.awayLogo) {
+            match.awayLogo = awayLogo;
+            changed = true;
+          }
+        }
+      }
+    }
+    if (problems.includes("h2h_not_empty") && eventId && match?.homeTeamId && match?.awayTeamId) {
+      const h2hKey = `${eventId}_${match.homeTeamId}_${match.awayTeamId}`;
+      const h2h = await fetchH2H(eventId, match.homeTeamId, match.awayTeamId, null, null);
+      const normalized = ensureH2HContract(h2h, match.homeTeamId, match.awayTeamId);
+      if (Number(normalized?.played || 0) > 0) {
+        match.h2h = normalized;
+        match.h2hStatus = normalized.status || "h2h-agent";
+        if (!store.h2hCache) store.h2hCache = {};
+        store.h2hCache[h2hKey] = { updated: now, data: normalized };
+        changed = true;
+      }
+    }
+    if (problems.includes("first_leg_for_aggregate") && match?.aggregate?.active && match?.h2h) {
+      const rebuilt = buildAggregateInfo({ bbcMeta: { aggregate: match.aggregate } }, null, match.h2h, null);
+      if (rebuilt?.firstLegScore && !match.aggregate.firstLegScore) {
+        match.aggregate = { ...match.aggregate, firstLegScore: rebuilt.firstLegScore };
+        changed = true;
+      }
+    }
+    if (changed) {
+      result.healed += 1;
+      result.details.push({ matchId: match.id, healedProblems: problems });
+    }
+  }
+  return result;
 }
 
 function buildAiRecommendations(store, todayKey) {
@@ -11728,10 +11883,14 @@ async function main() {
   store.worldCup2026Readiness = buildWorldCup2026ReadinessFromStore(store);
   compactStore(store, today, now);
   rebuildReviewsAndLearning(store);
+  const selfHealing = await runSelfHealingRetries(store, today, now);
   store.sourceCoverage = buildSourceCoverage(store, today);
   store.dataCompletenessAudit = buildDataCompletenessAudit(store, today);
   store.oddsIntegrationReadiness = buildOddsIntegrationReadiness(store, today);
-  store.dataScout = buildDataScoutReport(store, today);
+  store.dataScout = {
+    ...buildDataScoutReport(store, today),
+    selfHealing,
+  };
   store.anomalyReport = buildDataAnomalyReport(store, today);
   store.aiAdvice = buildAiRecommendations(store, today);
   store.competitionArchiveIndex = buildCompetitionArchiveIndex(store, today);
@@ -11753,24 +11912,3 @@ async function main() {
 }
 
 main();
-
-
-
-
-  const rolling = postMatchStatsProfile?.rolling || {};
-  const blendedSeason = {
-    avgShotsOn: seasonStats?.avgShotsOn ?? rolling.shotsOnTarget ?? null,
-    avgShotsOnAgainst: seasonStats?.avgShotsOnAgainst ?? null,
-    avgShots: seasonStats?.avgShots ?? null,
-    avgShotsAgainst: seasonStats?.avgShotsAgainst ?? null,
-    avgPossession: seasonStats?.avgPossession ?? rolling.possession ?? null,
-    avgCorners: seasonStats?.avgCorners ?? rolling.corners ?? null,
-    avgCornersAgainst: seasonStats?.avgCornersAgainst ?? null,
-    cleanSheets: seasonStats?.cleanSheets ?? null,
-    cleanSheetRate: seasonStats?.cleanSheetRate ?? null,
-    failToScoreRate: seasonStats?.failToScoreRate ?? null,
-    bttsRate: seasonStats?.bttsRate ?? null,
-    over25Rate: seasonStats?.over25Rate ?? null,
-    dominanceScore: seasonStats?.dominanceScore ?? null,
-    historicalGames: seasonStats?.historicalGames ?? null,
-  };
