@@ -840,10 +840,14 @@ function ModelEdgeStrip({ match, prediction }: { match: any; prediction: any }) 
   const keeper = prediction.modelEdges?.keeperEdge?.summary || "keepers gelijk";
   const dataCompleteness = prediction.dataCompleteness || match.dataCompleteness || prediction.modelEdges?.dataCompleteness;
   const qualityGate = prediction.qualityGate || match.qualityGate || prediction.modelEdges?.qualityGate;
+  const sourceReliability = prediction.modelEdges?.sourceReliability || null;
+  const featureImportance = prediction.featureImportance || prediction.modelEdges?.featureImportance || [];
+  const leagueCalibration = prediction.modelEdges?.leagueCalibration || null;
   const dataCompletenessPct = dataCompleteness?.percent ?? (dataCompleteness?.score != null ? Math.round(dataCompleteness.score * 100) : null);
 
   return (
-    <div className="grid grid-cols-5 gap-1.5 mb-2">
+    <>
+    <div className="grid grid-cols-6 gap-1.5 mb-2">
       <div className="rounded-xl border border-cyan-500/15 bg-cyan-950/20 px-2 py-1.5">
         <div className="text-[7px] uppercase font-black text-cyan-300/80">Model</div>
         <div className={`text-[10px] font-black ${agreement != null && agreement < 0.55 ? "text-amber-300" : "text-white"}`}>
@@ -868,7 +872,30 @@ function ModelEdgeStrip({ match, prediction }: { match: any; prediction: any }) 
           {dataCompletenessPct != null ? `${dataCompletenessPct}%` : "n.v.t."}
         </div>
       </div>
+      <div className="rounded-xl border border-fuchsia-500/15 bg-fuchsia-950/20 px-2 py-1.5">
+        <div className="text-[7px] uppercase font-black text-fuchsia-300/80">Bronscore</div>
+        <div className="text-[10px] font-black text-white">
+          {sourceReliability?.score != null ? `${Math.round(Number(sourceReliability.score) * 100)}%` : "-"}
+        </div>
+      </div>
     </div>
+    <div className="rounded-xl border border-white/10 bg-slate-950/40 px-2 py-2 mb-2">
+      <div className="text-[8px] font-black uppercase text-slate-400 mb-1">Model debug</div>
+      <div className="text-[9px] text-slate-300">
+        Datagate: <span className="font-black text-white">{qualityGate?.summary || "n.v.t."}</span>
+      </div>
+      {leagueCalibration?.profile && (
+        <div className="text-[9px] text-slate-400 mt-1">
+          League calibratie: draw {Number(leagueCalibration.profile.drawBias || 0) >= 0 ? "+" : ""}{Number(leagueCalibration.profile.drawBias || 0).toFixed(3)} · home {Number(leagueCalibration.profile.homeBias || 0) >= 0 ? "+" : ""}{Number(leagueCalibration.profile.homeBias || 0).toFixed(3)} · conf {Number(leagueCalibration.profile.confidenceBias || 0) >= 0 ? "+" : ""}{Number(leagueCalibration.profile.confidenceBias || 0).toFixed(3)}
+        </div>
+      )}
+      {Array.isArray(featureImportance) && featureImportance.length > 0 && (
+        <div className="mt-1 text-[9px] text-slate-300">
+          Top drivers: {featureImportance.slice(0, 4).map((item: any) => `${item.label || item.key} (${item.score})`).join(" · ")}
+        </div>
+      )}
+    </div>
+    </>
   );
 }
 

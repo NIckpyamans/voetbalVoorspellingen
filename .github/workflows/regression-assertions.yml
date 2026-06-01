@@ -1,0 +1,27 @@
+name: Regression Assertions
+
+on:
+  schedule:
+    - cron: "23 6 * * *"
+  workflow_dispatch:
+  push:
+    paths:
+      - "scripts/server-worker.js"
+      - "scripts/regression-assertions.js"
+      - "server_data.json"
+      - "data/**"
+
+jobs:
+  check-regressions:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: npm
+      - name: Install dependencies
+        run: npm ci
+      - name: Run regression assertions
+        run: npm run monitor:regressions

@@ -119,6 +119,8 @@ function buildSplitMeta(store) {
     oddsIntegrationReadiness: store.oddsIntegrationReadiness || null,
     modelPerformance: store.modelPerformance || null,
     backtestSummary: store.backtestSummary || null,
+    backtestSegmentation: store.backtestSegmentation || null,
+    leagueCalibrationProfiles: store.leagueCalibrationProfiles || {},
     anomalyReport: store.anomalyReport || null,
     topExactScoreMonitor: store.topExactScoreMonitor || null,
     topExactClubs: store.topExactClubs || null,
@@ -225,23 +227,66 @@ function getLeagueCalibrationProfile(leagueLabel) {
   return LEAGUE_CALIBRATION_PROFILES[leagueLabel] || LEAGUE_CALIBRATION_PROFILES.default;
 }
 
-function applyLeagueCalibration(probabilities, leagueLabel) {
-  const profile = getLeagueCalibrationProfile(leagueLabel);
+function mergeLeagueCalibrationProfile(base, dynamicProfile = null) {
+  if (!dynamicProfile) return base;
+  return {
+    confidenceBias: Number(base?.confidenceBias || 0) + Number(dynamicProfile?.confidenceBias || 0),
+    drawBias: Number(base?.drawBias || 0) + Number(dynamicProfile?.drawBias || 0),
+    homeBias: Number(base?.homeBias || 0) + Number(dynamicProfile?.homeBias || 0),
+  };
+}
+
+function applyLeagueCalibration(probabilities, leagueLabel, dynamicProfile = null) {
+  const profile = mergeLeagueCalibrationProfile(getLeagueCalibrationProfile(leagueLabel), dynamicProfile);
   const home = clamp(Number(probabilities?.homeProb || 0) + Number(profile.homeBias || 0), 0.01, 0.98);
   const draw = clamp(Number(probabilities?.drawProb || 0) + Number(profile.drawBias || 0), 0.01, 0.98);
   const away = clamp(Number(probabilities?.awayProb || 0) - Number(profile.homeBias || 0), 0.01, 0.98);
   const total = home + draw + away;
-  const featureImportance = buildFeatureImportance(featureVector, {
-    sourceReliability,
-    dataCompleteness,
-  });
-
   return {
     homeProb: Number((home / total).toFixed(4)),
     drawProb: Number((draw / total).toFixed(4)),
     awayProb: Number((away / total).toFixed(4)),
     profile,
   };
+}
+
+function rebuildLeagueCalibrationProfilesFromReviews(store) {
+  const reviews = Object.values(store?.postMatchReviews || {}).filter(Boolean);
+  const byLeague = {};
+  for (const item of reviews.slice(-1200)) {
+    const league = String(item?.league || "").trim();
+    if (!league) continue;
+    if (!byLeague[league]) byLeague[league] = { matches: 0, actualDraw: 0, predictedDraw: 0, homeMissBias: 0, outcomeHits: 0 };
+    const row = byLeague[league];
+    row.matches += 1;
+    row.outcomeHits += item?.outcomeHit ? 1 : 0;
+    const actual = String(item?.actualScore || "").split("-").map(Number);
+    const pred = String(item?.predictedScore || "").split("-").map(Number);
+    const actualDraw = Number.isFinite(actual[0]) && Number.isFinite(actual[1]) && actual[0] === actual[1] ? 1 : 0;
+    const predDraw = Number.isFinite(pred[0]) && Number.isFinite(pred[1]) && pred[0] === pred[1] ? 1 : 0;
+    row.actualDraw += actualDraw;
+    row.predictedDraw += predDraw;
+    if (item?.actualOutcome === "H" && item?.predictedOutcome !== "H") row.homeMissBias += 1;
+    if (item?.actualOutcome !== "H" && item?.predictedOutcome === "H") row.homeMissBias -= 1;
+  }
+  const profiles = {};
+  for (const [league, row] of Object.entries(byLeague)) {
+    if (Number(row.matches || 0) < 24) continue;
+    const drawRateActual = Number(row.actualDraw || 0) / Number(row.matches || 1);
+    const drawRatePred = Number(row.predictedDraw || 0) / Number(row.matches || 1);
+    const drawBias = clamp((drawRateActual - drawRatePred) * 0.08, -0.035, 0.035);
+    const homeBias = clamp((Number(row.homeMissBias || 0) / Number(row.matches || 1)) * 0.03, -0.025, 0.025);
+    const outcomeHitRate = Number(row.outcomeHits || 0) / Number(row.matches || 1);
+    const confidenceBias = clamp((outcomeHitRate - 0.52) * 0.04, -0.025, 0.025);
+    profiles[league] = {
+      matches: Number(row.matches || 0),
+      confidenceBias: Number(confidenceBias.toFixed(4)),
+      drawBias: Number(drawBias.toFixed(4)),
+      homeBias: Number(homeBias.toFixed(4)),
+      updatedAt: new Date().toISOString(),
+    };
+  }
+  store.leagueCalibrationProfiles = profiles;
 }
 
 function quarterBucketFromMinute(minuteLike) {
@@ -9901,6 +9946,12 @@ function predict(input) {
     resultFresh: input.resultFresh,
   });
   const qualityGate = qualityGateForCompleteness(dataCompleteness);
+  if (input?.assertionDegraded) {
+    qualityGate.blockedHighConfidence = true;
+    qualityGate.confidenceCap = Math.min(Number(qualityGate.confidenceCap || 0.7), 0.58);
+    qualityGate.penalty = Number((Number(qualityGate.penalty || 0) + 0.04).toFixed(3));
+    qualityGate.summary = `${qualityGate.summary}; assertion-degraded mode actief`;
+  }
   const sourceReliability = sourceReliabilityScore(
     {
       ...input,
@@ -9941,7 +9992,7 @@ function predict(input) {
   const finalConfidenceRaw = Number(confidenceCalibration.calibratedConfidence ?? adjustedConfidence);
   const neutral = { homeProb: 0.3333, drawProb: 0.3334, awayProb: 0.3333 };
   const reliabilityWeighted = blendProbabilities(blended, neutral, sourceReliability.blendWeight);
-  const leagueCalibrated = applyLeagueCalibration(reliabilityWeighted, input.league);
+  const leagueCalibrated = applyLeagueCalibration(reliabilityWeighted, input.league, input.leagueCalibrationProfile || null);
   const finalProbabilities = {
     homeProb: leagueCalibrated.homeProb,
     drawProb: leagueCalibrated.drawProb,
@@ -9965,6 +10016,10 @@ function predict(input) {
     home: buildTeamAiSummary("home", input.homeTeamProfile?.teamName || "Thuis", input.homeRecent, input.homeTeamProfile, input.homeInjuries),
     away: buildTeamAiSummary("away", input.awayTeamProfile?.teamName || "Uit", input.awayRecent, input.awayTeamProfile, input.awayInjuries),
   };
+  const featureImportance = buildFeatureImportance(featureVector, {
+    sourceReliability,
+    dataCompleteness,
+  });
 
   return {
     homeProb: finalProbabilities.homeProb,
@@ -10232,6 +10287,8 @@ function defaultStore() {
     teamLearning: {},
     leagueReliability: {},
     phaseReliability: {},
+    leagueCalibrationProfiles: {},
+    backtestSegmentation: null,
     featureDiagnostics: null,
     sourceCoverage: null,
     dataScout: null,
@@ -10761,6 +10818,7 @@ function buildAiRecommendations(store, todayKey) {
   }
 
   const sourceCoverage = store.sourceCoverage || null;
+  const segmentation = store.backtestSegmentation || null;
   const scout = store.dataScout || null;
   const failedAssertions = (scout?.regressionAssertions || []).filter((item) => !item.passed);
   if (failedAssertions.length) {
@@ -10952,6 +11010,94 @@ function buildAiRecommendations(store, todayKey) {
   return issues;
 }
 
+function buildBacktestSegmentation(store) {
+  const previous = store.backtestSegmentation || null;
+  const reviews = Object.values(store.postMatchReviews || {}).filter(Boolean);
+  const byLeague = {};
+  const byPhase = {};
+  for (const review of reviews) {
+    const league = String(review?.league || "unknown");
+    const phase = String(review?.phaseBucket || "unknown");
+    if (!byLeague[league]) byLeague[league] = { matches: 0, outcomeHits: 0, exactHits: 0 };
+    if (!byPhase[phase]) byPhase[phase] = { matches: 0, outcomeHits: 0, exactHits: 0 };
+    byLeague[league].matches += 1;
+    byPhase[phase].matches += 1;
+    byLeague[league].outcomeHits += review?.outcomeHit ? 1 : 0;
+    byPhase[phase].outcomeHits += review?.outcomeHit ? 1 : 0;
+    byLeague[league].exactHits += review?.exactHit ? 1 : 0;
+    byPhase[phase].exactHits += review?.exactHit ? 1 : 0;
+  }
+  if (Array.isArray(segmentation?.driftAlerts) && segmentation.driftAlerts.length) {
+    const top = segmentation.driftAlerts[0];
+    issues.push({
+      title: "Performance drift gedetecteerd",
+      summary: `${top.scope} ${top.key} daalde ${Math.round(Math.abs(Number(top.delta || 0)) * 100)}pp op outcome-hitrate.`,
+      action: "Verhoog bronkwaliteit op deze scope en herweeg league/phase calibratie met recente reviews.",
+      priority: String(top.severity || "medium"),
+    });
+  }
+  const normalize = (obj) =>
+    Object.fromEntries(
+      Object.entries(obj).map(([key, row]) => {
+        const matches = Math.max(Number(row.matches || 0), 1);
+        return [
+          key,
+          {
+            matches: Number(row.matches || 0),
+            outcomeHitRate: Number((Number(row.outcomeHits || 0) / matches).toFixed(3)),
+            exactHitRate: Number((Number(row.exactHits || 0) / matches).toFixed(3)),
+          },
+        ];
+      })
+    );
+  const leagues = normalize(byLeague);
+  const phases = normalize(byPhase);
+  const driftAlerts = [];
+  if (previous?.leagues) {
+    for (const [league, row] of Object.entries(leagues)) {
+      const prev = previous.leagues?.[league];
+      if (!prev || Number(row.matches || 0) < 12 || Number(prev.matches || 0) < 12) continue;
+      const delta = Number((Number(row.outcomeHitRate || 0) - Number(prev.outcomeHitRate || 0)).toFixed(3));
+      if (delta <= -0.08) {
+        driftAlerts.push({
+          scope: "league",
+          key: league,
+          metric: "outcomeHitRate",
+          delta,
+          current: row.outcomeHitRate,
+          previous: prev.outcomeHitRate,
+          severity: "high",
+        });
+      }
+    }
+  }
+  if (previous?.phases) {
+    for (const [phase, row] of Object.entries(phases)) {
+      const prev = previous.phases?.[phase];
+      if (!prev || Number(row.matches || 0) < 12 || Number(prev.matches || 0) < 12) continue;
+      const delta = Number((Number(row.outcomeHitRate || 0) - Number(prev.outcomeHitRate || 0)).toFixed(3));
+      if (delta <= -0.08) {
+        driftAlerts.push({
+          scope: "phase",
+          key: phase,
+          metric: "outcomeHitRate",
+          delta,
+          current: row.outcomeHitRate,
+          previous: prev.outcomeHitRate,
+          severity: "medium",
+        });
+      }
+    }
+  }
+  return {
+    generatedAt: new Date().toISOString(),
+    totalReviews: reviews.length,
+    leagues,
+    phases,
+    driftAlerts,
+  };
+}
+
 async function main() {
   let store = defaultStore();
   if (fs.existsSync(DATA_FILE)) {
@@ -10976,6 +11122,8 @@ async function main() {
   if (!store.marketProfiles) store.marketProfiles = {};
   if (!store.marketProfilesUpdated) store.marketProfilesUpdated = {};
   if (!store.postMatchReviews) store.postMatchReviews = {};
+  if (!store.leagueCalibrationProfiles) store.leagueCalibrationProfiles = {};
+  if (!store.backtestSegmentation) store.backtestSegmentation = null;
   if (!store.teamPostMatchStats) store.teamPostMatchStats = {};
   if (!store.predictionSnapshots) store.predictionSnapshots = {};
   if (!store.predictionSnapshotIndex) store.predictionSnapshotIndex = {};
@@ -11613,6 +11761,8 @@ async function main() {
         marketCalibration,
         refereeProfile,
         modelPerformance: store.modelPerformance,
+        leagueCalibrationProfile: store.leagueCalibrationProfiles?.[leagueInfo.label] || null,
+        assertionDegraded: !!store.dataScout?.degraded,
       });
 
       const matchId = `ss-${event.id}`;
@@ -11883,6 +12033,8 @@ async function main() {
   store.worldCup2026Readiness = buildWorldCup2026ReadinessFromStore(store);
   compactStore(store, today, now);
   rebuildReviewsAndLearning(store);
+  rebuildLeagueCalibrationProfilesFromReviews(store);
+  store.backtestSegmentation = buildBacktestSegmentation(store);
   const selfHealing = await runSelfHealingRetries(store, today, now);
   store.sourceCoverage = buildSourceCoverage(store, today);
   store.dataCompletenessAudit = buildDataCompletenessAudit(store, today);
@@ -11890,6 +12042,7 @@ async function main() {
   store.dataScout = {
     ...buildDataScoutReport(store, today),
     selfHealing,
+    backtestSegmentation: store.backtestSegmentation || null,
   };
   store.anomalyReport = buildDataAnomalyReport(store, today);
   store.aiAdvice = buildAiRecommendations(store, today);

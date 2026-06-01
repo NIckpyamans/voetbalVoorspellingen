@@ -838,6 +838,28 @@ const SettingsView: React.FC = () => {
                 </div>
               </div>
             )}
+            {Array.isArray(dataScout.regressionAssertions) && dataScout.regressionAssertions.length > 0 && (
+              <div className="rounded-xl border border-rose-500/10 bg-rose-950/10 p-3">
+                <div className="text-[10px] font-black text-rose-300 uppercase mb-2">
+                  Regressie assertions {dataScout.degraded ? "(degraded)" : "(ok)"}
+                </div>
+                <div className="space-y-1.5">
+                  {dataScout.regressionAssertions.map((item: any) => (
+                    <div key={item.key} className="text-[10px] text-slate-300">
+                      <span className={`font-black mr-1 ${item.passed ? "text-emerald-300" : "text-rose-300"}`}>
+                        {item.passed ? "PASS" : "FAIL"}
+                      </span>
+                      {item.key}: {item.detail}
+                    </div>
+                  ))}
+                </div>
+                {dataScout.selfHealing && (
+                  <div className="text-[10px] text-slate-400 mt-2">
+                    Self-healing: attempted {Number(dataScout.selfHealing.attempted || 0)} · healed {Number(dataScout.selfHealing.healed || 0)}
+                  </div>
+                )}
+              </div>
+            )}
 
             <div className="rounded-xl border border-white/5 bg-slate-900/30 p-3">
               <div className="text-[10px] font-black text-slate-400 uppercase mb-2">Gratis bronnen en wat ze leveren</div>
@@ -869,6 +891,18 @@ const SettingsView: React.FC = () => {
                 ))}
               </div>
             </div>
+            {Array.isArray(dataScout?.backtestSegmentation?.driftAlerts) && dataScout.backtestSegmentation.driftAlerts.length > 0 && (
+              <div className="rounded-xl border border-amber-500/10 bg-amber-950/10 p-3">
+                <div className="text-[10px] font-black text-amber-300 uppercase mb-1">Backtest drift alerts</div>
+                <div className="space-y-1">
+                  {dataScout.backtestSegmentation.driftAlerts.slice(0, 6).map((row: any, idx: number) => (
+                    <div key={`${row.scope}-${row.key}-${idx}`} className="text-[10px] text-slate-300">
+                      {row.scope} {row.key}: {Math.round(Number(row.delta || 0) * 100)}pp ({Math.round(Number(row.previous || 0) * 100)}% → {Math.round(Number(row.current || 0) * 100)}%)
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
           </div>
         ) : (
           <div className="text-[11px] text-slate-500">
