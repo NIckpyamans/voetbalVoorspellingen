@@ -23,6 +23,8 @@ import {
 import { fetchOddsAtPrediction } from "./odds-provider.js";
 
 const SOFA = "https://api.sofascore.com/api/v1";
+const THESPORTSDB_BASE = "https://www.thesportsdb.com/api/v1/json";
+const FOOTBALL_DATA_BASE = "https://api.football-data.org/v4";
 const sofaFetchCircuit = { blocked: false, failures: 0, logged: false };
 const DATA_FILE = path.resolve(process.cwd(), "server_data.json");
 const SPLIT_DATA_DIR = path.resolve(process.cwd(), "data");
@@ -56,6 +58,10 @@ const LEAGUES = [
 
 const sleep = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
 const clamp = (value, min, max) => Math.max(min, Math.min(max, value));
+const toFiniteNumber = (value, fallback = null) => {
+  const n = Number(value);
+  return Number.isFinite(n) ? n : fallback;
+};
 
 function writeJsonFile(filePath, data) {
   fs.mkdirSync(path.dirname(filePath), { recursive: true });
@@ -91,6 +97,7 @@ function buildSplitMeta(store) {
     workerVersion: store.workerVersion || "unknown",
     dates: Object.keys(store.matches || {}).sort(),
     reviewCount: Object.keys(store.postMatchReviews || {}).length,
+    teamPostMatchStatsCount: Object.keys(store.teamPostMatchStats || {}).length,
     teamLearningCount: Object.keys(store.teamLearning || {}).length,
     aiAdvice: store.aiAdvice || [],
     featureDiagnostics: store.featureDiagnostics || null,
@@ -145,6 +152,7 @@ function writeSplitDataFiles(store) {
     predictionSnapshots: store.predictionSnapshots || {},
     predictionSnapshotIndex: store.predictionSnapshotIndex || {},
     teamLearning: store.teamLearning || {},
+    teamPostMatchStats: store.teamPostMatchStats || {},
     leagueReliability: store.leagueReliability || {},
     phaseReliability: store.phaseReliability || {},
     modelPerformance: store.modelPerformance || null,
@@ -201,6 +209,62 @@ function trimScoreMatrix(scoreMatrix, limit = MAX_SCORE_MATRIX_ENTRIES) {
       .sort((a, b) => Number(b[1] || 0) - Number(a[1] || 0))
       .slice(0, limit)
   );
+}
+
+function quarterBucketFromMinute(minuteLike) {
+  const minute = parseMinuteValue(minuteLike);
+  if (!Number.isFinite(minute)) return "unknown";
+  if (minute <= 15) return "q1_0_15";
+  if (minute <= 30) return "q2_16_30";
+  if (minute <= 45) return "q3_31_45_plus";
+  if (minute <= 60) return "q4_46_60";
+  if (minute <= 75) return "q5_61_75";
+  return "q6_76_90_plus";
+}
+
+function emptyGoalQuarters() {
+  return {
+    q1_0_15: 0,
+    q2_16_30: 0,
+    q3_31_45_plus: 0,
+    q4_46_60: 0,
+    q5_61_75: 0,
+    q6_76_90_plus: 0,
+    unknown: 0,
+  };
+}
+
+function normalizePostMatchStats(raw, source, sourceDetail = null) {
+  const home = raw?.home || {};
+  const away = raw?.away || {};
+  const quarters = raw?.goalQuarters || {};
+  return {
+    source: source || "unknown",
+    sourceDetail: sourceDetail || null,
+    home: {
+      possession: toFiniteNumber(home.possession),
+      shots: toFiniteNumber(home.shots),
+      shotsOnTarget: toFiniteNumber(home.shotsOnTarget),
+      bigChances: toFiniteNumber(home.bigChances),
+      corners: toFiniteNumber(home.corners),
+      freeKicks: toFiniteNumber(home.freeKicks),
+      fouls: toFiniteNumber(home.fouls),
+    },
+    away: {
+      possession: toFiniteNumber(away.possession),
+      shots: toFiniteNumber(away.shots),
+      shotsOnTarget: toFiniteNumber(away.shotsOnTarget),
+      bigChances: toFiniteNumber(away.bigChances),
+      corners: toFiniteNumber(away.corners),
+      freeKicks: toFiniteNumber(away.freeKicks),
+      fouls: toFiniteNumber(away.fouls),
+    },
+    goalQuarters: {
+      home: { ...emptyGoalQuarters(), ...(quarters.home || {}) },
+      away: { ...emptyGoalQuarters(), ...(quarters.away || {}) },
+      total: { ...emptyGoalQuarters(), ...(quarters.total || {}) },
+    },
+  };
 }
 
 function compactMonteCarlo(monteCarlo) {
@@ -3252,7 +3316,7 @@ function buildTeamSquadSummary(store) {
   };
 }
 
-function buildTeamProfile({ teamName, recent, seasonStats, injuries, clubElo, standingPos, squadProfile, transferProfile }) {
+function buildTeamProfile({ teamName, recent, seasonStats, postMatchStatsProfile, injuries, clubElo, standingPos, squadProfile, transferProfile }) {
   const homeSplit = recent?.splits?.home || emptySplit();
   const awaySplit = recent?.splits?.away || emptySplit();
   const strongestSide = recent?.strongestSide || "balanced";
@@ -3308,24 +3372,9 @@ function buildTeamProfile({ teamName, recent, seasonStats, injuries, clubElo, st
       over25Rate: awaySplit.over25Rate,
       cleanSheetRate: awaySplit.cleanSheetRate,
     },
-    season: seasonStats
-      ? {
-          avgShotsOn: seasonStats.avgShotsOn ?? null,
-          avgShotsOnAgainst: seasonStats.avgShotsOnAgainst ?? null,
-          avgShots: seasonStats.avgShots ?? null,
-          avgShotsAgainst: seasonStats.avgShotsAgainst ?? null,
-          avgPossession: seasonStats.avgPossession ?? null,
-          avgCorners: seasonStats.avgCorners ?? null,
-          avgCornersAgainst: seasonStats.avgCornersAgainst ?? null,
-          cleanSheets: seasonStats.cleanSheets ?? null,
-          cleanSheetRate: seasonStats.cleanSheetRate ?? null,
-          failToScoreRate: seasonStats.failToScoreRate ?? null,
-          bttsRate: seasonStats.bttsRate ?? null,
-          over25Rate: seasonStats.over25Rate ?? null,
-          dominanceScore: seasonStats.dominanceScore ?? null,
-          historicalGames: seasonStats.historicalGames ?? null,
-        }
-      : null,
+    season: seasonStats || postMatchStatsProfile ? blendedSeason : null,
+    postMatchRolling: postMatchStatsProfile?.rolling || null,
+    goalQuarterProfile: postMatchStatsProfile?.quarterScoring || null,
     injuries: {
       count: Number(injuries?.injuredCount || 0),
       ratingImpact: Number(injuries?.injuredRating || 0),
@@ -8199,6 +8248,232 @@ async function fetchEventDetails(eventId) {
   return json?.event || null;
 }
 
+function parseSofaStatisticsItems(eventDetails) {
+  const groups = eventDetails?.statistics || eventDetails?.statisticsGroups || [];
+  const items = [];
+  for (const group of groups || []) {
+    for (const row of group?.statisticsItems || group?.items || []) {
+      items.push(row);
+    }
+  }
+  return items;
+}
+
+function extractSofaTeamStat(items, metricKeys = [], side = "home") {
+  const wanted = metricKeys.map((key) => String(key).toLowerCase());
+  for (const item of items || []) {
+    const key = String(item?.name || item?.key || item?.type || "").toLowerCase();
+    if (!wanted.some((wantedKey) => key.includes(wantedKey))) continue;
+    const value = side === "home" ? (item?.home ?? item?.value?.home) : (item?.away ?? item?.value?.away);
+    const parsed = toFiniteNumber(String(value ?? "").replace("%", "").trim());
+    if (Number.isFinite(parsed)) return parsed;
+  }
+  return null;
+}
+
+function buildGoalQuarterStatsFromIncidents(incidents, homeId, awayId) {
+  const result = {
+    home: emptyGoalQuarters(),
+    away: emptyGoalQuarters(),
+    total: emptyGoalQuarters(),
+  };
+  for (const item of incidents || []) {
+    const type = String(item?.incidentType || item?.type || "").toLowerCase();
+    const klass = String(item?.incidentClass || "").toLowerCase();
+    const isGoal = type.includes("goal") || klass.includes("goal");
+    if (!isGoal) continue;
+    const bucket = quarterBucketFromMinute(item?.time ?? item?.minute ?? item?.displayTime ?? item?.addedTime ?? null);
+    const scorerTeamId = String(item?.team?.id || item?.teamId || "");
+    const isHomeGoal = scorerTeamId && String(homeId || "") && scorerTeamId === String(homeId || "");
+    const isAwayGoal = scorerTeamId && String(awayId || "") && scorerTeamId === String(awayId || "");
+    if (isHomeGoal) result.home[bucket] += 1;
+    if (isAwayGoal) result.away[bucket] += 1;
+    result.total[bucket] += 1;
+  }
+  return result;
+}
+
+function extractPostMatchStatsFromSofa(eventDetails, homeId, awayId) {
+  const items = parseSofaStatisticsItems(eventDetails);
+  const incidents = eventDetails?.incidents || [];
+  const stats = normalizePostMatchStats(
+    {
+      home: {
+        possession: extractSofaTeamStat(items, ["possession"], "home"),
+        shots: extractSofaTeamStat(items, ["total shots", "shots total", "shots"], "home"),
+        shotsOnTarget: extractSofaTeamStat(items, ["shots on target", "shots on goal"], "home"),
+        bigChances: extractSofaTeamStat(items, ["big chances"], "home"),
+        corners: extractSofaTeamStat(items, ["corners"], "home"),
+        freeKicks: extractSofaTeamStat(items, ["free kicks"], "home"),
+        fouls: extractSofaTeamStat(items, ["fouls"], "home"),
+      },
+      away: {
+        possession: extractSofaTeamStat(items, ["possession"], "away"),
+        shots: extractSofaTeamStat(items, ["total shots", "shots total", "shots"], "away"),
+        shotsOnTarget: extractSofaTeamStat(items, ["shots on target", "shots on goal"], "away"),
+        bigChances: extractSofaTeamStat(items, ["big chances"], "away"),
+        corners: extractSofaTeamStat(items, ["corners"], "away"),
+        freeKicks: extractSofaTeamStat(items, ["free kicks"], "away"),
+        fouls: extractSofaTeamStat(items, ["fouls"], "away"),
+      },
+      goalQuarters: buildGoalQuarterStatsFromIncidents(incidents, homeId, awayId),
+    },
+    "sofascore-event",
+    "event.statistics+incidents"
+  );
+  return stats;
+}
+
+async function fetchJsonWithHeaders(url, headers = {}, timeoutMs = 12000) {
+  try {
+    const response = await fetchWithTimeout(url, { headers: { Accept: "application/json", ...headers } }, timeoutMs);
+    if (!response.ok) return null;
+    return await response.json();
+  } catch {
+    return null;
+  }
+}
+
+async function fetchPostMatchStatsFromTheSportsDb(match) {
+  const apiKey = String(process.env.THESPORTSDB_API_KEY || "3").trim();
+  if (!apiKey) return null;
+  const date = String(match?.date || "").trim();
+  if (!date) return null;
+  const dayFeed = await safeFetch(`${THESPORTSDB_BASE}/${apiKey}/eventsday.php?d=${encodeURIComponent(date)}&s=Soccer`);
+  const events = dayFeed?.events || [];
+  const homeName = normalizeName(match?.homeTeamName || "");
+  const awayName = normalizeName(match?.awayTeamName || "");
+  const event = events.find((row) => {
+    const h = normalizeName(row?.strHomeTeam || "");
+    const a = normalizeName(row?.strAwayTeam || "");
+    return h === homeName && a === awayName;
+  });
+  const idEvent = event?.idEvent;
+  if (!idEvent) return null;
+  const statsFeed = await safeFetch(`${THESPORTSDB_BASE}/${apiKey}/lookupeventstats.php?id=${idEvent}`);
+  const timelineFeed = await safeFetch(`${THESPORTSDB_BASE}/${apiKey}/lookuptimeline.php?id=${idEvent}`);
+  const raw = (statsFeed?.eventstats || statsFeed?.event || [])[0] || {};
+  const parseHomeAway = (homeKey, awayKey) => ({
+    home: toFiniteNumber(raw?.[homeKey]),
+    away: toFiniteNumber(raw?.[awayKey]),
+  });
+  const possession = parseHomeAway("intHomePossession", "intAwayPossession");
+  const shots = parseHomeAway("intHomeShots", "intAwayShots");
+  const shotsOn = parseHomeAway("intHomeShotsOnGoal", "intAwayShotsOnGoal");
+  const corners = parseHomeAway("intHomeCorners", "intAwayCorners");
+  const fouls = parseHomeAway("intHomeFouls", "intAwayFouls");
+  const freeKicks = parseHomeAway("intHomeFreeKicks", "intAwayFreeKicks");
+  const quarterStats = { home: emptyGoalQuarters(), away: emptyGoalQuarters(), total: emptyGoalQuarters() };
+  const timeline = timelineFeed?.timeline || [];
+  for (const item of timeline) {
+    const isGoal = String(item?.strTimeline || "").toLowerCase().includes("goal");
+    if (!isGoal) continue;
+    const bucket = quarterBucketFromMinute(item?.intTime || item?.strTime || item?.strMinute);
+    const side = normalizeName(item?.strTeam || "");
+    if (side === homeName) quarterStats.home[bucket] += 1;
+    if (side === awayName) quarterStats.away[bucket] += 1;
+    quarterStats.total[bucket] += 1;
+  }
+  const hasAny = [possession.home, possession.away, shots.home, shots.away, shotsOn.home, shotsOn.away].some((n) => Number.isFinite(n));
+  if (!hasAny) return null;
+  return normalizePostMatchStats(
+    {
+      home: {
+        possession: possession.home,
+        shots: shots.home,
+        shotsOnTarget: shotsOn.home,
+        corners: corners.home,
+        fouls: fouls.home,
+        freeKicks: freeKicks.home,
+      },
+      away: {
+        possession: possession.away,
+        shots: shots.away,
+        shotsOnTarget: shotsOn.away,
+        corners: corners.away,
+        fouls: fouls.away,
+        freeKicks: freeKicks.away,
+      },
+      goalQuarters: quarterStats,
+    },
+    "thesportsdb",
+    `idEvent:${idEvent}`
+  );
+}
+
+async function fetchPostMatchStatsFromFootballData(match) {
+  const apiKey = String(process.env.FOOTBALL_DATA_API_KEY || "").trim();
+  if (!apiKey) return null;
+  const dateFrom = `${match?.date}T00:00:00Z`;
+  const dateTo = `${match?.date}T23:59:59Z`;
+  const competitions = String(process.env.FOOTBALL_DATA_COMPETITIONS || "PL,BL1,PD,SA,FL1,ELC,DED,CL,EL,EC").split(",").map((v) => v.trim()).filter(Boolean);
+  const homeName = normalizeName(match?.homeTeamName || "");
+  const awayName = normalizeName(match?.awayTeamName || "");
+  for (const code of competitions) {
+    const url = `${FOOTBALL_DATA_BASE}/competitions/${encodeURIComponent(code)}/matches?dateFrom=${encodeURIComponent(dateFrom)}&dateTo=${encodeURIComponent(dateTo)}&status=FINISHED`;
+    const payload = await fetchJsonWithHeaders(url, { "X-Auth-Token": apiKey }, 14000);
+    const matchRow = (payload?.matches || []).find((row) => {
+      const h = normalizeName(row?.homeTeam?.name || "");
+      const a = normalizeName(row?.awayTeam?.name || "");
+      return h === homeName && a === awayName;
+    });
+    if (!matchRow) continue;
+    const stats = matchRow?.statistics || {};
+    const homeStats = stats.home || stats.homeTeam || {};
+    const awayStats = stats.away || stats.awayTeam || {};
+    const normalized = normalizePostMatchStats(
+      {
+        home: {
+          possession: toFiniteNumber(homeStats.ballPossession ?? homeStats.possession),
+          shots: toFiniteNumber(homeStats.shots ?? homeStats.totalShots),
+          shotsOnTarget: toFiniteNumber(homeStats.shotsOnGoal ?? homeStats.shotsOnTarget),
+          corners: toFiniteNumber(homeStats.cornerKicks ?? homeStats.corners),
+          freeKicks: toFiniteNumber(homeStats.freeKicks),
+          fouls: toFiniteNumber(homeStats.fouls),
+          bigChances: toFiniteNumber(homeStats.bigChances),
+        },
+        away: {
+          possession: toFiniteNumber(awayStats.ballPossession ?? awayStats.possession),
+          shots: toFiniteNumber(awayStats.shots ?? awayStats.totalShots),
+          shotsOnTarget: toFiniteNumber(awayStats.shotsOnGoal ?? awayStats.shotsOnTarget),
+          corners: toFiniteNumber(awayStats.cornerKicks ?? awayStats.corners),
+          freeKicks: toFiniteNumber(awayStats.freeKicks),
+          fouls: toFiniteNumber(awayStats.fouls),
+          bigChances: toFiniteNumber(awayStats.bigChances),
+        },
+      },
+      "football-data.org",
+      `competition:${code}`
+    );
+    const hasAny = Object.values(normalized.home).concat(Object.values(normalized.away)).some((v) => Number.isFinite(Number(v)));
+    if (hasAny) return normalized;
+  }
+  return null;
+}
+
+function statsCoverageScore(stats) {
+  if (!stats) return 0;
+  const keys = ["possession", "shots", "shotsOnTarget", "bigChances", "corners", "freeKicks", "fouls"];
+  const total = keys.length * 2;
+  let hit = 0;
+  for (const key of keys) {
+    if (Number.isFinite(Number(stats?.home?.[key]))) hit += 1;
+    if (Number.isFinite(Number(stats?.away?.[key]))) hit += 1;
+  }
+  return Number((hit / Math.max(total, 1)).toFixed(2));
+}
+
+async function buildPostMatchStatsWithFallback({ match, eventDetails, homeId, awayId }) {
+  const sofaStats = extractPostMatchStatsFromSofa(eventDetails, homeId, awayId);
+  if (statsCoverageScore(sofaStats) >= 0.5) return { ...sofaStats, coverageScore: statsCoverageScore(sofaStats), fallbackUsed: false };
+  const sportsDbStats = await fetchPostMatchStatsFromTheSportsDb(match);
+  if (statsCoverageScore(sportsDbStats) >= 0.5) return { ...sportsDbStats, coverageScore: statsCoverageScore(sportsDbStats), fallbackUsed: true };
+  const footballDataStats = await fetchPostMatchStatsFromFootballData(match);
+  if (statsCoverageScore(footballDataStats) > 0) return { ...footballDataStats, coverageScore: statsCoverageScore(footballDataStats), fallbackUsed: true };
+  if (sofaStats) return { ...sofaStats, coverageScore: statsCoverageScore(sofaStats), fallbackUsed: true };
+  return null;
+}
+
 function extractReferee(eventDetails) {
   const referee =
     eventDetails?.referee ||
@@ -9717,6 +9992,66 @@ function getTeam(storeTeams, id, name) {
   return storeTeams[key];
 }
 
+function pushRolling(values, next, size = 10) {
+  const list = Array.isArray(values) ? values.slice() : [];
+  if (Number.isFinite(Number(next))) list.push(Number(next));
+  return list.slice(-size);
+}
+
+function averageRolling(values) {
+  const list = (values || []).filter((v) => Number.isFinite(Number(v))).map(Number);
+  if (!list.length) return null;
+  return Number((list.reduce((sum, v) => sum + v, 0) / list.length).toFixed(2));
+}
+
+function updateTeamPostMatchStats(store, match) {
+  const stats = match?.postMatchStats;
+  if (!stats) return;
+  if (!store.teamPostMatchStats) store.teamPostMatchStats = {};
+  const upsert = (teamId, teamName, side) => {
+    const key = teamId ? `id:${teamId}` : `name:${normalizeName(teamName)}`;
+    if (!store.teamPostMatchStats[key]) {
+      store.teamPostMatchStats[key] = {
+        teamId: teamId || "",
+        teamName: teamName || "Unknown",
+        matches: 0,
+        possession: [],
+        shotsOnTarget: [],
+        corners: [],
+        fouls: [],
+        bigChances: [],
+        freeKicks: [],
+        quarterScoring: emptyGoalQuarters(),
+      };
+    }
+    const row = store.teamPostMatchStats[key];
+    row.matches += 1;
+    row.teamName = teamName || row.teamName;
+    row.teamId = teamId || row.teamId;
+    row.possession = pushRolling(row.possession, stats?.[side]?.possession);
+    row.shotsOnTarget = pushRolling(row.shotsOnTarget, stats?.[side]?.shotsOnTarget);
+    row.corners = pushRolling(row.corners, stats?.[side]?.corners);
+    row.fouls = pushRolling(row.fouls, stats?.[side]?.fouls);
+    row.bigChances = pushRolling(row.bigChances, stats?.[side]?.bigChances);
+    row.freeKicks = pushRolling(row.freeKicks, stats?.[side]?.freeKicks);
+    for (const keyQuarter of Object.keys(emptyGoalQuarters())) {
+      row.quarterScoring[keyQuarter] = Number(row.quarterScoring[keyQuarter] || 0) + Number(stats?.goalQuarters?.[side]?.[keyQuarter] || 0);
+    }
+    row.rolling = {
+      possession: averageRolling(row.possession),
+      shotsOnTarget: averageRolling(row.shotsOnTarget),
+      corners: averageRolling(row.corners),
+      fouls: averageRolling(row.fouls),
+      bigChances: averageRolling(row.bigChances),
+      freeKicks: averageRolling(row.freeKicks),
+    };
+    row.lastSource = stats?.source || null;
+    row.lastUpdated = Date.now();
+  };
+  upsert(match.homeTeamId, match.homeTeamName, "home");
+  upsert(match.awayTeamId, match.awayTeamName, "away");
+}
+
 function defaultStore() {
   return {
     teams: {},
@@ -9752,6 +10087,7 @@ function defaultStore() {
     predictionSnapshots: {},
     predictionSnapshotIndex: {},
     postMatchReviews: {},
+    teamPostMatchStats: {},
     teamLearning: {},
     leagueReliability: {},
     phaseReliability: {},
@@ -10362,6 +10698,7 @@ async function main() {
   if (!store.marketProfiles) store.marketProfiles = {};
   if (!store.marketProfilesUpdated) store.marketProfilesUpdated = {};
   if (!store.postMatchReviews) store.postMatchReviews = {};
+  if (!store.teamPostMatchStats) store.teamPostMatchStats = {};
   if (!store.predictionSnapshots) store.predictionSnapshots = {};
   if (!store.predictionSnapshotIndex) store.predictionSnapshotIndex = {};
   if (!store.teamLearning) store.teamLearning = {};
@@ -10889,6 +11226,7 @@ async function main() {
         teamName: homeName,
         recent: homeRecent,
         seasonStats: homeSeasonStats,
+        postMatchStatsProfile: store.teamPostMatchStats?.[homeId ? `id:${homeId}` : `name:${normalizeName(homeName)}`] || null,
         injuries: store.teamInjuries[homeId] || null,
         clubElo: homeClubElo,
         standingPos: homePos,
@@ -10899,6 +11237,7 @@ async function main() {
         teamName: awayName,
         recent: awayRecent,
         seasonStats: awaySeasonStats,
+        postMatchStatsProfile: store.teamPostMatchStats?.[awayId ? `id:${awayId}` : `name:${normalizeName(awayName)}`] || null,
         injuries: store.teamInjuries[awayId] || null,
         clubElo: awayClubElo,
         standingPos: awayPos,
@@ -11021,6 +11360,16 @@ async function main() {
       const homeScore = event.homeScore?.current != null ? Number(event.homeScore.current) : null;
       const awayScore = event.awayScore?.current != null ? Number(event.awayScore.current) : null;
       const appStatus = inferPostKickoffStatus(event, resolveAppStatus(event), score, now);
+      const isFinishedMatch = String(appStatus || "").toUpperCase() === "FT";
+      let postMatchStats = null;
+      if (isFinishedMatch) {
+        postMatchStats = await buildPostMatchStatsWithFallback({
+          match: { date, homeTeamName: homeName, awayTeamName: awayName },
+          eventDetails,
+          homeId,
+          awayId,
+        });
+      }
       const match = {
         id: matchId,
         sofaId: event.id,
@@ -11093,9 +11442,11 @@ async function main() {
         qualityGate: prediction.qualityGate,
         monteCarlo: prediction.monteCarlo,
         ensembleMeta: prediction.ensembleMeta,
+        postMatchStats: isFinishedMatch ? (postMatchStats || normalizePostMatchStats({}, "missing", "finished-without-stats")) : null,
       };
 
       dayMatches.push(match);
+      if (isFinishedMatch) updateTeamPostMatchStats(store, match);
       const predictionRecord = {
         matchId,
         date,
@@ -11142,6 +11493,7 @@ async function main() {
         featureVector: prediction.featureVector,
         ensembleMeta: prediction.ensembleMeta,
         monteCarlo: prediction.monteCarlo,
+        postMatchStats: isFinishedMatch ? (postMatchStats || normalizePostMatchStats({}, "missing", "finished-without-stats")) : null,
         ...prediction,
       };
       const snapshotMeta = registerPredictionSnapshot(store, match, predictionRecord, now);
@@ -11282,3 +11634,20 @@ main();
 
 
 
+  const rolling = postMatchStatsProfile?.rolling || {};
+  const blendedSeason = {
+    avgShotsOn: seasonStats?.avgShotsOn ?? rolling.shotsOnTarget ?? null,
+    avgShotsOnAgainst: seasonStats?.avgShotsOnAgainst ?? null,
+    avgShots: seasonStats?.avgShots ?? null,
+    avgShotsAgainst: seasonStats?.avgShotsAgainst ?? null,
+    avgPossession: seasonStats?.avgPossession ?? rolling.possession ?? null,
+    avgCorners: seasonStats?.avgCorners ?? rolling.corners ?? null,
+    avgCornersAgainst: seasonStats?.avgCornersAgainst ?? null,
+    cleanSheets: seasonStats?.cleanSheets ?? null,
+    cleanSheetRate: seasonStats?.cleanSheetRate ?? null,
+    failToScoreRate: seasonStats?.failToScoreRate ?? null,
+    bttsRate: seasonStats?.bttsRate ?? null,
+    over25Rate: seasonStats?.over25Rate ?? null,
+    dominanceScore: seasonStats?.dominanceScore ?? null,
+    historicalGames: seasonStats?.historicalGames ?? null,
+  };
