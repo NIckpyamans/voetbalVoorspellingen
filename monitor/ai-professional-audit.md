@@ -1,35 +1,35 @@
 # FootyAI professionele AI-audit
 
-Gegenereerd: 2026-05-26T10:59:57.055Z
+Gegenereerd: 2026-06-01T12:22:01.191Z
 Bron: https://voorspellingenprive.vercel.app
 
 ## Samenvatting
-Professionele audit actief. Kritieke opslagvelden lijken aanwezig; blijf kalibratie en bronkwaliteit bewaken.
+Professionele audit actief, maar live fetch is beperkt: snapshots.
 
 ## Live status
-- Wedstrijden vandaag: 1
-- Voorspellingen vandaag: 1
-- Reviews: 661
-- Prediction snapshots: 12
-- Worker: v22-backtest-source-audit
-- Feature coverage: 100%
+- Wedstrijden vandaag: 0
+- Voorspellingen vandaag: 0
+- Reviews: 682
+- Prediction snapshots: 0
+- Worker: v23-calibrated-odds-ledger
+- Feature coverage: 0%
 - Echte odds coverage: 0%
-- Alleen historisch marktprofiel: 100%
-- Gemiddelde datacompleetheid: 74%
-- Datacompleetheid-audit: Datacompleetheid vandaag: 74%, laagste kwart 74%.
-- Odds readiness: Kies of configureer eerst een echte oddsprovider; historische football-data.co.uk profielen blijven alleen calibratie-input.
+- Alleen historisch marktprofiel: 0%
+- Gemiddelde datacompleetheid: onbekend
+- Datacompleetheid-audit: onbekend
+- Odds readiness: onbekend
 
 ## Opslag-audit
-- prediction_id: aanwezig (kritiek) - Voeg een stabiele prediction_id toe per voorspelling.
-- generated_at / cutoff_at: aanwezig (kritiek) - Sla tijdstip en cutoff expliciet op zodat latere uitslagen geen input kunnen worden.
-- featureVector: aanwezig (hoog) - Aanwezig waar predictions gevuld zijn; maak hem immutable per prediction_id.
-- model_version: aanwezig (hoog) - Gebruik naast ensembleMeta ook workerVersion en feature_schema_version.
+- prediction_id: mist (kritiek) - Voeg een stabiele prediction_id toe per voorspelling.
+- generated_at / cutoff_at: mist (kritiek) - Sla tijdstip en cutoff expliciet op zodat latere uitslagen geen input kunnen worden.
+- featureVector: mist (hoog) - Aanwezig waar predictions gevuld zijn; maak hem immutable per prediction_id.
+- model_version: mist (hoog) - Gebruik naast ensembleMeta ook workerVersion en feature_schema_version.
 - odds_at_prediction: mist (hoog) - Sla echte bookmaker, markt, odds en timestamp op; historische marktprofielen tellen niet als ROI-basis.
-- odds_status / missing_reason: aanwezig (hoog) - Markeer per voorspelling of odds echt, deels, historisch-only of ontbrekend zijn.
-- Brier/log loss: aanwezig (kritiek) - Bereken evaluatiemetrics op 1X2 per postMatchReview.
+- odds_status / missing_reason: mist (hoog) - Markeer per voorspelling of odds echt, deels, historisch-only of ontbrekend zijn.
+- Brier/log loss: mist (kritiek) - Bereken evaluatiemetrics op 1X2 per postMatchReview.
 - ROI/CLV met echte odds: mist (hoog) - Bereken ROI/CLV pas wanneer odds_at_prediction en closing_odds echt gevuld zijn.
-- leakage_guard: aanwezig (kritiek) - Leg cutoff_before_kickoff, snapshot_backed en source_timestamp dekking vast.
-- feature_source_metadata: aanwezig (hoog) - Leg per feature bron, as_of en source_timestamp dekking vast.
+- leakage_guard: mist (kritiek) - Leg cutoff_before_kickoff, snapshot_backed en source_timestamp dekking vast.
+- feature_source_metadata: mist (hoog) - Leg per feature bron, as_of en source_timestamp dekking vast.
 
 ## Top verbeteringen
 1. Maak pre-match voorspellingen immutable - impact zeer hoog, moeite middel. Sla prediction_id, generated_at, cutoff_at, model_version, feature_schema_version, input_snapshot_hash en result_status op. Overschrijf deze records nooit bij latere worker-runs.
