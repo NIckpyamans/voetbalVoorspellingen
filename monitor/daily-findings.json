@@ -1972,6 +1972,72 @@
           "issues": []
         }
       ]
+    },
+    "2026-06-02": {
+      "runs": [
+        {
+          "timestamp": "2026-06-01T23:44:48.985Z",
+          "stats": {
+            "today": "2026-06-02",
+            "tomorrow": "2026-06-03",
+            "dataPresent": true,
+            "lastRun": 1780316471426,
+            "ageMinutes": 684,
+            "maxWorkerAgeMinutes": 180,
+            "todayMatches": 0,
+            "tomorrowMatches": 0,
+            "fixtureCalendar": {
+              "status": "fixture_source_gap",
+              "healthy": false,
+              "emptyWindowOk": false,
+              "severity": "medium",
+              "todayCount": 0,
+              "tomorrowCount": 0,
+              "windowDays": 7,
+              "checkedDates": [
+                "2026-06-02",
+                "2026-06-03"
+              ],
+              "nextMatchDate": null,
+              "nextMatchCount": 0,
+              "explanation": "Geen wedstrijden gevonden en onvoldoende kalenderbewijs dat dit een echte lege speeldag is."
+            },
+            "liveMatches": 0,
+            "liveWithoutMinute": 0,
+            "h2hFilled": 0,
+            "h2hMissing": 0,
+            "standingsCount": 41,
+            "cupSheetCount": 3,
+            "phaseReliabilityCount": 3
+          },
+          "issues": [
+            {
+              "key": "worker_stale",
+              "severity": "high",
+              "message": "server_data.json is 684 minuten oud.",
+              "details": {}
+            },
+            {
+              "key": "today_matches_empty",
+              "severity": "medium",
+              "message": "Er zijn geen wedstrijden voor vandaag in server_data.json.",
+              "details": {}
+            },
+            {
+              "key": "fixture_calendar_source_gap",
+              "severity": "medium",
+              "message": "Geen wedstrijden gevonden en onvoldoende kalenderbewijs dat dit een echte lege speeldag is.",
+              "details": {
+                "checkedDates": [
+                  "2026-06-02",
+                  "2026-06-03"
+                ],
+                "nextMatchDate": null
+              }
+            }
+          ]
+        }
+      ]
     }
   }
 }
