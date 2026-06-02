@@ -800,7 +800,7 @@ export interface StandingsResponse {
 // ============================================================================
 
 export type FilterMode = "alle" | "favorieten" | "live" | "gepland" | "gespeeld";
-export type View = "dashboard" | "history" | "standings" | "settings";
+export type View = "dashboard" | "history" | "standings" | "modelops" | "settings";
 
 export interface BestBet {
   matchId: string;

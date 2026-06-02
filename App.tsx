@@ -5,6 +5,7 @@ import BestBetCard from "./components/BestBetCard";
 import PredictionHistory from "./components/PredictionHistory";
 import StandingsView from "./components/StandingsView";
 import SettingsView from "./components/SettingsView";
+import ModelOpsView from "./components/ModelOpsView";
 import DateNavigation from "./components/DateNavigation"; // NIEUW IMPORT
 import { getFavorites } from "./components/FavoriteTeams";
 import { Match } from "./types";
@@ -28,7 +29,7 @@ import {
   shortLeague,
 } from "./shared/dashboard.js";
 
-type View = "dashboard" | "history" | "standings" | "settings";
+type View = "dashboard" | "history" | "standings" | "modelops" | "settings";
 type FilterMode = "alle" | "favorieten" | "live" | "gepland" | "gespeeld";
 
 function isLive(match: Match) {
@@ -598,6 +599,8 @@ const App: React.FC = () => {
           <PredictionHistory />
         ) : view === "standings" ? (
           <StandingsView />
+        ) : view === "modelops" ? (
+          <ModelOpsView />
         ) : view === "settings" ? (
           <SettingsView />
         ) : (

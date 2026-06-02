@@ -58,6 +58,10 @@ function mapServerReview(review: any) {
     oddsProviderStatus: review.oddsProviderStatus || null,
     oddsMissingReason: review.oddsMissingReason || null,
     featureSourceMetadata: review.featureSourceMetadata || null,
+    featureImportance: Array.isArray(review.featureImportance) ? review.featureImportance : [],
+    sourceReliability: review.sourceReliability || null,
+    qualityGate: review.qualityGate || null,
+    leagueCalibration: review.leagueCalibration || null,
     sourceTimestampCoverage: review.sourceTimestampCoverage ?? review.leakageGuard?.sourceTimestampCoverage ?? null,
     bestBetRank: Number(review.bestBetRank || 0) || null,
     topConfidencePick: !!review.topConfidencePick,
@@ -85,10 +89,29 @@ export default async function handler(req: any, res: any) {
     const items = Object.values(store.postMatchReviews || {})
       .map((review: any) => mapServerReview(review))
       .sort((a: any, b: any) => Number(b.timestamp || 0) - Number(a.timestamp || 0));
+    const featureImportanceTrend = items.reduce((acc: Record<string, any>, item: any) => {
+      for (const driver of item.featureImportance || []) {
+        const key = driver.key || driver.label || "unknown";
+        if (!acc[key]) acc[key] = { key, label: driver.label || key, count: 0, totalScore: 0 };
+        acc[key].count += 1;
+        acc[key].totalScore += Number(driver.score || 0);
+      }
+      return acc;
+    }, {});
+    const featureImportanceSummary = Object.values(featureImportanceTrend)
+      .map((row: any) => ({
+        key: row.key,
+        label: row.label,
+        count: row.count,
+        avgScore: Number((Number(row.totalScore || 0) / Math.max(Number(row.count || 0), 1)).toFixed(3)),
+      }))
+      .sort((a: any, b: any) => b.avgScore - a.avgScore)
+      .slice(0, 12);
 
     return res.status(200).json({
       ok: true,
       items,
+      featureImportanceSummary,
       total: items.length,
       sourceBranch: branch,
       workerVersion: store.workerVersion || "unknown",

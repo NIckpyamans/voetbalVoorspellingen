@@ -121,6 +121,8 @@ function buildSplitMeta(store) {
     backtestSummary: store.backtestSummary || null,
     backtestSegmentation: store.backtestSegmentation || null,
     leagueCalibrationProfiles: store.leagueCalibrationProfiles || {},
+    leagueCalibrationProfilesByWindow: store.leagueCalibrationProfilesByWindow || {},
+    leagueCalibrationRollbackProfiles: store.leagueCalibrationRollbackProfiles || {},
     anomalyReport: store.anomalyReport || null,
     topExactScoreMonitor: store.topExactScoreMonitor || null,
     topExactClubs: store.topExactClubs || null,
@@ -252,41 +254,89 @@ function applyLeagueCalibration(probabilities, leagueLabel, dynamicProfile = nul
 
 function rebuildLeagueCalibrationProfilesFromReviews(store) {
   const reviews = Object.values(store?.postMatchReviews || {}).filter(Boolean);
-  const byLeague = {};
-  for (const item of reviews.slice(-1200)) {
-    const league = String(item?.league || "").trim();
-    if (!league) continue;
-    if (!byLeague[league]) byLeague[league] = { matches: 0, actualDraw: 0, predictedDraw: 0, homeMissBias: 0, outcomeHits: 0 };
-    const row = byLeague[league];
-    row.matches += 1;
-    row.outcomeHits += item?.outcomeHit ? 1 : 0;
-    const actual = String(item?.actualScore || "").split("-").map(Number);
-    const pred = String(item?.predictedScore || "").split("-").map(Number);
-    const actualDraw = Number.isFinite(actual[0]) && Number.isFinite(actual[1]) && actual[0] === actual[1] ? 1 : 0;
-    const predDraw = Number.isFinite(pred[0]) && Number.isFinite(pred[1]) && pred[0] === pred[1] ? 1 : 0;
-    row.actualDraw += actualDraw;
-    row.predictedDraw += predDraw;
-    if (item?.actualOutcome === "H" && item?.predictedOutcome !== "H") row.homeMissBias += 1;
-    if (item?.actualOutcome !== "H" && item?.predictedOutcome === "H") row.homeMissBias -= 1;
+  const windows = [7, 30, 90];
+  const generatedAt = new Date().toISOString();
+  const buildProfile = (items, windowDays) => {
+    const byLeague = {};
+    for (const item of items) {
+      const league = String(item?.league || "").trim();
+      if (!league) continue;
+      if (!byLeague[league]) byLeague[league] = { matches: 0, actualDraw: 0, predictedDraw: 0, homeMissBias: 0, outcomeHits: 0 };
+      const row = byLeague[league];
+      row.matches += 1;
+      row.outcomeHits += item?.outcomeHit ? 1 : 0;
+      const actual = String(item?.actualScore || "").split("-").map(Number);
+      const pred = String(item?.predictedScore || "").split("-").map(Number);
+      const actualDraw = Number.isFinite(actual[0]) && Number.isFinite(actual[1]) && actual[0] === actual[1] ? 1 : 0;
+      const predDraw = Number.isFinite(pred[0]) && Number.isFinite(pred[1]) && pred[0] === pred[1] ? 1 : 0;
+      row.actualDraw += actualDraw;
+      row.predictedDraw += predDraw;
+      if (item?.actualOutcome === "H" && item?.predictedOutcome !== "H") row.homeMissBias += 1;
+      if (item?.actualOutcome !== "H" && item?.predictedOutcome === "H") row.homeMissBias -= 1;
+    }
+    const profiles = {};
+    for (const [league, row] of Object.entries(byLeague)) {
+      if (Number(row.matches || 0) < 8) continue;
+      const sampleStability = clamp(Number(row.matches || 0) / (windowDays <= 7 ? 18 : windowDays <= 30 ? 36 : 60), 0, 1);
+      const outcomeHitRate = Number(row.outcomeHits || 0) / Number(row.matches || 1);
+      const hitRateStability = clamp(1 - Math.abs(outcomeHitRate - 0.52) * 1.7, 0, 1);
+      const stabilityScore = Number((sampleStability * 0.72 + hitRateStability * 0.28).toFixed(3));
+      const drawRateActual = Number(row.actualDraw || 0) / Number(row.matches || 1);
+      const drawRatePred = Number(row.predictedDraw || 0) / Number(row.matches || 1);
+      const drawBias = clamp((drawRateActual - drawRatePred) * 0.08, -0.035, 0.035);
+      const homeBias = clamp((Number(row.homeMissBias || 0) / Number(row.matches || 1)) * 0.03, -0.025, 0.025);
+      const confidenceBias = clamp((outcomeHitRate - 0.52) * 0.04, -0.025, 0.025);
+      profiles[league] = {
+        matches: Number(row.matches || 0),
+        windowDays,
+        stabilityScore,
+        confidenceBias: Number(confidenceBias.toFixed(4)),
+        drawBias: Number(drawBias.toFixed(4)),
+        homeBias: Number(homeBias.toFixed(4)),
+        updatedAt: generatedAt,
+      };
+    }
+    return profiles;
+  };
+  const now = Date.now();
+  const profilesByWindow = {};
+  for (const days of windows) {
+    const cutoff = now - days * 24 * 60 * 60 * 1000;
+    profilesByWindow[String(days)] = buildProfile(
+      reviews.filter((review) => Number(review?.createdAt || 0) >= cutoff || Date.parse(review?.date || "") >= cutoff),
+      days
+    );
   }
-  const profiles = {};
-  for (const [league, row] of Object.entries(byLeague)) {
-    if (Number(row.matches || 0) < 24) continue;
-    const drawRateActual = Number(row.actualDraw || 0) / Number(row.matches || 1);
-    const drawRatePred = Number(row.predictedDraw || 0) / Number(row.matches || 1);
-    const drawBias = clamp((drawRateActual - drawRatePred) * 0.08, -0.035, 0.035);
-    const homeBias = clamp((Number(row.homeMissBias || 0) / Number(row.matches || 1)) * 0.03, -0.025, 0.025);
-    const outcomeHitRate = Number(row.outcomeHits || 0) / Number(row.matches || 1);
-    const confidenceBias = clamp((outcomeHitRate - 0.52) * 0.04, -0.025, 0.025);
-    profiles[league] = {
-      matches: Number(row.matches || 0),
-      confidenceBias: Number(confidenceBias.toFixed(4)),
-      drawBias: Number(drawBias.toFixed(4)),
-      homeBias: Number(homeBias.toFixed(4)),
-      updatedAt: new Date().toISOString(),
+  const allLeagues = new Set(Object.values(profilesByWindow).flatMap((profiles) => Object.keys(profiles || {})));
+  const selectedProfiles = {};
+  for (const league of allLeagues) {
+    const candidates = windows
+      .map((days) => profilesByWindow[String(days)]?.[league])
+      .filter(Boolean)
+      .sort((a, b) => Number(b.stabilityScore || 0) - Number(a.stabilityScore || 0));
+    const selected = candidates[0];
+    if (!selected || Number(selected.stabilityScore || 0) < 0.45) continue;
+    selectedProfiles[league] = {
+      ...selected,
+      selectedWindow: selected.windowDays,
+      availableWindows: candidates.map((item) => ({
+        windowDays: item.windowDays,
+        matches: item.matches,
+        stabilityScore: item.stabilityScore,
+      })),
     };
   }
-  store.leagueCalibrationProfiles = profiles;
+  const rollbackProfiles = { ...(store.leagueCalibrationRollbackProfiles || {}) };
+  for (const alert of store.backtestSegmentation?.driftAlerts || []) {
+    if (alert?.scope !== "league" || alert?.severity !== "high") continue;
+    const key = String(alert.key || "");
+    const previous = store.leagueCalibrationProfiles?.[key];
+    if (previous) rollbackProfiles[key] = { ...previous, rollbackAt: generatedAt, rollbackReason: "performance_drift" };
+    delete selectedProfiles[key];
+  }
+  store.leagueCalibrationProfilesByWindow = profilesByWindow;
+  store.leagueCalibrationRollbackProfiles = rollbackProfiles;
+  store.leagueCalibrationProfiles = selectedProfiles;
 }
 
 function quarterBucketFromMinute(minuteLike) {
@@ -6854,6 +6904,10 @@ function buildPostMatchReview(match, prediction) {
     oddsStatus: oddsDiagnostics.oddsStatus,
     oddsMissingReason: oddsDiagnostics.oddsMissingReason,
     featureSourceMetadata: prediction?.featureSourceMetadata || null,
+    featureImportance: prediction?.featureImportance || prediction?.modelEdges?.featureImportance || [],
+    sourceReliability: prediction?.modelEdges?.sourceReliability || null,
+    qualityGate: prediction?.qualityGate || prediction?.modelEdges?.qualityGate || null,
+    leagueCalibration: prediction?.modelEdges?.leagueCalibration || null,
     sourceTimestampCoverage: prediction?.featureSourceMetadata?.coverage?.timestampCoverage ?? null,
     modelVersion: prediction?.modelVersion || prediction?.ensembleMeta?.baseModel || null,
     featureSchemaVersion: prediction?.featureSchemaVersion || null,
@@ -10288,6 +10342,8 @@ function defaultStore() {
     leagueReliability: {},
     phaseReliability: {},
     leagueCalibrationProfiles: {},
+    leagueCalibrationProfilesByWindow: {},
+    leagueCalibrationRollbackProfiles: {},
     backtestSegmentation: null,
     featureDiagnostics: null,
     sourceCoverage: null,
@@ -10725,48 +10781,58 @@ async function runSelfHealingRetries(store, todayKey, now) {
   const result = {
     attempted: 0,
     healed: 0,
+    timedOut: 0,
     details: [],
   };
-  for (const match of todayMatches) {
+  const timeoutMs = Number(process.env.SELF_HEALING_TIMEOUT_MS || 4500);
+  const concurrency = Number(process.env.SELF_HEALING_CONCURRENCY || 4);
+  const withHardTimeout = (promise, label) =>
+    Promise.race([
+      promise,
+      sleep(timeoutMs).then(() => ({ timedOut: true, label })),
+    ]);
+  const healMatch = async (match) => {
     const problems = [];
     const isLive = ["LIVE", "HT"].includes(String(match?.status || "").toUpperCase());
     if (isLive && !match?.minute && !Number.isFinite(Number(match?.minuteValue))) problems.push("live_minute_present");
     if (Number(match?.h2h?.played || 0) <= 0) problems.push("h2h_not_empty");
     if (match?.aggregate?.active && !match?.aggregate?.firstLegScore) problems.push("first_leg_for_aggregate");
     if (!match?.homeLogo || !match?.awayLogo) problems.push("logos_with_fallback");
-    if (!problems.length) continue;
-    result.attempted += 1;
+    if (!problems.length) return null;
     let changed = false;
     const eventId = String(match?.sofaId || "").replace(/^ss-/, "");
-    if (eventId && (problems.includes("live_minute_present") || problems.includes("first_leg_for_aggregate") || problems.includes("logos_with_fallback"))) {
-      const details = await fetchEventDetails(eventId);
-      if (details) {
-        const minuteState = resolveMinuteState(
-          { status: details?.status || {}, homeScore: details?.homeScore || {}, awayScore: details?.awayScore || {} },
-          details
-        );
-        if (!match?.minute && (minuteState?.minute || Number.isFinite(Number(minuteState?.minuteValue)))) {
-          match.minute = minuteState.minute || match.minute;
-          match.minuteValue = minuteState.minuteValue ?? match.minuteValue;
+    const detailTask = eventId && (problems.includes("live_minute_present") || problems.includes("first_leg_for_aggregate") || problems.includes("logos_with_fallback"))
+      ? fetchEventDetails(eventId)
+      : Promise.resolve(null);
+    const h2hTask = problems.includes("h2h_not_empty") && eventId && match?.homeTeamId && match?.awayTeamId
+      ? fetchH2H(eventId, match.homeTeamId, match.awayTeamId, null, null)
+      : Promise.resolve(null);
+    const [details, h2h] = await Promise.all([detailTask, h2hTask]);
+    if (details) {
+      const minuteState = resolveMinuteState(
+        { status: details?.status || {}, homeScore: details?.homeScore || {}, awayScore: details?.awayScore || {} },
+        details
+      );
+      if (!match?.minute && (minuteState?.minute || Number.isFinite(Number(minuteState?.minuteValue)))) {
+        match.minute = minuteState.minute || match.minute;
+        match.minuteValue = minuteState.minuteValue ?? match.minuteValue;
+        changed = true;
+      }
+      if ((!match?.homeLogo || !match?.awayLogo) && details?.homeTeam && details?.awayTeam) {
+        const homeLogo = resolveTeamLogoUrl(details.homeTeam, match.homeTeamId, match.homeTeamName, "sofascore");
+        const awayLogo = resolveTeamLogoUrl(details.awayTeam, match.awayTeamId, match.awayTeamName, "sofascore");
+        if (homeLogo && !match.homeLogo) {
+          match.homeLogo = homeLogo;
           changed = true;
         }
-        if ((!match?.homeLogo || !match?.awayLogo) && details?.homeTeam && details?.awayTeam) {
-          const homeLogo = resolveTeamLogoUrl(details.homeTeam, match.homeTeamId, match.homeTeamName, "sofascore");
-          const awayLogo = resolveTeamLogoUrl(details.awayTeam, match.awayTeamId, match.awayTeamName, "sofascore");
-          if (homeLogo && !match.homeLogo) {
-            match.homeLogo = homeLogo;
-            changed = true;
-          }
-          if (awayLogo && !match.awayLogo) {
-            match.awayLogo = awayLogo;
-            changed = true;
-          }
+        if (awayLogo && !match.awayLogo) {
+          match.awayLogo = awayLogo;
+          changed = true;
         }
       }
     }
-    if (problems.includes("h2h_not_empty") && eventId && match?.homeTeamId && match?.awayTeamId) {
+    if (h2h && problems.includes("h2h_not_empty") && eventId && match?.homeTeamId && match?.awayTeamId) {
       const h2hKey = `${eventId}_${match.homeTeamId}_${match.awayTeamId}`;
-      const h2h = await fetchH2H(eventId, match.homeTeamId, match.awayTeamId, null, null);
       const normalized = ensureH2HContract(h2h, match.homeTeamId, match.awayTeamId);
       if (Number(normalized?.played || 0) > 0) {
         match.h2h = normalized;
@@ -10784,8 +10850,33 @@ async function runSelfHealingRetries(store, todayKey, now) {
       }
     }
     if (changed) {
-      result.healed += 1;
-      result.details.push({ matchId: match.id, healedProblems: problems });
+      return { matchId: match.id, healedProblems: problems };
+    }
+    return { matchId: match.id, healedProblems: [], attemptedProblems: problems };
+  };
+  const candidates = todayMatches.filter((match) => {
+    const status = String(match?.status || "").toUpperCase();
+    return (
+      (["LIVE", "HT"].includes(status) && !match?.minute && !Number.isFinite(Number(match?.minuteValue))) ||
+      Number(match?.h2h?.played || 0) <= 0 ||
+      (match?.aggregate?.active && !match?.aggregate?.firstLegScore) ||
+      !match?.homeLogo ||
+      !match?.awayLogo
+    );
+  });
+  result.attempted = candidates.length;
+  for (let index = 0; index < candidates.length; index += concurrency) {
+    const batch = candidates.slice(index, index + concurrency);
+    const outcomes = await Promise.all(batch.map((match) => withHardTimeout(healMatch(match), match.id)));
+    for (const outcome of outcomes) {
+      if (!outcome) continue;
+      if (outcome.timedOut) {
+        result.timedOut += 1;
+        result.details.push({ matchId: outcome.label, timedOut: true });
+        continue;
+      }
+      if (Array.isArray(outcome.healedProblems) && outcome.healedProblems.length) result.healed += 1;
+      result.details.push(outcome);
     }
   }
   return result;
@@ -11123,6 +11214,8 @@ async function main() {
   if (!store.marketProfilesUpdated) store.marketProfilesUpdated = {};
   if (!store.postMatchReviews) store.postMatchReviews = {};
   if (!store.leagueCalibrationProfiles) store.leagueCalibrationProfiles = {};
+  if (!store.leagueCalibrationProfilesByWindow) store.leagueCalibrationProfilesByWindow = {};
+  if (!store.leagueCalibrationRollbackProfiles) store.leagueCalibrationRollbackProfiles = {};
   if (!store.backtestSegmentation) store.backtestSegmentation = null;
   if (!store.teamPostMatchStats) store.teamPostMatchStats = {};
   if (!store.predictionSnapshots) store.predictionSnapshots = {};
@@ -12033,8 +12126,8 @@ async function main() {
   store.worldCup2026Readiness = buildWorldCup2026ReadinessFromStore(store);
   compactStore(store, today, now);
   rebuildReviewsAndLearning(store);
-  rebuildLeagueCalibrationProfilesFromReviews(store);
   store.backtestSegmentation = buildBacktestSegmentation(store);
+  rebuildLeagueCalibrationProfilesFromReviews(store);
   const selfHealing = await runSelfHealingRetries(store, today, now);
   store.sourceCoverage = buildSourceCoverage(store, today);
   store.dataCompletenessAudit = buildDataCompletenessAudit(store, today);
