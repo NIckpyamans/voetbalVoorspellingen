@@ -217,6 +217,29 @@ function buildRetainedDateSet(baseDateKey) {
   return retain;
 }
 
+function resolveDateWindowToken(token, todayKey) {
+  const value = String(token || "").trim().toLowerCase();
+  if (!value) return null;
+  if (value === "yesterday") return addDaysToDateKey(todayKey, -1);
+  if (value === "today") return todayKey;
+  if (value === "tomorrow") return addDaysToDateKey(todayKey, 1);
+  if (value === "dayaftertomorrow" || value === "day-after-tomorrow") return addDaysToDateKey(todayKey, 2);
+  if (/^[+-]?\d+$/.test(value)) return addDaysToDateKey(todayKey, Number(value));
+  if (/^\d{4}-\d{2}-\d{2}$/.test(value)) return value;
+  return null;
+}
+
+function buildRefreshDateWindow(todayKey) {
+  const configured = String(process.env.FOOTYAI_DATE_WINDOW || "").trim();
+  const tokens = configured
+    ? configured.split(",")
+    : ["-1", "0", "1", "2", "3", "4", "5", "6", "7"];
+  const resolved = tokens
+    .map((token) => resolveDateWindowToken(token, todayKey))
+    .filter(Boolean);
+  return [...new Set(resolved)].sort();
+}
+
 function trimScoreMatrix(scoreMatrix, limit = MAX_SCORE_MATRIX_ENTRIES) {
   return Object.fromEntries(
     Object.entries(scoreMatrix || {})
@@ -4001,6 +4024,14 @@ function buildTeamAiSummary(side, teamName, recent, profile, injuries) {
 
 function buildTrainingSnapshot(store) {
   const rows = [];
+  const snapshotsByMatchId = new Map();
+  for (const snapshot of Object.values(store.predictionSnapshots || {}).flat()) {
+    if (!snapshot?.matchId) continue;
+    const list = snapshotsByMatchId.get(snapshot.matchId) || [];
+    list.push(snapshot);
+    snapshotsByMatchId.set(snapshot.matchId, list);
+  }
+
   for (const date of Object.keys(store.matches || {})) {
     const matches = store.matches?.[date] || [];
     const predictions = Object.fromEntries(
@@ -4010,7 +4041,16 @@ function buildTrainingSnapshot(store) {
     for (const match of matches) {
       const prediction = predictions[match.id] || {};
       const reviewPrediction = selectPredictionForReview(store, match, prediction);
-      rows.push({
+      const label =
+        String(match.status || "").toUpperCase() === "FT" && match.score?.includes("-")
+          ? (() => {
+              const [homeGoals, awayGoals] = String(match.score).split("-").map(Number);
+              if (homeGoals > awayGoals) return "H";
+              if (homeGoals < awayGoals) return "A";
+              return "D";
+            })()
+          : null;
+      const baseRow = {
         date,
         matchId: match.id,
         league: match.league,
@@ -4018,28 +4058,44 @@ function buildTrainingSnapshot(store) {
         awayTeam: match.awayTeamName,
         status: match.status || "NS",
         score: match.score || null,
-        label:
-          String(match.status || "").toUpperCase() === "FT" && match.score?.includes("-")
-            ? (() => {
-                const [homeGoals, awayGoals] = String(match.score).split("-").map(Number);
-                if (homeGoals > awayGoals) return "H";
-                if (homeGoals < awayGoals) return "A";
-                return "D";
-              })()
-            : null,
-        predictionId: reviewPrediction?.predictionId || prediction.predictionId || null,
-        generatedAt: reviewPrediction?.generatedAt || prediction.generatedAt || null,
-        cutoffAt: reviewPrediction?.cutoffAt || prediction.cutoffAt || null,
-        featureVector: reviewPrediction?.featureVector || prediction.featureVector || null,
-        ensembleMeta: reviewPrediction?.ensembleMeta || prediction.ensembleMeta || null,
+        label,
         review: store.postMatchReviews?.[match.id] || null,
-      });
+      };
+      const snapshotCandidates = (snapshotsByMatchId.get(match.id) || [])
+        .filter((snapshot) => snapshot?.predictionId && snapshot?.generatedAt)
+        .map((snapshot) => ({
+          predictionId: snapshot.predictionId,
+          generatedAt: snapshot.generatedAt,
+          cutoffAt: snapshot.cutoffAt || snapshot.generatedAt,
+          featureVector: snapshot.featureVector || snapshot.features || snapshot.inputSnapshot?.featureVector || null,
+          ensembleMeta: snapshot.ensembleMeta || snapshot.prediction?.ensembleMeta || null,
+          snapshotStatus: snapshot.status || null,
+          snapshotBacked: true,
+        }));
+      const candidates = [
+        {
+          predictionId: reviewPrediction?.predictionId || prediction.predictionId || null,
+          generatedAt: reviewPrediction?.generatedAt || prediction.generatedAt || null,
+          cutoffAt: reviewPrediction?.cutoffAt || prediction.cutoffAt || null,
+          featureVector: reviewPrediction?.featureVector || prediction.featureVector || null,
+          ensembleMeta: reviewPrediction?.ensembleMeta || prediction.ensembleMeta || null,
+          snapshotBacked: false,
+        },
+        ...snapshotCandidates,
+      ];
+      const seenCandidateIds = new Set();
+      for (const candidate of candidates) {
+        const candidateKey = candidate.predictionId || `${match.id}:${candidate.generatedAt || "latest"}`;
+        if (seenCandidateIds.has(candidateKey)) continue;
+        seenCandidateIds.add(candidateKey);
+        rows.push({ ...baseRow, ...candidate });
+      }
     }
   }
 
   return {
     generatedAt: new Date().toISOString(),
-    version: "v8-monte-carlo",
+    version: "v9-snapshot-expanded",
     reviewCount: Object.keys(store.postMatchReviews || {}).length,
     rows,
   };
@@ -4693,7 +4749,7 @@ function matchHasFinalScore(match) {
   );
 }
 
-function normalizeStoredMatchReliability(match, dateKey, now) {
+function normalizeStoredMatchReliability(match, dateKey, now, store = null) {
   if (!match || typeof match !== "object") return match;
   const next = { ...match };
   const result = lookupCuratedResultBackfill(dateKey, next.homeTeamName || next.homeTeam, next.awayTeamName || next.awayTeam);
@@ -4709,6 +4765,28 @@ function normalizeStoredMatchReliability(match, dateKey, now) {
       next.resultPending = false;
       next.resultPendingReason = null;
     }
+  }
+  const historicalResult = store && !matchHasFinalScore(next) ? lookupHistoricalResultBackfill(store, next, dateKey) : null;
+  if (historicalResult && !matchHasFinalScore(next)) {
+    next.homeScore = historicalResult.homeScore;
+    next.awayScore = historicalResult.awayScore;
+    next.score = historicalResult.score;
+    next.status = "FT";
+    next.resultBackfill = true;
+    next.resultBackfillSource = historicalResult.source || "historical result backfill";
+    next.resultPending = false;
+    next.resultPendingReason = null;
+  }
+  const storedH2H = store && Number(next.h2h?.played || 0) <= 0 ? lookupStoredMatchH2HBackfill(store, next, dateKey) : null;
+  if (storedH2H?.played) {
+    next.h2h = {
+      ...storedH2H,
+      agent: {
+        ...(storedH2H.agent || {}),
+        name: "H2H-agent",
+        source: "stored-match-history",
+      },
+    };
   }
 
   const kickoffMs = Date.parse(next.kickoff || next.date || `${dateKey}T12:00:00Z`);
@@ -6624,6 +6702,100 @@ function lookupHistoricalH2HBackfill(leagueMarketProfile, homeName, awayName, cu
     results,
     status: leagueMarketProfile?.source === "openfootball" ? "openfootball-historical" : "historical-competition",
   };
+}
+
+function orientHistoricalScore(item, homeName, awayName) {
+  const scoreParts = String(item?.score || "").split("-").map(Number);
+  if (scoreParts.length !== 2 || !scoreParts.every(Number.isFinite)) return null;
+  const homeVariants = new Set(buildPossibleNames(homeName));
+  const awayVariants = new Set(buildPossibleNames(awayName));
+  const itemHome = normalizeName(item?.home || item?.homeTeam || "");
+  const itemAway = normalizeName(item?.away || item?.awayTeam || "");
+  if (homeVariants.has(itemHome) && awayVariants.has(itemAway)) {
+    return { homeScore: scoreParts[0], awayScore: scoreParts[1], score: `${scoreParts[0]}-${scoreParts[1]}` };
+  }
+  if (homeVariants.has(itemAway) && awayVariants.has(itemHome)) {
+    return { homeScore: scoreParts[1], awayScore: scoreParts[0], score: `${scoreParts[1]}-${scoreParts[0]}` };
+  }
+  return null;
+}
+
+function lookupHistoricalResultBackfill(store, match, dateKey) {
+  if (!store || !match || !dateKey) return null;
+  const homeName = match.homeTeamName || match.homeTeam;
+  const awayName = match.awayTeamName || match.awayTeam;
+  const profileBuckets = [
+    store.marketProfiles?.[match.league],
+    store.openfootballProfiles?.[match.league],
+    ...Object.values(store.marketProfiles || {}),
+    ...Object.values(store.openfootballProfiles || {}),
+  ].filter(Boolean);
+  const seenProfiles = new Set();
+  for (const profile of profileBuckets) {
+    const profileKey = `${profile.source || "profile"}:${profile.updatedAt || ""}:${profile.sampleSize || ""}`;
+    if (seenProfiles.has(profileKey)) continue;
+    seenProfiles.add(profileKey);
+    const historical = lookupHistoricalH2HBackfill(profile, homeName, awayName, match.homeTeamId, match.awayTeamId);
+    const hit = (historical?.results || []).find((item) => String(item?.date || "").slice(0, 10) === dateKey);
+    const oriented = hit ? orientHistoricalScore(hit, homeName, awayName) : null;
+    if (oriented) {
+      return {
+        ...oriented,
+        source: hit.source || historical.status || profile.source || "historical-result-backfill",
+      };
+    }
+  }
+  return null;
+}
+
+function lookupStoredMatchH2HBackfill(store, match, dateKey) {
+  if (!store || !match || !dateKey) return null;
+  const homeName = match.homeTeamName || match.homeTeam;
+  const awayName = match.awayTeamName || match.awayTeam;
+  const homeVariants = new Set(buildPossibleNames(homeName));
+  const awayVariants = new Set(buildPossibleNames(awayName));
+  const results = [];
+  for (const [storedDate, matches] of Object.entries(store.matches || {})) {
+    if (String(storedDate || "") >= String(dateKey || "")) continue;
+    for (const candidate of matches || []) {
+      if (!matchHasFinalScore(candidate)) continue;
+      const candidateHome = normalizeName(candidate.homeTeamName || candidate.homeTeam || "");
+      const candidateAway = normalizeName(candidate.awayTeamName || candidate.awayTeam || "");
+      const sameOrder = homeVariants.has(candidateHome) && awayVariants.has(candidateAway);
+      const reversed = homeVariants.has(candidateAway) && awayVariants.has(candidateHome);
+      if (!sameOrder && !reversed) continue;
+      const score = String(candidate.score || `${candidate.homeScore}-${candidate.awayScore}`);
+      const [homeScore, awayScore] = score.split("-").map(Number);
+      if (!Number.isFinite(homeScore) || !Number.isFinite(awayScore)) continue;
+      const winnerId =
+        homeScore === awayScore
+          ? ""
+          : (sameOrder ? homeScore > awayScore : awayScore > homeScore)
+            ? String(match.homeTeamId || normalizeName(homeName))
+            : String(match.awayTeamId || normalizeName(awayName));
+      results.push({
+        date: String(storedDate || candidate.date || "").slice(0, 10),
+        home: sameOrder ? homeName : awayName,
+        away: sameOrder ? awayName : homeName,
+        score: sameOrder ? `${homeScore}-${awayScore}` : `${awayScore}-${homeScore}`,
+        homeTeamId: sameOrder ? match.homeTeamId || "" : match.awayTeamId || "",
+        awayTeamId: sameOrder ? match.awayTeamId || "" : match.homeTeamId || "",
+        winnerId,
+        source: candidate.resultBackfillSource || candidate.source || "stored-match-history",
+        sourceTimestamp: candidate.sourceAsOf?.result || candidate.sourceAsOf?.fixture || isoFromMs(Date.now()),
+      });
+    }
+  }
+  if (!results.length) return null;
+  return summarizeH2HResults(
+    results.slice(-5),
+    homeName,
+    awayName,
+    match.homeTeamId,
+    match.awayTeamId,
+    "stored-match-history",
+    results.length
+  );
 }
 
 function lookupMarketTeamProfile(leagueMarketProfile, teamName) {
@@ -9597,6 +9769,7 @@ function buildH2HAgentProfile({
   fallbackLegs = [],
   marketProfile,
   openFootballProfile,
+  extraProfiles = [],
   homeName,
   awayName,
   homeId,
@@ -9624,10 +9797,10 @@ function buildH2HAgentProfile({
     sameCompetitionPlayed += Number(curatedH2H.sameCompetitionPlayed || 0);
   }
 
-  for (const historicalH2H of [
-    lookupHistoricalH2HBackfill(marketProfile || null, homeName, awayName, homeId, awayId),
-    lookupHistoricalH2HBackfill(openFootballProfile || null, homeName, awayName, homeId, awayId),
-  ]) {
+  const historicalProfiles = [marketProfile, openFootballProfile, ...extraProfiles].filter(Boolean);
+  for (const historicalH2H of historicalProfiles.map((profile) =>
+    lookupHistoricalH2HBackfill(profile, homeName, awayName, homeId, awayId)
+  )) {
     if (!historicalH2H?.results?.length) continue;
     results = mergeH2HResultLists(results, historicalH2H.results);
     sources.push(historicalH2H.status || "historical-competition");
@@ -9949,10 +10122,36 @@ function predict(input) {
       : rawBestHomeGoals === rawBestAwayGoals
         ? "draw"
         : "away";
-  const selectedScore = bestScore;
-  const selectedExactProb = bestProb;
   const dominantOutcome = outcomeEntries[0];
   const outcomeEdge = Number((dominantOutcome.prob - outcomeEntries[1].prob).toFixed(4));
+  let selectedScore = bestScore;
+  let selectedExactProb = bestProb;
+  let scoreSelectionReason =
+    scoreCalibration.applied
+      ? `${scoreCalibration.reason}; scorematrix gekalibreerd`
+      : dominantOutcome.key !== bestScoreOutcome
+        ? `hoogste exacte scorematrix-kans inclusief Monte Carlo; 1X2 neigt naar ${dominantOutcome.key === "home" ? "thuiswinst" : dominantOutcome.key === "away" ? "uitwinst" : "gelijkspel"}`
+        : "hoogste exacte scorematrix-kans inclusief Monte Carlo";
+  const outcomeAlignedScore = Object.entries(combinedScoreMatrix)
+    .filter(([score]) => {
+      const [homeGoals, awayGoals] = String(score).split("-").map(Number);
+      if (!Number.isFinite(homeGoals) || !Number.isFinite(awayGoals)) return false;
+      const scoreOutcome = homeGoals > awayGoals ? "home" : homeGoals === awayGoals ? "draw" : "away";
+      return scoreOutcome === dominantOutcome.key;
+    })
+    .sort((a, b) => Number(b[1] || 0) - Number(a[1] || 0))[0];
+  const outcomeReliabilityLift =
+    Number(input.modelPerformance?.probabilityOutcomeHitRate || 0) -
+    Number(input.modelPerformance?.exactHitRate || input.modelPerformance?.scoreHitRate || 0);
+  const shouldAlignToOutcome =
+    outcomeAlignedScore &&
+    dominantOutcome.key !== bestScoreOutcome &&
+    (outcomeEdge >= 0.08 || outcomeReliabilityLift >= 0.04);
+  if (shouldAlignToOutcome) {
+    selectedScore = outcomeAlignedScore[0];
+    selectedExactProb = Number(outcomeAlignedScore[1] || selectedExactProb || 0);
+    scoreSelectionReason = `1X2-edge (${Math.round(outcomeEdge * 100)}pp) weegt zwaarder dan exacte score; gekozen score past bij ${dominantOutcome.key === "home" ? "thuiswinst" : dominantOutcome.key === "away" ? "uitwinst" : "gelijkspel"}`;
+  }
   const [predHomeGoals, predAwayGoals] = selectedScore.split("-").map(Number);
   const modelAgreement = calcModelAgreement(baseModel, heuristicModel);
   const lineupImpact = buildLineupImpact(input);
@@ -10114,14 +10313,10 @@ function predict(input) {
       scoreSelection: {
         rawBestScore: bestScore,
         selectedScore,
-        reason:
-          scoreCalibration.applied
-            ? `${scoreCalibration.reason}; scorematrix blijft leidend`
-            : dominantOutcome.key !== bestScoreOutcome
-              ? `hoogste exacte scorematrix-kans inclusief Monte Carlo; 1X2 neigt naar ${dominantOutcome.key === "home" ? "thuiswinst" : dominantOutcome.key === "away" ? "uitwinst" : "gelijkspel"}`
-              : "hoogste exacte scorematrix-kans inclusief Monte Carlo",
+        reason: scoreSelectionReason,
         outcomeEdge,
         calibrationApplied: scoreCalibration.applied,
+        outcomeAligned: !!shouldAlignToOutcome,
       },
       dataCompleteness,
       qualityGate,
@@ -10196,7 +10391,7 @@ function compactStore(store, referenceDateKey, now) {
     store.matches[date] = dedupeStoredMatches(
       (store.matches[date] || [])
         .filter(Boolean)
-        .map((match) => normalizeStoredMatchReliability(match, date, now))
+        .map((match) => normalizeStoredMatchReliability(match, date, now, store))
     );
     store.predictions[date] = dedupeStoredPredictions(store.predictions?.[date] || [], store.matches[date]).map((prediction) =>
       compactPredictionEntry(prediction, date !== referenceDateKey && date !== addDaysToDateKey(referenceDateKey, 1))
@@ -11098,6 +11293,16 @@ function buildAiRecommendations(store, todayKey) {
     });
   }
 
+  if (Array.isArray(segmentation?.driftAlerts) && segmentation.driftAlerts.length) {
+    const top = segmentation.driftAlerts[0];
+    issues.push({
+      title: "Performance drift gedetecteerd",
+      summary: `${top.scope} ${top.key} daalde ${Math.round(Math.abs(Number(top.delta || 0)) * 100)}pp op outcome-hitrate.`,
+      action: "Verhoog bronkwaliteit op deze scope en herweeg league/phase calibratie met recente reviews.",
+      priority: String(top.severity || "medium"),
+    });
+  }
+
   return issues;
 }
 
@@ -11117,15 +11322,6 @@ function buildBacktestSegmentation(store) {
     byPhase[phase].outcomeHits += review?.outcomeHit ? 1 : 0;
     byLeague[league].exactHits += review?.exactHit ? 1 : 0;
     byPhase[phase].exactHits += review?.exactHit ? 1 : 0;
-  }
-  if (Array.isArray(segmentation?.driftAlerts) && segmentation.driftAlerts.length) {
-    const top = segmentation.driftAlerts[0];
-    issues.push({
-      title: "Performance drift gedetecteerd",
-      summary: `${top.scope} ${top.key} daalde ${Math.round(Math.abs(Number(top.delta || 0)) * 100)}pp op outcome-hitrate.`,
-      action: "Verhoog bronkwaliteit op deze scope en herweeg league/phase calibratie met recente reviews.",
-      priority: String(top.severity || "medium"),
-    });
   }
   const normalize = (obj) =>
     Object.fromEntries(
@@ -11203,10 +11399,10 @@ async function main() {
   const today = toAmsterdamDateKey(new Date());
   const yesterday = addDaysToDateKey(today, -1);
   const tomorrow = addDaysToDateKey(today, 1);
-  const dayAfterTomorrow = addDaysToDateKey(today, 2);
-  // Houd bewust een extra dag vooruit vast. Als een geplande worker-run een
-  // keer wordt overgeslagen, blijft "morgen" in de app alsnog gevuld.
-  const dates = [yesterday, today, tomorrow, dayAfterTomorrow];
+  // Houd bewust meerdere dagen vooruit vast. Als een geplande worker-run een
+  // keer wordt overgeslagen, blijft de kalenderstatus betrouwbaarder.
+  const dates = buildRefreshDateWindow(today);
+  console.log(`[worker] datumvenster: ${dates.join(", ")}`);
 
   if (!store.knockoutOverview) store.knockoutOverview = {};
   if (!store.cupSheets) store.cupSheets = {};
@@ -11245,6 +11441,7 @@ async function main() {
   }
 
   const allEvents = {};
+  const fixtureSourceDiagnostics = {};
   const teamTournamentMap = new Map();
   const tournamentsMap = new Map();
   const requiredTeamIds = new Set();
@@ -11281,6 +11478,17 @@ async function main() {
     const openLigaDbEvents = await fetchOpenLigaDbScheduledEvents(date);
     const bbcEvents = await fetchBbcScheduledEvents(date);
     const curatedEvents = fetchCuratedFixtureBackfill(date);
+    fixtureSourceDiagnostics[date] = {
+      checkedAt: new Date(now).toISOString(),
+      sofascore: apiEvents.length,
+      sofascoreFiltered: events.length,
+      footballData: fallbackEvents.length,
+      theSportsDb: sportsDbEvents.length,
+      espn: espnEvents.length,
+      openLigaDb: openLigaDbEvents.length,
+      bbc: bbcEvents.length,
+      curated: curatedEvents.length,
+    };
     const combinedFallbacks = dedupeFallbackEvents([
       ...events,
       ...fallbackEvents,
@@ -11312,6 +11520,7 @@ async function main() {
     if (combinedFallbacks.length) {
       events = combinedFallbacks.map((event) => applyCuratedResultBackfill(event, date));
     }
+    fixtureSourceDiagnostics[date].combined = events.length;
     
     if (events.length > 0) {
       console.log(`[worker] ${date}: ${events.length} events na filtering (${apiEvents.length} totaal)`);
@@ -11638,6 +11847,7 @@ async function main() {
         fallbackLegs: h2hFallbackLegs,
         marketProfile: leagueMarketProfile,
         openFootballProfile,
+        extraProfiles: globalTeamFormProfiles,
         homeName,
         awayName,
         homeId,
@@ -12136,6 +12346,7 @@ async function main() {
     ...buildDataScoutReport(store, today),
     selfHealing,
     backtestSegmentation: store.backtestSegmentation || null,
+    fixtureSourceDiagnostics,
   };
   store.anomalyReport = buildDataAnomalyReport(store, today);
   store.aiAdvice = buildAiRecommendations(store, today);

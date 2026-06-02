@@ -402,6 +402,16 @@ function collectPredictionRecords(store, todayKey) {
   }));
 }
 
+function sourceTimestampCoverageForRecord(match, prediction) {
+  const explicit = numeric(prediction?.featureSourceMetadata?.coverage?.timestampCoverage);
+  if (explicit != null) return explicit;
+  const sourceAsOf = prediction?.sourceAsOf || match?.sourceAsOf || {};
+  const keys = ["fixture", "h2h", "homeForm", "awayForm", "standings", "marketProfile", "lineups", "referee"];
+  const relevant = keys.filter((key) => sourceAsOf[key] != null);
+  if (!relevant.length) return null;
+  return Number((relevant.length / keys.length).toFixed(3));
+}
+
 function summarizeCompletenessGroup(key, records) {
   const scores = records
     .map(({ match, prediction }) => numeric(prediction?.dataCompletenessScore ?? prediction?.dataCompleteness?.score ?? match?.dataCompletenessScore ?? match?.dataCompleteness?.score))
@@ -462,7 +472,7 @@ export function buildDataCompletenessAudit(store, todayKey) {
     .map(({ match, prediction }) => numeric(prediction?.dataCompletenessScore ?? prediction?.dataCompleteness?.score ?? match?.dataCompletenessScore ?? match?.dataCompleteness?.score))
     .filter((value) => value != null);
   const sourceTimestampCoverageValues = records
-    .map(({ prediction }) => numeric(prediction?.featureSourceMetadata?.coverage?.timestampCoverage))
+    .map(({ match, prediction }) => sourceTimestampCoverageForRecord(match, prediction))
     .filter((value) => value != null);
   const byLeague = Object.entries(groupReviewsBy(records, ({ match, prediction }) => prediction?.league || match?.league || "unknown"))
     .map(([key, group]) => summarizeCompletenessGroup(key, group))
@@ -507,6 +517,16 @@ export function buildOddsIntegrationReadiness(store, todayKey) {
     process.env.ODDS_API_URL_TEMPLATE ? "custom-url-template" : null,
     process.env.FOOTBALL_DATA_TOKEN || process.env.FOOTBALL_DATA_API_KEY ? "football-data.org" : null,
   ].filter(Boolean);
+  const envStatus = {
+    ODDS_PROVIDER_NAME: !!process.env.ODDS_PROVIDER_NAME,
+    ODDS_API_URL_TEMPLATE: !!process.env.ODDS_API_URL_TEMPLATE,
+    ODDS_API_KEY: !!process.env.ODDS_API_KEY,
+    THE_ODDS_API_KEY: !!process.env.THE_ODDS_API_KEY,
+    FOOTBALL_DATA_TOKEN: !!(process.env.FOOTBALL_DATA_TOKEN || process.env.FOOTBALL_DATA_API_KEY),
+  };
+  const urlTemplateReady = !!process.env.ODDS_API_URL_TEMPLATE;
+  const keyReady = !!(process.env.ODDS_API_KEY || process.env.THE_ODDS_API_KEY);
+  const providerNameReady = !!process.env.ODDS_PROVIDER_NAME || keyReady || urlTemplateReady;
   const requiredFields = [
     "provider",
     "bookmaker",
@@ -525,6 +545,15 @@ export function buildOddsIntegrationReadiness(store, todayKey) {
     date: todayKey,
     providerConfigured: configuredProviders.length > 0,
     configuredProviders,
+    configurationStatus:
+      providerNameReady && urlTemplateReady && keyReady
+        ? "ready_for_live_pre_match_odds"
+        : keyReady && !urlTemplateReady
+          ? "api_key_without_url_template"
+          : urlTemplateReady && !keyReady
+            ? "url_template_without_api_key"
+            : "credentials_needed",
+    envStatus,
     environmentVariables: ["ODDS_PROVIDER_NAME", "ODDS_API_URL_TEMPLATE", "ODDS_API_KEY", "THE_ODDS_API_KEY", "FOOTBALL_DATA_TOKEN"],
     requiredFields,
     currentCoverage: {
@@ -546,7 +575,9 @@ export function buildOddsIntegrationReadiness(store, todayKey) {
       "exclude odds captured after cutoff from model input",
     ],
     nextAction: configuredProviders.length
-      ? "Koppel providerfetch aan de pre-match snapshotstap en bewaar closing odds apart."
+      ? urlTemplateReady && keyReady
+        ? "Provider staat klaar: controleer eerst een kleine wedstrijddag en bewaar closing odds apart."
+        : "Maak de odds-secret flow compleet: ODDS_API_URL_TEMPLATE plus ODDS_API_KEY/THE_ODDS_API_KEY zijn samen nodig."
       : "Kies of configureer eerst een echte oddsprovider; historische football-data.co.uk profielen blijven alleen calibratie-input.",
   };
 }

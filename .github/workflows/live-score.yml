@@ -15,8 +15,16 @@ permissions:
 env:
   TZ: Europe/Amsterdam
   FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: "true"
+  DATA_BRANCH: codex/step3b-layout
   FOOTYAI_REFRESH_MODE: live-results
-  FOOTYAI_DATE_WINDOW: yesterday,today,tomorrow
+  FOOTYAI_DATE_WINDOW: yesterday,today,tomorrow,+2,+3,+4,+5,+6,+7
+  ODDS_PROVIDER_NAME: ${{ secrets.ODDS_PROVIDER_NAME }}
+  ODDS_API_URL_TEMPLATE: ${{ secrets.ODDS_API_URL_TEMPLATE }}
+  ODDS_API_KEY: ${{ secrets.ODDS_API_KEY }}
+  THE_ODDS_API_KEY: ${{ secrets.THE_ODDS_API_KEY }}
+  DATABASE_URL: ${{ secrets.DATABASE_URL }}
+  POSTGRES_URL: ${{ secrets.POSTGRES_URL }}
+  SUPABASE_DB_URL: ${{ secrets.SUPABASE_DB_URL }}
 
 jobs:
   refresh-live-scores:
@@ -28,6 +36,7 @@ jobs:
         with:
           fetch-depth: 0
           token: ${{ secrets.GITHUB_TOKEN }}
+          ref: ${{ env.DATA_BRANCH }}
 
       - uses: actions/setup-node@v4
         with:
@@ -42,7 +51,7 @@ jobs:
 
       - name: Commit and push data only
         run: |
-          BRANCH_NAME="${{ github.ref_name }}"
+          BRANCH_NAME="${DATA_BRANCH:-${{ github.ref_name }}}"
           git config user.name github-actions
           git config user.email github-actions@github.com
           git add server_data.json data
