@@ -5,6 +5,10 @@ on:
     - cron: "15 6 * * 1"
   workflow_dispatch:
 
+concurrency:
+  group: football-biweekly-architecture-digest
+  cancel-in-progress: false
+
 jobs:
   build-digest:
     runs-on: ubuntu-latest
@@ -28,11 +32,20 @@ jobs:
       - name: Build biweekly digest
         run: npm run monitor:biweekly
 
-      - name: Commit digest
+      - name: Check two-week cadence
+        id: cadence
         run: |
+          SHOULD_REFRESH="$(node -e "const fs=require('fs'); const d=JSON.parse(fs.readFileSync('monitor/biweekly-review-digest.json','utf8')); console.log(d.shouldRefresh ? 'true' : 'false')")"
+          echo "should_refresh=$SHOULD_REFRESH" >> "$GITHUB_OUTPUT"
+
+      - name: Commit digest
+        if: steps.cadence.outputs.should_refresh == 'true' || github.event_name == 'workflow_dispatch'
+        run: |
+          BRANCH_NAME="${{ github.ref_name }}"
           git config user.name "github-actions"
           git config user.email "github-actions@github.com"
-          git add monitor/biweekly-review-digest.json monitor/biweekly-review-digest.md
+          git add monitor/biweekly-review-digest.json monitor/biweekly-review-digest.md docs/database-migration-plan.md docs/worker-modularization-plan.md docs/agent-data-collection-policy.md
           git diff --cached --quiet && exit 0
-          git commit -m "update biweekly AI digest [skip vercel]"
-          git push
+          git commit -m "update biweekly architecture digest [skip vercel]"
+          git pull --rebase --autostash origin "$BRANCH_NAME" || true
+          git push origin "HEAD:$BRANCH_NAME"

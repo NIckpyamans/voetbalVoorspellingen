@@ -22,13 +22,18 @@ async function readRufloReport() {
     }
   }
 }
-function readBiweeklyDigest() {
+async function readBiweeklyDigest() {
   try {
-    const digestPath = path.join(process.cwd(), "monitor", "biweekly-review-digest.json");
-    if (!fs.existsSync(digestPath)) return null;
-    return JSON.parse(fs.readFileSync(digestPath, "utf-8"));
+    const remote = await fetchRepoJson("monitor/biweekly-review-digest.json");
+    return remote.data;
   } catch {
-    return null;
+    try {
+      const digestPath = path.join(process.cwd(), "monitor", "biweekly-review-digest.json");
+      if (!fs.existsSync(digestPath)) return null;
+      return JSON.parse(fs.readFileSync(digestPath, "utf-8"));
+    } catch {
+      return null;
+    }
   }
 }
 
@@ -232,7 +237,7 @@ export default async function handler(req: any, res: any) {
   );
 
   try {
-    const biweeklyDigest = readBiweeklyDigest();
+    const biweeklyDigest = await readBiweeklyDigest();
     const rufloReport = await readRufloReport();
     const meta = await readSplitMeta();
 

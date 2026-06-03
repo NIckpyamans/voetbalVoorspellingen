@@ -694,6 +694,56 @@ const SettingsView: React.FC = () => {
               ))}
             </div>
 
+            {biweeklyDigest.architectureAudit ? (
+              <div className="rounded-xl border border-emerald-500/10 bg-emerald-950/10 p-3">
+                <div className="text-[10px] font-black text-emerald-300 uppercase mb-1">Architectuuranalyse</div>
+                <div className="text-[10px] text-slate-300 mb-3">{biweeklyDigest.architectureAudit.summary}</div>
+                <div className="space-y-2">
+                  {(biweeklyDigest.architectureAudit.findings || []).slice(0, 5).map((item: any) => (
+                    <div key={item.key} className="rounded-lg border border-white/5 bg-slate-950/30 p-2">
+                      <div className="flex items-center justify-between gap-3">
+                        <div className="text-[10px] font-black text-white">{item.title}</div>
+                        <span className="text-[8px] font-black px-2 py-0.5 rounded-full bg-red-900/20 text-red-200">
+                          {item.priority}
+                        </span>
+                      </div>
+                      <div className="text-[9px] text-slate-400 mt-1">Probleem: {item.problem}</div>
+                      <div className="text-[9px] text-slate-500 mt-1">Oplossing: {item.solution}</div>
+                      <div className="text-[8px] text-emerald-300 mt-1">Impact: {item.expectedImpact}</div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            ) : null}
+
+            <div className="rounded-xl border border-blue-500/10 bg-blue-950/10 p-3">
+              <div className="text-[10px] font-black text-blue-300 uppercase mb-2">Standaard uitgevoerd</div>
+              <div className="space-y-2">
+                {((biweeklyDigest.standardActions || biweeklyDigest.architectureAudit?.standardActions || []) as any[])
+                  .slice(0, 3)
+                  .map((item: any) => (
+                    <div key={item.key} className="rounded-lg border border-white/5 bg-slate-950/30 p-2">
+                      <div className="text-[10px] font-black text-white">{item.title}</div>
+                      <div className="text-[9px] text-slate-500 mt-1">{item.output}</div>
+                    </div>
+                  ))}
+              </div>
+            </div>
+
+            <div className="rounded-xl border border-amber-500/10 bg-amber-950/10 p-3">
+              <div className="text-[10px] font-black text-amber-300 uppercase mb-2">Volgende aanbevelingen</div>
+              <div className="space-y-2">
+                {(biweeklyDigest.nextRecommendations || biweeklyDigest.architectureAudit?.nextRecommendations || [])
+                  .slice(0, 5)
+                  .map((item: any, index: number) => (
+                    <div key={`${item.title}-${index}`} className="rounded-lg border border-white/5 bg-slate-950/30 p-2">
+                      <div className="text-[10px] font-black text-white">{index + 1}. {item.title}</div>
+                      <div className="text-[9px] text-slate-400 mt-1">{item.reason}</div>
+                    </div>
+                  ))}
+              </div>
+            </div>
+
             <div className="rounded-xl border border-purple-500/10 bg-purple-950/10 p-3">
               <div className="text-[10px] font-black text-purple-300 uppercase mb-1">Mailstatus</div>
               <div className="text-[10px] text-slate-300">
