@@ -1,6 +1,6 @@
 {
-  "generatedAt": "2026-06-01T23:44:49.360Z",
-  "date": "2026-06-02",
+  "generatedAt": "2026-06-03T00:02:51.601Z",
+  "date": "2026-06-03",
   "name": "Ruflo-style gratis AI monitor",
   "mode": "naast-productie",
   "productionSafe": true,
@@ -85,16 +85,16 @@
     },
     "learning": {
       "score": 12,
-      "summary": "Leerlaag: 682 reviews, exact 12%, winnaar/gelijk 41%, top-5 exact 15%.",
+      "summary": "Leerlaag: 691 reviews, exact 12%, winnaar/gelijk 41%, top-5 exact 14%.",
       "topConfidence": {
-        "matches": 116,
-        "exactHitRate": 0.147,
-        "outcomeHitRate": 0.414,
-        "probabilityOutcomeHitRate": 0.543,
-        "avgGoalError": 1.61,
+        "matches": 117,
+        "exactHitRate": 0.145,
+        "outcomeHitRate": 0.41,
+        "probabilityOutcomeHitRate": 0.538,
+        "avgGoalError": 1.65,
         "rank1ExactHitRate": 0.103,
         "rank1OutcomeHitRate": 0.379,
-        "versusOverallOutcomeDelta": 0
+        "versusOverallOutcomeDelta": -0.002
       },
       "topClubs": [
         {
@@ -182,33 +182,14 @@
       ]
     },
     "control": {
-      "score": 20,
-      "summary": "Ontwikkelcontrole: 3 actieve monitorissues op 2026-06-02; digest 2026-05-19 t/m 2026-06-01.",
-      "latestDay": "2026-06-02",
+      "score": 60,
+      "summary": "Ontwikkelcontrole: 1 actieve monitorissues op 2026-06-03; digest 2026-05-19 t/m 2026-06-01.",
+      "latestDay": "2026-06-03",
       "shouldPropose": true,
       "actions": [
         {
-          "priority": "high",
-          "title": "server_data.json is 684 minuten oud.",
-          "freeSolution": "Laat GitHub Actions schedule + manual dispatch draaien; geen mail nodig, alleen data committen.",
-          "files": [
-            ".github/workflows/worker.yml"
-          ],
-          "status": "monitor"
-        },
-        {
           "priority": "medium",
-          "title": "Er zijn geen wedstrijden voor vandaag in server_data.json.",
-          "freeSolution": "Gebruik gratis fallbackketen met TheSportsDB/OpenLigaDB/openfootball en toon bronstatus in Instellingen.",
-          "files": [
-            "scripts/server-worker.js",
-            "api/Matches.ts"
-          ],
-          "status": "monitor"
-        },
-        {
-          "priority": "medium",
-          "title": "Geen wedstrijden gevonden en onvoldoende kalenderbewijs dat dit een echte lege speeldag is.",
+          "title": "cupSheets is leeg.",
           "freeSolution": "Gebruik bestaande gratis workerdata en maak een reviewbranch-voorstel in plaats van blind live wijzigen.",
           "files": [
             "scripts/server-worker.js"
@@ -236,14 +217,6 @@
       ]
     },
     {
-      "title": "server_data.json is 684 minuten oud.",
-      "count": 1,
-      "priority": "high",
-      "agents": [
-        "control"
-      ]
-    },
-    {
       "title": "H2H-backfill verder vullen",
       "count": 1,
       "priority": "medium",
@@ -252,15 +225,7 @@
       ]
     },
     {
-      "title": "Er zijn geen wedstrijden voor vandaag in server_data.json.",
-      "count": 1,
-      "priority": "medium",
-      "agents": [
-        "control"
-      ]
-    },
-    {
-      "title": "Geen wedstrijden gevonden en onvoldoende kalenderbewijs dat dit een echte lege speeldag is.",
+      "title": "cupSheets is leeg.",
       "count": 1,
       "priority": "medium",
       "agents": [
@@ -292,16 +257,6 @@
       "agent": "learning"
     },
     {
-      "priority": "high",
-      "title": "server_data.json is 684 minuten oud.",
-      "freeSolution": "Laat GitHub Actions schedule + manual dispatch draaien; geen mail nodig, alleen data committen.",
-      "files": [
-        ".github/workflows/worker.yml"
-      ],
-      "status": "monitor",
-      "agent": "control"
-    },
-    {
       "priority": "medium",
       "title": "H2H-backfill verder vullen",
       "freeSolution": "Gebruik openfootball en football-data rows per competitie als historische H2H fallback voordat de UI 'leeg' toont.",
@@ -314,18 +269,7 @@
     },
     {
       "priority": "medium",
-      "title": "Er zijn geen wedstrijden voor vandaag in server_data.json.",
-      "freeSolution": "Gebruik gratis fallbackketen met TheSportsDB/OpenLigaDB/openfootball en toon bronstatus in Instellingen.",
-      "files": [
-        "scripts/server-worker.js",
-        "api/Matches.ts"
-      ],
-      "status": "monitor",
-      "agent": "control"
-    },
-    {
-      "priority": "medium",
-      "title": "Geen wedstrijden gevonden en onvoldoende kalenderbewijs dat dit een echte lege speeldag is.",
+      "title": "cupSheets is leeg.",
       "freeSolution": "Gebruik bestaande gratis workerdata en maak een reviewbranch-voorstel in plaats van blind live wijzigen.",
       "files": [
         "scripts/server-worker.js"
