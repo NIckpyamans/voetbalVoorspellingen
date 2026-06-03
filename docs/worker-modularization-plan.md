@@ -1,12 +1,12 @@
 # Worker Modularisatieplan
 
-Laatst bijgewerkt: 2026-06-03T08:53:44.808Z
+Laatst bijgewerkt: 2026-06-03T09:09:37.649Z
 
 ## Doel
 Splits scripts/server-worker.js zonder voorspelgedrag te veranderen. Iedere stap behoudt dezelfde output in server_data.json en data/*.json.
 
 ## Doelmodules
-- scripts/worker/data-collection.js: bronnen ophalen, fetch timeouts, rate-limit circuits, retries, source diagnostics. Eerste stap is actief.
+- scripts/worker/data-collection.js: bronnen ophalen, fetch timeouts, rate-limit circuits, OpenFootball, Understat, FBref en source diagnostics. BBC/ESPN volgen apart.
 - shared/matchNormalization.js + scripts/worker/validation.js: teamnamen, statussen, score parsing, dedupe, result backfill en H2H-contracten. Eerste stap is actief.
 - feature-builder: vorm, H2H, xG, ELO, lineups, injuries, weather, market features.
 - scripts/worker/prediction.js: Poisson, Monte Carlo, ensemble, scorematrix, 1X2-calibratie. Eerste pure math-stap is actief.
@@ -20,6 +20,7 @@ Splits scripts/server-worker.js zonder voorspelgedrag te veranderen. Iedere stap
 4. Verplaats storage/archive-output. Eerste stap is actief via scripts/worker/archive.js.
 5. Verplaats prediction-engine pas na snapshot/regression lock. Eerste pure math-stap is actief via scripts/worker/prediction.js.
 6. Activeer database writes pas als JSON-output identiek blijft.
+7. Verplaats BBC/ESPN event-fetchers apart, inclusief logo-cache en status/minute mapping tests.
 
 ## Gedragsregels
 - Geen nieuwe databronnen tijdens extractie.

@@ -25,14 +25,19 @@ import { writeJsonFile, writeSplitDataFiles } from "./worker/archive.js";
 import {
   createSafeFetch,
   fetchExternalJson,
+  fetchFbrefSnapshot as fetchFbrefSnapshotSource,
+  fetchOpenfootballProfile as fetchOpenfootballProfileSource,
   fetchText,
+  fetchUnderstatSnapshot as fetchUnderstatSnapshotSource,
   fetchWithTimeout,
   safeFetchText,
 } from "./worker/data-collection.js";
 import {
   ensureH2HContract,
+  lookupCuratedResultBackfill,
   matchHasFinalScore,
   mergeH2HResultLists,
+  normalizeStoredMatchReliability,
   parseScoreToGoals,
 } from "./worker/validation.js";
 import {
@@ -4602,99 +4607,6 @@ function dedupeStoredPredictions(predictions = [], matches = []) {
   return output;
 }
 
-function normalizeStoredMatchReliability(match, dateKey, now, store = null) {
-  if (!match || typeof match !== "object") return match;
-  const next = { ...match };
-  const result = lookupCuratedResultBackfill(dateKey, next.homeTeamName || next.homeTeam, next.awayTeamName || next.awayTeam);
-  if (result && ["POSTPONED", "CANCELLED", "ABANDONED"].includes(String(result.status || "").toUpperCase())) {
-    next.status = String(result.status || "").toUpperCase();
-    next.score = null;
-    next.homeScore = null;
-    next.awayScore = null;
-    next.resultBackfill = true;
-    next.resultBackfillSource = result.sourceNote || "curated fixture status backfill";
-    next.resultPending = false;
-    next.resultPendingReason = null;
-  }
-  if (result && !matchHasFinalScore(next)) {
-    const [homeScore, awayScore] = String(result.score || "").split("-").map(Number);
-    if (Number.isFinite(homeScore) && Number.isFinite(awayScore)) {
-      next.homeScore = homeScore;
-      next.awayScore = awayScore;
-      next.score = result.score;
-      next.status = result.status || "FT";
-      next.resultBackfill = true;
-      next.resultBackfillSource = result.sourceNote || "curated result backfill";
-      next.resultPending = false;
-      next.resultPendingReason = null;
-    }
-  }
-  const historicalResult = store && !matchHasFinalScore(next) ? lookupHistoricalResultBackfill(store, next, dateKey) : null;
-  if (historicalResult && !matchHasFinalScore(next)) {
-    next.homeScore = historicalResult.homeScore;
-    next.awayScore = historicalResult.awayScore;
-    next.score = historicalResult.score;
-    next.status = "FT";
-    next.resultBackfill = true;
-    next.resultBackfillSource = historicalResult.source || "historical result backfill";
-    next.resultPending = false;
-    next.resultPendingReason = null;
-  }
-  const storedH2H = store && Number(next.h2h?.played || 0) <= 0 ? lookupStoredMatchH2HBackfill(store, next, dateKey) : null;
-  if (storedH2H?.played) {
-    next.h2h = {
-      ...storedH2H,
-      agent: {
-        ...(storedH2H.agent || {}),
-        name: "H2H-agent",
-        source: "stored-match-history",
-      },
-    };
-  }
-
-  const kickoffMs = Date.parse(next.kickoff || next.date || `${dateKey}T12:00:00Z`);
-  const status = String(next.status || "").toUpperCase();
-  const isPastResultWindow = Number.isFinite(kickoffMs) && now - kickoffMs > 150 * 60 * 1000;
-  if (
-    isPastResultWindow &&
-    !matchHasFinalScore(next) &&
-    !["POSTPONED", "CANCELLED", "ABANDONED"].includes(status)
-  ) {
-    next.status = "RESULT_PENDING";
-    next.resultPending = true;
-    next.resultPendingReason =
-      next.resultPendingReason || "Wedstrijd is voorbij, maar geen betrouwbare eindstand gevonden in de gratis bronnen.";
-  }
-
-  const sourceAsOf = { ...(next.sourceAsOf || {}) };
-  if (!sourceAsOf.fixture) sourceAsOf.fixture = isoFromMs(now);
-  if (next.resultBackfill && !sourceAsOf.result) sourceAsOf.result = isoFromMs(now);
-  if (Number(next.h2h?.played || 0) > 0) {
-    const h2hAsOf =
-      next.h2h.asOf ||
-      next.h2h.sourceTimestamp ||
-      sourceAsOf.h2h ||
-      sourceAsOf.openfootballProfile ||
-      sourceAsOf.marketProfile ||
-      isoFromMs(now);
-    next.h2h = {
-      ...next.h2h,
-      source: next.h2h.source || next.h2h.status || "h2h-agent",
-      asOf: h2hAsOf,
-      sourceTimestamp: h2hAsOf,
-    };
-    sourceAsOf.h2h = h2hAsOf;
-  }
-  next.sourceAsOf = sourceAsOf;
-  next.dataReliability = {
-    ...(next.dataReliability || {}),
-    resultStatus: matchHasFinalScore(next) ? "final_score" : next.resultPending ? "result_pending_backfill" : "pre_match",
-    h2hTimestampKnown: Number(next.h2h?.played || 0) > 0 ? !!(next.h2h?.asOf || next.h2h?.sourceTimestamp) : false,
-    checkedAt: isoFromMs(now),
-  };
-  return next;
-}
-
 function getSportsDbSeasonLabel(dateISO) {
   const base = new Date(`${dateISO}T12:00:00Z`);
   const year = base.getUTCFullYear();
@@ -4741,16 +4653,10 @@ function fetchCuratedFixtureBackfill(dateISO) {
     });
 }
 
-function lookupCuratedResultBackfill(dateISO, homeName, awayName) {
-  const pairKey = buildPairKey(homeName, awayName);
-  return (
-    CURATED_RESULT_BACKFILL.find((item) => item.date === dateISO && buildPairKey(item.home, item.away) === pairKey) ||
-    null
-  );
-}
-
 function applyCuratedResultBackfill(event, dateISO) {
   const result = lookupCuratedResultBackfill(
+    CURATED_RESULT_BACKFILL,
+    buildPairKey,
     dateISO,
     event?.homeTeam?.name || "",
     event?.awayTeam?.name || ""
@@ -6198,254 +6104,6 @@ function buildH2HProfileFromResults(results, source) {
   };
 }
 
-async function fetchOpenfootballProfile(leagueLabel, dateISO) {
-  const competitionCode = OPENFOOTBALL_COMPETITIONS[leagueLabel];
-  if (!competitionCode) return null;
-
-  const results = [];
-  for (const seasonTag of getOpenfootballSeasonTags(dateISO, 3)) {
-    const url = `https://raw.githubusercontent.com/openfootball/football.json/master/${seasonTag}/${competitionCode}.json`;
-    const json = await fetchExternalJson(url);
-    const matches = Array.isArray(json?.matches) ? json.matches : [];
-    for (const match of matches) {
-      const ft = match?.score?.ft;
-      if (!Array.isArray(ft) || ft.length < 2) continue;
-      const homeGoals = toNumber(ft[0]);
-      const awayGoals = toNumber(ft[1]);
-      if (!Number.isFinite(homeGoals) || !Number.isFinite(awayGoals)) continue;
-      results.push({
-        date: match.date || null,
-        home: match.team1 || match.homeTeam || "",
-        away: match.team2 || match.awayTeam || "",
-        homeGoals,
-        awayGoals,
-      });
-    }
-  }
-
-  if (!results.length) return null;
-  return buildH2HProfileFromResults(results, "openfootball");
-}
-
-function getUnderstatSeason(dateISO) {
-  const base = dateISO ? new Date(dateISO) : new Date();
-  const amsterdamString = base.toLocaleString("en-US", {
-    timeZone: "Europe/Amsterdam",
-    year: "numeric",
-    month: "numeric",
-  });
-  const [monthStr, yearStr] = amsterdamString.split('/');
-  const year = parseInt(yearStr, 10);
-  const month = parseInt(monthStr, 10) - 1;
-  return String(month >= 6 ? year : year - 1);
-}
-
-function average(values) {
-  const clean = values.map((value) => Number(value)).filter((value) => Number.isFinite(value));
-  if (!clean.length) return null;
-  return Number((clean.reduce((sum, value) => sum + value, 0) / clean.length).toFixed(2));
-}
-
-async function fetchUnderstatSnapshot(leagueLabel, dateISO) {
-  const code = UNDERSTAT_LEAGUE_CODES[leagueLabel];
-  if (!code) return null;
-
-  const season = getUnderstatSeason(dateISO);
-  const url = `https://understat.com/getLeagueData/${code}/${season}`;
-  const json = await fetchExternalJson(url, {
-    "X-Requested-With": "XMLHttpRequest",
-    Referer: `https://understat.com/league/${code}/${season}`,
-  });
-  const teamsData = json?.teams || null;
-  if (!teamsData || typeof teamsData !== "object") return null;
-
-  const teams = {};
-  for (const team of Object.values(teamsData)) {
-    const name = String(team?.title || "").trim();
-    const history = Array.isArray(team?.history) ? team.history : [];
-    if (!name || !history.length) continue;
-    const homeRows = history.filter((row) => row.h_a === "h");
-    const awayRows = history.filter((row) => row.h_a === "a");
-    teams[normalizeName(name)] = {
-      teamName: name,
-      games: history.length,
-      avgXG: average(history.map((row) => row.xG)),
-      avgXGA: average(history.map((row) => row.xGA)),
-      avgNpxG: average(history.map((row) => row.npxG)),
-      avgNpxGA: average(history.map((row) => row.npxGA)),
-      homeXG: average(homeRows.map((row) => row.xG)),
-      homeXGA: average(homeRows.map((row) => row.xGA)),
-      awayXG: average(awayRows.map((row) => row.xG)),
-      awayXGA: average(awayRows.map((row) => row.xGA)),
-      ppda: average(history.map((row) => Number(row?.ppda?.att || 0) / Math.max(1, Number(row?.ppda?.def || 0)))),
-      deep: average(history.map((row) => row.deep)),
-      source: "Understat",
-      season,
-    };
-  }
-
-  return {
-    updatedAt: Date.now(),
-    source: "Understat",
-    leagueLabel,
-    season,
-    sampleSize: Object.keys(teams).length,
-    teams,
-  };
-}
-
-function getFbrefSnapshotUrls(leagueLabel) {
-  const info = FBREF_RELEASE_CODES[leagueLabel];
-  if (!info) return [];
-  const baseName = `${info.country}_M_${info.tier}`;
-  const urls = [];
-  if (info.advanced) {
-    urls.push({
-      type: "advanced",
-      url: `https://github.com/JaseZiv/worldfootballR_data/releases/download/fb_advanced_match_stats/${baseName}_summary_team_advanced_match_stats.csv`,
-    });
-  }
-  urls.push({
-    type: "shooting",
-    url: `https://github.com/JaseZiv/worldfootballR_data/releases/download/fb_match_shooting/${baseName}_match_shooting.csv`,
-  });
-  return urls;
-}
-
-function incrementSnapshotTeam(bucket, values) {
-  bucket.games += Number(values.games || 0);
-  bucket.shots += Number(values.shots || 0);
-  bucket.shotsOn += Number(values.shotsOn || 0);
-  bucket.xG += Number(values.xG || 0);
-  bucket.npxG += Number(values.npxG || 0);
-  bucket.homeGames += Number(values.homeGames || 0);
-  bucket.awayGames += Number(values.awayGames || 0);
-  bucket.homeShots += Number(values.homeShots || 0);
-  bucket.awayShots += Number(values.awayShots || 0);
-  bucket.homeXG += Number(values.homeXG || 0);
-  bucket.awayXG += Number(values.awayXG || 0);
-}
-
-async function fetchFbrefSnapshot(leagueLabel, dateISO) {
-  const urls = getFbrefSnapshotUrls(leagueLabel);
-  if (!urls.length) return null;
-
-  const currentFolder = getSeasonFolder(dateISO);
-  const currentEndYear = 2000 + Number(currentFolder.slice(2));
-  const teams = {};
-  let sampleSize = 0;
-  let sourceType = null;
-
-  for (const item of urls) {
-    const csvText = await fetchText(item.url);
-    if (!csvText) continue;
-    const rows = parseCsv(csvText);
-    if (!rows.length) continue;
-    sourceType = item.type;
-    const seenShotMatches = new Set();
-
-    for (const row of rows) {
-      const seasonEnd = Number(row.Season_End_Year || row.season_end_year || 0);
-      if (seasonEnd && seasonEnd < currentEndYear - 2) continue;
-      if (String(row.Gender || "M") !== "M") continue;
-      const teamName = String(row.Team || row.Squad || "").trim();
-      if (!teamName) continue;
-      const key = normalizeName(teamName);
-      if (!teams[key]) {
-        teams[key] = {
-          teamName,
-          games: 0,
-          shots: 0,
-          shotsOn: 0,
-          xG: 0,
-          npxG: 0,
-          homeGames: 0,
-          awayGames: 0,
-          homeShots: 0,
-          awayShots: 0,
-          homeXG: 0,
-          awayXG: 0,
-        };
-      }
-
-      if (item.type === "advanced") {
-        const homeAway = String(row.Home_Away || "").toLowerCase();
-        const shots = Number(toNumber(row.Sh) || 0);
-        const shotsOn = Number(toNumber(row.SoT) || 0);
-        const xG = Number(toNumber(row.xG_Expected || row.Home_xG || row.Away_xG) || 0);
-        const npxG = Number(toNumber(row.npxG_Expected) || xG || 0);
-        incrementSnapshotTeam(teams[key], {
-          games: 1,
-          shots,
-          shotsOn,
-          xG,
-          npxG,
-          homeGames: homeAway === "home" ? 1 : 0,
-          awayGames: homeAway === "away" ? 1 : 0,
-          homeShots: homeAway === "home" ? shots : 0,
-          awayShots: homeAway === "away" ? shots : 0,
-          homeXG: homeAway === "home" ? xG : 0,
-          awayXG: homeAway === "away" ? xG : 0,
-        });
-      } else {
-        const homeAway = String(row.Home_Away || "").toLowerCase();
-        const xG = Number(toNumber(row.xG) || 0);
-        const onTarget = ["goal", "saved", "saved to post"].includes(String(row.Outcome || "").toLowerCase()) ? 1 : 0;
-        const matchKey = `${key}_${row.MatchURL || row.Date || sampleSize}`;
-        const firstShotForMatch = !seenShotMatches.has(matchKey);
-        seenShotMatches.add(matchKey);
-        incrementSnapshotTeam(teams[key], {
-          games: firstShotForMatch ? 1 : 0,
-          shots: 1,
-          shotsOn: onTarget,
-          xG,
-          npxG: xG,
-          homeGames: firstShotForMatch && homeAway === "home" ? 1 : 0,
-          awayGames: firstShotForMatch && homeAway === "away" ? 1 : 0,
-          homeShots: homeAway === "home" ? 1 : 0,
-          awayShots: homeAway === "away" ? 1 : 0,
-          homeXG: homeAway === "home" ? xG : 0,
-          awayXG: homeAway === "away" ? xG : 0,
-        });
-      }
-      sampleSize += 1;
-    }
-
-    if (Object.keys(teams).length) break;
-  }
-
-  if (!Object.keys(teams).length) return null;
-
-  const formattedTeams = {};
-  for (const [key, value] of Object.entries(teams)) {
-    const games = Math.max(Number(value.games || 0), 1);
-    const homeGames = Math.max(Number(value.homeGames || 0), 1);
-    const awayGames = Math.max(Number(value.awayGames || 0), 1);
-    formattedTeams[key] = {
-      teamName: value.teamName,
-      games: Number(value.games || 0),
-      avgShots: Number((Number(value.shots || 0) / games).toFixed(2)),
-      avgShotsOn: Number((Number(value.shotsOn || 0) / games).toFixed(2)),
-      avgXG: Number((Number(value.xG || 0) / games).toFixed(2)),
-      avgNpxG: Number((Number(value.npxG || 0) / games).toFixed(2)),
-      homeShots: Number((Number(value.homeShots || 0) / homeGames).toFixed(2)),
-      awayShots: Number((Number(value.awayShots || 0) / awayGames).toFixed(2)),
-      homeXG: Number((Number(value.homeXG || 0) / homeGames).toFixed(2)),
-      awayXG: Number((Number(value.awayXG || 0) / awayGames).toFixed(2)),
-      source: `FBref ${sourceType || "snapshot"}`,
-    };
-  }
-
-  return {
-    updatedAt: Date.now(),
-    source: "FBref",
-    leagueLabel,
-    sourceType,
-    sampleSize,
-    teams: formattedTeams,
-  };
-}
-
 function lookupSnapshotTeam(snapshot, teamName) {
   const teams = snapshot?.teams || {};
   for (const variant of buildPossibleNames(teamName)) {
@@ -6580,34 +6238,6 @@ function orientHistoricalScore(item, homeName, awayName) {
   }
   if (homeVariants.has(itemAway) && awayVariants.has(itemHome)) {
     return { homeScore: scoreParts[1], awayScore: scoreParts[0], score: `${scoreParts[1]}-${scoreParts[0]}` };
-  }
-  return null;
-}
-
-function lookupHistoricalResultBackfill(store, match, dateKey) {
-  if (!store || !match || !dateKey) return null;
-  const homeName = match.homeTeamName || match.homeTeam;
-  const awayName = match.awayTeamName || match.awayTeam;
-  const profileBuckets = [
-    store.marketProfiles?.[match.league],
-    store.openfootballProfiles?.[match.league],
-    ...Object.values(store.marketProfiles || {}),
-    ...Object.values(store.openfootballProfiles || {}),
-  ].filter(Boolean);
-  const seenProfiles = new Set();
-  for (const profile of profileBuckets) {
-    const profileKey = `${profile.source || "profile"}:${profile.updatedAt || ""}:${profile.sampleSize || ""}`;
-    if (seenProfiles.has(profileKey)) continue;
-    seenProfiles.add(profileKey);
-    const historical = lookupHistoricalH2HBackfill(profile, homeName, awayName, match.homeTeamId, match.awayTeamId);
-    const hit = (historical?.results || []).find((item) => String(item?.date || "").slice(0, 10) === dateKey);
-    const oriented = hit ? orientHistoricalScore(hit, homeName, awayName) : null;
-    if (oriented) {
-      return {
-        ...oriented,
-        source: hit.source || historical.status || profile.source || "historical-result-backfill",
-      };
-    }
   }
   return null;
 }
@@ -10124,7 +9754,16 @@ function compactStore(store, referenceDateKey, now) {
     store.matches[date] = dedupeStoredMatches(
       (store.matches[date] || [])
         .filter(Boolean)
-        .map((match) => normalizeStoredMatchReliability(match, date, now, store))
+        .map((match) =>
+          normalizeStoredMatchReliability(match, date, now, store, {
+            curatedResultBackfill: CURATED_RESULT_BACKFILL,
+            buildPairKey,
+            lookupHistoricalH2HBackfill,
+            orientHistoricalScore,
+            lookupStoredMatchH2HBackfill,
+            isoFromMs,
+          })
+        )
     );
     store.predictions[date] = dedupeStoredPredictions(store.predictions?.[date] || [], store.matches[date]).map((prediction) =>
       compactPredictionEntry(prediction, date !== referenceDateKey && date !== addDaysToDateKey(referenceDateKey, 1))
@@ -11352,7 +10991,12 @@ async function main() {
         missingOpenFootballTeamForm ||
         now - Number(store.openfootballProfilesUpdated?.[leagueLabel] || 0) > OPENFOOTBALL_TTL)
     ) {
-      const openfootballProfile = await fetchOpenfootballProfile(leagueLabel, today);
+      const openfootballProfile = await fetchOpenfootballProfileSource(leagueLabel, today, {
+        openfootballCompetitions: OPENFOOTBALL_COMPETITIONS,
+        getOpenfootballSeasonTags,
+        toNumber,
+        buildH2HProfileFromResults,
+      });
       if (openfootballProfile) {
         store.openfootballProfiles[leagueLabel] = openfootballProfile;
         store.openfootballProfilesUpdated[leagueLabel] = now;
@@ -11365,7 +11009,10 @@ async function main() {
       (!store.understatSnapshots[leagueLabel] ||
         now - Number(store.understatSnapshotsUpdated?.[leagueLabel] || 0) > SNAPSHOT_TTL)
     ) {
-      const understatSnapshot = await fetchUnderstatSnapshot(leagueLabel, today);
+      const understatSnapshot = await fetchUnderstatSnapshotSource(leagueLabel, today, {
+        understatLeagueCodes: UNDERSTAT_LEAGUE_CODES,
+        normalizeName,
+      });
       if (understatSnapshot) {
         store.understatSnapshots[leagueLabel] = understatSnapshot;
         store.understatSnapshotsUpdated[leagueLabel] = now;
@@ -11378,7 +11025,13 @@ async function main() {
       (!store.fbrefSnapshots[leagueLabel] ||
         now - Number(store.fbrefSnapshotsUpdated?.[leagueLabel] || 0) > SNAPSHOT_TTL)
     ) {
-      const fbrefSnapshot = await fetchFbrefSnapshot(leagueLabel, today);
+      const fbrefSnapshot = await fetchFbrefSnapshotSource(leagueLabel, today, {
+        fbrefReleaseCodes: FBREF_RELEASE_CODES,
+        getSeasonFolder,
+        parseCsv,
+        normalizeName,
+        toNumber,
+      });
       if (fbrefSnapshot) {
         store.fbrefSnapshots[leagueLabel] = fbrefSnapshot;
         store.fbrefSnapshotsUpdated[leagueLabel] = now;
