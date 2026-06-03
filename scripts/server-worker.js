@@ -21,6 +21,7 @@ import {
   calibrateOutcomeProbabilities,
 } from "./prediction-analytics.js";
 import { fetchOddsAtPrediction } from "./odds-provider.js";
+import { writeJsonFile, writeSplitDataFiles } from "./worker/archive.js";
 
 const SOFA = "https://api.sofascore.com/api/v1";
 const THESPORTSDB_BASE = "https://www.thesportsdb.com/api/v1/json";
@@ -72,125 +73,6 @@ const toFiniteNumber = (value, fallback = null) => {
   const n = Number(value);
   return Number.isFinite(n) ? n : fallback;
 };
-
-function writeJsonFile(filePath, data) {
-  fs.mkdirSync(path.dirname(filePath), { recursive: true });
-  fs.writeFileSync(filePath, JSON.stringify(data));
-}
-
-function pickReviewsForMatches(store, matches) {
-  const reviews = {};
-  for (const match of matches || []) {
-    if (store.postMatchReviews?.[match.id]) {
-      reviews[match.id] = store.postMatchReviews[match.id];
-    }
-  }
-  return reviews;
-}
-
-function pickPredictionSnapshotsForMatches(store, matches) {
-  const snapshots = {};
-  for (const match of matches || []) {
-    const ids = store.predictionSnapshotIndex?.[match.id] || [];
-    for (const predictionId of ids) {
-      if (store.predictionSnapshots?.[predictionId]) {
-        snapshots[predictionId] = store.predictionSnapshots[predictionId];
-      }
-    }
-  }
-  return snapshots;
-}
-
-function buildSplitMeta(store) {
-  return {
-    lastRun: store.lastRun || null,
-    workerVersion: store.workerVersion || "unknown",
-    dates: Object.keys(store.matches || {}).sort(),
-    reviewCount: Object.keys(store.postMatchReviews || {}).length,
-    teamPostMatchStatsCount: Object.keys(store.teamPostMatchStats || {}).length,
-    teamLearningCount: Object.keys(store.teamLearning || {}).length,
-    aiAdvice: store.aiAdvice || [],
-    featureDiagnostics: store.featureDiagnostics || null,
-    sourceCoverage: store.sourceCoverage || null,
-    predictionSnapshotCount: Object.keys(store.predictionSnapshots || {}).length,
-    predictionSnapshotIndexCount: Object.keys(store.predictionSnapshotIndex || {}).length,
-    dataScout: store.dataScout || null,
-    dataCompletenessAudit: store.dataCompletenessAudit || null,
-    oddsIntegrationReadiness: store.oddsIntegrationReadiness || null,
-    modelPerformance: store.modelPerformance || null,
-    backtestSummary: store.backtestSummary || null,
-    backtestSegmentation: store.backtestSegmentation || null,
-    leagueCalibrationProfiles: store.leagueCalibrationProfiles || {},
-    leagueCalibrationProfilesByWindow: store.leagueCalibrationProfilesByWindow || {},
-    leagueCalibrationRollbackProfiles: store.leagueCalibrationRollbackProfiles || {},
-    anomalyReport: store.anomalyReport || null,
-    topExactScoreMonitor: store.topExactScoreMonitor || null,
-    topExactClubs: store.topExactClubs || null,
-    competitionArchiveIndex: store.competitionArchiveIndex || null,
-    teamSquadSummary: store.teamSquadSummary || null,
-    worldCup2026Readiness: store.worldCup2026Readiness || null,
-    worldCup2026Projection: store.worldCup2026Projection || null,
-    worldCup2026Ratings: store.worldCup2026Ratings || null,
-  };
-}
-
-function writeSplitDataFiles(store) {
-  const daysDir = path.join(SPLIT_DATA_DIR, "days");
-  fs.mkdirSync(daysDir, { recursive: true });
-
-  for (const dateKey of Object.keys(store.matches || {})) {
-    const matches = store.matches?.[dateKey] || [];
-    writeJsonFile(path.join(daysDir, `${dateKey}.json`), {
-      date: dateKey,
-      matches,
-      predictions: store.predictions?.[dateKey] || [],
-      predictionSnapshots: pickPredictionSnapshotsForMatches(store, matches),
-      reviews: pickReviewsForMatches(store, matches),
-      lastRun: store.lastRun || null,
-      workerVersion: store.workerVersion || "unknown",
-    });
-  }
-
-  writeJsonFile(path.join(SPLIT_DATA_DIR, "meta.json"), buildSplitMeta(store));
-  writeJsonFile(path.join(SPLIT_DATA_DIR, "standings.json"), {
-    standings: store.standings || {},
-    knockoutOverview: store.knockoutOverview || {},
-    cupSheets: store.cupSheets || {},
-    lastRun: store.lastRun || null,
-    workerVersion: store.workerVersion || "unknown",
-    reviewCount: Object.keys(store.postMatchReviews || {}).length,
-    teamLearningCount: Object.keys(store.teamLearning || {}).length,
-  });
-  writeJsonFile(path.join(SPLIT_DATA_DIR, "history-summary.json"), {
-    postMatchReviews: store.postMatchReviews || {},
-    predictionSnapshots: store.predictionSnapshots || {},
-    predictionSnapshotIndex: store.predictionSnapshotIndex || {},
-    teamLearning: store.teamLearning || {},
-    teamPostMatchStats: store.teamPostMatchStats || {},
-    leagueReliability: store.leagueReliability || {},
-    phaseReliability: store.phaseReliability || {},
-    modelPerformance: store.modelPerformance || null,
-    backtestSummary: store.backtestSummary || null,
-    anomalyReport: store.anomalyReport || null,
-    topExactScoreMonitor: store.topExactScoreMonitor || null,
-    topExactClubs: store.topExactClubs || null,
-    competitionArchiveIndex: store.competitionArchiveIndex || null,
-    teamSquadSummary: store.teamSquadSummary || null,
-    worldCup2026Readiness: store.worldCup2026Readiness || null,
-    worldCup2026Projection: store.worldCup2026Projection || null,
-    worldCup2026Ratings: store.worldCup2026Ratings || null,
-    lastRun: store.lastRun || null,
-  });
-  writeJsonFile(path.join(SPLIT_DATA_DIR, "teams.json"), {
-    teamSquads: store.teamSquads || {},
-    teamTransfers: store.teamTransfers || {},
-    teamSquadSummary: store.teamSquadSummary || null,
-    worldCup2026Ratings: store.worldCup2026Ratings || null,
-    lastRun: store.lastRun || null,
-    workerVersion: store.workerVersion || "unknown",
-  });
-  writeCompetitionArchiveFiles(store);
-}
 
 function toAmsterdamDateKey(dateLike) {
   const date = dateLike instanceof Date ? dateLike : new Date(dateLike);
@@ -12396,7 +12278,10 @@ async function main() {
   
   fs.mkdirSync(path.dirname(TRAINING_SNAPSHOT_FILE), { recursive: true });
   fs.writeFileSync(TRAINING_SNAPSHOT_FILE, JSON.stringify(buildTrainingSnapshot(store)));
-  writeSplitDataFiles(store);
+  writeSplitDataFiles(store, {
+    splitDataDir: SPLIT_DATA_DIR,
+    writeCompetitionArchiveFiles,
+  });
   fs.writeFileSync(DATA_FILE, JSON.stringify(store));
   console.log("[worker] klaar");
 }

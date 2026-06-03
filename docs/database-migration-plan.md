@@ -1,6 +1,6 @@
 # Database Migratieplan
 
-Laatst bijgewerkt: 2026-06-03T08:28:13.635Z
+Laatst bijgewerkt: 2026-06-03T08:41:14.158Z
 
 ## Doel
 Maak Postgres/Supabase de bron van waarheid voor een schaalbaar voetbal intelligence platform. JSON blijft alleen cache, export of fallback.
@@ -9,14 +9,17 @@ Maak Postgres/Supabase de bron van waarheid voor een schaalbaar voetbal intellig
 - Maak tabellen voor countries, competitions, competition_seasons, clubs, club_aliases, venues en matches.
 - Voeg source_records toe voor ruwe bronpayloads met provider, fetched_at, source_url, content_hash en trust_score.
 - Voeg source_audit toe per genormaliseerd veld zodat iedere voorspelling herleidbaar blijft.
+- Voeg model_versions en calibration_profiles toe om modelruns reproduceerbaar te maken.
 
 ## Fase 2 - Wedstrijddata
 - Breid matches uit met season_id, competition_id, home_club_id, away_club_id en status_normalized.
 - Maak match_results, match_stats en team_match_stats voor eindstand, ruststand, xG, shots, cards, corners en possession.
+- Maak h2h_edges voor onderlinge historie per clubpaar en competitiecontext.
 - Bewaar RESULT_PENDING, CANCELLED en POSTPONED als statussen, niet als ontbrekende scores.
 
 ## Fase 3 - Seizoenbeheer
 - Maak standings_snapshots, team_season_stats en season_archives.
+- Maak players, squads, injuries en suspensions voor selectiecontext per seizoen en wedstrijd.
 - Archiveer bij seizoenafsluiting standings, fixtures, resultaten, predictions en modelevaluaties immutable.
 - Open automatisch het volgende seizoen op basis van competition calendar en status.
 
