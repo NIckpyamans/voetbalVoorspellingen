@@ -47,6 +47,53 @@
     "Marktanalyse",
     "Datakwaliteit"
   ],
+  "appEcosystem": {
+    "dataAnalytics": {
+      "role": "Professional analysis hub for reusable context, KPI definitions, QA rules and dashboard contracts.",
+      "useFor": [
+        "Biweekly architecture and data-quality reviews",
+        "Model performance interpretation",
+        "Dataset and KPI catalog governance",
+        "Analysis-ready reports after database connection"
+      ],
+      "doNotUseFor": [
+        "Secret storage",
+        "Primary match storage",
+        "Replacing Postgres",
+        "Live worker state"
+      ],
+      "priority": "high"
+    },
+    "vercel": {
+      "role": "Deployment, environment variables, cron/workflow operations and storage integrations.",
+      "useFor": [
+        "DATABASE_URL and ODDS secrets",
+        "Scheduled worker/monitor jobs",
+        "Production deployment verification",
+        "Future Vercel storage or marketplace Postgres integration"
+      ],
+      "priority": "high"
+    },
+    "github": {
+      "role": "Source control, review flow, CI checks and branch-based worker data publishing.",
+      "useFor": [
+        "Pull requests",
+        "Action logs",
+        "Regression gatekeeping",
+        "Safe review branches"
+      ],
+      "priority": "high"
+    },
+    "slack": {
+      "role": "Optional alerting and digest delivery for stale worker, data-quality or deployment issues.",
+      "useFor": [
+        "Biweekly digest notifications",
+        "Critical anomaly alerts",
+        "Database/odds credential readiness reminders"
+      ],
+      "priority": "medium"
+    }
+  },
   "recommendedNextActions": [
     "Fill DATABASE_URL or POSTGRES_URL in Vercel.",
     "Apply database/schema.sql.",

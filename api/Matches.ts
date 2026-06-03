@@ -38,6 +38,21 @@ async function readBiweeklyDigest() {
   }
 }
 
+async function readDataContext() {
+  try {
+    const remote = await fetchRepoJson("docs/data-context/analysis-context.json");
+    return remote.data;
+  } catch {
+    try {
+      const contextPath = path.join(process.cwd(), "docs", "data-context", "analysis-context.json");
+      if (!fs.existsSync(contextPath)) return null;
+      return JSON.parse(fs.readFileSync(contextPath, "utf-8"));
+    } catch {
+      return null;
+    }
+  }
+}
+
 function attachReview(match: any, reviewsOrStore: any) {
   const reviews = reviewsOrStore?.postMatchReviews || reviewsOrStore?.reviews || reviewsOrStore || {};
   return {
@@ -95,6 +110,7 @@ export default async function handler(req: any, res: any) {
 
   try {
     const biweeklyDigest = await readBiweeklyDigest();
+    const dataContext = await readDataContext();
     const rufloReport = await readRufloReport();
     const meta = await readSplitMeta();
 
@@ -153,6 +169,7 @@ export default async function handler(req: any, res: any) {
           worldCup2026Projection: meta.worldCup2026Projection || null,
           worldCup2026Ratings: meta.worldCup2026Ratings || null,
           biweeklyDigest,
+          dataContext,
           rufloReport,
           sourceBranch,
           source: "github-worker-v4-split-multiday",
@@ -215,6 +232,7 @@ export default async function handler(req: any, res: any) {
       worldCup2026Projection: meta.worldCup2026Projection || null,
       worldCup2026Ratings: meta.worldCup2026Ratings || null,
       biweeklyDigest,
+      dataContext,
       rufloReport,
       sourceBranch,
       source: matches.length ? "github-worker-v4-split" : "no-matches-yet",

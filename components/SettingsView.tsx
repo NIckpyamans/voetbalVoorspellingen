@@ -15,6 +15,7 @@ const SettingsView: React.FC = () => {
   const [teamLearningCount, setTeamLearningCount] = useState(0);
   const [aiAdvice, setAiAdvice] = useState<any[]>([]);
   const [biweeklyDigest, setBiweeklyDigest] = useState<any | null>(null);
+  const [dataContext, setDataContext] = useState<any | null>(null);
   const [rufloReport, setRufloReport] = useState<any | null>(null);
   const [featureDiagnostics, setFeatureDiagnostics] = useState<any | null>(null);
   const [sourceCoverage, setSourceCoverage] = useState<any | null>(null);
@@ -62,6 +63,7 @@ const SettingsView: React.FC = () => {
       if (data.teamLearningCount != null) setTeamLearningCount(Number(data.teamLearningCount || 0));
       if (Array.isArray(data.aiAdvice)) setAiAdvice(data.aiAdvice);
       if (data.biweeklyDigest) setBiweeklyDigest(data.biweeklyDigest);
+      if (data.dataContext) setDataContext(data.dataContext);
       if (data.rufloReport) setRufloReport(data.rufloReport);
       if (data.featureDiagnostics) setFeatureDiagnostics(data.featureDiagnostics);
       if (data.sourceCoverage) setSourceCoverage(data.sourceCoverage);
@@ -775,6 +777,100 @@ const SettingsView: React.FC = () => {
         ) : (
           <div className="text-[11px] text-slate-500">
             Nog geen tweewekelijkse bundel beschikbaar. Deze wordt automatisch opgebouwd zodra de digest-workflow draait.
+          </div>
+        )}
+      </div>
+
+
+      <div className="glass-card rounded-2xl border border-teal-500/10 p-5 bg-teal-950/5">
+        <div className="flex items-start justify-between gap-3 mb-3">
+          <div>
+            <div className="text-[10px] font-black text-teal-300 uppercase">Data Analytics contextlaag</div>
+            <div className="text-[11px] text-slate-400 mt-1">
+              Ordeningslaag voor datasets, KPI's, QA-regels en dashboardcontracten. Niet als opslagmotor, wel als analysehub bovenop Postgres.
+            </div>
+          </div>
+          <span className="text-[8px] font-black px-2 py-0.5 rounded-full bg-teal-900/30 text-teal-300">
+            {dataContext ? "actief" : "wacht op context"}
+          </span>
+        </div>
+
+        {dataContext ? (
+          <div className="space-y-3">
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-2">
+              {[
+                { label: "Domeinen", value: Object.keys(dataContext.domains || {}).length },
+                { label: "Datasets", value: Object.values(dataContext.domains || {}).flat().length },
+                { label: "KPI's", value: (dataContext.primaryKpis || []).length },
+                { label: "Dashboards", value: (dataContext.defaultDashboardSections || []).length },
+              ].map((item) => (
+                <div key={item.label} className="rounded-xl border border-white/5 bg-slate-950/30 px-3 py-2">
+                  <div className="text-[8px] font-black text-slate-500 uppercase">{item.label}</div>
+                  <div className="text-[15px] font-black text-white mt-1">{item.value}</div>
+                </div>
+              ))}
+            </div>
+
+            <div className="grid md:grid-cols-2 gap-3">
+              <div className="rounded-xl border border-white/5 bg-slate-900/30 p-3">
+                <div className="text-[10px] font-black text-slate-400 uppercase mb-2">Belangrijkste KPI's</div>
+                <div className="flex flex-wrap gap-1.5">
+                  {(dataContext.primaryKpis || []).slice(0, 10).map((kpi: string) => (
+                    <span key={kpi} className="rounded-full border border-white/10 bg-slate-950/40 px-2 py-1 text-[9px] font-black text-slate-300">
+                      {kpi}
+                    </span>
+                  ))}
+                </div>
+              </div>
+              <div className="rounded-xl border border-white/5 bg-slate-900/30 p-3">
+                <div className="text-[10px] font-black text-slate-400 uppercase mb-2">Quality gates</div>
+                <div className="space-y-2">
+                  {Object.entries(dataContext.qualityGates || {}).slice(0, 5).map(([key, value]) => (
+                    <div key={key} className="text-[10px]">
+                      <span className="font-black text-white">{key}: </span>
+                      <span className="text-slate-400">{String(value)}</span>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            </div>
+
+            <div className="rounded-xl border border-white/5 bg-slate-900/30 p-3">
+              <div className="text-[10px] font-black text-slate-400 uppercase mb-2">Welke apps/plugins geven voordeel?</div>
+              <div className="grid md:grid-cols-2 gap-2">
+                {Object.entries(dataContext.appEcosystem || {}).map(([key, app]: [string, any]) => (
+                  <div key={key} className="rounded-lg border border-white/5 bg-slate-950/30 p-2">
+                    <div className="flex items-center justify-between gap-3">
+                      <div className="text-[10px] font-black text-white">{key}</div>
+                      <span className={`text-[8px] font-black px-2 py-0.5 rounded-full ${
+                        app.priority === "high" ? "bg-green-900/30 text-green-300" : "bg-amber-900/30 text-amber-300"
+                      }`}>
+                        {app.priority || "medium"}
+                      </span>
+                    </div>
+                    <div className="text-[9px] text-slate-400 mt-1">{app.role}</div>
+                    <div className="text-[8px] text-slate-500 mt-1">
+                      {(app.useFor || []).slice(0, 2).join(" · ")}
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+
+            <div className="rounded-xl border border-amber-500/10 bg-amber-950/10 p-3">
+              <div className="text-[10px] font-black text-amber-300 uppercase mb-2">Optimale inzet</div>
+              <div className="space-y-1">
+                {(dataContext.recommendedNextActions || []).slice(0, 5).map((item: string, index: number) => (
+                  <div key={`${item}-${index}`} className="text-[10px] text-slate-300">
+                    {index + 1}. {item}
+                  </div>
+                ))}
+              </div>
+            </div>
+          </div>
+        ) : (
+          <div className="text-[11px] text-slate-500">
+            Data Analytics context verschijnt zodra `docs/data-context/analysis-context.json` via de API beschikbaar is.
           </div>
         )}
       </div>
