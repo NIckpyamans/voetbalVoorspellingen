@@ -26,6 +26,26 @@ function replaceTemplate(template, variables) {
   });
 }
 
+function inferOddsApiSportKey(match = {}) {
+  const override = process.env.ODDS_API_SPORT || process.env.ODDS_SPORT_KEY || "";
+  if (override.trim()) return override.trim();
+  const league = normalizeName(match.league || "");
+  const mappings = [
+    [/premier league/, "soccer_epl"],
+    [/championship/, "soccer_efl_champ"],
+    [/laliga|la liga/, "soccer_spain_la_liga"],
+    [/serie a/, "soccer_italy_serie_a"],
+    [/bundesliga/, "soccer_germany_bundesliga"],
+    [/ligue 1/, "soccer_france_ligue_one"],
+    [/eredivisie/, "soccer_netherlands_eredivisie"],
+    [/liga portugal|portugal/, "soccer_portugal_primeira_liga"],
+    [/champions league/, "soccer_uefa_champs_league"],
+    [/europa league/, "soccer_uefa_europa_league"],
+    [/conference league/, "soccer_uefa_europa_conference_league"],
+  ];
+  return mappings.find(([pattern]) => pattern.test(league))?.[1] || "soccer_epl";
+}
+
 function pickFlatOdds(node) {
   if (!node || typeof node !== "object") return null;
   const odds = node.odds && typeof node.odds === "object" ? node.odds : node;
@@ -156,6 +176,7 @@ export async function fetchOddsAtPrediction(match, options = {}) {
   const generatedAt = options.generatedAt || new Date().toISOString();
   const url = replaceTemplate(template, {
     apiKey,
+    sport: inferOddsApiSportKey(match),
     homeTeam: match?.homeTeam || "",
     awayTeam: match?.awayTeam || "",
     league: match?.league || "",

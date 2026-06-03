@@ -1524,6 +1524,14 @@ const CURATED_FIXTURE_BACKFILL = [
 
 const CURATED_RESULT_BACKFILL = [
   {
+    date: "2026-05-23",
+    home: "Hull City",
+    away: "Southampton",
+    score: null,
+    status: "CANCELLED",
+    sourceNote: "Championship play-off fixture replaced; Hull City played Middlesbrough instead",
+  },
+  {
     date: "2026-05-05",
     home: "RKC Waalwijk",
     away: "Willem II",
@@ -4753,6 +4761,16 @@ function normalizeStoredMatchReliability(match, dateKey, now, store = null) {
   if (!match || typeof match !== "object") return match;
   const next = { ...match };
   const result = lookupCuratedResultBackfill(dateKey, next.homeTeamName || next.homeTeam, next.awayTeamName || next.awayTeam);
+  if (result && ["POSTPONED", "CANCELLED", "ABANDONED"].includes(String(result.status || "").toUpperCase())) {
+    next.status = String(result.status || "").toUpperCase();
+    next.score = null;
+    next.homeScore = null;
+    next.awayScore = null;
+    next.resultBackfill = true;
+    next.resultBackfillSource = result.sourceNote || "curated fixture status backfill";
+    next.resultPending = false;
+    next.resultPendingReason = null;
+  }
   if (result && !matchHasFinalScore(next)) {
     const [homeScore, awayScore] = String(result.score || "").split("-").map(Number);
     if (Number.isFinite(homeScore) && Number.isFinite(awayScore)) {
@@ -4893,6 +4911,21 @@ function applyCuratedResultBackfill(event, dateISO) {
     event?.awayTeam?.name || ""
   );
   if (!result) return event;
+
+  if (["POSTPONED", "CANCELLED", "ABANDONED"].includes(String(result.status || "").toUpperCase())) {
+    return {
+      ...event,
+      status: {
+        ...(event.status || {}),
+        type: "cancelled",
+        description: String(result.status || "").toUpperCase(),
+      },
+      resultBackfillMeta: {
+        sourceNote: result.sourceNote || "curated fixture status backfill",
+      },
+      source: `${event.source || "unknown"}+status-backfill`,
+    };
+  }
 
   const [homeGoals, awayGoals] = String(result.score || "").split("-").map(Number);
   if (!Number.isFinite(homeGoals) || !Number.isFinite(awayGoals)) return event;

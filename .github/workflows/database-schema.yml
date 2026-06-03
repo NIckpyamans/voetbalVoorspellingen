@@ -1,0 +1,45 @@
+name: Apply Database Schema
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+env:
+  FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: "true"
+  DATABASE_URL: ${{ secrets.DATABASE_URL }}
+  POSTGRES_URL: ${{ secrets.POSTGRES_URL }}
+  SUPABASE_DB_URL: ${{ secrets.SUPABASE_DB_URL }}
+
+jobs:
+  apply-schema:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Verify database connection secret
+        run: |
+          DB_URL="${DATABASE_URL:-${POSTGRES_URL:-${SUPABASE_DB_URL:-}}}"
+          if [ -z "$DB_URL" ]; then
+            echo "::error::Geen DATABASE_URL, POSTGRES_URL of SUPABASE_DB_URL secret gezet."
+            exit 1
+          fi
+
+      - name: Install postgres client
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y postgresql-client
+
+      - name: Apply schema
+        run: npm run db:schema:apply
