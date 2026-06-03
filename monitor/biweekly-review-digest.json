@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-06-03T09:09:37.649Z",
+  "generatedAt": "2026-06-03T09:31:42.543Z",
   "range": {
     "from": "2026-05-21",
     "to": "2026-06-03",
@@ -115,7 +115,7 @@
     ]
   },
   "architectureAudit": {
-    "generatedAt": "2026-06-03T09:09:37.649Z",
+    "generatedAt": "2026-06-03T09:31:42.543Z",
     "summary": "Professionele architectuuranalyse voor schaalbaarheid, datakwaliteit, AI-agentwaarde, databasegroei en modelbetrouwbaarheid.",
     "findings": [
       {
@@ -197,22 +197,22 @@
         "reason": "Het migratieplan is nu vastgelegd; de volgende stap is DATABASE_URL/POSTGRES_URL koppelen en npm run db:schema:apply draaien."
       },
       {
-        "title": "Resultaat- en H2H-normalisatie centraliseren",
+        "title": "H2H/result-contract bewaken met regressietests",
         "priority": "Hoog",
         "expectedImpact": "Hoog",
-        "reason": "Dit verlaagt risico op conflicterende eindstanden tussen worker, API en client."
+        "reason": "H2H-dekking staat op 86%; voorkom terugval door worker/API/client-contracten automatisch te testen."
       },
       {
-        "title": "Openstaande resultaatbackfills opschonen",
-        "priority": "Hoog",
-        "expectedImpact": "Hoog",
-        "reason": "Pending eindstanden remmen learning, modelkalibratie en dashboardvertrouwen."
+        "title": "Resultaatbackfill schoon houden",
+        "priority": "Middel",
+        "expectedImpact": "Middel",
+        "reason": "De audit meldt 0 pending backfills; behoud dit met automatische bronvergelijking na iedere worker-run."
       },
       {
-        "title": "Snapshot-training uitbreiden",
+        "title": "Snapshot-training naar 150 rows opschalen",
         "priority": "Middel",
         "expectedImpact": "Hoog",
-        "reason": "Minimaal 50 betrouwbare snapshot-backed rows zijn nodig voordat zelflerende gewichten volwassen worden."
+        "reason": "76 snapshot-backed rows is volwassen; volgende kwaliteitsdoel is 150 voor stabielere league/phase-kalibratie."
       },
       {
         "title": "Odds en closing-line kalibratie live beoordelen",
@@ -250,22 +250,22 @@
       "reason": "Het migratieplan is nu vastgelegd; de volgende stap is DATABASE_URL/POSTGRES_URL koppelen en npm run db:schema:apply draaien."
     },
     {
-      "title": "Resultaat- en H2H-normalisatie centraliseren",
+      "title": "H2H/result-contract bewaken met regressietests",
       "priority": "Hoog",
       "expectedImpact": "Hoog",
-      "reason": "Dit verlaagt risico op conflicterende eindstanden tussen worker, API en client."
+      "reason": "H2H-dekking staat op 86%; voorkom terugval door worker/API/client-contracten automatisch te testen."
     },
     {
-      "title": "Openstaande resultaatbackfills opschonen",
-      "priority": "Hoog",
-      "expectedImpact": "Hoog",
-      "reason": "Pending eindstanden remmen learning, modelkalibratie en dashboardvertrouwen."
+      "title": "Resultaatbackfill schoon houden",
+      "priority": "Middel",
+      "expectedImpact": "Middel",
+      "reason": "De audit meldt 0 pending backfills; behoud dit met automatische bronvergelijking na iedere worker-run."
     },
     {
-      "title": "Snapshot-training uitbreiden",
+      "title": "Snapshot-training naar 150 rows opschalen",
       "priority": "Middel",
       "expectedImpact": "Hoog",
-      "reason": "Minimaal 50 betrouwbare snapshot-backed rows zijn nodig voordat zelflerende gewichten volwassen worden."
+      "reason": "76 snapshot-backed rows is volwassen; volgende kwaliteitsdoel is 150 voor stabielere league/phase-kalibratie."
     },
     {
       "title": "Odds en closing-line kalibratie live beoordelen",

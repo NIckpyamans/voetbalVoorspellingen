@@ -63,9 +63,9 @@ Professionele architectuuranalyse voor schaalbaarheid, datakwaliteit, AI-agentwa
 
 ## Volgende aanbevelingen
 1. Database credentials activeren en schema toepassen (Hoog, impact: Zeer hoog) - Het migratieplan is nu vastgelegd; de volgende stap is DATABASE_URL/POSTGRES_URL koppelen en npm run db:schema:apply draaien.
-2. Resultaat- en H2H-normalisatie centraliseren (Hoog, impact: Hoog) - Dit verlaagt risico op conflicterende eindstanden tussen worker, API en client.
-3. Openstaande resultaatbackfills opschonen (Hoog, impact: Hoog) - Pending eindstanden remmen learning, modelkalibratie en dashboardvertrouwen.
-4. Snapshot-training uitbreiden (Middel, impact: Hoog) - Minimaal 50 betrouwbare snapshot-backed rows zijn nodig voordat zelflerende gewichten volwassen worden.
+2. H2H/result-contract bewaken met regressietests (Hoog, impact: Hoog) - H2H-dekking staat op 86%; voorkom terugval door worker/API/client-contracten automatisch te testen.
+3. Resultaatbackfill schoon houden (Middel, impact: Middel) - De audit meldt 0 pending backfills; behoud dit met automatische bronvergelijking na iedere worker-run.
+4. Snapshot-training naar 150 rows opschalen (Middel, impact: Hoog) - 76 snapshot-backed rows is volwassen; volgende kwaliteitsdoel is 150 voor stabielere league/phase-kalibratie.
 5. Odds en closing-line kalibratie live beoordelen (Middel, impact: Hoog) - ROI/CLV is pas betrouwbaar zodra echte odds_at_prediction en closing odds consequent binnenkomen.
 
 ## Reviewbranch voorstel

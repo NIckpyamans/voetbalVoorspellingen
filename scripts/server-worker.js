@@ -24,6 +24,8 @@ import { fetchOddsAtPrediction } from "./odds-provider.js";
 import { writeJsonFile, writeSplitDataFiles } from "./worker/archive.js";
 import {
   createSafeFetch,
+  fetchBbcScheduledEvents as fetchBbcScheduledEventsSource,
+  fetchEspnScoreboardEvents as fetchEspnScoreboardEventsSource,
   fetchExternalJson,
   fetchFbrefSnapshot as fetchFbrefSnapshotSource,
   fetchOpenfootballProfile as fetchOpenfootballProfileSource,
@@ -41,9 +43,8 @@ import {
   parseScoreToGoals,
 } from "./worker/validation.js";
 import {
-  dixonColesAdjustment,
+  buildPoissonScoreModel,
   hashSeed,
-  poisson,
   seededRandom,
 } from "./worker/prediction.js";
 
@@ -4712,163 +4713,6 @@ function decodeHtmlText(value) {
     .trim();
 }
 
-function getBbcLeagueLabel(html, index) {
-  const before = html.slice(Math.max(0, index - 5000), index);
-  const headings = [...before.matchAll(/<h2[^>]*>([\s\S]*?)<\/h2>/g)];
-  const headingName = decodeHtmlText(String(headings.at(-1)?.[1] || "").replace(/<[^>]+>/g, " ").replace(/\s+/g, " "));
-  if (BBC_COMPETITION_TO_LABEL[headingName]) return BBC_COMPETITION_TO_LABEL[headingName];
-  if (headingName) return null;
-
-  const matches = [...before.matchAll(/SignpostLink[^>]*>([^<]+)</g)];
-  const competitionName = decodeHtmlText(matches.at(-1)?.[1] || "");
-  return BBC_COMPETITION_TO_LABEL[competitionName] || null;
-}
-
-function parseBbcAggregate(block, homeName, awayName) {
-  const aggregateTextMatch = String(block || "").match(/Aggregate score\s+([^<]+?)<\/span>/i);
-  const aggregateText = decodeHtmlText(aggregateTextMatch?.[1] || "");
-  const numberMatch = aggregateText.match(/(.+?)\s+(\d+)\s*,\s*(.+?)\s+(\d+)/);
-  if (!numberMatch) return null;
-
-  const firstTeam = decodeHtmlText(numberMatch[1]);
-  const firstGoals = Number(numberMatch[2]);
-  const secondTeam = decodeHtmlText(numberMatch[3]);
-  const secondGoals = Number(numberMatch[4]);
-  if (!Number.isFinite(firstGoals) || !Number.isFinite(secondGoals)) return null;
-
-  const homeVariants = buildPossibleNames(homeName);
-  const awayVariants = buildPossibleNames(awayName);
-  const firstVariants = buildPossibleNames(firstTeam);
-  const secondVariants = buildPossibleNames(secondTeam);
-  const firstIsHome = firstVariants.some((variant) => homeVariants.includes(variant));
-  const secondIsAway = secondVariants.some((variant) => awayVariants.includes(variant));
-  const firstIsAway = firstVariants.some((variant) => awayVariants.includes(variant));
-  const secondIsHome = secondVariants.some((variant) => homeVariants.includes(variant));
-
-  if (firstIsHome && secondIsAway) {
-    return {
-      homeAggregateBeforeMatch: firstGoals,
-      awayAggregateBeforeMatch: secondGoals,
-      aggregateText,
-      previousLegScore: `${firstGoals}-${secondGoals}`,
-      previousLegText: `${homeName} ${firstGoals}-${secondGoals} ${awayName}`,
-    };
-  }
-  if (firstIsAway && secondIsHome) {
-    return {
-      homeAggregateBeforeMatch: secondGoals,
-      awayAggregateBeforeMatch: firstGoals,
-      aggregateText,
-      previousLegScore: `${secondGoals}-${firstGoals}`,
-      previousLegText: `${awayName} ${firstGoals}-${secondGoals} ${homeName}`,
-    };
-  }
-
-  return {
-    homeAggregateBeforeMatch: firstGoals,
-    awayAggregateBeforeMatch: secondGoals,
-    aggregateText,
-    previousLegScore: `${firstGoals}-${secondGoals}`,
-    previousLegText: `${firstTeam} ${firstGoals}-${secondGoals} ${secondTeam}`,
-  };
-}
-
-const espnTeamLogoCache = new Map();
-let espnTeamLogoCacheLoaded = false;
-
-function rememberEspnTeamLogo(team) {
-  const logo =
-    String(team?.logos?.[0]?.href || team?.logo || "").trim();
-  if (!logo) return;
-  const names = [
-    team?.displayName,
-    team?.name,
-    team?.shortDisplayName,
-  ].filter(Boolean);
-  for (const name of names) {
-    for (const variant of buildLogoLookupNames(name)) {
-      espnTeamLogoCache.set(normalizeName(variant), logo);
-    }
-  }
-}
-
-async function ensureEspnTeamLogoCache() {
-  if (espnTeamLogoCacheLoaded) return;
-  espnTeamLogoCacheLoaded = true;
-  const codes = [...new Set(Object.values(ESPN_SCOREBOARD_LEAGUES))];
-  for (const code of codes) {
-    const json = await fetchExternalJson(`https://site.api.espn.com/apis/site/v2/sports/soccer/${code}/teams`);
-    const teams = json?.sports?.[0]?.leagues?.[0]?.teams || json?.sports?.leagues?.teams || [];
-    for (const wrapper of teams || []) {
-      rememberEspnTeamLogo(wrapper?.team || wrapper);
-    }
-    await sleep(20);
-  }
-}
-
-async function resolveEspnTeamLogoByName(teamName) {
-  await ensureEspnTeamLogoCache();
-  const variants = buildLogoLookupNames(teamName);
-  for (const variant of variants) {
-    const logo = espnTeamLogoCache.get(normalizeName(variant));
-    if (logo) return logo;
-  }
-  return "";
-}
-
-async function fetchBbcScheduledEvents(dateISO) {
-  const html = await fetchText(`https://www.bbc.co.uk/sport/football/scores-fixtures/${dateISO}`);
-  if (!html) return [];
-
-  const fallbackEvents = [];
-  const pattern = /<span class="visually-hidden[^"]*">([^<]+?) versus ([^<]+?) kick off ([0-9]{1,2}:[0-9]{2})<\/span>/g;
-  for (const match of html.matchAll(pattern)) {
-    const homeName = decodeHtmlText(match[1]);
-    const awayName = decodeHtmlText(match[2]);
-    const time = decodeHtmlText(match[3]);
-    const leagueLabel = getBbcLeagueLabel(html, match.index || 0);
-    const eventBlock = html.slice(match.index || 0, Math.min(html.length, (match.index || 0) + 3500));
-    const bbcAggregate = parseBbcAggregate(eventBlock, homeName, awayName);
-    if (!leagueLabel) continue;
-    if (isWomenContext(leagueLabel, homeName, awayName) || isYouthContext(leagueLabel, homeName, awayName)) continue;
-
-    const leagueInfo = LEAGUES.find((item) => item.label === leagueLabel) || {
-      label: leagueLabel,
-      name: leagueLabel.split(" - ").at(-1),
-      country: leagueLabel.split(" - ")[0],
-      type: leagueLabel.includes("Europe -") ? "cup" : "league",
-    };
-    const kickoffIso = buildFootballDataKickoffIso(dateISO, time);
-    const [homeLogoUrl, awayLogoUrl] = await Promise.all([
-      resolveEspnTeamLogoByName(homeName),
-      resolveEspnTeamLogoByName(awayName),
-    ]);
-    fallbackEvents.push({
-      id: `bbc-${dateISO}-${normalizeName(homeName)}-${normalizeName(awayName)}`,
-      startTimestamp: Math.floor(new Date(kickoffIso).getTime() / 1000),
-      homeTeam: { id: "", name: homeName, country: { name: leagueInfo.country || "" }, logoUrl: homeLogoUrl },
-      awayTeam: { id: "", name: awayName, country: { name: leagueInfo.country || "" }, logoUrl: awayLogoUrl },
-      uniqueTournament: { id: null, name: leagueInfo.name },
-      tournament: {
-        id: null,
-        name: leagueInfo.name,
-        category: { name: leagueInfo.country || "" },
-        uniqueTournament: { id: null },
-      },
-      season: { id: null },
-      status: { type: "notstarted", description: "NS" },
-      homeScore: {},
-      awayScore: {},
-      bbcMeta: {
-        aggregate: bbcAggregate,
-      },
-      source: "bbc-fixture-fallback",
-    });
-  }
-
-  return fallbackEvents;
-}
-
 async function fetchSportsDbScheduledEvents(dateISO) {
   const fallbackById = new Map();
   const appendEvent = (event, leagueLabel) => {
@@ -4992,119 +4836,6 @@ async function fetchSportsDbScheduledEvents(dateISO) {
   }
 
   return Array.from(fallbackById.values()).map((item) => item.event);
-}
-
-function getEspnCompetitor(competition, side) {
-  return (competition?.competitors || []).find((competitor) => competitor?.homeAway === side) || null;
-}
-
-function mapEspnStatus(statusType) {
-  const state = String(statusType?.state || "").toLowerCase();
-  const name = String(statusType?.name || "").toLowerCase();
-  const description = String(statusType?.description || statusType?.detail || statusType?.shortDetail || "").toLowerCase();
-  const completed = Boolean(statusType?.completed);
-  if (completed || state === "post" || name.includes("final") || description.includes("final") || description === "ft") {
-    return "finished";
-  }
-  if (state === "in" || description.includes("'") || description.includes("half")) {
-    return description.includes("half") && !description.match(/\d/) ? "halftime" : "inprogress";
-  }
-  return "notstarted";
-}
-
-function getEspnDisplayMinute(status) {
-  const detail = String(status?.type?.shortDetail || status?.type?.detail || status?.displayClock || "").trim();
-  const minute = parseMinuteFromDescription(detail);
-  if (minute?.current) return { current: minute.current, extra: minute.extra || 0, label: detail };
-  const clockSeconds = Number(status?.clock || 0);
-  if (clockSeconds > 0) {
-    const current = Math.max(1, Math.floor(clockSeconds / 60));
-    return { current, extra: 0, label: `${current}'` };
-  }
-  return { current: null, extra: 0, label: detail || null };
-}
-
-async function fetchEspnScoreboardEvents(dateISO) {
-  const fallbackEvents = [];
-  const yyyymmdd = String(dateISO || "").replace(/-/g, "");
-
-  for (const [leagueLabel, espnCode] of Object.entries(ESPN_SCOREBOARD_LEAGUES)) {
-    const leagueInfo = LEAGUES.find((item) => item.label === leagueLabel);
-    if (!leagueInfo) continue;
-
-    const json = await fetchExternalJson(
-      `https://site.api.espn.com/apis/site/v2/sports/soccer/${espnCode}/scoreboard?dates=${yyyymmdd}`
-    );
-    const events = Array.isArray(json?.events) ? json.events : [];
-    for (const event of events) {
-      const competition = event?.competitions?.[0] || {};
-      const home = getEspnCompetitor(competition, "home");
-      const away = getEspnCompetitor(competition, "away");
-      const homeName = String(home?.team?.displayName || home?.team?.name || "").trim();
-      const awayName = String(away?.team?.displayName || away?.team?.name || "").trim();
-      if (!homeName || !awayName) continue;
-      if (isWomenContext(leagueLabel, homeName, awayName) || isYouthContext(leagueLabel, homeName, awayName)) continue;
-
-      const kickoff = new Date(competition?.date || event?.date || "");
-      if (toAmsterdamDateKey(kickoff) !== dateISO) continue;
-
-      const statusType = competition?.status?.type || event?.status?.type || {};
-      const homeGoals = toNumber(home?.score);
-      const awayGoals = toNumber(away?.score);
-      let appStatusType = mapEspnStatus(statusType);
-      const hasNumericScore = Number.isFinite(homeGoals) && Number.isFinite(awayGoals);
-      const ageMs = Date.now() - kickoff.getTime();
-      if (hasNumericScore && appStatusType === "notstarted") {
-        if (ageMs > 130 * 60 * 1000) appStatusType = "finished";
-        else if (ageMs > 0) appStatusType = "inprogress";
-      }
-      const scoreAvailable =
-        Number.isFinite(homeGoals) && Number.isFinite(awayGoals) && appStatusType !== "notstarted";
-      const minute = getEspnDisplayMinute(competition?.status || event?.status || {});
-
-      fallbackEvents.push({
-        id: `espn-${espnCode}-${event.id || `${dateISO}-${normalizeName(homeName)}-${normalizeName(awayName)}`}`,
-        startTimestamp: Math.floor(kickoff.getTime() / 1000),
-        homeTeam: {
-          id: String(home?.team?.id || ""),
-          name: homeName,
-          country: { name: leagueInfo.country || "" },
-          logoUrl: String(home?.team?.logo || ""),
-        },
-        awayTeam: {
-          id: String(away?.team?.id || ""),
-          name: awayName,
-          country: { name: leagueInfo.country || "" },
-          logoUrl: String(away?.team?.logo || ""),
-        },
-        uniqueTournament: { id: null, name: leagueInfo.name },
-        tournament: {
-          id: null,
-          name: leagueInfo.name,
-          category: { name: leagueInfo.country || "" },
-          uniqueTournament: { id: null },
-        },
-        season: { id: event?.season?.year || null },
-        status: {
-          type: appStatusType,
-          description: statusType.shortDetail || statusType.detail || statusType.description || "",
-        },
-        time: minute.current ? { current: minute.current, extra: minute.extra || 0 } : {},
-        period: appStatusType === "halftime" ? "HT" : null,
-        homeScore: scoreAvailable ? { current: homeGoals } : {},
-        awayScore: scoreAvailable ? { current: awayGoals } : {},
-        espnMeta: {
-          code: espnCode,
-          status: statusType.name || statusType.description || null,
-          minute: minute.label,
-        },
-        source: "espn-scoreboard-fallback",
-      });
-    }
-    await sleep(20);
-  }
-
-  return fallbackEvents;
 }
 
 async function fetchOpenLigaDbScheduledEvents(dateISO) {
@@ -9380,59 +9111,9 @@ function predict(input) {
   homeXG = clamp(homeXG, 0.22, 3.8);
   awayXG = clamp(awayXG, 0.22, 3.8);
 
-  let homeProb = 0;
-  let drawProb = 0;
-  let awayProb = 0;
-  let over15 = 0;
-  let over25 = 0;
-  let over35 = 0;
-  let btts = 0;
-  let bestScore = "1-1";
-  let bestProb = 0;
-  const bestByOutcome = {
-    home: { score: "1-0", probability: 0 },
-    draw: { score: "1-1", probability: 0 },
-    away: { score: "0-1", probability: 0 },
-  };
-  const scoreMatrix = {};
-
-  for (let homeGoals = 0; homeGoals <= 6; homeGoals += 1) {
-    for (let awayGoals = 0; awayGoals <= 6; awayGoals += 1) {
-      const probability =
-        poisson(homeXG, homeGoals) *
-        poisson(awayXG, awayGoals) *
-        dixonColesAdjustment(homeGoals, awayGoals, homeXG, awayXG);
-
-      if (homeGoals > awayGoals) homeProb += probability;
-      else if (homeGoals === awayGoals) drawProb += probability;
-      else awayProb += probability;
-
-      if (probability > bestProb) {
-        bestProb = probability;
-        bestScore = `${homeGoals}-${awayGoals}`;
-      }
-
-      if (homeGoals > awayGoals && probability > bestByOutcome.home.probability) {
-        bestByOutcome.home = { score: `${homeGoals}-${awayGoals}`, probability };
-      } else if (homeGoals === awayGoals && probability > bestByOutcome.draw.probability) {
-        bestByOutcome.draw = { score: `${homeGoals}-${awayGoals}`, probability };
-      } else if (awayGoals > homeGoals && probability > bestByOutcome.away.probability) {
-        bestByOutcome.away = { score: `${homeGoals}-${awayGoals}`, probability };
-      }
-
-      const totalGoals = homeGoals + awayGoals;
-      if (totalGoals > 1.5) over15 += probability;
-      if (totalGoals > 2.5) over25 += probability;
-      if (totalGoals > 3.5) over35 += probability;
-      if (homeGoals > 0 && awayGoals > 0) btts += probability;
-      if (probability > 0.01) scoreMatrix[`${homeGoals}-${awayGoals}`] = Number(probability.toFixed(4));
-    }
-  }
-
-  const totalProb = homeProb + drawProb + awayProb;
-  homeProb /= totalProb;
-  drawProb /= totalProb;
-  awayProb /= totalProb;
+  const poissonModel = buildPoissonScoreModel(homeXG, awayXG);
+  const { homeProb, drawProb, awayProb, over15, over25, over35, btts, scoreMatrix } = poissonModel;
+  let { bestScore, bestProb } = poissonModel;
 
   const homeAwayEdge = buildHomeAwayEdge(input.homeRecent, input.awayRecent);
   const featureVector = buildFeatureVector(input);
@@ -10846,9 +10527,30 @@ async function main() {
 
     const fallbackEvents = await fetchFallbackScheduledEventsFromMarket(date);
     const sportsDbEvents = await fetchSportsDbScheduledEvents(date);
-    const espnEvents = await fetchEspnScoreboardEvents(date);
+    const espnEvents = await fetchEspnScoreboardEventsSource(date, {
+      espnScoreboardLeagues: ESPN_SCOREBOARD_LEAGUES,
+      leagues: LEAGUES,
+      isWomenContext,
+      isYouthContext,
+      toAmsterdamDateKey,
+      toNumber,
+      parseMinuteFromDescription,
+      normalizeName,
+      sleep,
+    });
     const openLigaDbEvents = await fetchOpenLigaDbScheduledEvents(date);
-    const bbcEvents = await fetchBbcScheduledEvents(date);
+    const bbcEvents = await fetchBbcScheduledEventsSource(date, {
+      bbcCompetitionToLabel: BBC_COMPETITION_TO_LABEL,
+      espnScoreboardLeagues: ESPN_SCOREBOARD_LEAGUES,
+      leagues: LEAGUES,
+      buildPossibleNames,
+      buildLogoLookupNames,
+      normalizeName,
+      buildFootballDataKickoffIso,
+      isWomenContext,
+      isYouthContext,
+      sleep,
+    });
     const curatedEvents = fetchCuratedFixtureBackfill(date);
     fixtureSourceDiagnostics[date] = {
       checkedAt: new Date(now).toISOString(),

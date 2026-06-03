@@ -114,6 +114,18 @@ export async function fetchExternalJson(url, headers = {}) {
   }
 }
 
+function decodeHtmlText(value) {
+  return String(value || "")
+    .replace(/&amp;/g, "&")
+    .replace(/&#x27;/g, "'")
+    .replace(/&#39;/g, "'")
+    .replace(/&quot;/g, '"')
+    .replace(/&nbsp;/g, " ")
+    .replace(/&lt;/g, "<")
+    .replace(/&gt;/g, ">")
+    .trim();
+}
+
 function average(values) {
   const clean = values.map((value) => Number(value)).filter((value) => Number.isFinite(value));
   if (!clean.length) return null;
@@ -208,6 +220,270 @@ export async function fetchOpenfootballProfile(leagueLabel, dateISO, deps) {
 
   if (!results.length) return null;
   return deps.buildH2HProfileFromResults(results, "openfootball");
+}
+
+function getBbcLeagueLabel(html, index, bbcCompetitionToLabel) {
+  const before = html.slice(Math.max(0, index - 5000), index);
+  const headings = [...before.matchAll(/<h2[^>]*>([\s\S]*?)<\/h2>/g)];
+  const headingName = decodeHtmlText(String(headings.at(-1)?.[1] || "").replace(/<[^>]+>/g, " ").replace(/\s+/g, " "));
+  if (bbcCompetitionToLabel[headingName]) return bbcCompetitionToLabel[headingName];
+  if (headingName) return null;
+
+  const matches = [...before.matchAll(/SignpostLink[^>]*>([^<]+)</g)];
+  const competitionName = decodeHtmlText(matches.at(-1)?.[1] || "");
+  return bbcCompetitionToLabel[competitionName] || null;
+}
+
+function parseBbcAggregate(block, homeName, awayName, deps) {
+  const aggregateTextMatch = String(block || "").match(/Aggregate score\s+([^<]+?)<\/span>/i);
+  const aggregateText = decodeHtmlText(aggregateTextMatch?.[1] || "");
+  const numberMatch = aggregateText.match(/(.+?)\s+(\d+)\s*,\s*(.+?)\s+(\d+)/);
+  if (!numberMatch) return null;
+
+  const firstTeam = decodeHtmlText(numberMatch[1]);
+  const firstGoals = Number(numberMatch[2]);
+  const secondTeam = decodeHtmlText(numberMatch[3]);
+  const secondGoals = Number(numberMatch[4]);
+  if (!Number.isFinite(firstGoals) || !Number.isFinite(secondGoals)) return null;
+
+  const homeVariants = deps.buildPossibleNames(homeName);
+  const awayVariants = deps.buildPossibleNames(awayName);
+  const firstVariants = deps.buildPossibleNames(firstTeam);
+  const secondVariants = deps.buildPossibleNames(secondTeam);
+  const firstIsHome = firstVariants.some((variant) => homeVariants.includes(variant));
+  const secondIsAway = secondVariants.some((variant) => awayVariants.includes(variant));
+  const firstIsAway = firstVariants.some((variant) => awayVariants.includes(variant));
+  const secondIsHome = secondVariants.some((variant) => homeVariants.includes(variant));
+
+  if (firstIsHome && secondIsAway) {
+    return {
+      homeAggregateBeforeMatch: firstGoals,
+      awayAggregateBeforeMatch: secondGoals,
+      aggregateText,
+      previousLegScore: `${firstGoals}-${secondGoals}`,
+      previousLegText: `${homeName} ${firstGoals}-${secondGoals} ${awayName}`,
+    };
+  }
+  if (firstIsAway && secondIsHome) {
+    return {
+      homeAggregateBeforeMatch: secondGoals,
+      awayAggregateBeforeMatch: firstGoals,
+      aggregateText,
+      previousLegScore: `${secondGoals}-${firstGoals}`,
+      previousLegText: `${awayName} ${firstGoals}-${secondGoals} ${homeName}`,
+    };
+  }
+
+  return {
+    homeAggregateBeforeMatch: firstGoals,
+    awayAggregateBeforeMatch: secondGoals,
+    aggregateText,
+    previousLegScore: `${firstGoals}-${secondGoals}`,
+    previousLegText: `${firstTeam} ${firstGoals}-${secondGoals} ${secondTeam}`,
+  };
+}
+
+const espnTeamLogoCache = new Map();
+let espnTeamLogoCacheLoaded = false;
+
+function rememberEspnTeamLogo(team, deps) {
+  const logo = String(team?.logos?.[0]?.href || team?.logo || "").trim();
+  if (!logo) return;
+  const names = [team?.displayName, team?.name, team?.shortDisplayName].filter(Boolean);
+  for (const name of names) {
+    for (const variant of deps.buildLogoLookupNames(name)) {
+      espnTeamLogoCache.set(deps.normalizeName(variant), logo);
+    }
+  }
+}
+
+async function ensureEspnTeamLogoCache(deps) {
+  if (espnTeamLogoCacheLoaded) return;
+  espnTeamLogoCacheLoaded = true;
+  const codes = [...new Set(Object.values(deps.espnScoreboardLeagues || {}))];
+  for (const code of codes) {
+    const json = await fetchExternalJson(`https://site.api.espn.com/apis/site/v2/sports/soccer/${code}/teams`);
+    const teams = json?.sports?.[0]?.leagues?.[0]?.teams || json?.sports?.leagues?.teams || [];
+    for (const wrapper of teams || []) {
+      rememberEspnTeamLogo(wrapper?.team || wrapper, deps);
+    }
+    await deps.sleep(20);
+  }
+}
+
+async function resolveEspnTeamLogoByName(teamName, deps) {
+  await ensureEspnTeamLogoCache(deps);
+  const variants = deps.buildLogoLookupNames(teamName);
+  for (const variant of variants) {
+    const logo = espnTeamLogoCache.get(deps.normalizeName(variant));
+    if (logo) return logo;
+  }
+  return "";
+}
+
+export async function fetchBbcScheduledEvents(dateISO, deps) {
+  const html = await fetchText(`https://www.bbc.co.uk/sport/football/scores-fixtures/${dateISO}`);
+  if (!html) return [];
+
+  const fallbackEvents = [];
+  const pattern = /<span class="visually-hidden[^"]*">([^<]+?) versus ([^<]+?) kick off ([0-9]{1,2}:[0-9]{2})<\/span>/g;
+  for (const match of html.matchAll(pattern)) {
+    const homeName = decodeHtmlText(match[1]);
+    const awayName = decodeHtmlText(match[2]);
+    const time = decodeHtmlText(match[3]);
+    const leagueLabel = getBbcLeagueLabel(html, match.index || 0, deps.bbcCompetitionToLabel);
+    const eventBlock = html.slice(match.index || 0, Math.min(html.length, (match.index || 0) + 3500));
+    const bbcAggregate = parseBbcAggregate(eventBlock, homeName, awayName, deps);
+    if (!leagueLabel) continue;
+    if (deps.isWomenContext(leagueLabel, homeName, awayName) || deps.isYouthContext(leagueLabel, homeName, awayName)) continue;
+
+    const leagueInfo = deps.leagues.find((item) => item.label === leagueLabel) || {
+      label: leagueLabel,
+      name: leagueLabel.split(" - ").at(-1),
+      country: leagueLabel.split(" - ")[0],
+      type: leagueLabel.includes("Europe -") ? "cup" : "league",
+    };
+    const kickoffIso = deps.buildFootballDataKickoffIso(dateISO, time);
+    const [homeLogoUrl, awayLogoUrl] = await Promise.all([
+      resolveEspnTeamLogoByName(homeName, deps),
+      resolveEspnTeamLogoByName(awayName, deps),
+    ]);
+    fallbackEvents.push({
+      id: `bbc-${dateISO}-${deps.normalizeName(homeName)}-${deps.normalizeName(awayName)}`,
+      startTimestamp: Math.floor(new Date(kickoffIso).getTime() / 1000),
+      homeTeam: { id: "", name: homeName, country: { name: leagueInfo.country || "" }, logoUrl: homeLogoUrl },
+      awayTeam: { id: "", name: awayName, country: { name: leagueInfo.country || "" }, logoUrl: awayLogoUrl },
+      uniqueTournament: { id: null, name: leagueInfo.name },
+      tournament: {
+        id: null,
+        name: leagueInfo.name,
+        category: { name: leagueInfo.country || "" },
+        uniqueTournament: { id: null },
+      },
+      season: { id: null },
+      status: { type: "notstarted", description: "NS" },
+      homeScore: {},
+      awayScore: {},
+      bbcMeta: {
+        aggregate: bbcAggregate,
+      },
+      source: "bbc-fixture-fallback",
+    });
+  }
+
+  return fallbackEvents;
+}
+
+function getEspnCompetitor(competition, side) {
+  return (competition?.competitors || []).find((competitor) => competitor?.homeAway === side) || null;
+}
+
+function mapEspnStatus(statusType) {
+  const state = String(statusType?.state || "").toLowerCase();
+  const name = String(statusType?.name || "").toLowerCase();
+  const description = String(statusType?.description || statusType?.detail || statusType?.shortDetail || "").toLowerCase();
+  const completed = Boolean(statusType?.completed);
+  if (completed || state === "post" || name.includes("final") || description.includes("final") || description === "ft") {
+    return "finished";
+  }
+  if (state === "in" || description.includes("'") || description.includes("half")) {
+    return description.includes("half") && !description.match(/\d/) ? "halftime" : "inprogress";
+  }
+  return "notstarted";
+}
+
+function getEspnDisplayMinute(status, deps) {
+  const detail = String(status?.type?.shortDetail || status?.type?.detail || status?.displayClock || "").trim();
+  const minute = deps.parseMinuteFromDescription(detail);
+  if (minute?.current) return { current: minute.current, extra: minute.extra || 0, label: detail };
+  const clockSeconds = Number(status?.clock || 0);
+  if (clockSeconds > 0) {
+    const current = Math.max(1, Math.floor(clockSeconds / 60));
+    return { current, extra: 0, label: `${current}'` };
+  }
+  return { current: null, extra: 0, label: detail || null };
+}
+
+export async function fetchEspnScoreboardEvents(dateISO, deps) {
+  const fallbackEvents = [];
+  const yyyymmdd = String(dateISO || "").replace(/-/g, "");
+
+  for (const [leagueLabel, espnCode] of Object.entries(deps.espnScoreboardLeagues)) {
+    const leagueInfo = deps.leagues.find((item) => item.label === leagueLabel);
+    if (!leagueInfo) continue;
+
+    const json = await fetchExternalJson(
+      `https://site.api.espn.com/apis/site/v2/sports/soccer/${espnCode}/scoreboard?dates=${yyyymmdd}`
+    );
+    const events = Array.isArray(json?.events) ? json.events : [];
+    for (const event of events) {
+      const competition = event?.competitions?.[0] || {};
+      const home = getEspnCompetitor(competition, "home");
+      const away = getEspnCompetitor(competition, "away");
+      const homeName = String(home?.team?.displayName || home?.team?.name || "").trim();
+      const awayName = String(away?.team?.displayName || away?.team?.name || "").trim();
+      if (!homeName || !awayName) continue;
+      if (deps.isWomenContext(leagueLabel, homeName, awayName) || deps.isYouthContext(leagueLabel, homeName, awayName)) continue;
+
+      const kickoff = new Date(competition?.date || event?.date || "");
+      if (deps.toAmsterdamDateKey(kickoff) !== dateISO) continue;
+
+      const statusType = competition?.status?.type || event?.status?.type || {};
+      const homeGoals = deps.toNumber(home?.score);
+      const awayGoals = deps.toNumber(away?.score);
+      let appStatusType = mapEspnStatus(statusType);
+      const hasNumericScore = Number.isFinite(homeGoals) && Number.isFinite(awayGoals);
+      const ageMs = Date.now() - kickoff.getTime();
+      if (hasNumericScore && appStatusType === "notstarted") {
+        if (ageMs > 130 * 60 * 1000) appStatusType = "finished";
+        else if (ageMs > 0) appStatusType = "inprogress";
+      }
+      const scoreAvailable = Number.isFinite(homeGoals) && Number.isFinite(awayGoals) && appStatusType !== "notstarted";
+      const minute = getEspnDisplayMinute(competition?.status || event?.status || {}, deps);
+
+      fallbackEvents.push({
+        id: `espn-${espnCode}-${event.id || `${dateISO}-${deps.normalizeName(homeName)}-${deps.normalizeName(awayName)}`}`,
+        startTimestamp: Math.floor(kickoff.getTime() / 1000),
+        homeTeam: {
+          id: String(home?.team?.id || ""),
+          name: homeName,
+          country: { name: leagueInfo.country || "" },
+          logoUrl: String(home?.team?.logo || ""),
+        },
+        awayTeam: {
+          id: String(away?.team?.id || ""),
+          name: awayName,
+          country: { name: leagueInfo.country || "" },
+          logoUrl: String(away?.team?.logo || ""),
+        },
+        uniqueTournament: { id: null, name: leagueInfo.name },
+        tournament: {
+          id: null,
+          name: leagueInfo.name,
+          category: { name: leagueInfo.country || "" },
+          uniqueTournament: { id: null },
+        },
+        season: { id: event?.season?.year || null },
+        status: {
+          type: appStatusType,
+          description: statusType.shortDetail || statusType.detail || statusType.description || "",
+        },
+        time: minute.current ? { current: minute.current, extra: minute.extra || 0 } : {},
+        period: appStatusType === "halftime" ? "HT" : null,
+        homeScore: scoreAvailable ? { current: homeGoals } : {},
+        awayScore: scoreAvailable ? { current: awayGoals } : {},
+        espnMeta: {
+          code: espnCode,
+          status: statusType.name || statusType.description || null,
+          minute: minute.label,
+        },
+        source: "espn-scoreboard-fallback",
+      });
+    }
+    await deps.sleep(20);
+  }
+
+  return fallbackEvents;
 }
 
 function getFbrefSnapshotUrls(leagueLabel, fbrefReleaseCodes) {

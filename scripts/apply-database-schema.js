@@ -6,6 +6,26 @@ import { spawnSync } from "child_process";
 
 const ROOT = process.cwd();
 const schemaPath = path.join(ROOT, "database", "schema.sql");
+
+function loadEnvFile(filePath) {
+  if (!fs.existsSync(filePath)) return;
+  const lines = fs.readFileSync(filePath, "utf8").split(/\r?\n/);
+  for (const line of lines) {
+    const trimmed = line.trim();
+    if (!trimmed || trimmed.startsWith("#")) continue;
+    const separator = trimmed.indexOf("=");
+    if (separator <= 0) continue;
+    const key = trimmed.slice(0, separator).trim();
+    const rawValue = trimmed.slice(separator + 1).trim();
+    if (!key || process.env[key] != null) continue;
+    process.env[key] = rawValue.replace(/^['"]|['"]$/g, "");
+  }
+}
+
+for (const fileName of [".env.local", ".env.production.local", ".env"]) {
+  loadEnvFile(path.join(ROOT, fileName));
+}
+
 const databaseUrl = process.env.DATABASE_URL || process.env.POSTGRES_URL || process.env.SUPABASE_DB_URL || "";
 
 if (!fs.existsSync(schemaPath)) {

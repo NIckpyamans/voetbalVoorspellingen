@@ -7,6 +7,7 @@ const ROOT = process.cwd();
 const FINDINGS_FILE = path.join(ROOT, "monitor", "daily-findings.json");
 const PROPOSAL_FILE = path.join(ROOT, "monitor", "review-branch-proposal.json");
 const DATA_QUALITY_FILE = path.join(ROOT, "monitor", "data-quality-audit.json");
+const CATBOOST_READY_FILE = path.join(ROOT, "training", "catboost-ready.json");
 const OUTPUT_JSON = path.join(ROOT, "monitor", "biweekly-review-digest.json");
 const OUTPUT_MD = path.join(ROOT, "monitor", "biweekly-review-digest.md");
 const DATABASE_PLAN_MD = path.join(ROOT, "docs", "database-migration-plan.md");
@@ -286,6 +287,7 @@ function buildDigest() {
   const findings = readJsonSafe(FINDINGS_FILE, { days: {} });
   const proposal = readJsonSafe(PROPOSAL_FILE, null);
   const dataQuality = readJsonSafe(DATA_QUALITY_FILE, null);
+  const catboostReady = readJsonSafe(CATBOOST_READY_FILE, []);
   const allFindingDays = Object.keys(findings.days || {}).sort();
   const latestFindingDay = allFindingDays.at(-1) || getAmsterdamDate();
   const fromDate = subtractDays(latestFindingDay, 13);
@@ -332,6 +334,13 @@ function buildDigest() {
 
   const week = getIsoWeek(latestFindingDay);
   const shouldRefresh = week % 2 === 0;
+  const dataQualityTotals = dataQuality?.totals || {};
+  const pendingResultBackfills = Number(dataQualityTotals.pendingResultBackfills || 0);
+  const h2hCoverage = Number(dataQualityTotals.h2hCoverage || 0);
+  const trainingRows = Array.isArray(catboostReady) ? catboostReady : catboostReady?.rows || [];
+  const snapshotBackedRows = trainingRows.filter(
+    (row) => row?.snapshotBacked || row?.evaluationSource === "prediction_snapshot" || row?.inputSnapshotHash
+  ).length;
   const nextRecommendations = [
     {
       title: "Database credentials activeren en schema toepassen",
@@ -340,22 +349,31 @@ function buildDigest() {
       reason: "Het migratieplan is nu vastgelegd; de volgende stap is DATABASE_URL/POSTGRES_URL koppelen en npm run db:schema:apply draaien.",
     },
     {
-      title: "Resultaat- en H2H-normalisatie centraliseren",
+      title: h2hCoverage >= 0.85 ? "H2H/result-contract bewaken met regressietests" : "Resultaat- en H2H-normalisatie centraliseren",
       priority: "Hoog",
       expectedImpact: "Hoog",
-      reason: "Dit verlaagt risico op conflicterende eindstanden tussen worker, API en client.",
+      reason:
+        h2hCoverage >= 0.85
+          ? `H2H-dekking staat op ${Math.round(h2hCoverage * 100)}%; voorkom terugval door worker/API/client-contracten automatisch te testen.`
+          : "Dit verlaagt risico op conflicterende eindstanden tussen worker, API en client.",
     },
     {
-      title: "Openstaande resultaatbackfills opschonen",
-      priority: "Hoog",
-      expectedImpact: "Hoog",
-      reason: "Pending eindstanden remmen learning, modelkalibratie en dashboardvertrouwen.",
+      title: pendingResultBackfills === 0 ? "Resultaatbackfill schoon houden" : "Openstaande resultaatbackfills opschonen",
+      priority: pendingResultBackfills === 0 ? "Middel" : "Hoog",
+      expectedImpact: pendingResultBackfills === 0 ? "Middel" : "Hoog",
+      reason:
+        pendingResultBackfills === 0
+          ? "De audit meldt 0 pending backfills; behoud dit met automatische bronvergelijking na iedere worker-run."
+          : "Pending eindstanden remmen learning, modelkalibratie en dashboardvertrouwen.",
     },
     {
-      title: "Snapshot-training uitbreiden",
+      title: snapshotBackedRows >= 50 ? "Snapshot-training naar 150 rows opschalen" : "Snapshot-training uitbreiden",
       priority: "Middel",
       expectedImpact: "Hoog",
-      reason: "Minimaal 50 betrouwbare snapshot-backed rows zijn nodig voordat zelflerende gewichten volwassen worden.",
+      reason:
+        snapshotBackedRows >= 50
+          ? `${snapshotBackedRows} snapshot-backed rows is volwassen; volgende kwaliteitsdoel is 150 voor stabielere league/phase-kalibratie.`
+          : "Minimaal 50 betrouwbare snapshot-backed rows zijn nodig voordat zelflerende gewichten volwassen worden.",
     },
     {
       title: "Odds en closing-line kalibratie live beoordelen",
