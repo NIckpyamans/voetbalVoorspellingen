@@ -53,6 +53,41 @@ async function readDataContext() {
   }
 }
 
+function databaseConfigured() {
+  return Boolean(
+    String(process.env.DATABASE_URL || "").trim() ||
+      String(process.env.POSTGRES_URL || "").trim() ||
+      String(process.env.SUPABASE_DB_URL || "").trim()
+  );
+}
+
+function readSourceLineageBackfill() {
+  try {
+    const manifestPath = path.join(process.cwd(), "monitor", "source-lineage-backfill.json");
+    if (!fs.existsSync(manifestPath)) return null;
+    return JSON.parse(fs.readFileSync(manifestPath, "utf-8"));
+  } catch {
+    return null;
+  }
+}
+
+function buildDatabaseIntegration(dataContext: any) {
+  const configured = databaseConfigured();
+  const sourceLineageBackfill = readSourceLineageBackfill();
+  return {
+    sourceOfTruth: configured ? "postgres-ready" : "json-cache",
+    databaseConfigured: configured,
+    schemaApplyCommand: "npm run db:schema:apply",
+    sourceLineageBackfill,
+    dashboardContracts: dataContext?.defaultDashboardSections || [],
+    databaseBackedSections: configured ? dataContext?.defaultDashboardSections || [] : [],
+    jsonFallbackSections: configured ? [] : dataContext?.defaultDashboardSections || [],
+    nextAction: configured
+      ? "Schema toepassen en daarna source lineage backfill uitvoeren."
+      : "Vul DATABASE_URL of POSTGRES_URL om dashboardsecties database-backed te maken.",
+  };
+}
+
 function attachReview(match: any, reviewsOrStore: any) {
   const reviews = reviewsOrStore?.postMatchReviews || reviewsOrStore?.reviews || reviewsOrStore || {};
   return {
@@ -111,6 +146,7 @@ export default async function handler(req: any, res: any) {
   try {
     const biweeklyDigest = await readBiweeklyDigest();
     const dataContext = await readDataContext();
+    const databaseIntegration = buildDatabaseIntegration(dataContext);
     const rufloReport = await readRufloReport();
     const meta = await readSplitMeta();
 
@@ -170,6 +206,7 @@ export default async function handler(req: any, res: any) {
           worldCup2026Ratings: meta.worldCup2026Ratings || null,
           biweeklyDigest,
           dataContext,
+          databaseIntegration,
           rufloReport,
           sourceBranch,
           source: "github-worker-v4-split-multiday",
@@ -233,6 +270,7 @@ export default async function handler(req: any, res: any) {
       worldCup2026Ratings: meta.worldCup2026Ratings || null,
       biweeklyDigest,
       dataContext,
+      databaseIntegration,
       rufloReport,
       sourceBranch,
       source: matches.length ? "github-worker-v4-split" : "no-matches-yet",

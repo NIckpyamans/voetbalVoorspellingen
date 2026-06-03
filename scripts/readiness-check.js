@@ -56,6 +56,7 @@ function configured(...names) {
 const packageJson = readJsonSafe("package.json", {});
 const trainingExport = readJsonSafe(path.join("training", "catboost-ready.json"), {});
 const dataQualityAudit = readJsonSafe(path.join("monitor", "data-quality-audit.json"), {});
+const sourceLineageBackfill = readJsonSafe(path.join("monitor", "source-lineage-backfill.json"), {});
 const meta = readJsonSafe(path.join("data", "meta.json"), {});
 const indexHtml = readTextSafe("index.html");
 const indexTsx = readTextSafe("index.tsx");
@@ -148,6 +149,20 @@ const report = {
           ? "database_needed_for_roi_clv_storage"
           : "odds_credentials_needed",
     note: "ROI/CLV pas live beoordelen wanneer echte odds_at_prediction plus closing odds in de database staan.",
+  },
+  sourceLineage: {
+    backfillGenerated: Boolean(sourceLineageBackfill.generatedAt),
+    generatedAt: sourceLineageBackfill.generatedAt || null,
+    sourceRecords: Number(sourceLineageBackfill.sourceRecords || 0),
+    sourceAuditRows: Number(sourceLineageBackfill.sourceAuditRows || 0),
+    applyStatus: sourceLineageBackfill.applyStatus || "not_generated",
+    sqlFile: sourceLineageBackfill.sqlFile || null,
+    status: sourceLineageBackfill.generatedAt
+      ? dbConfigured
+        ? "ready_to_apply_or_applied"
+        : "generated_waiting_for_database"
+      : "run_db_source_lineage_backfill",
+    runCommand: "npm run db:source-lineage:backfill",
   },
   fixtureCalendar: {
     today,

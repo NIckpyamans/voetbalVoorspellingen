@@ -16,6 +16,7 @@ const SettingsView: React.FC = () => {
   const [aiAdvice, setAiAdvice] = useState<any[]>([]);
   const [biweeklyDigest, setBiweeklyDigest] = useState<any | null>(null);
   const [dataContext, setDataContext] = useState<any | null>(null);
+  const [databaseIntegration, setDatabaseIntegration] = useState<any | null>(null);
   const [rufloReport, setRufloReport] = useState<any | null>(null);
   const [featureDiagnostics, setFeatureDiagnostics] = useState<any | null>(null);
   const [sourceCoverage, setSourceCoverage] = useState<any | null>(null);
@@ -64,6 +65,7 @@ const SettingsView: React.FC = () => {
       if (Array.isArray(data.aiAdvice)) setAiAdvice(data.aiAdvice);
       if (data.biweeklyDigest) setBiweeklyDigest(data.biweeklyDigest);
       if (data.dataContext) setDataContext(data.dataContext);
+      if (data.databaseIntegration) setDatabaseIntegration(data.databaseIntegration);
       if (data.rufloReport) setRufloReport(data.rufloReport);
       if (data.featureDiagnostics) setFeatureDiagnostics(data.featureDiagnostics);
       if (data.sourceCoverage) setSourceCoverage(data.sourceCoverage);
@@ -809,6 +811,35 @@ const SettingsView: React.FC = () => {
                   <div className="text-[15px] font-black text-white mt-1">{item.value}</div>
                 </div>
               ))}
+            </div>
+
+            <div className="rounded-xl border border-white/5 bg-slate-900/30 p-3">
+              <div className="flex items-center justify-between gap-3 mb-2">
+                <div>
+                  <div className="text-[10px] font-black text-slate-400 uppercase">Database/API-output</div>
+                  <div className="text-[10px] text-slate-400 mt-1">
+                    {databaseIntegration?.nextAction || "Database-integratie status wordt opgehaald."}
+                  </div>
+                </div>
+                <span className={`text-[8px] font-black px-2 py-0.5 rounded-full ${
+                  databaseIntegration?.databaseConfigured ? "bg-green-900/30 text-green-300" : "bg-amber-900/30 text-amber-300"
+                }`}>
+                  {databaseIntegration?.databaseConfigured ? "Postgres klaar" : "JSON fallback"}
+                </span>
+              </div>
+              <div className="grid grid-cols-2 md:grid-cols-4 gap-2">
+                {[
+                  { label: "DB secties", value: (databaseIntegration?.databaseBackedSections || []).length },
+                  { label: "JSON fallback", value: (databaseIntegration?.jsonFallbackSections || []).length },
+                  { label: "Source records", value: databaseIntegration?.sourceLineageBackfill?.sourceRecords || 0 },
+                  { label: "Audit rows", value: databaseIntegration?.sourceLineageBackfill?.sourceAuditRows || 0 },
+                ].map((item) => (
+                  <div key={item.label} className="rounded-lg border border-white/5 bg-slate-950/30 p-2">
+                    <div className="text-[8px] font-black text-slate-500 uppercase">{item.label}</div>
+                    <div className="text-[13px] font-black text-white mt-1">{item.value}</div>
+                  </div>
+                ))}
+              </div>
             </div>
 
             <div className="grid md:grid-cols-2 gap-3">
