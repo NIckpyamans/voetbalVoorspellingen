@@ -43,9 +43,15 @@ import {
   parseScoreToGoals,
 } from "./worker/validation.js";
 import {
+  buildFeatureImportance,
+  buildFeatureVector,
   buildPoissonScoreModel,
+  buildRiskProfile,
   hashSeed,
+  qualityGateForCompleteness,
+  scoreDataCompleteness,
   seededRandom,
+  sourceReliabilityScore,
 } from "./worker/prediction.js";
 
 const SOFA = "https://api.sofascore.com/api/v1";
@@ -3502,170 +3508,6 @@ function calculateRecentH2HBalance(h2h, currentHomeId, currentAwayId) {
   return totalWeight > 0 ? Number((weightedScore / totalWeight).toFixed(2)) : 0;
 }
 
-function buildFeatureVector(input) {
-  const homeSplit = pickHomeStrength(input.homeRecent);
-  const awaySplit = pickAwayStrength(input.awayRecent);
-  const homeCompareKey = String(input.homeTeamId || normalizeName(input.homeTeamName || ""));
-  const awayCompareKey = String(input.awayTeamId || normalizeName(input.awayTeamName || ""));
-  const homePpg = toPointsPerGame(input.homeRecent?.wins, input.homeRecent?.draws, input.homeRecent?.gamesPlayed);
-  const awayPpg = toPointsPerGame(input.awayRecent?.wins, input.awayRecent?.draws, input.awayRecent?.gamesPlayed);
-  const lineupRatingDiff = Number(
-    (
-      Number(input.lineupSummary?.home?.avgRating || 0) -
-      Number(input.lineupSummary?.away?.avgRating || 0)
-    ).toFixed(2)
-  );
-  const homeContinuity = calcLineupContinuity(input.lineupSummary?.home, input.homeInjuries);
-  const awayContinuity = calcLineupContinuity(input.lineupSummary?.away, input.awayInjuries);
-  const awayTravelPenalty = calcTravelPenalty(input);
-  const keeperRatingDiff = calcKeeperEdge(input.lineupSummary);
-  const homeLearning = input.homeLearning || {};
-  const awayLearning = input.awayLearning || {};
-  const homeMarket = input.homeMarketProfile || {};
-  const awayMarket = input.awayMarketProfile || {};
-  const leagueReliability = input.leagueReliability || {};
-  const phaseReliability = input.phaseReliability || {};
-  const refereeProfile = input.refereeProfile || {};
-  const h2hSampleSize = Math.max(Number(input.h2h?.played || 0), Array.isArray(input.h2h?.results) ? input.h2h.results.length : 0);
-  const h2hReliability = h2hSampleSize >= 5 ? 1 : h2hSampleSize >= 3 ? 0.65 : h2hSampleSize >= 2 ? 0.35 : 0;
-  const isInternational =
-    isSeniorInternationalTournament(input.league) ||
-    String(input.phaseBucket || "").toLowerCase() === "interland" ||
-    String(input.leagueType || "").toLowerCase() === "international";
-  const clubEloScale = isInternational ? 0.35 : 1;
-  const homeSquadRating = Number(input.homeTeamProfile?.squadRating || input.homeTeamProfile?.teamStrengthRating || 50);
-  const awaySquadRating = Number(input.awayTeamProfile?.squadRating || input.awayTeamProfile?.teamStrengthRating || 50);
-  const homeTransferImpact = Number(input.homeTeamProfile?.transferImpact || 0);
-  const awayTransferImpact = Number(input.awayTeamProfile?.transferImpact || 0);
-
-  return {
-    home_avg_scored: Number(input.homeRecent?.avgScored || 1.35),
-    away_avg_scored: Number(input.awayRecent?.avgScored || 1.35),
-    home_avg_conceded: Number(input.homeRecent?.avgConceded || 1.35),
-    away_avg_conceded: Number(input.awayRecent?.avgConceded || 1.35),
-    home_home_split_scored: Number(homeSplit.avgScored || 1.35),
-    home_home_split_conceded: Number(homeSplit.avgConceded || 1.35),
-    away_away_split_scored: Number(awaySplit.avgScored || 1.35),
-    away_away_split_conceded: Number(awaySplit.avgConceded || 1.35),
-    home_ppg: homePpg,
-    away_ppg: awayPpg,
-    ppg_diff: Number((homePpg - awayPpg).toFixed(2)),
-    home_rest_days: Number(input.homeRestDays ?? 0),
-    away_rest_days: Number(input.awayRestDays ?? 0),
-    rest_diff: Number((Number(input.homeRestDays ?? 0) - Number(input.awayRestDays ?? 0)).toFixed(2)),
-    club_elo_diff: Number(((Number(input.homeClubElo || 0) - Number(input.awayClubElo || 0)) * clubEloScale).toFixed(0)),
-    raw_club_elo_diff: Number((Number(input.homeClubElo || 0) - Number(input.awayClubElo || 0)).toFixed(0)),
-    club_elo_scale: clubEloScale,
-    home_squad_rating: Number(homeSquadRating.toFixed(1)),
-    away_squad_rating: Number(awaySquadRating.toFixed(1)),
-    squad_rating_diff: Number(((homeSquadRating - awaySquadRating) / 10).toFixed(2)),
-    home_transfer_impact: Number(homeTransferImpact.toFixed(2)),
-    away_transfer_impact: Number(awayTransferImpact.toFixed(2)),
-    transfer_impact_diff: Number((homeTransferImpact - awayTransferImpact).toFixed(2)),
-    home_injuries: Number(input.homeInjuries?.injuredCount || 0),
-    away_injuries: Number(input.awayInjuries?.injuredCount || 0),
-    weather_risk:
-      input.weather?.riskLevel === "high" ? 2 : input.weather?.riskLevel === "medium" ? 1 : 0,
-    lineups_confirmed: input.lineupSummary?.confirmed ? 1 : 0,
-    h2h_sample_size: h2hSampleSize,
-    h2h_reliability: h2hReliability,
-    h2h_balance:
-      input.h2h?.played >= 1
-        ? Number(
-            (
-              (Number(input.h2h.homeWins || 0) - Number(input.h2h.awayWins || 0)) /
-              Math.max(Number(input.h2h.played || 1), 1)
-            ).toFixed(2)
-          )
-        : 0,
-    h2h_recent_5_balance: calculateRecentH2HBalance(input.h2h, homeCompareKey, awayCompareKey),
-    recent_h2h_balance:
-      input.h2h?.results?.length >= 1
-        ? Number(
-            (() => {
-              const recent5 = (input.h2h.results || []).slice(-5);
-              let homeWins = 0;
-              let awayWins = 0;
-              recent5.forEach(r => {
-                if (String(r.winnerId || "") === homeCompareKey) homeWins++;
-                else if (String(r.winnerId || "") === awayCompareKey) awayWins++;
-              });
-              return ((homeWins - awayWins) / Math.max(recent5.length, 1)).toFixed(2);
-            })()
-          )
-        : 0,
-    match_importance: Number(input.matchImportance || 1),
-    home_btts_rate: Number(input.homeRecent?.bttsRate || 0.5),
-    away_btts_rate: Number(input.awayRecent?.bttsRate || 0.5),
-    home_over25_home: Number(homeSplit.over25Rate || 0.45),
-    away_over25_away: Number(awaySplit.over25Rate || 0.45),
-    home_yellow_rate: Number(input.homeRecent?.yellowCardRate || 0),
-    away_yellow_rate: Number(input.awayRecent?.yellowCardRate || 0),
-    home_cards_rate: Number(
-      (
-        Number(input.homeRecent?.yellowCardRate || 0) +
-        Number(input.homeRecent?.redCardRate || 0) * 1.8
-      ).toFixed(2)
-    ),
-    away_cards_rate: Number(
-      (
-        Number(input.awayRecent?.yellowCardRate || 0) +
-        Number(input.awayRecent?.redCardRate || 0) * 1.8
-      ).toFixed(2)
-    ),
-    home_avg_corners: Number(input.homeSeasonStats?.avgCorners || 0),
-    away_avg_corners: Number(input.awaySeasonStats?.avgCorners || 0),
-    home_avg_shots: Number(input.homeSeasonStats?.avgShots || 0),
-    away_avg_shots: Number(input.awaySeasonStats?.avgShots || 0),
-    home_avg_shots_against: Number(input.homeSeasonStats?.avgShotsAgainst || 0),
-    away_avg_shots_against: Number(input.awaySeasonStats?.avgShotsAgainst || 0),
-    home_avg_shots_on_against: Number(input.homeSeasonStats?.avgShotsOnAgainst || 0),
-    away_avg_shots_on_against: Number(input.awaySeasonStats?.avgShotsOnAgainst || 0),
-    dominance_diff: Number(
-      (
-        Number(input.homeSeasonStats?.dominanceScore || 0) -
-        Number(input.awaySeasonStats?.dominanceScore || 0)
-      ).toFixed(2)
-    ),
-    set_piece_diff: Number(
-      (
-        Number(input.homeTeamProfile?.setPieceScore || 0) -
-        Number(input.awayTeamProfile?.setPieceScore || 0)
-      ).toFixed(2)
-    ),
-    home_learning_outcome_hit: Number(homeLearning.outcomeHitRate || 0.5),
-    away_learning_outcome_hit: Number(awayLearning.outcomeHitRate || 0.5),
-    home_learning_goal_bias: Number(homeLearning.homeGoalBias || 0),
-    away_learning_goal_bias: Number(awayLearning.awayGoalBias || 0),
-    learning_outcome_bias_diff: Number(
-      (
-        Number(homeLearning.homeOutcomeBias || 0) -
-        Number(awayLearning.awayOutcomeBias || 0)
-      ).toFixed(2)
-    ),
-    home_market_implied_ppg: Number(homeMarket.homeImpliedPpg || homeMarket.homeActualPpg || 1.25),
-    away_market_implied_ppg: Number(awayMarket.awayImpliedPpg || awayMarket.awayActualPpg || 1.25),
-    market_overperformance_diff: Number(
-      (
-        Number(homeMarket.homeOverperformance || 0) -
-        Number(awayMarket.awayOverperformance || 0)
-      ).toFixed(2)
-    ),
-    market_strength: Number(input.marketCalibration?.strength || 0),
-    league_reliability: Number(leagueReliability.reliabilityScore || 0.5),
-    league_avg_goal_error: Number(leagueReliability.avgGoalError || 2),
-    phase_reliability: Number(phaseReliability.reliabilityScore || 0.5),
-    phase_avg_goal_error: Number(phaseReliability.avgGoalError || 2),
-    referee_cards_trend: Number(refereeProfile.cardsTrend || 0),
-    referee_penalty_rate: Number(refereeProfile.estimatedPenaltyRate || 0),
-    lineups_avg_rating_diff: lineupRatingDiff,
-    home_lineup_continuity: homeContinuity,
-    away_lineup_continuity: awayContinuity,
-    keeper_rating_diff: keeperRatingDiff,
-    away_travel_penalty: awayTravelPenalty,
-  };
-}
-
 function buildHeuristicEnsemble(featureVector) {
   let homeScore = 0;
   let drawScore = 0;
@@ -3854,26 +3696,6 @@ function buildKeeperEdge(input, featureVector) {
     diff,
     summary: diff > 0 ? "thuiskeeper oogt sterker" : "uitkeeper oogt sterker",
   };
-}
-
-function buildRiskProfile({ confidence, agreement, weatherRisk, lineupConfirmed, injuriesTotal, awayTravelPenalty, keeperDiff }) {
-  let score = 0;
-  if (confidence < 0.48) score += 2;
-  else if (confidence < 0.6) score += 1;
-
-  if (agreement < 0.65) score += 2;
-  else if (agreement < 0.78) score += 1;
-
-  if (weatherRisk === "medium") score += 1;
-  if (weatherRisk === "high") score += 2;
-  if (!lineupConfirmed) score += 1;
-  if (injuriesTotal >= 4) score += 1;
-  if (awayTravelPenalty >= 0.2) score += 1;
-  if (Math.abs(Number(keeperDiff || 0)) >= 0.35) score -= 1;
-
-  if (score >= 5) return "hoog";
-  if (score >= 3) return "middel";
-  return "laag";
 }
 
 function buildTeamAiSummary(side, teamName, recent, profile, injuries) {
@@ -6562,148 +6384,6 @@ function assignTopConfidenceRanks(dayMatches, dayPredictions) {
   }
 }
 
-function scoreDataCompleteness(input, edges = {}) {
-  const reasons = [];
-  const missing = [];
-  const add = (condition, weight, goodReason, missingReason, partial = 0) => {
-    if (condition) {
-      reasons.push(goodReason);
-      return weight;
-    }
-    if (partial > 0) {
-      reasons.push(`${missingReason} deels`);
-      return weight * partial;
-    }
-    missing.push(missingReason);
-    return 0;
-  };
-
-  const h2hPlayed = Math.max(Number(input?.h2h?.played || 0), Array.isArray(input?.h2h?.results) ? input.h2h.results.length : 0);
-  const homeFormGames = Number(input?.homeRecent?.gamesPlayed || 0);
-  const awayFormGames = Number(input?.awayRecent?.gamesPlayed || 0);
-  const homeSources = input?.homeSeasonStats?.externalSources || [];
-  const awaySources = input?.awaySeasonStats?.externalSources || [];
-  const hasXg =
-    input?.homeSeasonStats?.xG != null ||
-    input?.awaySeasonStats?.xG != null ||
-    homeSources.includes("Understat") ||
-    awaySources.includes("Understat");
-  const marketCalibration = edges.marketCalibration || input?.marketCalibration || {};
-  const bookmakerSignals = Array.isArray(marketCalibration.bookmakerSignals) ? marketCalibration.bookmakerSignals : [];
-  const marketCoverage = Number(marketCalibration.closingCoverage || 0);
-  const hasOdds = bookmakerSignals.length > 0 || marketCoverage >= 0.15;
-  const hasStanding = Number(input?.homeStandingPos || input?.homePos || 0) > 0 && Number(input?.awayStandingPos || input?.awayPos || 0) > 0;
-  const hasTeamIds = !!input?.homeTeamId && !!input?.awayTeamId;
-  const hasStableTeamIdentity =
-    hasTeamIds ||
-    !!(
-      input?.teamIdentity?.home?.key &&
-      input?.teamIdentity?.away?.key
-    ) ||
-    !!(normalizeName(input?.homeTeamName || input?.homeTeam) && normalizeName(input?.awayTeamName || input?.awayTeam));
-  const sourceQuality = Math.max(Number(input?.homeSeasonStats?.sourceQuality || 0), Number(input?.awaySeasonStats?.sourceQuality || 0));
-  const lineupsKnown = !!input?.lineupSummary?.confirmed;
-  const postMatchCoverage = Number(input?.postMatchStats?.coverageScore || 0);
-  const postMatchPresent = Number(postMatchCoverage || 0) > 0;
-
-  const score =
-    add(h2hPlayed >= 3, 0.16, "H2H gevuld", "H2H ontbreekt", h2hPlayed >= 1 ? 0.45 : 0) +
-    add(homeFormGames >= 5 && awayFormGames >= 5, 0.16, "vormdata gevuld", "vormdata dun", homeFormGames >= 3 && awayFormGames >= 3 ? 0.65 : 0) +
-    add(hasStanding, 0.12, "stand/positie gevuld", "stand/positie ontbreekt") +
-    add(hasTeamIds, 0.1, "team-id match aanwezig", "team-id match ontbreekt", hasStableTeamIdentity ? 0.55 : 0) +
-    add(hasXg || sourceQuality >= 0.45, 0.18, "xG/shot-bronnen aanwezig", "xG/shot-bronnen dun", sourceQuality >= 0.25 ? 0.55 : 0) +
-    add(hasOdds, 0.14, "odds/marktdekking aanwezig", "odds/marktdekking dun", marketCoverage > 0 ? 0.45 : 0) +
-    add(lineupsKnown, 0.06, "opstellingsdata bevestigd", "opstellingsdata open", 0.35) +
-    add(edges.resultFresh !== false, 0.08, "uitslagbron actueel", "uitslagbron verouderd", edges.resultFresh == null ? 0.65 : 0) +
-    add(postMatchPresent, 0.06, "post-match stats verrijkt", "post-match stats ontbreken", 0);
-
-  const normalized = clamp(score, 0, 1);
-  const label = normalized >= 0.75 ? "hoog" : normalized >= 0.58 ? "voldoende" : normalized >= 0.42 ? "laag" : "kritiek";
-  return {
-    score: Number(normalized.toFixed(3)),
-    percent: Math.round(normalized * 100),
-    label,
-    reasons: reasons.slice(0, 6),
-    missing: missing.slice(0, 6),
-  };
-}
-
-function buildFeatureImportance(featureVector = {}, modelEdges = {}) {
-  const candidates = [
-    { key: "ppg_diff", value: Math.abs(Number(featureVector.ppg_diff || 0)), label: "vorm/points-per-game verschil" },
-    { key: "club_elo_diff", value: Math.abs(Number(featureVector.club_elo_diff || 0) / 100), label: "ClubElo verschil" },
-    { key: "h2h_recent_5_balance", value: Math.abs(Number(featureVector.h2h_recent_5_balance || 0) * 10), label: "recente H2H balans" },
-    { key: "lineups_avg_rating_diff", value: Math.abs(Number(featureVector.lineups_avg_rating_diff || 0)), label: "opstelling ratingverschil" },
-    { key: "keeper_rating_diff", value: Math.abs(Number(featureVector.keeper_rating_diff || 0)), label: "keeper edge" },
-    { key: "market_overperformance_diff", value: Math.abs(Number(featureVector.market_overperformance_diff || 0) * 10), label: "markt-overperformance" },
-    { key: "away_travel_penalty", value: Math.abs(Number(featureVector.away_travel_penalty || 0) * 10), label: "reisbelasting uitteam" },
-    { key: "source_reliability", value: Math.abs(Number(modelEdges?.sourceReliability?.score || 0) * 10), label: "bronbetrouwbaarheid" },
-    { key: "data_completeness", value: Math.abs(Number(modelEdges?.dataCompleteness?.score || 0) * 10), label: "datacompleteness" },
-  ];
-  return candidates
-    .sort((a, b) => b.value - a.value)
-    .slice(0, 6)
-    .map((item) => ({
-      key: item.key,
-      label: item.label,
-      score: Number(item.value.toFixed(3)),
-    }));
-}
-
-function sourceReliabilityScore(input, dataCompleteness) {
-  const h2hPlayed = Number(input?.h2h?.played || 0);
-  const h2hQuality = h2hPlayed >= 5 ? 1 : h2hPlayed >= 3 ? 0.72 : h2hPlayed >= 1 ? 0.38 : 0.15;
-  const sourceQuality = Math.max(
-    Number(input?.homeSeasonStats?.sourceQuality || 0),
-    Number(input?.awaySeasonStats?.sourceQuality || 0),
-    0
-  );
-  const hasLineups = input?.lineupSummary?.confirmed ? 1 : 0.45;
-  const marketCoverage = Number(input?.marketCalibration?.closingCoverage || 0);
-  const postMatchCoverage = Number(input?.postMatchStats?.coverageScore || 0);
-  const completeness = Number(dataCompleteness?.score || 0);
-  const reliability = clamp(
-    completeness * 0.36 +
-      sourceQuality * 0.22 +
-      h2hQuality * 0.16 +
-      hasLineups * 0.12 +
-      clamp(marketCoverage, 0, 1) * 0.1 +
-      clamp(postMatchCoverage, 0, 1) * 0.04,
-    0,
-    1
-  );
-  const blendWeight = clamp(0.55 + reliability * 0.45, 0.55, 1);
-  return {
-    score: Number(reliability.toFixed(3)),
-    blendWeight: Number(blendWeight.toFixed(3)),
-    penalty: Number((1 - reliability).toFixed(3)),
-    label: reliability >= 0.72 ? "strong" : reliability >= 0.54 ? "moderate" : reliability >= 0.4 ? "weak" : "critical",
-  };
-}
-
-function qualityGateForCompleteness(dataCompleteness) {
-  const score = Number(dataCompleteness?.score || 0);
-  const modelReady = score >= 0.6;
-  const confidenceCap = score < 0.35 ? 0.4 : score < 0.5 ? 0.52 : score < 0.6 ? 0.62 : score < 0.7 ? 0.74 : 0.93;
-  const penalty = score < 0.35 ? 0.16 : score < 0.5 ? 0.1 : score < 0.6 ? 0.06 : score < 0.7 ? 0.025 : 0;
-  return {
-    blockedHighConfidence: score < 0.7,
-    modelReady,
-    confidenceCap,
-    penalty,
-    summary:
-      score < 0.35
-        ? "kwaliteitsgate blokkeert hoge zekerheid: cruciale data ontbreekt"
-        : score < 0.5
-          ? "kwaliteitsgate verlaagt confidence: brondata is dun"
-          : score < 0.6
-            ? "kwaliteitsgate beperkt confidence: niet alle kernbronnen zijn gevuld"
-            : score < 0.7
-              ? "kwaliteitsgate voorzichtig: model-ready maar nog niet topkwaliteit"
-              : "kwaliteitsgate akkoord",
-  };
-}
-
 function calibrateScoreMatrixWithReviewBias(scoreMatrix, input, selectedScore) {
   const leagueReliability = input?.leagueReliability || {};
   const phaseReliability = input?.phaseReliability || {};
@@ -9116,7 +8796,17 @@ function predict(input) {
   let { bestScore, bestProb } = poissonModel;
 
   const homeAwayEdge = buildHomeAwayEdge(input.homeRecent, input.awayRecent);
-  const featureVector = buildFeatureVector(input);
+  const featureVector = buildFeatureVector(input, {
+    pickHomeStrength,
+    pickAwayStrength,
+    normalizeName,
+    toPointsPerGame,
+    calcLineupContinuity,
+    calcTravelPenalty,
+    calcKeeperEdge,
+    calculateRecentH2HBalance,
+    isSeniorInternationalTournament,
+  });
   const heuristicModel = buildHeuristicEnsemble(featureVector);
   const baseModel = { homeProb, drawProb, awayProb };
   const preSimulationBlend = blendProbabilities(
@@ -9236,12 +8926,19 @@ function predict(input) {
       : Number(marketCalibration.closingCoverage || 0) < 0.4
         ? 0.005
         : 0;
-  const dataCompleteness = scoreDataCompleteness(input, {
-    marketCalibration,
-    leagueReliability,
-    phaseReliability,
-    resultFresh: input.resultFresh,
-  });
+  const dataCompleteness = scoreDataCompleteness(
+    input,
+    {
+      marketCalibration,
+      leagueReliability,
+      phaseReliability,
+      resultFresh: input.resultFresh,
+    },
+    {
+      clamp,
+      normalizeName,
+    }
+  );
   const qualityGate = qualityGateForCompleteness(dataCompleteness);
   if (input?.assertionDegraded) {
     qualityGate.blockedHighConfidence = true;
@@ -9254,7 +8951,10 @@ function predict(input) {
       ...input,
       marketCalibration,
     },
-    dataCompleteness
+    dataCompleteness,
+    {
+      clamp,
+    }
   );
   const fragilityPenalty =
     (Number(learningEdge.homeFragility || 0) + Number(learningEdge.awayFragility || 0) >= 4 ? 0.02 : 0) +
