@@ -22,6 +22,25 @@ import {
 } from "./prediction-analytics.js";
 import { fetchOddsAtPrediction } from "./odds-provider.js";
 import { writeJsonFile, writeSplitDataFiles } from "./worker/archive.js";
+import {
+  createSafeFetch,
+  fetchExternalJson,
+  fetchText,
+  fetchWithTimeout,
+  safeFetchText,
+} from "./worker/data-collection.js";
+import {
+  ensureH2HContract,
+  matchHasFinalScore,
+  mergeH2HResultLists,
+  parseScoreToGoals,
+} from "./worker/validation.js";
+import {
+  dixonColesAdjustment,
+  hashSeed,
+  poisson,
+  seededRandom,
+} from "./worker/prediction.js";
 
 const SOFA = "https://api.sofascore.com/api/v1";
 const THESPORTSDB_BASE = "https://www.thesportsdb.com/api/v1/json";
@@ -1042,6 +1061,12 @@ const sportsDbSquadFetchState = {
   loggedLimit: false,
   loggedRateLimit: false,
 };
+const safeFetch = createSafeFetch({
+  sofaBase: SOFA,
+  sofaFetchCircuit,
+  sportsDbSquadFetchState,
+  logger: console,
+});
 const openSquadSourceState = {
   wikidataCount: 0,
   wikipediaCount: 0,
@@ -1647,45 +1672,6 @@ process.on("unhandledRejection", (err) => {
 process.on("uncaughtException", (err) => {
   console.error("[worker] uncaughtException:", err?.message || err);
 });
-
-function factorial(n) {
-  if (n <= 1) return 1;
-  let result = 1;
-  for (let i = 2; i <= n; i += 1) result *= i;
-  return result;
-}
-
-function poisson(lambda, k) {
-  return (Math.pow(lambda, k) * Math.exp(-lambda)) / factorial(k);
-}
-
-function dixonColesAdjustment(h, a, homeXG, awayXG, rho = -0.13) {
-  if (h === 0 && a === 0) return 1 - homeXG * awayXG * rho;
-  if (h === 0 && a === 1) return 1 + homeXG * rho;
-  if (h === 1 && a === 0) return 1 + awayXG * rho;
-  if (h === 1 && a === 1) return 1 - rho;
-  return 1;
-}
-
-function hashSeed(value) {
-  let hash = 2166136261;
-  for (const char of String(value || "")) {
-    hash ^= char.charCodeAt(0);
-    hash = Math.imul(hash, 16777619);
-  }
-  return hash >>> 0;
-}
-
-function seededRandom(seed) {
-  let state = seed >>> 0;
-  return () => {
-    state += 0x6d2b79f5;
-    let t = state;
-    t = Math.imul(t ^ (t >>> 15), t | 1);
-    t ^= t + Math.imul(t ^ (t >>> 7), t | 61);
-    return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
-  };
-}
 
 function samplePoisson(lambda, random) {
   const safeLambda = clamp(Number(lambda || 0), 0.05, 7);
@@ -4277,22 +4263,6 @@ function getOpenfootballSeasonTags(dateISO, seasonsBack = 2) {
   return tags;
 }
 
-async function fetchText(url) {
-  try {
-    const response = await fetch(url, {
-      headers: {
-        Accept: "text/plain,text/csv,text/*;q=0.9,*/*;q=0.8",
-        "User-Agent":
-          "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 Chrome/123.0 Safari/537.36",
-      },
-    });
-    if (!response.ok) return null;
-    return await response.text();
-  } catch {
-    return null;
-  }
-}
-
 function parseCsvLine(line) {
   const values = [];
   let current = "";
@@ -4630,13 +4600,6 @@ function dedupeStoredPredictions(predictions = [], matches = []) {
     output.push({ ...prediction, matchId: canonicalMatchId || prediction.matchId });
   }
   return output;
-}
-
-function matchHasFinalScore(match) {
-  return (
-    String(match?.score || "").includes("-") ||
-    (Number.isFinite(Number(match?.homeScore)) && Number.isFinite(Number(match?.awayScore)))
-  );
 }
 
 function normalizeStoredMatchReliability(match, dateKey, now, store = null) {
@@ -5691,20 +5654,6 @@ function parseHistoricalRowDate(value) {
   const dash = new Date(text);
   if (!Number.isNaN(dash.getTime())) return dash.toISOString().slice(0, 10);
   return null;
-}
-
-function mergeH2HResultLists(existingResults = [], extraResults = []) {
-  const seen = new Set();
-  const merged = [];
-  for (const item of [...existingResults, ...extraResults]) {
-    const key = `${item?.date || ""}_${item?.home || ""}_${item?.away || ""}_${item?.score || ""}`;
-    if (seen.has(key)) continue;
-    seen.add(key);
-    merged.push(item);
-  }
-  return merged
-    .sort((a, b) => String(a?.date || "").localeCompare(String(b?.date || "")))
-    .slice(-8);
 }
 
 function h2hCompareKeys(homeName, awayName, homeId, awayId) {
@@ -7426,100 +7375,6 @@ function calibrateScoreMatrixWithReviewBias(scoreMatrix, input, selectedScore) {
   };
 }
 
-async function fetchWithTimeout(url, options = {}, timeoutMs = 12000) {
-  const controller = new AbortController();
-  const timeout = setTimeout(() => controller.abort(), timeoutMs);
-  try {
-    return await fetch(url, {
-      ...options,
-      signal: controller.signal,
-    });
-  } finally {
-    clearTimeout(timeout);
-  }
-}
-
-async function safeFetch(url) {
-  const isSofaRequest = String(url || "").startsWith(SOFA);
-  const isSportsDbSquadRequest = String(url || "").includes("thesportsdb.com/api/v1/json/3/searchplayers.php");
-  if (isSofaRequest && sofaFetchCircuit.blocked) {
-    return null;
-  }
-  if (isSportsDbSquadRequest && sportsDbSquadFetchState.blockedUntil > Date.now()) {
-    return null;
-  }
-  try {
-    const response = await fetchWithTimeout(url, {
-      headers: {
-        Accept: "application/json",
-        "Accept-Language": "en-US,en;q=0.9",
-        Origin: "https://www.sofascore.com",
-        Referer: "https://www.sofascore.com/",
-        "User-Agent":
-          "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 Chrome/123.0 Safari/537.36",
-      },
-    }, 12000);
-    if (!response.ok) {
-      if (isSofaRequest && response.status === 403) {
-        sofaFetchCircuit.failures += 1;
-        sofaFetchCircuit.blocked = true;
-        if (!sofaFetchCircuit.logged) {
-          console.error("[worker] Sofascore geeft 403; deze run gebruikt automatisch de gratis fallbackbronnen.");
-          sofaFetchCircuit.logged = true;
-        }
-        return null;
-      }
-      if (isSportsDbSquadRequest && response.status === 429) {
-        sportsDbSquadFetchState.blockedUntil = Date.now() + 60 * 60 * 1000;
-        if (!sportsDbSquadFetchState.loggedRateLimit) {
-          console.warn("[worker] TheSportsDB spelerslijsten zijn tijdelijk rate-limited; worker gebruikt afgeleide teamsterkte.");
-          sportsDbSquadFetchState.loggedRateLimit = true;
-        }
-        return null;
-      }
-      console.error(`[worker] API error ${response.status} voor ${url}`);
-      return null;
-    }
-    return await response.json();
-  } catch (err) {
-    console.error(`[worker] Fetch error voor ${url}: ${err?.message || err}`);
-    return null;
-  }
-}
-
-async function safeFetchText(url) {
-  try {
-    const response = await fetchWithTimeout(url, {
-      headers: {
-        Accept: "text/plain,text/csv,*/*",
-        "User-Agent":
-          "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 Chrome/123.0 Safari/53736",
-      },
-    }, 12000);
-    if (!response.ok) return null;
-    return await response.text();
-  } catch {
-    return null;
-  }
-}
-
-async function fetchExternalJson(url, headers = {}) {
-  try {
-    const response = await fetchWithTimeout(url, {
-      headers: {
-        Accept: "application/json,text/javascript,*/*;q=0.8",
-        "User-Agent":
-          "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 Chrome/123.0 Safari/53736",
-        ...headers,
-      },
-    }, 12000);
-    if (!response.ok) return null;
-    return await response.json();
-  } catch {
-    return null;
-  }
-}
-
 function getLeagueInfo(event) {
   if (shouldExcludeEvent(event)) return null;
   const tournament = String(
@@ -7886,12 +7741,6 @@ function isStandingLeagueLabel(label) {
   ];
   if (excluded.some((item) => text.includes(item))) return false;
   return true;
-}
-
-function parseScoreToGoals(score) {
-  const match = String(score || "").match(/(\d+)\s*-\s*(\d+)/);
-  if (!match) return null;
-  return { homeGoals: Number(match[1]), awayGoals: Number(match[2]) };
 }
 
 function shouldApplyMatchToStanding(match, baseStanding) {
@@ -8282,37 +8131,6 @@ function supplementTeamFormWithH2H(currentForm, h2h, teamName) {
     if (!byKey.has(key)) byKey.set(key, item);
   }
   return buildTeamFormFromRecentMatches([...byKey.values()], currentMatches.length ? "historical+h2h-team-form" : "h2h-team-form");
-}
-
-function buildEmptyH2HContract(homeId, awayId) {
-  return {
-    played: 0,
-    homeWins: 0,
-    draws: 0,
-    awayWins: 0,
-    sameCompetitionPlayed: 0,
-    weightedRecentBalance: 0,
-    results: [],
-    homeTeamId: homeId || null,
-    awayTeamId: awayId || null,
-    status: "h2h-agent-empty",
-    source: "contract-fallback",
-  };
-}
-
-function ensureH2HContract(h2h, homeId, awayId) {
-  const base = h2h && typeof h2h === "object" ? h2h : buildEmptyH2HContract(homeId, awayId);
-  const results = Array.isArray(base.results) ? base.results.filter(Boolean) : [];
-  return {
-    ...buildEmptyH2HContract(homeId, awayId),
-    ...base,
-    results,
-    played: Number(base.played || results.length || 0),
-    homeWins: Number(base.homeWins || 0),
-    draws: Number(base.draws || 0),
-    awayWins: Number(base.awayWins || 0),
-    status: base.status || (results.length ? "h2h-agent" : "h2h-agent-empty"),
-  };
 }
 
 function ensureRecentFormContract(currentForm, fallbackTeamName, h2h, teamId, oppositeTeamId) {

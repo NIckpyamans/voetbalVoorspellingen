@@ -3,9 +3,9 @@
 Deze map is de veilige opsplitsing van `scripts/server-worker.js`.
 
 ## Modules
-- `data-collection.js`: publieke bronnen, rate limits, retries en source diagnostics.
-- `validation.js`: matchstatus, result backfill, H2H-contracten en bronconflicten.
-- `prediction.js`: feature vectors, scorematrix, ensemble en probability calibration.
+- `data-collection.js`: publieke bronnen, fetch timeouts, rate-limit circuits, retries en source diagnostics.
+- `validation.js`: matchstatus, score parsing, result backfill, H2H-contracten en bronconflicten.
+- `prediction.js`: pure prediction math, Poisson helpers, scorematrix, ensemble en probability calibration.
 - `learning.js`: post-match reviews, modelmetingen, team learning en calibration profiles.
 - `archive.js`: JSON split-output, meta-export en competition archive writes.
 
