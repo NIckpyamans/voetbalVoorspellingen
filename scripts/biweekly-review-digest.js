@@ -13,6 +13,7 @@ const OUTPUT_MD = path.join(ROOT, "monitor", "biweekly-review-digest.md");
 const DATABASE_PLAN_MD = path.join(ROOT, "docs", "database-migration-plan.md");
 const WORKER_PLAN_MD = path.join(ROOT, "docs", "worker-modularization-plan.md");
 const AGENT_POLICY_MD = path.join(ROOT, "docs", "agent-data-collection-policy.md");
+const DATA_CONTEXT_DIR = path.join(ROOT, "docs", "data-context");
 
 const architectureFindings = [
   {
@@ -85,6 +86,12 @@ const standardActions = [
     title: "Nieuwe dataverzameling/agents alleen na architectuurcriteria",
     status: "guardrail-active",
     output: "docs/agent-data-collection-policy.md",
+  },
+  {
+    key: "data_context",
+    title: "Herbruikbare data context bewaken",
+    status: "context-active",
+    output: "docs/data-context/analysis-context.json",
   },
 ];
 

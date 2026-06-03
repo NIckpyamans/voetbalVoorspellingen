@@ -1,0 +1,57 @@
+{
+  "version": "2026-06-03",
+  "purpose": "Reusable data context for football intelligence analysis, QA, dashboards and model evaluation.",
+  "storageBoundary": {
+    "sourceOfTruth": "Postgres via DATABASE_URL or POSTGRES_URL",
+    "cache": ["server_data.json", "data/days/*.json", "training/*.json"],
+    "notForSecrets": true
+  },
+  "domains": {
+    "footballGraph": ["countries", "competitions", "competition_seasons", "clubs", "club_aliases", "venues"],
+    "matches": ["matches", "match_results", "match_stats", "team_match_stats", "h2h_edges"],
+    "seasonIntelligence": ["standings_snapshots", "team_season_stats", "season_archives"],
+    "squadContext": ["players", "squads", "injuries", "suspensions"],
+    "predictionLedger": ["prediction_snapshots", "prediction_evaluations", "odds_snapshots", "model_versions", "calibration_profiles"],
+    "sourceLineage": ["source_records", "source_audit"]
+  },
+  "primaryKpis": [
+    "h2h_coverage",
+    "pending_result_backfills",
+    "missing_past_scores",
+    "data_completeness_score",
+    "source_reliability_score",
+    "outcome_hit_rate",
+    "probability_outcome_hit_rate",
+    "exact_hit_rate",
+    "brier_score",
+    "calibration_error",
+    "odds_capture_rate",
+    "closing_line_coverage",
+    "clv",
+    "roi",
+    "worker_age_minutes",
+    "snapshot_backed_rows"
+  ],
+  "qualityGates": {
+    "database": "DATABASE_URL, POSTGRES_URL or SUPABASE_DB_URL must be configured before schema apply.",
+    "odds": "ODDS_API_KEY or THE_ODDS_API_KEY plus ODDS_API_URL_TEMPLATE must be configured before ROI/CLV reporting.",
+    "prediction": "Probabilities must sum to 1 and high confidence is blocked below 0.70 data completeness.",
+    "leakage": "generated_at and cutoff_at must be before kickoff_at for pre-match snapshots.",
+    "lineage": "Prediction-impacting fields should have source audit metadata."
+  },
+  "defaultDashboardSections": [
+    "Wedstrijdanalyse",
+    "Teamanalyse",
+    "Competitieanalyse",
+    "Modelprestaties",
+    "Marktanalyse",
+    "Datakwaliteit"
+  ],
+  "recommendedNextActions": [
+    "Fill DATABASE_URL or POSTGRES_URL in Vercel.",
+    "Apply database/schema.sql.",
+    "Backfill source_records and source_audit from current JSON cache.",
+    "Connect dashboard sections to database-backed API responses.",
+    "Enable odds/closing-line KPI reporting only after real credentials are present."
+  ]
+}

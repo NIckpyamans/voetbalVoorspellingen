@@ -60,6 +60,7 @@ Professionele architectuuranalyse voor schaalbaarheid, datakwaliteit, AI-agentwa
 - Database migratieplan bijwerken: docs/database-migration-plan.md (auto-maintained)
 - Worker modularisatieplan bijwerken: docs/worker-modularization-plan.md (auto-maintained)
 - Nieuwe dataverzameling/agents alleen na architectuurcriteria: docs/agent-data-collection-policy.md (guardrail-active)
+- Herbruikbare data context bewaken: docs/data-context/analysis-context.json (context-active)
 
 ## Volgende aanbevelingen
 1. Database credentials activeren en schema toepassen (Hoog, impact: Zeer hoog) - Het migratieplan is nu vastgelegd; de volgende stap is DATABASE_URL/POSTGRES_URL koppelen en npm run db:schema:apply draaien.
