@@ -7,7 +7,7 @@ on:
     - cron: "37 6 * * *"
 
 concurrency:
-  group: football-learning
+  group: football-data-refresh
   cancel-in-progress: false
 
 permissions:
@@ -65,5 +65,13 @@ jobs:
           git add server_data.json data training
           git diff --staged --quiet && echo "geen wijzigingen" && exit 0
           git commit -m "update learning data [skip vercel]"
-          git pull --rebase origin "$BRANCH_NAME" || true
-          git push origin "$BRANCH_NAME"
+          for attempt in 1 2 3; do
+            git pull --rebase --autostash origin "$BRANCH_NAME"
+            if git push origin HEAD:"$BRANCH_NAME"; then
+              exit 0
+            fi
+            echo "Push poging $attempt mislukt; remote is waarschijnlijk net bijgewerkt. Opnieuw proberen..."
+            sleep $((attempt * 5))
+          done
+          echo "Push mislukt na 3 pogingen"
+          exit 1

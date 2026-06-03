@@ -58,8 +58,16 @@ jobs:
           BRANCH_NAME="${DATA_BRANCH:-${{ github.ref_name }}}"
           git config user.name github-actions
           git config user.email github-actions@github.com
-          git add server_data.json data
+          git add server_data.json data training
           git diff --staged --quiet && echo "geen wijzigingen" && exit 0
           git commit -m "update wedstrijden [skip vercel]"
-          git pull --rebase origin "$BRANCH_NAME" || true
-          git push origin "$BRANCH_NAME"
+          for attempt in 1 2 3; do
+            git pull --rebase --autostash origin "$BRANCH_NAME"
+            if git push origin HEAD:"$BRANCH_NAME"; then
+              exit 0
+            fi
+            echo "Push poging $attempt mislukt; remote is waarschijnlijk net bijgewerkt. Opnieuw proberen..."
+            sleep $((attempt * 5))
+          done
+          echo "Push mislukt na 3 pogingen"
+          exit 1
