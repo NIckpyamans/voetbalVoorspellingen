@@ -6,6 +6,7 @@ import path from "path";
 const ROOT = process.cwd();
 const FINDINGS_FILE = path.join(ROOT, "monitor", "daily-findings.json");
 const PROPOSAL_FILE = path.join(ROOT, "monitor", "review-branch-proposal.json");
+const DATA_QUALITY_FILE = path.join(ROOT, "monitor", "data-quality-audit.json");
 const OUTPUT_JSON = path.join(ROOT, "monitor", "biweekly-review-digest.json");
 const OUTPUT_MD = path.join(ROOT, "monitor", "biweekly-review-digest.md");
 const DATABASE_PLAN_MD = path.join(ROOT, "docs", "database-migration-plan.md");
@@ -121,6 +122,11 @@ function writeStandardActionDocs(generatedAt) {
       "- Geen historische JSON-data verwijderen voordat database-import is gevalideerd.",
       "- Iedere import moet idempotent zijn op provider_id of canonical_match_key.",
       "- Iedere wijziging moet readiness, regression en datakwaliteitchecks doorstaan.",
+      "",
+      "## Secrets-gate",
+      "- DATABASE_URL, POSTGRES_URL of SUPABASE_DB_URL moet gevuld zijn voordat `npm run db:schema:apply` wordt uitgevoerd.",
+      "- ODDS_API_KEY of THE_ODDS_API_KEY moet gevuld zijn voordat ROI/CLV live wordt beoordeeld.",
+      "- Zie docs/secrets-readiness-checklist.md voor de actuele checklist.",
       "",
     ].join("\n")
   );
@@ -275,6 +281,7 @@ function buildDigest() {
 
   const findings = readJsonSafe(FINDINGS_FILE, { days: {} });
   const proposal = readJsonSafe(PROPOSAL_FILE, null);
+  const dataQuality = readJsonSafe(DATA_QUALITY_FILE, null);
   const allFindingDays = Object.keys(findings.days || {}).sort();
   const latestFindingDay = allFindingDays.at(-1) || getAmsterdamDate();
   const fromDate = subtractDays(latestFindingDay, 13);
@@ -374,6 +381,14 @@ function buildDigest() {
     },
     latestStats,
     topFindings,
+    dataQuality: dataQuality
+      ? {
+          generatedAt: dataQuality.generatedAt,
+          totals: dataQuality.totals,
+          status: dataQuality.status,
+          recommendations: dataQuality.recommendations || [],
+        }
+      : null,
     architectureAudit: {
       generatedAt,
       summary:
@@ -425,6 +440,10 @@ function buildDigest() {
       `  - Risico: ${item.risk}`,
       `  - Oplossing: ${item.solution}`,
     ]),
+    "",
+    dataQuality
+      ? `## Datakwaliteit\n- Pending result backfills: ${Number(dataQuality?.totals?.pendingResultBackfills || 0)}\n- Ontbrekende oude scores: ${Number(dataQuality?.totals?.missingPastScores || 0)}\n- H2H-dekking: ${Math.round(Number(dataQuality?.totals?.h2hCoverage || 0) * 100)}%\n${(dataQuality.recommendations || []).map((item) => `- ${item}`).join("\n")}`
+      : "## Datakwaliteit\n- Nog geen data-quality audit beschikbaar. Draai npm run monitor:data-quality.",
     "",
     "## Standaard uitgevoerde acties",
     ...standardActions.map((item) => `- ${item.title}: ${item.output} (${item.status})`),

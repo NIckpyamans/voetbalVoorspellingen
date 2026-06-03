@@ -1,6 +1,6 @@
 # Database Migratieplan
 
-Laatst bijgewerkt: 2026-06-03T07:55:16.511Z
+Laatst bijgewerkt: 2026-06-03T08:28:13.635Z
 
 ## Doel
 Maak Postgres/Supabase de bron van waarheid voor een schaalbaar voetbal intelligence platform. JSON blijft alleen cache, export of fallback.
@@ -29,3 +29,8 @@ Maak Postgres/Supabase de bron van waarheid voor een schaalbaar voetbal intellig
 - Geen historische JSON-data verwijderen voordat database-import is gevalideerd.
 - Iedere import moet idempotent zijn op provider_id of canonical_match_key.
 - Iedere wijziging moet readiness, regression en datakwaliteitchecks doorstaan.
+
+## Secrets-gate
+- DATABASE_URL, POSTGRES_URL of SUPABASE_DB_URL moet gevuld zijn voordat `npm run db:schema:apply` wordt uitgevoerd.
+- ODDS_API_KEY of THE_ODDS_API_KEY moet gevuld zijn voordat ROI/CLV live wordt beoordeeld.
+- Zie docs/secrets-readiness-checklist.md voor de actuele checklist.

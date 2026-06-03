@@ -36,6 +36,7 @@ function configured(...names) {
 
 const packageJson = readJsonSafe("package.json", {});
 const trainingExport = readJsonSafe(path.join("training", "catboost-ready.json"), {});
+const dataQualityAudit = readJsonSafe(path.join("monitor", "data-quality-audit.json"), {});
 const meta = readJsonSafe(path.join("data", "meta.json"), {});
 const indexHtml = readTextSafe("index.html");
 const indexTsx = readTextSafe("index.tsx");
@@ -74,7 +75,11 @@ const report = {
     schemaFileExists: exists(path.join("database", "schema.sql")),
     connectionConfigured: dbConfigured,
     applyCommand: "npm run db:schema:apply",
+    migrationPlanExists: exists(path.join("docs", "database-migration-plan.md")),
     status: dbConfigured ? "ready_to_apply_schema" : "database_url_needed",
+    nextStep: dbConfigured
+      ? "Voer npm run db:schema:apply uit en controleer daarna prediction/database writes."
+      : "Vul DATABASE_URL, POSTGRES_URL of SUPABASE_DB_URL als secret voordat schema apply kan draaien.",
   },
   training: {
     exportExists: exists(path.join("training", "catboost-ready.json")),
@@ -94,6 +99,36 @@ const report = {
         : Number(trainingExport.snapshotBackedRows || 0) > 0
           ? "snapshot_training_warming_up"
           : "waiting_for_finished_snapshot_predictions",
+    nextTargetRows: Number(trainingExport.trainingPolicy?.nextTargetRows || 150),
+    nextTargetGap: Math.max(0, Number(trainingExport.trainingPolicy?.nextTargetRows || 150) - Number(trainingExport.snapshotBackedRows || 0)),
+  },
+  dataQuality: {
+    auditExists: exists(path.join("monitor", "data-quality-audit.json")),
+    generatedAt: dataQualityAudit.generatedAt || null,
+    pendingResultBackfills: Number(dataQualityAudit?.totals?.pendingResultBackfills || 0),
+    missingPastScores: Number(dataQualityAudit?.totals?.missingPastScores || 0),
+    h2hCoverage: Number(dataQualityAudit?.totals?.h2hCoverage || 0),
+    status:
+      !dataQualityAudit.generatedAt
+        ? "run_monitor_data_quality"
+        : Number(dataQualityAudit?.totals?.pendingResultBackfills || 0) || Number(dataQualityAudit?.totals?.missingPastScores || 0)
+          ? "result_backfill_needed"
+          : Number(dataQualityAudit?.totals?.h2hCoverage || 0) < 0.85
+            ? "h2h_backfill_needed"
+            : "data_quality_ready",
+    runCommand: "npm run monitor:data-quality",
+  },
+  oddsClosingLine: {
+    liveOddsReady: oddsKeyConfigured && oddsTemplateConfigured,
+    databaseReadyForStorage: dbConfigured,
+    roiClvReady: oddsKeyConfigured && oddsTemplateConfigured && dbConfigured,
+    status:
+      oddsKeyConfigured && oddsTemplateConfigured && dbConfigured
+        ? "ready_for_live_roi_clv_review"
+        : oddsKeyConfigured && oddsTemplateConfigured
+          ? "database_needed_for_roi_clv_storage"
+          : "odds_credentials_needed",
+    note: "ROI/CLV pas live beoordelen wanneer echte odds_at_prediction plus closing odds in de database staan.",
   },
   fixtureCalendar: {
     today,

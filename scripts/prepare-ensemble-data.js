@@ -9,6 +9,7 @@ const EXPORT_FILE = path.join(ROOT, "training", "catboost-ready.json");
 const EXPORT_CSV_FILE = path.join(ROOT, "training", "catboost-ready.csv");
 const CONFIG_FILE = path.join(ROOT, "training", "ensemble-config.json");
 const MIN_SNAPSHOT_ROWS = Number(process.env.SNAPSHOT_MIN_TRAINING_ROWS || 50);
+const NEXT_SNAPSHOT_TARGET_ROWS = Number(process.env.SNAPSHOT_NEXT_TARGET_ROWS || 150);
 
 const DERIVED_REVIEW_FEATURES = [
   "prob_home_base",
@@ -52,6 +53,28 @@ function boolFeature(value) {
 
 function normalizedPhase(value) {
   return String(value || "").toLowerCase();
+}
+
+function hasUsableOdds(row) {
+  const review = row?.review || {};
+  const odds = row?.oddsAtPrediction || review?.oddsAtPrediction || row?.odds || review?.odds || null;
+  if (!odds || typeof odds !== "object") return false;
+  return ["home", "draw", "away", "homeOdds", "drawOdds", "awayOdds"].some((field) => {
+    const value = Number(odds[field]);
+    return Number.isFinite(value) && value > 1.01;
+  });
+}
+
+function hasUsableClosingLine(row) {
+  const review = row?.review || {};
+  const market = row?.marketCalibration || review?.marketCalibration || row?.modelEdges?.marketCalibration || review?.modelEdges?.marketCalibration || null;
+  const closing = row?.closingOdds || review?.closingOdds || row?.closingLine || review?.closingLine || market;
+  if (!closing || typeof closing !== "object") return false;
+  if (Number(closing.closingCoverage || 0) > 0.4) return true;
+  return ["closingHome", "closingDraw", "closingAway", "closing_home", "closing_draw", "closing_away"].some((field) => {
+    const value = Number(closing[field]);
+    return Number.isFinite(value) && value > 1.01;
+  });
 }
 
 function buildDerivedReviewFeatures(row) {
@@ -111,15 +134,24 @@ function buildFeaturePayload(row, primaryFeatures) {
 
 function buildTrainingPolicy(snapshotBackedRows) {
   const mature = snapshotBackedRows >= MIN_SNAPSHOT_ROWS;
+  const nextTargetGap = Math.max(0, NEXT_SNAPSHOT_TARGET_ROWS - snapshotBackedRows);
   return {
     minSnapshotRows: MIN_SNAPSHOT_ROWS,
+    nextTargetRows: NEXT_SNAPSHOT_TARGET_ROWS,
+    nextTargetGap,
     snapshotBackedRows,
     maturity: mature ? "mature" : "warming_up",
     snapshotBoostActive: mature,
     snapshotWeight: mature ? 1 : 0.65,
     fallbackWeight: mature ? 0.25 : 0.35,
+    qualityGate:
+      snapshotBackedRows >= NEXT_SNAPSHOT_TARGET_ROWS
+        ? "expert_sample"
+        : mature
+          ? "mature_but_growing"
+          : "warming_up",
     note: mature
-      ? "Snapshot-backed rows zijn voldoende aanwezig en mogen zwaarder meewegen dan fallback rows."
+      ? `Snapshot-backed rows zijn voldoende aanwezig en mogen zwaarder meewegen dan fallback rows. Volgende expert-target: ${NEXT_SNAPSHOT_TARGET_ROWS} rows.`
       : `Snapshot-backed rows blijven conservatief gewogen tot minimaal ${MIN_SNAPSHOT_ROWS} afgeronde snapshotvoorspellingen beschikbaar zijn.`,
   };
 }
@@ -148,6 +180,8 @@ function main() {
     })
     .filter(Boolean);
   const snapshotBackedRows = rawExportRows.filter((row) => row.snapshotBacked).length;
+  const oddsReadyRows = rows.filter(hasUsableOdds).length;
+  const closingLineRows = rows.filter(hasUsableClosingLine).length;
   const trainingPolicy = buildTrainingPolicy(snapshotBackedRows);
   const exportRows = rawExportRows.map((row) => ({
     ...row,
@@ -166,7 +200,19 @@ function main() {
         totalRows: exportRows.length,
         snapshotBackedRows,
         fallbackRows: exportRows.filter((row) => !row.snapshotBacked).length,
+        oddsReadyRows,
+        closingLineRows,
         trainingPolicy,
+        trainingExpansion: {
+          nextSnapshotTargetRows: trainingPolicy.nextTargetRows,
+          nextSnapshotTargetGap: trainingPolicy.nextTargetGap,
+          oddsReadyRows,
+          closingLineRows,
+          recommendation:
+            trainingPolicy.nextTargetGap > 0
+              ? `Laat scheduled learning doorlopen tot minimaal ${trainingPolicy.nextTargetRows} snapshot-backed rows.`
+              : "Snapshotgroep heeft expert-target bereikt; kalibreer nu sterker per league en phase.",
+        },
         featureNames,
         leakageNote:
           "snapshotBackedRows zijn lekvrijer. fallbackRows gebruiken alleen opgeslagen prediction/review-signalen en blijven gemarkeerd als fallback tot prediction snapshots met featureVector beschikbaar zijn. trainingWeight voorkomt dat een te kleine snapshotgroep te vroeg dominant wordt.",

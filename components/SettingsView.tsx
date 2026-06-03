@@ -730,6 +730,27 @@ const SettingsView: React.FC = () => {
               </div>
             </div>
 
+            {biweeklyDigest.dataQuality ? (
+              <div className="rounded-xl border border-rose-500/10 bg-rose-950/10 p-3">
+                <div className="text-[10px] font-black text-rose-300 uppercase mb-2">Datakwaliteit</div>
+                <div className="grid grid-cols-3 gap-2 mb-2">
+                  {[
+                    { label: "Pending", value: biweeklyDigest.dataQuality.totals?.pendingResultBackfills || 0 },
+                    { label: "Scores missen", value: biweeklyDigest.dataQuality.totals?.missingPastScores || 0 },
+                    { label: "H2H", value: `${Math.round(Number(biweeklyDigest.dataQuality.totals?.h2hCoverage || 0) * 100)}%` },
+                  ].map((item) => (
+                    <div key={item.label} className="rounded-lg border border-white/5 bg-slate-950/30 p-2">
+                      <div className="text-[8px] font-black text-slate-500 uppercase">{item.label}</div>
+                      <div className="text-[12px] font-black text-white mt-1">{item.value}</div>
+                    </div>
+                  ))}
+                </div>
+                {(biweeklyDigest.dataQuality.recommendations || []).slice(0, 2).map((item: string, index: number) => (
+                  <div key={`${item}-${index}`} className="text-[9px] text-slate-400 mt-1">{item}</div>
+                ))}
+              </div>
+            ) : null}
+
             <div className="rounded-xl border border-amber-500/10 bg-amber-950/10 p-3">
               <div className="text-[10px] font-black text-amber-300 uppercase mb-2">Volgende aanbevelingen</div>
               <div className="space-y-2">

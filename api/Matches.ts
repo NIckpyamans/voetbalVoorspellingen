@@ -5,6 +5,7 @@ import { addDaysToDateKey, todayAmsterdamKey } from "../shared/date.js";
 import { buildWorldCup2026DayData, buildWorldCup2026FriendlyDayData, getWorldCup2026ReadinessSnapshot } from "../shared/worldCup2026.js";
 import { createLogger, getErrorDetails } from "../shared/logger.js";
 import { setCorsHeaders } from "../shared/cors.js";
+import { mergeDuplicateServedMatches, normalizeServedMatch } from "../shared/matchNormalization.js";
 
 const logger = createLogger("api.matches");
 
@@ -47,159 +48,15 @@ function attachReview(match: any, reviewsOrStore: any) {
   };
 }
 
-const TEAM_DEDUPE_ALIASES: Record<string, string> = {
-  "freiburg": "freiburg",
-  "sc freiburg": "freiburg",
-  "sport club freiburg": "freiburg",
-  "aston villa": "aston villa",
-  "aston villa fc": "aston villa",
-  "man city": "manchester city",
-  "manchester city": "manchester city",
-  "manchester city fc": "manchester city",
-  "psg": "paris saint germain",
-  "paris sg": "paris saint germain",
-  "paris saint germain": "paris saint germain",
-  "paris saint-germain": "paris saint germain",
-  "fc barcelona": "barcelona",
-  "barcelona": "barcelona",
-};
-
-const VERIFIED_RESULT_BACKFILL = [
-  {
-    date: "2026-05-20",
-    home: "Freiburg",
-    away: "Aston Villa",
-    score: "0-3",
-    status: "FT",
-    sourceNote: "verified Europa League final result backfill",
-  },
-];
-
-function normalizeDedupeText(value: unknown) {
-  return String(value || "")
-    .normalize("NFD")
-    .replace(/[\u0300-\u036f]/g, "")
-    .toLowerCase()
-    .replace(/&/g, " and ")
-    .replace(/[^a-z0-9]+/g, " ")
-    .replace(/\b(afc|fc|cf|sc|cd|ac|as|rc|sv|vfl|vfb|bk|fk|ik|if|club de|club)\b/g, " ")
-    .replace(/\s+/g, " ")
-    .trim();
-}
-
-function canonicalDedupeTeam(value: unknown) {
-  const normalized = normalizeDedupeText(value);
-  return TEAM_DEDUPE_ALIASES[normalized] || normalized;
-}
-
-function pairKey(home: unknown, away: unknown) {
-  const teams = [canonicalDedupeTeam(home), canonicalDedupeTeam(away)].sort();
-  return teams.join("__");
-}
-
-function lookupVerifiedResultBackfill(match: any) {
-  const dateKey = String(match?.date || match?.kickoff || "").slice(0, 10);
-  const matchPair = pairKey(match?.homeTeamName || match?.homeTeam, match?.awayTeamName || match?.awayTeam);
-  return VERIFIED_RESULT_BACKFILL.find((item) => item.date === dateKey && pairKey(item.home, item.away) === matchPair) || null;
-}
-
-function applyVerifiedResultBackfill(match: any) {
-  const backfill = lookupVerifiedResultBackfill(match);
-  if (!backfill) return match;
-  const hasFinalScore = typeof match?.score === "string" && /^\d+\s*-\s*\d+$/.test(match.score) && String(match?.status || "").toUpperCase() === "FT";
-  if (hasFinalScore) return match;
-  const [homeScore, awayScore] = backfill.score.split("-").map(Number);
-  return {
-    ...match,
-    score: backfill.score,
-    homeScore,
-    awayScore,
-    status: backfill.status,
-    resultPending: false,
-    resultPendingReason: null,
-    resultBackfill: true,
-    resultBackfillSource: backfill.sourceNote,
-  };
-}
-
-function buildServedMatchDedupeKey(match: any) {
-  const dateKey = String(match?.date || match?.kickoff || "").slice(0, 10);
-  const league = normalizeDedupeText(match?.league).replace(/\b(uefa|europe)\b/g, " ").replace(/\s+/g, " ").trim();
-  const home = canonicalDedupeTeam(match?.homeTeamName || match?.homeTeam);
-  const away = canonicalDedupeTeam(match?.awayTeamName || match?.awayTeam);
-  if (!dateKey || !home || !away) return "";
-  return `${dateKey}|${league}|${home}|${away}`;
-}
-
-function servedMatchQuality(match: any) {
-  const status = String(match?.status || "").toUpperCase();
-  const statusScore = ["FT", "AET", "PEN"].includes(status) ? 80 : ["LIVE", "HT"].includes(status) ? 70 : status === "RESULT_PENDING" ? 20 : 0;
-  const scoreScore = match?.score || match?.homeScore != null || match?.awayScore != null ? 30 : 0;
-  const logoScore = (match?.homeLogo ? 4 : 0) + (match?.awayLogo ? 4 : 0);
-  const detailScore = Number(match?.h2h?.played || 0) * 2 + (match?.homeRecent ? 3 : 0) + (match?.awayRecent ? 3 : 0);
-  return statusScore + scoreScore + logoScore + detailScore;
-}
-
-function dedupeServedMatches(matches: any[]) {
-  const seen = new Map<string, any>();
-  for (const match of matches || []) {
-    const key = buildServedMatchDedupeKey(match);
-    if (!key) {
-      seen.set(match?.id || `${seen.size}`, match);
-      continue;
-    }
-    const current = seen.get(key);
-    if (!current) {
-      seen.set(key, match);
-      continue;
-    }
-    const preferred = servedMatchQuality(match) > servedMatchQuality(current) ? match : current;
-    const fallback = preferred === match ? current : match;
-    seen.set(key, {
-      ...fallback,
-      ...preferred,
-      homeLogo: preferred.homeLogo || fallback.homeLogo,
-      awayLogo: preferred.awayLogo || fallback.awayLogo,
-      score: preferred.score || fallback.score,
-      homeScore: preferred.homeScore ?? fallback.homeScore,
-      awayScore: preferred.awayScore ?? fallback.awayScore,
-      h2h: preferred.h2h || fallback.h2h,
-      homeRecent: preferred.homeRecent || fallback.homeRecent,
-      awayRecent: preferred.awayRecent || fallback.awayRecent,
-    });
-  }
-  return [...seen.values()];
-}
-
 function mergeWorldCupSeed(dateKey: string, matches: any[]) {
   const worldCup = buildWorldCup2026DayData(dateKey);
   const friendly = buildWorldCup2026FriendlyDayData(dateKey);
   if (!worldCup.matches.length && !friendly.matches.length) return matches;
-  return dedupeServedMatches([...matches, ...worldCup.matches, ...friendly.matches]);
-}
-
-function normalizeServedMatchStatus(match: any) {
-  const status = String(match?.status || "NS").toUpperCase();
-  const hasScore = typeof match?.score === "string" && match.score.includes("-");
-  const settledStatuses = new Set(["FT", "AET", "PEN", "LIVE", "HT", "RESULT_PENDING"]);
-  if (hasScore || settledStatuses.has(status)) return match;
-
-  const kickoffMs = Date.parse(match?.kickoff || match?.date || "");
-  const isKickoffKnown = Number.isFinite(kickoffMs);
-  const isPastResultWindow = isKickoffKnown && Date.now() - kickoffMs > 150 * 60 * 1000;
-
-  if (!isPastResultWindow) return match;
-
-  return {
-    ...match,
-    status: "RESULT_PENDING",
-    resultPending: true,
-    resultPendingReason: "Wedstrijd is voorbij, maar de gratis bron heeft nog geen eindstand geleverd.",
-  };
+  return mergeDuplicateServedMatches([...matches, ...worldCup.matches, ...friendly.matches]);
 }
 
 function attachReviewAndNormalize(match: any, store: any) {
-  return normalizeServedMatchStatus(applyVerifiedResultBackfill(attachReview(match, store)));
+  return normalizeServedMatch(attachReview(match, store));
 }
 
 async function readSplitMeta() {
@@ -264,7 +121,7 @@ export default async function handler(req: any, res: any) {
           }
         }
 
-        const uniqueMultiDayMatches = dedupeServedMatches(multiDayMatches);
+        const uniqueMultiDayMatches = mergeDuplicateServedMatches(multiDayMatches);
 
       return res.status(200).json({
           ok: true,

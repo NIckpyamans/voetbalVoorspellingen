@@ -49,6 +49,13 @@ Professionele architectuuranalyse voor schaalbaarheid, datakwaliteit, AI-agentwa
   - Risico: Dashboard kan te zeker ogen terwijl real-world hitrates achterblijven.
   - Oplossing: Kalibreer per league/phase/model en gebruik echte odds pas zodra odds_at_prediction betrouwbaar is.
 
+## Datakwaliteit
+- Pending result backfills: 0
+- Ontbrekende oude scores: 0
+- H2H-dekking: 86%
+- Resultaatbackfill is schoon binnen de auditperiode.
+- H2H-dekking is voldoende voor de huidige auditperiode.
+
 ## Standaard uitgevoerde acties
 - Database migratieplan bijwerken: docs/database-migration-plan.md (auto-maintained)
 - Worker modularisatieplan bijwerken: docs/worker-modularization-plan.md (auto-maintained)
