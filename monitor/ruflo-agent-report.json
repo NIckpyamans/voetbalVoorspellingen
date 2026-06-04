@@ -1,6 +1,6 @@
 {
-  "generatedAt": "2026-06-03T00:02:51.601Z",
-  "date": "2026-06-03",
+  "generatedAt": "2026-06-04T00:01:56.926Z",
+  "date": "2026-06-04",
   "name": "Ruflo-style gratis AI monitor",
   "mode": "naast-productie",
   "productionSafe": true,
@@ -182,11 +182,39 @@
       ]
     },
     "control": {
-      "score": 60,
-      "summary": "Ontwikkelcontrole: 1 actieve monitorissues op 2026-06-03; digest 2026-05-19 t/m 2026-06-01.",
-      "latestDay": "2026-06-03",
+      "score": 4,
+      "summary": "Ontwikkelcontrole: 4 actieve monitorissues op 2026-06-04; digest 2026-05-21 t/m 2026-06-03.",
+      "latestDay": "2026-06-04",
       "shouldPropose": true,
       "actions": [
+        {
+          "priority": "high",
+          "title": "server_data.json is 995 minuten oud.",
+          "freeSolution": "Laat GitHub Actions schedule + manual dispatch draaien; geen mail nodig, alleen data committen.",
+          "files": [
+            ".github/workflows/worker.yml"
+          ],
+          "status": "monitor"
+        },
+        {
+          "priority": "medium",
+          "title": "Er zijn geen wedstrijden voor vandaag in server_data.json.",
+          "freeSolution": "Gebruik gratis fallbackketen met TheSportsDB/OpenLigaDB/openfootball en toon bronstatus in Instellingen.",
+          "files": [
+            "scripts/server-worker.js",
+            "api/Matches.ts"
+          ],
+          "status": "monitor"
+        },
+        {
+          "priority": "medium",
+          "title": "Geen wedstrijden gevonden en onvoldoende kalenderbewijs dat dit een echte lege speeldag is.",
+          "freeSolution": "Gebruik bestaande gratis workerdata en maak een reviewbranch-voorstel in plaats van blind live wijzigen.",
+          "files": [
+            "scripts/server-worker.js"
+          ],
+          "status": "monitor"
+        },
         {
           "priority": "medium",
           "title": "cupSheets is leeg.",
@@ -217,11 +245,35 @@
       ]
     },
     {
+      "title": "server_data.json is 995 minuten oud.",
+      "count": 1,
+      "priority": "high",
+      "agents": [
+        "control"
+      ]
+    },
+    {
       "title": "H2H-backfill verder vullen",
       "count": 1,
       "priority": "medium",
       "agents": [
         "data"
+      ]
+    },
+    {
+      "title": "Er zijn geen wedstrijden voor vandaag in server_data.json.",
+      "count": 1,
+      "priority": "medium",
+      "agents": [
+        "control"
+      ]
+    },
+    {
+      "title": "Geen wedstrijden gevonden en onvoldoende kalenderbewijs dat dit een echte lege speeldag is.",
+      "count": 1,
+      "priority": "medium",
+      "agents": [
+        "control"
       ]
     },
     {
@@ -257,6 +309,16 @@
       "agent": "learning"
     },
     {
+      "priority": "high",
+      "title": "server_data.json is 995 minuten oud.",
+      "freeSolution": "Laat GitHub Actions schedule + manual dispatch draaien; geen mail nodig, alleen data committen.",
+      "files": [
+        ".github/workflows/worker.yml"
+      ],
+      "status": "monitor",
+      "agent": "control"
+    },
+    {
       "priority": "medium",
       "title": "H2H-backfill verder vullen",
       "freeSolution": "Gebruik openfootball en football-data rows per competitie als historische H2H fallback voordat de UI 'leeg' toont.",
@@ -266,6 +328,27 @@
       ],
       "status": "aanbevolen",
       "agent": "data"
+    },
+    {
+      "priority": "medium",
+      "title": "Er zijn geen wedstrijden voor vandaag in server_data.json.",
+      "freeSolution": "Gebruik gratis fallbackketen met TheSportsDB/OpenLigaDB/openfootball en toon bronstatus in Instellingen.",
+      "files": [
+        "scripts/server-worker.js",
+        "api/Matches.ts"
+      ],
+      "status": "monitor",
+      "agent": "control"
+    },
+    {
+      "priority": "medium",
+      "title": "Geen wedstrijden gevonden en onvoldoende kalenderbewijs dat dit een echte lege speeldag is.",
+      "freeSolution": "Gebruik bestaande gratis workerdata en maak een reviewbranch-voorstel in plaats van blind live wijzigen.",
+      "files": [
+        "scripts/server-worker.js"
+      ],
+      "status": "monitor",
+      "agent": "control"
     },
     {
       "priority": "medium",
