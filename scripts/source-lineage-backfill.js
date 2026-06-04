@@ -4,6 +4,7 @@ import crypto from "crypto";
 import fs from "fs";
 import path from "path";
 import { spawnSync } from "child_process";
+import { neon } from "@neondatabase/serverless";
 
 const ROOT = process.cwd();
 const DATA_DIR = path.join(ROOT, "data", "days");
@@ -287,15 +288,125 @@ const manifest = {
   databaseConfigured: Boolean(process.env.DATABASE_URL || process.env.POSTGRES_URL || process.env.SUPABASE_DB_URL),
 };
 
+async function applySqlWithNeon(databaseUrl) {
+  const sql = neon(databaseUrl);
+  const statements = splitSqlStatements(fs.readFileSync(SQL_FILE, "utf8"));
+  const [predictionSnapshotCount] = await sql.query("select count(*)::int as count from prediction_snapshots");
+  const shouldApplyAudit = Number(predictionSnapshotCount?.count || 0) > 0;
+  let appliedStatements = 0;
+  let skippedAuditStatements = 0;
+
+  for (const statement of statements) {
+    if (!shouldApplyAudit && /\binsert\s+into\s+source_audit\b/i.test(statement)) {
+      skippedAuditStatements += 1;
+      continue;
+    }
+    await sql.query(statement);
+    appliedStatements += 1;
+  }
+  const [appliedCounts] = await sql.query(`
+    select
+      (select count(*)::int from source_records) as source_records,
+      (select count(*)::int from source_audit) as source_audit,
+      (select count(*)::int from prediction_snapshots) as prediction_snapshots
+  `);
+
+  manifest.applyStatus = "applied";
+  manifest.applyMethod = "neon-serverless";
+  manifest.appliedStatements = appliedStatements;
+  manifest.skippedAuditStatements = skippedAuditStatements;
+  manifest.appliedCounts = appliedCounts;
+  if (!shouldApplyAudit) {
+    manifest.auditBackfillStatus = "skipped_until_prediction_snapshots_exist";
+  }
+}
+
+function splitSqlStatements(input) {
+  const statements = [];
+  let current = "";
+  let quote = null;
+  let dollarTag = null;
+
+  for (let index = 0; index < input.length; index += 1) {
+    const char = input[index];
+    const next = input[index + 1];
+    current += char;
+
+    if (dollarTag) {
+      if (input.slice(index, index + dollarTag.length) === dollarTag) {
+        current += input.slice(index + 1, index + dollarTag.length);
+        index += dollarTag.length - 1;
+        dollarTag = null;
+      }
+      continue;
+    }
+
+    if (quote) {
+      if (char === quote && next === quote) {
+        current += next;
+        index += 1;
+        continue;
+      }
+      if (char === quote) quote = null;
+      continue;
+    }
+
+    if (char === "'" || char === '"') {
+      quote = char;
+      continue;
+    }
+
+    if (char === "$") {
+      const match = input.slice(index).match(/^\$[A-Za-z0-9_]*\$/);
+      if (match) {
+        dollarTag = match[0];
+        current += dollarTag.slice(1);
+        index += dollarTag.length - 1;
+      }
+      continue;
+    }
+
+    if (char === "-" && next === "-") {
+      const newline = input.indexOf("\n", index + 2);
+      const commentEnd = newline === -1 ? input.length - 1 : newline;
+      current += input.slice(index + 1, commentEnd + 1);
+      index = commentEnd;
+      continue;
+    }
+
+    if (char === ";") {
+      const statement = current.trim();
+      if (statement) statements.push(statement);
+      current = "";
+    }
+  }
+
+  const tail = current.trim();
+  if (tail) statements.push(tail);
+  return statements;
+}
+
 const databaseUrl = process.env.DATABASE_URL || process.env.POSTGRES_URL || process.env.SUPABASE_DB_URL || "";
 if (databaseUrl) {
   const result = spawnSync("psql", [databaseUrl, "-v", "ON_ERROR_STOP=1", "-f", SQL_FILE], {
     stdio: "inherit",
     shell: false,
   });
-  manifest.applyStatus = result.status === 0 ? "applied" : "failed";
-  if (result.error) manifest.applyError = result.error.message;
-  if (result.status !== 0) process.exitCode = result.status || 1;
+  if (result.error) {
+    manifest.applyMethod = "neon-serverless";
+    manifest.psqlFallbackReason = result.error.message;
+    try {
+      await applySqlWithNeon(databaseUrl);
+    } catch (error) {
+      manifest.applyStatus = "failed";
+      manifest.applyError = error.message;
+      process.exitCode = 1;
+    }
+  } else {
+    manifest.applyStatus = result.status === 0 ? "applied" : "failed";
+    manifest.applyMethod = "psql";
+    if (result.status !== 0) process.exitCode = result.status || 1;
+  }
 } else {
   manifest.applyStatus = "skipped_database_url_needed";
   manifest.nextStep = "Vul DATABASE_URL, POSTGRES_URL of SUPABASE_DB_URL en draai npm run db:source-lineage:backfill opnieuw.";

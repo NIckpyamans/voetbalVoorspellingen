@@ -23,9 +23,11 @@
     "readiness": "node scripts/readiness-check.js",
     "context:check": "node scripts/data-context-check.js",
     "db:schema:apply": "node scripts/apply-database-schema.js",
-    "db:source-lineage:backfill": "node scripts/source-lineage-backfill.js"
+    "db:source-lineage:backfill": "node scripts/source-lineage-backfill.js",
+    "db:verify": "node scripts/verify-database-state.js"
   },
   "dependencies": {
+    "@neondatabase/serverless": "^1.1.0",
     "react": "^19.2.4",
     "react-dom": "^19.2.4"
   },

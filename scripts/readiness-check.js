@@ -155,6 +155,10 @@ const report = {
     generatedAt: sourceLineageBackfill.generatedAt || null,
     sourceRecords: Number(sourceLineageBackfill.sourceRecords || 0),
     sourceAuditRows: Number(sourceLineageBackfill.sourceAuditRows || 0),
+    appliedSourceRecords: Number(sourceLineageBackfill.appliedCounts?.source_records || 0),
+    appliedSourceAuditRows: Number(sourceLineageBackfill.appliedCounts?.source_audit || 0),
+    predictionSnapshotsInDatabase: Number(sourceLineageBackfill.appliedCounts?.prediction_snapshots || 0),
+    auditBackfillStatus: sourceLineageBackfill.auditBackfillStatus || null,
     applyStatus: sourceLineageBackfill.applyStatus || "not_generated",
     sqlFile: sourceLineageBackfill.sqlFile || null,
     status: sourceLineageBackfill.generatedAt
