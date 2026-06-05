@@ -142,6 +142,24 @@ export function buildFeatureVector(input, deps) {
   const awaySquadRating = Number(input.awayTeamProfile?.squadRating || input.awayTeamProfile?.teamStrengthRating || 50);
   const homeTransferImpact = Number(input.homeTeamProfile?.transferImpact || 0);
   const awayTransferImpact = Number(input.awayTeamProfile?.transferImpact || 0);
+  const dbFeatureContext = input.dbFeatureContext || {};
+  const dbMatchStats = dbFeatureContext.matchStats || {};
+  const dbTeamMatchStats = Array.isArray(dbFeatureContext.teamMatchStats) ? dbFeatureContext.teamMatchStats : [];
+  const dbHomeTeamStats = dbTeamMatchStats.find((item) => item.side === "home") || {};
+  const dbAwayTeamStats = dbTeamMatchStats.find((item) => item.side === "away") || {};
+  const dbHistoricalOdds = dbFeatureContext.historicalOdds || {};
+  const dbOddsSamples = Number(dbHistoricalOdds.samples || 0);
+  const dbAvgHomeOdds = Number(dbHistoricalOdds.avgHome || 0);
+  const dbAvgAwayOdds = Number(dbHistoricalOdds.avgAway || 0);
+  const dbHomeImplied = dbAvgHomeOdds > 1.01 ? 1 / dbAvgHomeOdds : 0;
+  const dbAwayImplied = dbAvgAwayOdds > 1.01 ? 1 / dbAvgAwayOdds : 0;
+  const dbWeather = input.weather || {};
+  const dbWeatherRisk =
+    dbWeather.riskLevel === "high" || Number(dbWeather.precipitation || 0) >= 4 || Number(dbWeather.windSpeed || 0) >= 45
+      ? 2
+      : dbWeather.riskLevel === "medium" || Number(dbWeather.precipitation || 0) >= 1 || Number(dbWeather.windSpeed || 0) >= 25
+        ? 1
+        : 0;
 
   return {
     home_avg_scored: Number(input.homeRecent?.avgScored || 1.35),
@@ -169,7 +187,10 @@ export function buildFeatureVector(input, deps) {
     transfer_impact_diff: Number((homeTransferImpact - awayTransferImpact).toFixed(2)),
     home_injuries: Number(input.homeInjuries?.injuredCount || 0),
     away_injuries: Number(input.awayInjuries?.injuredCount || 0),
-    weather_risk: input.weather?.riskLevel === "high" ? 2 : input.weather?.riskLevel === "medium" ? 1 : 0,
+    weather_risk: dbWeatherRisk,
+    db_weather_temperature: Number(dbWeather.temperature ?? 0),
+    db_weather_wind_speed: Number(dbWeather.windSpeed ?? 0),
+    db_weather_precipitation: Number(dbWeather.precipitation ?? 0),
     lineups_confirmed: input.lineupSummary?.confirmed ? 1 : 0,
     h2h_sample_size: h2hSampleSize,
     h2h_reliability: h2hReliability,
@@ -202,10 +223,10 @@ export function buildFeatureVector(input, deps) {
     away_yellow_rate: Number(input.awayRecent?.yellowCardRate || 0),
     home_cards_rate: Number((Number(input.homeRecent?.yellowCardRate || 0) + Number(input.homeRecent?.redCardRate || 0) * 1.8).toFixed(2)),
     away_cards_rate: Number((Number(input.awayRecent?.yellowCardRate || 0) + Number(input.awayRecent?.redCardRate || 0) * 1.8).toFixed(2)),
-    home_avg_corners: Number(input.homeSeasonStats?.avgCorners || 0),
-    away_avg_corners: Number(input.awaySeasonStats?.avgCorners || 0),
-    home_avg_shots: Number(input.homeSeasonStats?.avgShots || 0),
-    away_avg_shots: Number(input.awaySeasonStats?.avgShots || 0),
+    home_avg_corners: Number(input.homeSeasonStats?.avgCorners ?? dbMatchStats.homeCorners ?? dbHomeTeamStats.corners ?? 0),
+    away_avg_corners: Number(input.awaySeasonStats?.avgCorners ?? dbMatchStats.awayCorners ?? dbAwayTeamStats.corners ?? 0),
+    home_avg_shots: Number(input.homeSeasonStats?.avgShots ?? dbMatchStats.homeShots ?? dbHomeTeamStats.shots ?? 0),
+    away_avg_shots: Number(input.awaySeasonStats?.avgShots ?? dbMatchStats.awayShots ?? dbAwayTeamStats.shots ?? 0),
     home_avg_shots_against: Number(input.homeSeasonStats?.avgShotsAgainst || 0),
     away_avg_shots_against: Number(input.awaySeasonStats?.avgShotsAgainst || 0),
     home_avg_shots_on_against: Number(input.homeSeasonStats?.avgShotsOnAgainst || 0),
@@ -217,8 +238,13 @@ export function buildFeatureVector(input, deps) {
     home_learning_goal_bias: Number(homeLearning.homeGoalBias || 0),
     away_learning_goal_bias: Number(awayLearning.awayGoalBias || 0),
     learning_outcome_bias_diff: Number((Number(homeLearning.homeOutcomeBias || 0) - Number(awayLearning.awayOutcomeBias || 0)).toFixed(2)),
-    home_market_implied_ppg: Number(homeMarket.homeImpliedPpg || homeMarket.homeActualPpg || 1.25),
-    away_market_implied_ppg: Number(awayMarket.awayImpliedPpg || awayMarket.awayActualPpg || 1.25),
+    home_db_xg: Number(dbMatchStats.homeXg ?? dbHomeTeamStats.xg ?? 0),
+    away_db_xg: Number(dbMatchStats.awayXg ?? dbAwayTeamStats.xg ?? 0),
+    db_historical_odds_samples: dbOddsSamples,
+    db_historical_home_implied: Number(dbHomeImplied.toFixed(4)),
+    db_historical_away_implied: Number(dbAwayImplied.toFixed(4)),
+    home_market_implied_ppg: Number(homeMarket.homeImpliedPpg || homeMarket.homeActualPpg || (dbHomeImplied ? dbHomeImplied * 3 : 1.25)),
+    away_market_implied_ppg: Number(awayMarket.awayImpliedPpg || awayMarket.awayActualPpg || (dbAwayImplied ? dbAwayImplied * 3 : 1.25)),
     market_overperformance_diff: Number((Number(homeMarket.homeOverperformance || 0) - Number(awayMarket.awayOverperformance || 0)).toFixed(2)),
     market_strength: Number(input.marketCalibration?.strength || 0),
     league_reliability: Number(leagueReliability.reliabilityScore || 0.5),

@@ -83,6 +83,23 @@ create table if not exists club_aliases (
   unique (club_id, normalized_alias)
 );
 
+create table if not exists competition_season_clubs (
+  season_id text not null references seasons(season_id),
+  competition_id text not null references competitions(competition_id),
+  club_id text not null references clubs(club_id),
+  club_name text not null,
+  status text not null default 'active',
+  entry_reason text,
+  previous_season_id text references seasons(season_id),
+  previous_level integer,
+  current_level integer,
+  source text,
+  source_record_id text references source_records(source_record_id),
+  created_at timestamptz not null default now(),
+  updated_at timestamptz not null default now(),
+  primary key (season_id, club_id)
+);
+
 create table if not exists source_records (
   source_record_id text primary key,
   provider text not null,
@@ -430,6 +447,8 @@ create index if not exists idx_matches_kickoff on matches(kickoff_at);
 create index if not exists idx_matches_date_key on matches(date_key);
 create index if not exists idx_matches_competition_season on matches(competition_id, season_id);
 create index if not exists idx_competition_seasons_competition_status on competition_seasons(competition_id, status);
+create index if not exists idx_competition_season_clubs_competition on competition_season_clubs(competition_id, season_id);
+create index if not exists idx_competition_season_clubs_status on competition_season_clubs(status, entry_reason);
 create index if not exists idx_club_aliases_normalized on club_aliases(normalized_alias);
 create index if not exists idx_venues_country_city on venues(country_id, city);
 create index if not exists idx_source_records_entity on source_records(entity_type, entity_key, fetched_at desc);

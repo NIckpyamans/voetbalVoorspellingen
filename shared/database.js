@@ -571,7 +571,96 @@ export async function readDatabaseCounts() {
       (select count(*)::int from odds_snapshots) as odds_snapshots,
       (select count(*)::int from historical_odds_snapshots) as historical_odds_snapshots,
       (select count(*)::int from match_stats) as match_stats,
-      (select count(*)::int from team_match_stats) as team_match_stats
+      (select count(*)::int from team_match_stats) as team_match_stats,
+      (select count(*)::int from competition_season_clubs) as competition_season_clubs,
+      (select count(*)::int from standings_snapshots where source = 'season-reset-zero') as zero_standings_snapshots,
+      (select count(*)::int from h2h_edges) as h2h_edges
   `);
   return { databaseConfigured: true, ...counts };
+}
+
+export async function readDatabaseFeatureContext({ matchId, homeClubId, awayClubId, competitionId, dateKey } = {}) {
+  const sql = getSql();
+  if (!sql) return null;
+  const byMatch = matchId
+    ? await sql.query(
+        `
+          select
+            ms.*,
+            (
+              select jsonb_agg(to_jsonb(tms) order by tms.side)
+              from team_match_stats tms
+              where tms.match_id = $1
+            ) as team_match_stats_payload,
+            (
+              select jsonb_build_object(
+                'samples', count(*),
+                'avgHome', avg(home),
+                'avgDraw', avg(draw),
+                'avgAway', avg(away)
+              )
+              from historical_odds_snapshots
+              where match_id = $1
+            ) as historical_odds_payload
+          from matches m
+          left join match_stats ms on ms.match_id = m.match_id
+          where m.match_id = $1
+          limit 1
+        `,
+        [matchId]
+      )
+    : [];
+  const row = byMatch[0] || {};
+  const teamSeasonRows = homeClubId || awayClubId
+    ? await sql.query(
+        `
+          select club_id, style_profile, xg_for, xg_against, matches_played
+          from team_season_stats
+          where club_id = any($1)
+          order by updated_at desc
+          limit 4
+        `,
+        [[homeClubId, awayClubId].filter(Boolean)]
+      )
+    : [];
+  const h2hRows = homeClubId && awayClubId
+    ? await sql.query(
+        `
+          select *
+          from h2h_edges
+          where home_club_id = least($1::text, $2::text)
+            and away_club_id = greatest($1::text, $2::text)
+            and ($3::text is null or competition_id = $3::text)
+          order by updated_at desc
+          limit 1
+        `,
+        [homeClubId, awayClubId, competitionId || null]
+      )
+    : [];
+  return {
+    matchId,
+    dateKey,
+    matchStats: row.match_id
+      ? {
+          homeXg: row.home_xg,
+          awayXg: row.away_xg,
+          homeShots: row.home_shots,
+          awayShots: row.away_shots,
+          homeCorners: row.home_corners,
+          awayCorners: row.away_corners,
+          statsSource: row.stats_source,
+        }
+      : {},
+    teamMatchStats: row.team_match_stats_payload || [],
+    historicalOdds: row.historical_odds_payload || null,
+    teamSeasonStyle: teamSeasonRows,
+    h2hEdge: h2hRows[0] || null,
+    featureSources: [
+      row.stats_source ? "match_stats" : null,
+      row.team_match_stats_payload?.length ? "team_match_stats" : null,
+      row.historical_odds_payload?.samples ? "historical_odds_snapshots" : null,
+      teamSeasonRows.length ? "team_season_stats" : null,
+      h2hRows.length ? "h2h_edges" : null,
+    ].filter(Boolean),
+  };
 }

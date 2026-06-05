@@ -6,13 +6,23 @@ import path from "path";
 import { getSql, loadLocalEnv } from "../shared/database.js";
 
 const ROOT = process.cwd();
+const ARGS = new Set(process.argv.slice(2));
+function argValue(name, fallback = null) {
+  const prefix = `${name}=`;
+  const found = process.argv.slice(2).find((arg) => arg.startsWith(prefix));
+  return found ? found.slice(prefix.length) : fallback;
+}
 const LIMIT = Math.max(1, Number(process.env.FREE_SOURCE_IMPORT_LIMIT || 120));
 const FOOTBALL_DATA_FULL_SEASONS =
-  process.argv.includes("--full") ||
+  ARGS.has("--full") ||
   ["1", "true", "yes"].includes(String(process.env.FOOTBALL_DATA_FULL_SEASONS || "").toLowerCase());
 const FOOTBALL_DATA_LIMIT = FOOTBALL_DATA_FULL_SEASONS ? Number.POSITIVE_INFINITY : LIMIT;
 const WEATHER_LIMIT = Math.max(1, Number(process.env.FREE_SOURCE_WEATHER_LIMIT || 120));
 const STATSBOMB_EVENT_LIMIT = Math.max(1, Number(process.env.STATSBOMB_EVENT_LIMIT || 18));
+const VENUE_GEOCODE_LIMIT = Math.max(0, Number(process.env.VENUE_GEOCODE_LIMIT || 25));
+const SOURCE_FILTER = String(argValue("--source", process.env.FREE_SOURCE_IMPORT_SOURCE || "all")).toLowerCase();
+const LEAGUE_FILTER = String(argValue("--league", process.env.FREE_SOURCE_LEAGUE_CODE || "")).toUpperCase();
+const SEASON_FOLDER_FILTER = String(argValue("--season-folder", process.env.FREE_SOURCE_SEASON_FOLDER || ""));
 const MANIFEST_PATH = path.join(ROOT, "monitor", "free-source-import.json");
 
 const FOOTBALL_DATA_LEAGUES = [
@@ -90,7 +100,7 @@ function currentSeasonFolders() {
   const start = month >= 7 ? year : year - 1;
   const folder = `${String(start).slice(2)}${String(start + 1).slice(2)}`;
   const previous = `${String(start - 1).slice(2)}${String(start).slice(2)}`;
-  return [folder, previous];
+  return SEASON_FOLDER_FILTER ? [SEASON_FOLDER_FILTER] : [folder, previous];
 }
 
 function seasonLabelFromFolder(folder) {
@@ -149,6 +159,21 @@ async function fetchText(url) {
   const response = await fetch(url, { headers: { "User-Agent": "FootyPredict-FreeSourceImporter/1.0" } });
   if (!response.ok) throw new Error(`${response.status} ${response.statusText}`);
   return response.text();
+}
+
+async function fetchNominatimJson(url) {
+  const response = await fetch(url, {
+    headers: {
+      "User-Agent": "FootyPredict-FreeSourceImporter/1.0 contact=local",
+      "Accept": "application/json",
+    },
+  });
+  if (!response.ok) throw new Error(`${response.status} ${response.statusText}`);
+  return response.json();
+}
+
+async function sleep(ms) {
+  await new Promise((resolve) => setTimeout(resolve, ms));
 }
 
 async function fetchJson(url) {
@@ -306,7 +331,7 @@ async function importFootballData(sql) {
   const errors = [];
   for (const folder of currentSeasonFolders()) {
     const seasonLabel = seasonLabelFromFolder(folder);
-    for (const item of FOOTBALL_DATA_LEAGUES) {
+    for (const item of FOOTBALL_DATA_LEAGUES.filter((league) => !LEAGUE_FILTER || league.code.toUpperCase() === LEAGUE_FILTER)) {
       if (matches >= FOOTBALL_DATA_LIMIT) break;
       const url = `https://www.football-data.co.uk/mmz4281/${folder}/${item.code}.csv`;
       try {
@@ -504,7 +529,7 @@ async function importOpenFootball(sql) {
   const errors = [];
   const unavailable = [];
   for (const seasonTag of OPENFOOTBALL_SEASON_TAGS) {
-    for (const item of OPENFOOTBALL_COMPETITIONS) {
+    for (const item of OPENFOOTBALL_COMPETITIONS.filter((league) => !LEAGUE_FILTER || league.code.toUpperCase() === LEAGUE_FILTER)) {
       if (matches >= LIMIT) break;
       const url = `https://raw.githubusercontent.com/openfootball/football.json/master/${seasonTag}/${item.code}.json`;
       try {
@@ -784,6 +809,67 @@ async function importStoredWeather(sql) {
   return { matches, errors };
 }
 
+async function backfillVenueCoordinates(sql) {
+  const rows = await sql.query(
+    `
+      select club_id, name, country_name
+      from clubs
+      where venue_id is null
+      order by updated_at desc nulls last, name
+      limit $1
+    `,
+    [VENUE_GEOCODE_LIMIT]
+  );
+  let geocoded = 0;
+  const errors = [];
+  for (const row of rows) {
+    try {
+      const query = encodeURIComponent(`${row.name} football stadium ${row.country_name || ""}`.trim());
+      const url = `https://nominatim.openstreetmap.org/search?q=${query}&format=json&limit=1`;
+      const results = await fetchNominatimJson(url);
+      const first = Array.isArray(results) ? results[0] : null;
+      if (!first?.lat || !first?.lon) continue;
+      const venueId = `venue-osm-${digest(`${row.club_id}|${first.osm_type}|${first.osm_id}`)}`;
+      const payload = {
+        provider: "OpenStreetMap Nominatim",
+        query: decodeURIComponent(query),
+        result: first,
+      };
+      const sourceRecordId = `src_venue_geocode_${digest(row.club_id)}`;
+      await upsertSourceRecord(sql, sourceRecordId, "OpenStreetMap Nominatim", url, "venue_geocode", row.club_id, payload, 0.68);
+      await sql.query(
+        `
+          insert into venues (venue_id, name, city, latitude, longitude, provider_ids)
+          values ($1,$2,$3,$4,$5,$6::jsonb)
+          on conflict (venue_id) do update set
+            latitude = excluded.latitude,
+            longitude = excluded.longitude,
+            provider_ids = excluded.provider_ids,
+            updated_at = now()
+        `,
+        [
+          venueId,
+          String(first.display_name || `${row.name} stadium`).split(",")[0],
+          String(first.display_name || "").split(",")[1]?.trim() || null,
+          Number(first.lat),
+          Number(first.lon),
+          JSON.stringify({ nominatim: { osmType: first.osm_type, osmId: first.osm_id } }),
+        ]
+      );
+      await sql.query(`update clubs set venue_id = $2, stadium = coalesce(stadium, $3), updated_at = now() where club_id = $1`, [
+        row.club_id,
+        venueId,
+        String(first.display_name || `${row.name} stadium`).split(",")[0],
+      ]);
+      geocoded += 1;
+      await sleep(1100);
+    } catch (error) {
+      errors.push({ clubId: row.club_id, error: error.message });
+    }
+  }
+  return { scanned: rows.length, geocoded, errors };
+}
+
 async function main() {
   loadLocalEnv(ROOT);
   const sql = getSql();
@@ -795,11 +881,15 @@ async function main() {
   const result = {
     generatedAt: startedAt,
     limit: LIMIT,
-    footballData: await importFootballData(sql),
-    openFootball: await importOpenFootball(sql),
-    statsBomb: await importStatsBombCatalog(sql),
-    statsBombEvents: await importStatsBombEvents(sql),
-    openMeteoStoredWeather: await importStoredWeather(sql),
+    sourceFilter: SOURCE_FILTER,
+    leagueFilter: LEAGUE_FILTER || null,
+    seasonFolderFilter: SEASON_FOLDER_FILTER || null,
+    footballData: SOURCE_FILTER === "all" || SOURCE_FILTER === "football-data" ? await importFootballData(sql) : { skipped: true },
+    openFootball: SOURCE_FILTER === "all" || SOURCE_FILTER === "openfootball" ? await importOpenFootball(sql) : { skipped: true },
+    statsBomb: SOURCE_FILTER === "all" || SOURCE_FILTER === "statsbomb" ? await importStatsBombCatalog(sql) : { skipped: true },
+    statsBombEvents: SOURCE_FILTER === "all" || SOURCE_FILTER === "statsbomb" ? await importStatsBombEvents(sql) : { skipped: true },
+    venueGeocode: SOURCE_FILTER === "all" || SOURCE_FILTER === "venues" ? await backfillVenueCoordinates(sql) : { skipped: true },
+    openMeteoStoredWeather: SOURCE_FILTER === "all" || SOURCE_FILTER === "weather" ? await importStoredWeather(sql) : { skipped: true },
   };
   fs.mkdirSync(path.dirname(MANIFEST_PATH), { recursive: true });
   fs.writeFileSync(MANIFEST_PATH, `${JSON.stringify(result, null, 2)}\n`);

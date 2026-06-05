@@ -2,6 +2,7 @@
 
 import fs from "fs";
 import path from "path";
+import { getSql, loadLocalEnv } from "../shared/database.js";
 import { todayAmsterdamKey } from "../shared/date.js";
 import { buildFixtureCalendarStatus } from "../shared/fixtureCalendar.js";
 
@@ -26,6 +27,7 @@ function loadEnvFile(filePath) {
 for (const fileName of [".env.local", ".env.production.local", ".env"]) {
   loadEnvFile(path.join(ROOT, fileName));
 }
+loadLocalEnv(ROOT);
 
 function readJsonSafe(relativePath, fallback) {
   try {
@@ -81,6 +83,45 @@ const fixtureCalendar = buildFixtureCalendarStatus({
 const oddsKeyConfigured = configured("ODDS_API_KEY", "THE_ODDS_API_KEY");
 const oddsTemplateConfigured = configured("ODDS_API_URL_TEMPLATE");
 const dbConfigured = configured("DATABASE_URL", "POSTGRES_URL", "SUPABASE_DB_URL");
+
+async function readDatabaseCoverage() {
+  if (!dbConfigured) return { databaseConfigured: false };
+  try {
+    const sql = getSql();
+    if (!sql) return { databaseConfigured: false };
+    const [counts] = await sql.query(`
+      select
+        (select count(*)::int from matches) as matches,
+        (select count(*)::int from matches where coalesce(weather_payload, '{}'::jsonb) <> '{}'::jsonb) as weather_matches,
+        (select count(*)::int from historical_odds_snapshots) as historical_odds_snapshots,
+        (select count(*)::int from match_stats) as match_stats,
+        (select count(*)::int from team_match_stats) as team_match_stats,
+        (select count(*)::int from team_season_stats where coalesce(style_profile, '{}'::jsonb) <> '{}'::jsonb) as styled_team_seasons,
+        (select count(*)::int from competition_season_clubs) as season_clubs,
+        (select count(*)::int from standings_snapshots where source = 'season-reset-zero') as zero_standings,
+        (select count(*)::int from h2h_edges) as h2h_edges
+    `);
+    const totalMatches = Math.max(Number(counts.matches || 0), 1);
+    return {
+      databaseConfigured: true,
+      ...counts,
+      weatherCoverage: Number((Number(counts.weather_matches || 0) / totalMatches).toFixed(3)),
+      matchStatsCoverage: Number((Number(counts.match_stats || 0) / totalMatches).toFixed(3)),
+      status:
+        Number(counts.historical_odds_snapshots || 0) > 0 &&
+        Number(counts.match_stats || 0) > 0 &&
+        Number(counts.team_match_stats || 0) > 0 &&
+        Number(counts.season_clubs || 0) > 0 &&
+        Number(counts.h2h_edges || 0) > 0
+          ? "database_feature_coverage_ready"
+          : "database_feature_coverage_incomplete",
+    };
+  } catch (error) {
+    return { databaseConfigured: true, status: "database_coverage_check_failed", error: error.message };
+  }
+}
+
+const databaseCoverage = await readDatabaseCoverage();
 
 const report = {
   generatedAt: new Date().toISOString(),
@@ -152,6 +193,7 @@ const report = {
           : "odds_credentials_needed",
     note: "ROI/CLV pas live beoordelen wanneer echte odds_at_prediction plus closing odds in de database staan.",
   },
+  databaseFeatureCoverage: databaseCoverage,
   freeSources: {
     strategyConfigured: Boolean(freeSourceStrategy.version),
     mode: freeSourceStrategy.mode || "unknown",

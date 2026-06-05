@@ -22,7 +22,7 @@ import {
 } from "./prediction-analytics.js";
 import { fetchOddsAtPrediction } from "./odds-provider.js";
 import { writeJsonFile, writeSplitDataFiles } from "./worker/archive.js";
-import { loadLocalEnv, syncStoreToDatabase } from "../shared/database.js";
+import { loadLocalEnv, readDatabaseFeatureContext, syncStoreToDatabase } from "../shared/database.js";
 import {
   createSafeFetch,
   fetchBbcScheduledEvents as fetchBbcScheduledEventsSource,
@@ -3536,6 +3536,12 @@ function buildHeuristicEnsemble(featureVector) {
   awayScore -= featureVector.dominance_diff * 0.08;
   homeScore += (featureVector.home_avg_shots - featureVector.away_avg_shots_against) * 0.01;
   awayScore += (featureVector.away_avg_shots - featureVector.home_avg_shots_against) * 0.01;
+  homeScore += Number(featureVector.home_db_xg || 0) * 0.035;
+  awayScore += Number(featureVector.away_db_xg || 0) * 0.035;
+  homeScore += (Number(featureVector.db_historical_home_implied || 0) - Number(featureVector.db_historical_away_implied || 0)) * 0.16;
+  awayScore += (Number(featureVector.db_historical_away_implied || 0) - Number(featureVector.db_historical_home_implied || 0)) * 0.16;
+  drawScore += Math.min(Number(featureVector.db_historical_odds_samples || 0), 8) * 0.003;
+  drawScore += Number(featureVector.weather_risk || 0) * 0.018;
   homeScore += featureVector.lineups_avg_rating_diff * 0.05;
   awayScore -= featureVector.lineups_avg_rating_diff * 0.05;
   homeScore += featureVector.keeper_rating_diff * 0.035;
@@ -10813,6 +10819,14 @@ async function main() {
         lineups: lineupSummary ? isoFromTimestamp(now) : null,
         referee: refereeProfile?.name ? isoFromTimestamp(store.marketProfilesUpdated?.[leagueInfo.label] || now) : null,
       };
+      const matchId = `ss-${event.id}`;
+      const dbFeatureContext = await readDatabaseFeatureContext({
+        matchId,
+        homeClubId: homeId ? String(homeId) : null,
+        awayClubId: awayId ? String(awayId) : null,
+        competitionId: null,
+        dateKey: date,
+      }).catch(() => null);
 
       const prediction = predict({
         homeTeamId: homeId,
@@ -10853,13 +10867,13 @@ async function main() {
         leagueReliability,
         phaseReliability,
         marketCalibration,
+        dbFeatureContext,
         refereeProfile,
         modelPerformance: store.modelPerformance,
         leagueCalibrationProfile: store.leagueCalibrationProfiles?.[leagueInfo.label] || null,
         assertionDegraded: !!store.dataScout?.degraded,
       });
 
-      const matchId = `ss-${event.id}`;
       const generatedAtIso = isoFromMs(now) || new Date(now).toISOString();
       const oddsCapture = await fetchOddsAtPrediction(
         {
@@ -10931,6 +10945,7 @@ async function main() {
         homeTeamProfile,
         awayTeamProfile,
         h2h,
+        dbFeatureContext,
         h2hStatus: h2h?.status || "empty",
         formDataQuality: {
           homeGames: Number(homeRecent?.gamesPlayed || 0),

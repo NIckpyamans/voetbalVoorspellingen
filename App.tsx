@@ -30,7 +30,7 @@ import {
 } from "./shared/dashboard.js";
 
 type View = "dashboard" | "history" | "standings" | "modelops" | "settings";
-type FilterMode = "alle" | "favorieten" | "live" | "gepland" | "gespeeld" | "brondekking";
+type FilterMode = "alle" | "favorieten" | "live" | "gepland" | "gespeeld" | "brondekking" | "odds" | "xg" | "weer" | "mistdata";
 
 function isLive(match: Match) {
   return isMatchLive(match);
@@ -129,6 +129,25 @@ function dashboardMatchQuality(match: Match) {
 function freeSourceCoveragePercent(match: Match) {
   const coverage = match.freeSourceCoverage || match.sourceCoverage || (match as any).sourceCoverage;
   return Number(coverage?.percent ?? (coverage?.score != null ? coverage.score * 100 : 0));
+}
+
+function hasCoverageEntry(match: Match, key: string) {
+  const coverage = match.freeSourceCoverage || match.sourceCoverage || (match as any).sourceCoverage;
+  const entries = Array.isArray(coverage?.entries) ? coverage.entries : [];
+  return entries.some((entry: any) => entry.key === key && entry.available);
+}
+
+function hasOddsData(match: Match) {
+  return hasCoverageEntry(match, "odds") || Number((match as any).dbFeatureContext?.historicalOdds?.samples || 0) > 0;
+}
+
+function hasXgData(match: Match) {
+  const stats = (match as any).dbFeatureContext?.matchStats || {};
+  return hasCoverageEntry(match, "xg_style") || stats.homeXg != null || stats.awayXg != null || Number(stats.homeShots || 0) > 0 || Number(stats.awayShots || 0) > 0;
+}
+
+function hasWeatherData(match: Match) {
+  return hasCoverageEntry(match, "weather") || Boolean(match.weather?.conditions || match.weather?.temperature != null);
 }
 
 function dedupeDashboardMatches(items: Match[]) {
@@ -390,6 +409,12 @@ const App: React.FC = () => {
     if (activeFilter === "gepland") return leagueScoped.filter((match) => !isLive(match) && !isFinished(match));
     if (activeFilter === "gespeeld") return leagueScoped.filter(isFinished);
     if (activeFilter === "brondekking") return leagueScoped.filter((match) => freeSourceCoveragePercent(match) >= 60);
+    if (activeFilter === "odds") return leagueScoped.filter(hasOddsData);
+    if (activeFilter === "xg") return leagueScoped.filter(hasXgData);
+    if (activeFilter === "weer") return leagueScoped.filter(hasWeatherData);
+    if (activeFilter === "mistdata") {
+      return leagueScoped.filter((match) => freeSourceCoveragePercent(match) < 60 || !hasOddsData(match) || !hasXgData(match) || !hasWeatherData(match));
+    }
 
     if (activeFilter === "favorieten") {
       return leagueScoped.filter((match) => {
@@ -404,7 +429,7 @@ const App: React.FC = () => {
 
   const sortedMatches = useMemo(() => {
     return [...filteredMatches].sort((a, b) => {
-      if (activeFilter === "brondekking") return freeSourceCoveragePercent(b) - freeSourceCoveragePercent(a);
+      if (["brondekking", "odds", "xg", "weer", "mistdata"].includes(activeFilter)) return freeSourceCoveragePercent(b) - freeSourceCoveragePercent(a);
       const aIdx = LEAGUE_ORDER.indexOf(a.league);
       const bIdx = LEAGUE_ORDER.indexOf(b.league);
       if (aIdx !== -1 && bIdx !== -1) return aIdx - bIdx;
@@ -444,6 +469,10 @@ const App: React.FC = () => {
   const plannedCount = dayMatches.filter((match) => !isLive(match) && !isFinished(match)).length;
   const finishedCount = dayMatches.filter(isFinished).length;
   const sourceCoverageCount = dayMatches.filter((match) => freeSourceCoveragePercent(match) >= 60).length;
+  const oddsCoverageCount = dayMatches.filter(hasOddsData).length;
+  const xgCoverageCount = dayMatches.filter(hasXgData).length;
+  const weatherCoverageCount = dayMatches.filter(hasWeatherData).length;
+  const missingCoverageCount = dayMatches.filter((match) => freeSourceCoveragePercent(match) < 60 || !hasOddsData(match) || !hasXgData(match) || !hasWeatherData(match)).length;
 
   const bestBets = useMemo(() => {
     const matchById = new Map<string, Match>();
@@ -619,13 +648,17 @@ const App: React.FC = () => {
               onDateChange={setSelectedDate}
             />
 
-            <div className="grid grid-cols-2 md:grid-cols-5 gap-2 mb-3">
+            <div className="grid grid-cols-2 md:grid-cols-3 xl:grid-cols-5 gap-2 mb-3">
               {[
                 { key: "favorieten", label: "Favorieten", count: favoriteCount, color: "yellow", icon: "★" },
                 { key: "live", label: "Live", count: liveCount, color: "red", icon: "●" },
                 { key: "gepland", label: "Gepland", count: plannedCount, color: "blue", icon: "" },
                 { key: "gespeeld", label: "Gespeeld", count: finishedCount, color: "slate", icon: "" },
                 { key: "brondekking", label: "Brondekking", count: sourceCoverageCount, color: "emerald", icon: "" },
+                { key: "odds", label: "Heeft odds", count: oddsCoverageCount, color: "emerald", icon: "" },
+                { key: "xg", label: "Heeft xG", count: xgCoverageCount, color: "cyan", icon: "" },
+                { key: "weer", label: "Heeft weer", count: weatherCoverageCount, color: "sky", icon: "" },
+                { key: "mistdata", label: "Mist brondata", count: missingCoverageCount, color: "amber", icon: "" },
               ].map(({ key, label, count, color, icon }) => (
                 <button
                   key={key}
@@ -881,7 +914,7 @@ const App: React.FC = () => {
                   </section>
                 )}
 
-                {(activeFilter === "alle" || activeFilter === "live" || activeFilter === "favorieten" || activeFilter === "brondekking") && liveMatches.length > 0 && (
+                {(activeFilter === "alle" || activeFilter === "live" || activeFilter === "favorieten" || activeFilter === "brondekking" || activeFilter === "odds" || activeFilter === "xg" || activeFilter === "weer" || activeFilter === "mistdata") && liveMatches.length > 0 && (
                   <section>
                     <div className="flex items-center gap-2 mb-3">
                       <span className="w-2 h-2 bg-red-500 rounded-full animate-pulse" />
@@ -900,7 +933,7 @@ const App: React.FC = () => {
                   </section>
                 )}
 
-                {(activeFilter === "alle" || activeFilter === "gepland" || activeFilter === "favorieten" || activeFilter === "brondekking") && plannedMatches.length > 0 && (
+                {(activeFilter === "alle" || activeFilter === "gepland" || activeFilter === "favorieten" || activeFilter === "brondekking" || activeFilter === "odds" || activeFilter === "xg" || activeFilter === "weer" || activeFilter === "mistdata") && plannedMatches.length > 0 && (
                   <section>
                     <div className="flex items-center gap-2 mb-3">
                       <span className="w-2 h-2 bg-blue-500 rounded-full" />
@@ -919,7 +952,7 @@ const App: React.FC = () => {
                   </section>
                 )}
 
-                {(activeFilter === "alle" || activeFilter === "gespeeld" || activeFilter === "favorieten" || activeFilter === "brondekking") && finishedMatches.length > 0 && (
+                {(activeFilter === "alle" || activeFilter === "gespeeld" || activeFilter === "favorieten" || activeFilter === "brondekking" || activeFilter === "odds" || activeFilter === "xg" || activeFilter === "weer" || activeFilter === "mistdata") && finishedMatches.length > 0 && (
                   <section>
                     <div className="flex items-center gap-2 mb-3">
                       <span className="w-2 h-2 bg-slate-400 rounded-full" />

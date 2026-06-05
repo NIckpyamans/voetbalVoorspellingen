@@ -1,0 +1,76 @@
+name: Free source database batches
+
+on:
+  schedule:
+    - cron: "17 3 * * 2,5"
+  workflow_dispatch:
+    inputs:
+      source:
+        description: "Source to import: football-data, openfootball, statsbomb, venues, weather, all"
+        required: false
+        default: "football-data"
+      league:
+        description: "Optional league code, e.g. E0, E1, N1, D1, SP1"
+        required: false
+        default: ""
+      season_folder:
+        description: "Optional Football-Data season folder, e.g. 2526 or 2425"
+        required: false
+        default: ""
+
+jobs:
+  football-data:
+    if: github.event_name == 'schedule'
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        league: [E0, E1, N1, D1, SP1, I1, F1]
+        season_folder: [2526, 2425]
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+      - run: node scripts/apply-database-schema.js
+        env:
+          DATABASE_URL: ${{ secrets.DATABASE_URL }}
+          POSTGRES_URL: ${{ secrets.POSTGRES_URL }}
+      - run: node scripts/import-free-sources.js --source=football-data --league=${{ matrix.league }} --season-folder=${{ matrix.season_folder }}
+        env:
+          DATABASE_URL: ${{ secrets.DATABASE_URL }}
+          POSTGRES_URL: ${{ secrets.POSTGRES_URL }}
+          FREE_SOURCE_IMPORT_LIMIT: 420
+      - run: node scripts/reset-competition-seasons.js
+        env:
+          DATABASE_URL: ${{ secrets.DATABASE_URL }}
+          POSTGRES_URL: ${{ secrets.POSTGRES_URL }}
+
+  manual:
+    if: github.event_name == 'workflow_dispatch'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+      - run: node scripts/apply-database-schema.js
+        env:
+          DATABASE_URL: ${{ secrets.DATABASE_URL }}
+          POSTGRES_URL: ${{ secrets.POSTGRES_URL }}
+      - run: node scripts/import-free-sources.js --source=${{ inputs.source }} --league=${{ inputs.league }} --season-folder=${{ inputs.season_folder }}
+        env:
+          DATABASE_URL: ${{ secrets.DATABASE_URL }}
+          POSTGRES_URL: ${{ secrets.POSTGRES_URL }}
+          FREE_SOURCE_IMPORT_LIMIT: 420
+          FREE_SOURCE_WEATHER_LIMIT: 250
+          STATSBOMB_EVENT_LIMIT: 24
+          VENUE_GEOCODE_LIMIT: 20
+      - run: node scripts/reset-competition-seasons.js
+        env:
+          DATABASE_URL: ${{ secrets.DATABASE_URL }}
+          POSTGRES_URL: ${{ secrets.POSTGRES_URL }}
