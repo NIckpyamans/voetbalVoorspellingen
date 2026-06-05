@@ -13,6 +13,8 @@ const REQUIRED_FILES = [
   "quality-rules.md",
   "dashboard-contract.md",
   "analysis-context.json",
+  "free-source-strategy.json",
+  "followed-clubs-context.json",
 ];
 const OPTIONAL_SCHEMA_TABLES = new Set(["season_archives"]);
 
@@ -55,8 +57,30 @@ for (const section of context?.defaultDashboardSections || []) {
   if (!String(section || "").trim()) fail("Dashboardsectie mag niet leeg zijn");
 }
 
+const freeSourceStrategy = JSON.parse(fs.readFileSync(path.join(CONTEXT_DIR, "free-source-strategy.json"), "utf8"));
+const followedClubContext = JSON.parse(fs.readFileSync(path.join(CONTEXT_DIR, "followed-clubs-context.json"), "utf8"));
+
+if (!Array.isArray(freeSourceStrategy.sources) || freeSourceStrategy.sources.length < 5) {
+  fail("Free-source strategy moet minimaal 5 gratis/open bronnen bevatten");
+}
+
+for (const source of freeSourceStrategy.sources || []) {
+  if (!source.id || !source.name || !source.url || !Array.isArray(source.databaseTargets)) {
+    fail(`Free-source bron mist verplichte velden: ${source.id || source.name || "unknown"}`);
+  }
+}
+
+if (!Array.isArray(followedClubContext.clubs) || !followedClubContext.clubs.length) {
+  fail("Followed club context bevat nog geen clubs");
+}
+
+const unenrichedClubs = (followedClubContext.clubs || []).filter((club) => !club.external?.theSportsDb?.ok);
+if (unenrichedClubs.length) {
+  fail(`Niet alle gevolgde clubs zijn gratis verrijkt: ${unenrichedClubs.map((club) => club.name).join(", ")}`);
+}
+
 if (!process.exitCode) {
   console.log(
-    `[data-context-check] ok: ${contextTables.length} datasets, ${context.primaryKpis?.length || 0} KPI's, ${context.defaultDashboardSections?.length || 0} dashboardsecties`
+    `[data-context-check] ok: ${contextTables.length} datasets, ${context.primaryKpis?.length || 0} KPI's, ${context.defaultDashboardSections?.length || 0} dashboardsecties, ${freeSourceStrategy.sources.length} gratis bronnen, ${followedClubContext.clubs.length} gevolgde clubs`
   );
 }

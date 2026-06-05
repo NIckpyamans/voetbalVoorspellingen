@@ -8,12 +8,23 @@ Doel: een herbruikbare analysehub voor voetbaldata, modelkwaliteit, QA-regels en
 - Gebruik `kpis.md` voor vaste definities van model-, data- en business-KPI's.
 - Gebruik `quality-rules.md` voor checks die regressies en datavervuiling moeten vangen.
 - Gebruik `dashboard-contract.md` als contract tussen database/API en app-dashboard.
+- Gebruik `free-source-strategy.json` als vaste broncatalogus voor werken zonder betaalde sport-API keys.
+- Gebruik `followed-clubs-context.json` als analyseklare clubcontext voor gevolgde clubs.
 
 ## Architectuurrol
 1. Database: opslag van wedstrijden, clubs, voorspellingen, odds en bronrecords.
 2. Worker: verzamelt, normaliseert, voorspelt en archiveert.
 3. Data context: beschrijft betekenis, KPI's, checks en analysevragen.
 4. Dashboard: toont alleen metrics die volgens deze context gedefinieerd zijn.
+
+## Free-source mode
+De app moet blijven werken zonder betaalde sport-API keys. De voorkeursbronnen zijn Football-Data.co.uk, OpenFootball, TheSportsDB Free API, OpenLigaDB, StatsBomb Open Data, Open-Meteo en historische SPI-benchmarks.
+
+Ververs gevolgde clubcontext met:
+
+```bash
+npm run context:clubs
+```
 
 ## Geheimen
 Bewaar nooit secrets in deze map. `DATABASE_URL`, `POSTGRES_URL`, `ODDS_API_KEY` en `THE_ODDS_API_KEY` horen alleen in Vercel env of lokale `.env.local`.

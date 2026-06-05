@@ -1,0 +1,111 @@
+{
+  "version": "2026-06-05",
+  "mode": "free-and-open-sources-first",
+  "principle": "Use paid API keys only as optional accelerators. Core fixtures, historical results, team context, weather, model training and QA must keep working from free/open sources.",
+  "sources": [
+    {
+      "id": "football-data-co-uk",
+      "name": "Football-Data.co.uk",
+      "url": "https://www.football-data.co.uk/data",
+      "cost": "free",
+      "keyRequired": false,
+      "coverage": ["historical results", "match statistics", "historical odds", "closing odds proxies"],
+      "bestUse": ["model training", "backtesting", "market calibration", "ROI and CLV simulation"],
+      "risk": "Not a live odds feed; update cadence is periodic and league coverage varies.",
+      "priority": "high",
+      "databaseTargets": ["matches", "match_results", "match_stats", "odds_snapshots", "prediction_evaluations", "calibration_profiles"]
+    },
+    {
+      "id": "openfootball",
+      "name": "OpenFootball / football.db",
+      "url": "https://openfootball.github.io/",
+      "cost": "free",
+      "keyRequired": false,
+      "coverage": ["competitions", "seasons", "fixtures", "results"],
+      "bestUse": ["season archive", "club aliases", "H2H fallback", "competition graph"],
+      "risk": "Historical/open data is strong; current fixture completeness differs per competition.",
+      "priority": "high",
+      "databaseTargets": ["countries", "competitions", "competition_seasons", "clubs", "club_aliases", "matches", "h2h_edges"]
+    },
+    {
+      "id": "thesportsdb-free",
+      "name": "TheSportsDB Free API",
+      "url": "https://www.thesportsdb.com/documentation",
+      "cost": "free",
+      "keyRequired": false,
+      "freeKey": "123",
+      "coverage": ["team metadata", "badges", "venues", "basic schedules", "basic results"],
+      "bestUse": ["club profile enrichment", "logos", "venue metadata", "fallback fixtures"],
+      "risk": "Free API has stricter limits and some methods are restricted compared with premium.",
+      "priority": "high",
+      "databaseTargets": ["clubs", "venues", "source_records"]
+    },
+    {
+      "id": "openligadb",
+      "name": "OpenLigaDB",
+      "url": "https://api.openligadb.de/index.html",
+      "cost": "free",
+      "keyRequired": false,
+      "coverage": ["German fixtures", "results", "tables", "teams"],
+      "bestUse": ["Bundesliga and German competition validation", "result cross-checking"],
+      "risk": "Community-maintained data; validate before using as single source of truth.",
+      "priority": "medium",
+      "databaseTargets": ["matches", "match_results", "standings_snapshots", "source_audit"]
+    },
+    {
+      "id": "statsbomb-open-data",
+      "name": "StatsBomb Open Data",
+      "url": "https://github.com/statsbomb/open-data",
+      "cost": "free",
+      "keyRequired": false,
+      "coverage": ["event data", "xG", "lineups", "360 data for selected matches"],
+      "bestUse": ["feature engineering", "xG priors", "style-of-play modelling", "model validation"],
+      "risk": "Excellent quality but selected competitions only and not live.",
+      "priority": "medium",
+      "databaseTargets": ["match_stats", "team_match_stats", "team_season_stats", "source_records"]
+    },
+    {
+      "id": "open-meteo",
+      "name": "Open-Meteo",
+      "url": "https://open-meteo.com/",
+      "cost": "free for non-commercial use within limits",
+      "keyRequired": false,
+      "coverage": ["weather forecast", "historical weather"],
+      "bestUse": ["weather risk", "wind/rain/temperature match context"],
+      "risk": "Free tier is non-commercial and attribution/rate-limit rules apply.",
+      "priority": "medium",
+      "databaseTargets": ["source_records", "prediction_snapshots"]
+    },
+    {
+      "id": "fivethirtyeight-spi",
+      "name": "FiveThirtyEight Soccer SPI",
+      "url": "https://github.com/fivethirtyeight/data/tree/master/soccer-spi",
+      "cost": "free",
+      "keyRequired": false,
+      "coverage": ["historical SPI", "historical forecasts", "xG fields"],
+      "bestUse": ["historical model benchmark", "team strength priors", "calibration comparison"],
+      "risk": "Sports forecasts are no longer actively updated, so use as historical benchmark only.",
+      "priority": "low",
+      "databaseTargets": ["model_versions", "calibration_profiles", "prediction_evaluations"]
+    }
+  ],
+  "fallbackOrder": [
+    "Football-Data.co.uk for historical training and market calibration",
+    "OpenFootball for season/competition structure",
+    "TheSportsDB free API for club metadata and fixture fallback",
+    "OpenLigaDB for German validation",
+    "StatsBomb Open Data for advanced historical feature engineering",
+    "Open-Meteo for weather",
+    "FiveThirtyEight SPI only as historical benchmark"
+  ],
+  "notRecommendedAsPrimary": [
+    {
+      "source": "unofficial scraping of blocked pages",
+      "reason": "High fragility, legal/terms risk and inconsistent source timestamps."
+    },
+    {
+      "source": "free trial APIs",
+      "reason": "They reintroduce credential dependency and can silently expire."
+    }
+  ]
+}

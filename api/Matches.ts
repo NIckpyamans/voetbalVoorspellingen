@@ -42,16 +42,44 @@ async function readBiweeklyDigest() {
 async function readDataContext() {
   try {
     const remote = await fetchRepoJson("docs/data-context/analysis-context.json");
-    return remote.data;
+    return await enrichDataContext(remote.data);
   } catch {
     try {
       const contextPath = path.join(process.cwd(), "docs", "data-context", "analysis-context.json");
       if (!fs.existsSync(contextPath)) return null;
-      return JSON.parse(fs.readFileSync(contextPath, "utf-8"));
+      return await enrichDataContext(JSON.parse(fs.readFileSync(contextPath, "utf-8")));
     } catch {
       return null;
     }
   }
+}
+
+async function readContextJson(relativePath: string) {
+  try {
+    const remote = await fetchRepoJson(relativePath);
+    return remote.data;
+  } catch {
+    try {
+      const localPath = path.join(process.cwd(), ...relativePath.split("/"));
+      if (!fs.existsSync(localPath)) return null;
+      return JSON.parse(fs.readFileSync(localPath, "utf-8"));
+    } catch {
+      return null;
+    }
+  }
+}
+
+async function enrichDataContext(context: any) {
+  if (!context) return context;
+  const [freeSourceStrategy, followedClubContext] = await Promise.all([
+    readContextJson("docs/data-context/free-source-strategy.json"),
+    readContextJson("docs/data-context/followed-clubs-context.json"),
+  ]);
+  return {
+    ...context,
+    freeSourceStrategy,
+    followedClubContext,
+  };
 }
 
 function readSourceLineageBackfill() {

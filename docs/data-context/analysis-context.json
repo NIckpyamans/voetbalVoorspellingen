@@ -6,6 +6,21 @@
     "cache": ["server_data.json", "data/days/*.json", "training/*.json"],
     "notForSecrets": true
   },
+  "freeSourceMode": {
+    "enabled": true,
+    "strategyFile": "docs/data-context/free-source-strategy.json",
+    "followedClubContext": "docs/data-context/followed-clubs-context.json",
+    "principle": "Core model training, source lineage and dashboards must keep working without paid sports API keys.",
+    "primarySources": [
+      "Football-Data.co.uk",
+      "OpenFootball",
+      "TheSportsDB Free API",
+      "OpenLigaDB",
+      "StatsBomb Open Data",
+      "Open-Meteo",
+      "FiveThirtyEight SPI historical benchmark"
+    ]
+  },
   "domains": {
     "footballGraph": ["countries", "competitions", "competition_seasons", "clubs", "club_aliases", "venues"],
     "matches": ["matches", "match_results", "match_stats", "team_match_stats", "h2h_edges"],
@@ -54,7 +69,8 @@
         "Biweekly architecture and data-quality reviews",
         "Model performance interpretation",
         "Dataset and KPI catalog governance",
-        "Analysis-ready reports after database connection"
+        "Analysis-ready reports after database connection",
+        "Free-source club context analysis from docs/data-context/followed-clubs-context.json"
       ],
       "doNotUseFor": [
         "Secret storage",
@@ -95,10 +111,10 @@
     }
   },
   "recommendedNextActions": [
-    "Fill DATABASE_URL or POSTGRES_URL in Vercel.",
-    "Apply database/schema.sql.",
-    "Backfill source_records and source_audit from current JSON cache.",
-    "Connect dashboard sections to database-backed API responses.",
-    "Enable odds/closing-line KPI reporting only after real credentials are present."
+    "Keep Neon connected and verify DATABASE_URL/POSTGRES_URL after each Vercel env pull.",
+    "Refresh followed club context with npm run context:clubs.",
+    "Use Football-Data.co.uk historical odds instead of paid live odds for ROI/CLV simulation.",
+    "Expand free source coverage per league before adding paid providers.",
+    "Enable Slack only after SLACK_WEBHOOK_URL is configured."
   ]
 }

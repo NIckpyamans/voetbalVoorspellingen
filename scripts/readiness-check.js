@@ -57,6 +57,8 @@ const packageJson = readJsonSafe("package.json", {});
 const trainingExport = readJsonSafe(path.join("training", "catboost-ready.json"), {});
 const dataQualityAudit = readJsonSafe(path.join("monitor", "data-quality-audit.json"), {});
 const sourceLineageBackfill = readJsonSafe(path.join("monitor", "source-lineage-backfill.json"), {});
+const freeSourceStrategy = readJsonSafe(path.join("docs", "data-context", "free-source-strategy.json"), {});
+const followedClubContext = readJsonSafe(path.join("docs", "data-context", "followed-clubs-context.json"), {});
 const meta = readJsonSafe(path.join("data", "meta.json"), {});
 const indexHtml = readTextSafe("index.html");
 const indexTsx = readTextSafe("index.tsx");
@@ -149,6 +151,28 @@ const report = {
           ? "database_needed_for_roi_clv_storage"
           : "odds_credentials_needed",
     note: "ROI/CLV pas live beoordelen wanneer echte odds_at_prediction plus closing odds in de database staan.",
+  },
+  freeSources: {
+    strategyConfigured: Boolean(freeSourceStrategy.version),
+    mode: freeSourceStrategy.mode || "unknown",
+    sourceCount: Array.isArray(freeSourceStrategy.sources) ? freeSourceStrategy.sources.length : 0,
+    highPrioritySources: Array.isArray(freeSourceStrategy.sources)
+      ? freeSourceStrategy.sources.filter((source) => source.priority === "high").length
+      : 0,
+    followedClubContextGenerated: Boolean(followedClubContext.generatedAt),
+    followedClubs: Array.isArray(followedClubContext.clubs) ? followedClubContext.clubs.length : 0,
+    followedClubsEnriched: Array.isArray(followedClubContext.clubs)
+      ? followedClubContext.clubs.filter((club) => club.external?.theSportsDb?.ok).length
+      : 0,
+    sourceRecordSync: followedClubContext.sourceRecordSync || null,
+    status:
+      freeSourceStrategy.version &&
+      Array.isArray(followedClubContext.clubs) &&
+      followedClubContext.clubs.length > 0 &&
+      followedClubContext.clubs.every((club) => club.external?.theSportsDb?.ok)
+        ? "free_source_context_ready"
+        : "free_source_context_incomplete",
+    runCommand: "npm run context:clubs",
   },
   sourceLineage: {
     backfillGenerated: Boolean(sourceLineageBackfill.generatedAt),

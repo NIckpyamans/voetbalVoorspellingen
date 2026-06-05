@@ -813,6 +813,40 @@ const SettingsView: React.FC = () => {
               ))}
             </div>
 
+            <div className="rounded-xl border border-emerald-500/10 bg-emerald-950/10 p-3">
+              <div className="flex items-center justify-between gap-3 mb-2">
+                <div>
+                  <div className="text-[10px] font-black text-emerald-300 uppercase">Gratis bronnenstrategie</div>
+                  <div className="text-[10px] text-slate-400 mt-1">
+                    Werkt zonder betaalde sport-API keys; betaalde bronnen blijven optioneel.
+                  </div>
+                </div>
+                <span className="text-[8px] font-black px-2 py-0.5 rounded-full bg-emerald-900/30 text-emerald-300">
+                  {dataContext.freeSourceMode?.enabled ? "free-source mode" : "niet actief"}
+                </span>
+              </div>
+              <div className="grid grid-cols-2 md:grid-cols-4 gap-2">
+                {[
+                  { label: "Gratis bronnen", value: (dataContext.freeSourceStrategy?.sources || []).length },
+                  { label: "High priority", value: (dataContext.freeSourceStrategy?.sources || []).filter((source: any) => source.priority === "high").length },
+                  { label: "Gevolgde clubs", value: (dataContext.followedClubContext?.clubs || []).length },
+                  { label: "Club verrijkt", value: (dataContext.followedClubContext?.clubs || []).filter((club: any) => club.external?.theSportsDb?.ok).length },
+                ].map((item) => (
+                  <div key={item.label} className="rounded-lg border border-white/5 bg-slate-950/30 p-2">
+                    <div className="text-[8px] font-black text-slate-500 uppercase">{item.label}</div>
+                    <div className="text-[13px] font-black text-white mt-1">{item.value}</div>
+                  </div>
+                ))}
+              </div>
+              <div className="mt-2 flex flex-wrap gap-1.5">
+                {(dataContext.freeSourceStrategy?.sources || []).slice(0, 7).map((source: any) => (
+                  <span key={source.id} className="rounded-full border border-emerald-500/10 bg-slate-950/40 px-2 py-1 text-[8px] font-black text-emerald-200">
+                    {source.name}
+                  </span>
+                ))}
+              </div>
+            </div>
+
             <div className="rounded-xl border border-white/5 bg-slate-900/30 p-3">
               <div className="flex items-center justify-between gap-3 mb-2">
                 <div>
