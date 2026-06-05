@@ -3773,6 +3773,7 @@ function buildTrainingSnapshot(store) {
         score: match.score || null,
         label,
         review: store.postMatchReviews?.[match.id] || null,
+        dbFeatureContext: match.dbFeatureContext || prediction.dbFeatureContext || reviewPrediction?.dbFeatureContext || null,
       };
       const snapshotCandidates = (snapshotsByMatchId.get(match.id) || [])
         .filter((snapshot) => snapshot?.predictionId && snapshot?.generatedAt)
@@ -3782,6 +3783,7 @@ function buildTrainingSnapshot(store) {
           cutoffAt: snapshot.cutoffAt || snapshot.generatedAt,
           featureVector: snapshot.featureVector || snapshot.features || snapshot.inputSnapshot?.featureVector || null,
           ensembleMeta: snapshot.ensembleMeta || snapshot.prediction?.ensembleMeta || null,
+          dbFeatureContext: snapshot.dbFeatureContext || snapshot.inputSnapshot?.dbFeatureContext || null,
           snapshotStatus: snapshot.status || null,
           snapshotBacked: true,
         }));
@@ -3792,6 +3794,12 @@ function buildTrainingSnapshot(store) {
           cutoffAt: reviewPrediction?.cutoffAt || prediction.cutoffAt || null,
           featureVector: reviewPrediction?.featureVector || prediction.featureVector || null,
           ensembleMeta: reviewPrediction?.ensembleMeta || prediction.ensembleMeta || null,
+          dbFeatureContext:
+            reviewPrediction?.dbFeatureContext ||
+            prediction.dbFeatureContext ||
+            match.dbFeatureContext ||
+            baseRow.dbFeatureContext ||
+            null,
           snapshotBacked: false,
         },
         ...snapshotCandidates,
@@ -10826,6 +10834,8 @@ async function main() {
         awayClubId: awayId ? String(awayId) : null,
         competitionId: null,
         dateKey: date,
+        homeTeamName: homeName,
+        awayTeamName: awayName,
       }).catch(() => null);
 
       const prediction = predict({

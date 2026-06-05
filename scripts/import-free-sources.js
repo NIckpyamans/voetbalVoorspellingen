@@ -52,12 +52,18 @@ const KNOWN_VENUES = {
   "aston villa": { name: "Villa Park", city: "Birmingham", lat: 52.5092, lon: -1.8848 },
   "athletic club": { name: "San Mames", city: "Bilbao", lat: 43.2642, lon: -2.9494 },
   "athletic bilbao": { name: "San Mames", city: "Bilbao", lat: 43.2642, lon: -2.9494 },
+  "az": { name: "AFAS Stadion", city: "Alkmaar", lat: 52.6125, lon: 4.7425 },
   "barcelona": { name: "Camp Nou", city: "Barcelona", lat: 41.3809, lon: 2.1228 },
   "bayern munich": { name: "Allianz Arena", city: "Munich", lat: 48.2188, lon: 11.6247 },
   "borussia dortmund": { name: "Signal Iduna Park", city: "Dortmund", lat: 51.4926, lon: 7.4519 },
   "chelsea": { name: "Stamford Bridge", city: "London", lat: 51.4816, lon: -0.191 },
   "crystal palace": { name: "Selhurst Park", city: "London", lat: 51.3983, lon: -0.0855 },
+  "ajax": { name: "Johan Cruijff ArenA", city: "Amsterdam", lat: 52.3142, lon: 4.9418 },
+  "feyenoord rotterdam": { name: "De Kuip", city: "Rotterdam", lat: 51.8939, lon: 4.5231 },
+  "rotterdam": { name: "De Kuip", city: "Rotterdam", lat: 51.8939, lon: 4.5231 },
   "freiburg": { name: "Europa-Park Stadion", city: "Freiburg", lat: 48.0217, lon: 7.8303 },
+  "groningen": { name: "Euroborg", city: "Groningen", lat: 53.2061, lon: 6.5919 },
+  "heerenveen": { name: "Abe Lenstra Stadion", city: "Heerenveen", lat: 52.9594, lon: 5.9361 },
   "inter": { name: "San Siro", city: "Milan", lat: 45.4781, lon: 9.124 },
   "juventus": { name: "Allianz Stadium", city: "Turin", lat: 45.1096, lon: 7.6413 },
   "liverpool": { name: "Anfield", city: "Liverpool", lat: 53.4308, lon: -2.9608 },
@@ -65,9 +71,16 @@ const KNOWN_VENUES = {
   "manchester united": { name: "Old Trafford", city: "Manchester", lat: 53.4631, lon: -2.2913 },
   "milan": { name: "San Siro", city: "Milan", lat: 45.4781, lon: 9.124 },
   "paris saint-germain": { name: "Parc des Princes", city: "Paris", lat: 48.8414, lon: 2.253 },
+  "pec zwolle": { name: "MAC3PARK Stadion", city: "Zwolle", lat: 52.5178, lon: 6.1206 },
+  "psv": { name: "Philips Stadion", city: "Eindhoven", lat: 51.4418, lon: 5.4674 },
   "psg": { name: "Parc des Princes", city: "Paris", lat: 48.8414, lon: 2.253 },
+  "sparta rotterdam": { name: "Het Kasteel", city: "Rotterdam", lat: 51.9202, lon: 4.4326 },
+  "telstar 1963": { name: "BUKO Stadion", city: "Velsen-Zuid", lat: 52.4594, lon: 4.6414 },
+  "twente": { name: "De Grolsch Veste", city: "Enschede", lat: 52.2369, lon: 6.8375 },
+  "utrecht": { name: "Stadion Galgenwaard", city: "Utrecht", lat: 52.0783, lon: 5.1456 },
   "real madrid": { name: "Santiago Bernabeu", city: "Madrid", lat: 40.4531, lon: -3.6883 },
   "tottenham": { name: "Tottenham Hotspur Stadium", city: "London", lat: 51.6043, lon: -0.0664 },
+  "vitesse": { name: "GelreDome", city: "Arnhem", lat: 51.9633, lon: 5.8939 },
 };
 
 function digest(value) {
@@ -818,12 +831,55 @@ async function backfillVenueCoordinates(sql) {
       order by updated_at desc nulls last, name
       limit $1
     `,
-    [VENUE_GEOCODE_LIMIT]
+    [Math.max(VENUE_GEOCODE_LIMIT * 20, VENUE_GEOCODE_LIMIT)]
   );
+  const targetRows = rows
+    .sort((a, b) => {
+      const aKnown = KNOWN_VENUES[canonicalTeamName(a.name)] ? 0 : 1;
+      const bKnown = KNOWN_VENUES[canonicalTeamName(b.name)] ? 0 : 1;
+      return aKnown - bKnown || String(a.name).localeCompare(String(b.name));
+    })
+    .slice(0, VENUE_GEOCODE_LIMIT);
   let geocoded = 0;
+  let curated = 0;
   const errors = [];
-  for (const row of rows) {
+  for (const row of targetRows) {
     try {
+      const knownVenue = KNOWN_VENUES[canonicalTeamName(row.name)] || null;
+      if (knownVenue) {
+        const venueId = `venue-${slug(knownVenue.name)}-${slug(knownVenue.city)}`;
+        const sourceRecordId = `src_venue_curated_${digest(row.club_id)}`;
+        const payload = { provider: "curated-free-venue-seed", team: row.name, venue: knownVenue };
+        await upsertSourceRecord(sql, sourceRecordId, "curated-free-venue-seed", null, "venue_geocode", row.club_id, payload, 0.82);
+        await sql.query(
+          `
+            insert into venues (venue_id, name, city, latitude, longitude, provider_ids)
+            values ($1,$2,$3,$4,$5,$6::jsonb)
+            on conflict (venue_id) do update set
+              name = excluded.name,
+              city = excluded.city,
+              latitude = excluded.latitude,
+              longitude = excluded.longitude,
+              provider_ids = excluded.provider_ids,
+              updated_at = now()
+          `,
+          [
+            venueId,
+            knownVenue.name,
+            knownVenue.city,
+            knownVenue.lat,
+            knownVenue.lon,
+            JSON.stringify({ curated: true, team: row.name, sourceRecordId }),
+          ]
+        );
+        await sql.query(`update clubs set venue_id = $2, stadium = coalesce(stadium, $3), updated_at = now() where club_id = $1`, [
+          row.club_id,
+          venueId,
+          knownVenue.name,
+        ]);
+        curated += 1;
+        continue;
+      }
       const query = encodeURIComponent(`${row.name} football stadium ${row.country_name || ""}`.trim());
       const url = `https://nominatim.openstreetmap.org/search?q=${query}&format=json&limit=1`;
       const results = await fetchNominatimJson(url);
@@ -867,7 +923,7 @@ async function backfillVenueCoordinates(sql) {
       errors.push({ clubId: row.club_id, error: error.message });
     }
   }
-  return { scanned: rows.length, geocoded, errors };
+  return { scanned: targetRows.length, candidatePool: rows.length, curated, geocoded, errors };
 }
 
 async function main() {

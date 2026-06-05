@@ -579,14 +579,133 @@ export async function readDatabaseCounts() {
   return { databaseConfigured: true, ...counts };
 }
 
-export async function readDatabaseFeatureContext({ matchId, homeClubId, awayClubId, competitionId, dateKey } = {}) {
+function dbAliasKey(value) {
+  return String(value || "")
+    .toLowerCase()
+    .normalize("NFKD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .replace(/\b(fc|cf|afc|sc|club|football|voetbal)\b/g, " ")
+    .replace(/&/g, " and ")
+    .replace(/[^a-z0-9]+/g, "-")
+    .replace(/^-+|-+$/g, "")
+    .slice(0, 120);
+}
+
+function aliasVariants(value) {
+  const base = dbAliasKey(value);
+  const variants = new Set([base]);
+  const compact = base.replace(/-/g, "");
+  if (compact && compact !== base) variants.add(compact);
+  const withoutCityPrefix = base.replace(/^(real|sporting|atletico|athletic|olympique|inter|ac)-/, "");
+  if (withoutCityPrefix && withoutCityPrefix !== base) variants.add(withoutCityPrefix);
+  const withoutSuffix = base.replace(/-(fc|cf|afc|sc|club)$/, "");
+  if (withoutSuffix && withoutSuffix !== base) variants.add(withoutSuffix);
+  return [...variants].filter(Boolean);
+}
+
+async function resolveClubIdByAlias(sql, providedId, teamName) {
+  if (providedId) {
+    const [exactClub] = await sql.query("select club_id from clubs where club_id = $1 limit 1", [String(providedId)]);
+    if (exactClub?.club_id) return { clubId: exactClub.club_id, source: "provided_id" };
+  }
+
+  const variants = aliasVariants(teamName);
+  if (!variants.length) return { clubId: providedId ? String(providedId) : null, source: "unresolved" };
+
+  const [aliasRow] = await sql.query(
+    `
+      select club_id, normalized_alias
+      from club_aliases
+      where normalized_alias = any($1::text[])
+      order by array_position($1::text[], normalized_alias) nulls last
+      limit 1
+    `,
+    [variants]
+  );
+  if (aliasRow?.club_id) return { clubId: aliasRow.club_id, source: "club_aliases", matchedAlias: aliasRow.normalized_alias };
+
+  const [nameRow] = await sql.query(
+    `
+      select club_id, name
+      from clubs
+      where lower(regexp_replace(name, '[^a-zA-Z0-9]+', '-', 'g')) = any($1::text[])
+      limit 1
+    `,
+    [variants]
+  );
+  if (nameRow?.club_id) return { clubId: nameRow.club_id, source: "club_name", matchedAlias: dbAliasKey(nameRow.name) };
+
+  return { clubId: providedId ? String(providedId) : null, source: "unresolved" };
+}
+
+async function resolveMatchIdByFixture(sql, { matchId, dateKey, homeClubId, awayClubId, homeTeamName, awayTeamName }) {
+  if (matchId) {
+    const [exactMatch] = await sql.query("select match_id from matches where match_id = $1 limit 1", [String(matchId)]);
+    if (exactMatch?.match_id) return { matchId: exactMatch.match_id, source: "provided_match_id" };
+  }
+  if (dateKey && homeClubId && awayClubId) {
+    const [fixtureMatch] = await sql.query(
+      `
+        select match_id
+        from matches
+        where date_key = $1
+          and home_club_id = $2
+          and away_club_id = $3
+        order by kickoff_at nulls last, updated_at desc
+        limit 1
+      `,
+      [dateKey, homeClubId, awayClubId]
+    );
+    if (fixtureMatch?.match_id) return { matchId: fixtureMatch.match_id, source: "date_club_fixture" };
+  }
+  if (dateKey && homeTeamName && awayTeamName) {
+    const [nameMatch] = await sql.query(
+      `
+        select match_id
+        from matches
+        where date_key = $1
+          and lower(home_team_name) = lower($2)
+          and lower(away_team_name) = lower($3)
+        order by kickoff_at nulls last, updated_at desc
+        limit 1
+      `,
+      [dateKey, String(homeTeamName), String(awayTeamName)]
+    );
+    if (nameMatch?.match_id) return { matchId: nameMatch.match_id, source: "date_team_name_fixture" };
+  }
+  return { matchId: matchId ? String(matchId) : null, source: "unresolved" };
+}
+
+export async function readDatabaseFeatureContext({
+  matchId,
+  homeClubId,
+  awayClubId,
+  competitionId,
+  dateKey,
+  homeTeamName,
+  awayTeamName,
+} = {}) {
   const sql = getSql();
   if (!sql) return null;
-  const byMatch = matchId
+  const homeResolution = await resolveClubIdByAlias(sql, homeClubId, homeTeamName);
+  const awayResolution = await resolveClubIdByAlias(sql, awayClubId, awayTeamName);
+  const resolvedHomeClubId = homeResolution.clubId;
+  const resolvedAwayClubId = awayResolution.clubId;
+  const matchResolution = await resolveMatchIdByFixture(sql, {
+    matchId,
+    dateKey,
+    homeClubId: resolvedHomeClubId,
+    awayClubId: resolvedAwayClubId,
+    homeTeamName,
+    awayTeamName,
+  });
+  const resolvedMatchId = matchResolution.matchId;
+  const byMatch = resolvedMatchId
     ? await sql.query(
         `
           select
             ms.*,
+            m.weather_payload,
             (
               select jsonb_agg(to_jsonb(tms) order by tms.side)
               from team_match_stats tms
@@ -607,11 +726,11 @@ export async function readDatabaseFeatureContext({ matchId, homeClubId, awayClub
           where m.match_id = $1
           limit 1
         `,
-        [matchId]
+        [resolvedMatchId]
       )
     : [];
   const row = byMatch[0] || {};
-  const teamSeasonRows = homeClubId || awayClubId
+  const teamSeasonRows = resolvedHomeClubId || resolvedAwayClubId
     ? await sql.query(
         `
           select club_id, style_profile, xg_for, xg_against, matches_played
@@ -620,10 +739,10 @@ export async function readDatabaseFeatureContext({ matchId, homeClubId, awayClub
           order by updated_at desc
           limit 4
         `,
-        [[homeClubId, awayClubId].filter(Boolean)]
+        [[resolvedHomeClubId, resolvedAwayClubId].filter(Boolean)]
       )
     : [];
-  const h2hRows = homeClubId && awayClubId
+  const h2hRows = resolvedHomeClubId && resolvedAwayClubId
     ? await sql.query(
         `
           select *
@@ -634,11 +753,24 @@ export async function readDatabaseFeatureContext({ matchId, homeClubId, awayClub
           order by updated_at desc
           limit 1
         `,
-        [homeClubId, awayClubId, competitionId || null]
+        [resolvedHomeClubId, resolvedAwayClubId, competitionId || null]
       )
     : [];
   return {
-    matchId,
+    matchId: resolvedMatchId || matchId,
+    requestedMatchId: matchId || null,
+    matchResolution,
+    requestedHomeClubId: homeClubId || null,
+    requestedAwayClubId: awayClubId || null,
+    resolvedHomeClubId,
+    resolvedAwayClubId,
+    homeResolution,
+    awayResolution,
+    aliasMatched:
+      homeResolution.source === "club_aliases" ||
+      homeResolution.source === "club_name" ||
+      awayResolution.source === "club_aliases" ||
+      awayResolution.source === "club_name",
     dateKey,
     matchStats: row.match_id
       ? {
@@ -653,6 +785,7 @@ export async function readDatabaseFeatureContext({ matchId, homeClubId, awayClub
       : {},
     teamMatchStats: row.team_match_stats_payload || [],
     historicalOdds: row.historical_odds_payload || null,
+    weather: row.weather_payload || null,
     teamSeasonStyle: teamSeasonRows,
     h2hEdge: h2hRows[0] || null,
     featureSources: [

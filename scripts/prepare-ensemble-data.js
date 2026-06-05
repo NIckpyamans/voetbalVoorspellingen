@@ -33,6 +33,30 @@ const DERIVED_REVIEW_FEATURES = [
   "source_timestamp_coverage",
 ];
 
+const DB_FEATURES = [
+  "db_has_match_stats",
+  "db_has_team_match_stats",
+  "db_historical_odds_samples",
+  "db_historical_home_implied",
+  "db_historical_draw_implied",
+  "db_historical_away_implied",
+  "db_home_xg",
+  "db_away_xg",
+  "db_home_shots",
+  "db_away_shots",
+  "db_home_corners",
+  "db_away_corners",
+  "db_weather_available",
+  "db_weather_temperature",
+  "db_weather_wind_speed",
+  "db_weather_precipitation",
+  "db_h2h_edge_played",
+  "db_h2h_edge_balance",
+  "db_style_profile_available",
+  "db_alias_matched",
+  "db_feature_source_count",
+];
+
 function readJsonSafe(filePath, fallback) {
   try {
     if (!fs.existsSync(filePath)) return fallback;
@@ -112,10 +136,63 @@ function buildDerivedReviewFeatures(row) {
   return hasSignal ? features : null;
 }
 
+function impliedProbability(decimalOdd) {
+  const value = Number(decimalOdd);
+  return Number.isFinite(value) && value > 1 ? 1 / value : 0;
+}
+
+function firstTeamMatchStat(context, side) {
+  const rows = Array.isArray(context?.teamMatchStats) ? context.teamMatchStats : [];
+  return rows.find((row) => String(row?.side || "").toLowerCase() === side) || {};
+}
+
+function buildDatabaseFeatures(row) {
+  const sourceVector = row?.featureVector && typeof row.featureVector === "object" ? row.featureVector : {};
+  const context = row?.dbFeatureContext && typeof row.dbFeatureContext === "object" ? row.dbFeatureContext : {};
+  const matchStats = context.matchStats || {};
+  const homeTeamStats = firstTeamMatchStat(context, "home");
+  const awayTeamStats = firstTeamMatchStat(context, "away");
+  const odds = context.historicalOdds || {};
+  const weather = context.weather || context.weatherPayload || {};
+  const h2h = context.h2hEdge || {};
+  const styleRows = Array.isArray(context.teamSeasonStyle) ? context.teamSeasonStyle : [];
+  const sourceCount = Array.isArray(context.featureSources) ? context.featureSources.length : 0;
+
+  const features = {
+    db_has_match_stats: boolFeature(matchStats.statsSource || sourceVector.db_has_match_stats),
+    db_has_team_match_stats: boolFeature((context.teamMatchStats || []).length || sourceVector.db_has_team_match_stats),
+    db_historical_odds_samples: numberFeature(odds.samples ?? sourceVector.db_historical_odds_samples),
+    db_historical_home_implied: numberFeature(sourceVector.db_historical_home_implied || impliedProbability(odds.avgHome)),
+    db_historical_draw_implied: numberFeature(sourceVector.db_historical_draw_implied || impliedProbability(odds.avgDraw)),
+    db_historical_away_implied: numberFeature(sourceVector.db_historical_away_implied || impliedProbability(odds.avgAway)),
+    db_home_xg: numberFeature(sourceVector.home_db_xg ?? sourceVector.db_home_xg ?? matchStats.homeXg ?? homeTeamStats.xg),
+    db_away_xg: numberFeature(sourceVector.away_db_xg ?? sourceVector.db_away_xg ?? matchStats.awayXg ?? awayTeamStats.xg),
+    db_home_shots: numberFeature(sourceVector.home_db_shots ?? sourceVector.db_home_shots ?? matchStats.homeShots ?? homeTeamStats.shots),
+    db_away_shots: numberFeature(sourceVector.away_db_shots ?? sourceVector.db_away_shots ?? matchStats.awayShots ?? awayTeamStats.shots),
+    db_home_corners: numberFeature(sourceVector.home_db_corners ?? sourceVector.db_home_corners ?? matchStats.homeCorners ?? homeTeamStats.corners),
+    db_away_corners: numberFeature(sourceVector.away_db_corners ?? sourceVector.db_away_corners ?? matchStats.awayCorners ?? awayTeamStats.corners),
+    db_weather_available: boolFeature(
+      sourceVector.db_weather_temperature || weather.temperature_2m_mean || weather.temperature || context.weatherAvailable
+    ),
+    db_weather_temperature: numberFeature(sourceVector.db_weather_temperature ?? weather.temperature_2m_mean ?? weather.temperature),
+    db_weather_wind_speed: numberFeature(sourceVector.db_weather_wind_speed ?? weather.wind_speed_10m_max ?? weather.windSpeed),
+    db_weather_precipitation: numberFeature(sourceVector.db_weather_precipitation ?? weather.precipitation_sum ?? weather.precipitation),
+    db_h2h_edge_played: numberFeature(h2h.played ?? sourceVector.db_h2h_edge_played),
+    db_h2h_edge_balance: numberFeature(h2h.weighted_recent_balance ?? sourceVector.db_h2h_edge_balance),
+    db_style_profile_available: boolFeature(styleRows.some((item) => item?.style_profile) || sourceVector.db_style_profile_available),
+    db_alias_matched: boolFeature(context.aliasMatched),
+    db_feature_source_count: numberFeature(sourceCount),
+  };
+
+  const hasSignal = Object.values(features).some((value) => Number(value) !== 0);
+  return hasSignal ? features : null;
+}
+
 function buildFeaturePayload(row, primaryFeatures) {
   const sourceVector = row?.featureVector && typeof row.featureVector === "object" ? row.featureVector : null;
   const derived = buildDerivedReviewFeatures(row);
-  if (!sourceVector && !derived) return null;
+  const databaseFeatures = buildDatabaseFeatures(row);
+  if (!sourceVector && !derived && !databaseFeatures) return null;
 
   const features = {};
   for (const key of primaryFeatures || []) {
@@ -124,10 +201,19 @@ function buildFeaturePayload(row, primaryFeatures) {
   for (const key of DERIVED_REVIEW_FEATURES) {
     features[key] = numberFeature(derived?.[key]);
   }
+  for (const key of DB_FEATURES) {
+    features[key] = numberFeature(databaseFeatures?.[key]);
+  }
 
   return {
     features,
-    featureSource: sourceVector ? "snapshot_feature_vector" : "review_prediction_fallback",
+    featureSource: sourceVector
+      ? databaseFeatures
+        ? "snapshot_feature_vector_plus_db_context"
+        : "snapshot_feature_vector"
+      : databaseFeatures
+        ? "db_context_fallback"
+        : "review_prediction_fallback",
     snapshotBacked: !!(row?.predictionId && row?.generatedAt && row?.cutoffAt && sourceVector),
   };
 }
@@ -160,7 +246,7 @@ function main() {
   const snapshot = readJsonSafe(SNAPSHOT_FILE, { rows: [] });
   const config = readJsonSafe(CONFIG_FILE, { primaryFeatures: [] });
   const rows = Array.isArray(snapshot.rows) ? snapshot.rows : [];
-  const featureNames = [...(config.primaryFeatures || []), ...DERIVED_REVIEW_FEATURES];
+  const featureNames = [...(config.primaryFeatures || []), ...DERIVED_REVIEW_FEATURES, ...DB_FEATURES];
 
   const rawExportRows = rows
     .map((row) => {

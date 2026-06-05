@@ -63,6 +63,45 @@ interface CupSheet {
   rounds: Record<string, KnockoutItem[]>;
 }
 
+interface DatabaseSeasonTeam {
+  clubId: string;
+  clubName: string;
+  entryReason: string;
+  previousLevel?: number | null;
+  currentLevel?: number | null;
+  status?: string;
+}
+
+interface DatabaseSeasonTransition {
+  key: string;
+  competitionId: string;
+  competitionName?: string;
+  countryName?: string;
+  level?: number | null;
+  seasonId: string;
+  yearLabel?: string;
+  teams: DatabaseSeasonTeam[];
+  promoted: DatabaseSeasonTeam[];
+  relegated: DatabaseSeasonTeam[];
+  retained: DatabaseSeasonTeam[];
+  newOrPromoted: DatabaseSeasonTeam[];
+}
+
+interface DatabaseSeasonOverview {
+  databaseConfigured?: boolean;
+  zeroStandings?: Array<{
+    competitionId: string;
+    competitionName?: string;
+    countryName?: string;
+    level?: number | null;
+    seasonId: string;
+    yearLabel?: string;
+    rows: StandingRow[];
+  }>;
+  transitions?: DatabaseSeasonTransition[];
+  error?: string;
+}
+
 function zoneClasses(color?: string) {
   if (color === "blue") return "border-l-blue-500 text-blue-400";
   if (color === "amber") return "border-l-amber-500 text-amber-400";
@@ -137,6 +176,20 @@ function sourceLabel(source?: string) {
   return source || "cache";
 }
 
+function normalizeLeagueLabel(value?: string) {
+  return String(value || "")
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, " ")
+    .trim();
+}
+
+function reasonLabel(reason?: string) {
+  if (reason === "promoted") return "Gepromoveerd";
+  if (reason === "relegated") return "Gedegradeerd";
+  if (reason === "new_or_promoted") return "Nieuw/promotie";
+  return "Behoud";
+}
+
 const StandingsView: React.FC = () => {
   const [standings, setStandings] = useState<Record<string, LeagueStanding>>({});
   const [cupSheets, setCupSheets] = useState<Record<string, CupSheet>>({});
@@ -147,6 +200,7 @@ const StandingsView: React.FC = () => {
   const [hiddenLeagueLabels, setHiddenLeagueLabels] = useState<string[]>(readHiddenStandings);
   const [showLeagueManager, setShowLeagueManager] = useState(true);
   const [favoriteStandingLabel, setFavoriteStandingLabel] = useState<string>(readFavoriteStanding);
+  const [databaseSeasonOverview, setDatabaseSeasonOverview] = useState<DatabaseSeasonOverview | null>(null);
 
   useEffect(() => {
     try {
@@ -173,6 +227,7 @@ const StandingsView: React.FC = () => {
         const nextCupSheets = data.cupSheets || {};
         setStandings(nextStandings);
         setCupSheets(nextCupSheets);
+        setDatabaseSeasonOverview(data.databaseSeasonOverview || null);
 
         const standingKeys = Object.keys(nextStandings);
         const cupKeys = Object.keys(nextCupSheets);
@@ -226,6 +281,34 @@ const StandingsView: React.FC = () => {
 
   const currentStanding = selectedLeague ? standings[selectedLeague] : null;
   const currentCup = selectedCup ? cupSheets[selectedCup] : null;
+  const currentSeasonTransition = useMemo(() => {
+    if (!currentStanding || !databaseSeasonOverview?.transitions?.length) return null;
+    const target = normalizeLeagueLabel(currentStanding.label);
+    return (
+      databaseSeasonOverview.transitions.find((item) => {
+        const labels = [
+          item.competitionName,
+          item.countryName && item.competitionName ? `${item.countryName} ${item.competitionName}` : null,
+          item.countryName && item.competitionName ? `${item.countryName} - ${item.competitionName}` : null,
+        ].map((label) => normalizeLeagueLabel(label || ""));
+        return labels.some((label) => label && (target.includes(label) || label.includes(target)));
+      }) || null
+    );
+  }, [currentStanding, databaseSeasonOverview]);
+  const currentZeroStanding = useMemo(() => {
+    if (!currentStanding || !databaseSeasonOverview?.zeroStandings?.length) return null;
+    const target = normalizeLeagueLabel(currentStanding.label);
+    return (
+      databaseSeasonOverview.zeroStandings.find((item) => {
+        const labels = [
+          item.competitionName,
+          item.countryName && item.competitionName ? `${item.countryName} ${item.competitionName}` : null,
+          item.countryName && item.competitionName ? `${item.countryName} - ${item.competitionName}` : null,
+        ].map((label) => normalizeLeagueLabel(label || ""));
+        return labels.some((label) => label && (target.includes(label) || label.includes(target)));
+      }) || null
+    );
+  }, [currentStanding, databaseSeasonOverview]);
   const currentSources =
     currentStanding?.sources?.length
       ? currentStanding.sources
@@ -436,6 +519,56 @@ const StandingsView: React.FC = () => {
                   ))}
                 </div>
               </div>
+              {(currentSeasonTransition || currentZeroStanding || databaseSeasonOverview?.error) && (
+                <div className="border-b border-white/5 bg-slate-950/55 px-4 py-3">
+                  {databaseSeasonOverview?.error ? (
+                    <div className="rounded-xl border border-amber-500/20 bg-amber-500/10 p-3 text-[10px] font-bold text-amber-200">
+                      Database seizoenanalyse tijdelijk niet beschikbaar: {databaseSeasonOverview.error}
+                    </div>
+                  ) : (
+                    <div className="grid grid-cols-1 lg:grid-cols-3 gap-3">
+                      <div className="rounded-xl border border-cyan-500/15 bg-cyan-500/10 p-3">
+                        <div className="text-[9px] font-black uppercase text-cyan-200">Seizoenreset database</div>
+                        <div className="mt-1 text-xl font-black text-white">
+                          {currentZeroStanding?.rows?.length || currentSeasonTransition?.teams?.length || 0}
+                        </div>
+                        <div className="text-[10px] text-cyan-100/80">
+                          teams starten op nul in {currentZeroStanding?.yearLabel || currentSeasonTransition?.yearLabel || "huidig seizoen"}
+                        </div>
+                      </div>
+                      <div className="rounded-xl border border-emerald-500/15 bg-emerald-500/10 p-3">
+                        <div className="text-[9px] font-black uppercase text-emerald-200">Promotie zichtbaar</div>
+                        <div className="mt-1 flex flex-wrap gap-1">
+                          {(currentSeasonTransition?.promoted?.length
+                            ? currentSeasonTransition.promoted
+                            : currentSeasonTransition?.newOrPromoted || []
+                          ).slice(0, 8).map((team) => (
+                            <span key={team.clubId} className="rounded-full bg-emerald-400/15 px-2 py-1 text-[9px] font-black text-emerald-100">
+                              {team.clubName}
+                            </span>
+                          ))}
+                          {!currentSeasonTransition?.promoted?.length && !currentSeasonTransition?.newOrPromoted?.length && (
+                            <span className="text-[10px] font-bold text-emerald-100/70">Geen promoties gemarkeerd.</span>
+                          )}
+                        </div>
+                      </div>
+                      <div className="rounded-xl border border-red-500/15 bg-red-500/10 p-3">
+                        <div className="text-[9px] font-black uppercase text-red-200">Degradatie zichtbaar</div>
+                        <div className="mt-1 flex flex-wrap gap-1">
+                          {(currentSeasonTransition?.relegated || []).slice(0, 8).map((team) => (
+                            <span key={team.clubId} className="rounded-full bg-red-400/15 px-2 py-1 text-[9px] font-black text-red-100">
+                              {team.clubName}
+                            </span>
+                          ))}
+                          {!currentSeasonTransition?.relegated?.length && (
+                            <span className="text-[10px] font-bold text-red-100/70">Geen degradaties gemarkeerd.</span>
+                          )}
+                        </div>
+                      </div>
+                    </div>
+                  )}
+                </div>
+              )}
               <div className="grid grid-cols-12 gap-1 px-4 py-2 bg-slate-900/60 text-[8px] font-black text-slate-400 uppercase">
                 <div className="col-span-1">#</div>
                 <div className="col-span-4">Club</div>
@@ -475,6 +608,11 @@ const StandingsView: React.FC = () => {
                           )}
                           <span className="text-[11px] font-black text-white truncate">{row.team}</span>
                         </div>
+                        {currentSeasonTransition?.teams?.find((team) => team.clubName === row.team)?.entryReason && (
+                          <div className="mt-0.5 text-[8px] font-black uppercase text-slate-500">
+                            {reasonLabel(currentSeasonTransition.teams.find((team) => team.clubName === row.team)?.entryReason)}
+                          </div>
+                        )}
                       </div>
                       <div className="col-span-1 text-center text-[11px] text-green-400 font-bold">{row.w}</div>
                       <div className="col-span-1 text-center text-[11px] text-slate-400 font-bold">{row.d}</div>
