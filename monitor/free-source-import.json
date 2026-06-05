@@ -1,34 +1,51 @@
 {
-  "generatedAt": "2026-06-05T06:57:44.543Z",
-  "limit": 80,
+  "generatedAt": "2026-06-05T08:29:42.363Z",
+  "limit": 120,
   "footballData": {
-    "matches": 80,
-    "odds": 320,
-    "stats": 80,
-    "errors": []
-  },
-  "openFootball": {
-    "matches": 80,
-    "clubs": 160,
+    "matches": 5219,
+    "odds": 19571,
+    "stats": 5218,
     "errors": [
       {
-        "source": "openfootball",
-        "url": "https://raw.githubusercontent.com/openfootball/football.json/master/2025-26/eng.1.json",
-        "error": "404 Not Found"
+        "source": "football-data",
+        "url": "https://www.football-data.co.uk/mmz4281/2526/N2.csv",
+        "error": "300 Multiple Choices"
       },
       {
-        "source": "openfootball",
-        "url": "https://raw.githubusercontent.com/openfootball/football.json/master/2025-26/eng.2.json",
-        "error": "404 Not Found"
+        "source": "football-data",
+        "url": "https://www.football-data.co.uk/mmz4281/2425/N2.csv",
+        "error": "300 Multiple Choices"
       }
     ]
+  },
+  "openFootball": {
+    "matches": 120,
+    "clubs": 240,
+    "unavailable": [
+      {
+        "url": "https://raw.githubusercontent.com/openfootball/football.json/master/2025-26/eng.1.json",
+        "reason": "not_published"
+      },
+      {
+        "url": "https://raw.githubusercontent.com/openfootball/football.json/master/2025-26/eng.2.json",
+        "reason": "not_published"
+      }
+    ],
+    "unavailableCount": 2,
+    "errors": []
   },
   "statsBomb": {
     "records": 80,
     "errors": []
   },
+  "statsBombEvents": {
+    "matches": 18,
+    "teams": 36,
+    "events": 63877,
+    "errors": []
+  },
   "openMeteoStoredWeather": {
-    "matches": 0,
+    "matches": 120,
     "errors": []
   }
 }

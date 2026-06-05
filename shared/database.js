@@ -475,10 +475,33 @@ export async function readDatabaseDay(dateKey, options = {}) {
   const limit = Math.min(Math.max(Number(options.limit || 500), 1), 2000);
   const matches = await sql.query(
     `
-      select raw_payload
-      from matches
-      where date_key = $1
-      order by kickoff_at nulls last, home_team_name, away_team_name
+      select
+        m.match_id,
+        m.raw_payload,
+        m.weather_payload,
+        m.source_coverage,
+        ms.*,
+        (
+          select jsonb_agg(to_jsonb(tms) order by tms.side)
+          from team_match_stats tms
+          where tms.match_id = m.match_id
+        ) as team_match_stats_payload,
+        (
+          select jsonb_build_object(
+            'providers', jsonb_agg(distinct hos.provider),
+            'bookmakers', jsonb_agg(distinct hos.bookmaker),
+            'samples', count(*),
+            'avgHome', avg(hos.home),
+            'avgDraw', avg(hos.draw),
+            'avgAway', avg(hos.away)
+          )
+          from historical_odds_snapshots hos
+          where hos.match_id = m.match_id
+        ) as historical_odds_payload
+      from matches m
+      left join match_stats ms on ms.match_id = m.match_id
+      where m.date_key = $1
+      order by m.kickoff_at nulls last, m.home_team_name, m.away_team_name
       limit $2
     `,
     [dateKey, limit]
@@ -498,7 +521,39 @@ export async function readDatabaseDay(dateKey, options = {}) {
   return {
     ok: true,
     source: "postgres",
-    matches: matches.map((row) => row.raw_payload).filter(Boolean),
+    matches: matches.map((row) => {
+      if (!row.raw_payload) return null;
+      const matchStats = {
+        halftimeHomeGoals: row.halftime_home_goals,
+        halftimeAwayGoals: row.halftime_away_goals,
+        homeXg: row.home_xg,
+        awayXg: row.away_xg,
+        homeShots: row.home_shots,
+        awayShots: row.away_shots,
+        homeShotsOnTarget: row.home_shots_on_target,
+        awayShotsOnTarget: row.away_shots_on_target,
+        homeCorners: row.home_corners,
+        awayCorners: row.away_corners,
+        statsSource: row.stats_source,
+      };
+      return {
+        ...row.raw_payload,
+        weather: row.raw_payload.weather || row.weather_payload || undefined,
+        freeSourceCoverage: row.raw_payload.freeSourceCoverage || row.source_coverage || undefined,
+        sourceCoverage: row.raw_payload.sourceCoverage || row.source_coverage || undefined,
+        dbFeatureContext: {
+          matchStats,
+          teamMatchStats: row.team_match_stats_payload || [],
+          historicalOdds: row.historical_odds_payload || null,
+          featureSources: [
+            row.stats_source ? "match_stats" : null,
+            row.team_match_stats_payload?.length ? "team_match_stats" : null,
+            row.historical_odds_payload?.samples ? "historical_odds_snapshots" : null,
+            row.weather_payload && Object.keys(row.weather_payload).length ? "weather_payload" : null,
+          ].filter(Boolean),
+        },
+      };
+    }).filter(Boolean),
     predictions: predictions.map((row) => row.prediction_payload).filter(Boolean),
   };
 }

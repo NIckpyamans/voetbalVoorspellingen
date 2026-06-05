@@ -33,6 +33,20 @@ export interface FreeSourceCoverage {
   }>;
 }
 
+export interface DatabaseFeatureContext {
+  matchStats?: Record<string, number | string | null | undefined>;
+  teamMatchStats?: Array<Record<string, unknown>>;
+  historicalOdds?: {
+    providers?: string[];
+    bookmakers?: string[];
+    samples?: number;
+    avgHome?: number;
+    avgDraw?: number;
+    avgAway?: number;
+  } | null;
+  featureSources?: string[];
+}
+
 export interface Match {
   // ========================================
   // BASIS WEDSTRIJD INFORMATIE
@@ -66,6 +80,7 @@ export interface Match {
   liveUpdatedAt?: number;
   freeSourceCoverage?: FreeSourceCoverage;
   sourceCoverage?: FreeSourceCoverage;
+  dbFeatureContext?: DatabaseFeatureContext;
   
   // ========================================
   // VORM & RANKINGS

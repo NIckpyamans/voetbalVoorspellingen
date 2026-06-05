@@ -45,6 +45,7 @@ function buildValueFlags(prediction: any) {
 
 function enrichPrediction(prediction: any, matchMap: Record<string, any>, store: any) {
   const match = matchMap[prediction.matchId] || null;
+  const dbFeatureContext = prediction.dbFeatureContext || match?.dbFeatureContext || null;
   return {
     ...prediction,
     derivedOdds: buildDerivedOdds(prediction),
@@ -64,13 +65,25 @@ function enrichPrediction(prediction: any, matchMap: Record<string, any>, store:
       prediction.homeClubElo != null ? prediction.homeClubElo : match?.homeClubElo ?? null,
     awayClubElo:
       prediction.awayClubElo != null ? prediction.awayClubElo : match?.awayClubElo ?? null,
-    modelEdges: prediction.modelEdges || match?.modelEdges || null,
+    modelEdges: {
+      ...(match?.modelEdges || {}),
+      ...(prediction.modelEdges || {}),
+      databaseFeatures: dbFeatureContext
+        ? {
+            sources: dbFeatureContext.featureSources || [],
+            hasMatchStats: Boolean(dbFeatureContext.matchStats?.statsSource),
+            hasTeamMatchStats: Boolean(dbFeatureContext.teamMatchStats?.length),
+            historicalOddsSamples: Number(dbFeatureContext.historicalOdds?.samples || 0),
+          }
+        : null,
+    },
     homeTeamProfile: prediction.homeTeamProfile || match?.homeTeamProfile || null,
     awayTeamProfile: prediction.awayTeamProfile || match?.awayTeamProfile || null,
     featureVector: prediction.featureVector || match?.featureVector || null,
     ensembleMeta: prediction.ensembleMeta || match?.ensembleMeta || null,
     learningSummary: prediction.learningSummary || match?.learningSummary || null,
     marketCalibration: prediction.marketCalibration || match?.marketCalibration || null,
+    dbFeatureContext,
     review: prediction.review || match?.review || store.postMatchReviews?.[prediction.matchId] || null,
     match,
   };

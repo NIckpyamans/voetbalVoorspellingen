@@ -7,6 +7,12 @@ import { getSql, loadLocalEnv } from "../shared/database.js";
 
 const ROOT = process.cwd();
 const LIMIT = Math.max(1, Number(process.env.FREE_SOURCE_IMPORT_LIMIT || 120));
+const FOOTBALL_DATA_FULL_SEASONS =
+  process.argv.includes("--full") ||
+  ["1", "true", "yes"].includes(String(process.env.FOOTBALL_DATA_FULL_SEASONS || "").toLowerCase());
+const FOOTBALL_DATA_LIMIT = FOOTBALL_DATA_FULL_SEASONS ? Number.POSITIVE_INFINITY : LIMIT;
+const WEATHER_LIMIT = Math.max(1, Number(process.env.FREE_SOURCE_WEATHER_LIMIT || 120));
+const STATSBOMB_EVENT_LIMIT = Math.max(1, Number(process.env.STATSBOMB_EVENT_LIMIT || 18));
 const MANIFEST_PATH = path.join(ROOT, "monitor", "free-source-import.json");
 
 const FOOTBALL_DATA_LEAGUES = [
@@ -29,6 +35,31 @@ const OPENFOOTBALL_COMPETITIONS = [
   { country: "Italy", league: "Italy - Serie A", code: "it.1", level: 1 },
 ];
 
+const OPENFOOTBALL_SEASON_TAGS = ["2025-26", "2025-2026", "2024-25", "2024-2025", "2023-24", "2023-2024", "2022-23", "2022-2023", "2021-22", "2021-2022"];
+
+const KNOWN_VENUES = {
+  "arsenal": { name: "Emirates Stadium", city: "London", lat: 51.555, lon: -0.1086 },
+  "aston villa": { name: "Villa Park", city: "Birmingham", lat: 52.5092, lon: -1.8848 },
+  "athletic club": { name: "San Mames", city: "Bilbao", lat: 43.2642, lon: -2.9494 },
+  "athletic bilbao": { name: "San Mames", city: "Bilbao", lat: 43.2642, lon: -2.9494 },
+  "barcelona": { name: "Camp Nou", city: "Barcelona", lat: 41.3809, lon: 2.1228 },
+  "bayern munich": { name: "Allianz Arena", city: "Munich", lat: 48.2188, lon: 11.6247 },
+  "borussia dortmund": { name: "Signal Iduna Park", city: "Dortmund", lat: 51.4926, lon: 7.4519 },
+  "chelsea": { name: "Stamford Bridge", city: "London", lat: 51.4816, lon: -0.191 },
+  "crystal palace": { name: "Selhurst Park", city: "London", lat: 51.3983, lon: -0.0855 },
+  "freiburg": { name: "Europa-Park Stadion", city: "Freiburg", lat: 48.0217, lon: 7.8303 },
+  "inter": { name: "San Siro", city: "Milan", lat: 45.4781, lon: 9.124 },
+  "juventus": { name: "Allianz Stadium", city: "Turin", lat: 45.1096, lon: 7.6413 },
+  "liverpool": { name: "Anfield", city: "Liverpool", lat: 53.4308, lon: -2.9608 },
+  "manchester city": { name: "Etihad Stadium", city: "Manchester", lat: 53.4831, lon: -2.2004 },
+  "manchester united": { name: "Old Trafford", city: "Manchester", lat: 53.4631, lon: -2.2913 },
+  "milan": { name: "San Siro", city: "Milan", lat: 45.4781, lon: 9.124 },
+  "paris saint-germain": { name: "Parc des Princes", city: "Paris", lat: 48.8414, lon: 2.253 },
+  "psg": { name: "Parc des Princes", city: "Paris", lat: 48.8414, lon: 2.253 },
+  "real madrid": { name: "Santiago Bernabeu", city: "Madrid", lat: 40.4531, lon: -3.6883 },
+  "tottenham": { name: "Tottenham Hotspur Stadium", city: "London", lat: 51.6043, lon: -0.0664 },
+};
+
 function digest(value) {
   return crypto.createHash("sha1").update(String(value || "")).digest("hex").slice(0, 20);
 }
@@ -41,6 +72,15 @@ function slug(value) {
     .trim()
     .replace(/[\s_]+/g, "-")
     .slice(0, 80);
+}
+
+function canonicalTeamName(value) {
+  return String(value || "")
+    .toLowerCase()
+    .replace(/\b(fc|cf|afc|sc|club)\b/g, " ")
+    .replace(/[^a-z0-9-]+/g, " ")
+    .trim()
+    .replace(/\s+/g, " ");
 }
 
 function currentSeasonFolders() {
@@ -111,6 +151,40 @@ async function fetchText(url) {
   return response.text();
 }
 
+async function fetchJson(url) {
+  return JSON.parse(await fetchText(url));
+}
+
+function weatherCodeLabel(code) {
+  const value = Number(code);
+  if ([0, 1].includes(value)) return "helder";
+  if ([2, 3].includes(value)) return "bewolkt";
+  if ([45, 48].includes(value)) return "mist";
+  if ([51, 53, 55, 56, 57, 61, 63, 65, 66, 67, 80, 81, 82].includes(value)) return "regen";
+  if ([71, 73, 75, 77, 85, 86].includes(value)) return "sneeuw";
+  if ([95, 96, 99].includes(value)) return "onweer";
+  return "onbekend";
+}
+
+async function fetchOpenMeteoWeather(lat, lon, dateKey) {
+  const url = `https://archive-api.open-meteo.com/v1/archive?latitude=${lat}&longitude=${lon}&start_date=${dateKey}&end_date=${dateKey}&hourly=temperature_2m,precipitation,weather_code,wind_speed_10m&timezone=UTC`;
+  const data = await fetchJson(url);
+  const hours = data?.hourly?.time || [];
+  const index = Math.min(Math.max(hours.findIndex((time) => String(time).includes("15:00")), 0), Math.max(hours.length - 1, 0));
+  return {
+    source: "Open-Meteo",
+    latitude: lat,
+    longitude: lon,
+    temperature: numeric(data?.hourly?.temperature_2m?.[index]),
+    precipitation: numeric(data?.hourly?.precipitation?.[index]),
+    windSpeed: numeric(data?.hourly?.wind_speed_10m?.[index]),
+    weatherCode: numeric(data?.hourly?.weather_code?.[index]),
+    conditions: weatherCodeLabel(data?.hourly?.weather_code?.[index]),
+    date: dateKey,
+    capturedAt: new Date().toISOString(),
+  };
+}
+
 async function upsertSourceRecord(sql, id, provider, sourceUrl, entityType, entityKey, payload, trustScore = 0.75) {
   await sql.query(
     `
@@ -171,19 +245,58 @@ async function upsertCompetition(sql, source, item, seasonLabel) {
 
 async function upsertClub(sql, countryId, countryName, name, provider, providerId = null) {
   const clubId = `${provider}-club-${slug(name)}`;
+  const knownVenue = KNOWN_VENUES[canonicalTeamName(name)] || null;
+  const venueId = knownVenue ? `venue-${slug(knownVenue.name)}-${slug(knownVenue.city)}` : null;
+  if (knownVenue) {
+    await sql.query(
+      `
+        insert into venues (venue_id, name, city, country_id, latitude, longitude, provider_ids)
+        values ($1, $2, $3, $4, $5, $6, $7::jsonb)
+        on conflict (venue_id) do update set
+          name = excluded.name,
+          city = excluded.city,
+          country_id = excluded.country_id,
+          latitude = excluded.latitude,
+          longitude = excluded.longitude,
+          provider_ids = excluded.provider_ids,
+          updated_at = now()
+      `,
+      [venueId, knownVenue.name, knownVenue.city, countryId, knownVenue.lat, knownVenue.lon, JSON.stringify({ curated: true, team: name })]
+    );
+  }
   await sql.query(
     `
-      insert into clubs (club_id, name, country_id, country_name, provider_ids)
-      values ($1, $2, $3, $4, $5::jsonb)
-      on conflict (club_id) do update set name = excluded.name, country_id = excluded.country_id, country_name = excluded.country_name, provider_ids = excluded.provider_ids, updated_at = now()
+      insert into clubs (club_id, name, country_id, country_name, stadium, venue_id, provider_ids)
+      values ($1, $2, $3, $4, $5, $6, $7::jsonb)
+      on conflict (club_id) do update set
+        name = excluded.name,
+        country_id = excluded.country_id,
+        country_name = excluded.country_name,
+        stadium = coalesce(excluded.stadium, clubs.stadium),
+        venue_id = coalesce(excluded.venue_id, clubs.venue_id),
+        provider_ids = excluded.provider_ids,
+        updated_at = now()
     `,
-    [clubId, name, countryId, countryName, JSON.stringify({ [provider]: providerId || name })]
+    [clubId, name, countryId, countryName, knownVenue?.name || null, venueId, JSON.stringify({ [provider]: providerId || name })]
   );
   await sql.query(
     `insert into club_aliases (club_id, alias, normalized_alias, source) values ($1, $2, $3, $4) on conflict (club_id, normalized_alias) do nothing`,
     [clubId, name, slug(name), provider]
   );
-  return clubId;
+  return { clubId, venueId };
+}
+
+async function footballDataAlreadyImported(sql, matchId) {
+  if (!FOOTBALL_DATA_FULL_SEASONS) return false;
+  const [row] = await sql.query(
+    `
+      select
+        exists(select 1 from match_stats where match_id = $1) as has_stats,
+        (select count(*)::int from historical_odds_snapshots where match_id = $1) as odds_count
+    `,
+    [matchId]
+  );
+  return Boolean(row?.has_stats && Number(row?.odds_count || 0) >= 1);
 }
 
 async function importFootballData(sql) {
@@ -194,19 +307,22 @@ async function importFootballData(sql) {
   for (const folder of currentSeasonFolders()) {
     const seasonLabel = seasonLabelFromFolder(folder);
     for (const item of FOOTBALL_DATA_LEAGUES) {
-      if (matches >= LIMIT) break;
+      if (matches >= FOOTBALL_DATA_LIMIT) break;
       const url = `https://www.football-data.co.uk/mmz4281/${folder}/${item.code}.csv`;
       try {
         const rows = parseCsv(await fetchText(url)).filter((row) => row.Date && row.HomeTeam && row.AwayTeam);
         const { countryId, competitionId, seasonId } = await upsertCompetition(sql, "football-data", item, seasonLabel);
         await upsertSourceRecord(sql, `src_fd_${folder}_${item.code}`, "Football-Data.co.uk", url, "competition_season_csv", `${item.code}:${folder}`, { rows: rows.length, seasonLabel });
-        for (const row of rows.slice(0, Math.max(0, LIMIT - matches))) {
+        for (const row of rows.slice(0, Math.max(0, FOOTBALL_DATA_LIMIT - matches))) {
           const dateKey = parseFootballDataDate(row.Date);
           if (!dateKey) continue;
-          const homeClubId = await upsertClub(sql, countryId, item.country, row.HomeTeam, "football-data");
-          const awayClubId = await upsertClub(sql, countryId, item.country, row.AwayTeam, "football-data");
+          const homeClub = await upsertClub(sql, countryId, item.country, row.HomeTeam, "football-data");
+          const awayClub = await upsertClub(sql, countryId, item.country, row.AwayTeam, "football-data");
+          const homeClubId = homeClub.clubId;
+          const awayClubId = awayClub.clubId;
           const matchId = `fd-${item.code}-${dateKey}-${digest(`${row.HomeTeam}|${row.AwayTeam}`)}`;
           const sourceRecordId = `src_fd_match_${digest(`${matchId}|${row.Date}`)}`;
+          if (await footballDataAlreadyImported(sql, matchId)) continue;
           const finalHome = numeric(row.FTHG);
           const finalAway = numeric(row.FTAG);
           await upsertSourceRecord(sql, sourceRecordId, "Football-Data.co.uk", url, "match_row", matchId, row, 0.82);
@@ -214,10 +330,10 @@ async function importFootballData(sql) {
             `
               insert into matches (
                 match_id, source_match_id, data_source, competition_id, season_id, league, season, kickoff_at,
-                home_club_id, away_club_id, home_team_id, away_team_id, home_team_name, away_team_name,
+                home_club_id, away_club_id, venue_id, home_team_id, away_team_id, home_team_name, away_team_name,
                 status, status_normalized, date_key, raw_payload, source_coverage
               )
-              values ($1, $2, 'football-data.co.uk', $3, $4, $5, $6, $7, $8, $9, $8, $9, $10, $11, $12, $13, $14, $15::jsonb, $16::jsonb)
+              values ($1, $2, 'football-data.co.uk', $3, $4, $5, $6, $7, $8, $9, $10, $8, $9, $11, $12, $13, $14, $15, $16::jsonb, $17::jsonb)
               on conflict (match_id) do update set
                 competition_id = excluded.competition_id,
                 season_id = excluded.season_id,
@@ -226,6 +342,7 @@ async function importFootballData(sql) {
                 kickoff_at = excluded.kickoff_at,
                 home_club_id = excluded.home_club_id,
                 away_club_id = excluded.away_club_id,
+                venue_id = excluded.venue_id,
                 status = excluded.status,
                 status_normalized = excluded.status_normalized,
                 date_key = excluded.date_key,
@@ -243,6 +360,7 @@ async function importFootballData(sql) {
               `${dateKey}T12:00:00.000Z`,
               homeClubId,
               awayClubId,
+              homeClub.venueId,
               row.HomeTeam,
               row.AwayTeam,
               finalHome !== null && finalAway !== null ? "FT" : "NS",
@@ -384,7 +502,8 @@ async function importOpenFootball(sql) {
   let matches = 0;
   let clubs = 0;
   const errors = [];
-  for (const seasonTag of ["2025-26", "2024-25", "2023-24", "2022-23", "2021-22"]) {
+  const unavailable = [];
+  for (const seasonTag of OPENFOOTBALL_SEASON_TAGS) {
     for (const item of OPENFOOTBALL_COMPETITIONS) {
       if (matches >= LIMIT) break;
       const url = `https://raw.githubusercontent.com/openfootball/football.json/master/${seasonTag}/${item.code}.json`;
@@ -399,8 +518,10 @@ async function importOpenFootball(sql) {
         for (const game of games) {
             if (matches >= LIMIT) break;
             if (!game.team1 || !game.team2 || !game.date) continue;
-            const homeClubId = await upsertClub(sql, countryId, item.country, game.team1, "openfootball");
-            const awayClubId = await upsertClub(sql, countryId, item.country, game.team2, "openfootball");
+            const homeClub = await upsertClub(sql, countryId, item.country, game.team1, "openfootball");
+            const awayClub = await upsertClub(sql, countryId, item.country, game.team2, "openfootball");
+            const homeClubId = homeClub.clubId;
+            const awayClubId = awayClub.clubId;
             clubs += 2;
             const matchId = `of-${item.code}-${game.date}-${digest(`${game.team1}|${game.team2}`)}`;
             const score = Array.isArray(game.score?.ft) ? game.score.ft : game.score;
@@ -410,10 +531,10 @@ async function importOpenFootball(sql) {
               `
                 insert into matches (
                   match_id, source_match_id, data_source, competition_id, season_id, league, season,
-                  kickoff_at, home_club_id, away_club_id, home_team_id, away_team_id, home_team_name, away_team_name,
+                  kickoff_at, home_club_id, away_club_id, venue_id, home_team_id, away_team_id, home_team_name, away_team_name,
                   status, status_normalized, date_key, raw_payload, source_coverage
                 )
-                values ($1,$2,'OpenFootball',$3,$4,$5,$6,$7,$8,$9,$8,$9,$10,$11,$12,$13,$14,$15::jsonb,$16::jsonb)
+                values ($1,$2,'OpenFootball',$3,$4,$5,$6,$7,$8,$9,$10,$8,$9,$11,$12,$13,$14,$15,$16::jsonb,$17::jsonb)
                 on conflict (match_id) do update set
                   competition_id = excluded.competition_id,
                   season_id = excluded.season_id,
@@ -422,6 +543,7 @@ async function importOpenFootball(sql) {
                   kickoff_at = excluded.kickoff_at,
                   home_club_id = excluded.home_club_id,
                   away_club_id = excluded.away_club_id,
+                  venue_id = excluded.venue_id,
                   status = excluded.status,
                   status_normalized = excluded.status_normalized,
                   raw_payload = excluded.raw_payload,
@@ -438,6 +560,7 @@ async function importOpenFootball(sql) {
                 `${game.date}T12:00:00.000Z`,
                 homeClubId,
                 awayClubId,
+                homeClub.venueId,
                 game.team1,
                 game.team2,
                 finalHome !== null && finalAway !== null ? "FT" : "NS",
@@ -467,11 +590,12 @@ async function importOpenFootball(sql) {
             matches += 1;
         }
       } catch (error) {
-        errors.push({ source: "openfootball", url, error: error.message });
+        if (String(error.message || "").includes("404")) unavailable.push({ url, reason: "not_published" });
+        else errors.push({ source: "openfootball", url, error: error.message });
       }
     }
   }
-  return { matches, clubs, errors };
+  return { matches, clubs, unavailable: unavailable.slice(0, 12), unavailableCount: unavailable.length, errors };
 }
 
 async function importStatsBombCatalog(sql) {
@@ -491,14 +615,121 @@ async function importStatsBombCatalog(sql) {
   }
 }
 
+async function importStatsBombEvents(sql) {
+  const baseUrl = "https://raw.githubusercontent.com/statsbomb/open-data/master/data";
+  const errors = [];
+  let events = 0;
+  let matches = 0;
+  let teams = 0;
+  try {
+    const competitions = await fetchJson(`${baseUrl}/competitions.json`);
+    const candidates = competitions
+      .filter((item) => item.competition_id != null && item.season_id != null)
+      .sort((a, b) => String(b.season_name || "").localeCompare(String(a.season_name || "")))
+      .slice(0, 8);
+    for (const competition of candidates) {
+      if (matches >= STATSBOMB_EVENT_LIMIT) break;
+      const matchesUrl = `${baseUrl}/matches/${competition.competition_id}/${competition.season_id}.json`;
+      let matchRows = [];
+      try {
+        matchRows = await fetchJson(matchesUrl);
+      } catch (error) {
+        errors.push({ source: "statsbomb-matches", url: matchesUrl, error: error.message });
+        continue;
+      }
+      const countryId = slug(competition.country_name || "international");
+      const seasonLabel = `${competition.competition_name || "StatsBomb"} ${competition.season_name || competition.season_id}`;
+      const comp = await upsertCompetition(sql, "statsbomb", {
+        country: competition.country_name || "International",
+        league: competition.competition_name || `StatsBomb ${competition.competition_id}`,
+        code: String(competition.competition_id),
+        level: 1,
+      }, seasonLabel);
+      for (const match of matchRows.slice(0, Math.max(0, STATSBOMB_EVENT_LIMIT - matches))) {
+        const eventsUrl = `${baseUrl}/events/${match.match_id}.json`;
+        try {
+          const eventRows = await fetchJson(eventsUrl);
+          const aggregate = new Map();
+          for (const event of eventRows) {
+            const teamName = event?.team?.name;
+            if (!teamName) continue;
+            const current = aggregate.get(teamName) || { shots: 0, xg: 0, passes: 0, pressures: 0, carries: 0 };
+            if (event.type?.name === "Shot") {
+              current.shots += 1;
+              current.xg += Number(event.shot?.statsbomb_xg || 0);
+            }
+            if (event.type?.name === "Pass") current.passes += 1;
+            if (event.type?.name === "Pressure") current.pressures += 1;
+            if (event.type?.name === "Carry") current.carries += 1;
+            aggregate.set(teamName, current);
+          }
+          const sourceRecordId = `src_statsbomb_events_${match.match_id}`;
+          await upsertSourceRecord(sql, sourceRecordId, "StatsBomb Open Data", eventsUrl, "match_events_xg_style", String(match.match_id), {
+            matchId: match.match_id,
+            competition,
+            match,
+            teamAggregates: Object.fromEntries(aggregate),
+            eventRows: eventRows.length,
+          }, 0.88);
+          for (const [teamName, stats] of aggregate.entries()) {
+            const club = await upsertClub(sql, countryId, competition.country_name || "International", teamName, "statsbomb", teamName);
+            await sql.query(
+              `
+                insert into team_season_stats (
+                  team_season_stats_id, season_id, club_id, matches_played, xg_for, source_record_id, style_profile
+                )
+                values ($1,$2,$3,1,$4,$5,$6::jsonb)
+                on conflict (team_season_stats_id) do update set
+                  xg_for = excluded.xg_for,
+                  source_record_id = excluded.source_record_id,
+                  style_profile = excluded.style_profile,
+                  updated_at = now()
+              `,
+              [
+                `tss_statsbomb_${digest(`${comp.seasonId}|${teamName}`)}`,
+                comp.seasonId,
+                club.clubId,
+                Number(stats.xg.toFixed(4)),
+                sourceRecordId,
+                JSON.stringify({
+                  provider: "StatsBomb Open Data",
+                  sampleMatchId: match.match_id,
+                  shots: stats.shots,
+                  xg: Number(stats.xg.toFixed(4)),
+                  passes: stats.passes,
+                  pressures: stats.pressures,
+                  carries: stats.carries,
+                  styleTags: [
+                    stats.passes >= 450 ? "possession-heavy" : "direct-or-transition",
+                    stats.pressures >= 140 ? "high-pressure" : "moderate-pressure",
+                    stats.shots >= 14 ? "shot-volume" : "selective-shooting",
+                  ],
+                }),
+              ]
+            );
+            teams += 1;
+          }
+          events += eventRows.length;
+          matches += 1;
+        } catch (error) {
+          errors.push({ source: "statsbomb-events", url: eventsUrl, error: error.message });
+        }
+      }
+    }
+  } catch (error) {
+    errors.push({ source: "statsbomb-events", error: error.message });
+  }
+  return { matches, teams, events, errors };
+}
+
 async function importStoredWeather(sql) {
   const dataPath = path.join(ROOT, "server_data.json");
-  if (!fs.existsSync(dataPath)) return { matches: 0, errors: [{ source: "open-meteo", error: "server_data.json missing" }] };
-  const store = JSON.parse(fs.readFileSync(dataPath, "utf8"));
+  const errors = [];
+  const store = fs.existsSync(dataPath) ? JSON.parse(fs.readFileSync(dataPath, "utf8")) : { matches: {} };
   let matches = 0;
   for (const dayMatches of Object.values(store.matches || {})) {
     for (const match of dayMatches || []) {
-      if (matches >= LIMIT) break;
+      if (matches >= WEATHER_LIMIT) break;
       if (!match?.id || !match?.weather) continue;
       const payload = { ...match.weather, source: match.weather.source || "Open-Meteo", matchId: match.id };
       await upsertSourceRecord(sql, `src_weather_${digest(match.id)}`, "Open-Meteo", "https://open-meteo.com/", "match_weather", String(match.id), payload, 0.74);
@@ -509,7 +740,48 @@ async function importStoredWeather(sql) {
       matches += 1;
     }
   }
-  return { matches, errors: [] };
+  const rows = await sql.query(
+    `
+      select m.match_id, m.date_key, m.kickoff_at, m.source_coverage, v.latitude, v.longitude, v.name as venue_name
+      from matches m
+      join venues v on v.venue_id = m.venue_id
+      where v.latitude is not null
+        and v.longitude is not null
+        and m.date_key is not null
+        and coalesce(m.weather_payload, '{}'::jsonb) = '{}'::jsonb
+      order by m.kickoff_at nulls last, m.date_key desc
+      limit $1
+    `,
+    [Math.max(0, WEATHER_LIMIT - matches)]
+  );
+  for (const row of rows) {
+    try {
+      const dateKey = String(row.date_key || row.kickoff_at || "").slice(0, 10);
+      if (!dateKey) continue;
+      const payload = await fetchOpenMeteoWeather(row.latitude, row.longitude, dateKey);
+      payload.venueName = row.venue_name;
+      payload.matchId = row.match_id;
+      const sourceRecordId = `src_weather_${digest(row.match_id)}`;
+      await upsertSourceRecord(sql, sourceRecordId, "Open-Meteo", "https://open-meteo.com/", "match_weather", String(row.match_id), payload, 0.78);
+      const coverage = row.source_coverage && typeof row.source_coverage === "object" ? row.source_coverage : {};
+      const entries = Array.isArray(coverage.entries) ? coverage.entries.filter((entry) => entry.key !== "weather") : [];
+      entries.push({ key: "weather", label: "Weer", available: true, source: "Open-Meteo" });
+      const nextCoverage = {
+        ...coverage,
+        entries,
+        sources: [...new Set([...(coverage.sources || []), "Open-Meteo"])],
+        percent: Math.max(Number(coverage.percent || 0), Math.round((entries.filter((entry) => entry.available).length / Math.max(entries.length, 1)) * 100)),
+      };
+      await sql.query(
+        `update matches set weather_payload = $2::jsonb, source_coverage = $3::jsonb, updated_at = now() where match_id = $1`,
+        [String(row.match_id), JSON.stringify(payload), JSON.stringify(nextCoverage)]
+      );
+      matches += 1;
+    } catch (error) {
+      errors.push({ source: "open-meteo", matchId: row.match_id, error: error.message });
+    }
+  }
+  return { matches, errors };
 }
 
 async function main() {
@@ -526,6 +798,7 @@ async function main() {
     footballData: await importFootballData(sql),
     openFootball: await importOpenFootball(sql),
     statsBomb: await importStatsBombCatalog(sql),
+    statsBombEvents: await importStatsBombEvents(sql),
     openMeteoStoredWeather: await importStoredWeather(sql),
   };
   fs.mkdirSync(path.dirname(MANIFEST_PATH), { recursive: true });
