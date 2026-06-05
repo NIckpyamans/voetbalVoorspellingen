@@ -19,6 +19,20 @@ export interface MonteCarloSimulation {
   scoreMatrix?: Record<string, number>;
 }
 
+export interface FreeSourceCoverage {
+  score?: number;
+  percent?: number;
+  available?: number;
+  total?: number;
+  sources?: string[];
+  entries?: Array<{
+    key: string;
+    label?: string;
+    available: boolean;
+    source?: string | null;
+  }>;
+}
+
 export interface Match {
   // ========================================
   // BASIS WEDSTRIJD INFORMATIE
@@ -50,6 +64,8 @@ export interface Match {
   period?: string;
   extraTime?: number;
   liveUpdatedAt?: number;
+  freeSourceCoverage?: FreeSourceCoverage;
+  sourceCoverage?: FreeSourceCoverage;
   
   // ========================================
   // VORM & RANKINGS

@@ -4,6 +4,19 @@ import { logClientWarning } from '../shared/clientLogger';
 
 const FAVORITES_KEY = 'footypredict_favorites_v1';
 
+function syncFavoritesToServer(favorites: string[], changedTeam?: { teamId: string; teamName: string }) {
+  try {
+    void fetch('/api/favorites', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ favorites, changedTeam }),
+      keepalive: true,
+    }).catch((error) => logClientWarning("favorites_sync_failed", { error }));
+  } catch (error) {
+    logClientWarning("favorites_sync_failed", { error });
+  }
+}
+
 export function getFavorites(): string[] {
   try {
     return JSON.parse(localStorage.getItem(FAVORITES_KEY) || '[]');
@@ -20,6 +33,7 @@ export function toggleFavorite(teamId: string, teamName: string): boolean {
   if (idx >= 0) { favs.splice(idx, 1); }
   else { favs.push(key); }
   localStorage.setItem(FAVORITES_KEY, JSON.stringify(favs));
+  syncFavoritesToServer(favs, { teamId, teamName });
   return idx < 0; // true = toegevoegd
 }
 
@@ -51,7 +65,7 @@ export const FavoriteButton: React.FC<FavoriteButtonProps> = ({ teamId, teamName
     <button onClick={toggle} title={label} aria-label={label}
       className={`w-5 h-5 flex items-center justify-center rounded transition text-[11px]
         ${active ? 'text-yellow-400 hover:text-yellow-300' : 'text-slate-600 hover:text-yellow-400'}`}>
-      {active ? '★' : '☆'}
+      {active ? '*' : '+'}
     </button>
   );
 };
@@ -83,7 +97,7 @@ export const FavoriteSection: React.FC<FavoriteSectionProps> = ({ matches, predi
   return (
     <section>
       <div className="flex items-center gap-2 mb-3">
-        <span className="text-yellow-400 text-sm">★</span>
+        <span className="text-yellow-400 text-sm">*</span>
         <span className="text-sm font-black uppercase">Mijn favoriete teams ({favMatches.length})</span>
       </div>
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
@@ -107,16 +121,17 @@ export const FavoriteManager: React.FC<FavoriteManagerProps> = ({ onClose }) => 
     const updated = favorites.filter(f => f !== key);
     localStorage.setItem(FAVORITES_KEY, JSON.stringify(updated));
     setFavorites(updated);
+    syncFavoritesToServer(updated);
   };
 
   return (
     <div className="bg-slate-900/95 border border-white/10 rounded-2xl p-4 shadow-2xl">
       <div className="flex items-center justify-between mb-3">
         <span className="text-sm font-black text-white">Favoriete teams</span>
-        <button onClick={onClose} className="text-slate-400 hover:text-white text-lg leading-none">×</button>
+        <button onClick={onClose} className="text-slate-400 hover:text-white text-lg leading-none">x</button>
       </div>
       {favorites.length === 0 ? (
-        <p className="text-[11px] text-slate-500">Nog geen favorieten. Klik op ☆ bij een team om het toe te voegen.</p>
+        <p className="text-[11px] text-slate-500">Nog geen favorieten. Klik op + bij een team om het toe te voegen.</p>
       ) : (
         <div className="space-y-1.5">
           {favorites.map(key => (

@@ -352,6 +352,9 @@ function ExpandableInsights({ match, prediction }: { match: any; prediction: any
   const competitionReliability = prediction.modelEdges?.leagueReliability || match.competitionReliability;
   const phaseReliability = prediction.modelEdges?.phaseReliability || match.phaseReliability;
   const refereeProfile = prediction.modelEdges?.refereeProfile || match.refereeProfile;
+  const freeSourceCoverage = (match as any).freeSourceCoverage || (match as any).sourceCoverage || prediction.freeSourceCoverage || null;
+  const freeSourceEntries = Array.isArray(freeSourceCoverage?.entries) ? freeSourceCoverage.entries : [];
+  const freeSourceNames = Array.isArray(freeSourceCoverage?.sources) ? freeSourceCoverage.sources.slice(0, 3).join(", ") : "";
   const bookmakerSignals = Array.isArray(marketCalibration?.bookmakerSignals) ? marketCalibration.bookmakerSignals.slice(0, 3) : [];
   const modelWarnings = Array.isArray(prediction.modelEdges?.modelWarnings) ? prediction.modelEdges.modelWarnings : [];
   const lowAgreement = agreement != null && agreement < 0.55;
@@ -584,6 +587,17 @@ function ExpandableInsights({ match, prediction }: { match: any; prediction: any
               <div>Marktsterkte: <span className="font-black text-white">{marketCalibration?.strength != null ? `${Math.round(marketCalibration.strength * 100)}%` : "-"}</span></div>
               <div>Competitie: <span className="font-black text-white">{competitionReliability?.reliabilityScore != null ? `${Math.round(competitionReliability.reliabilityScore * 100)}%` : "-"}</span></div>
               <div>Fase: <span className="font-black text-white">{phaseReliability?.reliabilityScore != null ? `${Math.round(phaseReliability.reliabilityScore * 100)}%` : "-"}</span></div>
+              <div>Free Source Coverage: <span className="font-black text-white">{freeSourceCoverage?.percent != null ? `${freeSourceCoverage.percent}%` : "-"}</span></div>
+              {freeSourceEntries.length > 0 && (
+                <div className="flex flex-wrap gap-1 pt-1">
+                  {freeSourceEntries.slice(0, 8).map((entry: any) => (
+                    <span key={entry.key || entry.label} className={`rounded px-1 py-0.5 border ${entry.available ? "border-emerald-500/25 bg-emerald-500/10 text-emerald-200" : "border-slate-600/30 bg-slate-800/50 text-slate-500"}`}>
+                      {entry.label || entry.key}
+                    </span>
+                  ))}
+                </div>
+              )}
+              {freeSourceNames && <div>Bronnen: <span className="font-black text-white">{freeSourceNames}</span></div>}
             </div>
           </div>
         </div>

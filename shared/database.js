@@ -89,6 +89,92 @@ function expectedScoreFromPrediction(prediction) {
   };
 }
 
+function hasNumber(value) {
+  return value !== null && value !== undefined && Number.isFinite(Number(value));
+}
+
+function uniqueTruthy(values) {
+  return [...new Set(values.filter(Boolean).map((value) => String(value)))];
+}
+
+export function buildMatchSourceCoverage(match = {}, prediction = null) {
+  const homeStats = match.homeSeasonStats || {};
+  const awayStats = match.awaySeasonStats || {};
+  const marketCalibration = prediction?.marketCalibration || match.marketCalibration || {};
+  const entries = [
+    {
+      key: "fixture",
+      label: "Fixture",
+      available: Boolean(match.id && match.homeTeamName && match.awayTeamName && (match.kickoff || match.date)),
+      source: match.dataSource || match.source || "worker-json",
+    },
+    {
+      key: "result",
+      label: "Eindstand",
+      available: Boolean(parseScore(match.score) || hasNumber(match.homeScore) || hasNumber(match.awayScore)),
+      source: match.resultSource || match.dataSource || null,
+    },
+    {
+      key: "h2h",
+      label: "Head-to-head",
+      available: Boolean(match.h2h?.played || match.h2h?.results?.length || match.h2hStatus === "filled"),
+      source: match.h2h?.agent?.sources?.[0] || match.h2h?.source || null,
+    },
+    {
+      key: "form",
+      label: "Vorm",
+      available: Boolean(match.homeForm || match.awayForm || homeStats.gamesPlayed || awayStats.gamesPlayed),
+      source: homeStats.source || awayStats.source || "worker-form",
+    },
+    {
+      key: "standings",
+      label: "Stand",
+      available: hasNumber(match.homePos) || hasNumber(match.awayPos),
+      source: match.standingsSource || homeStats.source || awayStats.source || null,
+    },
+    {
+      key: "weather",
+      label: "Weer",
+      available: Boolean(match.weather?.conditions || hasNumber(match.weather?.temperature)),
+      source: match.weather?.source || "Open-Meteo",
+    },
+    {
+      key: "xg_style",
+      label: "xG/stijl",
+      available:
+        hasNumber(homeStats.xG) ||
+        hasNumber(awayStats.xG) ||
+        hasNumber(homeStats.shotsFor) ||
+        hasNumber(awayStats.shotsFor) ||
+        Boolean(homeStats.externalSources?.length || awayStats.externalSources?.length),
+      source: uniqueTruthy([
+        ...(homeStats.externalSources || []),
+        ...(awayStats.externalSources || []),
+        homeStats.source,
+        awayStats.source,
+      ])[0] || null,
+    },
+    {
+      key: "odds",
+      label: "Odds/closing",
+      available:
+        Boolean(prediction?.oddsAtPrediction || prediction?.odds) ||
+        Number(marketCalibration.closingCoverage || 0) > 0,
+      source: marketCalibration.source || prediction?.oddsProviderStatus || null,
+    },
+  ];
+  const available = entries.filter((entry) => entry.available).length;
+  return {
+    score: entries.length ? available / entries.length : 0,
+    percent: entries.length ? Math.round((available / entries.length) * 100) : 0,
+    available,
+    total: entries.length,
+    entries,
+    sources: uniqueTruthy(entries.map((entry) => entry.source)),
+    generatedAt: new Date().toISOString(),
+  };
+}
+
 function indexMatches(store) {
   const matchById = new Map();
   for (const [dateKey, matches] of Object.entries(store?.matches || {})) {
@@ -102,14 +188,15 @@ function indexMatches(store) {
 async function upsertMatch(sql, match, fallbackDate = null) {
   if (!match?.id || !match?.homeTeamName || !match?.awayTeamName) return false;
   const dateKey = dateKeyFromMatch(match, fallbackDate);
+  const sourceCoverage = match.sourceCoverage || match.freeSourceCoverage || buildMatchSourceCoverage(match);
   await sql.query(
     `
       insert into matches (
         match_id, source_match_id, data_source, league, season, kickoff_at,
         home_team_id, away_team_id, home_team_name, away_team_name, team_identity,
-        status, status_normalized, date_key, raw_payload, updated_at
+        status, status_normalized, date_key, raw_payload, weather_payload, source_coverage, updated_at
       )
-      values ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11::jsonb, $12, $13, $14, $15::jsonb, now())
+      values ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11::jsonb, $12, $13, $14, $15::jsonb, $16::jsonb, $17::jsonb, now())
       on conflict (match_id) do update set
         source_match_id = excluded.source_match_id,
         data_source = excluded.data_source,
@@ -125,6 +212,8 @@ async function upsertMatch(sql, match, fallbackDate = null) {
         status_normalized = excluded.status_normalized,
         date_key = excluded.date_key,
         raw_payload = excluded.raw_payload,
+        weather_payload = excluded.weather_payload,
+        source_coverage = excluded.source_coverage,
         updated_at = now()
     `,
     [
@@ -142,7 +231,9 @@ async function upsertMatch(sql, match, fallbackDate = null) {
       match.status || null,
       statusNormalized(match),
       dateKey,
-      JSON.stringify(match),
+      JSON.stringify({ ...match, freeSourceCoverage: sourceCoverage }),
+      JSON.stringify(match.weather || {}),
+      JSON.stringify(sourceCoverage),
     ]
   );
 
@@ -163,6 +254,69 @@ async function upsertMatch(sql, match, fallbackDate = null) {
     );
   }
 
+  return true;
+}
+
+function indexSnapshotsByMatch(store) {
+  const byPredictionId = new Map();
+  const byMatchId = new Map();
+  for (const snapshot of Object.values(store?.predictionSnapshots || {})) {
+    if (!snapshot?.predictionId || !snapshot?.matchId) continue;
+    byPredictionId.set(String(snapshot.predictionId), snapshot);
+    const current = byMatchId.get(String(snapshot.matchId));
+    const currentTime = Date.parse(current?.generatedAt || "") || 0;
+    const nextTime = Date.parse(snapshot.generatedAt || "") || 0;
+    if (!current || nextTime >= currentTime) byMatchId.set(String(snapshot.matchId), snapshot);
+  }
+  return { byPredictionId, byMatchId };
+}
+
+async function upsertPredictionEvaluation(sql, matchId, review, snapshotIndexes) {
+  if (!matchId || !review) return false;
+  const directPredictionId = review.predictionId ? String(review.predictionId) : null;
+  const snapshot =
+    (directPredictionId && snapshotIndexes.byPredictionId.get(directPredictionId)) ||
+    snapshotIndexes.byMatchId.get(String(matchId));
+  const predictionId = directPredictionId || snapshot?.predictionId;
+  if (!predictionId) return false;
+
+  await sql.query(
+    `
+      insert into prediction_evaluations (
+        prediction_id, match_id, exact_hit, outcome_hit, probability_outcome_hit,
+        brier_score, log_loss, roi, roi_status, clv, clv_status, evaluation_source, evaluated_at
+      )
+      values ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13)
+      on conflict (prediction_id) do update set
+        match_id = excluded.match_id,
+        exact_hit = excluded.exact_hit,
+        outcome_hit = excluded.outcome_hit,
+        probability_outcome_hit = excluded.probability_outcome_hit,
+        brier_score = excluded.brier_score,
+        log_loss = excluded.log_loss,
+        roi = excluded.roi,
+        roi_status = excluded.roi_status,
+        clv = excluded.clv,
+        clv_status = excluded.clv_status,
+        evaluation_source = excluded.evaluation_source,
+        evaluated_at = excluded.evaluated_at
+    `,
+    [
+      String(predictionId),
+      String(matchId),
+      review.exactHit ?? null,
+      review.outcomeHit ?? null,
+      review.probabilityOutcomeHit ?? null,
+      review.brierScore ?? null,
+      review.logLoss ?? null,
+      review.roi ?? null,
+      review.roiStatus || null,
+      review.clv ?? null,
+      review.clvStatus || null,
+      review.evaluationSource || "json-post-match-review",
+      asIso(review.evaluatedAt || review.createdAt || review.reviewedAt) || new Date().toISOString(),
+    ]
+  );
   return true;
 }
 
@@ -287,9 +441,11 @@ export async function syncStoreToDatabase(store, options = {}) {
   if (!sql) return { skipped: true, reason: "database_url_missing" };
 
   const matchById = indexMatches(store);
+  const snapshotIndexes = indexSnapshotsByMatch(store);
   const dateFilter = Array.isArray(options.dateKeys) && options.dateKeys.length ? new Set(options.dateKeys) : null;
   let matches = 0;
   let predictionSnapshots = 0;
+  let predictionEvaluations = 0;
 
   for (const [dateKey, dayMatches] of Object.entries(store?.matches || {})) {
     if (dateFilter && !dateFilter.has(dateKey)) continue;
@@ -303,7 +459,13 @@ export async function syncStoreToDatabase(store, options = {}) {
     if (await upsertPredictionSnapshot(sql, snapshot, matchById)) predictionSnapshots += 1;
   }
 
-  return { skipped: false, matches, predictionSnapshots };
+  for (const [matchId, review] of Object.entries(store?.postMatchReviews || {})) {
+    const match = matchById.get(String(matchId));
+    if (dateFilter && match?.date && !dateFilter.has(match.date)) continue;
+    if (await upsertPredictionEvaluation(sql, matchId, review, snapshotIndexes)) predictionEvaluations += 1;
+  }
+
+  return { skipped: false, matches, predictionSnapshots, predictionEvaluations };
 }
 
 export async function readDatabaseDay(dateKey, options = {}) {
@@ -348,9 +510,13 @@ export async function readDatabaseCounts() {
     select
       (select count(*)::int from matches) as matches,
       (select count(*)::int from prediction_snapshots) as prediction_snapshots,
+      (select count(*)::int from prediction_evaluations) as prediction_evaluations,
       (select count(*)::int from source_records) as source_records,
       (select count(*)::int from source_audit) as source_audit,
-      (select count(*)::int from odds_snapshots) as odds_snapshots
+      (select count(*)::int from odds_snapshots) as odds_snapshots,
+      (select count(*)::int from historical_odds_snapshots) as historical_odds_snapshots,
+      (select count(*)::int from match_stats) as match_stats,
+      (select count(*)::int from team_match_stats) as team_match_stats
   `);
   return { databaseConfigured: true, ...counts };
 }

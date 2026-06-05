@@ -334,6 +334,23 @@ create table if not exists odds_snapshots (
   created_at timestamptz not null default now()
 );
 
+create table if not exists historical_odds_snapshots (
+  historical_odds_snapshot_id text primary key,
+  match_id text not null references matches(match_id),
+  provider text not null,
+  bookmaker text,
+  market text not null default '1X2',
+  home numeric,
+  draw numeric,
+  away numeric,
+  closing_home numeric,
+  closing_draw numeric,
+  closing_away numeric,
+  captured_at timestamptz,
+  source_record_id text references source_records(source_record_id),
+  created_at timestamptz not null default now()
+);
+
 create table if not exists match_results (
   match_id text primary key references matches(match_id),
   final_home_goals integer,
@@ -393,6 +410,10 @@ create table if not exists calibration_profiles (
 
 alter table prediction_snapshots add column if not exists model_version_id text;
 alter table prediction_snapshots add column if not exists prediction_payload jsonb not null default '{}'::jsonb;
+alter table matches add column if not exists weather_payload jsonb not null default '{}'::jsonb;
+alter table matches add column if not exists source_coverage jsonb not null default '{}'::jsonb;
+alter table team_match_stats add column if not exists style_profile jsonb not null default '{}'::jsonb;
+alter table team_season_stats add column if not exists style_profile jsonb not null default '{}'::jsonb;
 
 create table if not exists source_audit (
   source_audit_id bigserial primary key,
@@ -426,5 +447,6 @@ create index if not exists idx_prediction_snapshots_model_version_id on predicti
 create index if not exists idx_prediction_evaluations_evaluated on prediction_evaluations(evaluated_at desc);
 create index if not exists idx_prediction_evaluations_match on prediction_evaluations(match_id);
 create index if not exists idx_odds_snapshots_prediction on odds_snapshots(prediction_id);
+create index if not exists idx_historical_odds_match on historical_odds_snapshots(match_id);
 create index if not exists idx_calibration_profiles_model_competition on calibration_profiles(model_version_id, competition_id);
 create index if not exists idx_source_audit_prediction_field on source_audit(prediction_id, field_name);

@@ -6,7 +6,7 @@ import { buildWorldCup2026DayData, buildWorldCup2026FriendlyDayData, getWorldCup
 import { createLogger, getErrorDetails } from "../shared/logger.js";
 import { setCorsHeaders } from "../shared/cors.js";
 import { mergeDuplicateServedMatches, normalizeServedMatch } from "../shared/matchNormalization.js";
-import { databaseConfigured, readDatabaseCounts, readDatabaseDay } from "../shared/database.js";
+import { buildMatchSourceCoverage, databaseConfigured, readDatabaseCounts, readDatabaseDay } from "../shared/database.js";
 
 const logger = createLogger("api.matches");
 
@@ -115,11 +115,15 @@ async function buildDatabaseIntegration(dataContext: any) {
 
 function attachReview(match: any, reviewsOrStore: any) {
   const reviews = reviewsOrStore?.postMatchReviews || reviewsOrStore?.reviews || reviewsOrStore || {};
+  const review = reviews?.[match.id] || null;
+  const sourceCoverage = match.freeSourceCoverage || match.sourceCoverage || buildMatchSourceCoverage(match, match.prediction || null);
   return {
     ...match,
-    review: reviews?.[match.id] || null,
+    review,
     learningSummary: match.learningSummary || null,
     marketCalibration: match.marketCalibration || null,
+    freeSourceCoverage: sourceCoverage,
+    sourceCoverage,
   };
 }
 
