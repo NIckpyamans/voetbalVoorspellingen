@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-06-05T11:33:20.838Z",
+  "generatedAt": "2026-06-05T12:50:49.321Z",
   "modelTarget": "1X2",
   "totalRows": 550,
   "snapshotBackedRows": 76,
@@ -25,6 +25,38 @@
     "closingLineRows": 0,
     "recommendation": "Laat scheduled learning doorlopen tot minimaal 150 snapshot-backed rows."
   },
+  "modelQualityByDbFeatureSourceCount": [
+    {
+      "dbFeatureSourceCount": "0",
+      "rows": 521,
+      "snapshotBackedRows": 76,
+      "evaluableRows": 521,
+      "outcomeHits": 213,
+      "labelDistribution": {
+        "H": 207,
+        "D": 184,
+        "A": 130
+      },
+      "snapshotBackedPct": 0.146,
+      "outcomeHitRate": 0.409,
+      "note": "Hit rate is alleen berekend voor rows met opgeslagen predictedOutcome."
+    },
+    {
+      "dbFeatureSourceCount": "1",
+      "rows": 29,
+      "snapshotBackedRows": 0,
+      "evaluableRows": 29,
+      "outcomeHits": 7,
+      "labelDistribution": {
+        "H": 13,
+        "D": 7,
+        "A": 9
+      },
+      "snapshotBackedPct": 0,
+      "outcomeHitRate": 0.241,
+      "note": "Hit rate is alleen berekend voor rows met opgeslagen predictedOutcome."
+    }
+  ],
   "featureNames": [
     "home_avg_scored",
     "away_avg_scored",
@@ -108,9 +140,10 @@
       "league": "Italy - Serie A",
       "label": "A",
       "predictionId": null,
-      "featureSource": "review_prediction_fallback",
+      "featureSource": "db_context_fallback",
       "snapshotBacked": false,
       "leakageRisk": "possible_post_match_overwrite",
+      "predictedOutcome": "D",
       "features": {
         "home_avg_scored": 0,
         "away_avg_scored": 0,
@@ -180,11 +213,11 @@
         "db_weather_temperature": 0,
         "db_weather_wind_speed": 0,
         "db_weather_precipitation": 0,
-        "db_h2h_edge_played": 0,
+        "db_h2h_edge_played": 2,
         "db_h2h_edge_balance": 0,
         "db_style_profile_available": 0,
-        "db_alias_matched": 0,
-        "db_feature_source_count": 0
+        "db_alias_matched": 1,
+        "db_feature_source_count": 1
       },
       "trainingWeight": 0.25,
       "trainingGroup": "fallback_review",
@@ -196,9 +229,10 @@
       "league": "England - Premier League",
       "label": "H",
       "predictionId": null,
-      "featureSource": "review_prediction_fallback",
+      "featureSource": "db_context_fallback",
       "snapshotBacked": false,
       "leakageRisk": "possible_post_match_overwrite",
+      "predictedOutcome": "D",
       "features": {
         "home_avg_scored": 0,
         "away_avg_scored": 0,
@@ -271,7 +305,7 @@
         "db_h2h_edge_played": 0,
         "db_h2h_edge_balance": 0,
         "db_style_profile_available": 0,
-        "db_alias_matched": 0,
+        "db_alias_matched": 1,
         "db_feature_source_count": 0
       },
       "trainingWeight": 0.25,
@@ -287,6 +321,7 @@
       "featureSource": "review_prediction_fallback",
       "snapshotBacked": false,
       "leakageRisk": "possible_post_match_overwrite",
+      "predictedOutcome": "D",
       "features": {
         "home_avg_scored": 0,
         "away_avg_scored": 0,
@@ -375,6 +410,7 @@
       "featureSource": "review_prediction_fallback",
       "snapshotBacked": false,
       "leakageRisk": "possible_post_match_overwrite",
+      "predictedOutcome": "D",
       "features": {
         "home_avg_scored": 0,
         "away_avg_scored": 0,
@@ -460,9 +496,10 @@
       "league": "Spain - LaLiga",
       "label": "A",
       "predictionId": null,
-      "featureSource": "review_prediction_fallback",
+      "featureSource": "db_context_fallback",
       "snapshotBacked": false,
       "leakageRisk": "possible_post_match_overwrite",
+      "predictedOutcome": "D",
       "features": {
         "home_avg_scored": 0,
         "away_avg_scored": 0,
@@ -532,11 +569,11 @@
         "db_weather_temperature": 0,
         "db_weather_wind_speed": 0,
         "db_weather_precipitation": 0,
-        "db_h2h_edge_played": 0,
+        "db_h2h_edge_played": 4,
         "db_h2h_edge_balance": 0,
         "db_style_profile_available": 0,
-        "db_alias_matched": 0,
-        "db_feature_source_count": 0
+        "db_alias_matched": 1,
+        "db_feature_source_count": 1
       },
       "trainingWeight": 0.25,
       "trainingGroup": "fallback_review",
@@ -548,9 +585,10 @@
       "league": "Italy - Serie A",
       "label": "D",
       "predictionId": null,
-      "featureSource": "review_prediction_fallback",
+      "featureSource": "db_context_fallback",
       "snapshotBacked": false,
       "leakageRisk": "possible_post_match_overwrite",
+      "predictedOutcome": "D",
       "features": {
         "home_avg_scored": 0,
         "away_avg_scored": 0,
@@ -620,11 +658,11 @@
         "db_weather_temperature": 0,
         "db_weather_wind_speed": 0,
         "db_weather_precipitation": 0,
-        "db_h2h_edge_played": 0,
-        "db_h2h_edge_balance": 0,
+        "db_h2h_edge_played": 4,
+        "db_h2h_edge_balance": -0.25,
         "db_style_profile_available": 0,
-        "db_alias_matched": 0,
-        "db_feature_source_count": 0
+        "db_alias_matched": 1,
+        "db_feature_source_count": 1
       },
       "trainingWeight": 0.25,
       "trainingGroup": "fallback_review",
@@ -636,9 +674,10 @@
       "league": "Italy - Serie A",
       "label": "D",
       "predictionId": null,
-      "featureSource": "review_prediction_fallback",
+      "featureSource": "db_context_fallback",
       "snapshotBacked": false,
       "leakageRisk": "possible_post_match_overwrite",
+      "predictedOutcome": "D",
       "features": {
         "home_avg_scored": 0,
         "away_avg_scored": 0,
@@ -708,11 +747,11 @@
         "db_weather_temperature": 0,
         "db_weather_wind_speed": 0,
         "db_weather_precipitation": 0,
-        "db_h2h_edge_played": 0,
-        "db_h2h_edge_balance": 0,
+        "db_h2h_edge_played": 4,
+        "db_h2h_edge_balance": 0.5,
         "db_style_profile_available": 0,
-        "db_alias_matched": 0,
-        "db_feature_source_count": 0
+        "db_alias_matched": 1,
+        "db_feature_source_count": 1
       },
       "trainingWeight": 0.25,
       "trainingGroup": "fallback_review",
@@ -724,9 +763,10 @@
       "league": "Italy - Serie A",
       "label": "H",
       "predictionId": null,
-      "featureSource": "review_prediction_fallback",
+      "featureSource": "db_context_fallback",
       "snapshotBacked": false,
       "leakageRisk": "possible_post_match_overwrite",
+      "predictedOutcome": "D",
       "features": {
         "home_avg_scored": 0,
         "away_avg_scored": 0,
@@ -796,11 +836,11 @@
         "db_weather_temperature": 0,
         "db_weather_wind_speed": 0,
         "db_weather_precipitation": 0,
-        "db_h2h_edge_played": 0,
-        "db_h2h_edge_balance": 0,
+        "db_h2h_edge_played": 4,
+        "db_h2h_edge_balance": 0.25,
         "db_style_profile_available": 0,
-        "db_alias_matched": 0,
-        "db_feature_source_count": 0
+        "db_alias_matched": 1,
+        "db_feature_source_count": 1
       },
       "trainingWeight": 0.25,
       "trainingGroup": "fallback_review",
@@ -815,6 +855,7 @@
       "featureSource": "review_prediction_fallback",
       "snapshotBacked": false,
       "leakageRisk": "possible_post_match_overwrite",
+      "predictedOutcome": "D",
       "features": {
         "home_avg_scored": 0,
         "away_avg_scored": 0,
@@ -903,6 +944,7 @@
       "featureSource": "review_prediction_fallback",
       "snapshotBacked": false,
       "leakageRisk": "possible_post_match_overwrite",
+      "predictedOutcome": "D",
       "features": {
         "home_avg_scored": 0,
         "away_avg_scored": 0,
@@ -988,9 +1030,10 @@
       "league": "Germany - Bundesliga",
       "label": "A",
       "predictionId": null,
-      "featureSource": "review_prediction_fallback",
+      "featureSource": "db_context_fallback",
       "snapshotBacked": false,
       "leakageRisk": "possible_post_match_overwrite",
+      "predictedOutcome": "D",
       "features": {
         "home_avg_scored": 0,
         "away_avg_scored": 0,
@@ -1063,7 +1106,7 @@
         "db_h2h_edge_played": 0,
         "db_h2h_edge_balance": 0,
         "db_style_profile_available": 0,
-        "db_alias_matched": 0,
+        "db_alias_matched": 1,
         "db_feature_source_count": 0
       },
       "trainingWeight": 0.25,
@@ -1079,6 +1122,7 @@
       "featureSource": "review_prediction_fallback",
       "snapshotBacked": false,
       "leakageRisk": "possible_post_match_overwrite",
+      "predictedOutcome": "D",
       "features": {
         "home_avg_scored": 0,
         "away_avg_scored": 0,
@@ -1167,6 +1211,7 @@
       "featureSource": "review_prediction_fallback",
       "snapshotBacked": false,
       "leakageRisk": "possible_post_match_overwrite",
+      "predictedOutcome": "D",
       "features": {
         "home_avg_scored": 0,
         "away_avg_scored": 0,
@@ -1252,9 +1297,10 @@
       "league": "Germany - Bundesliga",
       "label": "H",
       "predictionId": null,
-      "featureSource": "review_prediction_fallback",
+      "featureSource": "db_context_fallback",
       "snapshotBacked": false,
       "leakageRisk": "possible_post_match_overwrite",
+      "predictedOutcome": "D",
       "features": {
         "home_avg_scored": 0,
         "away_avg_scored": 0,
@@ -1327,7 +1373,7 @@
         "db_h2h_edge_played": 0,
         "db_h2h_edge_balance": 0,
         "db_style_profile_available": 0,
-        "db_alias_matched": 0,
+        "db_alias_matched": 1,
         "db_feature_source_count": 0
       },
       "trainingWeight": 0.25,
@@ -1340,9 +1386,10 @@
       "league": "Germany - Bundesliga",
       "label": "D",
       "predictionId": null,
-      "featureSource": "review_prediction_fallback",
+      "featureSource": "db_context_fallback",
       "snapshotBacked": false,
       "leakageRisk": "possible_post_match_overwrite",
+      "predictedOutcome": "D",
       "features": {
         "home_avg_scored": 0,
         "away_avg_scored": 0,
@@ -1415,7 +1462,7 @@
         "db_h2h_edge_played": 0,
         "db_h2h_edge_balance": 0,
         "db_style_profile_available": 0,
-        "db_alias_matched": 0,
+        "db_alias_matched": 1,
         "db_feature_source_count": 0
       },
       "trainingWeight": 0.25,
@@ -1431,6 +1478,7 @@
       "featureSource": "review_prediction_fallback",
       "snapshotBacked": false,
       "leakageRisk": "possible_post_match_overwrite",
+      "predictedOutcome": "D",
       "features": {
         "home_avg_scored": 0,
         "away_avg_scored": 0,
@@ -1519,6 +1567,7 @@
       "featureSource": "review_prediction_fallback",
       "snapshotBacked": false,
       "leakageRisk": "possible_post_match_overwrite",
+      "predictedOutcome": "D",
       "features": {
         "home_avg_scored": 0,
         "away_avg_scored": 0,
@@ -1607,6 +1656,7 @@
       "featureSource": "review_prediction_fallback",
       "snapshotBacked": false,
       "leakageRisk": "possible_post_match_overwrite",
+      "predictedOutcome": "D",
       "features": {
         "home_avg_scored": 0,
         "away_avg_scored": 0,
@@ -1695,6 +1745,7 @@
       "featureSource": "review_prediction_fallback",
       "snapshotBacked": false,
       "leakageRisk": "possible_post_match_overwrite",
+      "predictedOutcome": "D",
       "features": {
         "home_avg_scored": 0,
         "away_avg_scored": 0,
@@ -1783,6 +1834,7 @@
       "featureSource": "review_prediction_fallback",
       "snapshotBacked": false,
       "leakageRisk": "possible_post_match_overwrite",
+      "predictedOutcome": "D",
       "features": {
         "home_avg_scored": 0,
         "away_avg_scored": 0,
@@ -1868,9 +1920,10 @@
       "league": "England - Premier League",
       "label": "H",
       "predictionId": null,
-      "featureSource": "review_prediction_fallback",
+      "featureSource": "db_context_fallback",
       "snapshotBacked": false,
       "leakageRisk": "possible_post_match_overwrite",
+      "predictedOutcome": "D",
       "features": {
         "home_avg_scored": 0,
         "away_avg_scored": 0,
@@ -1940,11 +1993,11 @@
         "db_weather_temperature": 0,
         "db_weather_wind_speed": 0,
         "db_weather_precipitation": 0,
-        "db_h2h_edge_played": 0,
-        "db_h2h_edge_balance": 0,
+        "db_h2h_edge_played": 4,
+        "db_h2h_edge_balance": 0.25,
         "db_style_profile_available": 0,
-        "db_alias_matched": 0,
-        "db_feature_source_count": 0
+        "db_alias_matched": 1,
+        "db_feature_source_count": 1
       },
       "trainingWeight": 0.25,
       "trainingGroup": "fallback_review",
@@ -1956,9 +2009,10 @@
       "league": "France - Ligue 1",
       "label": "A",
       "predictionId": null,
-      "featureSource": "review_prediction_fallback",
+      "featureSource": "db_context_fallback",
       "snapshotBacked": false,
       "leakageRisk": "possible_post_match_overwrite",
+      "predictedOutcome": "D",
       "features": {
         "home_avg_scored": 0,
         "away_avg_scored": 0,
@@ -2028,11 +2082,11 @@
         "db_weather_temperature": 0,
         "db_weather_wind_speed": 0,
         "db_weather_precipitation": 0,
-        "db_h2h_edge_played": 0,
+        "db_h2h_edge_played": 2,
         "db_h2h_edge_balance": 0,
         "db_style_profile_available": 0,
-        "db_alias_matched": 0,
-        "db_feature_source_count": 0
+        "db_alias_matched": 1,
+        "db_feature_source_count": 1
       },
       "trainingWeight": 0.25,
       "trainingGroup": "fallback_review",
@@ -2044,9 +2098,10 @@
       "league": "Netherlands - Eredivisie",
       "label": "D",
       "predictionId": null,
-      "featureSource": "review_prediction_fallback",
+      "featureSource": "db_context_fallback",
       "snapshotBacked": false,
       "leakageRisk": "possible_post_match_overwrite",
+      "predictedOutcome": "D",
       "features": {
         "home_avg_scored": 0,
         "away_avg_scored": 0,
@@ -2116,11 +2171,11 @@
         "db_weather_temperature": 0,
         "db_weather_wind_speed": 0,
         "db_weather_precipitation": 0,
-        "db_h2h_edge_played": 0,
+        "db_h2h_edge_played": 4,
         "db_h2h_edge_balance": 0,
         "db_style_profile_available": 0,
-        "db_alias_matched": 0,
-        "db_feature_source_count": 0
+        "db_alias_matched": 1,
+        "db_feature_source_count": 1
       },
       "trainingWeight": 0.25,
       "trainingGroup": "fallback_review",
@@ -2135,6 +2190,7 @@
       "featureSource": "review_prediction_fallback",
       "snapshotBacked": false,
       "leakageRisk": "possible_post_match_overwrite",
+      "predictedOutcome": "D",
       "features": {
         "home_avg_scored": 0,
         "away_avg_scored": 0,
@@ -2220,9 +2276,10 @@
       "league": "Netherlands - Eredivisie",
       "label": "A",
       "predictionId": null,
-      "featureSource": "review_prediction_fallback",
+      "featureSource": "db_context_fallback",
       "snapshotBacked": false,
       "leakageRisk": "possible_post_match_overwrite",
+      "predictedOutcome": "D",
       "features": {
         "home_avg_scored": 0,
         "away_avg_scored": 0,
@@ -2292,11 +2349,11 @@
         "db_weather_temperature": 0,
         "db_weather_wind_speed": 0,
         "db_weather_precipitation": 0,
-        "db_h2h_edge_played": 0,
-        "db_h2h_edge_balance": 0,
+        "db_h2h_edge_played": 2,
+        "db_h2h_edge_balance": -0.5,
         "db_style_profile_available": 0,
-        "db_alias_matched": 0,
-        "db_feature_source_count": 0
+        "db_alias_matched": 1,
+        "db_feature_source_count": 1
       },
       "trainingWeight": 0.25,
       "trainingGroup": "fallback_review",
@@ -2308,9 +2365,10 @@
       "league": "Netherlands - Eredivisie",
       "label": "A",
       "predictionId": null,
-      "featureSource": "review_prediction_fallback",
+      "featureSource": "db_context_fallback",
       "snapshotBacked": false,
       "leakageRisk": "possible_post_match_overwrite",
+      "predictedOutcome": "D",
       "features": {
         "home_avg_scored": 0,
         "away_avg_scored": 0,
@@ -2380,11 +2438,11 @@
         "db_weather_temperature": 0,
         "db_weather_wind_speed": 0,
         "db_weather_precipitation": 0,
-        "db_h2h_edge_played": 0,
-        "db_h2h_edge_balance": 0,
+        "db_h2h_edge_played": 4,
+        "db_h2h_edge_balance": -0.25,
         "db_style_profile_available": 0,
-        "db_alias_matched": 0,
-        "db_feature_source_count": 0
+        "db_alias_matched": 1,
+        "db_feature_source_count": 1
       },
       "trainingWeight": 0.25,
       "trainingGroup": "fallback_review",
@@ -2396,9 +2454,10 @@
       "league": "Netherlands - Eredivisie",
       "label": "H",
       "predictionId": null,
-      "featureSource": "review_prediction_fallback",
+      "featureSource": "db_context_fallback",
       "snapshotBacked": false,
       "leakageRisk": "possible_post_match_overwrite",
+      "predictedOutcome": "D",
       "features": {
         "home_avg_scored": 0,
         "away_avg_scored": 0,
@@ -2468,11 +2527,11 @@
         "db_weather_temperature": 0,
         "db_weather_wind_speed": 0,
         "db_weather_precipitation": 0,
-        "db_h2h_edge_played": 0,
-        "db_h2h_edge_balance": 0,
+        "db_h2h_edge_played": 4,
+        "db_h2h_edge_balance": 1,
         "db_style_profile_available": 0,
-        "db_alias_matched": 0,
-        "db_feature_source_count": 0
+        "db_alias_matched": 1,
+        "db_feature_source_count": 1
       },
       "trainingWeight": 0.25,
       "trainingGroup": "fallback_review",
@@ -2484,9 +2543,10 @@
       "league": "Netherlands - Eredivisie",
       "label": "D",
       "predictionId": null,
-      "featureSource": "review_prediction_fallback",
+      "featureSource": "db_context_fallback",
       "snapshotBacked": false,
       "leakageRisk": "possible_post_match_overwrite",
+      "predictedOutcome": "D",
       "features": {
         "home_avg_scored": 0,
         "away_avg_scored": 0,
@@ -2556,11 +2616,11 @@
         "db_weather_temperature": 0,
         "db_weather_wind_speed": 0,
         "db_weather_precipitation": 0,
-        "db_h2h_edge_played": 0,
-        "db_h2h_edge_balance": 0,
+        "db_h2h_edge_played": 4,
+        "db_h2h_edge_balance": 0.25,
         "db_style_profile_available": 0,
-        "db_alias_matched": 0,
-        "db_feature_source_count": 0
+        "db_alias_matched": 1,
+        "db_feature_source_count": 1
       },
       "trainingWeight": 0.25,
       "trainingGroup": "fallback_review",
@@ -2572,9 +2632,10 @@
       "league": "Netherlands - Eredivisie",
       "label": "D",
       "predictionId": null,
-      "featureSource": "review_prediction_fallback",
+      "featureSource": "db_context_fallback",
       "snapshotBacked": false,
       "leakageRisk": "possible_post_match_overwrite",
+      "predictedOutcome": "D",
       "features": {
         "home_avg_scored": 0,
         "away_avg_scored": 0,
@@ -2647,7 +2708,7 @@
         "db_h2h_edge_played": 0,
         "db_h2h_edge_balance": 0,
         "db_style_profile_available": 0,
-        "db_alias_matched": 0,
+        "db_alias_matched": 1,
         "db_feature_source_count": 0
       },
       "trainingWeight": 0.25,
@@ -2660,9 +2721,10 @@
       "league": "England - Premier League",
       "label": "H",
       "predictionId": null,
-      "featureSource": "review_prediction_fallback",
+      "featureSource": "db_context_fallback",
       "snapshotBacked": false,
       "leakageRisk": "possible_post_match_overwrite",
+      "predictedOutcome": "D",
       "features": {
         "home_avg_scored": 0,
         "away_avg_scored": 0,
@@ -2732,11 +2794,11 @@
         "db_weather_temperature": 0,
         "db_weather_wind_speed": 0,
         "db_weather_precipitation": 0,
-        "db_h2h_edge_played": 0,
-        "db_h2h_edge_balance": 0,
+        "db_h2h_edge_played": 4,
+        "db_h2h_edge_balance": 0.25,
         "db_style_profile_available": 0,
-        "db_alias_matched": 0,
-        "db_feature_source_count": 0
+        "db_alias_matched": 1,
+        "db_feature_source_count": 1
       },
       "trainingWeight": 0.25,
       "trainingGroup": "fallback_review",
@@ -2748,9 +2810,10 @@
       "league": "England - Premier League",
       "label": "H",
       "predictionId": null,
-      "featureSource": "review_prediction_fallback",
+      "featureSource": "db_context_fallback",
       "snapshotBacked": false,
       "leakageRisk": "possible_post_match_overwrite",
+      "predictedOutcome": "D",
       "features": {
         "home_avg_scored": 0,
         "away_avg_scored": 0,
@@ -2820,11 +2883,11 @@
         "db_weather_temperature": 0,
         "db_weather_wind_speed": 0,
         "db_weather_precipitation": 0,
-        "db_h2h_edge_played": 0,
-        "db_h2h_edge_balance": 0,
+        "db_h2h_edge_played": 4,
+        "db_h2h_edge_balance": -0.25,
         "db_style_profile_available": 0,
-        "db_alias_matched": 0,
-        "db_feature_source_count": 0
+        "db_alias_matched": 1,
+        "db_feature_source_count": 1
       },
       "trainingWeight": 0.25,
       "trainingGroup": "fallback_review",
@@ -2836,9 +2899,10 @@
       "league": "England - Premier League",
       "label": "A",
       "predictionId": null,
-      "featureSource": "review_prediction_fallback",
+      "featureSource": "db_context_fallback",
       "snapshotBacked": false,
       "leakageRisk": "possible_post_match_overwrite",
+      "predictedOutcome": "D",
       "features": {
         "home_avg_scored": 0,
         "away_avg_scored": 0,
@@ -2911,7 +2975,7 @@
         "db_h2h_edge_played": 0,
         "db_h2h_edge_balance": 0,
         "db_style_profile_available": 0,
-        "db_alias_matched": 0,
+        "db_alias_matched": 1,
         "db_feature_source_count": 0
       },
       "trainingWeight": 0.25,
@@ -2924,9 +2988,10 @@
       "league": "Germany - Bundesliga",
       "label": "A",
       "predictionId": null,
-      "featureSource": "review_prediction_fallback",
+      "featureSource": "db_context_fallback",
       "snapshotBacked": false,
       "leakageRisk": "possible_post_match_overwrite",
+      "predictedOutcome": "D",
       "features": {
         "home_avg_scored": 0,
         "away_avg_scored": 0,
@@ -2996,11 +3061,11 @@
         "db_weather_temperature": 0,
         "db_weather_wind_speed": 0,
         "db_weather_precipitation": 0,
-        "db_h2h_edge_played": 0,
-        "db_h2h_edge_balance": 0,
+        "db_h2h_edge_played": 4,
+        "db_h2h_edge_balance": -0.25,
         "db_style_profile_available": 0,
-        "db_alias_matched": 0,
-        "db_feature_source_count": 0
+        "db_alias_matched": 1,
+        "db_feature_source_count": 1
       },
       "trainingWeight": 0.25,
       "trainingGroup": "fallback_review",
@@ -3012,9 +3077,10 @@
       "league": "Germany - Bundesliga",
       "label": "H",
       "predictionId": null,
-      "featureSource": "review_prediction_fallback",
+      "featureSource": "db_context_fallback",
       "snapshotBacked": false,
       "leakageRisk": "possible_post_match_overwrite",
+      "predictedOutcome": "D",
       "features": {
         "home_avg_scored": 0,
         "away_avg_scored": 0,
@@ -3084,11 +3150,11 @@
         "db_weather_temperature": 0,
         "db_weather_wind_speed": 0,
         "db_weather_precipitation": 0,
-        "db_h2h_edge_played": 0,
-        "db_h2h_edge_balance": 0,
+        "db_h2h_edge_played": 4,
+        "db_h2h_edge_balance": 0.75,
         "db_style_profile_available": 0,
-        "db_alias_matched": 0,
-        "db_feature_source_count": 0
+        "db_alias_matched": 1,
+        "db_feature_source_count": 1
       },
       "trainingWeight": 0.25,
       "trainingGroup": "fallback_review",
@@ -3100,9 +3166,10 @@
       "league": "Germany - Bundesliga",
       "label": "D",
       "predictionId": null,
-      "featureSource": "review_prediction_fallback",
+      "featureSource": "db_context_fallback",
       "snapshotBacked": false,
       "leakageRisk": "possible_post_match_overwrite",
+      "predictedOutcome": "D",
       "features": {
         "home_avg_scored": 0,
         "away_avg_scored": 0,
@@ -3175,7 +3242,7 @@
         "db_h2h_edge_played": 0,
         "db_h2h_edge_balance": 0,
         "db_style_profile_available": 0,
-        "db_alias_matched": 0,
+        "db_alias_matched": 1,
         "db_feature_source_count": 0
       },
       "trainingWeight": 0.25,
@@ -3191,6 +3258,7 @@
       "featureSource": "review_prediction_fallback",
       "snapshotBacked": false,
       "leakageRisk": "possible_post_match_overwrite",
+      "predictedOutcome": "D",
       "features": {
         "home_avg_scored": 0,
         "away_avg_scored": 0,
@@ -3279,6 +3347,7 @@
       "featureSource": "review_prediction_fallback",
       "snapshotBacked": false,
       "leakageRisk": "possible_post_match_overwrite",
+      "predictedOutcome": "D",
       "features": {
         "home_avg_scored": 0,
         "away_avg_scored": 0,
@@ -3367,6 +3436,7 @@
       "featureSource": "review_prediction_fallback",
       "snapshotBacked": false,
       "leakageRisk": "possible_post_match_overwrite",
+      "predictedOutcome": "D",
       "features": {
         "home_avg_scored": 0,
         "away_avg_scored": 0,
@@ -3455,6 +3525,7 @@
       "featureSource": "review_prediction_fallback",
       "snapshotBacked": false,
       "leakageRisk": "possible_post_match_overwrite",
+      "predictedOutcome": "D",
       "features": {
         "home_avg_scored": 0,
         "away_avg_scored": 0,
@@ -3543,6 +3614,7 @@
       "featureSource": "review_prediction_fallback",
       "snapshotBacked": false,
       "leakageRisk": "possible_post_match_overwrite",
+      "predictedOutcome": "D",
       "features": {
         "home_avg_scored": 0,
         "away_avg_scored": 0,
@@ -3628,9 +3700,10 @@
       "league": "Spain - LaLiga",
       "label": "H",
       "predictionId": null,
-      "featureSource": "review_prediction_fallback",
+      "featureSource": "db_context_fallback",
       "snapshotBacked": false,
       "leakageRisk": "possible_post_match_overwrite",
+      "predictedOutcome": "D",
       "features": {
         "home_avg_scored": 0,
         "away_avg_scored": 0,
@@ -3700,11 +3773,11 @@
         "db_weather_temperature": 0,
         "db_weather_wind_speed": 0,
         "db_weather_precipitation": 0,
-        "db_h2h_edge_played": 0,
-        "db_h2h_edge_balance": 0,
+        "db_h2h_edge_played": 2,
+        "db_h2h_edge_balance": 1,
         "db_style_profile_available": 0,
-        "db_alias_matched": 0,
-        "db_feature_source_count": 0
+        "db_alias_matched": 1,
+        "db_feature_source_count": 1
       },
       "trainingWeight": 0.25,
       "trainingGroup": "fallback_review",
@@ -3716,9 +3789,10 @@
       "league": "Spain - LaLiga",
       "label": "A",
       "predictionId": null,
-      "featureSource": "review_prediction_fallback",
+      "featureSource": "db_context_fallback",
       "snapshotBacked": false,
       "leakageRisk": "possible_post_match_overwrite",
+      "predictedOutcome": "D",
       "features": {
         "home_avg_scored": 0,
         "away_avg_scored": 0,
@@ -3788,11 +3862,11 @@
         "db_weather_temperature": 0,
         "db_weather_wind_speed": 0,
         "db_weather_precipitation": 0,
-        "db_h2h_edge_played": 0,
+        "db_h2h_edge_played": 4,
         "db_h2h_edge_balance": 0,
         "db_style_profile_available": 0,
-        "db_alias_matched": 0,
-        "db_feature_source_count": 0
+        "db_alias_matched": 1,
+        "db_feature_source_count": 1
       },
       "trainingWeight": 0.25,
       "trainingGroup": "fallback_review",
@@ -3804,9 +3878,10 @@
       "league": "Spain - LaLiga",
       "label": "H",
       "predictionId": null,
-      "featureSource": "review_prediction_fallback",
+      "featureSource": "db_context_fallback",
       "snapshotBacked": false,
       "leakageRisk": "possible_post_match_overwrite",
+      "predictedOutcome": "D",
       "features": {
         "home_avg_scored": 0,
         "away_avg_scored": 0,
@@ -3876,11 +3951,11 @@
         "db_weather_temperature": 0,
         "db_weather_wind_speed": 0,
         "db_weather_precipitation": 0,
-        "db_h2h_edge_played": 0,
-        "db_h2h_edge_balance": 0,
+        "db_h2h_edge_played": 2,
+        "db_h2h_edge_balance": 0.5,
         "db_style_profile_available": 0,
-        "db_alias_matched": 0,
-        "db_feature_source_count": 0
+        "db_alias_matched": 1,
+        "db_feature_source_count": 1
       },
       "trainingWeight": 0.25,
       "trainingGroup": "fallback_review",
@@ -3892,9 +3967,10 @@
       "league": "Spain - LaLiga",
       "label": "A",
       "predictionId": null,
-      "featureSource": "review_prediction_fallback",
+      "featureSource": "db_context_fallback",
       "snapshotBacked": false,
       "leakageRisk": "possible_post_match_overwrite",
+      "predictedOutcome": "D",
       "features": {
         "home_avg_scored": 0,
         "away_avg_scored": 0,
@@ -3964,11 +4040,11 @@
         "db_weather_temperature": 0,
         "db_weather_wind_speed": 0,
         "db_weather_precipitation": 0,
-        "db_h2h_edge_played": 0,
-        "db_h2h_edge_balance": 0,
+        "db_h2h_edge_played": 4,
+        "db_h2h_edge_balance": 0.5,
         "db_style_profile_available": 0,
-        "db_alias_matched": 0,
-        "db_feature_source_count": 0
+        "db_alias_matched": 1,
+        "db_feature_source_count": 1
       },
       "trainingWeight": 0.25,
       "trainingGroup": "fallback_review",
@@ -3983,6 +4059,7 @@
       "featureSource": "review_prediction_fallback",
       "snapshotBacked": false,
       "leakageRisk": "possible_post_match_overwrite",
+      "predictedOutcome": "D",
       "features": {
         "home_avg_scored": 0,
         "away_avg_scored": 0,
@@ -4071,6 +4148,7 @@
       "featureSource": "review_prediction_fallback",
       "snapshotBacked": false,
       "leakageRisk": "possible_post_match_overwrite",
+      "predictedOutcome": "D",
       "features": {
         "home_avg_scored": 0,
         "away_avg_scored": 0,
@@ -4159,6 +4237,7 @@
       "featureSource": "review_prediction_fallback",
       "snapshotBacked": false,
       "leakageRisk": "possible_post_match_overwrite",
+      "predictedOutcome": "D",
       "features": {
         "home_avg_scored": 0,
         "away_avg_scored": 0,
@@ -4244,9 +4323,10 @@
       "league": "Spain - LaLiga",
       "label": "H",
       "predictionId": null,
-      "featureSource": "review_prediction_fallback",
+      "featureSource": "db_context_fallback",
       "snapshotBacked": false,
       "leakageRisk": "possible_post_match_overwrite",
+      "predictedOutcome": "D",
       "features": {
         "home_avg_scored": 0,
         "away_avg_scored": 0,
@@ -4316,11 +4396,11 @@
         "db_weather_temperature": 0,
         "db_weather_wind_speed": 0,
         "db_weather_precipitation": 0,
-        "db_h2h_edge_played": 0,
-        "db_h2h_edge_balance": 0,
+        "db_h2h_edge_played": 2,
+        "db_h2h_edge_balance": 0.5,
         "db_style_profile_available": 0,
-        "db_alias_matched": 0,
-        "db_feature_source_count": 0
+        "db_alias_matched": 1,
+        "db_feature_source_count": 1
       },
       "trainingWeight": 0.25,
       "trainingGroup": "fallback_review",
@@ -4332,9 +4412,10 @@
       "league": "Italy - Serie A",
       "label": "D",
       "predictionId": null,
-      "featureSource": "review_prediction_fallback",
+      "featureSource": "db_context_fallback",
       "snapshotBacked": false,
       "leakageRisk": "possible_post_match_overwrite",
+      "predictedOutcome": "D",
       "features": {
         "home_avg_scored": 0,
         "away_avg_scored": 0,
@@ -4404,11 +4485,11 @@
         "db_weather_temperature": 0,
         "db_weather_wind_speed": 0,
         "db_weather_precipitation": 0,
-        "db_h2h_edge_played": 0,
-        "db_h2h_edge_balance": 0,
+        "db_h2h_edge_played": 4,
+        "db_h2h_edge_balance": -0.25,
         "db_style_profile_available": 0,
-        "db_alias_matched": 0,
-        "db_feature_source_count": 0
+        "db_alias_matched": 1,
+        "db_feature_source_count": 1
       },
       "trainingWeight": 0.25,
       "trainingGroup": "fallback_review",
@@ -4420,9 +4501,10 @@
       "league": "Italy - Serie A",
       "label": "H",
       "predictionId": null,
-      "featureSource": "review_prediction_fallback",
+      "featureSource": "db_context_fallback",
       "snapshotBacked": false,
       "leakageRisk": "possible_post_match_overwrite",
+      "predictedOutcome": "D",
       "features": {
         "home_avg_scored": 0,
         "away_avg_scored": 0,
@@ -4492,11 +4574,11 @@
         "db_weather_temperature": 0,
         "db_weather_wind_speed": 0,
         "db_weather_precipitation": 0,
-        "db_h2h_edge_played": 0,
-        "db_h2h_edge_balance": 0,
+        "db_h2h_edge_played": 2,
+        "db_h2h_edge_balance": 0.5,
         "db_style_profile_available": 0,
-        "db_alias_matched": 0,
-        "db_feature_source_count": 0
+        "db_alias_matched": 1,
+        "db_feature_source_count": 1
       },
       "trainingWeight": 0.25,
       "trainingGroup": "fallback_review",
@@ -4508,9 +4590,10 @@
       "league": "Italy - Serie A",
       "label": "D",
       "predictionId": null,
-      "featureSource": "review_prediction_fallback",
+      "featureSource": "db_context_fallback",
       "snapshotBacked": false,
       "leakageRisk": "possible_post_match_overwrite",
+      "predictedOutcome": "D",
       "features": {
         "home_avg_scored": 0,
         "away_avg_scored": 0,
@@ -4580,11 +4663,11 @@
         "db_weather_temperature": 0,
         "db_weather_wind_speed": 0,
         "db_weather_precipitation": 0,
-        "db_h2h_edge_played": 0,
+        "db_h2h_edge_played": 4,
         "db_h2h_edge_balance": 0,
         "db_style_profile_available": 0,
-        "db_alias_matched": 0,
-        "db_feature_source_count": 0
+        "db_alias_matched": 1,
+        "db_feature_source_count": 1
       },
       "trainingWeight": 0.25,
       "trainingGroup": "fallback_review",
@@ -4596,9 +4679,10 @@
       "league": "Italy - Serie A",
       "label": "H",
       "predictionId": null,
-      "featureSource": "review_prediction_fallback",
+      "featureSource": "db_context_fallback",
       "snapshotBacked": false,
       "leakageRisk": "possible_post_match_overwrite",
+      "predictedOutcome": "D",
       "features": {
         "home_avg_scored": 0,
         "away_avg_scored": 0,
@@ -4668,11 +4752,11 @@
         "db_weather_temperature": 0,
         "db_weather_wind_speed": 0,
         "db_weather_precipitation": 0,
-        "db_h2h_edge_played": 0,
-        "db_h2h_edge_balance": 0,
+        "db_h2h_edge_played": 4,
+        "db_h2h_edge_balance": 0.25,
         "db_style_profile_available": 0,
-        "db_alias_matched": 0,
-        "db_feature_source_count": 0
+        "db_alias_matched": 1,
+        "db_feature_source_count": 1
       },
       "trainingWeight": 0.25,
       "trainingGroup": "fallback_review",
@@ -4684,9 +4768,10 @@
       "league": "France - Ligue 1",
       "label": "D",
       "predictionId": null,
-      "featureSource": "review_prediction_fallback",
+      "featureSource": "db_context_fallback",
       "snapshotBacked": false,
       "leakageRisk": "possible_post_match_overwrite",
+      "predictedOutcome": "D",
       "features": {
         "home_avg_scored": 0,
         "away_avg_scored": 0,
@@ -4756,11 +4841,11 @@
         "db_weather_temperature": 0,
         "db_weather_wind_speed": 0,
         "db_weather_precipitation": 0,
-        "db_h2h_edge_played": 0,
-        "db_h2h_edge_balance": 0,
+        "db_h2h_edge_played": 4,
+        "db_h2h_edge_balance": -0.75,
         "db_style_profile_available": 0,
-        "db_alias_matched": 0,
-        "db_feature_source_count": 0
+        "db_alias_matched": 1,
+        "db_feature_source_count": 1
       },
       "trainingWeight": 0.25,
       "trainingGroup": "fallback_review",
@@ -4772,9 +4857,10 @@
       "league": "France - Ligue 1",
       "label": "H",
       "predictionId": null,
-      "featureSource": "review_prediction_fallback",
+      "featureSource": "db_context_fallback",
       "snapshotBacked": false,
       "leakageRisk": "possible_post_match_overwrite",
+      "predictedOutcome": "D",
       "features": {
         "home_avg_scored": 0,
         "away_avg_scored": 0,
@@ -4844,11 +4930,11 @@
         "db_weather_temperature": 0,
         "db_weather_wind_speed": 0,
         "db_weather_precipitation": 0,
-        "db_h2h_edge_played": 0,
-        "db_h2h_edge_balance": 0,
+        "db_h2h_edge_played": 4,
+        "db_h2h_edge_balance": 1,
         "db_style_profile_available": 0,
-        "db_alias_matched": 0,
-        "db_feature_source_count": 0
+        "db_alias_matched": 1,
+        "db_feature_source_count": 1
       },
       "trainingWeight": 0.25,
       "trainingGroup": "fallback_review",
@@ -4860,9 +4946,10 @@
       "league": "France - Ligue 1",
       "label": "H",
       "predictionId": null,
-      "featureSource": "review_prediction_fallback",
+      "featureSource": "db_context_fallback",
       "snapshotBacked": false,
       "leakageRisk": "possible_post_match_overwrite",
+      "predictedOutcome": "D",
       "features": {
         "home_avg_scored": 0,
         "away_avg_scored": 0,
@@ -4935,7 +5022,7 @@
         "db_h2h_edge_played": 0,
         "db_h2h_edge_balance": 0,
         "db_style_profile_available": 0,
-        "db_alias_matched": 0,
+        "db_alias_matched": 1,
         "db_feature_source_count": 0
       },
       "trainingWeight": 0.25,
@@ -4948,9 +5035,10 @@
       "league": "France - Ligue 1",
       "label": "A",
       "predictionId": null,
-      "featureSource": "review_prediction_fallback",
+      "featureSource": "db_context_fallback",
       "snapshotBacked": false,
       "leakageRisk": "possible_post_match_overwrite",
+      "predictedOutcome": "D",
       "features": {
         "home_avg_scored": 0,
         "away_avg_scored": 0,
@@ -5020,11 +5108,11 @@
         "db_weather_temperature": 0,
         "db_weather_wind_speed": 0,
         "db_weather_precipitation": 0,
-        "db_h2h_edge_played": 0,
+        "db_h2h_edge_played": 4,
         "db_h2h_edge_balance": 0,
         "db_style_profile_available": 0,
-        "db_alias_matched": 0,
-        "db_feature_source_count": 0
+        "db_alias_matched": 1,
+        "db_feature_source_count": 1
       },
       "trainingWeight": 0.25,
       "trainingGroup": "fallback_review",
@@ -5036,9 +5124,10 @@
       "league": "France - Ligue 1",
       "label": "H",
       "predictionId": null,
-      "featureSource": "review_prediction_fallback",
+      "featureSource": "db_context_fallback",
       "snapshotBacked": false,
       "leakageRisk": "possible_post_match_overwrite",
+      "predictedOutcome": "D",
       "features": {
         "home_avg_scored": 0,
         "away_avg_scored": 0,
@@ -5108,11 +5197,11 @@
         "db_weather_temperature": 0,
         "db_weather_wind_speed": 0,
         "db_weather_precipitation": 0,
-        "db_h2h_edge_played": 0,
-        "db_h2h_edge_balance": 0,
+        "db_h2h_edge_played": 4,
+        "db_h2h_edge_balance": 1,
         "db_style_profile_available": 0,
-        "db_alias_matched": 0,
-        "db_feature_source_count": 0
+        "db_alias_matched": 1,
+        "db_feature_source_count": 1
       },
       "trainingWeight": 0.25,
       "trainingGroup": "fallback_review",
@@ -5127,6 +5216,7 @@
       "featureSource": "review_prediction_fallback",
       "snapshotBacked": false,
       "leakageRisk": "possible_post_match_overwrite",
+      "predictedOutcome": "D",
       "features": {
         "home_avg_scored": 0,
         "away_avg_scored": 0,
@@ -5215,6 +5305,7 @@
       "featureSource": "review_prediction_fallback",
       "snapshotBacked": false,
       "leakageRisk": "possible_post_match_overwrite",
+      "predictedOutcome": "D",
       "features": {
         "home_avg_scored": 0,
         "away_avg_scored": 0,
@@ -5303,6 +5394,7 @@
       "featureSource": "review_prediction_fallback",
       "snapshotBacked": false,
       "leakageRisk": "possible_post_match_overwrite",
+      "predictedOutcome": "D",
       "features": {
         "home_avg_scored": 0,
         "away_avg_scored": 0,
@@ -5391,6 +5483,7 @@
       "featureSource": "review_prediction_fallback",
       "snapshotBacked": false,
       "leakageRisk": "possible_post_match_overwrite",
+      "predictedOutcome": "D",
       "features": {
         "home_avg_scored": 0,
         "away_avg_scored": 0,
@@ -5479,6 +5572,7 @@
       "featureSource": "review_prediction_fallback",
       "snapshotBacked": false,
       "leakageRisk": "possible_post_match_overwrite",
+      "predictedOutcome": "D",
       "features": {
         "home_avg_scored": 0,
         "away_avg_scored": 0,
@@ -5567,6 +5661,7 @@
       "featureSource": "review_prediction_fallback",
       "snapshotBacked": false,
       "leakageRisk": "possible_post_match_overwrite",
+      "predictedOutcome": "D",
       "features": {
         "home_avg_scored": 0,
         "away_avg_scored": 0,
@@ -5655,6 +5750,7 @@
       "featureSource": "review_prediction_fallback",
       "snapshotBacked": false,
       "leakageRisk": "possible_post_match_overwrite",
+      "predictedOutcome": "D",
       "features": {
         "home_avg_scored": 0,
         "away_avg_scored": 0,
@@ -5743,6 +5839,7 @@
       "featureSource": "review_prediction_fallback",
       "snapshotBacked": false,
       "leakageRisk": "possible_post_match_overwrite",
+      "predictedOutcome": "D",
       "features": {
         "home_avg_scored": 0,
         "away_avg_scored": 0,
@@ -5831,6 +5928,7 @@
       "featureSource": "review_prediction_fallback",
       "snapshotBacked": false,
       "leakageRisk": "possible_post_match_overwrite",
+      "predictedOutcome": "D",
       "features": {
         "home_avg_scored": 0,
         "away_avg_scored": 0,
@@ -5919,6 +6017,7 @@
       "featureSource": "review_prediction_fallback",
       "snapshotBacked": false,
       "leakageRisk": "possible_post_match_overwrite",
+      "predictedOutcome": "D",
       "features": {
         "home_avg_scored": 0,
         "away_avg_scored": 0,
@@ -6007,6 +6106,7 @@
       "featureSource": "review_prediction_fallback",
       "snapshotBacked": false,
       "leakageRisk": "possible_post_match_overwrite",
+      "predictedOutcome": "D",
       "features": {
         "home_avg_scored": 0,
         "away_avg_scored": 0,
@@ -6095,6 +6195,7 @@
       "featureSource": "review_prediction_fallback",
       "snapshotBacked": false,
       "leakageRisk": "possible_post_match_overwrite",
+      "predictedOutcome": "D",
       "features": {
         "home_avg_scored": 0,
         "away_avg_scored": 0,
@@ -6183,6 +6284,7 @@
       "featureSource": "review_prediction_fallback",
       "snapshotBacked": false,
       "leakageRisk": "possible_post_match_overwrite",
+      "predictedOutcome": "D",
       "features": {
         "home_avg_scored": 0,
         "away_avg_scored": 0,
@@ -6271,6 +6373,7 @@
       "featureSource": "review_prediction_fallback",
       "snapshotBacked": false,
       "leakageRisk": "possible_post_match_overwrite",
+      "predictedOutcome": "D",
       "features": {
         "home_avg_scored": 0,
         "away_avg_scored": 0,
@@ -6359,6 +6462,7 @@
       "featureSource": "review_prediction_fallback",
       "snapshotBacked": false,
       "leakageRisk": "possible_post_match_overwrite",
+      "predictedOutcome": "D",
       "features": {
         "home_avg_scored": 0,
         "away_avg_scored": 0,
@@ -6447,6 +6551,7 @@
       "featureSource": "review_prediction_fallback",
       "snapshotBacked": false,
       "leakageRisk": "possible_post_match_overwrite",
+      "predictedOutcome": "D",
       "features": {
         "home_avg_scored": 0,
         "away_avg_scored": 0,
@@ -6535,6 +6640,7 @@
       "featureSource": "review_prediction_fallback",
       "snapshotBacked": false,
       "leakageRisk": "possible_post_match_overwrite",
+      "predictedOutcome": "D",
       "features": {
         "home_avg_scored": 0,
         "away_avg_scored": 0,
@@ -6623,6 +6729,7 @@
       "featureSource": "review_prediction_fallback",
       "snapshotBacked": false,
       "leakageRisk": "possible_post_match_overwrite",
+      "predictedOutcome": "D",
       "features": {
         "home_avg_scored": 0,
         "away_avg_scored": 0,
@@ -6711,6 +6818,7 @@
       "featureSource": "review_prediction_fallback",
       "snapshotBacked": false,
       "leakageRisk": "possible_post_match_overwrite",
+      "predictedOutcome": "D",
       "features": {
         "home_avg_scored": 0,
         "away_avg_scored": 0,
@@ -6799,6 +6907,7 @@
       "featureSource": "review_prediction_fallback",
       "snapshotBacked": false,
       "leakageRisk": "possible_post_match_overwrite",
+      "predictedOutcome": "D",
       "features": {
         "home_avg_scored": 0,
         "away_avg_scored": 0,
@@ -6887,6 +6996,7 @@
       "featureSource": "review_prediction_fallback",
       "snapshotBacked": false,
       "leakageRisk": "possible_post_match_overwrite",
+      "predictedOutcome": "D",
       "features": {
         "home_avg_scored": 0,
         "away_avg_scored": 0,
@@ -6975,6 +7085,7 @@
       "featureSource": "review_prediction_fallback",
       "snapshotBacked": false,
       "leakageRisk": "possible_post_match_overwrite",
+      "predictedOutcome": "D",
       "features": {
         "home_avg_scored": 0,
         "away_avg_scored": 0,
@@ -7063,6 +7174,7 @@
       "featureSource": "review_prediction_fallback",
       "snapshotBacked": false,
       "leakageRisk": "possible_post_match_overwrite",
+      "predictedOutcome": "D",
       "features": {
         "home_avg_scored": 0,
         "away_avg_scored": 0,
@@ -7151,6 +7263,7 @@
       "featureSource": "review_prediction_fallback",
       "snapshotBacked": false,
       "leakageRisk": "possible_post_match_overwrite",
+      "predictedOutcome": "D",
       "features": {
         "home_avg_scored": 0,
         "away_avg_scored": 0,
@@ -7239,6 +7352,7 @@
       "featureSource": "review_prediction_fallback",
       "snapshotBacked": false,
       "leakageRisk": "possible_post_match_overwrite",
+      "predictedOutcome": "D",
       "features": {
         "home_avg_scored": 0,
         "away_avg_scored": 0,
@@ -7327,6 +7441,7 @@
       "featureSource": "review_prediction_fallback",
       "snapshotBacked": false,
       "leakageRisk": "possible_post_match_overwrite",
+      "predictedOutcome": "H",
       "features": {
         "home_avg_scored": 0,
         "away_avg_scored": 0,
@@ -7415,6 +7530,7 @@
       "featureSource": "review_prediction_fallback",
       "snapshotBacked": false,
       "leakageRisk": "possible_post_match_overwrite",
+      "predictedOutcome": "D",
       "features": {
         "home_avg_scored": 0,
         "away_avg_scored": 0,
@@ -7503,6 +7619,7 @@
       "featureSource": "review_prediction_fallback",
       "snapshotBacked": false,
       "leakageRisk": "possible_post_match_overwrite",
+      "predictedOutcome": "A",
       "features": {
         "home_avg_scored": 0,
         "away_avg_scored": 0,
@@ -7591,6 +7708,7 @@
       "featureSource": "review_prediction_fallback",
       "snapshotBacked": false,
       "leakageRisk": "possible_post_match_overwrite",
+      "predictedOutcome": "D",
       "features": {
         "home_avg_scored": 0,
         "away_avg_scored": 0,
@@ -7679,6 +7797,7 @@
       "featureSource": "review_prediction_fallback",
       "snapshotBacked": false,
       "leakageRisk": "possible_post_match_overwrite",
+      "predictedOutcome": "D",
       "features": {
         "home_avg_scored": 0,
         "away_avg_scored": 0,
@@ -7767,6 +7886,7 @@
       "featureSource": "review_prediction_fallback",
       "snapshotBacked": false,
       "leakageRisk": "possible_post_match_overwrite",
+      "predictedOutcome": "D",
       "features": {
         "home_avg_scored": 0,
         "away_avg_scored": 0,
@@ -7855,6 +7975,7 @@
       "featureSource": "review_prediction_fallback",
       "snapshotBacked": false,
       "leakageRisk": "possible_post_match_overwrite",
+      "predictedOutcome": "H",
       "features": {
         "home_avg_scored": 0,
         "away_avg_scored": 0,
@@ -7943,6 +8064,7 @@
       "featureSource": "review_prediction_fallback",
       "snapshotBacked": false,
       "leakageRisk": "possible_post_match_overwrite",
+      "predictedOutcome": "D",
       "features": {
         "home_avg_scored": 0,
         "away_avg_scored": 0,
@@ -8031,6 +8153,7 @@
       "featureSource": "review_prediction_fallback",
       "snapshotBacked": false,
       "leakageRisk": "possible_post_match_overwrite",
+      "predictedOutcome": "H",
       "features": {
         "home_avg_scored": 0,
         "away_avg_scored": 0,
@@ -8119,6 +8242,7 @@
       "featureSource": "review_prediction_fallback",
       "snapshotBacked": false,
       "leakageRisk": "possible_post_match_overwrite",
+      "predictedOutcome": "D",
       "features": {
         "home_avg_scored": 0,
         "away_avg_scored": 0,
@@ -8207,6 +8331,7 @@
       "featureSource": "review_prediction_fallback",
       "snapshotBacked": false,
       "leakageRisk": "possible_post_match_overwrite",
+      "predictedOutcome": "H",
       "features": {
         "home_avg_scored": 0,
         "away_avg_scored": 0,
@@ -8295,6 +8420,7 @@
       "featureSource": "review_prediction_fallback",
       "snapshotBacked": false,
       "leakageRisk": "possible_post_match_overwrite",
+      "predictedOutcome": "D",
       "features": {
         "home_avg_scored": 0,
         "away_avg_scored": 0,
@@ -8383,6 +8509,7 @@
       "featureSource": "review_prediction_fallback",
       "snapshotBacked": false,
       "leakageRisk": "possible_post_match_overwrite",
+      "predictedOutcome": "H",
       "features": {
         "home_avg_scored": 0,
         "away_avg_scored": 0,
@@ -8471,6 +8598,7 @@
       "featureSource": "review_prediction_fallback",
       "snapshotBacked": false,
       "leakageRisk": "possible_post_match_overwrite",
+      "predictedOutcome": "D",
       "features": {
         "home_avg_scored": 0,
         "away_avg_scored": 0,
@@ -8559,6 +8687,7 @@
       "featureSource": "review_prediction_fallback",
       "snapshotBacked": false,
       "leakageRisk": "possible_post_match_overwrite",
+      "predictedOutcome": "A",
       "features": {
         "home_avg_scored": 0,
         "away_avg_scored": 0,
@@ -8647,6 +8776,7 @@
       "featureSource": "review_prediction_fallback",
       "snapshotBacked": false,
       "leakageRisk": "possible_post_match_overwrite",
+      "predictedOutcome": "A",
       "features": {
         "home_avg_scored": 0,
         "away_avg_scored": 0,
@@ -8735,6 +8865,7 @@
       "featureSource": "review_prediction_fallback",
       "snapshotBacked": false,
       "leakageRisk": "possible_post_match_overwrite",
+      "predictedOutcome": "D",
       "features": {
         "home_avg_scored": 0,
         "away_avg_scored": 0,
@@ -8823,6 +8954,7 @@
       "featureSource": "review_prediction_fallback",
       "snapshotBacked": false,
       "leakageRisk": "possible_post_match_overwrite",
+      "predictedOutcome": "D",
       "features": {
         "home_avg_scored": 0,
         "away_avg_scored": 0,
@@ -8911,6 +9043,7 @@
       "featureSource": "review_prediction_fallback",
       "snapshotBacked": false,
       "leakageRisk": "possible_post_match_overwrite",
+      "predictedOutcome": "A",
       "features": {
         "home_avg_scored": 0,
         "away_avg_scored": 0,
@@ -8999,6 +9132,7 @@
       "featureSource": "review_prediction_fallback",
       "snapshotBacked": false,
       "leakageRisk": "possible_post_match_overwrite",
+      "predictedOutcome": "A",
       "features": {
         "home_avg_scored": 0,
         "away_avg_scored": 0,
@@ -9087,6 +9221,7 @@
       "featureSource": "review_prediction_fallback",
       "snapshotBacked": false,
       "leakageRisk": "possible_post_match_overwrite",
+      "predictedOutcome": "H",
       "features": {
         "home_avg_scored": 0,
         "away_avg_scored": 0,
@@ -9175,6 +9310,7 @@
       "featureSource": "review_prediction_fallback",
       "snapshotBacked": false,
       "leakageRisk": "possible_post_match_overwrite",
+      "predictedOutcome": "D",
       "features": {
         "home_avg_scored": 0,
         "away_avg_scored": 0,
@@ -9263,6 +9399,7 @@
       "featureSource": "review_prediction_fallback",
       "snapshotBacked": false,
       "leakageRisk": "possible_post_match_overwrite",
+      "predictedOutcome": "A",
       "features": {
         "home_avg_scored": 0,
         "away_avg_scored": 0,
@@ -9351,6 +9488,7 @@
       "featureSource": "review_prediction_fallback",
       "snapshotBacked": false,
       "leakageRisk": "possible_post_match_overwrite",
+      "predictedOutcome": "D",
       "features": {
         "home_avg_scored": 0,
         "away_avg_scored": 0,
@@ -9439,6 +9577,7 @@
       "featureSource": "review_prediction_fallback",
       "snapshotBacked": false,
       "leakageRisk": "possible_post_match_overwrite",
+      "predictedOutcome": "H",
       "features": {
         "home_avg_scored": 0,
         "away_avg_scored": 0,
@@ -9527,6 +9666,7 @@
       "featureSource": "review_prediction_fallback",
       "snapshotBacked": false,
       "leakageRisk": "possible_post_match_overwrite",
+      "predictedOutcome": "H",
       "features": {
         "home_avg_scored": 0,
         "away_avg_scored": 0,
@@ -9615,6 +9755,7 @@
       "featureSource": "review_prediction_fallback",
       "snapshotBacked": false,
       "leakageRisk": "possible_post_match_overwrite",
+      "predictedOutcome": "H",
       "features": {
         "home_avg_scored": 0,
         "away_avg_scored": 0,
@@ -9703,6 +9844,7 @@
       "featureSource": "review_prediction_fallback",
       "snapshotBacked": false,
       "leakageRisk": "possible_post_match_overwrite",
+      "predictedOutcome": "D",
       "features": {
         "home_avg_scored": 0,
         "away_avg_scored": 0,
@@ -9791,6 +9933,7 @@
       "featureSource": "review_prediction_fallback",
       "snapshotBacked": false,
       "leakageRisk": "possible_post_match_overwrite",
+      "predictedOutcome": "H",
       "features": {
         "home_avg_scored": 0,
         "away_avg_scored": 0,
@@ -9879,6 +10022,7 @@
       "featureSource": "review_prediction_fallback",
       "snapshotBacked": false,
       "leakageRisk": "possible_post_match_overwrite",
+      "predictedOutcome": "D",
       "features": {
         "home_avg_scored": 0,
         "away_avg_scored": 0,
@@ -9967,6 +10111,7 @@
       "featureSource": "review_prediction_fallback",
       "snapshotBacked": false,
       "leakageRisk": "possible_post_match_overwrite",
+      "predictedOutcome": "D",
       "features": {
         "home_avg_scored": 0,
         "away_avg_scored": 0,
@@ -10055,6 +10200,7 @@
       "featureSource": "review_prediction_fallback",
       "snapshotBacked": false,
       "leakageRisk": "possible_post_match_overwrite",
+      "predictedOutcome": "D",
       "features": {
         "home_avg_scored": 0,
         "away_avg_scored": 0,
@@ -10143,6 +10289,7 @@
       "featureSource": "review_prediction_fallback",
       "snapshotBacked": false,
       "leakageRisk": "possible_post_match_overwrite",
+      "predictedOutcome": "D",
       "features": {
         "home_avg_scored": 0,
         "away_avg_scored": 0,
@@ -10231,6 +10378,7 @@
       "featureSource": "review_prediction_fallback",
       "snapshotBacked": false,
       "leakageRisk": "possible_post_match_overwrite",
+      "predictedOutcome": "H",
       "features": {
         "home_avg_scored": 0,
         "away_avg_scored": 0,
@@ -10319,6 +10467,7 @@
       "featureSource": "review_prediction_fallback",
       "snapshotBacked": false,
       "leakageRisk": "possible_post_match_overwrite",
+      "predictedOutcome": "H",
       "features": {
         "home_avg_scored": 0,
         "away_avg_scored": 0,
@@ -10407,6 +10556,7 @@
       "featureSource": "review_prediction_fallback",
       "snapshotBacked": false,
       "leakageRisk": "possible_post_match_overwrite",
+      "predictedOutcome": "D",
       "features": {
         "home_avg_scored": 0,
         "away_avg_scored": 0,
@@ -10495,6 +10645,7 @@
       "featureSource": "review_prediction_fallback",
       "snapshotBacked": false,
       "leakageRisk": "possible_post_match_overwrite",
+      "predictedOutcome": "H",
       "features": {
         "home_avg_scored": 0,
         "away_avg_scored": 0,
@@ -10583,6 +10734,7 @@
       "featureSource": "review_prediction_fallback",
       "snapshotBacked": false,
       "leakageRisk": "possible_post_match_overwrite",
+      "predictedOutcome": "H",
       "features": {
         "home_avg_scored": 0,
         "away_avg_scored": 0,
@@ -10671,6 +10823,7 @@
       "featureSource": "review_prediction_fallback",
       "snapshotBacked": false,
       "leakageRisk": "possible_post_match_overwrite",
+      "predictedOutcome": "H",
       "features": {
         "home_avg_scored": 0,
         "away_avg_scored": 0,
@@ -10759,6 +10912,7 @@
       "featureSource": "review_prediction_fallback",
       "snapshotBacked": false,
       "leakageRisk": "possible_post_match_overwrite",
+      "predictedOutcome": "H",
       "features": {
         "home_avg_scored": 0,
         "away_avg_scored": 0,
@@ -10847,6 +11001,7 @@
       "featureSource": "review_prediction_fallback",
       "snapshotBacked": false,
       "leakageRisk": "possible_post_match_overwrite",
+      "predictedOutcome": "D",
       "features": {
         "home_avg_scored": 0,
         "away_avg_scored": 0,
@@ -10935,6 +11090,7 @@
       "featureSource": "review_prediction_fallback",
       "snapshotBacked": false,
       "leakageRisk": "possible_post_match_overwrite",
+      "predictedOutcome": "D",
       "features": {
         "home_avg_scored": 0,
         "away_avg_scored": 0,
@@ -11023,6 +11179,7 @@
       "featureSource": "review_prediction_fallback",
       "snapshotBacked": false,
       "leakageRisk": "possible_post_match_overwrite",
+      "predictedOutcome": "A",
       "features": {
         "home_avg_scored": 0,
         "away_avg_scored": 0,
@@ -11111,6 +11268,7 @@
       "featureSource": "review_prediction_fallback",
       "snapshotBacked": false,
       "leakageRisk": "possible_post_match_overwrite",
+      "predictedOutcome": "D",
       "features": {
         "home_avg_scored": 0,
         "away_avg_scored": 0,
@@ -11199,6 +11357,7 @@
       "featureSource": "review_prediction_fallback",
       "snapshotBacked": false,
       "leakageRisk": "possible_post_match_overwrite",
+      "predictedOutcome": "D",
       "features": {
         "home_avg_scored": 0,
         "away_avg_scored": 0,
@@ -11287,6 +11446,7 @@
       "featureSource": "review_prediction_fallback",
       "snapshotBacked": false,
       "leakageRisk": "possible_post_match_overwrite",
+      "predictedOutcome": "D",
       "features": {
         "home_avg_scored": 0,
         "away_avg_scored": 0,
@@ -11375,6 +11535,7 @@
       "featureSource": "review_prediction_fallback",
       "snapshotBacked": false,
       "leakageRisk": "possible_post_match_overwrite",
+      "predictedOutcome": "D",
       "features": {
         "home_avg_scored": 0,
         "away_avg_scored": 0,
@@ -11463,6 +11624,7 @@
       "featureSource": "review_prediction_fallback",
       "snapshotBacked": false,
       "leakageRisk": "possible_post_match_overwrite",
+      "predictedOutcome": "D",
       "features": {
         "home_avg_scored": 0,
         "away_avg_scored": 0,
@@ -11551,6 +11713,7 @@
       "featureSource": "review_prediction_fallback",
       "snapshotBacked": false,
       "leakageRisk": "possible_post_match_overwrite",
+      "predictedOutcome": "A",
       "features": {
         "home_avg_scored": 0,
         "away_avg_scored": 0,
@@ -11639,6 +11802,7 @@
       "featureSource": "review_prediction_fallback",
       "snapshotBacked": false,
       "leakageRisk": "possible_post_match_overwrite",
+      "predictedOutcome": "H",
       "features": {
         "home_avg_scored": 0,
         "away_avg_scored": 0,
@@ -11727,6 +11891,7 @@
       "featureSource": "review_prediction_fallback",
       "snapshotBacked": false,
       "leakageRisk": "possible_post_match_overwrite",
+      "predictedOutcome": "A",
       "features": {
         "home_avg_scored": 0,
         "away_avg_scored": 0,
@@ -11815,6 +11980,7 @@
       "featureSource": "review_prediction_fallback",
       "snapshotBacked": false,
       "leakageRisk": "possible_post_match_overwrite",
+      "predictedOutcome": "H",
       "features": {
         "home_avg_scored": 0,
         "away_avg_scored": 0,
@@ -11903,6 +12069,7 @@
       "featureSource": "review_prediction_fallback",
       "snapshotBacked": false,
       "leakageRisk": "possible_post_match_overwrite",
+      "predictedOutcome": "D",
       "features": {
         "home_avg_scored": 0,
         "away_avg_scored": 0,
@@ -11991,6 +12158,7 @@
       "featureSource": "review_prediction_fallback",
       "snapshotBacked": false,
       "leakageRisk": "possible_post_match_overwrite",
+      "predictedOutcome": "D",
       "features": {
         "home_avg_scored": 0,
         "away_avg_scored": 0,
@@ -12079,6 +12247,7 @@
       "featureSource": "review_prediction_fallback",
       "snapshotBacked": false,
       "leakageRisk": "possible_post_match_overwrite",
+      "predictedOutcome": "D",
       "features": {
         "home_avg_scored": 0,
         "away_avg_scored": 0,
@@ -12167,6 +12336,7 @@
       "featureSource": "review_prediction_fallback",
       "snapshotBacked": false,
       "leakageRisk": "possible_post_match_overwrite",
+      "predictedOutcome": "D",
       "features": {
         "home_avg_scored": 0,
         "away_avg_scored": 0,
@@ -12255,6 +12425,7 @@
       "featureSource": "review_prediction_fallback",
       "snapshotBacked": false,
       "leakageRisk": "possible_post_match_overwrite",
+      "predictedOutcome": "D",
       "features": {
         "home_avg_scored": 0,
         "away_avg_scored": 0,
@@ -12343,6 +12514,7 @@
       "featureSource": "review_prediction_fallback",
       "snapshotBacked": false,
       "leakageRisk": "possible_post_match_overwrite",
+      "predictedOutcome": "D",
       "features": {
         "home_avg_scored": 0,
         "away_avg_scored": 0,
@@ -12431,6 +12603,7 @@
       "featureSource": "review_prediction_fallback",
       "snapshotBacked": false,
       "leakageRisk": "possible_post_match_overwrite",
+      "predictedOutcome": "D",
       "features": {
         "home_avg_scored": 0,
         "away_avg_scored": 0,
@@ -12519,6 +12692,7 @@
       "featureSource": "review_prediction_fallback",
       "snapshotBacked": false,
       "leakageRisk": "possible_post_match_overwrite",
+      "predictedOutcome": "D",
       "features": {
         "home_avg_scored": 0,
         "away_avg_scored": 0,
@@ -12607,6 +12781,7 @@
       "featureSource": "review_prediction_fallback",
       "snapshotBacked": false,
       "leakageRisk": "possible_post_match_overwrite",
+      "predictedOutcome": "D",
       "features": {
         "home_avg_scored": 0,
         "away_avg_scored": 0,
@@ -12695,6 +12870,7 @@
       "featureSource": "review_prediction_fallback",
       "snapshotBacked": false,
       "leakageRisk": "possible_post_match_overwrite",
+      "predictedOutcome": "D",
       "features": {
         "home_avg_scored": 0,
         "away_avg_scored": 0,
@@ -12783,6 +12959,7 @@
       "featureSource": "review_prediction_fallback",
       "snapshotBacked": false,
       "leakageRisk": "possible_post_match_overwrite",
+      "predictedOutcome": "A",
       "features": {
         "home_avg_scored": 0,
         "away_avg_scored": 0,
@@ -12871,6 +13048,7 @@
       "featureSource": "review_prediction_fallback",
       "snapshotBacked": false,
       "leakageRisk": "possible_post_match_overwrite",
+      "predictedOutcome": "D",
       "features": {
         "home_avg_scored": 0,
         "away_avg_scored": 0,
@@ -12959,6 +13137,7 @@
       "featureSource": "review_prediction_fallback",
       "snapshotBacked": false,
       "leakageRisk": "possible_post_match_overwrite",
+      "predictedOutcome": "H",
       "features": {
         "home_avg_scored": 0,
         "away_avg_scored": 0,
@@ -13047,6 +13226,7 @@
       "featureSource": "review_prediction_fallback",
       "snapshotBacked": false,
       "leakageRisk": "possible_post_match_overwrite",
+      "predictedOutcome": "D",
       "features": {
         "home_avg_scored": 0,
         "away_avg_scored": 0,
@@ -13135,6 +13315,7 @@
       "featureSource": "review_prediction_fallback",
       "snapshotBacked": false,
       "leakageRisk": "possible_post_match_overwrite",
+      "predictedOutcome": "D",
       "features": {
         "home_avg_scored": 0,
         "away_avg_scored": 0,
@@ -13223,6 +13404,7 @@
       "featureSource": "review_prediction_fallback",
       "snapshotBacked": false,
       "leakageRisk": "possible_post_match_overwrite",
+      "predictedOutcome": "D",
       "features": {
         "home_avg_scored": 0,
         "away_avg_scored": 0,
@@ -13311,6 +13493,7 @@
       "featureSource": "review_prediction_fallback",
       "snapshotBacked": false,
       "leakageRisk": "possible_post_match_overwrite",
+      "predictedOutcome": "A",
       "features": {
         "home_avg_scored": 0,
         "away_avg_scored": 0,
@@ -13399,6 +13582,7 @@
       "featureSource": "review_prediction_fallback",
       "snapshotBacked": false,
       "leakageRisk": "possible_post_match_overwrite",
+      "predictedOutcome": "D",
       "features": {
         "home_avg_scored": 0,
         "away_avg_scored": 0,
@@ -13487,6 +13671,7 @@
       "featureSource": "review_prediction_fallback",
       "snapshotBacked": false,
       "leakageRisk": "possible_post_match_overwrite",
+      "predictedOutcome": "H",
       "features": {
         "home_avg_scored": 0,
         "away_avg_scored": 0,
@@ -13575,6 +13760,7 @@
       "featureSource": "review_prediction_fallback",
       "snapshotBacked": false,
       "leakageRisk": "possible_post_match_overwrite",
+      "predictedOutcome": "H",
       "features": {
         "home_avg_scored": 0,
         "away_avg_scored": 0,
@@ -13663,6 +13849,7 @@
       "featureSource": "review_prediction_fallback",
       "snapshotBacked": false,
       "leakageRisk": "possible_post_match_overwrite",
+      "predictedOutcome": "D",
       "features": {
         "home_avg_scored": 0,
         "away_avg_scored": 0,
@@ -13751,6 +13938,7 @@
       "featureSource": "review_prediction_fallback",
       "snapshotBacked": false,
       "leakageRisk": "possible_post_match_overwrite",
+      "predictedOutcome": "H",
       "features": {
         "home_avg_scored": 0,
         "away_avg_scored": 0,
@@ -13839,6 +14027,7 @@
       "featureSource": "review_prediction_fallback",
       "snapshotBacked": false,
       "leakageRisk": "possible_post_match_overwrite",
+      "predictedOutcome": "D",
       "features": {
         "home_avg_scored": 0,
         "away_avg_scored": 0,
@@ -13927,6 +14116,7 @@
       "featureSource": "review_prediction_fallback",
       "snapshotBacked": false,
       "leakageRisk": "possible_post_match_overwrite",
+      "predictedOutcome": "D",
       "features": {
         "home_avg_scored": 0,
         "away_avg_scored": 0,
@@ -14015,6 +14205,7 @@
       "featureSource": "review_prediction_fallback",
       "snapshotBacked": false,
       "leakageRisk": "possible_post_match_overwrite",
+      "predictedOutcome": "H",
       "features": {
         "home_avg_scored": 0,
         "away_avg_scored": 0,
@@ -14103,6 +14294,7 @@
       "featureSource": "review_prediction_fallback",
       "snapshotBacked": false,
       "leakageRisk": "possible_post_match_overwrite",
+      "predictedOutcome": "D",
       "features": {
         "home_avg_scored": 0,
         "away_avg_scored": 0,
@@ -14191,6 +14383,7 @@
       "featureSource": "review_prediction_fallback",
       "snapshotBacked": false,
       "leakageRisk": "possible_post_match_overwrite",
+      "predictedOutcome": "A",
       "features": {
         "home_avg_scored": 0,
         "away_avg_scored": 0,
@@ -14279,6 +14472,7 @@
       "featureSource": "review_prediction_fallback",
       "snapshotBacked": false,
       "leakageRisk": "possible_post_match_overwrite",
+      "predictedOutcome": "H",
       "features": {
         "home_avg_scored": 0,
         "away_avg_scored": 0,
@@ -14367,6 +14561,7 @@
       "featureSource": "review_prediction_fallback",
       "snapshotBacked": false,
       "leakageRisk": "possible_post_match_overwrite",
+      "predictedOutcome": "A",
       "features": {
         "home_avg_scored": 0,
         "away_avg_scored": 0,
@@ -14455,6 +14650,7 @@
       "featureSource": "review_prediction_fallback",
       "snapshotBacked": false,
       "leakageRisk": "possible_post_match_overwrite",
+      "predictedOutcome": "D",
       "features": {
         "home_avg_scored": 0,
         "away_avg_scored": 0,
@@ -14543,6 +14739,7 @@
       "featureSource": "review_prediction_fallback",
       "snapshotBacked": false,
       "leakageRisk": "possible_post_match_overwrite",
+      "predictedOutcome": "D",
       "features": {
         "home_avg_scored": 0,
         "away_avg_scored": 0,
@@ -14631,6 +14828,7 @@
       "featureSource": "review_prediction_fallback",
       "snapshotBacked": false,
       "leakageRisk": "possible_post_match_overwrite",
+      "predictedOutcome": "D",
       "features": {
         "home_avg_scored": 0,
         "away_avg_scored": 0,
@@ -14719,6 +14917,7 @@
       "featureSource": "review_prediction_fallback",
       "snapshotBacked": false,
       "leakageRisk": "possible_post_match_overwrite",
+      "predictedOutcome": "H",
       "features": {
         "home_avg_scored": 0,
         "away_avg_scored": 0,
@@ -14807,6 +15006,7 @@
       "featureSource": "review_prediction_fallback",
       "snapshotBacked": false,
       "leakageRisk": "possible_post_match_overwrite",
+      "predictedOutcome": "H",
       "features": {
         "home_avg_scored": 0,
         "away_avg_scored": 0,
@@ -14895,6 +15095,7 @@
       "featureSource": "review_prediction_fallback",
       "snapshotBacked": false,
       "leakageRisk": "possible_post_match_overwrite",
+      "predictedOutcome": "D",
       "features": {
         "home_avg_scored": 0,
         "away_avg_scored": 0,
@@ -14983,6 +15184,7 @@
       "featureSource": "review_prediction_fallback",
       "snapshotBacked": false,
       "leakageRisk": "possible_post_match_overwrite",
+      "predictedOutcome": "D",
       "features": {
         "home_avg_scored": 0,
         "away_avg_scored": 0,
@@ -15071,6 +15273,7 @@
       "featureSource": "review_prediction_fallback",
       "snapshotBacked": false,
       "leakageRisk": "possible_post_match_overwrite",
+      "predictedOutcome": "H",
       "features": {
         "home_avg_scored": 0,
         "away_avg_scored": 0,
@@ -15159,6 +15362,7 @@
       "featureSource": "review_prediction_fallback",
       "snapshotBacked": false,
       "leakageRisk": "possible_post_match_overwrite",
+      "predictedOutcome": "D",
       "features": {
         "home_avg_scored": 0,
         "away_avg_scored": 0,
@@ -15247,6 +15451,7 @@
       "featureSource": "review_prediction_fallback",
       "snapshotBacked": false,
       "leakageRisk": "possible_post_match_overwrite",
+      "predictedOutcome": "H",
       "features": {
         "home_avg_scored": 0,
         "away_avg_scored": 0,
@@ -15335,6 +15540,7 @@
       "featureSource": "review_prediction_fallback",
       "snapshotBacked": false,
       "leakageRisk": "possible_post_match_overwrite",
+      "predictedOutcome": "H",
       "features": {
         "home_avg_scored": 0,
         "away_avg_scored": 0,
@@ -15423,6 +15629,7 @@
       "featureSource": "review_prediction_fallback",
       "snapshotBacked": false,
       "leakageRisk": "possible_post_match_overwrite",
+      "predictedOutcome": "A",
       "features": {
         "home_avg_scored": 0,
         "away_avg_scored": 0,
@@ -15511,6 +15718,7 @@
       "featureSource": "review_prediction_fallback",
       "snapshotBacked": false,
       "leakageRisk": "possible_post_match_overwrite",
+      "predictedOutcome": "D",
       "features": {
         "home_avg_scored": 0,
         "away_avg_scored": 0,
@@ -15599,6 +15807,7 @@
       "featureSource": "review_prediction_fallback",
       "snapshotBacked": false,
       "leakageRisk": "possible_post_match_overwrite",
+      "predictedOutcome": "H",
       "features": {
         "home_avg_scored": 0,
         "away_avg_scored": 0,
@@ -15687,6 +15896,7 @@
       "featureSource": "review_prediction_fallback",
       "snapshotBacked": false,
       "leakageRisk": "possible_post_match_overwrite",
+      "predictedOutcome": "A",
       "features": {
         "home_avg_scored": 0,
         "away_avg_scored": 0,
@@ -15775,6 +15985,7 @@
       "featureSource": "review_prediction_fallback",
       "snapshotBacked": false,
       "leakageRisk": "possible_post_match_overwrite",
+      "predictedOutcome": "D",
       "features": {
         "home_avg_scored": 0,
         "away_avg_scored": 0,
@@ -15863,6 +16074,7 @@
       "featureSource": "review_prediction_fallback",
       "snapshotBacked": false,
       "leakageRisk": "possible_post_match_overwrite",
+      "predictedOutcome": "D",
       "features": {
         "home_avg_scored": 0,
         "away_avg_scored": 0,
@@ -15951,6 +16163,7 @@
       "featureSource": "review_prediction_fallback",
       "snapshotBacked": false,
       "leakageRisk": "possible_post_match_overwrite",
+      "predictedOutcome": "H",
       "features": {
         "home_avg_scored": 0,
         "away_avg_scored": 0,
@@ -16039,6 +16252,7 @@
       "featureSource": "review_prediction_fallback",
       "snapshotBacked": false,
       "leakageRisk": "possible_post_match_overwrite",
+      "predictedOutcome": "D",
       "features": {
         "home_avg_scored": 0,
         "away_avg_scored": 0,
@@ -16127,6 +16341,7 @@
       "featureSource": "review_prediction_fallback",
       "snapshotBacked": false,
       "leakageRisk": "possible_post_match_overwrite",
+      "predictedOutcome": "D",
       "features": {
         "home_avg_scored": 0,
         "away_avg_scored": 0,
@@ -16215,6 +16430,7 @@
       "featureSource": "review_prediction_fallback",
       "snapshotBacked": false,
       "leakageRisk": "possible_post_match_overwrite",
+      "predictedOutcome": "D",
       "features": {
         "home_avg_scored": 0,
         "away_avg_scored": 0,
@@ -16303,6 +16519,7 @@
       "featureSource": "review_prediction_fallback",
       "snapshotBacked": false,
       "leakageRisk": "possible_post_match_overwrite",
+      "predictedOutcome": "D",
       "features": {
         "home_avg_scored": 0,
         "away_avg_scored": 0,
@@ -16391,6 +16608,7 @@
       "featureSource": "review_prediction_fallback",
       "snapshotBacked": false,
       "leakageRisk": "possible_post_match_overwrite",
+      "predictedOutcome": "H",
       "features": {
         "home_avg_scored": 0,
         "away_avg_scored": 0,
@@ -16479,6 +16697,7 @@
       "featureSource": "review_prediction_fallback",
       "snapshotBacked": false,
       "leakageRisk": "possible_post_match_overwrite",
+      "predictedOutcome": "D",
       "features": {
         "home_avg_scored": 0,
         "away_avg_scored": 0,
@@ -16567,6 +16786,7 @@
       "featureSource": "review_prediction_fallback",
       "snapshotBacked": false,
       "leakageRisk": "possible_post_match_overwrite",
+      "predictedOutcome": "D",
       "features": {
         "home_avg_scored": 0,
         "away_avg_scored": 0,
@@ -16655,6 +16875,7 @@
       "featureSource": "review_prediction_fallback",
       "snapshotBacked": false,
       "leakageRisk": "possible_post_match_overwrite",
+      "predictedOutcome": "H",
       "features": {
         "home_avg_scored": 0,
         "away_avg_scored": 0,
@@ -16743,6 +16964,7 @@
       "featureSource": "review_prediction_fallback",
       "snapshotBacked": false,
       "leakageRisk": "possible_post_match_overwrite",
+      "predictedOutcome": "D",
       "features": {
         "home_avg_scored": 0,
         "away_avg_scored": 0,
@@ -16831,6 +17053,7 @@
       "featureSource": "review_prediction_fallback",
       "snapshotBacked": false,
       "leakageRisk": "possible_post_match_overwrite",
+      "predictedOutcome": "H",
       "features": {
         "home_avg_scored": 0,
         "away_avg_scored": 0,
@@ -16919,6 +17142,7 @@
       "featureSource": "review_prediction_fallback",
       "snapshotBacked": false,
       "leakageRisk": "possible_post_match_overwrite",
+      "predictedOutcome": "D",
       "features": {
         "home_avg_scored": 0,
         "away_avg_scored": 0,
@@ -17007,6 +17231,7 @@
       "featureSource": "review_prediction_fallback",
       "snapshotBacked": false,
       "leakageRisk": "possible_post_match_overwrite",
+      "predictedOutcome": "H",
       "features": {
         "home_avg_scored": 0,
         "away_avg_scored": 0,
@@ -17095,6 +17320,7 @@
       "featureSource": "review_prediction_fallback",
       "snapshotBacked": false,
       "leakageRisk": "possible_post_match_overwrite",
+      "predictedOutcome": "A",
       "features": {
         "home_avg_scored": 0,
         "away_avg_scored": 0,
@@ -17183,6 +17409,7 @@
       "featureSource": "review_prediction_fallback",
       "snapshotBacked": false,
       "leakageRisk": "possible_post_match_overwrite",
+      "predictedOutcome": "D",
       "features": {
         "home_avg_scored": 0,
         "away_avg_scored": 0,
@@ -17271,6 +17498,7 @@
       "featureSource": "review_prediction_fallback",
       "snapshotBacked": false,
       "leakageRisk": "possible_post_match_overwrite",
+      "predictedOutcome": "D",
       "features": {
         "home_avg_scored": 0,
         "away_avg_scored": 0,
@@ -17359,6 +17587,7 @@
       "featureSource": "review_prediction_fallback",
       "snapshotBacked": false,
       "leakageRisk": "possible_post_match_overwrite",
+      "predictedOutcome": "A",
       "features": {
         "home_avg_scored": 0,
         "away_avg_scored": 0,
@@ -17447,6 +17676,7 @@
       "featureSource": "review_prediction_fallback",
       "snapshotBacked": false,
       "leakageRisk": "possible_post_match_overwrite",
+      "predictedOutcome": "D",
       "features": {
         "home_avg_scored": 0,
         "away_avg_scored": 0,
@@ -17535,6 +17765,7 @@
       "featureSource": "review_prediction_fallback",
       "snapshotBacked": false,
       "leakageRisk": "possible_post_match_overwrite",
+      "predictedOutcome": "D",
       "features": {
         "home_avg_scored": 0,
         "away_avg_scored": 0,
@@ -17623,6 +17854,7 @@
       "featureSource": "review_prediction_fallback",
       "snapshotBacked": false,
       "leakageRisk": "possible_post_match_overwrite",
+      "predictedOutcome": "H",
       "features": {
         "home_avg_scored": 0,
         "away_avg_scored": 0,
@@ -17711,6 +17943,7 @@
       "featureSource": "review_prediction_fallback",
       "snapshotBacked": false,
       "leakageRisk": "possible_post_match_overwrite",
+      "predictedOutcome": "H",
       "features": {
         "home_avg_scored": 0,
         "away_avg_scored": 0,
@@ -17799,6 +18032,7 @@
       "featureSource": "review_prediction_fallback",
       "snapshotBacked": false,
       "leakageRisk": "possible_post_match_overwrite",
+      "predictedOutcome": "D",
       "features": {
         "home_avg_scored": 0,
         "away_avg_scored": 0,
@@ -17887,6 +18121,7 @@
       "featureSource": "review_prediction_fallback",
       "snapshotBacked": false,
       "leakageRisk": "possible_post_match_overwrite",
+      "predictedOutcome": "D",
       "features": {
         "home_avg_scored": 0,
         "away_avg_scored": 0,
@@ -17975,6 +18210,7 @@
       "featureSource": "review_prediction_fallback",
       "snapshotBacked": false,
       "leakageRisk": "possible_post_match_overwrite",
+      "predictedOutcome": "D",
       "features": {
         "home_avg_scored": 0,
         "away_avg_scored": 0,
@@ -18063,6 +18299,7 @@
       "featureSource": "review_prediction_fallback",
       "snapshotBacked": false,
       "leakageRisk": "possible_post_match_overwrite",
+      "predictedOutcome": "D",
       "features": {
         "home_avg_scored": 0,
         "away_avg_scored": 0,
@@ -18151,6 +18388,7 @@
       "featureSource": "review_prediction_fallback",
       "snapshotBacked": false,
       "leakageRisk": "possible_post_match_overwrite",
+      "predictedOutcome": "D",
       "features": {
         "home_avg_scored": 0,
         "away_avg_scored": 0,
@@ -18239,6 +18477,7 @@
       "featureSource": "review_prediction_fallback",
       "snapshotBacked": false,
       "leakageRisk": "possible_post_match_overwrite",
+      "predictedOutcome": "D",
       "features": {
         "home_avg_scored": 0,
         "away_avg_scored": 0,
@@ -18327,6 +18566,7 @@
       "featureSource": "review_prediction_fallback",
       "snapshotBacked": false,
       "leakageRisk": "possible_post_match_overwrite",
+      "predictedOutcome": "D",
       "features": {
         "home_avg_scored": 0,
         "away_avg_scored": 0,
@@ -18415,6 +18655,7 @@
       "featureSource": "review_prediction_fallback",
       "snapshotBacked": false,
       "leakageRisk": "possible_post_match_overwrite",
+      "predictedOutcome": "D",
       "features": {
         "home_avg_scored": 0,
         "away_avg_scored": 0,
@@ -18503,6 +18744,7 @@
       "featureSource": "review_prediction_fallback",
       "snapshotBacked": false,
       "leakageRisk": "possible_post_match_overwrite",
+      "predictedOutcome": "D",
       "features": {
         "home_avg_scored": 0,
         "away_avg_scored": 0,
@@ -18591,6 +18833,7 @@
       "featureSource": "review_prediction_fallback",
       "snapshotBacked": false,
       "leakageRisk": "possible_post_match_overwrite",
+      "predictedOutcome": "D",
       "features": {
         "home_avg_scored": 0,
         "away_avg_scored": 0,
@@ -18679,6 +18922,7 @@
       "featureSource": "review_prediction_fallback",
       "snapshotBacked": false,
       "leakageRisk": "possible_post_match_overwrite",
+      "predictedOutcome": "D",
       "features": {
         "home_avg_scored": 0,
         "away_avg_scored": 0,
@@ -18767,6 +19011,7 @@
       "featureSource": "review_prediction_fallback",
       "snapshotBacked": false,
       "leakageRisk": "possible_post_match_overwrite",
+      "predictedOutcome": "D",
       "features": {
         "home_avg_scored": 0,
         "away_avg_scored": 0,
@@ -18855,6 +19100,7 @@
       "featureSource": "review_prediction_fallback",
       "snapshotBacked": false,
       "leakageRisk": "possible_post_match_overwrite",
+      "predictedOutcome": "D",
       "features": {
         "home_avg_scored": 0,
         "away_avg_scored": 0,
@@ -18943,6 +19189,7 @@
       "featureSource": "review_prediction_fallback",
       "snapshotBacked": false,
       "leakageRisk": "possible_post_match_overwrite",
+      "predictedOutcome": "D",
       "features": {
         "home_avg_scored": 0,
         "away_avg_scored": 0,
@@ -19031,6 +19278,7 @@
       "featureSource": "review_prediction_fallback",
       "snapshotBacked": false,
       "leakageRisk": "possible_post_match_overwrite",
+      "predictedOutcome": "D",
       "features": {
         "home_avg_scored": 0,
         "away_avg_scored": 0,
@@ -19119,6 +19367,7 @@
       "featureSource": "review_prediction_fallback",
       "snapshotBacked": false,
       "leakageRisk": "possible_post_match_overwrite",
+      "predictedOutcome": "D",
       "features": {
         "home_avg_scored": 0,
         "away_avg_scored": 0,
@@ -19207,6 +19456,7 @@
       "featureSource": "review_prediction_fallback",
       "snapshotBacked": false,
       "leakageRisk": "possible_post_match_overwrite",
+      "predictedOutcome": "D",
       "features": {
         "home_avg_scored": 0,
         "away_avg_scored": 0,
@@ -19295,6 +19545,7 @@
       "featureSource": "review_prediction_fallback",
       "snapshotBacked": false,
       "leakageRisk": "possible_post_match_overwrite",
+      "predictedOutcome": "D",
       "features": {
         "home_avg_scored": 0,
         "away_avg_scored": 0,
@@ -19383,6 +19634,7 @@
       "featureSource": "review_prediction_fallback",
       "snapshotBacked": false,
       "leakageRisk": "possible_post_match_overwrite",
+      "predictedOutcome": "D",
       "features": {
         "home_avg_scored": 0,
         "away_avg_scored": 0,
@@ -19471,6 +19723,7 @@
       "featureSource": "review_prediction_fallback",
       "snapshotBacked": false,
       "leakageRisk": "possible_post_match_overwrite",
+      "predictedOutcome": "D",
       "features": {
         "home_avg_scored": 0,
         "away_avg_scored": 0,
@@ -19559,6 +19812,7 @@
       "featureSource": "review_prediction_fallback",
       "snapshotBacked": false,
       "leakageRisk": "possible_post_match_overwrite",
+      "predictedOutcome": "D",
       "features": {
         "home_avg_scored": 0,
         "away_avg_scored": 0,
@@ -19647,6 +19901,7 @@
       "featureSource": "review_prediction_fallback",
       "snapshotBacked": false,
       "leakageRisk": "possible_post_match_overwrite",
+      "predictedOutcome": "D",
       "features": {
         "home_avg_scored": 0,
         "away_avg_scored": 0,
@@ -19735,6 +19990,7 @@
       "featureSource": "review_prediction_fallback",
       "snapshotBacked": false,
       "leakageRisk": "possible_post_match_overwrite",
+      "predictedOutcome": "D",
       "features": {
         "home_avg_scored": 0,
         "away_avg_scored": 0,
@@ -19823,6 +20079,7 @@
       "featureSource": "review_prediction_fallback",
       "snapshotBacked": false,
       "leakageRisk": "possible_post_match_overwrite",
+      "predictedOutcome": "D",
       "features": {
         "home_avg_scored": 0,
         "away_avg_scored": 0,
@@ -19911,6 +20168,7 @@
       "featureSource": "review_prediction_fallback",
       "snapshotBacked": false,
       "leakageRisk": "possible_post_match_overwrite",
+      "predictedOutcome": "D",
       "features": {
         "home_avg_scored": 0,
         "away_avg_scored": 0,
@@ -19999,6 +20257,7 @@
       "featureSource": "review_prediction_fallback",
       "snapshotBacked": false,
       "leakageRisk": "possible_post_match_overwrite",
+      "predictedOutcome": "D",
       "features": {
         "home_avg_scored": 0,
         "away_avg_scored": 0,
@@ -20087,6 +20346,7 @@
       "featureSource": "review_prediction_fallback",
       "snapshotBacked": false,
       "leakageRisk": "possible_post_match_overwrite",
+      "predictedOutcome": "D",
       "features": {
         "home_avg_scored": 0,
         "away_avg_scored": 0,
@@ -20175,6 +20435,7 @@
       "featureSource": "review_prediction_fallback",
       "snapshotBacked": false,
       "leakageRisk": "possible_post_match_overwrite",
+      "predictedOutcome": "D",
       "features": {
         "home_avg_scored": 0,
         "away_avg_scored": 0,
@@ -20263,6 +20524,7 @@
       "featureSource": "review_prediction_fallback",
       "snapshotBacked": false,
       "leakageRisk": "possible_post_match_overwrite",
+      "predictedOutcome": "D",
       "features": {
         "home_avg_scored": 0,
         "away_avg_scored": 0,
@@ -20351,6 +20613,7 @@
       "featureSource": "review_prediction_fallback",
       "snapshotBacked": false,
       "leakageRisk": "possible_post_match_overwrite",
+      "predictedOutcome": "D",
       "features": {
         "home_avg_scored": 0,
         "away_avg_scored": 0,
@@ -20439,6 +20702,7 @@
       "featureSource": "review_prediction_fallback",
       "snapshotBacked": false,
       "leakageRisk": "possible_post_match_overwrite",
+      "predictedOutcome": "D",
       "features": {
         "home_avg_scored": 0,
         "away_avg_scored": 0,
@@ -20527,6 +20791,7 @@
       "featureSource": "review_prediction_fallback",
       "snapshotBacked": false,
       "leakageRisk": "possible_post_match_overwrite",
+      "predictedOutcome": "D",
       "features": {
         "home_avg_scored": 0,
         "away_avg_scored": 0,
@@ -20615,6 +20880,7 @@
       "featureSource": "review_prediction_fallback",
       "snapshotBacked": false,
       "leakageRisk": "possible_post_match_overwrite",
+      "predictedOutcome": "D",
       "features": {
         "home_avg_scored": 0,
         "away_avg_scored": 0,
@@ -20703,6 +20969,7 @@
       "featureSource": "review_prediction_fallback",
       "snapshotBacked": false,
       "leakageRisk": "possible_post_match_overwrite",
+      "predictedOutcome": "D",
       "features": {
         "home_avg_scored": 0,
         "away_avg_scored": 0,
@@ -20791,6 +21058,7 @@
       "featureSource": "review_prediction_fallback",
       "snapshotBacked": false,
       "leakageRisk": "possible_post_match_overwrite",
+      "predictedOutcome": "D",
       "features": {
         "home_avg_scored": 0,
         "away_avg_scored": 0,
@@ -20879,6 +21147,7 @@
       "featureSource": "review_prediction_fallback",
       "snapshotBacked": false,
       "leakageRisk": "possible_post_match_overwrite",
+      "predictedOutcome": "D",
       "features": {
         "home_avg_scored": 0,
         "away_avg_scored": 0,
@@ -20967,6 +21236,7 @@
       "featureSource": "review_prediction_fallback",
       "snapshotBacked": false,
       "leakageRisk": "possible_post_match_overwrite",
+      "predictedOutcome": "D",
       "features": {
         "home_avg_scored": 0,
         "away_avg_scored": 0,
@@ -21055,6 +21325,7 @@
       "featureSource": "review_prediction_fallback",
       "snapshotBacked": false,
       "leakageRisk": "possible_post_match_overwrite",
+      "predictedOutcome": "D",
       "features": {
         "home_avg_scored": 0,
         "away_avg_scored": 0,
@@ -21143,6 +21414,7 @@
       "featureSource": "review_prediction_fallback",
       "snapshotBacked": false,
       "leakageRisk": "possible_post_match_overwrite",
+      "predictedOutcome": "D",
       "features": {
         "home_avg_scored": 0,
         "away_avg_scored": 0,
@@ -21231,6 +21503,7 @@
       "featureSource": "review_prediction_fallback",
       "snapshotBacked": false,
       "leakageRisk": "possible_post_match_overwrite",
+      "predictedOutcome": "D",
       "features": {
         "home_avg_scored": 0,
         "away_avg_scored": 0,
@@ -21319,6 +21592,7 @@
       "featureSource": "review_prediction_fallback",
       "snapshotBacked": false,
       "leakageRisk": "possible_post_match_overwrite",
+      "predictedOutcome": "D",
       "features": {
         "home_avg_scored": 0,
         "away_avg_scored": 0,
@@ -21407,6 +21681,7 @@
       "featureSource": "review_prediction_fallback",
       "snapshotBacked": false,
       "leakageRisk": "possible_post_match_overwrite",
+      "predictedOutcome": "D",
       "features": {
         "home_avg_scored": 0,
         "away_avg_scored": 0,
@@ -21495,6 +21770,7 @@
       "featureSource": "review_prediction_fallback",
       "snapshotBacked": false,
       "leakageRisk": "possible_post_match_overwrite",
+      "predictedOutcome": "D",
       "features": {
         "home_avg_scored": 0,
         "away_avg_scored": 0,
@@ -21583,6 +21859,7 @@
       "featureSource": "review_prediction_fallback",
       "snapshotBacked": false,
       "leakageRisk": "possible_post_match_overwrite",
+      "predictedOutcome": "D",
       "features": {
         "home_avg_scored": 0,
         "away_avg_scored": 0,
@@ -21671,6 +21948,7 @@
       "featureSource": "review_prediction_fallback",
       "snapshotBacked": false,
       "leakageRisk": "possible_post_match_overwrite",
+      "predictedOutcome": "D",
       "features": {
         "home_avg_scored": 0,
         "away_avg_scored": 0,
@@ -21759,6 +22037,7 @@
       "featureSource": "review_prediction_fallback",
       "snapshotBacked": false,
       "leakageRisk": "possible_post_match_overwrite",
+      "predictedOutcome": "D",
       "features": {
         "home_avg_scored": 0,
         "away_avg_scored": 0,
@@ -21847,6 +22126,7 @@
       "featureSource": "review_prediction_fallback",
       "snapshotBacked": false,
       "leakageRisk": "possible_post_match_overwrite",
+      "predictedOutcome": "D",
       "features": {
         "home_avg_scored": 0,
         "away_avg_scored": 0,
@@ -21935,6 +22215,7 @@
       "featureSource": "review_prediction_fallback",
       "snapshotBacked": false,
       "leakageRisk": "possible_post_match_overwrite",
+      "predictedOutcome": "D",
       "features": {
         "home_avg_scored": 0,
         "away_avg_scored": 0,
@@ -22023,6 +22304,7 @@
       "featureSource": "review_prediction_fallback",
       "snapshotBacked": false,
       "leakageRisk": "possible_post_match_overwrite",
+      "predictedOutcome": "D",
       "features": {
         "home_avg_scored": 0,
         "away_avg_scored": 0,
@@ -22111,6 +22393,7 @@
       "featureSource": "review_prediction_fallback",
       "snapshotBacked": false,
       "leakageRisk": "possible_post_match_overwrite",
+      "predictedOutcome": "D",
       "features": {
         "home_avg_scored": 0,
         "away_avg_scored": 0,
@@ -22199,6 +22482,7 @@
       "featureSource": "review_prediction_fallback",
       "snapshotBacked": false,
       "leakageRisk": "possible_post_match_overwrite",
+      "predictedOutcome": "D",
       "features": {
         "home_avg_scored": 0,
         "away_avg_scored": 0,
@@ -22287,6 +22571,7 @@
       "featureSource": "review_prediction_fallback",
       "snapshotBacked": false,
       "leakageRisk": "possible_post_match_overwrite",
+      "predictedOutcome": "D",
       "features": {
         "home_avg_scored": 0,
         "away_avg_scored": 0,
@@ -22375,6 +22660,7 @@
       "featureSource": "review_prediction_fallback",
       "snapshotBacked": false,
       "leakageRisk": "possible_post_match_overwrite",
+      "predictedOutcome": "D",
       "features": {
         "home_avg_scored": 0,
         "away_avg_scored": 0,
@@ -22463,6 +22749,7 @@
       "featureSource": "review_prediction_fallback",
       "snapshotBacked": false,
       "leakageRisk": "possible_post_match_overwrite",
+      "predictedOutcome": "D",
       "features": {
         "home_avg_scored": 0,
         "away_avg_scored": 0,
@@ -22551,6 +22838,7 @@
       "featureSource": "review_prediction_fallback",
       "snapshotBacked": false,
       "leakageRisk": "possible_post_match_overwrite",
+      "predictedOutcome": "D",
       "features": {
         "home_avg_scored": 0,
         "away_avg_scored": 0,
@@ -22639,6 +22927,7 @@
       "featureSource": "review_prediction_fallback",
       "snapshotBacked": false,
       "leakageRisk": "possible_post_match_overwrite",
+      "predictedOutcome": "D",
       "features": {
         "home_avg_scored": 0,
         "away_avg_scored": 0,
@@ -22727,6 +23016,7 @@
       "featureSource": "review_prediction_fallback",
       "snapshotBacked": false,
       "leakageRisk": "possible_post_match_overwrite",
+      "predictedOutcome": "D",
       "features": {
         "home_avg_scored": 0,
         "away_avg_scored": 0,
@@ -22815,6 +23105,7 @@
       "featureSource": "review_prediction_fallback",
       "snapshotBacked": false,
       "leakageRisk": "possible_post_match_overwrite",
+      "predictedOutcome": "D",
       "features": {
         "home_avg_scored": 0,
         "away_avg_scored": 0,
@@ -22903,6 +23194,7 @@
       "featureSource": "review_prediction_fallback",
       "snapshotBacked": false,
       "leakageRisk": "possible_post_match_overwrite",
+      "predictedOutcome": "D",
       "features": {
         "home_avg_scored": 0,
         "away_avg_scored": 0,
@@ -22991,6 +23283,7 @@
       "featureSource": "review_prediction_fallback",
       "snapshotBacked": false,
       "leakageRisk": "possible_post_match_overwrite",
+      "predictedOutcome": "D",
       "features": {
         "home_avg_scored": 0,
         "away_avg_scored": 0,
@@ -23079,6 +23372,7 @@
       "featureSource": "review_prediction_fallback",
       "snapshotBacked": false,
       "leakageRisk": "possible_post_match_overwrite",
+      "predictedOutcome": "D",
       "features": {
         "home_avg_scored": 0,
         "away_avg_scored": 0,
@@ -23167,6 +23461,7 @@
       "featureSource": "review_prediction_fallback",
       "snapshotBacked": false,
       "leakageRisk": "possible_post_match_overwrite",
+      "predictedOutcome": "D",
       "features": {
         "home_avg_scored": 0,
         "away_avg_scored": 0,
@@ -23255,6 +23550,7 @@
       "featureSource": "review_prediction_fallback",
       "snapshotBacked": false,
       "leakageRisk": "possible_post_match_overwrite",
+      "predictedOutcome": "D",
       "features": {
         "home_avg_scored": 0,
         "away_avg_scored": 0,
@@ -23343,6 +23639,7 @@
       "featureSource": "review_prediction_fallback",
       "snapshotBacked": false,
       "leakageRisk": "possible_post_match_overwrite",
+      "predictedOutcome": "D",
       "features": {
         "home_avg_scored": 0,
         "away_avg_scored": 0,
@@ -23431,6 +23728,7 @@
       "featureSource": "review_prediction_fallback",
       "snapshotBacked": false,
       "leakageRisk": "possible_post_match_overwrite",
+      "predictedOutcome": "D",
       "features": {
         "home_avg_scored": 0,
         "away_avg_scored": 0,
@@ -23519,6 +23817,7 @@
       "featureSource": "review_prediction_fallback",
       "snapshotBacked": false,
       "leakageRisk": "possible_post_match_overwrite",
+      "predictedOutcome": "D",
       "features": {
         "home_avg_scored": 0,
         "away_avg_scored": 0,
@@ -23607,6 +23906,7 @@
       "featureSource": "review_prediction_fallback",
       "snapshotBacked": false,
       "leakageRisk": "possible_post_match_overwrite",
+      "predictedOutcome": "D",
       "features": {
         "home_avg_scored": 0,
         "away_avg_scored": 0,
@@ -23695,6 +23995,7 @@
       "featureSource": "review_prediction_fallback",
       "snapshotBacked": false,
       "leakageRisk": "possible_post_match_overwrite",
+      "predictedOutcome": "D",
       "features": {
         "home_avg_scored": 0,
         "away_avg_scored": 0,
@@ -23783,6 +24084,7 @@
       "featureSource": "review_prediction_fallback",
       "snapshotBacked": false,
       "leakageRisk": "possible_post_match_overwrite",
+      "predictedOutcome": "D",
       "features": {
         "home_avg_scored": 0,
         "away_avg_scored": 0,
@@ -23871,6 +24173,7 @@
       "featureSource": "review_prediction_fallback",
       "snapshotBacked": false,
       "leakageRisk": "possible_post_match_overwrite",
+      "predictedOutcome": "D",
       "features": {
         "home_avg_scored": 0,
         "away_avg_scored": 0,
@@ -23959,6 +24262,7 @@
       "featureSource": "review_prediction_fallback",
       "snapshotBacked": false,
       "leakageRisk": "possible_post_match_overwrite",
+      "predictedOutcome": "D",
       "features": {
         "home_avg_scored": 0,
         "away_avg_scored": 0,
@@ -24047,6 +24351,7 @@
       "featureSource": "review_prediction_fallback",
       "snapshotBacked": false,
       "leakageRisk": "possible_post_match_overwrite",
+      "predictedOutcome": "D",
       "features": {
         "home_avg_scored": 0,
         "away_avg_scored": 0,
@@ -24135,6 +24440,7 @@
       "featureSource": "review_prediction_fallback",
       "snapshotBacked": false,
       "leakageRisk": "possible_post_match_overwrite",
+      "predictedOutcome": "D",
       "features": {
         "home_avg_scored": 0,
         "away_avg_scored": 0,
@@ -24223,6 +24529,7 @@
       "featureSource": "review_prediction_fallback",
       "snapshotBacked": false,
       "leakageRisk": "possible_post_match_overwrite",
+      "predictedOutcome": "D",
       "features": {
         "home_avg_scored": 0,
         "away_avg_scored": 0,
@@ -24311,6 +24618,7 @@
       "featureSource": "review_prediction_fallback",
       "snapshotBacked": false,
       "leakageRisk": "possible_post_match_overwrite",
+      "predictedOutcome": "D",
       "features": {
         "home_avg_scored": 0,
         "away_avg_scored": 0,
@@ -24399,6 +24707,7 @@
       "featureSource": "review_prediction_fallback",
       "snapshotBacked": false,
       "leakageRisk": "possible_post_match_overwrite",
+      "predictedOutcome": "D",
       "features": {
         "home_avg_scored": 0,
         "away_avg_scored": 0,
@@ -24487,6 +24796,7 @@
       "featureSource": "review_prediction_fallback",
       "snapshotBacked": false,
       "leakageRisk": "possible_post_match_overwrite",
+      "predictedOutcome": "D",
       "features": {
         "home_avg_scored": 0,
         "away_avg_scored": 0,
@@ -24575,6 +24885,7 @@
       "featureSource": "review_prediction_fallback",
       "snapshotBacked": false,
       "leakageRisk": "possible_post_match_overwrite",
+      "predictedOutcome": "H",
       "features": {
         "home_avg_scored": 0,
         "away_avg_scored": 0,
@@ -24663,6 +24974,7 @@
       "featureSource": "review_prediction_fallback",
       "snapshotBacked": false,
       "leakageRisk": "possible_post_match_overwrite",
+      "predictedOutcome": "D",
       "features": {
         "home_avg_scored": 0,
         "away_avg_scored": 0,
@@ -24751,6 +25063,7 @@
       "featureSource": "review_prediction_fallback",
       "snapshotBacked": false,
       "leakageRisk": "possible_post_match_overwrite",
+      "predictedOutcome": "D",
       "features": {
         "home_avg_scored": 0,
         "away_avg_scored": 0,
@@ -24839,6 +25152,7 @@
       "featureSource": "review_prediction_fallback",
       "snapshotBacked": false,
       "leakageRisk": "possible_post_match_overwrite",
+      "predictedOutcome": "D",
       "features": {
         "home_avg_scored": 0,
         "away_avg_scored": 0,
@@ -24927,6 +25241,7 @@
       "featureSource": "review_prediction_fallback",
       "snapshotBacked": false,
       "leakageRisk": "possible_post_match_overwrite",
+      "predictedOutcome": "A",
       "features": {
         "home_avg_scored": 0,
         "away_avg_scored": 0,
@@ -25015,6 +25330,7 @@
       "featureSource": "review_prediction_fallback",
       "snapshotBacked": false,
       "leakageRisk": "possible_post_match_overwrite",
+      "predictedOutcome": "D",
       "features": {
         "home_avg_scored": 0,
         "away_avg_scored": 0,
@@ -25103,6 +25419,7 @@
       "featureSource": "review_prediction_fallback",
       "snapshotBacked": false,
       "leakageRisk": "possible_post_match_overwrite",
+      "predictedOutcome": "D",
       "features": {
         "home_avg_scored": 0,
         "away_avg_scored": 0,
@@ -25191,6 +25508,7 @@
       "featureSource": "review_prediction_fallback",
       "snapshotBacked": false,
       "leakageRisk": "possible_post_match_overwrite",
+      "predictedOutcome": "D",
       "features": {
         "home_avg_scored": 0,
         "away_avg_scored": 0,
@@ -25279,6 +25597,7 @@
       "featureSource": "review_prediction_fallback",
       "snapshotBacked": false,
       "leakageRisk": "possible_post_match_overwrite",
+      "predictedOutcome": "D",
       "features": {
         "home_avg_scored": 0,
         "away_avg_scored": 0,
@@ -25367,6 +25686,7 @@
       "featureSource": "review_prediction_fallback",
       "snapshotBacked": false,
       "leakageRisk": "possible_post_match_overwrite",
+      "predictedOutcome": "D",
       "features": {
         "home_avg_scored": 0,
         "away_avg_scored": 0,
@@ -25455,6 +25775,7 @@
       "featureSource": "review_prediction_fallback",
       "snapshotBacked": false,
       "leakageRisk": "possible_post_match_overwrite",
+      "predictedOutcome": "D",
       "features": {
         "home_avg_scored": 0,
         "away_avg_scored": 0,
@@ -25543,6 +25864,7 @@
       "featureSource": "review_prediction_fallback",
       "snapshotBacked": false,
       "leakageRisk": "possible_post_match_overwrite",
+      "predictedOutcome": "D",
       "features": {
         "home_avg_scored": 0,
         "away_avg_scored": 0,
@@ -25631,6 +25953,7 @@
       "featureSource": "review_prediction_fallback",
       "snapshotBacked": false,
       "leakageRisk": "possible_post_match_overwrite",
+      "predictedOutcome": "D",
       "features": {
         "home_avg_scored": 0,
         "away_avg_scored": 0,
@@ -25719,6 +26042,7 @@
       "featureSource": "review_prediction_fallback",
       "snapshotBacked": false,
       "leakageRisk": "possible_post_match_overwrite",
+      "predictedOutcome": "H",
       "features": {
         "home_avg_scored": 0,
         "away_avg_scored": 0,
@@ -25807,6 +26131,7 @@
       "featureSource": "review_prediction_fallback",
       "snapshotBacked": false,
       "leakageRisk": "possible_post_match_overwrite",
+      "predictedOutcome": "D",
       "features": {
         "home_avg_scored": 0,
         "away_avg_scored": 0,
@@ -25895,6 +26220,7 @@
       "featureSource": "review_prediction_fallback",
       "snapshotBacked": false,
       "leakageRisk": "possible_post_match_overwrite",
+      "predictedOutcome": "H",
       "features": {
         "home_avg_scored": 0,
         "away_avg_scored": 0,
@@ -25983,6 +26309,7 @@
       "featureSource": "review_prediction_fallback",
       "snapshotBacked": false,
       "leakageRisk": "possible_post_match_overwrite",
+      "predictedOutcome": "D",
       "features": {
         "home_avg_scored": 0,
         "away_avg_scored": 0,
@@ -26071,6 +26398,7 @@
       "featureSource": "review_prediction_fallback",
       "snapshotBacked": false,
       "leakageRisk": "possible_post_match_overwrite",
+      "predictedOutcome": "A",
       "features": {
         "home_avg_scored": 0,
         "away_avg_scored": 0,
@@ -26159,6 +26487,7 @@
       "featureSource": "review_prediction_fallback",
       "snapshotBacked": false,
       "leakageRisk": "possible_post_match_overwrite",
+      "predictedOutcome": "D",
       "features": {
         "home_avg_scored": 0,
         "away_avg_scored": 0,
@@ -26247,6 +26576,7 @@
       "featureSource": "review_prediction_fallback",
       "snapshotBacked": false,
       "leakageRisk": "possible_post_match_overwrite",
+      "predictedOutcome": "H",
       "features": {
         "home_avg_scored": 0,
         "away_avg_scored": 0,
@@ -26335,6 +26665,7 @@
       "featureSource": "review_prediction_fallback",
       "snapshotBacked": false,
       "leakageRisk": "possible_post_match_overwrite",
+      "predictedOutcome": "D",
       "features": {
         "home_avg_scored": 0,
         "away_avg_scored": 0,
@@ -26423,6 +26754,7 @@
       "featureSource": "review_prediction_fallback",
       "snapshotBacked": false,
       "leakageRisk": "possible_post_match_overwrite",
+      "predictedOutcome": "A",
       "features": {
         "home_avg_scored": 0,
         "away_avg_scored": 0,
@@ -26511,6 +26843,7 @@
       "featureSource": "review_prediction_fallback",
       "snapshotBacked": false,
       "leakageRisk": "possible_post_match_overwrite",
+      "predictedOutcome": "D",
       "features": {
         "home_avg_scored": 0,
         "away_avg_scored": 0,
@@ -26599,6 +26932,7 @@
       "featureSource": "review_prediction_fallback",
       "snapshotBacked": false,
       "leakageRisk": "possible_post_match_overwrite",
+      "predictedOutcome": "D",
       "features": {
         "home_avg_scored": 0,
         "away_avg_scored": 0,
@@ -26687,6 +27021,7 @@
       "featureSource": "review_prediction_fallback",
       "snapshotBacked": false,
       "leakageRisk": "possible_post_match_overwrite",
+      "predictedOutcome": "D",
       "features": {
         "home_avg_scored": 0,
         "away_avg_scored": 0,
@@ -26775,6 +27110,7 @@
       "featureSource": "review_prediction_fallback",
       "snapshotBacked": false,
       "leakageRisk": "possible_post_match_overwrite",
+      "predictedOutcome": "A",
       "features": {
         "home_avg_scored": 0,
         "away_avg_scored": 0,
@@ -26863,6 +27199,7 @@
       "featureSource": "review_prediction_fallback",
       "snapshotBacked": false,
       "leakageRisk": "possible_post_match_overwrite",
+      "predictedOutcome": "H",
       "features": {
         "home_avg_scored": 0,
         "away_avg_scored": 0,
@@ -26951,6 +27288,7 @@
       "featureSource": "review_prediction_fallback",
       "snapshotBacked": false,
       "leakageRisk": "possible_post_match_overwrite",
+      "predictedOutcome": "H",
       "features": {
         "home_avg_scored": 0,
         "away_avg_scored": 0,
@@ -27039,6 +27377,7 @@
       "featureSource": "review_prediction_fallback",
       "snapshotBacked": false,
       "leakageRisk": "possible_post_match_overwrite",
+      "predictedOutcome": "D",
       "features": {
         "home_avg_scored": 0,
         "away_avg_scored": 0,
@@ -27127,6 +27466,7 @@
       "featureSource": "review_prediction_fallback",
       "snapshotBacked": false,
       "leakageRisk": "possible_post_match_overwrite",
+      "predictedOutcome": "D",
       "features": {
         "home_avg_scored": 0,
         "away_avg_scored": 0,
@@ -27215,6 +27555,7 @@
       "featureSource": "review_prediction_fallback",
       "snapshotBacked": false,
       "leakageRisk": "possible_post_match_overwrite",
+      "predictedOutcome": "A",
       "features": {
         "home_avg_scored": 0,
         "away_avg_scored": 0,
@@ -27303,6 +27644,7 @@
       "featureSource": "review_prediction_fallback",
       "snapshotBacked": false,
       "leakageRisk": "possible_post_match_overwrite",
+      "predictedOutcome": "D",
       "features": {
         "home_avg_scored": 0,
         "away_avg_scored": 0,
@@ -27391,6 +27733,7 @@
       "featureSource": "review_prediction_fallback",
       "snapshotBacked": false,
       "leakageRisk": "possible_post_match_overwrite",
+      "predictedOutcome": "H",
       "features": {
         "home_avg_scored": 0,
         "away_avg_scored": 0,
@@ -27479,6 +27822,7 @@
       "featureSource": "review_prediction_fallback",
       "snapshotBacked": false,
       "leakageRisk": "possible_post_match_overwrite",
+      "predictedOutcome": "D",
       "features": {
         "home_avg_scored": 0,
         "away_avg_scored": 0,
@@ -27567,6 +27911,7 @@
       "featureSource": "review_prediction_fallback",
       "snapshotBacked": false,
       "leakageRisk": "possible_post_match_overwrite",
+      "predictedOutcome": "H",
       "features": {
         "home_avg_scored": 0,
         "away_avg_scored": 0,
@@ -27655,6 +28000,7 @@
       "featureSource": "review_prediction_fallback",
       "snapshotBacked": false,
       "leakageRisk": "possible_post_match_overwrite",
+      "predictedOutcome": "H",
       "features": {
         "home_avg_scored": 0,
         "away_avg_scored": 0,
@@ -27743,6 +28089,7 @@
       "featureSource": "review_prediction_fallback",
       "snapshotBacked": false,
       "leakageRisk": "possible_post_match_overwrite",
+      "predictedOutcome": "D",
       "features": {
         "home_avg_scored": 0,
         "away_avg_scored": 0,
@@ -27831,6 +28178,7 @@
       "featureSource": "review_prediction_fallback",
       "snapshotBacked": false,
       "leakageRisk": "possible_post_match_overwrite",
+      "predictedOutcome": "D",
       "features": {
         "home_avg_scored": 0,
         "away_avg_scored": 0,
@@ -27919,6 +28267,7 @@
       "featureSource": "review_prediction_fallback",
       "snapshotBacked": false,
       "leakageRisk": "possible_post_match_overwrite",
+      "predictedOutcome": "A",
       "features": {
         "home_avg_scored": 0,
         "away_avg_scored": 0,
@@ -28007,6 +28356,7 @@
       "featureSource": "review_prediction_fallback",
       "snapshotBacked": false,
       "leakageRisk": "possible_post_match_overwrite",
+      "predictedOutcome": "H",
       "features": {
         "home_avg_scored": 0,
         "away_avg_scored": 0,
@@ -28095,6 +28445,7 @@
       "featureSource": "review_prediction_fallback",
       "snapshotBacked": false,
       "leakageRisk": "possible_post_match_overwrite",
+      "predictedOutcome": "D",
       "features": {
         "home_avg_scored": 0,
         "away_avg_scored": 0,
@@ -28183,6 +28534,7 @@
       "featureSource": "review_prediction_fallback",
       "snapshotBacked": false,
       "leakageRisk": "possible_post_match_overwrite",
+      "predictedOutcome": "D",
       "features": {
         "home_avg_scored": 0,
         "away_avg_scored": 0,
@@ -28271,6 +28623,7 @@
       "featureSource": "review_prediction_fallback",
       "snapshotBacked": false,
       "leakageRisk": "possible_post_match_overwrite",
+      "predictedOutcome": "H",
       "features": {
         "home_avg_scored": 0,
         "away_avg_scored": 0,
@@ -28359,6 +28712,7 @@
       "featureSource": "review_prediction_fallback",
       "snapshotBacked": false,
       "leakageRisk": "possible_post_match_overwrite",
+      "predictedOutcome": "D",
       "features": {
         "home_avg_scored": 0,
         "away_avg_scored": 0,
@@ -28447,6 +28801,7 @@
       "featureSource": "review_prediction_fallback",
       "snapshotBacked": false,
       "leakageRisk": "possible_post_match_overwrite",
+      "predictedOutcome": "H",
       "features": {
         "home_avg_scored": 0,
         "away_avg_scored": 0,
@@ -28535,6 +28890,7 @@
       "featureSource": "review_prediction_fallback",
       "snapshotBacked": false,
       "leakageRisk": "possible_post_match_overwrite",
+      "predictedOutcome": "D",
       "features": {
         "home_avg_scored": 0,
         "away_avg_scored": 0,
@@ -28623,6 +28979,7 @@
       "featureSource": "review_prediction_fallback",
       "snapshotBacked": false,
       "leakageRisk": "possible_post_match_overwrite",
+      "predictedOutcome": "D",
       "features": {
         "home_avg_scored": 0,
         "away_avg_scored": 0,
@@ -28711,6 +29068,7 @@
       "featureSource": "review_prediction_fallback",
       "snapshotBacked": false,
       "leakageRisk": "possible_post_match_overwrite",
+      "predictedOutcome": "D",
       "features": {
         "home_avg_scored": 0,
         "away_avg_scored": 0,
@@ -28799,6 +29157,7 @@
       "featureSource": "review_prediction_fallback",
       "snapshotBacked": false,
       "leakageRisk": "possible_post_match_overwrite",
+      "predictedOutcome": "H",
       "features": {
         "home_avg_scored": 0,
         "away_avg_scored": 0,
@@ -28887,6 +29246,7 @@
       "featureSource": "review_prediction_fallback",
       "snapshotBacked": false,
       "leakageRisk": "possible_post_match_overwrite",
+      "predictedOutcome": "D",
       "features": {
         "home_avg_scored": 0,
         "away_avg_scored": 0,
@@ -28975,6 +29335,7 @@
       "featureSource": "review_prediction_fallback",
       "snapshotBacked": false,
       "leakageRisk": "possible_post_match_overwrite",
+      "predictedOutcome": "A",
       "features": {
         "home_avg_scored": 0,
         "away_avg_scored": 0,
@@ -29063,6 +29424,7 @@
       "featureSource": "review_prediction_fallback",
       "snapshotBacked": false,
       "leakageRisk": "possible_post_match_overwrite",
+      "predictedOutcome": "H",
       "features": {
         "home_avg_scored": 0,
         "away_avg_scored": 0,
@@ -29151,6 +29513,7 @@
       "featureSource": "review_prediction_fallback",
       "snapshotBacked": false,
       "leakageRisk": "possible_post_match_overwrite",
+      "predictedOutcome": "H",
       "features": {
         "home_avg_scored": 0,
         "away_avg_scored": 0,
@@ -29239,6 +29602,7 @@
       "featureSource": "review_prediction_fallback",
       "snapshotBacked": false,
       "leakageRisk": "possible_post_match_overwrite",
+      "predictedOutcome": "D",
       "features": {
         "home_avg_scored": 0,
         "away_avg_scored": 0,
@@ -29327,6 +29691,7 @@
       "featureSource": "review_prediction_fallback",
       "snapshotBacked": false,
       "leakageRisk": "possible_post_match_overwrite",
+      "predictedOutcome": "H",
       "features": {
         "home_avg_scored": 0,
         "away_avg_scored": 0,
@@ -29415,6 +29780,7 @@
       "featureSource": "review_prediction_fallback",
       "snapshotBacked": false,
       "leakageRisk": "possible_post_match_overwrite",
+      "predictedOutcome": "H",
       "features": {
         "home_avg_scored": 0,
         "away_avg_scored": 0,
@@ -29503,6 +29869,7 @@
       "featureSource": "review_prediction_fallback",
       "snapshotBacked": false,
       "leakageRisk": "possible_post_match_overwrite",
+      "predictedOutcome": "A",
       "features": {
         "home_avg_scored": 0,
         "away_avg_scored": 0,
@@ -29591,6 +29958,7 @@
       "featureSource": "review_prediction_fallback",
       "snapshotBacked": false,
       "leakageRisk": "possible_post_match_overwrite",
+      "predictedOutcome": "D",
       "features": {
         "home_avg_scored": 0,
         "away_avg_scored": 0,
@@ -29679,6 +30047,7 @@
       "featureSource": "review_prediction_fallback",
       "snapshotBacked": false,
       "leakageRisk": "possible_post_match_overwrite",
+      "predictedOutcome": "D",
       "features": {
         "home_avg_scored": 0,
         "away_avg_scored": 0,
@@ -29767,6 +30136,7 @@
       "featureSource": "review_prediction_fallback",
       "snapshotBacked": false,
       "leakageRisk": "possible_post_match_overwrite",
+      "predictedOutcome": "H",
       "features": {
         "home_avg_scored": 0,
         "away_avg_scored": 0,
@@ -29855,6 +30225,7 @@
       "featureSource": "review_prediction_fallback",
       "snapshotBacked": false,
       "leakageRisk": "possible_post_match_overwrite",
+      "predictedOutcome": "D",
       "features": {
         "home_avg_scored": 0,
         "away_avg_scored": 0,
@@ -29943,6 +30314,7 @@
       "featureSource": "review_prediction_fallback",
       "snapshotBacked": false,
       "leakageRisk": "possible_post_match_overwrite",
+      "predictedOutcome": "D",
       "features": {
         "home_avg_scored": 0,
         "away_avg_scored": 0,
@@ -30031,6 +30403,7 @@
       "featureSource": "review_prediction_fallback",
       "snapshotBacked": false,
       "leakageRisk": "possible_post_match_overwrite",
+      "predictedOutcome": "D",
       "features": {
         "home_avg_scored": 0,
         "away_avg_scored": 0,
@@ -30119,6 +30492,7 @@
       "featureSource": "review_prediction_fallback",
       "snapshotBacked": false,
       "leakageRisk": "possible_post_match_overwrite",
+      "predictedOutcome": "D",
       "features": {
         "home_avg_scored": 0,
         "away_avg_scored": 0,
@@ -30207,6 +30581,7 @@
       "featureSource": "review_prediction_fallback",
       "snapshotBacked": false,
       "leakageRisk": "possible_post_match_overwrite",
+      "predictedOutcome": "H",
       "features": {
         "home_avg_scored": 0,
         "away_avg_scored": 0,
@@ -30295,6 +30670,7 @@
       "featureSource": "review_prediction_fallback",
       "snapshotBacked": false,
       "leakageRisk": "possible_post_match_overwrite",
+      "predictedOutcome": "D",
       "features": {
         "home_avg_scored": 0,
         "away_avg_scored": 0,
@@ -30383,6 +30759,7 @@
       "featureSource": "review_prediction_fallback",
       "snapshotBacked": false,
       "leakageRisk": "possible_post_match_overwrite",
+      "predictedOutcome": "H",
       "features": {
         "home_avg_scored": 0,
         "away_avg_scored": 0,
@@ -30471,6 +30848,7 @@
       "featureSource": "review_prediction_fallback",
       "snapshotBacked": false,
       "leakageRisk": "possible_post_match_overwrite",
+      "predictedOutcome": "D",
       "features": {
         "home_avg_scored": 0,
         "away_avg_scored": 0,
@@ -30559,6 +30937,7 @@
       "featureSource": "review_prediction_fallback",
       "snapshotBacked": false,
       "leakageRisk": "possible_post_match_overwrite",
+      "predictedOutcome": "D",
       "features": {
         "home_avg_scored": 0,
         "away_avg_scored": 0,
@@ -30647,6 +31026,7 @@
       "featureSource": "review_prediction_fallback",
       "snapshotBacked": false,
       "leakageRisk": "possible_post_match_overwrite",
+      "predictedOutcome": "D",
       "features": {
         "home_avg_scored": 0,
         "away_avg_scored": 0,
@@ -30735,6 +31115,7 @@
       "featureSource": "review_prediction_fallback",
       "snapshotBacked": false,
       "leakageRisk": "possible_post_match_overwrite",
+      "predictedOutcome": "D",
       "features": {
         "home_avg_scored": 0,
         "away_avg_scored": 0,
@@ -30823,6 +31204,7 @@
       "featureSource": "review_prediction_fallback",
       "snapshotBacked": false,
       "leakageRisk": "possible_post_match_overwrite",
+      "predictedOutcome": "D",
       "features": {
         "home_avg_scored": 0,
         "away_avg_scored": 0,
@@ -30911,6 +31293,7 @@
       "featureSource": "review_prediction_fallback",
       "snapshotBacked": false,
       "leakageRisk": "possible_post_match_overwrite",
+      "predictedOutcome": "D",
       "features": {
         "home_avg_scored": 0,
         "away_avg_scored": 0,
@@ -30999,6 +31382,7 @@
       "featureSource": "review_prediction_fallback",
       "snapshotBacked": false,
       "leakageRisk": "possible_post_match_overwrite",
+      "predictedOutcome": "D",
       "features": {
         "home_avg_scored": 0,
         "away_avg_scored": 0,
@@ -31087,6 +31471,7 @@
       "featureSource": "review_prediction_fallback",
       "snapshotBacked": false,
       "leakageRisk": "possible_post_match_overwrite",
+      "predictedOutcome": "A",
       "features": {
         "home_avg_scored": 0,
         "away_avg_scored": 0,
@@ -31175,6 +31560,7 @@
       "featureSource": "review_prediction_fallback",
       "snapshotBacked": false,
       "leakageRisk": "possible_post_match_overwrite",
+      "predictedOutcome": "D",
       "features": {
         "home_avg_scored": 0,
         "away_avg_scored": 0,
@@ -31263,6 +31649,7 @@
       "featureSource": "review_prediction_fallback",
       "snapshotBacked": false,
       "leakageRisk": "possible_post_match_overwrite",
+      "predictedOutcome": "A",
       "features": {
         "home_avg_scored": 0,
         "away_avg_scored": 0,
@@ -31351,6 +31738,7 @@
       "featureSource": "review_prediction_fallback",
       "snapshotBacked": false,
       "leakageRisk": "possible_post_match_overwrite",
+      "predictedOutcome": "H",
       "features": {
         "home_avg_scored": 0,
         "away_avg_scored": 0,
@@ -31439,6 +31827,7 @@
       "featureSource": "review_prediction_fallback",
       "snapshotBacked": false,
       "leakageRisk": "possible_post_match_overwrite",
+      "predictedOutcome": "A",
       "features": {
         "home_avg_scored": 0,
         "away_avg_scored": 0,
@@ -31527,6 +31916,7 @@
       "featureSource": "review_prediction_fallback",
       "snapshotBacked": false,
       "leakageRisk": "possible_post_match_overwrite",
+      "predictedOutcome": "H",
       "features": {
         "home_avg_scored": 0,
         "away_avg_scored": 0,
@@ -31615,6 +32005,7 @@
       "featureSource": "review_prediction_fallback",
       "snapshotBacked": false,
       "leakageRisk": "possible_post_match_overwrite",
+      "predictedOutcome": "H",
       "features": {
         "home_avg_scored": 0,
         "away_avg_scored": 0,
@@ -31703,6 +32094,7 @@
       "featureSource": "review_prediction_fallback",
       "snapshotBacked": false,
       "leakageRisk": "possible_post_match_overwrite",
+      "predictedOutcome": "H",
       "features": {
         "home_avg_scored": 0,
         "away_avg_scored": 0,
@@ -31791,6 +32183,7 @@
       "featureSource": "review_prediction_fallback",
       "snapshotBacked": false,
       "leakageRisk": "possible_post_match_overwrite",
+      "predictedOutcome": "H",
       "features": {
         "home_avg_scored": 0,
         "away_avg_scored": 0,
@@ -31879,6 +32272,7 @@
       "featureSource": "review_prediction_fallback",
       "snapshotBacked": false,
       "leakageRisk": "possible_post_match_overwrite",
+      "predictedOutcome": "D",
       "features": {
         "home_avg_scored": 0,
         "away_avg_scored": 0,
@@ -31967,6 +32361,7 @@
       "featureSource": "review_prediction_fallback",
       "snapshotBacked": false,
       "leakageRisk": "possible_post_match_overwrite",
+      "predictedOutcome": "D",
       "features": {
         "home_avg_scored": 0,
         "away_avg_scored": 0,
@@ -32055,6 +32450,7 @@
       "featureSource": "review_prediction_fallback",
       "snapshotBacked": false,
       "leakageRisk": "possible_post_match_overwrite",
+      "predictedOutcome": "A",
       "features": {
         "home_avg_scored": 0,
         "away_avg_scored": 0,
@@ -32143,6 +32539,7 @@
       "featureSource": "review_prediction_fallback",
       "snapshotBacked": false,
       "leakageRisk": "possible_post_match_overwrite",
+      "predictedOutcome": "D",
       "features": {
         "home_avg_scored": 0,
         "away_avg_scored": 0,
@@ -32231,6 +32628,7 @@
       "featureSource": "review_prediction_fallback",
       "snapshotBacked": false,
       "leakageRisk": "possible_post_match_overwrite",
+      "predictedOutcome": "H",
       "features": {
         "home_avg_scored": 0,
         "away_avg_scored": 0,
@@ -32319,6 +32717,7 @@
       "featureSource": "review_prediction_fallback",
       "snapshotBacked": false,
       "leakageRisk": "possible_post_match_overwrite",
+      "predictedOutcome": "D",
       "features": {
         "home_avg_scored": 0,
         "away_avg_scored": 0,
@@ -32407,6 +32806,7 @@
       "featureSource": "review_prediction_fallback",
       "snapshotBacked": false,
       "leakageRisk": "possible_post_match_overwrite",
+      "predictedOutcome": "D",
       "features": {
         "home_avg_scored": 0,
         "away_avg_scored": 0,
@@ -32495,6 +32895,7 @@
       "featureSource": "review_prediction_fallback",
       "snapshotBacked": false,
       "leakageRisk": "possible_post_match_overwrite",
+      "predictedOutcome": "H",
       "features": {
         "home_avg_scored": 0,
         "away_avg_scored": 0,
@@ -32583,6 +32984,7 @@
       "featureSource": "review_prediction_fallback",
       "snapshotBacked": false,
       "leakageRisk": "possible_post_match_overwrite",
+      "predictedOutcome": "H",
       "features": {
         "home_avg_scored": 0,
         "away_avg_scored": 0,
@@ -32671,6 +33073,7 @@
       "featureSource": "review_prediction_fallback",
       "snapshotBacked": false,
       "leakageRisk": "possible_post_match_overwrite",
+      "predictedOutcome": "H",
       "features": {
         "home_avg_scored": 0,
         "away_avg_scored": 0,
@@ -32759,6 +33162,7 @@
       "featureSource": "review_prediction_fallback",
       "snapshotBacked": false,
       "leakageRisk": "possible_post_match_overwrite",
+      "predictedOutcome": "H",
       "features": {
         "home_avg_scored": 0,
         "away_avg_scored": 0,
@@ -32847,6 +33251,7 @@
       "featureSource": "review_prediction_fallback",
       "snapshotBacked": false,
       "leakageRisk": "possible_post_match_overwrite",
+      "predictedOutcome": "A",
       "features": {
         "home_avg_scored": 0,
         "away_avg_scored": 0,
@@ -32935,6 +33340,7 @@
       "featureSource": "review_prediction_fallback",
       "snapshotBacked": false,
       "leakageRisk": "possible_post_match_overwrite",
+      "predictedOutcome": "D",
       "features": {
         "home_avg_scored": 0,
         "away_avg_scored": 0,
@@ -33023,6 +33429,7 @@
       "featureSource": "review_prediction_fallback",
       "snapshotBacked": false,
       "leakageRisk": "possible_post_match_overwrite",
+      "predictedOutcome": "D",
       "features": {
         "home_avg_scored": 0,
         "away_avg_scored": 0,
@@ -33111,6 +33518,7 @@
       "featureSource": "review_prediction_fallback",
       "snapshotBacked": false,
       "leakageRisk": "possible_post_match_overwrite",
+      "predictedOutcome": "H",
       "features": {
         "home_avg_scored": 0,
         "away_avg_scored": 0,
@@ -33199,6 +33607,7 @@
       "featureSource": "review_prediction_fallback",
       "snapshotBacked": false,
       "leakageRisk": "possible_post_match_overwrite",
+      "predictedOutcome": "D",
       "features": {
         "home_avg_scored": 0,
         "away_avg_scored": 0,
@@ -33287,6 +33696,7 @@
       "featureSource": "review_prediction_fallback",
       "snapshotBacked": false,
       "leakageRisk": "possible_post_match_overwrite",
+      "predictedOutcome": "H",
       "features": {
         "home_avg_scored": 0,
         "away_avg_scored": 0,
@@ -33375,6 +33785,7 @@
       "featureSource": "review_prediction_fallback",
       "snapshotBacked": false,
       "leakageRisk": "possible_post_match_overwrite",
+      "predictedOutcome": "D",
       "features": {
         "home_avg_scored": 0,
         "away_avg_scored": 0,
@@ -33463,6 +33874,7 @@
       "featureSource": "review_prediction_fallback",
       "snapshotBacked": false,
       "leakageRisk": "possible_post_match_overwrite",
+      "predictedOutcome": "A",
       "features": {
         "home_avg_scored": 0,
         "away_avg_scored": 0,
@@ -33551,6 +33963,7 @@
       "featureSource": "review_prediction_fallback",
       "snapshotBacked": false,
       "leakageRisk": "possible_post_match_overwrite",
+      "predictedOutcome": "D",
       "features": {
         "home_avg_scored": 0,
         "away_avg_scored": 0,
@@ -33639,6 +34052,7 @@
       "featureSource": "review_prediction_fallback",
       "snapshotBacked": false,
       "leakageRisk": "possible_post_match_overwrite",
+      "predictedOutcome": "D",
       "features": {
         "home_avg_scored": 0,
         "away_avg_scored": 0,
@@ -33727,6 +34141,7 @@
       "featureSource": "review_prediction_fallback",
       "snapshotBacked": false,
       "leakageRisk": "possible_post_match_overwrite",
+      "predictedOutcome": "D",
       "features": {
         "home_avg_scored": 0,
         "away_avg_scored": 0,
@@ -33815,6 +34230,7 @@
       "featureSource": "review_prediction_fallback",
       "snapshotBacked": false,
       "leakageRisk": "possible_post_match_overwrite",
+      "predictedOutcome": "D",
       "features": {
         "home_avg_scored": 0,
         "away_avg_scored": 0,
@@ -33903,6 +34319,7 @@
       "featureSource": "review_prediction_fallback",
       "snapshotBacked": false,
       "leakageRisk": "possible_post_match_overwrite",
+      "predictedOutcome": "D",
       "features": {
         "home_avg_scored": 0,
         "away_avg_scored": 0,
@@ -33991,6 +34408,7 @@
       "featureSource": "review_prediction_fallback",
       "snapshotBacked": false,
       "leakageRisk": "possible_post_match_overwrite",
+      "predictedOutcome": "H",
       "features": {
         "home_avg_scored": 0,
         "away_avg_scored": 0,
@@ -34079,6 +34497,7 @@
       "featureSource": "review_prediction_fallback",
       "snapshotBacked": false,
       "leakageRisk": "possible_post_match_overwrite",
+      "predictedOutcome": "D",
       "features": {
         "home_avg_scored": 0,
         "away_avg_scored": 0,
@@ -34167,6 +34586,7 @@
       "featureSource": "review_prediction_fallback",
       "snapshotBacked": false,
       "leakageRisk": "possible_post_match_overwrite",
+      "predictedOutcome": "A",
       "features": {
         "home_avg_scored": 0,
         "away_avg_scored": 0,
@@ -34255,6 +34675,7 @@
       "featureSource": "review_prediction_fallback",
       "snapshotBacked": false,
       "leakageRisk": "possible_post_match_overwrite",
+      "predictedOutcome": "D",
       "features": {
         "home_avg_scored": 0,
         "away_avg_scored": 0,
@@ -34343,6 +34764,7 @@
       "featureSource": "review_prediction_fallback",
       "snapshotBacked": false,
       "leakageRisk": "possible_post_match_overwrite",
+      "predictedOutcome": "D",
       "features": {
         "home_avg_scored": 0,
         "away_avg_scored": 0,
@@ -34431,6 +34853,7 @@
       "featureSource": "review_prediction_fallback",
       "snapshotBacked": false,
       "leakageRisk": "possible_post_match_overwrite",
+      "predictedOutcome": "H",
       "features": {
         "home_avg_scored": 0,
         "away_avg_scored": 0,
@@ -34519,6 +34942,7 @@
       "featureSource": "review_prediction_fallback",
       "snapshotBacked": false,
       "leakageRisk": "possible_post_match_overwrite",
+      "predictedOutcome": "D",
       "features": {
         "home_avg_scored": 0,
         "away_avg_scored": 0,
@@ -34607,6 +35031,7 @@
       "featureSource": "review_prediction_fallback",
       "snapshotBacked": false,
       "leakageRisk": "possible_post_match_overwrite",
+      "predictedOutcome": "H",
       "features": {
         "home_avg_scored": 0,
         "away_avg_scored": 0,
@@ -34695,6 +35120,7 @@
       "featureSource": "review_prediction_fallback",
       "snapshotBacked": false,
       "leakageRisk": "possible_post_match_overwrite",
+      "predictedOutcome": "D",
       "features": {
         "home_avg_scored": 0,
         "away_avg_scored": 0,
@@ -34783,6 +35209,7 @@
       "featureSource": "review_prediction_fallback",
       "snapshotBacked": false,
       "leakageRisk": "possible_post_match_overwrite",
+      "predictedOutcome": "A",
       "features": {
         "home_avg_scored": 0,
         "away_avg_scored": 0,
@@ -34871,6 +35298,7 @@
       "featureSource": "review_prediction_fallback",
       "snapshotBacked": false,
       "leakageRisk": "possible_post_match_overwrite",
+      "predictedOutcome": "H",
       "features": {
         "home_avg_scored": 0,
         "away_avg_scored": 0,
@@ -34959,6 +35387,7 @@
       "featureSource": "review_prediction_fallback",
       "snapshotBacked": false,
       "leakageRisk": "possible_post_match_overwrite",
+      "predictedOutcome": "A",
       "features": {
         "home_avg_scored": 0,
         "away_avg_scored": 0,
@@ -35047,6 +35476,7 @@
       "featureSource": "review_prediction_fallback",
       "snapshotBacked": false,
       "leakageRisk": "possible_post_match_overwrite",
+      "predictedOutcome": "A",
       "features": {
         "home_avg_scored": 0,
         "away_avg_scored": 0,
@@ -35135,6 +35565,7 @@
       "featureSource": "review_prediction_fallback",
       "snapshotBacked": false,
       "leakageRisk": "possible_post_match_overwrite",
+      "predictedOutcome": "A",
       "features": {
         "home_avg_scored": 0,
         "away_avg_scored": 0,
@@ -35223,6 +35654,7 @@
       "featureSource": "review_prediction_fallback",
       "snapshotBacked": false,
       "leakageRisk": "possible_post_match_overwrite",
+      "predictedOutcome": "D",
       "features": {
         "home_avg_scored": 0,
         "away_avg_scored": 0,
@@ -35311,6 +35743,7 @@
       "featureSource": "review_prediction_fallback",
       "snapshotBacked": false,
       "leakageRisk": "possible_post_match_overwrite",
+      "predictedOutcome": "H",
       "features": {
         "home_avg_scored": 0,
         "away_avg_scored": 0,
@@ -35399,6 +35832,7 @@
       "featureSource": "review_prediction_fallback",
       "snapshotBacked": false,
       "leakageRisk": "possible_post_match_overwrite",
+      "predictedOutcome": "D",
       "features": {
         "home_avg_scored": 0,
         "away_avg_scored": 0,
@@ -35487,6 +35921,7 @@
       "featureSource": "review_prediction_fallback",
       "snapshotBacked": false,
       "leakageRisk": "possible_post_match_overwrite",
+      "predictedOutcome": "D",
       "features": {
         "home_avg_scored": 0,
         "away_avg_scored": 0,
@@ -35575,6 +36010,7 @@
       "featureSource": "review_prediction_fallback",
       "snapshotBacked": false,
       "leakageRisk": "possible_post_match_overwrite",
+      "predictedOutcome": "H",
       "features": {
         "home_avg_scored": 0,
         "away_avg_scored": 0,
@@ -35663,6 +36099,7 @@
       "featureSource": "review_prediction_fallback",
       "snapshotBacked": false,
       "leakageRisk": "possible_post_match_overwrite",
+      "predictedOutcome": "D",
       "features": {
         "home_avg_scored": 0,
         "away_avg_scored": 0,
@@ -35751,6 +36188,7 @@
       "featureSource": "review_prediction_fallback",
       "snapshotBacked": false,
       "leakageRisk": "possible_post_match_overwrite",
+      "predictedOutcome": "D",
       "features": {
         "home_avg_scored": 0,
         "away_avg_scored": 0,
@@ -35839,6 +36277,7 @@
       "featureSource": "review_prediction_fallback",
       "snapshotBacked": false,
       "leakageRisk": "possible_post_match_overwrite",
+      "predictedOutcome": "H",
       "features": {
         "home_avg_scored": 0,
         "away_avg_scored": 0,
@@ -35927,6 +36366,7 @@
       "featureSource": "review_prediction_fallback",
       "snapshotBacked": false,
       "leakageRisk": "possible_post_match_overwrite",
+      "predictedOutcome": "H",
       "features": {
         "home_avg_scored": 0,
         "away_avg_scored": 0,
@@ -36015,6 +36455,7 @@
       "featureSource": "review_prediction_fallback",
       "snapshotBacked": false,
       "leakageRisk": "possible_post_match_overwrite",
+      "predictedOutcome": "H",
       "features": {
         "home_avg_scored": 0,
         "away_avg_scored": 0,
@@ -36103,6 +36544,7 @@
       "featureSource": "review_prediction_fallback",
       "snapshotBacked": false,
       "leakageRisk": "possible_post_match_overwrite",
+      "predictedOutcome": "H",
       "features": {
         "home_avg_scored": 0,
         "away_avg_scored": 0,
@@ -36191,6 +36633,7 @@
       "featureSource": "review_prediction_fallback",
       "snapshotBacked": false,
       "leakageRisk": "possible_post_match_overwrite",
+      "predictedOutcome": "D",
       "features": {
         "home_avg_scored": 0,
         "away_avg_scored": 0,
@@ -36279,6 +36722,7 @@
       "featureSource": "review_prediction_fallback",
       "snapshotBacked": false,
       "leakageRisk": "possible_post_match_overwrite",
+      "predictedOutcome": "H",
       "features": {
         "home_avg_scored": 0,
         "away_avg_scored": 0,
@@ -36367,6 +36811,7 @@
       "featureSource": "review_prediction_fallback",
       "snapshotBacked": false,
       "leakageRisk": "possible_post_match_overwrite",
+      "predictedOutcome": "A",
       "features": {
         "home_avg_scored": 0,
         "away_avg_scored": 0,
@@ -36455,6 +36900,7 @@
       "featureSource": "review_prediction_fallback",
       "snapshotBacked": false,
       "leakageRisk": "possible_post_match_overwrite",
+      "predictedOutcome": "D",
       "features": {
         "home_avg_scored": 0,
         "away_avg_scored": 0,
@@ -36543,6 +36989,7 @@
       "featureSource": "review_prediction_fallback",
       "snapshotBacked": false,
       "leakageRisk": "possible_post_match_overwrite",
+      "predictedOutcome": "H",
       "features": {
         "home_avg_scored": 0,
         "away_avg_scored": 0,
@@ -36631,6 +37078,7 @@
       "featureSource": "review_prediction_fallback",
       "snapshotBacked": false,
       "leakageRisk": "possible_post_match_overwrite",
+      "predictedOutcome": "H",
       "features": {
         "home_avg_scored": 0,
         "away_avg_scored": 0,
@@ -36719,6 +37167,7 @@
       "featureSource": "review_prediction_fallback",
       "snapshotBacked": false,
       "leakageRisk": "possible_post_match_overwrite",
+      "predictedOutcome": "D",
       "features": {
         "home_avg_scored": 0,
         "away_avg_scored": 0,
@@ -36807,6 +37256,7 @@
       "featureSource": "review_prediction_fallback",
       "snapshotBacked": false,
       "leakageRisk": "possible_post_match_overwrite",
+      "predictedOutcome": "H",
       "features": {
         "home_avg_scored": 0,
         "away_avg_scored": 0,
@@ -36895,6 +37345,7 @@
       "featureSource": "review_prediction_fallback",
       "snapshotBacked": false,
       "leakageRisk": "possible_post_match_overwrite",
+      "predictedOutcome": "D",
       "features": {
         "home_avg_scored": 0,
         "away_avg_scored": 0,
@@ -36983,6 +37434,7 @@
       "featureSource": "review_prediction_fallback",
       "snapshotBacked": false,
       "leakageRisk": "possible_post_match_overwrite",
+      "predictedOutcome": "H",
       "features": {
         "home_avg_scored": 0,
         "away_avg_scored": 0,
@@ -37071,6 +37523,7 @@
       "featureSource": "review_prediction_fallback",
       "snapshotBacked": false,
       "leakageRisk": "possible_post_match_overwrite",
+      "predictedOutcome": "H",
       "features": {
         "home_avg_scored": 0,
         "away_avg_scored": 0,
@@ -37159,6 +37612,7 @@
       "featureSource": "review_prediction_fallback",
       "snapshotBacked": false,
       "leakageRisk": "possible_post_match_overwrite",
+      "predictedOutcome": "H",
       "features": {
         "home_avg_scored": 0,
         "away_avg_scored": 0,
@@ -37247,6 +37701,7 @@
       "featureSource": "review_prediction_fallback",
       "snapshotBacked": false,
       "leakageRisk": "possible_post_match_overwrite",
+      "predictedOutcome": "H",
       "features": {
         "home_avg_scored": 0,
         "away_avg_scored": 0,
@@ -37335,6 +37790,7 @@
       "featureSource": "review_prediction_fallback",
       "snapshotBacked": false,
       "leakageRisk": "possible_post_match_overwrite",
+      "predictedOutcome": "H",
       "features": {
         "home_avg_scored": 0,
         "away_avg_scored": 0,
@@ -37423,6 +37879,7 @@
       "featureSource": "review_prediction_fallback",
       "snapshotBacked": false,
       "leakageRisk": "possible_post_match_overwrite",
+      "predictedOutcome": "A",
       "features": {
         "home_avg_scored": 0,
         "away_avg_scored": 0,
@@ -37511,6 +37968,7 @@
       "featureSource": "review_prediction_fallback",
       "snapshotBacked": false,
       "leakageRisk": "possible_post_match_overwrite",
+      "predictedOutcome": "H",
       "features": {
         "home_avg_scored": 0,
         "away_avg_scored": 0,
@@ -37599,6 +38057,7 @@
       "featureSource": "review_prediction_fallback",
       "snapshotBacked": false,
       "leakageRisk": "possible_post_match_overwrite",
+      "predictedOutcome": "A",
       "features": {
         "home_avg_scored": 0,
         "away_avg_scored": 0,
@@ -37687,6 +38146,7 @@
       "featureSource": "review_prediction_fallback",
       "snapshotBacked": false,
       "leakageRisk": "possible_post_match_overwrite",
+      "predictedOutcome": "H",
       "features": {
         "home_avg_scored": 0,
         "away_avg_scored": 0,
@@ -37775,6 +38235,7 @@
       "featureSource": "review_prediction_fallback",
       "snapshotBacked": false,
       "leakageRisk": "possible_post_match_overwrite",
+      "predictedOutcome": "H",
       "features": {
         "home_avg_scored": 0,
         "away_avg_scored": 0,
@@ -37863,6 +38324,7 @@
       "featureSource": "review_prediction_fallback",
       "snapshotBacked": false,
       "leakageRisk": "possible_post_match_overwrite",
+      "predictedOutcome": "H",
       "features": {
         "home_avg_scored": 0,
         "away_avg_scored": 0,
@@ -37951,6 +38413,7 @@
       "featureSource": "review_prediction_fallback",
       "snapshotBacked": false,
       "leakageRisk": "possible_post_match_overwrite",
+      "predictedOutcome": "H",
       "features": {
         "home_avg_scored": 0,
         "away_avg_scored": 0,
@@ -38039,6 +38502,7 @@
       "featureSource": "review_prediction_fallback",
       "snapshotBacked": false,
       "leakageRisk": "possible_post_match_overwrite",
+      "predictedOutcome": "A",
       "features": {
         "home_avg_scored": 0,
         "away_avg_scored": 0,
@@ -38127,6 +38591,7 @@
       "featureSource": "review_prediction_fallback",
       "snapshotBacked": false,
       "leakageRisk": "possible_post_match_overwrite",
+      "predictedOutcome": "D",
       "features": {
         "home_avg_scored": 0,
         "away_avg_scored": 0,
@@ -38215,6 +38680,7 @@
       "featureSource": "review_prediction_fallback",
       "snapshotBacked": false,
       "leakageRisk": "possible_post_match_overwrite",
+      "predictedOutcome": "H",
       "features": {
         "home_avg_scored": 0,
         "away_avg_scored": 0,
@@ -38303,6 +38769,7 @@
       "featureSource": "review_prediction_fallback",
       "snapshotBacked": false,
       "leakageRisk": "possible_post_match_overwrite",
+      "predictedOutcome": "A",
       "features": {
         "home_avg_scored": 0,
         "away_avg_scored": 0,
@@ -38391,6 +38858,7 @@
       "featureSource": "review_prediction_fallback",
       "snapshotBacked": false,
       "leakageRisk": "possible_post_match_overwrite",
+      "predictedOutcome": "D",
       "features": {
         "home_avg_scored": 0,
         "away_avg_scored": 0,
@@ -38479,6 +38947,7 @@
       "featureSource": "review_prediction_fallback",
       "snapshotBacked": false,
       "leakageRisk": "possible_post_match_overwrite",
+      "predictedOutcome": "D",
       "features": {
         "home_avg_scored": 0,
         "away_avg_scored": 0,
@@ -38567,6 +39036,7 @@
       "featureSource": "review_prediction_fallback",
       "snapshotBacked": false,
       "leakageRisk": "possible_post_match_overwrite",
+      "predictedOutcome": "D",
       "features": {
         "home_avg_scored": 0,
         "away_avg_scored": 0,
@@ -38655,6 +39125,7 @@
       "featureSource": "review_prediction_fallback",
       "snapshotBacked": false,
       "leakageRisk": "possible_post_match_overwrite",
+      "predictedOutcome": "A",
       "features": {
         "home_avg_scored": 0,
         "away_avg_scored": 0,
@@ -38743,6 +39214,7 @@
       "featureSource": "review_prediction_fallback",
       "snapshotBacked": false,
       "leakageRisk": "possible_post_match_overwrite",
+      "predictedOutcome": "H",
       "features": {
         "home_avg_scored": 0,
         "away_avg_scored": 0,
@@ -38831,6 +39303,7 @@
       "featureSource": "review_prediction_fallback",
       "snapshotBacked": false,
       "leakageRisk": "possible_post_match_overwrite",
+      "predictedOutcome": "H",
       "features": {
         "home_avg_scored": 0,
         "away_avg_scored": 0,
@@ -38919,6 +39392,7 @@
       "featureSource": "review_prediction_fallback",
       "snapshotBacked": false,
       "leakageRisk": "possible_post_match_overwrite",
+      "predictedOutcome": "H",
       "features": {
         "home_avg_scored": 0,
         "away_avg_scored": 0,
@@ -39007,6 +39481,7 @@
       "featureSource": "review_prediction_fallback",
       "snapshotBacked": false,
       "leakageRisk": "possible_post_match_overwrite",
+      "predictedOutcome": "A",
       "features": {
         "home_avg_scored": 0,
         "away_avg_scored": 0,
@@ -39095,6 +39570,7 @@
       "featureSource": "review_prediction_fallback",
       "snapshotBacked": false,
       "leakageRisk": "possible_post_match_overwrite",
+      "predictedOutcome": "H",
       "features": {
         "home_avg_scored": 0,
         "away_avg_scored": 0,
@@ -39183,6 +39659,7 @@
       "featureSource": "review_prediction_fallback",
       "snapshotBacked": false,
       "leakageRisk": "possible_post_match_overwrite",
+      "predictedOutcome": "A",
       "features": {
         "home_avg_scored": 0,
         "away_avg_scored": 0,
@@ -39271,6 +39748,7 @@
       "featureSource": "review_prediction_fallback",
       "snapshotBacked": false,
       "leakageRisk": "possible_post_match_overwrite",
+      "predictedOutcome": "H",
       "features": {
         "home_avg_scored": 0,
         "away_avg_scored": 0,
@@ -39359,6 +39837,7 @@
       "featureSource": "review_prediction_fallback",
       "snapshotBacked": false,
       "leakageRisk": "possible_post_match_overwrite",
+      "predictedOutcome": "H",
       "features": {
         "home_avg_scored": 0,
         "away_avg_scored": 0,
@@ -39447,6 +39926,7 @@
       "featureSource": "review_prediction_fallback",
       "snapshotBacked": false,
       "leakageRisk": "possible_post_match_overwrite",
+      "predictedOutcome": "H",
       "features": {
         "home_avg_scored": 0,
         "away_avg_scored": 0,
@@ -39535,6 +40015,7 @@
       "featureSource": "review_prediction_fallback",
       "snapshotBacked": false,
       "leakageRisk": "possible_post_match_overwrite",
+      "predictedOutcome": "H",
       "features": {
         "home_avg_scored": 0,
         "away_avg_scored": 0,
@@ -39623,6 +40104,7 @@
       "featureSource": "review_prediction_fallback",
       "snapshotBacked": false,
       "leakageRisk": "possible_post_match_overwrite",
+      "predictedOutcome": "A",
       "features": {
         "home_avg_scored": 0,
         "away_avg_scored": 0,
@@ -39711,6 +40193,7 @@
       "featureSource": "review_prediction_fallback",
       "snapshotBacked": false,
       "leakageRisk": "possible_post_match_overwrite",
+      "predictedOutcome": "H",
       "features": {
         "home_avg_scored": 0,
         "away_avg_scored": 0,
@@ -39799,6 +40282,7 @@
       "featureSource": "review_prediction_fallback",
       "snapshotBacked": false,
       "leakageRisk": "possible_post_match_overwrite",
+      "predictedOutcome": "H",
       "features": {
         "home_avg_scored": 0,
         "away_avg_scored": 0,
@@ -39887,6 +40371,7 @@
       "featureSource": "review_prediction_fallback",
       "snapshotBacked": false,
       "leakageRisk": "possible_post_match_overwrite",
+      "predictedOutcome": "H",
       "features": {
         "home_avg_scored": 0,
         "away_avg_scored": 0,
@@ -39975,6 +40460,7 @@
       "featureSource": "review_prediction_fallback",
       "snapshotBacked": false,
       "leakageRisk": "possible_post_match_overwrite",
+      "predictedOutcome": "H",
       "features": {
         "home_avg_scored": 0,
         "away_avg_scored": 0,
@@ -40063,6 +40549,7 @@
       "featureSource": "review_prediction_fallback",
       "snapshotBacked": false,
       "leakageRisk": "possible_post_match_overwrite",
+      "predictedOutcome": "A",
       "features": {
         "home_avg_scored": 0,
         "away_avg_scored": 0,
@@ -40151,6 +40638,7 @@
       "featureSource": "review_prediction_fallback",
       "snapshotBacked": false,
       "leakageRisk": "possible_post_match_overwrite",
+      "predictedOutcome": "D",
       "features": {
         "home_avg_scored": 0,
         "away_avg_scored": 0,
@@ -40239,6 +40727,7 @@
       "featureSource": "review_prediction_fallback",
       "snapshotBacked": false,
       "leakageRisk": "possible_post_match_overwrite",
+      "predictedOutcome": "H",
       "features": {
         "home_avg_scored": 0,
         "away_avg_scored": 0,
@@ -40327,6 +40816,7 @@
       "featureSource": "review_prediction_fallback",
       "snapshotBacked": false,
       "leakageRisk": "possible_post_match_overwrite",
+      "predictedOutcome": "H",
       "features": {
         "home_avg_scored": 0,
         "away_avg_scored": 0,
@@ -40415,6 +40905,7 @@
       "featureSource": "snapshot_feature_vector",
       "snapshotBacked": true,
       "leakageRisk": null,
+      "predictedOutcome": "H",
       "features": {
         "home_avg_scored": 1.8,
         "away_avg_scored": 0.7,
@@ -40503,6 +40994,7 @@
       "featureSource": "snapshot_feature_vector",
       "snapshotBacked": true,
       "leakageRisk": null,
+      "predictedOutcome": "H",
       "features": {
         "home_avg_scored": 1.8,
         "away_avg_scored": 0.7,
@@ -40591,6 +41083,7 @@
       "featureSource": "snapshot_feature_vector",
       "snapshotBacked": true,
       "leakageRisk": null,
+      "predictedOutcome": "H",
       "features": {
         "home_avg_scored": 1.8,
         "away_avg_scored": 0.7,
@@ -40679,6 +41172,7 @@
       "featureSource": "snapshot_feature_vector",
       "snapshotBacked": true,
       "leakageRisk": null,
+      "predictedOutcome": "H",
       "features": {
         "home_avg_scored": 1.8,
         "away_avg_scored": 0.7,
@@ -40767,6 +41261,7 @@
       "featureSource": "snapshot_feature_vector",
       "snapshotBacked": true,
       "leakageRisk": null,
+      "predictedOutcome": "H",
       "features": {
         "home_avg_scored": 1.8,
         "away_avg_scored": 0.7,
@@ -40855,6 +41350,7 @@
       "featureSource": "snapshot_feature_vector",
       "snapshotBacked": true,
       "leakageRisk": null,
+      "predictedOutcome": "H",
       "features": {
         "home_avg_scored": 1.8,
         "away_avg_scored": 0.7,
@@ -40943,6 +41439,7 @@
       "featureSource": "snapshot_feature_vector",
       "snapshotBacked": true,
       "leakageRisk": null,
+      "predictedOutcome": "H",
       "features": {
         "home_avg_scored": 1.8,
         "away_avg_scored": 0.7,
@@ -41031,6 +41528,7 @@
       "featureSource": "snapshot_feature_vector",
       "snapshotBacked": true,
       "leakageRisk": null,
+      "predictedOutcome": "D",
       "features": {
         "home_avg_scored": 1.1,
         "away_avg_scored": 1.3,
@@ -41119,6 +41617,7 @@
       "featureSource": "snapshot_feature_vector",
       "snapshotBacked": true,
       "leakageRisk": null,
+      "predictedOutcome": "D",
       "features": {
         "home_avg_scored": 1.1,
         "away_avg_scored": 1.3,
@@ -41207,6 +41706,7 @@
       "featureSource": "snapshot_feature_vector",
       "snapshotBacked": true,
       "leakageRisk": null,
+      "predictedOutcome": "D",
       "features": {
         "home_avg_scored": 1.1,
         "away_avg_scored": 1.3,
@@ -41295,6 +41795,7 @@
       "featureSource": "snapshot_feature_vector",
       "snapshotBacked": true,
       "leakageRisk": null,
+      "predictedOutcome": "D",
       "features": {
         "home_avg_scored": 1.1,
         "away_avg_scored": 1.3,
@@ -41383,6 +41884,7 @@
       "featureSource": "snapshot_feature_vector",
       "snapshotBacked": true,
       "leakageRisk": null,
+      "predictedOutcome": "D",
       "features": {
         "home_avg_scored": 1.1,
         "away_avg_scored": 1.3,
@@ -41471,6 +41973,7 @@
       "featureSource": "snapshot_feature_vector",
       "snapshotBacked": true,
       "leakageRisk": null,
+      "predictedOutcome": "D",
       "features": {
         "home_avg_scored": 1.1,
         "away_avg_scored": 1.3,
@@ -41559,6 +42062,7 @@
       "featureSource": "snapshot_feature_vector",
       "snapshotBacked": true,
       "leakageRisk": null,
+      "predictedOutcome": "D",
       "features": {
         "home_avg_scored": 1.1,
         "away_avg_scored": 1.3,
@@ -41647,6 +42151,7 @@
       "featureSource": "snapshot_feature_vector",
       "snapshotBacked": true,
       "leakageRisk": null,
+      "predictedOutcome": "D",
       "features": {
         "home_avg_scored": 1.1,
         "away_avg_scored": 1.3,
@@ -41735,6 +42240,7 @@
       "featureSource": "snapshot_feature_vector",
       "snapshotBacked": true,
       "leakageRisk": null,
+      "predictedOutcome": "D",
       "features": {
         "home_avg_scored": 1.1,
         "away_avg_scored": 1.3,
@@ -41823,6 +42329,7 @@
       "featureSource": "snapshot_feature_vector",
       "snapshotBacked": true,
       "leakageRisk": null,
+      "predictedOutcome": "D",
       "features": {
         "home_avg_scored": 1.1,
         "away_avg_scored": 1.3,
@@ -41911,6 +42418,7 @@
       "featureSource": "snapshot_feature_vector",
       "snapshotBacked": true,
       "leakageRisk": null,
+      "predictedOutcome": "A",
       "features": {
         "home_avg_scored": 0.7,
         "away_avg_scored": 1.8,
@@ -41999,6 +42507,7 @@
       "featureSource": "snapshot_feature_vector",
       "snapshotBacked": true,
       "leakageRisk": null,
+      "predictedOutcome": "A",
       "features": {
         "home_avg_scored": 0.7,
         "away_avg_scored": 1.8,
@@ -42087,6 +42596,7 @@
       "featureSource": "snapshot_feature_vector",
       "snapshotBacked": true,
       "leakageRisk": null,
+      "predictedOutcome": "A",
       "features": {
         "home_avg_scored": 0.7,
         "away_avg_scored": 1.8,
@@ -42175,6 +42685,7 @@
       "featureSource": "snapshot_feature_vector",
       "snapshotBacked": true,
       "leakageRisk": null,
+      "predictedOutcome": "A",
       "features": {
         "home_avg_scored": 0.7,
         "away_avg_scored": 1.8,
@@ -42263,6 +42774,7 @@
       "featureSource": "snapshot_feature_vector",
       "snapshotBacked": true,
       "leakageRisk": null,
+      "predictedOutcome": "A",
       "features": {
         "home_avg_scored": 0.7,
         "away_avg_scored": 1.8,
@@ -42351,6 +42863,7 @@
       "featureSource": "snapshot_feature_vector",
       "snapshotBacked": true,
       "leakageRisk": null,
+      "predictedOutcome": "A",
       "features": {
         "home_avg_scored": 0.7,
         "away_avg_scored": 1.8,
@@ -42439,6 +42952,7 @@
       "featureSource": "snapshot_feature_vector",
       "snapshotBacked": true,
       "leakageRisk": null,
+      "predictedOutcome": "A",
       "features": {
         "home_avg_scored": 0.7,
         "away_avg_scored": 1.8,
@@ -42527,6 +43041,7 @@
       "featureSource": "snapshot_feature_vector",
       "snapshotBacked": true,
       "leakageRisk": null,
+      "predictedOutcome": "H",
       "features": {
         "home_avg_scored": 2.1,
         "away_avg_scored": 1.5,
@@ -42615,6 +43130,7 @@
       "featureSource": "snapshot_feature_vector",
       "snapshotBacked": true,
       "leakageRisk": null,
+      "predictedOutcome": "H",
       "features": {
         "home_avg_scored": 2.1,
         "away_avg_scored": 1.5,
@@ -42703,6 +43219,7 @@
       "featureSource": "snapshot_feature_vector",
       "snapshotBacked": true,
       "leakageRisk": null,
+      "predictedOutcome": "H",
       "features": {
         "home_avg_scored": 2.1,
         "away_avg_scored": 1.5,
@@ -42791,6 +43308,7 @@
       "featureSource": "snapshot_feature_vector",
       "snapshotBacked": true,
       "leakageRisk": null,
+      "predictedOutcome": "H",
       "features": {
         "home_avg_scored": 2.1,
         "away_avg_scored": 1.5,
@@ -42879,6 +43397,7 @@
       "featureSource": "snapshot_feature_vector",
       "snapshotBacked": true,
       "leakageRisk": null,
+      "predictedOutcome": "H",
       "features": {
         "home_avg_scored": 2.1,
         "away_avg_scored": 1.5,
@@ -42967,6 +43486,7 @@
       "featureSource": "snapshot_feature_vector",
       "snapshotBacked": true,
       "leakageRisk": null,
+      "predictedOutcome": "H",
       "features": {
         "home_avg_scored": 2.1,
         "away_avg_scored": 1.5,
@@ -43055,6 +43575,7 @@
       "featureSource": "snapshot_feature_vector",
       "snapshotBacked": true,
       "leakageRisk": null,
+      "predictedOutcome": "H",
       "features": {
         "home_avg_scored": 2.1,
         "away_avg_scored": 1.5,
@@ -43143,6 +43664,7 @@
       "featureSource": "snapshot_feature_vector",
       "snapshotBacked": true,
       "leakageRisk": null,
+      "predictedOutcome": "H",
       "features": {
         "home_avg_scored": 2.1,
         "away_avg_scored": 1.5,
@@ -43231,6 +43753,7 @@
       "featureSource": "snapshot_feature_vector",
       "snapshotBacked": true,
       "leakageRisk": null,
+      "predictedOutcome": "H",
       "features": {
         "home_avg_scored": 2.1,
         "away_avg_scored": 1.5,
@@ -43319,6 +43842,7 @@
       "featureSource": "snapshot_feature_vector",
       "snapshotBacked": true,
       "leakageRisk": null,
+      "predictedOutcome": "H",
       "features": {
         "home_avg_scored": 2.1,
         "away_avg_scored": 1.5,
@@ -43407,6 +43931,7 @@
       "featureSource": "snapshot_feature_vector",
       "snapshotBacked": true,
       "leakageRisk": null,
+      "predictedOutcome": "H",
       "features": {
         "home_avg_scored": 2.1,
         "away_avg_scored": 1.5,
@@ -43495,6 +44020,7 @@
       "featureSource": "snapshot_feature_vector",
       "snapshotBacked": true,
       "leakageRisk": null,
+      "predictedOutcome": "H",
       "features": {
         "home_avg_scored": 2.1,
         "away_avg_scored": 1.5,
@@ -43583,6 +44109,7 @@
       "featureSource": "snapshot_feature_vector",
       "snapshotBacked": true,
       "leakageRisk": null,
+      "predictedOutcome": "H",
       "features": {
         "home_avg_scored": 2.1,
         "away_avg_scored": 1.5,
@@ -43671,6 +44198,7 @@
       "featureSource": "snapshot_feature_vector",
       "snapshotBacked": true,
       "leakageRisk": null,
+      "predictedOutcome": "H",
       "features": {
         "home_avg_scored": 2.1,
         "away_avg_scored": 1.5,
@@ -43759,6 +44287,7 @@
       "featureSource": "snapshot_feature_vector",
       "snapshotBacked": true,
       "leakageRisk": null,
+      "predictedOutcome": "H",
       "features": {
         "home_avg_scored": 2.1,
         "away_avg_scored": 1.5,
@@ -43847,6 +44376,7 @@
       "featureSource": "snapshot_feature_vector",
       "snapshotBacked": true,
       "leakageRisk": null,
+      "predictedOutcome": "H",
       "features": {
         "home_avg_scored": 2.1,
         "away_avg_scored": 1.5,
@@ -43935,6 +44465,7 @@
       "featureSource": "snapshot_feature_vector",
       "snapshotBacked": true,
       "leakageRisk": null,
+      "predictedOutcome": "H",
       "features": {
         "home_avg_scored": 2.1,
         "away_avg_scored": 1.5,
@@ -44023,6 +44554,7 @@
       "featureSource": "snapshot_feature_vector",
       "snapshotBacked": true,
       "leakageRisk": null,
+      "predictedOutcome": "H",
       "features": {
         "home_avg_scored": 2.1,
         "away_avg_scored": 1.5,
@@ -44111,6 +44643,7 @@
       "featureSource": "snapshot_feature_vector",
       "snapshotBacked": true,
       "leakageRisk": null,
+      "predictedOutcome": "H",
       "features": {
         "home_avg_scored": 2.1,
         "away_avg_scored": 1.5,
@@ -44199,6 +44732,7 @@
       "featureSource": "snapshot_feature_vector",
       "snapshotBacked": true,
       "leakageRisk": null,
+      "predictedOutcome": "H",
       "features": {
         "home_avg_scored": 2.1,
         "away_avg_scored": 1.5,
@@ -44287,6 +44821,7 @@
       "featureSource": "snapshot_feature_vector",
       "snapshotBacked": true,
       "leakageRisk": null,
+      "predictedOutcome": "H",
       "features": {
         "home_avg_scored": 2.1,
         "away_avg_scored": 1.5,
@@ -44375,6 +44910,7 @@
       "featureSource": "snapshot_feature_vector",
       "snapshotBacked": true,
       "leakageRisk": null,
+      "predictedOutcome": "H",
       "features": {
         "home_avg_scored": 2.1,
         "away_avg_scored": 1.5,
@@ -44463,6 +44999,7 @@
       "featureSource": "snapshot_feature_vector",
       "snapshotBacked": true,
       "leakageRisk": null,
+      "predictedOutcome": "H",
       "features": {
         "home_avg_scored": 2.1,
         "away_avg_scored": 1.5,
@@ -44551,6 +45088,7 @@
       "featureSource": "snapshot_feature_vector",
       "snapshotBacked": true,
       "leakageRisk": null,
+      "predictedOutcome": "H",
       "features": {
         "home_avg_scored": 2.1,
         "away_avg_scored": 1.5,
@@ -44639,6 +45177,7 @@
       "featureSource": "snapshot_feature_vector",
       "snapshotBacked": true,
       "leakageRisk": null,
+      "predictedOutcome": "H",
       "features": {
         "home_avg_scored": 2.1,
         "away_avg_scored": 1.5,
@@ -44727,6 +45266,7 @@
       "featureSource": "review_prediction_fallback",
       "snapshotBacked": false,
       "leakageRisk": "possible_post_match_overwrite",
+      "predictedOutcome": "H",
       "features": {
         "home_avg_scored": 0,
         "away_avg_scored": 0,
@@ -44815,6 +45355,7 @@
       "featureSource": "review_prediction_fallback",
       "snapshotBacked": false,
       "leakageRisk": "possible_post_match_overwrite",
+      "predictedOutcome": "A",
       "features": {
         "home_avg_scored": 0,
         "away_avg_scored": 0,
@@ -44903,6 +45444,7 @@
       "featureSource": "review_prediction_fallback",
       "snapshotBacked": false,
       "leakageRisk": "possible_post_match_overwrite",
+      "predictedOutcome": "D",
       "features": {
         "home_avg_scored": 0,
         "away_avg_scored": 0,
@@ -44991,6 +45533,7 @@
       "featureSource": "review_prediction_fallback",
       "snapshotBacked": false,
       "leakageRisk": "possible_post_match_overwrite",
+      "predictedOutcome": "H",
       "features": {
         "home_avg_scored": 0,
         "away_avg_scored": 0,
@@ -45079,6 +45622,7 @@
       "featureSource": "review_prediction_fallback",
       "snapshotBacked": false,
       "leakageRisk": "possible_post_match_overwrite",
+      "predictedOutcome": "H",
       "features": {
         "home_avg_scored": 0,
         "away_avg_scored": 0,
@@ -45167,6 +45711,7 @@
       "featureSource": "review_prediction_fallback",
       "snapshotBacked": false,
       "leakageRisk": "possible_post_match_overwrite",
+      "predictedOutcome": "A",
       "features": {
         "home_avg_scored": 0,
         "away_avg_scored": 0,
@@ -45255,6 +45800,7 @@
       "featureSource": "review_prediction_fallback",
       "snapshotBacked": false,
       "leakageRisk": "possible_post_match_overwrite",
+      "predictedOutcome": "H",
       "features": {
         "home_avg_scored": 0,
         "away_avg_scored": 0,
@@ -45343,6 +45889,7 @@
       "featureSource": "review_prediction_fallback",
       "snapshotBacked": false,
       "leakageRisk": "possible_post_match_overwrite",
+      "predictedOutcome": "D",
       "features": {
         "home_avg_scored": 0,
         "away_avg_scored": 0,
@@ -45431,6 +45978,7 @@
       "featureSource": "review_prediction_fallback",
       "snapshotBacked": false,
       "leakageRisk": "possible_post_match_overwrite",
+      "predictedOutcome": "H",
       "features": {
         "home_avg_scored": 0,
         "away_avg_scored": 0,
@@ -45519,6 +46067,7 @@
       "featureSource": "review_prediction_fallback",
       "snapshotBacked": false,
       "leakageRisk": "possible_post_match_overwrite",
+      "predictedOutcome": "A",
       "features": {
         "home_avg_scored": 0,
         "away_avg_scored": 0,
@@ -45607,6 +46156,7 @@
       "featureSource": "review_prediction_fallback",
       "snapshotBacked": false,
       "leakageRisk": "possible_post_match_overwrite",
+      "predictedOutcome": "D",
       "features": {
         "home_avg_scored": 0,
         "away_avg_scored": 0,
@@ -45695,6 +46245,7 @@
       "featureSource": "review_prediction_fallback",
       "snapshotBacked": false,
       "leakageRisk": "possible_post_match_overwrite",
+      "predictedOutcome": "H",
       "features": {
         "home_avg_scored": 0,
         "away_avg_scored": 0,
@@ -45783,6 +46334,7 @@
       "featureSource": "review_prediction_fallback",
       "snapshotBacked": false,
       "leakageRisk": "possible_post_match_overwrite",
+      "predictedOutcome": "H",
       "features": {
         "home_avg_scored": 0,
         "away_avg_scored": 0,
@@ -45871,6 +46423,7 @@
       "featureSource": "review_prediction_fallback",
       "snapshotBacked": false,
       "leakageRisk": "possible_post_match_overwrite",
+      "predictedOutcome": "A",
       "features": {
         "home_avg_scored": 0,
         "away_avg_scored": 0,
@@ -45959,6 +46512,7 @@
       "featureSource": "review_prediction_fallback",
       "snapshotBacked": false,
       "leakageRisk": "possible_post_match_overwrite",
+      "predictedOutcome": "H",
       "features": {
         "home_avg_scored": 0,
         "away_avg_scored": 0,
@@ -46047,6 +46601,7 @@
       "featureSource": "review_prediction_fallback",
       "snapshotBacked": false,
       "leakageRisk": "possible_post_match_overwrite",
+      "predictedOutcome": "D",
       "features": {
         "home_avg_scored": 0,
         "away_avg_scored": 0,
@@ -46135,6 +46690,7 @@
       "featureSource": "snapshot_feature_vector",
       "snapshotBacked": true,
       "leakageRisk": null,
+      "predictedOutcome": "D",
       "features": {
         "home_avg_scored": 0.4,
         "away_avg_scored": 1.1,
@@ -46223,6 +46779,7 @@
       "featureSource": "snapshot_feature_vector",
       "snapshotBacked": true,
       "leakageRisk": null,
+      "predictedOutcome": "D",
       "features": {
         "home_avg_scored": 0.4,
         "away_avg_scored": 1.1,
@@ -46311,6 +46868,7 @@
       "featureSource": "snapshot_feature_vector",
       "snapshotBacked": true,
       "leakageRisk": null,
+      "predictedOutcome": "D",
       "features": {
         "home_avg_scored": 0.4,
         "away_avg_scored": 1.1,
@@ -46399,6 +46957,7 @@
       "featureSource": "snapshot_feature_vector",
       "snapshotBacked": true,
       "leakageRisk": null,
+      "predictedOutcome": "D",
       "features": {
         "home_avg_scored": 0.4,
         "away_avg_scored": 1.1,
@@ -46487,6 +47046,7 @@
       "featureSource": "snapshot_feature_vector",
       "snapshotBacked": true,
       "leakageRisk": null,
+      "predictedOutcome": "D",
       "features": {
         "home_avg_scored": 0.4,
         "away_avg_scored": 1.1,
@@ -46575,6 +47135,7 @@
       "featureSource": "snapshot_feature_vector",
       "snapshotBacked": true,
       "leakageRisk": null,
+      "predictedOutcome": "D",
       "features": {
         "home_avg_scored": 0.4,
         "away_avg_scored": 1.1,
@@ -46663,6 +47224,7 @@
       "featureSource": "snapshot_feature_vector",
       "snapshotBacked": true,
       "leakageRisk": null,
+      "predictedOutcome": "D",
       "features": {
         "home_avg_scored": 0.4,
         "away_avg_scored": 1.1,
@@ -46751,6 +47313,7 @@
       "featureSource": "snapshot_feature_vector",
       "snapshotBacked": true,
       "leakageRisk": null,
+      "predictedOutcome": "D",
       "features": {
         "home_avg_scored": 0.4,
         "away_avg_scored": 1.1,
@@ -46839,6 +47402,7 @@
       "featureSource": "snapshot_feature_vector",
       "snapshotBacked": true,
       "leakageRisk": null,
+      "predictedOutcome": "D",
       "features": {
         "home_avg_scored": 0.4,
         "away_avg_scored": 1.1,
@@ -46927,6 +47491,7 @@
       "featureSource": "snapshot_feature_vector",
       "snapshotBacked": true,
       "leakageRisk": null,
+      "predictedOutcome": "D",
       "features": {
         "home_avg_scored": 0.4,
         "away_avg_scored": 1.1,
@@ -47015,6 +47580,7 @@
       "featureSource": "snapshot_feature_vector",
       "snapshotBacked": true,
       "leakageRisk": null,
+      "predictedOutcome": "D",
       "features": {
         "home_avg_scored": 0.4,
         "away_avg_scored": 1.1,
@@ -47103,6 +47669,7 @@
       "featureSource": "snapshot_feature_vector",
       "snapshotBacked": true,
       "leakageRisk": null,
+      "predictedOutcome": "D",
       "features": {
         "home_avg_scored": 0.4,
         "away_avg_scored": 1.1,
@@ -47191,6 +47758,7 @@
       "featureSource": "snapshot_feature_vector",
       "snapshotBacked": true,
       "leakageRisk": null,
+      "predictedOutcome": "D",
       "features": {
         "home_avg_scored": 0.4,
         "away_avg_scored": 1.1,
@@ -47279,6 +47847,7 @@
       "featureSource": "snapshot_feature_vector",
       "snapshotBacked": true,
       "leakageRisk": null,
+      "predictedOutcome": "D",
       "features": {
         "home_avg_scored": 0.4,
         "away_avg_scored": 1.1,
@@ -47367,6 +47936,7 @@
       "featureSource": "snapshot_feature_vector",
       "snapshotBacked": true,
       "leakageRisk": null,
+      "predictedOutcome": "D",
       "features": {
         "home_avg_scored": 0.4,
         "away_avg_scored": 1.1,
@@ -47455,6 +48025,7 @@
       "featureSource": "snapshot_feature_vector",
       "snapshotBacked": true,
       "leakageRisk": null,
+      "predictedOutcome": "D",
       "features": {
         "home_avg_scored": 0.4,
         "away_avg_scored": 1.1,
@@ -47543,6 +48114,7 @@
       "featureSource": "snapshot_feature_vector",
       "snapshotBacked": true,
       "leakageRisk": null,
+      "predictedOutcome": "D",
       "features": {
         "home_avg_scored": 0.4,
         "away_avg_scored": 1.1,
@@ -47631,6 +48203,7 @@
       "featureSource": "snapshot_feature_vector",
       "snapshotBacked": true,
       "leakageRisk": null,
+      "predictedOutcome": "D",
       "features": {
         "home_avg_scored": 0.4,
         "away_avg_scored": 1.1,
@@ -47719,6 +48292,7 @@
       "featureSource": "snapshot_feature_vector",
       "snapshotBacked": true,
       "leakageRisk": null,
+      "predictedOutcome": "D",
       "features": {
         "home_avg_scored": 0.4,
         "away_avg_scored": 1.1,
@@ -47807,6 +48381,7 @@
       "featureSource": "snapshot_feature_vector",
       "snapshotBacked": true,
       "leakageRisk": null,
+      "predictedOutcome": "D",
       "features": {
         "home_avg_scored": 0.4,
         "away_avg_scored": 1.1,
@@ -47895,6 +48470,7 @@
       "featureSource": "snapshot_feature_vector",
       "snapshotBacked": true,
       "leakageRisk": null,
+      "predictedOutcome": "D",
       "features": {
         "home_avg_scored": 0.4,
         "away_avg_scored": 1.1,
@@ -47983,6 +48559,7 @@
       "featureSource": "snapshot_feature_vector",
       "snapshotBacked": true,
       "leakageRisk": null,
+      "predictedOutcome": "D",
       "features": {
         "home_avg_scored": 0.4,
         "away_avg_scored": 1.1,
@@ -48071,6 +48648,7 @@
       "featureSource": "snapshot_feature_vector",
       "snapshotBacked": true,
       "leakageRisk": null,
+      "predictedOutcome": "D",
       "features": {
         "home_avg_scored": 0.4,
         "away_avg_scored": 1.1,
@@ -48159,6 +48737,7 @@
       "featureSource": "snapshot_feature_vector",
       "snapshotBacked": true,
       "leakageRisk": null,
+      "predictedOutcome": "D",
       "features": {
         "home_avg_scored": 0.4,
         "away_avg_scored": 1.1,
@@ -48247,6 +48826,7 @@
       "featureSource": "snapshot_feature_vector",
       "snapshotBacked": true,
       "leakageRisk": null,
+      "predictedOutcome": "D",
       "features": {
         "home_avg_scored": 0.4,
         "away_avg_scored": 1.1,
@@ -48335,6 +48915,7 @@
       "featureSource": "snapshot_feature_vector",
       "snapshotBacked": true,
       "leakageRisk": null,
+      "predictedOutcome": "D",
       "features": {
         "home_avg_scored": 0.4,
         "away_avg_scored": 1.1,
@@ -48423,6 +49004,7 @@
       "featureSource": "snapshot_feature_vector",
       "snapshotBacked": true,
       "leakageRisk": null,
+      "predictedOutcome": "D",
       "features": {
         "home_avg_scored": 0.4,
         "away_avg_scored": 1.1,

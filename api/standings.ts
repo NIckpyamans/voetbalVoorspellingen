@@ -77,6 +77,9 @@ async function readDatabaseSeasonOverview() {
         csc.entry_reason,
         csc.status,
         csc.previous_level,
+        csc.previous_standing_position,
+        csc.previous_standing_points,
+        csc.previous_standing_source,
         csc.current_level,
         c.name as competition_name,
         c.country_name,
@@ -114,6 +117,9 @@ async function readDatabaseSeasonOverview() {
       entryReason: row.entry_reason || "retained",
       previousLevel: row.previous_level,
       currentLevel: row.current_level,
+      previousStandingPosition: row.previous_standing_position,
+      previousStandingPoints: row.previous_standing_points,
+      previousStandingSource: row.previous_standing_source,
       status: row.status,
     };
     transitionsByCompetition[key].teams.push(item);
@@ -139,6 +145,60 @@ async function readDatabaseSeasonOverview() {
     })),
     transitions: Object.values(transitionsByCompetition),
   };
+}
+
+async function readDatabaseCoverageByCompetition() {
+  if (!databaseConfigured()) return null;
+  const sql = getSql();
+  if (!sql) return null;
+  const rows = await sql.query(
+    `
+      select
+        coalesce(m.league, c.country_name || ' - ' || c.name, m.competition_id, 'Onbekend') as label,
+        m.competition_id,
+        c.name as competition_name,
+        c.country_name,
+        count(distinct m.match_id)::int as matches,
+        count(distinct m.match_id) filter (where coalesce(m.weather_payload, '{}'::jsonb) <> '{}'::jsonb)::int as weather_matches,
+        count(distinct ms.match_id)::int as xg_matches,
+        count(distinct hos.match_id)::int as odds_history_matches,
+        count(distinct m.match_id) filter (where exists (
+          select 1
+          from h2h_edges h
+          where h.home_club_id = least(m.home_club_id, m.away_club_id)
+            and h.away_club_id = greatest(m.home_club_id, m.away_club_id)
+            and (h.competition_id = m.competition_id or h.competition_id is null)
+        ))::int as h2h_matches,
+        count(distinct m.match_id) filter (where exists (
+          select 1
+          from standings_snapshots ss
+          where ss.competition_id = m.competition_id
+            and ss.source = 'season-reset-zero'
+        ))::int as season_reset_matches
+      from matches m
+      left join competitions c on c.competition_id = m.competition_id
+      left join match_stats ms on ms.match_id = m.match_id
+      left join historical_odds_snapshots hos on hos.match_id = m.match_id
+      group by coalesce(m.league, c.country_name || ' - ' || c.name, m.competition_id, 'Onbekend'), m.competition_id, c.name, c.country_name
+      order by matches desc
+      limit 120
+    `
+  );
+  return rows.map((row: any) => {
+    const matches = Math.max(Number(row.matches || 0), 1);
+    return {
+      label: row.label,
+      competitionId: row.competition_id,
+      competitionName: row.competition_name,
+      countryName: row.country_name,
+      matches: row.matches,
+      weather: { count: row.weather_matches, pct: Math.round((Number(row.weather_matches || 0) / matches) * 100) },
+      h2h: { count: row.h2h_matches, pct: Math.round((Number(row.h2h_matches || 0) / matches) * 100) },
+      xg: { count: row.xg_matches, pct: Math.round((Number(row.xg_matches || 0) / matches) * 100) },
+      oddsHistory: { count: row.odds_history_matches, pct: Math.round((Number(row.odds_history_matches || 0) / matches) * 100) },
+      seasonReset: { count: row.season_reset_matches, pct: Math.round((Number(row.season_reset_matches || 0) / matches) * 100) },
+    };
+  });
 }
 
 export default async function handler(req: any, res: any) {
@@ -168,6 +228,10 @@ export default async function handler(req: any, res: any) {
       databaseConfigured: databaseConfigured(),
       error: error?.message || "database season overview unavailable",
     }));
+    const databaseCoverageByCompetition = await readDatabaseCoverageByCompetition().catch((error) => ({
+      databaseConfigured: databaseConfigured(),
+      error: error?.message || "database coverage unavailable",
+    }));
 
     return res.status(200).json({
       ok: true,
@@ -175,6 +239,7 @@ export default async function handler(req: any, res: any) {
       knockoutOverview: store.knockoutOverview || {},
       cupSheets,
       databaseSeasonOverview,
+      databaseCoverageByCompetition,
       lastRun: store.lastRun || null,
       workerVersion: store.workerVersion || "unknown",
       reviewCount: Object.keys(store.postMatchReviews || {}).length,

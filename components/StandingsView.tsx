@@ -68,6 +68,9 @@ interface DatabaseSeasonTeam {
   clubName: string;
   entryReason: string;
   previousLevel?: number | null;
+  previousStandingPosition?: number | null;
+  previousStandingPoints?: number | null;
+  previousStandingSource?: string | null;
   currentLevel?: number | null;
   status?: string;
 }
@@ -100,6 +103,24 @@ interface DatabaseSeasonOverview {
   }>;
   transitions?: DatabaseSeasonTransition[];
   error?: string;
+}
+
+interface CompetitionCoverageMetric {
+  count: number;
+  pct: number;
+}
+
+interface CompetitionCoverage {
+  label: string;
+  competitionId?: string;
+  competitionName?: string;
+  countryName?: string;
+  matches: number;
+  weather: CompetitionCoverageMetric;
+  h2h: CompetitionCoverageMetric;
+  xg: CompetitionCoverageMetric;
+  oddsHistory: CompetitionCoverageMetric;
+  seasonReset: CompetitionCoverageMetric;
 }
 
 function zoneClasses(color?: string) {
@@ -190,6 +211,14 @@ function reasonLabel(reason?: string) {
   return "Behoud";
 }
 
+function coverageTone(pct?: number) {
+  const value = Number(pct || 0);
+  if (value >= 75) return "border-emerald-500/20 bg-emerald-500/10 text-emerald-200";
+  if (value >= 35) return "border-amber-500/20 bg-amber-500/10 text-amber-200";
+  if (value > 0) return "border-sky-500/20 bg-sky-500/10 text-sky-200";
+  return "border-slate-700 bg-slate-800/70 text-slate-400";
+}
+
 const StandingsView: React.FC = () => {
   const [standings, setStandings] = useState<Record<string, LeagueStanding>>({});
   const [cupSheets, setCupSheets] = useState<Record<string, CupSheet>>({});
@@ -201,6 +230,7 @@ const StandingsView: React.FC = () => {
   const [showLeagueManager, setShowLeagueManager] = useState(true);
   const [favoriteStandingLabel, setFavoriteStandingLabel] = useState<string>(readFavoriteStanding);
   const [databaseSeasonOverview, setDatabaseSeasonOverview] = useState<DatabaseSeasonOverview | null>(null);
+  const [databaseCoverageByCompetition, setDatabaseCoverageByCompetition] = useState<CompetitionCoverage[]>([]);
 
   useEffect(() => {
     try {
@@ -228,6 +258,7 @@ const StandingsView: React.FC = () => {
         setStandings(nextStandings);
         setCupSheets(nextCupSheets);
         setDatabaseSeasonOverview(data.databaseSeasonOverview || null);
+        setDatabaseCoverageByCompetition(Array.isArray(data.databaseCoverageByCompetition) ? data.databaseCoverageByCompetition : []);
 
         const standingKeys = Object.keys(nextStandings);
         const cupKeys = Object.keys(nextCupSheets);
@@ -309,6 +340,21 @@ const StandingsView: React.FC = () => {
       }) || null
     );
   }, [currentStanding, databaseSeasonOverview]);
+  const currentCoverage = useMemo(() => {
+    if (!currentStanding || !databaseCoverageByCompetition.length) return null;
+    const target = normalizeLeagueLabel(currentStanding.label);
+    return (
+      databaseCoverageByCompetition.find((item) => {
+        const labels = [
+          item.label,
+          item.competitionName,
+          item.countryName && item.competitionName ? `${item.countryName} ${item.competitionName}` : null,
+          item.countryName && item.competitionName ? `${item.countryName} - ${item.competitionName}` : null,
+        ].map((label) => normalizeLeagueLabel(label || ""));
+        return labels.some((label) => label && (target.includes(label) || label.includes(target)));
+      }) || null
+    );
+  }, [currentStanding, databaseCoverageByCompetition]);
   const currentSources =
     currentStanding?.sources?.length
       ? currentStanding.sources
@@ -519,6 +565,29 @@ const StandingsView: React.FC = () => {
                   ))}
                 </div>
               </div>
+              {currentCoverage && (
+                <div className="border-b border-white/5 bg-slate-950/35 px-4 py-3">
+                  <div className="mb-2 text-[9px] font-black uppercase text-slate-400">
+                    Database coverage per competitie · {currentCoverage.matches} wedstrijden
+                  </div>
+                  <div className="flex flex-wrap gap-1.5">
+                    {[
+                      ["Weer", currentCoverage.weather],
+                      ["H2H", currentCoverage.h2h],
+                      ["xG/stats", currentCoverage.xg],
+                      ["Odds history", currentCoverage.oddsHistory],
+                      ["Season reset", currentCoverage.seasonReset],
+                    ].map(([label, metric]) => (
+                      <span
+                        key={String(label)}
+                        className={`rounded-full border px-2 py-1 text-[9px] font-black ${coverageTone((metric as CompetitionCoverageMetric).pct)}`}
+                      >
+                        {String(label)} {(metric as CompetitionCoverageMetric).pct}%
+                      </span>
+                    ))}
+                  </div>
+                </div>
+              )}
               {(currentSeasonTransition || currentZeroStanding || databaseSeasonOverview?.error) && (
                 <div className="border-b border-white/5 bg-slate-950/55 px-4 py-3">
                   {databaseSeasonOverview?.error ? (
@@ -611,6 +680,9 @@ const StandingsView: React.FC = () => {
                         {currentSeasonTransition?.teams?.find((team) => team.clubName === row.team)?.entryReason && (
                           <div className="mt-0.5 text-[8px] font-black uppercase text-slate-500">
                             {reasonLabel(currentSeasonTransition.teams.find((team) => team.clubName === row.team)?.entryReason)}
+                            {currentSeasonTransition.teams.find((team) => team.clubName === row.team)?.previousStandingPosition
+                              ? ` · vorig seizoen #${currentSeasonTransition.teams.find((team) => team.clubName === row.team)?.previousStandingPosition}`
+                              : ""}
                           </div>
                         )}
                       </div>

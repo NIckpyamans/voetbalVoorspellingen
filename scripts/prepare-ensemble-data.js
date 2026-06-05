@@ -2,6 +2,7 @@
 
 import fs from "fs";
 import path from "path";
+import { loadLocalEnv, readDatabaseFeatureContext } from "../shared/database.js";
 
 const ROOT = process.cwd();
 const SNAPSHOT_FILE = path.join(ROOT, "training", "training-snapshot.json");
@@ -10,6 +11,7 @@ const EXPORT_CSV_FILE = path.join(ROOT, "training", "catboost-ready.csv");
 const CONFIG_FILE = path.join(ROOT, "training", "ensemble-config.json");
 const MIN_SNAPSHOT_ROWS = Number(process.env.SNAPSHOT_MIN_TRAINING_ROWS || 50);
 const NEXT_SNAPSHOT_TARGET_ROWS = Number(process.env.SNAPSHOT_NEXT_TARGET_ROWS || 150);
+const TRAINING_DB_CONTEXT_LIMIT = Math.max(0, Number(process.env.TRAINING_DB_CONTEXT_LIMIT || 60));
 
 const DERIVED_REVIEW_FEATURES = [
   "prob_home_base",
@@ -99,6 +101,35 @@ function hasUsableClosingLine(row) {
     const value = Number(closing[field]);
     return Number.isFinite(value) && value > 1.01;
   });
+}
+
+function predictedOutcomeFromRow(row) {
+  const review = row?.review || {};
+  const candidates = [
+    review.predictedOutcome,
+    review.outcomePrediction,
+    review.pick,
+    row?.predictedOutcome,
+    row?.outcomePrediction,
+    row?.pick,
+    row?.prediction?.predictedOutcome,
+  ];
+  for (const candidate of candidates) {
+    const value = String(candidate || "").toUpperCase();
+    if (["H", "1", "HOME", "THUIS"].includes(value)) return "H";
+    if (["D", "X", "DRAW", "GELIJK"].includes(value)) return "D";
+    if (["A", "2", "AWAY", "UIT"].includes(value)) return "A";
+  }
+  const probabilities = review?.probabilities || row?.probabilities || row?.prediction?.probabilities || null;
+  if (probabilities) {
+    const scored = [
+      ["H", Number(probabilities.home ?? probabilities.homeProb)],
+      ["D", Number(probabilities.draw ?? probabilities.drawProb)],
+      ["A", Number(probabilities.away ?? probabilities.awayProb)],
+    ].filter(([, value]) => Number.isFinite(value));
+    if (scored.length) return scored.sort((a, b) => Number(b[1]) - Number(a[1]))[0][0];
+  }
+  return null;
 }
 
 function buildDerivedReviewFeatures(row) {
@@ -242,10 +273,75 @@ function buildTrainingPolicy(snapshotBackedRows) {
   };
 }
 
-function main() {
+function buildQualityByDbFeatureSourceCount(exportRows) {
+  const groups = new Map();
+  for (const row of exportRows) {
+    const count = Math.max(0, Math.round(Number(row.features?.db_feature_source_count || 0)));
+    const key = count >= 4 ? "4+" : String(count);
+    const group = groups.get(key) || {
+      dbFeatureSourceCount: key,
+      rows: 0,
+      snapshotBackedRows: 0,
+      evaluableRows: 0,
+      outcomeHits: 0,
+      labelDistribution: { H: 0, D: 0, A: 0 },
+    };
+    group.rows += 1;
+    if (row.snapshotBacked) group.snapshotBackedRows += 1;
+    if (row.label && group.labelDistribution[row.label] !== undefined) group.labelDistribution[row.label] += 1;
+    if (row.predictedOutcome && row.label) {
+      group.evaluableRows += 1;
+      if (row.predictedOutcome === row.label) group.outcomeHits += 1;
+    }
+    groups.set(key, group);
+  }
+  return [...groups.values()]
+    .sort((a, b) => String(a.dbFeatureSourceCount).localeCompare(String(b.dbFeatureSourceCount), undefined, { numeric: true }))
+    .map((group) => ({
+      ...group,
+      snapshotBackedPct: group.rows ? Number((group.snapshotBackedRows / group.rows).toFixed(3)) : 0,
+      outcomeHitRate: group.evaluableRows ? Number((group.outcomeHits / group.evaluableRows).toFixed(3)) : null,
+      note:
+        group.evaluableRows > 0
+          ? "Hit rate is alleen berekend voor rows met opgeslagen predictedOutcome."
+          : "Nog geen opgeslagen predictedOutcome in deze groep; gebruik deze bucket voorlopig voor coverage/learning-prioriteit.",
+    }));
+}
+
+async function enrichRowsWithDatabaseContext(rows) {
+  loadLocalEnv(ROOT);
+  if (!TRAINING_DB_CONTEXT_LIMIT) return rows;
+  const cache = new Map();
+  let attempted = 0;
+  const output = [];
+  for (const row of rows) {
+    if (row?.dbFeatureContext || attempted >= TRAINING_DB_CONTEXT_LIMIT) {
+      output.push(row);
+      continue;
+    }
+    const key = [row.matchId, row.date, row.homeTeam, row.awayTeam].join("|");
+    if (!cache.has(key)) {
+      cache.set(
+        key,
+        readDatabaseFeatureContext({
+          matchId: row.matchId,
+          dateKey: row.date,
+          homeTeamName: row.homeTeam,
+          awayTeamName: row.awayTeam,
+        }).catch(() => null)
+      );
+    }
+    attempted += 1;
+    const dbFeatureContext = await cache.get(key);
+    output.push(dbFeatureContext ? { ...row, dbFeatureContext } : row);
+  }
+  return output;
+}
+
+async function main() {
   const snapshot = readJsonSafe(SNAPSHOT_FILE, { rows: [] });
   const config = readJsonSafe(CONFIG_FILE, { primaryFeatures: [] });
-  const rows = Array.isArray(snapshot.rows) ? snapshot.rows : [];
+  const rows = await enrichRowsWithDatabaseContext(Array.isArray(snapshot.rows) ? snapshot.rows : []);
   const featureNames = [...(config.primaryFeatures || []), ...DERIVED_REVIEW_FEATURES, ...DB_FEATURES];
 
   const rawExportRows = rows
@@ -261,6 +357,7 @@ function main() {
         featureSource: payload.featureSource,
         snapshotBacked: payload.snapshotBacked,
         leakageRisk: row?.review?.leakageRisk || row?.leakageGuard?.risk || null,
+        predictedOutcome: predictedOutcomeFromRow(row),
         features: payload.features,
       };
     })
@@ -275,6 +372,7 @@ function main() {
     trainingGroup: row.snapshotBacked ? "snapshot_backed" : "fallback_review",
     snapshotMaturity: trainingPolicy.maturity,
   }));
+  const modelQualityByDbFeatureSourceCount = buildQualityByDbFeatureSourceCount(exportRows);
 
   fs.mkdirSync(path.dirname(EXPORT_FILE), { recursive: true });
   fs.writeFileSync(
@@ -299,6 +397,7 @@ function main() {
               ? `Laat scheduled learning doorlopen tot minimaal ${trainingPolicy.nextTargetRows} snapshot-backed rows.`
               : "Snapshotgroep heeft expert-target bereikt; kalibreer nu sterker per league en phase.",
         },
+        modelQualityByDbFeatureSourceCount,
         featureNames,
         leakageNote:
           "snapshotBackedRows zijn lekvrijer. fallbackRows gebruiken alleen opgeslagen prediction/review-signalen en blijven gemarkeerd als fallback tot prediction snapshots met featureVector beschikbaar zijn. trainingWeight voorkomt dat een te kleine snapshotgroep te vroeg dominant wordt.",
@@ -318,6 +417,7 @@ function main() {
       "predictionId",
       "featureSource",
       "snapshotBacked",
+      "predictedOutcome",
       "leakageRisk",
       "trainingWeight",
       "trainingGroup",
@@ -333,6 +433,7 @@ function main() {
         row.predictionId || "",
         row.featureSource,
         row.snapshotBacked ? 1 : 0,
+        row.predictedOutcome || "",
         row.leakageRisk || "",
         row.trainingWeight,
         row.trainingGroup,
@@ -359,4 +460,7 @@ function main() {
   );
 }
 
-main();
+main().catch((error) => {
+  console.error(error);
+  process.exit(1);
+});

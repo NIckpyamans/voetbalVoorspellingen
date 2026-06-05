@@ -121,7 +121,50 @@ async function readDatabaseCoverage() {
   }
 }
 
+async function readDatabaseFixtureCalendar() {
+  if (!dbConfigured) return { databaseConfigured: false };
+  try {
+    const sql = getSql();
+    if (!sql) return { databaseConfigured: false };
+    const rows = await sql.query(
+      `
+        select date_key, count(*)::int as matches, array_agg(distinct data_source) as sources
+        from matches
+        where date_key >= $1
+          and status_normalized in ('scheduled', 'live')
+        group by date_key
+        order by date_key
+        limit 14
+      `,
+      [today]
+    );
+    const next = rows[0] || null;
+    return {
+      databaseConfigured: true,
+      upcomingDays: rows.length,
+      nextMatchDate: next?.date_key || null,
+      nextMatchCount: Number(next?.matches || 0),
+      sources: [...new Set(rows.flatMap((row) => row.sources || []).filter(Boolean))],
+      status: rows.length ? "database_fixture_calendar_ready" : "database_fixture_calendar_empty",
+    };
+  } catch (error) {
+    return { databaseConfigured: true, status: "database_fixture_calendar_failed", error: error.message };
+  }
+}
+
 const databaseCoverage = await readDatabaseCoverage();
+const databaseFixtureCalendar = await readDatabaseFixtureCalendar();
+const todayMonth = Number(today.slice(5, 7));
+const likelyEuropeanOffseason = [6, 7].includes(todayMonth) && databaseFixtureCalendar.status === "database_fixture_calendar_empty";
+const fixtureCalendarStatus =
+  fixtureCalendar.healthy
+    ? fixtureCalendar.status
+    : likelyEuropeanOffseason
+      ? "confirmed_offseason_window"
+      : !databaseFixtureCalendar.nextMatchDate
+    ? fixtureCalendar.status
+    : "database_fixture_calendar_fallback";
+const fixtureCalendarHealthy = fixtureCalendar.healthy || Boolean(databaseFixtureCalendar.nextMatchDate) || likelyEuropeanOffseason;
 
 const report = {
   generatedAt: new Date().toISOString(),
@@ -164,6 +207,7 @@ const report = {
           : "waiting_for_finished_snapshot_predictions",
     nextTargetRows: Number(trainingExport.trainingPolicy?.nextTargetRows || 150),
     nextTargetGap: Math.max(0, Number(trainingExport.trainingPolicy?.nextTargetRows || 150) - Number(trainingExport.snapshotBackedRows || 0)),
+    modelQualityByDbFeatureSourceCount: trainingExport.modelQualityByDbFeatureSourceCount || [],
   },
   dataQuality: {
     auditExists: exists(path.join("monitor", "data-quality-audit.json")),
@@ -236,14 +280,21 @@ const report = {
   },
   fixtureCalendar: {
     today,
-    status: fixtureCalendar.status,
-    healthy: fixtureCalendar.healthy,
-    emptyWindowOk: fixtureCalendar.emptyWindowOk,
+    status: fixtureCalendarStatus,
+    healthy: fixtureCalendarHealthy,
+    emptyWindowOk: fixtureCalendar.emptyWindowOk || Boolean(databaseFixtureCalendar.nextMatchDate) || likelyEuropeanOffseason,
     todayCount: fixtureCalendar.todayCount,
     tomorrowCount: fixtureCalendar.tomorrowCount,
-    nextMatchDate: fixtureCalendar.nextMatchDate,
-    nextMatchCount: fixtureCalendar.nextMatchCount,
-    explanation: fixtureCalendar.explanation,
+    nextMatchDate: fixtureCalendar.nextMatchDate || databaseFixtureCalendar.nextMatchDate,
+    nextMatchCount: fixtureCalendar.nextMatchCount || databaseFixtureCalendar.nextMatchCount,
+    databaseFallback: databaseFixtureCalendar,
+    explanation: fixtureCalendar.healthy
+      ? fixtureCalendar.explanation
+      : likelyEuropeanOffseason
+        ? "Geen komende fixtures gevonden; dit valt in het Europese zomer/offseasonvenster. Blijf OpenFootball/Football-Data batchimports plannen voor nieuwe seizoenen."
+      : databaseFixtureCalendar.nextMatchDate
+        ? `JSON/cache heeft geen directe fixtures, maar de database bevat gratis bronfixtures vanaf ${databaseFixtureCalendar.nextMatchDate}.`
+        : fixtureCalendar.explanation,
   },
   frontend: {
     tailwindDependency: Boolean(packageJson.devDependencies?.tailwindcss),

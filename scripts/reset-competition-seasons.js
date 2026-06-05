@@ -22,7 +22,114 @@ function inferEntryReason(current, previousByClub) {
   return { reason: "retained", previousSeasonId: previous.season_id, previousLevel };
 }
 
+async function ensureSeasonTransitionColumns(sql) {
+  await sql.query("alter table competition_season_clubs add column if not exists previous_standing_position integer");
+  await sql.query("alter table competition_season_clubs add column if not exists previous_standing_points integer");
+  await sql.query("alter table competition_season_clubs add column if not exists previous_standing_source text");
+}
+
+function normalizeStandingTeam(value) {
+  return String(value || "")
+    .toLowerCase()
+    .normalize("NFKD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .replace(/\b(fc|cf|afc|sc|club)\b/g, " ")
+    .replace(/[^a-z0-9]+/g, " ")
+    .trim()
+    .replace(/\s+/g, " ");
+}
+
+function standingPositionValue(row, index) {
+  return Number(row?.pos ?? row?.position ?? row?.rank ?? index + 1) || index + 1;
+}
+
+function standingPointsValue(row) {
+  const value = Number(row?.pts ?? row?.points ?? row?.Ptn ?? row?.Pnt);
+  return Number.isFinite(value) ? value : null;
+}
+
+async function readPreviousStandingByClub(sql, season) {
+  const rows = await sql.query(
+    `
+      select ss.standings, ss.source, s.season_id, s.year_label, comp.level
+      from standings_snapshots ss
+      join seasons s on s.season_id = ss.season_id
+      join competitions comp on comp.competition_id = ss.competition_id
+      where s.year_label < $1
+      order by s.year_label desc, ss.captured_at desc
+      limit 80
+    `,
+    [season.year_label]
+  );
+  const byClub = new Map();
+  const byName = new Map();
+  for (const snapshot of rows) {
+    const standings = Array.isArray(snapshot.standings) ? snapshot.standings : [];
+    standings.forEach((item, index) => {
+      const clubId = item?.clubId || item?.club_id || item?.teamId || null;
+      const teamName = item?.team || item?.clubName || item?.name || null;
+      const standing = {
+        position: standingPositionValue(item, index),
+        points: standingPointsValue(item),
+        seasonId: snapshot.season_id,
+        yearLabel: snapshot.year_label,
+        level: snapshot.level,
+        source: snapshot.source || "standings_snapshots",
+      };
+      if (clubId && !byClub.has(clubId)) byClub.set(clubId, standing);
+      const nameKey = normalizeStandingTeam(teamName);
+      if (nameKey && !byName.has(nameKey)) byName.set(nameKey, standing);
+    });
+  }
+  return { byClub, byName };
+}
+
+function findPreviousStanding(club, previousStandings) {
+  return previousStandings.byClub.get(club.club_id) || previousStandings.byName.get(normalizeStandingTeam(club.club_name)) || null;
+}
+
+function buildPreviousStandingIndex(snapshots) {
+  const bySeasonYear = new Map();
+  for (const snapshot of snapshots) {
+    const standings = Array.isArray(snapshot.standings) ? snapshot.standings : [];
+    const item = bySeasonYear.get(snapshot.year_label) || { byClub: new Map(), byName: new Map() };
+    standings.forEach((row, index) => {
+      const clubId = row?.clubId || row?.club_id || row?.teamId || null;
+      const teamName = row?.team || row?.clubName || row?.name || null;
+      const standing = {
+        position: standingPositionValue(row, index),
+        points: standingPointsValue(row),
+        seasonId: snapshot.season_id,
+        yearLabel: snapshot.year_label,
+        level: snapshot.level,
+        source: snapshot.source || "standings_snapshots",
+      };
+      if (clubId && !item.byClub.has(clubId)) item.byClub.set(clubId, standing);
+      const nameKey = normalizeStandingTeam(teamName);
+      if (nameKey && !item.byName.has(nameKey)) item.byName.set(nameKey, standing);
+    });
+    bySeasonYear.set(snapshot.year_label, item);
+  }
+  return bySeasonYear;
+}
+
+function previousStandingForSeason(season, previousStandingIndex) {
+  const years = [...previousStandingIndex.keys()].filter((year) => String(year) < String(season.year_label)).sort().reverse();
+  const merged = { byClub: new Map(), byName: new Map() };
+  for (const year of years) {
+    const item = previousStandingIndex.get(year);
+    for (const [key, value] of item.byClub.entries()) {
+      if (!merged.byClub.has(key)) merged.byClub.set(key, value);
+    }
+    for (const [key, value] of item.byName.entries()) {
+      if (!merged.byName.has(key)) merged.byName.set(key, value);
+    }
+  }
+  return merged;
+}
+
 async function rebuildSeasonMemberships(sql) {
+  await ensureSeasonTransitionColumns(sql);
   const seasons = await sql.query(
     `
       select s.season_id, s.competition_id, s.year_label, c.level, c.name as competition_name
@@ -34,6 +141,16 @@ async function rebuildSeasonMemberships(sql) {
   let memberships = 0;
   let zeroStandings = 0;
   const seasonSummaries = [];
+  const allStandingSnapshots = await sql.query(
+    `
+      select ss.standings, ss.source, s.season_id, s.year_label, comp.level
+      from standings_snapshots ss
+      join seasons s on s.season_id = ss.season_id
+      join competitions comp on comp.competition_id = ss.competition_id
+      order by s.year_label desc, ss.captured_at desc
+    `
+  );
+  const previousStandingIndex = buildPreviousStandingIndex(allStandingSnapshots);
 
   for (const season of seasons) {
     const clubs = await sql.query(
@@ -49,6 +166,7 @@ async function rebuildSeasonMemberships(sql) {
       [season.season_id]
     );
     if (!clubs.length) continue;
+    const previousStandings = previousStandingForSeason(season, previousStandingIndex);
 
     const previousRows = await sql.query(
       `
@@ -69,13 +187,15 @@ async function rebuildSeasonMemberships(sql) {
     const standings = [];
     for (const club of clubs) {
       const entry = inferEntryReason({ ...club, level: season.level }, previousByClub);
+      const previousStanding = findPreviousStanding(club, previousStandings);
       await sql.query(
         `
           insert into competition_season_clubs (
             season_id, competition_id, club_id, club_name, status, entry_reason,
-            previous_season_id, previous_level, current_level, source
+            previous_season_id, previous_level, previous_standing_position,
+            previous_standing_points, previous_standing_source, current_level, source
           )
-          values ($1,$2,$3,$4,'active',$5,$6,$7,$8,'matches-derived')
+          values ($1,$2,$3,$4,'active',$5,$6,$7,$8,$9,$10,$11,'matches-and-standings-derived')
           on conflict (season_id, club_id) do update set
             competition_id = excluded.competition_id,
             club_name = excluded.club_name,
@@ -83,6 +203,9 @@ async function rebuildSeasonMemberships(sql) {
             entry_reason = excluded.entry_reason,
             previous_season_id = excluded.previous_season_id,
             previous_level = excluded.previous_level,
+            previous_standing_position = excluded.previous_standing_position,
+            previous_standing_points = excluded.previous_standing_points,
+            previous_standing_source = excluded.previous_standing_source,
             current_level = excluded.current_level,
             source = excluded.source,
             updated_at = now()
@@ -95,6 +218,9 @@ async function rebuildSeasonMemberships(sql) {
           entry.reason,
           entry.previousSeasonId,
           entry.previousLevel,
+          previousStanding?.position || null,
+          previousStanding?.points || null,
+          previousStanding?.source || null,
           season.level,
         ]
       );
@@ -110,6 +236,9 @@ async function rebuildSeasonMemberships(sql) {
         goalDifference: 0,
         points: 0,
         entryReason: entry.reason,
+        previousStandingPosition: previousStanding?.position || null,
+        previousStandingPoints: previousStanding?.points || null,
+        previousStandingSource: previousStanding?.source || null,
       });
       memberships += 1;
     }

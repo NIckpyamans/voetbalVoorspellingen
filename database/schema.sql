@@ -92,6 +92,9 @@ create table if not exists competition_season_clubs (
   entry_reason text,
   previous_season_id text references seasons(season_id),
   previous_level integer,
+  previous_standing_position integer,
+  previous_standing_points integer,
+  previous_standing_source text,
   current_level integer,
   source text,
   source_record_id text references source_records(source_record_id),
@@ -449,6 +452,9 @@ create index if not exists idx_matches_competition_season on matches(competition
 create index if not exists idx_competition_seasons_competition_status on competition_seasons(competition_id, status);
 create index if not exists idx_competition_season_clubs_competition on competition_season_clubs(competition_id, season_id);
 create index if not exists idx_competition_season_clubs_status on competition_season_clubs(status, entry_reason);
+alter table competition_season_clubs add column if not exists previous_standing_position integer;
+alter table competition_season_clubs add column if not exists previous_standing_points integer;
+alter table competition_season_clubs add column if not exists previous_standing_source text;
 create index if not exists idx_club_aliases_normalized on club_aliases(normalized_alias);
 create index if not exists idx_venues_country_city on venues(country_id, city);
 create index if not exists idx_source_records_entity on source_records(entity_type, entity_key, fetched_at desc);
