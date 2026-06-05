@@ -1,6 +1,7 @@
 import { fetchServerStore } from "./_dataSource.js";
 import { createLogger, getErrorDetails } from "../shared/logger.js";
 import { setCorsHeaders } from "../shared/cors.js";
+import { databaseConfigured, getSql } from "../shared/database.js";
 
 const logger = createLogger("api.prediction-snapshots");
 
@@ -61,6 +62,41 @@ export default async function handler(req: any, res: any) {
     const predictionId = typeof req.query?.predictionId === "string" ? req.query.predictionId : null;
     const matchId = typeof req.query?.matchId === "string" ? req.query.matchId : null;
     const limit = Math.min(Math.max(Number(req.query?.limit || 25), 1), 100);
+
+    if (databaseConfigured()) {
+      const sql = getSql();
+      if (sql) {
+        let rows: any[] = [];
+        if (predictionId) {
+          rows = await sql.query(
+            "select prediction_payload, generated_at from prediction_snapshots where prediction_id = $1 limit 1",
+            [predictionId]
+          );
+        } else if (matchId) {
+          rows = await sql.query(
+            "select prediction_payload, generated_at from prediction_snapshots where match_id = $1 order by generated_at desc limit $2",
+            [matchId, limit]
+          );
+        } else {
+          rows = await sql.query(
+            "select prediction_payload, generated_at from prediction_snapshots order by generated_at desc limit $1",
+            [limit]
+          );
+        }
+        const items = rows.map((row: any) => compactSnapshot(row.prediction_payload)).filter(Boolean);
+        if (items.length) {
+          return res.status(200).json({
+            ok: true,
+            items,
+            total: items.length,
+            sourceBranch: "postgres",
+            workerVersion: items[0]?.modelVersion || "database",
+            durationMs: Date.now() - started,
+          });
+        }
+      }
+    }
+
     const { store, branch } = await fetchServerStore();
     const snapshots = store.predictionSnapshots || {};
     const index = store.predictionSnapshotIndex || {};

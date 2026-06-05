@@ -829,10 +829,10 @@ const SettingsView: React.FC = () => {
               </div>
               <div className="grid grid-cols-2 md:grid-cols-4 gap-2">
                 {[
-                  { label: "DB secties", value: (databaseIntegration?.databaseBackedSections || []).length },
-                  { label: "JSON fallback", value: (databaseIntegration?.jsonFallbackSections || []).length },
+                  { label: "DB matches", value: databaseIntegration?.counts?.matches || 0 },
+                  { label: "Snapshots", value: databaseIntegration?.counts?.prediction_snapshots || 0 },
                   { label: "Source records", value: databaseIntegration?.sourceLineageBackfill?.sourceRecords || 0 },
-                  { label: "Audit rows", value: databaseIntegration?.sourceLineageBackfill?.sourceAuditRows || 0 },
+                  { label: "Audit rows", value: databaseIntegration?.counts?.source_audit || databaseIntegration?.sourceLineageBackfill?.appliedCounts?.source_audit || 0 },
                 ].map((item) => (
                   <div key={item.label} className="rounded-lg border border-white/5 bg-slate-950/30 p-2">
                     <div className="text-[8px] font-black text-slate-500 uppercase">{item.label}</div>

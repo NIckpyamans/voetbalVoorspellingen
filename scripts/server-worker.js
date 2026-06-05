@@ -22,6 +22,7 @@ import {
 } from "./prediction-analytics.js";
 import { fetchOddsAtPrediction } from "./odds-provider.js";
 import { writeJsonFile, writeSplitDataFiles } from "./worker/archive.js";
+import { loadLocalEnv, syncStoreToDatabase } from "../shared/database.js";
 import {
   createSafeFetch,
   fetchBbcScheduledEvents as fetchBbcScheduledEventsSource,
@@ -62,6 +63,8 @@ const DATA_FILE = path.resolve(process.cwd(), "server_data.json");
 const SPLIT_DATA_DIR = path.resolve(process.cwd(), "data");
 const COMPETITION_ARCHIVE_DIR = path.join(SPLIT_DATA_DIR, "competitions");
 const TRAINING_SNAPSHOT_FILE = path.resolve(process.cwd(), "training", "training-snapshot.json");
+
+loadLocalEnv(process.cwd());
 
 const LEAGUES = [
   { country: "netherlands", name: "eredivisie", label: "Netherlands - Eredivisie", type: "league" },
@@ -11156,6 +11159,26 @@ async function main() {
     writeCompetitionArchiveFiles,
   });
   fs.writeFileSync(DATA_FILE, JSON.stringify(store));
+  try {
+    const dbSync = await syncStoreToDatabase(store, { dateKeys: dates });
+    store.databaseSync = { ...dbSync, syncedAt: new Date().toISOString() };
+    if (dbSync.skipped) {
+      console.warn(`[worker] database sync overgeslagen: ${dbSync.reason}`);
+    } else {
+      console.log(
+        `[worker] database sync: ${dbSync.matches} matches, ${dbSync.predictionSnapshots} prediction snapshots`
+      );
+    }
+    fs.writeFileSync(DATA_FILE, JSON.stringify(store));
+  } catch (error) {
+    store.databaseSync = {
+      syncedAt: new Date().toISOString(),
+      skipped: false,
+      error: error?.message || String(error),
+    };
+    fs.writeFileSync(DATA_FILE, JSON.stringify(store));
+    console.warn(`[worker] database sync mislukt: ${store.databaseSync.error}`);
+  }
   console.log("[worker] klaar");
 }
 

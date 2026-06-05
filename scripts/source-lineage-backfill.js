@@ -291,19 +291,32 @@ const manifest = {
 async function applySqlWithNeon(databaseUrl) {
   const sql = neon(databaseUrl);
   const statements = splitSqlStatements(fs.readFileSync(SQL_FILE, "utf8"));
-  const [predictionSnapshotCount] = await sql.query("select count(*)::int as count from prediction_snapshots");
-  const shouldApplyAudit = Number(predictionSnapshotCount?.count || 0) > 0;
+  const predictionSnapshots = await sql.query(
+    "select prediction_id, match_id, generated_at from prediction_snapshots order by generated_at desc"
+  );
+  const latestPredictionByMatch = new Map();
+  const predictionIds = new Set();
+  for (const snapshot of predictionSnapshots) {
+    if (snapshot?.prediction_id) predictionIds.add(String(snapshot.prediction_id));
+    if (snapshot?.match_id && !latestPredictionByMatch.has(String(snapshot.match_id))) {
+      latestPredictionByMatch.set(String(snapshot.match_id), String(snapshot.prediction_id));
+    }
+  }
+  const shouldApplyAudit = predictionIds.size > 0;
   let appliedStatements = 0;
   let skippedAuditStatements = 0;
 
   for (const statement of statements) {
-    if (!shouldApplyAudit && /\binsert\s+into\s+source_audit\b/i.test(statement)) {
+    if (/\binsert\s+into\s+source_audit\b/i.test(statement)) {
       skippedAuditStatements += 1;
       continue;
     }
     await sql.query(statement);
     appliedStatements += 1;
   }
+  const appliedAuditRows = shouldApplyAudit
+    ? await applyAuditRowsWithNeon(sql, auditRows, { latestPredictionByMatch, predictionIds })
+    : 0;
   const [appliedCounts] = await sql.query(`
     select
       (select count(*)::int from source_records) as source_records,
@@ -315,10 +328,74 @@ async function applySqlWithNeon(databaseUrl) {
   manifest.applyMethod = "neon-serverless";
   manifest.appliedStatements = appliedStatements;
   manifest.skippedAuditStatements = skippedAuditStatements;
+  manifest.appliedAuditRows = appliedAuditRows;
   manifest.appliedCounts = appliedCounts;
   if (!shouldApplyAudit) {
     manifest.auditBackfillStatus = "skipped_until_prediction_snapshots_exist";
+  } else {
+    manifest.auditBackfillStatus = "applied";
   }
+}
+
+async function applyAuditRowsWithNeon(sql, rows, context) {
+  const [before] = await sql.query("select count(*)::int as count from source_audit");
+  const mapped = [];
+  for (const row of rows) {
+    const predictionId = row.prediction_id
+      ? context.predictionIds.has(String(row.prediction_id))
+        ? String(row.prediction_id)
+        : null
+      : context.latestPredictionByMatch.get(String(row.match_id || ""));
+    if (!predictionId) continue;
+    mapped.push({ ...row, prediction_id: predictionId });
+  }
+
+  const batchSize = 250;
+  for (let offset = 0; offset < mapped.length; offset += batchSize) {
+    const batch = mapped.slice(offset, offset + batchSize);
+    const params = [];
+    const values = batch.map((row, index) => {
+      const base = index * 7;
+      params.push(
+        row.prediction_id,
+        row.field_name,
+        Boolean(row.available),
+        row.source || null,
+        row.as_of || null,
+        Boolean(row.source_timestamp_known),
+        row.note || null
+      );
+      return `($${base + 1}, $${base + 2}, $${base + 3}, $${base + 4}, $${base + 5}, $${base + 6}, $${base + 7})`;
+    });
+    await sql.query(
+      `
+        insert into source_audit (
+          prediction_id, field_name, available, source, as_of, source_timestamp_known, note
+        )
+        select
+          v.prediction_id,
+          v.field_name,
+          v.available::boolean,
+          v.source,
+          v.as_of::timestamptz,
+          v.source_timestamp_known::boolean,
+          v.note
+        from (values ${values.join(", ")}) as v(
+          prediction_id, field_name, available, source, as_of, source_timestamp_known, note
+        )
+        where not exists (
+          select 1
+          from source_audit existing
+          where existing.prediction_id = v.prediction_id
+            and existing.field_name = v.field_name
+            and coalesce(existing.note, '') = coalesce(v.note, '')
+        )
+      `,
+      params
+    );
+  }
+  const [after] = await sql.query("select count(*)::int as count from source_audit");
+  return Math.max(Number(after?.count || 0) - Number(before?.count || 0), 0);
 }
 
 function splitSqlStatements(input) {

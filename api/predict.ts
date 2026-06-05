@@ -3,6 +3,7 @@ import { todayAmsterdamKey } from "../shared/date.js";
 import { buildWorldCup2026DayData, buildWorldCup2026FriendlyDayData } from "../shared/worldCup2026.js";
 import { createLogger, getErrorDetails } from "../shared/logger.js";
 import { setCorsHeaders } from "../shared/cors.js";
+import { databaseConfigured, readDatabaseDay } from "../shared/database.js";
 
 const logger = createLogger("api.predict");
 
@@ -109,6 +110,12 @@ export default async function handler(req: any, res: any) {
     let reviewCount = 0;
 
     try {
+      const dbDay = databaseConfigured() ? await readDatabaseDay(date).catch(() => null) : null;
+      if (dbDay?.matches?.length || dbDay?.predictions?.length) {
+        predictions = dbDay.predictions || [];
+        matches = dbDay.matches || [];
+        branch = "postgres";
+      } else {
       const [dayResponse, metaResponse] = await Promise.all([
         fetchDayData(date),
         fetchMetaData().catch(() => ({ data: {}, branch: "split-data" })),
@@ -121,6 +128,7 @@ export default async function handler(req: any, res: any) {
       branch = dayResponse.branch || branch;
       lastRun = day.lastRun || meta.lastRun || null;
       reviewCount = Number(meta.reviewCount || Object.keys(reviews).length || 0);
+      }
     } catch {
       const full = await fetchServerStore();
       const store = full.store || {};
@@ -144,7 +152,7 @@ export default async function handler(req: any, res: any) {
       date,
       predictions: predictions.map((prediction) => enrichPrediction(prediction, matchMap, splitStore)),
       total: predictions.length,
-      source: predictions.length ? "server-data-v6-split-review-market" : "none",
+      source: predictions.length && branch === "postgres" ? "postgres-prediction-snapshots" : predictions.length ? "server-data-v6-split-review-market" : "none",
       sourceBranch: branch,
       lastRun,
       reviewCount,

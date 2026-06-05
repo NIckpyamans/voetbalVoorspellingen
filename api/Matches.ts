@@ -6,6 +6,7 @@ import { buildWorldCup2026DayData, buildWorldCup2026FriendlyDayData, getWorldCup
 import { createLogger, getErrorDetails } from "../shared/logger.js";
 import { setCorsHeaders } from "../shared/cors.js";
 import { mergeDuplicateServedMatches, normalizeServedMatch } from "../shared/matchNormalization.js";
+import { databaseConfigured, readDatabaseCounts, readDatabaseDay } from "../shared/database.js";
 
 const logger = createLogger("api.matches");
 
@@ -53,14 +54,6 @@ async function readDataContext() {
   }
 }
 
-function databaseConfigured() {
-  return Boolean(
-    String(process.env.DATABASE_URL || "").trim() ||
-      String(process.env.POSTGRES_URL || "").trim() ||
-      String(process.env.SUPABASE_DB_URL || "").trim()
-  );
-}
-
 function readSourceLineageBackfill() {
   try {
     const manifestPath = path.join(process.cwd(), "monitor", "source-lineage-backfill.json");
@@ -71,19 +64,23 @@ function readSourceLineageBackfill() {
   }
 }
 
-function buildDatabaseIntegration(dataContext: any) {
+async function buildDatabaseIntegration(dataContext: any) {
   const configured = databaseConfigured();
   const sourceLineageBackfill = readSourceLineageBackfill();
+  const counts = configured ? await readDatabaseCounts().catch(() => null) : null;
   return {
-    sourceOfTruth: configured ? "postgres-ready" : "json-cache",
+    sourceOfTruth: counts?.matches || counts?.prediction_snapshots ? "postgres" : configured ? "postgres-ready" : "json-cache",
     databaseConfigured: configured,
+    counts,
     schemaApplyCommand: "npm run db:schema:apply",
     sourceLineageBackfill,
     dashboardContracts: dataContext?.defaultDashboardSections || [],
-    databaseBackedSections: configured ? dataContext?.defaultDashboardSections || [] : [],
-    jsonFallbackSections: configured ? [] : dataContext?.defaultDashboardSections || [],
+    databaseBackedSections: counts?.matches || counts?.prediction_snapshots ? dataContext?.defaultDashboardSections || [] : [],
+    jsonFallbackSections: counts?.matches || counts?.prediction_snapshots ? [] : dataContext?.defaultDashboardSections || [],
     nextAction: configured
-      ? "Schema toepassen en daarna source lineage backfill uitvoeren."
+      ? counts?.matches
+        ? "Dashboard leest Postgres waar data beschikbaar is; JSON blijft fallback."
+        : "Worker/database sync draaien zodat matches en prediction snapshots gevuld worden."
       : "Vul DATABASE_URL of POSTGRES_URL om dashboardsecties database-backed te maken.",
   };
 }
@@ -146,7 +143,7 @@ export default async function handler(req: any, res: any) {
   try {
     const biweeklyDigest = await readBiweeklyDigest();
     const dataContext = await readDataContext();
-    const databaseIntegration = buildDatabaseIntegration(dataContext);
+    const databaseIntegration = await buildDatabaseIntegration(dataContext);
     const rufloReport = await readRufloReport();
     const meta = await readSplitMeta();
 
@@ -159,9 +156,15 @@ export default async function handler(req: any, res: any) {
         try {
           for (let i = -Math.floor(numDays / 2); i <= Math.floor(numDays / 2); i++) {
             const dateStr = addDaysToDateKey(targetDate, i);
-            const day = await readSplitDay(dateStr);
-            sourceBranch = day.branch || sourceBranch;
-            multiDayMatches.push(...day.matches.map((match: any) => attachReviewAndNormalize(match, day.reviews)));
+            const dbDay = databaseConfigured() ? await readDatabaseDay(dateStr).catch(() => null) : null;
+            if (dbDay?.matches?.length) {
+              sourceBranch = "postgres";
+              multiDayMatches.push(...dbDay.matches.map((match: any) => attachReviewAndNormalize(match, {})));
+            } else {
+              const day = await readSplitDay(dateStr);
+              sourceBranch = day.branch || sourceBranch;
+              multiDayMatches.push(...day.matches.map((match: any) => attachReviewAndNormalize(match, day.reviews)));
+            }
           }
         } catch {
           const { store, branch } = await fetchServerStore();
@@ -209,7 +212,7 @@ export default async function handler(req: any, res: any) {
           databaseIntegration,
           rufloReport,
           sourceBranch,
-          source: "github-worker-v4-split-multiday",
+          source: sourceBranch === "postgres" ? "postgres-database-multiday" : "github-worker-v4-split-multiday",
           durationMs: Date.now() - started,
         });
       }
@@ -221,11 +224,17 @@ export default async function handler(req: any, res: any) {
     let sourceBranch = "split-data";
 
     try {
-      const day = await readSplitDay(targetDate);
-      baseMatches = day.matches.map((match: any) => attachReviewAndNormalize(match, day.reviews));
-      lastRun = day.lastRun || lastRun;
-      workerVersion = day.workerVersion || workerVersion;
-      sourceBranch = day.branch || sourceBranch;
+      const dbDay = databaseConfigured() ? await readDatabaseDay(targetDate).catch(() => null) : null;
+      if (dbDay?.matches?.length) {
+        baseMatches = dbDay.matches.map((match: any) => attachReviewAndNormalize(match, {}));
+        sourceBranch = "postgres";
+      } else {
+        const day = await readSplitDay(targetDate);
+        baseMatches = day.matches.map((match: any) => attachReviewAndNormalize(match, day.reviews));
+        lastRun = day.lastRun || lastRun;
+        workerVersion = day.workerVersion || workerVersion;
+        sourceBranch = day.branch || sourceBranch;
+      }
     } catch {
       const { store, branch } = await fetchServerStore();
       baseMatches = (store.matches?.[targetDate] || []).map((match: any) => attachReviewAndNormalize(match, store));
@@ -273,7 +282,7 @@ export default async function handler(req: any, res: any) {
       databaseIntegration,
       rufloReport,
       sourceBranch,
-      source: matches.length ? "github-worker-v4-split" : "no-matches-yet",
+      source: matches.length && sourceBranch === "postgres" ? "postgres-database" : matches.length ? "github-worker-v4-split" : "no-matches-yet",
       message: matches.length ? null : "Nog geen wedstrijden gevonden voor deze dag in de actuele workerdata.",
       durationMs: Date.now() - started,
     });

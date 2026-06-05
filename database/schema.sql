@@ -285,6 +285,8 @@ alter table matches add column if not exists away_club_id text references clubs(
 alter table matches add column if not exists venue_id text references venues(venue_id);
 alter table matches add column if not exists status_normalized text;
 alter table matches add column if not exists neutral_venue boolean not null default false;
+alter table matches add column if not exists date_key text;
+alter table matches add column if not exists raw_payload jsonb not null default '{}'::jsonb;
 alter table clubs add column if not exists venue_id text references venues(venue_id);
 
 create table if not exists prediction_snapshots (
@@ -390,6 +392,7 @@ create table if not exists calibration_profiles (
 );
 
 alter table prediction_snapshots add column if not exists model_version_id text;
+alter table prediction_snapshots add column if not exists prediction_payload jsonb not null default '{}'::jsonb;
 
 create table if not exists source_audit (
   source_audit_id bigserial primary key,
@@ -403,6 +406,7 @@ create table if not exists source_audit (
 );
 
 create index if not exists idx_matches_kickoff on matches(kickoff_at);
+create index if not exists idx_matches_date_key on matches(date_key);
 create index if not exists idx_matches_competition_season on matches(competition_id, season_id);
 create index if not exists idx_competition_seasons_competition_status on competition_seasons(competition_id, status);
 create index if not exists idx_club_aliases_normalized on club_aliases(normalized_alias);
