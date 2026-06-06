@@ -57,12 +57,12 @@ for (const club of clubs) {
 let mergedGroups = 0;
 let removedClubs = 0;
 for (const [key, group] of groups.entries()) {
-  if (group.length < 2) continue;
   const [countryKey, nameKey] = key.split("|");
+  const canonicalClubId = `club-${countryKey}-${nameKey}`;
+  if (group.length === 1 && group[0].club_id === canonicalClubId) continue;
   const preferred = group.find((club) => club.club_id === `club-${countryKey}-${nameKey}`)
     || group.find((club) => String(club.club_id).startsWith("club-"))
     || group[0];
-  const canonicalClubId = `club-${countryKey}-${nameKey}`;
   const providerIds = Object.assign({}, ...group.map((club) => club.provider_ids || {}));
   const history = Object.assign({}, ...group.map((club) => club.history || {}));
   const oldIds = group.map((club) => club.club_id).filter((clubId) => clubId !== canonicalClubId);
