@@ -12,6 +12,12 @@ if (!sql) {
 
 const MAX_REQUESTS = Math.max(1, Number(process.env.COVERAGE_REPAIR_BATCH_LIMIT || 12));
 
+await sql.query(`
+  update coverage_repair_requests
+  set status = 'pending', started_at = null, last_error = 'Automatisch opnieuw ingepland na verlopen running-status.'
+  where status = 'running' and started_at < now() - interval '45 minutes'
+`);
+
 function runNode(script, args = [], extraEnv = {}) {
   const result = spawnSync(process.execPath, [script, ...args], {
     cwd: process.cwd(),
@@ -27,7 +33,13 @@ async function processCategory(category) {
   if (category === "weather") {
     return runNode("scripts/import-free-sources.js", ["--source=weather"], { FREE_SOURCE_WEATHER_LIMIT: "600" });
   }
-  if (category === "xg" || category === "oddsHistory") {
+  if (category === "xg") {
+    return runNode("scripts/import-free-sources.js", ["--source=statsbomb"], {
+      STATSBOMB_EVENT_LIMIT: "120",
+      STATSBOMB_COMPETITION_LIMIT: "24",
+    });
+  }
+  if (category === "oddsHistory") {
     return runNode("scripts/import-free-sources.js", ["--source=football-data"], { FREE_SOURCE_IMPORT_LIMIT: "700" });
   }
   if (category === "h2h" || category === "seasonReset") {

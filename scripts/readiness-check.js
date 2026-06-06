@@ -61,6 +61,7 @@ const dataQualityAudit = readJsonSafe(path.join("monitor", "data-quality-audit.j
 const sourceLineageBackfill = readJsonSafe(path.join("monitor", "source-lineage-backfill.json"), {});
 const freeSourceStrategy = readJsonSafe(path.join("docs", "data-context", "free-source-strategy.json"), {});
 const followedClubContext = readJsonSafe(path.join("docs", "data-context", "followed-clubs-context.json"), {});
+const freeOddsReadiness = readJsonSafe(path.join("monitor", "free-odds-readiness.json"), {});
 const meta = readJsonSafe(path.join("data", "meta.json"), {});
 const indexHtml = readTextSafe("index.html");
 const indexTsx = readTextSafe("index.tsx");
@@ -236,6 +237,8 @@ const report = {
           ? "database_needed_for_roi_clv_storage"
           : "odds_credentials_needed",
     note: "ROI/CLV pas live beoordelen wanneer echte odds_at_prediction plus closing odds in de database staan.",
+    freeHistorical: freeOddsReadiness.readiness || null,
+    freeHistoricalCoverage: freeOddsReadiness.database || null,
   },
   databaseFeatureCoverage: databaseCoverage,
   freeSources: {

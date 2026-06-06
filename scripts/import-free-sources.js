@@ -20,6 +20,8 @@ const FOOTBALL_DATA_LIMIT = FOOTBALL_DATA_FULL_SEASONS ? Number.POSITIVE_INFINIT
 const WEATHER_LIMIT = Math.max(1, Number(process.env.FREE_SOURCE_WEATHER_LIMIT || 120));
 const STATSBOMB_EVENT_LIMIT = Math.max(1, Number(process.env.STATSBOMB_EVENT_LIMIT || 18));
 const STATSBOMB_COMPETITION_LIMIT = Math.max(1, Number(process.env.STATSBOMB_COMPETITION_LIMIT || 16));
+const STATSBOMB_COMPETITION_OFFSET = Math.max(0, Number(process.env.STATSBOMB_COMPETITION_OFFSET || 0));
+const STATSBOMB_FORCE_REFRESH = ["1", "true", "yes"].includes(String(process.env.STATSBOMB_FORCE_REFRESH || "").toLowerCase());
 const VENUE_GEOCODE_LIMIT = Math.max(0, Number(process.env.VENUE_GEOCODE_LIMIT || 25));
 const SOURCE_FILTER = String(argValue("--source", process.env.FREE_SOURCE_IMPORT_SOURCE || "all")).toLowerCase();
 const LEAGUE_FILTER = String(argValue("--league", process.env.FREE_SOURCE_LEAGUE_CODE || "")).toUpperCase();
@@ -390,7 +392,9 @@ async function upsertSourceRecord(sql, id, provider, sourceUrl, entityType, enti
 
 async function upsertCompetition(sql, source, item, seasonLabel) {
   const countryId = slug(item.country);
-  const competitionId = `competition-${countryId}-l${Number(item.level || 0) || "unknown"}`;
+  const competitionId = source === "statsbomb"
+    ? `competition-statsbomb-${slug(item.code)}`
+    : `competition-${countryId}-l${Number(item.level || 0) || "unknown"}`;
   const seasonYears = String(seasonLabel || "").match(/(20\d{2})\D+(?:20)?(\d{2,4})/);
   const normalizedSeasonLabel = seasonYears
     ? `${seasonYears[1]}/${seasonYears[2].length === 2 ? `20${seasonYears[2]}` : seasonYears[2]}`
@@ -496,6 +500,7 @@ async function importFootballData(sql) {
   let odds = 0;
   let stats = 0;
   const errors = [];
+  const unavailable = [];
   for (const folder of currentSeasonFolders()) {
     const seasonLabel = seasonLabelFromFolder(folder);
     for (const item of FOOTBALL_DATA_LEAGUES.filter((league) => !LEAGUE_FILTER || league.code.toUpperCase() === LEAGUE_FILTER)) {
@@ -683,11 +688,12 @@ async function importFootballData(sql) {
           matches += 1;
         }
       } catch (error) {
-        errors.push({ source: "football-data", url, error: error.message });
+        if (String(error.message || "").includes("404")) unavailable.push({ url, reason: "not_published" });
+        else errors.push({ source: "football-data", url, error: error.message });
       }
     }
   }
-  return { matches, odds, stats, errors };
+  return { matches, odds, stats, unavailable: unavailable.slice(0, 12), unavailableCount: unavailable.length, errors };
 }
 
 async function importOpenFootball(sql) {
@@ -818,6 +824,7 @@ async function importStatsBombEvents(sql) {
     const candidates = competitions
       .filter((item) => item.competition_id != null && item.season_id != null)
       .sort((a, b) => String(b.season_name || "").localeCompare(String(a.season_name || "")))
+      .slice(STATSBOMB_COMPETITION_OFFSET)
       .slice(0, STATSBOMB_COMPETITION_LIMIT);
     for (const competition of candidates) {
       if (matches >= STATSBOMB_EVENT_LIMIT) break;
@@ -838,6 +845,14 @@ async function importStatsBombEvents(sql) {
         level: 1,
       }, seasonLabel);
       for (const match of matchRows.slice(0, Math.max(0, STATSBOMB_EVENT_LIMIT - matches))) {
+        const statsBombMatchId = `statsbomb-${match.match_id}`;
+        if (!STATSBOMB_FORCE_REFRESH) {
+          const [existing] = await sql.query(
+            `select exists(select 1 from match_stats where match_id = $1 and stats_source = 'StatsBomb Open Data') as imported`,
+            [statsBombMatchId]
+          );
+          if (existing?.imported) continue;
+        }
         const eventsUrl = `${baseUrl}/events/${match.match_id}.json`;
         try {
           const eventRows = await fetchJson(eventsUrl);
@@ -867,7 +882,6 @@ async function importStatsBombEvents(sql) {
           const awayTeamName = match.away_team?.away_team_name;
           const homeClub = homeTeamName ? await upsertClub(sql, countryId, competition.country_name || "International", homeTeamName, "statsbomb", match.home_team?.home_team_id) : null;
           const awayClub = awayTeamName ? await upsertClub(sql, countryId, competition.country_name || "International", awayTeamName, "statsbomb", match.away_team?.away_team_id) : null;
-          const statsBombMatchId = `statsbomb-${match.match_id}`;
           const homeStats = aggregate.get(homeTeamName) || { shots: 0, xg: 0 };
           const awayStats = aggregate.get(awayTeamName) || { shots: 0, xg: 0 };
           if (homeClub && awayClub) {

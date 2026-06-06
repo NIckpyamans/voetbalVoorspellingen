@@ -25,6 +25,8 @@ const competitions = await sql.query(
 const groups = new Map();
 for (const competition of competitions) {
   if (!competition.country_name || !competition.level) continue;
+  const providerIds = competition.provider_ids || {};
+  if (!providerIds["football-data"] && !providerIds.openfootball) continue;
   const key = `${slug(competition.country_name)}|${competition.level}`;
   const group = groups.get(key) || [];
   group.push(competition);

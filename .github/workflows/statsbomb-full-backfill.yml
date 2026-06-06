@@ -1,0 +1,55 @@
+name: StatsBomb full xG backfill
+
+on:
+  schedule:
+    - cron: "41 1 * * 0"
+  workflow_dispatch:
+
+jobs:
+  import-block:
+    runs-on: ubuntu-latest
+    timeout-minutes: 180
+    strategy:
+      fail-fast: false
+      max-parallel: 2
+      matrix:
+        offset: [0, 4, 8, 12, 16, 20, 24, 28, 32, 36, 40, 44, 48, 52, 56, 60, 64, 68, 72, 76]
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+      - name: Import StatsBomb competition block
+        run: node scripts/import-free-sources.js --source=statsbomb
+        env:
+          DATABASE_URL: ${{ secrets.DATABASE_URL }}
+          POSTGRES_URL: ${{ secrets.POSTGRES_URL }}
+          STATSBOMB_COMPETITION_OFFSET: ${{ matrix.offset }}
+          STATSBOMB_COMPETITION_LIMIT: 4
+          STATSBOMB_EVENT_LIMIT: 1000
+
+  finalize:
+    needs: import-block
+    if: always()
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+      - run: node scripts/merge-source-clubs.js
+        env:
+          DATABASE_URL: ${{ secrets.DATABASE_URL }}
+          POSTGRES_URL: ${{ secrets.POSTGRES_URL }}
+      - run: node scripts/repair-statsbomb-competitions.js
+        env:
+          DATABASE_URL: ${{ secrets.DATABASE_URL }}
+          POSTGRES_URL: ${{ secrets.POSTGRES_URL }}
+      - run: node scripts/reset-competition-seasons.js
+        env:
+          DATABASE_URL: ${{ secrets.DATABASE_URL }}
+          POSTGRES_URL: ${{ secrets.POSTGRES_URL }}

@@ -1,0 +1,76 @@
+{
+  "generatedAt": "2026-06-06T19:05:29.078Z",
+  "policy": {
+    "liveRoiRequiresTimestampedPrematchOdds": true,
+    "clvRequiresSeparateClosingTimestamp": true,
+    "historicalClosingProxyMayTrainCalibration": true,
+    "historicalClosingProxyMaySettleLiveClv": false
+  },
+  "sources": [
+    {
+      "key": "football-data-co-uk",
+      "name": "Football-Data.co.uk",
+      "url": "https://www.football-data.co.uk/data.php",
+      "cost": "free",
+      "access": "anonymous-download",
+      "role": "historical-results-bookmaker-odds-closing-proxy",
+      "supportsHistoricalRoiBacktest": true,
+      "supportsLiveRoi": false,
+      "supportsLiveClv": false,
+      "integrated": true
+    },
+    {
+      "key": "betfair-historical-basic",
+      "name": "Betfair Historical Data Basic",
+      "url": "https://historicdata.betfair.com/",
+      "cost": "free-basic-tier",
+      "access": "registered-account-download",
+      "role": "timestamped-historical-exchange-markets",
+      "supportsHistoricalRoiBacktest": true,
+      "supportsLiveRoi": false,
+      "supportsLiveClv": false,
+      "integrated": false,
+      "note": "Optionele handmatige import; vereist een Betfair-account en mag niet als anonieme live feed worden behandeld."
+    }
+  ],
+  "database": {
+    "snapshots": 19571,
+    "matches": 5219,
+    "bookmakers": 4,
+    "complete_1x2": 19571,
+    "closing_proxy_rows": 19571,
+    "timestamped_clv_pairs": 0
+  },
+  "providers": [
+    {
+      "provider": "Football-Data.co.uk",
+      "bookmaker": "Bet365",
+      "rows": 5219,
+      "matches": 5219
+    },
+    {
+      "provider": "Football-Data.co.uk",
+      "bookmaker": "MarketAvg",
+      "rows": 5219,
+      "matches": 5219
+    },
+    {
+      "provider": "Football-Data.co.uk",
+      "bookmaker": "MarketMax",
+      "rows": 5219,
+      "matches": 5219
+    },
+    {
+      "provider": "Football-Data.co.uk",
+      "bookmaker": "Pinnacle",
+      "rows": 3914,
+      "matches": 3914
+    }
+  ],
+  "readiness": {
+    "historicalRoiBacktest": "ready",
+    "historicalCalibration": "ready_with_closing_proxy",
+    "liveRoi": "blocked_without_timestamped_prematch_odds",
+    "liveClv": "blocked_without_separate_closing_timestamp"
+  }
+}

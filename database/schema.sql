@@ -367,6 +367,7 @@ create table if not exists historical_odds_snapshots (
   closing_draw numeric,
   closing_away numeric,
   captured_at timestamptz,
+  closing_captured_at timestamptz,
   source_record_id text references source_records(source_record_id),
   created_at timestamptz not null default now()
 );
@@ -449,6 +450,7 @@ alter table matches add column if not exists weather_payload jsonb not null defa
 alter table matches add column if not exists source_coverage jsonb not null default '{}'::jsonb;
 alter table team_match_stats add column if not exists style_profile jsonb not null default '{}'::jsonb;
 alter table team_season_stats add column if not exists style_profile jsonb not null default '{}'::jsonb;
+alter table historical_odds_snapshots add column if not exists closing_captured_at timestamptz;
 
 create table if not exists source_audit (
   source_audit_id bigserial primary key,

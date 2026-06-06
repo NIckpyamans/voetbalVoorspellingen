@@ -1,0 +1,36 @@
+{
+  "version": "2026-06-06",
+  "policy": {
+    "liveRoiRequiresTimestampedPrematchOdds": true,
+    "clvRequiresSeparateClosingTimestamp": true,
+    "historicalClosingProxyMayTrainCalibration": true,
+    "historicalClosingProxyMaySettleLiveClv": false
+  },
+  "sources": [
+    {
+      "key": "football-data-co-uk",
+      "name": "Football-Data.co.uk",
+      "url": "https://www.football-data.co.uk/data.php",
+      "cost": "free",
+      "access": "anonymous-download",
+      "role": "historical-results-bookmaker-odds-closing-proxy",
+      "supportsHistoricalRoiBacktest": true,
+      "supportsLiveRoi": false,
+      "supportsLiveClv": false,
+      "integrated": true
+    },
+    {
+      "key": "betfair-historical-basic",
+      "name": "Betfair Historical Data Basic",
+      "url": "https://historicdata.betfair.com/",
+      "cost": "free-basic-tier",
+      "access": "registered-account-download",
+      "role": "timestamped-historical-exchange-markets",
+      "supportsHistoricalRoiBacktest": true,
+      "supportsLiveRoi": false,
+      "supportsLiveClv": false,
+      "integrated": false,
+      "note": "Optionele handmatige import; vereist een Betfair-account en mag niet als anonieme live feed worden behandeld."
+    }
+  ]
+}
