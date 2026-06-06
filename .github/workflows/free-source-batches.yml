@@ -6,7 +6,7 @@ on:
   workflow_dispatch:
     inputs:
       source:
-        description: "Source to import: football-data, openfootball, statsbomb, venues, weather, all"
+        description: "Source to import: football-data, openfootball, statsbomb, venues, aliases, weather, all"
         required: false
         default: "football-data"
       league:
@@ -19,6 +19,65 @@ on:
         default: ""
 
 jobs:
+  new-season-discovery:
+    if: github.event_name == 'schedule'
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        league: [E0, E1, N1, D1, SP1, I1, F1]
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+      - name: Detect newly published season files
+        run: node scripts/import-free-sources.js --source=football-data --league=${{ matrix.league }}
+        env:
+          DATABASE_URL: ${{ secrets.DATABASE_URL }}
+          POSTGRES_URL: ${{ secrets.POSTGRES_URL }}
+          FREE_SOURCE_IMPORT_LIMIT: 120
+
+  openfootball-season-discovery:
+    if: github.event_name == 'schedule'
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        league: [en.1, en.2, nl.1, de.1, es.1, it.1, fr.1]
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+      - name: Detect newly published OpenFootball seasons
+        run: node scripts/import-free-sources.js --source=openfootball --league=${{ matrix.league }}
+        env:
+          DATABASE_URL: ${{ secrets.DATABASE_URL }}
+          POSTGRES_URL: ${{ secrets.POSTGRES_URL }}
+          FREE_SOURCE_IMPORT_LIMIT: 120
+
+  season-discovery-finalize:
+    if: github.event_name == 'schedule'
+    needs: [new-season-discovery, openfootball-season-discovery]
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+      - name: Rebuild season memberships and H2H after discovery
+        run: node scripts/reset-competition-seasons.js
+        env:
+          DATABASE_URL: ${{ secrets.DATABASE_URL }}
+          POSTGRES_URL: ${{ secrets.POSTGRES_URL }}
+
   football-data:
     if: github.event_name == 'schedule'
     runs-on: ubuntu-latest

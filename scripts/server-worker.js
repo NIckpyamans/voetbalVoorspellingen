@@ -685,6 +685,7 @@ function buildPredictionInputSnapshot(match, prediction, metadata = {}) {
     competitionReliability: prediction?.competitionReliability || prediction?.modelEdges?.leagueReliability || match?.competitionReliability || null,
     phaseReliability: prediction?.phaseReliability || prediction?.modelEdges?.phaseReliability || match?.phaseReliability || null,
     refereeProfile: prediction?.refereeProfile || prediction?.modelEdges?.refereeProfile || match?.refereeProfile || null,
+    dbFeatureContext: prediction?.dbFeatureContext || match?.dbFeatureContext || null,
     featureSourceMetadata: metadata.featureSourceMetadata || prediction?.featureSourceMetadata || null,
   };
 }
@@ -752,6 +753,7 @@ function registerPredictionSnapshot(store, match, prediction, generatedAtMs) {
     homeTeamId: match?.homeTeamId || null,
     awayTeamId: match?.awayTeamId || null,
     teamIdentity: match?.teamIdentity || prediction?.teamIdentity || null,
+    dbFeatureContext: prediction?.dbFeatureContext || match?.dbFeatureContext || null,
     inputSnapshot,
     inputSnapshotHash,
     features: prediction?.featureVector || null,
@@ -796,6 +798,7 @@ function registerPredictionSnapshot(store, match, prediction, generatedAtMs) {
       oddsMissingReason: oddsDiagnostics.oddsMissingReason,
       roiStatus: hasRoiOdd ? "pending_result" : "odds_missing",
       clvStatus: "closing_odds_missing",
+      dbFeatureContext: prediction?.dbFeatureContext || match?.dbFeatureContext || null,
       featureSourceMetadata,
       leakageGuard,
     },

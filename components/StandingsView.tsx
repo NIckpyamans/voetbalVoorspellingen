@@ -121,6 +121,12 @@ interface CompetitionCoverage {
   xg: CompetitionCoverageMetric;
   oddsHistory: CompetitionCoverageMetric;
   seasonReset: CompetitionCoverageMetric;
+  missing?: Record<string, Array<{
+    matchId: string;
+    date?: string;
+    homeTeam: string;
+    awayTeam: string;
+  }>>;
 }
 
 function zoneClasses(color?: string) {
@@ -231,6 +237,7 @@ const StandingsView: React.FC = () => {
   const [favoriteStandingLabel, setFavoriteStandingLabel] = useState<string>(readFavoriteStanding);
   const [databaseSeasonOverview, setDatabaseSeasonOverview] = useState<DatabaseSeasonOverview | null>(null);
   const [databaseCoverageByCompetition, setDatabaseCoverageByCompetition] = useState<CompetitionCoverage[]>([]);
+  const [selectedCoverageKey, setSelectedCoverageKey] = useState<string | null>(null);
 
   useEffect(() => {
     try {
@@ -310,6 +317,10 @@ const StandingsView: React.FC = () => {
     }
   }, [selectedLeague, sortedLeagueKeys, visibleLeagueKeys]);
 
+  useEffect(() => {
+    setSelectedCoverageKey(null);
+  }, [selectedLeague]);
+
   const currentStanding = selectedLeague ? standings[selectedLeague] : null;
   const currentCup = selectedCup ? cupSheets[selectedCup] : null;
   const currentSeasonTransition = useMemo(() => {
@@ -361,6 +372,9 @@ const StandingsView: React.FC = () => {
       : currentStanding
         ? [{ source: currentStanding.source || "cache", rows: currentStanding.rows.length }]
         : [];
+  const selectedCoverageMissing = currentCoverage && selectedCoverageKey
+    ? currentCoverage.missing?.[selectedCoverageKey] || []
+    : [];
 
   if (loading) {
     return (
@@ -572,20 +586,52 @@ const StandingsView: React.FC = () => {
                   </div>
                   <div className="flex flex-wrap gap-1.5">
                     {[
-                      ["Weer", currentCoverage.weather],
-                      ["H2H", currentCoverage.h2h],
-                      ["xG/stats", currentCoverage.xg],
-                      ["Odds history", currentCoverage.oddsHistory],
-                      ["Season reset", currentCoverage.seasonReset],
-                    ].map(([label, metric]) => (
-                      <span
-                        key={String(label)}
-                        className={`rounded-full border px-2 py-1 text-[9px] font-black ${coverageTone((metric as CompetitionCoverageMetric).pct)}`}
+                      { key: "weather", label: "Weer", metric: currentCoverage.weather },
+                      { key: "h2h", label: "H2H", metric: currentCoverage.h2h },
+                      { key: "xg", label: "xG/stats", metric: currentCoverage.xg },
+                      { key: "oddsHistory", label: "Odds history", metric: currentCoverage.oddsHistory },
+                      { key: "seasonReset", label: "Season reset", metric: currentCoverage.seasonReset },
+                    ].map(({ key, label, metric }) => (
+                      <button
+                        key={key}
+                        onClick={() => setSelectedCoverageKey((current) => current === key ? null : key)}
+                        className={`rounded-full border px-2 py-1 text-[9px] font-black transition hover:-translate-y-0.5 ${coverageTone(metric.pct)} ${
+                          selectedCoverageKey === key ? "ring-2 ring-white/30" : ""
+                        }`}
                       >
-                        {String(label)} {(metric as CompetitionCoverageMetric).pct}%
-                      </span>
+                        {label} {metric.pct}%
+                      </button>
                     ))}
                   </div>
+                  {selectedCoverageKey && (
+                    <div className="mt-3 rounded-xl border border-white/5 bg-slate-950/70 p-3">
+                      <div className="mb-2 flex items-center justify-between gap-2">
+                        <div className="text-[10px] font-black uppercase text-white">
+                          Ontbrekende data · {selectedCoverageKey}
+                        </div>
+                        <button
+                          onClick={() => setSelectedCoverageKey(null)}
+                          className="rounded-md bg-slate-800 px-2 py-1 text-[9px] font-black text-slate-300"
+                        >
+                          Sluiten
+                        </button>
+                      </div>
+                      {selectedCoverageMissing.length ? (
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-1.5">
+                          {selectedCoverageMissing.map((match) => (
+                            <div key={`${selectedCoverageKey}-${match.matchId}`} className="rounded-lg bg-slate-900/80 px-2.5 py-2 text-[9px]">
+                              <div className="font-black text-slate-200">{match.homeTeam} - {match.awayTeam}</div>
+                              <div className="text-slate-500">{match.date || "datum onbekend"}</div>
+                            </div>
+                          ))}
+                        </div>
+                      ) : (
+                        <div className="text-[10px] font-bold text-emerald-300">
+                          Geen ontbrekende wedstrijden in de begrensde databasecontrole.
+                        </div>
+                      )}
+                    </div>
+                  )}
                 </div>
               )}
               {(currentSeasonTransition || currentZeroStanding || databaseSeasonOverview?.error) && (

@@ -184,6 +184,61 @@ async function readDatabaseCoverageByCompetition() {
       limit 120
     `
   );
+  const missingRows = await sql.query(
+    `
+      with base as (
+        select
+          m.match_id,
+          m.competition_id,
+          coalesce(m.league, c.country_name || ' - ' || c.name, m.competition_id, 'Onbekend') as label,
+          m.date_key,
+          m.home_team_name,
+          m.away_team_name,
+          coalesce(m.weather_payload, '{}'::jsonb) <> '{}'::jsonb as has_weather,
+          ms.match_id is not null as has_xg,
+          exists (select 1 from historical_odds_snapshots hos where hos.match_id = m.match_id) as has_odds,
+          exists (
+            select 1 from h2h_edges h
+            where h.home_club_id = least(m.home_club_id, m.away_club_id)
+              and h.away_club_id = greatest(m.home_club_id, m.away_club_id)
+              and (h.competition_id = m.competition_id or h.competition_id is null)
+          ) as has_h2h,
+          exists (
+            select 1 from standings_snapshots ss
+            where ss.competition_id = m.competition_id and ss.source = 'season-reset-zero'
+          ) as has_season_reset
+        from matches m
+        left join competitions c on c.competition_id = m.competition_id
+        left join match_stats ms on ms.match_id = m.match_id
+      ),
+      missing as (
+        select *, 'weather' as category from base where not has_weather
+        union all select *, 'h2h' as category from base where not has_h2h
+        union all select *, 'xg' as category from base where not has_xg
+        union all select *, 'oddsHistory' as category from base where not has_odds
+        union all select *, 'seasonReset' as category from base where not has_season_reset
+      ),
+      ranked as (
+        select *, row_number() over (partition by label, category order by date_key desc nulls last, match_id) as rn
+        from missing
+      )
+      select label, category, match_id, date_key, home_team_name, away_team_name
+      from ranked
+      where rn <= 10
+      order by label, category, rn
+    `
+  );
+  const missingByLabel: Record<string, Record<string, any[]>> = {};
+  for (const row of missingRows) {
+    if (!missingByLabel[row.label]) missingByLabel[row.label] = {};
+    if (!missingByLabel[row.label][row.category]) missingByLabel[row.label][row.category] = [];
+    missingByLabel[row.label][row.category].push({
+      matchId: row.match_id,
+      date: row.date_key,
+      homeTeam: row.home_team_name,
+      awayTeam: row.away_team_name,
+    });
+  }
   return rows.map((row: any) => {
     const matches = Math.max(Number(row.matches || 0), 1);
     return {
@@ -197,6 +252,7 @@ async function readDatabaseCoverageByCompetition() {
       xg: { count: row.xg_matches, pct: Math.round((Number(row.xg_matches || 0) / matches) * 100) },
       oddsHistory: { count: row.odds_history_matches, pct: Math.round((Number(row.odds_history_matches || 0) / matches) * 100) },
       seasonReset: { count: row.season_reset_matches, pct: Math.round((Number(row.season_reset_matches || 0) / matches) * 100) },
+      missing: missingByLabel[row.label] || {},
     };
   });
 }

@@ -29,6 +29,7 @@ env:
   DATABASE_URL: ${{ secrets.DATABASE_URL }}
   POSTGRES_URL: ${{ secrets.POSTGRES_URL }}
   SUPABASE_DB_URL: ${{ secrets.SUPABASE_DB_URL }}
+  TRAINING_DB_CONTEXT_LIMIT: "200"
 
 jobs:
   learn:

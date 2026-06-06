@@ -37,15 +37,28 @@ const FOOTBALL_DATA_LEAGUES = [
 ];
 
 const OPENFOOTBALL_COMPETITIONS = [
-  { country: "England", league: "England - Premier League", code: "eng.1", level: 1 },
-  { country: "England", league: "England - Championship", code: "eng.2", level: 2 },
+  { country: "England", league: "England - Premier League", code: "en.1", level: 1 },
+  { country: "England", league: "England - Championship", code: "en.2", level: 2 },
   { country: "Netherlands", league: "Netherlands - Eredivisie", code: "nl.1", level: 1 },
   { country: "Germany", league: "Germany - Bundesliga", code: "de.1", level: 1 },
   { country: "Spain", league: "Spain - LaLiga", code: "es.1", level: 1 },
   { country: "Italy", league: "Italy - Serie A", code: "it.1", level: 1 },
+  { country: "France", league: "France - Ligue 1", code: "fr.1", level: 1 },
 ];
 
-const OPENFOOTBALL_SEASON_TAGS = ["2025-26", "2025-2026", "2024-25", "2024-2025", "2023-24", "2023-2024", "2022-23", "2022-2023", "2021-22", "2021-2022"];
+function openFootballSeasonTags() {
+  const now = new Date();
+  const year = now.getUTCFullYear();
+  const month = now.getUTCMonth() + 1;
+  const start = month >= 7 ? year : year - 1;
+  const starts = [start + 1, start, start - 1, start - 2, start - 3, start - 4];
+  return starts.flatMap((seasonStart) => [
+    `${seasonStart}-${String(seasonStart + 1).slice(2)}`,
+    `${seasonStart}-${seasonStart + 1}`,
+  ]);
+}
+
+const OPENFOOTBALL_SEASON_TAGS = openFootballSeasonTags();
 
 const KNOWN_VENUES = {
   "arsenal": { name: "Emirates Stadium", city: "London", lat: 51.555, lon: -0.1086 },
@@ -151,6 +164,52 @@ const KNOWN_VENUES = {
   "wolfsburg": { name: "Volkswagen Arena", city: "Wolfsburg", lat: 52.4319, lon: 10.8039 },
 };
 
+const TEAM_NAME_ALIASES = {
+  "alaves": "deportivo alaves",
+  "deportivo alaves": "deportivo alaves",
+  "birmingham": "birmingham city",
+  "blackburn": "blackburn rovers",
+  "bristol city": "bristol city",
+  "cardiff": "cardiff city",
+  "coventry": "coventry city",
+  "derby": "derby county",
+  "hull": "hull city",
+  "ipswich": "ipswich town",
+  "leeds": "leeds united",
+  "leicester": "leicester city",
+  "luton": "luton town",
+  "millwall": "millwall",
+  "norwich": "norwich city",
+  "preston": "preston north end",
+  "qpr": "queens park rangers",
+  "sheffield utd": "sheffield united",
+  "stoke": "stoke city",
+  "sunderland": "sunderland",
+  "swansea": "swansea city",
+  "watford": "watford",
+  "west brom": "west bromwich albion",
+  "auxerre": "aj auxerre",
+  "le havre": "le havre ac",
+  "lille": "losc lille",
+  "lyon": "olympique lyonnais",
+  "marseille": "olympique de marseille",
+  "monaco": "as monaco",
+  "montpellier": "montpellier hsc",
+  "nantes": "fc nantes",
+  "nice": "ogc nice",
+  "paris sg": "paris saint-germain",
+  "psg": "paris saint-germain",
+  "reims": "stade de reims",
+  "rennes": "stade rennais",
+  "st etienne": "saint-etienne",
+  "strasbourg": "rc strasbourg",
+  "toulouse": "toulouse fc",
+  "dortmund": "borussia dortmund",
+  "espanol": "espanyol",
+  "feyenoord": "feyenoord rotterdam",
+  "twente 65": "twente",
+};
+
 function digest(value) {
   return crypto.createHash("sha1").update(String(value || "")).digest("hex").slice(0, 20);
 }
@@ -165,13 +224,32 @@ function slug(value) {
     .slice(0, 80);
 }
 
-function canonicalTeamName(value) {
+function normalizedTeamName(value) {
   return String(value || "")
     .toLowerCase()
     .replace(/\b(fc|cf|afc|sc|club)\b/g, " ")
     .replace(/[^a-z0-9-]+/g, " ")
     .trim()
     .replace(/\s+/g, " ");
+}
+
+function canonicalTeamName(value) {
+  const normalized = normalizedTeamName(value);
+  return TEAM_NAME_ALIASES[normalized] || normalized;
+}
+
+function knownVenueForTeam(value) {
+  return KNOWN_VENUES[canonicalTeamName(value)] || KNOWN_VENUES[normalizedTeamName(value)] || null;
+}
+
+function teamAliasVariants(value) {
+  const raw = String(value || "").trim();
+  const normalized = canonicalTeamName(raw);
+  const variants = new Set([raw, normalized]);
+  for (const [alias, canonical] of Object.entries(TEAM_NAME_ALIASES)) {
+    if (canonical === normalized) variants.add(alias);
+  }
+  return [...variants].filter(Boolean);
 }
 
 function currentSeasonFolders() {
@@ -181,7 +259,8 @@ function currentSeasonFolders() {
   const start = month >= 7 ? year : year - 1;
   const folder = `${String(start).slice(2)}${String(start + 1).slice(2)}`;
   const previous = `${String(start - 1).slice(2)}${String(start).slice(2)}`;
-  return SEASON_FOLDER_FILTER ? [SEASON_FOLDER_FILTER] : [folder, previous];
+  const next = `${String(start + 1).slice(2)}${String(start + 2).slice(2)}`;
+  return SEASON_FOLDER_FILTER ? [SEASON_FOLDER_FILTER] : [next, folder, previous];
 }
 
 function seasonLabelFromFolder(folder) {
@@ -351,7 +430,7 @@ async function upsertCompetition(sql, source, item, seasonLabel) {
 
 async function upsertClub(sql, countryId, countryName, name, provider, providerId = null) {
   const clubId = `${provider}-club-${slug(name)}`;
-  const knownVenue = KNOWN_VENUES[canonicalTeamName(name)] || null;
+  const knownVenue = knownVenueForTeam(name);
   const venueId = knownVenue ? `venue-${slug(knownVenue.name)}-${slug(knownVenue.city)}` : null;
   if (knownVenue) {
     await sql.query(
@@ -385,10 +464,12 @@ async function upsertClub(sql, countryId, countryName, name, provider, providerI
     `,
     [clubId, name, countryId, countryName, knownVenue?.name || null, venueId, JSON.stringify({ [provider]: providerId || name })]
   );
-  await sql.query(
-    `insert into club_aliases (club_id, alias, normalized_alias, source) values ($1, $2, $3, $4) on conflict (club_id, normalized_alias) do nothing`,
-    [clubId, name, slug(name), provider]
-  );
+  for (const alias of teamAliasVariants(name)) {
+    await sql.query(
+      `insert into club_aliases (club_id, alias, normalized_alias, source) values ($1, $2, $3, $4) on conflict (club_id, normalized_alias) do nothing`,
+      [clubId, alias, slug(alias), provider]
+    );
+  }
   return { clubId, venueId };
 }
 
@@ -903,8 +984,8 @@ async function backfillVenueCoordinates(sql) {
   );
   const targetRows = rows
     .sort((a, b) => {
-      const aKnown = KNOWN_VENUES[canonicalTeamName(a.name)] ? 0 : 1;
-      const bKnown = KNOWN_VENUES[canonicalTeamName(b.name)] ? 0 : 1;
+      const aKnown = knownVenueForTeam(a.name) ? 0 : 1;
+      const bKnown = knownVenueForTeam(b.name) ? 0 : 1;
       return aKnown - bKnown || String(a.name).localeCompare(String(b.name));
     })
     .slice(0, VENUE_GEOCODE_LIMIT);
@@ -913,7 +994,7 @@ async function backfillVenueCoordinates(sql) {
   const errors = [];
   for (const row of targetRows) {
     try {
-      const knownVenue = KNOWN_VENUES[canonicalTeamName(row.name)] || null;
+      const knownVenue = knownVenueForTeam(row.name);
       if (knownVenue) {
         const venueId = `venue-${slug(knownVenue.name)}-${slug(knownVenue.city)}`;
         const sourceRecordId = `src_venue_curated_${digest(row.club_id)}`;
@@ -994,6 +1075,26 @@ async function backfillVenueCoordinates(sql) {
   return { scanned: targetRows.length, candidatePool: rows.length, curated, geocoded, errors };
 }
 
+async function backfillClubAliases(sql) {
+  const clubs = await sql.query("select club_id, name from clubs order by club_id");
+  let inserted = 0;
+  for (const club of clubs) {
+    for (const alias of teamAliasVariants(club.name)) {
+      const result = await sql.query(
+        `
+          insert into club_aliases (club_id, alias, normalized_alias, source)
+          values ($1, $2, $3, 'curated-alias-backfill')
+          on conflict (club_id, normalized_alias) do nothing
+          returning alias_id
+        `,
+        [club.club_id, alias, slug(alias)]
+      );
+      inserted += result.length;
+    }
+  }
+  return { scannedClubs: clubs.length, inserted };
+}
+
 async function main() {
   loadLocalEnv(ROOT);
   const sql = getSql();
@@ -1013,6 +1114,10 @@ async function main() {
     statsBomb: SOURCE_FILTER === "all" || SOURCE_FILTER === "statsbomb" ? await importStatsBombCatalog(sql) : { skipped: true },
     statsBombEvents: SOURCE_FILTER === "all" || SOURCE_FILTER === "statsbomb" ? await importStatsBombEvents(sql) : { skipped: true },
     venueGeocode: SOURCE_FILTER === "all" || SOURCE_FILTER === "venues" ? await backfillVenueCoordinates(sql) : { skipped: true },
+    clubAliases:
+      SOURCE_FILTER === "all" || SOURCE_FILTER === "aliases" || SOURCE_FILTER === "venues"
+        ? await backfillClubAliases(sql)
+        : { skipped: true },
     openMeteoStoredWeather: SOURCE_FILTER === "all" || SOURCE_FILTER === "weather" ? await importStoredWeather(sql) : { skipped: true },
   };
   fs.mkdirSync(path.dirname(MANIFEST_PATH), { recursive: true });
