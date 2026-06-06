@@ -17,6 +17,7 @@
     "monitor:biweekly": "node scripts/biweekly-review-digest.js",
     "monitor:data-quality": "node scripts/data-quality-audit.js",
     "train:prepare": "node scripts/prepare-ensemble-data.js",
+    "train:snapshot-context:analyze": "node scripts/analyze-snapshot-db-context.js",
     "export:ledger": "node scripts/export-prediction-ledger.js",
     "monitor:ruflo": "node scripts/ruflo-monitor.js",
     "monitor:regressions": "node scripts/regression-assertions.js",
@@ -29,6 +30,8 @@
     "db:free-sources:import": "node scripts/import-free-sources.js",
     "db:free-sources:import:full": "node scripts/import-free-sources.js --full",
     "db:free-sources:import:batch": "node scripts/import-free-sources.js --source=football-data",
+    "db:coverage-repairs:process": "node scripts/process-coverage-repairs.js",
+    "db:competitions:merge": "node scripts/merge-source-competitions.js",
     "db:seasons:reset": "node scripts/reset-competition-seasons.js",
     "db:sync-json": "node scripts/sync-json-to-database.js",
     "db:verify": "node scripts/verify-database-state.js"

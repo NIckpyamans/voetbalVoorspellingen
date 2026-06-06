@@ -389,8 +389,12 @@ async function upsertSourceRecord(sql, id, provider, sourceUrl, entityType, enti
 
 async function upsertCompetition(sql, source, item, seasonLabel) {
   const countryId = slug(item.country);
-  const competitionId = `${source}-${slug(item.code)}`;
-  const seasonId = `${competitionId}-${slug(seasonLabel)}`;
+  const competitionId = `competition-${countryId}-l${Number(item.level || 0) || "unknown"}`;
+  const seasonYears = String(seasonLabel || "").match(/(20\d{2})\D+(?:20)?(\d{2,4})/);
+  const normalizedSeasonLabel = seasonYears
+    ? `${seasonYears[1]}/${seasonYears[2].length === 2 ? `20${seasonYears[2]}` : seasonYears[2]}`
+    : seasonLabel;
+  const seasonId = `${competitionId}-${slug(normalizedSeasonLabel)}`;
   await sql.query(
     `insert into countries (country_id, name) values ($1, $2) on conflict (country_id) do update set name = excluded.name, updated_at = now()`,
     [countryId, item.country]
@@ -404,7 +408,7 @@ async function upsertCompetition(sql, source, item, seasonLabel) {
         country_id = excluded.country_id,
         country_name = excluded.country_name,
         level = excluded.level,
-        provider_ids = excluded.provider_ids,
+        provider_ids = competitions.provider_ids || excluded.provider_ids,
         updated_at = now()
     `,
     [competitionId, item.league, countryId, item.country, item.level || null, JSON.stringify({ [source]: item.code })]
@@ -415,7 +419,7 @@ async function upsertCompetition(sql, source, item, seasonLabel) {
       values ($1, $2, $3, $4)
       on conflict (season_id) do update set competition_id = excluded.competition_id, year_label = excluded.year_label, status = excluded.status, updated_at = now()
     `,
-    [seasonId, competitionId, seasonLabel, seasonLabel.includes("2025") || seasonLabel.includes("2026") ? "active" : "archived"]
+    [seasonId, competitionId, normalizedSeasonLabel, String(normalizedSeasonLabel).includes("2025") || String(normalizedSeasonLabel).includes("2026") ? "active" : "archived"]
   );
   await sql.query(
     `
@@ -423,7 +427,7 @@ async function upsertCompetition(sql, source, item, seasonLabel) {
       values ($1, $2, $3, $4)
       on conflict (season_id) do update set competition_id = excluded.competition_id, year_label = excluded.year_label, status = excluded.status, updated_at = now()
     `,
-    [seasonId, competitionId, seasonLabel, seasonLabel.includes("2025") || seasonLabel.includes("2026") ? "active" : "archived"]
+    [seasonId, competitionId, normalizedSeasonLabel, String(normalizedSeasonLabel).includes("2025") || String(normalizedSeasonLabel).includes("2026") ? "active" : "archived"]
   );
   return { countryId, competitionId, seasonId };
 }

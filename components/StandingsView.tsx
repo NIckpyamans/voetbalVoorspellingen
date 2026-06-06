@@ -238,6 +238,7 @@ const StandingsView: React.FC = () => {
   const [databaseSeasonOverview, setDatabaseSeasonOverview] = useState<DatabaseSeasonOverview | null>(null);
   const [databaseCoverageByCompetition, setDatabaseCoverageByCompetition] = useState<CompetitionCoverage[]>([]);
   const [selectedCoverageKey, setSelectedCoverageKey] = useState<string | null>(null);
+  const [coverageRepairStatus, setCoverageRepairStatus] = useState<string | null>(null);
 
   useEffect(() => {
     try {
@@ -319,7 +320,28 @@ const StandingsView: React.FC = () => {
 
   useEffect(() => {
     setSelectedCoverageKey(null);
+    setCoverageRepairStatus(null);
   }, [selectedLeague]);
+
+  async function queueCoverageRepair() {
+    if (!currentCoverage || !selectedCoverageKey) return;
+    setCoverageRepairStatus("Repair-verzoek wordt ingepland...");
+    try {
+      const response = await fetch("/api/coverage-repair", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          category: selectedCoverageKey,
+          competitionId: currentCoverage.competitionId || "",
+          competitionLabel: currentCoverage.label || currentStanding?.label || "",
+        }),
+      });
+      const result = await response.json();
+      setCoverageRepairStatus(result?.queued ? "Repair ingepland voor de volgende databatch." : result?.error || "Inplannen mislukt.");
+    } catch {
+      setCoverageRepairStatus("Inplannen mislukt; probeer het later opnieuw.");
+    }
+  }
 
   const currentStanding = selectedLeague ? standings[selectedLeague] : null;
   const currentCup = selectedCup ? cupSheets[selectedCup] : null;
@@ -615,6 +637,15 @@ const StandingsView: React.FC = () => {
                         >
                           Sluiten
                         </button>
+                      </div>
+                      <div className="mb-2 flex flex-wrap items-center gap-2">
+                        <button
+                          onClick={queueCoverageRepair}
+                          className="rounded-lg border border-cyan-500/20 bg-cyan-500/10 px-3 py-1.5 text-[9px] font-black text-cyan-200 hover:bg-cyan-500/20"
+                        >
+                          Ontbrekende data opnieuw importeren
+                        </button>
+                        {coverageRepairStatus && <span className="text-[9px] font-bold text-slate-400">{coverageRepairStatus}</span>}
                       </div>
                       {selectedCoverageMissing.length ? (
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-1.5">

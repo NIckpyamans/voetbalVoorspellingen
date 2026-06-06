@@ -72,11 +72,34 @@ jobs:
           node-version: 22
           cache: npm
       - run: npm ci
+      - name: Merge source competitions into canonical seasons
+        run: node scripts/merge-source-competitions.js
+        env:
+          DATABASE_URL: ${{ secrets.DATABASE_URL }}
+          POSTGRES_URL: ${{ secrets.POSTGRES_URL }}
       - name: Rebuild season memberships and H2H after discovery
         run: node scripts/reset-competition-seasons.js
         env:
           DATABASE_URL: ${{ secrets.DATABASE_URL }}
           POSTGRES_URL: ${{ secrets.POSTGRES_URL }}
+      - name: Backfill free match stats and historical odds
+        run: node scripts/import-free-sources.js --source=football-data
+        env:
+          DATABASE_URL: ${{ secrets.DATABASE_URL }}
+          POSTGRES_URL: ${{ secrets.POSTGRES_URL }}
+          FREE_SOURCE_IMPORT_LIMIT: 700
+      - name: Backfill weather after season discovery
+        run: node scripts/import-free-sources.js --source=weather
+        env:
+          DATABASE_URL: ${{ secrets.DATABASE_URL }}
+          POSTGRES_URL: ${{ secrets.POSTGRES_URL }}
+          FREE_SOURCE_WEATHER_LIMIT: 700
+      - name: Process requested coverage repairs
+        run: node scripts/process-coverage-repairs.js
+        env:
+          DATABASE_URL: ${{ secrets.DATABASE_URL }}
+          POSTGRES_URL: ${{ secrets.POSTGRES_URL }}
+          COVERAGE_REPAIR_BATCH_LIMIT: 12
 
   football-data:
     if: github.event_name == 'schedule'

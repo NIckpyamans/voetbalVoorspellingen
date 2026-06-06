@@ -39,6 +39,51 @@ function normalizeStandingTeam(value) {
     .replace(/\s+/g, " ");
 }
 
+const MEMBERSHIP_TEAM_ALIASES = {
+  "afc bournemouth": "bournemouth",
+  "brighton hove albion": "brighton",
+  "leeds united": "leeds",
+  "manchester city": "man city",
+  "manchester united": "man united",
+  "newcastle united": "newcastle",
+  "nottingham forest": "nott m forest",
+  "sunderland": "sunderland",
+  "tottenham hotspur": "tottenham",
+  "west ham united": "west ham",
+  "wolverhampton wanderers": "wolves",
+  "ajax": "ajax",
+  "az alkmaar": "az",
+  "feyenoord rotterdam": "feyenoord",
+  "fortuna sittard": "for sittard",
+  "groningen": "groningen",
+  "heracles almelo": "heracles",
+  "nec": "nijmegen",
+  "pec zwolle": "zwolle",
+  "psv eindhoven": "psv",
+  "sbv excelsior": "excelsior",
+  "heerenveen": "heerenveen",
+  "telstar 1963": "telstar",
+  "twente 65": "twente",
+  "utrecht": "utrecht",
+  "volendam": "volendam",
+};
+
+function membershipTeamKey(value) {
+  const normalized = normalizeStandingTeam(value);
+  return MEMBERSHIP_TEAM_ALIASES[normalized] || normalized;
+}
+
+function dedupeSeasonClubs(rows) {
+  const byKey = new Map();
+  for (const row of rows) {
+    const key = membershipTeamKey(row.club_name);
+    const current = byKey.get(key);
+    const prefersFootballData = String(row.club_id || "").startsWith("football-data-") && !String(current?.club_id || "").startsWith("football-data-");
+    if (!current || prefersFootballData) byKey.set(key, row);
+  }
+  return [...byKey.values()].sort((a, b) => String(a.club_name).localeCompare(String(b.club_name)));
+}
+
 function standingPositionValue(row, index) {
   return Number(row?.pos ?? row?.position ?? row?.rank ?? index + 1) || index + 1;
 }
@@ -153,7 +198,7 @@ async function rebuildSeasonMemberships(sql) {
   const previousStandingIndex = buildPreviousStandingIndex(allStandingSnapshots);
 
   for (const season of seasons) {
-    const clubs = await sql.query(
+    const rawClubs = await sql.query(
       `
         select club_id, club_name
         from (
@@ -165,6 +210,7 @@ async function rebuildSeasonMemberships(sql) {
       `,
       [season.season_id]
     );
+    const clubs = dedupeSeasonClubs(rawClubs);
     if (!clubs.length) continue;
     const previousStandings = previousStandingForSeason(season, previousStandingIndex);
 
@@ -184,6 +230,7 @@ async function rebuildSeasonMemberships(sql) {
       if (!previousByClub.has(previous.club_id)) previousByClub.set(previous.club_id, previous);
     }
 
+    await sql.query("delete from competition_season_clubs where season_id = $1", [season.season_id]);
     const standings = [];
     for (const club of clubs) {
       const entry = inferEntryReason({ ...club, level: season.level }, previousByClub);
@@ -244,6 +291,10 @@ async function rebuildSeasonMemberships(sql) {
     }
 
     const snapshotId = `zero_${digest(`${season.season_id}|${clubs.length}`)}`;
+    await sql.query("delete from standings_snapshots where season_id = $1 and source = 'season-reset-zero' and standings_snapshot_id <> $2", [
+      season.season_id,
+      snapshotId,
+    ]);
     await sql.query(
       `
         insert into standings_snapshots (standings_snapshot_id, competition_id, season_id, captured_at, source, standings)

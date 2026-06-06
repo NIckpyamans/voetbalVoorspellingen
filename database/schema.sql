@@ -428,6 +428,21 @@ create table if not exists calibration_profiles (
   generated_at timestamptz not null default now()
 );
 
+create table if not exists coverage_repair_requests (
+  request_id text primary key,
+  competition_id text references competitions(competition_id),
+  competition_label text,
+  category text not null,
+  status text not null default 'pending',
+  requested_at timestamptz not null default now(),
+  started_at timestamptz,
+  completed_at timestamptz,
+  attempts integer not null default 0,
+  requested_by text,
+  result_payload jsonb not null default '{}'::jsonb,
+  last_error text
+);
+
 alter table prediction_snapshots add column if not exists model_version_id text;
 alter table prediction_snapshots add column if not exists prediction_payload jsonb not null default '{}'::jsonb;
 alter table matches add column if not exists weather_payload jsonb not null default '{}'::jsonb;
@@ -456,6 +471,7 @@ alter table competition_season_clubs add column if not exists previous_standing_
 alter table competition_season_clubs add column if not exists previous_standing_points integer;
 alter table competition_season_clubs add column if not exists previous_standing_source text;
 create index if not exists idx_club_aliases_normalized on club_aliases(normalized_alias);
+create index if not exists idx_coverage_repair_requests_status on coverage_repair_requests(status, requested_at);
 create index if not exists idx_venues_country_city on venues(country_id, city);
 create index if not exists idx_source_records_entity on source_records(entity_type, entity_key, fetched_at desc);
 create index if not exists idx_standings_snapshots_season on standings_snapshots(season_id, captured_at desc);
