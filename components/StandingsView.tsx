@@ -337,11 +337,20 @@ const StandingsView: React.FC = () => {
 
   async function queueCoverageRepair() {
     if (!currentCoverage || !selectedCoverageKey) return;
+    let writeToken = window.sessionStorage.getItem("footyai_write_token") || "";
+    if (!writeToken) {
+      writeToken = window.prompt("Voer het beheertoken in om een zware datarepair te starten.")?.trim() || "";
+      if (!writeToken) {
+        setCoverageRepairStatus("Repair niet gestart: beheertoken ontbreekt.");
+        return;
+      }
+      window.sessionStorage.setItem("footyai_write_token", writeToken);
+    }
     setCoverageRepairStatus("Repair-verzoek wordt ingepland...");
     try {
       const response = await fetch("/api/coverage-repair", {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
+        headers: { "Content-Type": "application/json", "X-Write-Token": writeToken },
         body: JSON.stringify({
           category: selectedCoverageKey,
           competitionId: currentCoverage.competitionId || "",

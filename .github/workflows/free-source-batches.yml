@@ -82,6 +82,11 @@ jobs:
         env:
           DATABASE_URL: ${{ secrets.DATABASE_URL }}
           POSTGRES_URL: ${{ secrets.POSTGRES_URL }}
+      - name: Merge duplicate source fixtures
+        run: node scripts/merge-canonical-fixtures.js
+        env:
+          DATABASE_URL: ${{ secrets.DATABASE_URL }}
+          POSTGRES_URL: ${{ secrets.POSTGRES_URL }}
       - name: Rebuild season memberships and H2H after discovery
         run: node scripts/reset-competition-seasons.js
         env:

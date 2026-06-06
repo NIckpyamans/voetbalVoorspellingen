@@ -1,6 +1,7 @@
 import crypto from "crypto";
 import { setCorsHeaders } from "../shared/cors.js";
 import { databaseConfigured, getSql } from "../shared/database.js";
+import { enforceWriteSecurity } from "../shared/writeSecurity.js";
 
 const ALLOWED_CATEGORIES = new Set(["weather", "h2h", "xg", "oddsHistory", "seasonReset"]);
 
@@ -41,6 +42,7 @@ export default async function handler(req: any, res: any) {
     return res.status(200).json({ ok: true, request: row || null });
   }
   if (req.method !== "POST") return res.status(405).json({ ok: false, error: "method_not_allowed" });
+  if (!enforceWriteSecurity(req, res, { scope: "coverage-repair", limit: 4, requireToken: true })) return;
 
   const requestId = `repair_${crypto.createHash("sha1").update(`${competitionId}|${competitionLabel}|${category}`).digest("hex").slice(0, 20)}`;
   const [row] = await sql.query(

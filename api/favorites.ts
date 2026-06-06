@@ -1,6 +1,7 @@
 import crypto from "crypto";
 import { setCorsHeaders } from "../shared/cors.js";
 import { databaseConfigured, getSql } from "../shared/database.js";
+import { enforceWriteSecurity } from "../shared/writeSecurity.js";
 
 function digest(value: unknown) {
   return crypto.createHash("sha1").update(JSON.stringify(value || "")).digest("hex");
@@ -18,6 +19,7 @@ export default async function handler(req: any, res: any) {
   setCorsHeaders(req, res, { methods: "POST, OPTIONS" });
   if (req.method === "OPTIONS") return res.status(204).end();
   if (req.method !== "POST") return res.status(405).json({ ok: false, error: "method_not_allowed" });
+  if (!enforceWriteSecurity(req, res, { scope: "favorites", limit: 8, requireToken: true })) return;
   if (!databaseConfigured()) return res.status(202).json({ ok: true, stored: false, reason: "database_not_configured" });
 
   const body = await readBody(req).catch(() => null);

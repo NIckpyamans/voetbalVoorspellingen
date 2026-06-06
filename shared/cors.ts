@@ -30,5 +30,5 @@ export function setCorsHeaders(req: any, res: any, options: { methods?: string }
   }
 
   res.setHeader("Access-Control-Allow-Methods", options.methods || "GET, OPTIONS");
-  res.setHeader("Access-Control-Allow-Headers", "Content-Type");
+  res.setHeader("Access-Control-Allow-Headers", "Content-Type, X-Write-Token");
 }

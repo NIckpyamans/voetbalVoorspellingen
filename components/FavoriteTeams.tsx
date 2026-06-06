@@ -6,9 +6,11 @@ const FAVORITES_KEY = 'footypredict_favorites_v1';
 
 function syncFavoritesToServer(favorites: string[], changedTeam?: { teamId: string; teamName: string }) {
   try {
+    const writeToken = window.sessionStorage.getItem("footyai_write_token") || "";
+    if (!writeToken) return;
     void fetch('/api/favorites', {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
+      headers: { 'Content-Type': 'application/json', 'X-Write-Token': writeToken },
       body: JSON.stringify({ favorites, changedTeam }),
       keepalive: true,
     }).catch((error) => logClientWarning("favorites_sync_failed", { error }));

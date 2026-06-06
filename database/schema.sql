@@ -119,6 +119,7 @@ create table if not exists source_records (
 
 create table if not exists matches (
   match_id text primary key,
+  canonical_fixture_id text,
   source_match_id text,
   data_source text,
   competition_id text references competitions(competition_id),
@@ -139,6 +140,18 @@ create table if not exists matches (
   neutral_venue boolean not null default false,
   created_at timestamptz not null default now(),
   updated_at timestamptz not null default now()
+);
+
+create table if not exists fixture_source_aliases (
+  fixture_source_alias_id text primary key,
+  canonical_fixture_id text not null,
+  canonical_match_id text not null references matches(match_id),
+  source_match_id text not null,
+  provider text,
+  source_payload jsonb not null default '{}'::jsonb,
+  created_at timestamptz not null default now(),
+  updated_at timestamptz not null default now(),
+  unique (provider, source_match_id)
 );
 
 create table if not exists match_stats (
@@ -299,6 +312,7 @@ create table if not exists season_archives (
 );
 
 alter table matches add column if not exists competition_id text references competitions(competition_id);
+alter table matches add column if not exists canonical_fixture_id text;
 alter table matches add column if not exists season_id text references seasons(season_id);
 alter table matches add column if not exists home_club_id text references clubs(club_id);
 alter table matches add column if not exists away_club_id text references clubs(club_id);
@@ -466,6 +480,8 @@ create table if not exists source_audit (
 create index if not exists idx_matches_kickoff on matches(kickoff_at);
 create index if not exists idx_matches_date_key on matches(date_key);
 create index if not exists idx_matches_competition_season on matches(competition_id, season_id);
+create unique index if not exists idx_matches_canonical_fixture_unique on matches(canonical_fixture_id) where canonical_fixture_id is not null;
+create index if not exists idx_fixture_source_aliases_canonical on fixture_source_aliases(canonical_fixture_id, canonical_match_id);
 create index if not exists idx_competition_seasons_competition_status on competition_seasons(competition_id, status);
 create index if not exists idx_competition_season_clubs_competition on competition_season_clubs(competition_id, season_id);
 create index if not exists idx_competition_season_clubs_status on competition_season_clubs(status, entry_reason);
