@@ -13,12 +13,11 @@ async function readBody(req: any) {
 }
 
 export default async function handler(req: any, res: any) {
-  setCorsHeaders(req, res, { methods: "POST, OPTIONS" });
+  setCorsHeaders(req, res, { methods: "GET, POST, OPTIONS" });
   if (req.method === "OPTIONS") return res.status(204).end();
-  if (req.method !== "POST") return res.status(405).json({ ok: false, error: "method_not_allowed" });
   if (!databaseConfigured()) return res.status(503).json({ ok: false, error: "database_not_configured" });
 
-  const body = await readBody(req).catch(() => null);
+  const body = req.method === "POST" ? await readBody(req).catch(() => null) : req.query;
   const category = String(body?.category || "");
   const competitionId = String(body?.competitionId || "").slice(0, 160);
   const competitionLabel = String(body?.competitionLabel || "").slice(0, 240);
@@ -26,8 +25,24 @@ export default async function handler(req: any, res: any) {
     return res.status(400).json({ ok: false, error: "invalid_repair_request" });
   }
 
-  const requestId = `repair_${crypto.createHash("sha1").update(`${competitionId}|${competitionLabel}|${category}`).digest("hex").slice(0, 20)}`;
   const sql = getSql();
+  if (req.method === "GET") {
+    const [row] = await sql.query(
+      `
+        select request_id, status, requested_at, started_at, completed_at, attempts, last_error, result_payload
+        from coverage_repair_requests
+        where category = $1
+          and (($2 <> '' and competition_id = $2) or ($3 <> '' and competition_label = $3))
+        order by requested_at desc
+        limit 1
+      `,
+      [category, competitionId, competitionLabel]
+    );
+    return res.status(200).json({ ok: true, request: row || null });
+  }
+  if (req.method !== "POST") return res.status(405).json({ ok: false, error: "method_not_allowed" });
+
+  const requestId = `repair_${crypto.createHash("sha1").update(`${competitionId}|${competitionLabel}|${category}`).digest("hex").slice(0, 20)}`;
   const [row] = await sql.query(
     `
       insert into coverage_repair_requests (
@@ -39,7 +54,7 @@ export default async function handler(req: any, res: any) {
         requested_at = case when coverage_repair_requests.status = 'running' then coverage_repair_requests.requested_at else now() end,
         completed_at = case when coverage_repair_requests.status = 'running' then coverage_repair_requests.completed_at else null end,
         last_error = null
-      returning request_id, status, requested_at
+      returning request_id, status, requested_at, started_at, completed_at, attempts, last_error, result_payload
     `,
     [requestId, competitionId, competitionLabel, category, String(req.headers?.["user-agent"] || "").slice(0, 240)]
   );

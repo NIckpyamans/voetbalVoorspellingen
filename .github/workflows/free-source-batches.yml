@@ -77,6 +77,11 @@ jobs:
         env:
           DATABASE_URL: ${{ secrets.DATABASE_URL }}
           POSTGRES_URL: ${{ secrets.POSTGRES_URL }}
+      - name: Merge source clubs into canonical identities
+        run: node scripts/merge-source-clubs.js
+        env:
+          DATABASE_URL: ${{ secrets.DATABASE_URL }}
+          POSTGRES_URL: ${{ secrets.POSTGRES_URL }}
       - name: Rebuild season memberships and H2H after discovery
         run: node scripts/reset-competition-seasons.js
         env:
@@ -130,6 +135,34 @@ jobs:
           DATABASE_URL: ${{ secrets.DATABASE_URL }}
           POSTGRES_URL: ${{ secrets.POSTGRES_URL }}
 
+  statsbomb-xg:
+    if: github.event_name == 'schedule'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+      - name: Import reliable free StatsBomb xG and style data
+        run: node scripts/import-free-sources.js --source=statsbomb
+        env:
+          DATABASE_URL: ${{ secrets.DATABASE_URL }}
+          POSTGRES_URL: ${{ secrets.POSTGRES_URL }}
+          STATSBOMB_EVENT_LIMIT: 80
+          STATSBOMB_COMPETITION_LIMIT: 24
+      - name: Canonicalize imported club identities
+        run: node scripts/merge-source-clubs.js
+        env:
+          DATABASE_URL: ${{ secrets.DATABASE_URL }}
+          POSTGRES_URL: ${{ secrets.POSTGRES_URL }}
+      - name: Rebuild H2H after club canonicalization
+        run: node scripts/reset-competition-seasons.js
+        env:
+          DATABASE_URL: ${{ secrets.DATABASE_URL }}
+          POSTGRES_URL: ${{ secrets.POSTGRES_URL }}
+
   manual:
     if: github.event_name == 'workflow_dispatch'
     runs-on: ubuntu-latest
@@ -151,6 +184,7 @@ jobs:
           FREE_SOURCE_IMPORT_LIMIT: 420
           FREE_SOURCE_WEATHER_LIMIT: 250
           STATSBOMB_EVENT_LIMIT: 24
+          STATSBOMB_COMPETITION_LIMIT: 16
           VENUE_GEOCODE_LIMIT: 20
       - run: node scripts/reset-competition-seasons.js
         env:

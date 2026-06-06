@@ -110,6 +110,16 @@ interface CompetitionCoverageMetric {
   pct: number;
 }
 
+interface CoverageRepairRequest {
+  request_id?: string;
+  status?: "pending" | "running" | "completed" | "failed";
+  requested_at?: string;
+  started_at?: string | null;
+  completed_at?: string | null;
+  attempts?: number;
+  last_error?: string | null;
+}
+
 interface CompetitionCoverage {
   label: string;
   competitionId?: string;
@@ -239,6 +249,7 @@ const StandingsView: React.FC = () => {
   const [databaseCoverageByCompetition, setDatabaseCoverageByCompetition] = useState<CompetitionCoverage[]>([]);
   const [selectedCoverageKey, setSelectedCoverageKey] = useState<string | null>(null);
   const [coverageRepairStatus, setCoverageRepairStatus] = useState<string | null>(null);
+  const [coverageRepairRequest, setCoverageRepairRequest] = useState<CoverageRepairRequest | null>(null);
 
   useEffect(() => {
     try {
@@ -321,6 +332,7 @@ const StandingsView: React.FC = () => {
   useEffect(() => {
     setSelectedCoverageKey(null);
     setCoverageRepairStatus(null);
+    setCoverageRepairRequest(null);
   }, [selectedLeague]);
 
   async function queueCoverageRepair() {
@@ -337,6 +349,7 @@ const StandingsView: React.FC = () => {
         }),
       });
       const result = await response.json();
+      setCoverageRepairRequest(result?.request || null);
       setCoverageRepairStatus(result?.queued ? "Repair ingepland voor de volgende databatch." : result?.error || "Inplannen mislukt.");
     } catch {
       setCoverageRepairStatus("Inplannen mislukt; probeer het later opnieuw.");
@@ -388,6 +401,36 @@ const StandingsView: React.FC = () => {
       }) || null
     );
   }, [currentStanding, databaseCoverageByCompetition]);
+
+  useEffect(() => {
+    if (!currentCoverage || !selectedCoverageKey) return;
+    let cancelled = false;
+    let timer: ReturnType<typeof setTimeout> | undefined;
+    const refresh = async () => {
+      const query = new URLSearchParams({
+        category: selectedCoverageKey,
+        competitionId: currentCoverage.competitionId || "",
+        competitionLabel: currentCoverage.label || currentStanding?.label || "",
+      });
+      try {
+        const response = await fetch(`/api/coverage-repair?${query.toString()}`);
+        const result = await response.json();
+        if (!cancelled && result?.ok) {
+          setCoverageRepairRequest(result.request || null);
+          if (result.request?.status === "pending" || result.request?.status === "running") {
+            timer = setTimeout(refresh, 10000);
+          }
+        }
+      } catch {
+        // Repair-status is informative; the coverage panel remains usable when polling fails.
+      }
+    };
+    refresh();
+    return () => {
+      cancelled = true;
+      if (timer) clearTimeout(timer);
+    };
+  }, [currentCoverage, currentStanding?.label, selectedCoverageKey]);
   const currentSources =
     currentStanding?.sources?.length
       ? currentStanding.sources
@@ -646,7 +689,27 @@ const StandingsView: React.FC = () => {
                           Ontbrekende data opnieuw importeren
                         </button>
                         {coverageRepairStatus && <span className="text-[9px] font-bold text-slate-400">{coverageRepairStatus}</span>}
+                        {coverageRepairRequest?.status && (
+                          <span
+                            className={`rounded-full border px-2 py-1 text-[9px] font-black uppercase ${
+                              coverageRepairRequest.status === "completed"
+                                ? "border-emerald-500/30 bg-emerald-500/10 text-emerald-300"
+                                : coverageRepairRequest.status === "failed"
+                                  ? "border-rose-500/30 bg-rose-500/10 text-rose-300"
+                                  : coverageRepairRequest.status === "running"
+                                    ? "border-sky-500/30 bg-sky-500/10 text-sky-300"
+                                    : "border-amber-500/30 bg-amber-500/10 text-amber-300"
+                            }`}
+                          >
+                            {coverageRepairRequest.status}
+                          </span>
+                        )}
                       </div>
+                      {coverageRepairRequest?.last_error && (
+                        <div className="mb-2 rounded-lg border border-rose-500/20 bg-rose-500/5 px-2.5 py-2 text-[9px] font-bold text-rose-300">
+                          Laatste fout: {coverageRepairRequest.last_error}
+                        </div>
+                      )}
                       {selectedCoverageMissing.length ? (
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-1.5">
                           {selectedCoverageMissing.map((match) => (

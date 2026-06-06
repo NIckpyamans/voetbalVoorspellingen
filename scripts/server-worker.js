@@ -30,6 +30,7 @@ import {
   fetchExternalJson,
   fetchFbrefSnapshot as fetchFbrefSnapshotSource,
   fetchOpenfootballProfile as fetchOpenfootballProfileSource,
+  resolveEspnTeamLogoByName as resolveEspnTeamLogoByNameSource,
   fetchText,
   fetchUnderstatSnapshot as fetchUnderstatSnapshotSource,
   fetchWithTimeout,
@@ -1685,10 +1686,12 @@ const FBREF_RELEASE_CODES = {
 
 process.on("unhandledRejection", (err) => {
   console.error("[worker] unhandledRejection:", err?.message || err);
+  process.exitCode = 1;
 });
 
 process.on("uncaughtException", (err) => {
   console.error("[worker] uncaughtException:", err?.message || err);
+  process.exitCode = 1;
 });
 
 function samplePoisson(lambda, random) {
@@ -5058,13 +5061,19 @@ function resolveTeamLogoUrl(team, teamId, teamName, source) {
 }
 
 async function repairStoredLogos(store) {
+  const logoDeps = {
+    espnScoreboardLeagues: ESPN_SCOREBOARD_LEAGUES,
+    buildLogoLookupNames,
+    normalizeName,
+    sleep,
+  };
   const days = Object.keys(store.matches || {});
   for (const day of days) {
     const matches = Array.isArray(store.matches?.[day]) ? store.matches[day] : [];
     for (const match of matches) {
       const [homeOfficialLogo, awayOfficialLogo] = await Promise.all([
-        resolveEspnTeamLogoByName(match.homeTeamName),
-        resolveEspnTeamLogoByName(match.awayTeamName),
+        resolveEspnTeamLogoByNameSource(match.homeTeamName, logoDeps),
+        resolveEspnTeamLogoByNameSource(match.awayTeamName, logoDeps),
       ]);
       const dataSource = String(match.dataSource || match.source || "");
       const homeCurrentLogo = String(match.homeLogo || "").trim();

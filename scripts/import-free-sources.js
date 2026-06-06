@@ -19,6 +19,7 @@ const FOOTBALL_DATA_FULL_SEASONS =
 const FOOTBALL_DATA_LIMIT = FOOTBALL_DATA_FULL_SEASONS ? Number.POSITIVE_INFINITY : LIMIT;
 const WEATHER_LIMIT = Math.max(1, Number(process.env.FREE_SOURCE_WEATHER_LIMIT || 120));
 const STATSBOMB_EVENT_LIMIT = Math.max(1, Number(process.env.STATSBOMB_EVENT_LIMIT || 18));
+const STATSBOMB_COMPETITION_LIMIT = Math.max(1, Number(process.env.STATSBOMB_COMPETITION_LIMIT || 16));
 const VENUE_GEOCODE_LIMIT = Math.max(0, Number(process.env.VENUE_GEOCODE_LIMIT || 25));
 const SOURCE_FILTER = String(argValue("--source", process.env.FREE_SOURCE_IMPORT_SOURCE || "all")).toLowerCase();
 const LEAGUE_FILTER = String(argValue("--league", process.env.FREE_SOURCE_LEAGUE_CODE || "")).toUpperCase();
@@ -433,7 +434,7 @@ async function upsertCompetition(sql, source, item, seasonLabel) {
 }
 
 async function upsertClub(sql, countryId, countryName, name, provider, providerId = null) {
-  const clubId = `${provider}-club-${slug(name)}`;
+  const clubId = `club-${countryId}-${slug(canonicalTeamName(name))}`;
   const knownVenue = knownVenueForTeam(name);
   const venueId = knownVenue ? `venue-${slug(knownVenue.name)}-${slug(knownVenue.city)}` : null;
   if (knownVenue) {
@@ -463,7 +464,7 @@ async function upsertClub(sql, countryId, countryName, name, provider, providerI
         country_name = excluded.country_name,
         stadium = coalesce(excluded.stadium, clubs.stadium),
         venue_id = coalesce(excluded.venue_id, clubs.venue_id),
-        provider_ids = excluded.provider_ids,
+        provider_ids = clubs.provider_ids || excluded.provider_ids,
         updated_at = now()
     `,
     [clubId, name, countryId, countryName, knownVenue?.name || null, venueId, JSON.stringify({ [provider]: providerId || name })]
@@ -817,7 +818,7 @@ async function importStatsBombEvents(sql) {
     const candidates = competitions
       .filter((item) => item.competition_id != null && item.season_id != null)
       .sort((a, b) => String(b.season_name || "").localeCompare(String(a.season_name || "")))
-      .slice(0, 8);
+      .slice(0, STATSBOMB_COMPETITION_LIMIT);
     for (const competition of candidates) {
       if (matches >= STATSBOMB_EVENT_LIMIT) break;
       const matchesUrl = `${baseUrl}/matches/${competition.competition_id}/${competition.season_id}.json`;
@@ -862,6 +863,61 @@ async function importStatsBombEvents(sql) {
             teamAggregates: Object.fromEntries(aggregate),
             eventRows: eventRows.length,
           }, 0.88);
+          const homeTeamName = match.home_team?.home_team_name;
+          const awayTeamName = match.away_team?.away_team_name;
+          const homeClub = homeTeamName ? await upsertClub(sql, countryId, competition.country_name || "International", homeTeamName, "statsbomb", match.home_team?.home_team_id) : null;
+          const awayClub = awayTeamName ? await upsertClub(sql, countryId, competition.country_name || "International", awayTeamName, "statsbomb", match.away_team?.away_team_id) : null;
+          const statsBombMatchId = `statsbomb-${match.match_id}`;
+          const homeStats = aggregate.get(homeTeamName) || { shots: 0, xg: 0 };
+          const awayStats = aggregate.get(awayTeamName) || { shots: 0, xg: 0 };
+          if (homeClub && awayClub) {
+            const kickoff = match.match_date ? `${match.match_date}T12:00:00.000Z` : null;
+            await sql.query(
+              `
+                insert into matches (
+                  match_id, source_match_id, data_source, competition_id, season_id, league, season, kickoff_at,
+                  home_club_id, away_club_id, home_team_id, away_team_id, home_team_name, away_team_name,
+                  status, status_normalized, date_key, raw_payload, source_coverage
+                )
+                values ($1,$2,'StatsBomb Open Data',$3,$4,$5,$6,$7,$8,$9,$8,$9,$10,$11,'FT','finished',$12,$13::jsonb,$14::jsonb)
+                on conflict (match_id) do update set
+                  home_club_id = excluded.home_club_id,
+                  away_club_id = excluded.away_club_id,
+                  raw_payload = excluded.raw_payload,
+                  source_coverage = matches.source_coverage || excluded.source_coverage,
+                  updated_at = now()
+              `,
+              [
+                statsBombMatchId, String(match.match_id), comp.competitionId, comp.seasonId,
+                competition.competition_name, seasonLabel, kickoff, homeClub.clubId, awayClub.clubId,
+                homeTeamName, awayTeamName, match.match_date || null, JSON.stringify(match),
+                JSON.stringify({ xg: { source: "StatsBomb Open Data", reliability: 0.88 } }),
+              ]
+            );
+            await sql.query(
+              `
+                insert into match_stats (match_id, home_xg, away_xg, home_shots, away_shots, stats_source, source_record_id)
+                values ($1,$2,$3,$4,$5,'StatsBomb Open Data',$6)
+                on conflict (match_id) do update set
+                  home_xg = excluded.home_xg, away_xg = excluded.away_xg,
+                  home_shots = excluded.home_shots, away_shots = excluded.away_shots,
+                  stats_source = excluded.stats_source, source_record_id = excluded.source_record_id, updated_at = now()
+              `,
+              [statsBombMatchId, Number(homeStats.xg.toFixed(4)), Number(awayStats.xg.toFixed(4)), homeStats.shots, awayStats.shots, sourceRecordId]
+            );
+            for (const [side, club, stats] of [["home", homeClub, homeStats], ["away", awayClub, awayStats]]) {
+              await sql.query(
+                `
+                  insert into team_match_stats (team_match_stats_id, match_id, club_id, side, xg, shots, stats_source, source_record_id)
+                  values ($1,$2,$3,$4,$5,$6,'StatsBomb Open Data',$7)
+                  on conflict (match_id, side) do update set
+                    club_id = excluded.club_id, xg = excluded.xg, shots = excluded.shots,
+                    stats_source = excluded.stats_source, source_record_id = excluded.source_record_id, updated_at = now()
+                `,
+                [`tms_statsbomb_${match.match_id}_${side}`, statsBombMatchId, club.clubId, side, Number(stats.xg.toFixed(4)), stats.shots, sourceRecordId]
+              );
+            }
+          }
           for (const [teamName, stats] of aggregate.entries()) {
             const club = await upsertClub(sql, countryId, competition.country_name || "International", teamName, "statsbomb", teamName);
             await sql.query(

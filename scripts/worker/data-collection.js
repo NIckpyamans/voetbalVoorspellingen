@@ -311,7 +311,7 @@ async function ensureEspnTeamLogoCache(deps) {
   }
 }
 
-async function resolveEspnTeamLogoByName(teamName, deps) {
+export async function resolveEspnTeamLogoByName(teamName, deps) {
   await ensureEspnTeamLogoCache(deps);
   const variants = deps.buildLogoLookupNames(teamName);
   for (const variant of variants) {
