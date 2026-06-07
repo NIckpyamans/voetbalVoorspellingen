@@ -1,18 +1,35 @@
 {
-  "generatedAt": "2026-06-05T05:47:52.120Z",
+  "generatedAt": "2026-06-07T15:42:47.596Z",
   "database": {
     "databaseConfigured": true,
-    "matches": 514,
+    "matches": 12122,
     "prediction_snapshots": 76,
-    "source_records": 1030,
-    "source_audit": 35,
-    "odds_snapshots": 0
+    "prediction_evaluations": 76,
+    "source_records": 24027,
+    "source_audit": 871,
+    "odds_snapshots": 0,
+    "historical_odds_snapshots": 19571,
+    "match_stats": 9179,
+    "team_match_stats": 18358,
+    "competition_season_clubs": 1475,
+    "zero_standings_snapshots": 105,
+    "h2h_edges": 3107
   },
   "alerts": [
     {
       "key": "odds_credentials_missing",
       "severity": "medium",
       "message": "Odds credentials ontbreken nog; ROI/CLV blijft niet-live."
+    },
+    {
+      "key": "database_quality_degradation",
+      "severity": "high",
+      "message": "Model presteert onder de competitie-baseline voor competition:competition-europe-champions-league|model:v23-calibrated-odds-ledger."
+    },
+    {
+      "key": "database_quality_degradation",
+      "severity": "high",
+      "message": "Model presteert onder de competitie-baseline voor competition:competition-belgium-l1|model:v23-calibrated-odds-ledger."
     }
   ],
   "slackConfigured": false,
