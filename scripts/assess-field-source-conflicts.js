@@ -25,8 +25,9 @@ let detected = 0;
 for (const [field, valueSql] of fields) {
   const rows = await sql.query(`
     with candidates as (
-      select msr.match_id,sr.source_record_id,msr.provider,msr.trust_score,${valueSql} value
+      select msr.match_id,sr.source_record_id,msr.provider,coalesce(pft.effective_trust_score,msr.trust_score) trust_score,${valueSql} value
       from match_source_records msr join source_records sr on sr.source_record_id=msr.source_record_id
+      left join provider_field_trust_profiles pft on pft.provider=msr.provider and pft.field_name='${field}'
     ), conflicting as (
       select match_id,jsonb_agg(jsonb_build_object('sourceRecordId',source_record_id,'provider',provider,'value',value,'trustScore',trust_score)
         order by trust_score desc nulls last) candidate_values,
@@ -52,5 +53,14 @@ for (const [field, valueSql] of fields) {
   detected += rows.length;
 }
 await sql.query("update source_conflicts set status='review_required',updated_at=now() where status='pending' and field_name in ('home_club_id','away_club_id')");
+await sql.query(`
+  update source_conflicts sc set status='resolved',resolution_method='canonical_club_merge',resolved_at=now(),updated_at=now()
+  where sc.field_name in ('home_club_id','away_club_id') and sc.status='review_required'
+    and not exists (
+      select 1 from jsonb_array_elements(sc.candidate_values) candidate
+      where candidate->>'value' <> sc.selected_value#>>'{}'
+        and exists(select 1 from clubs c where c.club_id=candidate->>'value')
+    )
+`);
 const summary = await sql.query("select field_name,count(1)::int conflicts,count(1) filter(where status='pending')::int pending from source_conflicts group by field_name order by conflicts desc");
 console.log(JSON.stringify({ detected, fields: summary }, null, 2));

@@ -161,6 +161,7 @@ const DataIntegrityView: React.FC = () => {
       <div className="grid gap-5 xl:grid-cols-[1.3fr_0.7fr]">
         <section className="glass-card rounded-3xl border border-sky-500/15 p-5">
           <h3 className="text-sm font-black uppercase text-sky-200">Modelkwaliteit per competitie en versie</h3>
+          <p className="mt-1 text-[9px] text-slate-500">Alleen zichtbaar vanaf {number(data.modelQualityMinimumSample || 20)} evaluaties.</p>
           <div className="mt-4 max-h-[420px] space-y-2 overflow-y-auto">
             {modelQuality.map((item) => (
               <div key={item.dimension} className="rounded-2xl border border-white/5 bg-slate-950/35 p-3">
@@ -190,8 +191,34 @@ const DataIntegrityView: React.FC = () => {
               </div>
             ))}
             <div className="rounded-2xl border border-cyan-500/10 bg-cyan-500/5 p-3 text-[9px] text-cyan-200">
-              Automatische repairs: {number((data.repairSummary || []).find((row: any) => row.repair_status === "applied")?.rows || 0)}
+              Automatische repairs: {number((data.repairSummary || []).find((row: any) => row.repair_status === "applied" && row.rollback_status === "not_rolled_back")?.rows || 0)}
             </div>
+          </div>
+        </section>
+      </div>
+
+      <div className="grid gap-5 xl:grid-cols-2">
+        <section className="glass-card rounded-3xl border border-orange-500/15 p-5">
+          <h3 className="text-sm font-black uppercase text-orange-200">Actieve kwaliteitswaarschuwingen</h3>
+          <div className="mt-4 space-y-2">
+            {(data.qualityAlerts || []).length ? data.qualityAlerts.map((alert: any) => (
+              <div key={alert.alert_id} className="rounded-2xl border border-orange-500/10 bg-orange-500/5 p-3">
+                <div className="flex justify-between gap-2"><span className="truncate text-[9px] font-black text-white">{alert.dimension_key}</span><span className="text-[8px] font-black uppercase text-orange-300">{alert.severity}</span></div>
+                <div className="mt-1 text-[9px] text-slate-400">{alert.message}</div>
+                <div className="mt-2 text-[8px] text-slate-500">{Number(alert.previous_value || 0).toFixed(3)} naar {Number(alert.current_value || 0).toFixed(3)}</div>
+              </div>
+            )) : <div className="rounded-2xl border border-emerald-500/15 bg-emerald-500/5 p-4 text-[10px] font-bold text-emerald-200">Geen plotselinge kwaliteitsdalingen gevonden.</div>}
+          </div>
+        </section>
+        <section className="glass-card rounded-3xl border border-fuchsia-500/15 p-5">
+          <h3 className="text-sm font-black uppercase text-fuchsia-200">Veldspecifieke providertrust</h3>
+          <div className="mt-4 max-h-[360px] space-y-2 overflow-y-auto">
+            {(data.fieldTrust || []).slice(0, 24).map((item: any) => (
+              <div key={`${item.provider}-${item.field_name}`} className="rounded-xl border border-white/5 bg-slate-950/35 p-3">
+                <div className="flex justify-between gap-2"><span className="truncate text-[9px] font-black text-white">{item.provider}</span><span className="text-[10px] font-black text-fuchsia-300">{pct(item.effective_trust_score)}</span></div>
+                <div className="mt-1 text-[8px] text-slate-500">{item.field_name} · {number(item.samples)} samples · Wilson {pct(item.wilson_lower_bound)}</div>
+              </div>
+            ))}
           </div>
         </section>
       </div>

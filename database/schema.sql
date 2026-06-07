@@ -141,6 +141,19 @@ create table if not exists provider_trust_history (
   metrics jsonb not null default '{}'::jsonb
 );
 
+create table if not exists provider_field_trust_profiles (
+  provider text not null,
+  field_name text not null,
+  effective_trust_score numeric not null default 0.5,
+  raw_accuracy numeric,
+  bayesian_accuracy numeric,
+  wilson_lower_bound numeric,
+  samples integer not null default 0,
+  metrics jsonb not null default '{}'::jsonb,
+  updated_at timestamptz not null default now(),
+  primary key (provider, field_name)
+);
+
 create table if not exists source_conflicts (
   source_conflict_id text primary key,
   entity_type text not null,
@@ -168,8 +181,32 @@ create table if not exists source_conflict_repairs (
   source_trust_score numeric,
   repair_status text not null,
   repair_reason text,
-  repaired_at timestamptz not null default now()
+  repaired_at timestamptz not null default now(),
+  rollback_status text not null default 'not_rolled_back',
+  rollback_reason text,
+  rolled_back_at timestamptz
 );
+alter table source_conflict_repairs add column if not exists rollback_status text not null default 'not_rolled_back';
+alter table source_conflict_repairs add column if not exists rollback_reason text;
+alter table source_conflict_repairs add column if not exists rolled_back_at timestamptz;
+
+create table if not exists quality_alerts (
+  alert_id text primary key,
+  alert_type text not null,
+  dimension_key text not null,
+  severity text not null,
+  status text not null default 'open',
+  current_value numeric,
+  previous_value numeric,
+  delta numeric,
+  threshold numeric,
+  message text not null,
+  evidence jsonb not null default '{}'::jsonb,
+  detected_at timestamptz not null default now(),
+  resolved_at timestamptz,
+  updated_at timestamptz not null default now()
+);
+alter table quality_alerts drop constraint if exists quality_alerts_alert_type_dimension_key_status_key;
 
 create table if not exists integrity_metric_snapshots (
   integrity_metric_snapshot_id bigserial primary key,
@@ -714,6 +751,8 @@ create index if not exists idx_venues_country_city on venues(country_id, city);
 create index if not exists idx_source_records_entity on source_records(entity_type, entity_key, fetched_at desc);
 create index if not exists idx_source_conflicts_status on source_conflicts(status, detected_at desc);
 create index if not exists idx_source_conflict_repairs_conflict_date on source_conflict_repairs(source_conflict_id, repaired_at desc);
+create index if not exists idx_provider_field_trust_field_score on provider_field_trust_profiles(field_name, effective_trust_score desc);
+create index if not exists idx_quality_alerts_status_detected on quality_alerts(status, detected_at desc);
 create index if not exists idx_provider_trust_history_provider_date on provider_trust_history(provider, captured_at desc);
 create index if not exists idx_integrity_metric_snapshots_key_date on integrity_metric_snapshots(metric_key, dimension_key, captured_at desc);
 create index if not exists idx_standings_snapshots_season on standings_snapshots(season_id, captured_at desc);

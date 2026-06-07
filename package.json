@@ -41,6 +41,8 @@
     "db:sources:trust": "node scripts/score-source-trust.js",
     "db:sources:conflicts": "node scripts/assess-field-source-conflicts.js",
     "db:sources:conflicts:repair": "node scripts/repair-source-conflicts.js",
+    "db:sources:conflicts:rollback": "node scripts/rollback-source-conflict-repair.js",
+    "db:quality:alerts": "node scripts/detect-quality-degradation.js",
     "db:sources:audit": "node scripts/audit-prediction-sources.js",
     "db:odds:leakage": "node scripts/enforce-odds-leakage-rules.js",
     "db:odds:prematch:collect": "node scripts/collect-free-prematch-odds.js",

@@ -46,6 +46,11 @@ jobs:
         env:
           DATABASE_URL: ${{ secrets.DATABASE_URL }}
           POSTGRES_URL: ${{ secrets.POSTGRES_URL }}
+      - name: Merge confirmed canonical club aliases
+        run: npm run db:clubs:merge
+        env:
+          DATABASE_URL: ${{ secrets.DATABASE_URL }}
+          POSTGRES_URL: ${{ secrets.POSTGRES_URL }}
       - name: Repair trusted field-level source conflicts
         run: npm run db:sources:conflicts:repair
         env:
@@ -72,7 +77,13 @@ jobs:
           DATABASE_URL: ${{ secrets.DATABASE_URL }}
           POSTGRES_URL: ${{ secrets.POSTGRES_URL }}
       - name: Capture integrity trends and partition readiness
-        run: npm run db:integrity:snapshot && npm run db:partition:assess
+        run: npm run db:integrity:snapshot && npm run db:quality:alerts && npm run db:partition:assess
         env:
           DATABASE_URL: ${{ secrets.DATABASE_URL }}
           POSTGRES_URL: ${{ secrets.POSTGRES_URL }}
+      - name: Send configured quality alerts
+        run: npm run monitor:alerts
+        env:
+          DATABASE_URL: ${{ secrets.DATABASE_URL }}
+          POSTGRES_URL: ${{ secrets.POSTGRES_URL }}
+          SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}

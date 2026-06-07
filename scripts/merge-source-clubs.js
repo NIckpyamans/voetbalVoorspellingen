@@ -31,6 +31,8 @@ const NAME_EQUIVALENTS = new Map(Object.entries({
   "twente": "fc-twente",
   "utrecht": "fc-utrecht",
   "alaves": "deportivo-alaves",
+  "leeds": "leeds-united",
+  "paris-sg": "paris-saint-germain",
 }));
 
 function canonicalNameKey(name) {

@@ -2,7 +2,7 @@
 
 import fs from "fs";
 import path from "path";
-import { loadLocalEnv, readDatabaseCounts } from "../shared/database.js";
+import { getSql, loadLocalEnv, readDatabaseCounts } from "../shared/database.js";
 
 const ROOT = process.cwd();
 
@@ -69,6 +69,11 @@ async function postSlack(webhookUrl, payload) {
 
 const counts = await readDatabaseCounts().catch((error) => ({ error: error.message }));
 const alerts = collectAlerts();
+const sql = getSql();
+if (sql) {
+  const qualityAlerts = await sql.query("select severity,message from quality_alerts where status='open' order by detected_at desc limit 20");
+  alerts.push(...qualityAlerts.map((alert) => ({ key: "database_quality_degradation", severity: alert.severity, message: alert.message })));
+}
 const webhookUrl = process.env.SLACK_WEBHOOK_URL || "";
 const result = {
   generatedAt: new Date().toISOString(),

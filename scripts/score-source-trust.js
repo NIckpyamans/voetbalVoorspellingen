@@ -131,5 +131,33 @@ await sql.query(`
   update matches m set primary_source_record_id=msr.source_record_id,updated_at=now()
   from match_source_records msr where msr.match_id=m.match_id and msr.is_primary
 `);
+const fieldContracts = [
+  ["score", `case when jsonb_typeof(sr.payload#>'{score,ft}')='array' then (sr.payload#>>'{score,ft,0}')||'-'||(sr.payload#>>'{score,ft,1}')
+    when jsonb_typeof(sr.payload->'score')='array' then (sr.payload#>>'{score,0}')||'-'||(sr.payload#>>'{score,1}')
+    else coalesce(sr.payload->>'score',sr.payload->>'finalScore') end`, "mr.final_home_goals::text||'-'||mr.final_away_goals::text"],
+  ["kickoff", "coalesce(sr.payload->>'kickoff',sr.payload->>'kickoff_at')", "m.kickoff_at::text"],
+  ["status", "upper(coalesce(sr.payload->>'status',sr.payload->>'status_normalized'))", "upper(coalesce(m.status_normalized,m.status))"],
+];
+for (const [field, sourceValue, canonicalValue] of fieldContracts) {
+  await sql.query(`
+    with scored as (
+      select msr.provider,count(1)::int samples,sum((${sourceValue}=${canonicalValue})::int)::numeric correct,
+        avg((${sourceValue}=${canonicalValue})::int)::numeric raw_accuracy
+      from match_source_records msr join source_records sr on sr.source_record_id=msr.source_record_id
+      join matches m on m.match_id=msr.match_id left join match_results mr on mr.match_id=m.match_id
+      where nullif(${sourceValue},'') is not null and nullif(${canonicalValue},'') is not null group by msr.provider
+    ), corrected as (
+      select s.*,p.effective_trust_score prior,
+        (s.correct+p.effective_trust_score*30)/(s.samples+30) bayesian_accuracy,
+        greatest(0,(s.raw_accuracy+1.9208/s.samples-1.96*sqrt((s.raw_accuracy*(1-s.raw_accuracy)+0.9604/s.samples)/s.samples))/(1+3.8416/s.samples)) wilson
+      from scored s join provider_trust_profiles p on p.provider=s.provider
+    )
+    insert into provider_field_trust_profiles(provider,field_name,effective_trust_score,raw_accuracy,bayesian_accuracy,wilson_lower_bound,samples,metrics,updated_at)
+    select provider,$1,least(0.99,greatest(0.1,bayesian_accuracy*0.7+wilson*0.3)),raw_accuracy,bayesian_accuracy,wilson,samples,
+      jsonb_build_object('priorStrength',30,'method','bayesian_wilson_field_v1'),now() from corrected
+    on conflict(provider,field_name) do update set effective_trust_score=excluded.effective_trust_score,raw_accuracy=excluded.raw_accuracy,
+      bayesian_accuracy=excluded.bayesian_accuracy,wilson_lower_bound=excluded.wilson_lower_bound,samples=excluded.samples,metrics=excluded.metrics,updated_at=now()
+  `, [field]);
+}
 const [summary] = await sql.query("select count(1)::int providers,(select count(1)::int from matches where primary_source_record_id is not null) primary_matches,(select count(1)::int from source_conflicts) conflicts from provider_trust_profiles");
 console.log(JSON.stringify(summary, null, 2));

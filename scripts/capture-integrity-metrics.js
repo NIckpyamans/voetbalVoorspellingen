@@ -35,7 +35,7 @@ for (const row of qualityDimensions) {
   const dimension = `competition:${row.competition_id}|model:${row.model_version}`;
   for (const key of ["evaluation_count", "outcome_hit_rate", "average_brier", "average_log_loss"]) {
     await sql.query("insert into integrity_metric_snapshots(metric_key,metric_value,dimension_key,metadata) values($1,$2,$3,$4::jsonb)",
-      [`model_${key}`, row[key], dimension, JSON.stringify({ competitionId: row.competition_id, modelVersion: row.model_version, source: "model-quality-dimension-v1" })]);
+      [`model_${key}`, row[key], dimension, JSON.stringify({ competitionId: row.competition_id, modelVersion: row.model_version, sampleSize: Number(row.evaluation_count), source: "model-quality-dimension-v1" })]);
   }
 }
 await sql.query(`
