@@ -27,6 +27,15 @@ for (const row of rows) {
   groups.set(id, [...(groups.get(id) || []), row]);
 }
 
+// Release stale IDs first so identity resolution cannot create transient unique-key collisions.
+const releasedMatchIds = [...new Set([
+  ...rows.filter((row) => row.canonical_fixture_id && row.canonical_fixture_id !== idFor(row)).map((row) => row.match_id),
+  ...[...groups.values()].filter((group) => group.length > 1).flatMap((group) => group.map((row) => row.match_id)),
+])];
+for (let index = 0; index < releasedMatchIds.length; index += 250) {
+  await sql.query("update matches set canonical_fixture_id=null,updated_at=now() where match_id=any($1::text[])", [releasedMatchIds.slice(index, index + 250)]);
+}
+
 async function registerFixtureAlias(canonicalFixtureId, targetMatchId, row) {
   const sourceId = String(row.source_match_id || row.match_id);
   const provider = String(row.data_source || "unknown");

@@ -117,6 +117,34 @@ create table if not exists source_records (
   created_at timestamptz not null default now()
 );
 
+create table if not exists provider_trust_profiles (
+  provider text primary key,
+  base_trust_score numeric not null default 0.5,
+  effective_trust_score numeric not null default 0.5,
+  records_count integer not null default 0,
+  timestamp_coverage numeric not null default 0,
+  conflict_rate numeric not null default 0,
+  resolution_win_rate numeric not null default 0,
+  metrics jsonb not null default '{}'::jsonb,
+  updated_at timestamptz not null default now()
+);
+
+create table if not exists source_conflicts (
+  source_conflict_id text primary key,
+  entity_type text not null,
+  entity_key text not null,
+  field_name text not null,
+  candidate_values jsonb not null default '[]'::jsonb,
+  selected_source_record_id text references source_records(source_record_id),
+  selected_value jsonb,
+  resolution_method text,
+  status text not null default 'pending',
+  detected_at timestamptz not null default now(),
+  resolved_at timestamptz,
+  updated_at timestamptz not null default now(),
+  unique (entity_type, entity_key, field_name)
+);
+
 create table if not exists matches (
   match_id text primary key,
   canonical_fixture_id text,
@@ -618,6 +646,7 @@ create index if not exists idx_club_aliases_normalized on club_aliases(normalize
 create index if not exists idx_coverage_repair_requests_status on coverage_repair_requests(status, requested_at);
 create index if not exists idx_venues_country_city on venues(country_id, city);
 create index if not exists idx_source_records_entity on source_records(entity_type, entity_key, fetched_at desc);
+create index if not exists idx_source_conflicts_status on source_conflicts(status, detected_at desc);
 create index if not exists idx_standings_snapshots_season on standings_snapshots(season_id, captured_at desc);
 create index if not exists idx_team_season_stats_season_club on team_season_stats(season_id, club_id);
 create index if not exists idx_team_match_stats_match on team_match_stats(match_id);

@@ -13,7 +13,18 @@ const rows = await sql.query(`
     os.odds_role, os.available_before_kickoff, os.minutes_before_kickoff,
     os.closing_home, os.closing_draw, os.closing_away, os.closing_captured_at
   from prediction_snapshots ps join matches m on m.match_id=ps.match_id join match_results mr on mr.match_id=ps.match_id
-  left join lateral (select * from odds_snapshots where prediction_id=ps.prediction_id order by captured_at desc nulls last limit 1) os on true
+  left join lateral (
+    select candidate.* from (
+      select home,draw,away,captured_at,odds_role,available_before_kickoff,minutes_before_kickoff,
+        closing_home,closing_draw,closing_away,closing_captured_at
+      from odds_snapshots where prediction_id=ps.prediction_id
+      union all
+      select home,draw,away,captured_at,odds_role,available_before_kickoff,minutes_before_kickoff,
+        closing_home,closing_draw,closing_away,closing_captured_at
+      from historical_odds_snapshots
+      where match_id=ps.match_id and available_before_kickoff=true and captured_at<=ps.generated_at
+    ) candidate order by candidate.captured_at desc nulls last limit 1
+  ) os on true
   where ps.generated_at <= coalesce(m.kickoff_at, ps.generated_at) order by ps.generated_at limit $1
 `, [limit]);
 const clamp = (value) => Math.max(1e-9, Math.min(1 - 1e-9, Number(value || 0)));

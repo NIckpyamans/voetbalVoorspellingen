@@ -1,6 +1,6 @@
 import React from 'react';
 
-type View = 'dashboard' | 'history' | 'standings' | 'modelops' | 'settings';
+type View = 'dashboard' | 'history' | 'standings' | 'modelops' | 'integrity' | 'settings';
 
 interface HeaderProps {
   view?: View;
@@ -41,6 +41,7 @@ const Header: React.FC<HeaderProps> = ({ view, currentView, onViewChange }) => {
             { key: 'standings',  label: 'Standen',   icon: 'fa-table'       },
             { key: 'history',    label: 'Geschiedenis', icon: 'fa-history'  },
             { key: 'modelops',   label: 'Model Ops', icon: 'fa-chart-line'  },
+            { key: 'integrity',  label: 'Integriteit', icon: 'fa-shield-alt' },
           ] as const).map(({ key, label, icon }) => (
             <button key={key}
               onClick={() => onViewChange(key)}

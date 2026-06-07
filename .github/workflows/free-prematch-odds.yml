@@ -1,12 +1,12 @@
-name: Prediction evaluation
+name: Free timestamped prematch odds
 
 on:
   schedule:
-    - cron: "47 3 * * *"
+    - cron: "13,43 * * * *"
   workflow_dispatch:
 
 jobs:
-  evaluate:
+  capture:
     runs-on: ubuntu-latest
     timeout-minutes: 20
     steps:
@@ -20,8 +20,7 @@ jobs:
         env:
           DATABASE_URL: ${{ secrets.DATABASE_URL }}
           POSTGRES_URL: ${{ secrets.POSTGRES_URL }}
-      - run: node scripts/evaluate-prediction-snapshots.js
+      - run: npm run db:odds:leakage
         env:
           DATABASE_URL: ${{ secrets.DATABASE_URL }}
           POSTGRES_URL: ${{ secrets.POSTGRES_URL }}
-          PREDICTION_EVALUATION_LIMIT: 5000

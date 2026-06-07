@@ -317,75 +317,33 @@ async function rebuildSeasonMemberships(sql) {
 }
 
 async function rebuildH2HEdges(sql) {
-  await sql.query("delete from h2h_edges");
   const rows = await sql.query(
     `
-      select
-        least(home_club_id, away_club_id) as club_a,
-        greatest(home_club_id, away_club_id) as club_b,
-        competition_id,
-        jsonb_agg(
-          jsonb_build_object(
-            'matchId', m.match_id,
-            'date', m.date_key,
-            'homeClubId', m.home_club_id,
-            'awayClubId', m.away_club_id,
-            'homeTeam', m.home_team_name,
-            'awayTeam', m.away_team_name,
-            'homeGoals', mr.final_home_goals,
-            'awayGoals', mr.final_away_goals,
-            'outcome', mr.actual_outcome
-          )
-          order by m.date_key
-        ) as results,
-        count(*)::int as played,
-        sum(case when mr.actual_outcome = 'H' then 1 else 0 end)::int as home_wins_raw,
-        sum(case when mr.actual_outcome = 'D' then 1 else 0 end)::int as draws,
-        sum(case when mr.actual_outcome = 'A' then 1 else 0 end)::int as away_wins_raw
-      from matches m
-      join match_results mr on mr.match_id = m.match_id
-      where m.home_club_id is not null
-        and m.away_club_id is not null
-        and m.competition_id is not null
-        and m.identity_status = 'resolved'
-      group by least(home_club_id, away_club_id), greatest(home_club_id, away_club_id), competition_id
-      having count(*) >= 1
+      with aggregated as (
+        select least(home_club_id,away_club_id) club_a,greatest(home_club_id,away_club_id) club_b,m.competition_id,
+          jsonb_agg(jsonb_build_object('matchId',m.match_id,'date',m.date_key,'homeClubId',m.home_club_id,'awayClubId',m.away_club_id,
+            'homeTeam',m.home_team_name,'awayTeam',m.away_team_name,'homeGoals',mr.final_home_goals,'awayGoals',mr.final_away_goals,'outcome',mr.actual_outcome)
+            order by m.date_key) results,
+          count(1)::int played,sum((mr.actual_outcome='H')::int)::int home_wins,sum((mr.actual_outcome='D')::int)::int draws,
+          sum((mr.actual_outcome='A')::int)::int away_wins
+        from matches m join match_results mr on mr.match_id=m.match_id
+        where m.identity_status='resolved' and m.home_club_id is not null and m.away_club_id is not null and m.competition_id is not null
+        group by least(home_club_id,away_club_id),greatest(home_club_id,away_club_id),m.competition_id
+      ), upserted as (
+        insert into h2h_edges(h2h_edge_id,home_club_id,away_club_id,competition_id,played,home_wins,draws,away_wins,weighted_recent_balance,results)
+        select 'h2h_'||substr(md5(club_a||'|'||club_b||'|'||competition_id),1,20),club_a,club_b,competition_id,played,home_wins,draws,away_wins,
+          round((home_wins-away_wins)::numeric/greatest(played,1),3),results from aggregated
+        on conflict(home_club_id,away_club_id,competition_id) do update set played=excluded.played,home_wins=excluded.home_wins,
+          draws=excluded.draws,away_wins=excluded.away_wins,weighted_recent_balance=excluded.weighted_recent_balance,results=excluded.results,updated_at=now()
+        returning 1
+      ), removed as (
+        delete from h2h_edges h where not exists(select 1 from aggregated a where a.club_a=h.home_club_id and a.club_b=h.away_club_id and a.competition_id=h.competition_id)
+        returning 1
+      )
+      select (select count(1)::int from upserted) edges,(select count(1)::int from removed) removed
     `
   );
-  let edges = 0;
-  for (const row of rows) {
-    await sql.query(
-      `
-        insert into h2h_edges (
-          h2h_edge_id, home_club_id, away_club_id, competition_id, played,
-          home_wins, draws, away_wins, weighted_recent_balance, results
-        )
-        values ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10::jsonb)
-        on conflict (home_club_id, away_club_id, competition_id) do update set
-          played = excluded.played,
-          home_wins = excluded.home_wins,
-          draws = excluded.draws,
-          away_wins = excluded.away_wins,
-          weighted_recent_balance = excluded.weighted_recent_balance,
-          results = excluded.results,
-          updated_at = now()
-      `,
-      [
-        `h2h_${digest(`${row.club_a}|${row.club_b}|${row.competition_id}`)}`,
-        row.club_a,
-        row.club_b,
-        row.competition_id,
-        row.played,
-        row.home_wins_raw,
-        row.draws,
-        row.away_wins_raw,
-        Number(((Number(row.home_wins_raw || 0) - Number(row.away_wins_raw || 0)) / Math.max(Number(row.played || 1), 1)).toFixed(3)),
-        JSON.stringify(row.results || []),
-      ]
-    );
-    edges += 1;
-  }
-  return { edges };
+  return rows[0] || { edges: 0, removed: 0 };
 }
 
 async function main() {

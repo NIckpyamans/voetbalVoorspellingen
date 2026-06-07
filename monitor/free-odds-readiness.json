@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-06-06T19:05:29.078Z",
+  "generatedAt": "2026-06-07T09:40:06.147Z",
   "policy": {
     "liveRoiRequiresTimestampedPrematchOdds": true,
     "clvRequiresSeparateClosingTimestamp": true,
@@ -13,11 +13,12 @@
       "url": "https://www.football-data.co.uk/data.php",
       "cost": "free",
       "access": "anonymous-download",
-      "role": "historical-results-bookmaker-odds-closing-proxy",
+      "role": "historical-closing-proxy-and-scheduled-prematch-capture",
       "supportsHistoricalRoiBacktest": true,
-      "supportsLiveRoi": false,
+      "supportsLiveRoi": true,
       "supportsLiveClv": false,
-      "integrated": true
+      "integrated": true,
+      "note": "Aankomende odds worden iedere 6 uur opgehaald; onze fetch-tijd is de controleerbare prematch-timestamp."
     },
     {
       "key": "betfair-historical-basic",
@@ -39,7 +40,8 @@
     "bookmakers": 4,
     "complete_1x2": 19571,
     "closing_proxy_rows": 19571,
-    "timestamped_clv_pairs": 0
+    "timestamped_clv_pairs": 0,
+    "safe_timestamped_prematch": 0
   },
   "providers": [
     {
@@ -70,7 +72,7 @@
   "readiness": {
     "historicalRoiBacktest": "ready",
     "historicalCalibration": "ready_with_closing_proxy",
-    "liveRoi": "blocked_without_timestamped_prematch_odds",
+    "liveRoi": "waiting_for_upcoming_timestamped_prematch_odds",
     "liveClv": "blocked_without_separate_closing_timestamp"
   }
 }

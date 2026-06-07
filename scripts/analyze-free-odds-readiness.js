@@ -23,7 +23,10 @@ const [coverage] = await sql.query(`
     )::int as closing_proxy_rows,
     count(*) filter (
       where captured_at is not null and closing_captured_at is not null and closing_captured_at > captured_at
-    )::int as timestamped_clv_pairs
+    )::int as timestamped_clv_pairs,
+    count(*) filter (
+      where odds_role = 'prematch' and available_before_kickoff = true and minutes_before_kickoff > 0
+    )::int as safe_timestamped_prematch
   from historical_odds_snapshots
 `);
 const providers = await sql.query(`
@@ -43,7 +46,7 @@ const report = {
   readiness: {
     historicalRoiBacktest: Number(coverage?.complete_1x2 || 0) > 0 ? "ready" : "missing_historical_odds",
     historicalCalibration: Number(coverage?.closing_proxy_rows || 0) > 0 ? "ready_with_closing_proxy" : "missing_closing_proxy",
-    liveRoi: "blocked_without_timestamped_prematch_odds",
+    liveRoi: Number(coverage?.safe_timestamped_prematch || 0) > 0 ? "ready" : "waiting_for_upcoming_timestamped_prematch_odds",
     liveClv: timestampedClvPairs > 0 ? "ready" : "blocked_without_separate_closing_timestamp",
   },
 };
