@@ -41,6 +41,11 @@ jobs:
         env:
           DATABASE_URL: ${{ secrets.DATABASE_URL }}
           POSTGRES_URL: ${{ secrets.POSTGRES_URL }}
+      - name: Detect field-level source conflicts
+        run: npm run db:sources:conflicts
+        env:
+          DATABASE_URL: ${{ secrets.DATABASE_URL }}
+          POSTGRES_URL: ${{ secrets.POSTGRES_URL }}
       - name: Audit every prediction source field
         run: npm run db:sources:audit
         env:
@@ -58,6 +63,11 @@ jobs:
           POSTGRES_URL: ${{ secrets.POSTGRES_URL }}
       - name: Rebuild H2H using set-based SQL
         run: npm run db:h2h:rebuild
+        env:
+          DATABASE_URL: ${{ secrets.DATABASE_URL }}
+          POSTGRES_URL: ${{ secrets.POSTGRES_URL }}
+      - name: Capture integrity trends and partition readiness
+        run: npm run db:integrity:snapshot && npm run db:partition:assess
         env:
           DATABASE_URL: ${{ secrets.DATABASE_URL }}
           POSTGRES_URL: ${{ secrets.POSTGRES_URL }}

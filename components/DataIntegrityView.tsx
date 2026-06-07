@@ -2,6 +2,11 @@ import React, { useEffect, useState } from "react";
 
 const pct = (value: unknown) => `${Math.round(Number(value || 0) * 100)}%`;
 const number = (value: unknown) => Number(value || 0).toLocaleString("nl-NL");
+const trendGroups = (rows: any[]) => Object.values((rows || []).reduce((groups: Record<string, any>, row: any) => {
+  if (!groups[row.metric_key]) groups[row.metric_key] = { key: row.metric_key, rows: [] };
+  groups[row.metric_key].rows.push(row);
+  return groups;
+}, {})) as Array<{ key: string; rows: any[] }>;
 
 const DataIntegrityView: React.FC = () => {
   const [data, setData] = useState<any>(null);
@@ -25,6 +30,7 @@ const DataIntegrityView: React.FC = () => {
   if (!data) return <div className="h-72 animate-pulse rounded-3xl border border-cyan-500/10 bg-slate-950/40" />;
 
   const summary = data.summary || {};
+  const trendItems = trendGroups(data.trends);
   const cards = [
     ["Opgeloste identiteit", `${number(summary.resolved_matches)} / ${number(summary.matches)}`, "text-emerald-300"],
     ["Quarantaine", number(summary.quarantined_matches), "text-amber-300"],
@@ -120,6 +126,52 @@ const DataIntegrityView: React.FC = () => {
           </div>
         </section>
       </div>
+
+      <section className="glass-card rounded-3xl border border-emerald-500/15 p-5">
+        <h3 className="text-sm font-black uppercase text-emerald-200">Historische trends</h3>
+        <p className="mt-1 text-[10px] text-slate-500">Dagelijkse ontwikkeling van datakwaliteit, oddsdekking en modelkwaliteit.</p>
+        <div className="mt-4 grid gap-3 md:grid-cols-2 xl:grid-cols-3">
+          {trendItems.map((trend) => {
+            const values = trend.rows.map((row) => Number(row.metric_value || 0));
+            const maximum = Math.max(...values, 1);
+            const latest = values.at(-1) || 0;
+            return (
+              <div key={trend.key} className="rounded-2xl border border-white/5 bg-slate-950/35 p-3">
+                <div className="flex items-center justify-between gap-2">
+                  <div className="truncate text-[9px] font-black uppercase text-slate-400">{trend.key.replaceAll("_", " ")}</div>
+                  <div className="text-sm font-black text-emerald-300">{Number(latest.toFixed(4)).toLocaleString("nl-NL")}</div>
+                </div>
+                <div className="mt-3 flex h-12 items-end gap-1">
+                  {values.map((value, index) => (
+                    <div key={index} className="min-w-1 flex-1 rounded-t bg-emerald-400/60" style={{ height: `${Math.max(5, (value / maximum) * 100)}%` }} />
+                  ))}
+                </div>
+              </div>
+            );
+          })}
+        </div>
+      </section>
+
+      <section className="glass-card rounded-3xl border border-violet-500/15 p-5">
+        <h3 className="text-sm font-black uppercase text-violet-200">Partitioneringsreadiness</h3>
+        <div className="mt-4 grid gap-2 md:grid-cols-2 xl:grid-cols-3">
+          {(data.partitions || []).map((item: any) => {
+            const ratio = Math.min(1, Number(item.current_rows || 0) / Math.max(Number(item.activate_after_rows || 1), 1));
+            return (
+              <div key={item.table_name} className="rounded-2xl border border-white/5 bg-slate-950/35 p-3">
+                <div className="flex justify-between gap-2">
+                  <div className="truncate text-[10px] font-black text-white">{item.table_name}</div>
+                  <span className="text-[8px] font-black text-violet-300">{item.migration_status}</span>
+                </div>
+                <div className="mt-2 h-1.5 overflow-hidden rounded-full bg-slate-900">
+                  <div className="h-full rounded-full bg-violet-400" style={{ width: `${Math.max(1, ratio * 100)}%` }} />
+                </div>
+                <div className="mt-2 text-[8px] text-slate-500">{number(item.current_rows)} / {number(item.activate_after_rows)} · {item.recommended_interval}</div>
+              </div>
+            );
+          })}
+        </div>
+      </section>
     </div>
   );
 };

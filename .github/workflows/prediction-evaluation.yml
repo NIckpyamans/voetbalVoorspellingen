@@ -25,3 +25,7 @@ jobs:
           DATABASE_URL: ${{ secrets.DATABASE_URL }}
           POSTGRES_URL: ${{ secrets.POSTGRES_URL }}
           PREDICTION_EVALUATION_LIMIT: 5000
+      - run: npm run db:roi-clv:analyze && npm run db:integrity:snapshot
+        env:
+          DATABASE_URL: ${{ secrets.DATABASE_URL }}
+          POSTGRES_URL: ${{ secrets.POSTGRES_URL }}

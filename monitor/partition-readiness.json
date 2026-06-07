@@ -1,0 +1,59 @@
+{
+  "generatedAt": "2026-06-07T14:55:49.422Z",
+  "tables": [
+    {
+      "table": "matches",
+      "rows": 12122,
+      "threshold": 5000000,
+      "status": "planned",
+      "ratioToThreshold": 0.002424,
+      "requiresDowntime": false,
+      "method": "shadow_table_dual_write_backfill_swap"
+    },
+    {
+      "table": "historical_odds_snapshots",
+      "rows": 19571,
+      "threshold": 10000000,
+      "status": "planned",
+      "ratioToThreshold": 0.001957,
+      "requiresDowntime": false,
+      "method": "shadow_table_dual_write_backfill_swap"
+    },
+    {
+      "table": "odds_snapshots",
+      "rows": 0,
+      "threshold": 5000000,
+      "status": "planned",
+      "ratioToThreshold": 0,
+      "requiresDowntime": false,
+      "method": "shadow_table_dual_write_backfill_swap"
+    },
+    {
+      "table": "prediction_snapshots",
+      "rows": 76,
+      "threshold": 5000000,
+      "status": "planned",
+      "ratioToThreshold": 0.000015,
+      "requiresDowntime": false,
+      "method": "shadow_table_dual_write_backfill_swap"
+    },
+    {
+      "table": "source_audit",
+      "rows": 871,
+      "threshold": 10000000,
+      "status": "planned",
+      "ratioToThreshold": 0.000087,
+      "requiresDowntime": false,
+      "method": "shadow_table_dual_write_backfill_swap"
+    },
+    {
+      "table": "integrity_metric_snapshots",
+      "rows": 25,
+      "threshold": 1000000,
+      "status": "planned",
+      "ratioToThreshold": 0.000025,
+      "requiresDowntime": false,
+      "method": "shadow_table_dual_write_backfill_swap"
+    }
+  ]
+}

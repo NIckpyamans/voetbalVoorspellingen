@@ -39,6 +39,7 @@
     "db:matches:resolve": "node scripts/resolve-quarantined-matches.js",
     "db:matches:lineage": "node scripts/backfill-match-source-lineage.js",
     "db:sources:trust": "node scripts/score-source-trust.js",
+    "db:sources:conflicts": "node scripts/assess-field-source-conflicts.js",
     "db:sources:audit": "node scripts/audit-prediction-sources.js",
     "db:odds:leakage": "node scripts/enforce-odds-leakage-rules.js",
     "db:odds:prematch:collect": "node scripts/collect-free-prematch-odds.js",
@@ -46,6 +47,9 @@
     "odds:free:analyze": "node scripts/analyze-free-odds-readiness.js",
     "db:seasons:reset": "node scripts/reset-competition-seasons.js",
     "db:h2h:rebuild": "node scripts/rebuild-h2h-edges.js",
+    "db:integrity:snapshot": "node scripts/capture-integrity-metrics.js",
+    "db:roi-clv:analyze": "node scripts/analyze-roi-clv-coverage.js",
+    "db:partition:assess": "node scripts/assess-partition-readiness.js",
     "db:sync-json": "node scripts/sync-json-to-database.js",
     "db:verify": "node scripts/verify-database-state.js"
   },

@@ -129,6 +129,18 @@ create table if not exists provider_trust_profiles (
   updated_at timestamptz not null default now()
 );
 
+create table if not exists provider_trust_history (
+  provider_trust_history_id bigserial primary key,
+  provider text not null,
+  captured_at timestamptz not null default now(),
+  effective_trust_score numeric not null,
+  result_accuracy numeric,
+  settled_records integer not null default 0,
+  conflict_rate numeric,
+  timestamp_coverage numeric,
+  metrics jsonb not null default '{}'::jsonb
+);
+
 create table if not exists source_conflicts (
   source_conflict_id text primary key,
   entity_type text not null,
@@ -143,6 +155,27 @@ create table if not exists source_conflicts (
   resolved_at timestamptz,
   updated_at timestamptz not null default now(),
   unique (entity_type, entity_key, field_name)
+);
+
+create table if not exists integrity_metric_snapshots (
+  integrity_metric_snapshot_id bigserial primary key,
+  captured_at timestamptz not null default now(),
+  metric_key text not null,
+  metric_value numeric not null,
+  dimension_key text not null default 'global',
+  metadata jsonb not null default '{}'::jsonb
+);
+
+create table if not exists partition_migration_registry (
+  table_name text primary key,
+  partition_column text not null,
+  partition_strategy text not null,
+  recommended_interval text not null,
+  current_rows bigint not null default 0,
+  activate_after_rows bigint not null,
+  migration_status text not null default 'planned',
+  readiness jsonb not null default '{}'::jsonb,
+  assessed_at timestamptz not null default now()
 );
 
 create table if not exists matches (
@@ -626,6 +659,25 @@ create table if not exists source_audit (
   note text
 );
 
+create or replace function audit_prediction_snapshot_insert()
+returns trigger language plpgsql as $$
+begin
+  insert into source_audit(prediction_id,field_name,available,source,as_of,source_timestamp_known,note)
+  values
+    (new.prediction_id,'prediction_payload',new.prediction_payload <> '{}'::jsonb,'prediction-engine',new.generated_at,true,'automatic-trigger-v1'),
+    (new.prediction_id,'features',new.features <> '{}'::jsonb,'prediction-engine',new.generated_at,true,'automatic-trigger-v1'),
+    (new.prediction_id,'probabilities',new.probabilities <> '{}'::jsonb,'prediction-engine',new.generated_at,true,'automatic-trigger-v1'),
+    (new.prediction_id,'data_completeness',new.data_completeness <> '{}'::jsonb,'prediction-engine',new.generated_at,true,'automatic-trigger-v1'),
+    (new.prediction_id,'source_metadata',new.feature_source_metadata <> '{}'::jsonb,'prediction-engine',new.generated_at,true,'automatic-trigger-v1');
+  return new;
+end;
+$$;
+
+drop trigger if exists prediction_snapshot_source_audit on prediction_snapshots;
+create trigger prediction_snapshot_source_audit
+after insert on prediction_snapshots
+for each row execute function audit_prediction_snapshot_insert();
+
 create index if not exists idx_matches_kickoff on matches(kickoff_at);
 create index if not exists idx_matches_date_key on matches(date_key);
 create index if not exists idx_matches_competition_season on matches(competition_id, season_id);
@@ -647,6 +699,8 @@ create index if not exists idx_coverage_repair_requests_status on coverage_repai
 create index if not exists idx_venues_country_city on venues(country_id, city);
 create index if not exists idx_source_records_entity on source_records(entity_type, entity_key, fetched_at desc);
 create index if not exists idx_source_conflicts_status on source_conflicts(status, detected_at desc);
+create index if not exists idx_provider_trust_history_provider_date on provider_trust_history(provider, captured_at desc);
+create index if not exists idx_integrity_metric_snapshots_key_date on integrity_metric_snapshots(metric_key, dimension_key, captured_at desc);
 create index if not exists idx_standings_snapshots_season on standings_snapshots(season_id, captured_at desc);
 create index if not exists idx_team_season_stats_season_club on team_season_stats(season_id, club_id);
 create index if not exists idx_team_match_stats_match on team_match_stats(match_id);

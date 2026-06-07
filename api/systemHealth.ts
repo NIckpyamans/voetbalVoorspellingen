@@ -222,7 +222,7 @@ export async function sendSystemHealth(_req: any, res: any, mode = "health") {
     if (String(_req?.query?.detail || "") === "integrity") {
       const sql = getSql();
       if (!sql) return res.status(503).json({ ok: false, error: "database_not_configured" });
-      const [summaryRows, quarantine, providers, conflicts, auditCoverage] = await Promise.all([
+      const [summaryRows, quarantine, providers, conflicts, auditCoverage, trends, partitions] = await Promise.all([
         sql.query(`select count(1)::int matches,count(1) filter(where identity_status='resolved')::int resolved_matches,
           count(1) filter(where identity_status='quarantined')::int quarantined_matches,
           (select count(1)::int from source_conflicts) conflicts,(select count(1)::int from source_audit) audit_rows,
@@ -241,10 +241,16 @@ export async function sendSystemHealth(_req: any, res: any, mode = "health") {
         sql.query(`select field_name,count(1)::int rows,count(1) filter(where available)::int available,
           round(count(1) filter(where available)::numeric/greatest(count(1),1),3) coverage
           from source_audit group by field_name order by field_name`),
+        sql.query(`select metric_key,metric_value,captured_at from (
+          select metric_key,metric_value,captured_at,row_number() over(partition by metric_key order by captured_at desc) rank
+          from integrity_metric_snapshots where dimension_key='global'
+        ) metrics where rank<=30 order by metric_key,captured_at`),
+        sql.query(`select table_name,partition_column,recommended_interval,current_rows,activate_after_rows,migration_status,readiness,assessed_at
+          from partition_migration_registry order by current_rows desc`),
       ]);
       setCorsHeaders(_req, res);
       res.setHeader("Cache-Control", "s-maxage=60, stale-while-revalidate=120");
-      return res.status(200).json({ ok: true, generatedAt: new Date().toISOString(), summary: summaryRows[0] || {}, quarantine, providers, conflicts, auditCoverage });
+      return res.status(200).json({ ok: true, generatedAt: new Date().toISOString(), summary: summaryRows[0] || {}, quarantine, providers, conflicts, auditCoverage, trends, partitions });
     }
     const payload = await buildSystemHealth(mode);
     setCorsHeaders(_req, res);

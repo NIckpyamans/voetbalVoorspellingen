@@ -41,6 +41,38 @@ for (const row of profiles.filter((item) => String(item.provider).includes("+"))
   );
 }
 await sql.query(`
+  with accuracy as (
+    select msr.provider,count(1)::int settled_records,
+      avg((
+        case
+          when jsonb_typeof(sr.payload->'score') = 'object'
+            and jsonb_typeof(sr.payload#>'{score,ft}') = 'array'
+          then (sr.payload#>>'{score,ft,0}') || '-' || (sr.payload#>>'{score,ft,1}')
+          else regexp_replace(coalesce(sr.payload->>'score',sr.payload->>'finalScore',''),'\\s','','g')
+        end
+        = mr.final_home_goals::text||'-'||mr.final_away_goals::text
+      )::int)::numeric result_accuracy
+    from match_source_records msr join source_records sr on sr.source_record_id=msr.source_record_id
+    join match_results mr on mr.match_id=msr.match_id
+    where nullif(
+      case
+        when jsonb_typeof(sr.payload->'score') = 'object'
+          and jsonb_typeof(sr.payload#>'{score,ft}') = 'array'
+        then (sr.payload#>>'{score,ft,0}') || '-' || (sr.payload#>>'{score,ft,1}')
+        else regexp_replace(coalesce(sr.payload->>'score',sr.payload->>'finalScore',''),'\\s','','g')
+      end,
+      ''
+    ) is not null
+    group by msr.provider
+  )
+  update provider_trust_profiles p set
+    resolution_win_rate=a.result_accuracy,
+    effective_trust_score=least(0.99,greatest(0.1,p.effective_trust_score*0.65+a.result_accuracy*0.35)),
+    metrics=p.metrics||jsonb_build_object('resultAccuracy',a.result_accuracy,'settledRecords',a.settled_records,'scoringMethod','outcome_weighted_v2'),
+    updated_at=now()
+  from accuracy a where a.provider=p.provider
+`);
+await sql.query(`
   update match_source_records msr set trust_score=p.effective_trust_score,updated_at=now()
   from provider_trust_profiles p where p.provider=msr.provider
 `);
