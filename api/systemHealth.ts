@@ -275,14 +275,19 @@ export async function sendSystemHealth(_req: any, res: any, mode = "health") {
           where metric_key in ('roi_clv_minimum_sample','roi_clv_roi_ready','roi_clv_clv_ready','roi_clv_safe_prematch_odds','roi_clv_closing_pairs')
           order by captured_at desc limit 10`),
         sql.query(`select pft.provider,pft.field_name,pft.effective_trust_score,pft.raw_accuracy,pft.bayesian_accuracy,pft.wilson_lower_bound,pft.samples,pft.updated_at,
-          coalesce(pfc.status,'active') control_status,pfc.reason,pfc.consecutive_low_scores
+          coalesce(pfc.status,'active') control_status,pfc.reason,pfc.consecutive_low_scores,pfc.trial_runs,pfc.trial_started_at,
+          case when pfc.status='trial' then greatest(0,2-pfc.trial_runs) else null end remaining_trial_runs
           from provider_field_trust_profiles pft left join provider_field_controls pfc on pfc.provider=pft.provider and pfc.field_name=pft.field_name
           order by (coalesce(pfc.status,'active')='disabled') desc,pft.field_name,pft.samples desc limit 200`),
         sql.query(`select alert_id,alert_type,dimension_key,severity,status,current_value,previous_value,delta,threshold,message,detected_at
           from quality_alerts where status='open' order by detected_at desc limit 20`),
         sql.query(`select club_merge_audit_id,canonical_club_id,merged_club_ids,reference_counts,merge_reason,merge_status,merged_at,rollback_status,rolled_back_at
           from club_merge_audit order by merged_at desc limit 20`),
-        sql.query(`select calibration_profile_id,competition_id,sample_size,brier_score,probability_shrinkage,profile,generated_at from calibration_profiles where phase_bucket='competition_recalibration_candidate' order by generated_at desc`),
+        sql.query(`select cp.calibration_profile_id,cp.competition_id,cp.sample_size,cp.brier_score,cp.probability_shrinkage,cp.profile,cp.generated_at,
+          count(se.shadow_evaluation_id)::int shadow_samples,avg(se.current_brier) shadow_current_brier,avg(se.shadow_brier) shadow_candidate_brier,
+          avg(se.current_outcome_hit::int) shadow_current_hit_rate,avg(se.shadow_outcome_hit::int) shadow_candidate_hit_rate
+          from calibration_profiles cp left join shadow_prediction_evaluations se on se.calibration_profile_id=cp.calibration_profile_id
+          where cp.phase_bucket='competition_recalibration_candidate' group by cp.calibration_profile_id order by cp.generated_at desc`),
         sql.query(`select provider,competition_id,field_name,effective_trust_score,samples from provider_competition_field_trust order by samples desc limit 100`),
       ]);
       setCorsHeaders(_req, res);

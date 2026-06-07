@@ -635,6 +635,34 @@ create table if not exists calibration_profiles (
   generated_at timestamptz not null default now()
 );
 
+create table if not exists shadow_prediction_evaluations (
+  shadow_evaluation_id text primary key,
+  calibration_profile_id text not null references calibration_profiles(calibration_profile_id),
+  prediction_id text not null references prediction_snapshots(prediction_id),
+  match_id text not null references matches(match_id),
+  competition_id text references competitions(competition_id),
+  current_brier numeric not null,
+  shadow_brier numeric not null,
+  current_outcome_hit boolean not null,
+  shadow_outcome_hit boolean not null,
+  shadow_probabilities jsonb not null default '{}'::jsonb,
+  evaluated_at timestamptz not null default now(),
+  unique(calibration_profile_id, prediction_id)
+);
+
+create table if not exists encrypted_database_backups (
+  backup_id text primary key,
+  backup_type text not null,
+  algorithm text not null,
+  key_reference text not null,
+  iv text not null,
+  auth_tag text not null,
+  ciphertext text not null,
+  record_count integer not null default 0,
+  metadata jsonb not null default '{}'::jsonb,
+  created_at timestamptz not null default now()
+);
+
 create table if not exists coverage_repair_requests (
   request_id text primary key,
   competition_id text references competitions(competition_id),
@@ -818,4 +846,6 @@ create index if not exists idx_odds_snapshots_prematch on odds_snapshots(predict
 create index if not exists idx_historical_odds_match on historical_odds_snapshots(match_id);
 create index if not exists idx_historical_odds_prematch on historical_odds_snapshots(match_id, captured_at desc) where available_before_kickoff = true and odds_role = 'prematch';
 create index if not exists idx_calibration_profiles_model_competition on calibration_profiles(model_version_id, competition_id);
+create index if not exists idx_shadow_prediction_competition_date on shadow_prediction_evaluations(competition_id, evaluated_at desc);
+create index if not exists idx_encrypted_database_backups_type_date on encrypted_database_backups(backup_type, created_at desc);
 create index if not exists idx_source_audit_prediction_field on source_audit(prediction_id, field_name);

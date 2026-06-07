@@ -36,8 +36,8 @@ jobs:
         env:
           DATABASE_URL: ${{ secrets.DATABASE_URL }}
           POSTGRES_URL: ${{ secrets.POSTGRES_URL }}
-      - name: Score providers and resolve source conflicts
-        run: npm run db:sources:trust && npm run db:sources:circuit-breaker && npm run db:models:recalibrate
+      - name: Score providers, run trials and evaluate shadow calibrations
+        run: npm run db:sources:trust && npm run db:sources:circuit-breaker && npm run db:models:recalibrate && npm run db:models:shadow:evaluate && npm run db:models:samples:monitor
         env:
           DATABASE_URL: ${{ secrets.DATABASE_URL }}
           POSTGRES_URL: ${{ secrets.POSTGRES_URL }}
@@ -46,11 +46,12 @@ jobs:
         env:
           DATABASE_URL: ${{ secrets.DATABASE_URL }}
           POSTGRES_URL: ${{ secrets.POSTGRES_URL }}
-      - name: Merge confirmed canonical club aliases
-        run: npm run db:clubs:merge && npm run db:clubs:merge:export
+      - name: Merge confirmed canonical club aliases and create encrypted recovery backup
+        run: npm run db:clubs:merge && npm run db:clubs:merge:backup:encrypted
         env:
           DATABASE_URL: ${{ secrets.DATABASE_URL }}
           POSTGRES_URL: ${{ secrets.POSTGRES_URL }}
+          CLUB_MERGE_BACKUP_KEY: ${{ secrets.CLUB_MERGE_BACKUP_KEY }}
       - name: Repair trusted field-level source conflicts
         run: npm run db:sources:conflicts:repair
         env:
