@@ -9,7 +9,7 @@ const DataIntegrityView: React.FC = () => {
 
   useEffect(() => {
     const controller = new AbortController();
-    fetch("/api/data-integrity", { cache: "no-store", signal: controller.signal })
+    fetch("/api/system-check?detail=integrity", { cache: "no-store", signal: controller.signal })
       .then(async (response) => {
         const payload = await response.json().catch(() => ({}));
         if (!response.ok || payload.ok === false) throw new Error(payload.error || "Integriteitsdata ophalen mislukt");
