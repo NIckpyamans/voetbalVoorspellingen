@@ -233,7 +233,7 @@ export async function sendSystemHealth(_req: any, res: any, mode = "health") {
     if (String(_req?.query?.detail || "") === "integrity") {
       const sql = getSql();
       if (!sql) return res.status(503).json({ ok: false, error: "database_not_configured" });
-      const [summaryRows, quarantine, providers, conflicts, auditCoverage, trends, partitions, modelQualityTrends, repairSummary, roiClvReadiness, fieldTrust, qualityAlerts] = await Promise.all([
+      const [summaryRows, quarantine, providers, conflicts, auditCoverage, trends, partitions, modelQualityTrends, repairSummary, roiClvReadiness, fieldTrust, qualityAlerts, clubMergeAudits] = await Promise.all([
         sql.query(`select count(1)::int matches,count(1) filter(where identity_status='resolved')::int resolved_matches,
           count(1) filter(where identity_status='quarantined')::int quarantined_matches,
           (select count(1)::int from source_conflicts) conflicts,(select count(1)::int from source_audit) audit_rows,
@@ -270,13 +270,15 @@ export async function sendSystemHealth(_req: any, res: any, mode = "health") {
         sql.query(`select pft.provider,pft.field_name,pft.effective_trust_score,pft.raw_accuracy,pft.bayesian_accuracy,pft.wilson_lower_bound,pft.samples,pft.updated_at,
           coalesce(pfc.status,'active') control_status,pfc.reason,pfc.consecutive_low_scores
           from provider_field_trust_profiles pft left join provider_field_controls pfc on pfc.provider=pft.provider and pfc.field_name=pft.field_name
-          order by pft.field_name,pft.samples desc limit 100`),
+          order by (coalesce(pfc.status,'active')='disabled') desc,pft.field_name,pft.samples desc limit 200`),
         sql.query(`select alert_id,alert_type,dimension_key,severity,status,current_value,previous_value,delta,threshold,message,detected_at
           from quality_alerts where status='open' order by detected_at desc limit 20`),
+        sql.query(`select club_merge_audit_id,canonical_club_id,merged_club_ids,reference_counts,merge_reason,merge_status,merged_at,rollback_status,rolled_back_at
+          from club_merge_audit order by merged_at desc limit 20`),
       ]);
       setCorsHeaders(_req, res);
       res.setHeader("Cache-Control", "s-maxage=60, stale-while-revalidate=120");
-      return res.status(200).json({ ok: true, generatedAt: new Date().toISOString(), summary: summaryRows[0] || {}, quarantine, providers, conflicts, auditCoverage, trends, partitions, modelQualityTrends, repairSummary, roiClvReadiness, fieldTrust, qualityAlerts, modelQualityMinimumSample: 20 });
+      return res.status(200).json({ ok: true, generatedAt: new Date().toISOString(), summary: summaryRows[0] || {}, quarantine, providers, conflicts, auditCoverage, trends, partitions, modelQualityTrends, repairSummary, roiClvReadiness, fieldTrust, qualityAlerts, clubMergeAudits, modelQualityMinimumSample: 20 });
     }
     const payload = await buildSystemHealth(mode);
     setCorsHeaders(_req, res);

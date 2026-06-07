@@ -205,6 +205,9 @@ const DataIntegrityView: React.FC = () => {
             <div className="rounded-2xl border border-cyan-500/10 bg-cyan-500/5 p-3 text-[9px] text-cyan-200">
               Automatische repairs: {number((data.repairSummary || []).find((row: any) => row.repair_status === "applied" && row.rollback_status === "not_rolled_back")?.rows || 0)}
             </div>
+            <div className="rounded-2xl border border-violet-500/10 bg-violet-500/5 p-3 text-[9px] text-violet-200">
+              Permanente clubmerge-audits: {number((data.clubMergeAudits || []).length)}
+            </div>
           </div>
         </section>
       </div>
