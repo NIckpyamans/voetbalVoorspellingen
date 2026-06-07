@@ -230,10 +230,17 @@ export async function sendSystemHealth(_req: any, res: any, mode = "health") {
       setCorsHeaders(_req, res, { methods: "GET, POST, OPTIONS" });
       return res.status(updated.length ? 200 : 404).json({ ok: Boolean(updated.length), alert: updated[0] || null });
     }
+    if (String(_req?.query?.detail || "") === "provider-control" && _req.method === "POST") {
+      const sql=getSql(); if(!sql) return res.status(503).json({ok:false,error:"database_not_configured"});
+      const body=typeof _req.body==="string"?JSON.parse(_req.body||"{}"):_req.body||{};
+      if(!body.provider||!body.fieldName||body.action!=="start_trial") return res.status(400).json({ok:false,error:"invalid_provider_action"});
+      const rows=await sql.query(`update provider_field_controls set status='trial',trial_started_at=now(),trial_runs=0,reason='manual_trial_reactivation',updated_at=now() where provider=$1 and field_name=$2 and status='disabled' returning *`,[String(body.provider),String(body.fieldName)]);
+      return res.status(rows.length?200:404).json({ok:Boolean(rows.length),control:rows[0]||null});
+    }
     if (String(_req?.query?.detail || "") === "integrity") {
       const sql = getSql();
       if (!sql) return res.status(503).json({ ok: false, error: "database_not_configured" });
-      const [summaryRows, quarantine, providers, conflicts, auditCoverage, trends, partitions, modelQualityTrends, repairSummary, roiClvReadiness, fieldTrust, qualityAlerts, clubMergeAudits] = await Promise.all([
+      const [summaryRows, quarantine, providers, conflicts, auditCoverage, trends, partitions, modelQualityTrends, repairSummary, roiClvReadiness, fieldTrust, qualityAlerts, clubMergeAudits, calibrationProfiles, competitionFieldTrust] = await Promise.all([
         sql.query(`select count(1)::int matches,count(1) filter(where identity_status='resolved')::int resolved_matches,
           count(1) filter(where identity_status='quarantined')::int quarantined_matches,
           (select count(1)::int from source_conflicts) conflicts,(select count(1)::int from source_audit) audit_rows,
@@ -275,10 +282,12 @@ export async function sendSystemHealth(_req: any, res: any, mode = "health") {
           from quality_alerts where status='open' order by detected_at desc limit 20`),
         sql.query(`select club_merge_audit_id,canonical_club_id,merged_club_ids,reference_counts,merge_reason,merge_status,merged_at,rollback_status,rolled_back_at
           from club_merge_audit order by merged_at desc limit 20`),
+        sql.query(`select calibration_profile_id,competition_id,sample_size,brier_score,probability_shrinkage,profile,generated_at from calibration_profiles where phase_bucket='competition_recalibration_candidate' order by generated_at desc`),
+        sql.query(`select provider,competition_id,field_name,effective_trust_score,samples from provider_competition_field_trust order by samples desc limit 100`),
       ]);
       setCorsHeaders(_req, res);
       res.setHeader("Cache-Control", "s-maxage=60, stale-while-revalidate=120");
-      return res.status(200).json({ ok: true, generatedAt: new Date().toISOString(), summary: summaryRows[0] || {}, quarantine, providers, conflicts, auditCoverage, trends, partitions, modelQualityTrends, repairSummary, roiClvReadiness, fieldTrust, qualityAlerts, clubMergeAudits, modelQualityMinimumSample: 20 });
+      return res.status(200).json({ ok: true, generatedAt: new Date().toISOString(), summary: summaryRows[0] || {}, quarantine, providers, conflicts, auditCoverage, trends, partitions, modelQualityTrends, repairSummary, roiClvReadiness, fieldTrust, qualityAlerts, clubMergeAudits, calibrationProfiles, competitionFieldTrust, modelQualityMinimumSample: 20 });
     }
     const payload = await buildSystemHealth(mode);
     setCorsHeaders(_req, res);

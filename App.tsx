@@ -7,6 +7,7 @@ import StandingsView from "./components/StandingsView";
 import SettingsView from "./components/SettingsView";
 import ModelOpsView from "./components/ModelOpsView";
 import DataIntegrityView from "./components/DataIntegrityView";
+import ProviderControlView from "./components/ProviderControlView";
 import DateNavigation from "./components/DateNavigation"; // NIEUW IMPORT
 import { getFavorites } from "./components/FavoriteTeams";
 import { Match } from "./types";
@@ -30,7 +31,7 @@ import {
   shortLeague,
 } from "./shared/dashboard.js";
 
-type View = "dashboard" | "history" | "standings" | "modelops" | "integrity" | "settings";
+type View = "dashboard" | "history" | "standings" | "modelops" | "integrity" | "providers" | "settings";
 type FilterMode = "alle" | "favorieten" | "live" | "gepland" | "gespeeld" | "brondekking" | "odds" | "xg" | "weer" | "mistdata";
 
 function isLive(match: Match) {
@@ -641,6 +642,8 @@ const App: React.FC = () => {
           <ModelOpsView />
         ) : view === "integrity" ? (
           <DataIntegrityView />
+        ) : view === "providers" ? (
+          <ProviderControlView />
         ) : view === "settings" ? (
           <SettingsView />
         ) : (

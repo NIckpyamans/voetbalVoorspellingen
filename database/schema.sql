@@ -161,8 +161,23 @@ create table if not exists provider_field_controls (
   reason text,
   consecutive_low_scores integer not null default 0,
   disabled_at timestamptz,
+  trial_started_at timestamptz,
+  trial_runs integer not null default 0,
   updated_at timestamptz not null default now(),
   primary key (provider, field_name)
+);
+alter table provider_field_controls add column if not exists trial_started_at timestamptz;
+alter table provider_field_controls add column if not exists trial_runs integer not null default 0;
+
+create table if not exists provider_competition_field_trust (
+  provider text not null,
+  competition_id text not null,
+  field_name text not null,
+  effective_trust_score numeric not null,
+  samples integer not null default 0,
+  metrics jsonb not null default '{}'::jsonb,
+  updated_at timestamptz not null default now(),
+  primary key(provider,competition_id,field_name)
 );
 
 create table if not exists club_merge_audit (

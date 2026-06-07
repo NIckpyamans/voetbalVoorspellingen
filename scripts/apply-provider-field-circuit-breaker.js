@@ -17,9 +17,16 @@ await sql.query(`
   from provider_field_trust_profiles
   on conflict(provider,field_name) do update set
     consecutive_low_scores=case when excluded.reason is not null then provider_field_controls.consecutive_low_scores+1 else 0 end,
-    status=case when excluded.reason is not null and provider_field_controls.consecutive_low_scores+1 >= $3 then 'disabled' else 'active' end,
+    status=case
+      when provider_field_controls.status='trial' and excluded.reason is null and provider_field_controls.trial_runs+1>=2 then 'active'
+      when provider_field_controls.status='trial' and excluded.reason is not null then 'disabled'
+      when provider_field_controls.status='trial' then 'trial'
+      when provider_field_controls.status='disabled' and excluded.reason is null then 'trial'
+      when excluded.reason is not null and provider_field_controls.consecutive_low_scores+1 >= $3 then 'disabled' else 'active' end,
     reason=excluded.reason,
     disabled_at=case when excluded.reason is not null and provider_field_controls.consecutive_low_scores+1 >= $3 then coalesce(provider_field_controls.disabled_at,now()) else null end,
+    trial_started_at=case when provider_field_controls.status='disabled' and excluded.reason is null then now() else provider_field_controls.trial_started_at end,
+    trial_runs=case when provider_field_controls.status='trial' then provider_field_controls.trial_runs+1 when provider_field_controls.status='disabled' and excluded.reason is null then 1 else 0 end,
     updated_at=now()
 `, [minimumScore, minimumSamples, consecutiveRuns]);
 const summary = await sql.query("select status,count(1)::int rows from provider_field_controls group by status order by status");

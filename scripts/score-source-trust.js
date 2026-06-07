@@ -161,6 +161,16 @@ for (const [field, sourceValue, canonicalValue] of fieldContracts) {
       bayesian_accuracy=excluded.bayesian_accuracy,wilson_lower_bound=excluded.wilson_lower_bound,samples=excluded.samples,metrics=excluded.metrics,updated_at=now()
   `, [field]);
 }
+await sql.query(`
+  insert into provider_competition_field_trust(provider,competition_id,field_name,effective_trust_score,samples,metrics,updated_at)
+  select msr.provider,m.competition_id,'score',
+    least(0.99,greatest(0.1,(sum((case when jsonb_typeof(sr.payload#>'{score,ft}')='array' then (sr.payload#>>'{score,ft,0}')||'-'||(sr.payload#>>'{score,ft,1}') else coalesce(sr.payload->>'score',sr.payload->>'finalScore') end=mr.final_home_goals::text||'-'||mr.final_away_goals::text)::int)+15)/(count(1)+30))),
+    count(1)::int,jsonb_build_object('method','competition_field_bayesian_v1'),now()
+  from match_source_records msr join source_records sr on sr.source_record_id=msr.source_record_id join matches m on m.match_id=msr.match_id join match_results mr on mr.match_id=m.match_id
+  where m.competition_id is not null and nullif(coalesce(sr.payload->>'score',sr.payload->>'finalScore',sr.payload#>>'{score,ft,0}'),'') is not null
+  group by msr.provider,m.competition_id
+  on conflict(provider,competition_id,field_name) do update set effective_trust_score=excluded.effective_trust_score,samples=excluded.samples,metrics=excluded.metrics,updated_at=now()
+`);
 const directFieldTrust = [
   ["odds", `select hos.provider,count(1)::int samples,
     avg((hos.home>1 and hos.draw>1 and hos.away>1 and hos.captured_at is not null and hos.captured_at<m.kickoff_at)::int)::numeric raw_accuracy
