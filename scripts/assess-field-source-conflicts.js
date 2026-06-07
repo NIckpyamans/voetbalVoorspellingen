@@ -28,6 +28,8 @@ for (const [field, valueSql] of fields) {
       select msr.match_id,sr.source_record_id,msr.provider,coalesce(pft.effective_trust_score,msr.trust_score) trust_score,${valueSql} value
       from match_source_records msr join source_records sr on sr.source_record_id=msr.source_record_id
       left join provider_field_trust_profiles pft on pft.provider=msr.provider and pft.field_name='${field}'
+      left join provider_field_controls pfc on pfc.provider=msr.provider and pfc.field_name='${field}'
+      where coalesce(pfc.status,'active')<>'disabled'
     ), conflicting as (
       select match_id,jsonb_agg(jsonb_build_object('sourceRecordId',source_record_id,'provider',provider,'value',value,'trustScore',trust_score)
         order by trust_score desc nulls last) candidate_values,

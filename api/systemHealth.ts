@@ -219,6 +219,17 @@ export async function buildSystemHealth(mode = "health") {
 
 export async function sendSystemHealth(_req: any, res: any, mode = "health") {
   try {
+    if (String(_req?.query?.detail || "") === "integrity-alert" && _req.method === "POST") {
+      const sql = getSql();
+      if (!sql) return res.status(503).json({ ok: false, error: "database_not_configured" });
+      const body = typeof _req.body === "string" ? JSON.parse(_req.body || "{}") : (_req.body || {});
+      const action = String(body.action || "");
+      if (!["acknowledged", "ignored", "resolved"].includes(action) || !body.alertId) return res.status(400).json({ ok: false, error: "invalid_alert_action" });
+      const updated = await sql.query(`update quality_alerts set status=$2,resolved_at=case when $2='resolved' then now() else null end,updated_at=now()
+        where alert_id=$1 returning alert_id,status,updated_at`, [String(body.alertId), action]);
+      setCorsHeaders(_req, res, { methods: "GET, POST, OPTIONS" });
+      return res.status(updated.length ? 200 : 404).json({ ok: Boolean(updated.length), alert: updated[0] || null });
+    }
     if (String(_req?.query?.detail || "") === "integrity") {
       const sql = getSql();
       if (!sql) return res.status(503).json({ ok: false, error: "database_not_configured" });
@@ -256,8 +267,10 @@ export async function sendSystemHealth(_req: any, res: any, mode = "health") {
         sql.query(`select metric_key,metric_value,metadata,captured_at from integrity_metric_snapshots
           where metric_key in ('roi_clv_minimum_sample','roi_clv_roi_ready','roi_clv_clv_ready','roi_clv_safe_prematch_odds','roi_clv_closing_pairs')
           order by captured_at desc limit 10`),
-        sql.query(`select provider,field_name,effective_trust_score,raw_accuracy,bayesian_accuracy,wilson_lower_bound,samples,updated_at
-          from provider_field_trust_profiles order by field_name,samples desc limit 60`),
+        sql.query(`select pft.provider,pft.field_name,pft.effective_trust_score,pft.raw_accuracy,pft.bayesian_accuracy,pft.wilson_lower_bound,pft.samples,pft.updated_at,
+          coalesce(pfc.status,'active') control_status,pfc.reason,pfc.consecutive_low_scores
+          from provider_field_trust_profiles pft left join provider_field_controls pfc on pfc.provider=pft.provider and pfc.field_name=pft.field_name
+          order by pft.field_name,pft.samples desc limit 100`),
         sql.query(`select alert_id,alert_type,dimension_key,severity,status,current_value,previous_value,delta,threshold,message,detected_at
           from quality_alerts where status='open' order by detected_at desc limit 20`),
       ]);

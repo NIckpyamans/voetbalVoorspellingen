@@ -137,6 +137,8 @@ const fieldContracts = [
     else coalesce(sr.payload->>'score',sr.payload->>'finalScore') end`, "mr.final_home_goals::text||'-'||mr.final_away_goals::text"],
   ["kickoff", "coalesce(sr.payload->>'kickoff',sr.payload->>'kickoff_at')", "m.kickoff_at::text"],
   ["status", "upper(coalesce(sr.payload->>'status',sr.payload->>'status_normalized'))", "upper(coalesce(m.status_normalized,m.status))"],
+  ["home_club_id", `(select ca.club_id from club_aliases ca where ca.normalized_alias=trim(both '-' from lower(regexp_replace(coalesce(sr.payload->>'homeTeamName',sr.payload->>'HomeTeam',sr.payload->>'team1',sr.payload#>>'{homeTeam,name}'),'[^a-zA-Z0-9]+','-','g'))) limit 1)`, "m.home_club_id"],
+  ["away_club_id", `(select ca.club_id from club_aliases ca where ca.normalized_alias=trim(both '-' from lower(regexp_replace(coalesce(sr.payload->>'awayTeamName',sr.payload->>'AwayTeam',sr.payload->>'team2',sr.payload#>>'{awayTeam,name}'),'[^a-zA-Z0-9]+','-','g'))) limit 1)`, "m.away_club_id"],
 ];
 for (const [field, sourceValue, canonicalValue] of fieldContracts) {
   await sql.query(`
@@ -155,6 +157,32 @@ for (const [field, sourceValue, canonicalValue] of fieldContracts) {
     insert into provider_field_trust_profiles(provider,field_name,effective_trust_score,raw_accuracy,bayesian_accuracy,wilson_lower_bound,samples,metrics,updated_at)
     select provider,$1,least(0.99,greatest(0.1,bayesian_accuracy*0.7+wilson*0.3)),raw_accuracy,bayesian_accuracy,wilson,samples,
       jsonb_build_object('priorStrength',30,'method','bayesian_wilson_field_v1'),now() from corrected
+    on conflict(provider,field_name) do update set effective_trust_score=excluded.effective_trust_score,raw_accuracy=excluded.raw_accuracy,
+      bayesian_accuracy=excluded.bayesian_accuracy,wilson_lower_bound=excluded.wilson_lower_bound,samples=excluded.samples,metrics=excluded.metrics,updated_at=now()
+  `, [field]);
+}
+const directFieldTrust = [
+  ["odds", `select hos.provider,count(1)::int samples,
+    avg((hos.home>1 and hos.draw>1 and hos.away>1 and hos.captured_at is not null and hos.captured_at<m.kickoff_at)::int)::numeric raw_accuracy
+    from historical_odds_snapshots hos join matches m on m.match_id=hos.match_id group by hos.provider`],
+  ["xg", `select ms.stats_source provider,count(1)::int samples,
+    avg((ms.home_xg>=0 and ms.away_xg>=0 and ms.home_xg<15 and ms.away_xg<15)::int)::numeric raw_accuracy
+    from match_stats ms where ms.home_xg is not null and ms.away_xg is not null group by ms.stats_source`],
+  ["match_stats", `select ms.stats_source provider,count(1)::int samples,
+    avg((coalesce(ms.home_shots,0)>=coalesce(ms.home_shots_on_target,0) and coalesce(ms.away_shots,0)>=coalesce(ms.away_shots_on_target,0)
+      and coalesce(ms.home_red_cards,0)<=coalesce(ms.home_yellow_cards,0)+3 and coalesce(ms.away_red_cards,0)<=coalesce(ms.away_yellow_cards,0)+3)::int)::numeric raw_accuracy
+    from match_stats ms where ms.stats_source is not null group by ms.stats_source`],
+];
+for (const [field, query] of directFieldTrust) {
+  await sql.query(`
+    with scored as (${query}), corrected as (
+      select s.*,coalesce(p.effective_trust_score,0.5) prior,(s.raw_accuracy*s.samples+coalesce(p.effective_trust_score,0.5)*30)/(s.samples+30) bayesian_accuracy,
+        greatest(0,(s.raw_accuracy+1.9208/s.samples-1.96*sqrt((s.raw_accuracy*(1-s.raw_accuracy)+0.9604/s.samples)/s.samples))/(1+3.8416/s.samples)) wilson
+      from scored s left join provider_trust_profiles p on p.provider=s.provider
+    )
+    insert into provider_field_trust_profiles(provider,field_name,effective_trust_score,raw_accuracy,bayesian_accuracy,wilson_lower_bound,samples,metrics,updated_at)
+    select provider,$1,least(0.99,greatest(0.1,bayesian_accuracy*0.7+wilson*0.3)),raw_accuracy,bayesian_accuracy,wilson,samples,
+      jsonb_build_object('priorStrength',30,'method','quality_contract_bayesian_wilson_v1'),now() from corrected
     on conflict(provider,field_name) do update set effective_trust_score=excluded.effective_trust_score,raw_accuracy=excluded.raw_accuracy,
       bayesian_accuracy=excluded.bayesian_accuracy,wilson_lower_bound=excluded.wilson_lower_bound,samples=excluded.samples,metrics=excluded.metrics,updated_at=now()
   `, [field]);

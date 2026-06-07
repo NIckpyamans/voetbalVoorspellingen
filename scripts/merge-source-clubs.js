@@ -68,6 +68,24 @@ for (const [key, group] of groups.entries()) {
   const providerIds = Object.assign({}, ...group.map((club) => club.provider_ids || {}));
   const history = Object.assign({}, ...group.map((club) => club.history || {}));
   const oldIds = group.map((club) => club.club_id).filter((clubId) => clubId !== canonicalClubId);
+  const referenceSnapshot = {
+    homeMatches: (await sql.query("select match_id,home_club_id club_id from matches where home_club_id=any($1::text[])", [oldIds])),
+    awayMatches: (await sql.query("select match_id,away_club_id club_id from matches where away_club_id=any($1::text[])", [oldIds])),
+    teamMatchStats: (await sql.query("select team_match_stats_id,club_id from team_match_stats where club_id=any($1::text[])", [oldIds])),
+    teamSeasonStats: (await sql.query("select team_season_stats_id,club_id from team_season_stats where club_id=any($1::text[])", [oldIds])),
+    competitionSeasonClubs: (await sql.query("select * from competition_season_clubs where club_id=any($1::text[])", [oldIds])),
+    aliases: (await sql.query("select alias,normalized_alias,source,club_id from club_aliases where club_id=any($1::text[])", [oldIds])),
+    players: (await sql.query("select player_id,club_id from players where club_id=any($1::text[])", [oldIds])),
+    squads: (await sql.query("select squad_id,club_id from squads where club_id=any($1::text[])", [oldIds])),
+    injuries: (await sql.query("select injury_id,club_id from injuries where club_id=any($1::text[])", [oldIds])),
+    suspensions: (await sql.query("select suspension_id,club_id from suspensions where club_id=any($1::text[])", [oldIds])),
+  };
+  const canonicalSnapshot = group.find((club) => club.club_id === canonicalClubId) || {};
+  await sql.query(`insert into club_merge_audit(canonical_club_id,merged_club_ids,canonical_snapshot,merged_club_snapshots,reference_counts,reference_snapshot,merge_reason)
+    values($1,$2::jsonb,$3::jsonb,$4::jsonb,$5::jsonb,$6::jsonb,'canonical_name_equivalence_v1')`, [
+    canonicalClubId, JSON.stringify(oldIds), JSON.stringify(canonicalSnapshot), JSON.stringify(group.filter((club) => oldIds.includes(club.club_id))),
+    JSON.stringify(Object.fromEntries(Object.entries(referenceSnapshot).map(([key, rows]) => [key, rows.length]))), JSON.stringify(referenceSnapshot),
+  ]);
 
   await sql.query(
     `

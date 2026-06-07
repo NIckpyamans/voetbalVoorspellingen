@@ -25,15 +25,25 @@ for (const metric of metrics) {
   );
 }
 const qualityDimensions = await sql.query(`
+  with competition_outcomes as (
+    select m.competition_id,count(1)::numeric total,
+      count(1) filter(where mr.actual_outcome='H')::numeric home,
+      count(1) filter(where mr.actual_outcome='D')::numeric draw,
+      count(1) filter(where mr.actual_outcome='A')::numeric away
+    from match_results mr join matches m on m.match_id=mr.match_id group by m.competition_id
+  )
   select coalesce(m.competition_id,'competition:unknown') competition_id,coalesce(ps.model_version,'model:unknown') model_version,
     count(1)::numeric evaluation_count,coalesce(avg(pe.outcome_hit::int),0)::numeric outcome_hit_rate,
-    coalesce(avg(pe.brier_score),0)::numeric average_brier,coalesce(avg(pe.log_loss),0)::numeric average_log_loss
+    coalesce(avg(pe.brier_score),0)::numeric average_brier,coalesce(avg(pe.log_loss),0)::numeric average_log_loss,
+    greatest(co.home,co.draw,co.away)/greatest(co.total,1) baseline_outcome_hit_rate,
+    (1-(power(co.home/co.total,2)+power(co.draw/co.total,2)+power(co.away/co.total,2)))/3 baseline_average_brier
   from prediction_evaluations pe join prediction_snapshots ps on ps.prediction_id=pe.prediction_id join matches m on m.match_id=pe.match_id
-  group by m.competition_id,ps.model_version
+  join competition_outcomes co on co.competition_id=m.competition_id
+  group by m.competition_id,ps.model_version,co.home,co.draw,co.away,co.total
 `);
 for (const row of qualityDimensions) {
   const dimension = `competition:${row.competition_id}|model:${row.model_version}`;
-  for (const key of ["evaluation_count", "outcome_hit_rate", "average_brier", "average_log_loss"]) {
+  for (const key of ["evaluation_count", "outcome_hit_rate", "average_brier", "average_log_loss", "baseline_outcome_hit_rate", "baseline_average_brier"]) {
     await sql.query("insert into integrity_metric_snapshots(metric_key,metric_value,dimension_key,metadata) values($1,$2,$3,$4::jsonb)",
       [`model_${key}`, row[key], dimension, JSON.stringify({ competitionId: row.competition_id, modelVersion: row.model_version, sampleSize: Number(row.evaluation_count), source: "model-quality-dimension-v1" })]);
   }

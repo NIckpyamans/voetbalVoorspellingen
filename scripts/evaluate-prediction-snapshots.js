@@ -17,12 +17,14 @@ const rows = await sql.query(`
     select candidate.* from (
       select home,draw,away,captured_at,odds_role,available_before_kickoff,minutes_before_kickoff,
         closing_home,closing_draw,closing_away,closing_captured_at
-      from odds_snapshots where prediction_id=ps.prediction_id
+      from odds_snapshots os where prediction_id=ps.prediction_id and not exists(
+        select 1 from provider_field_controls pfc where pfc.provider=os.provider and pfc.field_name='odds' and pfc.status='disabled')
       union all
       select home,draw,away,captured_at,odds_role,available_before_kickoff,minutes_before_kickoff,
         closing_home,closing_draw,closing_away,closing_captured_at
       from historical_odds_snapshots
-      where match_id=ps.match_id and available_before_kickoff=true and captured_at<=ps.generated_at
+      where match_id=ps.match_id and available_before_kickoff=true and captured_at<=ps.generated_at and not exists(
+        select 1 from provider_field_controls pfc where pfc.provider=historical_odds_snapshots.provider and pfc.field_name='odds' and pfc.status='disabled')
     ) candidate order by candidate.captured_at desc nulls last limit 1
   ) os on true
   where ps.generated_at <= coalesce(m.kickoff_at, ps.generated_at) order by ps.generated_at limit $1

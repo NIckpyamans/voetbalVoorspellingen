@@ -154,6 +154,34 @@ create table if not exists provider_field_trust_profiles (
   primary key (provider, field_name)
 );
 
+create table if not exists provider_field_controls (
+  provider text not null,
+  field_name text not null,
+  status text not null default 'active',
+  reason text,
+  consecutive_low_scores integer not null default 0,
+  disabled_at timestamptz,
+  updated_at timestamptz not null default now(),
+  primary key (provider, field_name)
+);
+
+create table if not exists club_merge_audit (
+  club_merge_audit_id bigserial primary key,
+  canonical_club_id text not null,
+  merged_club_ids jsonb not null default '[]'::jsonb,
+  canonical_snapshot jsonb not null default '{}'::jsonb,
+  merged_club_snapshots jsonb not null default '[]'::jsonb,
+  reference_counts jsonb not null default '{}'::jsonb,
+  reference_snapshot jsonb not null default '{}'::jsonb,
+  merge_reason text not null,
+  merge_status text not null default 'applied',
+  merged_at timestamptz not null default now(),
+  rollback_status text not null default 'not_rolled_back',
+  rollback_reason text,
+  rolled_back_at timestamptz
+);
+alter table club_merge_audit add column if not exists reference_snapshot jsonb not null default '{}'::jsonb;
+
 create table if not exists source_conflicts (
   source_conflict_id text primary key,
   entity_type text not null,
@@ -752,6 +780,8 @@ create index if not exists idx_source_records_entity on source_records(entity_ty
 create index if not exists idx_source_conflicts_status on source_conflicts(status, detected_at desc);
 create index if not exists idx_source_conflict_repairs_conflict_date on source_conflict_repairs(source_conflict_id, repaired_at desc);
 create index if not exists idx_provider_field_trust_field_score on provider_field_trust_profiles(field_name, effective_trust_score desc);
+create index if not exists idx_provider_field_controls_status on provider_field_controls(status, updated_at desc);
+create index if not exists idx_club_merge_audit_status on club_merge_audit(merge_status, merged_at desc);
 create index if not exists idx_quality_alerts_status_detected on quality_alerts(status, detected_at desc);
 create index if not exists idx_provider_trust_history_provider_date on provider_trust_history(provider, captured_at desc);
 create index if not exists idx_integrity_metric_snapshots_key_date on integrity_metric_snapshots(metric_key, dimension_key, captured_at desc);

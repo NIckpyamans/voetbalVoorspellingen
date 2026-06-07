@@ -37,7 +37,7 @@ jobs:
           DATABASE_URL: ${{ secrets.DATABASE_URL }}
           POSTGRES_URL: ${{ secrets.POSTGRES_URL }}
       - name: Score providers and resolve source conflicts
-        run: npm run db:sources:trust
+        run: npm run db:sources:trust && npm run db:sources:circuit-breaker
         env:
           DATABASE_URL: ${{ secrets.DATABASE_URL }}
           POSTGRES_URL: ${{ secrets.POSTGRES_URL }}

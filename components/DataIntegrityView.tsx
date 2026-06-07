@@ -37,6 +37,15 @@ const DataIntegrityView: React.FC = () => {
     return groups;
   }, {})) as Array<{ dimension: string; metrics: Record<string, number>; metadata: any }>;
   const roiMetric = (key: string) => Number((data.roiClvReadiness || []).find((row: any) => row.metric_key === key)?.metric_value || 0);
+  const updateAlert = async (alertId: string, action: string) => {
+    const response = await fetch("/api/system-check?detail=integrity-alert", {
+      method: "POST",
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify({ alertId, action }),
+    });
+    if (!response.ok) throw new Error("Alertactie mislukt");
+    setData((current: any) => ({ ...current, qualityAlerts: (current.qualityAlerts || []).filter((alert: any) => alert.alert_id !== alertId) }));
+  };
   const cards = [
     ["Opgeloste identiteit", `${number(summary.resolved_matches)} / ${number(summary.matches)}`, "text-emerald-300"],
     ["Quarantaine", number(summary.quarantined_matches), "text-amber-300"],
@@ -172,6 +181,9 @@ const DataIntegrityView: React.FC = () => {
                   <div><div className="text-sm font-black text-emerald-300">{pct(item.metrics.model_outcome_hit_rate)}</div><div className="text-[7px] uppercase text-slate-500">uitkomst hit</div></div>
                   <div><div className="text-sm font-black text-amber-300">{Number(item.metrics.model_average_brier || 0).toFixed(3)}</div><div className="text-[7px] uppercase text-slate-500">Brier</div></div>
                 </div>
+                <div className="mt-2 text-[8px] text-slate-500">
+                  Tegen baseline: hit {item.metrics.model_outcome_hit_rate >= item.metrics.model_baseline_outcome_hit_rate ? "+" : ""}{pct(item.metrics.model_outcome_hit_rate - item.metrics.model_baseline_outcome_hit_rate)} · Brier {(item.metrics.model_average_brier - item.metrics.model_baseline_average_brier).toFixed(3)}
+                </div>
               </div>
             ))}
           </div>
@@ -206,6 +218,11 @@ const DataIntegrityView: React.FC = () => {
                 <div className="flex justify-between gap-2"><span className="truncate text-[9px] font-black text-white">{alert.dimension_key}</span><span className="text-[8px] font-black uppercase text-orange-300">{alert.severity}</span></div>
                 <div className="mt-1 text-[9px] text-slate-400">{alert.message}</div>
                 <div className="mt-2 text-[8px] text-slate-500">{Number(alert.previous_value || 0).toFixed(3)} naar {Number(alert.current_value || 0).toFixed(3)}</div>
+                <div className="mt-3 flex gap-1">
+                  {[["acknowledged", "Bevestigen"], ["ignored", "Negeren"], ["resolved", "Oplossen"]].map(([action, label]) => (
+                    <button key={action} onClick={() => updateAlert(alert.alert_id, action)} className="rounded-lg border border-white/10 px-2 py-1 text-[7px] font-black uppercase text-slate-300 hover:bg-white/5">{label}</button>
+                  ))}
+                </div>
               </div>
             )) : <div className="rounded-2xl border border-emerald-500/15 bg-emerald-500/5 p-4 text-[10px] font-bold text-emerald-200">Geen plotselinge kwaliteitsdalingen gevonden.</div>}
           </div>
@@ -215,7 +232,7 @@ const DataIntegrityView: React.FC = () => {
           <div className="mt-4 max-h-[360px] space-y-2 overflow-y-auto">
             {(data.fieldTrust || []).slice(0, 24).map((item: any) => (
               <div key={`${item.provider}-${item.field_name}`} className="rounded-xl border border-white/5 bg-slate-950/35 p-3">
-                <div className="flex justify-between gap-2"><span className="truncate text-[9px] font-black text-white">{item.provider}</span><span className="text-[10px] font-black text-fuchsia-300">{pct(item.effective_trust_score)}</span></div>
+                <div className="flex justify-between gap-2"><span className="truncate text-[9px] font-black text-white">{item.provider}</span><span className={item.control_status === "disabled" ? "text-[10px] font-black text-red-300" : "text-[10px] font-black text-fuchsia-300"}>{item.control_status === "disabled" ? "uitgeschakeld" : pct(item.effective_trust_score)}</span></div>
                 <div className="mt-1 text-[8px] text-slate-500">{item.field_name} · {number(item.samples)} samples · Wilson {pct(item.wilson_lower_bound)}</div>
               </div>
             ))}
