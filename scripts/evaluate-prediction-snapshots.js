@@ -10,6 +10,7 @@ const rows = await sql.query(`
   select ps.prediction_id, ps.match_id, ps.probabilities, ps.expected_score, ps.prediction_payload,
     m.kickoff_at, mr.final_home_goals, mr.final_away_goals, mr.actual_outcome,
     os.home odds_home, os.draw odds_draw, os.away odds_away, os.captured_at odds_captured_at,
+    os.odds_role, os.available_before_kickoff, os.minutes_before_kickoff,
     os.closing_home, os.closing_draw, os.closing_away, os.closing_captured_at
   from prediction_snapshots ps join matches m on m.match_id=ps.match_id join match_results mr on mr.match_id=ps.match_id
   left join lateral (select * from odds_snapshots where prediction_id=ps.prediction_id order by captured_at desc nulls last limit 1) os on true
@@ -34,7 +35,9 @@ for (const row of rows) {
   const exact = Number.isFinite(expectedHome) && Number.isFinite(expectedAway) ? expectedHome === Number(row.final_home_goals) && expectedAway === Number(row.final_away_goals) : null;
   const brier = ((home-vector[0])**2 + (draw-vector[1])**2 + (away-vector[2])**2) / 3;
   const odds = predicted === "H" ? row.odds_home : predicted === "D" ? row.odds_draw : row.odds_away;
-  const prematch = row.odds_captured_at && row.kickoff_at && new Date(row.odds_captured_at) < new Date(row.kickoff_at);
+  const prematch = row.available_before_kickoff === true && row.odds_role === "prematch" &&
+    Number(row.minutes_before_kickoff) > 0 && row.odds_captured_at && row.kickoff_at &&
+    new Date(row.odds_captured_at) < new Date(row.kickoff_at);
   const roi = prematch && Number(odds) > 1 ? (predicted === row.actual_outcome ? Number(odds)-1 : -1) : null;
   const closing = predicted === "H" ? row.closing_home : predicted === "D" ? row.closing_draw : row.closing_away;
   const closingValid = prematch && row.closing_captured_at && new Date(row.closing_captured_at) > new Date(row.odds_captured_at) && Number(closing) > 1;

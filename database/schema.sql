@@ -137,9 +137,40 @@ create table if not exists matches (
   team_identity jsonb not null default '{}'::jsonb,
   status text,
   status_normalized text,
+  identity_status text not null default 'resolved',
+  identity_missing_fields jsonb not null default '[]'::jsonb,
+  quarantined_at timestamptz,
+  primary_source_record_id text references source_records(source_record_id),
   neutral_venue boolean not null default false,
   created_at timestamptz not null default now(),
   updated_at timestamptz not null default now()
+);
+
+create table if not exists match_identity_quarantine (
+  quarantine_id text primary key,
+  match_id text not null unique references matches(match_id),
+  missing_fields jsonb not null default '[]'::jsonb,
+  reason text not null default 'incomplete_match_identity',
+  status text not null default 'pending',
+  attempts integer not null default 0,
+  last_attempt_at timestamptz,
+  quarantined_at timestamptz not null default now(),
+  resolved_at timestamptz,
+  resolution_payload jsonb not null default '{}'::jsonb,
+  updated_at timestamptz not null default now()
+);
+
+create table if not exists match_source_records (
+  match_source_record_id text primary key,
+  match_id text not null references matches(match_id),
+  source_record_id text not null references source_records(source_record_id),
+  provider text not null,
+  source_match_id text,
+  is_primary boolean not null default false,
+  trust_score numeric,
+  created_at timestamptz not null default now(),
+  updated_at timestamptz not null default now(),
+  unique (match_id, source_record_id)
 );
 
 create table if not exists fixture_source_aliases (
@@ -363,6 +394,9 @@ create table if not exists odds_snapshots (
   closing_draw numeric,
   closing_away numeric,
   closing_captured_at timestamptz,
+  odds_role text not null default 'unknown',
+  available_before_kickoff boolean not null default false,
+  minutes_before_kickoff integer,
   status text not null default 'missing',
   missing_reason text,
   created_at timestamptz not null default now()
@@ -382,6 +416,9 @@ create table if not exists historical_odds_snapshots (
   closing_away numeric,
   captured_at timestamptz,
   closing_captured_at timestamptz,
+  odds_role text not null default 'unknown',
+  available_before_kickoff boolean not null default false,
+  minutes_before_kickoff integer,
   source_record_id text references source_records(source_record_id),
   created_at timestamptz not null default now()
 );
@@ -462,9 +499,93 @@ alter table prediction_snapshots add column if not exists model_version_id text;
 alter table prediction_snapshots add column if not exists prediction_payload jsonb not null default '{}'::jsonb;
 alter table matches add column if not exists weather_payload jsonb not null default '{}'::jsonb;
 alter table matches add column if not exists source_coverage jsonb not null default '{}'::jsonb;
+alter table matches add column if not exists identity_status text not null default 'resolved';
+alter table matches add column if not exists identity_missing_fields jsonb not null default '[]'::jsonb;
+alter table matches add column if not exists quarantined_at timestamptz;
+alter table matches add column if not exists primary_source_record_id text references source_records(source_record_id);
 alter table team_match_stats add column if not exists style_profile jsonb not null default '{}'::jsonb;
 alter table team_season_stats add column if not exists style_profile jsonb not null default '{}'::jsonb;
 alter table historical_odds_snapshots add column if not exists closing_captured_at timestamptz;
+alter table historical_odds_snapshots add column if not exists odds_role text not null default 'unknown';
+alter table historical_odds_snapshots add column if not exists available_before_kickoff boolean not null default false;
+alter table historical_odds_snapshots add column if not exists minutes_before_kickoff integer;
+alter table odds_snapshots add column if not exists odds_role text not null default 'unknown';
+alter table odds_snapshots add column if not exists available_before_kickoff boolean not null default false;
+alter table odds_snapshots add column if not exists minutes_before_kickoff integer;
+
+create or replace function enforce_match_identity_status()
+returns trigger language plpgsql as $$
+begin
+  new.identity_missing_fields :=
+    (case when new.home_club_id is null then '["home_club_id"]'::jsonb else '[]'::jsonb end) ||
+    (case when new.away_club_id is null then '["away_club_id"]'::jsonb else '[]'::jsonb end) ||
+    (case when new.competition_id is null then '["competition_id"]'::jsonb else '[]'::jsonb end) ||
+    (case when new.season_id is null then '["season_id"]'::jsonb else '[]'::jsonb end);
+  new.identity_status := case when new.identity_missing_fields = '[]'::jsonb then 'resolved' else 'quarantined' end;
+  new.quarantined_at := case
+    when new.identity_status = 'resolved' then null
+    else coalesce(new.quarantined_at, now())
+  end;
+  return new;
+end;
+$$;
+
+drop trigger if exists match_identity_status_guard on matches;
+create trigger match_identity_status_guard
+before insert or update of home_club_id, away_club_id, competition_id, season_id on matches
+for each row execute function enforce_match_identity_status();
+
+create or replace function enforce_historical_odds_leakage_guard()
+returns trigger language plpgsql as $$
+declare kickoff timestamptz;
+begin
+  if new.odds_role not in ('unknown', 'prematch', 'closing_proxy', 'closing_timestamped', 'in_play') then
+    raise exception 'Invalid odds_role: %', new.odds_role;
+  end if;
+  select kickoff_at into kickoff from matches where match_id = new.match_id;
+  if new.available_before_kickoff then
+    if new.odds_role <> 'prematch' or new.captured_at is null or kickoff is null or new.captured_at >= kickoff then
+      raise exception 'Leakage guard rejected historical odds marked available before kickoff';
+    end if;
+    new.minutes_before_kickoff := floor(extract(epoch from (kickoff - new.captured_at)) / 60);
+  else
+    new.minutes_before_kickoff := null;
+  end if;
+  return new;
+end;
+$$;
+
+drop trigger if exists historical_odds_leakage_guard on historical_odds_snapshots;
+create trigger historical_odds_leakage_guard
+before insert or update on historical_odds_snapshots
+for each row execute function enforce_historical_odds_leakage_guard();
+
+create or replace function enforce_prediction_odds_leakage_guard()
+returns trigger language plpgsql as $$
+declare kickoff timestamptz;
+begin
+  if new.odds_role not in ('unknown', 'prematch', 'closing_proxy', 'closing_timestamped', 'in_play') then
+    raise exception 'Invalid odds_role: %', new.odds_role;
+  end if;
+  select m.kickoff_at into kickoff
+  from prediction_snapshots ps join matches m on m.match_id = ps.match_id
+  where ps.prediction_id = new.prediction_id;
+  if new.available_before_kickoff then
+    if new.odds_role <> 'prematch' or new.captured_at is null or kickoff is null or new.captured_at >= kickoff then
+      raise exception 'Leakage guard rejected prediction odds marked available before kickoff';
+    end if;
+    new.minutes_before_kickoff := floor(extract(epoch from (kickoff - new.captured_at)) / 60);
+  else
+    new.minutes_before_kickoff := null;
+  end if;
+  return new;
+end;
+$$;
+
+drop trigger if exists prediction_odds_leakage_guard on odds_snapshots;
+create trigger prediction_odds_leakage_guard
+before insert or update on odds_snapshots
+for each row execute function enforce_prediction_odds_leakage_guard();
 
 create table if not exists source_audit (
   source_audit_id bigserial primary key,
@@ -480,7 +601,12 @@ create table if not exists source_audit (
 create index if not exists idx_matches_kickoff on matches(kickoff_at);
 create index if not exists idx_matches_date_key on matches(date_key);
 create index if not exists idx_matches_competition_season on matches(competition_id, season_id);
+create index if not exists idx_matches_identity_status on matches(identity_status, date_key);
+create index if not exists idx_matches_quarantine_pending on matches(updated_at) where identity_status = 'quarantined';
 create unique index if not exists idx_matches_canonical_fixture_unique on matches(canonical_fixture_id) where canonical_fixture_id is not null;
+create index if not exists idx_match_identity_quarantine_status on match_identity_quarantine(status, updated_at);
+create index if not exists idx_match_source_records_match on match_source_records(match_id, is_primary desc);
+create index if not exists idx_match_source_records_source on match_source_records(source_record_id);
 create index if not exists idx_fixture_source_aliases_canonical on fixture_source_aliases(canonical_fixture_id, canonical_match_id);
 create index if not exists idx_competition_seasons_competition_status on competition_seasons(competition_id, status);
 create index if not exists idx_competition_season_clubs_competition on competition_season_clubs(competition_id, season_id);
@@ -506,6 +632,8 @@ create index if not exists idx_prediction_snapshots_model_version_id on predicti
 create index if not exists idx_prediction_evaluations_evaluated on prediction_evaluations(evaluated_at desc);
 create index if not exists idx_prediction_evaluations_match on prediction_evaluations(match_id);
 create index if not exists idx_odds_snapshots_prediction on odds_snapshots(prediction_id);
+create index if not exists idx_odds_snapshots_prematch on odds_snapshots(prediction_id, captured_at desc) where available_before_kickoff = true and odds_role = 'prematch';
 create index if not exists idx_historical_odds_match on historical_odds_snapshots(match_id);
+create index if not exists idx_historical_odds_prematch on historical_odds_snapshots(match_id, captured_at desc) where available_before_kickoff = true and odds_role = 'prematch';
 create index if not exists idx_calibration_profiles_model_competition on calibration_profiles(model_version_id, competition_id);
 create index if not exists idx_source_audit_prediction_field on source_audit(prediction_id, field_name);

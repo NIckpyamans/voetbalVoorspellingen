@@ -83,6 +83,20 @@ for (const [canonicalFixtureId, group] of groups) {
   for (const table of ["historical_odds_snapshots", "prediction_snapshots", "prediction_evaluations", "injuries", "suspensions"]) {
     await sql.query(`update ${table} set match_id=$1 where match_id=any($2::text[])`, [target.match_id, duplicates]);
   }
+  await sql.query(`
+    insert into match_source_records (
+      match_source_record_id, match_id, source_record_id, provider, source_match_id, is_primary, trust_score
+    )
+    select
+      'match_source_' || md5($1 || '|' || source_record_id), $1, source_record_id, provider, source_match_id, false, trust_score
+    from match_source_records
+    where match_id=any($2::text[])
+    on conflict (match_id, source_record_id) do update set
+      provider=excluded.provider, source_match_id=excluded.source_match_id,
+      trust_score=excluded.trust_score, updated_at=now()
+  `, [target.match_id, duplicates]);
+  await sql.query("delete from match_source_records where match_id=any($1::text[])", [duplicates]);
+  await sql.query("delete from match_identity_quarantine where match_id=any($1::text[])", [duplicates]);
   await sql.query("delete from matches where match_id=any($1::text[])", [duplicates]);
   mergedFixtures += 1;
   removedMatches += duplicates.length;

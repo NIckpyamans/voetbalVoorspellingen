@@ -673,15 +673,18 @@ async function importFootballData(sql) {
               `
                 insert into historical_odds_snapshots (
                   historical_odds_snapshot_id, match_id, provider, bookmaker, market, home, draw, away,
-                  closing_home, closing_draw, closing_away, captured_at, source_record_id
+                  closing_home, closing_draw, closing_away, captured_at, source_record_id,
+                  odds_role, available_before_kickoff, minutes_before_kickoff
                 )
-                values ($1,$2,'Football-Data.co.uk',$3,'1X2',$4,$5,$6,$4,$5,$6,$7,$8)
+                values ($1,$2,'Football-Data.co.uk',$3,'1X2',$4,$5,$6,$4,$5,$6,null,$7,'closing_proxy',false,null)
                 on conflict (historical_odds_snapshot_id) do update set
                   home = excluded.home, draw = excluded.draw, away = excluded.away,
                   closing_home = excluded.closing_home, closing_draw = excluded.closing_draw, closing_away = excluded.closing_away,
-                  source_record_id = excluded.source_record_id
+                  captured_at = null, closing_captured_at = null,
+                  source_record_id = excluded.source_record_id,
+                  odds_role = 'closing_proxy', available_before_kickoff = false, minutes_before_kickoff = null
               `,
-              [`hist_odds_${digest(`${matchId}|${bookmaker}`)}`, matchId, bookmaker, numeric(home), numeric(draw), numeric(away), `${dateKey}T12:00:00.000Z`, sourceRecordId]
+              [`hist_odds_${digest(`${matchId}|${bookmaker}`)}`, matchId, bookmaker, numeric(home), numeric(draw), numeric(away), sourceRecordId]
             );
             odds += 1;
           }

@@ -1,0 +1,43 @@
+name: Database integrity maintenance
+
+on:
+  schedule:
+    - cron: "11 5 * * *"
+  workflow_dispatch:
+
+jobs:
+  integrity:
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+      - name: Apply database contracts
+        run: npm run db:schema:apply
+        env:
+          DATABASE_URL: ${{ secrets.DATABASE_URL }}
+          POSTGRES_URL: ${{ secrets.POSTGRES_URL }}
+      - name: Quarantine unresolved match identities
+        run: npm run db:matches:quarantine
+        env:
+          DATABASE_URL: ${{ secrets.DATABASE_URL }}
+          POSTGRES_URL: ${{ secrets.POSTGRES_URL }}
+      - name: Complete direct match source lineage
+        run: npm run db:matches:lineage
+        env:
+          DATABASE_URL: ${{ secrets.DATABASE_URL }}
+          POSTGRES_URL: ${{ secrets.POSTGRES_URL }}
+      - name: Enforce odds leakage classifications
+        run: npm run db:odds:leakage
+        env:
+          DATABASE_URL: ${{ secrets.DATABASE_URL }}
+          POSTGRES_URL: ${{ secrets.POSTGRES_URL }}
+      - name: Rebuild resolved season memberships and H2H
+        run: npm run db:seasons:reset
+        env:
+          DATABASE_URL: ${{ secrets.DATABASE_URL }}
+          POSTGRES_URL: ${{ secrets.POSTGRES_URL }}

@@ -202,9 +202,9 @@ async function rebuildSeasonMemberships(sql) {
       `
         select club_id, club_name
         from (
-          select home_club_id as club_id, home_team_name as club_name from matches where season_id = $1 and home_club_id is not null
+          select home_club_id as club_id, home_team_name as club_name from matches where season_id = $1 and home_club_id is not null and identity_status = 'resolved'
           union
-          select away_club_id as club_id, away_team_name as club_name from matches where season_id = $1 and away_club_id is not null
+          select away_club_id as club_id, away_team_name as club_name from matches where season_id = $1 and away_club_id is not null and identity_status = 'resolved'
         ) clubs
         order by club_name
       `,
@@ -317,6 +317,7 @@ async function rebuildSeasonMemberships(sql) {
 }
 
 async function rebuildH2HEdges(sql) {
+  await sql.query("delete from h2h_edges");
   const rows = await sql.query(
     `
       select
@@ -346,6 +347,7 @@ async function rebuildH2HEdges(sql) {
       where m.home_club_id is not null
         and m.away_club_id is not null
         and m.competition_id is not null
+        and m.identity_status = 'resolved'
       group by least(home_club_id, away_club_id), greatest(home_club_id, away_club_id), competition_id
       having count(*) >= 1
     `

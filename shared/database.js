@@ -409,13 +409,19 @@ async function upsertPredictionSnapshot(sql, snapshot, matchById) {
 
   const odds = snapshot.oddsAtPrediction || predictionPayload.oddsAtPrediction || predictionPayload.odds || null;
   if (odds) {
+    const capturedAt = asIso(odds.capturedAt) || generatedAt;
+    const kickoffAt = asIso(match?.kickoff || snapshot.kickoff);
+    const availableBeforeKickoff = Boolean(capturedAt && kickoffAt && Date.parse(capturedAt) < Date.parse(kickoffAt));
+    const minutesBeforeKickoff = availableBeforeKickoff
+      ? Math.floor((Date.parse(kickoffAt) - Date.parse(capturedAt)) / 60000)
+      : null;
     await sql.query(
       `
         insert into odds_snapshots (
           odds_snapshot_id, prediction_id, provider, bookmaker, market, home, draw, away,
-          captured_at, status, missing_reason
+          captured_at, odds_role, available_before_kickoff, minutes_before_kickoff, status, missing_reason
         )
-        values ($1, $2, $3, $4, '1X2', $5, $6, $7, $8, $9, $10)
+        values ($1, $2, $3, $4, '1X2', $5, $6, $7, $8, $9, $10, $11, $12, $13)
         on conflict (odds_snapshot_id) do nothing
       `,
       [
@@ -426,7 +432,10 @@ async function upsertPredictionSnapshot(sql, snapshot, matchById) {
         odds.home ?? null,
         odds.draw ?? null,
         odds.away ?? null,
-        asIso(odds.capturedAt) || generatedAt,
+        capturedAt,
+        availableBeforeKickoff ? "prematch" : "unknown",
+        availableBeforeKickoff,
+        minutesBeforeKickoff,
         snapshot.oddsStatus || predictionPayload.oddsStatus || "captured",
         snapshot.oddsMissingReason || predictionPayload.oddsMissingReason || null,
       ]
@@ -500,7 +509,7 @@ export async function readDatabaseDay(dateKey, options = {}) {
         ) as historical_odds_payload
       from matches m
       left join match_stats ms on ms.match_id = m.match_id
-      where m.date_key = $1
+      where m.date_key = $1 and m.identity_status = 'resolved'
       order by m.kickoff_at nulls last, m.home_team_name, m.away_team_name
       limit $2
     `,
@@ -511,7 +520,7 @@ export async function readDatabaseDay(dateKey, options = {}) {
       select ps.prediction_payload
       from prediction_snapshots ps
       join matches m on m.match_id = ps.match_id
-      where m.date_key = $1
+      where m.date_key = $1 and m.identity_status = 'resolved'
       order by ps.generated_at desc
       limit $2
     `,
@@ -649,6 +658,7 @@ async function resolveMatchIdByFixture(sql, { matchId, dateKey, homeClubId, away
         select match_id
         from matches
         where date_key = $1
+          and identity_status = 'resolved'
           and home_club_id = $2
           and away_club_id = $3
         order by kickoff_at nulls last, updated_at desc
@@ -664,6 +674,7 @@ async function resolveMatchIdByFixture(sql, { matchId, dateKey, homeClubId, away
         select match_id
         from matches
         where date_key = $1
+          and identity_status = 'resolved'
           and lower(home_team_name) = lower($2)
           and lower(away_team_name) = lower($3)
         order by kickoff_at nulls last, updated_at desc
