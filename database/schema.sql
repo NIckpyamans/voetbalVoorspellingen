@@ -157,6 +157,20 @@ create table if not exists source_conflicts (
   unique (entity_type, entity_key, field_name)
 );
 
+create table if not exists source_conflict_repairs (
+  source_conflict_repair_id bigserial primary key,
+  source_conflict_id text not null references source_conflicts(source_conflict_id),
+  entity_key text not null,
+  field_name text not null,
+  previous_value jsonb,
+  applied_value jsonb,
+  source_record_id text references source_records(source_record_id),
+  source_trust_score numeric,
+  repair_status text not null,
+  repair_reason text,
+  repaired_at timestamptz not null default now()
+);
+
 create table if not exists integrity_metric_snapshots (
   integrity_metric_snapshot_id bigserial primary key,
   captured_at timestamptz not null default now(),
@@ -699,6 +713,7 @@ create index if not exists idx_coverage_repair_requests_status on coverage_repai
 create index if not exists idx_venues_country_city on venues(country_id, city);
 create index if not exists idx_source_records_entity on source_records(entity_type, entity_key, fetched_at desc);
 create index if not exists idx_source_conflicts_status on source_conflicts(status, detected_at desc);
+create index if not exists idx_source_conflict_repairs_conflict_date on source_conflict_repairs(source_conflict_id, repaired_at desc);
 create index if not exists idx_provider_trust_history_provider_date on provider_trust_history(provider, captured_at desc);
 create index if not exists idx_integrity_metric_snapshots_key_date on integrity_metric_snapshots(metric_key, dimension_key, captured_at desc);
 create index if not exists idx_standings_snapshots_season on standings_snapshots(season_id, captured_at desc);

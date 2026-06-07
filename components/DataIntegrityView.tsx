@@ -31,6 +31,12 @@ const DataIntegrityView: React.FC = () => {
 
   const summary = data.summary || {};
   const trendItems = trendGroups(data.trends);
+  const modelQuality = Object.values((data.modelQualityTrends || []).reduce((groups: Record<string, any>, row: any) => {
+    if (!groups[row.dimension_key]) groups[row.dimension_key] = { dimension: row.dimension_key, metrics: {}, metadata: row.metadata || {} };
+    groups[row.dimension_key].metrics[row.metric_key] = Number(row.metric_value || 0);
+    return groups;
+  }, {})) as Array<{ dimension: string; metrics: Record<string, number>; metadata: any }>;
+  const roiMetric = (key: string) => Number((data.roiClvReadiness || []).find((row: any) => row.metric_key === key)?.metric_value || 0);
   const cards = [
     ["Opgeloste identiteit", `${number(summary.resolved_matches)} / ${number(summary.matches)}`, "text-emerald-300"],
     ["Quarantaine", number(summary.quarantined_matches), "text-amber-300"],
@@ -151,6 +157,44 @@ const DataIntegrityView: React.FC = () => {
           })}
         </div>
       </section>
+
+      <div className="grid gap-5 xl:grid-cols-[1.3fr_0.7fr]">
+        <section className="glass-card rounded-3xl border border-sky-500/15 p-5">
+          <h3 className="text-sm font-black uppercase text-sky-200">Modelkwaliteit per competitie en versie</h3>
+          <div className="mt-4 max-h-[420px] space-y-2 overflow-y-auto">
+            {modelQuality.map((item) => (
+              <div key={item.dimension} className="rounded-2xl border border-white/5 bg-slate-950/35 p-3">
+                <div className="truncate text-[10px] font-black text-white">{item.metadata.competitionId || "Onbekende competitie"}</div>
+                <div className="mt-1 truncate text-[8px] text-slate-500">{item.metadata.modelVersion || "Onbekend model"}</div>
+                <div className="mt-3 grid grid-cols-3 gap-2 text-center">
+                  <div><div className="text-sm font-black text-sky-300">{number(item.metrics.model_evaluation_count)}</div><div className="text-[7px] uppercase text-slate-500">evaluaties</div></div>
+                  <div><div className="text-sm font-black text-emerald-300">{pct(item.metrics.model_outcome_hit_rate)}</div><div className="text-[7px] uppercase text-slate-500">uitkomst hit</div></div>
+                  <div><div className="text-sm font-black text-amber-300">{Number(item.metrics.model_average_brier || 0).toFixed(3)}</div><div className="text-[7px] uppercase text-slate-500">Brier</div></div>
+                </div>
+              </div>
+            ))}
+          </div>
+        </section>
+        <section className="glass-card rounded-3xl border border-lime-500/15 p-5">
+          <h3 className="text-sm font-black uppercase text-lime-200">ROI/CLV kwaliteitsgate</h3>
+          <p className="mt-2 text-[10px] leading-relaxed text-slate-500">Publicatie start pas zodra minimaal 100 veilige prematch- en closing-waarnemingen beschikbaar zijn.</p>
+          <div className="mt-4 space-y-3">
+            {[
+              ["Prematch odds", roiMetric("roi_clv_safe_prematch_odds"), roiMetric("roi_clv_roi_ready")],
+              ["Closing paren", roiMetric("roi_clv_closing_pairs"), roiMetric("roi_clv_clv_ready")],
+            ].map(([label, value, ready]) => (
+              <div key={String(label)} className="rounded-2xl border border-white/5 bg-slate-950/35 p-3">
+                <div className="flex justify-between text-[9px] font-black text-white"><span>{label}</span><span className={ready ? "text-emerald-300" : "text-amber-300"}>{ready ? "gereed" : "wachten"}</span></div>
+                <div className="mt-2 h-1.5 overflow-hidden rounded-full bg-slate-900"><div className="h-full rounded-full bg-lime-400" style={{ width: `${Math.min(100, Number(value))}%` }} /></div>
+                <div className="mt-2 text-[8px] text-slate-500">{number(value)} / 100 veilige waarnemingen</div>
+              </div>
+            ))}
+            <div className="rounded-2xl border border-cyan-500/10 bg-cyan-500/5 p-3 text-[9px] text-cyan-200">
+              Automatische repairs: {number((data.repairSummary || []).find((row: any) => row.repair_status === "applied")?.rows || 0)}
+            </div>
+          </div>
+        </section>
+      </div>
 
       <section className="glass-card rounded-3xl border border-violet-500/15 p-5">
         <h3 className="text-sm font-black uppercase text-violet-200">Partitioneringsreadiness</h3>

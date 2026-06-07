@@ -42,7 +42,15 @@ for (const row of profiles.filter((item) => String(item.provider).includes("+"))
 }
 await sql.query(`
   with accuracy as (
-    select msr.provider,count(1)::int settled_records,
+    select msr.provider,count(1)::int settled_records,sum((
+        case
+          when jsonb_typeof(sr.payload->'score') = 'object'
+            and jsonb_typeof(sr.payload#>'{score,ft}') = 'array'
+          then (sr.payload#>>'{score,ft,0}') || '-' || (sr.payload#>>'{score,ft,1}')
+          else regexp_replace(coalesce(sr.payload->>'score',sr.payload->>'finalScore',''),'\\s','','g')
+        end
+        = mr.final_home_goals::text||'-'||mr.final_away_goals::text
+      )::int)::numeric correct_records,
       avg((
         case
           when jsonb_typeof(sr.payload->'score') = 'object'
@@ -64,13 +72,24 @@ await sql.query(`
       ''
     ) is not null
     group by msr.provider
+  ), corrected as (
+    select a.*,p.base_trust_score,
+      (a.correct_records + p.base_trust_score * 50) / (a.settled_records + 50) bayesian_accuracy,
+      greatest(0,(
+        a.result_accuracy + 1.9208/a.settled_records -
+        1.96*sqrt((a.result_accuracy*(1-a.result_accuracy)+0.9604/a.settled_records)/a.settled_records)
+      )/(1+3.8416/a.settled_records)) wilson_lower_bound
+    from accuracy a join provider_trust_profiles p on p.provider=a.provider
   )
   update provider_trust_profiles p set
-    resolution_win_rate=a.result_accuracy,
-    effective_trust_score=least(0.99,greatest(0.1,p.effective_trust_score*0.65+a.result_accuracy*0.35)),
-    metrics=p.metrics||jsonb_build_object('resultAccuracy',a.result_accuracy,'settledRecords',a.settled_records,'scoringMethod','outcome_weighted_v2'),
+    resolution_win_rate=c.bayesian_accuracy,
+    effective_trust_score=least(0.99,greatest(0.1,p.effective_trust_score*0.65+(c.bayesian_accuracy*0.7+c.wilson_lower_bound*0.3)*0.35)),
+    metrics=p.metrics||jsonb_build_object(
+      'rawResultAccuracy',c.result_accuracy,'resultAccuracy',c.bayesian_accuracy,'wilsonLowerBound',c.wilson_lower_bound,
+      'settledRecords',c.settled_records,'priorStrength',50,'scoringMethod','bayesian_wilson_outcome_v3'
+    ),
     updated_at=now()
-  from accuracy a where a.provider=p.provider
+  from corrected c where c.provider=p.provider
 `);
 await sql.query(`
   update match_source_records msr set trust_score=p.effective_trust_score,updated_at=now()

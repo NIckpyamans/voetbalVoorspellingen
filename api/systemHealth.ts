@@ -222,7 +222,7 @@ export async function sendSystemHealth(_req: any, res: any, mode = "health") {
     if (String(_req?.query?.detail || "") === "integrity") {
       const sql = getSql();
       if (!sql) return res.status(503).json({ ok: false, error: "database_not_configured" });
-      const [summaryRows, quarantine, providers, conflicts, auditCoverage, trends, partitions] = await Promise.all([
+      const [summaryRows, quarantine, providers, conflicts, auditCoverage, trends, partitions, modelQualityTrends, repairSummary, roiClvReadiness] = await Promise.all([
         sql.query(`select count(1)::int matches,count(1) filter(where identity_status='resolved')::int resolved_matches,
           count(1) filter(where identity_status='quarantined')::int quarantined_matches,
           (select count(1)::int from source_conflicts) conflicts,(select count(1)::int from source_audit) audit_rows,
@@ -247,10 +247,19 @@ export async function sendSystemHealth(_req: any, res: any, mode = "health") {
         ) metrics where rank<=30 order by metric_key,captured_at`),
         sql.query(`select table_name,partition_column,recommended_interval,current_rows,activate_after_rows,migration_status,readiness,assessed_at
           from partition_migration_registry order by current_rows desc`),
+        sql.query(`select dimension_key,metric_key,metric_value,captured_at,metadata from (
+          select dimension_key,metric_key,metric_value,captured_at,metadata,
+            row_number() over(partition by dimension_key,metric_key order by captured_at desc) rank
+          from integrity_metric_snapshots where dimension_key<>'global' and metric_key like 'model_%'
+        ) quality where rank=1 order by dimension_key,metric_key`),
+        sql.query(`select repair_status,count(1)::int rows from source_conflict_repairs group by repair_status order by repair_status`),
+        sql.query(`select metric_key,metric_value,metadata,captured_at from integrity_metric_snapshots
+          where metric_key in ('roi_clv_minimum_sample','roi_clv_roi_ready','roi_clv_clv_ready','roi_clv_safe_prematch_odds','roi_clv_closing_pairs')
+          order by captured_at desc limit 10`),
       ]);
       setCorsHeaders(_req, res);
       res.setHeader("Cache-Control", "s-maxage=60, stale-while-revalidate=120");
-      return res.status(200).json({ ok: true, generatedAt: new Date().toISOString(), summary: summaryRows[0] || {}, quarantine, providers, conflicts, auditCoverage, trends, partitions });
+      return res.status(200).json({ ok: true, generatedAt: new Date().toISOString(), summary: summaryRows[0] || {}, quarantine, providers, conflicts, auditCoverage, trends, partitions, modelQualityTrends, repairSummary, roiClvReadiness });
     }
     const payload = await buildSystemHealth(mode);
     setCorsHeaders(_req, res);

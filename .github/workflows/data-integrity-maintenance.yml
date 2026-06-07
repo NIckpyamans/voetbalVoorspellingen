@@ -46,6 +46,11 @@ jobs:
         env:
           DATABASE_URL: ${{ secrets.DATABASE_URL }}
           POSTGRES_URL: ${{ secrets.POSTGRES_URL }}
+      - name: Repair trusted field-level source conflicts
+        run: npm run db:sources:conflicts:repair
+        env:
+          DATABASE_URL: ${{ secrets.DATABASE_URL }}
+          POSTGRES_URL: ${{ secrets.POSTGRES_URL }}
       - name: Audit every prediction source field
         run: npm run db:sources:audit
         env:
