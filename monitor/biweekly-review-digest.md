@@ -1,24 +1,24 @@
 # FootyAI tweewekelijkse AI-digest
 
-Periode: 2026-05-21 t/m 2026-06-03
+Periode: 2026-05-26 t/m 2026-06-08
 
-AI bundel over de laatste 14 dagen: 5 hoofdthema's uit 18 monitorbevindingen.
+AI bundel over de laatste 14 dagen: 5 hoofdthema's uit 26 monitorbevindingen.
 
 - Runs: 14
-- Bevindingen: 18
+- Bevindingen: 26
 - Thema's: 5
 
 ## Hoofdpunten
-- Workerdata verouderd (10x, severity: high)
+- Workerdata verouderd (8x, severity: high)
   - Gebruik het reviewbranch-voorstel als veilige volgende patchronde.
-- Geen speeldagdata (4x, severity: medium)
+- Geen speeldagdata (6x, severity: medium)
   - Controleer brondekking en dagfilter in de worker voor vandaag + morgen.
+- Bekerschema leeg (6x, severity: medium)
+  - Gebruik het reviewbranch-voorstel als veilige volgende patchronde.
+- Fixturekalender onzeker (4x, severity: medium)
+  - Controleer kalenderfallbacks; 0 wedstrijden is alleen ok als de worker dat kan verklaren.
 - H2H niet gevuld (2x, severity: medium)
   - Trek H2H verder uit historische competitiebestanden en bewaak fallbackdekking in de worker.
-- Fixturekalender onzeker (1x, severity: medium)
-  - Controleer kalenderfallbacks; 0 wedstrijden is alleen ok als de worker dat kan verklaren.
-- Bekerschema leeg (1x, severity: medium)
-  - Gebruik het reviewbranch-voorstel als veilige volgende patchronde.
 
 ## Architectuuranalyse
 Professionele architectuuranalyse voor schaalbaarheid, datakwaliteit, AI-agentwaarde, databasegroei en modelbetrouwbaarheid.
@@ -70,8 +70,8 @@ Professionele architectuuranalyse voor schaalbaarheid, datakwaliteit, AI-agentwa
 5. Odds en closing-line kalibratie live beoordelen (Middel, impact: Hoog) - ROI/CLV is pas betrouwbaar zodra echte odds_at_prediction en closing odds consequent binnenkomen.
 
 ## Reviewbranch voorstel
-- codex/review-20260603
-- AI reviewvoorstel voor 2026-06-03: 1 aandachtspunt(en) met patchadvies, niet automatisch live.
+- codex/review-20260608
+- AI reviewvoorstel voor 2026-06-08: 1 aandachtspunt(en) met patchadvies, niet automatisch live.
 
 ## Mailstatus
 - Mailverzending vereist nog aparte mailcredentials of een mailservice. De bundel wordt nu wel automatisch opgebouwd en opgeslagen.

@@ -1,11 +1,11 @@
 # Data Quality Audit
 
-Laatst bijgewerkt: 2026-06-03T08:27:58.109Z
+Laatst bijgewerkt: 2026-06-08T11:21:45.550Z
 Lookback: 45 dagen
 
 ## Scores
-- Wedstrijden: 462
-- Oude wedstrijden: 462
+- Wedstrijden: 455
+- Oude wedstrijden: 455
 - Pending result backfills: 0
 - Ontbrekende oude scores: 0
 - H2H-dekking: 86%
