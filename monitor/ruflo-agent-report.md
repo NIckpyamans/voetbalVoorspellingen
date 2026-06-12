@@ -1,13 +1,13 @@
 # Ruflo-style AI monitor
 
-Datum: 2026-06-12
+Datum: 2026-06-13
 
 Ruflo draait als extra agentlaag naast de app: hij leest monitor/data/reviews, zoekt gratis oplossingen en maakt patchadvies zonder blind live te wijzigen.
 
 ## Agents
 - Data: Datalaag: H2H 0%, bookmakers 0%, refs 0%.
 - Leren: Leerlaag: 691 reviews, exact 12%, winnaar/gelijk 41%, top-5 exact 14%.
-- Controle: Ontwikkelcontrole: 0 actieve monitorissues op 2026-06-12; digest 2026-05-26 t/m 2026-06-08.
+- Controle: Ontwikkelcontrole: 0 actieve monitorissues op 2026-06-13; digest 2026-05-26 t/m 2026-06-08.
 
 ## Gratis acties
 1. [high] Wedstrijddag fallbackketen strakker maken (data) - Laat de worker altijd meerdere gratis bronnen proberen: SofaScore -> TheSportsDB -> OpenLigaDB -> football-data/openfootball.
