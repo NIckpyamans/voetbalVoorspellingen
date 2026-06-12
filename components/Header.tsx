@@ -1,6 +1,6 @@
 import React from 'react';
 
-type View = 'dashboard' | 'history' | 'standings' | 'modelops' | 'integrity' | 'providers' | 'settings';
+type View = 'dashboard' | 'worldcup' | 'history' | 'standings' | 'modelops' | 'integrity' | 'providers' | 'settings';
 
 interface HeaderProps {
   view?: View;
@@ -38,6 +38,7 @@ const Header: React.FC<HeaderProps> = ({ view, currentView, onViewChange }) => {
         <nav className="hidden lg:flex gap-1 items-center">
           {([
             { key: 'dashboard',  label: 'Dashboard', icon: 'fa-home'        },
+            { key: 'worldcup',   label: 'WK 2026', icon: 'fa-trophy'        },
             { key: 'standings',  label: 'Standen',   icon: 'fa-table'       },
             { key: 'history',    label: 'Geschiedenis', icon: 'fa-history'  },
             { key: 'modelops',   label: 'Model Ops', icon: 'fa-chart-line'  },

@@ -21,8 +21,8 @@ const FILES = {
   logo: path.join(ROOT, "api", "logo.ts"),
   standings: path.join(ROOT, "api", "standings.ts"),
   health: path.join(ROOT, "api", "health.ts"),
-  status: path.join(ROOT, "api", "status.ts"),
-  systemCheck: path.join(ROOT, "api", "system-check.ts"),
+  status: path.join(ROOT, "api", "health.ts"),
+  systemCheck: path.join(ROOT, "api", "health.ts"),
   logger: path.join(ROOT, "shared", "logger.js"),
   http: path.join(ROOT, "shared", "http.js"),
 };
