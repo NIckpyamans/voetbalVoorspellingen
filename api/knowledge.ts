@@ -35,6 +35,28 @@ function normalize(value: unknown) {
     .trim();
 }
 
+function queryTerms(query: string) {
+  const aliases: Record<string, string[]> = {
+    competitie: ["competition", "league", "season"],
+    competities: ["competition", "league", "season"],
+    seizoen: ["season"],
+    seizoenen: ["season"],
+    opgeslagen: ["planned", "active", "closed"],
+    wedstrijd: ["match"],
+    wedstrijden: ["match"],
+    club: ["team"],
+    clubs: ["team"],
+    ploeg: ["team"],
+    ploegen: ["team"],
+    probleem: ["health"],
+    problemen: ["health"],
+    fout: ["health"],
+    fouten: ["health"],
+  };
+  const base = normalize(query).split(" ").filter((term) => term.length > 1);
+  return [...new Set(base.flatMap((term) => [term, ...(aliases[term] || [])]))];
+}
+
 function competitionItems() {
   const index = readJson("data/competitions/index.json", { competitions: [] });
   return (index.competitions || []).map((item: any): KnowledgeItem => ({
@@ -179,7 +201,7 @@ export default async function handler(req: any, res: any) {
   const query = String(req.query?.q || "").trim().slice(0, 240);
   if (query.length < 2) return res.status(400).json({ ok: false, error: "query_too_short" });
   const generatedAt = new Date().toISOString();
-  const terms = normalize(query).split(" ").filter((term) => term.length > 1);
+  const terms = queryTerms(query);
   const results = buildIndex()
     .map((item) => ({ ...item, score: score(item, terms) }))
     .filter((item) => item.score > 0)
