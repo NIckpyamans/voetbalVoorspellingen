@@ -19,11 +19,29 @@ on:
         default: ""
 
 jobs:
+  prepare-database:
+    if: github.event_name == 'schedule'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+      - name: Apply database schema once before parallel imports
+        run: node scripts/apply-database-schema.js
+        env:
+          DATABASE_URL: ${{ secrets.DATABASE_URL }}
+          POSTGRES_URL: ${{ secrets.POSTGRES_URL }}
+
   new-season-discovery:
     if: github.event_name == 'schedule'
+    needs: prepare-database
     runs-on: ubuntu-latest
     strategy:
       fail-fast: false
+      max-parallel: 4
       matrix:
         league: [E0, E1, N1, D1, SP1, I1, F1]
     steps:
@@ -42,9 +60,11 @@ jobs:
 
   openfootball-season-discovery:
     if: github.event_name == 'schedule'
+    needs: prepare-database
     runs-on: ubuntu-latest
     strategy:
       fail-fast: false
+      max-parallel: 4
       matrix:
         league: [en.1, en.2, nl.1, de.1, es.1, it.1, fr.1]
     steps:
@@ -63,7 +83,7 @@ jobs:
 
   season-discovery-finalize:
     if: github.event_name == 'schedule'
-    needs: [new-season-discovery, openfootball-season-discovery]
+    needs: [new-season-discovery, openfootball-season-discovery, football-data, statsbomb-xg]
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -113,9 +133,11 @@ jobs:
 
   football-data:
     if: github.event_name == 'schedule'
+    needs: prepare-database
     runs-on: ubuntu-latest
     strategy:
       fail-fast: false
+      max-parallel: 4
       matrix:
         league: [E0, E1, N1, D1, SP1, I1, F1]
         season_folder: [2526, 2425]
@@ -126,10 +148,6 @@ jobs:
           node-version: 22
           cache: npm
       - run: npm ci
-      - run: node scripts/apply-database-schema.js
-        env:
-          DATABASE_URL: ${{ secrets.DATABASE_URL }}
-          POSTGRES_URL: ${{ secrets.POSTGRES_URL }}
       - run: node scripts/import-free-sources.js --source=football-data --league=${{ matrix.league }} --season-folder=${{ matrix.season_folder }}
         env:
           DATABASE_URL: ${{ secrets.DATABASE_URL }}
@@ -142,6 +160,7 @@ jobs:
 
   statsbomb-xg:
     if: github.event_name == 'schedule'
+    needs: prepare-database
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -157,17 +176,6 @@ jobs:
           POSTGRES_URL: ${{ secrets.POSTGRES_URL }}
           STATSBOMB_EVENT_LIMIT: 80
           STATSBOMB_COMPETITION_LIMIT: 24
-      - name: Canonicalize imported club identities
-        run: node scripts/merge-source-clubs.js
-        env:
-          DATABASE_URL: ${{ secrets.DATABASE_URL }}
-          POSTGRES_URL: ${{ secrets.POSTGRES_URL }}
-      - name: Rebuild H2H after club canonicalization
-        run: node scripts/reset-competition-seasons.js
-        env:
-          DATABASE_URL: ${{ secrets.DATABASE_URL }}
-          POSTGRES_URL: ${{ secrets.POSTGRES_URL }}
-
   manual:
     if: github.event_name == 'workflow_dispatch'
     runs-on: ubuntu-latest

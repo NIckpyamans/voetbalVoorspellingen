@@ -58,6 +58,7 @@ for (const club of clubs) {
 
 let mergedGroups = 0;
 let removedClubs = 0;
+let retainedReferencedClubs = 0;
 for (const [key, group] of groups.entries()) {
   const [countryKey, nameKey] = key.split("|");
   const canonicalClubId = `club-${countryKey}-${nameKey}`;
@@ -146,9 +147,21 @@ for (const [key, group] of groups.entries()) {
   await sql.query("update injuries set club_id = $1 where club_id = any($2::text[])", [canonicalClubId, oldIds]);
   await sql.query("update suspensions set club_id = $1 where club_id = any($2::text[])", [canonicalClubId, oldIds]);
   await sql.query("delete from club_aliases where club_id = any($1::text[])", [oldIds]);
-  await sql.query("delete from clubs where club_id = any($1::text[])", [oldIds]);
+  const deletedClubs = await sql.query(
+    `
+      delete from clubs c
+      where c.club_id = any($1::text[])
+        and not exists (
+          select 1 from matches m
+          where m.home_club_id = c.club_id or m.away_club_id = c.club_id
+        )
+      returning c.club_id
+    `,
+    [oldIds]
+  );
   mergedGroups += 1;
-  removedClubs += oldIds.length;
+  removedClubs += deletedClubs.length;
+  retainedReferencedClubs += oldIds.length - deletedClubs.length;
 }
 
-console.log(JSON.stringify({ ok: true, groups: groups.size, mergedGroups, removedClubs }, null, 2));
+console.log(JSON.stringify({ ok: true, groups: groups.size, mergedGroups, removedClubs, retainedReferencedClubs }, null, 2));
