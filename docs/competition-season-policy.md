@@ -16,6 +16,11 @@ Run:
 
 ```bash
 npm run season:prepare-next
+npm run season:sync-membership
 ```
 
 The read-only FootyAI knowledge endpoint indexes both historical and planned competition files.
+
+The membership sync only uses a complete previous-season archive as a baseline and marks it
+`previous_season_baseline`. Promotions, relegations and European qualification remain unconfirmed
+until imported source data proves the new composition.

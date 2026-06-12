@@ -23,6 +23,7 @@ import {
 } from "./prediction-analytics.js";
 import { fetchOddsAtPrediction } from "./odds-provider.js";
 import { writeJsonFile, writeSplitDataFiles } from "./worker/archive.js";
+import { buildCupSheetsFromMatches, mergeCupSheets } from "../shared/cupSheets.js";
 import { loadLocalEnv, readDatabaseFeatureContext, syncStoreToDatabase } from "../shared/database.js";
 import {
   createSafeFetch,
@@ -61,6 +62,7 @@ const SOFA = "https://api.sofascore.com/api/v1";
 const THESPORTSDB_BASE = "https://www.thesportsdb.com/api/v1/json";
 const FOOTBALL_DATA_BASE = "https://api.football-data.org/v4";
 const sofaFetchCircuit = { blocked: false, failures: 0, logged: false };
+const ROOT = process.cwd();
 const DATA_FILE = path.resolve(process.cwd(), "server_data.json");
 const SPLIT_DATA_DIR = path.resolve(process.cwd(), "data");
 const COMPETITION_ARCHIVE_DIR = path.join(SPLIT_DATA_DIR, "competitions");
@@ -10243,7 +10245,6 @@ async function main() {
   repairStoredPredictionScoreSelections(store);
   compactStore(store, today, now);
   for (const date of dates) store.knockoutOverview[date] = [];
-  store.cupSheets = {};
   rebuildReviewsAndLearning(store);
 
   let clubEloSnapshot = store.clubEloCache;
@@ -11200,6 +11201,7 @@ async function main() {
   store.backtestSegmentation = buildBacktestSegmentation(store);
   rebuildLeagueCalibrationProfilesFromReviews(store);
   const selfHealing = await runSelfHealingRetries(store, today, now);
+  store.cupSheets = mergeCupSheets(store.cupSheets, buildCupSheetsFromMatches(store));
   store.sourceCoverage = buildSourceCoverage(store, today);
   store.dataCompletenessAudit = buildDataCompletenessAudit(store, today);
   store.oddsIntegrationReadiness = buildOddsIntegrationReadiness(store, today);

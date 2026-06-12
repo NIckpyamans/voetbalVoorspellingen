@@ -1,6 +1,5 @@
 const DEFAULT_ALLOWED_ORIGINS = [
   "https://voetbalvoorspellingen-clean.vercel.app",
-  "https://voorspellingenprive.vercel.app",
   "http://localhost:3000",
   "http://localhost:5173",
 ];

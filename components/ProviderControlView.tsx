@@ -9,9 +9,12 @@ const ProviderControlView: React.FC = () => {
   useEffect(() => { load(); }, []);
 
   const trial = async (provider: string, fieldName: string) => {
+    const token = window.sessionStorage.getItem("footyai_admin_token") || window.prompt("Voer het admintoken in om een providerproef te starten.")?.trim() || "";
+    if (!token) return;
+    window.sessionStorage.setItem("footyai_admin_token", token);
     await fetch("/api/system-check?detail=provider-control", {
       method: "POST",
-      headers: { "content-type": "application/json" },
+      headers: { "content-type": "application/json", "x-write-token": token },
       body: JSON.stringify({ provider, fieldName, action: "start_trial" }),
     });
     await load();

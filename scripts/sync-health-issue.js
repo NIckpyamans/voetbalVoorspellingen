@@ -53,6 +53,8 @@ function gh(args) {
   return result.stdout.trim();
 }
 
+gh(["label", "create", "health-check", "--color", "0E8A16", "--description", "Automatische FootyAI health-checkbevinding", "--force"]);
+gh(["label", "create", "needs-triage", "--color", "FBCA04", "--description", "Moet inhoudelijk worden beoordeeld", "--force"]);
 const existing = gh(["issue", "list", "--state", "open", "--label", "health-check", "--search", marker, "--json", "number", "--jq", ".[0].number"]);
 if (existing) {
   gh(["issue", "edit", existing, "--title", title, "--body", body]);

@@ -2,45 +2,9 @@ import { fetchStandingsData, fetchServerStore } from "./_dataSource.js";
 import { createLogger, getErrorDetails } from "../shared/logger.js";
 import { setCorsHeaders } from "../shared/cors.js";
 import { databaseConfigured, getSql } from "../shared/database.js";
+import { buildCupSheetsFromMatches } from "../shared/cupSheets.js";
 
 const logger = createLogger("api.standings");
-
-function buildCupSheetsFromMatches(store: any) {
-  const sheets: Record<string, any> = {};
-  const allMatches = Object.values(store.matches || {}).flat() as any[];
-
-  for (const match of allMatches) {
-    const isCupLike =
-      match.aggregate?.active ||
-      String(match.context?.summary || "").includes("knock-out") ||
-      String(match.league || "").includes("Champions League") ||
-      String(match.league || "").includes("Europa League") ||
-      String(match.league || "").includes("Conference League") ||
-      String(match.league || "").includes("Beker");
-
-    if (!isCupLike) continue;
-
-    const league = match.league || "Bekertoernooi";
-    const round = String(match.roundLabel || "Knock-out");
-    if (!sheets[league]) sheets[league] = { league, rounds: {} };
-    if (!sheets[league].rounds[round]) sheets[league].rounds[round] = [];
-
-    sheets[league].rounds[round].push({
-      league,
-      roundLabel: match.roundLabel || null,
-      stakes: match.context?.stakes || match.context?.summary || null,
-      matchId: match.id,
-      kickoff: match.kickoff || null,
-      homeTeamName: match.homeTeamName,
-      awayTeamName: match.awayTeamName,
-      aggregate: match.aggregate || null,
-      score: match.score || null,
-      status: match.status || "NS",
-    });
-  }
-
-  return sheets;
-}
 
 async function readDatabaseSeasonOverview() {
   if (!databaseConfigured()) return null;

@@ -4,6 +4,7 @@ import fs from "fs";
 import path from "path";
 import { addDaysToDateKey } from "../shared/date.js";
 import { buildFixtureCalendarStatus } from "../shared/fixtureCalendar.js";
+import { buildCupSheetsFromMatches } from "../shared/cupSheets.js";
 
 const ROOT = process.cwd();
 const DATA_FILE = path.join(ROOT, "server_data.json");
@@ -121,7 +122,9 @@ function collectDataChecks() {
     lastRunFresh,
   });
   const standingsCount = Object.keys(store.standings || {}).length;
-  const cupSheetCount = Object.keys(store.cupSheets || {}).length;
+  const cupSheetCount = Object.keys(
+    Object.keys(store.cupSheets || {}).length ? store.cupSheets : buildCupSheetsFromMatches(store)
+  ).length;
   const phaseReliabilityCount = Object.keys(store.phaseReliability || {}).length;
   const liveMatches = todayMatches.filter((match) => String(match.status || "").toUpperCase() === "LIVE");
   const liveWithoutMinute = liveMatches.filter(

@@ -6,6 +6,7 @@ import { buildFixtureCalendarStatus } from "../shared/fixtureCalendar.js";
 import { createLogger, getErrorDetails } from "../shared/logger.js";
 import { setCorsHeaders } from "../shared/cors.js";
 import { getSql } from "../shared/database.js";
+import { enforceWriteSecurity } from "../shared/writeSecurity.js";
 
 const logger = createLogger("api.system-health");
 const ROOT = process.cwd();
@@ -220,6 +221,7 @@ export async function buildSystemHealth(mode = "health") {
 export async function sendSystemHealth(_req: any, res: any, mode = "health") {
   try {
     if (String(_req?.query?.detail || "") === "integrity-alert" && _req.method === "POST") {
+      if (!enforceWriteSecurity(_req, res, { scope: "integrity-alert", limit: 8, requireToken: true, requiredRole: "operator" })) return;
       const sql = getSql();
       if (!sql) return res.status(503).json({ ok: false, error: "database_not_configured" });
       const body = typeof _req.body === "string" ? JSON.parse(_req.body || "{}") : (_req.body || {});
@@ -231,6 +233,7 @@ export async function sendSystemHealth(_req: any, res: any, mode = "health") {
       return res.status(updated.length ? 200 : 404).json({ ok: Boolean(updated.length), alert: updated[0] || null });
     }
     if (String(_req?.query?.detail || "") === "provider-control" && _req.method === "POST") {
+      if (!enforceWriteSecurity(_req, res, { scope: "provider-control", limit: 4, requireToken: true, requiredRole: "admin" })) return;
       const sql=getSql(); if(!sql) return res.status(503).json({ok:false,error:"database_not_configured"});
       const body=typeof _req.body==="string"?JSON.parse(_req.body||"{}"):_req.body||{};
       if(!body.provider||!body.fieldName||body.action!=="start_trial") return res.status(400).json({ok:false,error:"invalid_provider_action"});

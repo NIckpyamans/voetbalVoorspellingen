@@ -38,9 +38,12 @@ const DataIntegrityView: React.FC = () => {
   }, {})) as Array<{ dimension: string; metrics: Record<string, number>; metadata: any }>;
   const roiMetric = (key: string) => Number((data.roiClvReadiness || []).find((row: any) => row.metric_key === key)?.metric_value || 0);
   const updateAlert = async (alertId: string, action: string) => {
+    const token = window.sessionStorage.getItem("footyai_operator_token") || window.prompt("Voer het operator- of admintoken in.")?.trim() || "";
+    if (!token) return;
+    window.sessionStorage.setItem("footyai_operator_token", token);
     const response = await fetch("/api/system-check?detail=integrity-alert", {
       method: "POST",
-      headers: { "content-type": "application/json" },
+      headers: { "content-type": "application/json", "x-write-token": token },
       body: JSON.stringify({ alertId, action }),
     });
     if (!response.ok) throw new Error("Alertactie mislukt");

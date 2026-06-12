@@ -8,6 +8,17 @@ interface HeaderProps {
   onViewChange: (view: View) => void;
 }
 
+const NAV_ITEMS = [
+  { key: 'dashboard', label: 'Dashboard', icon: 'fa-home' },
+  { key: 'worldcup', label: 'WK 2026', icon: 'fa-trophy' },
+  { key: 'knowledge', label: 'Vraag FootyAI', icon: 'fa-search' },
+  { key: 'standings', label: 'Standen', icon: 'fa-table' },
+  { key: 'history', label: 'Geschiedenis', icon: 'fa-history' },
+  { key: 'modelops', label: 'Model Ops', icon: 'fa-chart-line' },
+  { key: 'integrity', label: 'Integriteit', icon: 'fa-shield-alt' },
+  { key: 'providers', label: 'Providers', icon: 'fa-plug' },
+] as const;
+
 const Header: React.FC<HeaderProps> = ({ view, currentView, onViewChange }) => {
   const activeView = view || currentView;
 
@@ -36,16 +47,7 @@ const Header: React.FC<HeaderProps> = ({ view, currentView, onViewChange }) => {
       {/* Nav */}
       <div className="flex items-center gap-2">
         <nav className="hidden lg:flex gap-1 items-center">
-          {([
-            { key: 'dashboard',  label: 'Dashboard', icon: 'fa-home'        },
-            { key: 'worldcup',   label: 'WK 2026', icon: 'fa-trophy'        },
-            { key: 'knowledge',   label: 'Vraag FootyAI', icon: 'fa-search' },
-            { key: 'standings',  label: 'Standen',   icon: 'fa-table'       },
-            { key: 'history',    label: 'Geschiedenis', icon: 'fa-history'  },
-            { key: 'modelops',   label: 'Model Ops', icon: 'fa-chart-line'  },
-            { key: 'integrity',  label: 'Integriteit', icon: 'fa-shield-alt' },
-            { key: 'providers',  label: 'Providers', icon: 'fa-plug' },
-          ] as const).map(({ key, label, icon }) => (
+          {NAV_ITEMS.map(({ key, label, icon }) => (
             <button key={key}
               onClick={() => onViewChange(key)}
               aria-label={label}
@@ -59,6 +61,22 @@ const Header: React.FC<HeaderProps> = ({ view, currentView, onViewChange }) => {
             </button>
           ))}
         </nav>
+        <button
+          onClick={() => onViewChange('knowledge')}
+          aria-label="Vraag FootyAI"
+          className={`lg:hidden rounded-lg border px-2.5 py-1.5 text-[10px] font-black uppercase ${
+            activeView === 'knowledge' ? 'border-cyan-400/40 bg-cyan-500/20 text-cyan-200' : 'border-white/10 bg-white/5 text-slate-300'
+          }`}>
+          <i className="fas fa-search" />
+        </button>
+        <select
+          aria-label="Mobiele navigatie"
+          value={activeView || 'dashboard'}
+          onChange={(event) => onViewChange(event.target.value as View)}
+          className="max-w-28 rounded-lg border border-white/10 bg-slate-900 px-2 py-1.5 text-[10px] font-bold text-slate-200 lg:hidden">
+          {NAV_ITEMS.map((item) => <option key={item.key} value={item.key}>{item.label}</option>)}
+          <option value="settings">Instellingen</option>
+        </select>
 
         <div className="h-5 w-px bg-white/10 mx-1 hidden lg:block" />
 

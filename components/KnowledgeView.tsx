@@ -21,7 +21,7 @@ const KnowledgeView: React.FC = () => {
     setLoading(true);
     setError(null);
     try {
-      const response = await fetch(`/api/knowledge?q=${encodeURIComponent(nextQuery)}`, { cache: "no-store" });
+      const response = await fetch(`/api/knowledge?ai=1&q=${encodeURIComponent(nextQuery)}`, { cache: "no-store" });
       const payload = await response.json().catch(() => ({}));
       if (!response.ok || payload.ok === false) throw new Error(payload.error || "Zoeken mislukt");
       setData(payload);
@@ -69,6 +69,9 @@ const KnowledgeView: React.FC = () => {
               <span className="text-[9px] text-slate-500">{new Date(data.generatedAt).toLocaleString("nl-NL")}</span>
             </div>
             <p className="mt-3 text-sm leading-relaxed text-slate-200">{data.answer}</p>
+            <div className="mt-3 text-[9px] font-bold uppercase tracking-wider text-slate-500">
+              {data.answerMode === "openai_read_only" ? `OpenAI read-only · ${data.model || "model"}` : "Deterministische read-only fallback"}
+            </div>
             <div className="mt-4 flex flex-wrap gap-2">
               {(data.sources || []).map((source: string) => <span key={source} className="rounded-full bg-emerald-500/10 px-3 py-1 text-[8px] font-bold text-emerald-200">{source}</span>)}
             </div>

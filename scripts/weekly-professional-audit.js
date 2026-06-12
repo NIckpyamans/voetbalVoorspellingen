@@ -4,7 +4,7 @@ import fs from "fs";
 import path from "path";
 
 const ROOT = process.cwd();
-const BASE_URL = (process.env.FOOTYAI_BASE_URL || "https://voorspellingenprive.vercel.app").replace(/\/$/, "");
+const BASE_URL = (process.env.FOOTYAI_BASE_URL || "https://voetbalvoorspellingen-clean.vercel.app").replace(/\/$/, "");
 const OUTPUT_JSON = path.join(ROOT, "monitor", "ai-professional-audit.json");
 const OUTPUT_MD = path.join(ROOT, "monitor", "ai-professional-audit.md");
 

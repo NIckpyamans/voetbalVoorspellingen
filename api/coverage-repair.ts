@@ -42,7 +42,7 @@ export default async function handler(req: any, res: any) {
     return res.status(200).json({ ok: true, request: row || null });
   }
   if (req.method !== "POST") return res.status(405).json({ ok: false, error: "method_not_allowed" });
-  if (!enforceWriteSecurity(req, res, { scope: "coverage-repair", limit: 4, requireToken: true })) return;
+  if (!enforceWriteSecurity(req, res, { scope: "coverage-repair", limit: 4, requireToken: true, requiredRole: "operator" })) return;
 
   const requestId = `repair_${crypto.createHash("sha1").update(`${competitionId}|${competitionLabel}|${category}`).digest("hex").slice(0, 20)}`;
   const [row] = await sql.query(
@@ -58,7 +58,7 @@ export default async function handler(req: any, res: any) {
         last_error = null
       returning request_id, status, requested_at, started_at, completed_at, attempts, last_error, result_payload
     `,
-    [requestId, competitionId, competitionLabel, category, String(req.headers?.["user-agent"] || "").slice(0, 240)]
+    [requestId, competitionId, competitionLabel, category, `${req.footyAiRole || "unknown"}:${String(req.headers?.["user-agent"] || "").slice(0, 220)}`]
   );
   return res.status(202).json({ ok: true, queued: true, request: row });
 }

@@ -8,7 +8,7 @@ function safeEqual(left: string, right: string) {
   return a.length === b.length && crypto.timingSafeEqual(a, b);
 }
 
-export function enforceWriteSecurity(req: any, res: any, options: { scope: string; limit?: number; requireToken?: boolean }) {
+export function enforceWriteSecurity(req: any, res: any, options: { scope: string; limit?: number; requireToken?: boolean; requiredRole?: "operator" | "admin" }) {
   const origin = String(req.headers?.origin || "");
   const allowed = new Set(String(process.env.CORS_ALLOWED_ORIGINS || "https://voetbalvoorspellingen-clean.vercel.app")
     .split(",").map((value) => value.trim()).filter(Boolean));
@@ -17,12 +17,19 @@ export function enforceWriteSecurity(req: any, res: any, options: { scope: strin
     return false;
   }
   if (options.requireToken) {
-    const expected = String(process.env.WRITE_API_TOKEN || "");
     const provided = String(req.headers?.["x-write-token"] || "");
-    if (!expected || !provided || !safeEqual(expected, provided)) {
+    const requiredRole = String(options.requiredRole || "operator");
+    const tokens = [
+      { role: "admin", value: String(process.env.FOOTYAI_ADMIN_TOKEN || process.env.WRITE_API_TOKEN || "") },
+      { role: "operator", value: String(process.env.FOOTYAI_OPERATOR_TOKEN || "") },
+    ].filter((item) => item.value);
+    const matched = tokens.find((item) => provided && safeEqual(item.value, provided));
+    const allowed = matched && (requiredRole === "operator" || matched.role === "admin");
+    if (!allowed) {
       res.status(401).json({ ok: false, error: "write_token_required" });
       return false;
     }
+    req.footyAiRole = matched.role;
   }
   const forwarded = String(req.headers?.["x-forwarded-for"] || "").split(",")[0].trim();
   const key = `${options.scope}:${forwarded || req.socket?.remoteAddress || "unknown"}`;
