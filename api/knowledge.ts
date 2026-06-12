@@ -15,11 +15,8 @@ type KnowledgeItem = {
 const ROOT = process.cwd();
 const MAX_RESULTS = 30;
 const INDEX_TTL_MS = 5 * 60_000;
-const AI_DAILY_REQUEST_LIMIT = Math.max(1, Number(process.env.FOOTYAI_AI_DAILY_REQUEST_LIMIT || 50));
-const AI_MAX_OUTPUT_TOKENS = Math.max(100, Math.min(800, Number(process.env.FOOTYAI_AI_MAX_OUTPUT_TOKENS || 350)));
 let cachedIndex: KnowledgeItem[] | null = null;
 let cachedAt = 0;
-const aiUsage = new Map<string, { requests: number; inputTokens: number; outputTokens: number }>();
 
 function readJson(relativePath: string, fallback: any) {
   try {
@@ -136,27 +133,8 @@ function answerFor(query: string, results: KnowledgeItem[], generatedAt: string)
   return `Ik vond ${results.length} relevante items. De beste match is ${results[0].title}: ${results[0].subtitle}. Antwoord gegenereerd uit read-only FootyAI-bronnen op ${generatedAt}.`;
 }
 
-function usageDay() {
-  return new Date().toISOString().slice(0, 10);
-}
-
-function textFromResponse(payload: any) {
-  if (payload?.output_text) return String(payload.output_text);
-  return (payload?.output || [])
-    .flatMap((item: any) => item?.content || [])
-    .filter((item: any) => item?.type === "output_text")
-    .map((item: any) => item?.text || "")
-    .join("\n")
-    .trim();
-}
-
-async function answerWithModel(query: string, results: KnowledgeItem[]) {
-  const apiKey = String(process.env.OPENAI_API_KEY || "");
-  if (!apiKey) return null;
-  const day = usageDay();
-  const usage = aiUsage.get(day) || { requests: 0, inputTokens: 0, outputTokens: 0 };
-  if (usage.requests >= AI_DAILY_REQUEST_LIMIT) return { skipped: "daily_budget_reached", usage };
-
+async function answerWithOllama(query: string, results: KnowledgeItem[]) {
+  if (String(process.env.FOOTYAI_OLLAMA_ENABLED || "").toLowerCase() !== "true") return null;
   const evidence = results.slice(0, 10).map((item, index) => ({
     sourceNumber: index + 1,
     type: item.type,
@@ -166,31 +144,30 @@ async function answerWithModel(query: string, results: KnowledgeItem[]) {
     date: item.date || null,
     excerpt: item.text.slice(0, 500),
   }));
-  const response = await fetch("https://api.openai.com/v1/responses", {
+  const baseUrl = String(process.env.FOOTYAI_OLLAMA_URL || "http://127.0.0.1:11434").replace(/\/$/, "");
+  const controller = new AbortController();
+  const timeout = setTimeout(() => controller.abort(), 4_500);
+  const response = await fetch(`${baseUrl}/api/generate`, {
     method: "POST",
-    headers: { Authorization: `Bearer ${apiKey}`, "Content-Type": "application/json" },
+    headers: { "Content-Type": "application/json" },
+    signal: controller.signal,
     body: JSON.stringify({
-      model: process.env.FOOTYAI_OPENAI_MODEL || "gpt-5-mini",
-      max_output_tokens: AI_MAX_OUTPUT_TOKENS,
-      input: [
-        {
-          role: "system",
-          content: "Je bent de read-only FootyAI-assistent. Gebruik uitsluitend het aangeleverde bewijs. Noem bronnummers tussen blokhaken. Zeg duidelijk wanneer bewijs ontbreekt. Stel nooit wijzigingen of herstelacties als uitgevoerd voor.",
-        },
-        { role: "user", content: JSON.stringify({ question: query, evidence }) },
-      ],
+      model: process.env.FOOTYAI_OLLAMA_MODEL || process.env.OLLAMA_MODEL || "llama3.2:3b",
+      stream: false,
+      prompt: [
+        "Je bent de gratis read-only FootyAI-assistent.",
+        "Gebruik uitsluitend het bewijs hieronder. Noem bronnummers tussen blokhaken.",
+        "Zeg duidelijk wanneer bewijs ontbreekt. Voer nooit wijzigingen uit.",
+        JSON.stringify({ question: query, evidence }),
+      ].join("\n"),
+      options: { temperature: 0.2, num_predict: 350 },
     }),
   });
-  if (!response.ok) throw new Error(`openai_${response.status}`);
+  clearTimeout(timeout);
+  if (!response.ok) throw new Error(`ollama_${response.status}`);
   const payload = await response.json();
-  const nextUsage = {
-    requests: usage.requests + 1,
-    inputTokens: usage.inputTokens + Number(payload?.usage?.input_tokens || 0),
-    outputTokens: usage.outputTokens + Number(payload?.usage?.output_tokens || 0),
-  };
-  aiUsage.set(day, nextUsage);
-  console.log(JSON.stringify({ event: "footyai_ai_answer", day, model: payload?.model, usage: payload?.usage || null }));
-  return { answer: textFromResponse(payload), model: payload?.model || process.env.FOOTYAI_OPENAI_MODEL || "gpt-5-mini", usage: nextUsage };
+  const answer = String(payload?.response || "").trim();
+  return answer ? { answer, model: payload?.model || process.env.FOOTYAI_OLLAMA_MODEL || "local" } : null;
 }
 
 export default async function handler(req: any, res: any) {
@@ -212,9 +189,9 @@ export default async function handler(req: any, res: any) {
   let modelAnswer: any = null;
   if (useModel && results.length) {
     try {
-      modelAnswer = await answerWithModel(query, results);
+      modelAnswer = await answerWithOllama(query, results);
     } catch (error: any) {
-      console.warn(JSON.stringify({ event: "footyai_ai_failed", error: error?.message || String(error) }));
+      console.warn(JSON.stringify({ event: "footyai_ollama_unavailable", error: error?.message || String(error) }));
     }
   }
 
@@ -224,9 +201,9 @@ export default async function handler(req: any, res: any) {
     query,
     generatedAt,
     answer: modelAnswer?.answer || answerFor(query, results, generatedAt),
-    answerMode: modelAnswer?.answer ? "openai_read_only" : "deterministic_read_only",
+    answerMode: modelAnswer?.answer ? "ollama_local_read_only" : "deterministic_read_only",
     model: modelAnswer?.model || null,
-    aiUsage: modelAnswer?.usage || null,
+    freeMode: true,
     sources: [...new Set(results.slice(0, 8).map((item) => item.source))],
     results,
   });

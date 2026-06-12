@@ -1,12 +1,6 @@
-<div align="center">
-<img width="1200" height="475" alt="GHBanner" src="https://github.com/user-attachments/assets/0aa67016-6eaf-458a-adb2-6e31a0763ed6" />
-</div>
+# FootyAI
 
-# Run and deploy your AI Studio app
-
-This contains everything you need to run your app locally.
-
-View your app in AI Studio: https://ai.studio/apps/drive/1flTlewPJ1rfoPRvL7a_rL_U48tuFpRla
+Gratis voetbaldata-, voorspelling- en kennisapp. De productie-app gebruikt geen betaalde AI-API.
 
 ## Run Locally
 
@@ -18,10 +12,13 @@ View your app in AI Studio: https://ai.studio/apps/drive/1flTlewPJ1rfoPRvL7a_rL_
 2. Run the app:
    `npm run dev`
 
+Voor lokale tests inclusief `/api/*` routes gebruik je `vercel dev`. De gewone Vite-server test alleen de frontend.
+
 ## Notes
 
 - **No API keys needed.** Match data is pulled from a public (unofficial) SofaScore JSON feed.
 - Predictions run **fully locally** (Elo + Poisson) and the model **learns in your browser** by storing finished results in `localStorage`.
+- Vraag FootyAI is volledig gratis: productie gebruikt brongebonden antwoorden en bewaart de vraaggeschiedenis in de browser. Optioneel kan Ollama lokaal antwoorden verbeteren wanneer je eigen computer aanstaat.
 - Tailwind draait via de lokale Vite/PostCSS build; de productie-app gebruikt geen `cdn.tailwindcss.com` meer.
 - Optionele productiechecks staan in `.env.example` en `npm run readiness`. Zonder odds-key of database URL blijft de app eerlijk in no-key mode.
 - Postgres/Supabase is voorbereid via `database/schema.sql`; uitvoeren kan later met `npm run db:schema:apply` zodra er een database URL is.

@@ -188,12 +188,14 @@ function isRateLimited(req: any) {
 }
 
 async function tryOllama(prompt: string) {
+  if (String(process.env.FOOTYAI_OLLAMA_ENABLED || "").toLowerCase() !== "true") return null;
   try {
-    const response = await fetchWithRetry("http://127.0.0.1:11434/api/generate", {
+    const baseUrl = String(process.env.FOOTYAI_OLLAMA_URL || "http://127.0.0.1:11434").replace(/\/$/, "");
+    const response = await fetchWithRetry(`${baseUrl}/api/generate`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
-        model: process.env.OLLAMA_MODEL || "gpt-oss:20b",
+        model: process.env.FOOTYAI_OLLAMA_MODEL || process.env.OLLAMA_MODEL || "llama3.2:3b",
         prompt: prompt.slice(0, MAX_PROMPT_CHARS),
         stream: false,
         options: { temperature: 0.25 },
