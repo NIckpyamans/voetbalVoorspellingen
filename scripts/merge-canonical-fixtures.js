@@ -89,9 +89,13 @@ for (const [canonicalFixtureId, group] of groups) {
     from match_results where match_id=any($2::text[]) order by settled_at desc nulls last limit 1 on conflict (match_id) do nothing
   `, [target.match_id, duplicates]);
   await sql.query("delete from match_results where match_id=any($1::text[])", [duplicates]);
-  for (const table of ["historical_odds_snapshots", "prediction_snapshots", "prediction_evaluations", "injuries", "suspensions"]) {
+  for (const table of ["historical_odds_snapshots", "prediction_snapshots", "prediction_evaluations", "shadow_prediction_evaluations", "injuries", "suspensions"]) {
     await sql.query(`update ${table} set match_id=$1 where match_id=any($2::text[])`, [target.match_id, duplicates]);
   }
+  await sql.query(
+    "update fixture_source_aliases set canonical_match_id=$1,canonical_fixture_id=$2,updated_at=now() where canonical_match_id=any($3::text[])",
+    [target.match_id, canonicalFixtureId, duplicates]
+  );
   await sql.query(`
     insert into match_source_records (
       match_source_record_id, match_id, source_record_id, provider, source_match_id, is_primary, trust_score
