@@ -1,6 +1,7 @@
 import fs from "fs";
 import path from "path";
 import { setCorsHeaders } from "../shared/cors.js";
+import { fetchRepoJson, fetchServerStore } from "./_dataSource.js";
 
 type KnowledgeItem = {
   id: string;
@@ -35,6 +36,16 @@ function normalize(value: unknown) {
     .trim();
 }
 
+async function readStoredJson(relativePath: string, fallback: any) {
+  const local = readJson(relativePath, null);
+  if (local !== null) return local;
+  try {
+    return (await fetchRepoJson(relativePath)).data;
+  } catch {
+    return fallback;
+  }
+}
+
 function queryTerms(query: string) {
   const aliases: Record<string, string[]> = {
     competitie: ["competition", "league", "season"],
@@ -57,8 +68,7 @@ function queryTerms(query: string) {
   return [...new Set(base.flatMap((term) => [term, ...(aliases[term] || [])]))];
 }
 
-function competitionItems() {
-  const index = readJson("data/competitions/index.json", { competitions: [] });
+function competitionItems(index: any) {
   return (index.competitions || []).map((item: any): KnowledgeItem => ({
     id: item.key,
     type: "competition",
@@ -70,8 +80,7 @@ function competitionItems() {
   }));
 }
 
-function matchItems() {
-  const store = readJson("server_data.json", { matches: {} });
+function matchItems(store: any) {
   const rows: KnowledgeItem[] = [];
   for (const [date, matches] of Object.entries(store.matches || {})) {
     for (const match of (matches as any[]).slice(0, 400)) {
@@ -97,8 +106,7 @@ function matchItems() {
   return rows.slice(-5000);
 }
 
-function teamItems() {
-  const teams = readJson("data/teams.json", {});
+function teamItems(teams: any) {
   const rows = Array.isArray(teams) ? teams : Object.values(teams || {});
   return rows.slice(0, 3000).map((team: any, index: number): KnowledgeItem => ({
     id: String(team.id || team.teamId || team.name || index),
@@ -110,8 +118,7 @@ function teamItems() {
   }));
 }
 
-function healthItems() {
-  const findings = readJson("monitor/daily-findings.json", { days: {} });
+function healthItems(findings: any) {
   const dates = Object.keys(findings.days || {}).sort();
   const latestDate = dates.at(-1);
   const latest = latestDate ? findings.days[latestDate]?.runs?.at(-1) : null;
@@ -126,9 +133,23 @@ function healthItems() {
   }));
 }
 
-function buildIndex() {
+async function buildIndex() {
   if (cachedIndex && Date.now() - cachedAt < INDEX_TTL_MS) return cachedIndex;
-  cachedIndex = [...competitionItems(), ...matchItems(), ...teamItems(), ...healthItems()];
+  const localStore = readJson("server_data.json", null);
+  const [competitionIndex, teams, findings, store] = await Promise.all([
+    readStoredJson("data/competitions/index.json", { competitions: [] }),
+    readStoredJson("data/teams.json", {}),
+    readStoredJson("monitor/daily-findings.json", { days: {} }),
+    localStore !== null
+      ? Promise.resolve(localStore)
+      : fetchServerStore().then((result) => result.store).catch(() => ({ matches: {} })),
+  ]);
+  cachedIndex = [
+    ...competitionItems(competitionIndex),
+    ...matchItems(store),
+    ...teamItems(teams),
+    ...healthItems(findings),
+  ];
   cachedAt = Date.now();
   return cachedIndex;
 }
@@ -202,7 +223,7 @@ export default async function handler(req: any, res: any) {
   if (query.length < 2) return res.status(400).json({ ok: false, error: "query_too_short" });
   const generatedAt = new Date().toISOString();
   const terms = queryTerms(query);
-  const results = buildIndex()
+  const results = (await buildIndex())
     .map((item) => ({ ...item, score: score(item, terms) }))
     .filter((item) => item.score > 0)
     .sort((a, b) => b.score - a.score || String(b.date || "").localeCompare(String(a.date || "")))
