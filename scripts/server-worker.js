@@ -3,6 +3,7 @@
 import fs from "fs";
 import path from "path";
 import crypto from "crypto";
+import { spawnSync } from "child_process";
 import { normalizeMinute, parseMinuteValue } from "../shared/minute.js";
 import {
   WORLD_CUP_LEAGUE,
@@ -2006,11 +2007,39 @@ function buildCompetitionArchives(store, todayKey) {
     })
     .sort((a, b) => `${b.season} ${a.league}`.localeCompare(`${a.season} ${b.league}`));
 
+  try {
+    const catalog = JSON.parse(fs.readFileSync(path.join(ROOT, "config", "competition-catalog.json"), "utf8"));
+    for (const competition of catalog.competitions || []) {
+      const key = `${catalog.season}__${competition.slug}`;
+      if (competitions.some((item) => item.key === key)) continue;
+      competitions.unshift({
+        key,
+        season: catalog.season,
+        league: competition.league,
+        slug: competition.slug,
+        status: "planned",
+        totalMatches: 0,
+        finishedMatches: 0,
+        scheduledMatches: 0,
+        liveMatches: 0,
+        firstMatchDate: null,
+        lastMatchDate: null,
+        teamCount: (competition.teams || []).length,
+        membershipStatus: competition.membershipStatus,
+        expectedTeams: competition.expectedTeams,
+        archiveFile: `data/competitions/${catalog.season}/${competition.slug}.json`,
+      });
+    }
+  } catch {
+    // The worker remains compatible when no future-season catalog is present.
+  }
+
   return {
     index: {
       generatedAt: Date.now(),
       totalCompetitions: competitions.length,
       activeCount: competitions.filter((item) => item.status === "active").length,
+      plannedCount: competitions.filter((item) => item.status === "planned").length,
       closedCount: competitions.filter((item) => item.status === "closed").length,
       competitions,
     },
@@ -2029,6 +2058,10 @@ function writeCompetitionArchiveFiles(store) {
   writeJsonFile(path.join(COMPETITION_ARCHIVE_DIR, "index.json"), index);
   for (const archive of Object.values(archives)) {
     writeJsonFile(path.join(COMPETITION_ARCHIVE_DIR, archive.season, `${archive.slug}.json`), archive);
+  }
+  const nextSeasonScript = path.join(ROOT, "scripts", "prepare-next-season.js");
+  if (fs.existsSync(nextSeasonScript)) {
+    spawnSync(process.execPath, [nextSeasonScript], { cwd: ROOT, stdio: "inherit" });
   }
 }
 

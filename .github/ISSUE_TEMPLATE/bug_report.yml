@@ -1,0 +1,39 @@
+name: FootyAI fout
+description: Meld een reproduceerbare fout of regressie.
+title: "[Bug] "
+labels: ["bug", "needs-triage"]
+body:
+  - type: textarea
+    id: problem
+    attributes:
+      label: Probleem
+      description: Wat gaat er fout?
+    validations:
+      required: true
+  - type: textarea
+    id: expected
+    attributes:
+      label: Verwacht gedrag
+    validations:
+      required: true
+  - type: input
+    id: date
+    attributes:
+      label: Speeldag of datum
+      placeholder: YYYY-MM-DD
+  - type: textarea
+    id: evidence
+    attributes:
+      label: Bewijs
+      description: Voeg relevante wedstrijd-ID's, URL's, screenshots of logs toe.
+  - type: checkboxes
+    id: regressions
+    attributes:
+      label: Mogelijke regressie
+      options:
+        - label: Live minuut ontbreekt
+        - label: H2H is leeg
+        - label: Eerste duel ontbreekt
+        - label: Bekerschema is leeg
+        - label: Verkeerde wedstrijden op dashboard
+        - label: Logo fallback werkt niet

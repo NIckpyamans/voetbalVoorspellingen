@@ -7,6 +7,7 @@ on:
 
 permissions:
   contents: write
+  issues: write
 
 env:
   TZ: Europe/Amsterdam
@@ -39,6 +40,11 @@ jobs:
 
       - name: Build review proposal
         run: node scripts/propose-review-branch.js
+
+      - name: Create or update relevant health issue
+        run: node scripts/sync-health-issue.js
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Run Ruflo-style monitor
         run: node scripts/ruflo-monitor.js

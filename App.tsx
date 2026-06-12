@@ -9,6 +9,7 @@ import ModelOpsView from "./components/ModelOpsView";
 import DataIntegrityView from "./components/DataIntegrityView";
 import ProviderControlView from "./components/ProviderControlView";
 import WorldCupView from "./components/WorldCupView";
+import KnowledgeView from "./components/KnowledgeView";
 import DateNavigation from "./components/DateNavigation"; // NIEUW IMPORT
 import { getFavorites } from "./components/FavoriteTeams";
 import { Match } from "./types";
@@ -32,7 +33,7 @@ import {
   shortLeague,
 } from "./shared/dashboard.js";
 
-type View = "dashboard" | "worldcup" | "history" | "standings" | "modelops" | "integrity" | "providers" | "settings";
+type View = "dashboard" | "worldcup" | "knowledge" | "history" | "standings" | "modelops" | "integrity" | "providers" | "settings";
 type FilterMode = "alle" | "favorieten" | "live" | "gepland" | "gespeeld" | "brondekking" | "odds" | "xg" | "weer" | "mistdata";
 
 function isLive(match: Match) {
@@ -639,6 +640,8 @@ const App: React.FC = () => {
           <PredictionHistory />
         ) : view === "worldcup" ? (
           <WorldCupView liveMatches={matches} predictions={predictions} />
+        ) : view === "knowledge" ? (
+          <KnowledgeView />
         ) : view === "standings" ? (
           <StandingsView />
         ) : view === "modelops" ? (

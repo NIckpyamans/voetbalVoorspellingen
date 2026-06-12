@@ -1,0 +1,32 @@
+name: Health-check bevinding
+description: Leg een relevante automatische health-checkbevinding vast.
+title: "[Health] "
+labels: ["health-check", "needs-triage"]
+body:
+  - type: input
+    id: finding_key
+    attributes:
+      label: Bevinding-sleutel
+    validations:
+      required: true
+  - type: dropdown
+    id: severity
+    attributes:
+      label: Ernst
+      options:
+        - high
+        - medium
+        - low
+    validations:
+      required: true
+  - type: textarea
+    id: evidence
+    attributes:
+      label: Bewijs en impact
+    validations:
+      required: true
+  - type: textarea
+    id: patch
+    attributes:
+      label: Patchvoorstel
+      description: Alleen een voorstel; niet automatisch live toepassen.

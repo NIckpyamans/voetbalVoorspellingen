@@ -1,6 +1,6 @@
 import React from 'react';
 
-type View = 'dashboard' | 'worldcup' | 'history' | 'standings' | 'modelops' | 'integrity' | 'providers' | 'settings';
+type View = 'dashboard' | 'worldcup' | 'knowledge' | 'history' | 'standings' | 'modelops' | 'integrity' | 'providers' | 'settings';
 
 interface HeaderProps {
   view?: View;
@@ -39,6 +39,7 @@ const Header: React.FC<HeaderProps> = ({ view, currentView, onViewChange }) => {
           {([
             { key: 'dashboard',  label: 'Dashboard', icon: 'fa-home'        },
             { key: 'worldcup',   label: 'WK 2026', icon: 'fa-trophy'        },
+            { key: 'knowledge',   label: 'Vraag FootyAI', icon: 'fa-search' },
             { key: 'standings',  label: 'Standen',   icon: 'fa-table'       },
             { key: 'history',    label: 'Geschiedenis', icon: 'fa-history'  },
             { key: 'modelops',   label: 'Model Ops', icon: 'fa-chart-line'  },

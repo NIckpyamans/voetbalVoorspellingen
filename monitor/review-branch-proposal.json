@@ -1,24 +1,24 @@
 {
-  "generatedAt": "2026-06-11T23:54:13.772Z",
+  "generatedAt": "2026-06-12T08:59:14.751Z",
   "date": "2026-06-12",
   "proposalOnly": true,
   "shouldPropose": true,
   "branchName": "codex/review-20260612",
-  "summary": "AI reviewvoorstel voor 2026-06-12: 1 aandachtspunt(en) met patchadvies, niet automatisch live.",
+  "summary": "AI reviewvoorstel voor 2026-06-12: 4 aandachtspunt(en) met patchadvies, niet automatisch live.",
   "latestStats": {
     "today": "2026-06-12",
     "tomorrow": "2026-06-13",
     "dataPresent": true,
-    "lastRun": 1781218546216,
-    "ageMinutes": 58,
+    "lastRun": 1781240731757,
+    "ageMinutes": 234,
     "maxWorkerAgeMinutes": 180,
     "todayMatches": 0,
     "tomorrowMatches": 0,
     "fixtureCalendar": {
-      "status": "confirmed_empty_with_gap_note",
-      "healthy": true,
-      "emptyWindowOk": true,
-      "severity": "none",
+      "status": "fixture_source_gap",
+      "healthy": false,
+      "emptyWindowOk": false,
+      "severity": "medium",
       "todayCount": 0,
       "tomorrowCount": 0,
       "windowDays": 7,
@@ -34,7 +34,7 @@
       ],
       "nextMatchDate": null,
       "nextMatchCount": 0,
-      "explanation": "Geen wedstrijden in de directe kalender; worker en fallbackbronnen hebben wel vers gedraaid."
+      "explanation": "Geen wedstrijden gevonden en onvoldoende kalenderbewijs dat dit een echte lege speeldag is."
     },
     "liveMatches": 0,
     "liveWithoutMinute": 0,
@@ -47,6 +47,55 @@
   "findings": [
     {
       "priority": 1,
+      "key": "worker_stale",
+      "severity": "high",
+      "message": "server_data.json is 234 minuten oud.",
+      "whyItMatters": "Workerdata is te oud en verdient een workflow- of broncheck.",
+      "recommendedFiles": [
+        ".github/workflows/worker.yml",
+        "scripts/server-worker.js"
+      ],
+      "details": {}
+    },
+    {
+      "priority": 2,
+      "key": "today_matches_empty",
+      "severity": "medium",
+      "message": "Er zijn geen wedstrijden voor vandaag in server_data.json.",
+      "whyItMatters": "Vandaag-data ontbreekt terwijl er wedstrijden verwacht worden.",
+      "recommendedFiles": [
+        "scripts/server-worker.js",
+        "api/Matches.ts",
+        "services/matchService.ts"
+      ],
+      "details": {}
+    },
+    {
+      "priority": 3,
+      "key": "fixture_calendar_source_gap",
+      "severity": "medium",
+      "message": "Geen wedstrijden gevonden en onvoldoende kalenderbewijs dat dit een echte lege speeldag is.",
+      "whyItMatters": "Gerichte patch nodig in worker en UI.",
+      "recommendedFiles": [
+        "scripts/server-worker.js",
+        "components/MatchCard.tsx"
+      ],
+      "details": {
+        "checkedDates": [
+          "2026-06-12",
+          "2026-06-13",
+          "2026-06-14",
+          "2026-06-15",
+          "2026-06-16",
+          "2026-06-17",
+          "2026-06-18",
+          "2026-06-19"
+        ],
+        "nextMatchDate": null
+      }
+    },
+    {
+      "priority": 4,
       "key": "cupsheets_empty",
       "severity": "medium",
       "message": "cupSheets is leeg.",
@@ -60,7 +109,11 @@
     }
   ],
   "recommendedFiles": [
+    ".github/workflows/worker.yml",
     "scripts/server-worker.js",
+    "api/Matches.ts",
+    "services/matchService.ts",
+    "components/MatchCard.tsx",
     "components/StandingsView.tsx",
     "api/standings.ts"
   ],
