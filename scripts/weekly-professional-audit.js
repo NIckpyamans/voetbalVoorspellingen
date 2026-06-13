@@ -35,11 +35,11 @@ const recommendations = [
   },
   {
     key: "storage_backend",
-    title: "Bereid database-opslag voor",
+    title: "Breid Neon-opslag gecontroleerd uit",
     impact: "hoog",
     difficulty: "middel",
     files: ["api/_dataSource.ts", "scripts/server-worker.js"],
-    advice: "Gebruik JSON/GitHub als exportlaag, maar ontwerp een schema voor matches, predictions, features, results en evaluations in Postgres of Supabase."
+    advice: "Neon is actief. Migreer resterende JSON-afhankelijke widgets per contract naar Neon en behoud JSON/GitHub alleen als compatibele export- en fallbacklaag."
   },
   {
     key: "modular_worker",
@@ -183,8 +183,8 @@ async function main() {
   const report = {
     registeredAi: {
       name: "FootyAI Professional Prediction Audit",
-      role: "Wekelijkse senior engineering, data engineering en voetbaldata-analyse review",
-      cadence: "weekly",
+      role: "Tweewekelijkse senior engineering, data engineering en voetbaldata-analyse review",
+      cadence: "biweekly",
       owner: "Nick",
       status: "active"
     },

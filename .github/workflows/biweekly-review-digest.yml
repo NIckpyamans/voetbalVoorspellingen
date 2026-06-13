@@ -2,7 +2,9 @@ name: biweekly-review-digest
 
 on:
   schedule:
-    - cron: "15 6 * * 1"
+    # GitHub cron has no reliable every-other-week expression. Twice monthly
+    # keeps the cadence close to two weeks without spending weekly minutes.
+    - cron: "15 6 1,15 * *"
   workflow_dispatch:
 
 concurrency:
@@ -32,6 +34,8 @@ jobs:
       - name: Build biweekly digest
         run: |
           npm run monitor:data-quality
+          npm run monitor:widgets
+          npm run monitor:professional
           npm run monitor:biweekly
 
       - name: Check two-week cadence
@@ -46,7 +50,7 @@ jobs:
           BRANCH_NAME="${{ github.ref_name }}"
           git config user.name "github-actions"
           git config user.email "github-actions@github.com"
-          git add monitor/biweekly-review-digest.json monitor/biweekly-review-digest.md monitor/data-quality-audit.json monitor/data-quality-audit.md docs/database-migration-plan.md docs/worker-modularization-plan.md docs/agent-data-collection-policy.md
+          git add monitor/biweekly-review-digest.json monitor/biweekly-review-digest.md monitor/data-quality-audit.json monitor/data-quality-audit.md monitor/widget-integration-audit.json monitor/widget-integration-audit.md monitor/ai-professional-audit.json monitor/ai-professional-audit.md docs/database-migration-plan.md docs/worker-modularization-plan.md docs/agent-data-collection-policy.md
           git diff --cached --quiet && exit 0
           git commit -m "update biweekly architecture digest [skip vercel]"
           git pull --rebase --autostash origin "$BRANCH_NAME" || true

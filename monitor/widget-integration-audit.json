@@ -1,0 +1,93 @@
+{
+  "generatedAt": "2026-06-13T07:41:00.663Z",
+  "baseUrl": "https://voetbalvoorspellingen-clean.vercel.app",
+  "status": "ok",
+  "totals": {
+    "checks": 10,
+    "passed": 10,
+    "failed": 0
+  },
+  "neon": {
+    "connected": true,
+    "matches": 11803,
+    "predictionSnapshots": 76,
+    "h2hEdges": 3101,
+    "auditRows": 871
+  },
+  "checks": [
+    {
+      "key": "health",
+      "label": "Systeemstatus",
+      "passed": true,
+      "status": 200,
+      "detail": "status ok"
+    },
+    {
+      "key": "neon",
+      "label": "Neon database",
+      "passed": true,
+      "status": 200,
+      "detail": "11803 matches, 76 snapshots"
+    },
+    {
+      "key": "provider_widget",
+      "label": "Provider- en integriteitswidget",
+      "passed": true,
+      "status": 200,
+      "detail": "24 providers, 1253 conflicten"
+    },
+    {
+      "key": "matches_widget",
+      "label": "Dashboard/matches-widget",
+      "passed": true,
+      "status": 200,
+      "detail": "3 actuele matches, bron postgres"
+    },
+    {
+      "key": "standings_widget",
+      "label": "Standen-widget",
+      "passed": true,
+      "status": 200,
+      "detail": "41 standen"
+    },
+    {
+      "key": "cup_widget",
+      "label": "Bekerschema-widget",
+      "passed": true,
+      "status": 200,
+      "detail": "15 cupSheets"
+    },
+    {
+      "key": "season_widget",
+      "label": "Neon seizoen-widget",
+      "passed": true,
+      "status": 200,
+      "detail": "115 seizoenovergangen"
+    },
+    {
+      "key": "history_widget",
+      "label": "Geschiedenis-widget",
+      "passed": true,
+      "status": 200,
+      "detail": "691 reviews"
+    },
+    {
+      "key": "snapshot_widget",
+      "label": "Prediction-snapshot-widget",
+      "passed": true,
+      "status": 200,
+      "detail": "1 snapshots"
+    },
+    {
+      "key": "knowledge_widget",
+      "label": "Vraag FootyAI-widget",
+      "passed": true,
+      "status": 200,
+      "detail": "30 brongebonden resultaten"
+    }
+  ],
+  "opportunities": [
+    "Vul gratis pre-match odds snapshots voordat ROI/CLV wordt beoordeeld.",
+    "Prioriteer open bronconflicten op impact en providertrust."
+  ]
+}

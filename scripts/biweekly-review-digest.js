@@ -7,6 +7,7 @@ const ROOT = process.cwd();
 const FINDINGS_FILE = path.join(ROOT, "monitor", "daily-findings.json");
 const PROPOSAL_FILE = path.join(ROOT, "monitor", "review-branch-proposal.json");
 const DATA_QUALITY_FILE = path.join(ROOT, "monitor", "data-quality-audit.json");
+const WIDGET_AUDIT_FILE = path.join(ROOT, "monitor", "widget-integration-audit.json");
 const CATBOOST_READY_FILE = path.join(ROOT, "training", "catboost-ready.json");
 const OUTPUT_JSON = path.join(ROOT, "monitor", "biweekly-review-digest.json");
 const OUTPUT_MD = path.join(ROOT, "monitor", "biweekly-review-digest.md");
@@ -18,31 +19,31 @@ const DATA_CONTEXT_DIR = path.join(ROOT, "docs", "data-context");
 const architectureFindings = [
   {
     key: "worker_monolith",
-    title: "Worker is monolithisch",
-    problem: "De worker bevat data collection, validatie, prediction, learning, archivering en storage in een enkel bestand.",
-    cause: "Snelle iteratie heeft alle domeinen samengebracht in scripts/server-worker.js.",
+    title: "Worker-core blijft te groot",
+    problem: "Data collection, validatie, prediction, archivering en datumlogica zijn deels opgesplitst, maar scripts/server-worker.js blijft de grote orkestratielaag.",
+    cause: "De eerste veilige module-extracties zijn uitgevoerd; veel domeinlogica is nog gekoppeld aan de centrale store.",
     risk: "Nieuwe competities, databronnen en modellen worden moeilijk testbaar en vergroten regressierisico.",
-    solution: "Splits de worker gefaseerd in domeinmodules met gelijkblijvende input/output-contracten.",
+    solution: "Ga verder met kleine domeinextracties en voeg per module contracttests toe.",
     priority: "Hoog",
     expectedImpact: "Zeer hoog",
   },
   {
     key: "json_primary_storage",
-    title: "JSON is nog primaire datastore",
-    problem: "server_data.json is groot en groeit lineair mee met wedstrijden, reviews en snapshots.",
-    cause: "GitHub JSON fungeert nu als bron van waarheid en distributielaag tegelijk.",
+    title: "JSON-compatibiliteitslaag blijft te zwaar",
+    problem: "Neon is actief, maar server_data.json blijft groot en bevat nog gedeelde workerstatus, reviews en snapshots.",
+    cause: "GitHub JSON blijft tegelijk fallback, exportlaag en worker-uitwisselingsformaat.",
     risk: "Miljoenen wedstrijden zijn niet haalbaar met grote JSON-commits en serverless JSON-parsing.",
-    solution: "Maak Postgres/Supabase primair en behoud JSON alleen als cache/exportlaag.",
+    solution: "Maak Neon per dashboardsectie primair en verklein JSON stapsgewijs tot cache/exportlaag.",
     priority: "Hoog",
     expectedImpact: "Zeer hoog",
   },
   {
     key: "database_schema_too_narrow",
-    title: "Database-schema is nog prediction-ledger",
-    problem: "Het schema mist genormaliseerde competities, clubs, seizoenen, teamstatistieken en source records.",
-    cause: "Het huidige schema is ontworpen rond predictions en evaluaties, niet rond een volledige football intelligence graph.",
-    risk: "Seizoenbeheer, historische standen en bronherleidbaarheid worden later duur om te herstellen.",
-    solution: "Breid het schema uit met competition, club, season, match stats, source lineage en archive-tabellen.",
+    title: "Neon-adoptie is nog onvolledig",
+    problem: "Het schema bevat competities, clubs, seizoenen, wedstrijdstatistieken, H2H, source lineage en archives, maar niet iedere widget gebruikt deze tabellen primair.",
+    cause: "JSON-fallbacks blijven bewust actief tijdens de gefaseerde migratie.",
+    risk: "Widgets kunnen verschillende actualiteit en dekking tonen als Neon en JSON uiteenlopen.",
+    solution: "Meet database-backed dekking per widget en migreer secties alleen na contractvergelijking met JSON.",
     priority: "Hoog",
     expectedImpact: "Zeer hoog",
   },
@@ -294,6 +295,7 @@ function buildDigest() {
   const findings = readJsonSafe(FINDINGS_FILE, { days: {} });
   const proposal = readJsonSafe(PROPOSAL_FILE, null);
   const dataQuality = readJsonSafe(DATA_QUALITY_FILE, null);
+  const widgetAudit = readJsonSafe(WIDGET_AUDIT_FILE, null);
   const catboostReady = readJsonSafe(CATBOOST_READY_FILE, []);
   const allFindingDays = Object.keys(findings.days || {}).sort();
   const latestFindingDay = allFindingDays.at(-1) || getAmsterdamDate();
@@ -350,10 +352,12 @@ function buildDigest() {
   ).length;
   const nextRecommendations = [
     {
-      title: "Database credentials activeren en schema toepassen",
+      title: widgetAudit?.neon?.connected ? "Neon datadekking verder uitbreiden" : "Database credentials activeren en schema toepassen",
       priority: "Hoog",
       expectedImpact: "Zeer hoog",
-      reason: "Het migratieplan is nu vastgelegd; de volgende stap is DATABASE_URL/POSTGRES_URL koppelen en npm run db:schema:apply draaien.",
+      reason: widgetAudit?.neon?.connected
+        ? `Neon werkt met ${Number(widgetAudit.neon.matches || 0)} matches; maak nu meer dashboardsecties database-backed en verhoog source-auditdekking.`
+        : "Het migratieplan is nu vastgelegd; de volgende stap is DATABASE_URL/POSTGRES_URL koppelen en npm run db:schema:apply draaien.",
     },
     {
       title: h2hCoverage >= 0.85 ? "H2H/result-contract bewaken met regressietests" : "Resultaat- en H2H-normalisatie centraliseren",
@@ -418,6 +422,7 @@ function buildDigest() {
           recommendations: dataQuality.recommendations || [],
         }
       : null,
+    widgetAudit,
     architectureAudit: {
       generatedAt,
       summary:
@@ -473,6 +478,10 @@ function buildDigest() {
     dataQuality
       ? `## Datakwaliteit\n- Pending result backfills: ${Number(dataQuality?.totals?.pendingResultBackfills || 0)}\n- Ontbrekende oude scores: ${Number(dataQuality?.totals?.missingPastScores || 0)}\n- H2H-dekking: ${Math.round(Number(dataQuality?.totals?.h2hCoverage || 0) * 100)}%\n${(dataQuality.recommendations || []).map((item) => `- ${item}`).join("\n")}`
       : "## Datakwaliteit\n- Nog geen data-quality audit beschikbaar. Draai npm run monitor:data-quality.",
+    "",
+    widgetAudit
+      ? `## Widgetintegraties\n- Status: ${widgetAudit.status}\n- Neon: ${widgetAudit.neon?.connected ? "verbonden" : "niet verbonden"}\n- Checks: ${widgetAudit.totals?.passed || 0}/${widgetAudit.totals?.checks || 0} geslaagd\n${(widgetAudit.opportunities || []).map((item) => `- ${item}`).join("\n")}`
+      : "## Widgetintegraties\n- Nog geen widget-audit beschikbaar. Draai npm run monitor:widgets.",
     "",
     "## Standaard uitgevoerde acties",
     ...standardActions.map((item) => `- ${item.title}: ${item.output} (${item.status})`),

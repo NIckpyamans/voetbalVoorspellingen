@@ -1,0 +1,1639 @@
+{
+  "registeredAi": {
+    "name": "FootyAI Professional Prediction Audit",
+    "role": "Tweewekelijkse senior engineering, data engineering en voetbaldata-analyse review",
+    "cadence": "biweekly",
+    "owner": "Nick",
+    "status": "active"
+  },
+  "generatedAt": "2026-06-13T07:41:05.113Z",
+  "baseUrl": "https://voetbalvoorspellingen-clean.vercel.app",
+  "summary": "Professionele audit actief. Kritieke opslagvelden lijken aanwezig; blijf kalibratie en bronkwaliteit bewaken.",
+  "live": {
+    "matchesTotal": 3,
+    "predictionsTotal": 3,
+    "reviewCount": 691,
+    "predictionSnapshotCount": 25,
+    "workerVersion": "v23-calibrated-odds-ledger",
+    "sourceBranch": "codex/step3b-layout",
+    "sourceCoverage": {
+      "todayMatches": 0,
+      "scoreCoverage": 0,
+      "finishedScoreCoverage": 0,
+      "liveScoreCoverage": 0,
+      "logoCoverage": 0,
+      "finishedMatches": 0,
+      "finishedWithScore": 0,
+      "liveMatches": 0,
+      "liveWithScore": 0,
+      "pendingFinishedCount": 0,
+      "averageDataCompleteness": 0,
+      "lowCompletenessMatches": 0,
+      "statusBreakdown": {},
+      "bookmakerCoverage": 0,
+      "actualOddsCoverage": 0,
+      "refereeCoverage": 0,
+      "refereeStatusCoverage": 0,
+      "lineupStatusCoverage": 0,
+      "lineupConfirmedCoverage": 0,
+      "availabilityCoverage": 0,
+      "squadCoverage": 0,
+      "providerTeamIdCoverage": 0,
+      "stableTeamIdentityCoverage": 0,
+      "h2hCoverage": 0,
+      "openfootballH2hCoverage": 0,
+      "understatCoverage": 0,
+      "fbrefCoverage": 0,
+      "marketProfiles": 21,
+      "openfootballProfiles": 0,
+      "understatSnapshots": 0,
+      "fbrefSnapshots": 0,
+      "sourceBreakdown": {},
+      "coverageImprovementPlan": [
+        {
+          "key": "provider_team_ids",
+          "label": "Provider team-IDs",
+          "coverage": 0,
+          "target": 0.9,
+          "status": "needs_mapping",
+          "action": "Vul REEP_TEAM_MAP/football-data.org team mapping aan voor wedstrijden die uit naamfallback-bronnen komen."
+        },
+        {
+          "key": "lineups",
+          "label": "Bevestigde opstellingen",
+          "coverage": 0,
+          "target": 0.45,
+          "status": "pre_match_pending",
+          "action": "Blijf lineups vlak voor kickoff verversen; open lineups blijven confidence-penalty en faalsignaal."
+        },
+        {
+          "key": "referee_history",
+          "label": "Historische scheidsprofielen",
+          "coverage": 0,
+          "target": 0.65,
+          "status": "needs_aliases",
+          "action": "Breid referee aliasen en football-data.co.uk archieven per competitiefamilie uit."
+        },
+        {
+          "key": "availability",
+          "label": "Blessures/schorsingen",
+          "coverage": 0,
+          "target": 0.75,
+          "status": "needs_source_depth",
+          "action": "Gebruik Sofascore spelersstatus eerst, daarna Transfermarkt/football-data.org squad fallback met veilige team-id mapping."
+        }
+      ],
+      "backupSources": [
+        {
+          "key": "sofascore",
+          "name": "Sofascore",
+          "role": "optionele live/detailbron",
+          "status": "403/uitgeschakeld deze run",
+          "note": "Wordt alleen gebruikt als de publieke API bereikbaar is; ESPN, TheSportsDB en open data vullen scores/logo's bij 403."
+        },
+        {
+          "key": "espn-scoreboard",
+          "name": "ESPN Scoreboard",
+          "role": "score + logo backup",
+          "status": "stand-by",
+          "note": "Tweede hoofdbron voor fixtures, live/FT scores en officiele clublogo's voor topcompetities."
+        },
+        {
+          "key": "thesportsdb",
+          "name": "TheSportsDB",
+          "role": "backup",
+          "status": "stand-by",
+          "note": "Gratis fixturefallback voor internationale en geselecteerde competitiewedstrijden."
+        },
+        {
+          "key": "forza-football",
+          "name": "Forza Football",
+          "role": "selectie fallback",
+          "status": "stand-by",
+          "note": "Wordt pas geprobeerd als de eerste spelerslijstbron onvolledig is; gebruikt alleen bekende/geconfigureerde publieke squad-URL's."
+        },
+        {
+          "key": "football-data-org",
+          "name": "football-data.org",
+          "role": "selectie API fallback",
+          "status": "klaar, token ontbreekt",
+          "note": "Optionele gratis API-bron voor squads. Alleen actief met FOOTBALL_DATA_TOKEN en team-id mapping, zodat er geen verkeerde teams worden gematcht."
+        },
+        {
+          "key": "reep",
+          "name": "Reep Football",
+          "role": "team-ID koppeling",
+          "status": "stand-by",
+          "note": "Wordt gebruikt als alias/ID-koppelvlak wanneer REEP_TEAM_MAP aanwezig is; voorkomt verkeerde clubnaam- en logo-matches."
+        },
+        {
+          "key": "football-data",
+          "name": "football-data.co.uk",
+          "role": "backup + markt",
+          "status": "markt-only",
+          "note": "Historische odds, closing-lijnen en fixturefallback uit gratis competitiebestanden."
+        },
+        {
+          "key": "openligadb",
+          "name": "OpenLigaDB",
+          "role": "backup",
+          "status": "stand-by",
+          "note": "Extra gratis fixturebron voor vooral Duitse competities wanneer de hoofdbron dun blijft."
+        },
+        {
+          "key": "curated-bbc",
+          "name": "BBC fixture backfill",
+          "role": "curated noodfallback",
+          "status": "stand-by",
+          "note": "Handmatige gratis veiligheidslaag voor bewezen topwedstrijden die alle automatische fallbackbronnen missen."
+        },
+        {
+          "key": "openfootball",
+          "name": "openfootball",
+          "role": "historisch H2H",
+          "status": "stand-by",
+          "note": "0 competitieprofiel(en), 0% van vandaag met openfootball-H2H."
+        }
+      ],
+      "understat": {
+        "status": "stand-by",
+        "snapshots": 0,
+        "coverage": 0,
+        "note": "Geen actieve Understat-competitie op deze speeldag of bron tijdelijk niet bereikbaar."
+      },
+      "fbref": {
+        "status": "stand-by",
+        "snapshots": 0,
+        "coverage": 0,
+        "note": "Geen actieve FBref-snapshot voor deze speeldag of release tijdelijk niet bereikbaar."
+      }
+    },
+    "featureDiagnostics": {
+      "reviews": 691,
+      "exactHitRate": 0.117,
+      "outcomeHitRate": 0.412,
+      "probabilityOutcomeHitRate": 0.462,
+      "avgGoalError": 1.88,
+      "topConfidence": {
+        "matches": 117,
+        "exactHitRate": 0.145,
+        "outcomeHitRate": 0.41,
+        "probabilityOutcomeHitRate": 0.538,
+        "avgGoalError": 1.65,
+        "rank1ExactHitRate": 0.103,
+        "rank1OutcomeHitRate": 0.379,
+        "versusOverallOutcomeDelta": -0.002
+      },
+      "topFailureSignals": [
+        {
+          "signal": "open_lineups",
+          "count": 314
+        },
+        {
+          "signal": "low_model_agreement",
+          "count": 266
+        },
+        {
+          "signal": "h2h_signal",
+          "count": 234
+        },
+        {
+          "signal": "clubelo_misread",
+          "count": 85
+        },
+        {
+          "signal": "rest_gap",
+          "count": 41
+        },
+        {
+          "signal": "market_misread",
+          "count": 24
+        }
+      ],
+      "phaseBreakdown": [
+        {
+          "phase": "two-leg-knockout",
+          "matches": 334,
+          "exactHits": 31,
+          "outcomeHits": 133,
+          "exactHitRate": 0.09,
+          "outcomeHitRate": 0.4
+        },
+        {
+          "phase": "league",
+          "matches": 320,
+          "exactHits": 47,
+          "outcomeHits": 137,
+          "exactHitRate": 0.15,
+          "outcomeHitRate": 0.43
+        },
+        {
+          "phase": "cup",
+          "matches": 37,
+          "exactHits": 3,
+          "outcomeHits": 15,
+          "exactHitRate": 0.08,
+          "outcomeHitRate": 0.41
+        }
+      ],
+      "summary": "Reviewdiagnose: exact 12%, uitkomst 41%, topkans 46%."
+    },
+    "backtestSummary": {
+      "generatedAt": "2026-06-13T07:18:50.003Z",
+      "windows": [
+        {
+          "key": "2026-05",
+          "matches": 425,
+          "exactHitRate": 0.118,
+          "outcomeHitRate": 0.402,
+          "probabilityOutcomeHitRate": 0.48,
+          "bttsHitRate": 0.574,
+          "over25HitRate": 0.565,
+          "avgGoalError": 1.84,
+          "avgConfidence": 0.461,
+          "avgModelAgreement": 0.324,
+          "avgBrierScore": 0.6352,
+          "avgLogLoss": 1.0615,
+          "roiTotal": null,
+          "metricCoverage": {
+            "brier": 0.904,
+            "logLoss": 0.904,
+            "roi": 0,
+            "odds": 0,
+            "snapshot": 0.012,
+            "leakageCutoffKnown": 0.012
+          }
+        },
+        {
+          "key": "2026-04",
+          "matches": 266,
+          "exactHitRate": 0.117,
+          "outcomeHitRate": 0.429,
+          "probabilityOutcomeHitRate": 0.432,
+          "bttsHitRate": 0.519,
+          "over25HitRate": 0.538,
+          "avgGoalError": 1.94,
+          "avgConfidence": 0.605,
+          "avgModelAgreement": 0.136,
+          "avgBrierScore": 0.6429,
+          "avgLogLoss": 1.0628,
+          "roiTotal": null,
+          "metricCoverage": {
+            "brier": 0.353,
+            "logLoss": 0.353,
+            "roi": 0,
+            "odds": 0,
+            "snapshot": 0,
+            "leakageCutoffKnown": 0
+          }
+        }
+      ],
+      "strategies": [
+        {
+          "key": "top-5 exact-score picks",
+          "matches": 117,
+          "exactHitRate": 0.145,
+          "outcomeHitRate": 0.41,
+          "probabilityOutcomeHitRate": 0.538,
+          "bttsHitRate": 0.557,
+          "over25HitRate": 0.617,
+          "avgGoalError": 1.65,
+          "avgConfidence": 0.517,
+          "avgModelAgreement": 0.438,
+          "avgBrierScore": 0.6077,
+          "avgLogLoss": 1.017,
+          "roiTotal": null,
+          "metricCoverage": {
+            "brier": 0.889,
+            "logLoss": 0.889,
+            "roi": 0,
+            "odds": 0,
+            "snapshot": 0,
+            "leakageCutoffKnown": 0
+          }
+        },
+        {
+          "key": "overige voorspellingen",
+          "matches": 574,
+          "exactHitRate": 0.111,
+          "outcomeHitRate": 0.413,
+          "probabilityOutcomeHitRate": 0.446,
+          "bttsHitRate": 0.565,
+          "over25HitRate": 0.543,
+          "avgGoalError": 1.93,
+          "avgConfidence": 0.516,
+          "avgModelAgreement": 0.214,
+          "avgBrierScore": 0.6448,
+          "avgLogLoss": 1.0742,
+          "roiTotal": null,
+          "metricCoverage": {
+            "brier": 0.652,
+            "logLoss": 0.652,
+            "roi": 0,
+            "odds": 0,
+            "snapshot": 0.009,
+            "leakageCutoffKnown": 0.009
+          }
+        },
+        {
+          "key": "hoog vertrouwen",
+          "matches": 55,
+          "exactHitRate": 0.218,
+          "outcomeHitRate": 0.509,
+          "probabilityOutcomeHitRate": 0.509,
+          "bttsHitRate": 0.786,
+          "over25HitRate": 0.857,
+          "avgGoalError": 1.6,
+          "avgConfidence": 0.758,
+          "avgModelAgreement": 0.149,
+          "avgBrierScore": 0.5527,
+          "avgLogLoss": 0.9226,
+          "roiTotal": null,
+          "metricCoverage": {
+            "brier": 0.236,
+            "logLoss": 0.236,
+            "roi": 0,
+            "odds": 0,
+            "snapshot": 0,
+            "leakageCutoffKnown": 0
+          }
+        },
+        {
+          "key": "laag vertrouwen",
+          "matches": 337,
+          "exactHitRate": 0.104,
+          "outcomeHitRate": 0.412,
+          "probabilityOutcomeHitRate": 0.507,
+          "bttsHitRate": 0.604,
+          "over25HitRate": 0.57,
+          "avgGoalError": 1.98,
+          "avgConfidence": 0.406,
+          "avgModelAgreement": 0.233,
+          "avgBrierScore": 0.6267,
+          "avgLogLoss": 1.0546,
+          "roiTotal": null,
+          "metricCoverage": {
+            "brier": 0.792,
+            "logLoss": 0.792,
+            "roi": 0,
+            "odds": 0,
+            "snapshot": 0.009,
+            "leakageCutoffKnown": 0.009
+          }
+        },
+        {
+          "key": "snapshot-backed",
+          "matches": 5,
+          "exactHitRate": 0,
+          "outcomeHitRate": 0.2,
+          "probabilityOutcomeHitRate": 0,
+          "bttsHitRate": 0.8,
+          "over25HitRate": 0.8,
+          "avgGoalError": 2,
+          "avgConfidence": 0.52,
+          "avgModelAgreement": 0.386,
+          "avgBrierScore": 0.8062,
+          "avgLogLoss": 1.2854,
+          "roiTotal": null,
+          "metricCoverage": {
+            "brier": 1,
+            "logLoss": 1,
+            "roi": 0,
+            "odds": 0,
+            "snapshot": 1,
+            "leakageCutoffKnown": 1
+          }
+        },
+        {
+          "key": "fallback reviews",
+          "matches": 686,
+          "exactHitRate": 0.118,
+          "outcomeHitRate": 0.414,
+          "probabilityOutcomeHitRate": 0.465,
+          "bttsHitRate": 0.561,
+          "over25HitRate": 0.557,
+          "avgGoalError": 1.88,
+          "avgConfidence": 0.516,
+          "avgModelAgreement": 0.25,
+          "avgBrierScore": 0.6349,
+          "avgLogLoss": 1.0594,
+          "roiTotal": null,
+          "metricCoverage": {
+            "brier": 0.69,
+            "logLoss": 0.69,
+            "roi": 0,
+            "odds": 0,
+            "snapshot": 0,
+            "leakageCutoffKnown": 0
+          }
+        },
+        {
+          "key": "odds-ready reviews",
+          "matches": 0,
+          "exactHitRate": 0,
+          "outcomeHitRate": 0,
+          "probabilityOutcomeHitRate": 0,
+          "bttsHitRate": 0,
+          "over25HitRate": 0,
+          "avgGoalError": 0,
+          "avgConfidence": 0,
+          "avgModelAgreement": 0,
+          "avgBrierScore": null,
+          "avgLogLoss": null,
+          "roiTotal": null,
+          "metricCoverage": {
+            "brier": 0,
+            "logLoss": 0,
+            "roi": 0,
+            "odds": 0,
+            "snapshot": 0,
+            "leakageCutoffKnown": 0
+          }
+        }
+      ],
+      "calibrationBuckets": [
+        {
+          "key": "0-45",
+          "label": "laag <45%",
+          "matches": 205,
+          "avgConfidence": 0.357,
+          "observedOutcomeRate": 0.473,
+          "observedWinnerRate": 0.439,
+          "calibrationError": 0.116,
+          "avgBrierScore": 0.6486,
+          "avgLogLoss": 1.097
+        },
+        {
+          "key": "45-55",
+          "label": "45-55%",
+          "matches": 172,
+          "avgConfidence": 0.494,
+          "observedOutcomeRate": 0.552,
+          "observedWinnerRate": 0.349,
+          "calibrationError": 0.058,
+          "avgBrierScore": 0.6051,
+          "avgLogLoss": 1.0076
+        },
+        {
+          "key": "55-65",
+          "label": "55-65%",
+          "matches": 231,
+          "avgConfidence": 0.598,
+          "observedOutcomeRate": 0.385,
+          "observedWinnerRate": 0.407,
+          "calibrationError": -0.213,
+          "avgBrierScore": 0.6587,
+          "avgLogLoss": 1.0836
+        },
+        {
+          "key": "65-75",
+          "label": "65-75%",
+          "matches": 60,
+          "avgConfidence": 0.685,
+          "observedOutcomeRate": 0.483,
+          "observedWinnerRate": 0.533,
+          "calibrationError": -0.202,
+          "avgBrierScore": 0.554,
+          "avgLogLoss": 0.9192
+        },
+        {
+          "key": "75-100",
+          "label": "hoog 75%+",
+          "matches": 23,
+          "avgConfidence": 0.832,
+          "observedOutcomeRate": 0.391,
+          "observedWinnerRate": 0.391,
+          "calibrationError": -0.441,
+          "avgBrierScore": 0.6158,
+          "avgLogLoss": 1.0247
+        }
+      ],
+      "leakageSummary": {
+        "snapshotBacked": 5,
+        "fallback": 473,
+        "cutoffKnown": 5,
+        "highRisk": 17,
+        "sourceTimestampKnown": 0,
+        "snapshotCoverage": 0.007,
+        "cutoffCoverage": 0.007,
+        "sourceTimestampCoverage": 0
+      },
+      "metricCoverage": {
+        "brier": 0.692,
+        "logLoss": 0.692,
+        "roi": 0,
+        "clv": 0,
+        "oddsAtPrediction": 0,
+        "snapshots": 0.007
+      },
+      "latestWindow": {
+        "key": "2026-05",
+        "matches": 425,
+        "exactHitRate": 0.118,
+        "outcomeHitRate": 0.402,
+        "probabilityOutcomeHitRate": 0.48,
+        "bttsHitRate": 0.574,
+        "over25HitRate": 0.565,
+        "avgGoalError": 1.84,
+        "avgConfidence": 0.461,
+        "avgModelAgreement": 0.324,
+        "avgBrierScore": 0.6352,
+        "avgLogLoss": 1.0615,
+        "roiTotal": null,
+        "metricCoverage": {
+          "brier": 0.904,
+          "logLoss": 0.904,
+          "roi": 0,
+          "odds": 0,
+          "snapshot": 0.012,
+          "leakageCutoffKnown": 0.012
+        }
+      },
+      "summary": "Backtest uit opgeslagen reviews: 691 wedstrijden, laatste venster 2026-05, Brier 0.6352."
+    },
+    "modelPerformance": {
+      "generatedAt": "2026-06-13T07:18:50.002Z",
+      "overall": {
+        "key": "overall",
+        "matches": 691,
+        "exactHitRate": 0.117,
+        "outcomeHitRate": 0.412,
+        "probabilityOutcomeHitRate": 0.462,
+        "bttsHitRate": 0.563,
+        "over25HitRate": 0.56,
+        "avgGoalError": 1.88,
+        "avgConfidence": 0.516,
+        "avgModelAgreement": 0.251,
+        "avgBrierScore": 0.6367,
+        "avgLogLoss": 1.0618,
+        "roiTotal": null,
+        "metricCoverage": {
+          "brier": 0.692,
+          "logLoss": 0.692,
+          "roi": 0,
+          "odds": 0,
+          "snapshot": 0.007,
+          "leakageCutoffKnown": 0.007
+        }
+      },
+      "byLeague": [
+        {
+          "key": "Spain - LaLiga",
+          "matches": 119,
+          "exactHitRate": 0.134,
+          "outcomeHitRate": 0.42,
+          "probabilityOutcomeHitRate": 0.546,
+          "bttsHitRate": 0.546,
+          "over25HitRate": 0.546,
+          "avgGoalError": 1.66,
+          "avgConfidence": 0.505,
+          "avgModelAgreement": 0.277,
+          "avgBrierScore": 0.5822,
+          "avgLogLoss": 0.9918,
+          "roiTotal": null,
+          "metricCoverage": {
+            "brier": 0.773,
+            "logLoss": 0.773,
+            "roi": 0,
+            "odds": 0,
+            "snapshot": 0,
+            "leakageCutoffKnown": 0
+          }
+        },
+        {
+          "key": "Germany - Bundesliga",
+          "matches": 107,
+          "exactHitRate": 0.075,
+          "outcomeHitRate": 0.374,
+          "probabilityOutcomeHitRate": 0.402,
+          "bttsHitRate": 0.523,
+          "over25HitRate": 0.489,
+          "avgGoalError": 1.95,
+          "avgConfidence": 0.474,
+          "avgModelAgreement": 0.244,
+          "avgBrierScore": 0.6672,
+          "avgLogLoss": 1.1052,
+          "roiTotal": null,
+          "metricCoverage": {
+            "brier": 0.71,
+            "logLoss": 0.71,
+            "roi": 0,
+            "odds": 0,
+            "snapshot": 0,
+            "leakageCutoffKnown": 0
+          }
+        },
+        {
+          "key": "Italy - Serie A",
+          "matches": 76,
+          "exactHitRate": 0.118,
+          "outcomeHitRate": 0.487,
+          "probabilityOutcomeHitRate": 0.408,
+          "bttsHitRate": 0.508,
+          "over25HitRate": 0.431,
+          "avgGoalError": 1.88,
+          "avgConfidence": 0.523,
+          "avgModelAgreement": 0.374,
+          "avgBrierScore": 0.6439,
+          "avgLogLoss": 1.0854,
+          "roiTotal": null,
+          "metricCoverage": {
+            "brier": 0.711,
+            "logLoss": 0.711,
+            "roi": 0,
+            "odds": 0,
+            "snapshot": 0,
+            "leakageCutoffKnown": 0
+          }
+        },
+        {
+          "key": "Portugal - Liga Portugal",
+          "matches": 75,
+          "exactHitRate": 0.12,
+          "outcomeHitRate": 0.373,
+          "probabilityOutcomeHitRate": 0.533,
+          "bttsHitRate": 0.627,
+          "over25HitRate": 0.678,
+          "avgGoalError": 1.59,
+          "avgConfidence": 0.545,
+          "avgModelAgreement": 0.255,
+          "avgBrierScore": 0.5943,
+          "avgLogLoss": 0.9903,
+          "roiTotal": null,
+          "metricCoverage": {
+            "brier": 0.773,
+            "logLoss": 0.773,
+            "roi": 0,
+            "odds": 0,
+            "snapshot": 0,
+            "leakageCutoffKnown": 0
+          }
+        },
+        {
+          "key": "Belgium - Pro League",
+          "matches": 69,
+          "exactHitRate": 0.072,
+          "outcomeHitRate": 0.377,
+          "probabilityOutcomeHitRate": 0.478,
+          "bttsHitRate": 0.554,
+          "over25HitRate": 0.643,
+          "avgGoalError": 2.06,
+          "avgConfidence": 0.482,
+          "avgModelAgreement": 0.217,
+          "avgBrierScore": 0.6806,
+          "avgLogLoss": 1.1413,
+          "roiTotal": null,
+          "metricCoverage": {
+            "brier": 0.681,
+            "logLoss": 0.681,
+            "roi": 0,
+            "odds": 0,
+            "snapshot": 0.014,
+            "leakageCutoffKnown": 0.014
+          }
+        },
+        {
+          "key": "England - Premier League",
+          "matches": 57,
+          "exactHitRate": 0.158,
+          "outcomeHitRate": 0.404,
+          "probabilityOutcomeHitRate": 0.439,
+          "bttsHitRate": 0.638,
+          "over25HitRate": 0.638,
+          "avgGoalError": 1.82,
+          "avgConfidence": 0.494,
+          "avgModelAgreement": 0.256,
+          "avgBrierScore": 0.6683,
+          "avgLogLoss": 1.0905,
+          "roiTotal": null,
+          "metricCoverage": {
+            "brier": 0.737,
+            "logLoss": 0.737,
+            "roi": 0,
+            "odds": 0,
+            "snapshot": 0,
+            "leakageCutoffKnown": 0
+          }
+        },
+        {
+          "key": "Netherlands - Eredivisie",
+          "matches": 52,
+          "exactHitRate": 0.135,
+          "outcomeHitRate": 0.558,
+          "probabilityOutcomeHitRate": 0.404,
+          "bttsHitRate": 0.628,
+          "over25HitRate": 0.605,
+          "avgGoalError": 1.85,
+          "avgConfidence": 0.52,
+          "avgModelAgreement": 0.296,
+          "avgBrierScore": 0.641,
+          "avgLogLoss": 1.0509,
+          "roiTotal": null,
+          "metricCoverage": {
+            "brier": 0.75,
+            "logLoss": 0.75,
+            "roi": 0,
+            "odds": 0,
+            "snapshot": 0,
+            "leakageCutoffKnown": 0
+          }
+        },
+        {
+          "key": "France - Ligue 1",
+          "matches": 47,
+          "exactHitRate": 0.128,
+          "outcomeHitRate": 0.34,
+          "probabilityOutcomeHitRate": 0.511,
+          "bttsHitRate": 0.59,
+          "over25HitRate": 0.564,
+          "avgGoalError": 2.28,
+          "avgConfidence": 0.497,
+          "avgModelAgreement": 0.317,
+          "avgBrierScore": 0.6455,
+          "avgLogLoss": 1.0714,
+          "roiTotal": null,
+          "metricCoverage": {
+            "brier": 0.766,
+            "logLoss": 0.766,
+            "roi": 0,
+            "odds": 0,
+            "snapshot": 0.043,
+            "leakageCutoffKnown": 0.043
+          }
+        },
+        {
+          "key": "England - Championship",
+          "matches": 28,
+          "exactHitRate": 0.143,
+          "outcomeHitRate": 0.5,
+          "probabilityOutcomeHitRate": 0.429,
+          "bttsHitRate": 0.571,
+          "over25HitRate": 0.5,
+          "avgGoalError": 1.68,
+          "avgConfidence": 0.614,
+          "avgModelAgreement": 0.157,
+          "avgBrierScore": 0.6701,
+          "avgLogLoss": 1.1125,
+          "roiTotal": null,
+          "metricCoverage": {
+            "brier": 0.464,
+            "logLoss": 0.464,
+            "roi": 0,
+            "odds": 0,
+            "snapshot": 0,
+            "leakageCutoffKnown": 0
+          }
+        },
+        {
+          "key": "Europe - Champions League",
+          "matches": 14,
+          "exactHitRate": 0,
+          "outcomeHitRate": 0.143,
+          "probabilityOutcomeHitRate": 0.429,
+          "bttsHitRate": 0.4,
+          "over25HitRate": 0.5,
+          "avgGoalError": 2.64,
+          "avgConfidence": 0.499,
+          "avgModelAgreement": 0.062,
+          "avgBrierScore": 0.5846,
+          "avgLogLoss": 0.9981,
+          "roiTotal": null,
+          "metricCoverage": {
+            "brier": 0.714,
+            "logLoss": 0.714,
+            "roi": 0,
+            "odds": 0,
+            "snapshot": 0.071,
+            "leakageCutoffKnown": 0.071
+          }
+        },
+        {
+          "key": "Italy - Serie B",
+          "matches": 12,
+          "exactHitRate": 0.333,
+          "outcomeHitRate": 0.583,
+          "probabilityOutcomeHitRate": 0.25,
+          "bttsHitRate": 1,
+          "over25HitRate": 0.5,
+          "avgGoalError": 1.33,
+          "avgConfidence": 0.652,
+          "avgModelAgreement": 0,
+          "avgBrierScore": 0.6285,
+          "avgLogLoss": 0.9722,
+          "roiTotal": null,
+          "metricCoverage": {
+            "brier": 0.167,
+            "logLoss": 0.167,
+            "roi": 0,
+            "odds": 0,
+            "snapshot": 0,
+            "leakageCutoffKnown": 0
+          }
+        },
+        {
+          "key": "France - Ligue 2",
+          "matches": 12,
+          "exactHitRate": 0.083,
+          "outcomeHitRate": 0.583,
+          "probabilityOutcomeHitRate": 0.583,
+          "bttsHitRate": 0.667,
+          "over25HitRate": 0.333,
+          "avgGoalError": 2.5,
+          "avgConfidence": 0.734,
+          "avgModelAgreement": 0.045,
+          "avgBrierScore": 0.6263,
+          "avgLogLoss": 1.024,
+          "roiTotal": null,
+          "metricCoverage": {
+            "brier": 0.25,
+            "logLoss": 0.25,
+            "roi": 0,
+            "odds": 0,
+            "snapshot": 0,
+            "leakageCutoffKnown": 0
+          }
+        },
+        {
+          "key": "Netherlands - Eerste Divisie",
+          "matches": 10,
+          "exactHitRate": 0.2,
+          "outcomeHitRate": 0.4,
+          "probabilityOutcomeHitRate": 0.6,
+          "bttsHitRate": 0,
+          "over25HitRate": 0,
+          "avgGoalError": 1.9,
+          "avgConfidence": 0.591,
+          "avgModelAgreement": 0,
+          "avgBrierScore": null,
+          "avgLogLoss": null,
+          "roiTotal": null,
+          "metricCoverage": {
+            "brier": 0,
+            "logLoss": 0,
+            "roi": 0,
+            "odds": 0,
+            "snapshot": 0,
+            "leakageCutoffKnown": 0
+          }
+        },
+        {
+          "key": "Europe - Conference League",
+          "matches": 7,
+          "exactHitRate": 0,
+          "outcomeHitRate": 0.143,
+          "probabilityOutcomeHitRate": 0.286,
+          "bttsHitRate": 0.333,
+          "over25HitRate": 0.333,
+          "avgGoalError": 2.14,
+          "avgConfidence": 0.558,
+          "avgModelAgreement": 0.157,
+          "avgBrierScore": 0.8091,
+          "avgLogLoss": 1.3172,
+          "roiTotal": null,
+          "metricCoverage": {
+            "brier": 0.429,
+            "logLoss": 0.429,
+            "roi": 0,
+            "odds": 0,
+            "snapshot": 0.143,
+            "leakageCutoffKnown": 0.143
+          }
+        },
+        {
+          "key": "Europe - Europa League",
+          "matches": 6,
+          "exactHitRate": 0.167,
+          "outcomeHitRate": 0.167,
+          "probabilityOutcomeHitRate": 0.167,
+          "bttsHitRate": 0.333,
+          "over25HitRate": 1,
+          "avgGoalError": 2.67,
+          "avgConfidence": 0.459,
+          "avgModelAgreement": 0.048,
+          "avgBrierScore": 0.8044,
+          "avgLogLoss": 1.2748,
+          "roiTotal": null,
+          "metricCoverage": {
+            "brier": 0.5,
+            "logLoss": 0.5,
+            "roi": 0,
+            "odds": 0,
+            "snapshot": 0,
+            "leakageCutoffKnown": 0
+          }
+        }
+      ],
+      "byPhase": [
+        {
+          "key": "two-leg-knockout",
+          "matches": 334,
+          "exactHitRate": 0.093,
+          "outcomeHitRate": 0.398,
+          "probabilityOutcomeHitRate": 0.464,
+          "bttsHitRate": 0.585,
+          "over25HitRate": 0.565,
+          "avgGoalError": 1.93,
+          "avgConfidence": 0.483,
+          "avgModelAgreement": 0.312,
+          "avgBrierScore": 0.638,
+          "avgLogLoss": 1.0636,
+          "roiTotal": null,
+          "metricCoverage": {
+            "brier": 0.823,
+            "logLoss": 0.823,
+            "roi": 0,
+            "odds": 0,
+            "snapshot": 0.009,
+            "leakageCutoffKnown": 0.009
+          }
+        },
+        {
+          "key": "league",
+          "matches": 320,
+          "exactHitRate": 0.147,
+          "outcomeHitRate": 0.428,
+          "probabilityOutcomeHitRate": 0.456,
+          "bttsHitRate": 0.532,
+          "over25HitRate": 0.557,
+          "avgGoalError": 1.8,
+          "avgConfidence": 0.547,
+          "avgModelAgreement": 0.202,
+          "avgBrierScore": 0.6356,
+          "avgLogLoss": 1.0634,
+          "roiTotal": null,
+          "metricCoverage": {
+            "brier": 0.594,
+            "logLoss": 0.594,
+            "roi": 0,
+            "odds": 0,
+            "snapshot": 0,
+            "leakageCutoffKnown": 0
+          }
+        },
+        {
+          "key": "cup",
+          "matches": 37,
+          "exactHitRate": 0.081,
+          "outcomeHitRate": 0.405,
+          "probabilityOutcomeHitRate": 0.486,
+          "bttsHitRate": 0.538,
+          "over25HitRate": 0.462,
+          "avgGoalError": 2.11,
+          "avgConfidence": 0.55,
+          "avgModelAgreement": 0.131,
+          "avgBrierScore": 0.6237,
+          "avgLogLoss": 0.9985,
+          "roiTotal": null,
+          "metricCoverage": {
+            "brier": 0.351,
+            "logLoss": 0.351,
+            "roi": 0,
+            "odds": 0,
+            "snapshot": 0.054,
+            "leakageCutoffKnown": 0.054
+          }
+        }
+      ],
+      "byModel": [
+        {
+          "key": "ensemble",
+          "matches": 691,
+          "exactHitRate": 0.117,
+          "outcomeHitRate": 0.412,
+          "probabilityOutcomeHitRate": 0.462,
+          "bttsHitRate": 0.563,
+          "over25HitRate": 0.56,
+          "avgGoalError": 1.88,
+          "avgConfidence": 0.516,
+          "avgModelAgreement": 0.251,
+          "avgBrierScore": 0.6367,
+          "avgLogLoss": 1.0618,
+          "roiTotal": null,
+          "metricCoverage": {
+            "brier": 0.692,
+            "logLoss": 0.692,
+            "roi": 0,
+            "odds": 0,
+            "snapshot": 0.007,
+            "leakageCutoffKnown": 0.007
+          }
+        }
+      ],
+      "byModelVersion": [
+        {
+          "key": "dixon-coles-poisson",
+          "matches": 456,
+          "exactHitRate": 0.116,
+          "outcomeHitRate": 0.408,
+          "probabilityOutcomeHitRate": 0.465,
+          "bttsHitRate": 0.566,
+          "over25HitRate": 0.557,
+          "avgGoalError": 1.88,
+          "avgConfidence": 0.488,
+          "avgModelAgreement": 0.329,
+          "avgBrierScore": 0.6391,
+          "avgLogLoss": 1.0664,
+          "roiTotal": null,
+          "metricCoverage": {
+            "brier": 1,
+            "logLoss": 1,
+            "roi": 0,
+            "odds": 0,
+            "snapshot": 0,
+            "leakageCutoffKnown": 0
+          }
+        },
+        {
+          "key": "unknown",
+          "matches": 213,
+          "exactHitRate": 0.131,
+          "outcomeHitRate": 0.427,
+          "probabilityOutcomeHitRate": 0.46,
+          "bttsHitRate": 0.549,
+          "over25HitRate": 0.569,
+          "avgGoalError": 1.88,
+          "avgConfidence": 0.583,
+          "avgModelAgreement": 0.085,
+          "avgBrierScore": null,
+          "avgLogLoss": null,
+          "roiTotal": null,
+          "metricCoverage": {
+            "brier": 0,
+            "logLoss": 0,
+            "roi": 0,
+            "odds": 0,
+            "snapshot": 0,
+            "leakageCutoffKnown": 0
+          }
+        },
+        {
+          "key": "v23-calibrated-odds-ledger",
+          "matches": 22,
+          "exactHitRate": 0,
+          "outcomeHitRate": 0.364,
+          "probabilityOutcomeHitRate": 0.409,
+          "bttsHitRate": 0.545,
+          "over25HitRate": 0.591,
+          "avgGoalError": 1.77,
+          "avgConfidence": 0.456,
+          "avgModelAgreement": 0.256,
+          "avgBrierScore": 0.5876,
+          "avgLogLoss": 0.9658,
+          "roiTotal": null,
+          "metricCoverage": {
+            "brier": 1,
+            "logLoss": 1,
+            "roi": 0,
+            "odds": 0,
+            "snapshot": 0.227,
+            "leakageCutoffKnown": 0.227
+          }
+        }
+      ],
+      "modelComparisonStatus": "Alle reviews staan nu op ensemble; losse submodellen worden nog niet apart als eigen model beoordeeld.",
+      "modelSelectionAdvice": "De 1X2-kanslaag scoort beter dan de uitkomst van de gekozen exacte score. Gebruik de scorematrix voor exacte score, maar laat winnaar/gelijk sterker door de 1X2-kanslaag bewaken.",
+      "confidenceBuckets": [
+        {
+          "key": "hoog",
+          "matches": 55,
+          "exactHitRate": 0.218,
+          "outcomeHitRate": 0.509,
+          "probabilityOutcomeHitRate": 0.509,
+          "bttsHitRate": 0.786,
+          "over25HitRate": 0.857,
+          "avgGoalError": 1.6,
+          "avgConfidence": 0.758,
+          "avgModelAgreement": 0.149,
+          "avgBrierScore": 0.5527,
+          "avgLogLoss": 0.9226,
+          "roiTotal": null,
+          "metricCoverage": {
+            "brier": 0.236,
+            "logLoss": 0.236,
+            "roi": 0,
+            "odds": 0,
+            "snapshot": 0,
+            "leakageCutoffKnown": 0
+          }
+        },
+        {
+          "key": "gemiddeld",
+          "matches": 299,
+          "exactHitRate": 0.114,
+          "outcomeHitRate": 0.395,
+          "probabilityOutcomeHitRate": 0.401,
+          "bttsHitRate": 0.493,
+          "over25HitRate": 0.525,
+          "avgGoalError": 1.82,
+          "avgConfidence": 0.596,
+          "avgModelAgreement": 0.291,
+          "avgBrierScore": 0.6558,
+          "avgLogLoss": 1.0806,
+          "roiTotal": null,
+          "metricCoverage": {
+            "brier": 0.662,
+            "logLoss": 0.662,
+            "roi": 0,
+            "odds": 0,
+            "snapshot": 0.007,
+            "leakageCutoffKnown": 0.007
+          }
+        },
+        {
+          "key": "laag",
+          "matches": 337,
+          "exactHitRate": 0.104,
+          "outcomeHitRate": 0.412,
+          "probabilityOutcomeHitRate": 0.507,
+          "bttsHitRate": 0.604,
+          "over25HitRate": 0.57,
+          "avgGoalError": 1.98,
+          "avgConfidence": 0.406,
+          "avgModelAgreement": 0.233,
+          "avgBrierScore": 0.6267,
+          "avgLogLoss": 1.0546,
+          "roiTotal": null,
+          "metricCoverage": {
+            "brier": 0.792,
+            "logLoss": 0.792,
+            "roi": 0,
+            "odds": 0,
+            "snapshot": 0.009,
+            "leakageCutoffKnown": 0.009
+          }
+        }
+      ],
+      "calibrationBuckets": [
+        {
+          "key": "0-45",
+          "label": "laag <45%",
+          "matches": 205,
+          "avgConfidence": 0.357,
+          "observedOutcomeRate": 0.473,
+          "observedWinnerRate": 0.439,
+          "calibrationError": 0.116,
+          "avgBrierScore": 0.6486,
+          "avgLogLoss": 1.097
+        },
+        {
+          "key": "45-55",
+          "label": "45-55%",
+          "matches": 172,
+          "avgConfidence": 0.494,
+          "observedOutcomeRate": 0.552,
+          "observedWinnerRate": 0.349,
+          "calibrationError": 0.058,
+          "avgBrierScore": 0.6051,
+          "avgLogLoss": 1.0076
+        },
+        {
+          "key": "55-65",
+          "label": "55-65%",
+          "matches": 231,
+          "avgConfidence": 0.598,
+          "observedOutcomeRate": 0.385,
+          "observedWinnerRate": 0.407,
+          "calibrationError": -0.213,
+          "avgBrierScore": 0.6587,
+          "avgLogLoss": 1.0836
+        },
+        {
+          "key": "65-75",
+          "label": "65-75%",
+          "matches": 60,
+          "avgConfidence": 0.685,
+          "observedOutcomeRate": 0.483,
+          "observedWinnerRate": 0.533,
+          "calibrationError": -0.202,
+          "avgBrierScore": 0.554,
+          "avgLogLoss": 0.9192
+        },
+        {
+          "key": "75-100",
+          "label": "hoog 75%+",
+          "matches": 23,
+          "avgConfidence": 0.832,
+          "observedOutcomeRate": 0.391,
+          "observedWinnerRate": 0.391,
+          "calibrationError": -0.441,
+          "avgBrierScore": 0.6158,
+          "avgLogLoss": 1.0247
+        }
+      ],
+      "calibrationSummary": {
+        "averageAbsoluteError": 0.206,
+        "status": "zwak"
+      },
+      "metricCoverage": {
+        "brier": 0.692,
+        "logLoss": 0.692,
+        "roi": 0,
+        "clv": 0,
+        "oddsAtPrediction": 0,
+        "snapshots": 0.007
+      },
+      "weakestLeagues": [
+        {
+          "key": "Europe - Champions League",
+          "matches": 14,
+          "exactHitRate": 0,
+          "outcomeHitRate": 0.143,
+          "probabilityOutcomeHitRate": 0.429,
+          "bttsHitRate": 0.4,
+          "over25HitRate": 0.5,
+          "avgGoalError": 2.64,
+          "avgConfidence": 0.499,
+          "avgModelAgreement": 0.062,
+          "avgBrierScore": 0.5846,
+          "avgLogLoss": 0.9981,
+          "roiTotal": null,
+          "metricCoverage": {
+            "brier": 0.714,
+            "logLoss": 0.714,
+            "roi": 0,
+            "odds": 0,
+            "snapshot": 0.071,
+            "leakageCutoffKnown": 0.071
+          }
+        },
+        {
+          "key": "Europe - Conference League",
+          "matches": 7,
+          "exactHitRate": 0,
+          "outcomeHitRate": 0.143,
+          "probabilityOutcomeHitRate": 0.286,
+          "bttsHitRate": 0.333,
+          "over25HitRate": 0.333,
+          "avgGoalError": 2.14,
+          "avgConfidence": 0.558,
+          "avgModelAgreement": 0.157,
+          "avgBrierScore": 0.8091,
+          "avgLogLoss": 1.3172,
+          "roiTotal": null,
+          "metricCoverage": {
+            "brier": 0.429,
+            "logLoss": 0.429,
+            "roi": 0,
+            "odds": 0,
+            "snapshot": 0.143,
+            "leakageCutoffKnown": 0.143
+          }
+        },
+        {
+          "key": "Europe - Europa League",
+          "matches": 6,
+          "exactHitRate": 0.167,
+          "outcomeHitRate": 0.167,
+          "probabilityOutcomeHitRate": 0.167,
+          "bttsHitRate": 0.333,
+          "over25HitRate": 1,
+          "avgGoalError": 2.67,
+          "avgConfidence": 0.459,
+          "avgModelAgreement": 0.048,
+          "avgBrierScore": 0.8044,
+          "avgLogLoss": 1.2748,
+          "roiTotal": null,
+          "metricCoverage": {
+            "brier": 0.5,
+            "logLoss": 0.5,
+            "roi": 0,
+            "odds": 0,
+            "snapshot": 0,
+            "leakageCutoffKnown": 0
+          }
+        },
+        {
+          "key": "France - Ligue 1",
+          "matches": 47,
+          "exactHitRate": 0.128,
+          "outcomeHitRate": 0.34,
+          "probabilityOutcomeHitRate": 0.511,
+          "bttsHitRate": 0.59,
+          "over25HitRate": 0.564,
+          "avgGoalError": 2.28,
+          "avgConfidence": 0.497,
+          "avgModelAgreement": 0.317,
+          "avgBrierScore": 0.6455,
+          "avgLogLoss": 1.0714,
+          "roiTotal": null,
+          "metricCoverage": {
+            "brier": 0.766,
+            "logLoss": 0.766,
+            "roi": 0,
+            "odds": 0,
+            "snapshot": 0.043,
+            "leakageCutoffKnown": 0.043
+          }
+        },
+        {
+          "key": "Portugal - Liga Portugal",
+          "matches": 75,
+          "exactHitRate": 0.12,
+          "outcomeHitRate": 0.373,
+          "probabilityOutcomeHitRate": 0.533,
+          "bttsHitRate": 0.627,
+          "over25HitRate": 0.678,
+          "avgGoalError": 1.59,
+          "avgConfidence": 0.545,
+          "avgModelAgreement": 0.255,
+          "avgBrierScore": 0.5943,
+          "avgLogLoss": 0.9903,
+          "roiTotal": null,
+          "metricCoverage": {
+            "brier": 0.773,
+            "logLoss": 0.773,
+            "roi": 0,
+            "odds": 0,
+            "snapshot": 0,
+            "leakageCutoffKnown": 0
+          }
+        },
+        {
+          "key": "Germany - Bundesliga",
+          "matches": 107,
+          "exactHitRate": 0.075,
+          "outcomeHitRate": 0.374,
+          "probabilityOutcomeHitRate": 0.402,
+          "bttsHitRate": 0.523,
+          "over25HitRate": 0.489,
+          "avgGoalError": 1.95,
+          "avgConfidence": 0.474,
+          "avgModelAgreement": 0.244,
+          "avgBrierScore": 0.6672,
+          "avgLogLoss": 1.1052,
+          "roiTotal": null,
+          "metricCoverage": {
+            "brier": 0.71,
+            "logLoss": 0.71,
+            "roi": 0,
+            "odds": 0,
+            "snapshot": 0,
+            "leakageCutoffKnown": 0
+          }
+        },
+        {
+          "key": "Belgium - Pro League",
+          "matches": 69,
+          "exactHitRate": 0.072,
+          "outcomeHitRate": 0.377,
+          "probabilityOutcomeHitRate": 0.478,
+          "bttsHitRate": 0.554,
+          "over25HitRate": 0.643,
+          "avgGoalError": 2.06,
+          "avgConfidence": 0.482,
+          "avgModelAgreement": 0.217,
+          "avgBrierScore": 0.6806,
+          "avgLogLoss": 1.1413,
+          "roiTotal": null,
+          "metricCoverage": {
+            "brier": 0.681,
+            "logLoss": 0.681,
+            "roi": 0,
+            "odds": 0,
+            "snapshot": 0.014,
+            "leakageCutoffKnown": 0.014
+          }
+        },
+        {
+          "key": "Netherlands - Eerste Divisie",
+          "matches": 10,
+          "exactHitRate": 0.2,
+          "outcomeHitRate": 0.4,
+          "probabilityOutcomeHitRate": 0.6,
+          "bttsHitRate": 0,
+          "over25HitRate": 0,
+          "avgGoalError": 1.9,
+          "avgConfidence": 0.591,
+          "avgModelAgreement": 0,
+          "avgBrierScore": null,
+          "avgLogLoss": null,
+          "roiTotal": null,
+          "metricCoverage": {
+            "brier": 0,
+            "logLoss": 0,
+            "roi": 0,
+            "odds": 0,
+            "snapshot": 0,
+            "leakageCutoffKnown": 0
+          }
+        }
+      ],
+      "summary": "Modelperformance: 41% winnaar/gelijk, 12% exacte score, Brier 0.6367, log loss 1.0618. Alle reviews staan nu op ensemble; losse submodellen worden nog niet apart als eigen model beoordeeld."
+    },
+    "dataCompletenessAudit": {
+      "generatedAt": "2026-06-13T07:18:50.011Z",
+      "date": "2026-06-13",
+      "matches": 0,
+      "averageScore": null,
+      "p25Score": null,
+      "coverage": {
+        "h2h": 0,
+        "form": 0,
+        "standings": 0,
+        "teamIdentity": 0,
+        "providerTeamIds": 0,
+        "xgShots": 0,
+        "marketProfile": 0,
+        "liveOdds": 0,
+        "lineups": 0,
+        "lineupStatusKnown": 0,
+        "referee": 0,
+        "refereeStatusKnown": 0,
+        "sourceMetadata": 0
+      },
+      "sourceTimestampCoverage": null,
+      "missingReasons": [],
+      "lowCompletenessMatches": [],
+      "weakestLeagues": [],
+      "summary": "Geen wedstrijden voor datacompleetheid-audit."
+    },
+    "oddsIntegrationReadiness": {
+      "generatedAt": "2026-06-13T07:18:50.011Z",
+      "date": "2026-06-13",
+      "providerConfigured": true,
+      "configuredProviders": [
+        "custom-url-template"
+      ],
+      "configurationStatus": "url_template_without_api_key",
+      "envStatus": {
+        "ODDS_PROVIDER_NAME": true,
+        "ODDS_API_URL_TEMPLATE": true,
+        "ODDS_API_KEY": false,
+        "THE_ODDS_API_KEY": false,
+        "FOOTBALL_DATA_TOKEN": false
+      },
+      "environmentVariables": [
+        "ODDS_PROVIDER_NAME",
+        "ODDS_API_URL_TEMPLATE",
+        "ODDS_API_KEY",
+        "THE_ODDS_API_KEY",
+        "FOOTBALL_DATA_TOKEN"
+      ],
+      "requiredFields": [
+        "provider",
+        "bookmaker",
+        "market",
+        "home",
+        "draw",
+        "away",
+        "capturedAt",
+        "closingHome",
+        "closingDraw",
+        "closingAway",
+        "closingCapturedAt"
+      ],
+      "currentCoverage": {
+        "predictions": 0,
+        "snapshots": 0,
+        "reviews": 0,
+        "historicalMarketOnly": 0
+      },
+      "storageReady": {
+        "oddsStatus": true,
+        "roiStatus": true,
+        "clvStatus": true
+      },
+      "pipelineSteps": [
+        "fetch pre-match 1X2 odds before kickoff",
+        "store odds_at_prediction in immutable snapshot",
+        "fetch or derive closing odds after market close",
+        "settle ROI and CLV only after result",
+        "exclude odds captured after cutoff from model input"
+      ],
+      "nextAction": "Maak de odds-secret flow compleet: ODDS_API_URL_TEMPLATE plus ODDS_API_KEY/THE_ODDS_API_KEY zijn samen nodig."
+    },
+    "fetchErrors": {
+      "matches": null,
+      "predict": null,
+      "history": null,
+      "snapshots": null
+    }
+  },
+  "predictions": {
+    "total": 3,
+    "featureCoverage": 0,
+    "oddsCoverage": 0,
+    "historicalMarketOnly": 0,
+    "reviewCoverage": 0,
+    "averageCompleteness": 0.44
+  },
+  "storageAudit": [
+    {
+      "field": "prediction_id",
+      "present": true,
+      "importance": "kritiek",
+      "advice": "Voeg een stabiele prediction_id toe per voorspelling."
+    },
+    {
+      "field": "generated_at / cutoff_at",
+      "present": true,
+      "importance": "kritiek",
+      "advice": "Sla tijdstip en cutoff expliciet op zodat latere uitslagen geen input kunnen worden."
+    },
+    {
+      "field": "featureVector",
+      "present": true,
+      "importance": "hoog",
+      "advice": "Aanwezig waar predictions gevuld zijn; maak hem immutable per prediction_id."
+    },
+    {
+      "field": "model_version",
+      "present": true,
+      "importance": "hoog",
+      "advice": "Gebruik naast ensembleMeta ook workerVersion en feature_schema_version."
+    },
+    {
+      "field": "odds_at_prediction",
+      "present": false,
+      "importance": "hoog",
+      "advice": "Sla echte bookmaker, markt, odds en timestamp op; historische marktprofielen tellen niet als ROI-basis."
+    },
+    {
+      "field": "odds_status / missing_reason",
+      "present": true,
+      "importance": "hoog",
+      "advice": "Markeer per voorspelling of odds echt, deels, historisch-only of ontbrekend zijn."
+    },
+    {
+      "field": "Brier/log loss",
+      "present": true,
+      "importance": "kritiek",
+      "advice": "Bereken evaluatiemetrics op 1X2 per postMatchReview."
+    },
+    {
+      "field": "ROI/CLV met echte odds",
+      "present": false,
+      "importance": "hoog",
+      "advice": "Bereken ROI/CLV pas wanneer odds_at_prediction en closing_odds echt gevuld zijn."
+    },
+    {
+      "field": "leakage_guard",
+      "present": true,
+      "importance": "kritiek",
+      "advice": "Leg cutoff_before_kickoff, snapshot_backed en source_timestamp dekking vast."
+    },
+    {
+      "field": "feature_source_metadata",
+      "present": true,
+      "importance": "hoog",
+      "advice": "Leg per feature bron, as_of en source_timestamp dekking vast."
+    }
+  ],
+  "recommendations": [
+    {
+      "key": "immutable_prediction_snapshots",
+      "title": "Maak pre-match voorspellingen immutable",
+      "impact": "zeer hoog",
+      "difficulty": "middel",
+      "files": [
+        "scripts/server-worker.js",
+        "data/predictions"
+      ],
+      "advice": "Sla prediction_id, generated_at, cutoff_at, model_version, feature_schema_version, input_snapshot_hash en result_status op. Overschrijf deze records nooit bij latere worker-runs."
+    },
+    {
+      "key": "leakage_cutoff",
+      "title": "Dwing data-cutoff voor kickoff af",
+      "impact": "zeer hoog",
+      "difficulty": "middel",
+      "files": [
+        "scripts/server-worker.js"
+      ],
+      "advice": "Filter vorm, H2H, standings, odds, blessures en lineups op informatie die beschikbaar was voor generated_at/cutoff_at. Markeer elk veld met source_timestamp en as_of."
+    },
+    {
+      "key": "evaluation_metrics",
+      "title": "Voeg Brier score, log loss, CLV en ROI toe",
+      "impact": "zeer hoog",
+      "difficulty": "laag-middel",
+      "files": [
+        "scripts/server-worker.js",
+        "api/history.ts",
+        "components/PredictionHistory.tsx"
+      ],
+      "advice": "Bereken per review Brier score en log loss op 1X2. Voeg ROI en closing line value toe zodra odds_at_prediction en closing_odds gevuld zijn."
+    },
+    {
+      "key": "storage_backend",
+      "title": "Breid Neon-opslag gecontroleerd uit",
+      "impact": "hoog",
+      "difficulty": "middel",
+      "files": [
+        "api/_dataSource.ts",
+        "scripts/server-worker.js"
+      ],
+      "advice": "Neon is actief. Migreer resterende JSON-afhankelijke widgets per contract naar Neon en behoud JSON/GitHub alleen als compatibele export- en fallbacklaag."
+    },
+    {
+      "key": "modular_worker",
+      "title": "Splits de worker in domeinmodules",
+      "impact": "hoog",
+      "difficulty": "middel",
+      "files": [
+        "scripts/server-worker.js"
+      ],
+      "advice": "Splits data sources, normalisatie, feature builder, model, evaluation en storage. Dit maakt competities, bronnen en modellen makkelijker uitbreidbaar."
+    }
+  ],
+  "nextAction": "Verbeter nu odds-inname en source_timestamp dekking; train pas zwaarder wanneer ROI/CLV op echte odds gebaseerd zijn."
+}

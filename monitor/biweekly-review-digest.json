@@ -1,25 +1,25 @@
 {
-  "generatedAt": "2026-06-08T11:21:45.688Z",
+  "generatedAt": "2026-06-13T07:41:16.037Z",
   "range": {
-    "from": "2026-05-26",
-    "to": "2026-06-08",
+    "from": "2026-05-31",
+    "to": "2026-06-13",
     "days": 14
   },
   "shouldNotify": false,
   "shouldRefresh": true,
   "cadence": "tweewekelijks",
-  "summary": "AI bundel over de laatste 14 dagen: 5 hoofdthema's uit 26 monitorbevindingen.",
+  "summary": "AI bundel over de laatste 14 dagen: 4 hoofdthema's uit 33 monitorbevindingen.",
   "totals": {
-    "totalRuns": 14,
-    "totalIssues": 26,
-    "uniqueIssueTypes": 5
+    "totalRuns": 20,
+    "totalIssues": 33,
+    "uniqueIssueTypes": 4
   },
   "latestStats": {
-    "today": "2026-06-08",
-    "tomorrow": "2026-06-09",
+    "today": "2026-06-13",
+    "tomorrow": "2026-06-14",
     "dataPresent": true,
-    "lastRun": 1780870508200,
-    "ageMinutes": 65,
+    "lastRun": 1781304305899,
+    "ageMinutes": 68,
     "maxWorkerAgeMinutes": 180,
     "todayMatches": 0,
     "tomorrowMatches": 0,
@@ -32,14 +32,14 @@
       "tomorrowCount": 0,
       "windowDays": 7,
       "checkedDates": [
-        "2026-06-08",
-        "2026-06-09",
-        "2026-06-10",
-        "2026-06-11",
-        "2026-06-12",
         "2026-06-13",
         "2026-06-14",
-        "2026-06-15"
+        "2026-06-15",
+        "2026-06-16",
+        "2026-06-17",
+        "2026-06-18",
+        "2026-06-19",
+        "2026-06-20"
       ],
       "nextMatchDate": null,
       "nextMatchCount": 0,
@@ -50,61 +50,53 @@
     "h2hFilled": 0,
     "h2hMissing": 0,
     "standingsCount": 41,
-    "cupSheetCount": 0,
+    "cupSheetCount": 15,
     "phaseReliabilityCount": 3
   },
   "topFindings": [
     {
-      "key": "worker_stale",
-      "title": "Workerdata verouderd",
-      "count": 8,
-      "highestSeverity": "high",
-      "sampleMessage": "server_data.json is 889 minuten oud.",
-      "recommendation": "Gebruik het reviewbranch-voorstel als veilige volgende patchronde."
-    },
-    {
-      "key": "today_matches_empty",
-      "title": "Geen speeldagdata",
-      "count": 6,
-      "highestSeverity": "medium",
-      "sampleMessage": "Er zijn geen wedstrijden voor vandaag in server_data.json.",
-      "recommendation": "Controleer brondekking en dagfilter in de worker voor vandaag + morgen."
-    },
-    {
       "key": "cupsheets_empty",
       "title": "Bekerschema leeg",
-      "count": 6,
+      "count": 12,
       "highestSeverity": "medium",
       "sampleMessage": "cupSheets is leeg.",
       "recommendation": "Gebruik het reviewbranch-voorstel als veilige volgende patchronde."
     },
     {
+      "key": "worker_stale",
+      "title": "Workerdata verouderd",
+      "count": 7,
+      "highestSeverity": "high",
+      "sampleMessage": "server_data.json is 684 minuten oud.",
+      "recommendation": "Gebruik het reviewbranch-voorstel als veilige volgende patchronde."
+    },
+    {
+      "key": "today_matches_empty",
+      "title": "Geen speeldagdata",
+      "count": 7,
+      "highestSeverity": "medium",
+      "sampleMessage": "Er zijn geen wedstrijden voor vandaag in server_data.json.",
+      "recommendation": "Controleer brondekking en dagfilter in de worker voor vandaag + morgen."
+    },
+    {
       "key": "fixture_calendar_source_gap",
       "title": "Fixturekalender onzeker",
-      "count": 4,
+      "count": 7,
       "highestSeverity": "medium",
       "sampleMessage": "Geen wedstrijden gevonden en onvoldoende kalenderbewijs dat dit een echte lege speeldag is.",
       "recommendation": "Controleer kalenderfallbacks; 0 wedstrijden is alleen ok als de worker dat kan verklaren."
-    },
-    {
-      "key": "h2h_empty",
-      "title": "H2H niet gevuld",
-      "count": 2,
-      "highestSeverity": "medium",
-      "sampleMessage": "Alle wedstrijden van vandaag hebben lege H2H-data.",
-      "recommendation": "Trek H2H verder uit historische competitiebestanden en bewaak fallbackdekking in de worker."
     }
   ],
   "dataQuality": {
-    "generatedAt": "2026-06-08T11:21:45.550Z",
+    "generatedAt": "2026-06-13T07:31:49.967Z",
     "totals": {
-      "matches": 455,
-      "pastMatches": 455,
+      "matches": 388,
+      "pastMatches": 388,
       "pendingResultBackfills": 0,
       "missingPastScores": 0,
-      "h2hMissing": 64,
-      "h2hCovered": 391,
-      "h2hCoverage": 0.859
+      "h2hMissing": 55,
+      "h2hCovered": 333,
+      "h2hCoverage": 0.858
     },
     "status": {
       "resultBackfill": "clean",
@@ -115,37 +107,130 @@
       "H2H-dekking is voldoende voor de huidige auditperiode."
     ]
   },
+  "widgetAudit": {
+    "generatedAt": "2026-06-13T07:41:00.663Z",
+    "baseUrl": "https://voetbalvoorspellingen-clean.vercel.app",
+    "status": "ok",
+    "totals": {
+      "checks": 10,
+      "passed": 10,
+      "failed": 0
+    },
+    "neon": {
+      "connected": true,
+      "matches": 11803,
+      "predictionSnapshots": 76,
+      "h2hEdges": 3101,
+      "auditRows": 871
+    },
+    "checks": [
+      {
+        "key": "health",
+        "label": "Systeemstatus",
+        "passed": true,
+        "status": 200,
+        "detail": "status ok"
+      },
+      {
+        "key": "neon",
+        "label": "Neon database",
+        "passed": true,
+        "status": 200,
+        "detail": "11803 matches, 76 snapshots"
+      },
+      {
+        "key": "provider_widget",
+        "label": "Provider- en integriteitswidget",
+        "passed": true,
+        "status": 200,
+        "detail": "24 providers, 1253 conflicten"
+      },
+      {
+        "key": "matches_widget",
+        "label": "Dashboard/matches-widget",
+        "passed": true,
+        "status": 200,
+        "detail": "3 actuele matches, bron postgres"
+      },
+      {
+        "key": "standings_widget",
+        "label": "Standen-widget",
+        "passed": true,
+        "status": 200,
+        "detail": "41 standen"
+      },
+      {
+        "key": "cup_widget",
+        "label": "Bekerschema-widget",
+        "passed": true,
+        "status": 200,
+        "detail": "15 cupSheets"
+      },
+      {
+        "key": "season_widget",
+        "label": "Neon seizoen-widget",
+        "passed": true,
+        "status": 200,
+        "detail": "115 seizoenovergangen"
+      },
+      {
+        "key": "history_widget",
+        "label": "Geschiedenis-widget",
+        "passed": true,
+        "status": 200,
+        "detail": "691 reviews"
+      },
+      {
+        "key": "snapshot_widget",
+        "label": "Prediction-snapshot-widget",
+        "passed": true,
+        "status": 200,
+        "detail": "1 snapshots"
+      },
+      {
+        "key": "knowledge_widget",
+        "label": "Vraag FootyAI-widget",
+        "passed": true,
+        "status": 200,
+        "detail": "30 brongebonden resultaten"
+      }
+    ],
+    "opportunities": [
+      "Vul gratis pre-match odds snapshots voordat ROI/CLV wordt beoordeeld.",
+      "Prioriteer open bronconflicten op impact en providertrust."
+    ]
+  },
   "architectureAudit": {
-    "generatedAt": "2026-06-08T11:21:45.688Z",
+    "generatedAt": "2026-06-13T07:41:16.037Z",
     "summary": "Professionele architectuuranalyse voor schaalbaarheid, datakwaliteit, AI-agentwaarde, databasegroei en modelbetrouwbaarheid.",
     "findings": [
       {
         "key": "worker_monolith",
-        "title": "Worker is monolithisch",
-        "problem": "De worker bevat data collection, validatie, prediction, learning, archivering en storage in een enkel bestand.",
-        "cause": "Snelle iteratie heeft alle domeinen samengebracht in scripts/server-worker.js.",
+        "title": "Worker-core blijft te groot",
+        "problem": "Data collection, validatie, prediction, archivering en datumlogica zijn deels opgesplitst, maar scripts/server-worker.js blijft de grote orkestratielaag.",
+        "cause": "De eerste veilige module-extracties zijn uitgevoerd; veel domeinlogica is nog gekoppeld aan de centrale store.",
         "risk": "Nieuwe competities, databronnen en modellen worden moeilijk testbaar en vergroten regressierisico.",
-        "solution": "Splits de worker gefaseerd in domeinmodules met gelijkblijvende input/output-contracten.",
+        "solution": "Ga verder met kleine domeinextracties en voeg per module contracttests toe.",
         "priority": "Hoog",
         "expectedImpact": "Zeer hoog"
       },
       {
         "key": "json_primary_storage",
-        "title": "JSON is nog primaire datastore",
-        "problem": "server_data.json is groot en groeit lineair mee met wedstrijden, reviews en snapshots.",
-        "cause": "GitHub JSON fungeert nu als bron van waarheid en distributielaag tegelijk.",
+        "title": "JSON-compatibiliteitslaag blijft te zwaar",
+        "problem": "Neon is actief, maar server_data.json blijft groot en bevat nog gedeelde workerstatus, reviews en snapshots.",
+        "cause": "GitHub JSON blijft tegelijk fallback, exportlaag en worker-uitwisselingsformaat.",
         "risk": "Miljoenen wedstrijden zijn niet haalbaar met grote JSON-commits en serverless JSON-parsing.",
-        "solution": "Maak Postgres/Supabase primair en behoud JSON alleen als cache/exportlaag.",
+        "solution": "Maak Neon per dashboardsectie primair en verklein JSON stapsgewijs tot cache/exportlaag.",
         "priority": "Hoog",
         "expectedImpact": "Zeer hoog"
       },
       {
         "key": "database_schema_too_narrow",
-        "title": "Database-schema is nog prediction-ledger",
-        "problem": "Het schema mist genormaliseerde competities, clubs, seizoenen, teamstatistieken en source records.",
-        "cause": "Het huidige schema is ontworpen rond predictions en evaluaties, niet rond een volledige football intelligence graph.",
-        "risk": "Seizoenbeheer, historische standen en bronherleidbaarheid worden later duur om te herstellen.",
-        "solution": "Breid het schema uit met competition, club, season, match stats, source lineage en archive-tabellen.",
+        "title": "Neon-adoptie is nog onvolledig",
+        "problem": "Het schema bevat competities, clubs, seizoenen, wedstrijdstatistieken, H2H, source lineage en archives, maar niet iedere widget gebruikt deze tabellen primair.",
+        "cause": "JSON-fallbacks blijven bewust actief tijdens de gefaseerde migratie.",
+        "risk": "Widgets kunnen verschillende actualiteit en dekking tonen als Neon en JSON uiteenlopen.",
+        "solution": "Meet database-backed dekking per widget en migreer secties alleen na contractvergelijking met JSON.",
         "priority": "Hoog",
         "expectedImpact": "Zeer hoog"
       },
@@ -198,10 +283,10 @@
     ],
     "nextRecommendations": [
       {
-        "title": "Database credentials activeren en schema toepassen",
+        "title": "Neon datadekking verder uitbreiden",
         "priority": "Hoog",
         "expectedImpact": "Zeer hoog",
-        "reason": "Het migratieplan is nu vastgelegd; de volgende stap is DATABASE_URL/POSTGRES_URL koppelen en npm run db:schema:apply draaien."
+        "reason": "Neon werkt met 11803 matches; maak nu meer dashboardsecties database-backed en verhoog source-auditdekking."
       },
       {
         "title": "H2H/result-contract bewaken met regressietests",
@@ -257,10 +342,10 @@
   ],
   "nextRecommendations": [
     {
-      "title": "Database credentials activeren en schema toepassen",
+      "title": "Neon datadekking verder uitbreiden",
       "priority": "Hoog",
       "expectedImpact": "Zeer hoog",
-      "reason": "Het migratieplan is nu vastgelegd; de volgende stap is DATABASE_URL/POSTGRES_URL koppelen en npm run db:schema:apply draaien."
+      "reason": "Neon werkt met 11803 matches; maak nu meer dashboardsecties database-backed en verhoog source-auditdekking."
     },
     {
       "title": "H2H/result-contract bewaken met regressietests",
@@ -287,15 +372,7 @@
       "reason": "ROI/CLV is pas betrouwbaar zodra echte odds_at_prediction en closing odds consequent binnenkomen."
     }
   ],
-  "reviewProposal": {
-    "branchName": "codex/review-20260608",
-    "summary": "AI reviewvoorstel voor 2026-06-08: 1 aandachtspunt(en) met patchadvies, niet automatisch live.",
-    "recommendedFiles": [
-      "scripts/server-worker.js",
-      "components/StandingsView.tsx",
-      "api/standings.ts"
-    ]
-  },
+  "reviewProposal": null,
   "delivery": {
     "emailConfigured": false,
     "note": "Mailverzending vereist nog aparte mailcredentials of een mailservice. De bundel wordt nu wel automatisch opgebouwd en opgeslagen."
