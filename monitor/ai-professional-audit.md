@@ -1,6 +1,6 @@
 # FootyAI professionele AI-audit
 
-Gegenereerd: 2026-06-13T07:48:16.909Z
+Gegenereerd: 2026-06-13T07:50:22.723Z
 Bron: https://voetbalvoorspellingen-clean.vercel.app
 
 ## Samenvatting
