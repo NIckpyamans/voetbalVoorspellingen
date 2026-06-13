@@ -1,6 +1,6 @@
 # Widget Integration Audit
 
-Gegenereerd: 2026-06-13T07:41:00.663Z
+Gegenereerd: 2026-06-13T07:48:15.856Z
 Status: ok
 
 ## Neon
