@@ -11,6 +11,9 @@ concurrency:
   group: football-biweekly-architecture-digest
   cancel-in-progress: false
 
+env:
+  FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: "true"
+
 jobs:
   build-digest:
     runs-on: ubuntu-latest
