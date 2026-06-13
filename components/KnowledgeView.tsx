@@ -107,6 +107,9 @@ const KnowledgeView: React.FC = () => {
             <div className="mt-4 flex flex-wrap gap-2">
               {(data.sources || []).map((source: string) => <span key={source} className="rounded-full bg-emerald-500/10 px-3 py-1 text-[8px] font-bold text-emerald-200">{source}</span>)}
             </div>
+            {!!data.recognizedTerms?.length && (
+              <div className="mt-3 text-[8px] text-slate-500">Herkende zoektermen: {data.recognizedTerms.join(", ")}</div>
+            )}
           </section>
           <section className="grid gap-3 md:grid-cols-2 xl:grid-cols-3">
             {(data.results || []).map((item: any) => (
@@ -129,7 +132,7 @@ const KnowledgeView: React.FC = () => {
           </div>
           <div className="flex gap-2">
             <button onClick={exportHistory} disabled={!history.length} className="rounded-lg border border-cyan-400/20 px-3 py-1 text-[8px] font-black uppercase text-cyan-200 disabled:opacity-40">Exporteer</button>
-            <button onClick={() => { window.localStorage.removeItem(HISTORY_KEY); setHistory([]); }} disabled={!history.length} className="rounded-lg border border-red-400/20 px-3 py-1 text-[8px] font-black uppercase text-red-200 disabled:opacity-40">Wis lokaal</button>
+            <button onClick={() => { if (window.confirm("Alle lokaal opgeslagen FootyAI-vragen wissen?")) { window.localStorage.removeItem(HISTORY_KEY); setHistory([]); } }} disabled={!history.length} className="rounded-lg border border-red-400/20 px-3 py-1 text-[8px] font-black uppercase text-red-200 disabled:opacity-40">Wis lokaal</button>
           </div>
         </div>
         <div className="mt-4 grid gap-2 md:grid-cols-2">

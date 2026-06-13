@@ -8,6 +8,7 @@ Deze map is de veilige opsplitsing van `scripts/server-worker.js`.
 - `prediction.js`: pure prediction math, Poisson helpers, scorematrix, ensemble en probability calibration.
 - `learning.js`: post-match reviews, modelmetingen, team learning en calibration profiles.
 - `archive.js`: JSON split-output, meta-export en competition archive writes.
+- `date-window.js`: Amsterdam-datums, bewaartermijnen en configureerbare worker-datumvensters.
 
 ## Extractieregels
 - Verplaats alleen pure of contractueel afgebakende functies.

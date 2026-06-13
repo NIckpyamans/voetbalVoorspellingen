@@ -66,7 +66,18 @@ for (const competition of catalog.competitions || []) {
   plannedEntries.push(existing && (existing.totalMatches > 0 || existing.status !== "planned") ? existing : plannedEntry);
 }
 
-const historical = (previousIndex.competitions || []).filter((item) => item.season !== catalog.season);
+const historical = (previousIndex.competitions || [])
+  .filter((item) => item.season !== catalog.season)
+  .map((item) => {
+    const canClose = Number(item.liveMatches || 0) === 0 && Number(item.scheduledMatches || 0) === 0;
+    if (!canClose || item.status === "closed") return item;
+    const archivePath = item.archiveFile ? path.join(root, ...item.archiveFile.split("/")) : null;
+    if (archivePath && fs.existsSync(archivePath)) {
+      const archive = JSON.parse(fs.readFileSync(archivePath, "utf8"));
+      fs.writeFileSync(archivePath, JSON.stringify({ ...archive, status: "closed", closedAt: generatedAt }));
+    }
+    return { ...item, status: "closed", closedAt: generatedAt };
+  });
 const competitions = [...plannedEntries, ...historical];
 const index = {
   generatedAt,

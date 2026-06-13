@@ -23,6 +23,12 @@ import {
 } from "./prediction-analytics.js";
 import { fetchOddsAtPrediction } from "./odds-provider.js";
 import { writeJsonFile, writeSplitDataFiles } from "./worker/archive.js";
+import {
+  addDaysToDateKey,
+  buildRefreshDateWindow as buildConfiguredRefreshDateWindow,
+  buildRetainedDateSet as buildConfiguredRetainedDateSet,
+  toAmsterdamDateKey,
+} from "./worker/date-window.js";
 import { buildCupSheetsFromMatches, mergeCupSheets } from "../shared/cupSheets.js";
 import { loadLocalEnv, readDatabaseFeatureContext, syncStoreToDatabase } from "../shared/database.js";
 import {
@@ -112,52 +118,12 @@ const toFiniteNumber = (value, fallback = null) => {
   return Number.isFinite(n) ? n : fallback;
 };
 
-function toAmsterdamDateKey(dateLike) {
-  const date = dateLike instanceof Date ? dateLike : new Date(dateLike);
-  if (Number.isNaN(date.getTime())) return null;
-  return new Intl.DateTimeFormat("sv-SE", {
-    timeZone: "Europe/Amsterdam",
-    year: "numeric",
-    month: "2-digit",
-    day: "2-digit",
-  }).format(date);
-}
-
-function addDaysToDateKey(dateKey, offset) {
-  const base = new Date(`${dateKey}T12:00:00Z`);
-  base.setUTCDate(base.getUTCDate() + offset);
-  return base.toISOString().slice(0, 10);
-}
-
 function buildRetainedDateSet(baseDateKey) {
-  const retain = new Set();
-  for (let offset = -HISTORY_KEEP_DAYS_BACK; offset <= HISTORY_KEEP_DAYS_FORWARD; offset += 1) {
-    retain.add(addDaysToDateKey(baseDateKey, offset));
-  }
-  return retain;
-}
-
-function resolveDateWindowToken(token, todayKey) {
-  const value = String(token || "").trim().toLowerCase();
-  if (!value) return null;
-  if (value === "yesterday") return addDaysToDateKey(todayKey, -1);
-  if (value === "today") return todayKey;
-  if (value === "tomorrow") return addDaysToDateKey(todayKey, 1);
-  if (value === "dayaftertomorrow" || value === "day-after-tomorrow") return addDaysToDateKey(todayKey, 2);
-  if (/^[+-]?\d+$/.test(value)) return addDaysToDateKey(todayKey, Number(value));
-  if (/^\d{4}-\d{2}-\d{2}$/.test(value)) return value;
-  return null;
+  return buildConfiguredRetainedDateSet(baseDateKey, HISTORY_KEEP_DAYS_BACK, HISTORY_KEEP_DAYS_FORWARD);
 }
 
 function buildRefreshDateWindow(todayKey) {
-  const configured = String(process.env.FOOTYAI_DATE_WINDOW || "").trim();
-  const tokens = configured
-    ? configured.split(",")
-    : ["-1", "0", "1", "2", "3", "4", "5", "6", "7"];
-  const resolved = tokens
-    .map((token) => resolveDateWindowToken(token, todayKey))
-    .filter(Boolean);
-  return [...new Set(resolved)].sort();
+  return buildConfiguredRefreshDateWindow(todayKey, process.env.FOOTYAI_DATE_WINDOW);
 }
 
 function trimScoreMatrix(scoreMatrix, limit = MAX_SCORE_MATRIX_ENTRIES) {

@@ -63,9 +63,35 @@ function queryTerms(query: string) {
     problemen: ["health"],
     fout: ["health"],
     fouten: ["health"],
+    storing: ["health", "provider"],
+    storingen: ["health", "provider"],
+    bron: ["source", "provider"],
+    bronnen: ["source", "provider"],
   };
-  const base = normalize(query).split(" ").filter((term) => term.length > 1);
-  return [...new Set(base.flatMap((term) => [term, ...(aliases[term] || [])]))];
+  const stopWords = new Set(["de", "het", "een", "en", "of", "op", "in", "van", "voor", "met", "welke", "wat", "zijn", "is"]);
+  const base = normalize(query).split(" ").filter((term) => term.length > 1 && !stopWords.has(term));
+  const knownTerms = Object.keys(aliases);
+  return [...new Set(base.flatMap((term) => {
+    const corrected = aliases[term]
+      ? term
+      : knownTerms.find((candidate) => candidate.length >= 4 && editDistance(term, candidate) <= 2);
+    return [term, ...(corrected && corrected !== term ? [corrected] : []), ...(aliases[corrected || term] || [])];
+  }))];
+}
+
+function editDistance(left: string, right: string) {
+  const rows = Array.from({ length: left.length + 1 }, (_, index) => [index]);
+  for (let column = 1; column <= right.length; column += 1) rows[0][column] = column;
+  for (let row = 1; row <= left.length; row += 1) {
+    for (let column = 1; column <= right.length; column += 1) {
+      rows[row][column] = Math.min(
+        rows[row - 1][column] + 1,
+        rows[row][column - 1] + 1,
+        rows[row - 1][column - 1] + (left[row - 1] === right[column - 1] ? 0 : 1)
+      );
+    }
+  }
+  return rows[left.length][right.length];
 }
 
 function competitionItems(index: any) {
@@ -157,7 +183,13 @@ async function buildIndex() {
 function score(item: KnowledgeItem, terms: string[]) {
   const title = normalize(item.title);
   const haystack = normalize(`${item.title} ${item.subtitle} ${item.text} ${item.type}`);
-  return terms.reduce((total, term) => total + (title.includes(term) ? 8 : 0) + (haystack.includes(term) ? 2 : 0), 0);
+  const words = [...new Set(haystack.split(" ").filter(Boolean))];
+  return terms.reduce((total, term) => {
+    const titleMatch = title.includes(term);
+    const exactMatch = haystack.includes(term);
+    const fuzzy = !exactMatch && term.length >= 4 && words.some((word) => Math.abs(word.length - term.length) <= 1 && editDistance(word, term) <= 1);
+    return total + (titleMatch ? 8 : 0) + (exactMatch ? 2 : 0) + (fuzzy ? 1 : 0);
+  }, 0);
 }
 
 function answerFor(query: string, results: KnowledgeItem[], generatedAt: string) {
@@ -247,6 +279,7 @@ export default async function handler(req: any, res: any) {
     answerMode: modelAnswer?.answer ? "ollama_local_read_only" : "deterministic_read_only",
     model: modelAnswer?.model || null,
     freeMode: true,
+    recognizedTerms: terms,
     sources: [...new Set(results.slice(0, 8).map((item) => item.source))],
     results,
   });
