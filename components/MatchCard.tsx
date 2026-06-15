@@ -4,6 +4,7 @@ import { FavoriteButton } from "./FavoriteTeams";
 import PostMatchReview from "./PostMatchReview";
 import { getLiveMinuteLabel } from "../shared/minute.js";
 import { cleanSignalText } from "../shared/matchText.js";
+import { countryFlagEmoji, countryFlagSources } from "../shared/countryFlags";
 
 interface MatchCardProps {
   match: Match;
@@ -50,14 +51,17 @@ function Badge({ label, value, tone = "slate" }: { label: string; value: string;
   );
 }
 
-function Logo({ teamId, directUrl, name }: { teamId: string; directUrl?: string; name: string }) {
+function Logo({ teamId, directUrl, name, league }: { teamId: string; directUrl?: string; name: string; league?: string }) {
   const [attempt, setAttempt] = useState(0);
   const initial = (name || "?").trim().slice(0, 1).toUpperCase() || "?";
   const apiLogoUrl = /^\d+$/.test(String(teamId || "")) ? `/api/logo?id=${teamId}` : null;
+  const flagEmoji = countryFlagEmoji(name, league);
   const fallbackSvg = `data:image/svg+xml;charset=UTF-8,${encodeURIComponent(
-    `<svg xmlns="http://www.w3.org/2000/svg" width="96" height="96" viewBox="0 0 96 96"><defs><radialGradient id="g" cx="35%" cy="25%" r="75%"><stop offset="0%" stop-color="#334155"/><stop offset="55%" stop-color="#172033"/><stop offset="100%" stop-color="#0f172a"/></radialGradient></defs><circle cx="48" cy="48" r="45" fill="url(#g)" stroke="#334155" stroke-width="3"/><text x="48" y="58" font-family="Arial, sans-serif" font-size="38" font-weight="800" fill="#60a5fa" text-anchor="middle">${initial}</text></svg>`
+    `<svg xmlns="http://www.w3.org/2000/svg" width="96" height="96" viewBox="0 0 96 96"><defs><radialGradient id="g" cx="35%" cy="25%" r="75%"><stop offset="0%" stop-color="#334155"/><stop offset="55%" stop-color="#172033"/><stop offset="100%" stop-color="#0f172a"/></radialGradient></defs><circle cx="48" cy="48" r="45" fill="url(#g)" stroke="#334155" stroke-width="3"/><text x="48" y="${flagEmoji ? 62 : 58}" font-family="Arial, sans-serif" font-size="${flagEmoji ? 46 : 38}" font-weight="800" fill="#60a5fa" text-anchor="middle">${flagEmoji || initial}</text></svg>`
   )}`;
+  const flags = countryFlagSources(name, league);
   const sources = [
+    ...flags,
     directUrl || null,
     apiLogoUrl,
     fallbackSvg,
@@ -73,6 +77,16 @@ function Logo({ teamId, directUrl, name }: { teamId: string; directUrl?: string;
       onError={() => setAttempt((value) => Math.min(value + 1, sources.length - 1))}
     />
   );
+}
+
+function displayedMatchScore(match: Match, isFinished: boolean) {
+  if (typeof match.score === "string" && /^\s*\d+\s*[-:]\s*\d+\s*$/.test(match.score)) {
+    return match.score.replace(":", "-").replace(/\s+/g, "");
+  }
+  if (Number.isFinite(match.homeScore) && Number.isFinite(match.awayScore)) {
+    return `${match.homeScore}-${match.awayScore}`;
+  }
+  return isFinished ? "Uitslag ontbreekt" : "vs";
 }
 
 function FormPills({ form }: { form?: string }) {
@@ -1037,6 +1051,7 @@ const MatchCard: React.FC<MatchCardProps> = ({ match, prediction, onFavoriteChan
   const isResultPending = matchStatus === "RESULT_PENDING";
   const isFinished = matchStatus === "FT" || matchStatus === "AET" || matchStatus === "PEN" || isResultPending || matchStatus.includes("FINISH");
   const isLive = !isFinished && (matchStatus === "LIVE" || isHalfTime || !!liveMinute);
+  const displayedScore = displayedMatchScore(match, isFinished);
   const weather = match.weather || prediction.weather;
   const h2h = match.h2h || prediction.h2h;
   const aggregate = match.aggregate || prediction.aggregate;
@@ -1099,7 +1114,7 @@ const MatchCard: React.FC<MatchCardProps> = ({ match, prediction, onFavoriteChan
 
       <div className="flex items-center justify-between gap-2 mb-3">
         <div className="flex-1 text-center">
-          <Logo teamId={match.homeTeamId || ""} directUrl={match.homeLogo} name={match.homeTeamName} />
+          <Logo teamId={match.homeTeamId || ""} directUrl={match.homeLogo} name={match.homeTeamName} league={match.league} />
           <button
             type="button"
             onClick={() => setSelectedSquadSide(selectedSquadSide === "home" ? null : "home")}
@@ -1116,7 +1131,12 @@ const MatchCard: React.FC<MatchCardProps> = ({ match, prediction, onFavoriteChan
         </div>
 
         <div className="min-w-[104px] text-center">
-          <div className="text-xl font-black text-white">{match.score || "vs"}</div>
+          <div className={`font-black text-white ${displayedScore === "Uitslag ontbreekt" ? "text-[10px] text-amber-300" : "text-xl"}`}>
+            {displayedScore}
+          </div>
+          {isFinished && displayedScore !== "Uitslag ontbreekt" && (
+            <div className="mt-0.5 text-[8px] font-black uppercase tracking-wide text-emerald-300">Eindstand</div>
+          )}
           <div className="mt-1 bg-blue-600 px-2 py-0.5 rounded-full text-[10px] font-black text-white">
             Voorspelling {prediction.predHomeGoals}-{prediction.predAwayGoals}
           </div>
@@ -1133,7 +1153,7 @@ const MatchCard: React.FC<MatchCardProps> = ({ match, prediction, onFavoriteChan
         </div>
 
         <div className="flex-1 text-center">
-          <Logo teamId={match.awayTeamId || ""} directUrl={match.awayLogo} name={match.awayTeamName} />
+          <Logo teamId={match.awayTeamId || ""} directUrl={match.awayLogo} name={match.awayTeamName} league={match.league} />
           <button
             type="button"
             onClick={() => setSelectedSquadSide(selectedSquadSide === "away" ? null : "away")}

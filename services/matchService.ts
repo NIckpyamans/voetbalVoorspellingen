@@ -347,8 +347,15 @@ function buildMatchesUpdateFromPayload(
 function normalizeMatchStatus(m: any) {
   const rawStatus = String(m?.status || "NS").toUpperCase();
   const hasScore = typeof m?.score === "string" && m.score.includes("-");
-  const settledStatuses = new Set(["FT", "AET", "PEN", "LIVE", "HT", "RESULT_PENDING"]);
-  if (hasScore || settledStatuses.has(rawStatus)) return rawStatus;
+  const hasNumericScore =
+    m?.homeScore != null &&
+    m?.awayScore != null &&
+    Number.isFinite(Number(m.homeScore)) &&
+    Number.isFinite(Number(m.awayScore));
+  const explicitStatuses = new Set(["FT", "AET", "PEN", "LIVE", "HT"]);
+  if (explicitStatuses.has(rawStatus)) return rawStatus;
+  if (hasScore || hasNumericScore) return "FT";
+  if (rawStatus === "RESULT_PENDING") return rawStatus;
 
   const kickoffMs = Date.parse(m?.kickoff || m?.date || "");
   if (Number.isFinite(kickoffMs) && Date.now() - kickoffMs > 150 * 60 * 1000) {
@@ -362,6 +369,12 @@ function mapRawMatch(m: any): Match {
   m = applyVerifiedResultBackfill(m);
   const minuteValue = parseMinuteValue(m.minute, m.minuteValue);
   const status = normalizeMatchStatus(m);
+  const normalizedScore =
+    typeof m.score === "string" && m.score.includes("-")
+      ? m.score
+      : m.homeScore != null && m.awayScore != null && Number.isFinite(Number(m.homeScore)) && Number.isFinite(Number(m.awayScore))
+        ? `${Number(m.homeScore)}-${Number(m.awayScore)}`
+        : undefined;
 
   return {
     // ========================================
@@ -386,7 +399,7 @@ function mapRawMatch(m: any): Match {
     // STATUS & SCORE
     // ========================================
     status,
-    score: m.score || undefined,
+    score: normalizedScore,
     ...(m.homeScore != null ? { homeScore: Number(m.homeScore) } : {}),
     ...(m.awayScore != null ? { awayScore: Number(m.awayScore) } : {}),
     minute: normalizeMinute(m.minute, minuteValue, m.extraTime, m.period),

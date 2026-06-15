@@ -406,16 +406,24 @@ function getEspnDisplayMinute(status, deps) {
 
 export async function fetchEspnScoreboardEvents(dateISO, deps) {
   const fallbackEvents = [];
-  const yyyymmdd = String(dateISO || "").replace(/-/g, "");
+  const requestedDate = new Date(`${dateISO}T12:00:00.000Z`);
+  const previousDate = new Date(requestedDate.getTime() - 24 * 60 * 60 * 1000).toISOString().slice(0, 10);
+  const queryDates = [...new Set([previousDate, dateISO].map((value) => String(value || "").replace(/-/g, "")))];
 
   for (const [leagueLabel, espnCode] of Object.entries(deps.espnScoreboardLeagues)) {
     const leagueInfo = deps.leagues.find((item) => item.label === leagueLabel);
     if (!leagueInfo) continue;
 
-    const json = await fetchExternalJson(
-      `https://site.api.espn.com/apis/site/v2/sports/soccer/${espnCode}/scoreboard?dates=${yyyymmdd}`
-    );
-    const events = Array.isArray(json?.events) ? json.events : [];
+    const eventMap = new Map();
+    for (const yyyymmdd of queryDates) {
+      const json = await fetchExternalJson(
+        `https://site.api.espn.com/apis/site/v2/sports/soccer/${espnCode}/scoreboard?dates=${yyyymmdd}`
+      );
+      for (const event of Array.isArray(json?.events) ? json.events : []) {
+        eventMap.set(String(event?.id || `${event?.date || ""}-${event?.name || ""}`), event);
+      }
+    }
+    const events = [...eventMap.values()];
     for (const event of events) {
       const competition = event?.competitions?.[0] || {};
       const home = getEspnCompetitor(competition, "home");

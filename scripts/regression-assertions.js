@@ -25,9 +25,23 @@ const degraded = !!scout?.degraded;
 async function runContractAssertions() {
   const failures = [];
   const originalFetch = globalThis.fetch;
+  const matchCardSource = fs.readFileSync(path.join(root, "components", "MatchCard.tsx"), "utf8");
+  const worldCupViewSource = fs.readFileSync(path.join(root, "components", "WorldCupView.tsx"), "utf8");
+  const countryFlagSource = fs.readFileSync(path.join(root, "shared", "countryFlags.ts"), "utf8");
+  const matchServiceSource = fs.readFileSync(path.join(root, "services", "matchService.ts"), "utf8");
+  const workerSource = fs.readFileSync(path.join(root, "scripts", "server-worker.js"), "utf8");
   const assert = (condition, message) => {
     if (!condition) failures.push(message);
   };
+
+  assert(matchCardSource.includes("displayedMatchScore(match, isFinished)"), "Match card should derive a visible final score");
+  assert(matchCardSource.includes("Eindstand"), "Finished match cards should label the final score");
+  assert(worldCupViewSource.includes("CountryFlag"), "World Cup widget should render country flags");
+  assert(worldCupViewSource.includes("actualScore(match)"), "World Cup widget should prefer actual final scores");
+  assert(countryFlagSource.includes("flagcdn.com"), "National-team flags should include Flagcdn fallback");
+  assert(countryFlagSource.includes("flagsapi.com"), "National-team flags should include a second free fallback");
+  assert(matchServiceSource.includes("const hasNumericScore"), "Numeric home/away scores should normalize to a final result");
+  assert(workerSource.includes('"World - FIFA World Cup 2026": "fifa.world"'), "World Cup scores should use the free ESPN fallback");
 
   const bbcHtml = `
     <h2>Premier League</h2>

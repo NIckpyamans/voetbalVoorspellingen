@@ -1,6 +1,7 @@
 import React, { useMemo, useState } from "react";
 import { Match } from "../types";
 import { getWorldCup2026Fixtures, getWorldCup2026Teams } from "../shared/worldCup2026.js";
+import { countryFlagEmoji, countryFlagSources } from "../shared/countryFlags";
 
 interface WorldCupViewProps {
   liveMatches: Match[];
@@ -23,6 +24,43 @@ function predictedScore(match: any, predictions: Record<string, any>) {
   const home = prediction?.predHomeGoals;
   const away = prediction?.predAwayGoals;
   return Number.isFinite(Number(home)) && Number.isFinite(Number(away)) ? `${home}-${away}` : "-";
+}
+
+function actualScore(match: any) {
+  if (typeof match.score === "string" && /^\s*\d+\s*[-:]\s*\d+\s*$/.test(match.score)) {
+    return match.score.replace(":", "-").replace(/\s+/g, "");
+  }
+  return Number.isFinite(match.homeScore) && Number.isFinite(match.awayScore)
+    ? `${match.homeScore}-${match.awayScore}`
+    : null;
+}
+
+function CountryFlag({ name }: { name: string }) {
+  const sources = countryFlagSources(name, "World - FIFA World Cup 2026");
+  const [attempt, setAttempt] = useState(0);
+  if (!sources.length || attempt >= sources.length) {
+    return <span className="text-lg leading-none" aria-hidden="true">{countryFlagEmoji(name, "World - FIFA World Cup 2026") || "🏳️"}</span>;
+  }
+  return (
+    <img
+      src={sources[attempt]}
+      alt=""
+      loading="lazy"
+      referrerPolicy="no-referrer"
+      className="h-4 w-6 rounded-sm border border-white/15 object-cover"
+      onError={() => setAttempt((value) => value + 1)}
+    />
+  );
+}
+
+function WorldCupTeamLabel({ name, align }: { name: string; align: "left" | "right" }) {
+  return (
+    <div className={`flex items-center gap-2 text-sm font-black text-white ${align === "right" ? "justify-end text-right" : ""}`}>
+      {align === "left" && <CountryFlag name={name} />}
+      <span>{name}</span>
+      {align === "right" && <CountryFlag name={name} />}
+    </div>
+  );
 }
 
 const WorldCupView: React.FC<WorldCupViewProps> = ({ liveMatches, predictions }) => {
@@ -128,6 +166,7 @@ const WorldCupView: React.FC<WorldCupViewProps> = ({ liveMatches, predictions })
             {visibleFixtures.map((match: any) => {
               const status = String(match.status || "NS").toUpperCase();
               const isLive = ["LIVE", "HT"].includes(status);
+              const finalScore = actualScore(match);
               const completeness = Math.round(Number(match.dataCompletenessScore || match.dataCompleteness?.score || 0) * 100);
               return (
                 <article key={match.id} className="rounded-xl border border-white/10 bg-slate-950/45 p-3">
@@ -138,11 +177,12 @@ const WorldCupView: React.FC<WorldCupViewProps> = ({ liveMatches, predictions })
                     </span>
                   </div>
                   <div className="grid grid-cols-[1fr_auto_1fr] items-center gap-3">
-                    <div className="text-right text-sm font-black text-white">{match.homeTeamName}</div>
+                    <WorldCupTeamLabel name={match.homeTeamName} align="right" />
                     <div className="rounded-lg bg-slate-800 px-3 py-2 text-center text-sm font-black text-cyan-200">
-                      {match.score || predictedScore(match, predictions)}
+                      {finalScore || predictedScore(match, predictions)}
+                      {finalScore && <div className="text-[7px] uppercase text-emerald-300">Eindstand</div>}
                     </div>
-                    <div className="text-sm font-black text-white">{match.awayTeamName}</div>
+                    <WorldCupTeamLabel name={match.awayTeamName} align="left" />
                   </div>
                   <div className="mt-2 flex items-center justify-between gap-2 text-[9px] text-slate-500">
                     <span>{matchDateLabel(match)}</span>

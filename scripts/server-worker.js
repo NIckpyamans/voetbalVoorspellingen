@@ -1209,6 +1209,7 @@ const ESPN_SCOREBOARD_LEAGUES = {
   "Netherlands - Eredivisie": "ned.1",
   "Portugal - Liga Portugal": "por.1",
   "Spain - LaLiga": "esp.1",
+  "World - FIFA World Cup 2026": "fifa.world",
 };
 
 const DATA_SCOUT_SOURCES = [
