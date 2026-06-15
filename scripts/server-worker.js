@@ -99,6 +99,7 @@ const LEAGUES = [
   { country: "", name: "champions league", label: "Europe - Champions League", type: "cup" },
   { country: "", name: "europa league", label: "Europe - Europa League", type: "cup" },
   { country: "", name: "conference league", label: "Europe - Conference League", type: "cup" },
+  { country: "", name: "fifa world cup", label: WORLD_CUP_LEAGUE, type: "cup" },
 ];
 
 const LEAGUE_CALIBRATION_PROFILES = {

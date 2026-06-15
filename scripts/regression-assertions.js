@@ -42,6 +42,7 @@ async function runContractAssertions() {
   assert(countryFlagSource.includes("flagsapi.com"), "National-team flags should include a second free fallback");
   assert(matchServiceSource.includes("const hasNumericScore"), "Numeric home/away scores should normalize to a final result");
   assert(workerSource.includes('"World - FIFA World Cup 2026": "fifa.world"'), "World Cup scores should use the free ESPN fallback");
+  assert(workerSource.includes('label: WORLD_CUP_LEAGUE, type: "cup"'), "World Cup fallback should be registered as a worker league");
 
   const bbcHtml = `
     <h2>Premier League</h2>
