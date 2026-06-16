@@ -1,20 +1,20 @@
 {
-  "generatedAt": "2026-06-14T23:38:08.073Z",
-  "date": "2026-06-15",
+  "generatedAt": "2026-06-16T00:03:03.793Z",
+  "date": "2026-06-16",
   "name": "Ruflo-style gratis AI monitor",
   "mode": "naast-productie",
   "productionSafe": true,
   "summary": "Ruflo draait als extra agentlaag naast de app: hij leest monitor/data/reviews, zoekt gratis oplossingen en maakt patchadvies zonder blind live te wijzigen.",
   "agents": {
     "data": {
-      "score": 0,
-      "summary": "Datalaag: H2H 0%, bookmakers 0%, refs 0%.",
+      "score": 20,
+      "summary": "Datalaag: H2H 0%, bookmakers 100%, refs 0%.",
       "freeSources": [
         {
           "name": "SofaScore public endpoint",
           "role": "primaire wedstrijddagfeed",
           "free": true,
-          "status": "fallback nodig",
+          "status": "actief",
           "use": "Gebruik als eerste bron, maar behandel 403/lege dagen nooit als eindpunt."
         },
         {
@@ -62,16 +62,6 @@
       ],
       "actions": [
         {
-          "priority": "high",
-          "title": "Wedstrijddag fallbackketen strakker maken",
-          "freeSolution": "Laat de worker altijd meerdere gratis bronnen proberen: SofaScore -> TheSportsDB -> OpenLigaDB -> football-data/openfootball.",
-          "files": [
-            "scripts/server-worker.js",
-            "api/Matches.ts"
-          ],
-          "status": "bewaken"
-        },
-        {
           "priority": "medium",
           "title": "H2H-backfill verder vullen",
           "freeSolution": "Gebruik openfootball en football-data rows per competitie als historische H2H fallback voordat de UI 'leeg' toont.",
@@ -85,16 +75,16 @@
     },
     "learning": {
       "score": 12,
-      "summary": "Leerlaag: 691 reviews, exact 12%, winnaar/gelijk 41%, top-5 exact 14%.",
+      "summary": "Leerlaag: 700 reviews, exact 12%, winnaar/gelijk 41%, top-5 exact 14%.",
       "topConfidence": {
-        "matches": 117,
+        "matches": 124,
         "exactHitRate": 0.145,
-        "outcomeHitRate": 0.41,
-        "probabilityOutcomeHitRate": 0.538,
-        "avgGoalError": 1.65,
-        "rank1ExactHitRate": 0.103,
-        "rank1OutcomeHitRate": 0.379,
-        "versusOverallOutcomeDelta": -0.002
+        "outcomeHitRate": 0.403,
+        "probabilityOutcomeHitRate": 0.54,
+        "avgGoalError": 1.69,
+        "rank1ExactHitRate": 0.097,
+        "rank1OutcomeHitRate": 0.355,
+        "versusOverallOutcomeDelta": -0.01
       },
       "topClubs": [
         {
@@ -182,22 +172,25 @@
       ]
     },
     "control": {
-      "score": 100,
-      "summary": "Ontwikkelcontrole: 0 actieve monitorissues op 2026-06-15; digest 2026-05-31 t/m 2026-06-13.",
-      "latestDay": "2026-06-15",
-      "shouldPropose": false,
-      "actions": []
+      "score": 60,
+      "summary": "Ontwikkelcontrole: 1 actieve monitorissues op 2026-06-16; digest 2026-05-31 t/m 2026-06-13.",
+      "latestDay": "2026-06-16",
+      "shouldPropose": true,
+      "actions": [
+        {
+          "priority": "medium",
+          "title": "Alle wedstrijden van vandaag hebben lege H2H-data.",
+          "freeSolution": "Vul H2H uit openfootball/football-data competitiebestanden voordat de UI leeg toont.",
+          "files": [
+            "scripts/server-worker.js",
+            "components/MatchCard.tsx"
+          ],
+          "status": "monitor"
+        }
+      ]
     }
   },
   "topThemes": [
-    {
-      "title": "Wedstrijddag fallbackketen strakker maken",
-      "count": 1,
-      "priority": "high",
-      "agents": [
-        "data"
-      ]
-    },
     {
       "title": "Faalsignaal aanpakken: open_lineups",
       "count": 1,
@@ -213,20 +206,17 @@
       "agents": [
         "data"
       ]
+    },
+    {
+      "title": "Alle wedstrijden van vandaag hebben lege H2H-data.",
+      "count": 1,
+      "priority": "medium",
+      "agents": [
+        "control"
+      ]
     }
   ],
   "recommendedNextActions": [
-    {
-      "priority": "high",
-      "title": "Wedstrijddag fallbackketen strakker maken",
-      "freeSolution": "Laat de worker altijd meerdere gratis bronnen proberen: SofaScore -> TheSportsDB -> OpenLigaDB -> football-data/openfootball.",
-      "files": [
-        "scripts/server-worker.js",
-        "api/Matches.ts"
-      ],
-      "status": "bewaken",
-      "agent": "data"
-    },
     {
       "priority": "high",
       "title": "Faalsignaal aanpakken: open_lineups",
@@ -248,6 +238,17 @@
       ],
       "status": "aanbevolen",
       "agent": "data"
+    },
+    {
+      "priority": "medium",
+      "title": "Alle wedstrijden van vandaag hebben lege H2H-data.",
+      "freeSolution": "Vul H2H uit openfootball/football-data competitiebestanden voordat de UI leeg toont.",
+      "files": [
+        "scripts/server-worker.js",
+        "components/MatchCard.tsx"
+      ],
+      "status": "monitor",
+      "agent": "control"
     }
   ],
   "freeOnlyGuardrails": [
