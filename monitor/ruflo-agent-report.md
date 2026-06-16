@@ -1,13 +1,13 @@
 # Ruflo-style AI monitor
 
-Datum: 2026-06-16
+Datum: 2026-06-17
 
 Ruflo draait als extra agentlaag naast de app: hij leest monitor/data/reviews, zoekt gratis oplossingen en maakt patchadvies zonder blind live te wijzigen.
 
 ## Agents
 - Data: Datalaag: H2H 0%, bookmakers 100%, refs 0%.
-- Leren: Leerlaag: 700 reviews, exact 12%, winnaar/gelijk 41%, top-5 exact 14%.
-- Controle: Ontwikkelcontrole: 1 actieve monitorissues op 2026-06-16; digest 2026-05-31 t/m 2026-06-13.
+- Leren: Leerlaag: 703 reviews, exact 12%, winnaar/gelijk 41%, top-5 exact 14%.
+- Controle: Ontwikkelcontrole: 1 actieve monitorissues op 2026-06-17; digest 2026-05-31 t/m 2026-06-13.
 
 ## Gratis acties
 1. [high] Faalsignaal aanpakken: open_lineups (learning) - Laat dit signaal terugkomen als penalty in confidence en als uitleg in de matchkaart.
