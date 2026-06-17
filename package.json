@@ -5,7 +5,7 @@
   "type": "module",
   "scripts": {
     "dev": "vite",
-    "build": "vite build",
+    "build": "vite build && node scripts/copy-legacy-assets.js && node scripts/verify-vite-dist.js",
     "preview": "vite preview",
     "check": "tsc --noEmit",
     "worker": "node scripts/server-worker.js",

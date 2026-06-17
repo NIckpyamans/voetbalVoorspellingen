@@ -9615,7 +9615,10 @@ function buildDataScoutReport(store, todayKey) {
   const yesterdayScoresFilled = finishedYesterday.filter((match) => String(match?.score || "").includes("-")).length;
   const todaysFinished = todayMatches.filter((match) => String(match?.status || "").toUpperCase() === "FT");
   const todaysLive = todayMatches.filter((match) => ["LIVE", "HT"].includes(String(match?.status || "").toUpperCase()));
-  const h2hFilled = todayMatches.filter((match) => Number(match?.h2h?.played || 0) > 0).length;
+  const hasH2hProfile = (match) =>
+    Number(match?.h2h?.played || 0) > 0 ||
+    Boolean(match?.h2h?.status || match?.h2h?.source || match?.h2hStatus);
+  const h2hFilled = todayMatches.filter(hasH2hProfile).length;
   const logoFilled = todayMatches.filter((match) => match?.homeLogo && match?.awayLogo).length;
   const outOfDayMatches = todayMatches.filter((match) => String(match?.date || "") !== String(todayKey)).length;
   const liveMatchesWithMinuteOrFallback = todaysLive.filter(

@@ -7,7 +7,7 @@ import { Match, Prediction } from "../types";
 import { normalizeMinute, parseMinuteValue } from "../shared/minute.js";
 import { todayAmsterdamKey } from "../shared/date.js";
 
-const CACHE_VERSION = "v9_result_backfill_dedupe_guard";
+const CACHE_VERSION = "v10_live_render_recovery";
 const LIVE_CACHE_AGE_MS = 30_000;
 const TODAY_CACHE_AGE_MS = 90_000;
 const OTHER_CACHE_AGE_MS = 30 * 60_000;
@@ -219,6 +219,7 @@ function readCache(dateISO: string) {
 
     const parsed = JSON.parse(raw);
     const { matches } = dedupeMatchesForDay(parsed.matches || []);
+    if (dateISO === todayAmsterdamKey() && matches.length === 0) return null;
     const maxAge = getMaxCacheAge(dateISO, matches);
     if (!parsed?.ts || Date.now() - parsed.ts > maxAge) return null;
 
