@@ -1636,6 +1636,35 @@ const OPENFOOTBALL_COMPETITIONS = {
   "Netherlands - Eredivisie": "nl.1",
 };
 
+const NATIONAL_H2H_TOURNAMENTS = [
+  "fifa_world_cup",
+  "fifa_world_cup_qualification",
+  "uefa_euro",
+  "uefa_euro_qualification",
+  "uefa_nations_league",
+  "copa_america",
+  "gold_cup",
+  "afc_asian_cup",
+  "african_cup_of_nations",
+  "friendly",
+];
+const NATIONAL_H2H_YEARS_BACK = 12;
+const NATIONAL_H2H_WORLD_CUP_YEARS = [2022, 2018, 2014, 2010, 2006, 2002, 1998, 1994, 1990, 1986, 1982, 1978, 1974, 1970];
+const NATIONAL_H2H_EURO_YEARS = [2024, 2020, 2016, 2012, 2008, 2004, 2000, 1996, 1992, 1988, 1984, 1980];
+const NATIONAL_H2H_COPA_YEARS = [2024, 2021, 2019, 2016, 2015, 2011, 2007, 2004, 2001, 1999, 1997, 1995];
+const NATIONAL_H2H_CACHE_TTL = 30 * 24 * 60 * 60 * 1000;
+const MAX_NATIONAL_H2H_CACHE = 220;
+const NATIONAL_TEAM_ALIASES = {
+  "bosnia-herzegovina": ["bosnia and herzegovina", "bosnia herzegovina", "bosnia"],
+  "congo dr": ["dr congo", "d r congo", "democratic republic of congo", "congo kinshasa", "zaire"],
+  "czech republic": ["czechia"],
+  "iran": ["iran islamic republic"],
+  "ivory coast": ["cote d ivoire", "cote divoire"],
+  "north macedonia": ["macedonia"],
+  "south korea": ["korea republic", "republic of korea"],
+  "united states": ["usa", "u s a", "united states of america", "usmnt"],
+};
+
 const UNDERSTAT_LEAGUE_CODES = {
   "England - Premier League": "EPL",
   "Spain - LaLiga": "La_liga",
@@ -8570,11 +8599,144 @@ function lookupCuratedH2HBackfill(homeName, awayName, homeId, awayId) {
   };
 }
 
+function nationalNameVariants(name) {
+  const base = normalizeName(name);
+  const aliases = NATIONAL_TEAM_ALIASES[base] || [];
+  return new Set([base, ...aliases.map((alias) => normalizeName(alias)), ...buildPossibleNames(name)]);
+}
+
+function nationalPairCacheKey(homeName, awayName) {
+  return [...nationalNameVariants(homeName)][0] < [...nationalNameVariants(awayName)][0]
+    ? `${[...nationalNameVariants(homeName)][0]}__${[...nationalNameVariants(awayName)][0]}`
+    : `${[...nationalNameVariants(awayName)][0]}__${[...nationalNameVariants(homeName)][0]}`;
+}
+
+function isInternationalFixture(league, homeId, awayId) {
+  const text = String(league || "").toLowerCase();
+  return (
+    String(homeId || "").startsWith("country-") ||
+    String(awayId || "").startsWith("country-") ||
+    text.includes("world cup") ||
+    text.includes("international") ||
+    text.includes("nations league") ||
+    text.includes("euro qualification") ||
+    text.includes("fifa")
+  );
+}
+
+function parseOpenfootballInternationalText(text, year, tournamentLabel) {
+  const rows = [];
+  const lines = String(text || "").split(/\r?\n/);
+  for (const line of lines) {
+    const match = line.match(/^\s{2,}(.+?)\s+(\d+)-(\d+)\s+(.+?)(?:\s+@|$)/);
+    if (!match) continue;
+    const home = String(match[1] || "").trim();
+    const away = String(match[4] || "").trim();
+    const homeGoals = toNumber(match[2]);
+    const awayGoals = toNumber(match[3]);
+    if (!home || !away || !Number.isFinite(homeGoals) || !Number.isFinite(awayGoals)) continue;
+    rows.push({
+      date: String(year),
+      home,
+      away,
+      homeGoals,
+      awayGoals,
+      source: `openfootball-internationals:${tournamentLabel}`,
+    });
+  }
+  return rows;
+}
+
+function nationalH2HYearsForTournament(tournament, currentYear) {
+  const recent = Array.from({ length: NATIONAL_H2H_YEARS_BACK + 1 }, (_, index) => currentYear - index)
+    .filter((year) => year >= 1872);
+  if (tournament === "fifa_world_cup") return [...new Set([...recent, ...NATIONAL_H2H_WORLD_CUP_YEARS])].filter((year) => year <= currentYear);
+  if (tournament === "uefa_euro") return [...new Set([...recent, ...NATIONAL_H2H_EURO_YEARS])].filter((year) => year <= currentYear);
+  if (tournament === "copa_america") return [...new Set([...recent, ...NATIONAL_H2H_COPA_YEARS])].filter((year) => year <= currentYear);
+  return recent;
+}
+
+function orientNationalH2HResult(row, homeName, awayName, homeId, awayId) {
+  const requestedHome = nationalNameVariants(homeName);
+  const requestedAway = nationalNameVariants(awayName);
+  const rowHome = nationalNameVariants(row.home);
+  const rowAway = nationalNameVariants(row.away);
+  const homeHome = [...rowHome].some((value) => requestedHome.has(value));
+  const awayAway = [...rowAway].some((value) => requestedAway.has(value));
+  const homeAway = [...rowHome].some((value) => requestedAway.has(value));
+  const awayHome = [...rowAway].some((value) => requestedHome.has(value));
+  const homeGoals = Number(row.homeGoals);
+  const awayGoals = Number(row.awayGoals);
+
+  if (homeHome && awayAway) {
+    return {
+      date: row.date,
+      home: homeName,
+      away: awayName,
+      homeGoals,
+      awayGoals,
+      score: `${homeGoals}-${awayGoals}`,
+      winnerId: homeGoals > awayGoals ? homeId : awayGoals > homeGoals ? awayId : "",
+      source: row.source,
+    };
+  }
+
+  if (homeAway && awayHome) {
+    return {
+      date: row.date,
+      home: homeName,
+      away: awayName,
+      homeGoals: awayGoals,
+      awayGoals: homeGoals,
+      score: `${awayGoals}-${homeGoals}`,
+      winnerId: awayGoals > homeGoals ? homeId : homeGoals > awayGoals ? awayId : "",
+      source: row.source,
+    };
+  }
+
+  return null;
+}
+
+async function fetchNationalTeamH2HProfile(store, homeName, awayName, homeId, awayId, dateISO, league) {
+  if (!isInternationalFixture(league, homeId, awayId)) return null;
+  if (!store.nationalH2hCache) store.nationalH2hCache = {};
+  const cacheKey = nationalPairCacheKey(homeName, awayName);
+  const cached = store.nationalH2hCache[cacheKey];
+  const now = Date.now();
+  if (cached && now - Number(cached.updated || 0) < NATIONAL_H2H_CACHE_TTL) return cached.data;
+
+  const currentYear = Number(String(dateISO || new Date().toISOString()).slice(0, 4)) || new Date().getUTCFullYear();
+  const oriented = [];
+
+  for (const tournament of NATIONAL_H2H_TOURNAMENTS) {
+    const years = nationalH2HYearsForTournament(tournament, currentYear);
+    for (const year of years) {
+      const url = `https://raw.githubusercontent.com/openfootball/internationals/master/${tournament}/${year}_${tournament}.txt`;
+      const text = await safeFetchText(url);
+      if (!text) continue;
+      const rows = parseOpenfootballInternationalText(text, year, tournament);
+      for (const row of rows) {
+        const result = orientNationalH2HResult(row, homeName, awayName, homeId, awayId);
+        if (result) oriented.push(result);
+      }
+      if (oriented.length >= 5) break;
+    }
+    if (oriented.length >= 5) break;
+  }
+
+  const data = oriented.length
+    ? summarizeH2HResults(oriented, homeName, awayName, homeId, awayId, "openfootball-international-h2h", oriented.length)
+    : null;
+  store.nationalH2hCache[cacheKey] = { updated: now, data };
+  return data;
+}
+
 function buildH2HAgentProfile({
   baseH2H,
   fallbackLegs = [],
   marketProfile,
   openFootballProfile,
+  nationalProfile,
   extraProfiles = [],
   homeName,
   awayName,
@@ -8611,6 +8773,12 @@ function buildH2HAgentProfile({
     results = mergeH2HResultLists(results, historicalH2H.results);
     sources.push(historicalH2H.status || "historical-competition");
     sameCompetitionPlayed += Number(historicalH2H.sameCompetitionPlayed || 0);
+  }
+
+  if (nationalProfile?.results?.length) {
+    results = mergeH2HResultLists(results, nationalProfile.results);
+    sources.push(nationalProfile.status || "openfootball-international-h2h");
+    sameCompetitionPlayed += Number(nationalProfile.sameCompetitionPlayed || nationalProfile.played || 0);
   }
 
   if (!results.length) {
@@ -9204,6 +9372,7 @@ function compactStore(store, referenceDateKey, now) {
   pruneUpdatedMap(store, "understatSnapshots", "understatSnapshotsUpdated", SNAPSHOT_TTL, now, MAX_SNAPSHOT_CACHE);
   pruneUpdatedMap(store, "fbrefSnapshots", "fbrefSnapshotsUpdated", SNAPSHOT_TTL, now, MAX_SNAPSHOT_CACHE);
   pruneEmbeddedUpdatedMap(store, "h2hCache", H2H_TTL, now, MAX_H2H_CACHE);
+  pruneEmbeddedUpdatedMap(store, "nationalH2hCache", NATIONAL_H2H_CACHE_TTL, now, MAX_NATIONAL_H2H_CACHE);
   pruneEmbeddedUpdatedMap(store, "weatherCache", WEATHER_TTL, now, MAX_WEATHER_CACHE);
 
   if (store.clubEloUpdated && now - Number(store.clubEloUpdated || 0) > CLUB_ELO_TTL * 2) {
@@ -10629,6 +10798,15 @@ async function main() {
         ...Object.values(store.marketProfiles || {}),
         ...Object.values(store.openfootballProfiles || {}),
       ];
+      const nationalH2HProfile = await fetchNationalTeamH2HProfile(
+        store,
+        homeName,
+        awayName,
+        homeId,
+        awayId,
+        date,
+        leagueInfo.label
+      );
       let homeRecent = mergeTeamFormWithHistorical(
         store.teamStats[homeId] || null,
         leagueMarketProfile,
@@ -10669,6 +10847,7 @@ async function main() {
         fallbackLegs: h2hFallbackLegs,
         marketProfile: leagueMarketProfile,
         openFootballProfile,
+        nationalProfile: nationalH2HProfile,
         extraProfiles: globalTeamFormProfiles,
         homeName,
         awayName,
