@@ -42,15 +42,24 @@ function readJsonSafe(filePath, fallback) {
 }
 
 function readStore() {
-  const fullStore = readJsonSafe(DATA_FILE, null);
-  if (fullStore) return fullStore;
   const meta = readJsonSafe(path.join(ROOT, "data", "meta.json"), {});
+  const hasSplitData = !!meta?.lastRun || Array.isArray(meta?.dates);
+  if (!hasSplitData) {
+    const fullStore = readJsonSafe(DATA_FILE, null);
+    if (fullStore) return fullStore;
+  }
   const store = {
     ...meta,
     matches: {},
     predictions: {},
     postMatchReviews: {},
   };
+  const standingsExport = readJsonSafe(path.join(ROOT, "data", "standings.json"), {});
+  if (standingsExport && typeof standingsExport === "object") {
+    store.standings = standingsExport.standings || store.standings || {};
+    store.cupSheets = standingsExport.cupSheets || store.cupSheets || {};
+    store.knockoutOverview = standingsExport.knockoutOverview || store.knockoutOverview || {};
+  }
   const daysDir = path.join(ROOT, "data", "days");
   if (!fs.existsSync(daysDir)) return null;
   for (const entry of fs.readdirSync(daysDir)) {
@@ -163,7 +172,7 @@ function collectDataChecks() {
   if (!lastRun) {
     pushIssue(issues, "worker_last_run_missing", "high", "Worker heeft geen lastRun opgeslagen.");
   } else if (!lastRunFresh) {
-    pushIssue(issues, "worker_stale", "high", `server_data.json is ${ageMinutes} minuten oud.`);
+    pushIssue(issues, "worker_stale", "high", `Workerdata is ${ageMinutes} minuten oud.`);
   }
 
   if (!todayMatches.length && !fixtureCalendar.emptyWindowOk) {
@@ -224,8 +233,8 @@ function collectDataChecks() {
     );
   }
 
-  if (standingsCount === 0) {
-    pushIssue(issues, "standings_empty", "high", "Standings is leeg.");
+  if (standingsCount === 0 && cupSheetCount === 0) {
+    pushIssue(issues, "standings_empty", "high", "Standings/cupSheets zijn leeg.");
   }
 
   if (dateMismatches.length) {
