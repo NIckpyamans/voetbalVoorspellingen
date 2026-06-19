@@ -1,33 +1,24 @@
 {
-  "generatedAt": "2026-06-19T09:49:36.730Z",
+  "generatedAt": "2026-06-19T10:12:27.696Z",
   "framing": {
     "product": "PandaOS",
     "website": "https://pandaos.ai/",
     "applicability": "PandaOS is vooral nuttig als lokale workflow-orchestrator. Voor deze app passen we hetzelfde principe toe via herbruikbare monitorchecks, projectgeheugen en een centrale prioriteitenlijst."
   },
   "status": {
-    "totalActions": 26,
-    "highPriority": 9,
+    "totalActions": 24,
+    "highPriority": 6,
     "widgetStatus": "ok",
-    "dataCompleteness": 0.5,
+    "dataCompleteness": 0.66,
     "h2hCoverage": 1,
-    "predictionSnapshots": 619,
-    "latestWorkerRun": 1781862527988
+    "predictionSnapshots": 1184,
+    "latestWorkerRun": 1781863688967
   },
   "topActions": [
     {
       "source": "data/meta.aiAdvice",
-      "title": "Prediction quality gate actief",
-      "summary": "Gemiddelde bronkwaliteit staat op 50%; hoge exact-score confidence wordt daarom automatisch afgekapt.",
-      "action": "Vul eerst H2H, vorm, actuele standen, xG/shotdata en marktdekking voordat top-5 picks zwaar meetellen.",
-      "severity": "high",
-      "priority": "high",
-      "score": 100
-    },
-    {
-      "source": "data/meta.aiAdvice",
       "title": "Modelkalibratie",
-      "summary": "Exact-score hitrate staat op 12% over 708 reviews.",
+      "summary": "Exact-score hitrate staat op 12% over 714 reviews.",
       "action": "Gebruik deze score om ensemble- en closing-gewichten te blijven finetunen.",
       "severity": "high",
       "priority": "high",
@@ -36,7 +27,7 @@
     {
       "source": "data/meta.aiAdvice",
       "title": "Top faalsignaal",
-      "summary": "open_lineups kwam 325 keer terug in de reviewdata.",
+      "summary": "open_lineups kwam 326 keer terug in de reviewdata.",
       "action": "Gebruik dit signaal om de modelweging of brondekking gericht te verbeteren.",
       "severity": "high",
       "priority": "high",
@@ -52,28 +43,10 @@
       "score": 100
     },
     {
-      "source": "data/meta.aiAdvice",
-      "title": "Datakwaliteit kritisch",
-      "summary": "1 kritische anomaly-groep(en) gevonden.",
-      "action": "Los eerst ontbrekende eindstanden of corrupte scores op voordat modelwegingen opnieuw worden aangescherpt.",
-      "severity": "high",
-      "priority": "high",
-      "score": 100
-    },
-    {
       "source": "sourceCoverage.coverageImprovementPlan",
       "title": "Bevestigde opstellingen",
       "summary": "0% dekking, doel 45%.",
-      "action": "Blijf lineups vlak voor kickoff verversen; open lineups blijven confidence-penalty en faalsignaal.",
-      "severity": "high",
-      "priority": "high",
-      "score": 100
-    },
-    {
-      "source": "sourceCoverage.coverageImprovementPlan",
-      "title": "Historische scheidsprofielen",
-      "summary": "0% dekking, doel 65%.",
-      "action": "Breid referee aliasen en football-data.co.uk archieven per competitiefamilie uit.",
+      "action": "Projected XI is gevuld; vervang vlak voor kickoff door bevestigde opstellingen zodra live bron bereikbaar is.",
       "severity": "high",
       "priority": "high",
       "score": 100
@@ -108,7 +81,7 @@
     {
       "source": "data/meta.aiAdvice",
       "title": "H2H-signaal herwegen",
-      "summary": "H2H-signal kwam 235 keer terug als faalsignaal.",
+      "summary": "H2H-signal kwam 234 keer terug als faalsignaal.",
       "action": "Gebruik H2H alleen zwaar als het recent, voldoende gevuld en competitietype-vergelijkbaar is.",
       "severity": "medium",
       "priority": "medium",
@@ -122,22 +95,40 @@
       "severity": "medium",
       "priority": "medium",
       "score": 60
+    },
+    {
+      "source": "widgetIntegration.opportunities",
+      "title": "Vul gratis pre-match odds snapshots voordat ROI/CLV wordt beoordeeld.",
+      "summary": "Vul gratis pre-match odds snapshots voordat ROI/CLV wordt beoordeeld.",
+      "action": "Vul gratis pre-match odds snapshots voordat ROI/CLV wordt beoordeeld.",
+      "severity": "medium",
+      "priority": "medium",
+      "score": 60
+    },
+    {
+      "source": "widgetIntegration.opportunities",
+      "title": "Prioriteer open bronconflicten op impact en providertrust.",
+      "summary": "Prioriteer open bronconflicten op impact en providertrust.",
+      "action": "Prioriteer open bronconflicten op impact en providertrust.",
+      "severity": "medium",
+      "priority": "medium",
+      "score": 60
+    },
+    {
+      "source": "dataQuality.recommendations",
+      "title": "Resultaatbackfill is schoon binnen de auditperiode.",
+      "summary": "Resultaatbackfill is schoon binnen de auditperiode.",
+      "action": "Resultaatbackfill is schoon binnen de auditperiode.",
+      "severity": "medium",
+      "priority": "medium",
+      "score": 60
     }
   ],
   "allActions": [
     {
       "source": "data/meta.aiAdvice",
-      "title": "Prediction quality gate actief",
-      "summary": "Gemiddelde bronkwaliteit staat op 50%; hoge exact-score confidence wordt daarom automatisch afgekapt.",
-      "action": "Vul eerst H2H, vorm, actuele standen, xG/shotdata en marktdekking voordat top-5 picks zwaar meetellen.",
-      "severity": "high",
-      "priority": "high",
-      "score": 100
-    },
-    {
-      "source": "data/meta.aiAdvice",
       "title": "Modelkalibratie",
-      "summary": "Exact-score hitrate staat op 12% over 708 reviews.",
+      "summary": "Exact-score hitrate staat op 12% over 714 reviews.",
       "action": "Gebruik deze score om ensemble- en closing-gewichten te blijven finetunen.",
       "severity": "high",
       "priority": "high",
@@ -146,7 +137,7 @@
     {
       "source": "data/meta.aiAdvice",
       "title": "Top faalsignaal",
-      "summary": "open_lineups kwam 325 keer terug in de reviewdata.",
+      "summary": "open_lineups kwam 326 keer terug in de reviewdata.",
       "action": "Gebruik dit signaal om de modelweging of brondekking gericht te verbeteren.",
       "severity": "high",
       "priority": "high",
@@ -162,28 +153,10 @@
       "score": 100
     },
     {
-      "source": "data/meta.aiAdvice",
-      "title": "Datakwaliteit kritisch",
-      "summary": "1 kritische anomaly-groep(en) gevonden.",
-      "action": "Los eerst ontbrekende eindstanden of corrupte scores op voordat modelwegingen opnieuw worden aangescherpt.",
-      "severity": "high",
-      "priority": "high",
-      "score": 100
-    },
-    {
       "source": "sourceCoverage.coverageImprovementPlan",
       "title": "Bevestigde opstellingen",
       "summary": "0% dekking, doel 45%.",
-      "action": "Blijf lineups vlak voor kickoff verversen; open lineups blijven confidence-penalty en faalsignaal.",
-      "severity": "high",
-      "priority": "high",
-      "score": 100
-    },
-    {
-      "source": "sourceCoverage.coverageImprovementPlan",
-      "title": "Historische scheidsprofielen",
-      "summary": "0% dekking, doel 65%.",
-      "action": "Breid referee aliasen en football-data.co.uk archieven per competitiefamilie uit.",
+      "action": "Projected XI is gevuld; vervang vlak voor kickoff door bevestigde opstellingen zodra live bron bereikbaar is.",
       "severity": "high",
       "priority": "high",
       "score": 100
@@ -218,7 +191,7 @@
     {
       "source": "data/meta.aiAdvice",
       "title": "H2H-signaal herwegen",
-      "summary": "H2H-signal kwam 235 keer terug als faalsignaal.",
+      "summary": "H2H-signal kwam 234 keer terug als faalsignaal.",
       "action": "Gebruik H2H alleen zwaar als het recent, voldoende gevuld en competitietype-vergelijkbaar is.",
       "severity": "medium",
       "priority": "medium",
@@ -317,7 +290,7 @@
     {
       "source": "data/meta.aiAdvice",
       "title": "Topkans versus scoremodel",
-      "summary": "Topkans-hit staat op 46% tegenover 41% score-uitkomsthit.",
+      "summary": "Topkans-hit staat op 46% tegenover 42% score-uitkomsthit.",
       "action": "Gebruik dit verschil om te bepalen of het model te agressief op exacte score of juist te voorzichtig op 1X2 zit.",
       "severity": "low",
       "priority": "low",
@@ -346,6 +319,15 @@
       "title": "Provider team-IDs",
       "summary": "100% dekking, doel 90%.",
       "action": "Vul REEP_TEAM_MAP/football-data.org team mapping aan voor wedstrijden die uit naamfallback-bronnen komen.",
+      "severity": "low",
+      "priority": "low",
+      "score": 25
+    },
+    {
+      "source": "sourceCoverage.coverageImprovementPlan",
+      "title": "Historische scheidsprofielen",
+      "summary": "100% dekking, doel 65%.",
+      "action": "Breid referee aliasen en football-data.co.uk archieven per competitiefamilie uit.",
       "severity": "low",
       "priority": "low",
       "score": 25

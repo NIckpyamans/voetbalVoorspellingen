@@ -454,8 +454,22 @@ function buildTeamIdentity(homeId, awayId, homeName, awayName, source = "unknown
   };
 }
 
+function lookupWorldCupSeedPosition(teamName) {
+  const normalized = normalizeName(teamName);
+  const entries = Object.entries(WORLD_CUP_TEAMS || {});
+  const hit = entries.find(([, team]) => normalizeName(team?.name) === normalized || buildPossibleNames(team?.name).includes(normalized));
+  if (!hit || !hit[1]?.group) return null;
+  const group = hit[1].group;
+  const groupRows = entries
+    .filter(([, team]) => team?.group === group)
+    .sort((a, b) => Number(b[1]?.strength || 0) - Number(a[1]?.strength || 0));
+  const index = groupRows.findIndex(([code]) => code === hit[0]);
+  return index >= 0 ? index + 1 : null;
+}
+
 function resolveLineupStatus(lineupSummary) {
   if (lineupSummary?.confirmed) return "confirmed";
+  if (lineupSummary?.projected) return "projected";
   if (lineupSummary?.home || lineupSummary?.away) return "partial";
   return "missing";
 }
@@ -549,11 +563,20 @@ function buildFeatureSourceMetadata(match, prediction, generatedAt, oddsDiagnost
       oddsStatus || "missing"
     ),
     lineups: field(
-      !!(prediction?.lineupSummary?.confirmed || match?.lineupSummary?.confirmed),
+      !!(
+        prediction?.lineupSummary?.confirmed ||
+        match?.lineupSummary?.confirmed ||
+        prediction?.lineupSummary?.projected ||
+        match?.lineupSummary?.projected
+      ),
       prediction?.lineupSummary?.source || match?.lineupSummary?.source || "lineup source",
       sourceAsOf.lineups || generatedAt,
       !!sourceAsOf.lineups,
-      prediction?.lineupSummary?.confirmed || match?.lineupSummary?.confirmed ? "Bevestigd in worker-run." : "Nog open of niet beschikbaar."
+      prediction?.lineupSummary?.confirmed || match?.lineupSummary?.confirmed
+        ? "Bevestigd in worker-run."
+        : prediction?.lineupSummary?.projected || match?.lineupSummary?.projected
+          ? "Projected XI uit squad/teamprofiel; niet bevestigd."
+          : "Nog open of niet beschikbaar."
     ),
     referee: field(
       Number(prediction?.refereeProfile?.matches || match?.refereeProfile?.matches || 0) > 0 ||
@@ -3489,6 +3512,70 @@ function buildTeamProfile({ teamName, recent, seasonStats, postMatchStatsProfile
   };
 }
 
+function projectedLineupSideFromProfile(teamProfile, injuries) {
+  if (!teamProfile) return null;
+  const squadRating = Number(teamProfile.squadRating || teamProfile.teamStrengthRating || 0);
+  const ppg = Number(teamProfile.pointsPerGame || 1.35);
+  const consistency = Number(teamProfile.consistency || 0.5);
+  const injuryPenalty = Math.min(0.35, Number(injuries?.injuredCount || teamProfile.injuries?.count || 0) * 0.04);
+  const avgRating = Number(
+    clamp(
+      6.25 + (squadRating ? (squadRating - 50) / 40 : 0) + (ppg - 1.25) * 0.18 + (consistency - 0.5) * 0.22 - injuryPenalty,
+      6.05,
+      7.65
+    ).toFixed(2)
+  );
+  return {
+    formation: "projected",
+    starters: 11,
+    bench: 7,
+    avgRating,
+    keeperName: null,
+    keeperRating: Number(clamp(avgRating - 0.08, 6.0, 7.55).toFixed(2)),
+    confirmed: false,
+    projected: true,
+  };
+}
+
+function buildProjectedLineupSummary(homeTeamProfile, awayTeamProfile, homeInjuries, awayInjuries) {
+  const home = projectedLineupSideFromProfile(homeTeamProfile, homeInjuries);
+  const away = projectedLineupSideFromProfile(awayTeamProfile, awayInjuries);
+  if (!home || !away) return null;
+  return {
+    home,
+    away,
+    confirmed: false,
+    projected: true,
+    source: "projected-squad-profile",
+    summary: "Projected XI op basis van squadrating, vorm, consistentie en beschikbaarheid; niet gelijk aan bevestigde opstelling.",
+  };
+}
+
+function enrichSeasonStatsWithRecentProxy(seasonStats, recent, teamProfile, sourceLabel = "derived-form-shot-proxy") {
+  const merged = { ...(seasonStats || {}) };
+  const games = Number(recent?.gamesPlayed || 0);
+  if (games < 3) return merged;
+  const avgScored = Number(recent?.avgScored || 1.25);
+  const avgConceded = Number(recent?.avgConceded || 1.25);
+  const bttsRate = Number(recent?.bttsRate || 0.5);
+  const over25Rate = Number(recent?.over25Rate || 0.45);
+  const attackTrend = Number(teamProfile?.attackTrend || avgScored - avgConceded);
+  const estimatedShots = Number(clamp(8.4 + avgScored * 2.2 + Math.max(0, attackTrend) * 1.2, 7.5, 16.5).toFixed(2));
+  const estimatedShotsAgainst = Number(clamp(8.6 + avgConceded * 2.0, 7.2, 16.5).toFixed(2));
+  const estimatedXg = Number(clamp(avgScored * 0.82 + over25Rate * 0.32 + bttsRate * 0.12, 0.65, 2.45).toFixed(2));
+  const estimatedXga = Number(clamp(avgConceded * 0.82 + over25Rate * 0.2, 0.65, 2.35).toFixed(2));
+  merged.avgShots = merged.avgShots ?? estimatedShots;
+  merged.avgShotsAgainst = merged.avgShotsAgainst ?? estimatedShotsAgainst;
+  merged.avgShotsOn = merged.avgShotsOn ?? Number(clamp(estimatedShots * 0.34, 2.2, 6.8).toFixed(2));
+  merged.avgShotsOnAgainst = merged.avgShotsOnAgainst ?? Number(clamp(estimatedShotsAgainst * 0.34, 2.2, 6.8).toFixed(2));
+  merged.xG = merged.xG ?? estimatedXg;
+  merged.xGAgainst = merged.xGAgainst ?? estimatedXga;
+  merged.sourceQuality = Number(Math.max(Number(merged.sourceQuality || 0), 0.46).toFixed(2));
+  merged.externalSources = Array.from(new Set([...(merged.externalSources || []), sourceLabel]));
+  merged.historicalGames = Math.max(Number(merged.historicalGames || 0), games);
+  return merged;
+}
+
 function calcLineupContinuity(lineupSide, injuries) {
   const starters = Number(lineupSide?.starters || 0);
   const avgRating = Number(lineupSide?.avgRating || 6.8);
@@ -5953,6 +6040,28 @@ function lookupHistoricalRefereeProfile(leagueMarketProfile, refereeName, global
   );
 }
 
+function buildCompetitionRefereeBaseline(leagueMarketProfile, globalArchive, leagueLabel) {
+  const rows = [
+    ...Object.values(leagueMarketProfile?.referees || {}),
+    ...Object.values(globalArchive?.referees || {}),
+  ].filter((item) => Number(item?.matches || 0) > 0);
+  if (!rows.length) return null;
+  const totalMatches = rows.reduce((sum, item) => sum + Number(item.matches || 0), 0);
+  const weighted = (field, fallback = 0) => {
+    const numerator = rows.reduce((sum, item) => sum + Number(item[field] ?? fallback) * Number(item.matches || 0), 0);
+    return totalMatches ? Number((numerator / totalMatches).toFixed(3)) : fallback;
+  };
+  return {
+    refereeName: "Competitiebaseline scheidsrechter",
+    matches: totalMatches,
+    avgCards: weighted("avgCards", 3.7),
+    penaltyRate: weighted("penaltyRate", 0.11),
+    source: leagueMarketProfile?.referees ? "football-data.co.uk league referee baseline" : "football-data.co.uk global referee baseline",
+    league: leagueLabel,
+    inferred: true,
+  };
+}
+
 function flattenOddsContainers(node, bucket = []) {
   if (!node) return bucket;
   if (Array.isArray(node)) {
@@ -6137,7 +6246,7 @@ function buildPostMatchReview(match, prediction) {
   const failureSignals = [];
   if (predictedOutcome !== actualOutcome) {
     if (Math.abs(Number(prediction?.modelEdges?.clubEloDiff || 0)) >= 80) failureSignals.push("clubelo_misread");
-    if (!prediction?.modelEdges?.lineupConfirmed) failureSignals.push("open_lineups");
+    if (!prediction?.modelEdges?.lineupConfirmed && !prediction?.modelEdges?.lineupProjected) failureSignals.push("open_lineups");
     if (prediction?.weatherRisk === "high" || prediction?.modelEdges?.weatherRisk === "high") failureSignals.push("weather_risk");
     if (Math.abs(Number(prediction?.modelEdges?.rest || 0)) >= 2) failureSignals.push("rest_gap");
     if (match?.h2h?.results?.length >= 3) failureSignals.push("h2h_signal");
@@ -8034,7 +8143,8 @@ function buildPhaseReliabilityEdge(input) {
 }
 
 function buildRefereeProfile(referee, homeRecent, awayRecent, marketCalibration, historicalRefereeProfile) {
-  if (!referee?.name) return null;
+  const refereeName = referee?.name || historicalRefereeProfile?.refereeName || null;
+  if (!refereeName && !historicalRefereeProfile) return null;
   const homeCards = Number(homeRecent?.yellowCardRate || 0) + Number(homeRecent?.redCardRate || 0) * 1.8;
   const awayCards = Number(awayRecent?.yellowCardRate || 0) + Number(awayRecent?.redCardRate || 0) * 1.8;
   const estimatedCardsTrend = Number(((homeCards + awayCards) / 2).toFixed(2));
@@ -8051,18 +8161,20 @@ function buildRefereeProfile(referee, homeRecent, awayRecent, marketCalibration,
   const estimatedPenaltyRate =
     historicalRefereeProfile?.penaltyRate != null ? historicalRefereeProfile.penaltyRate : estimatedPenaltyBase;
   const strictness = cardsTrend >= 4.8 ? "streng" : cardsTrend >= 3.2 ? "gemiddeld" : "laat doorspelen";
-  const source = historicalRefereeProfile ? "football-data.co.uk referee history" : "team-profiel schatting";
+  const source = historicalRefereeProfile?.source || (historicalRefereeProfile ? "football-data.co.uk referee history" : "team-profiel schatting");
 
   return {
     ...referee,
+    name: refereeName,
+    inferred: !referee?.name || !!historicalRefereeProfile?.inferred,
     cardsTrend,
     estimatedPenaltyRate,
     strictness,
     source,
     matches: Number(historicalRefereeProfile?.matches || 0),
     summary: historicalRefereeProfile
-      ? `${referee.name}: ${strictness}, ${cardsTrend} kaarten gem. uit ${historicalRefereeProfile.matches} duels`
-      : `${referee.name}: ${strictness}, kaartenritme ${cardsTrend}, penalty-kans ${Math.round(estimatedPenaltyRate * 100)}%`,
+      ? `${refereeName}: ${strictness}, ${cardsTrend} kaarten gem. uit ${historicalRefereeProfile.matches} duels`
+      : `${refereeName}: ${strictness}, kaartenritme ${cardsTrend}, penalty-kans ${Math.round(estimatedPenaltyRate * 100)}%`,
   };
 }
 
@@ -9158,7 +9270,7 @@ function predict(input) {
   );
   const fragilityPenalty =
     (Number(learningEdge.homeFragility || 0) + Number(learningEdge.awayFragility || 0) >= 4 ? 0.02 : 0) +
-    (!input.lineupSummary?.confirmed ? 0.015 : 0);
+    (!input.lineupSummary?.confirmed ? (input.lineupSummary?.projected ? 0.006 : 0.015) : 0);
   const modelAgreementPenalty =
     modelAgreement < 0.35
       ? 0.085
@@ -9205,6 +9317,7 @@ function predict(input) {
     agreement: modelAgreement,
     weatherRisk: input.weather?.riskLevel || "low",
     lineupConfirmed: !!input.lineupSummary?.confirmed,
+    lineupProjected: !!input.lineupSummary?.projected,
     injuriesTotal: Number(input.homeInjuries?.injuredCount || 0) + Number(input.awayInjuries?.injuredCount || 0),
     awayTravelPenalty: featureVector.away_travel_penalty,
     keeperDiff: featureVector.keeper_rating_diff,
@@ -9241,6 +9354,7 @@ function predict(input) {
         : null,
       weatherRisk: input.weather?.riskLevel || "low",
       lineupConfirmed: !!input.lineupSummary?.confirmed,
+      lineupProjected: !!input.lineupSummary?.projected,
       lineupImpact,
       homeAwayEdge,
       tacticalMismatch,
@@ -9569,6 +9683,7 @@ function buildSourceCoverage(store, todayKey) {
   const refereeStatusKnown = todayMatches.filter((match) => !!match?.refereeStatus).length;
   const lineupStatusKnown = todayMatches.filter((match) => !!match?.lineupStatus).length;
   const lineupConfirmed = todayMatches.filter((match) => !!match?.lineupSummary?.confirmed).length;
+  const lineupProjected = todayMatches.filter((match) => !!match?.lineupSummary?.projected).length;
   const availabilityCovered = todayMatches.filter((match) => !!(match?.homeInjuries && match?.awayInjuries)).length;
   const squadCovered = todayMatches.filter((match) => !!(match?.homeTeamProfile?.squad && match?.awayTeamProfile?.squad)).length;
   const providerTeamIdsCovered = todayMatches.filter((match) => !!(match?.homeTeamId && match?.awayTeamId)).length;
@@ -9625,8 +9740,11 @@ function buildSourceCoverage(store, todayKey) {
       label: "Bevestigde opstellingen",
       coverage: Number((lineupConfirmed / total).toFixed(2)),
       target: 0.45,
-      status: lineupConfirmed / total >= 0.45 ? "ok" : "pre_match_pending",
-      action: "Blijf lineups vlak voor kickoff verversen; open lineups blijven confidence-penalty en faalsignaal.",
+      status: lineupConfirmed / total >= 0.45 ? "ok" : lineupProjected / total >= 0.75 ? "projected" : "pre_match_pending",
+      action:
+        lineupProjected / total >= 0.75
+          ? "Projected XI is gevuld; vervang vlak voor kickoff door bevestigde opstellingen zodra live bron bereikbaar is."
+          : "Blijf lineups vlak voor kickoff verversen; open lineups blijven confidence-penalty en faalsignaal.",
     },
     {
       key: "referee_history",
@@ -9665,6 +9783,7 @@ function buildSourceCoverage(store, todayKey) {
     refereeStatusCoverage: Number((refereeStatusKnown / total).toFixed(2)),
     lineupStatusCoverage: Number((lineupStatusKnown / total).toFixed(2)),
     lineupConfirmedCoverage: Number((lineupConfirmed / total).toFixed(2)),
+    lineupProjectedCoverage: Number((lineupProjected / total).toFixed(2)),
     availabilityCoverage: Number((availabilityCovered / total).toFixed(2)),
     squadCoverage: Number((squadCovered / total).toFixed(2)),
     providerTeamIdCoverage: Number((providerTeamIdsCovered / total).toFixed(2)),
@@ -10756,8 +10875,14 @@ async function main() {
       const standingMeta = standing?.meta || null;
       const homeStandingRow = findStandingRow(standing, homeId, homeName);
       const awayStandingRow = findStandingRow(standing, awayId, awayName);
-      const homePos = homeStandingRow?.pos ?? null;
-      const awayPos = awayStandingRow?.pos ?? null;
+      let homePos = homeStandingRow?.pos ?? null;
+      let awayPos = awayStandingRow?.pos ?? null;
+      let standingsSourceLabel = standing?.source || standingMeta?.source || null;
+      if ((homePos == null || awayPos == null) && isSeniorInternationalTournament(leagueInfo.label)) {
+        homePos = homePos ?? lookupWorldCupSeedPosition(homeName);
+        awayPos = awayPos ?? lookupWorldCupSeedPosition(awayName);
+        if (homePos != null || awayPos != null) standingsSourceLabel = "world-cup-seed-group-strength";
+      }
 
       getTeam(store.teams, homeId, homeName);
       getTeam(store.teams, awayId, awayName);
@@ -10916,18 +11041,23 @@ async function main() {
       const phaseReliability = store.phaseReliability?.[phaseBucket] || null;
 
       const minuteState = resolveMinuteState(event, eventDetails);
-      const homeSeasonStats = mergeSeasonStatsWithSnapshots(
+      let homeSeasonStats = mergeSeasonStatsWithSnapshots(
         store.teamSeasonStats[homeId] || null,
         homeName,
         leagueInfo.label,
         store
       );
-      const awaySeasonStats = mergeSeasonStatsWithSnapshots(
+      let awaySeasonStats = mergeSeasonStatsWithSnapshots(
         store.teamSeasonStats[awayId] || null,
         awayName,
         leagueInfo.label,
         store
       );
+      const derivedStatsSource = isSeniorInternationalTournament(leagueInfo.label)
+        ? "derived-national-form-shot-proxy"
+        : "derived-form-shot-proxy";
+      homeSeasonStats = enrichSeasonStatsWithRecentProxy(homeSeasonStats, homeRecent, null, derivedStatsSource);
+      awaySeasonStats = enrichSeasonStatsWithRecentProxy(awaySeasonStats, awayRecent, null, derivedStatsSource);
       if (homeId && homeSeasonStats?.externalSources?.length) store.teamSeasonStats[homeId] = homeSeasonStats;
       if (awayId && awaySeasonStats?.externalSources?.length) store.teamSeasonStats[awayId] = awaySeasonStats;
 
@@ -10974,8 +11104,30 @@ async function main() {
         squadProfile: awayIntelligence.squadProfile,
         transferProfile: awayIntelligence.transferProfile,
       });
+      if (!lineupSummary?.confirmed) {
+        const projectedLineup = buildProjectedLineupSummary(
+          homeTeamProfile,
+          awayTeamProfile,
+          store.teamInjuries[homeId] || null,
+          store.teamInjuries[awayId] || null
+        );
+        if (projectedLineup) {
+          lineupSummary = lineupSummary
+            ? {
+                ...projectedLineup,
+                ...lineupSummary,
+                home: lineupSummary.home || projectedLineup.home,
+                away: lineupSummary.away || projectedLineup.away,
+                projected: true,
+                source: `${lineupSummary.source || "partial-lineup"} + projected-squad-profile`,
+              }
+            : projectedLineup;
+        }
+      }
       const referee = extractReferee(eventDetails);
-      const historicalRefereeProfile = lookupHistoricalRefereeProfile(leagueMarketProfile, referee?.name, globalRefereeArchive);
+      const historicalRefereeProfile =
+        lookupHistoricalRefereeProfile(leagueMarketProfile, referee?.name, globalRefereeArchive) ||
+        buildCompetitionRefereeBaseline(leagueMarketProfile, globalRefereeArchive, leagueInfo.label);
       let supplementalOdds = null;
       if (
         !isFallbackEvent &&
@@ -11015,7 +11167,7 @@ async function main() {
         awaySeasonStats: awayId ? isoFromTimestamp(store.teamSeasonStatsUpdated?.[awayId]) : null,
         homeInjuries: homeId ? isoFromTimestamp(store.teamInjuriesUpdated?.[homeId]) : null,
         awayInjuries: awayId ? isoFromTimestamp(store.teamInjuriesUpdated?.[awayId]) : null,
-        standings: isoFromTimestamp(standing?.updated || standingMeta?.updated || 0),
+        standings: isoFromTimestamp(standing?.updated || standingMeta?.updated || (standingsSourceLabel ? now : 0)),
         marketProfile: isoFromTimestamp(store.marketProfilesUpdated?.[leagueInfo.label]),
         openfootballProfile: isoFromTimestamp(store.openfootballProfilesUpdated?.[leagueInfo.label]),
         understat: isoFromTimestamp(store.understatSnapshotsUpdated?.[leagueInfo.label]),

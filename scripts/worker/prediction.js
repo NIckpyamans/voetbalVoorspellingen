@@ -299,6 +299,7 @@ export function scoreDataCompleteness(input, edges = {}, deps) {
     !!(deps.normalizeName(input?.homeTeamName || input?.homeTeam) && deps.normalizeName(input?.awayTeamName || input?.awayTeam));
   const sourceQuality = Math.max(Number(input?.homeSeasonStats?.sourceQuality || 0), Number(input?.awaySeasonStats?.sourceQuality || 0));
   const lineupsKnown = !!input?.lineupSummary?.confirmed;
+  const lineupsProjected = !!input?.lineupSummary?.projected;
   const postMatchCoverage = Number(input?.postMatchStats?.coverageScore || 0);
   const postMatchPresent = Number(postMatchCoverage || 0) > 0;
 
@@ -309,7 +310,7 @@ export function scoreDataCompleteness(input, edges = {}, deps) {
     add(hasTeamIds, 0.1, "team-id match aanwezig", "team-id match ontbreekt", hasStableTeamIdentity ? 0.55 : 0) +
     add(hasXg || sourceQuality >= 0.45, 0.18, "xG/shot-bronnen aanwezig", "xG/shot-bronnen dun", sourceQuality >= 0.25 ? 0.55 : 0) +
     add(hasOdds, 0.14, "odds/marktdekking aanwezig", "odds/marktdekking dun", marketCoverage > 0 ? 0.45 : 0) +
-    add(lineupsKnown, 0.06, "opstellingsdata bevestigd", "opstellingsdata open", 0.35) +
+    add(lineupsKnown, 0.06, "opstellingsdata bevestigd", "opstellingsdata open", lineupsProjected ? 0.7 : 0.35) +
     add(edges.resultFresh !== false, 0.08, "uitslagbron actueel", "uitslagbron verouderd", edges.resultFresh == null ? 0.65 : 0) +
     add(postMatchPresent, 0.06, "post-match stats verrijkt", "post-match stats ontbreken", 0);
 
@@ -350,7 +351,7 @@ export function sourceReliabilityScore(input, dataCompleteness, deps) {
   const h2hPlayed = Number(input?.h2h?.played || 0);
   const h2hQuality = h2hPlayed >= 5 ? 1 : h2hPlayed >= 3 ? 0.72 : h2hPlayed >= 1 ? 0.38 : 0.15;
   const sourceQuality = Math.max(Number(input?.homeSeasonStats?.sourceQuality || 0), Number(input?.awaySeasonStats?.sourceQuality || 0), 0);
-  const hasLineups = input?.lineupSummary?.confirmed ? 1 : 0.45;
+  const hasLineups = input?.lineupSummary?.confirmed ? 1 : input?.lineupSummary?.projected ? 0.65 : 0.45;
   const marketCoverage = Number(input?.marketCalibration?.closingCoverage || 0);
   const postMatchCoverage = Number(input?.postMatchStats?.coverageScore || 0);
   const completeness = Number(dataCompleteness?.score || 0);
@@ -396,7 +397,7 @@ export function qualityGateForCompleteness(dataCompleteness) {
   };
 }
 
-export function buildRiskProfile({ confidence, agreement, weatherRisk, lineupConfirmed, injuriesTotal, awayTravelPenalty, keeperDiff }) {
+export function buildRiskProfile({ confidence, agreement, weatherRisk, lineupConfirmed, lineupProjected, injuriesTotal, awayTravelPenalty, keeperDiff }) {
   let score = 0;
   if (confidence < 0.48) score += 2;
   else if (confidence < 0.6) score += 1;
@@ -406,7 +407,7 @@ export function buildRiskProfile({ confidence, agreement, weatherRisk, lineupCon
 
   if (weatherRisk === "medium") score += 1;
   if (weatherRisk === "high") score += 2;
-  if (!lineupConfirmed) score += 1;
+  if (!lineupConfirmed && !lineupProjected) score += 1;
   if (injuriesTotal >= 4) score += 1;
   if (awayTravelPenalty >= 0.2) score += 1;
   if (Math.abs(Number(keeperDiff || 0)) >= 0.35) score -= 1;
