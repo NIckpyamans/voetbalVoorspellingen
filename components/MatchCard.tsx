@@ -1012,6 +1012,98 @@ function buildLocalAiAnalysis(match: any, prediction: any) {
   return `Model kiest ${score}; 1X2 neigt naar ${probability.label} (${Math.round(probability.value * 100)}%). Confidence ${confidence}%, datakwaliteit ${dataQuality}%, risico ${risk}; ${calibration}.${warnings}`;
 }
 
+function compactAnalyzePayload(match: any, prediction: any) {
+  const compactProfile = (profile: any) => profile
+    ? {
+        strongestSide: profile.strongestSide,
+        pointsPerGame: profile.pointsPerGame,
+        consistency: profile.consistency,
+        setPieceScore: profile.setPieceScore,
+        cornersTrend: profile.cornersTrend,
+      }
+    : null;
+  const compactRecent = (recent: any) => recent
+    ? {
+        form: recent.form,
+        strongestSide: recent.strongestSide,
+        yellowCardRate: recent.yellowCardRate,
+        redCardRate: recent.redCardRate,
+        recentMatches: Array.isArray(recent.recentMatches) ? recent.recentMatches.slice(-10) : [],
+        splits: recent.splits,
+      }
+    : null;
+  const compactEdges = (edges: any) => edges
+    ? {
+        riskProfile: edges.riskProfile,
+        modelAgreement: edges.modelAgreement,
+        clubEloDiff: edges.clubEloDiff,
+        lineupImpact: edges.lineupImpact,
+        tacticalMismatch: edges.tacticalMismatch,
+        formShift: edges.formShift,
+        keeperEdge: edges.keeperEdge,
+        travelEdge: edges.travelEdge,
+        modelWarnings: Array.isArray(edges.modelWarnings) ? edges.modelWarnings.slice(0, 4) : [],
+      }
+    : null;
+
+  return {
+    match: {
+      id: match.id,
+      status: match.status,
+      homeTeamName: match.homeTeamName,
+      awayTeamName: match.awayTeamName,
+      league: match.league,
+      homeForm: match.homeForm,
+      awayForm: match.awayForm,
+      homeRecent: compactRecent(match.homeRecent),
+      awayRecent: compactRecent(match.awayRecent),
+      h2h: match.h2h,
+      aggregate: match.aggregate,
+      context: match.context ? { summary: match.context.summary } : null,
+      weather: match.weather,
+      lineupSummary: match.lineupSummary,
+      homeRestDays: match.homeRestDays,
+      awayRestDays: match.awayRestDays,
+      homeClubElo: match.homeClubElo,
+      awayClubElo: match.awayClubElo,
+      homeInjuries: match.homeInjuries ? { injuredCount: match.homeInjuries.injuredCount || match.homeInjuries.count || 0 } : null,
+      awayInjuries: match.awayInjuries ? { injuredCount: match.awayInjuries.injuredCount || match.awayInjuries.count || 0 } : null,
+      homeTeamProfile: compactProfile(match.homeTeamProfile),
+      awayTeamProfile: compactProfile(match.awayTeamProfile),
+      ensembleMeta: match.ensembleMeta,
+      review: match.review,
+    },
+    prediction: {
+      matchId: prediction.matchId,
+      predHomeGoals: prediction.predHomeGoals,
+      predAwayGoals: prediction.predAwayGoals,
+      homeProb: prediction.homeProb,
+      drawProb: prediction.drawProb,
+      awayProb: prediction.awayProb,
+      homeXG: prediction.homeXG,
+      awayXG: prediction.awayXG,
+      over25: prediction.over25,
+      btts: prediction.btts,
+      homeForm: prediction.homeForm,
+      awayForm: prediction.awayForm,
+      homeRecent: compactRecent(prediction.homeRecent),
+      awayRecent: compactRecent(prediction.awayRecent),
+      weather: prediction.weather,
+      h2h: prediction.h2h,
+      aggregate: prediction.aggregate,
+      context: prediction.context ? { summary: prediction.context.summary } : null,
+      homeRestDays: prediction.homeRestDays,
+      awayRestDays: prediction.awayRestDays,
+      homeClubElo: prediction.homeClubElo,
+      awayClubElo: prediction.awayClubElo,
+      lineupSummary: prediction.lineupSummary,
+      modelEdges: compactEdges(prediction.modelEdges),
+      ensembleMeta: prediction.ensembleMeta,
+      review: prediction.review,
+    },
+  };
+}
+
 const MatchCard: React.FC<MatchCardProps> = ({ match, prediction, onFavoriteChange }) => {
   const [tab, setTab] = useState<"analyse" | "h2h" | "vorm" | "markten">("analyse");
   const [detailsOpen, setDetailsOpen] = useState(false);
@@ -1028,7 +1120,7 @@ const MatchCard: React.FC<MatchCardProps> = ({ match, prediction, onFavoriteChan
     fetch("/api/analyze", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ match, prediction }),
+      body: JSON.stringify(compactAnalyzePayload(match, prediction)),
     })
       .then(async (response) => {
         const contentType = response.headers.get("content-type") || "";
