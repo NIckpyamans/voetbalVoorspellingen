@@ -19,7 +19,9 @@ env:
   DATA_BRANCH: codex/step3b-layout
   FOOTYAI_DATE_WINDOW: yesterday,today,tomorrow,+2,+3,+4,+5,+6,+7
   FOOTBALL_DATA_TOKEN: ${{ secrets.FOOTBALL_DATA_TOKEN }}
+  API_KEY_FOOTBALL_DATA: ${{ secrets.API_KEY_FOOTBALL_DATA }}
   FOOTBALL_DATA_TEAM_MAP: ${{ secrets.FOOTBALL_DATA_TEAM_MAP }}
+  API_KEY_API_FOOTBALL: ${{ secrets.API_KEY_API_FOOTBALL }}
   NATIONAL_ELO_FEED_URL: ${{ secrets.NATIONAL_ELO_FEED_URL }}
   ODDS_PROVIDER_NAME: ${{ secrets.ODDS_PROVIDER_NAME }}
   ODDS_API_SPORT: ${{ secrets.ODDS_API_SPORT }}
@@ -67,7 +69,7 @@ jobs:
           BRANCH_NAME="${DATA_BRANCH:-${{ github.ref_name }}}"
           git config user.name github-actions
           git config user.email github-actions@github.com
-          git add server_data.json data training monitor/snapshot-db-context.json
+          git add data training monitor/snapshot-db-context.json
           git diff --staged --quiet && echo "geen wijzigingen" && exit 0
           git commit -m "update learning data [skip vercel]"
           for attempt in 1 2 3; do

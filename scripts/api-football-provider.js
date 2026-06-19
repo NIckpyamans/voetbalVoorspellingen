@@ -1,0 +1,236 @@
+import { getApiFootballKey } from "./provider-env.js";
+
+const API_FOOTBALL_BASE = "https://v3.football.api-sports.io";
+const DEFAULT_TIMEOUT_MS = 12_000;
+const DEFAULT_MAX_FETCHES_PER_RUN = 20;
+const TEAM_CACHE_TTL_MS = 30 * 24 * 60 * 60 * 1000;
+const H2H_CACHE_TTL_MS = 12 * 60 * 60 * 1000;
+
+let fetchesThisRun = 0;
+
+function normalizeName(value) {
+  return String(value || "")
+    .toLowerCase()
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .replace(/[^a-z0-9]+/g, " ")
+    .trim();
+}
+
+function isoDate(value) {
+  const date = new Date(value || "");
+  return Number.isNaN(date.getTime()) ? null : date.toISOString().slice(0, 10);
+}
+
+function leagueCountry(leagueLabel = "") {
+  const text = String(leagueLabel || "");
+  const country = text.includes(" - ") ? text.split(" - ")[0].trim() : "";
+  return country || "";
+}
+
+function isFresh(entry, ttlMs, now = Date.now()) {
+  const updated = Date.parse(entry?.updatedAt || entry?.updated || "");
+  return Number.isFinite(updated) && now - updated <= ttlMs;
+}
+
+function maxFetchesPerRun() {
+  const configured = Number(process.env.API_FOOTBALL_MAX_FETCHES_PER_RUN || "");
+  return Number.isFinite(configured) && configured > 0 ? configured : DEFAULT_MAX_FETCHES_PER_RUN;
+}
+
+async function apiFootballGet(path, params = {}, options = {}) {
+  const apiKey = getApiFootballKey();
+  if (!apiKey) return { status: "not_configured", data: null };
+  if (fetchesThisRun >= maxFetchesPerRun()) {
+    return { status: "rate_limited_locally", data: null };
+  }
+
+  const url = new URL(path, options.baseUrl || API_FOOTBALL_BASE);
+  for (const [key, value] of Object.entries(params || {})) {
+    if (value !== undefined && value !== null && String(value).trim()) url.searchParams.set(key, String(value));
+  }
+
+  const controller = new AbortController();
+  const timeout = setTimeout(() => controller.abort(), Number(options.timeoutMs || DEFAULT_TIMEOUT_MS));
+  fetchesThisRun += 1;
+  try {
+    const fetchImpl = options.fetchImpl || globalThis.fetch;
+    if (typeof fetchImpl !== "function") return { status: "fetch_unavailable", data: null };
+    const response = await fetchImpl(url, {
+      headers: {
+        Accept: "application/json",
+        "x-apisports-key": apiKey,
+      },
+      signal: controller.signal,
+    });
+    if (!response.ok) {
+      return { status: "provider_error", statusCode: response.status, data: null };
+    }
+    const payload = await response.json();
+    if (Array.isArray(payload?.errors) && payload.errors.length) {
+      return { status: "provider_error", errors: payload.errors, data: payload };
+    }
+    if (payload?.errors && typeof payload.errors === "object" && Object.keys(payload.errors).length) {
+      return { status: "provider_error", errors: payload.errors, data: payload };
+    }
+    return { status: "ok", data: payload };
+  } catch (error) {
+    return { status: "provider_exception", error: error?.message || String(error), data: null };
+  } finally {
+    clearTimeout(timeout);
+  }
+}
+
+function pickTeamSearchHit(payload, teamName, country) {
+  const wanted = normalizeName(teamName);
+  const wantedCountry = normalizeName(country);
+  const rows = Array.isArray(payload?.response) ? payload.response : [];
+  if (!wanted || !rows.length) return null;
+
+  const exact = rows.find((row) => {
+    const name = normalizeName(row?.team?.name);
+    const code = normalizeName(row?.team?.code);
+    const rowCountry = normalizeName(row?.team?.country);
+    const nameMatches = name === wanted || code === wanted;
+    const countryMatches = !wantedCountry || !rowCountry || rowCountry === wantedCountry;
+    return nameMatches && countryMatches;
+  });
+  if (exact?.team?.id) return exact.team;
+
+  const contained = rows.find((row) => {
+    const name = normalizeName(row?.team?.name);
+    const rowCountry = normalizeName(row?.team?.country);
+    const nameMatches = name && (name.includes(wanted) || wanted.includes(name));
+    const countryMatches = !wantedCountry || !rowCountry || rowCountry === wantedCountry;
+    return nameMatches && countryMatches;
+  });
+  return contained?.team?.id ? contained.team : null;
+}
+
+async function resolveTeamId(store, teamName, leagueLabel, options = {}) {
+  const country = leagueCountry(leagueLabel);
+  const key = `${normalizeName(country)}:${normalizeName(teamName)}`;
+  if (!store.apiFootballTeamMap) store.apiFootballTeamMap = {};
+  const cached = store.apiFootballTeamMap[key];
+  if (cached?.teamId && isFresh(cached, TEAM_CACHE_TTL_MS)) return cached.teamId;
+
+  const response = await apiFootballGet("/teams", { search: teamName }, options);
+  if (response.status !== "ok") {
+    store.apiFootballTeamMap[key] = {
+      teamId: null,
+      updatedAt: new Date().toISOString(),
+      status: response.status,
+      statusCode: response.statusCode || null,
+    };
+    return null;
+  }
+  const team = pickTeamSearchHit(response.data, teamName, country);
+  store.apiFootballTeamMap[key] = {
+    teamId: team?.id || null,
+    name: team?.name || null,
+    country: team?.country || null,
+    updatedAt: new Date().toISOString(),
+    status: team?.id ? "resolved" : "not_found",
+  };
+  return team?.id || null;
+}
+
+function normalizeFixtureH2H(fixtures, homeName, awayName, homeId, awayId) {
+  const currentHome = normalizeName(homeName);
+  const currentAway = normalizeName(awayName);
+  const results = [];
+
+  for (const row of fixtures || []) {
+    const fixture = row?.fixture || {};
+    const teams = row?.teams || {};
+    const goals = row?.goals || {};
+    const status = String(fixture?.status?.short || fixture?.status?.long || "").toUpperCase();
+    const homeGoals = Number(goals.home);
+    const awayGoals = Number(goals.away);
+    if (!Number.isFinite(homeGoals) || !Number.isFinite(awayGoals)) continue;
+    if (["NS", "TBD", "PST", "CANC", "ABD"].includes(status)) continue;
+
+    const fixtureHome = normalizeName(teams?.home?.name);
+    const fixtureAway = normalizeName(teams?.away?.name);
+    const sameOrientation = fixtureHome === currentHome && fixtureAway === currentAway;
+    const reversed = fixtureHome === currentAway && fixtureAway === currentHome;
+    if (!sameOrientation && !reversed) continue;
+
+    const currentHomeGoals = sameOrientation ? homeGoals : awayGoals;
+    const currentAwayGoals = sameOrientation ? awayGoals : homeGoals;
+    results.push({
+      date: isoDate(fixture.date),
+      home: homeName,
+      away: awayName,
+      score: `${currentHomeGoals}-${currentAwayGoals}`,
+      homeScore: currentHomeGoals,
+      awayScore: currentAwayGoals,
+      winnerId: currentHomeGoals > currentAwayGoals ? String(homeId || currentHome) : currentAwayGoals > currentHomeGoals ? String(awayId || currentAway) : "",
+      source: "api-football-h2h",
+      sourceTimestamp: fixture.date || new Date().toISOString(),
+      providerFixtureId: fixture.id || null,
+    });
+  }
+
+  return results
+    .filter((item) => item.date && item.score)
+    .sort((a, b) => String(a.date).localeCompare(String(b.date)))
+    .slice(-8);
+}
+
+export async function fetchApiFootballH2HProfile({ store, homeName, awayName, homeId, awayId, leagueLabel }, options = {}) {
+  if (!getApiFootballKey()) return null;
+  if (!store || !homeName || !awayName) return null;
+  if (!store.apiFootballH2HCache) store.apiFootballH2HCache = {};
+
+  const pairKey = `${normalizeName(leagueLabel)}:${normalizeName(homeName)}__${normalizeName(awayName)}`;
+  const cached = store.apiFootballH2HCache[pairKey];
+  if (cached?.data && isFresh(cached, H2H_CACHE_TTL_MS)) return cached.data;
+
+  const resolvedHomeId = await resolveTeamId(store, homeName, leagueLabel, options);
+  const resolvedAwayId = await resolveTeamId(store, awayName, leagueLabel, options);
+  if (!resolvedHomeId || !resolvedAwayId) {
+    store.apiFootballH2HCache[pairKey] = {
+      updatedAt: new Date().toISOString(),
+      status: "team_mapping_missing",
+      data: null,
+    };
+    return null;
+  }
+
+  const response = await apiFootballGet("/fixtures/headtohead", { h2h: `${resolvedHomeId}-${resolvedAwayId}`, last: 8 }, options);
+  if (response.status !== "ok") {
+    store.apiFootballH2HCache[pairKey] = {
+      updatedAt: new Date().toISOString(),
+      status: response.status,
+      statusCode: response.statusCode || null,
+      data: null,
+    };
+    return null;
+  }
+
+  const results = normalizeFixtureH2H(response.data?.response || [], homeName, awayName, homeId, awayId);
+  const homeWins = results.filter((item) => String(item.winnerId || "") === String(homeId || normalizeName(homeName))).length;
+  const awayWins = results.filter((item) => String(item.winnerId || "") === String(awayId || normalizeName(awayName))).length;
+  const data = results.length
+    ? {
+        played: results.length,
+        homeWins,
+        draws: results.length - homeWins - awayWins,
+        awayWins,
+        sameCompetitionPlayed: results.length,
+        results,
+        status: "api-football-h2h",
+        source: "api-football-h2h",
+        asOf: new Date().toISOString(),
+        sourceTimestamp: new Date().toISOString(),
+      }
+    : null;
+
+  store.apiFootballH2HCache[pairKey] = {
+    updatedAt: new Date().toISOString(),
+    status: data ? "available" : "not_found",
+    data,
+  };
+  return data;
+}

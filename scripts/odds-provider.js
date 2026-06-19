@@ -1,3 +1,5 @@
+import { getOddsApiKey } from "./provider-env.js";
+
 function normalizeName(value) {
   return String(value || "")
     .toLowerCase()
@@ -153,7 +155,7 @@ export function normalizeOddsSnapshot(raw, match, options = {}) {
 }
 
 export async function fetchOddsAtPrediction(match, options = {}) {
-  const apiKey = process.env.ODDS_API_KEY || process.env.THE_ODDS_API_KEY || "";
+  const apiKey = getOddsApiKey();
   const template = process.env.ODDS_API_URL_TEMPLATE || "";
   const provider = process.env.ODDS_PROVIDER_NAME || (apiKey ? "the-odds-api" : "custom-odds-provider");
   if (!apiKey && !template) {
@@ -194,10 +196,11 @@ export async function fetchOddsAtPrediction(match, options = {}) {
         reason: "fetch is niet beschikbaar in deze runtime.",
       };
     }
+    const isApiSports = /football\.api-sports\.io|api-sports\.io/i.test(url);
     const response = await fetchImpl(url, {
       headers: {
         Accept: "application/json",
-        ...(apiKey && !url.includes(apiKey) ? { "x-api-key": apiKey } : {}),
+        ...(apiKey && !url.includes(apiKey) ? (isApiSports ? { "x-apisports-key": apiKey } : { "x-api-key": apiKey }) : {}),
       },
     });
     if (!response.ok) {

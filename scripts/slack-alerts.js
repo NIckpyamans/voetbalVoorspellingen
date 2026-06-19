@@ -47,7 +47,7 @@ function collectAlerts() {
     });
   }
 
-  if (!process.env.ODDS_API_KEY && !process.env.THE_ODDS_API_KEY) {
+  if (!process.env.ODDS_API_KEY && !process.env.THE_ODDS_API_KEY && !process.env.API_KEY_API_FOOTBALL) {
     alerts.push({
       key: "odds_credentials_missing",
       severity: "medium",

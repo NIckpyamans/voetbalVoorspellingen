@@ -21,7 +21,9 @@ import {
   calibrateConfidenceWithBacktest,
   calibrateOutcomeProbabilities,
 } from "./prediction-analytics.js";
+import { fetchApiFootballH2HProfile } from "./api-football-provider.js";
 import { fetchOddsAtPrediction } from "./odds-provider.js";
+import { getApiFootballKey, getFootballDataApiKey } from "./provider-env.js";
 import { writeJsonFile, writeSplitDataFiles } from "./worker/archive.js";
 import {
   addDaysToDateKey,
@@ -3072,10 +3074,10 @@ async function fetchForzaSquadProfile(teamName, existing = null) {
 }
 
 async function fetchFootballDataOrgSquadProfile(teamName, existing = null) {
-  const token = process.env.FOOTBALL_DATA_TOKEN || process.env.FOOTBALL_DATA_API_KEY || "";
+  const token = getFootballDataApiKey();
   if (!token) {
     if (!openSquadSourceState.loggedFootballDataConfig) {
-      console.warn("[worker] football-data.org squadbron staat klaar, maar FOOTBALL_DATA_TOKEN ontbreekt; bron blijft uit tot er een gratis token is.");
+      console.warn("[worker] football-data.org squadbron staat klaar, maar FOOTBALL_DATA_TOKEN/API_KEY_FOOTBALL_DATA ontbreekt; bron blijft uit tot er een gratis token is.");
       openSquadSourceState.loggedFootballDataConfig = true;
     }
     return null;
@@ -7727,7 +7729,7 @@ async function fetchPostMatchStatsFromTheSportsDb(match) {
 }
 
 async function fetchPostMatchStatsFromFootballData(match) {
-  const apiKey = String(process.env.FOOTBALL_DATA_API_KEY || "").trim();
+  const apiKey = getFootballDataApiKey();
   if (!apiKey) return null;
   const dateFrom = `${match?.date}T00:00:00Z`;
   const dateTo = `${match?.date}T23:59:59Z`;
@@ -8849,6 +8851,7 @@ function buildH2HAgentProfile({
   marketProfile,
   openFootballProfile,
   nationalProfile,
+  apiFootballProfile,
   extraProfiles = [],
   homeName,
   awayName,
@@ -8891,6 +8894,12 @@ function buildH2HAgentProfile({
     results = mergeH2HResultLists(results, nationalProfile.results);
     sources.push(nationalProfile.status || "openfootball-international-h2h");
     sameCompetitionPlayed += Number(nationalProfile.sameCompetitionPlayed || nationalProfile.played || 0);
+  }
+
+  if (apiFootballProfile?.results?.length) {
+    results = mergeH2HResultLists(results, apiFootballProfile.results);
+    sources.push(apiFootballProfile.status || "api-football-h2h");
+    sameCompetitionPlayed += Number(apiFootballProfile.sameCompetitionPlayed || apiFootballProfile.played || 0);
   }
 
   if (!results.length) {
@@ -9831,8 +9840,15 @@ function buildSourceCoverage(store, todayKey) {
         key: "football-data-org",
         name: "football-data.org",
         role: "selectie API fallback",
-        status: process.env.FOOTBALL_DATA_TOKEN || process.env.FOOTBALL_DATA_API_KEY ? "token aanwezig" : "klaar, token ontbreekt",
-        note: "Optionele gratis API-bron voor squads. Alleen actief met FOOTBALL_DATA_TOKEN en team-id mapping, zodat er geen verkeerde teams worden gematcht.",
+        status: getFootballDataApiKey() ? "token aanwezig" : "klaar, token ontbreekt",
+        note: "Optionele gratis API-bron voor squads. Alleen actief met FOOTBALL_DATA_TOKEN/API_KEY_FOOTBALL_DATA en team-id mapping, zodat er geen verkeerde teams worden gematcht.",
+      },
+      {
+        key: "api-football",
+        name: "API-Football",
+        role: "H2H/teamdata API fallback",
+        status: getApiFootballKey() ? "token aanwezig" : "klaar, token ontbreekt",
+        note: "Gebruikt API_KEY_API_FOOTBALL als aanvullende bron voor H2H. Resultaten worden gecachet in de eigen app-state en meegesynchroniseerd naar Neon.",
       },
       {
         key: "reep",
@@ -10967,12 +10983,21 @@ async function main() {
       );
       const aggregatePreviousLeg = buildH2HFromAggregateMeta(event, homeId, awayId, homeName, awayName, date);
       const h2hFallbackLegs = [fallbackPreviousLeg, aggregatePreviousLeg].filter(Boolean);
+      const apiFootballProfile = await fetchApiFootballH2HProfile({
+        store,
+        homeName,
+        awayName,
+        homeId,
+        awayId,
+        leagueLabel: leagueInfo.label,
+      });
       h2h = buildH2HAgentProfile({
         baseH2H: h2h,
         fallbackLegs: h2hFallbackLegs,
         marketProfile: leagueMarketProfile,
         openFootballProfile,
         nationalProfile: nationalH2HProfile,
+        apiFootballProfile,
         extraProfiles: globalTeamFormProfiles,
         homeName,
         awayName,

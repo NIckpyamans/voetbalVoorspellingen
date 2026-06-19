@@ -1,3 +1,5 @@
+import { getApiFootballKey, getFootballDataApiKey, getOddsApiKey } from "./provider-env.js";
+
 const CONFIDENCE_BUCKETS = [
   { key: "0-45", label: "laag <45%", min: 0, max: 0.45 },
   { key: "45-55", label: "45-55%", min: 0.45, max: 0.55 },
@@ -514,18 +516,21 @@ export function buildOddsIntegrationReadiness(store, todayKey) {
   const reviews = Object.values(store.postMatchReviews || {});
   const configuredProviders = [
     process.env.ODDS_API_KEY || process.env.THE_ODDS_API_KEY ? "the-odds-api" : null,
+    getApiFootballKey() ? "api-football" : null,
     process.env.ODDS_API_URL_TEMPLATE ? "custom-url-template" : null,
-    process.env.FOOTBALL_DATA_TOKEN || process.env.FOOTBALL_DATA_API_KEY ? "football-data.org" : null,
+    getFootballDataApiKey() ? "football-data.org" : null,
   ].filter(Boolean);
   const envStatus = {
     ODDS_PROVIDER_NAME: !!process.env.ODDS_PROVIDER_NAME,
     ODDS_API_URL_TEMPLATE: !!process.env.ODDS_API_URL_TEMPLATE,
     ODDS_API_KEY: !!process.env.ODDS_API_KEY,
     THE_ODDS_API_KEY: !!process.env.THE_ODDS_API_KEY,
-    FOOTBALL_DATA_TOKEN: !!(process.env.FOOTBALL_DATA_TOKEN || process.env.FOOTBALL_DATA_API_KEY),
+    API_KEY_API_FOOTBALL: !!getApiFootballKey(),
+    FOOTBALL_DATA_TOKEN: !!getFootballDataApiKey(),
+    API_KEY_FOOTBALL_DATA: !!process.env.API_KEY_FOOTBALL_DATA,
   };
   const urlTemplateReady = !!process.env.ODDS_API_URL_TEMPLATE;
-  const keyReady = !!(process.env.ODDS_API_KEY || process.env.THE_ODDS_API_KEY);
+  const keyReady = !!getOddsApiKey();
   const providerNameReady = !!process.env.ODDS_PROVIDER_NAME || keyReady || urlTemplateReady;
   const requiredFields = [
     "provider",
@@ -554,7 +559,7 @@ export function buildOddsIntegrationReadiness(store, todayKey) {
             ? "url_template_without_api_key"
             : "credentials_needed",
     envStatus,
-    environmentVariables: ["ODDS_PROVIDER_NAME", "ODDS_API_URL_TEMPLATE", "ODDS_API_KEY", "THE_ODDS_API_KEY", "FOOTBALL_DATA_TOKEN"],
+    environmentVariables: ["ODDS_PROVIDER_NAME", "ODDS_API_URL_TEMPLATE", "ODDS_API_KEY", "THE_ODDS_API_KEY", "API_KEY_API_FOOTBALL", "FOOTBALL_DATA_TOKEN", "API_KEY_FOOTBALL_DATA"],
     requiredFields,
     currentCoverage: {
       predictions: hitRate(todayPredictions.filter(hasUsableOdds).length, todayPredictions.length),
@@ -577,7 +582,7 @@ export function buildOddsIntegrationReadiness(store, todayKey) {
     nextAction: configuredProviders.length
       ? urlTemplateReady && keyReady
         ? "Provider staat klaar: controleer eerst een kleine wedstrijddag en bewaar closing odds apart."
-        : "Maak de odds-secret flow compleet: ODDS_API_URL_TEMPLATE plus ODDS_API_KEY/THE_ODDS_API_KEY zijn samen nodig."
+        : "Maak de odds-secret flow compleet: ODDS_API_URL_TEMPLATE plus ODDS_API_KEY/THE_ODDS_API_KEY/API_KEY_API_FOOTBALL zijn samen nodig."
       : "Kies of configureer eerst een echte oddsprovider; historische football-data.co.uk profielen blijven alleen calibratie-input.",
   };
 }
