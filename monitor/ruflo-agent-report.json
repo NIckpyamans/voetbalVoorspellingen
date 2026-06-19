@@ -1,14 +1,14 @@
 {
-  "generatedAt": "2026-06-17T23:51:26.677Z",
-  "date": "2026-06-18",
+  "generatedAt": "2026-06-19T00:01:01.288Z",
+  "date": "2026-06-19",
   "name": "Ruflo-style gratis AI monitor",
   "mode": "naast-productie",
   "productionSafe": true,
   "summary": "Ruflo draait als extra agentlaag naast de app: hij leest monitor/data/reviews, zoekt gratis oplossingen en maakt patchadvies zonder blind live te wijzigen.",
   "agents": {
     "data": {
-      "score": 25,
-      "summary": "Datalaag: H2H 25%, bookmakers 100%, refs 0%.",
+      "score": 40,
+      "summary": "Datalaag: H2H 100%, bookmakers 100%, refs 0%.",
       "freeSources": [
         {
           "name": "SofaScore public endpoint",
@@ -60,22 +60,11 @@
           "use": "Niet live scrapen op iedere run; alleen gecachte snapshots gebruiken."
         }
       ],
-      "actions": [
-        {
-          "priority": "medium",
-          "title": "H2H-backfill verder vullen",
-          "freeSolution": "Gebruik openfootball en football-data rows per competitie als historische H2H fallback voordat de UI 'leeg' toont.",
-          "files": [
-            "scripts/server-worker.js",
-            "components/MatchCard.tsx"
-          ],
-          "status": "aanbevolen"
-        }
-      ]
+      "actions": []
     },
     "learning": {
       "score": 12,
-      "summary": "Leerlaag: 708 reviews, exact 12%, winnaar/gelijk 41%, top-5 exact 14%.",
+      "summary": "Leerlaag: 712 reviews, exact 12%, winnaar/gelijk 41%, top-5 exact 14%.",
       "topConfidence": {
         "matches": 124,
         "exactHitRate": 0.145,
@@ -84,7 +73,7 @@
         "avgGoalError": 1.69,
         "rank1ExactHitRate": 0.097,
         "rank1OutcomeHitRate": 0.355,
-        "versusOverallOutcomeDelta": -0.011
+        "versusOverallOutcomeDelta": -0.01
       },
       "topClubs": [
         {
@@ -173,8 +162,8 @@
     },
     "control": {
       "score": 100,
-      "summary": "Ontwikkelcontrole: 0 actieve monitorissues op 2026-06-18; digest 2026-05-31 t/m 2026-06-13.",
-      "latestDay": "2026-06-18",
+      "summary": "Ontwikkelcontrole: 0 actieve monitorissues op 2026-06-19; digest 2026-05-31 t/m 2026-06-13.",
+      "latestDay": "2026-06-19",
       "shouldPropose": false,
       "actions": []
     }
@@ -186,14 +175,6 @@
       "priority": "high",
       "agents": [
         "learning"
-      ]
-    },
-    {
-      "title": "H2H-backfill verder vullen",
-      "count": 1,
-      "priority": "medium",
-      "agents": [
-        "data"
       ]
     }
   ],
@@ -208,17 +189,6 @@
       ],
       "status": "reviewactie",
       "agent": "learning"
-    },
-    {
-      "priority": "medium",
-      "title": "H2H-backfill verder vullen",
-      "freeSolution": "Gebruik openfootball en football-data rows per competitie als historische H2H fallback voordat de UI 'leeg' toont.",
-      "files": [
-        "scripts/server-worker.js",
-        "components/MatchCard.tsx"
-      ],
-      "status": "aanbevolen",
-      "agent": "data"
     }
   ],
   "freeOnlyGuardrails": [
