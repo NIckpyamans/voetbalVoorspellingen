@@ -10,12 +10,39 @@ import { buildPoissonScoreModel } from "./worker/prediction.js";
 const root = process.cwd();
 const file = path.join(root, "server_data.json");
 
-if (!fs.existsSync(file)) {
-  console.error("[regression-assertions] server_data.json ontbreekt");
-  process.exit(1);
+function readJsonSafe(filePath, fallback) {
+  try {
+    if (!fs.existsSync(filePath)) return fallback;
+    return JSON.parse(fs.readFileSync(filePath, "utf-8"));
+  } catch {
+    return fallback;
+  }
 }
 
-const store = JSON.parse(fs.readFileSync(file, "utf-8"));
+function readStore() {
+  const fullStore = readJsonSafe(file, null);
+  if (fullStore) return fullStore;
+  const meta = readJsonSafe(path.join(root, "data", "meta.json"), {});
+  const store = {
+    ...meta,
+    matches: {},
+    predictions: {},
+    postMatchReviews: {},
+  };
+  const daysDir = path.join(root, "data", "days");
+  if (!fs.existsSync(daysDir)) return store;
+  for (const entry of fs.readdirSync(daysDir)) {
+    if (!/^\d{4}-\d{2}-\d{2}\.json$/.test(entry)) continue;
+    const dateKey = entry.replace(/\.json$/, "");
+    const day = readJsonSafe(path.join(daysDir, entry), {});
+    store.matches[dateKey] = Array.isArray(day.matches) ? day.matches : [];
+    store.predictions[dateKey] = Array.isArray(day.predictions) ? day.predictions : [];
+    Object.assign(store.postMatchReviews, day.reviews || {});
+  }
+  return store;
+}
+
+const store = readStore();
 const scout = store?.dataScout || {};
 const todayKey = scout?.collected?.todayDate || Object.keys(store.matches || {}).sort().findLast?.((date) => Array.isArray(store.matches?.[date])) || "";
 const todayMatches = Array.isArray(store.matches?.[todayKey]) ? store.matches[todayKey] : [];

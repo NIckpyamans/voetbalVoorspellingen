@@ -1,5 +1,6 @@
 import { fetchWithRetry } from "../shared/http.js";
 import { createLogger, getErrorDetails } from "../shared/logger.js";
+import { databaseConfigured, readDatabaseServerStore } from "../shared/database.js";
 
 const REPO_RAW_BASE = "https://raw.githubusercontent.com/NIckpyamans/voetbalVoorspellingen";
 const DATA_CACHE_TTL_MS = Number(process.env.DATA_CACHE_TTL_MS || 60_000);
@@ -71,6 +72,15 @@ function withOptionalCacheBust(url: string, force = false) {
 }
 
 export async function fetchServerStore() {
+  if (databaseConfigured()) {
+    try {
+      const databaseStore = await readDatabaseServerStore();
+      if (databaseStore?.store) return databaseStore;
+    } catch (err: any) {
+      logger.warning("database_server_store_fetch_failed", { error: getErrorDetails(err) });
+    }
+  }
+
   const cached = readCache("server_data.json");
   if (cached) {
     return {

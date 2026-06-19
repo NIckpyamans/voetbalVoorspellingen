@@ -41,6 +41,29 @@ function readJsonSafe(filePath, fallback) {
   }
 }
 
+function readStore() {
+  const fullStore = readJsonSafe(DATA_FILE, null);
+  if (fullStore) return fullStore;
+  const meta = readJsonSafe(path.join(ROOT, "data", "meta.json"), {});
+  const store = {
+    ...meta,
+    matches: {},
+    predictions: {},
+    postMatchReviews: {},
+  };
+  const daysDir = path.join(ROOT, "data", "days");
+  if (!fs.existsSync(daysDir)) return null;
+  for (const entry of fs.readdirSync(daysDir)) {
+    if (!/^\d{4}-\d{2}-\d{2}\.json$/.test(entry)) continue;
+    const dateKey = entry.replace(/\.json$/, "");
+    const day = readJsonSafe(path.join(daysDir, entry), {});
+    store.matches[dateKey] = Array.isArray(day.matches) ? day.matches : [];
+    store.predictions[dateKey] = Array.isArray(day.predictions) ? day.predictions : [];
+    Object.assign(store.postMatchReviews, day.reviews || {});
+  }
+  return store;
+}
+
 function writeJson(filePath, value) {
   ensureDir(filePath);
   const payload = JSON.stringify(value, null, 2);
@@ -98,10 +121,10 @@ function collectDataChecks() {
   const issues = [];
   const today = amsterdamDate();
   const tomorrow = addDaysToDateKey(today, 1);
-  const store = readJsonSafe(DATA_FILE, null);
+  const store = readStore();
 
   if (!store) {
-    pushIssue(issues, "server_data_missing", "high", "server_data.json ontbreekt of is ongeldig.");
+    pushIssue(issues, "worker_data_missing", "high", "Workerdata ontbreekt of is ongeldig.");
     return { issues, stats: { today, dataPresent: false } };
   }
 
@@ -144,7 +167,7 @@ function collectDataChecks() {
   }
 
   if (!todayMatches.length && !fixtureCalendar.emptyWindowOk) {
-    pushIssue(issues, "today_matches_empty", "medium", "Er zijn geen wedstrijden voor vandaag in server_data.json.");
+    pushIssue(issues, "today_matches_empty", "medium", "Er zijn geen wedstrijden voor vandaag in workerdata.");
   }
 
   if (!fixtureCalendar.healthy) {

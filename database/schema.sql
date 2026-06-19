@@ -260,6 +260,15 @@ create table if not exists integrity_metric_snapshots (
   metadata jsonb not null default '{}'::jsonb
 );
 
+create table if not exists app_state_segments (
+  segment_group text not null,
+  segment_key text not null,
+  payload jsonb not null default '{}'::jsonb,
+  payload_bytes integer not null default 0,
+  updated_at timestamptz not null default now(),
+  primary key (segment_group, segment_key)
+);
+
 create table if not exists partition_migration_registry (
   table_name text primary key,
   partition_column text not null,
@@ -828,6 +837,7 @@ create index if not exists idx_club_merge_audit_status on club_merge_audit(merge
 create index if not exists idx_quality_alerts_status_detected on quality_alerts(status, detected_at desc);
 create index if not exists idx_provider_trust_history_provider_date on provider_trust_history(provider, captured_at desc);
 create index if not exists idx_integrity_metric_snapshots_key_date on integrity_metric_snapshots(metric_key, dimension_key, captured_at desc);
+create index if not exists idx_app_state_segments_updated on app_state_segments(updated_at desc);
 create index if not exists idx_standings_snapshots_season on standings_snapshots(season_id, captured_at desc);
 create index if not exists idx_team_season_stats_season_club on team_season_stats(season_id, club_id);
 create index if not exists idx_team_match_stats_match on team_match_stats(match_id);

@@ -14,7 +14,6 @@ try {
     .filter(Boolean);
 
   const workerOnlyFiles = new Set([
-    "server_data.json",
     "training/training-snapshot.json",
     "monitor/daily-findings.json",
   ]);

@@ -97,6 +97,132 @@ function uniqueTruthy(values) {
   return [...new Set(values.filter(Boolean).map((value) => String(value)))];
 }
 
+function payloadBytes(value) {
+  return Buffer.byteLength(JSON.stringify(value ?? null), "utf8");
+}
+
+function chunkObjectEntries(object, size = 250) {
+  const entries = Object.entries(object || {});
+  const chunks = [];
+  for (let index = 0; index < entries.length; index += size) {
+    chunks.push(Object.fromEntries(entries.slice(index, index + size)));
+  }
+  return chunks;
+}
+
+function buildAppStateSegments(store, options = {}) {
+  const dateFilter = Array.isArray(options.dateKeys) && options.dateKeys.length ? new Set(options.dateKeys) : null;
+  const segments = [];
+  for (const [key, value] of Object.entries(store || {})) {
+    if (key === "matches" || key === "predictions") {
+      for (const [dateKey, rows] of Object.entries(value || {})) {
+        if (dateFilter && !dateFilter.has(dateKey)) continue;
+        segments.push({ group: key, key: String(dateKey), payload: rows || [] });
+      }
+      continue;
+    }
+    if (key === "predictionSnapshots") {
+      const snapshots = dateFilter
+        ? Object.fromEntries(
+            Object.entries(value || {}).filter(([, snapshot]) => snapshot?.date && dateFilter.has(snapshot.date))
+          )
+        : value || {};
+      const chunks = chunkObjectEntries(snapshots, 250);
+      chunks.forEach((payload, index) => {
+        const scope = dateFilter ? [...dateFilter].join("_") : "all";
+        segments.push({ group: key, key: `${scope}:chunk-${String(index).padStart(5, "0")}`, payload });
+      });
+      continue;
+    }
+    segments.push({ group: "root", key, payload: value ?? null });
+  }
+  return segments;
+}
+
+export async function syncAppStateSegmentsToDatabase(store, options = {}) {
+  const sql = getSql();
+  if (!sql) return { skipped: true, reason: "database_url_missing" };
+  const segments = buildAppStateSegments(store, options);
+  for (const segment of segments) {
+    await sql.query(
+      `
+        insert into app_state_segments (segment_group, segment_key, payload, payload_bytes, updated_at)
+        values ($1, $2, $3::jsonb, $4, now())
+        on conflict (segment_group, segment_key) do update set
+          payload = excluded.payload,
+          payload_bytes = excluded.payload_bytes,
+          updated_at = excluded.updated_at
+      `,
+      [segment.group, segment.key, JSON.stringify(segment.payload), payloadBytes(segment.payload)]
+    );
+  }
+  return {
+    skipped: false,
+    segments: segments.length,
+    bytes: segments.reduce((sum, segment) => sum + payloadBytes(segment.payload), 0),
+  };
+}
+
+export async function readDatabaseServerStore(options = {}) {
+  const sql = getSql();
+  if (!sql) return null;
+  const dateLimit = Math.min(Math.max(Number(options.dateLimit || 30), 1), 120);
+  const includePredictionSnapshots = options.includePredictionSnapshots === true;
+  const rows = await sql.query(
+    `
+      select segment_group, segment_key, payload, updated_at
+      from app_state_segments
+      where segment_group = 'root'
+      union all
+      select segment_group, segment_key, payload, updated_at
+      from (
+        select segment_group, segment_key, payload, updated_at
+        from app_state_segments
+        where segment_group = 'matches'
+        order by segment_key desc
+        limit $1
+      ) recent_matches
+      union all
+      select segment_group, segment_key, payload, updated_at
+      from (
+        select segment_group, segment_key, payload, updated_at
+        from app_state_segments
+        where segment_group = 'predictions'
+        order by segment_key desc
+        limit $1
+      ) recent_predictions
+      ${includePredictionSnapshots ? "union all select segment_group, segment_key, payload, updated_at from app_state_segments where segment_group = 'predictionSnapshots'" : ""}
+      order by segment_group, segment_key
+    `,
+    [dateLimit]
+  );
+  if (!rows.length) return null;
+  const store = { matches: {}, predictions: {}, predictionSnapshots: {} };
+  let latestUpdatedAt = null;
+  for (const row of rows) {
+    const group = row.segment_group;
+    const key = row.segment_key;
+    const payload = row.payload;
+    latestUpdatedAt = !latestUpdatedAt || Date.parse(row.updated_at) > Date.parse(latestUpdatedAt)
+      ? row.updated_at
+      : latestUpdatedAt;
+    if (group === "matches" || group === "predictions") {
+      store[group][key] = Array.isArray(payload) ? payload : [];
+    } else if (group === "predictionSnapshots") {
+      Object.assign(store.predictionSnapshots, payload || {});
+    } else if (group === "root") {
+      store[key] = payload;
+    }
+  }
+  return {
+    store,
+    branch: "postgres-app-state",
+    sourceUrl: "neon:app_state_segments",
+    cached: false,
+    updatedAt: latestUpdatedAt,
+  };
+}
+
 export function buildMatchSourceCoverage(match = {}, prediction = null) {
   const homeStats = match.homeSeasonStats || {};
   const awayStats = match.awaySeasonStats || {};
@@ -449,6 +575,7 @@ export async function syncStoreToDatabase(store, options = {}) {
   const sql = getSql();
   if (!sql) return { skipped: true, reason: "database_url_missing" };
 
+  const appState = await syncAppStateSegmentsToDatabase(store, options);
   const matchById = indexMatches(store);
   const snapshotIndexes = indexSnapshotsByMatch(store);
   const dateFilter = Array.isArray(options.dateKeys) && options.dateKeys.length ? new Set(options.dateKeys) : null;
@@ -474,7 +601,7 @@ export async function syncStoreToDatabase(store, options = {}) {
     if (await upsertPredictionEvaluation(sql, matchId, review, snapshotIndexes)) predictionEvaluations += 1;
   }
 
-  return { skipped: false, matches, predictionSnapshots, predictionEvaluations };
+  return { skipped: false, matches, predictionSnapshots, predictionEvaluations, appState };
 }
 
 export async function readDatabaseDay(dateKey, options = {}) {
@@ -565,6 +692,112 @@ export async function readDatabaseDay(dateKey, options = {}) {
     }).filter(Boolean),
     predictions: predictions.map((row) => row.prediction_payload).filter(Boolean),
   };
+}
+
+export async function readDatabaseHistoryItems(options = {}) {
+  const sql = getSql();
+  if (!sql) return null;
+  const limit = Math.min(Math.max(Number(options.limit || 1000), 1), 5000);
+  const rows = await sql.query(
+    `
+      select
+        pe.*,
+        ps.generated_at,
+        ps.cutoff_at,
+        ps.model_version,
+        ps.feature_schema_version,
+        ps.input_snapshot_hash,
+        ps.leakage_guard,
+        ps.feature_source_metadata,
+        ps.data_completeness,
+        ps.prediction_payload,
+        ps.expected_score,
+        ps.confidence,
+        ps.confidence_raw,
+        m.raw_payload,
+        m.league,
+        m.home_team_name,
+        m.away_team_name,
+        mr.final_home_goals,
+        mr.final_away_goals,
+        mr.actual_outcome
+      from prediction_evaluations pe
+      join prediction_snapshots ps on ps.prediction_id = pe.prediction_id
+      join matches m on m.match_id = pe.match_id
+      left join match_results mr on mr.match_id = pe.match_id
+      order by pe.evaluated_at desc
+      limit $1
+    `,
+    [limit]
+  );
+  return rows.map((row) => {
+    const prediction = row.prediction_payload || {};
+    const match = row.raw_payload || {};
+    const expectedScore = row.expected_score || {};
+    const predHome = prediction.predHomeGoals ?? expectedScore.home ?? null;
+    const predAway = prediction.predAwayGoals ?? expectedScore.away ?? null;
+    const actualScore =
+      row.final_home_goals != null && row.final_away_goals != null
+        ? `${row.final_home_goals}-${row.final_away_goals}`
+        : match.score || null;
+    return {
+      matchId: row.match_id,
+      predictionId: row.prediction_id,
+      predictedScore: predHome != null && predAway != null ? `${predHome}-${predAway}` : expectedScore.label || null,
+      actualScore,
+      exactHit: row.exact_hit,
+      outcomeHit: row.outcome_hit,
+      probabilityOutcomeHit: row.probability_outcome_hit,
+      totalGoalError: prediction.review?.totalGoalError ?? null,
+      createdAt: row.evaluated_at ? Date.parse(row.evaluated_at) : Date.now(),
+      evaluatedAt: row.evaluated_at,
+      homeTeamName: row.home_team_name || match.homeTeamName || null,
+      awayTeamName: row.away_team_name || match.awayTeamName || null,
+      league: row.league || match.league || null,
+      predictedOutcome: prediction.review?.predictedOutcome || null,
+      actualOutcome: row.actual_outcome || prediction.review?.actualOutcome || null,
+      confidence: row.confidence,
+      confidenceRaw: row.confidence_raw,
+      calibration: prediction.calibration || null,
+      exactScoreConfidence: prediction.exactScoreConfidence || null,
+      brierScore: row.brier_score,
+      logLoss: row.log_loss,
+      roi: row.roi,
+      roiStatus: row.roi_status,
+      clv: row.clv,
+      clvStatus: row.clv_status,
+      generatedAt: row.generated_at,
+      cutoffAt: row.cutoff_at,
+      modelVersion: row.model_version,
+      featureSchemaVersion: row.feature_schema_version,
+      inputSnapshotHash: row.input_snapshot_hash,
+      evaluationSource: row.evaluation_source,
+      leakageGuard: row.leakage_guard,
+      oddsAtPrediction: prediction.oddsAtPrediction || prediction.odds || null,
+      oddsStatus: prediction.oddsStatus || null,
+      oddsProviderStatus: prediction.oddsProviderStatus || null,
+      oddsMissingReason: prediction.oddsMissingReason || null,
+      featureSourceMetadata: row.feature_source_metadata,
+      featureImportance: Array.isArray(prediction.featureImportance) ? prediction.featureImportance : [],
+      sourceReliability: prediction.sourceReliability || null,
+      qualityGate: prediction.qualityGate || row.data_completeness || null,
+      leagueCalibration: prediction.leagueCalibration || null,
+      sourceTimestampCoverage: row.leakage_guard?.sourceTimestampCoverage ?? null,
+      bestBetRank: prediction.bestBetRank || null,
+      topConfidencePick: prediction.topConfidencePick || false,
+      topExactScorePick: prediction.topExactScorePick || false,
+      topExactReasons: prediction.topExactReasons || prediction.exactScoreReasons || [],
+      predictedBtts: prediction.predictedBtts ?? null,
+      actualBtts: prediction.actualBtts ?? null,
+      bttsHit: prediction.bttsHit ?? null,
+      predictedOver25: prediction.predictedOver25 ?? null,
+      actualOver25: prediction.actualOver25 ?? null,
+      over25Hit: prediction.over25Hit ?? null,
+      modelName: prediction.modelName || null,
+      modelAgreement: prediction.modelEdges?.modelAgreement || 0,
+      riskProfile: prediction.modelEdges?.riskProfile || null,
+    };
+  });
 }
 
 export async function readDatabaseCounts() {

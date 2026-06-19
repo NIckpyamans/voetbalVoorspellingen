@@ -1,6 +1,7 @@
 import { fetchServerStore } from "./_dataSource.js";
 import { createLogger, getErrorDetails } from "../shared/logger.js";
 import { setCorsHeaders } from "../shared/cors.js";
+import { databaseConfigured, readDatabaseHistoryItems } from "../shared/database.js";
 
 const logger = createLogger("api.history");
 
@@ -85,28 +86,28 @@ export default async function handler(req: any, res: any) {
   res.setHeader("Cache-Control", "s-maxage=120, stale-while-revalidate=60");
 
   try {
+    if (databaseConfigured()) {
+      const databaseItems = await readDatabaseHistoryItems({ limit: 1500 }).catch(() => null);
+      if (databaseItems?.length) {
+        const items = databaseItems.map((review: any) => mapServerReview(review));
+        const featureImportanceSummary = buildFeatureImportanceSummary(items);
+        return res.status(200).json({
+          ok: true,
+          items,
+          featureImportanceSummary,
+          total: items.length,
+          sourceBranch: "postgres",
+          workerVersion: "database",
+          durationMs: Date.now() - started,
+        });
+      }
+    }
+
     const { store, branch } = await fetchServerStore();
     const items = Object.values(store.postMatchReviews || {})
       .map((review: any) => mapServerReview(review))
       .sort((a: any, b: any) => Number(b.timestamp || 0) - Number(a.timestamp || 0));
-    const featureImportanceTrend = items.reduce((acc: Record<string, any>, item: any) => {
-      for (const driver of item.featureImportance || []) {
-        const key = driver.key || driver.label || "unknown";
-        if (!acc[key]) acc[key] = { key, label: driver.label || key, count: 0, totalScore: 0 };
-        acc[key].count += 1;
-        acc[key].totalScore += Number(driver.score || 0);
-      }
-      return acc;
-    }, {});
-    const featureImportanceSummary = Object.values(featureImportanceTrend)
-      .map((row: any) => ({
-        key: row.key,
-        label: row.label,
-        count: row.count,
-        avgScore: Number((Number(row.totalScore || 0) / Math.max(Number(row.count || 0), 1)).toFixed(3)),
-      }))
-      .sort((a: any, b: any) => b.avgScore - a.avgScore)
-      .slice(0, 12);
+    const featureImportanceSummary = buildFeatureImportanceSummary(items);
 
     return res.status(200).json({
       ok: true,
@@ -127,4 +128,25 @@ export default async function handler(req: any, res: any) {
       durationMs: Date.now() - started,
     });
   }
+}
+
+function buildFeatureImportanceSummary(items: any[]) {
+  const featureImportanceTrend = items.reduce((acc: Record<string, any>, item: any) => {
+    for (const driver of item.featureImportance || []) {
+      const key = driver.key || driver.label || "unknown";
+      if (!acc[key]) acc[key] = { key, label: driver.label || key, count: 0, totalScore: 0 };
+      acc[key].count += 1;
+      acc[key].totalScore += Number(driver.score || 0);
+    }
+    return acc;
+  }, {});
+  return Object.values(featureImportanceTrend)
+    .map((row: any) => ({
+      key: row.key,
+      label: row.label,
+      count: row.count,
+      avgScore: Number((Number(row.totalScore || 0) / Math.max(Number(row.count || 0), 1)).toFixed(3)),
+    }))
+    .sort((a: any, b: any) => b.avgScore - a.avgScore)
+    .slice(0, 12);
 }

@@ -161,14 +161,11 @@ function healthItems(findings: any) {
 
 async function buildIndex() {
   if (cachedIndex && Date.now() - cachedAt < INDEX_TTL_MS) return cachedIndex;
-  const localStore = readJson("server_data.json", null);
   const [competitionIndex, teams, findings, store] = await Promise.all([
     readStoredJson("data/competitions/index.json", { competitions: [] }),
     readStoredJson("data/teams.json", {}),
     readStoredJson("monitor/daily-findings.json", { days: {} }),
-    localStore !== null
-      ? Promise.resolve(localStore)
-      : fetchServerStore().then((result) => result.store).catch(() => ({ matches: {} })),
+    fetchServerStore().then((result) => result.store).catch(() => readJson("server_data.json", { matches: {} })),
   ]);
   cachedIndex = [
     ...competitionItems(competitionIndex),
