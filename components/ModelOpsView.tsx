@@ -46,6 +46,22 @@ const ModelOpsView: React.FC = () => {
   const selectedCalibration = Object.entries(payload?.leagueCalibrationProfiles || {}).slice(0, 8);
   const windowProfiles = payload?.leagueCalibrationProfilesByWindow || {};
   const rollbackProfiles = Object.entries(payload?.leagueCalibrationRollbackProfiles || {}).slice(0, 8);
+  const actionItems = [
+    ...(payload?.aiAdvice || []).map((item: any) => ({
+      title: item.title || "AI-advies",
+      summary: item.summary || item.action || "",
+      action: item.action || item.summary || "",
+      priority: item.priority || "medium",
+      source: "AI advies",
+    })),
+    ...(coverage.coverageImprovementPlan || []).map((item: any) => ({
+      title: item.label || item.key || "Dekkingsactie",
+      summary: `${pct(item.coverage)} dekking, doel ${pct(item.target)}.`,
+      action: item.action || "",
+      priority: item.status === "ok" ? "low" : "high",
+      source: "Brondekking",
+    })),
+  ].slice(0, 8);
 
   if (loading) {
     return <div className="glass-card rounded-2xl border border-white/5 p-6 text-sm text-slate-400">Model Ops laden...</div>;
@@ -74,6 +90,41 @@ const ModelOpsView: React.FC = () => {
           </div>
         ))}
       </div>
+
+      <section className="rounded-2xl border border-cyan-500/15 bg-cyan-950/10 p-4">
+        <div className="flex flex-col gap-1 md:flex-row md:items-end md:justify-between">
+          <div>
+            <div className="text-[10px] font-black uppercase text-cyan-300">Workflowprioriteiten</div>
+            <h3 className="text-lg font-black text-white">Volgende verbeteracties</h3>
+          </div>
+          <div className="text-[9px] font-bold uppercase tracking-[0.18em] text-slate-500">
+            PandaOS-principe: een centrale agent-werkstroom
+          </div>
+        </div>
+        <div className="mt-3 grid gap-2 xl:grid-cols-2">
+          {actionItems.length ? actionItems.map((item: any, index: number) => (
+            <div key={`${item.source}-${item.title}-${index}`} className="rounded-xl border border-white/5 bg-slate-950/45 p-3">
+              <div className="flex items-center justify-between gap-2">
+                <div className="truncate text-[10px] font-black text-white">{item.title}</div>
+                <span className={`rounded-full px-2 py-0.5 text-[8px] font-black uppercase ${
+                  item.priority === "high" ? "bg-rose-500/10 text-rose-300" :
+                  item.priority === "low" ? "bg-slate-500/10 text-slate-300" :
+                  "bg-amber-500/10 text-amber-300"
+                }`}>
+                  {item.priority}
+                </span>
+              </div>
+              <div className="mt-1 text-[9px] text-slate-400">{item.summary}</div>
+              {item.action && <div className="mt-2 text-[9px] font-semibold text-cyan-200">{item.action}</div>}
+              <div className="mt-2 text-[8px] uppercase text-slate-600">{item.source}</div>
+            </div>
+          )) : (
+            <div className="rounded-xl border border-emerald-500/15 bg-emerald-500/5 p-4 text-[11px] font-bold text-emerald-200">
+              Geen open verbeteracties in de laatste worker-output.
+            </div>
+          )}
+        </div>
+      </section>
 
       <div className="grid grid-cols-1 xl:grid-cols-2 gap-4">
         <section className="rounded-2xl border border-white/5 bg-slate-950/35 p-4">
