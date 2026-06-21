@@ -1,16 +1,16 @@
 {
-  "generatedAt": "2026-06-20T23:37:28.676Z",
-  "date": "2026-06-21",
+  "generatedAt": "2026-06-21T23:46:02.541Z",
+  "date": "2026-06-22",
   "proposalOnly": true,
   "shouldPropose": true,
-  "branchName": "codex/review-20260621",
-  "summary": "AI reviewvoorstel voor 2026-06-21: 1 aandachtspunt(en) met patchadvies, niet automatisch live.",
+  "branchName": "codex/review-20260622",
+  "summary": "AI reviewvoorstel voor 2026-06-22: 2 aandachtspunt(en) met patchadvies, niet automatisch live.",
   "latestStats": {
-    "today": "2026-06-21",
-    "tomorrow": "2026-06-22",
+    "today": "2026-06-22",
+    "tomorrow": "2026-06-23",
     "dataPresent": true,
-    "lastRun": 1781991864696,
-    "ageMinutes": 113,
+    "lastRun": 1782078488313,
+    "ageMinutes": 118,
     "maxWorkerAgeMinutes": 180,
     "todayMatches": 4,
     "tomorrowMatches": 4,
@@ -23,22 +23,22 @@
       "tomorrowCount": 4,
       "windowDays": 7,
       "checkedDates": [
-        "2026-06-21",
         "2026-06-22",
         "2026-06-23",
         "2026-06-24",
         "2026-06-25",
         "2026-06-26",
-        "2026-06-27"
+        "2026-06-27",
+        "2026-06-28"
       ],
-      "nextMatchDate": "2026-06-21",
+      "nextMatchDate": "2026-06-22",
       "nextMatchCount": 4,
       "explanation": "Vandaag of morgen staan er wedstrijden in de actuele data."
     },
     "liveMatches": 0,
     "liveWithoutMinute": 0,
-    "h2hFilled": 2,
-    "h2hMissing": 2,
+    "h2hFilled": 0,
+    "h2hMissing": 4,
     "standingsCount": 0,
     "cupSheetCount": 1,
     "phaseReliabilityCount": 0
@@ -46,6 +46,18 @@
   "findings": [
     {
       "priority": 1,
+      "key": "h2h_empty",
+      "severity": "medium",
+      "message": "Alle wedstrijden van vandaag hebben lege H2H-data.",
+      "whyItMatters": "Onderlinge duels worden niet sterk genoeg gevuld.",
+      "recommendedFiles": [
+        "scripts/server-worker.js",
+        "components/MatchCard.tsx"
+      ],
+      "details": {}
+    },
+    {
+      "priority": 2,
       "key": "phase_reliability_empty",
       "severity": "medium",
       "message": "phaseReliability is leeg.",
@@ -60,6 +72,7 @@
   ],
   "recommendedFiles": [
     "scripts/server-worker.js",
+    "components/MatchCard.tsx",
     "components/SettingsView.tsx",
     "types.ts"
   ],
