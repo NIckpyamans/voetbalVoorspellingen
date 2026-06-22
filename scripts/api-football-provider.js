@@ -128,7 +128,10 @@ async function resolveTeamId(store, teamName, leagueLabel, options = {}) {
   const key = `${normalizeName(country)}:${normalizeName(teamName)}`;
   if (!store.apiFootballTeamMap) store.apiFootballTeamMap = {};
   const cached = store.apiFootballTeamMap[key];
-  if (cached?.teamId && isFresh(cached, TEAM_CACHE_TTL_MS)) return cached.teamId;
+  const retryableCacheStatuses = new Set(["provider_error", "provider_exception", "fetch_unavailable"]);
+  if (cached && isFresh(cached, TEAM_CACHE_TTL_MS) && !retryableCacheStatuses.has(cached.status)) {
+    return cached.teamId || null;
+  }
 
   const response = await apiFootballGet("/teams", { search: teamName }, options);
   recordDiagnostic(store, response.status, { statusCode: response.statusCode, endpoint: "teams" });
