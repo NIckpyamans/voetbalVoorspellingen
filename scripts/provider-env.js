@@ -16,11 +16,10 @@ export function getApiFootballKey() {
   ).trim();
 }
 
-export function getOddsApiKey() {
-  return String(
-    process.env.ODDS_API_KEY ||
-      process.env.THE_ODDS_API_KEY ||
-      process.env.API_KEY_API_FOOTBALL ||
-      ""
-  ).trim();
+export function getOddsApiKey(template = process.env.ODDS_API_URL_TEMPLATE || "") {
+  const dedicatedKey = String(process.env.ODDS_API_KEY || process.env.THE_ODDS_API_KEY || "").trim();
+  if (dedicatedKey) return dedicatedKey;
+  const provider = String(process.env.ODDS_PROVIDER_NAME || "").toLowerCase();
+  const target = `${template} ${provider}`;
+  return /api-sports|api-football/.test(target) ? getApiFootballKey() : "";
 }

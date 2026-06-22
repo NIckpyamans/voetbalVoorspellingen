@@ -155,8 +155,8 @@ export function normalizeOddsSnapshot(raw, match, options = {}) {
 }
 
 export async function fetchOddsAtPrediction(match, options = {}) {
-  const apiKey = getOddsApiKey();
   const template = process.env.ODDS_API_URL_TEMPLATE || "";
+  const apiKey = getOddsApiKey(template);
   const provider = process.env.ODDS_PROVIDER_NAME || (apiKey ? "the-odds-api" : "custom-odds-provider");
   if (!apiKey && !template) {
     return {
@@ -172,6 +172,14 @@ export async function fetchOddsAtPrediction(match, options = {}) {
       oddsAtPrediction: null,
       provider,
       reason: "API-key staat klaar, maar ODDS_API_URL_TEMPLATE ontbreekt nog.",
+    };
+  }
+  if (!apiKey && /\{apiKey\}/i.test(template)) {
+    return {
+      status: "not_configured",
+      oddsAtPrediction: null,
+      provider,
+      reason: "De geconfigureerde odds-endpoint mist zijn eigen ODDS_API_KEY; API-Football-keys worden niet naar andere providers gestuurd.",
     };
   }
 
