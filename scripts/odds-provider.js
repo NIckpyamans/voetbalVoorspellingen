@@ -17,11 +17,11 @@ function numberOrNull(value) {
   return Number.isFinite(number) && number > 1 ? number : null;
 }
 
-function isBeforeOrAt(value, cutoff) {
+function isBeforeOrAt(value, cutoff, toleranceMs = 0) {
   const valueMs = Date.parse(value || "");
   const cutoffMs = Date.parse(cutoff || "");
   if (!Number.isFinite(valueMs) || !Number.isFinite(cutoffMs)) return true;
-  return valueMs <= cutoffMs;
+  return valueMs <= cutoffMs + toleranceMs;
 }
 
 function replaceTemplate(template, variables) {
@@ -126,7 +126,7 @@ export function normalizeOddsSnapshot(raw, match, options = {}) {
   }
 
   const capturedAt = snapshot.capturedAt || generatedAt;
-  if (!isBeforeOrAt(capturedAt, cutoffAt) || !isBeforeOrAt(capturedAt, kickoff)) {
+  if (!isBeforeOrAt(capturedAt, cutoffAt, 2 * 60 * 1000) || !isBeforeOrAt(capturedAt, kickoff)) {
     return {
       status: "rejected_after_cutoff",
       oddsAtPrediction: null,
@@ -248,11 +248,17 @@ export async function fetchOddsAtPrediction(match, options = {}) {
       payload = await response.json();
       responseCache.set(url, { payload, quota, cachedAt: Date.now() });
     }
+    const receivedAt = new Date().toISOString();
+    const requestedCutoffMs = Date.parse(options.cutoffAt || "");
+    const receivedAtMs = Date.parse(receivedAt);
+    const effectiveCutoffAt = Number.isFinite(requestedCutoffMs) && requestedCutoffMs > receivedAtMs
+      ? options.cutoffAt
+      : receivedAt;
     return {
       ...normalizeOddsSnapshot(payload, match, {
         provider,
-        generatedAt,
-        cutoffAt: options.cutoffAt || generatedAt,
+        generatedAt: receivedAt,
+        cutoffAt: effectiveCutoffAt,
         kickoff: match?.kickoff,
       }),
       provider,

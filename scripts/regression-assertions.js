@@ -7,6 +7,7 @@ import {
 } from "./worker/data-collection.js";
 import { buildPoissonScoreModel } from "./worker/prediction.js";
 import { fetchApiFootballH2HProfile } from "./api-football-provider.js";
+import { normalizeOddsSnapshot } from "./odds-provider.js";
 
 const root = process.cwd();
 const file = path.join(root, "server_data.json");
@@ -194,6 +195,19 @@ async function runContractAssertions() {
   assert(Math.abs(probabilityTotal - 1) < 0.000001, "Poisson 1X2 probabilities should normalize to 1");
   assert(scoreModel.scoreMatrix["1-1"] != null, "Poisson score matrix should include common scores");
   assert(Number.isFinite(scoreModel.bestProb) && scoreModel.bestProb > 0, "Poisson best probability should be positive");
+
+  const clockSkewOdds = normalizeOddsSnapshot(
+    { home: 1.8, draw: 3.4, away: 4.2, capturedAt: "2026-06-22T14:01:30Z" },
+    { kickoff: "2026-06-22T17:00:00Z" },
+    { cutoffAt: "2026-06-22T14:00:00Z", generatedAt: "2026-06-22T14:00:00Z" }
+  );
+  assert(clockSkewOdds.status === "available", "Odds provider clock skew up to two minutes should remain prematch-valid");
+  const postKickoffOdds = normalizeOddsSnapshot(
+    { home: 1.8, draw: 3.4, away: 4.2, capturedAt: "2026-06-22T17:00:01Z" },
+    { kickoff: "2026-06-22T17:00:00Z" },
+    { cutoffAt: "2026-06-22T17:00:01Z", generatedAt: "2026-06-22T17:00:01Z" }
+  );
+  assert(postKickoffOdds.status === "rejected_after_cutoff", "Odds after kickoff must remain rejected");
 
   const previousApiFootballKey = process.env.API_KEY_API_FOOTBALL;
   process.env.API_KEY_API_FOOTBALL = "contract-test-key";
