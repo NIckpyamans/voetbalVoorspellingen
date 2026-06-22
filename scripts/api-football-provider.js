@@ -196,6 +196,7 @@ function normalizeFixtureH2H(fixtures, homeName, awayName, homeId, awayId) {
 }
 
 export async function fetchApiFootballH2HProfile({ store, homeName, awayName, homeId, awayId, leagueLabel }, options = {}) {
+  if (String(process.env.API_FOOTBALL_H2H_ENABLED || "true").toLowerCase() === "false") return null;
   if (!getApiFootballKey()) return null;
   if (!store || !homeName || !awayName) return null;
   if (!store.apiFootballH2HCache) store.apiFootballH2HCache = {};
@@ -259,6 +260,7 @@ export function summarizeApiFootballUsage(store = {}) {
   const diagnostics = store.apiFootballDiagnostics || {};
   return {
     configured: Boolean(getApiFootballKey()),
+    enabled: String(process.env.API_FOOTBALL_H2H_ENABLED || "true").toLowerCase() !== "false",
     requests: Number(diagnostics.requests || 0),
     statusCounts: diagnostics.statusCounts || {},
     resolvedTeams: teamEntries.filter((entry) => entry?.teamId).length,
