@@ -25,7 +25,23 @@ function isoDate(value) {
 function leagueCountry(leagueLabel = "") {
   const text = String(leagueLabel || "");
   const country = text.includes(" - ") ? text.split(" - ")[0].trim() : "";
+  if (["world", "europe", "africa", "asia", "north america", "south america", "international"].includes(normalizeName(country))) {
+    return "";
+  }
   return country || "";
+}
+
+function recordDiagnostic(store, status, details = {}) {
+  if (!store.apiFootballDiagnostics) {
+    store.apiFootballDiagnostics = { requests: 0, statusCounts: {} };
+  }
+  const diagnostics = store.apiFootballDiagnostics;
+  diagnostics.requests += 1;
+  diagnostics.statusCounts[status] = Number(diagnostics.statusCounts[status] || 0) + 1;
+  diagnostics.lastStatus = status;
+  diagnostics.lastCheckedAt = new Date().toISOString();
+  if (details.statusCode) diagnostics.lastStatusCode = details.statusCode;
+  if (details.endpoint) diagnostics.lastEndpoint = details.endpoint;
 }
 
 function isFresh(entry, ttlMs, now = Date.now()) {
@@ -115,6 +131,7 @@ async function resolveTeamId(store, teamName, leagueLabel, options = {}) {
   if (cached?.teamId && isFresh(cached, TEAM_CACHE_TTL_MS)) return cached.teamId;
 
   const response = await apiFootballGet("/teams", { search: teamName }, options);
+  recordDiagnostic(store, response.status, { statusCode: response.statusCode, endpoint: "teams" });
   if (response.status !== "ok") {
     store.apiFootballTeamMap[key] = {
       teamId: null,
@@ -199,6 +216,7 @@ export async function fetchApiFootballH2HProfile({ store, homeName, awayName, ho
   }
 
   const response = await apiFootballGet("/fixtures/headtohead", { h2h: `${resolvedHomeId}-${resolvedAwayId}`, last: 8 }, options);
+  recordDiagnostic(store, response.status, { statusCode: response.statusCode, endpoint: "fixtures/headtohead" });
   if (response.status !== "ok") {
     store.apiFootballH2HCache[pairKey] = {
       updatedAt: new Date().toISOString(),
@@ -233,4 +251,23 @@ export async function fetchApiFootballH2HProfile({ store, homeName, awayName, ho
     data,
   };
   return data;
+}
+
+export function summarizeApiFootballUsage(store = {}) {
+  const teamEntries = Object.values(store.apiFootballTeamMap || {});
+  const h2hEntries = Object.values(store.apiFootballH2HCache || {});
+  const diagnostics = store.apiFootballDiagnostics || {};
+  return {
+    configured: Boolean(getApiFootballKey()),
+    requests: Number(diagnostics.requests || 0),
+    statusCounts: diagnostics.statusCounts || {},
+    resolvedTeams: teamEntries.filter((entry) => entry?.teamId).length,
+    failedTeamMappings: teamEntries.filter((entry) => !entry?.teamId).length,
+    cachedPairs: h2hEntries.length,
+    availablePairs: h2hEntries.filter((entry) => entry?.data?.results?.length).length,
+    providerResultCount: h2hEntries.reduce((sum, entry) => sum + Number(entry?.data?.results?.length || 0), 0),
+    lastStatus: diagnostics.lastStatus || null,
+    lastStatusCode: diagnostics.lastStatusCode || null,
+    lastCheckedAt: diagnostics.lastCheckedAt || null,
+  };
 }

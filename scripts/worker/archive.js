@@ -51,6 +51,7 @@ export function buildSplitMeta(store) {
     leagueCalibrationProfiles: store.leagueCalibrationProfiles || {},
     leagueCalibrationProfilesByWindow: store.leagueCalibrationProfilesByWindow || {},
     leagueCalibrationRollbackProfiles: store.leagueCalibrationRollbackProfiles || {},
+    phaseReliability: store.phaseReliability || {},
     anomalyReport: store.anomalyReport || null,
     topExactScoreMonitor: store.topExactScoreMonitor || null,
     topExactClubs: store.topExactClubs || null,
@@ -89,6 +90,11 @@ export function writeSplitDataFiles(store, options = {}) {
     workerVersion: store.workerVersion || "unknown",
     reviewCount: Object.keys(store.postMatchReviews || {}).length,
     teamLearningCount: Object.keys(store.teamLearning || {}).length,
+  });
+  writeJsonFile(path.join(splitDataDir, "phase-reliability.json"), {
+    phaseReliability: store.phaseReliability || {},
+    lastRun: store.lastRun || null,
+    workerVersion: store.workerVersion || "unknown",
   });
   writeJsonFile(path.join(splitDataDir, "history-summary.json"), {
     postMatchReviews: store.postMatchReviews || {},

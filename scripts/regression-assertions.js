@@ -6,6 +6,7 @@ import {
   fetchEspnScoreboardEvents,
 } from "./worker/data-collection.js";
 import { buildPoissonScoreModel } from "./worker/prediction.js";
+import { fetchApiFootballH2HProfile } from "./api-football-provider.js";
 
 const root = process.cwd();
 const file = path.join(root, "server_data.json");
@@ -38,6 +39,9 @@ function readStore() {
     store.cupSheets = standingsExport.cupSheets || store.cupSheets || {};
     store.knockoutOverview = standingsExport.knockoutOverview || store.knockoutOverview || {};
   }
+  const phaseExport = readJsonSafe(path.join(root, "data", "phase-reliability.json"), {});
+  const historyExport = readJsonSafe(path.join(root, "data", "history-summary.json"), {});
+  store.phaseReliability = phaseExport.phaseReliability || historyExport.phaseReliability || store.phaseReliability || {};
   const daysDir = path.join(root, "data", "days");
   if (!fs.existsSync(daysDir)) return store;
   for (const entry of fs.readdirSync(daysDir)) {
@@ -187,6 +191,47 @@ async function runContractAssertions() {
   assert(Math.abs(probabilityTotal - 1) < 0.000001, "Poisson 1X2 probabilities should normalize to 1");
   assert(scoreModel.scoreMatrix["1-1"] != null, "Poisson score matrix should include common scores");
   assert(Number.isFinite(scoreModel.bestProb) && scoreModel.bestProb > 0, "Poisson best probability should be positive");
+
+  const previousApiFootballKey = process.env.API_KEY_API_FOOTBALL;
+  process.env.API_KEY_API_FOOTBALL = "contract-test-key";
+  const apiFootballStore = {};
+  const apiFootballFetch = async (url) => {
+    const parsed = new URL(url);
+    if (parsed.pathname.endsWith("/teams")) {
+      const name = parsed.searchParams.get("search");
+      const isNetherlands = name === "Netherlands";
+      return {
+        ok: true,
+        async json() {
+          return { response: [{ team: { id: isNetherlands ? 111 : 222, name, country: isNetherlands ? "Netherlands" : "USA" } }] };
+        },
+      };
+    }
+    return {
+      ok: true,
+      async json() {
+        return {
+          response: [{
+            fixture: { id: 333, date: "2025-06-01T18:00:00Z", status: { short: "FT" } },
+            teams: { home: { name: "Netherlands" }, away: { name: "United States" } },
+            goals: { home: 2, away: 1 },
+          }],
+        };
+      },
+    };
+  };
+  const apiFootballH2h = await fetchApiFootballH2HProfile({
+    store: apiFootballStore,
+    homeName: "Netherlands",
+    awayName: "United States",
+    homeId: "nl",
+    awayId: "us",
+    leagueLabel: "World - FIFA World Cup 2026",
+  }, { fetchImpl: apiFootballFetch });
+  assert(apiFootballH2h?.played === 1, "API-Football should resolve national teams without treating World as a country");
+  assert(apiFootballH2h?.results?.[0]?.source === "api-football-h2h", "API-Football H2H source should reach the prediction input");
+  if (previousApiFootballKey == null) delete process.env.API_KEY_API_FOOTBALL;
+  else process.env.API_KEY_API_FOOTBALL = previousApiFootballKey;
 
   globalThis.fetch = originalFetch;
   return failures;

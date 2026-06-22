@@ -1,15 +1,7 @@
-import React, { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import React, { Suspense, lazy, useCallback, useEffect, useMemo, useRef, useState } from "react";
 import Header from "./components/Header";
 import MatchCard from "./components/MatchCard";
 import BestBetCard from "./components/BestBetCard";
-import PredictionHistory from "./components/PredictionHistory";
-import StandingsView from "./components/StandingsView";
-import SettingsView from "./components/SettingsView";
-import ModelOpsView from "./components/ModelOpsView";
-import DataIntegrityView from "./components/DataIntegrityView";
-import ProviderControlView from "./components/ProviderControlView";
-import WorldCupView from "./components/WorldCupView";
-import KnowledgeView from "./components/KnowledgeView";
 import DateNavigation from "./components/DateNavigation"; // NIEUW IMPORT
 import { getFavorites } from "./components/FavoriteTeams";
 import { Match } from "./types";
@@ -35,6 +27,19 @@ import {
 
 type View = "dashboard" | "worldcup" | "knowledge" | "history" | "standings" | "modelops" | "integrity" | "providers" | "settings";
 type FilterMode = "alle" | "favorieten" | "live" | "gepland" | "gespeeld" | "brondekking" | "odds" | "xg" | "weer" | "mistdata";
+
+const PredictionHistory = lazy(() => import("./components/PredictionHistory"));
+const StandingsView = lazy(() => import("./components/StandingsView"));
+const SettingsView = lazy(() => import("./components/SettingsView"));
+const ModelOpsView = lazy(() => import("./components/ModelOpsView"));
+const DataIntegrityView = lazy(() => import("./components/DataIntegrityView"));
+const ProviderControlView = lazy(() => import("./components/ProviderControlView"));
+const WorldCupView = lazy(() => import("./components/WorldCupView"));
+const KnowledgeView = lazy(() => import("./components/KnowledgeView"));
+
+function ViewFallback() {
+  return <div className="glass-card rounded-2xl p-8 text-center text-sm font-bold text-slate-400">Onderdeel laden...</div>;
+}
 
 function isLive(match: Match) {
   return isMatchLive(match);
@@ -636,6 +641,7 @@ const App: React.FC = () => {
       />
 
       <main className="max-w-7xl mx-auto px-4 py-6">
+        <Suspense fallback={<ViewFallback />}>
         {view === "history" ? (
           <PredictionHistory />
         ) : view === "worldcup" ? (
@@ -1008,6 +1014,7 @@ const App: React.FC = () => {
             )}
           </>
         )}
+        </Suspense>
       </main>
       </div>
     </div>

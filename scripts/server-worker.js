@@ -21,7 +21,7 @@ import {
   calibrateConfidenceWithBacktest,
   calibrateOutcomeProbabilities,
 } from "./prediction-analytics.js";
-import { fetchApiFootballH2HProfile } from "./api-football-provider.js";
+import { fetchApiFootballH2HProfile, summarizeApiFootballUsage } from "./api-football-provider.js";
 import { fetchOddsAtPrediction } from "./odds-provider.js";
 import { getApiFootballKey, getFootballDataApiKey } from "./provider-env.js";
 import { writeJsonFile, writeSplitDataFiles } from "./worker/archive.js";
@@ -9798,6 +9798,7 @@ function buildSourceCoverage(store, todayKey) {
     providerTeamIdCoverage: Number((providerTeamIdsCovered / total).toFixed(2)),
     stableTeamIdentityCoverage: Number((stableTeamIdentityCovered / total).toFixed(2)),
     h2hCoverage: Number((h2hCovered / total).toFixed(2)),
+    apiFootball: summarizeApiFootballUsage(store),
     openfootballH2hCoverage: Number((openfootballH2hCovered / total).toFixed(2)),
     understatCoverage: Number((understatCovered / total).toFixed(2)),
     fbrefCoverage: Number((fbrefCovered / total).toFixed(2)),

@@ -60,6 +60,9 @@ function readStore() {
     store.cupSheets = standingsExport.cupSheets || store.cupSheets || {};
     store.knockoutOverview = standingsExport.knockoutOverview || store.knockoutOverview || {};
   }
+  const phaseExport = readJsonSafe(path.join(ROOT, "data", "phase-reliability.json"), {});
+  const historyExport = readJsonSafe(path.join(ROOT, "data", "history-summary.json"), {});
+  store.phaseReliability = phaseExport.phaseReliability || historyExport.phaseReliability || store.phaseReliability || {};
   const daysDir = path.join(ROOT, "data", "days");
   if (!fs.existsSync(daysDir)) return null;
   for (const entry of fs.readdirSync(daysDir)) {
