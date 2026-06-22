@@ -52,6 +52,38 @@ async function auditOddsApi() {
   }
 }
 
+async function probeWorldCupOdds() {
+  if (String(process.env.ODDS_PROBE || "false").toLowerCase() !== "true") return { enabled: false };
+  const key = String(process.env.ODDS_API_KEY || process.env.THE_ODDS_API_KEY || "").trim();
+  if (!key) return { enabled: true, valid: false, status: "missing_key" };
+  try {
+    const url = new URL("https://api.the-odds-api.com/v4/sports/soccer_fifa_world_cup/odds/");
+    url.searchParams.set("apiKey", key);
+    url.searchParams.set("regions", "eu");
+    url.searchParams.set("markets", "h2h");
+    url.searchParams.set("oddsFormat", "decimal");
+    const { response, payload } = await requestJson(url);
+    const events = Array.isArray(payload) ? payload : [];
+    return {
+      enabled: true,
+      valid: response.ok,
+      status: response.status,
+      events: events.length,
+      bookmakerEvents: events.filter((event) => Array.isArray(event?.bookmakers) && event.bookmakers.length > 0).length,
+      dateRange: events.length
+        ? {
+            first: events.map((event) => event.commence_time).filter(Boolean).sort()[0] || null,
+            last: events.map((event) => event.commence_time).filter(Boolean).sort().at(-1) || null,
+          }
+        : null,
+      sampleMatches: events.slice(0, 12).map((event) => `${event.home_team} - ${event.away_team}`),
+      quota: quotaHeaders(response),
+    };
+  } catch (error) {
+    return { enabled: true, valid: false, status: "request_failed", errorCode: error?.name || "request_failed" };
+  }
+}
+
 async function auditApiFootball() {
   const key = getApiFootballKey();
   if (!key) return { configured: false, valid: false, status: "missing" };
@@ -100,6 +132,7 @@ async function auditFootballData() {
 const report = {
   checkedAt: new Date().toISOString(),
   oddsApi: await auditOddsApi(),
+  worldCupOddsProbe: await probeWorldCupOdds(),
   apiFootball: await auditApiFootball(),
   footballData: await auditFootballData(),
 };

@@ -2,6 +2,12 @@ name: Provider Quota Audit
 
 on:
   workflow_dispatch:
+    inputs:
+      probe_odds:
+        description: "Voer een betaalde WK-oddsprobe van maximaal 1 credit uit"
+        required: false
+        default: false
+        type: boolean
   schedule:
     - cron: "17 4 * * 1"
 
@@ -27,3 +33,4 @@ jobs:
           API_KEY_API_FOOTBALL: ${{ secrets.API_KEY_API_FOOTBALL }}
           API_KEY_FOOTBALL_DATA: ${{ secrets.API_KEY_FOOTBALL_DATA }}
           FOOTBALL_DATA_TOKEN: ${{ secrets.FOOTBALL_DATA_TOKEN }}
+          ODDS_PROBE: ${{ inputs.probe_odds || 'false' }}
