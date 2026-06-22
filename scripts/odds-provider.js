@@ -1,7 +1,8 @@
 import { getOddsApiKey } from "./provider-env.js";
 
 const responseCache = new Map();
-const RESPONSE_CACHE_TTL_MS = 2 * 60 * 1000;
+// Een volledige worker kan meerdere minuten duren; dezelfde sportmarkt hoeft binnen die run maar eenmaal opgehaald te worden.
+const RESPONSE_CACHE_TTL_MS = 30 * 60 * 1000;
 
 function normalizeName(value) {
   return String(value || "")
