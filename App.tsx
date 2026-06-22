@@ -2,6 +2,7 @@ import React, { Suspense, lazy, useCallback, useEffect, useMemo, useRef, useStat
 import Header from "./components/Header";
 import MatchCard from "./components/MatchCard";
 import BestBetCard from "./components/BestBetCard";
+import PredictionReadinessWidget from "./components/PredictionReadinessWidget";
 import DateNavigation from "./components/DateNavigation"; // NIEUW IMPORT
 import { getFavorites } from "./components/FavoriteTeams";
 import { Match } from "./types";
@@ -665,6 +666,8 @@ const App: React.FC = () => {
               selectedDate={selectedDate}
               onDateChange={setSelectedDate}
             />
+
+            <PredictionReadinessWidget matches={dayMatches} predictions={predictions} />
 
             <div className="grid grid-cols-2 md:grid-cols-3 xl:grid-cols-5 gap-2 mb-3">
               {[

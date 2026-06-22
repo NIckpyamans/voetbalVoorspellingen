@@ -1,0 +1,26 @@
+name: CodeQL Security
+
+on:
+  push:
+    branches: ["codex/step3b-layout"]
+  pull_request:
+    branches: ["codex/step3b-layout"]
+  schedule:
+    - cron: "31 2 * * 1"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  security-events: write
+
+jobs:
+  analyze:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - uses: github/codeql-action/init@v3
+        with:
+          languages: javascript-typescript
+      - uses: github/codeql-action/analyze@v3
+
