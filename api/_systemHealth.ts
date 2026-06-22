@@ -150,7 +150,10 @@ export async function buildSystemHealth(mode = "health") {
     workerFresh: lastRunFresh,
     todayOrTomorrowData: counts.today > 0 || counts.tomorrow > 0 || fixtureCalendar.emptyWindowOk,
     fixtureCalendar: fixtureCalendar.healthy,
-    standings: Object.keys(standings?.standings || {}).length > 0,
+    standings:
+      Object.keys(standings?.standings || {}).length > 0 ||
+      Object.keys(standings?.cupSheets || {}).length > 0 ||
+      Object.keys(standings?.knockoutOverview || {}).length > 0,
     monitor: !!findings?.days,
   };
 
