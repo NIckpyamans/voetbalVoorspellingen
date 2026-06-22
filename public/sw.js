@@ -1,5 +1,5 @@
-const CACHE_NAME = "footyai-shell-v2";
-const API_CACHE = "footyai-data-v2";
+const CACHE_NAME = "footyai-shell-v3";
+const API_CACHE = "footyai-data-v3";
 const SHELL = ["/manifest.webmanifest", "/footyai-ball-logo.jpeg", "/favicon.svg"];
 
 self.addEventListener("install", (event) => {
@@ -12,8 +12,6 @@ self.addEventListener("activate", (event) => {
     caches.keys()
       .then((keys) => Promise.all(keys.filter((key) => ![CACHE_NAME, API_CACHE].includes(key)).map((key) => caches.delete(key))))
       .then(() => self.clients.claim())
-      .then(() => self.clients.matchAll({ type: "window" }))
-      .then((clients) => Promise.all(clients.map((client) => client.navigate(client.url))))
   );
 });
 
