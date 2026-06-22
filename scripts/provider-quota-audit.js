@@ -41,6 +41,9 @@ async function auditOddsApi() {
       valid: response.ok,
       status: response.status,
       activeSports: Array.isArray(payload) ? payload.filter((sport) => sport?.active !== false).length : 0,
+      soccerSportKeys: Array.isArray(payload)
+        ? payload.filter((sport) => String(sport?.key || "").startsWith("soccer_")).map((sport) => sport.key)
+        : [],
       quota: quotaHeaders(response),
       errorCode: response.ok ? null : String(payload?.error_code || payload?.message || "provider_rejected_key").slice(0, 120),
     };

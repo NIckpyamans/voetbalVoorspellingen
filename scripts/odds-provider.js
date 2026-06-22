@@ -1,5 +1,8 @@
 import { getOddsApiKey } from "./provider-env.js";
 
+const responseCache = new Map();
+const RESPONSE_CACHE_TTL_MS = 2 * 60 * 1000;
+
 function normalizeName(value) {
   return String(value || "")
     .toLowerCase()
@@ -33,6 +36,7 @@ function inferOddsApiSportKey(match = {}) {
   if (override.trim()) return override.trim();
   const league = normalizeName(match.league || "");
   const mappings = [
+    [/world cup|fifa/, "soccer_fifa_world_cup"],
     [/premier league/, "soccer_epl"],
     [/championship/, "soccer_efl_champ"],
     [/laliga|la liga/, "soccer_spain_la_liga"],
@@ -155,6 +159,14 @@ export function normalizeOddsSnapshot(raw, match, options = {}) {
 }
 
 export async function fetchOddsAtPrediction(match, options = {}) {
+  if (String(process.env.ODDS_FETCH_ENABLED || "true").toLowerCase() === "false") {
+    return {
+      status: "disabled_for_refresh_mode",
+      oddsAtPrediction: null,
+      provider: process.env.ODDS_PROVIDER_NAME || "custom-odds-provider",
+      reason: "Odds ophalen is uitgeschakeld voor deze refreshmodus.",
+    };
+  }
   const template = process.env.ODDS_API_URL_TEMPLATE || "";
   const apiKey = getOddsApiKey(template);
   const provider = process.env.ODDS_PROVIDER_NAME || (apiKey ? "the-odds-api" : "custom-odds-provider");
@@ -204,14 +216,26 @@ export async function fetchOddsAtPrediction(match, options = {}) {
         reason: "fetch is niet beschikbaar in deze runtime.",
       };
     }
-    const isApiSports = /football\.api-sports\.io|api-sports\.io/i.test(url);
-    const response = await fetchImpl(url, {
-      headers: {
-        Accept: "application/json",
-        ...(apiKey && !url.includes(apiKey) ? (isApiSports ? { "x-apisports-key": apiKey } : { "x-api-key": apiKey }) : {}),
-      },
-    });
-    if (!response.ok) {
+    const cached = responseCache.get(url);
+    const cacheFresh = cached && Date.now() - cached.cachedAt <= RESPONSE_CACHE_TTL_MS;
+    let response = null;
+    let payload = cacheFresh ? cached.payload : null;
+    let quota = cacheFresh ? cached.quota : null;
+    if (!cacheFresh) {
+      const isApiSports = /football\.api-sports\.io|api-sports\.io/i.test(url);
+      response = await fetchImpl(url, {
+        headers: {
+          Accept: "application/json",
+          ...(apiKey && !url.includes(apiKey) ? (isApiSports ? { "x-apisports-key": apiKey } : { "x-api-key": apiKey }) : {}),
+        },
+      });
+      quota = {
+        remaining: response.headers.get("x-requests-remaining") || response.headers.get("x-ratelimit-requests-remaining"),
+        used: response.headers.get("x-requests-used"),
+        lastCost: response.headers.get("x-requests-last"),
+      };
+    }
+    if (response && !response.ok) {
       return {
         status: "provider_error",
         oddsAtPrediction: null,
@@ -220,7 +244,10 @@ export async function fetchOddsAtPrediction(match, options = {}) {
         reason: `Oddsprovider antwoordde met HTTP ${response.status}.`,
       };
     }
-    const payload = await response.json();
+    if (!cacheFresh) {
+      payload = await response.json();
+      responseCache.set(url, { payload, quota, cachedAt: Date.now() });
+    }
     return {
       ...normalizeOddsSnapshot(payload, match, {
         provider,
@@ -229,6 +256,7 @@ export async function fetchOddsAtPrediction(match, options = {}) {
         kickoff: match?.kickoff,
       }),
       provider,
+      requestMeta: { cached: Boolean(cacheFresh), quota },
     };
   } catch (error) {
     return {

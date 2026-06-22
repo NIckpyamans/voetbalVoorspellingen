@@ -22,6 +22,8 @@ env:
   API_KEY_API_FOOTBALL: ${{ secrets.API_KEY_API_FOOTBALL }}
   # Bewaar het API-Football-dagquotum voor de volledige workers; live scores hebben geen nieuwe H2H nodig.
   API_FOOTBALL_H2H_ENABLED: "false"
+  # Prematch odds worden in de volledige workers vastgelegd; dit voorkomt 12 dubbele odds-calls per dag.
+  ODDS_FETCH_ENABLED: "false"
   ODDS_PROVIDER_NAME: ${{ secrets.ODDS_PROVIDER_NAME }}
   ODDS_API_SPORT: ${{ secrets.ODDS_API_SPORT }}
   ODDS_API_URL_TEMPLATE: ${{ secrets.ODDS_API_URL_TEMPLATE }}
