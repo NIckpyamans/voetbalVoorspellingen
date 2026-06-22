@@ -3,6 +3,10 @@
   "private": true,
   "version": "0.0.0",
   "type": "module",
+  "engines": {
+    "node": "22.x"
+  },
+  "packageManager": "npm@11.6.2",
   "scripts": {
     "dev": "vite",
     "build": "vite build && node scripts/copy-legacy-assets.js && node scripts/verify-vite-dist.js",
@@ -30,6 +34,8 @@
     "readiness": "node scripts/readiness-check.js",
     "context:check": "node scripts/data-context-check.js",
     "context:clubs": "node scripts/build-followed-club-context.js",
+    "test:archive-retention": "node scripts/test-archive-retention.js",
+    "monitor:repository-size": "node scripts/repository-size-check.js",
     "db:schema:apply": "node scripts/apply-database-schema.js",
     "db:source-lineage:backfill": "node scripts/source-lineage-backfill.js",
     "db:free-sources:import": "node scripts/import-free-sources.js",

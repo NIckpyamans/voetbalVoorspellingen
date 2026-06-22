@@ -6,6 +6,37 @@ export function writeJsonFile(filePath, data) {
   fs.writeFileSync(filePath, JSON.stringify(data));
 }
 
+const DAY_FILE_PATTERN = /^\d{4}-\d{2}-\d{2}\.json$/;
+
+function dateKeyToUtcMs(dateKey) {
+  const ms = Date.parse(`${dateKey}T00:00:00Z`);
+  return Number.isFinite(ms) ? ms : null;
+}
+
+export function retainedStaticDateKeys(dateKeys, options = {}) {
+  const nowMs = Number(options.nowMs || Date.now());
+  const pastDays = Math.max(1, Number(options.pastDays ?? process.env.STATIC_EXPORT_PAST_DAYS ?? 45));
+  const futureDays = Math.max(1, Number(options.futureDays ?? process.env.STATIC_EXPORT_FUTURE_DAYS ?? 120));
+  const startMs = nowMs - pastDays * 86_400_000;
+  const endMs = nowMs + futureDays * 86_400_000;
+  return (dateKeys || []).filter((dateKey) => {
+    const dateMs = dateKeyToUtcMs(dateKey);
+    return dateMs !== null && dateMs >= startMs && dateMs <= endMs;
+  });
+}
+
+export function pruneStaticDayFiles(daysDir, retainedDateKeys) {
+  const retained = new Set(retainedDateKeys || []);
+  let removed = 0;
+  if (!fs.existsSync(daysDir)) return removed;
+  for (const fileName of fs.readdirSync(daysDir)) {
+    if (!DAY_FILE_PATTERN.test(fileName) || retained.has(fileName.slice(0, -5))) continue;
+    fs.unlinkSync(path.join(daysDir, fileName));
+    removed += 1;
+  }
+  return removed;
+}
+
 function pickReviewsForMatches(store, matches) {
   const reviews = {};
   for (const match of matches || []) {
@@ -68,7 +99,10 @@ export function writeSplitDataFiles(store, options = {}) {
   const daysDir = path.join(splitDataDir, "days");
   fs.mkdirSync(daysDir, { recursive: true });
 
-  for (const dateKey of Object.keys(store.matches || {})) {
+  const retainedDateKeys = retainedStaticDateKeys(Object.keys(store.matches || {}), options.retention);
+  pruneStaticDayFiles(daysDir, retainedDateKeys);
+
+  for (const dateKey of retainedDateKeys) {
     const matches = store.matches?.[dateKey] || [];
     writeJsonFile(path.join(daysDir, `${dateKey}.json`), {
       date: dateKey,
