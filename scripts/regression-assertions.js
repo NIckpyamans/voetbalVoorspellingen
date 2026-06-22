@@ -101,6 +101,7 @@ async function runContractAssertions() {
   const countryFlagSource = fs.readFileSync(path.join(root, "shared", "countryFlags.ts"), "utf8");
   const matchServiceSource = fs.readFileSync(path.join(root, "services", "matchService.ts"), "utf8");
   const workerSource = fs.readFileSync(path.join(root, "scripts", "server-worker.js"), "utf8");
+  const serviceWorkerSource = fs.readFileSync(path.join(root, "public", "sw.js"), "utf8");
   const assert = (condition, message) => {
     if (!condition) failures.push(message);
   };
@@ -114,6 +115,8 @@ async function runContractAssertions() {
   assert(matchServiceSource.includes("const hasNumericScore"), "Numeric home/away scores should normalize to a final result");
   assert(workerSource.includes('"World - FIFA World Cup 2026": "fifa.world"'), "World Cup scores should use the free ESPN fallback");
   assert(workerSource.includes('label: WORLD_CUP_LEAGUE, type: "cup"'), "World Cup fallback should be registered as a worker league");
+  assert(serviceWorkerSource.includes('request.mode === "navigate"'), "Service worker navigation should use the network-first path");
+  assert(!serviceWorkerSource.includes('const SHELL = ["/", "/index.html"'), "Service worker must not precache stale app-shell HTML");
 
   const bbcHtml = `
     <h2>Premier League</h2>
