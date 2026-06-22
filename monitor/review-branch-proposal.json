@@ -1,16 +1,16 @@
 {
-  "generatedAt": "2026-06-21T23:46:02.541Z",
-  "date": "2026-06-22",
+  "generatedAt": "2026-06-22T23:43:43.476Z",
+  "date": "2026-06-23",
   "proposalOnly": true,
   "shouldPropose": true,
-  "branchName": "codex/review-20260622",
-  "summary": "AI reviewvoorstel voor 2026-06-22: 2 aandachtspunt(en) met patchadvies, niet automatisch live.",
+  "branchName": "codex/review-20260623",
+  "summary": "AI reviewvoorstel voor 2026-06-23: 1 aandachtspunt(en) met patchadvies, niet automatisch live.",
   "latestStats": {
-    "today": "2026-06-22",
-    "tomorrow": "2026-06-23",
+    "today": "2026-06-23",
+    "tomorrow": "2026-06-24",
     "dataPresent": true,
-    "lastRun": 1782078488313,
-    "ageMinutes": 118,
+    "lastRun": 1782166854076,
+    "ageMinutes": 83,
     "maxWorkerAgeMinutes": 180,
     "todayMatches": 4,
     "tomorrowMatches": 4,
@@ -23,15 +23,16 @@
       "tomorrowCount": 4,
       "windowDays": 7,
       "checkedDates": [
-        "2026-06-22",
         "2026-06-23",
         "2026-06-24",
         "2026-06-25",
         "2026-06-26",
         "2026-06-27",
-        "2026-06-28"
+        "2026-06-28",
+        "2026-06-29",
+        "2026-06-30"
       ],
-      "nextMatchDate": "2026-06-22",
+      "nextMatchDate": "2026-06-23",
       "nextMatchCount": 4,
       "explanation": "Vandaag of morgen staan er wedstrijden in de actuele data."
     },
@@ -41,7 +42,7 @@
     "h2hMissing": 4,
     "standingsCount": 0,
     "cupSheetCount": 1,
-    "phaseReliabilityCount": 0
+    "phaseReliabilityCount": 1
   },
   "findings": [
     {
@@ -55,26 +56,11 @@
         "components/MatchCard.tsx"
       ],
       "details": {}
-    },
-    {
-      "priority": 2,
-      "key": "phase_reliability_empty",
-      "severity": "medium",
-      "message": "phaseReliability is leeg.",
-      "whyItMatters": "Fasebetrouwbaarheid wordt niet opgebouwd uit reviews.",
-      "recommendedFiles": [
-        "scripts/server-worker.js",
-        "components/SettingsView.tsx",
-        "types.ts"
-      ],
-      "details": {}
     }
   ],
   "recommendedFiles": [
     "scripts/server-worker.js",
-    "components/MatchCard.tsx",
-    "components/SettingsView.tsx",
-    "types.ts"
+    "components/MatchCard.tsx"
   ],
   "nextStep": "Gebruik deze proposal om gericht een reviewbranch te maken en alleen na controle te mergen."
 }
