@@ -109,6 +109,12 @@ export async function buildSystemHealth(mode = "health") {
   ]);
   const meta = remoteMeta.available ? remoteMeta.data : readJsonSafe(path.join("data", "meta.json"), {});
   const standings = remoteStandings.available ? remoteStandings.data : readJsonSafe(path.join("data", "standings.json"), {});
+  const nextKnownDate = (Array.isArray(meta?.dates) ? meta.dates : [])
+    .filter((dateKey: string) => dateKey > tomorrow)
+    .sort()[0] || null;
+  const remoteNextKnown = nextKnownDate
+    ? await fetchHealthJson(`day:${nextKnownDate}`, () => fetchDayData(nextKnownDate, freshRepoOptions), null)
+    : { available: false, data: null, branch: null, sourceUrl: null, cached: false, error: null };
   const findings = readJsonSafe(path.join("monitor", "daily-findings.json"), { days: {} });
   const serverDataInfo = getFileInfo("server_data.json");
   const metaInfo = getFileInfo(path.join("data", "meta.json"));
@@ -132,7 +138,9 @@ export async function buildSystemHealth(mode = "health") {
             ? remoteToday
             : dateKey === tomorrow
               ? remoteTomorrow
-              : null;
+          : dateKey === nextKnownDate
+            ? remoteNextKnown
+            : null;
       const day = remoteDay?.available ? remoteDay.data : readLocalDay(dateKey);
       return [dateKey, day || { matches: [] }];
     })
@@ -146,7 +154,7 @@ export async function buildSystemHealth(mode = "health") {
 
   const checks = {
     storage: serverDataInfo.exists || metaInfo.exists || remoteMeta.available,
-    splitData: remoteMeta.available && remoteStandings.available && (remoteYesterday.available || remoteToday.available || remoteTomorrow.available),
+    splitData: remoteMeta.available && remoteStandings.available,
     workerFresh: lastRunFresh,
     todayOrTomorrowData: counts.today > 0 || counts.tomorrow > 0 || fixtureCalendar.emptyWindowOk,
     fixtureCalendar: fixtureCalendar.healthy,
@@ -205,6 +213,7 @@ export async function buildSystemHealth(mode = "health") {
           yesterday: { available: remoteYesterday.available, branch: remoteYesterday.branch, cached: remoteYesterday.cached },
           today: { available: remoteToday.available, branch: remoteToday.branch, cached: remoteToday.cached },
           tomorrow: { available: remoteTomorrow.available, branch: remoteTomorrow.branch, cached: remoteTomorrow.cached },
+          nextKnown: { date: nextKnownDate, available: remoteNextKnown.available, branch: remoteNextKnown.branch, cached: remoteNextKnown.cached },
         },
       },
     },

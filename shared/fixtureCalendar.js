@@ -103,6 +103,22 @@ export function buildFixtureCalendarStatus(options = {}) {
     };
   }
 
+  if (upcoming && lastRunFresh && sourcesChecked) {
+    return {
+      status: "idle_until_next_known_match",
+      healthy: true,
+      emptyWindowOk: true,
+      severity: "none",
+      todayCount,
+      tomorrowCount,
+      windowDays,
+      checkedDates: coveredDates,
+      nextMatchDate: upcoming.date,
+      nextMatchCount: upcoming.count,
+      explanation: `Geen wedstrijden in de directe kalender; eerstvolgende bevestigde wedstrijd is ${upcoming.date}.`,
+    };
+  }
+
   if (lastRunFresh && sourcesChecked && coveredDates.length >= Math.min(2, windowDates.length)) {
     return {
       status: expectedTomorrowGap ? "confirmed_empty_with_gap_note" : "confirmed_empty_window",
