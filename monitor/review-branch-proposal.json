@@ -1,29 +1,28 @@
 {
-  "generatedAt": "2026-06-22T23:43:43.476Z",
-  "date": "2026-06-23",
+  "generatedAt": "2026-06-23T23:31:18.917Z",
+  "date": "2026-06-24",
   "proposalOnly": true,
   "shouldPropose": true,
-  "branchName": "codex/review-20260623",
-  "summary": "AI reviewvoorstel voor 2026-06-23: 1 aandachtspunt(en) met patchadvies, niet automatisch live.",
+  "branchName": "codex/review-20260624",
+  "summary": "AI reviewvoorstel voor 2026-06-24: 2 aandachtspunt(en) met patchadvies, niet automatisch live.",
   "latestStats": {
-    "today": "2026-06-23",
-    "tomorrow": "2026-06-24",
+    "today": "2026-06-24",
+    "tomorrow": "2026-06-25",
     "dataPresent": true,
-    "lastRun": 1782166854076,
-    "ageMinutes": 83,
+    "lastRun": 1782246439816,
+    "ageMinutes": 184,
     "maxWorkerAgeMinutes": 180,
     "todayMatches": 4,
-    "tomorrowMatches": 4,
+    "tomorrowMatches": 6,
     "fixtureCalendar": {
       "status": "has_current_matches",
       "healthy": true,
       "emptyWindowOk": true,
       "severity": "none",
       "todayCount": 4,
-      "tomorrowCount": 4,
+      "tomorrowCount": 6,
       "windowDays": 7,
       "checkedDates": [
-        "2026-06-23",
         "2026-06-24",
         "2026-06-25",
         "2026-06-26",
@@ -32,7 +31,7 @@
         "2026-06-29",
         "2026-06-30"
       ],
-      "nextMatchDate": "2026-06-23",
+      "nextMatchDate": "2026-06-24",
       "nextMatchCount": 4,
       "explanation": "Vandaag of morgen staan er wedstrijden in de actuele data."
     },
@@ -47,6 +46,18 @@
   "findings": [
     {
       "priority": 1,
+      "key": "worker_stale",
+      "severity": "high",
+      "message": "Workerdata is 184 minuten oud.",
+      "whyItMatters": "Workerdata is te oud en verdient een workflow- of broncheck.",
+      "recommendedFiles": [
+        ".github/workflows/worker.yml",
+        "scripts/server-worker.js"
+      ],
+      "details": {}
+    },
+    {
+      "priority": 2,
       "key": "h2h_empty",
       "severity": "medium",
       "message": "Alle wedstrijden van vandaag hebben lege H2H-data.",
@@ -59,6 +70,7 @@
     }
   ],
   "recommendedFiles": [
+    ".github/workflows/worker.yml",
     "scripts/server-worker.js",
     "components/MatchCard.tsx"
   ],
