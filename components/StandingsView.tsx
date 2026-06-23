@@ -205,6 +205,7 @@ function readFavoriteStanding() {
 
 function sourceLabel(source?: string) {
   const value = String(source || "").toLowerCase();
+  if (value.includes("competition-catalog-zero")) return "Seizoensstart (0-stand)";
   if (value.includes("live-match-overlay")) return "Live berekend";
   if (value.includes("football-data")) return "football-data.co.uk";
   if (value.includes("openfootball")) return "openfootball";
@@ -606,14 +607,14 @@ const StandingsView: React.FC = () => {
             )}
           </div>
 
-          <div className="flex gap-1.5 overflow-x-auto pb-2">
+          <div className="flex flex-wrap gap-1.5 pb-2">
             {(visibleLeagueKeys.length ? visibleLeagueKeys : sortedLeagueKeys).map((key) => {
               const label = standings[key]?.label || key;
               return (
                 <button
                   key={key}
                   onClick={() => setSelectedLeague(key)}
-                  className={`flex-shrink-0 px-3 py-1.5 rounded-lg text-[10px] font-black transition ${
+                  className={`px-3 py-1.5 rounded-lg text-[10px] font-black transition ${
                     selectedLeague === key ? "bg-blue-600 text-white" : "bg-slate-800 text-slate-300 hover:bg-slate-700"
                   }`}
                 >

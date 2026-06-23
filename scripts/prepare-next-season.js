@@ -10,13 +10,28 @@ const force = process.argv.includes("--force");
 
 const catalog = JSON.parse(fs.readFileSync(catalogPath, "utf8"));
 const previousIndex = fs.existsSync(indexPath) ? JSON.parse(fs.readFileSync(indexPath, "utf8")) : { competitions: [] };
-const generatedAt = Date.now();
+const generatedAt = Date.parse(String(catalog.generatedAt || "")) || Date.now();
 const plannedEntries = [];
 const existingCurrentByKey = new Map(
   (previousIndex.competitions || [])
     .filter((item) => item.season === catalog.season)
     .map((item) => [item.key, item])
 );
+
+function buildZeroStandings(competition) {
+  return (competition.teams || []).map((team, index) => ({
+    pos: index + 1,
+    team,
+    teamId: `catalog:${competition.slug}:${String(team).toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "")}`,
+    p: 0,
+    w: 0,
+    d: 0,
+    l: 0,
+    gf: 0,
+    ga: 0,
+    pts: 0,
+  }));
+}
 
 for (const competition of catalog.competitions || []) {
   const relativePath = `data/competitions/${catalog.season}/${competition.slug}.json`;
@@ -34,7 +49,7 @@ for (const competition of catalog.competitions || []) {
     generatedAt,
     teamCount: (competition.teams || []).length,
     teams: competition.teams || [],
-    standings: [],
+    standings: buildZeroStandings(competition),
     totalMatches: 0,
     finishedMatches: 0,
     scheduledMatches: 0,

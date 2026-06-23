@@ -38,5 +38,15 @@ export function resolveDateWindowToken(token, todayKey) {
 export function buildRefreshDateWindow(todayKey, configuredWindow = "") {
   const configured = String(configuredWindow || "").trim();
   const tokens = configured ? configured.split(",") : ["-1", "0", "1", "2", "3", "4", "5", "6", "7"];
-  return [...new Set(tokens.map((token) => resolveDateWindowToken(token, todayKey)).filter(Boolean))].sort();
+  const expanded = tokens.flatMap((token) => {
+    const range = String(token || "").trim().match(/^([+-]?\d+)\.\.([+-]?\d+)$/);
+    if (!range) return [token];
+    const start = Number(range[1]);
+    const end = Number(range[2]);
+    const step = start <= end ? 1 : -1;
+    const values = [];
+    for (let value = start; value !== end + step; value += step) values.push(String(value));
+    return values;
+  });
+  return [...new Set(expanded.map((token) => resolveDateWindowToken(token, todayKey)).filter(Boolean))].sort();
 }

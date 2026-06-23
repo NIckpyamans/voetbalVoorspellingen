@@ -1,0 +1,39 @@
+name: Competition catalog sync
+
+on:
+  schedule:
+    - cron: "41 3 * * *"
+  workflow_dispatch:
+
+concurrency:
+  group: competition-catalog-sync
+  cancel-in-progress: false
+
+permissions:
+  contents: write
+
+jobs:
+  sync:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v5
+        with:
+          ref: codex/step3b-layout
+          fetch-depth: 0
+      - uses: actions/setup-node@v5
+        with:
+          node-version: 22
+      - name: Synchronize team memberships and zero tables
+        run: |
+          node scripts/sync-competition-catalog-teams.js
+          node scripts/prepare-next-season.js --force
+      - name: Commit catalog changes
+        run: |
+          git config user.name github-actions
+          git config user.email github-actions@github.com
+          git add config/competition-catalog.json data/competitions
+          git diff --staged --quiet && echo "geen wijzigingen" && exit 0
+          git commit -m "sync competitiecatalogus [skip vercel]"
+          git pull --rebase --autostash origin codex/step3b-layout
+          git push origin HEAD:codex/step3b-layout

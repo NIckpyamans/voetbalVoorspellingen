@@ -102,6 +102,8 @@ const LEAGUES = [
   { country: "", name: "europa league", label: "Europe - Europa League", type: "cup" },
   { country: "", name: "conference league", label: "Europe - Conference League", type: "cup" },
   { country: "", name: "fifa world cup", label: WORLD_CUP_LEAGUE, type: "cup" },
+  { country: "world", name: "club friendly", label: "World - Club Friendlies", type: "friendly" },
+  { country: "world", name: "international friendly", label: "World - International Friendlies", type: "friendly" },
 ];
 
 const LEAGUE_CALIBRATION_PROFILES = {
@@ -1050,7 +1052,7 @@ const MIN_COMPLETE_ROSTER_PLAYERS = 22;
 const MIN_USABLE_ROSTER_PLAYERS = 16;
 // Bewaar gespeelde dagen ruim genoeg voor analyse, terugkijken en model-review.
 const HISTORY_KEEP_DAYS_BACK = 365;
-const HISTORY_KEEP_DAYS_FORWARD = 14;
+const HISTORY_KEEP_DAYS_FORWARD = 75;
 const MAX_REVIEWS = 2500;
 const MAX_PREDICTION_SNAPSHOTS = 5000;
 const MAX_SCORE_MATRIX_ENTRIES = 10;
@@ -1236,7 +1238,18 @@ const ESPN_SCOREBOARD_LEAGUES = {
   "Portugal - Liga Portugal": "por.1",
   "Spain - LaLiga": "esp.1",
   "World - FIFA World Cup 2026": "fifa.world",
+  "World - Club Friendlies": "club.friendly",
+  "World - International Friendlies": "fifa.friendly",
 };
+
+const FRIENDLY_SCOREBOARD_LEAGUES = {
+  "World - Club Friendlies": ESPN_SCOREBOARD_LEAGUES["World - Club Friendlies"],
+  "World - International Friendlies": ESPN_SCOREBOARD_LEAGUES["World - International Friendlies"],
+};
+
+function isFriendlyLeagueLabel(label) {
+  return /friendl|oefen/i.test(String(label || ""));
+}
 
 const DATA_SCOUT_SOURCES = [
   {
@@ -10495,7 +10508,9 @@ async function main() {
   // Houd bewust meerdere dagen vooruit vast. Als een geplande worker-run een
   // keer wordt overgeslagen, blijft de kalenderstatus betrouwbaarder.
   const dates = buildRefreshDateWindow(today);
+  const friendliesDiscoveryMode = process.env.FOOTYAI_REFRESH_MODE === "friendlies-discovery";
   console.log(`[worker] datumvenster: ${dates.join(", ")}`);
+  if (friendliesDiscoveryMode) console.log("[worker] modus: alleen oefenwedstrijden ontdekken");
 
   if (!store.knockoutOverview) store.knockoutOverview = {};
   if (!store.cupSheets) store.cupSheets = {};
@@ -10539,7 +10554,7 @@ async function main() {
   const requiredTeamIds = new Set();
 
   for (const date of dates) {
-    const json = await safeFetch(`${SOFA}/sport/football/scheduled-events/${date}`);
+    const json = friendliesDiscoveryMode ? null : await safeFetch(`${SOFA}/sport/football/scheduled-events/${date}`);
     
     // Handle different possible API response structures
     let apiEvents = [];
@@ -10564,10 +10579,10 @@ async function main() {
       })
       .filter((event) => getLeagueInfo(event));
 
-    const fallbackEvents = await fetchFallbackScheduledEventsFromMarket(date);
-    const sportsDbEvents = await fetchSportsDbScheduledEvents(date);
+    const fallbackEvents = friendliesDiscoveryMode ? [] : await fetchFallbackScheduledEventsFromMarket(date);
+    const sportsDbEvents = friendliesDiscoveryMode ? [] : await fetchSportsDbScheduledEvents(date);
     const espnEvents = await fetchEspnScoreboardEventsSource(date, {
-      espnScoreboardLeagues: ESPN_SCOREBOARD_LEAGUES,
+      espnScoreboardLeagues: friendliesDiscoveryMode ? FRIENDLY_SCOREBOARD_LEAGUES : ESPN_SCOREBOARD_LEAGUES,
       leagues: LEAGUES,
       isWomenContext,
       isYouthContext,
@@ -10577,8 +10592,8 @@ async function main() {
       normalizeName,
       sleep,
     });
-    const openLigaDbEvents = await fetchOpenLigaDbScheduledEvents(date);
-    const bbcEvents = await fetchBbcScheduledEventsSource(date, {
+    const openLigaDbEvents = friendliesDiscoveryMode ? [] : await fetchOpenLigaDbScheduledEvents(date);
+    const bbcEvents = friendliesDiscoveryMode ? [] : await fetchBbcScheduledEventsSource(date, {
       bbcCompetitionToLabel: BBC_COMPETITION_TO_LABEL,
       espnScoreboardLeagues: ESPN_SCOREBOARD_LEAGUES,
       leagues: LEAGUES,
@@ -10590,7 +10605,7 @@ async function main() {
       isYouthContext,
       sleep,
     });
-    const curatedEvents = fetchCuratedFixtureBackfill(date);
+    const curatedEvents = friendliesDiscoveryMode ? [] : fetchCuratedFixtureBackfill(date);
     fixtureSourceDiagnostics[date] = {
       checkedAt: new Date(now).toISOString(),
       sofascore: apiEvents.length,
@@ -10653,8 +10668,8 @@ async function main() {
         event.uniqueTournament?.id || event.tournament?.uniqueTournament?.id || event.tournament?.id || null;
       const seasonId = event.season?.id || null;
 
-      if (homeId) requiredTeamIds.add(homeId);
-      if (awayId) requiredTeamIds.add(awayId);
+      if (!friendliesDiscoveryMode && homeId) requiredTeamIds.add(homeId);
+      if (!friendliesDiscoveryMode && awayId) requiredTeamIds.add(awayId);
       if (homeId && tournamentId && seasonId) {
         teamTournamentMap.set(homeId, {
           tournamentId,
@@ -11458,8 +11473,15 @@ async function main() {
       await sleep(40);
     }
 
-    const uniqueDayMatches = dedupeStoredMatches(dayMatches);
-    const uniqueDayPredictions = dedupeStoredPredictions(dayPredictions, uniqueDayMatches);
+    const retainedMatches = friendliesDiscoveryMode
+      ? (store.matches?.[date] || []).filter((match) => !isFriendlyLeagueLabel(match?.league))
+      : [];
+    const uniqueDayMatches = dedupeStoredMatches([...retainedMatches, ...dayMatches]);
+    const retainedMatchIds = new Set(retainedMatches.map((match) => String(match?.id || "")));
+    const retainedPredictions = friendliesDiscoveryMode
+      ? (store.predictions?.[date] || []).filter((prediction) => retainedMatchIds.has(String(prediction?.matchId || "")))
+      : [];
+    const uniqueDayPredictions = dedupeStoredPredictions([...retainedPredictions, ...dayPredictions], uniqueDayMatches);
     assignTopConfidenceRanks(uniqueDayMatches, uniqueDayPredictions);
     store.matches[date] = uniqueDayMatches;
     store.predictions[date] = uniqueDayPredictions;
