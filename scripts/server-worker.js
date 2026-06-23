@@ -11048,7 +11048,9 @@ async function main() {
         store.teamStats[awayId] = awayRecent;
         store.teamStatsUpdated[awayId] = now;
       }
-      const aggregate = buildAggregateInfo(event, eventDetails, h2h, fallbackPreviousLeg);
+      const aggregate = leagueInfo.type === "friendly"
+        ? null
+        : buildAggregateInfo(event, eventDetails, h2h, fallbackPreviousLeg);
       const homeRestDays = calcRestDays(homeRecent?.lastMatchKickoff, kickoff);
       const awayRestDays = calcRestDays(awayRecent?.lastMatchKickoff, kickoff);
       const matchImportance = calcMatchImportance(homePos, awayPos, standing?.rows?.length || 20);
@@ -11483,8 +11485,13 @@ async function main() {
       : [];
     const uniqueDayPredictions = dedupeStoredPredictions([...retainedPredictions, ...dayPredictions], uniqueDayMatches);
     assignTopConfidenceRanks(uniqueDayMatches, uniqueDayPredictions);
-    store.matches[date] = uniqueDayMatches;
-    store.predictions[date] = uniqueDayPredictions;
+    if (friendliesDiscoveryMode && uniqueDayMatches.length === 0) {
+      delete store.matches[date];
+      delete store.predictions[date];
+    } else {
+      store.matches[date] = uniqueDayMatches;
+      store.predictions[date] = uniqueDayPredictions;
+    }
   }
 
   const liveJson = await safeFetch(`${SOFA}/sport/football/events/live`);

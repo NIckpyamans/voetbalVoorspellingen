@@ -93,7 +93,36 @@ const historical = (previousIndex.competitions || [])
     }
     return { ...item, status: "closed", closedAt: generatedAt };
   });
-const competitions = [...plannedEntries, ...historical];
+const plannedKeys = new Set(plannedEntries.map((item) => item.key));
+const additionalCurrentByKey = new Map(
+  (previousIndex.competitions || [])
+    .filter((item) => item.season === catalog.season && !plannedKeys.has(item.key))
+    .map((item) => [item.key, item])
+);
+const currentSeasonDir = path.join(root, "data", "competitions", catalog.season);
+if (fs.existsSync(currentSeasonDir)) {
+  for (const fileName of fs.readdirSync(currentSeasonDir).filter((name) => name.endsWith(".json"))) {
+    const archive = JSON.parse(fs.readFileSync(path.join(currentSeasonDir, fileName), "utf8"));
+    if (!archive?.key || plannedKeys.has(archive.key) || additionalCurrentByKey.has(archive.key)) continue;
+    additionalCurrentByKey.set(archive.key, {
+      key: archive.key,
+      season: archive.season,
+      league: archive.league,
+      slug: archive.slug,
+      status: archive.status || "active",
+      totalMatches: Number(archive.totalMatches || 0),
+      finishedMatches: Number(archive.finishedMatches || 0),
+      scheduledMatches: Number(archive.scheduledMatches || 0),
+      liveMatches: Number(archive.liveMatches || 0),
+      firstMatchDate: archive.firstMatchDate || null,
+      lastMatchDate: archive.lastMatchDate || null,
+      teamCount: Number(archive.teamCount || 0),
+      archiveFile: `data/competitions/${catalog.season}/${fileName}`,
+    });
+  }
+}
+const additionalCurrent = [...additionalCurrentByKey.values()];
+const competitions = [...plannedEntries, ...additionalCurrent, ...historical];
 const index = {
   generatedAt,
   activeSeason: catalog.season,

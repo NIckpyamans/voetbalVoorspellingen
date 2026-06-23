@@ -99,7 +99,10 @@ export function writeSplitDataFiles(store, options = {}) {
   const daysDir = path.join(splitDataDir, "days");
   fs.mkdirSync(daysDir, { recursive: true });
 
-  const retainedDateKeys = retainedStaticDateKeys(Object.keys(store.matches || {}), options.retention);
+  const populatedDateKeys = Object.keys(store.matches || {}).filter(
+    (dateKey) => (store.matches?.[dateKey] || []).length > 0 || (store.predictions?.[dateKey] || []).length > 0
+  );
+  const retainedDateKeys = retainedStaticDateKeys(populatedDateKeys, options.retention);
   pruneStaticDayFiles(daysDir, retainedDateKeys);
 
   for (const dateKey of retainedDateKeys) {
