@@ -3,7 +3,7 @@ import { createLogger, getErrorDetails } from "../shared/logger.js";
 import { setCorsHeaders } from "../shared/cors.js";
 import { databaseConfigured, getSql } from "../shared/database.js";
 import { buildCupSheetsFromMatches } from "../shared/cupSheets.js";
-import competitionCatalog from "../config/competition-catalog.json";
+import competitionCatalog from "../config/competition-catalog.json" with { type: "json" };
 
 const logger = createLogger("api.standings");
 

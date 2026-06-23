@@ -1159,7 +1159,9 @@ const MatchCard: React.FC<MatchCardProps> = ({ match, prediction, onFavoriteChan
   const modelLabel = (prediction.ensembleMeta || match.ensembleMeta)?.active ? "Ensemble" : "Basis";
   const phaseReliability = prediction.modelEdges?.phaseReliability || match.phaseReliability;
   const modelScopeLabel =
-    String(match.league || "").startsWith("Europe -") && (
+    String(match.league || "").toLowerCase().includes("friendly")
+      ? "Oefenduel"
+      : String(match.league || "").startsWith("Europe -") && (
       String(match.league || "").toLowerCase().includes("friendly") ||
       String(match.league || "").toLowerCase().includes("qualification") ||
       String(match.league || "").toLowerCase().includes("nations league") ||

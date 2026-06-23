@@ -28,6 +28,11 @@ jobs:
         run: |
           node scripts/sync-competition-catalog-teams.js
           node scripts/prepare-next-season.js --force
+      - name: Synchronize catalog memberships to Neon
+        run: node scripts/sync-competition-catalog-to-database.js
+        env:
+          DATABASE_URL: ${{ secrets.DATABASE_URL }}
+          POSTGRES_URL: ${{ secrets.POSTGRES_URL }}
       - name: Commit catalog changes
         run: |
           git config user.name github-actions

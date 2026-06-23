@@ -1213,6 +1213,11 @@ const SPORTSDB_LEAGUE_IDS = {
 };
 
 const SPORTSDB_NAME_TO_LABEL = {
+  "Club Friendly": "World - Club Friendlies",
+  "Club Friendlies": "World - Club Friendlies",
+  "Club Friendly Games": "World - Club Friendlies",
+  "International Friendly": "World - International Friendlies",
+  "International Friendlies": "World - International Friendlies",
   "Belgian Pro League": "Belgium - Pro League",
   "Dutch Eredivisie": "Netherlands - Eredivisie",
   "English League Championship": "England - Championship",
@@ -4692,7 +4697,8 @@ function decodeHtmlText(value) {
     .trim();
 }
 
-async function fetchSportsDbScheduledEvents(dateISO) {
+async function fetchSportsDbScheduledEvents(dateISO, options = {}) {
+  const onlyFriendlies = options.onlyFriendlies === true;
   const fallbackById = new Map();
   const appendEvent = (event, leagueLabel) => {
     const leagueInfo = LEAGUES.find((item) => item.label === leagueLabel);
@@ -4792,7 +4798,7 @@ async function fetchSportsDbScheduledEvents(dateISO) {
     console.warn(`[worker] TheSportsDB eventsday fallback mislukt voor ${dateISO}: ${error?.message || error}`);
   }
 
-  for (const [leagueLabel, leagueId] of Object.entries(SPORTSDB_LEAGUE_IDS)) {
+  for (const [leagueLabel, leagueId] of onlyFriendlies ? [] : Object.entries(SPORTSDB_LEAGUE_IDS)) {
     for (const endpoint of ["eventsnextleague", "eventspastleague"]) {
       try {
         const response = await fetch(`https://www.thesportsdb.com/api/v1/json/123/${endpoint}.php?id=${leagueId}`, {
@@ -7834,6 +7840,12 @@ function getReliabilityBucket(input) {
   const round = String(input?.roundLabel || "").toLowerCase();
   const summary = String(input?.context?.summary || input?.context?.type || "").toLowerCase();
   const leagueType = String(input?.leagueType || "").toLowerCase();
+  const isFriendly =
+    leagueType === "friendly" ||
+    league.includes("friendly") ||
+    league.includes("oefen") ||
+    summary.includes("friendly") ||
+    summary.includes("oefen");
   const isInternational =
     league.startsWith("europe -") &&
     (league.includes("nations league") ||
@@ -7845,8 +7857,6 @@ function getReliabilityBucket(input) {
   const isQualification =
     isInternational &&
     (league.includes("qualification") || round.includes("qualification") || summary.includes("qualification"));
-  const isFriendly =
-    isInternational && (league.includes("friendly") || league.includes("international friendly") || summary.includes("friendly"));
   const isTwoLegKnockout =
     !!input?.aggregate?.active ||
     summary.includes("tweeluik") ||
@@ -9274,6 +9284,21 @@ function predict(input) {
     }
   );
   const qualityGate = qualityGateForCompleteness(dataCompleteness);
+  const friendlyCalibration = getReliabilityBucket(input) === "friendly"
+    ? {
+        active: true,
+        confidenceCap: input.lineupSummary?.confirmed ? 0.52 : 0.46,
+        additionalPenalty: input.lineupSummary?.confirmed ? 0.035 : 0.065,
+        valueBetEligible: false,
+        summary: "Oefenwedstrijd: wisselende selecties en speelminuten verhogen onzekerheid; geen value-betclaim.",
+      }
+    : null;
+  if (friendlyCalibration) {
+    qualityGate.blockedHighConfidence = true;
+    qualityGate.confidenceCap = Math.min(Number(qualityGate.confidenceCap || 0.7), friendlyCalibration.confidenceCap);
+    qualityGate.penalty = Number((Number(qualityGate.penalty || 0) + friendlyCalibration.additionalPenalty).toFixed(3));
+    qualityGate.summary = `${qualityGate.summary}; friendly-cap ${Math.round(friendlyCalibration.confidenceCap * 100)}%`;
+  }
   if (input?.assertionDegraded) {
     qualityGate.blockedHighConfidence = true;
     qualityGate.confidenceCap = Math.min(Number(qualityGate.confidenceCap || 0.7), 0.58);
@@ -9389,6 +9414,7 @@ function predict(input) {
       marketCalibration,
       probabilityCalibration,
       confidenceCalibration,
+      friendlyCalibration,
       refereeProfile,
       scoreSelection: {
         rawBestScore: bestScore,
@@ -9417,6 +9443,7 @@ function predict(input) {
         ...(bookmakerSignals.length === 0 ? ["market_signals_missing"] : []),
         ...(dataCompleteness.score < 0.58 ? ["data_completeness_low"] : []),
         ...(sourceReliability.score < 0.5 ? ["source_reliability_low"] : []),
+        ...(friendlyCalibration ? ["friendly_high_uncertainty", "value_bet_disabled"] : []),
       ],
       riskProfile,
       teamAiSummary,
@@ -10554,7 +10581,7 @@ async function main() {
   const requiredTeamIds = new Set();
 
   for (const date of dates) {
-    const json = friendliesDiscoveryMode ? null : await safeFetch(`${SOFA}/sport/football/scheduled-events/${date}`);
+    const json = await safeFetch(`${SOFA}/sport/football/scheduled-events/${date}`);
     
     // Handle different possible API response structures
     let apiEvents = [];
@@ -10580,7 +10607,7 @@ async function main() {
       .filter((event) => getLeagueInfo(event));
 
     const fallbackEvents = friendliesDiscoveryMode ? [] : await fetchFallbackScheduledEventsFromMarket(date);
-    const sportsDbEvents = friendliesDiscoveryMode ? [] : await fetchSportsDbScheduledEvents(date);
+    const sportsDbEvents = await fetchSportsDbScheduledEvents(date, { onlyFriendlies: friendliesDiscoveryMode });
     const espnEvents = await fetchEspnScoreboardEventsSource(date, {
       espnScoreboardLeagues: friendliesDiscoveryMode ? FRIENDLY_SCOREBOARD_LEAGUES : ESPN_SCOREBOARD_LEAGUES,
       leagues: LEAGUES,

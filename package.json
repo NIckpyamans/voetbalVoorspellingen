@@ -71,6 +71,7 @@
     "season:prepare-next": "node scripts/prepare-next-season.js",
     "season:sync-membership": "node scripts/sync-competition-membership.js",
     "season:sync-catalog": "node scripts/sync-competition-catalog-teams.js && node scripts/prepare-next-season.js --force",
+    "db:sync-competition-catalog": "node scripts/sync-competition-catalog-to-database.js",
     "db:h2h:rebuild": "node scripts/rebuild-h2h-edges.js",
     "db:integrity:snapshot": "node scripts/capture-integrity-metrics.js",
     "db:roi-clv:analyze": "node scripts/analyze-roi-clv-coverage.js",
