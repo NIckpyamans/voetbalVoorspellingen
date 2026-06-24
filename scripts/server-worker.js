@@ -10256,7 +10256,7 @@ function buildAiRecommendations(store, todayKey) {
       priority: "high",
     });
   }
-  if (sourceCoverage && Number(sourceCoverage.logoCoverage || 0) < 0.95) {
+  if (todayMatches.length > 0 && sourceCoverage && Number(sourceCoverage.logoCoverage || 0) < 0.95) {
     issues.push({
       title: "Clublogo-cache uitbreiden",
       summary: `Logo-dekking staat op ${Math.round(Number(sourceCoverage.logoCoverage || 0) * 100)}% voor de actuele speeldag.`,
@@ -10264,7 +10264,7 @@ function buildAiRecommendations(store, todayKey) {
       priority: "medium",
     });
   }
-  if (sourceCoverage && Number(sourceCoverage.bookmakerCoverage || 0) < 0.7) {
+  if (todayMatches.length > 0 && sourceCoverage && Number(sourceCoverage.bookmakerCoverage || 0) < 0.7) {
     issues.push({
       title: "Bronkwaliteit odds nog dun",
       summary: `Bookmakerdekking staat op ${Math.round(Number(sourceCoverage.bookmakerCoverage || 0) * 100)}% voor de actuele speeldag.`,
@@ -10281,7 +10281,7 @@ function buildAiRecommendations(store, todayKey) {
       priority: "medium",
     });
   }
-  if (sourceCoverage && Number(sourceCoverage.h2hCoverage || 0) < 0.75) {
+  if (todayMatches.length > 0 && sourceCoverage && Number(sourceCoverage.h2hCoverage || 0) < 0.75) {
     issues.push({
       title: "H2H fallback verbreden",
       summary: `H2H-dekking staat op ${Math.round(Number(sourceCoverage.h2hCoverage || 0) * 100)}% voor de actuele speeldag.`,
@@ -10303,12 +10303,14 @@ function buildAiRecommendations(store, todayKey) {
     exactReviews.length > 0
       ? exactReviews.filter((item) => item.exactHit).length / exactReviews.length
       : 0;
-  issues.push({
-    title: "Modelkalibratie",
-    summary: `Exact-score hitrate staat op ${Math.round(exactHitRate * 100)}% over ${exactReviews.length} reviews.`,
-    action: "Gebruik deze score om ensemble- en closing-gewichten te blijven finetunen.",
-    priority: exactHitRate < 0.14 ? "high" : "low",
-  });
+  if (exactReviews.length > 0) {
+    issues.push({
+      title: "Modelkalibratie",
+      summary: `Exact-score hitrate staat op ${Math.round(exactHitRate * 100)}% over ${exactReviews.length} reviews.`,
+      action: "Gebruik deze score om ensemble- en closing-gewichten te blijven finetunen.",
+      priority: exactHitRate < 0.14 ? "high" : "low",
+    });
+  }
 
   const diagnostics = store.featureDiagnostics || null;
   const topFailure = diagnostics?.topFailureSignals?.[0] || null;

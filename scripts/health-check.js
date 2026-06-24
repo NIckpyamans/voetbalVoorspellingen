@@ -161,6 +161,12 @@ function collectDataChecks() {
     Object.keys(store.cupSheets || {}).length ? store.cupSheets : buildCupSheetsFromMatches(store)
   ).length;
   const phaseReliabilityCount = Object.keys(store.phaseReliability || {}).length;
+  const allMatches = Object.values(store.matches || {}).flatMap((rows) => Array.isArray(rows) ? rows : []);
+  const hasCupMatches = allMatches.some((match) => {
+    const league = String(match?.league || "").toLowerCase();
+    return match?.aggregate?.active || /cup|beker|champions league|europa league|conference league/.test(league);
+  });
+  const reviewCount = Object.keys(store.postMatchReviews || {}).length || Number(store.reviewCount || 0);
   const liveMatches = todayMatches.filter((match) => String(match.status || "").toUpperCase() === "LIVE");
   const liveWithoutMinute = liveMatches.filter(
     (match) => !match.minute && !match.minuteValue && !String(match.period || "").toLowerCase().includes("half time")
@@ -203,11 +209,11 @@ function collectDataChecks() {
     pushIssue(issues, "h2h_empty", "medium", "Alle wedstrijden van vandaag hebben lege H2H-data.");
   }
 
-  if (cupSheetCount === 0) {
+  if (cupSheetCount === 0 && hasCupMatches) {
     pushIssue(issues, "cupsheets_empty", "medium", "cupSheets is leeg.");
   }
 
-  if (phaseReliabilityCount === 0) {
+  if (phaseReliabilityCount === 0 && reviewCount > 0) {
     pushIssue(issues, "phase_reliability_empty", "medium", "phaseReliability is leeg.");
   }
 
@@ -236,7 +242,7 @@ function collectDataChecks() {
     );
   }
 
-  if (standingsCount === 0 && cupSheetCount === 0) {
+  if (standingsCount === 0 && cupSheetCount === 0 && (todayMatches.length > 0 || tomorrowMatches.length > 0)) {
     pushIssue(issues, "standings_empty", "high", "Standings/cupSheets zijn leeg.");
   }
 

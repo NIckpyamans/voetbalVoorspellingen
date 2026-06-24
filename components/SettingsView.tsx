@@ -142,6 +142,7 @@ const SettingsView: React.FC = () => {
     : null;
   const dataScore = Number(dataCompletenessAudit?.averageScore || 0);
   const timestampCoverage = Number(dataCompletenessAudit?.sourceTimestampCoverage || 0);
+  const hasAuditMatches = Number(dataCompletenessAudit?.matches || 0) > 0;
   const calibrationError = Number(modelPerformance?.calibrationSummary?.averageAbsoluteError || 0);
   const oddsProviderConfigured = !!oddsIntegrationReadiness?.providerConfigured;
   const liveOddsCoverage = Number(oddsIntegrationReadiness?.currentCoverage?.predictions || 0);
@@ -152,8 +153,8 @@ const SettingsView: React.FC = () => {
   const availabilityCoverage = Number(sourceCoverage?.availabilityCoverage ?? 0);
   const criticalAnomalies = Number(anomalyReport?.criticalCount || 0);
   const healthParts = [
-    dataScore,
-    timestampCoverage,
+    hasAuditMatches ? dataScore : 0.5,
+    hasAuditMatches ? timestampCoverage : 0.5,
     calibrationError ? Math.max(0, 1 - calibrationError / 0.28) : 0.45,
     oddsProviderConfigured ? Math.max(0.55, liveOddsCoverage) : 0,
     Math.max(snapshotCoverage, 0.2),
@@ -171,13 +172,13 @@ const SettingsView: React.FC = () => {
   const healthSignals = [
     {
       label: "Datacompleetheid",
-      value: `${Math.round(dataScore * 100)}%`,
-      tone: dataScore >= 0.75 ? "good" : dataScore >= 0.58 ? "warn" : "bad",
+      value: hasAuditMatches ? `${Math.round(dataScore * 100)}%` : "geen duels",
+      tone: !hasAuditMatches || dataScore >= 0.75 ? "good" : dataScore >= 0.58 ? "warn" : "bad",
     },
     {
       label: "Source timestamps",
-      value: `${Math.round(timestampCoverage * 100)}%`,
-      tone: timestampCoverage >= 0.9 ? "good" : timestampCoverage >= 0.65 ? "warn" : "bad",
+      value: hasAuditMatches ? `${Math.round(timestampCoverage * 100)}%` : "n.v.t.",
+      tone: !hasAuditMatches || timestampCoverage >= 0.9 ? "good" : timestampCoverage >= 0.65 ? "warn" : "bad",
     },
     {
       label: "Kalibratiefout",
@@ -225,8 +226,10 @@ const SettingsView: React.FC = () => {
       title: "Database als bron van waarheid",
       impact: "hoog",
       effort: "hoog",
-      status: "open",
-      detail: "De ledger is klaar; de volgende volwassenheidsstap is Postgres/Supabase met immutable snapshots en evaluaties.",
+      status: databaseIntegration?.databaseConfigured ? "geborgd" : "open",
+      detail: databaseIntegration?.databaseConfigured
+        ? "Neon is de primaire bron; JSON blijft alleen export- en storingsfallback."
+        : "Activeer Postgres met immutable snapshots en evaluaties als primaire waarheid.",
     },
   ];
   const coveragePlan = Array.isArray(sourceCoverage?.coverageImprovementPlan)

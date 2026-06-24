@@ -80,8 +80,8 @@ async function main() {
       "cup_widget",
       "Bekerschema-widget",
       standings,
-      Object.keys(standings.data?.cupSheets || {}).length > 0,
-      `${Object.keys(standings.data?.cupSheets || {}).length} cupSheets`
+      standings.data?.cupSheets != null && typeof standings.data.cupSheets === "object",
+      `${Object.keys(standings.data?.cupSheets || {}).length} actief; leeg is geldig buiten bekerrondes`
     ),
     result(
       "season_widget",

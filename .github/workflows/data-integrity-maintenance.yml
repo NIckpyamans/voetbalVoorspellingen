@@ -82,6 +82,11 @@ jobs:
         env:
           DATABASE_URL: ${{ secrets.DATABASE_URL }}
           POSTGRES_URL: ${{ secrets.POSTGRES_URL }}
+      - name: Audit source redundancy and maintain Neon storage budget
+        run: npm run monitor:source-redundancy && npm run db:neon-storage:maintain
+        env:
+          DATABASE_URL: ${{ secrets.DATABASE_URL }}
+          POSTGRES_URL: ${{ secrets.POSTGRES_URL }}
       - name: Send configured quality alerts
         run: npm run monitor:alerts
         env:

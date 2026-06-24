@@ -156,9 +156,38 @@ export async function syncAppStateSegmentsToDatabase(store, options = {}) {
       [segment.group, segment.key, JSON.stringify(segment.payload), payloadBytes(segment.payload)]
     );
   }
+  let prunedSegments = 0;
+  const snapshotKeys = segments
+    .filter((segment) => segment.group === "predictionSnapshots")
+    .map((segment) => segment.key);
+  const dateFilter = Array.isArray(options.dateKeys) && options.dateKeys.length ? options.dateKeys : null;
+  if (dateFilter) {
+    const scope = dateFilter.map(String).join("_");
+    const rows = await sql.query(
+      `delete from app_state_segments
+       where segment_group = 'predictionSnapshots'
+         and segment_key like $1
+         and not (segment_key = any($2::text[]))
+       returning segment_key`,
+      [`${scope}:%`, snapshotKeys]
+    );
+    prunedSegments += rows.length;
+  } else {
+    const rows = snapshotKeys.length
+      ? await sql.query(
+          `delete from app_state_segments
+           where segment_group = 'predictionSnapshots'
+             and not (segment_key = any($1::text[]))
+           returning segment_key`,
+          [snapshotKeys]
+        )
+      : await sql.query("delete from app_state_segments where segment_group = 'predictionSnapshots' returning segment_key");
+    prunedSegments += rows.length;
+  }
   return {
     skipped: false,
     segments: segments.length,
+    prunedSegments,
     bytes: segments.reduce((sum, segment) => sum + payloadBytes(segment.payload), 0),
   };
 }
