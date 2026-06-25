@@ -3810,6 +3810,59 @@
           "issues": []
         }
       ]
+    },
+    "2026-06-26": {
+      "runs": [
+        {
+          "timestamp": "2026-06-25T23:46:39.626Z",
+          "stats": {
+            "today": "2026-06-26",
+            "tomorrow": "2026-06-27",
+            "dataPresent": true,
+            "lastRun": 1782419248229,
+            "ageMinutes": 199,
+            "maxWorkerAgeMinutes": 180,
+            "todayMatches": 6,
+            "tomorrowMatches": 6,
+            "fixtureCalendar": {
+              "status": "has_current_matches",
+              "healthy": true,
+              "emptyWindowOk": true,
+              "severity": "none",
+              "todayCount": 6,
+              "tomorrowCount": 6,
+              "windowDays": 7,
+              "checkedDates": [
+                "2026-06-26",
+                "2026-06-27",
+                "2026-06-28",
+                "2026-06-29",
+                "2026-06-30",
+                "2026-07-01",
+                "2026-07-02"
+              ],
+              "nextMatchDate": "2026-06-26",
+              "nextMatchCount": 6,
+              "explanation": "Vandaag of morgen staan er wedstrijden in de actuele data."
+            },
+            "liveMatches": 0,
+            "liveWithoutMinute": 0,
+            "h2hFilled": 1,
+            "h2hMissing": 5,
+            "standingsCount": 0,
+            "cupSheetCount": 1,
+            "phaseReliabilityCount": 1
+          },
+          "issues": [
+            {
+              "key": "worker_stale",
+              "severity": "high",
+              "message": "Workerdata is 199 minuten oud.",
+              "details": {}
+            }
+          ]
+        }
+      ]
     }
   }
 }

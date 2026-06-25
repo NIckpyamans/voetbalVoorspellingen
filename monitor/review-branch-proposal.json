@@ -1,16 +1,16 @@
 {
-  "generatedAt": "2026-06-24T23:35:01.179Z",
-  "date": "2026-06-25",
+  "generatedAt": "2026-06-25T23:46:39.747Z",
+  "date": "2026-06-26",
   "proposalOnly": true,
-  "shouldPropose": false,
-  "branchName": "codex/review-20260625",
-  "summary": "Geen reviewbranch nodig op 2026-06-25.",
+  "shouldPropose": true,
+  "branchName": "codex/review-20260626",
+  "summary": "AI reviewvoorstel voor 2026-06-26: 1 aandachtspunt(en) met patchadvies, niet automatisch live.",
   "latestStats": {
-    "today": "2026-06-25",
-    "tomorrow": "2026-06-26",
+    "today": "2026-06-26",
+    "tomorrow": "2026-06-27",
     "dataPresent": true,
-    "lastRun": 1782337833689,
-    "ageMinutes": 104,
+    "lastRun": 1782419248229,
+    "ageMinutes": 199,
     "maxWorkerAgeMinutes": 180,
     "todayMatches": 6,
     "tomorrowMatches": 6,
@@ -23,27 +23,43 @@
       "tomorrowCount": 6,
       "windowDays": 7,
       "checkedDates": [
-        "2026-06-25",
         "2026-06-26",
         "2026-06-27",
         "2026-06-28",
         "2026-06-29",
         "2026-06-30",
-        "2026-07-01"
+        "2026-07-01",
+        "2026-07-02"
       ],
-      "nextMatchDate": "2026-06-25",
+      "nextMatchDate": "2026-06-26",
       "nextMatchCount": 6,
       "explanation": "Vandaag of morgen staan er wedstrijden in de actuele data."
     },
     "liveMatches": 0,
     "liveWithoutMinute": 0,
-    "h2hFilled": 2,
-    "h2hMissing": 4,
+    "h2hFilled": 1,
+    "h2hMissing": 5,
     "standingsCount": 0,
     "cupSheetCount": 1,
     "phaseReliabilityCount": 1
   },
-  "findings": [],
-  "recommendedFiles": [],
-  "nextStep": "Geen actie nodig; monitor blijft op de achtergrond doorlopen."
+  "findings": [
+    {
+      "priority": 1,
+      "key": "worker_stale",
+      "severity": "high",
+      "message": "Workerdata is 199 minuten oud.",
+      "whyItMatters": "Workerdata is te oud en verdient een workflow- of broncheck.",
+      "recommendedFiles": [
+        ".github/workflows/worker.yml",
+        "scripts/server-worker.js"
+      ],
+      "details": {}
+    }
+  ],
+  "recommendedFiles": [
+    ".github/workflows/worker.yml",
+    "scripts/server-worker.js"
+  ],
+  "nextStep": "Gebruik deze proposal om gericht een reviewbranch te maken en alleen na controle te mergen."
 }
