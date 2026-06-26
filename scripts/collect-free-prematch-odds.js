@@ -10,8 +10,22 @@ const leagues = ["E0", "E1", "N1", "N2", "D1", "SP1", "SP2", "I1", "F1", "B1", "
 const digest = (value) => crypto.createHash("sha1").update(String(value)).digest("hex").slice(0, 22);
 const normalize = (value) => String(value || "").toLowerCase().normalize("NFKD").replace(/[\u0300-\u036f]/g, "").replace(/[^a-z0-9]+/g, "");
 const now = new Date();
+const todayKey = now.toISOString().slice(0, 10);
+const fetchTimeoutMs = Number(process.env.ODDS_FETCH_TIMEOUT_MS || 8000);
 const start = now.getUTCMonth() + 1 >= 7 ? now.getUTCFullYear() : now.getUTCFullYear() - 1;
 const folders = [`${String(start).slice(2)}${String(start + 1).slice(2)}`, `${String(start + 1).slice(2)}${String(start + 2).slice(2)}`];
+async function fetchWithTimeout(url) {
+  const controller = new AbortController();
+  const timeout = setTimeout(() => controller.abort(), fetchTimeoutMs);
+  try {
+    return await fetch(url, {
+      signal: controller.signal,
+      headers: { Accept: "text/csv,text/plain,*/*", "User-Agent": "FootyPredict odds collector" },
+    });
+  } finally {
+    clearTimeout(timeout);
+  }
+}
 function parseCsv(text) {
   const lines = text.replace(/^\uFEFF/, "").split(/\r?\n/).filter(Boolean);
   const headers = lines.shift()?.split(",") || [];
@@ -33,12 +47,13 @@ const errors = [];
 for (const folder of folders) for (const code of leagues) {
   const url = `https://www.football-data.co.uk/mmz4281/${folder}/${code}.csv`;
   try {
-    const response = await fetch(url);
+    const response = await fetchWithTimeout(url);
     if (!response.ok) continue;
     const fetchedAt = new Date().toISOString();
     for (const row of parseCsv(await response.text())) {
       const dateKey = parseDate(row.Date);
       if (!dateKey || !row.HomeTeam || !row.AwayTeam) continue;
+      if (dateKey < todayKey) continue;
       const [match] = await sql.query(
         `select match_id,kickoff_at from matches where date_key=$1 and identity_status='resolved'
          and regexp_replace(lower(home_team_name),'[^a-z0-9]','','g')=$2
