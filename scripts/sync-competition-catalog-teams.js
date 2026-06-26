@@ -43,17 +43,58 @@ async function fetchTeams(code) {
 
 const catalog = JSON.parse(fs.readFileSync(catalogPath, "utf8"));
 const summary = [];
+const warnings = [];
 let changed = false;
 
 for (const competition of catalog.competitions || []) {
   const code = leagueCodes[competition.slug];
   if (!code) continue;
-  const teams = await fetchTeams(code);
-  if (!teams.length) throw new Error(`Geen teams ontvangen voor ${competition.league} (${code})`);
-  if (Number(competition.expectedTeams || 0) && teams.length !== Number(competition.expectedTeams)) {
-    throw new Error(
-      `${competition.league}: ${teams.length} teams ontvangen, ${competition.expectedTeams} verwacht; catalogus niet overschreven`
-    );
+  let teams = [];
+  try {
+    teams = await fetchTeams(code);
+  } catch (error) {
+    warnings.push({ league: competition.league, code, reason: error.message, action: "kept_existing_membership" });
+  }
+  const expectedTeams = Number(competition.expectedTeams || 0);
+  const existingTeams = Array.isArray(competition.teams) ? competition.teams : [];
+  if (!teams.length) {
+    if (existingTeams.length) {
+      warnings.push({
+        league: competition.league,
+        code,
+        reason: "provider_returned_no_teams",
+        action: "kept_existing_membership",
+        existingTeams: existingTeams.length,
+      });
+      summary.push({
+        league: competition.league,
+        code,
+        teams: existingTeams.length,
+        status: competition.membershipStatus || "existing_membership_retained",
+        warning: "provider_returned_no_teams",
+      });
+      continue;
+    }
+    warnings.push({ league: competition.league, code, reason: "provider_returned_no_teams", action: "skipped_no_existing_membership" });
+    continue;
+  }
+  if (expectedTeams && teams.length !== expectedTeams) {
+    warnings.push({
+      league: competition.league,
+      code,
+      reason: `provider_returned_${teams.length}_teams_expected_${expectedTeams}`,
+      action: existingTeams.length ? "kept_existing_membership" : "accepted_provider_membership_without_expected_count",
+    });
+    if (existingTeams.length) {
+      summary.push({
+        league: competition.league,
+        code,
+        teams: existingTeams.length,
+        status: competition.membershipStatus || "existing_membership_retained",
+        warning: "provider_count_mismatch",
+      });
+      continue;
+    }
   }
 
   const isUefa = code.startsWith("uefa.");
@@ -75,4 +116,4 @@ if (changed) catalog.generatedAt = new Date().toISOString();
 catalog.policy =
   "Historical seasons remain immutable. Domestic memberships are provider-confirmed; UEFA lists remain provisional until qualification is complete. Every planned table starts at zero.";
 if (changed) fs.writeFileSync(catalogPath, `${JSON.stringify(catalog, null, 2)}\n`);
-console.log(JSON.stringify({ ok: true, changed, competitions: summary.length, summary }, null, 2));
+console.log(JSON.stringify({ ok: true, changed, competitions: summary.length, warnings, summary }, null, 2));

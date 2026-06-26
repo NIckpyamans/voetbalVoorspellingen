@@ -16,6 +16,11 @@ jobs:
           node-version: 22
           cache: npm
       - run: npm ci
+      - name: Maintain Neon storage budget before heavy writes
+        run: npm run db:neon-storage:maintain
+        env:
+          DATABASE_URL: ${{ secrets.DATABASE_URL }}
+          POSTGRES_URL: ${{ secrets.POSTGRES_URL }}
       - name: Apply database contracts
         run: npm run db:schema:apply
         env:

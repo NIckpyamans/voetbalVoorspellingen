@@ -2,9 +2,16 @@
 
 import { getSql, loadLocalEnv } from "../shared/database.js";
 
-const LIMIT_BYTES = 5 * 1024 * 1024 * 1024;
-const WARNING_RATIO = 0.8;
+const DEFAULT_LIMIT_BYTES = 512 * 1024 * 1024;
+const LIMIT_BYTES = Number(process.env.NEON_STORAGE_LIMIT_BYTES || process.env.DATABASE_STORAGE_LIMIT_BYTES || DEFAULT_LIMIT_BYTES);
+const WARNING_RATIO = Number(process.env.NEON_STORAGE_WARNING_RATIO || 0.8);
+const CRITICAL_RATIO = Number(process.env.NEON_STORAGE_CRITICAL_RATIO || 0.95);
 const APPLY = process.argv.includes("--apply");
+
+function formatLimit(bytes) {
+  if (bytes >= 1024 * 1024 * 1024) return `${Number((bytes / 1024 / 1024 / 1024).toFixed(2))} GB`;
+  return `${Math.round(bytes / 1024 / 1024)} MB`;
+}
 
 loadLocalEnv(process.cwd());
 const sql = getSql();
@@ -43,9 +50,9 @@ async function measure() {
       bytes,
       pretty: database?.pretty || "0 bytes",
       limitBytes: LIMIT_BYTES,
-      limitPretty: "5 GB",
+      limitPretty: formatLimit(LIMIT_BYTES),
       usedPercent: Number(((bytes / LIMIT_BYTES) * 100).toFixed(2)),
-      status: bytes >= LIMIT_BYTES ? "critical" : bytes >= LIMIT_BYTES * WARNING_RATIO ? "warning" : "healthy",
+      status: bytes >= LIMIT_BYTES * CRITICAL_RATIO ? "critical" : bytes >= LIMIT_BYTES * WARNING_RATIO ? "warning" : "healthy",
     },
     tables,
     appStateSegments: segments,
@@ -56,13 +63,39 @@ const before = await measure();
 const cleanup = [];
 if (APPLY) {
   // These rows are derived caches or monitoring history. Canonical football and model data is retained.
+  const pressureBeforeCleanup = before.database.bytes >= LIMIT_BYTES * WARNING_RATIO;
+  const backupRetention = pressureBeforeCleanup ? 5 : 14;
+  const appStateRetentionDays = pressureBeforeCleanup ? 2 : 3;
   cleanup.push({
     target: "stale prediction snapshot cache chunks",
     rows: Number((await sql.query(`
       with deleted as (
         delete from app_state_segments
         where segment_group = 'predictionSnapshots'
-          and updated_at < now() - interval '3 days'
+          and updated_at < now() - ($1::text || ' days')::interval
+        returning 1
+      ) select count(*)::int as rows from deleted
+    `, [appStateRetentionDays]))[0]?.rows || 0),
+  });
+  if (pressureBeforeCleanup) {
+    cleanup.push({
+      target: "non-canonical app state cache older than pressure window",
+      rows: Number((await sql.query(`
+        with deleted as (
+          delete from app_state_segments
+          where segment_group in ('root', 'matches', 'predictions')
+            and updated_at < now() - interval '2 days'
+          returning 1
+        ) select count(*)::int as rows from deleted
+      `))[0]?.rows || 0),
+    });
+  }
+  cleanup.push({
+    target: "old prediction source audit rows beyond retention",
+    rows: Number((await sql.query(`
+      with deleted as (
+        delete from source_audit
+        where as_of < now() - interval '400 days'
         returning 1
       ) select count(*)::int as rows from deleted
     `))[0]?.rows || 0),
@@ -100,7 +133,7 @@ if (APPLY) {
     `))[0]?.rows || 0),
   });
   cleanup.push({
-    target: "encrypted recovery backups beyond latest 14 per type",
+    target: `encrypted recovery backups beyond latest ${backupRetention} per type`,
     rows: Number((await sql.query(`
       with ranked as (
         select backup_id,
@@ -109,20 +142,29 @@ if (APPLY) {
       ), deleted as (
         delete from encrypted_database_backups b
         using ranked r
-        where b.backup_id = r.backup_id and r.retention_rank > 14
+        where b.backup_id = r.backup_id and r.retention_rank > $1
         returning 1
       ) select count(*)::int as rows from deleted
-    `))[0]?.rows || 0),
+    `, [backupRetention]))[0]?.rows || 0),
   });
+  for (const table of ["app_state_segments", "encrypted_database_backups", "source_audit", "integrity_metric_snapshots", "provider_trust_history"]) {
+    try {
+      await sql.query(`vacuum (analyze) ${table}`);
+      cleanup.push({ target: `vacuum analyze ${table}`, rows: 0 });
+    } catch (error) {
+      cleanup.push({ target: `vacuum analyze ${table}`, error: error.message });
+    }
+  }
 }
 
-  const after = APPLY ? await measure() : before;
+const after = APPLY ? await measure() : before;
 const report = {
   generatedAt: new Date().toISOString(),
   mode: APPLY ? "apply" : "audit",
   policy: {
-    storageLimit: "5 GB",
-    warningAt: "80%",
+    storageLimit: formatLimit(LIMIT_BYTES),
+    warningAt: `${Math.round(WARNING_RATIO * 100)}%`,
+    criticalAt: `${Math.round(CRITICAL_RATIO * 100)}%`,
     canonicalDataRetained: ["matches", "prediction_snapshots", "prediction_evaluations", "odds", "H2H", "source lineage"],
   },
   before,
