@@ -37,10 +37,11 @@ jobs:
           DATABASE_URL: ${{ secrets.DATABASE_URL }}
           POSTGRES_URL: ${{ secrets.POSTGRES_URL }}
       - name: Complete direct match source lineage
-        run: npm run db:matches:lineage
+        run: npm run db:matches:lineage && npm run db:sources:redundancy:backfill && npm run db:sources:thesportsdb:backfill
         env:
           DATABASE_URL: ${{ secrets.DATABASE_URL }}
           POSTGRES_URL: ${{ secrets.POSTGRES_URL }}
+          THESPORTSDB_API_KEY: ${{ secrets.THESPORTSDB_API_KEY }}
       - name: Score providers, run trials and evaluate shadow calibrations
         run: npm run db:sources:trust && npm run db:sources:circuit-breaker && npm run db:models:recalibrate && npm run db:models:shadow:evaluate && npm run db:models:samples:monitor
         env:

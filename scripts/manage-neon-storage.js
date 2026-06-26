@@ -64,7 +64,7 @@ const cleanup = [];
 if (APPLY) {
   // These rows are derived caches or monitoring history. Canonical football and model data is retained.
   const pressureBeforeCleanup = before.database.bytes >= LIMIT_BYTES * WARNING_RATIO;
-  const backupRetention = pressureBeforeCleanup ? 5 : 14;
+  const backupRetention = pressureBeforeCleanup ? 1 : 3;
   const appStateRetentionDays = pressureBeforeCleanup ? 2 : 3;
   cleanup.push({
     target: "stale prediction snapshot cache chunks",
@@ -153,6 +153,16 @@ if (APPLY) {
       cleanup.push({ target: `vacuum analyze ${table}`, rows: 0 });
     } catch (error) {
       cleanup.push({ target: `vacuum analyze ${table}`, error: error.message });
+    }
+  }
+  if (pressureBeforeCleanup) {
+    for (const table of ["encrypted_database_backups", "app_state_segments"]) {
+      try {
+        await sql.query(`vacuum (full, analyze) ${table}`);
+        cleanup.push({ target: `vacuum full analyze ${table}`, rows: 0 });
+      } catch (error) {
+        cleanup.push({ target: `vacuum full analyze ${table}`, error: error.message });
+      }
     }
   }
 }
