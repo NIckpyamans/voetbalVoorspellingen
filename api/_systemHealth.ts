@@ -94,6 +94,65 @@ function sourceStatus(meta: any) {
   }));
 }
 
+async function fetchDatabaseHealthSnapshot(today: string, yesterday: string, tomorrow: string) {
+  const sql = getSql();
+  if (!sql) return null;
+  try {
+    const windowEnd = addDaysToDateKey(today, 7);
+    const [freshnessRows, dayRows, summaryRows] = await Promise.all([
+      sql.query(`
+        select greatest(
+          coalesce((select max(updated_at) from app_state_segments), 'epoch'::timestamptz),
+          coalesce((select max(updated_at) from matches), 'epoch'::timestamptz),
+          coalesce((select max(generated_at) from prediction_snapshots), 'epoch'::timestamptz)
+        ) as latest_update
+      `),
+      sql.query(
+        `select date_key::text as date_key, count(1)::int as matches
+         from matches
+         where date_key::date between $1::date and $2::date
+         group by date_key
+         order by date_key`,
+        [yesterday, windowEnd]
+      ),
+      sql.query(`
+        select
+          (select count(distinct competition_id)::int from standings_snapshots) as standings_count,
+          (select count(1)::int from h2h_edges) as h2h_edges,
+          (select count(1)::int from prediction_snapshots) as prediction_snapshots,
+          (select count(1)::int from prediction_evaluations) as review_count,
+          (select count(1)::int from app_state_segments where segment_group='root') as root_segments
+      `),
+    ]);
+    const latestUpdate = freshnessRows[0]?.latest_update || null;
+    const lastRun = latestUpdate ? Date.parse(latestUpdate) : 0;
+    const days = Object.fromEntries(
+      dayRows.map((row: any) => [row.date_key, { count: Number(row.matches || 0) }])
+    );
+    const summary = summaryRows[0] || {};
+    return {
+      available: true,
+      source: "neon",
+      lastRun,
+      dates: dayRows.map((row: any) => row.date_key),
+      days,
+      counts: {
+        yesterday: Number(days[yesterday]?.count || 0),
+        today: Number(days[today]?.count || 0),
+        tomorrow: Number(days[tomorrow]?.count || 0),
+      },
+      standingsCount: Number(summary.standings_count || 0),
+      h2hEdges: Number(summary.h2h_edges || 0),
+      predictionSnapshots: Number(summary.prediction_snapshots || 0),
+      reviewCount: Number(summary.review_count || 0),
+      rootSegments: Number(summary.root_segments || 0),
+    };
+  } catch (error) {
+    logger.warning("database_health_snapshot_failed", { error: getErrorDetails(error) });
+    return null;
+  }
+}
+
 export async function buildSystemHealth(mode = "health") {
   const started = Date.now();
   const today = todayAmsterdamKey();
@@ -119,17 +178,18 @@ export async function buildSystemHealth(mode = "health") {
   const serverDataInfo = getFileInfo("server_data.json");
   const metaInfo = getFileInfo(path.join("data", "meta.json"));
   const standingsInfo = getFileInfo(path.join("data", "standings.json"));
+  const databaseHealth = await fetchDatabaseHealthSnapshot(today, yesterday, tomorrow);
 
-  const lastRun = Number(meta?.lastRun || 0);
+  const lastRun = Number(databaseHealth?.lastRun || meta?.lastRun || 0);
   const ageMinutes = lastRun ? Math.round((Date.now() - lastRun) / 60_000) : null;
-  const counts = {
+  const counts = databaseHealth?.counts || {
     yesterday: countMatches(remoteYesterday.available ? remoteYesterday.data : readLocalDay(yesterday)),
     today: countMatches(remoteToday.available ? remoteToday.data : readLocalDay(today)),
     tomorrow: countMatches(remoteTomorrow.available ? remoteTomorrow.data : readLocalDay(tomorrow)),
   };
   const lastRunFresh = !!lastRun && ageMinutes != null && ageMinutes <= MAX_FRESH_AGE_MINUTES;
-  const knownDates = Array.isArray(meta?.dates) ? meta.dates : [yesterday, today, tomorrow];
-  const fixtureDays = Object.fromEntries(
+  const knownDates = databaseHealth?.dates?.length ? databaseHealth.dates : (Array.isArray(meta?.dates) ? meta.dates : [yesterday, today, tomorrow]);
+  const fixtureDays = databaseHealth?.days || Object.fromEntries(
     knownDates.map((dateKey: string) => {
       const remoteDay =
         dateKey === yesterday
@@ -153,12 +213,13 @@ export async function buildSystemHealth(mode = "health") {
   });
 
   const checks = {
-    storage: serverDataInfo.exists || metaInfo.exists || remoteMeta.available,
-    splitData: remoteMeta.available && remoteStandings.available,
+    storage: !!databaseHealth || serverDataInfo.exists || metaInfo.exists || remoteMeta.available,
+    splitData: !!databaseHealth || (remoteMeta.available && remoteStandings.available),
     workerFresh: lastRunFresh,
     todayOrTomorrowData: counts.today > 0 || counts.tomorrow > 0 || fixtureCalendar.emptyWindowOk,
     fixtureCalendar: fixtureCalendar.healthy,
     standings:
+      Number(databaseHealth?.standingsCount || 0) > 0 ||
       Object.keys(standings?.standings || {}).length > 0 ||
       Object.keys(standings?.cupSheets || {}).length > 0 ||
       Object.keys(standings?.knockoutOverview || {}).length > 0,
@@ -185,14 +246,17 @@ export async function buildSystemHealth(mode = "health") {
       refreshCadence: "live-score elke 2 uur, volledige worker 2x per dag",
       workerVersion: meta?.workerVersion || "unknown",
       sourceBranch: meta?.sourceBranch || remoteMeta.branch || process.env.DATA_BRANCH || process.env.VERCEL_GIT_COMMIT_REF || "unknown",
+      sourceOfTruth: databaseHealth ? "neon" : "json-cache",
     },
     data: {
       dates: { yesterday, today, tomorrow },
       matchCounts: counts,
       fixtureCalendar,
-      standingsCount: Object.keys(standings?.standings || {}).length,
+      standingsCount: Number(databaseHealth?.standingsCount || 0) || Object.keys(standings?.standings || {}).length,
       cupSheetCount: Object.keys(standings?.cupSheets || {}).length,
-      reviewCount: Number(meta?.reviewCount || 0),
+      reviewCount: Number(databaseHealth?.reviewCount || meta?.reviewCount || 0),
+      h2hEdges: Number(databaseHealth?.h2hEdges || 0),
+      predictionSnapshots: Number(databaseHealth?.predictionSnapshots || 0),
       teamLearningCount: Number(meta?.teamLearningCount || 0),
       sourceCoverage: meta?.sourceCoverage || null,
       dataCompletenessAudit: meta?.dataCompletenessAudit || null,
@@ -216,6 +280,12 @@ export async function buildSystemHealth(mode = "health") {
           nextKnown: { date: nextKnownDate, available: remoteNextKnown.available, branch: remoteNextKnown.branch, cached: remoteNextKnown.cached },
         },
       },
+      database: databaseHealth ? {
+        available: true,
+        rootSegments: databaseHealth.rootSegments,
+        predictionSnapshots: databaseHealth.predictionSnapshots,
+        h2hEdges: databaseHealth.h2hEdges,
+      } : { available: false },
     },
     externalSources: sourceStatus(meta),
     checks,
