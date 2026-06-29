@@ -1,49 +1,31 @@
 {
-  "generatedAt": "2026-06-28T23:19:33.542Z",
-  "date": "2026-06-29",
+  "generatedAt": "2026-06-29T23:16:54.027Z",
+  "date": "2026-06-30",
   "proposalOnly": true,
-  "shouldPropose": false,
-  "branchName": "codex/review-20260629",
-  "summary": "Geen reviewbranch nodig op 2026-06-29.",
+  "shouldPropose": true,
+  "branchName": "codex/review-20260630",
+  "summary": "AI reviewvoorstel voor 2026-06-30: 1 aandachtspunt(en) met patchadvies, niet automatisch live.",
   "latestStats": {
-    "today": "2026-06-29",
-    "tomorrow": "2026-06-30",
-    "dataPresent": true,
-    "lastRun": 1782681952836,
-    "ageMinutes": 114,
-    "maxWorkerAgeMinutes": 180,
-    "todayMatches": 2,
-    "tomorrowMatches": 3,
-    "fixtureCalendar": {
-      "status": "has_current_matches",
-      "healthy": true,
-      "emptyWindowOk": true,
-      "severity": "none",
-      "todayCount": 2,
-      "tomorrowCount": 3,
-      "windowDays": 7,
-      "checkedDates": [
-        "2026-06-29",
-        "2026-06-30",
-        "2026-07-01",
-        "2026-07-02",
-        "2026-07-03",
-        "2026-07-04",
-        "2026-07-05"
-      ],
-      "nextMatchDate": "2026-06-29",
-      "nextMatchCount": 2,
-      "explanation": "Vandaag of morgen staan er wedstrijden in de actuele data."
-    },
-    "liveMatches": 0,
-    "liveWithoutMinute": 0,
-    "h2hFilled": 2,
-    "h2hMissing": 0,
-    "standingsCount": 0,
-    "cupSheetCount": 1,
-    "phaseReliabilityCount": 1
+    "today": "2026-06-30",
+    "dataPresent": false
   },
-  "findings": [],
-  "recommendedFiles": [],
-  "nextStep": "Geen actie nodig; monitor blijft op de achtergrond doorlopen."
+  "findings": [
+    {
+      "priority": 1,
+      "key": "worker_data_missing",
+      "severity": "high",
+      "message": "Workerdata ontbreekt of is ongeldig.",
+      "whyItMatters": "Gerichte patch nodig in worker en UI.",
+      "recommendedFiles": [
+        "scripts/server-worker.js",
+        "components/MatchCard.tsx"
+      ],
+      "details": {}
+    }
+  ],
+  "recommendedFiles": [
+    "scripts/server-worker.js",
+    "components/MatchCard.tsx"
+  ],
+  "nextStep": "Gebruik deze proposal om gericht een reviewbranch te maken en alleen na controle te mergen."
 }

@@ -1,6 +1,6 @@
 {
-  "generatedAt": "2026-06-28T23:19:33.616Z",
-  "date": "2026-06-29",
+  "generatedAt": "2026-06-29T23:16:56.002Z",
+  "date": "2026-06-30",
   "name": "Ruflo-style gratis AI monitor",
   "mode": "naast-productie",
   "productionSafe": true,
@@ -81,14 +81,32 @@
       "actions": []
     },
     "control": {
-      "score": 100,
-      "summary": "Ontwikkelcontrole: 0 actieve monitorissues op 2026-06-29; digest 2026-05-31 t/m 2026-06-13.",
-      "latestDay": "2026-06-29",
-      "shouldPropose": false,
-      "actions": []
+      "score": 52,
+      "summary": "Ontwikkelcontrole: 1 actieve monitorissues op 2026-06-30; digest 2026-05-31 t/m 2026-06-13.",
+      "latestDay": "2026-06-30",
+      "shouldPropose": true,
+      "actions": [
+        {
+          "priority": "high",
+          "title": "Workerdata ontbreekt of is ongeldig.",
+          "freeSolution": "Gebruik bestaande gratis workerdata en maak een reviewbranch-voorstel in plaats van blind live wijzigen.",
+          "files": [
+            "scripts/server-worker.js"
+          ],
+          "status": "monitor"
+        }
+      ]
     }
   },
   "topThemes": [
+    {
+      "title": "Workerdata ontbreekt of is ongeldig.",
+      "count": 1,
+      "priority": "high",
+      "agents": [
+        "control"
+      ]
+    },
     {
       "title": "H2H-backfill verder vullen",
       "count": 1,
@@ -99,6 +117,16 @@
     }
   ],
   "recommendedNextActions": [
+    {
+      "priority": "high",
+      "title": "Workerdata ontbreekt of is ongeldig.",
+      "freeSolution": "Gebruik bestaande gratis workerdata en maak een reviewbranch-voorstel in plaats van blind live wijzigen.",
+      "files": [
+        "scripts/server-worker.js"
+      ],
+      "status": "monitor",
+      "agent": "control"
+    },
     {
       "priority": "medium",
       "title": "H2H-backfill verder vullen",
