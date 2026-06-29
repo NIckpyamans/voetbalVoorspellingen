@@ -37,6 +37,11 @@ const FOOTBALL_DATA_LEAGUES = [
   { country: "Spain", league: "Spain - LaLiga", code: "SP1", level: 1 },
   { country: "Italy", league: "Italy - Serie A", code: "I1", level: 1 },
   { country: "France", league: "France - Ligue 1", code: "F1", level: 1 },
+  { country: "France", league: "France - Ligue 2", code: "F2", level: 2 },
+  { country: "Portugal", league: "Portugal - Liga Portugal", code: "P1", level: 1 },
+  { country: "Portugal", league: "Portugal - Liga Portugal 2", code: "P2", level: 2 },
+  { country: "Belgium", league: "Belgium - Pro League", code: "B1", level: 1 },
+  { country: "Belgium", league: "Belgium - Challenger Pro League", code: "B2", level: 2 },
 ];
 
 const OPENFOOTBALL_COMPETITIONS = [

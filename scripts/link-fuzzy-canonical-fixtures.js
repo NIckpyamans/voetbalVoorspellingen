@@ -64,6 +64,49 @@ const TEAM_EQUIVALENTS = new Map(Object.entries({
   "bayer 04 leverkusen": "bayer leverkusen",
   "dortmund": "borussia dortmund",
   "rb leipzig": "leipzig",
+  "stade brestois 29": "brest",
+  "brestois": "brest",
+  "stade rennais 1901": "rennes",
+  "stade rennais": "rennes",
+  "rennais": "rennes",
+  "angers sco": "angers",
+  "olympique lyonnais": "lyon",
+  "ol lyonnais": "lyon",
+  "olympique de marseille": "marseille",
+  "om": "marseille",
+  "paris fc": "paris fc",
+  "rc strasbourg alsace": "strasbourg",
+  "rc strasbourg": "strasbourg",
+  "fc nantes": "nantes",
+  "fc lorient": "lorient",
+  "toulouse fc": "toulouse",
+  "havre ac": "le havre",
+  "le havre ac": "le havre",
+  "as monaco": "monaco",
+  "fc metz": "metz",
+  "osc lille": "lille",
+  "losc lille": "lille",
+  "sl benfica": "benfica",
+  "sport lisboa e benfica": "benfica",
+  "sporting cp": "sporting lisbon",
+  "sporting clube de portugal": "sporting lisbon",
+  "fc porto": "porto",
+  "sc braga": "braga",
+  "sporting braga": "braga",
+  "vitoria guimaraes": "guimaraes",
+  "vitoria sc": "guimaraes",
+  "gil vicente fc": "gil vicente",
+  "rio ave fc": "rio ave",
+  "fc famalicao": "famalicao",
+  "estrela amadora": "estrela",
+  "cf estrela amadora": "estrela",
+  "avs futebol sad": "avs",
+  "cd nacional": "nacional",
+  "cd santa clara": "santa clara",
+  "fc arouca": "arouca",
+  "gd estoril praia": "estoril",
+  "estoril praia": "estoril",
+  "moreirense fc": "moreirense",
 }));
 
 function digest(value, size = 24) {
@@ -84,7 +127,8 @@ function slug(value) {
 
 function normalizeTeam(value) {
   const raw = slug(value)
-    .replace(/\b(football club|futbol club|club de futbol|de futbol|fc|afc|cf|sc|ssc|ac|as|calcio|club|de|la|the)\b/g, " ")
+    .replace(/\b(football club|futbol club|club de futbol|de futbol|fc|afc|cf|sc|ssc|ac|as|calcio|club|stade|olympique|royal|koninklijke|de|la|the)\b/g, " ")
+    .replace(/\b(19|18|20)?\d{2}\b/g, " ")
     .replace(/\butd\b/g, "united")
     .replace(/\bmunchen\b/g, "munich")
     .replace(/\bkoln\b/g, "koln")
