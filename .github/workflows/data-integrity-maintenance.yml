@@ -36,6 +36,11 @@ jobs:
         env:
           DATABASE_URL: ${{ secrets.DATABASE_URL }}
           POSTGRES_URL: ${{ secrets.POSTGRES_URL }}
+      - name: Link fuzzy canonical fixtures and club aliases
+        run: npm run db:fixtures:fuzzy-link:apply
+        env:
+          DATABASE_URL: ${{ secrets.DATABASE_URL }}
+          POSTGRES_URL: ${{ secrets.POSTGRES_URL }}
       - name: Complete direct match source lineage
         run: npm run db:matches:lineage && npm run db:sources:redundancy:backfill && npm run db:sources:thesportsdb:backfill
         env:

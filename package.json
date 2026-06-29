@@ -51,6 +51,8 @@
     "db:clubs:merge:rollback": "node scripts/rollback-club-merge.js",
     "db:statsbomb:repair-competitions": "node scripts/repair-statsbomb-competitions.js",
     "db:fixtures:merge": "node scripts/merge-canonical-fixtures.js",
+    "db:fixtures:fuzzy-link": "node scripts/link-fuzzy-canonical-fixtures.js",
+    "db:fixtures:fuzzy-link:apply": "node scripts/link-fuzzy-canonical-fixtures.js --apply",
     "db:matches:quarantine": "node scripts/quarantine-unresolved-matches.js",
     "db:matches:resolve": "node scripts/resolve-quarantined-matches.js",
     "db:matches:lineage": "node scripts/backfill-match-source-lineage.js",
