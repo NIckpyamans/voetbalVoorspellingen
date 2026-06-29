@@ -7,7 +7,7 @@ const sql = getSql();
 if (!sql) process.exit(2);
 const limit = Math.max(1, Number(process.env.PREDICTION_EVALUATION_LIMIT || 1000));
 const rows = await sql.query(`
-  select ps.prediction_id, ps.match_id, ps.probabilities, ps.expected_score, ps.prediction_payload,
+  select ps.prediction_id, ps.match_id, ps.probabilities, ps.expected_score,
     m.kickoff_at, mr.final_home_goals, mr.final_away_goals, mr.actual_outcome,
     os.home odds_home, os.draw odds_draw, os.away odds_away, os.captured_at odds_captured_at,
     os.odds_role, os.available_before_kickoff, os.minutes_before_kickoff,
@@ -32,9 +32,8 @@ const rows = await sql.query(`
 const clamp = (value) => Math.max(1e-9, Math.min(1 - 1e-9, Number(value || 0)));
 let evaluated = 0;
 for (const row of rows) {
-  const payload = row.prediction_payload || {};
-  const probabilities = row.probabilities || payload.probabilities || {};
-  const raw = [Number((probabilities.home ?? payload.homeProb) || 0), Number((probabilities.draw ?? payload.drawProb) || 0), Number((probabilities.away ?? payload.awayProb) || 0)];
+  const probabilities = row.probabilities || {};
+  const raw = [Number(probabilities.home || 0), Number(probabilities.draw || 0), Number(probabilities.away || 0)];
   const total = raw.reduce((sum, value) => sum + Math.max(0, value), 0);
   if (total <= 0) continue;
   const [home, draw, away] = raw.map((value) => clamp(Math.max(0, value) / total));
@@ -42,9 +41,9 @@ for (const row of rows) {
   const vector = { H: [1, 0, 0], D: [0, 1, 0], A: [0, 0, 1] }[row.actual_outcome];
   const predicted = [["H", home], ["D", draw], ["A", away]].sort((a, b) => b[1] - a[1])[0][0];
   const actualProbability = row.actual_outcome === "H" ? home : row.actual_outcome === "D" ? draw : away;
-  const expected = row.expected_score || payload.expectedScore || {};
-  const expectedHome = Number(expected.home ?? payload.predHomeGoals);
-  const expectedAway = Number(expected.away ?? payload.predAwayGoals);
+  const expected = row.expected_score || {};
+  const expectedHome = Number(expected.home);
+  const expectedAway = Number(expected.away);
   const exact = Number.isFinite(expectedHome) && Number.isFinite(expectedAway) ? expectedHome === Number(row.final_home_goals) && expectedAway === Number(row.final_away_goals) : null;
   const brier = ((home-vector[0])**2 + (draw-vector[1])**2 + (away-vector[2])**2) / 3;
   const odds = predicted === "H" ? row.odds_home : predicted === "D" ? row.odds_draw : row.odds_away;

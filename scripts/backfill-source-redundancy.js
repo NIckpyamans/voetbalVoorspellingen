@@ -81,7 +81,7 @@ const [result] = await sql.query(`
         else 0.62
       end
     from alias_evidence a
-    on conflict (match_source_record_id) do update set
+    on conflict (match_id, source_record_id) do update set
       provider = excluded.provider,
       source_match_id = excluded.source_match_id,
       trust_score = greatest(coalesce(match_source_records.trust_score, 0), coalesce(excluded.trust_score, 0)),
