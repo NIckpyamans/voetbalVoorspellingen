@@ -5,14 +5,7 @@ import path from "path";
 import crypto from "crypto";
 import { spawnSync } from "child_process";
 import { normalizeMinute, parseMinuteValue } from "../shared/minute.js";
-import {
-  WORLD_CUP_LEAGUE,
-  WORLD_FRIENDLY_LEAGUE,
-  TEAMS as WORLD_CUP_TEAMS,
-  buildWorldCup2026ProjectionFromStore,
-  buildWorldCup2026ReadinessFromStore,
-  isWorldCup2026Team,
-} from "../shared/worldCup2026.js";
+import { filterVisibleMatches, isHiddenInternationalOrWorldCupEntity } from "../shared/competitionVisibility.js";
 import {
   buildBacktestSummaryFromReviews,
   buildDataCompletenessAudit,
@@ -31,7 +24,7 @@ import {
   buildRetainedDateSet as buildConfiguredRetainedDateSet,
   toAmsterdamDateKey,
 } from "./worker/date-window.js";
-import { buildCupSheetsFromMatches, mergeCupSheets } from "../shared/cupSheets.js";
+import { buildCupSheetsFromMatches } from "../shared/cupSheets.js";
 import { loadLocalEnv, readDatabaseFeatureContext, syncStoreToDatabase } from "../shared/database.js";
 import {
   createSafeFetch,
@@ -101,9 +94,7 @@ const LEAGUES = [
   { country: "", name: "champions league", label: "Europe - Champions League", type: "cup" },
   { country: "", name: "europa league", label: "Europe - Europa League", type: "cup" },
   { country: "", name: "conference league", label: "Europe - Conference League", type: "cup" },
-  { country: "", name: "fifa world cup", label: WORLD_CUP_LEAGUE, type: "cup" },
   { country: "world", name: "club friendly", label: "World - Club Friendlies", type: "friendly" },
-  { country: "world", name: "international friendly", label: "World - International Friendlies", type: "friendly" },
 ];
 
 const LEAGUE_CALIBRATION_PROFILES = {
@@ -459,16 +450,7 @@ function buildTeamIdentity(homeId, awayId, homeName, awayName, source = "unknown
 }
 
 function lookupWorldCupSeedPosition(teamName) {
-  const normalized = normalizeName(teamName);
-  const entries = Object.entries(WORLD_CUP_TEAMS || {});
-  const hit = entries.find(([, team]) => normalizeName(team?.name) === normalized || buildPossibleNames(team?.name).includes(normalized));
-  if (!hit || !hit[1]?.group) return null;
-  const group = hit[1].group;
-  const groupRows = entries
-    .filter(([, team]) => team?.group === group)
-    .sort((a, b) => Number(b[1]?.strength || 0) - Number(a[1]?.strength || 0));
-  const index = groupRows.findIndex(([code]) => code === hit[0]);
-  return index >= 0 ? index + 1 : null;
+  return null;
 }
 
 function resolveLineupStatus(lineupSummary) {
@@ -1216,8 +1198,6 @@ const SPORTSDB_NAME_TO_LABEL = {
   "Club Friendly": "World - Club Friendlies",
   "Club Friendlies": "World - Club Friendlies",
   "Club Friendly Games": "World - Club Friendlies",
-  "International Friendly": "World - International Friendlies",
-  "International Friendlies": "World - International Friendlies",
   "Belgian Pro League": "Belgium - Pro League",
   "Dutch Eredivisie": "Netherlands - Eredivisie",
   "English League Championship": "England - Championship",
@@ -1242,14 +1222,11 @@ const ESPN_SCOREBOARD_LEAGUES = {
   "Netherlands - Eredivisie": "ned.1",
   "Portugal - Liga Portugal": "por.1",
   "Spain - LaLiga": "esp.1",
-  "World - FIFA World Cup 2026": "fifa.world",
   "World - Club Friendlies": "club.friendly",
-  "World - International Friendlies": "fifa.friendly",
 };
 
 const FRIENDLY_SCOREBOARD_LEAGUES = {
   "World - Club Friendlies": ESPN_SCOREBOARD_LEAGUES["World - Club Friendlies"],
-  "World - International Friendlies": ESPN_SCOREBOARD_LEAGUES["World - International Friendlies"],
 };
 
 function isFriendlyLeagueLabel(label) {
@@ -2382,106 +2359,6 @@ function shouldExcludeEvent(event) {
 }
 
 function getInternationalLeagueInfo(event) {
-  if (shouldExcludeEvent(event)) return null;
-  const tournament = String(
-    event?.uniqueTournament?.name || event?.tournament?.name || ""
-  );
-  const tournamentNorm = normalizeName(tournament);
-  const categoryNorm = normalizeName(event?.tournament?.category?.name || "");
-  const homeCountryNorm = normalizeName(event?.homeTeam?.country?.name || "");
-  const awayCountryNorm = normalizeName(event?.awayTeam?.country?.name || "");
-  const homeName = event?.homeTeam?.name || "";
-  const awayName = event?.awayTeam?.name || "";
-  const hasEuropeanTeam =
-    isEuropeanCountryName(homeCountryNorm) || isEuropeanCountryName(awayCountryNorm);
-  const hasWorldCup2026Team = isWorldCup2026Team(homeName) || isWorldCup2026Team(awayName);
-  const europeanPair =
-    isEuropeanCountryName(homeCountryNorm) && isEuropeanCountryName(awayCountryNorm);
-
-  if (!isSeniorInternationalTournament(tournamentNorm)) return null;
-
-  if (
-    tournamentNorm.includes("world championship qualification") ||
-    tournamentNorm.includes("world championship qual") ||
-    tournamentNorm.includes("world cup qual") ||
-    tournamentNorm.includes("world cup qualification") ||
-    tournamentNorm.includes("fifa world cup qualification")
-  ) {
-    if (categoryNorm.includes("europe") || hasEuropeanTeam || tournamentNorm.includes("uefa")) {
-      return {
-        country: "",
-        name: tournamentNorm,
-        label: "Europe - World Cup Qualification",
-        type: "league",
-      };
-    }
-  }
-
-  if (
-    tournamentNorm.includes("world cup") &&
-    !tournamentNorm.includes("qualification") &&
-    !tournamentNorm.includes("qual")
-  ) {
-    return {
-      country: "",
-      name: tournamentNorm,
-      label: WORLD_CUP_LEAGUE,
-      type: "cup",
-    };
-  }
-
-  if (
-    (tournamentNorm.includes("european championship") && tournamentNorm.includes("qualification")) ||
-    tournamentNorm.includes("euro qualification") ||
-    tournamentNorm.includes("uefa euro qualification")
-  ) {
-    if (categoryNorm.includes("europe") || hasEuropeanTeam) {
-      return {
-        country: "",
-        name: tournamentNorm,
-        label: "Europe - Euro Qualification",
-        type: "league",
-      };
-    }
-  }
-
-  if (tournamentNorm.includes("uefa nations league")) {
-    return {
-      country: "",
-      name: tournamentNorm,
-      label: "Europe - UEFA Nations League",
-      type: "league",
-    };
-  }
-
-  if (
-    tournamentNorm.includes("european championship") &&
-    !tournamentNorm.includes("qualification")
-  ) {
-    if (categoryNorm.includes("europe") || hasEuropeanTeam) {
-      return {
-        country: "",
-        name: tournamentNorm,
-        label: "Europe - European Championship",
-        type: "cup",
-      };
-    }
-  }
-
-  if (
-    (tournamentNorm.includes("friendly games") || tournamentNorm.includes("international friendly")) &&
-    !tournamentNorm.includes("club")
-  ) {
-    if (hasEuropeanTeam || hasWorldCup2026Team || categoryNorm.includes("international") || categoryNorm.includes("world")) {
-      return {
-        country: "",
-        name: tournamentNorm,
-        label: hasEuropeanTeam && !hasWorldCup2026Team ? "Europe - International Friendly" : WORLD_FRIENDLY_LEAGUE,
-        type: "league",
-      };
-    }
-  }
-
   return null;
 }
 
@@ -3897,6 +3774,7 @@ function buildTrainingSnapshot(store) {
     );
 
     for (const match of matches) {
+      if (isHiddenInternationalOrWorldCupEntity(match)) continue;
       const prediction = predictions[match.id] || {};
       const reviewPrediction = selectPredictionForReview(store, match, prediction);
       const label =
@@ -9668,51 +9546,46 @@ function defaultStore() {
     aiAdvice: [],
     competitionArchiveIndex: null,
     teamSquadSummary: null,
-    worldCup2026Readiness: null,
-    worldCup2026Projection: null,
-    worldCup2026Ratings: null,
     lastRun: null,
     workerVersion: MODEL_VERSION,
   };
 }
 
-async function refreshWorldCupNationalRatings(store, now) {
-  const previous = store.worldCup2026Ratings || {};
-  const currentRatings = {};
-  for (const [code, team] of Object.entries(WORLD_CUP_TEAMS || {})) {
-    const seeded = Number(team?.strength || 65);
-    currentRatings[code] = {
-      code,
-      teamName: String(team?.name || code),
-      rating: Number((seeded * 20).toFixed(0)),
-      source: "seeded_country_strength",
-    };
+function removeHiddenInternationalStoreData(store) {
+  const hiddenMatchIds = new Set();
+  for (const [date, matches] of Object.entries(store.matches || {})) {
+    const visibleMatches = filterVisibleMatches(matches);
+    for (const match of matches || []) {
+      if (!visibleMatches.includes(match) && match?.id) hiddenMatchIds.add(match.id);
+    }
+    store.matches[date] = visibleMatches;
   }
 
-  const feedUrl = process.env.NATIONAL_ELO_FEED_URL || "";
-  if (feedUrl) {
-    const external = await fetchExternalJson(feedUrl);
-    const list = Array.isArray(external?.teams) ? external.teams : Array.isArray(external) ? external : [];
-    for (const item of list) {
-      const code = String(item?.code || "").toUpperCase();
-      if (!currentRatings[code]) continue;
-      const rating = Number(item?.rating || item?.elo || item?.points || 0);
-      if (!Number.isFinite(rating) || rating <= 0) continue;
-      currentRatings[code] = {
-        ...currentRatings[code],
-        rating: Number(rating.toFixed(0)),
-        source: String(item?.source || "external_elo_feed"),
-      };
+  for (const [date, predictions] of Object.entries(store.predictions || {})) {
+    store.predictions[date] = (predictions || []).filter((prediction) => {
+      if (hiddenMatchIds.has(prediction?.matchId)) return false;
+      return !isHiddenInternationalOrWorldCupEntity(prediction);
+    });
+  }
+
+  for (const [date, items] of Object.entries(store.knockoutOverview || {})) {
+    store.knockoutOverview[date] = (items || []).filter((item) => !isHiddenInternationalOrWorldCupEntity(item));
+  }
+
+  for (const matchId of hiddenMatchIds) {
+    delete store.postMatchReviews?.[matchId];
+    delete store.predictionSnapshotIndex?.[matchId];
+  }
+
+  for (const [snapshotId, snapshot] of Object.entries(store.predictionSnapshots || {})) {
+    if (hiddenMatchIds.has(snapshot?.matchId) || isHiddenInternationalOrWorldCupEntity(snapshot)) {
+      delete store.predictionSnapshots[snapshotId];
     }
   }
+}
 
-  store.worldCup2026Ratings = {
-    updatedAt: new Date(now).toISOString(),
-    sourceMode: feedUrl ? "seeded_plus_external" : "seed_only",
-    ratings: currentRatings,
-    refreshedBy: "worker",
-    previousUpdatedAt: previous?.updatedAt || null,
-  };
+async function refreshWorldCupNationalRatings(store, now) {
+  return null;
 }
 
 function buildSourceCoverage(store, todayKey) {
@@ -11579,15 +11452,13 @@ async function main() {
   }
 
   applyLiveStandingsOverlay(store);
-  await refreshWorldCupNationalRatings(store, now);
-  store.worldCup2026Projection = buildWorldCup2026ProjectionFromStore(store);
-  store.worldCup2026Readiness = buildWorldCup2026ReadinessFromStore(store);
+  removeHiddenInternationalStoreData(store);
   compactStore(store, today, now);
   rebuildReviewsAndLearning(store);
   store.backtestSegmentation = buildBacktestSegmentation(store);
   rebuildLeagueCalibrationProfilesFromReviews(store);
   const selfHealing = await runSelfHealingRetries(store, today, now);
-  store.cupSheets = mergeCupSheets(store.cupSheets, buildCupSheetsFromMatches(store));
+  store.cupSheets = buildCupSheetsFromMatches(store);
   store.sourceCoverage = buildSourceCoverage(store, today);
   store.dataCompletenessAudit = buildDataCompletenessAudit(store, today);
   store.oddsIntegrationReadiness = buildOddsIntegrationReadiness(store, today);

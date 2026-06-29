@@ -28,8 +28,6 @@ const ESPN_SCOREBOARD_LEAGUES = {
   "Portugal - Liga Portugal": "por.1",
   "Spain - LaLiga": "esp.1",
   "World - Club Friendlies": "club.friendly",
-  "World - FIFA World Cup 2026": "fifa.world",
-  "World - International Friendlies": "fifa.friendly",
 };
 
 function digest(value, size = 24) {

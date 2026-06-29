@@ -88,9 +88,6 @@ export function buildSplitMeta(store) {
     topExactClubs: store.topExactClubs || null,
     competitionArchiveIndex: store.competitionArchiveIndex || null,
     teamSquadSummary: store.teamSquadSummary || null,
-    worldCup2026Readiness: store.worldCup2026Readiness || null,
-    worldCup2026Projection: store.worldCup2026Projection || null,
-    worldCup2026Ratings: store.worldCup2026Ratings || null,
   };
 }
 
@@ -148,16 +145,12 @@ export function writeSplitDataFiles(store, options = {}) {
     topExactClubs: store.topExactClubs || null,
     competitionArchiveIndex: store.competitionArchiveIndex || null,
     teamSquadSummary: store.teamSquadSummary || null,
-    worldCup2026Readiness: store.worldCup2026Readiness || null,
-    worldCup2026Projection: store.worldCup2026Projection || null,
-    worldCup2026Ratings: store.worldCup2026Ratings || null,
     lastRun: store.lastRun || null,
   });
   writeJsonFile(path.join(splitDataDir, "teams.json"), {
     teamSquads: store.teamSquads || {},
     teamTransfers: store.teamTransfers || {},
     teamSquadSummary: store.teamSquadSummary || null,
-    worldCup2026Ratings: store.worldCup2026Ratings || null,
     lastRun: store.lastRun || null,
     workerVersion: store.workerVersion || "unknown",
   });

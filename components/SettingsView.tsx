@@ -28,9 +28,6 @@ const SettingsView: React.FC = () => {
   const [anomalyReport, setAnomalyReport] = useState<any | null>(null);
   const [competitionArchiveIndex, setCompetitionArchiveIndex] = useState<any | null>(null);
   const [teamSquadSummary, setTeamSquadSummary] = useState<any | null>(null);
-  const [worldCupReadiness, setWorldCupReadiness] = useState<any | null>(null);
-  const [worldCupProjection, setWorldCupProjection] = useState<any | null>(null);
-  const [worldCupRatings, setWorldCupRatings] = useState<any | null>(null);
   const [manualAdvice, setManualAdvice] = useState("");
   const [glassTransparency, setGlassTransparency] = useState(46);
   const [settingsWarning, setSettingsWarning] = useState<string | null>(null);
@@ -77,9 +74,6 @@ const SettingsView: React.FC = () => {
       if (data.anomalyReport) setAnomalyReport(data.anomalyReport);
       if (data.competitionArchiveIndex) setCompetitionArchiveIndex(data.competitionArchiveIndex);
       if (data.teamSquadSummary) setTeamSquadSummary(data.teamSquadSummary);
-      if (data.worldCup2026Readiness) setWorldCupReadiness(data.worldCup2026Readiness);
-      if (data.worldCup2026Projection) setWorldCupProjection(data.worldCup2026Projection);
-      if (data.worldCup2026Ratings) setWorldCupRatings(data.worldCup2026Ratings);
       setAnalysisEngine("template");
     };
 
@@ -350,66 +344,6 @@ const SettingsView: React.FC = () => {
                 </div>
               </div>
             ))}
-          </div>
-        </div>
-      </div>
-
-      <div className="glass-card rounded-2xl border border-emerald-500/20 p-5 bg-emerald-950/10">
-        <h3 className="text-sm font-black uppercase text-emerald-200">WK 2026 zichtbaarheid</h3>
-        <p className="text-[11px] text-slate-400 mt-1">
-          Status van de onderdelen die je noemde: selectie, oefenduels, topvorm, ranking en doorrekening.
-        </p>
-        <div className="mt-3 grid md:grid-cols-2 gap-2">
-          {[
-            { key: "squads", label: "Nationale selecties" },
-            { key: "friendlies", label: "Recente interlands/oefenduels" },
-            { key: "playerTopForm", label: "Speler-topvorm" },
-            { key: "fifaRankingElo", label: "FIFA ranking/Elo" },
-            { key: "groupAndKnockoutProjection", label: "Groepsstanden + knock-out" },
-          ].map((item) => {
-            const info = worldCupReadiness?.[item.key] || null;
-            const status = String(info?.status || "onduidelijk");
-            const tone =
-              status.includes("seeded") || status.includes("partially")
-                ? "border-amber-500/30 bg-amber-500/10 text-amber-100"
-                : status.includes("required")
-                  ? "border-red-500/30 bg-red-500/10 text-red-100"
-                  : "border-emerald-500/30 bg-emerald-500/10 text-emerald-100";
-            return (
-              <div key={item.key} className={`rounded-xl border p-3 ${tone}`}>
-                <div className="text-[10px] font-black uppercase">{item.label}</div>
-                <div className="mt-1 text-[9px] font-black opacity-90">{status.replace(/_/g, " ")}</div>
-                <div className="mt-1 text-[10px] text-slate-200">{info?.detail || "onduidelijk"}</div>
-              </div>
-            );
-          })}
-        </div>
-      </div>
-
-      <div className="grid md:grid-cols-2 gap-4">
-        <div className="glass-card rounded-2xl border border-cyan-500/20 p-4 bg-cyan-950/10">
-          <div className="text-[10px] font-black uppercase text-cyan-200">WK ranking refresh</div>
-          <div className="mt-1 text-[11px] text-slate-400">
-            {worldCupRatings?.sourceMode ? `Modus: ${worldCupRatings.sourceMode}` : "Nog geen ranking snapshot"}
-          </div>
-          <div className="mt-2 text-[10px] text-slate-300">
-            Laatste update: {worldCupRatings?.updatedAt ? new Date(worldCupRatings.updatedAt).toLocaleString("nl-NL") : "onbekend"}
-          </div>
-          <div className="mt-2 text-[10px] text-slate-300">
-            Teams met rating: {Object.keys(worldCupRatings?.ratings || {}).length}
-          </div>
-        </div>
-
-        <div className="glass-card rounded-2xl border border-indigo-500/20 p-4 bg-indigo-950/10">
-          <div className="text-[10px] font-black uppercase text-indigo-200">WK live projectie</div>
-          <div className="mt-1 text-[11px] text-slate-400">
-            Status: {worldCupProjection?.status || "onbekend"}
-          </div>
-          <div className="mt-2 text-[10px] text-slate-300">
-            Groepsduels verwerkt: {worldCupProjection?.completedGroupMatches ?? 0}/{worldCupProjection?.totalGroupMatches ?? 72}
-          </div>
-          <div className="mt-2 text-[10px] text-slate-300">
-            Round of 32 gevuld: {Array.isArray(worldCupProjection?.roundOf32) ? worldCupProjection.roundOf32.length : 0}
           </div>
         </div>
       </div>

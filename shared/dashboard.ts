@@ -21,16 +21,9 @@ export type DashboardHistoryItem = {
 };
 
 export const LEAGUE_ORDER = [
-  "World - FIFA World Cup 2026",
-  "World - International Friendly",
   "Europe - Champions League",
   "Europe - Europa League",
   "Europe - Conference League",
-  "Europe - UEFA Nations League",
-  "Europe - World Cup Qualification",
-  "Europe - Euro Qualification",
-  "Europe - European Championship",
-  "Europe - International Friendly",
   "England - Premier League",
   "England - Championship",
   "Netherlands - Eredivisie",

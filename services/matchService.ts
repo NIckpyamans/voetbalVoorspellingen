@@ -6,6 +6,7 @@
 import { Match, Prediction } from "../types";
 import { normalizeMinute, parseMinuteValue } from "../shared/minute.js";
 import { todayAmsterdamKey } from "../shared/date.js";
+import { filterVisibleMatches, filterVisiblePredictionMap } from "../shared/competitionVisibility.js";
 
 const CACHE_VERSION = "v10_live_render_recovery";
 const LIVE_CACHE_AGE_MS = 30_000;
@@ -279,17 +280,22 @@ function buildMatchesUpdateFromPayload(
     return { matches: [], predictions: {}, lastRun, workerNeeded: true };
   }
 
-  const mappedMatches = rawMatches.map(mapRawMatch);
+  const mappedMatches = filterVisibleMatches(rawMatches).map(mapRawMatch);
   const { matches, idRedirects } = dedupeMatchesForDay(mappedMatches);
   let predictionMap: Record<string, Prediction> = {};
 
-  for (const prediction of rawPredictions) {
+  const visiblePredictionInput = filterVisiblePredictionMap(
+    Object.fromEntries((rawPredictions || []).filter((prediction) => prediction?.matchId).map((prediction) => [prediction.matchId, prediction])),
+    matches
+  );
+
+  for (const prediction of Object.values(visiblePredictionInput)) {
     if (prediction.matchId) {
       predictionMap[prediction.matchId] = prediction;
     }
   }
 
-  for (const rawMatch of rawMatches) {
+  for (const rawMatch of mappedMatches) {
     if (!rawMatch.id) continue;
 
     if (!predictionMap[rawMatch.id]) {
@@ -510,7 +516,6 @@ function mapRawMatch(m: any): Match {
     // ========================================
     ...(m.coverage ? { coverage: m.coverage } : {}),
     ...(m.importance ? { importance: m.importance } : {}),
-    ...(m.worldCup2026 ? { worldCup2026: m.worldCup2026 } : {}),
     ...(m.dataCompleteness ? { dataCompleteness: m.dataCompleteness } : {}),
     ...(m.dataCompletenessScore != null ? { dataCompletenessScore: m.dataCompletenessScore } : {}),
     ...(m.phaseBucket ? { phaseBucket: m.phaseBucket } : {}),

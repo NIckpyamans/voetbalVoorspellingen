@@ -52,12 +52,12 @@ async function auditOddsApi() {
   }
 }
 
-async function probeWorldCupOdds() {
+async function probeClubOdds() {
   if (String(process.env.ODDS_PROBE || "false").toLowerCase() !== "true") return { enabled: false };
   const key = String(process.env.ODDS_API_KEY || process.env.THE_ODDS_API_KEY || "").trim();
   if (!key) return { enabled: true, valid: false, status: "missing_key" };
   try {
-    const url = new URL("https://api.the-odds-api.com/v4/sports/soccer_fifa_world_cup/odds/");
+    const url = new URL("https://api.the-odds-api.com/v4/sports/soccer_epl/odds/");
     url.searchParams.set("apiKey", key);
     url.searchParams.set("regions", "eu");
     url.searchParams.set("markets", "h2h");
@@ -132,7 +132,7 @@ async function auditFootballData() {
 const report = {
   checkedAt: new Date().toISOString(),
   oddsApi: await auditOddsApi(),
-  worldCupOddsProbe: await probeWorldCupOdds(),
+  clubOddsProbe: await probeClubOdds(),
   apiFootball: await auditApiFootball(),
   footballData: await auditFootballData(),
 };

@@ -823,25 +823,6 @@ function ExpandableMatchMeta({
 
       {open && (
       <div className="border-t border-white/6 px-3 py-3 space-y-2">
-        {match.worldCup2026 || prediction.worldCup2026 ? (
-          <div className="rounded-xl border border-cyan-400/20 bg-cyan-500/10 p-2">
-            <div className="mb-1 flex items-center justify-between gap-2">
-              <div className="text-[8px] font-black uppercase text-cyan-200">
-                WK 2026 data-audit
-              </div>
-              <div className="rounded-full bg-cyan-400/15 px-2 py-0.5 text-[8px] font-black text-cyan-100">
-                Match {match.worldCup2026?.matchNumber || prediction.worldCup2026?.matchNumber}
-              </div>
-            </div>
-            <div className="grid grid-cols-2 gap-1 text-[8px] text-slate-300">
-              <div>Landensterkte: <span className="font-black text-white">seed aanwezig</span></div>
-              <div>Selectie: <span className="font-black text-amber-200">nog niet geverifieerd</span></div>
-              <div>Topvorm spelers: <span className="font-black text-amber-200">provider nodig</span></div>
-              <div>Oefenduels: <span className="font-black text-amber-200">worker/provider</span></div>
-            </div>
-          </div>
-        ) : null}
-
         <ModelEdgeStrip match={match} prediction={prediction} />
 
         <div className="grid grid-cols-3 gap-1.5">

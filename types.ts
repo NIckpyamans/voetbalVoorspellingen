@@ -668,17 +668,6 @@ export interface Match {
     missing?: string[];
     status?: string;
   };
-  worldCup2026?: {
-    matchNumber?: number;
-    group?: string;
-    homeCode?: string | null;
-    awayCode?: string | null;
-    squadStatus?: string;
-    playerTopFormStatus?: string;
-    previousMatchesStatus?: string;
-    friendlyCoverageStatus?: string;
-    source?: Record<string, unknown>;
-  };
 }
 
 // ============================================================================

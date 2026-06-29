@@ -98,10 +98,10 @@ async function runContractAssertions() {
   const failures = [];
   const originalFetch = globalThis.fetch;
   const matchCardSource = fs.readFileSync(path.join(root, "components", "MatchCard.tsx"), "utf8");
-  const worldCupViewSource = fs.readFileSync(path.join(root, "components", "WorldCupView.tsx"), "utf8");
   const countryFlagSource = fs.readFileSync(path.join(root, "shared", "countryFlags.ts"), "utf8");
   const matchServiceSource = fs.readFileSync(path.join(root, "services", "matchService.ts"), "utf8");
   const workerSource = fs.readFileSync(path.join(root, "scripts", "server-worker.js"), "utf8");
+  const appSource = fs.readFileSync(path.join(root, "App.tsx"), "utf8");
   const serviceWorkerSource = fs.readFileSync(path.join(root, "public", "sw.js"), "utf8");
   const assert = (condition, message) => {
     if (!condition) failures.push(message);
@@ -109,13 +109,13 @@ async function runContractAssertions() {
 
   assert(matchCardSource.includes("displayedMatchScore(match, isFinished)"), "Match card should derive a visible final score");
   assert(matchCardSource.includes("Eindstand"), "Finished match cards should label the final score");
-  assert(worldCupViewSource.includes("CountryFlag"), "World Cup widget should render country flags");
-  assert(worldCupViewSource.includes("actualScore(match)"), "World Cup widget should prefer actual final scores");
   assert(countryFlagSource.includes("flagcdn.com"), "National-team flags should include Flagcdn fallback");
   assert(countryFlagSource.includes("flagsapi.com"), "National-team flags should include a second free fallback");
   assert(matchServiceSource.includes("const hasNumericScore"), "Numeric home/away scores should normalize to a final result");
-  assert(workerSource.includes('"World - FIFA World Cup 2026": "fifa.world"'), "World Cup scores should use the free ESPN fallback");
-  assert(workerSource.includes('label: WORLD_CUP_LEAGUE, type: "cup"'), "World Cup fallback should be registered as a worker league");
+  assert(!fs.existsSync(path.join(root, "components", "WorldCupView.tsx")), "World Cup widget should stay removed");
+  assert(!appSource.includes('"worldcup"'), "World Cup navigation route should stay removed");
+  assert(!workerSource.includes('"World - FIFA World Cup 2026": "fifa.world"'), "World Cup ESPN fallback should stay disabled");
+  assert(!workerSource.includes('"World - International Friendlies": "fifa.friendly"'), "International friendly ESPN fallback should stay disabled");
   assert(serviceWorkerSource.includes('request.mode === "navigate"'), "Service worker navigation should use the network-first path");
   assert(!serviceWorkerSource.includes('const SHELL = ["/", "/index.html"'), "Service worker must not precache stale app-shell HTML");
 
@@ -216,11 +216,11 @@ async function runContractAssertions() {
     const parsed = new URL(url);
     if (parsed.pathname.endsWith("/teams")) {
       const name = parsed.searchParams.get("search");
-      const isNetherlands = name === "Netherlands";
+      const isArsenal = name === "Arsenal";
       return {
         ok: true,
         async json() {
-          return { response: [{ team: { id: isNetherlands ? 111 : 222, name, country: isNetherlands ? "Netherlands" : "USA" } }] };
+          return { response: [{ team: { id: isArsenal ? 111 : 222, name, country: "England" } }] };
         },
       };
     }
@@ -230,7 +230,7 @@ async function runContractAssertions() {
         return {
           response: [{
             fixture: { id: 333, date: "2025-06-01T18:00:00Z", status: { short: "FT" } },
-            teams: { home: { name: "Netherlands" }, away: { name: "United States" } },
+            teams: { home: { name: "Arsenal" }, away: { name: "Chelsea" } },
             goals: { home: 2, away: 1 },
           }],
         };
@@ -239,13 +239,13 @@ async function runContractAssertions() {
   };
   const apiFootballH2h = await fetchApiFootballH2HProfile({
     store: apiFootballStore,
-    homeName: "Netherlands",
-    awayName: "United States",
-    homeId: "nl",
-    awayId: "us",
-    leagueLabel: "World - FIFA World Cup 2026",
+    homeName: "Arsenal",
+    awayName: "Chelsea",
+    homeId: "arsenal",
+    awayId: "chelsea",
+    leagueLabel: "England - Premier League",
   }, { fetchImpl: apiFootballFetch });
-  assert(apiFootballH2h?.played === 1, "API-Football should resolve national teams without treating World as a country");
+  assert(apiFootballH2h?.played === 1, "API-Football H2H should resolve provider-backed teams");
   assert(apiFootballH2h?.results?.[0]?.source === "api-football-h2h", "API-Football H2H source should reach the prediction input");
   if (previousApiFootballKey == null) delete process.env.API_KEY_API_FOOTBALL;
   else process.env.API_KEY_API_FOOTBALL = previousApiFootballKey;

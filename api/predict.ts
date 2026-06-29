@@ -1,9 +1,9 @@
 import { fetchDayData, fetchMetaData, fetchServerStore } from "./_dataSource.js";
 import { todayAmsterdamKey } from "../shared/date.js";
-import { buildWorldCup2026DayData, buildWorldCup2026FriendlyDayData } from "../shared/worldCup2026.js";
 import { createLogger, getErrorDetails } from "../shared/logger.js";
 import { setCorsHeaders } from "../shared/cors.js";
 import { databaseConfigured, readDatabaseDay } from "../shared/database.js";
+import { filterVisibleMatches, filterVisiblePredictions } from "../shared/competitionVisibility.js";
 
 const logger = createLogger("api.predict");
 
@@ -89,25 +89,6 @@ function enrichPrediction(prediction: any, matchMap: Record<string, any>, store:
   };
 }
 
-function mergeWorldCupPredictions(date: string, matches: any[], predictions: any[]) {
-  const worldCup = buildWorldCup2026DayData(date);
-  const friendlies = buildWorldCup2026FriendlyDayData(date);
-  if (!worldCup.matches.length && !friendlies.matches.length) return { matches, predictions };
-
-  const matchById = new Map<string, any>();
-  for (const match of [...matches, ...worldCup.matches, ...friendlies.matches]) matchById.set(match.id, match);
-
-  const predictionById = new Map<string, any>();
-  for (const prediction of [...worldCup.predictions, ...friendlies.predictions, ...predictions]) {
-    if (prediction?.matchId) predictionById.set(prediction.matchId, prediction);
-  }
-
-  return {
-    matches: [...matchById.values()],
-    predictions: [...predictionById.values()],
-  };
-}
-
 export default async function handler(req: any, res: any) {
   const started = Date.now();
   setCorsHeaders(req, res);
@@ -153,9 +134,8 @@ export default async function handler(req: any, res: any) {
       reviewCount = Object.keys(reviews || {}).length;
     }
 
-    const merged = mergeWorldCupPredictions(date, matches, predictions);
-    matches = merged.matches;
-    predictions = merged.predictions;
+    matches = filterVisibleMatches(matches);
+    predictions = filterVisiblePredictions(predictions, matches);
 
     const matchMap = Object.fromEntries(matches.map((match: any) => [match.id, { ...match, review: reviews?.[match.id] || null }]));
     const splitStore = { postMatchReviews: reviews };

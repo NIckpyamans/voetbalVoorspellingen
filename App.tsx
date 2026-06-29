@@ -25,8 +25,9 @@ import {
   readFavoriteStandingLabel,
   shortLeague,
 } from "./shared/dashboard.js";
+import { filterVisibleMatches, filterVisiblePredictionMap } from "./shared/competitionVisibility.js";
 
-type View = "dashboard" | "worldcup" | "knowledge" | "history" | "standings" | "modelops" | "integrity" | "providers" | "settings";
+type View = "dashboard" | "knowledge" | "history" | "standings" | "modelops" | "integrity" | "providers" | "settings";
 type FilterMode = "alle" | "favorieten" | "live" | "gepland" | "gespeeld" | "brondekking" | "odds" | "xg" | "weer" | "mistdata";
 
 const PredictionHistory = lazy(() => import("./components/PredictionHistory"));
@@ -35,7 +36,6 @@ const SettingsView = lazy(() => import("./components/SettingsView"));
 const ModelOpsView = lazy(() => import("./components/ModelOpsView"));
 const DataIntegrityView = lazy(() => import("./components/DataIntegrityView"));
 const ProviderControlView = lazy(() => import("./components/ProviderControlView"));
-const WorldCupView = lazy(() => import("./components/WorldCupView"));
 const KnowledgeView = lazy(() => import("./components/KnowledgeView"));
 
 function ViewFallback() {
@@ -318,8 +318,9 @@ const App: React.FC = () => {
     learnedRef.current.clear();
 
     const unsubscribe = velocityEngine.subscribe(({ matches: nextMatches, predictions: nextPredictions, lastRun: nextLastRun, workerNeeded: nextWorkerNeeded }) => {
-      setMatches(nextMatches);
-      setPredictions(nextPredictions);
+      const visibleMatches = filterVisibleMatches(nextMatches);
+      setMatches(visibleMatches);
+      setPredictions(filterVisiblePredictionMap(nextPredictions, visibleMatches));
       setLoading(false);
       setSyncStatus("klaar");
       setWorkerNeeded(!!nextWorkerNeeded);
@@ -645,8 +646,6 @@ const App: React.FC = () => {
         <Suspense fallback={<ViewFallback />}>
         {view === "history" ? (
           <PredictionHistory />
-        ) : view === "worldcup" ? (
-          <WorldCupView liveMatches={matches} predictions={predictions} />
         ) : view === "knowledge" ? (
           <KnowledgeView />
         ) : view === "standings" ? (

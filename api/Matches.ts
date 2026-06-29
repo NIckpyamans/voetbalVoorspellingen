@@ -2,11 +2,11 @@ import { fetchDayData, fetchMetaData, fetchRepoJson, fetchServerStore } from "./
 import fs from "fs";
 import path from "path";
 import { addDaysToDateKey, todayAmsterdamKey } from "../shared/date.js";
-import { buildWorldCup2026DayData, buildWorldCup2026FriendlyDayData, getWorldCup2026ReadinessSnapshot } from "../shared/worldCup2026.js";
 import { createLogger, getErrorDetails } from "../shared/logger.js";
 import { setCorsHeaders } from "../shared/cors.js";
 import { mergeDuplicateServedMatches, normalizeServedMatch } from "../shared/matchNormalization.js";
 import { buildMatchSourceCoverage, databaseConfigured, readDatabaseCounts, readDatabaseDay } from "../shared/database.js";
+import { filterVisibleMatches } from "../shared/competitionVisibility.js";
 
 const logger = createLogger("api.matches");
 
@@ -127,13 +127,6 @@ function attachReview(match: any, reviewsOrStore: any) {
   };
 }
 
-function mergeWorldCupSeed(dateKey: string, matches: any[]) {
-  const worldCup = buildWorldCup2026DayData(dateKey);
-  const friendly = buildWorldCup2026FriendlyDayData(dateKey);
-  if (!worldCup.matches.length && !friendly.matches.length) return matches;
-  return mergeDuplicateServedMatches([...matches, ...worldCup.matches, ...friendly.matches]);
-}
-
 function attachReviewAndNormalize(match: any, store: any) {
   return normalizeServedMatch(attachReview(match, store));
 }
@@ -208,7 +201,7 @@ export default async function handler(req: any, res: any) {
           }
         }
 
-        const uniqueMultiDayMatches = mergeDuplicateServedMatches(multiDayMatches);
+        const uniqueMultiDayMatches = filterVisibleMatches(mergeDuplicateServedMatches(multiDayMatches));
 
       return res.status(200).json({
           ok: true,
@@ -236,9 +229,6 @@ export default async function handler(req: any, res: any) {
           anomalyReport: meta.anomalyReport || null,
           competitionArchiveIndex: meta.competitionArchiveIndex || null,
           teamSquadSummary: meta.teamSquadSummary || null,
-          worldCup2026Readiness: meta.worldCup2026Readiness || getWorldCup2026ReadinessSnapshot(),
-          worldCup2026Projection: meta.worldCup2026Projection || null,
-          worldCup2026Ratings: meta.worldCup2026Ratings || null,
           biweeklyDigest,
           dataContext,
           databaseIntegration,
@@ -275,7 +265,7 @@ export default async function handler(req: any, res: any) {
       sourceBranch = branch;
     }
 
-    const uniqueBaseMatches = mergeWorldCupSeed(targetDate, baseMatches);
+    const uniqueBaseMatches = filterVisibleMatches(mergeDuplicateServedMatches(baseMatches));
 
     const matches = live === "true"
       ? uniqueBaseMatches.filter((m: any) => String(m.status || "").toUpperCase() === "LIVE")
@@ -306,9 +296,6 @@ export default async function handler(req: any, res: any) {
       anomalyReport: meta.anomalyReport || null,
       competitionArchiveIndex: meta.competitionArchiveIndex || null,
       teamSquadSummary: meta.teamSquadSummary || null,
-      worldCup2026Readiness: meta.worldCup2026Readiness || getWorldCup2026ReadinessSnapshot(),
-      worldCup2026Projection: meta.worldCup2026Projection || null,
-      worldCup2026Ratings: meta.worldCup2026Ratings || null,
       biweeklyDigest,
       dataContext,
       databaseIntegration,

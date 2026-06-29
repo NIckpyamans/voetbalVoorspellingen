@@ -3,6 +3,7 @@
 import fs from "fs";
 import path from "path";
 import { loadLocalEnv, readDatabaseFeatureContext } from "../shared/database.js";
+import { isHiddenInternationalOrWorldCupEntity } from "../shared/competitionVisibility.js";
 
 const ROOT = process.cwd();
 const SNAPSHOT_FILE = path.join(ROOT, "training", "training-snapshot.json");
@@ -341,7 +342,8 @@ async function enrichRowsWithDatabaseContext(rows) {
 async function main() {
   const snapshot = readJsonSafe(SNAPSHOT_FILE, { rows: [] });
   const config = readJsonSafe(CONFIG_FILE, { primaryFeatures: [] });
-  const rows = await enrichRowsWithDatabaseContext(Array.isArray(snapshot.rows) ? snapshot.rows : []);
+  const rows = (await enrichRowsWithDatabaseContext(Array.isArray(snapshot.rows) ? snapshot.rows : []))
+    .filter((row) => !isHiddenInternationalOrWorldCupEntity(row));
   const featureNames = [...(config.primaryFeatures || []), ...DERIVED_REVIEW_FEATURES, ...DB_FEATURES];
 
   const rawExportRows = rows
