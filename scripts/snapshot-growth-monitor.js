@@ -3,6 +3,7 @@
 import fs from "fs";
 import path from "path";
 import { getSql, loadLocalEnv } from "../shared/database.js";
+import { isHiddenInternationalOrWorldCupEntity } from "../shared/competitionVisibility.js";
 
 const ROOT = process.cwd();
 loadLocalEnv(ROOT);
@@ -35,7 +36,37 @@ if (sql) {
       (select count(1)::int from matches where kickoff_at > now()) future_matches,
       (select count(1)::int from matches where kickoff_at > now() and kickoff_at <= now() + interval '14 days') future_matches_14d
   `);
-  database = { configured: true, ...counts };
+  const snapshotEvaluationsByLeague = await sql.query(`
+    select coalesce(m.league, 'unknown') league, count(1)::int rows
+    from prediction_snapshots ps
+    join prediction_evaluations pe on pe.prediction_id = ps.prediction_id
+    join matches m on m.match_id = ps.match_id
+    join match_results mr on mr.match_id = ps.match_id
+    where ps.generated_at <= coalesce(m.kickoff_at, ps.generated_at)
+      and mr.actual_outcome in ('H','D','A')
+    group by coalesce(m.league, 'unknown')
+    order by rows desc
+  `);
+  const futureMatchesByLeague = await sql.query(`
+    select coalesce(league, 'unknown') league, count(1)::int rows
+    from matches
+    where kickoff_at > now()
+    group by coalesce(league, 'unknown')
+    order by rows desc
+  `);
+  const clubSnapshotEvaluations = snapshotEvaluationsByLeague
+    .filter((row) => !isHiddenInternationalOrWorldCupEntity({ league: row.league }))
+    .reduce((sum, row) => sum + Number(row.rows || 0), 0);
+  const futureClubMatches = futureMatchesByLeague
+    .filter((row) => !isHiddenInternationalOrWorldCupEntity({ league: row.league }))
+    .reduce((sum, row) => sum + Number(row.rows || 0), 0);
+  database = {
+    configured: true,
+    ...counts,
+    club_snapshot_evaluations: clubSnapshotEvaluations,
+    future_club_matches: futureClubMatches,
+    snapshot_evaluations_by_league: snapshotEvaluationsByLeague.slice(0, 12),
+  };
 }
 
 const report = {

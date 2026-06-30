@@ -2,7 +2,7 @@
 
 import fs from "fs";
 import path from "path";
-import { loadLocalEnv, readDatabaseFeatureContext } from "../shared/database.js";
+import { getSql, loadLocalEnv, readDatabaseFeatureContext } from "../shared/database.js";
 import { isHiddenInternationalOrWorldCupEntity } from "../shared/competitionVisibility.js";
 
 const ROOT = process.cwd();
@@ -13,6 +13,7 @@ const CONFIG_FILE = path.join(ROOT, "training", "ensemble-config.json");
 const MIN_SNAPSHOT_ROWS = Number(process.env.SNAPSHOT_MIN_TRAINING_ROWS || 50);
 const NEXT_SNAPSHOT_TARGET_ROWS = Number(process.env.SNAPSHOT_NEXT_TARGET_ROWS || 150);
 const TRAINING_DB_CONTEXT_LIMIT = Math.max(0, Number(process.env.TRAINING_DB_CONTEXT_LIMIT || 60));
+const TRAINING_DB_SNAPSHOT_LIMIT = Math.max(0, Number(process.env.TRAINING_DB_SNAPSHOT_LIMIT || 5000));
 
 const DERIVED_REVIEW_FEATURES = [
   "prob_home_base",
@@ -339,10 +340,134 @@ async function enrichRowsWithDatabaseContext(rows) {
   return output;
 }
 
+function normalizeDbPayloadRow(row) {
+  const payload = row?.prediction_payload && typeof row.prediction_payload === "object" ? row.prediction_payload : {};
+  const generatedAt = row.generated_at || payload.generatedAt || payload.cutoffAt || null;
+  const cutoffAt = row.cutoff_at || payload.cutoffAt || generatedAt;
+  const kickoffDate = row.kickoff_at ? new Date(row.kickoff_at).toISOString().slice(0, 10) : null;
+  const label = String(row.actual_outcome || "").toUpperCase();
+  if (!["H", "D", "A"].includes(label)) return null;
+
+  return {
+    ...payload,
+    matchId: row.match_id || payload.matchId || null,
+    date: row.date || payload.date || kickoffDate,
+    league: row.league || payload.league || null,
+    homeTeam: row.home_team_name || row.payload_home_team || payload.homeTeam || null,
+    awayTeam: row.away_team_name || row.payload_away_team || payload.awayTeam || null,
+    label,
+    predictionId: row.prediction_id || payload.predictionId || null,
+    generatedAt,
+    cutoffAt,
+    featureVector: row.feature_vector || payload.featureVector || null,
+    probabilities: row.probabilities || payload.probabilities || null,
+    expectedScore: row.expected_score || payload.expectedScore || null,
+    predHomeGoals: row.expected_score?.home ?? payload.predHomeGoals ?? payload.expectedScore?.home,
+    predAwayGoals: row.expected_score?.away ?? payload.predAwayGoals ?? payload.expectedScore?.away,
+    oddsAtPrediction:
+      Number(row.odds_home) > 1 || Number(row.odds_draw) > 1 || Number(row.odds_away) > 1
+        ? {
+            home: Number(row.odds_home) || null,
+            draw: Number(row.odds_draw) || null,
+            away: Number(row.odds_away) || null,
+            capturedAt: row.odds_captured_at || null,
+            role: row.odds_role || null,
+            availableBeforeKickoff: row.available_before_kickoff === true,
+          }
+        : payload.oddsAtPrediction || payload.odds || null,
+    review: {
+      ...payload,
+      probabilities: row.probabilities || payload.probabilities || null,
+      ensembleMeta: row.ensemble_meta || payload.ensembleMeta || null,
+      modelEdges: row.model_edges || payload.modelEdges || null,
+      marketCalibration: row.market_calibration || payload.marketCalibration || null,
+      leakageGuard: row.leakage_guard || payload.leakageGuard || null,
+      confidence: row.confidence ?? payload.confidence,
+      exactScoreConfidence: row.exact_score_confidence ?? payload.exactScoreConfidence,
+      oddsStatus: row.odds_status || payload.oddsStatus,
+      oddsAtPrediction:
+        Number(row.odds_home) > 1 || Number(row.odds_draw) > 1 || Number(row.odds_away) > 1
+          ? {
+              home: Number(row.odds_home) || null,
+              draw: Number(row.odds_draw) || null,
+              away: Number(row.odds_away) || null,
+              capturedAt: row.odds_captured_at || null,
+              role: row.odds_role || null,
+              availableBeforeKickoff: row.available_before_kickoff === true,
+            }
+          : payload.oddsAtPrediction || payload.odds || null,
+    },
+    evaluationSource: row.evaluation_source || "scheduled-database-evaluator",
+  };
+}
+
+async function readDatabaseSnapshotTrainingRows() {
+  loadLocalEnv(ROOT);
+  if (!TRAINING_DB_SNAPSHOT_LIMIT) return [];
+  const sql = getSql();
+  if (!sql) return [];
+  const rows = await sql.query(
+    `
+      select ps.prediction_id, ps.match_id, ps.generated_at,
+        ps.prediction_payload->>'date' as date,
+        ps.prediction_payload->>'cutoffAt' as cutoff_at,
+        ps.prediction_payload->>'homeTeam' as payload_home_team,
+        ps.prediction_payload->>'awayTeam' as payload_away_team,
+        ps.prediction_payload->'featureVector' as feature_vector,
+        ps.prediction_payload->'ensembleMeta' as ensemble_meta,
+        ps.prediction_payload->'modelEdges' as model_edges,
+        ps.prediction_payload->'marketCalibration' as market_calibration,
+        ps.prediction_payload->'leakageGuard' as leakage_guard,
+        ps.prediction_payload->>'confidence' as confidence,
+        ps.prediction_payload->>'exactProb' as exact_score_confidence,
+        ps.prediction_payload->>'oddsStatus' as odds_status,
+        ps.probabilities, ps.expected_score,
+        os.home odds_home, os.draw odds_draw, os.away odds_away,
+        os.captured_at odds_captured_at, os.odds_role, os.available_before_kickoff,
+        pe.evaluation_source, mr.actual_outcome, m.home_team_name, m.away_team_name,
+        m.league, m.kickoff_at
+      from prediction_snapshots ps
+      join prediction_evaluations pe on pe.prediction_id = ps.prediction_id
+      join matches m on m.match_id = ps.match_id
+      join match_results mr on mr.match_id = ps.match_id
+      left join lateral (
+        select home, draw, away, captured_at, odds_role, available_before_kickoff
+        from odds_snapshots
+        where prediction_id = ps.prediction_id
+        order by captured_at desc nulls last
+        limit 1
+      ) os on true
+      where ps.generated_at <= coalesce(m.kickoff_at, ps.generated_at)
+        and mr.actual_outcome in ('H','D','A')
+      order by ps.generated_at desc
+      limit $1
+    `,
+    [TRAINING_DB_SNAPSHOT_LIMIT]
+  );
+  return rows.map(normalizeDbPayloadRow).filter(Boolean);
+}
+
+function rowKey(row) {
+  return String(row?.predictionId || row?.prediction_id || row?.matchId || row?.match_id || "").trim();
+}
+
+function mergeTrainingRows(localRows, databaseRows) {
+  const merged = [];
+  const seen = new Set();
+  for (const row of [...databaseRows, ...localRows]) {
+    const key = rowKey(row);
+    if (key && seen.has(key)) continue;
+    if (key) seen.add(key);
+    merged.push(row);
+  }
+  return merged;
+}
+
 async function main() {
   const snapshot = readJsonSafe(SNAPSHOT_FILE, { rows: [] });
   const config = readJsonSafe(CONFIG_FILE, { primaryFeatures: [] });
-  const rows = (await enrichRowsWithDatabaseContext(Array.isArray(snapshot.rows) ? snapshot.rows : []))
+  const databaseRows = await readDatabaseSnapshotTrainingRows();
+  const rows = (await enrichRowsWithDatabaseContext(mergeTrainingRows(Array.isArray(snapshot.rows) ? snapshot.rows : [], databaseRows)))
     .filter((row) => !isHiddenInternationalOrWorldCupEntity(row));
   const featureNames = [...(config.primaryFeatures || []), ...DERIVED_REVIEW_FEATURES, ...DB_FEATURES];
 
