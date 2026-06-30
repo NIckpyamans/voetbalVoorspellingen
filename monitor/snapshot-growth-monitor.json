@@ -1,0 +1,30 @@
+{
+  "generatedAt": "2026-06-30T12:24:39.282Z",
+  "training": {
+    "totalRows": 0,
+    "snapshotBackedRows": 0,
+    "fallbackRows": 0,
+    "target": 150,
+    "gap": 150,
+    "maturity": "warming_up"
+  },
+  "database": {
+    "configured": true,
+    "prediction_snapshots": 4376,
+    "prematch_snapshots": 4376,
+    "scheduled_evaluations": 3387,
+    "snapshot_evaluations": 3387,
+    "future_matches": 45,
+    "future_matches_14d": 21
+  },
+  "automation": {
+    "workerCadence": "2x per dag volledige worker + live score refresh",
+    "learningCadence": "dagelijks train:prepare",
+    "recommendedNext": "Laat worker en learning doorlopen; verhoog snapshot-backed rows door meer toekomstige clubwedstrijden en pre-match snapshots vast te leggen."
+  },
+  "nextFocus": [
+    "meer clubfixtures in venster",
+    "worker snapshot cadence bewaken",
+    "prediction evaluation dagelijks blijven draaien"
+  ]
+}
