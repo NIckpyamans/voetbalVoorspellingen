@@ -2,6 +2,7 @@
 
 import crypto from "crypto";
 import { getSql, loadLocalEnv } from "../shared/database.js";
+import { fetchOddsAtPrediction } from "./odds-provider.js";
 
 loadLocalEnv(process.cwd());
 const sql = getSql();
@@ -12,6 +13,8 @@ const normalize = (value) => String(value || "").toLowerCase().normalize("NFKD")
 const now = new Date();
 const todayKey = now.toISOString().slice(0, 10);
 const fetchTimeoutMs = Number(process.env.ODDS_FETCH_TIMEOUT_MS || 8000);
+const oddsApiMatchLimit = Math.max(0, Number(process.env.ODDS_API_MATCH_LIMIT || 80));
+const oddsApiDaysAhead = Math.max(1, Number(process.env.ODDS_API_DAYS_AHEAD || 14));
 const start = now.getUTCMonth() + 1 >= 7 ? now.getUTCFullYear() : now.getUTCFullYear() - 1;
 const folders = [`${String(start).slice(2)}${String(start + 1).slice(2)}`, `${String(start + 1).slice(2)}${String(start + 2).slice(2)}`];
 async function fetchWithTimeout(url) {
@@ -43,6 +46,9 @@ function parseDate(value) {
 let captured = 0;
 let closingUpdated = 0;
 let futureRows = 0;
+let oddsApiCaptured = 0;
+let oddsApiClosingUpdated = 0;
+let oddsApiCandidates = 0;
 const errors = [];
 for (const folder of folders) for (const code of leagues) {
   const url = `https://www.football-data.co.uk/mmz4281/${folder}/${code}.csv`;
@@ -95,4 +101,106 @@ for (const folder of folders) for (const code of leagues) {
     errors.push({ url, error: error.message });
   }
 }
-console.log(JSON.stringify({ captured, closingUpdated, matchedFutureRows: futureRows, errors: errors.slice(0, 5) }, null, 2));
+
+async function captureOddsApiPrematch() {
+  if (!oddsApiMatchLimit) return;
+  const rows = await sql.query(
+    `select match_id, league, home_team_name, away_team_name, kickoff_at
+     from matches m
+     where kickoff_at > now()
+       and kickoff_at <= now() + ($1::text || ' days')::interval
+       and home_team_name is not null
+       and away_team_name is not null
+       and not exists (
+         select 1 from historical_odds_snapshots hos
+         where hos.match_id = m.match_id
+           and hos.provider = 'the-odds-api'
+           and hos.odds_role = 'prematch'
+           and hos.available_before_kickoff = true
+           and hos.captured_at > now() - interval '12 hours'
+       )
+     order by kickoff_at asc
+     limit $2`,
+    [String(oddsApiDaysAhead), oddsApiMatchLimit]
+  );
+  oddsApiCandidates = rows.length;
+  const generatedAt = new Date().toISOString();
+  for (const row of rows) {
+    try {
+      const result = await fetchOddsAtPrediction(
+        {
+          matchId: row.match_id,
+          league: row.league,
+          homeTeam: row.home_team_name,
+          awayTeam: row.away_team_name,
+          kickoff: row.kickoff_at,
+        },
+        { generatedAt, cutoffAt: generatedAt }
+      );
+      const odds = result?.oddsAtPrediction;
+      if (!odds || ![odds.home, odds.draw, odds.away].every((value) => Number(value) > 1)) continue;
+      const capturedAt = odds.capturedAt || generatedAt;
+      if (Date.parse(capturedAt) >= Date.parse(row.kickoff_at)) continue;
+      const minutesBeforeKickoff = Math.floor((Date.parse(row.kickoff_at) - Date.parse(capturedAt)) / 60000);
+      const bookmaker = odds.bookmaker || result.provider || "the-odds-api";
+      const snapshotId = `prematch_${digest(`${row.match_id}|the-odds-api|${bookmaker}|${capturedAt.slice(0, 13)}`)}`;
+      await sql.query(
+        `insert into historical_odds_snapshots (
+          historical_odds_snapshot_id,match_id,provider,bookmaker,market,home,draw,away,captured_at,
+          odds_role,available_before_kickoff,minutes_before_kickoff,source_record_id
+        ) values ($1,$2,'the-odds-api',$3,$4,$5,$6,$7,$8,'prematch',true,$9,null)
+        on conflict (historical_odds_snapshot_id) do update set
+          home=excluded.home, draw=excluded.draw, away=excluded.away,
+          captured_at=excluded.captured_at,
+          available_before_kickoff=excluded.available_before_kickoff,
+          minutes_before_kickoff=excluded.minutes_before_kickoff`,
+        [
+          snapshotId,
+          row.match_id,
+          bookmaker,
+          odds.market || "h2h",
+          Number(odds.home),
+          Number(odds.draw),
+          Number(odds.away),
+          capturedAt,
+          minutesBeforeKickoff,
+        ]
+      );
+      oddsApiCaptured += 1;
+      if (minutesBeforeKickoff > 0 && minutesBeforeKickoff <= 120) {
+        const updated = await sql.query(
+          `update historical_odds_snapshots
+           set closing_home=$3, closing_draw=$4, closing_away=$5, closing_captured_at=$6
+           where historical_odds_snapshot_id=(
+             select historical_odds_snapshot_id from historical_odds_snapshots
+             where match_id=$1 and bookmaker=$2 and odds_role='prematch' and captured_at<$6
+             order by captured_at asc limit 1
+           )
+           returning historical_odds_snapshot_id`,
+          [row.match_id, bookmaker, Number(odds.home), Number(odds.draw), Number(odds.away), capturedAt]
+        );
+        oddsApiClosingUpdated += updated.length;
+      }
+    } catch (error) {
+      errors.push({ provider: "the-odds-api", matchId: row.match_id, error: error.message });
+    }
+  }
+}
+
+await captureOddsApiPrematch();
+
+console.log(
+  JSON.stringify(
+    {
+      captured,
+      closingUpdated,
+      matchedFutureRows: futureRows,
+      oddsApiCandidates,
+      oddsApiCaptured,
+      oddsApiClosingUpdated,
+      errors: errors.slice(0, 5),
+    },
+    null,
+    2
+  )
+);

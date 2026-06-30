@@ -81,8 +81,8 @@ const fixtureCalendar = buildFixtureCalendarStatus({
   lastRunFresh: !!lastRun && Date.now() - lastRun <= 180 * 60_000,
 });
 
-const oddsKeyConfigured = configured("ODDS_API_KEY", "THE_ODDS_API_KEY", "API_KEY_API_FOOTBALL");
-const oddsTemplateConfigured = configured("ODDS_API_URL_TEMPLATE");
+const oddsKeyConfigured = configured("ODDS_API_KEY", "THE_ODDS_API_KEY");
+const oddsTemplateConfigured = configured("ODDS_API_URL_TEMPLATE") || oddsKeyConfigured;
 const dbConfigured = configured("DATABASE_URL", "POSTGRES_URL", "SUPABASE_DB_URL");
 
 async function readDatabaseCoverage() {

@@ -20,6 +20,12 @@ jobs:
         env:
           DATABASE_URL: ${{ secrets.DATABASE_URL }}
           POSTGRES_URL: ${{ secrets.POSTGRES_URL }}
+          ODDS_PROVIDER_NAME: ${{ secrets.ODDS_PROVIDER_NAME }}
+          ODDS_API_URL_TEMPLATE: ${{ secrets.ODDS_API_URL_TEMPLATE }}
+          ODDS_API_KEY: ${{ secrets.ODDS_API_KEY }}
+          THE_ODDS_API_KEY: ${{ secrets.THE_ODDS_API_KEY }}
+          ODDS_API_MATCH_LIMIT: 120
+          ODDS_API_DAYS_AHEAD: 21
       - run: node scripts/evaluate-prediction-snapshots.js
         env:
           DATABASE_URL: ${{ secrets.DATABASE_URL }}
