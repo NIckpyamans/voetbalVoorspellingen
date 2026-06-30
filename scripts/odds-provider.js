@@ -13,6 +13,27 @@ function normalizeName(value) {
     .trim();
 }
 
+function coreNameTokens(value) {
+  return normalizeName(value)
+    .split(" ")
+    .filter(Boolean)
+    .filter((token) => !["fc", "sc", "afc", "cf", "ac", "club", "the", "de", "la", "sv", "fk", "bk"].includes(token));
+}
+
+function namesSimilar(a, b) {
+  const left = normalizeName(a);
+  const right = normalizeName(b);
+  if (!left || !right) return false;
+  if (left === right) return true;
+  if (left.length >= 5 && right.length >= 5 && (left.includes(right) || right.includes(left))) return true;
+  const leftTokens = coreNameTokens(left);
+  const rightTokens = coreNameTokens(right);
+  if (!leftTokens.length || !rightTokens.length) return false;
+  const overlap = leftTokens.filter((token) => rightTokens.includes(token)).length;
+  const denominator = Math.max(1, Math.min(leftTokens.length, rightTokens.length));
+  return overlap / denominator >= 0.67;
+}
+
 function numberOrNull(value) {
   const number = Number(value);
   return Number.isFinite(number) && number > 1 ? number : null;
@@ -83,10 +104,15 @@ function extractTheOddsApiSnapshot(payload, match) {
   const awayName = normalizeName(match.awayTeam);
   const event =
     events.find((item) => {
-      const home = normalizeName(item?.home_team || item?.homeTeam || item?.home);
-      const away = normalizeName(item?.away_team || item?.awayTeam || item?.away);
-      return (!homeName || home === homeName) && (!awayName || away === awayName);
-    }) || events[0];
+      const home = item?.home_team || item?.homeTeam || item?.home;
+      const away = item?.away_team || item?.awayTeam || item?.away;
+      return (!homeName || namesSimilar(home, homeName)) && (!awayName || namesSimilar(away, awayName));
+    }) ||
+    events.find((item) => {
+      const home = item?.home_team || item?.homeTeam || item?.home;
+      const away = item?.away_team || item?.awayTeam || item?.away;
+      return (!homeName || namesSimilar(away, homeName)) && (!awayName || namesSimilar(home, awayName));
+    });
   if (!event) return null;
 
   for (const bookmaker of event.bookmakers || []) {
@@ -94,8 +120,8 @@ function extractTheOddsApiSnapshot(payload, match) {
       const key = String(market.key || market.market || "").toLowerCase();
       if (key && !["h2h", "1x2", "match_winner"].includes(key)) continue;
       const outcomes = Array.isArray(market.outcomes) ? market.outcomes : [];
-      const home = outcomes.find((outcome) => normalizeName(outcome.name) === homeName);
-      const away = outcomes.find((outcome) => normalizeName(outcome.name) === awayName);
+      const home = outcomes.find((outcome) => namesSimilar(outcome.name, homeName));
+      const away = outcomes.find((outcome) => namesSimilar(outcome.name, awayName));
       const draw = outcomes.find((outcome) => ["draw", "gelijkspel", "x"].includes(normalizeName(outcome.name)));
       const snapshot = {
         home: numberOrNull(home?.price),

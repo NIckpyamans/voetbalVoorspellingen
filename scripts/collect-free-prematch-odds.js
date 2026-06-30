@@ -49,6 +49,7 @@ let futureRows = 0;
 let oddsApiCaptured = 0;
 let oddsApiClosingUpdated = 0;
 let oddsApiCandidates = 0;
+const oddsApiStatusCounts = {};
 const errors = [];
 for (const folder of folders) for (const code of leagues) {
   const url = `https://www.football-data.co.uk/mmz4281/${folder}/${code}.csv`;
@@ -137,6 +138,7 @@ async function captureOddsApiPrematch() {
         },
         { generatedAt, cutoffAt: generatedAt }
       );
+      oddsApiStatusCounts[result?.status || "unknown"] = (oddsApiStatusCounts[result?.status || "unknown"] || 0) + 1;
       const odds = result?.oddsAtPrediction;
       if (!odds || ![odds.home, odds.draw, odds.away].every((value) => Number(value) > 1)) continue;
       const capturedAt = odds.capturedAt || generatedAt;
@@ -198,6 +200,7 @@ console.log(
       oddsApiCandidates,
       oddsApiCaptured,
       oddsApiClosingUpdated,
+      oddsApiStatusCounts,
       errors: errors.slice(0, 5),
     },
     null,
