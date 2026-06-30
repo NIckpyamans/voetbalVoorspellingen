@@ -1,31 +1,65 @@
 {
-  "generatedAt": "2026-06-29T23:16:54.027Z",
-  "date": "2026-06-30",
+  "generatedAt": "2026-06-30T23:38:25.926Z",
+  "date": "2026-07-01",
   "proposalOnly": true,
   "shouldPropose": true,
-  "branchName": "codex/review-20260630",
-  "summary": "AI reviewvoorstel voor 2026-06-30: 1 aandachtspunt(en) met patchadvies, niet automatisch live.",
+  "branchName": "codex/review-20260701",
+  "summary": "AI reviewvoorstel voor 2026-07-01: 1 aandachtspunt(en) met patchadvies, niet automatisch live.",
   "latestStats": {
-    "today": "2026-06-30",
-    "dataPresent": false
+    "today": "2026-07-01",
+    "tomorrow": "2026-07-02",
+    "dataPresent": true,
+    "lastRun": 1782850979751,
+    "ageMinutes": 195,
+    "maxWorkerAgeMinutes": 180,
+    "todayMatches": 0,
+    "tomorrowMatches": 0,
+    "fixtureCalendar": {
+      "status": "idle_until_next_match",
+      "healthy": true,
+      "emptyWindowOk": true,
+      "severity": "none",
+      "todayCount": 0,
+      "tomorrowCount": 0,
+      "windowDays": 7,
+      "checkedDates": [
+        "2026-07-01",
+        "2026-07-02",
+        "2026-07-03",
+        "2026-07-04",
+        "2026-07-05",
+        "2026-07-06",
+        "2026-07-07"
+      ],
+      "nextMatchDate": "2026-07-07",
+      "nextMatchCount": 4,
+      "explanation": "Geen wedstrijden vandaag/morgen; eerstvolgende bekende speeldag is 2026-07-07."
+    },
+    "liveMatches": 0,
+    "liveWithoutMinute": 0,
+    "h2hFilled": 0,
+    "h2hMissing": 0,
+    "standingsCount": 0,
+    "cupSheetCount": 2,
+    "phaseReliabilityCount": 0
   },
   "findings": [
     {
       "priority": 1,
-      "key": "worker_data_missing",
+      "key": "worker_stale",
       "severity": "high",
-      "message": "Workerdata ontbreekt of is ongeldig.",
-      "whyItMatters": "Gerichte patch nodig in worker en UI.",
+      "message": "Workerdata is 195 minuten oud.",
+      "whyItMatters": "Workerdata is te oud en verdient een workflow- of broncheck.",
       "recommendedFiles": [
-        "scripts/server-worker.js",
-        "components/MatchCard.tsx"
+        ".github/workflows/worker.yml",
+        "scripts/server-worker.js"
       ],
       "details": {}
     }
   ],
   "recommendedFiles": [
-    "scripts/server-worker.js",
-    "components/MatchCard.tsx"
+    ".github/workflows/worker.yml",
+    "scripts/server-worker.js"
   ],
   "nextStep": "Gebruik deze proposal om gericht een reviewbranch te maken en alleen na controle te mergen."
 }
