@@ -3448,6 +3448,41 @@ function buildProjectedLineupSummary(homeTeamProfile, awayTeamProfile, homeInjur
   };
 }
 
+function countAvailabilityItems(report, fields) {
+  if (!report || typeof report !== "object") return 0;
+  for (const field of fields) {
+    const value = report[field];
+    if (Array.isArray(value)) return value.length;
+    const number = Number(value);
+    if (Number.isFinite(number)) return Math.max(0, number);
+  }
+  return 0;
+}
+
+function buildAvailabilitySummary(homeInjuries, awayInjuries, lineupSummary, now) {
+  const homeInjured = countAvailabilityItems(homeInjuries, ["injured", "injuries", "players", "unavailable", "absent", "injuredCount"]);
+  const awayInjured = countAvailabilityItems(awayInjuries, ["injured", "injuries", "players", "unavailable", "absent", "injuredCount"]);
+  const homeSuspended = countAvailabilityItems(homeInjuries, ["suspended", "suspensions", "suspendedCount"]);
+  const awaySuspended = countAvailabilityItems(awayInjuries, ["suspended", "suspensions", "suspendedCount"]);
+  const homeCovered = !!homeInjuries || !!lineupSummary?.home;
+  const awayCovered = !!awayInjuries || !!lineupSummary?.away;
+  const coverage = homeCovered && awayCovered ? 1 : homeCovered || awayCovered ? 0.5 : 0;
+  const risk = clamp((homeInjured + awayInjured) * 0.04 + (homeSuspended + awaySuspended) * 0.07, 0, 1);
+  return {
+    coverage: Number(coverage.toFixed(2)),
+    risk: Number(risk.toFixed(3)),
+    homeUnavailable: homeInjured + homeSuspended,
+    awayUnavailable: awayInjured + awaySuspended,
+    homeInjured,
+    awayInjured,
+    homeSuspended,
+    awaySuspended,
+    status: coverage >= 1 ? "covered" : coverage > 0 ? "partial" : "missing",
+    source: homeInjuries || awayInjuries ? "injury-source + lineup-context" : lineupSummary ? "lineup-context" : "missing",
+    capturedAt: isoFromTimestamp(now),
+  };
+}
+
 function enrichSeasonStatsWithRecentProxy(seasonStats, recent, teamProfile, sourceLabel = "derived-form-shot-proxy") {
   const merged = { ...(seasonStats || {}) };
   const games = Number(recent?.gamesPlayed || 0);
@@ -11101,6 +11136,12 @@ async function main() {
       );
       const teamIdentity = buildTeamIdentity(homeId, awayId, homeName, awayName, String(event.source || "sofascore"));
       const lineupStatus = resolveLineupStatus(lineupSummary);
+      const availabilitySummary = buildAvailabilitySummary(
+        store.teamInjuries[homeId] || null,
+        store.teamInjuries[awayId] || null,
+        lineupSummary,
+        now
+      );
       const refereeStatus = resolveRefereeStatus(refereeProfile);
       const sourceAsOf = {
         fixture: isoFromTimestamp(now),
@@ -11118,6 +11159,7 @@ async function main() {
         understat: isoFromTimestamp(store.understatSnapshotsUpdated?.[leagueInfo.label]),
         fbref: isoFromTimestamp(store.fbrefSnapshotsUpdated?.[leagueInfo.label]),
         lineups: lineupSummary ? isoFromTimestamp(now) : null,
+        availability: availabilitySummary?.coverage > 0 ? availabilitySummary.capturedAt : null,
         referee: refereeProfile?.name ? isoFromTimestamp(store.marketProfilesUpdated?.[leagueInfo.label] || now) : null,
       };
       const matchId = `ss-${event.id}`;
@@ -11150,6 +11192,7 @@ async function main() {
         awayRestDays,
         weather,
         lineupSummary,
+        availabilitySummary,
         h2h,
         homeClubElo,
         awayClubElo,
@@ -11245,6 +11288,7 @@ async function main() {
         weather,
         lineupSummary,
         lineupStatus,
+        availabilitySummary,
         homeTeamProfile,
         awayTeamProfile,
         h2h,
@@ -11302,6 +11346,7 @@ async function main() {
         weather,
         lineupSummary,
         lineupStatus,
+        availabilitySummary,
         homeTeamProfile,
         awayTeamProfile,
         h2h,

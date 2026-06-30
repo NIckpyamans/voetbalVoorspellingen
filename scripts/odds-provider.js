@@ -1,4 +1,4 @@
-import { getOddsApiKey } from "./provider-env.js";
+import { getOddsApiKey, getOddsApiUrlTemplate, getOddsProviderName } from "./provider-env.js";
 
 const responseCache = new Map();
 // Een volledige worker kan meerdere minuten duren; dezelfde sportmarkt hoeft binnen die run maar eenmaal opgehaald te worden.
@@ -37,7 +37,6 @@ function inferOddsApiSportKey(match = {}) {
   if (override.trim()) return override.trim();
   const league = normalizeName(match.league || "");
   const mappings = [
-    [/world cup|fifa/, "soccer_fifa_world_cup"],
     [/premier league/, "soccer_epl"],
     [/championship/, "soccer_efl_champ"],
     [/laliga|la liga/, "soccer_spain_la_liga"],
@@ -168,9 +167,9 @@ export async function fetchOddsAtPrediction(match, options = {}) {
       reason: "Odds ophalen is uitgeschakeld voor deze refreshmodus.",
     };
   }
-  const template = process.env.ODDS_API_URL_TEMPLATE || "";
+  const template = getOddsApiUrlTemplate();
   const apiKey = getOddsApiKey(template);
-  const provider = process.env.ODDS_PROVIDER_NAME || (apiKey ? "the-odds-api" : "custom-odds-provider");
+  const provider = getOddsProviderName(template);
   if (!apiKey && !template) {
     return {
       status: "not_configured",
@@ -184,7 +183,7 @@ export async function fetchOddsAtPrediction(match, options = {}) {
       status: "provider_template_missing",
       oddsAtPrediction: null,
       provider,
-      reason: "API-key staat klaar, maar ODDS_API_URL_TEMPLATE ontbreekt nog.",
+      reason: "API-key staat klaar, maar er is geen odds-endpoint geconfigureerd.",
     };
   }
   if (!apiKey && /\{apiKey\}/i.test(template)) {
@@ -193,6 +192,14 @@ export async function fetchOddsAtPrediction(match, options = {}) {
       oddsAtPrediction: null,
       provider,
       reason: "De geconfigureerde odds-endpoint mist zijn eigen ODDS_API_KEY; API-Football-keys worden niet naar andere providers gestuurd.",
+    };
+  }
+  if (!apiKey && /the-odds-api\.com/i.test(template)) {
+    return {
+      status: "not_configured",
+      oddsAtPrediction: null,
+      provider,
+      reason: "The Odds API endpoint is actief, maar ODDS_API_KEY/THE_ODDS_API_KEY ontbreekt.",
     };
   }
 
@@ -263,7 +270,12 @@ export async function fetchOddsAtPrediction(match, options = {}) {
         kickoff: match?.kickoff,
       }),
       provider,
-      requestMeta: { cached: Boolean(cacheFresh), quota },
+      requestMeta: {
+        cached: Boolean(cacheFresh),
+        quota,
+        sport: inferOddsApiSportKey(match),
+        templateDefaulted: !String(process.env.ODDS_API_URL_TEMPLATE || "").trim(),
+      },
     };
   } catch (error) {
     return {

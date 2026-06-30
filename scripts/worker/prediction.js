@@ -110,6 +110,80 @@ export function buildPoissonScoreModel(homeXG, awayXG, options = {}) {
   };
 }
 
+export function buildH2HReliability(h2h = {}, options = {}) {
+  const results = Array.isArray(h2h?.results) ? h2h.results : [];
+  const played = Math.max(Number(h2h?.played || 0), results.length);
+  if (!played) {
+    return {
+      score: 0,
+      sampleSize: 0,
+      label: "empty",
+      reason: "geen H2H-duels",
+    };
+  }
+
+  const nowMs = Date.parse(options.generatedAt || options.kickoff || new Date().toISOString());
+  const dated = results
+    .map((result) => Date.parse(result?.date || result?.kickoff || result?.startTime || ""))
+    .filter((value) => Number.isFinite(value));
+  const newestMs = dated.length ? Math.max(...dated) : null;
+  const ageDays = newestMs && Number.isFinite(nowMs) ? Math.max(0, (nowMs - newestMs) / 86400000) : null;
+  const sampleScore = played >= 8 ? 1 : played >= 5 ? 0.82 : played >= 3 ? 0.58 : played >= 2 ? 0.34 : 0.18;
+  const recencyScore = ageDays == null ? 0.55 : ageDays <= 365 ? 1 : ageDays <= 730 ? 0.78 : ageDays <= 1460 ? 0.48 : 0.24;
+  const sameCompetitionPlayed = Number(h2h?.sameCompetitionPlayed || 0);
+  const competitionScore = sameCompetitionPlayed >= 3 ? 1 : sameCompetitionPlayed >= 1 ? 0.72 : 0.42;
+  const status = String(h2h?.status || "").toLowerCase();
+  const sourceScore = status === "loaded" ? 1 : status === "all-competitions" ? 0.7 : status === "cache" ? 0.65 : 0.5;
+  const rawScore = sampleScore * 0.45 + recencyScore * 0.25 + competitionScore * 0.2 + sourceScore * 0.1;
+  const sampleCap = played < 2 ? 0.24 : played < 3 ? 0.42 : played < 5 ? 0.68 : 1;
+  const competitionCap = sameCompetitionPlayed > 0 ? 1 : 0.72;
+  const score = Math.min(rawScore, sampleCap, competitionCap);
+
+  return {
+    score: Number(Math.max(0, Math.min(1, score)).toFixed(3)),
+    sampleSize: played,
+    sameCompetitionPlayed,
+    ageDays: ageDays == null ? null : Math.round(ageDays),
+    label: score >= 0.75 ? "strong" : score >= 0.52 ? "usable" : score >= 0.3 ? "thin" : "weak",
+    reason:
+      played < 3
+        ? "te weinig H2H-duels"
+        : sameCompetitionPlayed < 1
+          ? "alleen cross-competition H2H"
+          : ageDays != null && ageDays > 1460
+            ? "H2H is verouderd"
+            : "H2H bruikbaar",
+  };
+}
+
+export function buildAvailabilitySignal(input = {}, deps) {
+  if (input.availabilitySummary && typeof input.availabilitySummary === "object") {
+    return {
+      coverage: Number(input.availabilitySummary.coverage || 0),
+      risk: Number(input.availabilitySummary.risk || 0),
+      diff: Number(
+        (
+          Number(input.availabilitySummary.awayUnavailable || 0) -
+          Number(input.availabilitySummary.homeUnavailable || 0)
+        ).toFixed(2)
+      ),
+    };
+  }
+  const homeInjured = Number(input.homeInjuries?.injuredCount || 0);
+  const awayInjured = Number(input.awayInjuries?.injuredCount || 0);
+  const homeSuspended = Number(input.homeInjuries?.suspendedCount || input.homeInjuries?.suspensions || 0);
+  const awaySuspended = Number(input.awayInjuries?.suspendedCount || input.awayInjuries?.suspensions || 0);
+  const hasHome = !!input.homeInjuries || !!input.lineupSummary?.home;
+  const hasAway = !!input.awayInjuries || !!input.lineupSummary?.away;
+  const coverage = hasHome && hasAway ? 1 : hasHome || hasAway ? 0.5 : 0;
+  const risk = deps.clamp((homeInjured + awayInjured) * 0.04 + (homeSuspended + awaySuspended) * 0.07, 0, 1);
+  return {
+    coverage: Number(coverage.toFixed(2)),
+    risk: Number(risk.toFixed(3)),
+    diff: Number(((awayInjured + awaySuspended * 1.4) - (homeInjured + homeSuspended * 1.4)).toFixed(2)),
+  };
+}
+
 export function buildFeatureVector(input, deps) {
   const homeSplit = deps.pickHomeStrength(input.homeRecent);
   const awaySplit = deps.pickAwayStrength(input.awayRecent);
@@ -131,8 +205,10 @@ export function buildFeatureVector(input, deps) {
   const leagueReliability = input.leagueReliability || {};
   const phaseReliability = input.phaseReliability || {};
   const refereeProfile = input.refereeProfile || {};
-  const h2hSampleSize = Math.max(Number(input.h2h?.played || 0), Array.isArray(input.h2h?.results) ? input.h2h.results.length : 0);
-  const h2hReliability = h2hSampleSize >= 5 ? 1 : h2hSampleSize >= 3 ? 0.65 : h2hSampleSize >= 2 ? 0.35 : 0;
+  const h2hSignal = buildH2HReliability(input.h2h, { kickoff: input.kickoff, generatedAt: input.generatedAt });
+  const h2hSampleSize = h2hSignal.sampleSize;
+  const h2hReliability = h2hSignal.score;
+  const availabilitySignal = buildAvailabilitySignal(input, deps);
   const isInternational =
     deps.isSeniorInternationalTournament(input.league) ||
     String(input.phaseBucket || "").toLowerCase() === "interland" ||
@@ -187,6 +263,9 @@ export function buildFeatureVector(input, deps) {
     transfer_impact_diff: Number((homeTransferImpact - awayTransferImpact).toFixed(2)),
     home_injuries: Number(input.homeInjuries?.injuredCount || 0),
     away_injuries: Number(input.awayInjuries?.injuredCount || 0),
+    availability_coverage: availabilitySignal.coverage,
+    availability_risk: availabilitySignal.risk,
+    availability_diff: availabilitySignal.diff,
     weather_risk: dbWeatherRisk,
     db_weather_temperature: Number(dbWeather.temperature ?? 0),
     db_weather_wind_speed: Number(dbWeather.windSpeed ?? 0),
@@ -302,6 +381,7 @@ export function scoreDataCompleteness(input, edges = {}, deps) {
   const lineupsProjected = !!input?.lineupSummary?.projected;
   const postMatchCoverage = Number(input?.postMatchStats?.coverageScore || 0);
   const postMatchPresent = Number(postMatchCoverage || 0) > 0;
+  const availabilitySignal = buildAvailabilitySignal(input, deps);
 
   const score =
     add(h2hPlayed >= 3, 0.16, "H2H gevuld", "H2H ontbreekt", h2hPlayed >= 1 ? 0.45 : 0) +
@@ -311,6 +391,7 @@ export function scoreDataCompleteness(input, edges = {}, deps) {
     add(hasXg || sourceQuality >= 0.45, 0.18, "xG/shot-bronnen aanwezig", "xG/shot-bronnen dun", sourceQuality >= 0.25 ? 0.55 : 0) +
     add(hasOdds, 0.14, "odds/marktdekking aanwezig", "odds/marktdekking dun", marketCoverage > 0 ? 0.45 : 0) +
     add(lineupsKnown, 0.06, "opstellingsdata bevestigd", "opstellingsdata open", lineupsProjected ? 0.7 : 0.35) +
+    add(availabilitySignal.coverage >= 1, 0.04, "availability gevuld", "availability ontbreekt", availabilitySignal.coverage) +
     add(edges.resultFresh !== false, 0.08, "uitslagbron actueel", "uitslagbron verouderd", edges.resultFresh == null ? 0.65 : 0) +
     add(postMatchPresent, 0.06, "post-match stats verrijkt", "post-match stats ontbreken", 0);
 
@@ -329,7 +410,11 @@ export function buildFeatureImportance(featureVector = {}, modelEdges = {}) {
   const candidates = [
     { key: "ppg_diff", value: Math.abs(Number(featureVector.ppg_diff || 0)), label: "vorm/points-per-game verschil" },
     { key: "club_elo_diff", value: Math.abs(Number(featureVector.club_elo_diff || 0) / 100), label: "ClubElo verschil" },
-    { key: "h2h_recent_5_balance", value: Math.abs(Number(featureVector.h2h_recent_5_balance || 0) * 10), label: "recente H2H balans" },
+    {
+      key: "h2h_recent_5_balance",
+      value: Math.abs(Number(featureVector.h2h_recent_5_balance || 0) * 10 * Number(featureVector.h2h_reliability || 0.35)),
+      label: "betrouwbaar gewogen H2H balans",
+    },
     { key: "lineups_avg_rating_diff", value: Math.abs(Number(featureVector.lineups_avg_rating_diff || 0)), label: "opstelling ratingverschil" },
     { key: "keeper_rating_diff", value: Math.abs(Number(featureVector.keeper_rating_diff || 0)), label: "keeper edge" },
     { key: "market_overperformance_diff", value: Math.abs(Number(featureVector.market_overperformance_diff || 0) * 10), label: "markt-overperformance" },
@@ -348,8 +433,7 @@ export function buildFeatureImportance(featureVector = {}, modelEdges = {}) {
 }
 
 export function sourceReliabilityScore(input, dataCompleteness, deps) {
-  const h2hPlayed = Number(input?.h2h?.played || 0);
-  const h2hQuality = h2hPlayed >= 5 ? 1 : h2hPlayed >= 3 ? 0.72 : h2hPlayed >= 1 ? 0.38 : 0.15;
+  const h2hQuality = Math.max(0.15, Number(buildH2HReliability(input?.h2h, { kickoff: input?.kickoff }).score || 0));
   const sourceQuality = Math.max(Number(input?.homeSeasonStats?.sourceQuality || 0), Number(input?.awaySeasonStats?.sourceQuality || 0), 0);
   const hasLineups = input?.lineupSummary?.confirmed ? 1 : input?.lineupSummary?.projected ? 0.65 : 0.45;
   const marketCoverage = Number(input?.marketCalibration?.closingCoverage || 0);
