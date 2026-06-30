@@ -27,7 +27,15 @@ const [coverage] = await sql.query(`
     count(*) filter (
       where odds_role = 'prematch' and available_before_kickoff = true and minutes_before_kickoff > 0
     )::int as safe_timestamped_prematch
-  from historical_odds_snapshots
+  from (
+    select match_id, bookmaker, home, draw, away, closing_home, closing_draw, closing_away,
+      captured_at, closing_captured_at, odds_role, available_before_kickoff, minutes_before_kickoff
+    from historical_odds_snapshots
+    union all
+    select ps.match_id, os.bookmaker, os.home, os.draw, os.away, os.closing_home, os.closing_draw, os.closing_away,
+      os.captured_at, os.closing_captured_at, os.odds_role, os.available_before_kickoff, os.minutes_before_kickoff
+    from odds_snapshots os join prediction_snapshots ps on ps.prediction_id = os.prediction_id
+  ) all_odds
 `);
 const providers = await sql.query(`
   select provider, bookmaker, count(*)::int as rows, count(distinct match_id)::int as matches

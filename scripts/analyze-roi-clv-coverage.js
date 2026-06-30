@@ -11,8 +11,14 @@ const [report] = await sql.query(`
     count(1) filter(where clv is not null)::int clv_evaluations,
     round(coalesce(avg(roi) filter(where roi is not null),0),4) avg_roi,
     round(coalesce(avg(clv) filter(where clv is not null),0),4) avg_clv,
-    (select count(1)::int from historical_odds_snapshots where available_before_kickoff=true) safe_prematch_odds,
-    (select count(1)::int from historical_odds_snapshots where closing_captured_at is not null) closing_pairs
+    (
+      (select count(1)::int from historical_odds_snapshots where available_before_kickoff=true) +
+      (select count(1)::int from odds_snapshots where available_before_kickoff=true)
+    ) safe_prematch_odds,
+    (
+      (select count(1)::int from historical_odds_snapshots where closing_captured_at is not null) +
+      (select count(1)::int from odds_snapshots where closing_captured_at is not null)
+    ) closing_pairs
   from prediction_evaluations
 `);
 const roiReady = Number(report.safe_prematch_odds || 0) >= minimumSample && Number(report.roi_evaluations || 0) >= minimumSample;
