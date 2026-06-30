@@ -53,11 +53,25 @@ function replaceTemplate(template, variables) {
   });
 }
 
-function inferOddsApiSportKey(match = {}) {
+function configuredExtraSports() {
+  return String(process.env.ODDS_API_EXTRA_SPORTS || "")
+    .split(/[,\s]+/)
+    .map((value) => value.trim())
+    .filter(Boolean);
+}
+
+function unique(values) {
+  return [...new Set(values.filter(Boolean))];
+}
+
+function inferOddsApiSportKeys(match = {}) {
   const override = process.env.ODDS_API_SPORT || process.env.ODDS_SPORT_KEY || "";
-  if (override.trim()) return override.trim();
+  if (override.trim()) return unique([override.trim(), ...configuredExtraSports()]);
   const league = normalizeName(match.league || "");
   const mappings = [
+    [/champions league.*qual|qual.*champions league|ucl.*qual/, "soccer_uefa_champs_league_qualification"],
+    [/europa league.*qual|qual.*europa league/, "soccer_uefa_europa_league_qualification"],
+    [/conference league.*qual|qual.*conference league/, "soccer_uefa_europa_conference_league_qualification"],
     [/premier league/, "soccer_epl"],
     [/championship/, "soccer_efl_champ"],
     [/laliga|la liga/, "soccer_spain_la_liga"],
@@ -70,7 +84,23 @@ function inferOddsApiSportKey(match = {}) {
     [/europa league/, "soccer_uefa_europa_league"],
     [/conference league/, "soccer_uefa_europa_conference_league"],
   ];
-  return mappings.find(([pattern]) => pattern.test(league))?.[1] || "soccer_epl";
+  const primary = mappings.find(([pattern]) => pattern.test(league))?.[1] || "soccer_epl";
+  const fallbackByFamily = [];
+  if (/champions league|ucl|europe/.test(league)) {
+    fallbackByFamily.push("soccer_uefa_champs_league_qualification", "soccer_uefa_champs_league");
+  }
+  if (/europa league|europe/.test(league)) {
+    fallbackByFamily.push("soccer_uefa_europa_league_qualification", "soccer_uefa_europa_league");
+  }
+  if (/conference league|europe/.test(league)) {
+    fallbackByFamily.push("soccer_uefa_europa_conference_league_qualification", "soccer_uefa_europa_conference_league");
+  }
+  fallbackByFamily.push(...configuredExtraSports());
+  return unique([primary, ...fallbackByFamily]);
+}
+
+function inferOddsApiSportKey(match = {}) {
+  return inferOddsApiSportKeys(match)[0] || "soccer_epl";
 }
 
 function pickFlatOdds(node) {
@@ -230,15 +260,9 @@ export async function fetchOddsAtPrediction(match, options = {}) {
   }
 
   const generatedAt = options.generatedAt || new Date().toISOString();
-  const url = replaceTemplate(template, {
-    apiKey,
-    sport: inferOddsApiSportKey(match),
-    homeTeam: match?.homeTeam || "",
-    awayTeam: match?.awayTeam || "",
-    league: match?.league || "",
-    kickoff: match?.kickoff || "",
-    matchId: match?.matchId || "",
-  });
+  const sports = /the-odds-api\.com/i.test(template) && /\{sport\}/i.test(template)
+    ? inferOddsApiSportKeys(match)
+    : [inferOddsApiSportKey(match)];
 
   try {
     const fetchImpl = options.fetchImpl || globalThis.fetch;
@@ -250,57 +274,89 @@ export async function fetchOddsAtPrediction(match, options = {}) {
         reason: "fetch is niet beschikbaar in deze runtime.",
       };
     }
-    const cached = responseCache.get(url);
-    const cacheFresh = cached && Date.now() - cached.cachedAt <= RESPONSE_CACHE_TTL_MS;
-    let response = null;
-    let payload = cacheFresh ? cached.payload : null;
-    let quota = cacheFresh ? cached.quota : null;
-    if (!cacheFresh) {
-      const isApiSports = /football\.api-sports\.io|api-sports\.io/i.test(url);
-      response = await fetchImpl(url, {
-        headers: {
-          Accept: "application/json",
-          ...(apiKey && !url.includes(apiKey) ? (isApiSports ? { "x-apisports-key": apiKey } : { "x-api-key": apiKey }) : {}),
-        },
+    const attempts = [];
+    let lastResult = null;
+    for (const sport of sports) {
+      const url = replaceTemplate(template, {
+        apiKey,
+        sport,
+        homeTeam: match?.homeTeam || "",
+        awayTeam: match?.awayTeam || "",
+        league: match?.league || "",
+        kickoff: match?.kickoff || "",
+        matchId: match?.matchId || "",
       });
-      quota = {
-        remaining: response.headers.get("x-requests-remaining") || response.headers.get("x-ratelimit-requests-remaining"),
-        used: response.headers.get("x-requests-used"),
-        lastCost: response.headers.get("x-requests-last"),
-      };
-    }
-    if (response && !response.ok) {
-      return {
-        status: "provider_error",
-        oddsAtPrediction: null,
+      const cached = responseCache.get(url);
+      const cacheFresh = cached && Date.now() - cached.cachedAt <= RESPONSE_CACHE_TTL_MS;
+      let response = null;
+      let payload = cacheFresh ? cached.payload : null;
+      let quota = cacheFresh ? cached.quota : null;
+      if (!cacheFresh) {
+        const isApiSports = /football\.api-sports\.io|api-sports\.io/i.test(url);
+        response = await fetchImpl(url, {
+          headers: {
+            Accept: "application/json",
+            ...(apiKey && !url.includes(apiKey) ? (isApiSports ? { "x-apisports-key": apiKey } : { "x-api-key": apiKey }) : {}),
+          },
+        });
+        quota = {
+          remaining: response.headers.get("x-requests-remaining") || response.headers.get("x-ratelimit-requests-remaining"),
+          used: response.headers.get("x-requests-used"),
+          lastCost: response.headers.get("x-requests-last"),
+        };
+      }
+      if (response && !response.ok) {
+        attempts.push({ sport, status: "provider_error", statusCode: response.status });
+        if (![400, 404, 422].includes(Number(response.status))) {
+          return {
+            status: "provider_error",
+            oddsAtPrediction: null,
+            provider,
+            statusCode: response.status,
+            reason: `Oddsprovider antwoordde met HTTP ${response.status}.`,
+            requestMeta: { attempts, attemptedSports: sports },
+          };
+        }
+        continue;
+      }
+      if (!cacheFresh) {
+        payload = await response.json();
+        responseCache.set(url, { payload, quota, cachedAt: Date.now() });
+      }
+      const receivedAt = new Date().toISOString();
+      const requestedCutoffMs = Date.parse(options.cutoffAt || "");
+      const receivedAtMs = Date.parse(receivedAt);
+      const effectiveCutoffAt = Number.isFinite(requestedCutoffMs) && requestedCutoffMs > receivedAtMs
+        ? options.cutoffAt
+        : receivedAt;
+      const result = {
+        ...normalizeOddsSnapshot(payload, match, {
+          provider,
+          generatedAt: receivedAt,
+          cutoffAt: effectiveCutoffAt,
+          kickoff: match?.kickoff,
+        }),
         provider,
-        statusCode: response.status,
-        reason: `Oddsprovider antwoordde met HTTP ${response.status}.`,
+        requestMeta: {
+          cached: Boolean(cacheFresh),
+          quota,
+          sport,
+          attemptedSports: sports,
+          attempts,
+          templateDefaulted: !String(process.env.ODDS_API_URL_TEMPLATE || "").trim(),
+        },
       };
+      attempts.push({ sport, status: result.status, cached: Boolean(cacheFresh), remaining: quota?.remaining || null });
+      lastResult = result;
+      if (["available", "partial"].includes(result.status)) return result;
     }
-    if (!cacheFresh) {
-      payload = await response.json();
-      responseCache.set(url, { payload, quota, cachedAt: Date.now() });
-    }
-    const receivedAt = new Date().toISOString();
-    const requestedCutoffMs = Date.parse(options.cutoffAt || "");
-    const receivedAtMs = Date.parse(receivedAt);
-    const effectiveCutoffAt = Number.isFinite(requestedCutoffMs) && requestedCutoffMs > receivedAtMs
-      ? options.cutoffAt
-      : receivedAt;
     return {
-      ...normalizeOddsSnapshot(payload, match, {
-        provider,
-        generatedAt: receivedAt,
-        cutoffAt: effectiveCutoffAt,
-        kickoff: match?.kickoff,
-      }),
+      ...(lastResult || { status: "not_found", oddsAtPrediction: null, reason: "Geen sport fallback gaf herkenbare 1X2 odds terug." }),
       provider,
       requestMeta: {
-        cached: Boolean(cacheFresh),
-        quota,
-        sport: inferOddsApiSportKey(match),
-        templateDefaulted: !String(process.env.ODDS_API_URL_TEMPLATE || "").trim(),
+        ...(lastResult?.requestMeta || {}),
+        attemptedSports: sports,
+        attempts,
       },
     };
   } catch (error) {

@@ -1,0 +1,57 @@
+name: Odds and snapshot scout
+
+on:
+  schedule:
+    - cron: "23 8 * * *"
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+env:
+  DATA_BRANCH: codex/step3b-layout
+  FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: "true"
+  ODDS_PROVIDER_NAME: ${{ secrets.ODDS_PROVIDER_NAME }}
+  ODDS_API_URL_TEMPLATE: ${{ secrets.ODDS_API_URL_TEMPLATE }}
+  ODDS_API_KEY: ${{ secrets.ODDS_API_KEY }}
+  THE_ODDS_API_KEY: ${{ secrets.THE_ODDS_API_KEY }}
+  ODDS_API_EXTRA_SPORTS: soccer_uefa_champs_league_qualification,soccer_uefa_europa_league_qualification,soccer_uefa_europa_conference_league_qualification,soccer_uefa_champs_league,soccer_uefa_europa_league,soccer_uefa_europa_conference_league
+  DATABASE_URL: ${{ secrets.DATABASE_URL }}
+  POSTGRES_URL: ${{ secrets.POSTGRES_URL }}
+
+jobs:
+  scout:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v5
+        with:
+          fetch-depth: 0
+          token: ${{ secrets.GITHUB_TOKEN }}
+          ref: ${{ env.DATA_BRANCH }}
+      - uses: actions/setup-node@v5
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+      - run: npm run monitor:odds-coverage
+        env:
+          ODDS_SCOUT_LIMIT: 40
+          ODDS_SCOUT_DAYS_AHEAD: 21
+      - run: npm run monitor:snapshot-growth
+      - name: Commit scout reports
+        run: |
+          BRANCH_NAME="${DATA_BRANCH:-${{ github.ref_name }}}"
+          git config user.name github-actions
+          git config user.email github-actions@github.com
+          git add monitor/odds-coverage-scout.json monitor/snapshot-growth-monitor.json
+          git diff --staged --quiet && echo "geen scoutwijzigingen" && exit 0
+          git commit -m "update odds snapshot scout [skip vercel]"
+          for attempt in 1 2 3; do
+            git pull --rebase --autostash origin "$BRANCH_NAME"
+            if git push origin HEAD:"$BRANCH_NAME"; then
+              exit 0
+            fi
+            sleep $((attempt * 5))
+          done
+          exit 1
