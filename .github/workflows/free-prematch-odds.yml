@@ -2,6 +2,7 @@ name: Free timestamped prematch odds
 
 on:
   schedule:
+    - cron: "17 * * * *"
     - cron: "13 */4 * * *"
   workflow_dispatch:
 
@@ -26,6 +27,8 @@ jobs:
           THE_ODDS_API_KEY: ${{ secrets.THE_ODDS_API_KEY }}
           ODDS_API_MATCH_LIMIT: 120
           ODDS_API_DAYS_AHEAD: 21
+          ODDS_API_CLOSING_LIMIT: 180
+          ODDS_API_CLOSING_LOOKAHEAD_MINUTES: 180
       - run: npm run db:odds:leakage
         env:
           DATABASE_URL: ${{ secrets.DATABASE_URL }}

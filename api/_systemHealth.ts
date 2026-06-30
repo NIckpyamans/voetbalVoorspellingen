@@ -331,8 +331,14 @@ export async function sendSystemHealth(_req: any, res: any, mode = "health") {
           (select count(1)::int from source_conflicts) conflicts,(select count(1)::int from source_audit) audit_rows,
           (select count(distinct prediction_id)::int from source_audit) audited_predictions,
           (select count(1)::int from prediction_snapshots) prediction_snapshots,
-          (select count(1)::int from historical_odds_snapshots where available_before_kickoff=true) prematch_odds,
-          (select count(1)::int from historical_odds_snapshots where closing_captured_at is not null) closing_pairs,
+          (
+            (select count(1)::int from historical_odds_snapshots where available_before_kickoff=true) +
+            (select count(1)::int from odds_snapshots where available_before_kickoff=true)
+          ) prematch_odds,
+          (
+            (select count(1)::int from historical_odds_snapshots where closing_captured_at is not null) +
+            (select count(1)::int from odds_snapshots where closing_captured_at is not null)
+          ) closing_pairs,
           (select count(1)::int from h2h_edges) h2h_edges from matches`),
         sql.query(`select m.match_id,m.date_key,m.league,m.home_team_name,m.away_team_name,m.identity_missing_fields,q.attempts,q.last_attempt_at
           from matches m left join match_identity_quarantine q on q.match_id=m.match_id where m.identity_status='quarantined'

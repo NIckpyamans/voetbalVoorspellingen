@@ -15,6 +15,8 @@ const todayKey = now.toISOString().slice(0, 10);
 const fetchTimeoutMs = Number(process.env.ODDS_FETCH_TIMEOUT_MS || 8000);
 const oddsApiMatchLimit = Math.max(0, Number(process.env.ODDS_API_MATCH_LIMIT || 80));
 const oddsApiDaysAhead = Math.max(1, Number(process.env.ODDS_API_DAYS_AHEAD || 14));
+const oddsApiClosingLimit = Math.max(0, Number(process.env.ODDS_API_CLOSING_LIMIT || 160));
+const oddsApiClosingLookaheadMinutes = Math.max(15, Number(process.env.ODDS_API_CLOSING_LOOKAHEAD_MINUTES || 180));
 const start = now.getUTCMonth() + 1 >= 7 ? now.getUTCFullYear() : now.getUTCFullYear() - 1;
 const folders = [`${String(start).slice(2)}${String(start + 1).slice(2)}`, `${String(start + 1).slice(2)}${String(start + 2).slice(2)}`];
 async function fetchWithTimeout(url) {
@@ -49,7 +51,11 @@ let futureRows = 0;
 let oddsApiCaptured = 0;
 let oddsApiClosingUpdated = 0;
 let oddsApiCandidates = 0;
+let oddsApiClosingCandidates = 0;
+let oddsApiHistoricalClosingUpdated = 0;
+let oddsApiPredictionClosingUpdated = 0;
 const oddsApiStatusCounts = {};
+const oddsApiClosingStatusCounts = {};
 const errors = [];
 for (const folder of folders) for (const code of leagues) {
   const url = `https://www.football-data.co.uk/mmz4281/${folder}/${code}.csv`;
@@ -191,6 +197,96 @@ async function captureOddsApiPrematch() {
 
 await captureOddsApiPrematch();
 
+async function updateOddsApiClosingOdds() {
+  if (!oddsApiClosingLimit) return;
+  const rows = await sql.query(
+    `select * from (
+       select 'historical' as target_table, hos.historical_odds_snapshot_id as snapshot_id,
+         hos.match_id, m.league, m.home_team_name, m.away_team_name, m.kickoff_at,
+         hos.bookmaker, hos.captured_at as prematch_captured_at
+       from historical_odds_snapshots hos
+       join matches m on m.match_id = hos.match_id
+       where hos.odds_role = 'prematch'
+         and hos.available_before_kickoff = true
+         and hos.closing_captured_at is null
+         and m.kickoff_at > now()
+         and m.kickoff_at <= now() + ($1::text || ' minutes')::interval
+       union all
+       select 'prediction' as target_table, os.odds_snapshot_id as snapshot_id,
+         ps.match_id, m.league, m.home_team_name, m.away_team_name, m.kickoff_at,
+         os.bookmaker, os.captured_at as prematch_captured_at
+       from odds_snapshots os
+       join prediction_snapshots ps on ps.prediction_id = os.prediction_id
+       join matches m on m.match_id = ps.match_id
+       where os.odds_role = 'prematch'
+         and os.available_before_kickoff = true
+         and os.closing_captured_at is null
+         and m.kickoff_at > now()
+         and m.kickoff_at <= now() + ($1::text || ' minutes')::interval
+     ) candidates
+     order by kickoff_at asc
+     limit $2`,
+    [String(oddsApiClosingLookaheadMinutes), oddsApiClosingLimit]
+  );
+  oddsApiClosingCandidates = rows.length;
+  const resultCache = new Map();
+  for (const row of rows) {
+    try {
+      const cacheKey = row.match_id;
+      if (!resultCache.has(cacheKey)) {
+        const generatedAt = new Date().toISOString();
+        resultCache.set(
+          cacheKey,
+          fetchOddsAtPrediction(
+            {
+              matchId: row.match_id,
+              league: row.league,
+              homeTeam: row.home_team_name,
+              awayTeam: row.away_team_name,
+              kickoff: row.kickoff_at,
+            },
+            { generatedAt, cutoffAt: generatedAt }
+          )
+        );
+      }
+      const result = await resultCache.get(cacheKey);
+      oddsApiClosingStatusCounts[result?.status || "unknown"] =
+        (oddsApiClosingStatusCounts[result?.status || "unknown"] || 0) + 1;
+      const odds = result?.oddsAtPrediction;
+      if (!odds || ![odds.home, odds.draw, odds.away].every((value) => Number(value) > 1)) continue;
+      const closingCapturedAt = odds.capturedAt || new Date().toISOString();
+      if (Date.parse(closingCapturedAt) <= Date.parse(row.prematch_captured_at || "")) continue;
+      if (Date.parse(closingCapturedAt) >= Date.parse(row.kickoff_at)) continue;
+      if (row.target_table === "historical") {
+        const updated = await sql.query(
+          `update historical_odds_snapshots
+           set closing_home=$2, closing_draw=$3, closing_away=$4, closing_captured_at=$5
+           where historical_odds_snapshot_id=$1
+             and closing_captured_at is null
+           returning historical_odds_snapshot_id`,
+          [row.snapshot_id, Number(odds.home), Number(odds.draw), Number(odds.away), closingCapturedAt]
+        );
+        oddsApiHistoricalClosingUpdated += updated.length;
+      } else {
+        const updated = await sql.query(
+          `update odds_snapshots
+           set closing_home=$2, closing_draw=$3, closing_away=$4, closing_captured_at=$5
+           where odds_snapshot_id=$1
+             and closing_captured_at is null
+           returning odds_snapshot_id`,
+          [row.snapshot_id, Number(odds.home), Number(odds.draw), Number(odds.away), closingCapturedAt]
+        );
+        oddsApiPredictionClosingUpdated += updated.length;
+      }
+    } catch (error) {
+      errors.push({ provider: "the-odds-api-closing", matchId: row.match_id, error: error.message });
+    }
+  }
+  oddsApiClosingUpdated = oddsApiHistoricalClosingUpdated + oddsApiPredictionClosingUpdated;
+}
+
+await updateOddsApiClosingOdds();
+
 console.log(
   JSON.stringify(
     {
@@ -200,7 +296,11 @@ console.log(
       oddsApiCandidates,
       oddsApiCaptured,
       oddsApiClosingUpdated,
+      oddsApiClosingCandidates,
+      oddsApiHistoricalClosingUpdated,
+      oddsApiPredictionClosingUpdated,
       oddsApiStatusCounts,
+      oddsApiClosingStatusCounts,
       errors: errors.slice(0, 5),
     },
     null,

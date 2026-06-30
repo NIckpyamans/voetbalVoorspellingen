@@ -26,6 +26,8 @@ jobs:
           THE_ODDS_API_KEY: ${{ secrets.THE_ODDS_API_KEY }}
           ODDS_API_MATCH_LIMIT: 120
           ODDS_API_DAYS_AHEAD: 21
+          ODDS_API_CLOSING_LIMIT: 180
+          ODDS_API_CLOSING_LOOKAHEAD_MINUTES: 180
       - run: node scripts/evaluate-prediction-snapshots.js
         env:
           DATABASE_URL: ${{ secrets.DATABASE_URL }}

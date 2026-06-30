@@ -10,8 +10,14 @@ const metrics = await sql.query(`
   union all select 'resolved_matches',count(1) filter(where identity_status='resolved')::numeric from matches
   union all select 'source_conflicts',count(1)::numeric from source_conflicts
   union all select 'audit_coverage',count(distinct prediction_id)::numeric/greatest((select count(1) from prediction_snapshots),1) from source_audit
-  union all select 'prematch_odds',count(1)::numeric from historical_odds_snapshots where available_before_kickoff=true
-  union all select 'closing_pairs',count(1)::numeric from historical_odds_snapshots where closing_captured_at is not null
+  union all select 'prematch_odds',(
+    (select count(1)::numeric from historical_odds_snapshots where available_before_kickoff=true) +
+    (select count(1)::numeric from odds_snapshots where available_before_kickoff=true)
+  )
+  union all select 'closing_pairs',(
+    (select count(1)::numeric from historical_odds_snapshots where closing_captured_at is not null) +
+    (select count(1)::numeric from odds_snapshots where closing_captured_at is not null)
+  )
   union all select 'evaluated_predictions',count(1)::numeric from prediction_evaluations
   union all select 'outcome_hit_rate',coalesce(avg(outcome_hit::int),0)::numeric from prediction_evaluations
   union all select 'average_brier',coalesce(avg(brier_score),0)::numeric from prediction_evaluations

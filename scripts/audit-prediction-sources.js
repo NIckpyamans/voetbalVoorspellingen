@@ -14,7 +14,7 @@ const fields = [
   ["match_stats", "database", "exists(select 1 from match_stats where match_id=ps.match_id)"],
   ["team_match_stats", "database", "exists(select 1 from team_match_stats where match_id=ps.match_id)"],
   ["h2h", "database", "exists(select 1 from h2h_edges where home_club_id=least(m.home_club_id,m.away_club_id) and away_club_id=greatest(m.home_club_id,m.away_club_id))"],
-  ["prematch_odds", "database", "exists(select 1 from historical_odds_snapshots where match_id=ps.match_id and available_before_kickoff=true)"],
+  ["prematch_odds", "database", "exists(select 1 from historical_odds_snapshots where match_id=ps.match_id and available_before_kickoff=true) or exists(select 1 from odds_snapshots os where os.prediction_id=ps.prediction_id and os.available_before_kickoff=true)"],
   ["weather", "database", "m.weather_payload <> '{}'::jsonb"],
 ];
 for (const [field, source, availableSql] of fields) {
