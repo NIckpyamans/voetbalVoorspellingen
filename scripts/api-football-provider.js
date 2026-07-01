@@ -8,6 +8,10 @@ const H2H_CACHE_TTL_MS = 12 * 60 * 60 * 1000;
 
 let fetchesThisRun = 0;
 
+function apiFootballBaseUrl() {
+  return String(process.env.API_FOOTBALL_BASE_URL || process.env.APISPORTS_BASE_URL || API_FOOTBALL_BASE).trim();
+}
+
 function normalizeName(value) {
   return String(value || "")
     .toLowerCase()
@@ -42,6 +46,20 @@ function recordDiagnostic(store, status, details = {}) {
   diagnostics.lastCheckedAt = new Date().toISOString();
   if (details.statusCode) diagnostics.lastStatusCode = details.statusCode;
   if (details.endpoint) diagnostics.lastEndpoint = details.endpoint;
+  if (details.errorCategory) {
+    diagnostics.lastErrorCategory = details.errorCategory;
+    diagnostics.errorCategories = diagnostics.errorCategories || {};
+    diagnostics.errorCategories[details.errorCategory] = Number(diagnostics.errorCategories[details.errorCategory] || 0) + 1;
+  }
+}
+
+function classifyProviderError(response = {}) {
+  const text = JSON.stringify(response.errors || response.data?.errors || response.data || "").toLowerCase();
+  if (/quota|limit|rate|request/.test(text)) return "quota_or_rate_limit";
+  if (/token|key|auth|unauthorized|forbidden|subscription|plan/.test(text)) return "auth_or_plan";
+  if (/endpoint|not found|not_found|coverage/.test(text)) return "endpoint_or_coverage";
+  if (response.statusCode) return `http_${response.statusCode}`;
+  return "provider_payload_error";
 }
 
 function isFresh(entry, ttlMs, now = Date.now()) {
@@ -61,7 +79,7 @@ async function apiFootballGet(path, params = {}, options = {}) {
     return { status: "rate_limited_locally", data: null };
   }
 
-  const url = new URL(path, options.baseUrl || API_FOOTBALL_BASE);
+  const url = new URL(path, options.baseUrl || apiFootballBaseUrl());
   for (const [key, value] of Object.entries(params || {})) {
     if (value !== undefined && value !== null && String(value).trim()) url.searchParams.set(key, String(value));
   }
@@ -72,11 +90,13 @@ async function apiFootballGet(path, params = {}, options = {}) {
   try {
     const fetchImpl = options.fetchImpl || globalThis.fetch;
     if (typeof fetchImpl !== "function") return { status: "fetch_unavailable", data: null };
+    const headers = { Accept: "application/json", "x-apisports-key": apiKey };
+    if (/rapidapi/i.test(url.hostname)) {
+      headers["x-rapidapi-key"] = apiKey;
+      headers["x-rapidapi-host"] = url.hostname;
+    }
     const response = await fetchImpl(url, {
-      headers: {
-        Accept: "application/json",
-        "x-apisports-key": apiKey,
-      },
+      headers,
       signal: controller.signal,
     });
     if (!response.ok) {
@@ -84,10 +104,10 @@ async function apiFootballGet(path, params = {}, options = {}) {
     }
     const payload = await response.json();
     if (Array.isArray(payload?.errors) && payload.errors.length) {
-      return { status: "provider_error", errors: payload.errors, data: payload };
+      return { status: "provider_error", errorCategory: classifyProviderError({ errors: payload.errors, data: payload }), errors: payload.errors, data: payload };
     }
     if (payload?.errors && typeof payload.errors === "object" && Object.keys(payload.errors).length) {
-      return { status: "provider_error", errors: payload.errors, data: payload };
+      return { status: "provider_error", errorCategory: classifyProviderError({ errors: payload.errors, data: payload }), errors: payload.errors, data: payload };
     }
     return { status: "ok", data: payload };
   } catch (error) {
@@ -134,7 +154,11 @@ async function resolveTeamId(store, teamName, leagueLabel, options = {}) {
   }
 
   const response = await apiFootballGet("/teams", { search: teamName }, options);
-  recordDiagnostic(store, response.status, { statusCode: response.statusCode, endpoint: "teams" });
+  recordDiagnostic(store, response.status, {
+    statusCode: response.statusCode,
+    endpoint: "teams",
+    errorCategory: response.status === "ok" ? "" : response.errorCategory || classifyProviderError(response),
+  });
   if (response.status !== "ok") {
     store.apiFootballTeamMap[key] = {
       teamId: null,
@@ -264,8 +288,10 @@ export function summarizeApiFootballUsage(store = {}) {
   return {
     configured: Boolean(getApiFootballKey()),
     enabled: String(process.env.API_FOOTBALL_H2H_ENABLED || "true").toLowerCase() !== "false",
+    baseUrl: apiFootballBaseUrl().replace(/^https?:\/\//, ""),
     requests: Number(diagnostics.requests || 0),
     statusCounts: diagnostics.statusCounts || {},
+    errorCategories: diagnostics.errorCategories || {},
     resolvedTeams: teamEntries.filter((entry) => entry?.teamId).length,
     failedTeamMappings: teamEntries.filter((entry) => !entry?.teamId).length,
     cachedPairs: h2hEntries.length,
