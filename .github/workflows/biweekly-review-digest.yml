@@ -48,7 +48,7 @@ jobs:
           echo "should_refresh=$SHOULD_REFRESH" >> "$GITHUB_OUTPUT"
 
       - name: Commit digest
-        if: steps.cadence.outputs.should_refresh == 'true' || github.event_name == 'workflow_dispatch'
+        if: steps.cadence.outputs.should_refresh == 'true' || github.event_name == 'workflow_dispatch' || github.event_name == 'schedule'
         run: |
           BRANCH_NAME="${{ github.ref_name }}"
           git config user.name "github-actions"
