@@ -68,6 +68,7 @@ const DATA_FILE = path.resolve(process.cwd(), "server_data.json");
 const SPLIT_DATA_DIR = path.resolve(process.cwd(), "data");
 const COMPETITION_ARCHIVE_DIR = path.join(SPLIT_DATA_DIR, "competitions");
 const TRAINING_SNAPSHOT_FILE = path.resolve(process.cwd(), "training", "training-snapshot.json");
+const ODDS_FETCH_ENABLED = process.env.ODDS_FETCH_ENABLED !== "false";
 
 loadLocalEnv(process.cwd());
 
@@ -11221,19 +11222,21 @@ async function main() {
       });
 
       const generatedAtIso = isoFromMs(now) || new Date(now).toISOString();
-      const oddsCapture = await fetchOddsAtPrediction(
-        {
-          matchId,
-          league: leagueInfo.label,
-          homeTeam: homeName,
-          awayTeam: awayName,
-          kickoff,
-        },
-        {
-          generatedAt: generatedAtIso,
-          cutoffAt: generatedAtIso,
-        }
-      );
+      const oddsCapture = ODDS_FETCH_ENABLED
+        ? await fetchOddsAtPrediction(
+            {
+              matchId,
+              league: leagueInfo.label,
+              homeTeam: homeName,
+              awayTeam: awayName,
+              kickoff,
+            },
+            {
+              generatedAt: generatedAtIso,
+              cutoffAt: generatedAtIso,
+            }
+          )
+        : { status: "disabled", oddsAtPrediction: null, reason: "ODDS_FETCH_ENABLED=false" };
       const oddsAtPrediction = oddsCapture?.oddsAtPrediction || null;
       const score =
         event.homeScore?.current != null && event.awayScore?.current != null

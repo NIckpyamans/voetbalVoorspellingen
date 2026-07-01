@@ -3,6 +3,7 @@
 import fs from "fs";
 import path from "path";
 import { getSql, loadLocalEnv } from "../shared/database.js";
+import { CLUB_ONLY_FIXTURE_WHERE } from "./club-fixture-filter.js";
 import { fetchOddsAtPrediction } from "./odds-provider.js";
 
 const ROOT = process.cwd();
@@ -26,6 +27,7 @@ const rows = await sql.query(
      and m.kickoff_at <= now() + ($1::text || ' days')::interval
      and m.home_team_name is not null
      and m.away_team_name is not null
+     ${CLUB_ONLY_FIXTURE_WHERE}
    order by (case when exists(select 1 from historical_odds_snapshots hos where hos.match_id=m.match_id and hos.available_before_kickoff=true) then 1 else 0 end),
      m.kickoff_at asc
    limit $2`,

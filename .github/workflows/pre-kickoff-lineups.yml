@@ -1,0 +1,79 @@
+name: Pre-kickoff lineup refresh
+
+on:
+  schedule:
+    # Vlak voor wedstrijden vaker verversen, zonder H2H/odds-quota te verbruiken.
+    - cron: "*/30 4-22 * * *"
+  workflow_dispatch:
+
+concurrency:
+  group: football-lineup-refresh
+  cancel-in-progress: false
+
+permissions:
+  contents: write
+
+env:
+  TZ: Europe/Amsterdam
+  FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: "true"
+  DATA_BRANCH: codex/step3b-layout
+  FOOTYAI_DATE_WINDOW: today,tomorrow
+  API_KEY_FOOTBALL_DATA: ${{ secrets.API_KEY_FOOTBALL_DATA }}
+  API_KEY_API_FOOTBALL: ${{ secrets.API_KEY_API_FOOTBALL }}
+  API_FOOTBALL_BASE_URL: ${{ vars.API_FOOTBALL_BASE_URL }}
+  API_FOOTBALL_H2H_ENABLED: "false"
+  ODDS_FETCH_ENABLED: "false"
+  DATABASE_URL: ${{ secrets.DATABASE_URL }}
+  POSTGRES_URL: ${{ secrets.POSTGRES_URL }}
+  SUPABASE_DB_URL: ${{ secrets.SUPABASE_DB_URL }}
+
+jobs:
+  refresh-lineups:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+
+    steps:
+      - uses: actions/checkout@v5
+        with:
+          fetch-depth: 0
+          token: ${{ secrets.GITHUB_TOKEN }}
+          ref: ${{ env.DATA_BRANCH }}
+
+      - uses: actions/setup-node@v5
+        with:
+          node-version: 22
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Apply database schema
+        run: npm run db:schema:apply || if [ "$?" -eq 2 ]; then echo "database secret ontbreekt; schema apply overgeslagen"; else exit 1; fi
+
+      - name: Refresh near-kickoff lineups
+        run: node scripts/server-worker.js
+
+      - name: Monitor lineup coverage
+        run: npm run monitor:lineups
+        env:
+          LINEUP_MONITOR_DAYS_AHEAD: 2
+          LINEUP_MONITOR_LIMIT: 80
+
+      - name: Commit and push lineup data
+        run: |
+          BRANCH_NAME="${DATA_BRANCH:-${{ github.ref_name }}}"
+          git config user.name github-actions
+          git config user.email github-actions@github.com
+          git add data training monitor
+          git diff --staged --quiet && echo "geen lineupwijzigingen" && exit 0
+          git commit -m "pre-kickoff lineup refresh [skip vercel]"
+          for attempt in 1 2 3; do
+            git pull --rebase --autostash origin "$BRANCH_NAME"
+            if git push origin HEAD:"$BRANCH_NAME"; then
+              exit 0
+            fi
+            echo "Push poging $attempt mislukt; remote is waarschijnlijk net bijgewerkt. Opnieuw proberen..."
+            sleep $((attempt * 5))
+          done
+          echo "Push mislukt na 3 pogingen"
+          exit 1

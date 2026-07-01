@@ -3,6 +3,7 @@
 import fs from "fs";
 import path from "path";
 import { getSql, loadLocalEnv } from "../shared/database.js";
+import { CLUB_ONLY_FIXTURE_WHERE } from "./club-fixture-filter.js";
 
 const ROOT = process.cwd();
 loadLocalEnv(ROOT);
@@ -57,12 +58,12 @@ function latestSnapshotForMatch(rows, matchId) {
 }
 
 const matches = await sql.query(
-  `select match_id, date_key, league, home_team_name, away_team_name, kickoff_at
-   from matches
-   where kickoff_at > now()
-     and kickoff_at <= now() + ($1::text || ' days')::interval
-     and identity_status = 'resolved'
-   order by kickoff_at asc
+  `select m.match_id, m.date_key, m.league, m.home_team_name, m.away_team_name, m.kickoff_at
+   from matches m
+   where m.kickoff_at > now()
+     and m.kickoff_at <= now() + ($1::text || ' days')::interval
+     ${CLUB_ONLY_FIXTURE_WHERE}
+   order by m.kickoff_at asc
    limit $2`,
   [String(daysAhead), limit]
 );
