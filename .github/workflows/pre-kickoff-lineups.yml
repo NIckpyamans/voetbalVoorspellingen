@@ -11,7 +11,7 @@ concurrency:
   cancel-in-progress: false
 
 permissions:
-  contents: write
+  contents: read
 
 env:
   TZ: Europe/Amsterdam
@@ -59,23 +59,7 @@ jobs:
           LINEUP_MONITOR_DAYS_AHEAD: 2
           LINEUP_MONITOR_LIMIT: 80
 
-      - name: Commit and push lineup data
+      - name: Report local data changes
         run: |
-          BRANCH_NAME="${DATA_BRANCH:-${{ github.ref_name }}}"
-          git config user.name github-actions
-          git config user.email github-actions@github.com
-          git pull --rebase --autostash origin "$BRANCH_NAME"
-          # Monitorbestanden worden door de scout-workflow beheerd; deze workflow commit alleen workerdata.
-          git add data training
-          git diff --staged --quiet && echo "geen lineupwijzigingen" && exit 0
-          git commit -m "pre-kickoff lineup refresh [skip vercel]"
-          for attempt in 1 2 3; do
-            git pull --rebase --autostash origin "$BRANCH_NAME"
-            if git push origin HEAD:"$BRANCH_NAME"; then
-              exit 0
-            fi
-            echo "Push poging $attempt mislukt; remote is waarschijnlijk net bijgewerkt. Opnieuw proberen..."
-            sleep $((attempt * 5))
-          done
-          echo "Push mislukt na 3 pogingen"
-          exit 1
+          git status --short data training monitor || true
+          echo "Pre-kickoff refresh schrijft naar Neon via de worker. Statische exports blijven eigendom van de hoofdworker/scout workflows."
