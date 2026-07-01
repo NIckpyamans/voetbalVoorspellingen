@@ -126,6 +126,16 @@ async function main() {
     );
   }
 
+  const activeProfileIds = Object.keys(phaseReliability).map((phase) => `phase_reliability_${phase}`);
+  await sql.query(
+    `
+      delete from calibration_profiles
+      where calibration_profile_id like 'phase_reliability_%'
+        and not (calibration_profile_id = any($1::text[]))
+    `,
+    [activeProfileIds]
+  );
+
   const payload = {
     phaseReliability,
     lastRun: new Date().toISOString(),
