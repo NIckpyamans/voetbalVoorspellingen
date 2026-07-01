@@ -118,6 +118,11 @@ export function hasFinalScore(match) {
   return /^\d+\s*-\s*\d+$/.test(score) && ["FT", "AET", "PEN"].includes(status);
 }
 
+export function hasUsableH2H(match) {
+  const h2h = match?.h2h || {};
+  return Number(h2h.played || 0) > 0 || (Array.isArray(h2h.results) && h2h.results.length > 0);
+}
+
 export function lookupVerifiedResultBackfill(match) {
   const dateKey = String(match?.date || match?.kickoff || "").slice(0, 10);
   const matchPair = buildTeamPairKey(match?.homeTeamName || match?.homeTeam, match?.awayTeamName || match?.awayTeam);

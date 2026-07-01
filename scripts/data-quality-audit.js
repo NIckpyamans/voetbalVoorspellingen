@@ -3,6 +3,7 @@
 import fs from "fs";
 import path from "path";
 import { todayAmsterdamKey } from "../shared/date.js";
+import { hasFinalScore, hasUsableH2H } from "../shared/matchNormalization.js";
 
 const ROOT = process.cwd();
 const OUTPUT_JSON = path.join(ROOT, "monitor", "data-quality-audit.json");
@@ -33,12 +34,6 @@ function dateMinus(dateKey, days) {
   const date = new Date(`${dateKey}T12:00:00Z`);
   date.setUTCDate(date.getUTCDate() - days);
   return date.toISOString().slice(0, 10);
-}
-
-function hasFinalScore(match) {
-  const status = String(match?.status || "").toUpperCase();
-  const score = String(match?.score || "");
-  return /^\d+\s*-\s*\d+$/.test(score) && ["FT", "AET", "PEN"].includes(status);
 }
 
 function isPastMatch(match, today) {
@@ -82,7 +77,7 @@ function main() {
     .filter((match) => !hasFinalScore(match) && !["POSTPONED", "CANCELLED", "RESULT_PENDING"].includes(String(match?.status || "").toUpperCase()))
     .map(matchLabel);
   const h2hMissing = matches
-    .filter((match) => Number(match?.h2h?.played || 0) <= 0)
+    .filter((match) => !hasUsableH2H(match))
     .map(matchLabel);
   const h2hCovered = matches.length - h2hMissing.length;
   const resultBackfillScore = pendingResultBackfills.length === 0 && missingPastScores.length === 0 ? "clean" : "needs_backfill";

@@ -88,6 +88,20 @@ jobs:
         env:
           DATABASE_URL: ${{ secrets.DATABASE_URL }}
           POSTGRES_URL: ${{ secrets.POSTGRES_URL }}
+      - name: Backfill upcoming H2H using configured providers
+        run: npm run db:h2h:backfill-upcoming
+        env:
+          DATABASE_URL: ${{ secrets.DATABASE_URL }}
+          POSTGRES_URL: ${{ secrets.POSTGRES_URL }}
+          API_KEY_API_FOOTBALL: ${{ secrets.API_KEY_API_FOOTBALL }}
+          API_FOOTBALL_MAX_FETCHES_PER_RUN: "30"
+          H2H_BACKFILL_DAYS_AHEAD: "21"
+          H2H_BACKFILL_LIMIT: "40"
+      - name: Rebuild phase reliability from evaluated snapshots
+        run: npm run db:phase:rebuild
+        env:
+          DATABASE_URL: ${{ secrets.DATABASE_URL }}
+          POSTGRES_URL: ${{ secrets.POSTGRES_URL }}
       - name: Capture integrity trends and partition readiness
         run: npm run db:integrity:snapshot && npm run db:quality:alerts && npm run db:partition:assess
         env:
