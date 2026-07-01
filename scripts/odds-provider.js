@@ -1,4 +1,4 @@
-import { getOddsApiKey, getOddsApiUrlTemplate, getOddsProviderName } from "./provider-env.js";
+import { getOddsApiKey, getOddsApiUrlTemplate, getOddsProviderConfigs, getOddsProviderName } from "./provider-env.js";
 
 const responseCache = new Map();
 // Een volledige worker kan meerdere minuten duren; dezelfde sportmarkt hoeft binnen die run maar eenmaal opgehaald te worden.
@@ -226,7 +226,8 @@ export async function fetchOddsAtPrediction(match, options = {}) {
   const template = getOddsApiUrlTemplate();
   const apiKey = getOddsApiKey(template);
   const provider = getOddsProviderName(template);
-  if (!apiKey && !template) {
+  const providerConfigs = getOddsProviderConfigs();
+  if (!providerConfigs.length && !apiKey && !template) {
     return {
       status: "not_configured",
       oddsAtPrediction: null,
@@ -234,7 +235,7 @@ export async function fetchOddsAtPrediction(match, options = {}) {
       reason: "Geen ODDS_API_URL_TEMPLATE of ODDS_API_KEY geconfigureerd.",
     };
   }
-  if (!template) {
+  if (!providerConfigs.length && !template) {
     return {
       status: "provider_template_missing",
       oddsAtPrediction: null,
@@ -242,7 +243,7 @@ export async function fetchOddsAtPrediction(match, options = {}) {
       reason: "API-key staat klaar, maar er is geen odds-endpoint geconfigureerd.",
     };
   }
-  if (!apiKey && /\{apiKey\}/i.test(template)) {
+  if (!providerConfigs.length && !apiKey && /\{apiKey\}/i.test(template)) {
     return {
       status: "not_configured",
       oddsAtPrediction: null,
@@ -250,7 +251,7 @@ export async function fetchOddsAtPrediction(match, options = {}) {
       reason: "De geconfigureerde odds-endpoint mist zijn eigen ODDS_API_KEY; API-Football-keys worden niet naar andere providers gestuurd.",
     };
   }
-  if (!apiKey && /the-odds-api\.com/i.test(template)) {
+  if (!providerConfigs.length && !apiKey && /the-odds-api\.com/i.test(template)) {
     return {
       status: "not_configured",
       oddsAtPrediction: null,
@@ -260,10 +261,6 @@ export async function fetchOddsAtPrediction(match, options = {}) {
   }
 
   const generatedAt = options.generatedAt || new Date().toISOString();
-  const sports = /the-odds-api\.com/i.test(template) && /\{sport\}/i.test(template)
-    ? inferOddsApiSportKeys(match)
-    : [inferOddsApiSportKey(match)];
-
   try {
     const fetchImpl = options.fetchImpl || globalThis.fetch;
     if (typeof fetchImpl !== "function") {
@@ -276,16 +273,34 @@ export async function fetchOddsAtPrediction(match, options = {}) {
     }
     const attempts = [];
     let lastResult = null;
-    for (const sport of sports) {
-      const url = replaceTemplate(template, {
-        apiKey,
-        sport,
-        homeTeam: match?.homeTeam || "",
-        awayTeam: match?.awayTeam || "",
-        league: match?.league || "",
-        kickoff: match?.kickoff || "",
-        matchId: match?.matchId || "",
-      });
+    const configs = providerConfigs.length ? providerConfigs : [{ template, apiKey, provider, suffix: "" }];
+    for (const config of configs) {
+      const configTemplate = config.template;
+      const configApiKey = config.apiKey;
+      const configProvider = config.provider || provider;
+      if (!configApiKey && /\{apiKey\}/i.test(configTemplate)) {
+        attempts.push({ provider: configProvider, sport: "provider", status: "not_configured" });
+        lastResult = {
+          status: "not_configured",
+          oddsAtPrediction: null,
+          provider: configProvider,
+          reason: `Provider ${configProvider} mist een API-key.`,
+        };
+        continue;
+      }
+      const sports = /the-odds-api\.com/i.test(configTemplate) && /\{sport\}/i.test(configTemplate)
+        ? inferOddsApiSportKeys(match)
+        : [inferOddsApiSportKey(match)];
+      for (const sport of sports) {
+        const url = replaceTemplate(configTemplate, {
+          apiKey: configApiKey,
+          sport,
+          homeTeam: match?.homeTeam || "",
+          awayTeam: match?.awayTeam || "",
+          league: match?.league || "",
+          kickoff: match?.kickoff || "",
+          matchId: match?.matchId || "",
+        });
       const cached = responseCache.get(url);
       const cacheFresh = cached && Date.now() - cached.cachedAt <= RESPONSE_CACHE_TTL_MS;
       let response = null;
@@ -293,11 +308,19 @@ export async function fetchOddsAtPrediction(match, options = {}) {
       let quota = cacheFresh ? cached.quota : null;
       if (!cacheFresh) {
         const isApiSports = /football\.api-sports\.io|api-sports\.io/i.test(url);
+        const isRapidApi = /rapidapi/i.test(new URL(url).hostname);
+        const headers = {
+          Accept: "application/json",
+          ...(configApiKey && !url.includes(configApiKey)
+            ? isRapidApi
+              ? { "x-rapidapi-key": configApiKey, "x-rapidapi-host": new URL(url).hostname }
+              : isApiSports
+                ? { "x-apisports-key": configApiKey }
+                : { "x-api-key": configApiKey }
+            : {}),
+        };
         response = await fetchImpl(url, {
-          headers: {
-            Accept: "application/json",
-            ...(apiKey && !url.includes(apiKey) ? (isApiSports ? { "x-apisports-key": apiKey } : { "x-api-key": apiKey }) : {}),
-          },
+          headers,
         });
         quota = {
           remaining: response.headers.get("x-requests-remaining") || response.headers.get("x-ratelimit-requests-remaining"),
@@ -306,16 +329,17 @@ export async function fetchOddsAtPrediction(match, options = {}) {
         };
       }
       if (response && !response.ok) {
-        attempts.push({ sport, status: "provider_error", statusCode: response.status });
+        attempts.push({ provider: configProvider, sport, status: "provider_error", statusCode: response.status });
         if (![400, 404, 422].includes(Number(response.status))) {
-          return {
+          lastResult = {
             status: "provider_error",
             oddsAtPrediction: null,
-            provider,
+            provider: configProvider,
             statusCode: response.status,
             reason: `Oddsprovider antwoordde met HTTP ${response.status}.`,
-            requestMeta: { attempts, attemptedSports: sports },
+            requestMeta: { attempts, attemptedSports: sports, attemptedProviders: configs.map((item) => item.provider) },
           };
+          continue;
         }
         continue;
       }
@@ -331,31 +355,33 @@ export async function fetchOddsAtPrediction(match, options = {}) {
         : receivedAt;
       const result = {
         ...normalizeOddsSnapshot(payload, match, {
-          provider,
+          provider: configProvider,
           generatedAt: receivedAt,
           cutoffAt: effectiveCutoffAt,
           kickoff: match?.kickoff,
         }),
-        provider,
+        provider: configProvider,
         requestMeta: {
           cached: Boolean(cacheFresh),
           quota,
           sport,
           attemptedSports: sports,
+          attemptedProviders: configs.map((item) => item.provider),
           attempts,
           templateDefaulted: !String(process.env.ODDS_API_URL_TEMPLATE || "").trim(),
         },
       };
-      attempts.push({ sport, status: result.status, cached: Boolean(cacheFresh), remaining: quota?.remaining || null });
+      attempts.push({ provider: configProvider, sport, status: result.status, cached: Boolean(cacheFresh), remaining: quota?.remaining || null });
       lastResult = result;
       if (["available", "partial"].includes(result.status)) return result;
+      }
     }
     return {
       ...(lastResult || { status: "not_found", oddsAtPrediction: null, reason: "Geen sport fallback gaf herkenbare 1X2 odds terug." }),
-      provider,
+      provider: lastResult?.provider || provider,
       requestMeta: {
         ...(lastResult?.requestMeta || {}),
-        attemptedSports: sports,
+        attemptedProviders: configs.map((item) => item.provider),
         attempts,
       },
     };

@@ -15,6 +15,14 @@ env:
   ODDS_API_URL_TEMPLATE: ${{ secrets.ODDS_API_URL_TEMPLATE }}
   ODDS_API_KEY: ${{ secrets.ODDS_API_KEY }}
   THE_ODDS_API_KEY: ${{ secrets.THE_ODDS_API_KEY }}
+  ODDS_PROVIDER_NAME_2: ${{ secrets.ODDS_PROVIDER_NAME_2 }}
+  ODDS_API_URL_TEMPLATE_2: ${{ secrets.ODDS_API_URL_TEMPLATE_2 }}
+  ODDS_API_KEY_2: ${{ secrets.ODDS_API_KEY_2 }}
+  ODDS_PROVIDER_NAME_3: ${{ secrets.ODDS_PROVIDER_NAME_3 }}
+  ODDS_API_URL_TEMPLATE_3: ${{ secrets.ODDS_API_URL_TEMPLATE_3 }}
+  ODDS_API_KEY_3: ${{ secrets.ODDS_API_KEY_3 }}
+  SPORTMONKS_API_KEY: ${{ secrets.SPORTMONKS_API_KEY }}
+  SPORTMONKS_ODDS_API_URL_TEMPLATE: ${{ secrets.SPORTMONKS_ODDS_API_URL_TEMPLATE }}
   ODDS_API_EXTRA_SPORTS: soccer_uefa_champs_league_qualification,soccer_uefa_europa_league_qualification,soccer_uefa_europa_conference_league_qualification,soccer_uefa_champs_league,soccer_uefa_europa_league,soccer_uefa_europa_conference_league
   DATABASE_URL: ${{ secrets.DATABASE_URL }}
   POSTGRES_URL: ${{ secrets.POSTGRES_URL }}
@@ -39,12 +47,16 @@ jobs:
           ODDS_SCOUT_LIMIT: 40
           ODDS_SCOUT_DAYS_AHEAD: 21
       - run: npm run monitor:snapshot-growth
+      - run: npm run monitor:lineups
+        env:
+          LINEUP_MONITOR_DAYS_AHEAD: 14
+          LINEUP_MONITOR_LIMIT: 120
       - name: Commit scout reports
         run: |
           BRANCH_NAME="${DATA_BRANCH:-${{ github.ref_name }}}"
           git config user.name github-actions
           git config user.email github-actions@github.com
-          git add monitor/odds-coverage-scout.json monitor/snapshot-growth-monitor.json
+          git add monitor/odds-coverage-scout.json monitor/snapshot-growth-monitor.json monitor/lineup-availability-monitor.json
           git diff --staged --quiet && echo "geen scoutwijzigingen" && exit 0
           git commit -m "update odds snapshot scout [skip vercel]"
           for attempt in 1 2 3; do

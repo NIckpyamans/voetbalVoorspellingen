@@ -48,13 +48,69 @@ export function getOddsApiKey(template = process.env.ODDS_API_URL_TEMPLATE || ""
   return /api-sports|api-football/.test(target) ? getApiFootballKey() : "";
 }
 
+function splitTemplates(value = "") {
+  return String(value || "")
+    .split(/\r?\n|\|\||;;/)
+    .map((item) => item.trim())
+    .filter(Boolean);
+}
+
+function keyForTemplate(template, suffix = "") {
+  const direct = String(
+    process.env[`ODDS_API_KEY${suffix}`] ||
+      process.env[`THE_ODDS_API_KEY${suffix}`] ||
+      process.env[`SPORTMONKS_API_KEY${suffix}`] ||
+      process.env[`API_SPORTS_ODDS_KEY${suffix}`] ||
+      ""
+  ).trim();
+  if (direct) return direct;
+  const target = String(template || "").toLowerCase();
+  if (/sportmonks/.test(target)) return String(process.env.SPORTMONKS_API_KEY || "").trim();
+  if (/api-sports|api-football|football\.api-sports/.test(target)) return getApiFootballKey();
+  return getOddsApiKey(template);
+}
+
+function providerForTemplate(template, suffix = "") {
+  const explicit = String(process.env[`ODDS_PROVIDER_NAME${suffix}`] || "").trim();
+  if (explicit) return explicit;
+  if (/sportmonks/i.test(String(template || ""))) return "sportmonks";
+  if (/api-sports|api-football|football\.api-sports/i.test(String(template || ""))) return "api-football";
+  if (/the-odds-api/i.test(String(template || ""))) return "the-odds-api";
+  return getOddsProviderName(template);
+}
+
+export function getOddsProviderConfigs() {
+  const configs = [];
+  const add = (template, suffix = "") => {
+    const value = String(template || "").trim();
+    if (!value || configs.some((item) => item.template === value)) return;
+    configs.push({
+      template: value,
+      apiKey: keyForTemplate(value, suffix),
+      provider: providerForTemplate(value, suffix),
+      suffix,
+    });
+  };
+
+  add(getOddsApiUrlTemplate(), "");
+  for (const template of splitTemplates(process.env.ODDS_API_URL_TEMPLATES)) add(template, "");
+  add(process.env.ODDS_API_URL_TEMPLATE_2, "_2");
+  add(process.env.ODDS_API_URL_TEMPLATE_3, "_3");
+  add(process.env.EXTRA_ODDS_API_URL_TEMPLATE, "_2");
+  add(process.env.SPORTMONKS_ODDS_API_URL_TEMPLATE, "");
+  return configs;
+}
+
 export function buildProviderEnvStatus() {
   const oddsTemplate = getOddsApiUrlTemplate();
   const oddsProvider = getOddsProviderName(oddsTemplate);
+  const oddsProviderConfigs = getOddsProviderConfigs();
   return {
     footballDataConfigured: !!getFootballDataApiKey(),
     apiFootballConfigured: !!getApiFootballKey(),
     oddsConfigured: !!getOddsApiKey(oddsTemplate),
+    oddsProviderCount: oddsProviderConfigs.length,
+    oddsConfiguredProviderCount: oddsProviderConfigs.filter((config) => !!config.apiKey || !/\{apiKey\}/i.test(config.template)).length,
     dedicatedOddsConfigured: !!getDedicatedOddsApiKey(),
     oddsTemplateConfigured: !!oddsTemplate,
     oddsProvider,
