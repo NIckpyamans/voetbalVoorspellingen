@@ -8,6 +8,27 @@ const H2H_CACHE_TTL_MS = 12 * 60 * 60 * 1000;
 
 let fetchesThisRun = 0;
 
+const TEAM_SEARCH_ALIASES = new Map(
+  Object.entries({
+    "ararat armenia": ["FC Ararat-Armenia", "Ararat Armenia", "Ararat-Armenia"],
+    riga: ["Riga FC", "Riga Football Club", "Riga"],
+    "kauno zalgiris": ["Kauno Zalgiris", "Kauno Žalgiris", "FK Kauno Zalgiris", "FK Kauno Žalgiris"],
+    drita: ["FC Drita", "Drita", "Drita Gjilan"],
+    "una strassen": ["UNA Strassen", "FC UNA Strassen", "Strassen"],
+    "la fiorita": ["SP La Fiorita", "La Fiorita", "Societa Polisportiva La Fiorita"],
+    "af elbasani": ["AF Elbasani", "Elbasani", "KF Elbasani"],
+    bate: ["BATE Borisov", "BATE", "FC BATE Borisov"],
+    kairat: ["Kairat Almaty", "FC Kairat", "Kairat"],
+    sutjeska: ["Sutjeska Niksic", "FK Sutjeska", "FK Sutjeska Nikšić"],
+    flora: ["Flora Tallinn", "FC Flora", "Flora"],
+    "iberia 1999": ["Iberia 1999", "Saburtalo", "FC Iberia 1999", "FC Saburtalo"],
+    zira: ["Zira FK", "Zira", "Zirə FK"],
+    "torpedo kutaisi": ["Torpedo Kutaisi", "FC Torpedo Kutaisi", "Torpedo Kutaissi"],
+    "connah s quay nomads": ["Connah's Quay Nomads", "Connah S Quay Nomads", "The New Saints Connahs Quay", "Nomads"],
+    ballkani: ["Ballkani", "FC Ballkani", "KF Ballkani"],
+  }).map(([key, aliases]) => [key, aliases])
+);
+
 function apiFootballBaseUrl() {
   return String(process.env.API_FOOTBALL_BASE_URL || process.env.APISPORTS_BASE_URL || API_FOOTBALL_BASE).trim();
 }
@@ -55,11 +76,17 @@ function recordDiagnostic(store, status, details = {}) {
 
 function classifyProviderError(response = {}) {
   const text = JSON.stringify(response.errors || response.data?.errors || response.data || "").toLowerCase();
-  if (/quota|limit|rate|request/.test(text)) return "quota_or_rate_limit";
-  if (/token|key|auth|unauthorized|forbidden|subscription|plan/.test(text)) return "auth_or_plan";
+  if (/quota|limit|rate|request|too many/.test(text)) return "quota_or_rate_limit";
+  if (/token|key|auth|unauthorized|forbidden|subscription|plan|rapidapi|endpoint is disabled/.test(text)) return "auth_or_plan";
   if (/endpoint|not found|not_found|coverage/.test(text)) return "endpoint_or_coverage";
   if (response.statusCode) return `http_${response.statusCode}`;
   return "provider_payload_error";
+}
+
+function searchVariantsForTeam(teamName) {
+  const normalized = normalizeName(teamName);
+  const aliases = TEAM_SEARCH_ALIASES.get(normalized) || [];
+  return [...new Set([teamName, ...aliases].map((value) => String(value || "").trim()).filter(Boolean))].slice(0, 4);
 }
 
 function isFresh(entry, ttlMs, now = Date.now()) {
@@ -100,7 +127,18 @@ async function apiFootballGet(path, params = {}, options = {}) {
       signal: controller.signal,
     });
     if (!response.ok) {
-      return { status: "provider_error", statusCode: response.status, data: null };
+      let payload = null;
+      try {
+        payload = await response.json();
+      } catch {
+        payload = null;
+      }
+      return {
+        status: "provider_error",
+        statusCode: response.status,
+        errorCategory: classifyProviderError({ statusCode: response.status, data: payload }),
+        data: payload,
+      };
     }
     const payload = await response.json();
     if (Array.isArray(payload?.errors) && payload.errors.length) {
@@ -153,28 +191,40 @@ async function resolveTeamId(store, teamName, leagueLabel, options = {}) {
     return cached.teamId || null;
   }
 
-  const response = await apiFootballGet("/teams", { search: teamName }, options);
-  recordDiagnostic(store, response.status, {
-    statusCode: response.statusCode,
-    endpoint: "teams",
-    errorCategory: response.status === "ok" ? "" : response.errorCategory || classifyProviderError(response),
-  });
-  if (response.status !== "ok") {
+  let team = null;
+  let lastResponse = null;
+  let searchedAs = [];
+  for (const search of searchVariantsForTeam(teamName)) {
+    searchedAs.push(search);
+    const response = await apiFootballGet("/teams", { search }, options);
+    lastResponse = response;
+    recordDiagnostic(store, response.status, {
+      statusCode: response.statusCode,
+      endpoint: "teams",
+      errorCategory: response.status === "ok" ? "" : response.errorCategory || classifyProviderError(response),
+    });
+    if (response.status !== "ok") break;
+    team = pickTeamSearchHit(response.data, search, country) || pickTeamSearchHit(response.data, teamName, country);
+    if (team?.id) break;
+  }
+  if (!team?.id && lastResponse?.status !== "ok") {
     store.apiFootballTeamMap[key] = {
       teamId: null,
       updatedAt: new Date().toISOString(),
-      status: response.status,
-      statusCode: response.statusCode || null,
+      status: lastResponse?.status || "provider_error",
+      statusCode: lastResponse?.statusCode || null,
+      searchedAs,
+      errorCategory: lastResponse?.errorCategory || classifyProviderError(lastResponse),
     };
     return null;
   }
-  const team = pickTeamSearchHit(response.data, teamName, country);
   store.apiFootballTeamMap[key] = {
     teamId: team?.id || null,
     name: team?.name || null,
     country: team?.country || null,
     updatedAt: new Date().toISOString(),
     status: team?.id ? "resolved" : "not_found",
+    searchedAs,
   };
   return team?.id || null;
 }

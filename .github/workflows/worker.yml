@@ -3,6 +3,7 @@ name: Football AI Worker
 on:
   schedule:
     - cron: "7 5 * * *"
+    - cron: "7 11 * * *"
     - cron: "7 17 * * *"
   workflow_dispatch:
 
@@ -17,11 +18,12 @@ env:
   TZ: Europe/Amsterdam
   FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: "true"
   DATA_BRANCH: codex/step3b-layout
-  FOOTYAI_DATE_WINDOW: yesterday,today,tomorrow,+2,+3,+4,+5,+6,+7
+  FOOTYAI_DATE_WINDOW: yesterday,today,tomorrow,+2,+3,+4,+5,+6,+7,+8,+9,+10,+11,+12,+13,+14
   FOOTBALL_DATA_TOKEN: ${{ secrets.FOOTBALL_DATA_TOKEN }}
   API_KEY_FOOTBALL_DATA: ${{ secrets.API_KEY_FOOTBALL_DATA }}
   FOOTBALL_DATA_TEAM_MAP: ${{ secrets.FOOTBALL_DATA_TEAM_MAP }}
   API_KEY_API_FOOTBALL: ${{ secrets.API_KEY_API_FOOTBALL }}
+  API_FOOTBALL_BASE_URL: ${{ vars.API_FOOTBALL_BASE_URL }}
   API_FOOTBALL_H2H_ENABLED: "true"
   API_FOOTBALL_MAX_FETCHES_PER_RUN: "10"
   NATIONAL_ELO_FEED_URL: ${{ secrets.NATIONAL_ELO_FEED_URL }}

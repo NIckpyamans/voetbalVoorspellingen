@@ -94,6 +94,7 @@ jobs:
           DATABASE_URL: ${{ secrets.DATABASE_URL }}
           POSTGRES_URL: ${{ secrets.POSTGRES_URL }}
           API_KEY_API_FOOTBALL: ${{ secrets.API_KEY_API_FOOTBALL }}
+          API_FOOTBALL_BASE_URL: ${{ vars.API_FOOTBALL_BASE_URL }}
           API_FOOTBALL_MAX_FETCHES_PER_RUN: "30"
           H2H_BACKFILL_DAYS_AHEAD: "21"
           H2H_BACKFILL_LIMIT: "40"

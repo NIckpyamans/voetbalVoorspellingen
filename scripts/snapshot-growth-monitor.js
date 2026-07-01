@@ -81,7 +81,7 @@ const report = {
   },
   database,
   automation: {
-    workerCadence: "2x per dag volledige worker + live score refresh",
+    workerCadence: "3x per dag volledige worker + 2-uurlijkse live score refresh",
     learningCadence: "dagelijks train:prepare",
     recommendedNext:
       gap > 0
