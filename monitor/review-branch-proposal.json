@@ -1,16 +1,16 @@
 {
-  "generatedAt": "2026-06-30T23:38:25.926Z",
-  "date": "2026-07-01",
+  "generatedAt": "2026-07-01T23:44:11.264Z",
+  "date": "2026-07-02",
   "proposalOnly": true,
-  "shouldPropose": true,
-  "branchName": "codex/review-20260701",
-  "summary": "AI reviewvoorstel voor 2026-07-01: 1 aandachtspunt(en) met patchadvies, niet automatisch live.",
+  "shouldPropose": false,
+  "branchName": "codex/review-20260702",
+  "summary": "Geen reviewbranch nodig op 2026-07-02.",
   "latestStats": {
-    "today": "2026-07-01",
-    "tomorrow": "2026-07-02",
+    "today": "2026-07-02",
+    "tomorrow": "2026-07-03",
     "dataPresent": true,
-    "lastRun": 1782850979751,
-    "ageMinutes": 195,
+    "lastRun": 1782942776288,
+    "ageMinutes": 111,
     "maxWorkerAgeMinutes": 180,
     "todayMatches": 0,
     "tomorrowMatches": 0,
@@ -23,13 +23,14 @@
       "tomorrowCount": 0,
       "windowDays": 7,
       "checkedDates": [
-        "2026-07-01",
         "2026-07-02",
         "2026-07-03",
         "2026-07-04",
         "2026-07-05",
         "2026-07-06",
-        "2026-07-07"
+        "2026-07-07",
+        "2026-07-08",
+        "2026-07-09"
       ],
       "nextMatchDate": "2026-07-07",
       "nextMatchCount": 4,
@@ -40,26 +41,10 @@
     "h2hFilled": 0,
     "h2hMissing": 0,
     "standingsCount": 0,
-    "cupSheetCount": 2,
+    "cupSheetCount": 3,
     "phaseReliabilityCount": 0
   },
-  "findings": [
-    {
-      "priority": 1,
-      "key": "worker_stale",
-      "severity": "high",
-      "message": "Workerdata is 195 minuten oud.",
-      "whyItMatters": "Workerdata is te oud en verdient een workflow- of broncheck.",
-      "recommendedFiles": [
-        ".github/workflows/worker.yml",
-        "scripts/server-worker.js"
-      ],
-      "details": {}
-    }
-  ],
-  "recommendedFiles": [
-    ".github/workflows/worker.yml",
-    "scripts/server-worker.js"
-  ],
-  "nextStep": "Gebruik deze proposal om gericht een reviewbranch te maken en alleen na controle te mergen."
+  "findings": [],
+  "recommendedFiles": [],
+  "nextStep": "Geen actie nodig; monitor blijft op de achtergrond doorlopen."
 }
