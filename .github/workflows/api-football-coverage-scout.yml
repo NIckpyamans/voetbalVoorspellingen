@@ -1,0 +1,57 @@
+name: API-Football coverage scout
+
+on:
+  workflow_dispatch:
+    inputs:
+      days_ahead:
+        description: "Aantal dagen vooruit voor fixture mapping"
+        required: false
+        default: "21"
+      limit:
+        description: "Maximum aantal clubwedstrijden"
+        required: false
+        default: "40"
+  schedule:
+    - cron: "17 5 * * *"
+
+permissions:
+  contents: write
+
+jobs:
+  scout:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    env:
+      DATA_BRANCH: codex/step3b-layout
+      FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: "true"
+      DATABASE_URL: ${{ secrets.DATABASE_URL }}
+      POSTGRES_URL: ${{ secrets.POSTGRES_URL }}
+      API_KEY_API_FOOTBALL: ${{ secrets.API_KEY_API_FOOTBALL }}
+      API_FOOTBALL_KEY: ${{ secrets.API_FOOTBALL_KEY }}
+      APISPORTS_KEY: ${{ secrets.APISPORTS_KEY }}
+      API_FOOTBALL_BASE_URL: ${{ vars.API_FOOTBALL_BASE_URL }}
+      API_FOOTBALL_COVERAGE_DAYS_AHEAD: ${{ inputs.days_ahead || '21' }}
+      API_FOOTBALL_COVERAGE_LIMIT: ${{ inputs.limit || '40' }}
+      API_FOOTBALL_COVERAGE_MAX_DATES: "14"
+      API_FOOTBALL_ODDS_PROBE_LIMIT: "20"
+    steps:
+      - uses: actions/checkout@v5
+        with:
+          ref: ${{ env.DATA_BRANCH }}
+          fetch-depth: 0
+      - uses: actions/setup-node@v5
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+      - name: Scout API-Football fixture and odds coverage
+        run: npm run db:api-football:coverage-scout
+      - name: Commit API-Football scout report
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add monitor/api-football-coverage-scout.json
+          git diff --cached --quiet && exit 0
+          git commit -m "update api-football coverage scout [skip vercel]"
+          git pull --rebase origin "$DATA_BRANCH"
+          git push origin "HEAD:$DATA_BRANCH"
