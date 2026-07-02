@@ -1,10 +1,11 @@
 {
-  "generatedAt": "2026-07-02T09:56:41.297Z",
+  "generatedAt": "2026-07-02T10:02:49.750Z",
   "checked": 23,
   "covered": 0,
   "coverage": 0,
   "statusCounts": {
-    "provider_error": 23
+    "provider_error": 21,
+    "provider_exception": 2
   },
   "sportCounts": {
     "unknown": 23
@@ -16,7 +17,7 @@
       "available": 0,
       "partial": 0,
       "notFound": 0,
-      "providerErrors": 11
+      "providerErrors": 10
     },
     {
       "league": "Europe - Champions League",
@@ -32,7 +33,7 @@
       "available": 0,
       "partial": 0,
       "notFound": 0,
-      "providerErrors": 4
+      "providerErrors": 3
     }
   ],
   "samples": [
@@ -722,12 +723,12 @@
           "provider": "sportmonks",
           "sport": "soccer_uefa_europa_conference_league",
           "status": "provider_error",
-          "statusCode": 524
+          "statusCode": 401
         }
       ],
       "hasHistoricalOdds": false,
       "hasPredictionOdds": false,
-      "reason": "Oddsprovider antwoordde met HTTP 524."
+      "reason": "Oddsprovider antwoordde met HTTP 401."
     },
     {
       "matchId": "ss-bbc-2026-07-09-dynamo kyiv-universitatea cluj",
@@ -1176,62 +1177,13 @@
       "league": "Europe - Conference League",
       "home": "Dečić",
       "away": "Liepāja",
-      "status": "provider_error",
+      "status": "provider_exception",
       "sport": "unknown",
-      "attemptedSports": [
-        "soccer_uefa_europa_conference_league"
-      ],
-      "attempts": [
-        {
-          "provider": "the-odds-api",
-          "sport": "soccer_uefa_europa_conference_league",
-          "status": "not_found",
-          "cached": true,
-          "remaining": "476"
-        },
-        {
-          "provider": "the-odds-api",
-          "sport": "soccer_uefa_champs_league_qualification",
-          "status": "not_found",
-          "cached": true,
-          "remaining": "476"
-        },
-        {
-          "provider": "the-odds-api",
-          "sport": "soccer_uefa_champs_league",
-          "status": "not_found",
-          "cached": true,
-          "remaining": "476"
-        },
-        {
-          "provider": "the-odds-api",
-          "sport": "soccer_uefa_europa_league_qualification",
-          "status": "provider_error",
-          "statusCode": 404
-        },
-        {
-          "provider": "the-odds-api",
-          "sport": "soccer_uefa_europa_league",
-          "status": "not_found",
-          "cached": true,
-          "remaining": "476"
-        },
-        {
-          "provider": "the-odds-api",
-          "sport": "soccer_uefa_europa_conference_league_qualification",
-          "status": "provider_error",
-          "statusCode": 404
-        },
-        {
-          "provider": "sportmonks",
-          "sport": "soccer_uefa_europa_conference_league",
-          "status": "provider_error",
-          "statusCode": 401
-        }
-      ],
+      "attemptedSports": [],
+      "attempts": [],
       "hasHistoricalOdds": false,
       "hasPredictionOdds": false,
-      "reason": "Oddsprovider antwoordde met HTTP 401."
+      "reason": "This operation was aborted"
     },
     {
       "matchId": "ss-bbc-2026-07-16-astana-dinamo city",
@@ -1428,62 +1380,13 @@
       "league": "Europe - Europa League",
       "home": "Universitatea Cluj",
       "away": "Dynamo Kyiv",
-      "status": "provider_error",
+      "status": "provider_exception",
       "sport": "unknown",
-      "attemptedSports": [
-        "soccer_uefa_europa_league"
-      ],
-      "attempts": [
-        {
-          "provider": "the-odds-api",
-          "sport": "soccer_uefa_europa_league",
-          "status": "not_found",
-          "cached": true,
-          "remaining": "476"
-        },
-        {
-          "provider": "the-odds-api",
-          "sport": "soccer_uefa_champs_league_qualification",
-          "status": "not_found",
-          "cached": true,
-          "remaining": "476"
-        },
-        {
-          "provider": "the-odds-api",
-          "sport": "soccer_uefa_champs_league",
-          "status": "not_found",
-          "cached": true,
-          "remaining": "476"
-        },
-        {
-          "provider": "the-odds-api",
-          "sport": "soccer_uefa_europa_league_qualification",
-          "status": "provider_error",
-          "statusCode": 404
-        },
-        {
-          "provider": "the-odds-api",
-          "sport": "soccer_uefa_europa_conference_league_qualification",
-          "status": "provider_error",
-          "statusCode": 404
-        },
-        {
-          "provider": "the-odds-api",
-          "sport": "soccer_uefa_europa_conference_league",
-          "status": "not_found",
-          "cached": true,
-          "remaining": "476"
-        },
-        {
-          "provider": "sportmonks",
-          "sport": "soccer_uefa_europa_league",
-          "status": "provider_error",
-          "statusCode": 401
-        }
-      ],
+      "attemptedSports": [],
+      "attempts": [],
       "hasHistoricalOdds": false,
       "hasPredictionOdds": false,
-      "reason": "Oddsprovider antwoordde met HTTP 401."
+      "reason": "This operation was aborted"
     }
   ],
   "recommendation": "Geen oddsdekking gevonden voor deze kandidaten; voeg bredere provider toe voor Europese kwalificatie/voorrondewedstrijden."
