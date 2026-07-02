@@ -27,6 +27,8 @@ export function getSportmonksApiKey() {
 
 export const DEFAULT_THE_ODDS_API_URL_TEMPLATE =
   "https://api.the-odds-api.com/v4/sports/{sport}/odds/?apiKey={apiKey}&regions=eu&markets=h2h&oddsFormat=decimal";
+export const DEFAULT_SPORTMONKS_ODDS_API_URL_TEMPLATE =
+  "https://api.sportmonks.com/v3/football/odds/pre-match/fixtures/{sportmonksFixtureId}?filters=markets:1;bookmakers:2&api_token={apiKey}";
 
 export function getDedicatedOddsApiKey() {
   return String(process.env.ODDS_API_KEY || process.env.THE_ODDS_API_KEY || "").trim();
@@ -109,6 +111,7 @@ export function getOddsProviderConfigs() {
   add(process.env.ODDS_API_URL_TEMPLATE_3, "_3");
   add(process.env.EXTRA_ODDS_API_URL_TEMPLATE, "_2");
   add(process.env.SPORTMONKS_ODDS_API_URL_TEMPLATE, "");
+  if (getSportmonksApiKey()) add(DEFAULT_SPORTMONKS_ODDS_API_URL_TEMPLATE, "");
   return configs;
 }
 

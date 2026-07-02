@@ -397,6 +397,18 @@ export async function fetchOddsAtPrediction(match, options = {}) {
         ? inferOddsApiSportKeys(match)
         : [inferOddsApiSportKey(match)];
       for (const sport of sports) {
+        const sportmonksFixtureId = match?.sportmonksFixtureId ? String(match.sportmonksFixtureId).trim() : "";
+        if (/\{sportmonksFixtureId\}/i.test(configTemplate) && !/^\d+$/.test(sportmonksFixtureId)) {
+          attempts.push({ provider: configProvider, sport, status: "fixture_id_missing" });
+          lastResult = {
+            status: "not_found",
+            oddsAtPrediction: null,
+            provider: configProvider,
+            reason: "Sportmonks fixture-id ontbreekt; odds-by-fixture call overgeslagen.",
+            requestMeta: { attempts, attemptedSports: sports, attemptedProviders: configs.map((item) => item.provider) },
+          };
+          continue;
+        }
         const url = replaceTemplate(configTemplate, {
           apiKey: configApiKey,
           sport,
@@ -405,7 +417,7 @@ export async function fetchOddsAtPrediction(match, options = {}) {
           league: match?.league || "",
           kickoff: match?.kickoff || "",
           matchId: match?.matchId || "",
-          sportmonksFixtureId: match?.sportmonksFixtureId || match?.matchId || "",
+          sportmonksFixtureId,
         });
       const cached = responseCache.get(url);
       const cacheFresh = cached && Date.now() - cached.cachedAt <= RESPONSE_CACHE_TTL_MS;

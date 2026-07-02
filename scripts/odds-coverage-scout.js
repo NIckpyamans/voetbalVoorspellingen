@@ -5,6 +5,7 @@ import path from "path";
 import { getSql, loadLocalEnv } from "../shared/database.js";
 import { CLUB_ONLY_FIXTURE_WHERE } from "./club-fixture-filter.js";
 import { fetchOddsAtPrediction } from "./odds-provider.js";
+import { resolveSportmonksFixtureId } from "./sportmonks-fixture-resolver.js";
 
 const ROOT = process.cwd();
 loadLocalEnv(ROOT);
@@ -19,10 +20,12 @@ const daysAhead = Math.max(1, Number(process.env.ODDS_SCOUT_DAYS_AHEAD || 21));
 const generatedAt = new Date().toISOString();
 
 const rows = await sql.query(
-  `select m.match_id, m.league, m.home_team_name, m.away_team_name, m.kickoff_at,
+  `select m.match_id, m.canonical_fixture_id, m.league, m.home_team_name, m.away_team_name, m.kickoff_at,
+    fsa.source_match_id as sportmonks_fixture_id,
     exists(select 1 from historical_odds_snapshots hos where hos.match_id=m.match_id and hos.available_before_kickoff=true) as has_historical_odds,
     exists(select 1 from prediction_snapshots ps join odds_snapshots os on os.prediction_id=ps.prediction_id where ps.match_id=m.match_id and os.available_before_kickoff=true) as has_prediction_odds
    from matches m
+   left join fixture_source_aliases fsa on fsa.canonical_match_id = m.match_id and fsa.provider = 'sportmonks'
    where m.kickoff_at > now()
      and m.kickoff_at <= now() + ($1::text || ' days')::interval
      and m.home_team_name is not null
@@ -41,9 +44,22 @@ const samples = [];
 let covered = 0;
 
 for (const row of rows) {
+  let sportmonksFixtureId = row.sportmonks_fixture_id ? String(row.sportmonks_fixture_id) : null;
+  if (!sportmonksFixtureId) {
+    const resolved = await resolveSportmonksFixtureId(sql, {
+      matchId: row.match_id,
+      canonicalFixtureId: row.canonical_fixture_id,
+      league: row.league,
+      homeTeam: row.home_team_name,
+      awayTeam: row.away_team_name,
+      kickoff: row.kickoff_at,
+    });
+    if (resolved?.fixtureId) sportmonksFixtureId = String(resolved.fixtureId);
+  }
   const result = await fetchOddsAtPrediction(
     {
       matchId: row.match_id,
+      sportmonksFixtureId,
       league: row.league,
       homeTeam: row.home_team_name,
       awayTeam: row.away_team_name,
@@ -73,6 +89,7 @@ for (const row of rows) {
       away: row.away_team_name,
       status,
       sport,
+      sportmonksFixtureId,
       attemptedSports: result?.requestMeta?.attemptedSports || [],
       attempts: result?.requestMeta?.attempts || [],
       hasHistoricalOdds: !!row.has_historical_odds,

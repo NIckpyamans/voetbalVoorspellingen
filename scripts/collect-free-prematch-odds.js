@@ -3,6 +3,7 @@
 import crypto from "crypto";
 import { getSql, loadLocalEnv } from "../shared/database.js";
 import { fetchOddsAtPrediction } from "./odds-provider.js";
+import { resolveSportmonksFixtureId } from "./sportmonks-fixture-resolver.js";
 
 loadLocalEnv(process.cwd());
 const sql = getSql();
@@ -56,6 +57,7 @@ let oddsApiHistoricalClosingUpdated = 0;
 let oddsApiPredictionClosingUpdated = 0;
 const oddsApiStatusCounts = {};
 const oddsApiClosingStatusCounts = {};
+let sportmonksMapped = 0;
 const errors = [];
 for (const folder of folders) for (const code of leagues) {
   const url = `https://www.football-data.co.uk/mmz4281/${folder}/${code}.csv`;
@@ -112,8 +114,10 @@ for (const folder of folders) for (const code of leagues) {
 async function captureOddsApiPrematch() {
   if (!oddsApiMatchLimit) return;
   const rows = await sql.query(
-    `select match_id, league, home_team_name, away_team_name, kickoff_at
+    `select m.match_id, m.canonical_fixture_id, m.league, m.home_team_name, m.away_team_name, m.kickoff_at,
+       fsa.source_match_id as sportmonks_fixture_id
      from matches m
+     left join fixture_source_aliases fsa on fsa.canonical_match_id = m.match_id and fsa.provider = 'sportmonks'
      where kickoff_at > now()
        and kickoff_at <= now() + ($1::text || ' days')::interval
        and home_team_name is not null
@@ -134,9 +138,25 @@ async function captureOddsApiPrematch() {
   const generatedAt = new Date().toISOString();
   for (const row of rows) {
     try {
+      let sportmonksFixtureId = row.sportmonks_fixture_id ? String(row.sportmonks_fixture_id) : null;
+      if (!sportmonksFixtureId) {
+        const resolved = await resolveSportmonksFixtureId(sql, {
+          matchId: row.match_id,
+          canonicalFixtureId: row.canonical_fixture_id,
+          league: row.league,
+          homeTeam: row.home_team_name,
+          awayTeam: row.away_team_name,
+          kickoff: row.kickoff_at,
+        });
+        if (resolved?.fixtureId) {
+          sportmonksFixtureId = String(resolved.fixtureId);
+          sportmonksMapped += 1;
+        }
+      }
       const result = await fetchOddsAtPrediction(
         {
           matchId: row.match_id,
+          sportmonksFixtureId,
           league: row.league,
           homeTeam: row.home_team_name,
           awayTeam: row.away_team_name,
@@ -150,14 +170,16 @@ async function captureOddsApiPrematch() {
       const capturedAt = odds.capturedAt || generatedAt;
       if (Date.parse(capturedAt) >= Date.parse(row.kickoff_at)) continue;
       const minutesBeforeKickoff = Math.floor((Date.parse(row.kickoff_at) - Date.parse(capturedAt)) / 60000);
-      const bookmaker = odds.bookmaker || result.provider || "the-odds-api";
-      const snapshotId = `prematch_${digest(`${row.match_id}|the-odds-api|${bookmaker}|${capturedAt.slice(0, 13)}`)}`;
+      const provider = odds.provider || result.provider || "odds-provider";
+      const bookmaker = odds.bookmaker || provider;
+      const snapshotId = `prematch_${digest(`${row.match_id}|${provider}|${bookmaker}|${capturedAt.slice(0, 13)}`)}`;
       await sql.query(
         `insert into historical_odds_snapshots (
           historical_odds_snapshot_id,match_id,provider,bookmaker,market,home,draw,away,captured_at,
           odds_role,available_before_kickoff,minutes_before_kickoff,source_record_id
-        ) values ($1,$2,'the-odds-api',$3,$4,$5,$6,$7,$8,'prematch',true,$9,null)
+        ) values ($1,$2,$3,$4,$5,$6,$7,$8,$9,'prematch',true,$10,null)
         on conflict (historical_odds_snapshot_id) do update set
+          provider=excluded.provider,
           home=excluded.home, draw=excluded.draw, away=excluded.away,
           captured_at=excluded.captured_at,
           available_before_kickoff=excluded.available_before_kickoff,
@@ -165,6 +187,7 @@ async function captureOddsApiPrematch() {
         [
           snapshotId,
           row.match_id,
+          provider,
           bookmaker,
           odds.market || "h2h",
           Number(odds.home),
@@ -202,7 +225,7 @@ async function updateOddsApiClosingOdds() {
   const rows = await sql.query(
     `select * from (
        select 'historical' as target_table, hos.historical_odds_snapshot_id as snapshot_id,
-         hos.match_id, m.league, m.home_team_name, m.away_team_name, m.kickoff_at,
+         hos.match_id, m.canonical_fixture_id, m.league, m.home_team_name, m.away_team_name, m.kickoff_at,
          hos.bookmaker, hos.captured_at as prematch_captured_at
        from historical_odds_snapshots hos
        join matches m on m.match_id = hos.match_id
@@ -213,7 +236,7 @@ async function updateOddsApiClosingOdds() {
          and m.kickoff_at <= now() + ($1::text || ' minutes')::interval
        union all
        select 'prediction' as target_table, os.odds_snapshot_id as snapshot_id,
-         ps.match_id, m.league, m.home_team_name, m.away_team_name, m.kickoff_at,
+         ps.match_id, m.canonical_fixture_id, m.league, m.home_team_name, m.away_team_name, m.kickoff_at,
          os.bookmaker, os.captured_at as prematch_captured_at
        from odds_snapshots os
        join prediction_snapshots ps on ps.prediction_id = os.prediction_id
@@ -235,11 +258,20 @@ async function updateOddsApiClosingOdds() {
       const cacheKey = row.match_id;
       if (!resultCache.has(cacheKey)) {
         const generatedAt = new Date().toISOString();
+        const resolved = await resolveSportmonksFixtureId(sql, {
+          matchId: row.match_id,
+          canonicalFixtureId: row.canonical_fixture_id,
+          league: row.league,
+          homeTeam: row.home_team_name,
+          awayTeam: row.away_team_name,
+          kickoff: row.kickoff_at,
+        });
         resultCache.set(
           cacheKey,
           fetchOddsAtPrediction(
             {
               matchId: row.match_id,
+              sportmonksFixtureId: resolved?.fixtureId || null,
               league: row.league,
               homeTeam: row.home_team_name,
               awayTeam: row.away_team_name,
@@ -301,6 +333,7 @@ console.log(
       oddsApiPredictionClosingUpdated,
       oddsApiStatusCounts,
       oddsApiClosingStatusCounts,
+      sportmonksMapped,
       errors: errors.slice(0, 5),
     },
     null,
