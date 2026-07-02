@@ -188,19 +188,27 @@ async function auditSportmonks() {
     const encodedKey = encodeURIComponent(key);
     const today = new Date().toISOString().slice(0, 10);
     const leaguesResult = await requestJson(`https://api.sportmonks.com/v3/football/leagues?api_token=${encodedKey}&per_page=1`);
+    const allFixturesResult = await requestJson(
+      `https://api.sportmonks.com/v3/football/fixtures?api_token=${encodedKey}&include=participants&per_page=1`
+    );
     const fixturesDateResult = await requestJson(
       `https://api.sportmonks.com/v3/football/fixtures/date/${today}?api_token=${encodedKey}&include=participants&per_page=1`
     );
     const upcomingMarketResult = await requestJson(
       `https://api.sportmonks.com/v3/football/fixtures/upcoming/markets/1?api_token=${encodedKey}&include=participants&per_page=1`
     );
-    const fixtureId = firstSportmonksFixtureId(fixturesDateResult.payload, upcomingMarketResult.payload);
+    const fixtureId = firstSportmonksFixtureId(fixturesDateResult.payload, upcomingMarketResult.payload, allFixturesResult.payload);
+    const documentedSampleFixtureId = 18535517;
     const oddsByFixture = fixtureId
       ? await auditSportmonksEndpoint(
           "oddsByFixture",
           `https://api.sportmonks.com/v3/football/odds/pre-match/fixtures/${fixtureId}?api_token=${encodedKey}&filters=markets:1;bookmakers:2&per_page=1`
         )
       : { label: "oddsByFixture", valid: false, status: "skipped", errorCode: "no_fixture_id_found" };
+    const oddsByDocumentedSample = await auditSportmonksEndpoint(
+      "oddsByDocumentedSample",
+      `https://api.sportmonks.com/v3/football/odds/pre-match/fixtures/${documentedSampleFixtureId}?api_token=${encodedKey}&filters=markets:1;bookmakers:2&per_page=1`
+    );
     const oddsByFixtureMarket = fixtureId
       ? await auditSportmonksEndpoint(
           "oddsByFixtureMarket",
@@ -219,10 +227,13 @@ async function auditSportmonks() {
       quota: quotaHeaders(response),
       endpointAccess: {
         leagues: compactSportmonksStatus(leaguesResult.response, leaguesResult.payload),
+        allFixtures: compactSportmonksStatus(allFixturesResult.response, allFixturesResult.payload),
         fixturesDate: compactSportmonksStatus(fixturesDateResult.response, fixturesDateResult.payload),
         upcomingMarket: compactSportmonksStatus(upcomingMarketResult.response, upcomingMarketResult.payload),
         testedFixtureId: fixtureId,
         oddsByFixture,
+        documentedSampleFixtureId,
+        oddsByDocumentedSample,
         oddsByFixtureMarket,
       },
       documentedPlanLimitsPerEntityPerHour: {
