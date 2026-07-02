@@ -1,0 +1,53 @@
+name: Sportmonks Catalog Sync
+
+on:
+  workflow_dispatch:
+    inputs:
+      max_leagues:
+        description: "Maximum aantal Sportmonks leagues om te lezen"
+        required: false
+        default: "250"
+      team_season_limit:
+        description: "Maximum aantal seasons waarvoor teams worden opgehaald"
+        required: false
+        default: "60"
+  schedule:
+    - cron: "41 3 * * 2"
+
+permissions:
+  contents: write
+
+jobs:
+  sync:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    env:
+      DATA_BRANCH: codex/step3b-layout
+      DATABASE_URL: ${{ secrets.DATABASE_URL }}
+      POSTGRES_URL: ${{ secrets.POSTGRES_URL }}
+      SPORTMONKS_API_KEY: ${{ secrets.SPORTMONKS_API_KEY }}
+      MYSPORTS_API_KEY: ${{ secrets.MYSPORTS_API_KEY }}
+      SPORTMONKS_SYNC_MAX_LEAGUES: ${{ inputs.max_leagues || '250' }}
+      SPORTMONKS_SYNC_TEAM_SEASON_LIMIT: ${{ inputs.team_season_limit || '60' }}
+      SPORTMONKS_SYNC_PER_PAGE: "100"
+    steps:
+      - uses: actions/checkout@v5
+        with:
+          ref: ${{ env.DATA_BRANCH }}
+          fetch-depth: 0
+      - uses: actions/setup-node@v5
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+      - name: Sync Sportmonks catalog to Neon
+        run: npm run db:sportmonks:sync-catalog
+      - name: Commit Sportmonks monitor report
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add monitor/sportmonks-catalog-sync.json
+          git diff --cached --quiet && exit 0
+          git commit -m "update sportmonks catalog sync report [skip vercel]"
+          git pull --rebase origin "$DATA_BRANCH"
+          git push origin "HEAD:$DATA_BRANCH"
