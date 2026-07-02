@@ -1,11 +1,10 @@
 {
-  "generatedAt": "2026-07-02T10:02:49.750Z",
+  "generatedAt": "2026-07-02T10:35:58.621Z",
   "checked": 23,
   "covered": 0,
   "coverage": 0,
   "statusCounts": {
-    "provider_error": 21,
-    "provider_exception": 2
+    "not_found": 23
   },
   "sportCounts": {
     "unknown": 23
@@ -16,24 +15,24 @@
       "checked": 11,
       "available": 0,
       "partial": 0,
-      "notFound": 0,
-      "providerErrors": 10
+      "notFound": 11,
+      "providerErrors": 0
     },
     {
       "league": "Europe - Champions League",
       "checked": 8,
       "available": 0,
       "partial": 0,
-      "notFound": 0,
-      "providerErrors": 8
+      "notFound": 8,
+      "providerErrors": 0
     },
     {
       "league": "Europe - Europa League",
       "checked": 4,
       "available": 0,
       "partial": 0,
-      "notFound": 0,
-      "providerErrors": 3
+      "notFound": 4,
+      "providerErrors": 0
     }
   ],
   "samples": [
@@ -43,8 +42,9 @@
       "league": "Europe - Champions League",
       "home": "Ararat-Armenia",
       "away": "Riga",
-      "status": "provider_error",
+      "status": "not_found",
       "sport": "unknown",
+      "sportmonksFixtureId": null,
       "attemptedSports": [
         "soccer_uefa_champs_league"
       ],
@@ -92,13 +92,12 @@
         {
           "provider": "sportmonks",
           "sport": "soccer_uefa_champs_league",
-          "status": "provider_error",
-          "statusCode": 401
+          "status": "fixture_id_missing"
         }
       ],
       "hasHistoricalOdds": false,
       "hasPredictionOdds": false,
-      "reason": "Oddsprovider antwoordde met HTTP 401."
+      "reason": "Sportmonks fixture-id ontbreekt; odds-by-fixture call overgeslagen."
     },
     {
       "matchId": "ss-bbc-2026-07-07-kauno zalgiris-drita",
@@ -106,8 +105,9 @@
       "league": "Europe - Champions League",
       "home": "Kauno Žalgiris",
       "away": "Drita",
-      "status": "provider_error",
+      "status": "not_found",
       "sport": "unknown",
+      "sportmonksFixtureId": null,
       "attemptedSports": [
         "soccer_uefa_champs_league"
       ],
@@ -155,13 +155,12 @@
         {
           "provider": "sportmonks",
           "sport": "soccer_uefa_champs_league",
-          "status": "provider_error",
-          "statusCode": 401
+          "status": "fixture_id_missing"
         }
       ],
       "hasHistoricalOdds": false,
       "hasPredictionOdds": false,
-      "reason": "Oddsprovider antwoordde met HTTP 401."
+      "reason": "Sportmonks fixture-id ontbreekt; odds-by-fixture call overgeslagen."
     },
     {
       "matchId": "ss-bbc-2026-07-07-una strassen-la fiorita",
@@ -169,8 +168,9 @@
       "league": "Europe - Conference League",
       "home": "UNA Strassen",
       "away": "La Fiorita",
-      "status": "provider_error",
+      "status": "not_found",
       "sport": "unknown",
+      "sportmonksFixtureId": null,
       "attemptedSports": [
         "soccer_uefa_europa_conference_league"
       ],
@@ -218,13 +218,12 @@
         {
           "provider": "sportmonks",
           "sport": "soccer_uefa_europa_conference_league",
-          "status": "provider_error",
-          "statusCode": 401
+          "status": "fixture_id_missing"
         }
       ],
       "hasHistoricalOdds": false,
       "hasPredictionOdds": false,
-      "reason": "Oddsprovider antwoordde met HTTP 401."
+      "reason": "Sportmonks fixture-id ontbreekt; odds-by-fixture call overgeslagen."
     },
     {
       "matchId": "ss-bbc-2026-07-07-af elbasani-bate",
@@ -232,8 +231,9 @@
       "league": "Europe - Conference League",
       "home": "AF Elbasani",
       "away": "BATE",
-      "status": "provider_error",
+      "status": "not_found",
       "sport": "unknown",
+      "sportmonksFixtureId": null,
       "attemptedSports": [
         "soccer_uefa_europa_conference_league"
       ],
@@ -281,13 +281,12 @@
         {
           "provider": "sportmonks",
           "sport": "soccer_uefa_europa_conference_league",
-          "status": "provider_error",
-          "statusCode": 401
+          "status": "fixture_id_missing"
         }
       ],
       "hasHistoricalOdds": false,
       "hasPredictionOdds": false,
-      "reason": "Oddsprovider antwoordde met HTTP 401."
+      "reason": "Sportmonks fixture-id ontbreekt; odds-by-fixture call overgeslagen."
     },
     {
       "matchId": "ss-bbc-2026-07-08-kairat-sutjeska",
@@ -295,8 +294,9 @@
       "league": "Europe - Champions League",
       "home": "Kairat",
       "away": "Sutjeska",
-      "status": "provider_error",
+      "status": "not_found",
       "sport": "unknown",
+      "sportmonksFixtureId": null,
       "attemptedSports": [
         "soccer_uefa_champs_league"
       ],
@@ -344,13 +344,12 @@
         {
           "provider": "sportmonks",
           "sport": "soccer_uefa_champs_league",
-          "status": "provider_error",
-          "statusCode": 401
+          "status": "fixture_id_missing"
         }
       ],
       "hasHistoricalOdds": false,
       "hasPredictionOdds": false,
-      "reason": "Oddsprovider antwoordde met HTTP 401."
+      "reason": "Sportmonks fixture-id ontbreekt; odds-by-fixture call overgeslagen."
     },
     {
       "matchId": "ss-bbc-2026-07-08-zira-torpedo kutaisi",
@@ -358,8 +357,9 @@
       "league": "Europe - Conference League",
       "home": "Zira",
       "away": "Torpedo Kutaisi",
-      "status": "provider_error",
+      "status": "not_found",
       "sport": "unknown",
+      "sportmonksFixtureId": null,
       "attemptedSports": [
         "soccer_uefa_europa_conference_league"
       ],
@@ -407,13 +407,12 @@
         {
           "provider": "sportmonks",
           "sport": "soccer_uefa_europa_conference_league",
-          "status": "provider_error",
-          "statusCode": 401
+          "status": "fixture_id_missing"
         }
       ],
       "hasHistoricalOdds": false,
       "hasPredictionOdds": false,
-      "reason": "Oddsprovider antwoordde met HTTP 401."
+      "reason": "Sportmonks fixture-id ontbreekt; odds-by-fixture call overgeslagen."
     },
     {
       "matchId": "ss-bbc-2026-07-08-flora-iberia 1999",
@@ -421,8 +420,9 @@
       "league": "Europe - Champions League",
       "home": "Flora",
       "away": "Iberia 1999",
-      "status": "provider_error",
+      "status": "not_found",
       "sport": "unknown",
+      "sportmonksFixtureId": null,
       "attemptedSports": [
         "soccer_uefa_champs_league"
       ],
@@ -470,13 +470,12 @@
         {
           "provider": "sportmonks",
           "sport": "soccer_uefa_champs_league",
-          "status": "provider_error",
-          "statusCode": 401
+          "status": "fixture_id_missing"
         }
       ],
       "hasHistoricalOdds": false,
       "hasPredictionOdds": false,
-      "reason": "Oddsprovider antwoordde met HTTP 401."
+      "reason": "Sportmonks fixture-id ontbreekt; odds-by-fixture call overgeslagen."
     },
     {
       "matchId": "ss-bbc-2026-07-08-connah s quay nomads-ballkani",
@@ -484,8 +483,9 @@
       "league": "Europe - Conference League",
       "home": "Connah's Quay Nomads",
       "away": "Ballkani",
-      "status": "provider_error",
+      "status": "not_found",
       "sport": "unknown",
+      "sportmonksFixtureId": null,
       "attemptedSports": [
         "soccer_uefa_europa_conference_league"
       ],
@@ -533,13 +533,12 @@
         {
           "provider": "sportmonks",
           "sport": "soccer_uefa_europa_conference_league",
-          "status": "provider_error",
-          "statusCode": 401
+          "status": "fixture_id_missing"
         }
       ],
       "hasHistoricalOdds": false,
       "hasPredictionOdds": false,
-      "reason": "Oddsprovider antwoordde met HTTP 401."
+      "reason": "Sportmonks fixture-id ontbreekt; odds-by-fixture call overgeslagen."
     },
     {
       "matchId": "ss-bbc-2026-07-09-atletic club d escaldes-mornar",
@@ -547,8 +546,9 @@
       "league": "Europe - Conference League",
       "home": "Atlètic Club d'Escaldes",
       "away": "Mornar",
-      "status": "provider_error",
+      "status": "not_found",
       "sport": "unknown",
+      "sportmonksFixtureId": null,
       "attemptedSports": [
         "soccer_uefa_europa_conference_league"
       ],
@@ -596,13 +596,12 @@
         {
           "provider": "sportmonks",
           "sport": "soccer_uefa_europa_conference_league",
-          "status": "provider_error",
-          "statusCode": 401
+          "status": "fixture_id_missing"
         }
       ],
       "hasHistoricalOdds": false,
       "hasPredictionOdds": false,
-      "reason": "Oddsprovider antwoordde met HTTP 401."
+      "reason": "Sportmonks fixture-id ontbreekt; odds-by-fixture call overgeslagen."
     },
     {
       "matchId": "ss-bbc-2026-07-09-qarabag-vestri",
@@ -610,8 +609,9 @@
       "league": "Europe - Europa League",
       "home": "Qarabağ",
       "away": "Vestri",
-      "status": "provider_error",
+      "status": "not_found",
       "sport": "unknown",
+      "sportmonksFixtureId": null,
       "attemptedSports": [
         "soccer_uefa_europa_league"
       ],
@@ -659,13 +659,12 @@
         {
           "provider": "sportmonks",
           "sport": "soccer_uefa_europa_league",
-          "status": "provider_error",
-          "statusCode": 401
+          "status": "fixture_id_missing"
         }
       ],
       "hasHistoricalOdds": false,
       "hasPredictionOdds": false,
-      "reason": "Oddsprovider antwoordde met HTTP 401."
+      "reason": "Sportmonks fixture-id ontbreekt; odds-by-fixture call overgeslagen."
     },
     {
       "matchId": "ss-bbc-2026-07-09-alashkert-yelimay",
@@ -673,8 +672,9 @@
       "league": "Europe - Conference League",
       "home": "Alashkert",
       "away": "Yelimay",
-      "status": "provider_error",
+      "status": "not_found",
       "sport": "unknown",
+      "sportmonksFixtureId": null,
       "attemptedSports": [
         "soccer_uefa_europa_conference_league"
       ],
@@ -722,13 +722,12 @@
         {
           "provider": "sportmonks",
           "sport": "soccer_uefa_europa_conference_league",
-          "status": "provider_error",
-          "statusCode": 401
+          "status": "fixture_id_missing"
         }
       ],
       "hasHistoricalOdds": false,
       "hasPredictionOdds": false,
-      "reason": "Oddsprovider antwoordde met HTTP 401."
+      "reason": "Sportmonks fixture-id ontbreekt; odds-by-fixture call overgeslagen."
     },
     {
       "matchId": "ss-bbc-2026-07-09-dynamo kyiv-universitatea cluj",
@@ -736,8 +735,9 @@
       "league": "Europe - Europa League",
       "home": "Dynamo Kyiv",
       "away": "Universitatea Cluj",
-      "status": "provider_error",
+      "status": "not_found",
       "sport": "unknown",
+      "sportmonksFixtureId": null,
       "attemptedSports": [
         "soccer_uefa_europa_league"
       ],
@@ -785,13 +785,12 @@
         {
           "provider": "sportmonks",
           "sport": "soccer_uefa_europa_league",
-          "status": "provider_error",
-          "statusCode": 401
+          "status": "fixture_id_missing"
         }
       ],
       "hasHistoricalOdds": false,
       "hasPredictionOdds": false,
-      "reason": "Oddsprovider antwoordde met HTTP 401."
+      "reason": "Sportmonks fixture-id ontbreekt; odds-by-fixture call overgeslagen."
     },
     {
       "matchId": "ss-bbc-2026-07-14-kups-vardar skopje",
@@ -799,8 +798,9 @@
       "league": "Europe - Champions League",
       "home": "KuPS",
       "away": "Vardar Skopje",
-      "status": "provider_error",
+      "status": "not_found",
       "sport": "unknown",
+      "sportmonksFixtureId": null,
       "attemptedSports": [
         "soccer_uefa_champs_league"
       ],
@@ -848,13 +848,12 @@
         {
           "provider": "sportmonks",
           "sport": "soccer_uefa_champs_league",
-          "status": "provider_error",
-          "statusCode": 401
+          "status": "fixture_id_missing"
         }
       ],
       "hasHistoricalOdds": false,
       "hasPredictionOdds": false,
-      "reason": "Oddsprovider antwoordde met HTTP 401."
+      "reason": "Sportmonks fixture-id ontbreekt; odds-by-fixture call overgeslagen."
     },
     {
       "matchId": "ss-bbc-2026-07-14-iberia 1999-flora",
@@ -862,8 +861,9 @@
       "league": "Europe - Champions League",
       "home": "Iberia 1999",
       "away": "Flora",
-      "status": "provider_error",
+      "status": "not_found",
       "sport": "unknown",
+      "sportmonksFixtureId": null,
       "attemptedSports": [
         "soccer_uefa_champs_league"
       ],
@@ -911,13 +911,12 @@
         {
           "provider": "sportmonks",
           "sport": "soccer_uefa_champs_league",
-          "status": "provider_error",
-          "statusCode": 401
+          "status": "fixture_id_missing"
         }
       ],
       "hasHistoricalOdds": false,
       "hasPredictionOdds": false,
-      "reason": "Oddsprovider antwoordde met HTTP 401."
+      "reason": "Sportmonks fixture-id ontbreekt; odds-by-fixture call overgeslagen."
     },
     {
       "matchId": "ss-bbc-2026-07-14-la fiorita-una strassen",
@@ -925,8 +924,9 @@
       "league": "Europe - Conference League",
       "home": "La Fiorita",
       "away": "UNA Strassen",
-      "status": "provider_error",
+      "status": "not_found",
       "sport": "unknown",
+      "sportmonksFixtureId": null,
       "attemptedSports": [
         "soccer_uefa_europa_conference_league"
       ],
@@ -974,13 +974,12 @@
         {
           "provider": "sportmonks",
           "sport": "soccer_uefa_europa_conference_league",
-          "status": "provider_error",
-          "statusCode": 401
+          "status": "fixture_id_missing"
         }
       ],
       "hasHistoricalOdds": false,
       "hasPredictionOdds": false,
-      "reason": "Oddsprovider antwoordde met HTTP 401."
+      "reason": "Sportmonks fixture-id ontbreekt; odds-by-fixture call overgeslagen."
     },
     {
       "matchId": "ss-bbc-2026-07-15-malisheva-vllaznia shkoder",
@@ -988,8 +987,9 @@
       "league": "Europe - Conference League",
       "home": "Malisheva",
       "away": "Vllaznia Shkodër",
-      "status": "provider_error",
+      "status": "not_found",
       "sport": "unknown",
+      "sportmonksFixtureId": null,
       "attemptedSports": [
         "soccer_uefa_europa_conference_league"
       ],
@@ -1037,13 +1037,12 @@
         {
           "provider": "sportmonks",
           "sport": "soccer_uefa_europa_conference_league",
-          "status": "provider_error",
-          "statusCode": 401
+          "status": "fixture_id_missing"
         }
       ],
       "hasHistoricalOdds": false,
       "hasPredictionOdds": false,
-      "reason": "Oddsprovider antwoordde met HTTP 401."
+      "reason": "Sportmonks fixture-id ontbreekt; odds-by-fixture call overgeslagen."
     },
     {
       "matchId": "ss-bbc-2026-07-15-universitatea craiova-ml vitebsk",
@@ -1051,8 +1050,9 @@
       "league": "Europe - Champions League",
       "home": "Universitatea Craiova",
       "away": "ML Vitebsk",
-      "status": "provider_error",
+      "status": "not_found",
       "sport": "unknown",
+      "sportmonksFixtureId": null,
       "attemptedSports": [
         "soccer_uefa_champs_league"
       ],
@@ -1100,13 +1100,12 @@
         {
           "provider": "sportmonks",
           "sport": "soccer_uefa_champs_league",
-          "status": "provider_error",
-          "statusCode": 401
+          "status": "fixture_id_missing"
         }
       ],
       "hasHistoricalOdds": false,
       "hasPredictionOdds": false,
-      "reason": "Oddsprovider antwoordde met HTTP 401."
+      "reason": "Sportmonks fixture-id ontbreekt; odds-by-fixture call overgeslagen."
     },
     {
       "matchId": "ss-bbc-2026-07-15-atert bissen-ki",
@@ -1114,8 +1113,9 @@
       "league": "Europe - Champions League",
       "home": "Atert Bissen",
       "away": "KÍ",
-      "status": "provider_error",
+      "status": "not_found",
       "sport": "unknown",
+      "sportmonksFixtureId": null,
       "attemptedSports": [
         "soccer_uefa_champs_league"
       ],
@@ -1163,13 +1163,12 @@
         {
           "provider": "sportmonks",
           "sport": "soccer_uefa_champs_league",
-          "status": "provider_error",
-          "statusCode": 401
+          "status": "fixture_id_missing"
         }
       ],
       "hasHistoricalOdds": false,
       "hasPredictionOdds": false,
-      "reason": "Oddsprovider antwoordde met HTTP 401."
+      "reason": "Sportmonks fixture-id ontbreekt; odds-by-fixture call overgeslagen."
     },
     {
       "matchId": "ss-bbc-2026-07-15-decic-liepaja",
@@ -1177,13 +1176,62 @@
       "league": "Europe - Conference League",
       "home": "Dečić",
       "away": "Liepāja",
-      "status": "provider_exception",
+      "status": "not_found",
       "sport": "unknown",
-      "attemptedSports": [],
-      "attempts": [],
+      "sportmonksFixtureId": null,
+      "attemptedSports": [
+        "soccer_uefa_europa_conference_league"
+      ],
+      "attempts": [
+        {
+          "provider": "the-odds-api",
+          "sport": "soccer_uefa_europa_conference_league",
+          "status": "not_found",
+          "cached": true,
+          "remaining": "476"
+        },
+        {
+          "provider": "the-odds-api",
+          "sport": "soccer_uefa_champs_league_qualification",
+          "status": "not_found",
+          "cached": true,
+          "remaining": "476"
+        },
+        {
+          "provider": "the-odds-api",
+          "sport": "soccer_uefa_champs_league",
+          "status": "not_found",
+          "cached": true,
+          "remaining": "476"
+        },
+        {
+          "provider": "the-odds-api",
+          "sport": "soccer_uefa_europa_league_qualification",
+          "status": "provider_error",
+          "statusCode": 404
+        },
+        {
+          "provider": "the-odds-api",
+          "sport": "soccer_uefa_europa_league",
+          "status": "not_found",
+          "cached": true,
+          "remaining": "476"
+        },
+        {
+          "provider": "the-odds-api",
+          "sport": "soccer_uefa_europa_conference_league_qualification",
+          "status": "provider_error",
+          "statusCode": 404
+        },
+        {
+          "provider": "sportmonks",
+          "sport": "soccer_uefa_europa_conference_league",
+          "status": "fixture_id_missing"
+        }
+      ],
       "hasHistoricalOdds": false,
       "hasPredictionOdds": false,
-      "reason": "This operation was aborted"
+      "reason": "Sportmonks fixture-id ontbreekt; odds-by-fixture call overgeslagen."
     },
     {
       "matchId": "ss-bbc-2026-07-16-astana-dinamo city",
@@ -1191,8 +1239,9 @@
       "league": "Europe - Conference League",
       "home": "Astana",
       "away": "Dinamo City",
-      "status": "provider_error",
+      "status": "not_found",
       "sport": "unknown",
+      "sportmonksFixtureId": null,
       "attemptedSports": [
         "soccer_uefa_europa_conference_league"
       ],
@@ -1240,13 +1289,12 @@
         {
           "provider": "sportmonks",
           "sport": "soccer_uefa_europa_conference_league",
-          "status": "provider_error",
-          "statusCode": 401
+          "status": "fixture_id_missing"
         }
       ],
       "hasHistoricalOdds": false,
       "hasPredictionOdds": false,
-      "reason": "Oddsprovider antwoordde met HTTP 401."
+      "reason": "Sportmonks fixture-id ontbreekt; odds-by-fixture call overgeslagen."
     },
     {
       "matchId": "ss-bbc-2026-07-16-inter turku-sarajevo",
@@ -1254,8 +1302,9 @@
       "league": "Europe - Conference League",
       "home": "Inter Turku",
       "away": "Sarajevo",
-      "status": "provider_error",
+      "status": "not_found",
       "sport": "unknown",
+      "sportmonksFixtureId": null,
       "attemptedSports": [
         "soccer_uefa_europa_conference_league"
       ],
@@ -1303,13 +1352,12 @@
         {
           "provider": "sportmonks",
           "sport": "soccer_uefa_europa_conference_league",
-          "status": "provider_error",
-          "statusCode": 401
+          "status": "fixture_id_missing"
         }
       ],
       "hasHistoricalOdds": false,
       "hasPredictionOdds": false,
-      "reason": "Oddsprovider antwoordde met HTTP 401."
+      "reason": "Sportmonks fixture-id ontbreekt; odds-by-fixture call overgeslagen."
     },
     {
       "matchId": "ss-bbc-2026-07-16-derry city-cska sofia",
@@ -1317,8 +1365,9 @@
       "league": "Europe - Europa League",
       "home": "Derry City",
       "away": "CSKA Sofia",
-      "status": "provider_error",
+      "status": "not_found",
       "sport": "unknown",
+      "sportmonksFixtureId": null,
       "attemptedSports": [
         "soccer_uefa_europa_league"
       ],
@@ -1366,13 +1415,12 @@
         {
           "provider": "sportmonks",
           "sport": "soccer_uefa_europa_league",
-          "status": "provider_error",
-          "statusCode": 401
+          "status": "fixture_id_missing"
         }
       ],
       "hasHistoricalOdds": false,
       "hasPredictionOdds": false,
-      "reason": "Oddsprovider antwoordde met HTTP 401."
+      "reason": "Sportmonks fixture-id ontbreekt; odds-by-fixture call overgeslagen."
     },
     {
       "matchId": "ss-bbc-2026-07-16-universitatea cluj-dynamo kyiv",
@@ -1380,13 +1428,62 @@
       "league": "Europe - Europa League",
       "home": "Universitatea Cluj",
       "away": "Dynamo Kyiv",
-      "status": "provider_exception",
+      "status": "not_found",
       "sport": "unknown",
-      "attemptedSports": [],
-      "attempts": [],
+      "sportmonksFixtureId": null,
+      "attemptedSports": [
+        "soccer_uefa_europa_league"
+      ],
+      "attempts": [
+        {
+          "provider": "the-odds-api",
+          "sport": "soccer_uefa_europa_league",
+          "status": "not_found",
+          "cached": true,
+          "remaining": "476"
+        },
+        {
+          "provider": "the-odds-api",
+          "sport": "soccer_uefa_champs_league_qualification",
+          "status": "not_found",
+          "cached": true,
+          "remaining": "476"
+        },
+        {
+          "provider": "the-odds-api",
+          "sport": "soccer_uefa_champs_league",
+          "status": "not_found",
+          "cached": true,
+          "remaining": "476"
+        },
+        {
+          "provider": "the-odds-api",
+          "sport": "soccer_uefa_europa_league_qualification",
+          "status": "provider_error",
+          "statusCode": 404
+        },
+        {
+          "provider": "the-odds-api",
+          "sport": "soccer_uefa_europa_conference_league_qualification",
+          "status": "provider_error",
+          "statusCode": 404
+        },
+        {
+          "provider": "the-odds-api",
+          "sport": "soccer_uefa_europa_conference_league",
+          "status": "not_found",
+          "cached": true,
+          "remaining": "476"
+        },
+        {
+          "provider": "sportmonks",
+          "sport": "soccer_uefa_europa_league",
+          "status": "fixture_id_missing"
+        }
+      ],
       "hasHistoricalOdds": false,
       "hasPredictionOdds": false,
-      "reason": "This operation was aborted"
+      "reason": "Sportmonks fixture-id ontbreekt; odds-by-fixture call overgeslagen."
     }
   ],
   "recommendation": "Geen oddsdekking gevonden voor deze kandidaten; voeg bredere provider toe voor Europese kwalificatie/voorrondewedstrijden."
