@@ -137,13 +137,78 @@ function sportmonksRateLimitFromPayload(payload) {
   return payload?.rate_limit || payload?.meta?.rate_limit || payload?.meta?.pagination?.rate_limit || null;
 }
 
+function compactSportmonksStatus(response, payload) {
+  return {
+    valid: response.ok && !payload?.message?.toLowerCase?.().includes("unauthenticated"),
+    status: response.status,
+    records: Array.isArray(payload?.data) ? payload.data.length : 0,
+    firstId: Array.isArray(payload?.data) ? payload.data.find((item) => item?.id)?.id || null : payload?.data?.id || null,
+    firstName: Array.isArray(payload?.data)
+      ? payload.data.find((item) => item?.name)?.name || null
+      : payload?.data?.name || payload?.data?.fixture?.name || null,
+    hasOddsFlag: Array.isArray(payload?.data)
+      ? payload.data.some((item) => item?.has_odds || item?.has_premium_odds)
+      : Boolean(payload?.data?.has_odds || payload?.data?.has_premium_odds),
+    rateLimit: sportmonksRateLimitFromPayload(payload),
+    quota: quotaHeaders(response),
+    errorCode: response.ok ? null : String(payload?.message || payload?.error || "provider_rejected_endpoint").slice(0, 160),
+  };
+}
+
+async function auditSportmonksEndpoint(label, url) {
+  try {
+    const { response, payload } = await requestJson(url);
+    return {
+      label,
+      ...compactSportmonksStatus(response, payload),
+    };
+  } catch (error) {
+    return {
+      label,
+      valid: false,
+      status: "request_failed",
+      errorCode: error?.name || "request_failed",
+    };
+  }
+}
+
+function firstSportmonksFixtureId(...payloads) {
+  for (const payload of payloads) {
+    const rows = Array.isArray(payload?.data) ? payload.data : payload?.data ? [payload.data] : [];
+    const fixture = rows.find((item) => item?.id && (item?.has_odds || item?.has_premium_odds)) || rows.find((item) => item?.id);
+    if (fixture?.id) return fixture.id;
+  }
+  return null;
+}
+
 async function auditSportmonks() {
   const key = getSportmonksApiKey();
   if (!key) return { configured: false, valid: false, status: "missing" };
   try {
-    const { response, payload } = await requestJson(
-      `https://api.sportmonks.com/v3/football/leagues?api_token=${encodeURIComponent(key)}&per_page=1`
+    const encodedKey = encodeURIComponent(key);
+    const today = new Date().toISOString().slice(0, 10);
+    const leaguesResult = await requestJson(`https://api.sportmonks.com/v3/football/leagues?api_token=${encodedKey}&per_page=1`);
+    const fixturesDateResult = await requestJson(
+      `https://api.sportmonks.com/v3/football/fixtures/date/${today}?api_token=${encodedKey}&include=participants&per_page=1`
     );
+    const upcomingMarketResult = await requestJson(
+      `https://api.sportmonks.com/v3/football/fixtures/upcoming/markets/1?api_token=${encodedKey}&include=participants&per_page=1`
+    );
+    const fixtureId = firstSportmonksFixtureId(fixturesDateResult.payload, upcomingMarketResult.payload);
+    const oddsByFixture = fixtureId
+      ? await auditSportmonksEndpoint(
+          "oddsByFixture",
+          `https://api.sportmonks.com/v3/football/odds/pre-match/fixtures/${fixtureId}?api_token=${encodedKey}&filters=markets:1;bookmakers:2&per_page=1`
+        )
+      : { label: "oddsByFixture", valid: false, status: "skipped", errorCode: "no_fixture_id_found" };
+    const oddsByFixtureMarket = fixtureId
+      ? await auditSportmonksEndpoint(
+          "oddsByFixtureMarket",
+          `https://api.sportmonks.com/v3/football/odds/pre-match/fixtures/${fixtureId}/markets/1?api_token=${encodedKey}&filters=bookmakers:2&per_page=1`
+        )
+      : { label: "oddsByFixtureMarket", valid: false, status: "skipped", errorCode: "no_fixture_id_found" };
+    const response = leaguesResult.response;
+    const payload = leaguesResult.payload;
     const rateLimit = sportmonksRateLimitFromPayload(payload);
     return {
       configured: true,
@@ -152,6 +217,14 @@ async function auditSportmonks() {
       records: Array.isArray(payload?.data) ? payload.data.length : 0,
       rateLimit,
       quota: quotaHeaders(response),
+      endpointAccess: {
+        leagues: compactSportmonksStatus(leaguesResult.response, leaguesResult.payload),
+        fixturesDate: compactSportmonksStatus(fixturesDateResult.response, fixturesDateResult.payload),
+        upcomingMarket: compactSportmonksStatus(upcomingMarketResult.response, upcomingMarketResult.payload),
+        testedFixtureId: fixtureId,
+        oddsByFixture,
+        oddsByFixtureMarket,
+      },
       documentedPlanLimitsPerEntityPerHour: {
         starter: 2000,
         pro: 2500,
