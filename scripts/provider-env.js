@@ -81,11 +81,12 @@ function keyForTemplate(template, suffix = "") {
 }
 
 function providerForTemplate(template, suffix = "") {
+  const target = String(template || "");
+  if (/sportmonks/i.test(target)) return "sportmonks";
+  if (/api-sports|api-football|football\.api-sports/i.test(target)) return "api-football";
+  if (/the-odds-api/i.test(target)) return "the-odds-api";
   const explicit = String(process.env[`ODDS_PROVIDER_NAME${suffix}`] || "").trim();
   if (explicit) return explicit;
-  if (/sportmonks/i.test(String(template || ""))) return "sportmonks";
-  if (/api-sports|api-football|football\.api-sports/i.test(String(template || ""))) return "api-football";
-  if (/the-odds-api/i.test(String(template || ""))) return "the-odds-api";
   return getOddsProviderName(template);
 }
 
