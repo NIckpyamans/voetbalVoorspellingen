@@ -377,7 +377,7 @@ for (const target of teamSeasonTargets) {
     );
   }
 
-  const clubs = teams.map((team) => ({
+  const clubs = uniqueBy(teams.map((team) => ({
     club_id: `sportmonks-team-${team.id}`,
     name: team.name,
     country_id: team.country_id ? `sportmonks-country-${team.country_id}` : null,
@@ -392,7 +392,7 @@ for (const target of teamSeasonTargets) {
         placeholder: team.placeholder ?? null,
       },
     },
-  }));
+  })), (club) => club.club_id);
   await sql.query(
     `with incoming as (
        select * from jsonb_to_recordset($1::jsonb) as x(
@@ -411,12 +411,12 @@ for (const target of teamSeasonTargets) {
     [JSON.stringify(clubs)]
   );
 
-  const aliases = clubs.flatMap((club) => [
+  const aliases = uniqueBy(clubs.flatMap((club) => [
     { club_id: club.club_id, alias: club.name, normalized_alias: normalizeAlias(club.name), source: "sportmonks" },
     club.provider_ids?.sportmonks?.shortCode
       ? { club_id: club.club_id, alias: club.provider_ids.sportmonks.shortCode, normalized_alias: normalizeAlias(club.provider_ids.sportmonks.shortCode), source: "sportmonks-short-code" }
       : null,
-  ].filter(Boolean));
+  ].filter(Boolean)), (alias) => `${alias.club_id}|${alias.normalized_alias}`);
   await sql.query(
     `with incoming as (
        select * from jsonb_to_recordset($1::jsonb) as x(club_id text, alias text, normalized_alias text, source text)
@@ -429,7 +429,7 @@ for (const target of teamSeasonTargets) {
     [JSON.stringify(aliases)]
   );
 
-  const membershipRows = clubs.map((club) => ({
+  const membershipRows = uniqueBy(clubs.map((club) => ({
     season_id: target.season_id,
     competition_id: target.competition_id,
     club_id: club.club_id,
@@ -437,7 +437,7 @@ for (const target of teamSeasonTargets) {
     status: "active",
     entry_reason: "sportmonks-season-teams",
     source: "sportmonks",
-  }));
+  })), (membership) => `${membership.season_id}|${membership.club_id}`);
   await sql.query(
     `with incoming as (
        select * from jsonb_to_recordset($1::jsonb) as x(
