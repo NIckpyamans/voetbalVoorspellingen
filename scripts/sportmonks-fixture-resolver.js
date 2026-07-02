@@ -38,10 +38,16 @@ function teamSimilarity(left, right) {
 }
 
 function dateKey(value) {
-  return String(value || "").slice(0, 10);
+  if (!value) return "";
+  if (value instanceof Date && Number.isFinite(value.getTime())) return value.toISOString().slice(0, 10);
+  const raw = String(value || "").trim();
+  if (/^\d{4}-\d{2}-\d{2}/.test(raw)) return raw.slice(0, 10);
+  const parsed = Date.parse(raw);
+  return Number.isFinite(parsed) ? new Date(parsed).toISOString().slice(0, 10) : "";
 }
 
 function addDays(key, days) {
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(String(key || ""))) return "";
   const date = new Date(`${key}T00:00:00Z`);
   date.setUTCDate(date.getUTCDate() + days);
   return date.toISOString().slice(0, 10);
