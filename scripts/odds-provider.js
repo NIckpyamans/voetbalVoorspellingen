@@ -127,6 +127,97 @@ function pickFlatOdds(node) {
   };
 }
 
+function asArray(value) {
+  if (!value) return [];
+  return Array.isArray(value) ? value : [value];
+}
+
+function sportmonksName(value) {
+  return normalizeName(value?.name || value?.label || value?.description || value);
+}
+
+function sportmonksOddsValue(odd) {
+  return numberOrNull(odd?.value ?? odd?.dp3 ?? odd?.decimal ?? odd?.odds ?? odd?.price);
+}
+
+function collectSportmonksFixtures(node, fixtures = []) {
+  if (!node || typeof node !== "object") return fixtures;
+  const fixtureLike =
+    (node.participants || node.localteam || node.visitorteam || node.home_team || node.away_team) &&
+    (node.odds || node.fixtureOdds || node.prematch_odds || node.bookmakers);
+  if (fixtureLike) fixtures.push(node);
+  for (const key of ["data", "fixtures", "fixture", "round", "stage", "league"]) {
+    const child = node[key];
+    if (Array.isArray(child)) child.forEach((item) => collectSportmonksFixtures(item, fixtures));
+    else if (child && typeof child === "object") collectSportmonksFixtures(child, fixtures);
+  }
+  return fixtures;
+}
+
+function sportmonksParticipants(fixture) {
+  const participants = asArray(fixture?.participants || fixture?.participant || fixture?.teams);
+  const home =
+    participants.find((item) => item?.meta?.location === "home") ||
+    participants.find((item) => item?.location === "home") ||
+    fixture?.localteam ||
+    fixture?.home_team;
+  const away =
+    participants.find((item) => item?.meta?.location === "away") ||
+    participants.find((item) => item?.location === "away") ||
+    fixture?.visitorteam ||
+    fixture?.away_team;
+  return { home: home?.name || home?.team_name || null, away: away?.name || away?.team_name || null };
+}
+
+function sportmonksOddsRows(fixtureOrPayload) {
+  const raw = [
+    ...asArray(fixtureOrPayload?.odds),
+    ...asArray(fixtureOrPayload?.fixtureOdds),
+    ...asArray(fixtureOrPayload?.prematch_odds),
+  ];
+  for (const bookmaker of asArray(fixtureOrPayload?.bookmakers)) {
+    raw.push(...asArray(bookmaker?.odds).map((odd) => ({ ...odd, bookmaker: odd.bookmaker || bookmaker.name || bookmaker.id })));
+  }
+  return raw.flatMap((row) => asArray(row?.data || row));
+}
+
+function extractSportmonksSnapshot(payload, match) {
+  const fixtures = collectSportmonksFixtures(payload);
+  const homeName = normalizeName(match.homeTeam);
+  const awayName = normalizeName(match.awayTeam);
+  const fixture =
+    fixtures.find((item) => {
+      const participants = sportmonksParticipants(item);
+      return namesSimilar(participants.home, homeName) && namesSimilar(participants.away, awayName);
+    }) ||
+    fixtures.find((item) => {
+      const participants = sportmonksParticipants(item);
+      return namesSimilar(participants.away, homeName) && namesSimilar(participants.home, awayName);
+    }) ||
+    (fixtures.length === 1 ? fixtures[0] : null);
+  const rows = fixture ? sportmonksOddsRows(fixture) : sportmonksOddsRows(payload);
+  if (!rows.length) return null;
+
+  const fulltimeRows = rows.filter((odd) => {
+    const market = sportmonksName(odd?.market || odd?.market_description || odd?.market_name || odd?.market?.name);
+    const marketId = Number(odd?.market_id || odd?.market?.id || 0);
+    return marketId === 1 || /fulltime result|full time result|match winner|1x2|3way|3 way/.test(market);
+  });
+  const candidates = fulltimeRows.length ? fulltimeRows : rows;
+  const home = candidates.find((odd) => ["home", "1"].includes(sportmonksName(odd)) || namesSimilar(odd?.name, homeName));
+  const draw = candidates.find((odd) => ["draw", "x"].includes(sportmonksName(odd)));
+  const away = candidates.find((odd) => ["away", "2"].includes(sportmonksName(odd)) || namesSimilar(odd?.name, awayName));
+  const snapshot = {
+    home: sportmonksOddsValue(home),
+    draw: sportmonksOddsValue(draw),
+    away: sportmonksOddsValue(away),
+    bookmaker: home?.bookmaker?.name || home?.bookmaker || draw?.bookmaker?.name || draw?.bookmaker || away?.bookmaker?.name || away?.bookmaker || "sportmonks",
+    market: home?.market_description || home?.market?.name || draw?.market_description || draw?.market?.name || "Fulltime Result",
+    capturedAt: home?.latest_bookmaker_update || home?.updated_at || draw?.latest_bookmaker_update || draw?.updated_at || away?.latest_bookmaker_update || away?.updated_at || null,
+  };
+  return snapshot.home || snapshot.draw || snapshot.away ? snapshot : null;
+}
+
 function extractTheOddsApiSnapshot(payload, match) {
   const events = Array.isArray(payload) ? payload : payload?.events || payload?.data || [];
   if (!Array.isArray(events)) return null;
@@ -172,7 +263,7 @@ export function normalizeOddsSnapshot(raw, match, options = {}) {
   const generatedAt = options.generatedAt || new Date().toISOString();
   const cutoffAt = options.cutoffAt || generatedAt;
   const kickoff = match?.kickoff || options.kickoff || null;
-  const snapshot = pickFlatOdds(raw) || extractTheOddsApiSnapshot(raw, match || {});
+  const snapshot = pickFlatOdds(raw) || extractSportmonksSnapshot(raw, match || {}) || extractTheOddsApiSnapshot(raw, match || {});
   if (!snapshot) {
     return {
       status: "not_found",
@@ -300,6 +391,7 @@ export async function fetchOddsAtPrediction(match, options = {}) {
           league: match?.league || "",
           kickoff: match?.kickoff || "",
           matchId: match?.matchId || "",
+          sportmonksFixtureId: match?.sportmonksFixtureId || match?.matchId || "",
         });
       const cached = responseCache.get(url);
       const cacheFresh = cached && Date.now() - cached.cachedAt <= RESPONSE_CACHE_TTL_MS;
@@ -326,6 +418,9 @@ export async function fetchOddsAtPrediction(match, options = {}) {
           remaining: response.headers.get("x-requests-remaining") || response.headers.get("x-ratelimit-requests-remaining"),
           used: response.headers.get("x-requests-used"),
           lastCost: response.headers.get("x-requests-last"),
+          limit: response.headers.get("x-ratelimit-limit") || response.headers.get("x-ratelimit-requests-limit"),
+          reset: response.headers.get("x-ratelimit-reset") || response.headers.get("x-requestcounter-reset"),
+          retryAfter: response.headers.get("retry-after"),
         };
       }
       if (response && !response.ok) {
@@ -345,6 +440,10 @@ export async function fetchOddsAtPrediction(match, options = {}) {
       }
       if (!cacheFresh) {
         payload = await response.json();
+        quota = {
+          ...(quota || {}),
+          sportmonksRateLimit: payload?.rate_limit || payload?.meta?.rate_limit || null,
+        };
         responseCache.set(url, { payload, quota, cachedAt: Date.now() });
       }
       const receivedAt = new Date().toISOString();

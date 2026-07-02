@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 
-import { getApiFootballKey, getFootballDataApiKey } from "./provider-env.js";
+import { getApiFootballKey, getFootballDataApiKey, getSportmonksApiKey } from "./provider-env.js";
 
 const timeoutMs = 12_000;
 
@@ -13,6 +13,10 @@ function quotaHeaders(response) {
     "x-ratelimit-requests-remaining",
     "x-requestcounter-reset",
     "x-requests-available-minute",
+    "x-ratelimit-limit",
+    "x-ratelimit-remaining",
+    "x-ratelimit-reset",
+    "retry-after",
   ];
   return Object.fromEntries(names.map((name) => [name, response.headers.get(name)]).filter(([, value]) => value !== null));
 }
@@ -129,12 +133,46 @@ async function auditFootballData() {
   }
 }
 
+function sportmonksRateLimitFromPayload(payload) {
+  return payload?.rate_limit || payload?.meta?.rate_limit || payload?.meta?.pagination?.rate_limit || null;
+}
+
+async function auditSportmonks() {
+  const key = getSportmonksApiKey();
+  if (!key) return { configured: false, valid: false, status: "missing" };
+  try {
+    const { response, payload } = await requestJson(
+      `https://api.sportmonks.com/v3/football/leagues?api_token=${encodeURIComponent(key)}&per_page=1`
+    );
+    const rateLimit = sportmonksRateLimitFromPayload(payload);
+    return {
+      configured: true,
+      valid: response.ok && !payload?.message?.toLowerCase?.().includes("unauthenticated"),
+      status: response.status,
+      records: Array.isArray(payload?.data) ? payload.data.length : 0,
+      rateLimit,
+      quota: quotaHeaders(response),
+      documentedPlanLimitsPerEntityPerHour: {
+        starter: 2000,
+        pro: 2500,
+        growth: 3000,
+        enterprise: 5000,
+      },
+      documentedStrategy: "Sportmonks limieten zijn per entity per uur. Gebruik includes en cache reference data om calls te beperken.",
+      errorCode: response.ok ? null : String(payload?.message || payload?.error || "provider_rejected_key").slice(0, 120),
+    };
+  } catch (error) {
+    return { configured: true, valid: false, status: "request_failed", errorCode: error?.name || "request_failed" };
+  }
+}
+
 const report = {
   checkedAt: new Date().toISOString(),
   oddsApi: await auditOddsApi(),
   clubOddsProbe: await probeClubOdds(),
   apiFootball: await auditApiFootball(),
   footballData: await auditFootballData(),
+  sportmonks: await auditSportmonks(),
 };
 console.log(JSON.stringify(report, null, 2));
 

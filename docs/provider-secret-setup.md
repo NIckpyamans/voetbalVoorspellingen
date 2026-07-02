@@ -33,6 +33,9 @@ Voor betere dekking van UEFA qualifiers, kleine competities en friendlies kan ee
 Voor Sportmonks:
 
 - `SPORTMONKS_API_KEY`
+- `MYSPORTS_API_KEY` wordt ook ondersteund als alias voor dezelfde key.
 - `SPORTMONKS_ODDS_API_URL_TEMPLATE`
 
 Gebruik in templates `{apiKey}`, `{homeTeam}`, `{awayTeam}`, `{league}`, `{kickoff}`, `{matchId}` en optioneel `{sport}`. De worker probeert providers in volgorde en stopt zodra bruikbare 1X2 odds zijn gevonden.
+
+Voor een eerste Sportmonks key/quota-test is alleen `MYSPORTS_API_KEY` genoeg. Voor echte odds-capture moet daarnaast `SPORTMONKS_ODDS_API_URL_TEMPLATE` gevuld zijn met een endpoint dat odds teruggeeft, bijvoorbeeld een Sportmonks round- of fixture-endpoint met `include=fixtures.odds.market;fixtures.odds.bookmaker;fixtures.participants`.
