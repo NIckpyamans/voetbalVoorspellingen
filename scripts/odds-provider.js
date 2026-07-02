@@ -3,6 +3,7 @@ import { getOddsApiKey, getOddsApiUrlTemplate, getOddsProviderConfigs, getOddsPr
 const responseCache = new Map();
 // Een volledige worker kan meerdere minuten duren; dezelfde sportmarkt hoeft binnen die run maar eenmaal opgehaald te worden.
 const RESPONSE_CACHE_TTL_MS = 30 * 60 * 1000;
+const DEFAULT_FETCH_TIMEOUT_MS = Math.max(1000, Number(process.env.ODDS_PROVIDER_FETCH_TIMEOUT_MS || 12000));
 
 function normalizeName(value) {
   return String(value || "")
@@ -62,6 +63,19 @@ function configuredExtraSports() {
 
 function unique(values) {
   return [...new Set(values.filter(Boolean))];
+}
+
+async function fetchWithTimeout(fetchImpl, url, options = {}, timeoutMs = DEFAULT_FETCH_TIMEOUT_MS) {
+  const controller = new AbortController();
+  const timeout = setTimeout(() => controller.abort(), timeoutMs);
+  try {
+    return await fetchImpl(url, {
+      ...options,
+      signal: controller.signal,
+    });
+  } finally {
+    clearTimeout(timeout);
+  }
 }
 
 function inferOddsApiSportKeys(match = {}) {
@@ -411,7 +425,7 @@ export async function fetchOddsAtPrediction(match, options = {}) {
                 : { "x-api-key": configApiKey }
             : {}),
         };
-        response = await fetchImpl(url, {
+        response = await fetchWithTimeout(fetchImpl, url, {
           headers,
         });
         quota = {
