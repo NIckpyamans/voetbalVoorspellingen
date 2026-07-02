@@ -28,6 +28,7 @@ const maxOddsRequests = Math.max(0, Number(process.env.API_FOOTBALL_ODDS_PROBE_L
 const timeoutMs = Math.max(1000, Number(process.env.API_FOOTBALL_COVERAGE_TIMEOUT_MS || 12000));
 const reportPath = path.join(root, "monitor", "api-football-coverage-scout.json");
 const startedAt = Date.now();
+const quotaSamples = [];
 
 function digest(value, size = 24) {
   return crypto.createHash("sha1").update(String(value || "")).digest("hex").slice(0, size);
@@ -69,6 +70,10 @@ function dateKey(value) {
 
 async function apiGet(pathname, params = {}) {
   const url = new URL(pathname, baseUrl);
+  return apiGetUrl(url, params);
+}
+
+async function apiGetUrl(url, params = {}) {
   for (const [key, value] of Object.entries(params)) {
     if (value !== undefined && value !== null && String(value).trim()) url.searchParams.set(key, String(value));
   }
@@ -81,19 +86,35 @@ async function apiGet(pathname, params = {}) {
       headers["x-rapidapi-host"] = url.hostname;
     }
     const response = await fetch(url, { headers, signal: controller.signal });
-    const payload = await response.json().catch(() => null);
-    return {
+    const text = await response.text();
+    let payload = null;
+    try {
+      payload = text ? JSON.parse(text) : null;
+    } catch {
+      payload = null;
+    }
+    const quota = {
+      requestsLimit: response.headers.get("x-ratelimit-requests-limit"),
+      requestsRemaining: response.headers.get("x-ratelimit-requests-remaining"),
+      rateLimit: response.headers.get("x-ratelimit-limit"),
+      rateRemaining: response.headers.get("x-ratelimit-remaining"),
+    };
+    if (quotaSamples.length < 5 && Object.values(quota).some(Boolean)) quotaSamples.push(quota);
+    const result = {
       ok: response.ok && !Object.keys(payload?.errors || {}).length,
       status: response.status,
       payload,
-      quota: {
-        requestsLimit: response.headers.get("x-ratelimit-requests-limit"),
-        requestsRemaining: response.headers.get("x-ratelimit-requests-remaining"),
-        rateLimit: response.headers.get("x-ratelimit-limit"),
-        rateRemaining: response.headers.get("x-ratelimit-remaining"),
-      },
+      quota,
+      message: payload?.message || payload?.error || payload?.errors || text?.slice(0, 500) || null,
       url: url.toString().replace(apiKey, "***"),
     };
+    if (result.status === 403 && /rapidapi/i.test(url.hostname)) {
+      const directUrl = new URL(url.pathname, "https://v3.football.api-sports.io");
+      for (const [key, value] of url.searchParams.entries()) directUrl.searchParams.set(key, value);
+      const direct = await apiGetUrl(directUrl, {});
+      return { ...direct, fallbackFrom: result };
+    }
+    return result;
   } finally {
     clearTimeout(timeout);
   }
@@ -187,13 +208,27 @@ let oddsCaptured = 0;
 const statusCounts = {};
 const errors = [];
 const examples = [];
+let quotaBlocked = false;
 
 for (const [key, dateMatches] of [...byDate.entries()].slice(0, maxDates)) {
   const fixtureFeed = await apiGet("/fixtures", { date: key });
   fetchedDates += 1;
   statusCounts[`fixtures_${fixtureFeed.status}`] = (statusCounts[`fixtures_${fixtureFeed.status}`] || 0) + 1;
   if (!fixtureFeed.ok) {
-    errors.push({ endpoint: "fixtures", date: key, status: fixtureFeed.status, errors: fixtureFeed.payload?.errors || null });
+    errors.push({
+      endpoint: "fixtures",
+      date: key,
+      status: fixtureFeed.status,
+      message: fixtureFeed.message || null,
+      errors: fixtureFeed.payload?.errors || null,
+      fallbackFrom: fixtureFeed.fallbackFrom
+        ? { status: fixtureFeed.fallbackFrom.status, message: fixtureFeed.fallbackFrom.message || null }
+        : null,
+    });
+    if (fixtureFeed.status === 429) {
+      quotaBlocked = true;
+      break;
+    }
     continue;
   }
   const fixtures = Array.isArray(fixtureFeed.payload?.response) ? fixtureFeed.payload.response : [];
@@ -253,7 +288,14 @@ for (const [key, dateMatches] of [...byDate.entries()].slice(0, maxDates)) {
       oddsRequests += 1;
       statusCounts[`odds_${oddsFeed.status}`] = (statusCounts[`odds_${oddsFeed.status}`] || 0) + 1;
       if (!oddsFeed.ok) {
-        errors.push({ endpoint: "odds", fixtureId: best.id, status: oddsFeed.status, errors: oddsFeed.payload?.errors || null });
+        errors.push({
+          endpoint: "odds",
+          fixtureId: best.id,
+          status: oddsFeed.status,
+          message: oddsFeed.message || null,
+          errors: oddsFeed.payload?.errors || null,
+        });
+        if (oddsFeed.status === 429) quotaBlocked = true;
       } else {
         const odds = parseApiFootballOdds(oddsFeed.payload);
         if (odds && Date.now() < Date.parse(match.kickoff_at)) {
@@ -297,6 +339,9 @@ for (const [key, dateMatches] of [...byDate.entries()].slice(0, maxDates)) {
 const report = {
   ok: true,
   generatedAt: new Date().toISOString(),
+  provider: "api-football",
+  baseHost: new URL(baseUrl).hostname,
+  quotaBlocked,
   checked: matches.length,
   fetchedDates,
   fetchedFixtures,
@@ -304,6 +349,7 @@ const report = {
   oddsRequests,
   oddsCaptured,
   statusCounts,
+  quotaSamples,
   examples,
   errors: errors.slice(0, 20),
   durationMs: Date.now() - startedAt,
