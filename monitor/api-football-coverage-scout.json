@@ -1,54 +1,45 @@
 {
   "ok": true,
-  "generatedAt": "2026-07-02T10:52:03.725Z",
-  "checked": 23,
-  "fetchedDates": 6,
+  "generatedAt": "2026-07-02T10:54:41.717Z",
+  "provider": "api-football",
+  "baseHost": "api-football-v1.p.rapidapi.com",
+  "quotaBlocked": true,
+  "checked": 8,
+  "fetchedDates": 2,
   "fetchedFixtures": 0,
   "mappedFixtures": 0,
   "oddsRequests": 0,
   "oddsCaptured": 0,
   "statusCounts": {
-    "fixtures_403": 1,
-    "fixtures_429": 5
+    "fixtures_200": 1,
+    "fixtures_429": 1
   },
+  "quotaSamples": [],
   "examples": [],
   "errors": [
     {
       "endpoint": "fixtures",
       "date": "2026-07-07",
-      "status": 403,
-      "errors": null
+      "status": 200,
+      "message": {
+        "plan": "Free plans do not have access to this date, try from 2026-07-01 to 2026-07-03."
+      },
+      "errors": {
+        "plan": "Free plans do not have access to this date, try from 2026-07-01 to 2026-07-03."
+      },
+      "fallbackFrom": {
+        "status": 403,
+        "message": "You are not subscribed to this API."
+      }
     },
     {
       "endpoint": "fixtures",
       "date": "2026-07-08",
       "status": 429,
-      "errors": null
-    },
-    {
-      "endpoint": "fixtures",
-      "date": "2026-07-09",
-      "status": 429,
-      "errors": null
-    },
-    {
-      "endpoint": "fixtures",
-      "date": "2026-07-14",
-      "status": 429,
-      "errors": null
-    },
-    {
-      "endpoint": "fixtures",
-      "date": "2026-07-15",
-      "status": 429,
-      "errors": null
-    },
-    {
-      "endpoint": "fixtures",
-      "date": "2026-07-16",
-      "status": 429,
-      "errors": null
+      "message": "Too many requests",
+      "errors": null,
+      "fallbackFrom": null
     }
   ],
-  "durationMs": 942
+  "durationMs": 821
 }
