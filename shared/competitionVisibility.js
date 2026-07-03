@@ -17,12 +17,49 @@ const HIDDEN_SOURCE_PATTERNS = [
   /world-cup-2026/i,
 ];
 
+const HIDDEN_TEAM_PATTERNS = [
+  /^$/,
+  /^-$/,
+  /^tbd$/,
+  /^to be (decided|determined)$/,
+  /^unknown$/,
+  /^n\/a$/,
+  /\bwinner\s+group\b/i,
+  /\brunner[-\s]?up\s+group\b/i,
+  /\bthird\s+place\s+group\b/i,
+  /\bbest\s+third\b/i,
+  /\bgroup\s+[a-z]\s+(winner|runner[-\s]?up|third)/i,
+];
+
 function text(value) {
   return String(value || "");
 }
 
+function teamName(entity, prefix) {
+  return text(
+    entity[`${prefix}TeamName`] ||
+      entity[`${prefix}Team`] ||
+      entity[`${prefix}_team_name`] ||
+      entity[`${prefix}_team`] ||
+      ""
+  );
+}
+
+function hasTeamField(entity, prefix) {
+  return [`${prefix}TeamName`, `${prefix}Team`, `${prefix}_team_name`, `${prefix}_team`].some((key) =>
+    Object.prototype.hasOwnProperty.call(entity, key)
+  );
+}
+
+export function hasVisibleTeamNames(entity = {}) {
+  if (!hasTeamField(entity, "home") && !hasTeamField(entity, "away")) return true;
+  const home = teamName(entity, "home");
+  const away = teamName(entity, "away");
+  return ![home, away].some((name) => HIDDEN_TEAM_PATTERNS.some((pattern) => pattern.test(text(name).trim())));
+}
+
 export function isHiddenInternationalOrWorldCupEntity(entity = {}) {
-  const league = text(entity.league || entity.leagueLabel || entity.competition || entity.tournament);
+  const league = text(entity.league || entity.leagueLabel || entity.competition || entity.competitionName || entity.tournament);
   const source = text(entity.dataSource || entity.source || entity.provider || entity.id || entity.matchId);
   const phase = text(entity.phaseBucket || entity.leagueType || entity.type);
 
@@ -30,6 +67,7 @@ export function isHiddenInternationalOrWorldCupEntity(entity = {}) {
   if (HIDDEN_SOURCE_PATTERNS.some((pattern) => pattern.test(source))) return true;
   if (/national|international/i.test(phase) && !/club/i.test(league)) return true;
   if (entity.worldCup2026) return true;
+  if (!hasVisibleTeamNames(entity)) return true;
 
   return false;
 }

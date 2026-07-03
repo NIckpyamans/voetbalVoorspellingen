@@ -8,6 +8,7 @@ import {
 import { buildPoissonScoreModel } from "./worker/prediction.js";
 import { fetchApiFootballH2HProfile } from "./api-football-provider.js";
 import { normalizeOddsSnapshot } from "./odds-provider.js";
+import { filterVisibleMatches, isHiddenInternationalOrWorldCupEntity } from "../shared/competitionVisibility.js";
 
 const root = process.cwd();
 const file = path.join(root, "server_data.json");
@@ -102,6 +103,7 @@ async function runContractAssertions() {
   const matchServiceSource = fs.readFileSync(path.join(root, "services", "matchService.ts"), "utf8");
   const workerSource = fs.readFileSync(path.join(root, "scripts", "server-worker.js"), "utf8");
   const appSource = fs.readFileSync(path.join(root, "App.tsx"), "utf8");
+  const dateNavigationSource = fs.readFileSync(path.join(root, "components", "DateNavigation.tsx"), "utf8");
   const serviceWorkerSource = fs.readFileSync(path.join(root, "public", "sw.js"), "utf8");
   const assert = (condition, message) => {
     if (!condition) failures.push(message);
@@ -114,8 +116,25 @@ async function runContractAssertions() {
   assert(matchServiceSource.includes("const hasNumericScore"), "Numeric home/away scores should normalize to a final result");
   assert(!fs.existsSync(path.join(root, "components", "WorldCupView.tsx")), "World Cup widget should stay removed");
   assert(!appSource.includes('"worldcup"'), "World Cup navigation route should stay removed");
+  assert(!dateNavigationSource.includes("WK start"), "World Cup quick date buttons should stay removed");
   assert(!workerSource.includes('"World - FIFA World Cup 2026": "fifa.world"'), "World Cup ESPN fallback should stay disabled");
   assert(!workerSource.includes('"World - International Friendlies": "fifa.friendly"'), "International friendly ESPN fallback should stay disabled");
+  assert(
+    isHiddenInternationalOrWorldCupEntity({
+      league: "World - FIFA World Cup 2026",
+      homeTeamName: "Runner-up Group K",
+      awayTeamName: "Winner Group B",
+    }),
+    "World Cup placeholder fixtures should be hidden"
+  );
+  assert(
+    filterVisibleMatches([
+      { id: "club-1", league: "England - Premier League", homeTeamName: "Arsenal", awayTeamName: "Chelsea" },
+      { id: "wk-1", league: "World - FIFA World Cup 2026", homeTeamName: "Runner-up Group K", awayTeamName: "Winner Group B" },
+      { id: "empty-1", league: "World - FIFA World Cup 2026", homeTeamName: "", awayTeamName: "" },
+    ]).length === 1,
+    "Visible match filter should remove World Cup and empty-team fixtures"
+  );
   assert(serviceWorkerSource.includes('request.mode === "navigate"'), "Service worker navigation should use the network-first path");
   assert(!serviceWorkerSource.includes('const SHELL = ["/", "/index.html"'), "Service worker must not precache stale app-shell HTML");
 
