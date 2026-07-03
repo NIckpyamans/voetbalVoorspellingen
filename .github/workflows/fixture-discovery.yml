@@ -8,6 +8,7 @@ on:
 jobs:
   football-data-2627:
     runs-on: ubuntu-latest
+    timeout-minutes: 10
     strategy:
       fail-fast: false
       max-parallel: 3
@@ -35,6 +36,7 @@ jobs:
 
   openfootball-upcoming:
     runs-on: ubuntu-latest
+    timeout-minutes: 8
     strategy:
       fail-fast: false
       max-parallel: 3
@@ -57,12 +59,13 @@ jobs:
         env:
           DATABASE_URL: ${{ secrets.DATABASE_URL }}
           POSTGRES_URL: ${{ secrets.POSTGRES_URL }}
-          FREE_SOURCE_IMPORT_LIMIT: 600
+          FREE_SOURCE_IMPORT_LIMIT: 300
 
   finalize:
     needs: [football-data-2627, openfootball-upcoming]
     if: always()
     runs-on: ubuntu-latest
+    timeout-minutes: 12
     steps:
       - uses: actions/checkout@v5
       - uses: actions/setup-node@v5
