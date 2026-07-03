@@ -30,6 +30,7 @@ import {
   createSafeFetch,
   fetchBbcScheduledEvents as fetchBbcScheduledEventsSource,
   fetchEspnScoreboardEvents as fetchEspnScoreboardEventsSource,
+  fetchEspnTeamScheduleEvents as fetchEspnTeamScheduleEventsSource,
   fetchExternalJson,
   fetchFbrefSnapshot as fetchFbrefSnapshotSource,
   fetchOpenfootballProfile as fetchOpenfootballProfileSource,
@@ -96,6 +97,7 @@ const LEAGUES = [
   { country: "", name: "europa league", label: "Europe - Europa League", type: "cup" },
   { country: "", name: "conference league", label: "Europe - Conference League", type: "cup" },
   { country: "world", name: "club friendly", label: "World - Club Friendlies", type: "friendly" },
+  { country: "world", name: "club friendlies", label: "World - Club Friendlies", type: "friendly" },
 ];
 
 const LEAGUE_CALIBRATION_PROFILES = {
@@ -1230,6 +1232,19 @@ const FRIENDLY_SCOREBOARD_LEAGUES = {
   "World - Club Friendlies": ESPN_SCOREBOARD_LEAGUES["World - Club Friendlies"],
 };
 
+const DEFAULT_ESPN_FRIENDLY_TEAM_IDS = [
+  "139", // Ajax Amsterdam
+  "152", // FC Twente
+];
+
+function getEspnFriendlyTeamIds() {
+  const configured = String(process.env.ESPN_FRIENDLY_TEAM_IDS || "")
+    .split(/[,\s]+/)
+    .map((value) => value.trim())
+    .filter(Boolean);
+  return [...new Set([...DEFAULT_ESPN_FRIENDLY_TEAM_IDS, ...configured])];
+}
+
 function isFriendlyLeagueLabel(label) {
   return /friendl|oefen/i.test(String(label || ""));
 }
@@ -1250,6 +1265,22 @@ const DATA_SCOUT_SOURCES = [
     freeUse: "publieke scoreboard endpoint",
     data: ["fixtures", "live/FT scores", "clublogo's", "competitiedekking"],
     priority: "hoog",
+  },
+  {
+    key: "espn-team-schedule",
+    name: "ESPN Team Schedule",
+    category: "oefenwedstrijden",
+    freeUse: "publieke team schedule endpoint",
+    data: ["club friendlies", "kickoff", "teams", "clublogo's"],
+    priority: "hoog",
+  },
+  {
+    key: "official-club-fixtures",
+    name: "Officiele clubsites",
+    category: "curated oefenwedstrijden",
+    freeUse: "publieke clubwedstrijdpagina's",
+    data: ["bevestigde oefenwedstrijd", "venue", "bron-url"],
+    priority: "veiligheidsnet",
   },
   {
     key: "thesportsdb",
@@ -1437,6 +1468,54 @@ const CURATED_FIXTURE_BACKFILL = [
     away: "Rayo Vallecano",
     round: "Semi-finals",
     sourceNote: "UEFA fixtures backfill",
+  },
+];
+
+const CURATED_CLUB_FRIENDLIES = [
+  {
+    date: "2026-07-04",
+    time: "17:00",
+    home: "Ajax Amsterdam",
+    away: "Panathinaikos",
+    venue: "Sportcentrum de Beek, Garderen",
+    sourceName: "Ajax official games",
+    sourceUrl: "https://english.ajax.nl/games",
+  },
+  {
+    date: "2026-07-04",
+    time: "14:00",
+    home: "FC Twente",
+    away: "Aberdeen FC",
+    venue: "GFC Goor",
+    sourceName: "FC Twente official",
+    sourceUrl: "https://fctwente.nl/nieuws/fc-twente-treft-zaterdag-aberdeen-fc-in-goor",
+  },
+  {
+    date: "2026-07-10",
+    time: "18:00",
+    home: "Ajax Amsterdam",
+    away: "AEK Larnaca",
+    venue: "Sportcentrum de Beek, Garderen",
+    sourceName: "Ajax official games",
+    sourceUrl: "https://english.ajax.nl/games",
+  },
+  {
+    date: "2026-07-15",
+    time: "17:00",
+    home: "Ajax Amsterdam",
+    away: "VfL Bochum",
+    venue: "Sportcentrum de Beek, Garderen",
+    sourceName: "Ajax official games",
+    sourceUrl: "https://english.ajax.nl/games",
+  },
+  {
+    date: "2026-08-02",
+    time: "18:30",
+    home: "KRC Genk",
+    away: "FC Twente",
+    venue: "Genk",
+    sourceName: "FC Twente official",
+    sourceUrl: "https://fctwente.nl/nieuws/fc-twente-oefent-in-belgi-tegen-krc-genk",
   },
 ];
 
@@ -4548,6 +4627,38 @@ function fetchCuratedFixtureBackfill(dateISO) {
           aggregateLabel: item.aggregateLabel || null,
         },
         source: "curated-fixture-fallback",
+      };
+    });
+}
+
+function fetchCuratedClubFriendlies(dateISO) {
+  return CURATED_CLUB_FRIENDLIES
+    .filter((item) => item.date === dateISO)
+    .map((item) => {
+      const kickoffIso = buildFootballDataKickoffIso(dateISO, item.time);
+      const id = `curated-club-friendly-${dateISO}-${normalizeName(item.home)}-${normalizeName(item.away)}`;
+      return {
+        id,
+        startTimestamp: Math.floor(new Date(kickoffIso).getTime() / 1000),
+        homeTeam: { id: "", name: item.home, country: { name: "World" } },
+        awayTeam: { id: "", name: item.away, country: { name: "World" } },
+        uniqueTournament: { id: null, name: "Club Friendlies" },
+        tournament: {
+          id: null,
+          name: "Club Friendlies",
+          category: { name: "World" },
+          uniqueTournament: { id: null },
+        },
+        season: { id: null },
+        status: { type: "notstarted", description: "NS" },
+        homeScore: {},
+        awayScore: {},
+        curatedMeta: {
+          sourceNote: item.sourceName || "official club friendly",
+          sourceUrl: item.sourceUrl || null,
+          venue: item.venue || null,
+        },
+        source: "curated-club-friendly-fallback",
       };
     });
 }
@@ -9957,8 +10068,8 @@ function buildDataScoutReport(store, todayKey) {
     },
     {
       key: "standings_present",
-      passed: standingsCount > 0,
-      detail: `standings=${standingsCount}`,
+      passed: todayMatches.length === 0 || standingsCount > 0,
+      detail: todayMatches.length === 0 ? "geen wedstrijden" : `standings=${standingsCount}`,
       severity: "high",
     },
     {
@@ -10530,6 +10641,18 @@ async function main() {
       normalizeName,
       sleep,
     });
+    const espnTeamEvents = friendliesDiscoveryMode
+      ? await fetchEspnTeamScheduleEventsSource(date, {
+          espnTeamIds: getEspnFriendlyTeamIds(),
+          isWomenContext,
+          isYouthContext,
+          toAmsterdamDateKey,
+          toNumber,
+          parseMinuteFromDescription,
+          normalizeName,
+          sleep,
+        })
+      : [];
     const openLigaDbEvents = friendliesDiscoveryMode ? [] : await fetchOpenLigaDbScheduledEvents(date);
     const bbcEvents = friendliesDiscoveryMode ? [] : await fetchBbcScheduledEventsSource(date, {
       bbcCompetitionToLabel: BBC_COMPETITION_TO_LABEL,
@@ -10543,7 +10666,7 @@ async function main() {
       isYouthContext,
       sleep,
     });
-    const curatedEvents = friendliesDiscoveryMode ? [] : fetchCuratedFixtureBackfill(date);
+    const curatedEvents = friendliesDiscoveryMode ? fetchCuratedClubFriendlies(date) : fetchCuratedFixtureBackfill(date);
     fixtureSourceDiagnostics[date] = {
       checkedAt: new Date(now).toISOString(),
       sofascore: apiEvents.length,
@@ -10551,6 +10674,7 @@ async function main() {
       footballData: fallbackEvents.length,
       theSportsDb: sportsDbEvents.length,
       espn: espnEvents.length,
+      espnTeamSchedule: espnTeamEvents.length,
       openLigaDb: openLigaDbEvents.length,
       bbc: bbcEvents.length,
       curated: curatedEvents.length,
@@ -10560,6 +10684,7 @@ async function main() {
       ...fallbackEvents,
       ...sportsDbEvents,
       ...espnEvents,
+      ...espnTeamEvents,
       ...openLigaDbEvents,
       ...bbcEvents,
       ...curatedEvents,

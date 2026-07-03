@@ -378,6 +378,12 @@ function getEspnCompetitor(competition, side) {
   return (competition?.competitors || []).find((competitor) => competitor?.homeAway === side) || null;
 }
 
+function getEspnTeamLogo(team) {
+  if (team?.logo) return String(team.logo || "");
+  const logos = Array.isArray(team?.logos) ? team.logos : [];
+  return String(logos.find((logo) => String(logo?.rel || "").includes("default"))?.href || logos[0]?.href || "");
+}
+
 function mapEspnStatus(statusType) {
   const state = String(statusType?.state || "").toLowerCase();
   const name = String(statusType?.name || "").toLowerCase();
@@ -486,6 +492,86 @@ export async function fetchEspnScoreboardEvents(dateISO, deps) {
           minute: minute.label,
         },
         source: "espn-scoreboard-fallback",
+      });
+    }
+    await deps.sleep(20);
+  }
+
+  return fallbackEvents;
+}
+
+export async function fetchEspnTeamScheduleEvents(dateISO, deps) {
+  const teamIds = [...new Set((deps.espnTeamIds || []).map((id) => String(id || "").trim()).filter(Boolean))];
+  const seasonYear = Number(dateISO.slice(0, 4));
+  const fallbackEvents = [];
+  const seen = new Set();
+
+  for (const teamId of teamIds) {
+    const json = await fetchExternalJson(
+      `https://site.api.espn.com/apis/site/v2/sports/soccer/club.friendly/teams/${encodeURIComponent(teamId)}/schedule?season=${seasonYear}`
+    );
+    for (const event of Array.isArray(json?.events) ? json.events : []) {
+      const competition = event?.competitions?.[0] || {};
+      const kickoff = new Date(competition?.date || event?.date || "");
+      if (!Number.isFinite(kickoff.getTime()) || deps.toAmsterdamDateKey(kickoff) !== dateISO) continue;
+
+      const home = getEspnCompetitor(competition, "home");
+      const away = getEspnCompetitor(competition, "away");
+      const homeName = String(home?.team?.displayName || home?.team?.name || "").trim();
+      const awayName = String(away?.team?.displayName || away?.team?.name || "").trim();
+      if (!homeName || !awayName) continue;
+      if (deps.isWomenContext("World - Club Friendlies", homeName, awayName) || deps.isYouthContext("World - Club Friendlies", homeName, awayName)) continue;
+
+      const uniqueKey = String(event?.id || `${dateISO}-${deps.normalizeName(homeName)}-${deps.normalizeName(awayName)}`);
+      if (seen.has(uniqueKey)) continue;
+      seen.add(uniqueKey);
+
+      const statusType = competition?.status?.type || event?.status?.type || {};
+      const homeGoals = deps.toNumber(home?.score?.value ?? home?.score);
+      const awayGoals = deps.toNumber(away?.score?.value ?? away?.score);
+      const appStatusType = mapEspnStatus(statusType);
+      const scoreAvailable = Number.isFinite(homeGoals) && Number.isFinite(awayGoals) && appStatusType !== "notstarted";
+      const minute = getEspnDisplayMinute(competition?.status || event?.status || {}, deps);
+
+      fallbackEvents.push({
+        id: `espn-team-club-friendly-${uniqueKey}`,
+        startTimestamp: Math.floor(kickoff.getTime() / 1000),
+        homeTeam: {
+          id: String(home?.team?.id || ""),
+          name: homeName,
+          country: { name: "World" },
+          logoUrl: getEspnTeamLogo(home?.team),
+        },
+        awayTeam: {
+          id: String(away?.team?.id || ""),
+          name: awayName,
+          country: { name: "World" },
+          logoUrl: getEspnTeamLogo(away?.team),
+        },
+        uniqueTournament: { id: null, name: "Club Friendlies" },
+        tournament: {
+          id: null,
+          name: "Club Friendlies",
+          category: { name: "World" },
+          uniqueTournament: { id: null },
+        },
+        season: { id: seasonYear },
+        status: {
+          type: appStatusType,
+          description: statusType.shortDetail || statusType.detail || statusType.description || "",
+        },
+        time: minute.current ? { current: minute.current, extra: minute.extra || 0 } : {},
+        period: appStatusType === "halftime" ? "HT" : null,
+        homeScore: scoreAvailable ? { current: homeGoals } : {},
+        awayScore: scoreAvailable ? { current: awayGoals } : {},
+        espnMeta: {
+          code: "club.friendly",
+          mode: "team-schedule",
+          teamId,
+          status: statusType.name || statusType.description || null,
+          minute: minute.label,
+        },
+        source: "espn-team-schedule-fallback",
       });
     }
     await deps.sleep(20);

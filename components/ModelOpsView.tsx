@@ -46,19 +46,22 @@ const ModelOpsView: React.FC = () => {
   const selectedCalibration = Object.entries(payload?.leagueCalibrationProfiles || {}).slice(0, 8);
   const windowProfiles = payload?.leagueCalibrationProfilesByWindow || {};
   const rollbackProfiles = Object.entries(payload?.leagueCalibrationRollbackProfiles || {}).slice(0, 8);
+  const todayMatchCount = Number(coverage.todayMatches ?? scout?.collected?.todayMatches ?? 0);
+  const tomorrowMatchCount = Number(scout?.collected?.tomorrowMatches ?? 0);
+  const hasMatchContext = todayMatchCount > 0 || tomorrowMatchCount > 0;
   const actionItems = [
     ...(payload?.aiAdvice || []).map((item: any) => ({
       title: item.title || "AI-advies",
       summary: item.summary || item.action || "",
       action: item.action || item.summary || "",
-      priority: item.priority || "medium",
+      priority: !hasMatchContext && item.priority === "high" ? "low" : item.priority || "medium",
       source: "AI advies",
     })),
     ...(coverage.coverageImprovementPlan || []).map((item: any) => ({
       title: item.label || item.key || "Dekkingsactie",
-      summary: `${pct(item.coverage)} dekking, doel ${pct(item.target)}.`,
+      summary: hasMatchContext ? `${pct(item.coverage)} dekking, doel ${pct(item.target)}.` : "Geen actuele wedstrijdcontext; bewaken zodra er wedstrijden zijn.",
       action: item.action || "",
-      priority: item.status === "ok" ? "low" : "high",
+      priority: !hasMatchContext || item.status === "ok" ? "low" : "high",
       source: "Brondekking",
     })),
   ].slice(0, 8);
