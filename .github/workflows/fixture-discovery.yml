@@ -2,7 +2,7 @@ name: Upcoming season fixture discovery
 
 on:
   schedule:
-    - cron: "23 4 * * *"
+    - cron: "23 4 * * 1"
   workflow_dispatch:
 
 jobs:
@@ -12,7 +12,7 @@ jobs:
       fail-fast: false
       max-parallel: 3
       matrix:
-        league: [E0, E1, N1, N2, D1, SP1, I1, F1]
+        league: [E0, E1, N1, N2, D1, SP1, I1, F1, F2, P1, P2, B1, B2]
     steps:
       - uses: actions/checkout@v5
       - uses: actions/setup-node@v5
@@ -30,7 +30,8 @@ jobs:
         env:
           DATABASE_URL: ${{ secrets.DATABASE_URL }}
           POSTGRES_URL: ${{ secrets.POSTGRES_URL }}
-          FREE_SOURCE_IMPORT_LIMIT: 160
+          FOOTBALL_DATA_FULL_SEASONS: "true"
+          FREE_SOURCE_IMPORT_LIMIT: 600
 
   openfootball-upcoming:
     runs-on: ubuntu-latest
@@ -56,7 +57,7 @@ jobs:
         env:
           DATABASE_URL: ${{ secrets.DATABASE_URL }}
           POSTGRES_URL: ${{ secrets.POSTGRES_URL }}
-          FREE_SOURCE_IMPORT_LIMIT: 160
+          FREE_SOURCE_IMPORT_LIMIT: 600
 
   finalize:
     needs: [football-data-2627, openfootball-upcoming]

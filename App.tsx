@@ -2,7 +2,7 @@ import React, { Suspense, lazy, useCallback, useEffect, useMemo, useRef, useStat
 import Header from "./components/Header";
 import MatchCard from "./components/MatchCard";
 import BestBetCard from "./components/BestBetCard";
-import PredictionReadinessWidget from "./components/PredictionReadinessWidget";
+import CompactMatchRow from "./components/CompactMatchRow";
 import DateNavigation from "./components/DateNavigation"; // NIEUW IMPORT
 import { getFavorites } from "./components/FavoriteTeams";
 import { Match } from "./types";
@@ -223,6 +223,7 @@ const App: React.FC = () => {
   const [activeFilter, setActiveFilter] = useState<FilterMode>("alle");
   const [selectedLeague, setSelectedLeague] = useState<string>("alle");
   const [expandedTopClub, setExpandedTopClub] = useState<string | null>(null);
+  const [expandedMatchId, setExpandedMatchId] = useState<string | null>(null);
   const [favoriteStandingLabel, setFavoriteStandingLabel] = useState<string>(readFavoriteStandingLabel);
   const [favRefresh, setFavRefresh] = useState(0);
   const learnedRef = useRef<Set<string>>(new Set());
@@ -315,6 +316,7 @@ const App: React.FC = () => {
     setWorkerNeeded(false);
     setMatches([]);
     setPredictions({});
+    setExpandedMatchId(null);
     learnedRef.current.clear();
 
     const unsubscribe = velocityEngine.subscribe(({ matches: nextMatches, predictions: nextPredictions, lastRun: nextLastRun, workerNeeded: nextWorkerNeeded }) => {
@@ -666,9 +668,9 @@ const App: React.FC = () => {
               onDateChange={setSelectedDate}
             />
 
-            <PredictionReadinessWidget matches={dayMatches} predictions={predictions} />
+            
 
-            <div className="grid grid-cols-2 md:grid-cols-3 xl:grid-cols-5 gap-2 mb-3">
+            <div className="hidden">
               {[
                 { key: "favorieten", label: "Favorieten", count: favoriteCount, color: "yellow", icon: "★" },
                 { key: "live", label: "Live", count: liveCount, color: "red", icon: "●" },
@@ -696,6 +698,37 @@ const App: React.FC = () => {
                   <div className="text-xl font-black">{count}</div>
                 </button>
               ))}
+            </div>
+
+            <div className="mb-3 rounded-2xl border border-white/10 bg-slate-950/45 p-3">
+              <div className="mb-2 flex flex-wrap items-center justify-between gap-2">
+                <div>
+                  <h2 className="text-sm font-black uppercase text-white">Dagoverzicht</h2>
+                  <p className="text-[11px] text-slate-400">
+                    {dayMatches.length} wedstrijden · live {liveCount} · gepland {plannedCount} · gespeeld {finishedCount}
+                  </p>
+                </div>
+                <div className="flex flex-wrap gap-1">
+                  {[
+                    { key: "alle", label: "Alles", count: dayMatches.length },
+                    { key: "live", label: "Live", count: liveCount },
+                    { key: "gepland", label: "Gepland", count: plannedCount },
+                    { key: "gespeeld", label: "Gespeeld", count: finishedCount },
+                    { key: "favorieten", label: "Favorieten", count: favoriteCount },
+                  ].map(({ key, label, count }) => (
+                    <button
+                      key={key}
+                      type="button"
+                      onClick={() => setActiveFilter(key as FilterMode)}
+                      className={`rounded-full px-3 py-1 text-[10px] font-black transition ${
+                        activeFilter === key ? "bg-cyan-400 text-slate-950" : "bg-slate-800 text-slate-300 hover:bg-slate-700"
+                      }`}
+                    >
+                      {label} {count}
+                    </button>
+                  ))}
+                </div>
+              </div>
             </div>
 
             {/* AANGEPAST: Multi-row league tabs zonder scroll */}
@@ -913,7 +946,30 @@ const App: React.FC = () => {
                 </div>
               </div>
             ) : (
-              <div className="space-y-6">
+              <div className="space-y-3">
+                {sortedMatches.map((match) => {
+                  const enriched = enrichMatch(match);
+                  const expanded = expandedMatchId === match.id;
+                  return (
+                    <div key={match.id} className="space-y-2">
+                      <CompactMatchRow
+                        match={enriched}
+                        prediction={predictions[match.id]}
+                        expanded={expanded}
+                        onToggle={() => setExpandedMatchId(expanded ? null : match.id)}
+                      />
+                      {expanded && (
+                        <MatchCard
+                          match={enriched}
+                          prediction={predictions[match.id]}
+                          onFavoriteChange={() => setFavRefresh((value) => value + 1)}
+                        />
+                      )}
+                    </div>
+                  );
+                })}
+                {false && (
+                  <>
                 {activeFilter === "alle" && favoriteCount > 0 && (
                   <section>
                     <div className="flex items-center gap-2 mb-3">
@@ -989,6 +1045,9 @@ const App: React.FC = () => {
                       ))}
                     </div>
                   </section>
+                )}
+
+                  </>
                 )}
 
                 {!loading && dayMatches.length === 0 && (
