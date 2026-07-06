@@ -26,15 +26,23 @@ function mapServerReview(review: any) {
     typeof review.outcomeHit === "boolean"
       ? review.outcomeHit
       : predictedOutcome && actualOutcome
-        ? predictedOutcome === actualOutcome
-        : false;
+      ? predictedOutcome === actualOutcome
+      : false;
+  const predictedGoals = parseGoals(review.predictedScore);
+  const actualGoals = parseGoals(review.actualScore);
+  const totalGoalError =
+    review.totalGoalError != null
+      ? Number(review.totalGoalError || 0)
+      : predictedGoals && actualGoals
+        ? Math.abs(predictedGoals.home - actualGoals.home) + Math.abs(predictedGoals.away - actualGoals.away)
+        : 0;
   return {
     matchId: review.matchId,
     predictionId: review.predictionId || null,
     prediction: review.predictedScore,
     actual: review.actualScore,
     wasCorrect: !!review.exactHit,
-    errorMargin: Number(review.totalGoalError || 0),
+    errorMargin: totalGoalError,
     timestamp: Number(review.createdAt || Date.now()),
     homeTeam: review.homeTeamName || null,
     awayTeam: review.awayTeamName || null,
@@ -203,6 +211,19 @@ function pct(value: number, total: number) {
   return total ? Number(((value / total) * 100).toFixed(1)) : 0;
 }
 
+function parseGoals(score: any) {
+  const [home, away] = String(score || "").split(/[-:]/).map(Number);
+  return Number.isFinite(home) && Number.isFinite(away) ? { home, away } : null;
+}
+
+function outcomeFromScore(score: any) {
+  const goals = parseGoals(score);
+  if (!goals) return null;
+  if (goals.home > goals.away) return "Thuis";
+  if (goals.away > goals.home) return "Uit";
+  return "Gelijk";
+}
+
 function updateBucket(acc: Record<string, any>, key: string, item: any) {
   const bucketKey = String(key || "Onbekend");
   if (!acc[bucketKey]) {
@@ -222,15 +243,17 @@ function updateBucket(acc: Record<string, any>, key: string, item: any) {
   }
   const row = acc[bucketKey];
   row.total += 1;
+  const predictedOutcome = item.predictedOutcome || outcomeFromScore(item.prediction);
+  const actualOutcome = item.actualOutcome || outcomeFromScore(item.actual);
   if (item.wasCorrect) row.exact += 1;
   if (item.winnerCorrect) row.outcome += 1;
   row.goalError += Number(item.errorMargin || 0);
-  if (item.predictedOutcome === "Thuis" || item.predictedOutcome === "H") row.predictedHomeWins += 1;
-  if (item.actualOutcome === "Thuis" || item.actualOutcome === "H") row.actualHomeWins += 1;
-  if (item.predictedOutcome === "Gelijk" || item.predictedOutcome === "D") row.predictedDraws += 1;
-  if (item.actualOutcome === "Gelijk" || item.actualOutcome === "D") row.actualDraws += 1;
-  if (item.predictedOutcome === "Uit" || item.predictedOutcome === "A") row.predictedAwayWins += 1;
-  if (item.actualOutcome === "Uit" || item.actualOutcome === "A") row.actualAwayWins += 1;
+  if (predictedOutcome === "Thuis" || predictedOutcome === "H") row.predictedHomeWins += 1;
+  if (actualOutcome === "Thuis" || actualOutcome === "H") row.actualHomeWins += 1;
+  if (predictedOutcome === "Gelijk" || predictedOutcome === "D") row.predictedDraws += 1;
+  if (actualOutcome === "Gelijk" || actualOutcome === "D") row.actualDraws += 1;
+  if (predictedOutcome === "Uit" || predictedOutcome === "A") row.predictedAwayWins += 1;
+  if (actualOutcome === "Uit" || actualOutcome === "A") row.actualAwayWins += 1;
 }
 
 function finalizeBucket(row: any) {
@@ -254,10 +277,10 @@ function finalizeBucket(row: any) {
 }
 
 function buildHistorySummary(items: any[]) {
-  const byLeague: Record<string, any> = {};
-  const byModel: Record<string, any> = {};
-  const byTeam: Record<string, any> = {};
-  const dataQuality: Record<string, any> = {};
+  const leagueBuckets: Record<string, any> = {};
+  const modelBuckets: Record<string, any> = {};
+  const teamBuckets: Record<string, any> = {};
+  const dataQualityBuckets: Record<string, any> = {};
   let exact = 0;
   let outcome = 0;
   let withOdds = 0;
@@ -281,13 +304,13 @@ function buildHistorySummary(items: any[]) {
       logLossCount += 1;
     }
 
-    updateBucket(byLeague, item.league || "Onbekend", item);
-    updateBucket(byModel, item.modelVersion || item.modelName || "onbekend model", item);
-    const sourceScore = Number(item.sourceReliability?.score ?? item.qualityGate?.dataCompleteness?.score ?? -1);
+    updateBucket(leagueBuckets, item.league || "Onbekend", item);
+    updateBucket(modelBuckets, item.modelVersion || item.modelName || "onbekend model", item);
+    const sourceScore = Number(item.sourceReliability?.score ?? item.qualityGate?.dataCompleteness?.score ?? item.qualityGate?.score ?? -1);
     const qualityKey = sourceScore < 0 ? "onbekend" : sourceScore >= 0.62 ? "hoog" : sourceScore >= 0.45 ? "middel" : "laag";
-    updateBucket(dataQuality, qualityKey, item);
+    updateBucket(dataQualityBuckets, qualityKey, item);
     for (const team of [item.homeTeam, item.awayTeam]) {
-      if (team) updateBucket(byTeam, team, item);
+      if (team) updateBucket(teamBuckets, team, item);
     }
   }
 
@@ -299,20 +322,40 @@ function buildHistorySummary(items: any[]) {
       .slice(0, limit);
 
   const total = items.length;
+  const byLeague = top(leagueBuckets, 1, 12);
+  const byModel = top(modelBuckets, 1, 8);
+  const byTeam = top(teamBuckets, 2, 12);
+  const byDataQuality = top(dataQualityBuckets, 1, 6);
+  const oddsCoveragePct = pct(withOdds, total);
+  const recommendations = [
+    oddsCoveragePct < 25
+      ? `Oddsdekking is ${oddsCoveragePct}%; draai prematch odds-collector vaker en prioriteer wedstrijden zonder odds_snapshot.`
+      : null,
+    byLeague[0]?.total >= 30 && byLeague[0]?.outcomePct < 52
+      ? `${byLeague[0].key}: 1X2 ${byLeague[0].outcomePct}%; verlaag confidence of verschuif league calibration.`
+      : null,
+    byDataQuality.find((row: any) => row.key === "laag" && row.total >= 30 && row.outcomePct < 50)
+      ? "Lage datakwaliteit presteert zwak; cap confidence agressiever bij missende bronnen."
+      : null,
+    byModel[0]?.total >= 50 && byModel[0]?.exactPct < 8
+      ? `${byModel[0].key}: exact-score hitrate ${byModel[0].exactPct}%; scorematrix/calibratie hertrainen met recentere reviews.`
+      : null,
+  ].filter(Boolean);
   return {
     total,
     exact,
     outcome,
     exactPct: pct(exact, total),
     outcomePct: pct(outcome, total),
-    oddsCoveragePct: pct(withOdds, total),
+    oddsCoveragePct,
     snapshotCoveragePct: pct(withSnapshot, total),
     avgBrier: brierCount ? Number((brierSum / brierCount).toFixed(3)) : null,
     avgLogLoss: logLossCount ? Number((logLossSum / logLossCount).toFixed(3)) : null,
-    byLeague: top(byLeague, 1, 12),
-    byModel: top(byModel, 1, 8),
-    byTeam: top(byTeam, 2, 12),
-    byDataQuality: top(dataQuality, 1, 6),
+    byLeague,
+    byModel,
+    byTeam,
+    byDataQuality,
+    recommendations,
     generatedAt: new Date().toISOString(),
   };
 }
@@ -327,11 +370,13 @@ export default async function handler(req: any, res: any) {
     const serverItems = Object.values(store.postMatchReviews || {})
       .map((review: any) => mapServerReview(review))
       .sort((a: any, b: any) => Number(b.timestamp || 0) - Number(a.timestamp || 0));
+    const requestedLimit = Math.min(Math.max(Number(req.query?.limit || 750), 1), 1500);
+    const offset = Math.max(Number(req.query?.offset || 0), 0);
     let databaseRawItems = databaseConfigured()
-      ? (await readDatabaseHistoryItems({ limit: 1500 }).catch(() => null)) || []
+      ? (await readDatabaseHistoryItems({ limit: 5000 }).catch(() => null)) || []
       : [];
     if (databaseConfigured() && databaseRawItems.length === 0) {
-      databaseRawItems = await readDatabaseHistoryFallback(1500).catch(() => []);
+      databaseRawItems = await readDatabaseHistoryFallback(5000).catch(() => []);
     }
     const databaseItems = databaseRawItems.map((review: any) => mapServerReview(review));
     const items = mergeHistoryItems(databaseItems, serverItems);
@@ -339,9 +384,8 @@ export default async function handler(req: any, res: any) {
     const summary = buildHistorySummary(items);
     const summaryOnly = req.query?.summary === "1" || req.query?.summary === "true";
     const includeItems = req.query?.includeItems === "1" || req.query?.includeItems === "true";
-    const limit = Math.min(Math.max(Number(req.query?.limit || items.length), 1), 1500);
-    const offset = Math.max(Number(req.query?.offset || 0), 0);
-    const pageItems = items.slice(offset, offset + limit);
+    const limit = summaryOnly && !includeItems ? 0 : requestedLimit;
+    const pageItems = includeItems || !summaryOnly ? items.slice(offset, offset + requestedLimit) : [];
 
     if (summaryOnly && !includeItems) {
       return res.status(200).json({

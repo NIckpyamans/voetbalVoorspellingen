@@ -107,6 +107,7 @@ type HistoryServerSummary = {
   byModel?: HistorySummaryBucket[];
   byDataQuality?: HistorySummaryBucket[];
   byTeam?: HistorySummaryBucket[];
+  recommendations?: string[];
   generatedAt?: string;
 };
 
@@ -135,9 +136,10 @@ function mergeHistory(localItems: HistoryItem[], serverItems: HistoryItem[]) {
   const merged = new Map<string, HistoryItem>();
   for (const item of [...serverItems, ...localItems]) {
     if (!item?.matchId) continue;
-    const current = merged.get(item.matchId);
+    const key = String(item.predictionId || item.matchId);
+    const current = merged.get(key);
     if (!current || Number(item.timestamp || 0) >= Number(current.timestamp || 0)) {
-      merged.set(item.matchId, item);
+      merged.set(key, item);
     }
   }
   return [...merged.values()].sort((a, b) => Number(b.timestamp || 0) - Number(a.timestamp || 0));
@@ -150,6 +152,9 @@ const PredictionHistory: React.FC = () => {
   const [filter, setFilter] = useState<"alle" | "score" | "uitkomst" | "fout">("alle");
   const [search, setSearch] = useState("");
   const [page, setPage] = useState(0);
+  const [serverOffset, setServerOffset] = useState(0);
+  const [serverTotal, setServerTotal] = useState(0);
+  const [loadingMore, setLoadingMore] = useState(false);
   const [activeLeague, setActiveLeague] = useState<string | null>(null);
   const sectionRefs = useRef<Record<string, HTMLDivElement | null>>({});
 
@@ -168,8 +173,9 @@ const PredictionHistory: React.FC = () => {
     const boot = async () => {
       const localItems = readLocal();
       try {
+        const initialLimit = 750;
         const [historyResponse, snapshotResponse] = await Promise.all([
-          fetch("/api/history?summary=1&includeItems=1&limit=750"),
+          fetch(`/api/history?summary=1&includeItems=1&limit=${initialLimit}&offset=0`),
           fetch("/api/prediction-snapshots?summary=1"),
         ]);
         const data = await historyResponse.json();
@@ -177,7 +183,11 @@ const PredictionHistory: React.FC = () => {
         const serverItems = Array.isArray(data.items) ? hydrateHistory(data.items) : [];
         if (snapshotData?.summary && !cancelled) setSnapshotSummary(snapshotData.summary);
         if (data?.summary && !cancelled) setServerSummary(data.summary);
-        if (!cancelled) setHistory(mergeHistory(localItems, serverItems));
+        if (!cancelled) {
+          setServerTotal(Number(data.total || serverItems.length || 0));
+          setServerOffset(serverItems.length);
+          setHistory(mergeHistory(localItems, serverItems));
+        }
       } catch {
         if (!cancelled) setHistory(localItems.sort((a, b) => Number(b.timestamp || 0) - Number(a.timestamp || 0)));
       }
@@ -188,6 +198,22 @@ const PredictionHistory: React.FC = () => {
       cancelled = true;
     };
   }, []);
+
+  const loadMoreHistory = async () => {
+    if (loadingMore || (serverTotal > 0 && serverOffset >= serverTotal)) return;
+    setLoadingMore(true);
+    try {
+      const limit = 750;
+      const response = await fetch(`/api/history?includeItems=1&limit=${limit}&offset=${serverOffset}`);
+      const data = await response.json();
+      const serverItems = Array.isArray(data.items) ? hydrateHistory(data.items) : [];
+      setServerTotal(Number(data.total || serverTotal || serverItems.length));
+      setServerOffset((value) => value + serverItems.length);
+      setHistory((current) => mergeHistory(current, serverItems));
+    } finally {
+      setLoadingMore(false);
+    }
+  };
 
   const clearHistory = () => {
     if (!window.confirm("Weet je zeker dat je alle lokale geschiedenis wilt wissen? Worker-reviews blijven wel in de serverhistorie.")) {
@@ -372,6 +398,7 @@ const PredictionHistory: React.FC = () => {
           <p className="text-slate-500 text-xs mt-0.5">
             {stats.total.toLocaleString()} reviews zichtbaar
             {snapshotSummary ? ` - ${snapshotSummary.total.toLocaleString()} opgeslagen voorspelling-snapshots` : ""}
+            {serverTotal > stats.total ? ` - ${serverTotal.toLocaleString()} serverreviews doorzoekbaar` : ""}
           </p>
         </div>
         <button
@@ -435,6 +462,16 @@ const PredictionHistory: React.FC = () => {
               <div className="text-2xl font-black text-white mt-1">{serverSummary?.avgBrier ?? stats.avgBrier}</div>
             </div>
           </div>
+          {!!serverSummary?.recommendations?.length && (
+            <div className="mb-3 rounded-xl border border-amber-400/20 bg-amber-950/20 p-3">
+              <div className="mb-1 text-[8px] font-black uppercase text-amber-200">Automatische verbeteracties</div>
+              <div className="space-y-1">
+                {serverSummary.recommendations.slice(0, 4).map((item) => (
+                  <div key={item} className="text-[9px] font-bold text-amber-50/90">{item}</div>
+                ))}
+              </div>
+            </div>
+          )}
           <div className="space-y-2">
             {(serverSummary?.byModel || []).slice(0, 4).map((model) => (
               <div key={model.key} className="rounded-xl bg-slate-950/35 border border-white/5 px-3 py-2">
@@ -624,6 +661,25 @@ const PredictionHistory: React.FC = () => {
           className="flex-1 bg-slate-900/60 border border-white/10 rounded-lg px-3 py-1.5 text-sm text-white placeholder-slate-600 outline-none focus:border-blue-500/40"
         />
       </div>
+
+      {serverTotal > history.length && (
+        <div className="flex items-center justify-between gap-3 rounded-2xl border border-blue-500/15 bg-blue-500/5 px-4 py-3">
+          <div>
+            <div className="text-[10px] font-black uppercase text-blue-200">Meer evaluaties beschikbaar</div>
+            <div className="text-[11px] text-slate-500">
+              {history.length.toLocaleString()} geladen van {serverTotal.toLocaleString()} serverreviews. Zoek/filter werkt op geladen data.
+            </div>
+          </div>
+          <button
+            type="button"
+            onClick={loadMoreHistory}
+            disabled={loadingMore}
+            className="rounded-xl bg-blue-600 px-3 py-2 text-[10px] font-black text-white disabled:opacity-50"
+          >
+            {loadingMore ? "Laden..." : "Meer laden"}
+          </button>
+        </div>
+      )}
 
       {filtered.length === 0 ? (
         <div className="glass-card p-12 rounded-2xl text-center border border-dashed border-white/10">
