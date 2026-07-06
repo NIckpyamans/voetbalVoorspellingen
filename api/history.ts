@@ -414,11 +414,29 @@ export default async function handler(req: any, res: any) {
       .sort((a: any, b: any) => Number(b.timestamp || 0) - Number(a.timestamp || 0));
     const requestedLimit = Math.min(Math.max(Number(req.query?.limit || 750), 1), 1500);
     const offset = Math.max(Number(req.query?.offset || 0), 0);
-    let databaseRawItems = databaseConfigured()
-      ? (await readDatabaseHistoryItems({ limit: 5000 }).catch(() => null)) || []
-      : [];
-    if (databaseConfigured() && databaseRawItems.length === 0) {
-      databaseRawItems = await readDatabaseHistoryFallback(5000).catch(() => []);
+    const databaseDiagnostics: any = {
+      configured: databaseConfigured(),
+      primaryCount: 0,
+      fallbackCount: 0,
+      primaryError: null,
+      fallbackError: null,
+    };
+    let databaseRawItems: any[] = [];
+    if (databaseDiagnostics.configured) {
+      try {
+        databaseRawItems = (await readDatabaseHistoryItems({ limit: 5000 })) || [];
+        databaseDiagnostics.primaryCount = databaseRawItems.length;
+      } catch (err: any) {
+        databaseDiagnostics.primaryError = err?.message || String(err);
+      }
+      if (databaseRawItems.length === 0) {
+        try {
+          databaseRawItems = await readDatabaseHistoryFallback(5000);
+          databaseDiagnostics.fallbackCount = databaseRawItems.length;
+        } catch (err: any) {
+          databaseDiagnostics.fallbackError = err?.message || String(err);
+        }
+      }
     }
     const databaseItems = databaseRawItems.map((review: any) => mapServerReview(review));
     const items = mergeHistoryItems(databaseItems, serverItems);
@@ -440,6 +458,7 @@ export default async function handler(req: any, res: any) {
         workerVersion: store.workerVersion || "unknown",
         serverReviewCount: serverItems.length,
         databaseReviewCount: databaseItems.length,
+        databaseDiagnostics,
         durationMs: Date.now() - started,
       });
     }
@@ -456,6 +475,7 @@ export default async function handler(req: any, res: any) {
       workerVersion: store.workerVersion || "unknown",
       serverReviewCount: serverItems.length,
       databaseReviewCount: databaseItems.length,
+      databaseDiagnostics,
       durationMs: Date.now() - started,
     });
   } catch (err: any) {
