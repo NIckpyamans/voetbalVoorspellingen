@@ -469,7 +469,17 @@ export default async function handler(req: any, res: any) {
     const items = mergeHistoryItems(databaseItems, serverItems);
     const featureImportanceSummary = buildFeatureImportanceSummary(items);
     const summary = buildHistorySummary(items);
-    (summary as any).oddsDiagnostics = await buildOddsDiagnostics(store);
+    const oddsDiagnostics = await buildOddsDiagnostics(store);
+    (summary as any).oddsDiagnostics = oddsDiagnostics;
+    if (typeof oddsDiagnostics.predictionOddsCoveragePct === "number") {
+      (summary as any).oddsCoveragePct = oddsDiagnostics.predictionOddsCoveragePct;
+      if (oddsDiagnostics.predictionOddsCoveragePct < 60) {
+        (summary as any).recommendations = [
+          ...((summary as any).recommendations || []),
+          `Oddsdekking is ${oddsDiagnostics.predictionOddsCoveragePct}%; draai prematch odds-collector vaker en prioriteer wedstrijden zonder odds_snapshot.`,
+        ];
+      }
+    }
     const summaryOnly = req.query?.summary === "1" || req.query?.summary === "true";
     const includeItems = req.query?.includeItems === "1" || req.query?.includeItems === "true";
     const limit = summaryOnly && !includeItems ? 0 : requestedLimit;
