@@ -29,3 +29,14 @@ Deze matrix bepaalt welke bron waarvoor gebruikt wordt. Doel: zo weinig mogelijk
 - Lineups en blessures: Sofascore/API-Football/Sportmonks vlak voor kickoff; nooit hard high-falen als de wedstrijd nog niet binnen kickoffvenster zit.
 - Standings: alleen verplicht voor competitiewedstrijden met actieve standingsbron. Friendlies en lege speeldagen mogen geen high regressie veroorzaken.
 - Neon budget: sla ruwe payloads compact op, dedupe op canonical fixture, en gebruik curated records alleen voor bevestigde fixtures.
+
+## Geautomatiseerde veldroutering
+
+De uitvoerbare bronroutering staat in `config/source-field-routing.json`.
+Gebruik deze matrix als contract voor worker/API/client:
+
+- Fixtures en scores: ESPN/Sofascore primair; ESPN Team Schedule en officiele clubsites vullen vooral oefenwedstrijden.
+- Lineups: alleen Sofascore telt als bevestigd; projected-squad-profile blijft een lagere-confidence fallback.
+- Odds: The Odds API/Sportmonks/API-Football primair als echte provider; football-data.co.uk is historische of timestamped fallback, niet automatisch CLV-ready.
+- H2H: API-Football/OpenFootball/canonical history vullen aan, maar bij ontbrekende betrouwbare historie wordt geen kunstmatige H2H gemaakt.
+- Standen/teamlijsten: competitiecatalogus mag nulstanden tonen totdat providerstanden beschikbaar zijn.

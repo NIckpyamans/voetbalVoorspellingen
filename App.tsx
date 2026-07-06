@@ -775,7 +775,7 @@ const App: React.FC = () => {
               })}
             </div>
 
-            <div className="grid grid-cols-1 2xl:grid-cols-[minmax(0,1fr)_360px] gap-4 mb-6">
+            <div className="space-y-4 mb-6">
               <section className="glass-card rounded-2xl border border-yellow-500/20 p-4 bg-yellow-500/5">
                 <div className="flex items-center justify-between gap-3 mb-3">
                   <div>
@@ -830,8 +830,8 @@ const App: React.FC = () => {
                 </div>
               </section>
 
-              <aside className="glass-card rounded-2xl border border-blue-500/20 p-4 bg-blue-500/5">
-                <div className="mb-4 rounded-2xl border border-emerald-400/25 bg-emerald-500/10 p-3 shadow-[0_0_30px_rgba(16,185,129,0.08)]">
+              <aside className="glass-card rounded-2xl border border-emerald-400/20 bg-emerald-500/5 p-3">
+                <div className="rounded-2xl border border-emerald-400/25 bg-emerald-500/10 p-3 shadow-[0_0_30px_rgba(16,185,129,0.08)]">
                   <div className="mb-2 flex items-start justify-between gap-2">
                     <div>
                       <h2 className="text-sm font-black uppercase text-white">Favoriete competitie</h2>
@@ -848,21 +848,18 @@ const App: React.FC = () => {
                   </div>
 
                   {favoriteStanding?.rows?.length ? (
-                    <div className="max-h-[360px] overflow-y-auto rounded-xl border border-white/5 bg-slate-950/45">
-                      {favoriteStanding.rows.slice(0, 20).map((row: any) => {
+                    <div className="grid grid-cols-1 gap-1.5 rounded-xl border border-white/5 bg-slate-950/45 p-1.5 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6">
+                      {favoriteStanding.rows.slice(0, 6).map((row: any) => {
                         const goalDiff = Number(row.gf || 0) - Number(row.ga || 0);
                         return (
                           <div
                             key={`${favoriteStanding.key}-${row.teamId || row.team}`}
-                            className="grid grid-cols-[28px_minmax(0,1fr)_42px_42px] items-center gap-2 border-b border-white/5 px-2 py-2 last:border-b-0"
+                            className="grid grid-cols-[22px_minmax(0,1fr)_34px] items-center gap-2 rounded-lg bg-slate-950/55 px-2 py-2"
                           >
                             <div className="text-[10px] font-black text-slate-400">{row.pos}</div>
                             <div className="min-w-0">
                               <div className="truncate text-[10px] font-black text-white">{row.team}</div>
                               <div className="text-[8px] text-slate-500">{row.p || 0} gespeeld</div>
-                            </div>
-                            <div className={`text-right text-[10px] font-black ${goalDiff > 0 ? "text-green-300" : goalDiff < 0 ? "text-red-300" : "text-slate-400"}`}>
-                              {goalDiff > 0 ? `+${goalDiff}` : goalDiff}
                             </div>
                             <div className="text-right text-[12px] font-black text-white">{row.pts}</div>
                           </div>
@@ -875,58 +872,6 @@ const App: React.FC = () => {
                     </div>
                   )}
                 </div>
-
-                <div className="mb-3">
-                  <h2 className="text-sm font-black uppercase text-white">Top 10 clubs exact goed</h2>
-                  <p className="text-[11px] text-slate-500 mt-0.5">Teams waarbij AI historisch vaak de juiste uitslag raakt.</p>
-                </div>
-                {dashboardInsights.topClubs.length > 0 ? (
-                  <div className="space-y-2 max-h-[300px] overflow-y-auto pr-1">
-                    {dashboardInsights.topClubs.map((club, index) => (
-                      <div key={club.team} className="rounded-xl bg-slate-950/40 border border-white/5 px-3 py-2">
-                        <button
-                          type="button"
-                          onClick={() => setExpandedTopClub(expandedTopClub === club.team ? null : club.team)}
-                          className="w-full flex items-center justify-between gap-2 text-left"
-                        >
-                          <div className="min-w-0">
-                            <div className="text-[11px] font-black text-white truncate">#{index + 1} {club.team}</div>
-                            <div className="text-[9px] text-slate-500">
-                              {club.exact}/{club.total} exact - winnaar {club.outcomePct}% - klik voor juiste duels
-                            </div>
-                          </div>
-                          <div className="flex items-center gap-2">
-                            <div className="text-lg font-black text-green-300">{club.exactPct}%</div>
-                            <div className="text-[10px] text-slate-500">{expandedTopClub === club.team ? "▲" : "▼"}</div>
-                          </div>
-                        </button>
-                        {expandedTopClub === club.team && (
-                          <div className="mt-2 space-y-1 border-t border-white/5 pt-2">
-                            {club.exactMatches.length > 0 ? (
-                              club.exactMatches.slice(0, 8).map((item) => (
-                                <div key={`${club.team}-${item.matchId}`} className="rounded-lg bg-slate-900/70 px-2 py-1.5">
-                                  <div className="text-[9px] font-black text-white truncate">
-                                    {item.homeTeam} - {item.awayTeam}
-                                  </div>
-                                  <div className="text-[8px] text-slate-500">
-                                    {item.league || "Onbekend"} - voorspeld {item.prediction}, uitslag {item.actual}
-                                  </div>
-                                </div>
-                              ))
-                            ) : (
-                              <div className="text-[9px] text-slate-500">Geen exact-goed wedstrijden gevonden.</div>
-                            )}
-                          </div>
-                        )}
-                      </div>
-                    ))}
-                  </div>
-                ) : (
-                  <div className="rounded-xl border border-dashed border-blue-500/20 bg-slate-950/30 p-4 text-[12px] font-bold text-slate-400">
-                    Nog te weinig reviews voor een betrouwbare club top 10.
-                  </div>
-                )}
-
               </aside>
             </div>
 

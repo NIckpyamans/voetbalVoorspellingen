@@ -1237,12 +1237,27 @@ const DEFAULT_ESPN_FRIENDLY_TEAM_IDS = [
   "152", // FC Twente
 ];
 
+function readFriendlyTeamSourceIds() {
+  const file = path.join(ROOT, "config", "friendly-team-sources.json");
+  if (!fs.existsSync(file)) return [];
+  try {
+    const payload = JSON.parse(fs.readFileSync(file, "utf8"));
+    return (payload.teams || [])
+      .filter((team) => team?.active !== false)
+      .map((team) => String(team?.espnTeamId || "").trim())
+      .filter(Boolean);
+  } catch (error) {
+    console.warn("[friendly-team-sources] kan config niet lezen:", error.message);
+    return [];
+  }
+}
+
 function getEspnFriendlyTeamIds() {
   const configured = String(process.env.ESPN_FRIENDLY_TEAM_IDS || "")
     .split(/[,\s]+/)
     .map((value) => value.trim())
     .filter(Boolean);
-  return [...new Set([...DEFAULT_ESPN_FRIENDLY_TEAM_IDS, ...configured])];
+  return [...new Set([...DEFAULT_ESPN_FRIENDLY_TEAM_IDS, ...readFriendlyTeamSourceIds(), ...configured])];
 }
 
 function isFriendlyLeagueLabel(label) {

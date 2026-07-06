@@ -34,11 +34,11 @@ jobs:
           SPORTMONKS_API_KEY: ${{ secrets.SPORTMONKS_API_KEY }}
           MYSPORTS_API_KEY: ${{ secrets.MYSPORTS_API_KEY }}
           SPORTMONKS_ODDS_API_URL_TEMPLATE: ${{ secrets.SPORTMONKS_ODDS_API_URL_TEMPLATE }}
-          ODDS_API_EXTRA_SPORTS: soccer_uefa_champs_league_qualification,soccer_uefa_europa_league_qualification,soccer_uefa_europa_conference_league_qualification,soccer_uefa_champs_league,soccer_uefa_europa_league,soccer_uefa_europa_conference_league
-          ODDS_API_MATCH_LIMIT: 120
-          ODDS_API_DAYS_AHEAD: 21
-          ODDS_API_CLOSING_LIMIT: 180
-          ODDS_API_CLOSING_LOOKAHEAD_MINUTES: 180
+          ODDS_API_EXTRA_SPORTS: soccer_uefa_champs_league_qualification,soccer_uefa_europa_league_qualification,soccer_uefa_europa_conference_league_qualification,soccer_uefa_champs_league,soccer_uefa_europa_league,soccer_uefa_europa_conference_league,soccer_club_friendly,soccer_friendly
+          ODDS_API_MATCH_LIMIT: 180
+          ODDS_API_DAYS_AHEAD: 28
+          ODDS_API_CLOSING_LIMIT: 240
+          ODDS_API_CLOSING_LOOKAHEAD_MINUTES: 240
       - run: npm run db:odds:leakage
         env:
           DATABASE_URL: ${{ secrets.DATABASE_URL }}

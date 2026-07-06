@@ -1,0 +1,56 @@
+{
+  "version": "2026-07-06",
+  "policy": "Gebruik per dataveld de bron met de beste betrouwbaarheid en laagste quota-kosten. Backups vullen alleen ontbrekende velden of bevestigen conflicten; ze overschrijven geen primaire waarheid zonder betere timestamp/trust.",
+  "fields": {
+    "fixtures": {
+      "primary": ["ESPN Scoreboard", "Sofascore"],
+      "backups": ["ESPN Team Schedule", "BBC fixtures", "TheSportsDB", "official club fixtures"],
+      "notes": "Club friendlies worden expliciet via ESPN Team Schedule en curated official club fixtures aangevuld."
+    },
+    "scores_live_status": {
+      "primary": ["ESPN Scoreboard", "Sofascore"],
+      "backups": ["TheSportsDB", "OpenLigaDB", "BBC fixtures"],
+      "notes": "Live status mag alleen van actuele scoreboard/detailbronnen komen."
+    },
+    "confirmed_lineups": {
+      "primary": ["Sofascore lineups"],
+      "backups": ["projected-squad-profile", "football-data.org squad", "Forza Football configured pages"],
+      "notes": "Projected lineups tellen als modelinput met penalty, niet als confirmed."
+    },
+    "availability_injuries_suspensions": {
+      "primary": ["Sofascore player status"],
+      "backups": ["Forza Football configured pages", "football-data.org squad", "derived transfer watch"],
+      "notes": "Availability wordt vooral vlak voor kickoff opnieuw opgehaald."
+    },
+    "h2h": {
+      "primary": ["API-Football", "OpenFootball"],
+      "backups": ["canonical match history", "football-data.co.uk archive"],
+      "notes": "Voor obscure qualifiers/friendlies blijft H2H soms laag; geen fictieve H2H aanvullen."
+    },
+    "xg_shots_form": {
+      "primary": ["football-data.co.uk", "Understat"],
+      "backups": ["FBref", "derived team strength"],
+      "notes": "Understat/FBref blijven rate-limited pilots; football-data.co.uk is stabiele basis voor historische shots."
+    },
+    "standings": {
+      "primary": ["ESPN teams/standings", "competition catalog"],
+      "backups": ["API-Football standings", "OpenLigaDB"],
+      "notes": "Bij nieuw seizoen toont catalogus teams op nul totdat providerstand beschikbaar is."
+    },
+    "prematch_odds": {
+      "primary": ["The Odds API", "Sportmonks odds template", "API-Football odds"],
+      "backups": ["football-data.co.uk timestamped fetch", "historical market profile"],
+      "notes": "ROI gebruikt alleen echte timestamped prematch odds; historical profiles zijn alleen kalibratiecontext."
+    },
+    "closing_odds_clv": {
+      "primary": ["The Odds API near kickoff", "Sportmonks odds template near kickoff"],
+      "backups": ["football-data.co.uk historical closing proxy"],
+      "notes": "CLV blijft geblokkeerd zonder aparte closing timestamp."
+    },
+    "logos_team_identity": {
+      "primary": ["ESPN teams API", "TheSportsDB"],
+      "backups": ["shared club logo aliases", "Reep alias map"],
+      "notes": "Team-ID mapping voorkomt verkeerde clubnaam- en logomatches."
+    }
+  }
+}

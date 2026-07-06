@@ -500,6 +500,21 @@ export async function fetchEspnScoreboardEvents(dateISO, deps) {
   return fallbackEvents;
 }
 
+const espnTeamScheduleCache = new Map();
+
+async function fetchEspnTeamSchedule(teamId, seasonYear) {
+  const key = `${teamId}|${seasonYear}`;
+  if (!espnTeamScheduleCache.has(key)) {
+    espnTeamScheduleCache.set(
+      key,
+      fetchExternalJson(
+        `https://site.api.espn.com/apis/site/v2/sports/soccer/club.friendly/teams/${encodeURIComponent(teamId)}/schedule?season=${seasonYear}`
+      ).catch(() => ({}))
+    );
+  }
+  return espnTeamScheduleCache.get(key);
+}
+
 export async function fetchEspnTeamScheduleEvents(dateISO, deps) {
   const teamIds = [...new Set((deps.espnTeamIds || []).map((id) => String(id || "").trim()).filter(Boolean))];
   const seasonYear = Number(dateISO.slice(0, 4));
@@ -507,9 +522,7 @@ export async function fetchEspnTeamScheduleEvents(dateISO, deps) {
   const seen = new Set();
 
   for (const teamId of teamIds) {
-    const json = await fetchExternalJson(
-      `https://site.api.espn.com/apis/site/v2/sports/soccer/club.friendly/teams/${encodeURIComponent(teamId)}/schedule?season=${seasonYear}`
-    );
+    const json = await fetchEspnTeamSchedule(teamId, seasonYear);
     for (const event of Array.isArray(json?.events) ? json.events : []) {
       const competition = event?.competitions?.[0] || {};
       const kickoff = new Date(competition?.date || event?.date || "");
