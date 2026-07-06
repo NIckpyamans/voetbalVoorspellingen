@@ -1,6 +1,6 @@
 {
   "ok": true,
-  "generatedAt": "2026-07-05T08:21:23.488Z",
+  "generatedAt": "2026-07-06T09:13:13.466Z",
   "provider": "api-football",
   "baseHost": "api-football-v1.p.rapidapi.com",
   "quotaBlocked": true,
@@ -14,7 +14,14 @@
     "fixtures_200": 1,
     "fixtures_429": 1
   },
-  "quotaSamples": [],
+  "quotaSamples": [
+    {
+      "requestsLimit": "100",
+      "requestsRemaining": "99",
+      "rateLimit": "10",
+      "rateRemaining": "9"
+    }
+  ],
   "examples": [],
   "errors": [
     {
@@ -22,10 +29,10 @@
       "date": "2026-07-07",
       "status": 200,
       "message": {
-        "plan": "Free plans do not have access to this date, try from 2026-07-04 to 2026-07-06."
+        "access": "Your account is suspended, check on https://dashboard.api-football.com."
       },
       "errors": {
-        "plan": "Free plans do not have access to this date, try from 2026-07-04 to 2026-07-06."
+        "access": "Your account is suspended, check on https://dashboard.api-football.com."
       },
       "fallbackFrom": {
         "status": 403,
@@ -41,5 +48,5 @@
       "fallbackFrom": null
     }
   ],
-  "durationMs": 900
+  "durationMs": 552
 }
