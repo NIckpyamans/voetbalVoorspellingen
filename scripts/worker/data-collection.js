@@ -522,6 +522,8 @@ export async function fetchEspnTeamScheduleEvents(dateISO, deps) {
   const seen = new Set();
 
   for (const teamId of teamIds) {
+    const cacheKey = `${teamId}|${seasonYear}`;
+    const wasCached = espnTeamScheduleCache.has(cacheKey);
     const json = await fetchEspnTeamSchedule(teamId, seasonYear);
     for (const event of Array.isArray(json?.events) ? json.events : []) {
       const competition = event?.competitions?.[0] || {};
@@ -587,7 +589,7 @@ export async function fetchEspnTeamScheduleEvents(dateISO, deps) {
         source: "espn-team-schedule-fallback",
       });
     }
-    await deps.sleep(20);
+    if (!wasCached) await deps.sleep(20);
   }
 
   return fallbackEvents;
