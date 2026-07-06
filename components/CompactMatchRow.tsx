@@ -1,6 +1,7 @@
 import React from "react";
 import { Match } from "../types";
 import { isMatchFinished, isMatchLive } from "../shared/matchStatus.js";
+import { isGeneratedLogoUrl } from "../shared/clubLogos.js";
 
 interface CompactMatchRowProps {
   match: Match;
@@ -27,6 +28,26 @@ function sourcePct(match: Match) {
   const value = Number(coverage?.percent ?? coverage?.score ?? 0);
   if (!Number.isFinite(value) || value <= 0) return 0;
   return value <= 1 ? Math.round(value * 100) : Math.round(value);
+}
+
+function RowLogo({ logo, name }: { logo?: string; name: string }) {
+  const [attempt, setAttempt] = React.useState(0);
+  const directLogo = logo && !isGeneratedLogoUrl(logo) ? logo : null;
+  const nameLogo = name ? `/api/logo?name=${encodeURIComponent(name)}` : null;
+  const fallback = `data:image/svg+xml;charset=UTF-8,${encodeURIComponent(
+    `<svg xmlns="http://www.w3.org/2000/svg" width="48" height="48" viewBox="0 0 48 48"><circle cx="24" cy="24" r="22" fill="#172033" stroke="#38bdf8" stroke-width="2"/><text x="24" y="30" text-anchor="middle" font-family="Arial" font-size="15" font-weight="800" fill="#e0f2fe">${String(name || "?").trim().slice(0, 2).toUpperCase()}</text></svg>`
+  )}`;
+  const sources = [directLogo, nameLogo, fallback].filter(Boolean) as string[];
+  return (
+    <img
+      src={sources[Math.min(attempt, sources.length - 1)]}
+      alt=""
+      referrerPolicy="no-referrer"
+      crossOrigin="anonymous"
+      className="h-5 w-5 shrink-0 rounded-full bg-slate-900/60 object-contain p-0.5"
+      onError={() => setAttempt((value) => Math.min(value + 1, sources.length - 1))}
+    />
+  );
 }
 
 const CompactMatchRow: React.FC<CompactMatchRowProps> = ({ match, prediction, expanded, onToggle }) => {
@@ -62,13 +83,13 @@ const CompactMatchRow: React.FC<CompactMatchRowProps> = ({ match, prediction, ex
           <div className="mb-1 truncate text-[10px] font-black uppercase tracking-wide text-slate-500">{match.league}</div>
           <div className="grid grid-cols-[minmax(0,1fr)_28px_minmax(0,1fr)] items-center gap-2">
             <div className="flex min-w-0 items-center justify-end gap-2">
-              {match.homeLogo && <img src={match.homeLogo} alt="" className="h-5 w-5 rounded-full object-contain" />}
+              <RowLogo logo={match.homeLogo} name={match.homeTeamName} />
               <span className="truncate text-sm font-black text-white">{match.homeTeamName}</span>
             </div>
             <div className="text-center text-[10px] font-black text-slate-500">vs</div>
             <div className="flex min-w-0 items-center gap-2">
               <span className="truncate text-sm font-black text-white">{match.awayTeamName}</span>
-              {match.awayLogo && <img src={match.awayLogo} alt="" className="h-5 w-5 rounded-full object-contain" />}
+              <RowLogo logo={match.awayLogo} name={match.awayTeamName} />
             </div>
           </div>
         </div>

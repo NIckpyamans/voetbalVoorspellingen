@@ -270,6 +270,11 @@ export interface Match {
   };
   lineupSummary?: {
     confirmed: boolean;
+    projected?: boolean;
+    source?: string;
+    summary?: string;
+    home?: any;
+    away?: any;
     homeContinuity?: number;
     awayContinuity?: number;
     homeFormation?: string;

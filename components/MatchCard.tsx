@@ -323,6 +323,141 @@ function TeamSquadPanel({
   );
 }
 
+function playerPositionBucket(player: any) {
+  const position = String(player?.position || player?.player?.position || "").toUpperCase();
+  if (position.startsWith("G")) return "GK";
+  if (position.startsWith("D") || position.includes("BACK")) return "DF";
+  if (position.startsWith("M")) return "MF";
+  if (position.startsWith("F") || position.startsWith("A") || position.includes("WING") || position.includes("STRIKER")) return "FW";
+  return "MF";
+}
+
+function projectedPlayersFromProfile(profile: any) {
+  const squad = profile?.squad || profile;
+  const rawPlayers = Array.isArray(squad?.players) ? squad.players : [];
+  const available = rawPlayers
+    .map((player: any) => ({
+      name: String(player?.name || player?.player?.name || "").trim(),
+      position: playerPositionBucket(player),
+      source: player?.source || squad?.source || "squadprofiel",
+      availability: String(player?.availability || player?.status || "beschikbaar"),
+      loan: Boolean(player?.loan),
+    }))
+    .filter((player: any) => player.name && !player.loan && !/verhuurd|injur|bless|suspend|geschorst|niet/i.test(player.availability));
+  const byPosition = (position: string) => available.filter((player: any) => player.position === position);
+  const picked: any[] = [];
+  const take = (position: string, count: number) => {
+    for (const player of byPosition(position)) {
+      if (picked.length >= 11 || picked.filter((item) => item.position === position).length >= count) break;
+      if (!picked.some((item) => item.name.toLowerCase() === player.name.toLowerCase())) picked.push(player);
+    }
+  };
+  take("GK", 1);
+  take("DF", 4);
+  take("MF", 3);
+  take("FW", 3);
+  for (const player of available) {
+    if (picked.length >= 11) break;
+    if (!picked.some((item) => item.name.toLowerCase() === player.name.toLowerCase())) picked.push(player);
+  }
+  return picked.slice(0, 11);
+}
+
+function lineupPlayers(lineupSide: any, profile: any) {
+  const rawPlayers =
+    (Array.isArray(lineupSide?.players) && lineupSide.players) ||
+    (Array.isArray(lineupSide?.startersList) && lineupSide.startersList) ||
+    (Array.isArray(lineupSide?.startingXI) && lineupSide.startingXI) ||
+    [];
+  const mapped = rawPlayers
+    .map((player: any) => ({
+      name: String(player?.name || player?.player?.name || "").trim(),
+      position: playerPositionBucket(player),
+      shirtNumber: player?.shirtNumber || player?.jerseyNumber || player?.player?.jerseyNumber || null,
+      source: lineupSide?.confirmed ? "bevestigde opstelling" : lineupSide?.projected ? "verwachte opstelling" : "opstelling",
+    }))
+    .filter((player: any) => player.name);
+  return mapped.length ? mapped.slice(0, 11) : projectedPlayersFromProfile(profile);
+}
+
+function LineupSidePanel({ teamName, lineup, profile }: { teamName: string; lineup: any; profile: any }) {
+  const players = lineupPlayers(lineup, profile);
+  const formation = lineup?.formation && lineup.formation !== "projected" ? lineup.formation : "verwacht";
+  const status = lineup?.confirmed ? "bevestigd" : lineup?.projected ? "verwacht" : players.length ? "afgeleid" : "open";
+  return (
+    <div className="rounded-xl border border-white/8 bg-slate-950/45 p-3">
+      <div className="mb-2 flex items-start justify-between gap-2">
+        <div className="min-w-0">
+          <div className="truncate text-[10px] font-black uppercase text-white">{teamName}</div>
+          <div className="text-[8px] text-slate-500">Formatie {formation} - {status}</div>
+        </div>
+        <span className={`rounded-full px-2 py-0.5 text-[8px] font-black ${lineup?.confirmed ? "bg-green-500/15 text-green-300" : "bg-amber-500/15 text-amber-200"}`}>
+          {status}
+        </span>
+      </div>
+      <div className="mb-2 grid grid-cols-3 gap-1 text-center">
+        <Badge label="Spelers" value={`${players.length || lineup?.starters || 0}/11`} tone={players.length >= 10 ? "green" : "amber"} />
+        <Badge label="Bank" value={String(lineup?.bench ?? "-")} tone="slate" />
+        <Badge label="Keeper" value={lineup?.keeperName || players.find((player: any) => player.position === "GK")?.name || "-"} tone="blue" />
+      </div>
+      {players.length ? (
+        <div className="grid grid-cols-1 gap-1 sm:grid-cols-2">
+          {players.map((player: any, index: number) => (
+            <div key={`${teamName}-${player.name}-${index}`} className="flex items-center justify-between gap-2 rounded-lg bg-slate-900/55 px-2 py-1.5">
+              <div className="min-w-0">
+                <div className="truncate text-[9px] font-black text-slate-100">{player.name}</div>
+                <div className="text-[7px] text-slate-500">{player.source || status}</div>
+              </div>
+              <span className="shrink-0 rounded-full bg-slate-800 px-1.5 py-0.5 text-[7px] font-black text-cyan-200">
+                {player.shirtNumber ? `#${player.shirtNumber} ` : ""}{player.position}
+              </span>
+            </div>
+          ))}
+        </div>
+      ) : (
+        <div className="rounded-lg border border-dashed border-white/10 bg-slate-900/30 p-3 text-[9px] text-slate-500">
+          Nog geen betrouwbare spelersnamen gevonden. De voorspelling gebruikt dan wel lineup-status, blessures en teamprofielen.
+        </div>
+      )}
+    </div>
+  );
+}
+
+function LineupTab({ match, prediction }: { match: any; prediction: any }) {
+  const lineup = match.lineupSummary || prediction.lineupSummary || {};
+  const impact = prediction.modelEdges?.lineupImpact || match.modelEdges?.lineupImpact;
+  const source = lineup?.source || "lineup-context";
+  return (
+    <div className="space-y-2">
+      <div className="rounded-xl border border-cyan-400/15 bg-cyan-950/15 p-3">
+        <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
+          <div>
+            <div className="text-[8px] font-black uppercase text-cyan-300">Voorspelde opstelling</div>
+            <div className="text-[9px] text-slate-400">
+              {lineup?.confirmed ? "Bevestigde opstellingen gevonden; model gebruikt deze sterker." : "Nog geen officiële XI; model gebruikt verwachte XI uit squad, vorm en beschikbaarheid."}
+            </div>
+          </div>
+          <div className="flex flex-wrap gap-1">
+            <span className="rounded-full bg-slate-800 px-2 py-1 text-[8px] font-black text-slate-200">{source}</span>
+            <span className="rounded-full bg-slate-800 px-2 py-1 text-[8px] font-black text-slate-200">
+              impact {impact?.summary || "neutraal"}
+            </span>
+          </div>
+        </div>
+      </div>
+      <div className="grid grid-cols-1 gap-2 lg:grid-cols-2">
+        <LineupSidePanel teamName={match.homeTeamName} lineup={lineup?.home || { projected: true }} profile={match.homeTeamProfile || prediction.homeTeamProfile} />
+        <LineupSidePanel teamName={match.awayTeamName} lineup={lineup?.away || { projected: true }} profile={match.awayTeamProfile || prediction.awayTeamProfile} />
+      </div>
+      <div className="grid grid-cols-3 gap-1">
+        <Badge label="Continuity thuis" value={impact?.homeContinuity != null ? String(impact.homeContinuity) : "-"} tone="blue" />
+        <Badge label="Continuity uit" value={impact?.awayContinuity != null ? String(impact.awayContinuity) : "-"} tone="blue" />
+        <Badge label="Keeper edge" value={impact?.keeperDiff != null ? String(impact.keeperDiff) : "-"} tone="purple" />
+      </div>
+    </div>
+  );
+}
+
 function buildRecentH2HForm(h2h: any, currentHomeId?: string, currentAwayId?: string) {
   const recent = (h2h?.results || []).slice(-5).reverse();
   return recent.map((result: any, index: number) => {
@@ -1091,7 +1226,7 @@ function compactAnalyzePayload(match: any, prediction: any) {
 }
 
 const MatchCard: React.FC<MatchCardProps> = ({ match, prediction, onFavoriteChange }) => {
-  const [tab, setTab] = useState<"analyse" | "h2h" | "vorm" | "markten">("analyse");
+  const [tab, setTab] = useState<"analyse" | "opstelling" | "h2h" | "vorm" | "markten">("analyse");
   const [detailsOpen, setDetailsOpen] = useState(false);
   const [aiAnalysis, setAiAnalysis] = useState<string | null>(null);
   const [aiLoading, setAiLoading] = useState(false);
@@ -1327,9 +1462,10 @@ const MatchCard: React.FC<MatchCardProps> = ({ match, prediction, onFavoriteChan
 
       {detailsOpen && (
         <div className="mt-2 space-y-2">
-      <div className="grid grid-cols-4 gap-0.5 mt-2 mb-2 pt-1 border-t border-white/5">
+      <div className="grid grid-cols-5 gap-0.5 mt-2 mb-2 pt-1 border-t border-white/5">
         {[
           { key: "analyse", label: "AI" },
+          { key: "opstelling", label: "Opstelling" },
           { key: "h2h", label: "H2H" },
           { key: "vorm", label: "Vorm" },
           { key: "markten", label: "Markt" },
@@ -1379,6 +1515,8 @@ const MatchCard: React.FC<MatchCardProps> = ({ match, prediction, onFavoriteChan
           )}
         </div>
       )}
+
+      {tab === "opstelling" && <LineupTab match={match} prediction={prediction} />}
 
       {tab === "h2h" && (
         <div className="space-y-2">
