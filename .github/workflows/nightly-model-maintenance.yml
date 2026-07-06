@@ -1,0 +1,43 @@
+name: Nightly model maintenance
+
+on:
+  schedule:
+    - cron: "23 4 * * *"
+  workflow_dispatch:
+
+concurrency:
+  group: nightly-model-maintenance
+  cancel-in-progress: false
+
+jobs:
+  maintain:
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    env:
+      DATABASE_URL: ${{ secrets.DATABASE_URL }}
+      POSTGRES_URL: ${{ secrets.POSTGRES_URL }}
+      SUPABASE_DB_URL: ${{ secrets.SUPABASE_DB_URL }}
+      MODEL_RECALIBRATION_MIN_ROWS: "20"
+      MODEL_RECALIBRATION_MIN_VALIDATION_ROWS: "8"
+      MODEL_RECALIBRATION_MIN_BRIER_IMPROVEMENT: "0.001"
+      LOGO_BACKFILL_LIMIT: "80"
+    steps:
+      - uses: actions/checkout@v5
+        with:
+          ref: codex/step3b-layout
+
+      - uses: actions/setup-node@v5
+        with:
+          node-version: 22
+          cache: npm
+
+      - run: npm ci
+
+      - name: Backfill generated logo fallbacks
+        run: npm run db:logos:backfill:apply
+
+      - name: Recalibrate league/model profiles
+        run: npm run db:models:recalibrate:apply
+
+      - name: Monitor calibration sample health
+        run: npm run db:models:samples:monitor

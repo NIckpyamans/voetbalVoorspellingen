@@ -1,19 +1,267 @@
 #!/usr/bin/env node
+
+import fs from "fs";
+import path from "path";
 import { getSql, loadLocalEnv } from "../shared/database.js";
-loadLocalEnv(process.cwd()); const sql=getSql(); if(!sql) process.exit(2);
-const competitions=["competition-belgium-l1","competition-europe-champions-league"];
-const clamp=(x)=>Math.max(1e-9,Math.min(1-1e-9,x));
-for(const competition of competitions){
- const rows=await sql.query(`select ps.model_version,ps.probabilities,mr.actual_outcome,ps.generated_at from prediction_snapshots ps join prediction_evaluations pe on pe.prediction_id=ps.prediction_id join matches m on m.match_id=ps.match_id join match_results mr on mr.match_id=ps.match_id where m.competition_id=$1 order by ps.generated_at`,[competition]);
- if(rows.length<20) continue;
- const split=Math.max(14,Math.floor(rows.length*.7));const train=rows.slice(0,split),validation=rows.slice(split);
- const counts={H:1,D:1,A:1}; train.forEach(r=>counts[r.actual_outcome]++);
- const total=train.length+3;const prior={home:counts.H/total,draw:counts.D/total,away:counts.A/total};
- const score=(s)=>validation.reduce((sum,r)=>{const p=r.probabilities||{};const q=["home","draw","away"].map(k=>clamp(Number(p[k]||0)*(1-s)+prior[k]*s));const y=r.actual_outcome==="H"?0:r.actual_outcome==="D"?1:2;return sum+q.reduce((v,x,i)=>v+(x-(i===y?1:0))**2,0)/3;},0)/validation.length;
- const candidates=Array.from({length:8},(_,i)=>i*.05).map(shrinkage=>({shrinkage,brier:score(shrinkage)})).sort((a,b)=>a.brier-b.brier);
- const best=candidates[0], baseline=score(0), model=rows[0].model_version||"unknown";
- await sql.query(`insert into calibration_profiles(calibration_profile_id,competition_id,phase_bucket,sample_size,brier_score,probability_shrinkage,profile,generated_at)
- values($1,$2,'competition_recalibration_candidate',$3,$4,$5,$6::jsonb,now()) on conflict(calibration_profile_id) do update set sample_size=excluded.sample_size,brier_score=excluded.brier_score,probability_shrinkage=excluded.probability_shrinkage,profile=excluded.profile,generated_at=now()`,
- [`cal_${competition}_${model}`,competition,validation.length,best.brier,best.shrinkage,JSON.stringify({status:validation.length<20?"candidate_insufficient_validation":best.brier<baseline?"candidate_improves_brier":"candidate_no_improvement",modelVersion:model,minimumValidationRows:20,trainRows:train.length,validationRows:validation.length,prior,baselineBrier:baseline,calibratedBrier:best.brier,improvement:baseline-best.brier,method:"time_split_competition_prior_shrinkage_v2",leakageSafe:true})]);
+
+const ROOT = process.cwd();
+const APPLY_LIVE = process.argv.includes("--apply-live");
+const MIN_ROWS = Math.max(10, Number(process.env.MODEL_RECALIBRATION_MIN_ROWS || 20));
+const MIN_VALIDATION_ROWS = Math.max(5, Number(process.env.MODEL_RECALIBRATION_MIN_VALIDATION_ROWS || 8));
+const MIN_BRIER_IMPROVEMENT = Number(process.env.MODEL_RECALIBRATION_MIN_BRIER_IMPROVEMENT || 0.001);
+const REPORT_PATH = path.join(ROOT, "monitor", "model-recalibration-report.json");
+
+function clamp(value, min, max) {
+  return Math.max(min, Math.min(max, Number(value || 0)));
 }
-console.log(JSON.stringify({competitions},null,2));
+
+function slug(value) {
+  return String(value || "unknown")
+    .normalize("NFKD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, "_")
+    .replace(/^_+|_+$/g, "")
+    .slice(0, 80) || "unknown";
+}
+
+function normalizeProbabilities(probabilities) {
+  const raw = ["home", "draw", "away"].map((key) => Math.max(0, Number(probabilities?.[key] || 0)));
+  const total = raw.reduce((sum, value) => sum + value, 0);
+  if (!total) return [1 / 3, 1 / 3, 1 / 3];
+  return raw.map((value) => value / total);
+}
+
+function actualVector(outcome) {
+  const index = { H: 0, D: 1, A: 2 }[String(outcome || "")];
+  return [0, 1, 2].map((item) => (item === index ? 1 : 0));
+}
+
+function brier(probabilities, outcome) {
+  const y = actualVector(outcome);
+  return probabilities.reduce((sum, value, index) => sum + (value - y[index]) ** 2, 0) / 3;
+}
+
+function topHit(probabilities, outcome) {
+  const actual = { H: 0, D: 1, A: 2 }[String(outcome || "")];
+  return probabilities.indexOf(Math.max(...probabilities)) === actual;
+}
+
+function applyBias(probabilities, profile, scale = 1) {
+  const homeBias = Number(profile.homeBias || 0) * scale;
+  const drawBias = Number(profile.drawBias || 0) * scale;
+  const adjusted = [
+    clamp(probabilities[0] + homeBias, 0.01, 0.98),
+    clamp(probabilities[1] + drawBias, 0.01, 0.98),
+    clamp(probabilities[2] - homeBias, 0.01, 0.98),
+  ];
+  const total = adjusted.reduce((sum, value) => sum + value, 0);
+  return adjusted.map((value) => value / total);
+}
+
+function average(values) {
+  const nums = values.map(Number).filter(Number.isFinite);
+  return nums.length ? nums.reduce((sum, value) => sum + value, 0) / nums.length : null;
+}
+
+function buildProfile(trainRows, validationRows, scale) {
+  const trainProbabilities = trainRows.map((row) => normalizeProbabilities(row.probabilities));
+  const avgPredicted = {
+    home: average(trainProbabilities.map((row) => row[0])) || 1 / 3,
+    draw: average(trainProbabilities.map((row) => row[1])) || 1 / 3,
+    away: average(trainProbabilities.map((row) => row[2])) || 1 / 3,
+  };
+  const actualCounts = { H: 1, D: 1, A: 1 };
+  for (const row of trainRows) actualCounts[row.actual_outcome] = Number(actualCounts[row.actual_outcome] || 1) + 1;
+  const actualTotal = trainRows.length + 3;
+  const actualRates = {
+    home: actualCounts.H / actualTotal,
+    draw: actualCounts.D / actualTotal,
+    away: actualCounts.A / actualTotal,
+  };
+  const rawProfile = {
+    homeBias: clamp((actualRates.home - avgPredicted.home - (actualRates.away - avgPredicted.away)) * 0.035, -0.025, 0.025),
+    drawBias: clamp((actualRates.draw - avgPredicted.draw) * 0.08, -0.035, 0.035),
+  };
+  const baselineBrier = average(validationRows.map((row) => brier(normalizeProbabilities(row.probabilities), row.actual_outcome)));
+  const calibratedBrier = average(validationRows.map((row) => brier(applyBias(normalizeProbabilities(row.probabilities), rawProfile, scale), row.actual_outcome)));
+  const baselineOutcomeHitRate = average(validationRows.map((row) => Number(topHit(normalizeProbabilities(row.probabilities), row.actual_outcome)))) || 0;
+  const calibratedOutcomeHitRate = average(validationRows.map((row) => Number(topHit(applyBias(normalizeProbabilities(row.probabilities), rawProfile, scale), row.actual_outcome)))) || 0;
+  const confidenceBias = clamp((calibratedOutcomeHitRate - 0.52) * 0.04, -0.025, 0.025);
+  return {
+    scale,
+    homeBias: Number((rawProfile.homeBias * scale).toFixed(4)),
+    drawBias: Number((rawProfile.drawBias * scale).toFixed(4)),
+    confidenceBias: Number(confidenceBias.toFixed(4)),
+    baselineBrier: Number((baselineBrier ?? 0).toFixed(6)),
+    calibratedBrier: Number((calibratedBrier ?? 0).toFixed(6)),
+    improvement: Number(((baselineBrier ?? 0) - (calibratedBrier ?? 0)).toFixed(6)),
+    baselineOutcomeHitRate: Number(baselineOutcomeHitRate.toFixed(4)),
+    calibratedOutcomeHitRate: Number(calibratedOutcomeHitRate.toFixed(4)),
+    actualRates,
+    avgPredicted,
+  };
+}
+
+async function writeRootSegment(sql, key, payload) {
+  await sql.query(
+    `insert into app_state_segments(segment_group, segment_key, payload, payload_bytes, updated_at)
+     values('root',$1,$2::jsonb,$3,now())
+     on conflict(segment_group, segment_key) do update set
+       payload=excluded.payload,
+       payload_bytes=excluded.payload_bytes,
+       updated_at=excluded.updated_at`,
+    [key, JSON.stringify(payload), Buffer.byteLength(JSON.stringify(payload), "utf8")]
+  );
+}
+
+async function main() {
+  loadLocalEnv(ROOT);
+  const sql = getSql();
+  if (!sql) throw new Error("DATABASE_URL/POSTGRES_URL ontbreekt");
+
+  const rows = await sql.query(`
+    select
+      ps.prediction_id,
+      ps.match_id,
+      ps.model_version,
+      ps.probabilities,
+      ps.generated_at,
+      m.competition_id,
+      m.league,
+      mr.actual_outcome
+    from prediction_evaluations pe
+    join prediction_snapshots ps on ps.prediction_id = pe.prediction_id
+    join matches m on m.match_id = pe.match_id
+    join match_results mr on mr.match_id = pe.match_id
+    where mr.actual_outcome in ('H','D','A')
+      and ps.probabilities is not null
+    order by ps.generated_at asc
+  `);
+
+  const groups = new Map();
+  for (const row of rows) {
+    const league = String(row.league || row.competition_id || "").trim();
+    if (!league) continue;
+    const model = String(row.model_version || "unknown");
+    const key = `${league}||${model}`;
+    const group = groups.get(key) || { league, model, competitionId: row.competition_id || null, rows: [] };
+    group.rows.push(row);
+    groups.set(key, group);
+  }
+
+  const candidates = [];
+  const acceptedByLeague = new Map();
+  for (const group of groups.values()) {
+    if (group.rows.length < MIN_ROWS) continue;
+    const split = Math.max(MIN_ROWS - MIN_VALIDATION_ROWS, Math.floor(group.rows.length * 0.7));
+    const trainRows = group.rows.slice(0, split);
+    const validationRows = group.rows.slice(split);
+    if (validationRows.length < MIN_VALIDATION_ROWS) continue;
+    const best = [0.25, 0.5, 0.75, 1].map((scale) => buildProfile(trainRows, validationRows, scale)).sort((a, b) => b.improvement - a.improvement)[0];
+    const accepted = best.improvement >= MIN_BRIER_IMPROVEMENT;
+    const profile = {
+      status: accepted ? "accepted_live_candidate" : "candidate_no_improvement",
+      adjustmentType: "league_bias_v1",
+      modelVersion: group.model,
+      league: group.league,
+      competitionId: group.competitionId,
+      trainRows: trainRows.length,
+      validationRows: validationRows.length,
+      sampleSize: group.rows.length,
+      minimumRows: MIN_ROWS,
+      minimumValidationRows: MIN_VALIDATION_ROWS,
+      leakageSafe: true,
+      method: "time_split_league_probability_bias_v1",
+      ...best,
+    };
+    const calibrationProfileId = `league_bias_${slug(group.league)}_${slug(group.model)}`;
+    await sql.query(
+      `insert into calibration_profiles(
+        calibration_profile_id, competition_id, phase_bucket, sample_size,
+        brier_score, probability_shrinkage, confidence_bias, profile, generated_at
+      )
+      values($1,$2,'league_recalibration_candidate',$3,$4,$5,$6,$7::jsonb,now())
+      on conflict(calibration_profile_id) do update set
+        competition_id=excluded.competition_id,
+        phase_bucket=excluded.phase_bucket,
+        sample_size=excluded.sample_size,
+        brier_score=excluded.brier_score,
+        probability_shrinkage=excluded.probability_shrinkage,
+        confidence_bias=excluded.confidence_bias,
+        profile=excluded.profile,
+        generated_at=now()`,
+      [
+        calibrationProfileId,
+        group.competitionId,
+        validationRows.length,
+        best.calibratedBrier,
+        best.scale,
+        best.confidenceBias,
+        JSON.stringify(profile),
+      ]
+    );
+    const candidate = { calibrationProfileId, accepted, ...profile };
+    candidates.push(candidate);
+    if (accepted) {
+      const current = acceptedByLeague.get(group.league);
+      if (!current || candidate.improvement > current.improvement) acceptedByLeague.set(group.league, candidate);
+    }
+  }
+
+  const liveProfiles = Object.fromEntries(
+    [...acceptedByLeague.entries()].map(([league, row]) => [
+      league,
+      {
+        matches: row.sampleSize,
+        windowDays: null,
+        selectedWindow: "database_time_split",
+        stabilityScore: Number(Math.min(0.95, row.validationRows / 60 + Math.max(0, row.improvement) * 20).toFixed(3)),
+        confidenceBias: row.confidenceBias,
+        drawBias: row.drawBias,
+        homeBias: row.homeBias,
+        updatedAt: new Date().toISOString(),
+        source: "database_recalibration",
+        calibrationProfileId: row.calibrationProfileId,
+        validationRows: row.validationRows,
+        baselineBrier: row.baselineBrier,
+        calibratedBrier: row.calibratedBrier,
+        improvement: row.improvement,
+      },
+    ])
+  );
+
+  if (APPLY_LIVE) {
+    await writeRootSegment(sql, "leagueCalibrationProfiles", liveProfiles);
+    await writeRootSegment(sql, "modelRecalibrationSummary", {
+      generatedAt: new Date().toISOString(),
+      candidates: candidates.length,
+      accepted: Object.keys(liveProfiles).length,
+      minRows: MIN_ROWS,
+      minValidationRows: MIN_VALIDATION_ROWS,
+      minBrierImprovement: MIN_BRIER_IMPROVEMENT,
+    });
+  }
+
+  const report = {
+    ok: true,
+    applyLive: APPLY_LIVE,
+    generatedAt: new Date().toISOString(),
+    groups: groups.size,
+    candidates: candidates.length,
+    accepted: Object.keys(liveProfiles).length,
+    liveProfileKeys: Object.keys(liveProfiles),
+    topCandidates: candidates.sort((a, b) => b.improvement - a.improvement).slice(0, 20),
+    nextAction: APPLY_LIVE
+      ? "Shadow-evaluatie draaien en Model Ops controleren op accepted league profiles."
+      : "Run met --apply-live om accepted profielen in app_state_segments te zetten.",
+  };
+  fs.mkdirSync(path.dirname(REPORT_PATH), { recursive: true });
+  fs.writeFileSync(REPORT_PATH, `${JSON.stringify(report, null, 2)}\n`);
+  console.log(JSON.stringify(report, null, 2));
+}
+
+main().catch((error) => {
+  console.error(error);
+  process.exit(1);
+});

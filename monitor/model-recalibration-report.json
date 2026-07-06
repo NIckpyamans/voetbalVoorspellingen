@@ -1,0 +1,120 @@
+{
+  "ok": true,
+  "applyLive": true,
+  "generatedAt": "2026-07-06T13:24:49.701Z",
+  "groups": 11,
+  "candidates": 3,
+  "accepted": 2,
+  "liveProfileKeys": [
+    "Europe - Champions League",
+    "Belgium - Pro League"
+  ],
+  "topCandidates": [
+    {
+      "calibrationProfileId": "league_bias_europe_champions_league_v23_calibrated_odds_ledger",
+      "accepted": true,
+      "status": "accepted_live_candidate",
+      "adjustmentType": "league_bias_v1",
+      "modelVersion": "v23-calibrated-odds-ledger",
+      "league": "Europe - Champions League",
+      "competitionId": "competition-europe-champions-league",
+      "trainRows": 17,
+      "validationRows": 8,
+      "sampleSize": 25,
+      "minimumRows": 20,
+      "minimumValidationRows": 8,
+      "leakageSafe": true,
+      "method": "time_split_league_probability_bias_v1",
+      "scale": 1,
+      "homeBias": -0.0074,
+      "drawBias": 0.035,
+      "confidenceBias": -0.0208,
+      "baselineBrier": 0.27289,
+      "calibratedBrier": 0.253805,
+      "improvement": 0.019084,
+      "baselineOutcomeHitRate": 0,
+      "calibratedOutcomeHitRate": 0,
+      "actualRates": {
+        "home": 0.05,
+        "draw": 0.9,
+        "away": 0.05
+      },
+      "avgPredicted": {
+        "home": 0.4699999999999998,
+        "draw": 0.2713999999999999,
+        "away": 0.2586
+      }
+    },
+    {
+      "calibrationProfileId": "league_bias_belgium_pro_league_v23_calibrated_odds_ledger",
+      "accepted": true,
+      "status": "accepted_live_candidate",
+      "adjustmentType": "league_bias_v1",
+      "modelVersion": "v23-calibrated-odds-ledger",
+      "league": "Belgium - Pro League",
+      "competitionId": "competition-belgium-l1",
+      "trainRows": 18,
+      "validationRows": 9,
+      "sampleSize": 27,
+      "minimumRows": 20,
+      "minimumValidationRows": 8,
+      "leakageSafe": true,
+      "method": "time_split_league_probability_bias_v1",
+      "scale": 1,
+      "homeBias": 0.0072,
+      "drawBias": 0.035,
+      "confidenceBias": -0.0208,
+      "baselineBrier": 0.213075,
+      "calibratedBrier": 0.19805,
+      "improvement": 0.015025,
+      "baselineOutcomeHitRate": 0,
+      "calibratedOutcomeHitRate": 0,
+      "actualRates": {
+        "home": 0.047619047619047616,
+        "draw": 0.9047619047619048,
+        "away": 0.047619047619047616
+      },
+      "avgPredicted": {
+        "home": 0.21856092609260916,
+        "draw": 0.3563178167816781,
+        "away": 0.42512125712571236
+      }
+    },
+    {
+      "calibrationProfileId": "league_bias_world_fifa_world_cup_2026_v23_calibrated_odds_ledger",
+      "accepted": false,
+      "status": "candidate_no_improvement",
+      "adjustmentType": "league_bias_v1",
+      "modelVersion": "v23-calibrated-odds-ledger",
+      "league": "World - FIFA World Cup 2026",
+      "competitionId": null,
+      "trainRows": 2317,
+      "validationRows": 994,
+      "sampleSize": 3311,
+      "minimumRows": 20,
+      "minimumValidationRows": 8,
+      "leakageSafe": true,
+      "method": "time_split_league_probability_bias_v1",
+      "scale": 1,
+      "homeBias": 0.0055,
+      "drawBias": -0.0056,
+      "confidenceBias": -0.0032,
+      "baselineBrier": 0.211837,
+      "calibratedBrier": 0.211617,
+      "improvement": 0.00022,
+      "baselineOutcomeHitRate": 0.4708,
+      "calibratedOutcomeHitRate": 0.4406,
+      "actualRates": {
+        "home": 0.49008620689655175,
+        "draw": 0.20905172413793102,
+        "away": 0.30086206896551726
+      },
+      "avgPredicted": {
+        "home": 0.3760173845784142,
+        "draw": 0.2786407455816394,
+        "away": 0.345341869839945
+      }
+    }
+  ],
+  "nextAction": "Shadow-evaluatie draaien en Model Ops controleren op accepted league profiles."
+}
