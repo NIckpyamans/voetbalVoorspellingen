@@ -77,6 +77,16 @@ function hydrateHistory(items: HistoryItem[]) {
 
 const PAGE_SIZE = 80;
 
+type SnapshotSummary = {
+  total: number;
+  evaluated: number;
+  pending: number;
+  withSnapshotHash?: number;
+  withOdds?: number;
+  latestGeneratedAt?: string | null;
+  estimatedFeatureBytes?: number;
+};
+
 function formatRoi(item: HistoryItem) {
   if (item.roi != null && Number.isFinite(Number(item.roi))) return `${(Number(item.roi) * 100).toFixed(1)}%`;
   if (item.roiStatus === "odds_missing" || item.oddsStatus === "missing" || item.oddsStatus === "historical_market_profile_only") return "geen odds";
@@ -112,6 +122,7 @@ function mergeHistory(localItems: HistoryItem[], serverItems: HistoryItem[]) {
 
 const PredictionHistory: React.FC = () => {
   const [history, setHistory] = useState<HistoryItem[]>([]);
+  const [snapshotSummary, setSnapshotSummary] = useState<SnapshotSummary | null>(null);
   const [filter, setFilter] = useState<"alle" | "score" | "uitkomst" | "fout">("alle");
   const [search, setSearch] = useState("");
   const [page, setPage] = useState(0);
@@ -133,9 +144,14 @@ const PredictionHistory: React.FC = () => {
     const boot = async () => {
       const localItems = readLocal();
       try {
-        const response = await fetch("/api/history");
-        const data = await response.json();
+        const [historyResponse, snapshotResponse] = await Promise.all([
+          fetch("/api/history"),
+          fetch("/api/prediction-snapshots?summary=1"),
+        ]);
+        const data = await historyResponse.json();
+        const snapshotData = await snapshotResponse.json().catch(() => null);
         const serverItems = Array.isArray(data.items) ? hydrateHistory(data.items) : [];
+        if (snapshotData?.summary && !cancelled) setSnapshotSummary(snapshotData.summary);
         if (!cancelled) setHistory(mergeHistory(localItems, serverItems));
       } catch {
         if (!cancelled) setHistory(localItems.sort((a, b) => Number(b.timestamp || 0) - Number(a.timestamp || 0)));
@@ -328,7 +344,10 @@ const PredictionHistory: React.FC = () => {
       <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-3">
         <div>
           <h2 className="text-2xl font-black text-white uppercase tracking-tight">Voorspellingsgeschiedenis</h2>
-          <p className="text-slate-500 text-xs mt-0.5">{stats.total.toLocaleString()} voorspellingen en reviews zichtbaar</p>
+          <p className="text-slate-500 text-xs mt-0.5">
+            {stats.total.toLocaleString()} reviews zichtbaar
+            {snapshotSummary ? ` - ${snapshotSummary.total.toLocaleString()} opgeslagen voorspelling-snapshots` : ""}
+          </p>
         </div>
         <button
           onClick={clearHistory}
@@ -338,9 +357,11 @@ const PredictionHistory: React.FC = () => {
         </button>
       </div>
 
-      <div className="grid grid-cols-2 md:grid-cols-5 xl:grid-cols-10 gap-3">
+      <div className="grid grid-cols-2 md:grid-cols-4 xl:grid-cols-6 gap-3">
         {[
           { label: "Totaal", value: stats.total.toLocaleString(), color: "text-blue-400" },
+          { label: "Opgeslagen", value: snapshotSummary ? snapshotSummary.total.toLocaleString() : "-", color: "text-indigo-300" },
+          { label: "Nog te beoordelen", value: snapshotSummary ? snapshotSummary.pending.toLocaleString() : "-", color: "text-amber-300" },
           { label: "Juiste score", value: `${stats.exactPct}%`, color: "text-green-400" },
           { label: "Juiste winnaar/gelijk", value: `${stats.outcomePct}%`, color: "text-emerald-400" },
           { label: "Gem. foutmarge", value: stats.avgError, color: "text-purple-400" },

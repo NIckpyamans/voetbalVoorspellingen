@@ -80,33 +80,33 @@ function mapServerReview(review: any) {
   };
 }
 
+function mergeHistoryItems(primary: any[], secondary: any[]) {
+  const merged = new Map<string, any>();
+  for (const item of [...secondary, ...primary]) {
+    const key = String(item?.predictionId || item?.matchId || "");
+    if (!key) continue;
+    const current = merged.get(key);
+    if (!current || Number(item.timestamp || 0) >= Number(current.timestamp || 0)) {
+      merged.set(key, item);
+    }
+  }
+  return [...merged.values()].sort((a: any, b: any) => Number(b.timestamp || 0) - Number(a.timestamp || 0));
+}
+
 export default async function handler(req: any, res: any) {
   const started = Date.now();
   setCorsHeaders(req, res);
   res.setHeader("Cache-Control", "s-maxage=120, stale-while-revalidate=60");
 
   try {
-    if (databaseConfigured()) {
-      const databaseItems = await readDatabaseHistoryItems({ limit: 1500 }).catch(() => null);
-      if (databaseItems?.length) {
-        const items = databaseItems.map((review: any) => mapServerReview(review));
-        const featureImportanceSummary = buildFeatureImportanceSummary(items);
-        return res.status(200).json({
-          ok: true,
-          items,
-          featureImportanceSummary,
-          total: items.length,
-          sourceBranch: "postgres",
-          workerVersion: "database",
-          durationMs: Date.now() - started,
-        });
-      }
-    }
-
     const { store, branch } = await fetchServerStore();
-    const items = Object.values(store.postMatchReviews || {})
+    const serverItems = Object.values(store.postMatchReviews || {})
       .map((review: any) => mapServerReview(review))
       .sort((a: any, b: any) => Number(b.timestamp || 0) - Number(a.timestamp || 0));
+    const databaseItems = databaseConfigured()
+      ? (await readDatabaseHistoryItems({ limit: 1500 }).catch(() => null))?.map((review: any) => mapServerReview(review)) || []
+      : [];
+    const items = mergeHistoryItems(databaseItems, serverItems);
     const featureImportanceSummary = buildFeatureImportanceSummary(items);
 
     return res.status(200).json({
@@ -114,8 +114,10 @@ export default async function handler(req: any, res: any) {
       items,
       featureImportanceSummary,
       total: items.length,
-      sourceBranch: branch,
+      sourceBranch: databaseItems.length ? `postgres+${branch}` : branch,
       workerVersion: store.workerVersion || "unknown",
+      serverReviewCount: serverItems.length,
+      databaseReviewCount: databaseItems.length,
       durationMs: Date.now() - started,
     });
   } catch (err: any) {

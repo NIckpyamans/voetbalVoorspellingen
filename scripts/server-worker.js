@@ -5206,6 +5206,11 @@ function isSofaScoreLogoUrl(url) {
   return /api\.sofascore\.(?:app|com)\/api\/v1\/team\/\d+\/image/i.test(String(url || ""));
 }
 
+function isGeneratedLogoUrl(url) {
+  const text = String(url || "");
+  return !text || text.startsWith("data:image/svg+xml") || /generated|placeholder|fallback|initial/i.test(text);
+}
+
 function resolveEspnTeamLogoById(teamId) {
   const id = String(teamId || "").trim();
   if (!/^\d+$/.test(id)) return "";
@@ -5243,10 +5248,10 @@ async function repairStoredLogos(store) {
       const dataSource = String(match.dataSource || match.source || "");
       const homeCurrentLogo = String(match.homeLogo || "").trim();
       const awayCurrentLogo = String(match.awayLogo || "").trim();
-      const homeTrustedCurrentLogo = homeCurrentLogo && !(isEspnDataSource(dataSource) && isSofaScoreLogoUrl(homeCurrentLogo))
+      const homeTrustedCurrentLogo = homeCurrentLogo && !isGeneratedLogoUrl(homeCurrentLogo) && !(isEspnDataSource(dataSource) && isSofaScoreLogoUrl(homeCurrentLogo))
         ? homeCurrentLogo
         : "";
-      const awayTrustedCurrentLogo = awayCurrentLogo && !(isEspnDataSource(dataSource) && isSofaScoreLogoUrl(awayCurrentLogo))
+      const awayTrustedCurrentLogo = awayCurrentLogo && !isGeneratedLogoUrl(awayCurrentLogo) && !(isEspnDataSource(dataSource) && isSofaScoreLogoUrl(awayCurrentLogo))
         ? awayCurrentLogo
         : "";
       const homeEspnLogo = isEspnDataSource(dataSource) ? resolveEspnTeamLogoById(match.homeTeamId) : "";

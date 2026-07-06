@@ -5,6 +5,7 @@ import PostMatchReview from "./PostMatchReview";
 import { getLiveMinuteLabel } from "../shared/minute.js";
 import { cleanSignalText } from "../shared/matchText.js";
 import { countryFlagEmoji, countryFlagSources } from "../shared/countryFlags";
+import { isGeneratedLogoUrl } from "../shared/clubLogos.js";
 
 interface MatchCardProps {
   match: Match;
@@ -55,15 +56,19 @@ function Logo({ teamId, directUrl, name, league }: { teamId: string; directUrl?:
   const [attempt, setAttempt] = useState(0);
   const initial = (name || "?").trim().slice(0, 1).toUpperCase() || "?";
   const apiLogoUrl = /^\d+$/.test(String(teamId || "")) ? `/api/logo?id=${teamId}` : null;
+  const nameLogoUrl = name ? `/api/logo?name=${encodeURIComponent(name)}` : null;
   const flagEmoji = countryFlagEmoji(name, league);
+  const isInternational = Boolean(flagEmoji) && !String(league || "").toLowerCase().includes("club");
+  const trustedDirectUrl = directUrl && !isGeneratedLogoUrl(directUrl) ? directUrl : null;
   const fallbackSvg = `data:image/svg+xml;charset=UTF-8,${encodeURIComponent(
     `<svg xmlns="http://www.w3.org/2000/svg" width="96" height="96" viewBox="0 0 96 96"><defs><radialGradient id="g" cx="35%" cy="25%" r="75%"><stop offset="0%" stop-color="#334155"/><stop offset="55%" stop-color="#172033"/><stop offset="100%" stop-color="#0f172a"/></radialGradient></defs><circle cx="48" cy="48" r="45" fill="url(#g)" stroke="#334155" stroke-width="3"/><text x="48" y="${flagEmoji ? 62 : 58}" font-family="Arial, sans-serif" font-size="${flagEmoji ? 46 : 38}" font-weight="800" fill="#60a5fa" text-anchor="middle">${flagEmoji || initial}</text></svg>`
   )}`;
   const flags = countryFlagSources(name, league);
   const sources = [
-    ...flags,
-    directUrl || null,
+    trustedDirectUrl,
     apiLogoUrl,
+    nameLogoUrl,
+    ...(isInternational ? flags : []),
     fallbackSvg,
   ].filter(Boolean) as string[];
 

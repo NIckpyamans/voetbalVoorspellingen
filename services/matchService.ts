@@ -7,6 +7,7 @@ import { Match, Prediction } from "../types";
 import { normalizeMinute, parseMinuteValue } from "../shared/minute.js";
 import { todayAmsterdamKey } from "../shared/date.js";
 import { filterVisibleMatches, filterVisiblePredictionMap } from "../shared/competitionVisibility.js";
+import { isGeneratedLogoUrl } from "../shared/clubLogos.js";
 
 const CACHE_VERSION = "v10_live_render_recovery";
 const LIVE_CACHE_AGE_MS = 30_000;
@@ -116,7 +117,7 @@ function matchQuality(match: any) {
   const status = String(match?.status || "").toUpperCase();
   const statusScore = ["FT", "AET", "PEN"].includes(status) ? 80 : ["LIVE", "HT"].includes(status) ? 70 : status === "RESULT_PENDING" ? 20 : 0;
   const scoreScore = match?.score || match?.homeScore != null || match?.awayScore != null ? 30 : 0;
-  const logoScore = (match?.homeLogo ? 4 : 0) + (match?.awayLogo ? 4 : 0);
+  const logoScore = (!isGeneratedLogoUrl(match?.homeLogo) ? 4 : 0) + (!isGeneratedLogoUrl(match?.awayLogo) ? 4 : 0);
   const h2hScore = Number(match?.h2h?.played || 0) * 2;
   const recentScore = (match?.homeRecent ? 3 : 0) + (match?.awayRecent ? 3 : 0);
   const positionScore = (match?.homePos != null ? 2 : 0) + (match?.awayPos != null ? 2 : 0);
