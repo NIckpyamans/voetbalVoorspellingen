@@ -9099,12 +9099,48 @@ function predict(input) {
     awayXG *= clamp(1 - Number(input.awayInjuries.injuredCount) * 0.025, 0.85, 1);
   }
 
-  if (input.lineupSummary?.confirmed) {
+  let lineupAdjustment = {
+    applied: false,
+    status: "open",
+    weight: 0,
+    xgShift: 0,
+    ratingDiff: 0,
+    keeperDiff: 0,
+    continuityDiff: 0,
+    summary: "geen betrouwbare opstellingscorrectie",
+  };
+  if (input.lineupSummary?.confirmed || input.lineupSummary?.projected || input.lineupSummary?.home || input.lineupSummary?.away) {
     const homeRating = Number(input.lineupSummary.home?.avgRating || 6.8);
     const awayRating = Number(input.lineupSummary.away?.avgRating || 6.8);
-    const diff = homeRating - awayRating;
-    homeXG *= clamp(1 + diff * 0.02, 0.94, 1.08);
-    awayXG *= clamp(1 - diff * 0.02, 0.94, 1.08);
+    const ratingDiff = homeRating - awayRating;
+    const keeperDiff = calcKeeperEdge(input.lineupSummary);
+    const homeContinuity = calcLineupContinuity(input.lineupSummary?.home, input.homeInjuries);
+    const awayContinuity = calcLineupContinuity(input.lineupSummary?.away, input.awayInjuries);
+    const continuityDiff = Number((homeContinuity - awayContinuity).toFixed(2));
+    const status = input.lineupSummary?.confirmed ? "confirmed" : input.lineupSummary?.projected ? "projected" : "partial";
+    const weight = status === "confirmed" ? 1 : status === "projected" ? 0.52 : 0.35;
+    const xgShift = clamp(
+      ratingDiff * 0.018 * weight + keeperDiff * 0.014 * weight + continuityDiff * 0.045 * weight,
+      -0.085,
+      0.085
+    );
+    homeXG *= clamp(1 + xgShift, 0.92, 1.1);
+    awayXG *= clamp(1 - xgShift, 0.92, 1.1);
+    lineupAdjustment = {
+      applied: true,
+      status,
+      weight: Number(weight.toFixed(2)),
+      xgShift: Number(xgShift.toFixed(3)),
+      ratingDiff: Number(ratingDiff.toFixed(2)),
+      keeperDiff: Number(keeperDiff.toFixed(2)),
+      continuityDiff,
+      summary:
+        Math.abs(xgShift) < 0.015
+          ? "opstelling neutraal verwerkt"
+          : xgShift > 0
+            ? "opstelling verschuift xG richting thuisteam"
+            : "opstelling verschuift xG richting uitteam",
+    };
   }
 
   if (input.h2h?.played >= 3) {
@@ -9387,6 +9423,12 @@ function predict(input) {
   const fragilityPenalty =
     (Number(learningEdge.homeFragility || 0) + Number(learningEdge.awayFragility || 0) >= 4 ? 0.02 : 0) +
     (!input.lineupSummary?.confirmed ? (input.lineupSummary?.projected ? 0.006 : 0.015) : 0);
+  const lineupUncertaintyPenalty =
+    !lineupAdjustment.applied
+      ? 0.012
+      : lineupAdjustment.status === "confirmed"
+        ? 0
+        : Math.min(0.018, Math.abs(Number(lineupAdjustment.xgShift || 0)) * 0.08 + (lineupAdjustment.status === "projected" ? 0.004 : 0.01));
   const modelAgreementPenalty =
     modelAgreement < 0.35
       ? 0.085
@@ -9407,7 +9449,8 @@ function predict(input) {
       closingCoveragePenalty -
       qualityGate.penalty -
       reliabilityPenaltyExtra -
-      modelAgreementPenalty,
+      modelAgreementPenalty -
+      lineupUncertaintyPenalty,
     0.24,
     qualityGate.confidenceCap
   );
@@ -9471,6 +9514,7 @@ function predict(input) {
       weatherRisk: input.weather?.riskLevel || "low",
       lineupConfirmed: !!input.lineupSummary?.confirmed,
       lineupProjected: !!input.lineupSummary?.projected,
+      lineupAdjustment,
       lineupImpact,
       homeAwayEdge,
       tacticalMismatch,
@@ -9506,6 +9550,7 @@ function predict(input) {
       modelAgreement,
       monteCarloAgreement,
       modelAgreementPenalty: Number(modelAgreementPenalty.toFixed(3)),
+      lineupUncertaintyPenalty: Number(lineupUncertaintyPenalty.toFixed(3)),
       modelWarnings: [
         ...(modelAgreement < 0.55 ? ["low_model_agreement"] : []),
         ...(monteCarloAgreement < 0.55 ? ["monte_carlo_disagreement"] : []),

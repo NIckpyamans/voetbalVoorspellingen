@@ -93,6 +93,124 @@ function mergeHistoryItems(primary: any[], secondary: any[]) {
   return [...merged.values()].sort((a: any, b: any) => Number(b.timestamp || 0) - Number(a.timestamp || 0));
 }
 
+function pct(value: number, total: number) {
+  return total ? Number(((value / total) * 100).toFixed(1)) : 0;
+}
+
+function updateBucket(acc: Record<string, any>, key: string, item: any) {
+  const bucketKey = String(key || "Onbekend");
+  if (!acc[bucketKey]) {
+    acc[bucketKey] = {
+      key: bucketKey,
+      total: 0,
+      exact: 0,
+      outcome: 0,
+      goalError: 0,
+      predictedHomeWins: 0,
+      actualHomeWins: 0,
+      predictedDraws: 0,
+      actualDraws: 0,
+      predictedAwayWins: 0,
+      actualAwayWins: 0,
+    };
+  }
+  const row = acc[bucketKey];
+  row.total += 1;
+  if (item.wasCorrect) row.exact += 1;
+  if (item.winnerCorrect) row.outcome += 1;
+  row.goalError += Number(item.errorMargin || 0);
+  if (item.predictedOutcome === "Thuis" || item.predictedOutcome === "H") row.predictedHomeWins += 1;
+  if (item.actualOutcome === "Thuis" || item.actualOutcome === "H") row.actualHomeWins += 1;
+  if (item.predictedOutcome === "Gelijk" || item.predictedOutcome === "D") row.predictedDraws += 1;
+  if (item.actualOutcome === "Gelijk" || item.actualOutcome === "D") row.actualDraws += 1;
+  if (item.predictedOutcome === "Uit" || item.predictedOutcome === "A") row.predictedAwayWins += 1;
+  if (item.actualOutcome === "Uit" || item.actualOutcome === "A") row.actualAwayWins += 1;
+}
+
+function finalizeBucket(row: any) {
+  const homeBias = row.predictedHomeWins - row.actualHomeWins;
+  const drawBias = row.predictedDraws - row.actualDraws;
+  const awayBias = row.predictedAwayWins - row.actualAwayWins;
+  const largestBias = [
+    { label: "thuis", value: homeBias },
+    { label: "gelijk", value: drawBias },
+    { label: "uit", value: awayBias },
+  ].sort((a, b) => Math.abs(b.value) - Math.abs(a.value))[0];
+  return {
+    ...row,
+    exactPct: pct(row.exact, row.total),
+    outcomePct: pct(row.outcome, row.total),
+    avgGoalError: Number((Number(row.goalError || 0) / Math.max(row.total, 1)).toFixed(2)),
+    biasSummary: largestBias?.value
+      ? `${largestBias.value > 0 ? "overschat" : "onderschat"} ${largestBias.label} (${largestBias.value > 0 ? "+" : ""}${largestBias.value})`
+      : "geen duidelijke bias",
+  };
+}
+
+function buildHistorySummary(items: any[]) {
+  const byLeague: Record<string, any> = {};
+  const byModel: Record<string, any> = {};
+  const byTeam: Record<string, any> = {};
+  const dataQuality: Record<string, any> = {};
+  let exact = 0;
+  let outcome = 0;
+  let withOdds = 0;
+  let withSnapshot = 0;
+  let brierSum = 0;
+  let brierCount = 0;
+  let logLossSum = 0;
+  let logLossCount = 0;
+
+  for (const item of items) {
+    if (item.wasCorrect) exact += 1;
+    if (item.winnerCorrect) outcome += 1;
+    if (item.oddsStatus === "available" || item.oddsStatus === "partial" || Number.isFinite(Number(item.roi))) withOdds += 1;
+    if (item.predictionId && item.evaluationSource === "prediction_snapshot") withSnapshot += 1;
+    if (Number.isFinite(Number(item.brierScore))) {
+      brierSum += Number(item.brierScore);
+      brierCount += 1;
+    }
+    if (Number.isFinite(Number(item.logLoss))) {
+      logLossSum += Number(item.logLoss);
+      logLossCount += 1;
+    }
+
+    updateBucket(byLeague, item.league || "Onbekend", item);
+    updateBucket(byModel, item.modelVersion || item.modelName || "onbekend model", item);
+    const sourceScore = Number(item.sourceReliability?.score ?? item.qualityGate?.dataCompleteness?.score ?? -1);
+    const qualityKey = sourceScore < 0 ? "onbekend" : sourceScore >= 0.62 ? "hoog" : sourceScore >= 0.45 ? "middel" : "laag";
+    updateBucket(dataQuality, qualityKey, item);
+    for (const team of [item.homeTeam, item.awayTeam]) {
+      if (team) updateBucket(byTeam, team, item);
+    }
+  }
+
+  const top = (map: Record<string, any>, minTotal = 1, limit = 10) =>
+    Object.values(map)
+      .map(finalizeBucket)
+      .filter((row: any) => row.total >= minTotal)
+      .sort((a: any, b: any) => b.outcomePct - a.outcomePct || b.exactPct - a.exactPct || b.total - a.total)
+      .slice(0, limit);
+
+  const total = items.length;
+  return {
+    total,
+    exact,
+    outcome,
+    exactPct: pct(exact, total),
+    outcomePct: pct(outcome, total),
+    oddsCoveragePct: pct(withOdds, total),
+    snapshotCoveragePct: pct(withSnapshot, total),
+    avgBrier: brierCount ? Number((brierSum / brierCount).toFixed(3)) : null,
+    avgLogLoss: logLossCount ? Number((logLossSum / logLossCount).toFixed(3)) : null,
+    byLeague: top(byLeague, 1, 12),
+    byModel: top(byModel, 1, 8),
+    byTeam: top(byTeam, 2, 12),
+    byDataQuality: top(dataQuality, 1, 6),
+    generatedAt: new Date().toISOString(),
+  };
+}
+
 export default async function handler(req: any, res: any) {
   const started = Date.now();
   setCorsHeaders(req, res);
@@ -108,12 +226,35 @@ export default async function handler(req: any, res: any) {
       : [];
     const items = mergeHistoryItems(databaseItems, serverItems);
     const featureImportanceSummary = buildFeatureImportanceSummary(items);
+    const summary = buildHistorySummary(items);
+    const summaryOnly = req.query?.summary === "1" || req.query?.summary === "true";
+    const includeItems = req.query?.includeItems === "1" || req.query?.includeItems === "true";
+    const limit = Math.min(Math.max(Number(req.query?.limit || items.length), 1), 1500);
+    const offset = Math.max(Number(req.query?.offset || 0), 0);
+    const pageItems = items.slice(offset, offset + limit);
+
+    if (summaryOnly && !includeItems) {
+      return res.status(200).json({
+        ok: true,
+        summary,
+        featureImportanceSummary,
+        total: items.length,
+        sourceBranch: databaseItems.length ? `postgres+${branch}` : branch,
+        workerVersion: store.workerVersion || "unknown",
+        serverReviewCount: serverItems.length,
+        databaseReviewCount: databaseItems.length,
+        durationMs: Date.now() - started,
+      });
+    }
 
     return res.status(200).json({
       ok: true,
-      items,
+      items: pageItems,
+      summary,
       featureImportanceSummary,
       total: items.length,
+      limit,
+      offset,
       sourceBranch: databaseItems.length ? `postgres+${branch}` : branch,
       workerVersion: store.workerVersion || "unknown",
       serverReviewCount: serverItems.length,

@@ -426,6 +426,7 @@ function LineupSidePanel({ teamName, lineup, profile }: { teamName: string; line
 function LineupTab({ match, prediction }: { match: any; prediction: any }) {
   const lineup = match.lineupSummary || prediction.lineupSummary || {};
   const impact = prediction.modelEdges?.lineupImpact || match.modelEdges?.lineupImpact;
+  const adjustment = prediction.modelEdges?.lineupAdjustment || match.modelEdges?.lineupAdjustment;
   const source = lineup?.source || "lineup-context";
   return (
     <div className="space-y-2">
@@ -454,6 +455,18 @@ function LineupTab({ match, prediction }: { match: any; prediction: any }) {
         <Badge label="Continuity uit" value={impact?.awayContinuity != null ? String(impact.awayContinuity) : "-"} tone="blue" />
         <Badge label="Keeper edge" value={impact?.keeperDiff != null ? String(impact.keeperDiff) : "-"} tone="purple" />
       </div>
+      {adjustment && (
+        <div className="rounded-xl border border-fuchsia-400/15 bg-fuchsia-950/15 p-2">
+          <div className="mb-1 text-[8px] font-black uppercase text-fuchsia-200">Effect op voorspelling</div>
+          <div className="grid grid-cols-2 gap-1 text-[8px] text-slate-300 md:grid-cols-4">
+            <div>Status: <span className="font-black text-white">{adjustment.status || "-"}</span></div>
+            <div>Gewicht: <span className="font-black text-white">{adjustment.weight != null ? `${Math.round(Number(adjustment.weight) * 100)}%` : "-"}</span></div>
+            <div>xG-shift: <span className="font-black text-white">{adjustment.xgShift != null ? `${adjustment.xgShift > 0 ? "+" : ""}${adjustment.xgShift}` : "-"}</span></div>
+            <div>Penalty: <span className="font-black text-white">{prediction.modelEdges?.lineupUncertaintyPenalty != null ? `${Math.round(Number(prediction.modelEdges.lineupUncertaintyPenalty) * 100)}pp` : "-"}</span></div>
+          </div>
+          <div className="mt-1 text-[8px] text-slate-400">{adjustment.summary || "opstelling verwerkt in model"}</div>
+        </div>
+      )}
     </div>
   );
 }
@@ -792,6 +805,73 @@ function KeySignals({ match, prediction }: { match: any; prediction: any }) {
           {signal}
         </span>
       ))}
+    </div>
+  );
+}
+
+function DataQualitySnapshot({ match, prediction }: { match: any; prediction: any }) {
+  const dataCompleteness = prediction.dataCompleteness || match.dataCompleteness || prediction.modelEdges?.dataCompleteness;
+  const qualityGate = prediction.qualityGate || match.qualityGate || prediction.modelEdges?.qualityGate;
+  const sourceReliability = prediction.modelEdges?.sourceReliability || match.sourceReliability;
+  const marketCalibration = prediction.modelEdges?.marketCalibration || match.marketCalibration;
+  const h2hPlayed = Math.max(Number(match.h2h?.played || 0), Array.isArray(match.h2h?.results) ? match.h2h.results.length : 0);
+  const lineup = match.lineupSummary || prediction.lineupSummary || {};
+  const missing = Array.isArray(dataCompleteness?.missing) ? dataCompleteness.missing : [];
+  const reasons = Array.isArray(dataCompleteness?.reasons) ? dataCompleteness.reasons : [];
+  const percent = dataCompleteness?.percent ?? (dataCompleteness?.score != null ? Math.round(Number(dataCompleteness.score) * 100) : null);
+  const confidenceCap = qualityGate?.confidenceCap != null ? `${Math.round(Number(qualityGate.confidenceCap) * 100)}%` : "-";
+  const penalty = qualityGate?.penalty != null ? `${Math.round(Number(qualityGate.penalty) * 100)}pp` : "-";
+  const oddsStatus =
+    Number(marketCalibration?.closingCoverage || 0) >= 0.2 || (Array.isArray(marketCalibration?.bookmakerSignals) && marketCalibration.bookmakerSignals.length)
+      ? "markt deels gevuld"
+      : "geen actuele odds";
+  const h2hStatus = h2hPlayed >= 3 ? `${h2hPlayed} duels` : h2hPlayed > 0 ? `${h2hPlayed} duel, dun` : "H2H ontbreekt";
+  const lineupStatus = lineup.confirmed ? "bevestigd" : lineup.projected ? "voorspeld" : "open";
+
+  if (percent == null && !missing.length && !qualityGate && !sourceReliability) return null;
+
+  const tone =
+    percent == null
+      ? "border-slate-500/15 bg-slate-950/35"
+      : percent >= 65
+        ? "border-emerald-400/20 bg-emerald-950/15"
+        : percent >= 48
+          ? "border-amber-400/20 bg-amber-950/15"
+          : "border-red-400/20 bg-red-950/15";
+
+  return (
+    <div className={`mb-2 rounded-xl border p-2 ${tone}`}>
+      <div className="mb-2 flex flex-col gap-2 sm:flex-row sm:items-start sm:justify-between">
+        <div>
+          <div className="text-[8px] font-black uppercase text-slate-300">Datakwaliteit & confidence-impact</div>
+          <div className="text-[9px] text-slate-500">
+            {qualityGate?.summary || "Model toont welke input mist en hoe hard zekerheid wordt afgekapt."}
+          </div>
+        </div>
+        <div className="flex flex-wrap gap-1">
+          <span className="rounded-full bg-slate-900/70 px-2 py-0.5 text-[8px] font-black text-white">{percent != null ? `${percent}% data` : "data ?"}</span>
+          <span className="rounded-full bg-slate-900/70 px-2 py-0.5 text-[8px] font-black text-amber-200">cap {confidenceCap}</span>
+          <span className="rounded-full bg-slate-900/70 px-2 py-0.5 text-[8px] font-black text-red-200">penalty {penalty}</span>
+        </div>
+      </div>
+      <div className="grid grid-cols-2 gap-1.5 md:grid-cols-4">
+        <Badge label="Odds" value={oddsStatus} tone={oddsStatus.includes("geen") ? "amber" : "green"} />
+        <Badge label="Lineup" value={lineupStatus} tone={lineup.confirmed ? "green" : lineup.projected ? "amber" : "slate"} />
+        <Badge label="H2H" value={h2hStatus} tone={h2hPlayed >= 3 ? "green" : "amber"} />
+        <Badge label="Bron" value={sourceReliability?.label || "-"} tone={sourceReliability?.score >= 0.54 ? "green" : "amber"} />
+      </div>
+      <div className="mt-2 flex flex-wrap gap-1">
+        {[...missing.slice(0, 4), ...reasons.slice(0, Math.max(0, 4 - missing.length))].map((item: any) => (
+          <span
+            key={String(item)}
+            className={`rounded-full px-2 py-0.5 text-[8px] font-black ${
+              missing.includes(item) ? "bg-red-500/10 text-red-200 border border-red-500/20" : "bg-emerald-500/10 text-emerald-200 border border-emerald-500/20"
+            }`}
+          >
+            {String(item)}
+          </span>
+        ))}
+      </div>
     </div>
   );
 }
@@ -1443,6 +1523,7 @@ const MatchCard: React.FC<MatchCardProps> = ({ match, prediction, onFavoriteChan
       <div className="mb-2">
         <KeySignals match={match} prediction={prediction} />
       </div>
+      <DataQualitySnapshot match={match} prediction={prediction} />
 
       <ExpandableMatchMeta match={match} prediction={prediction} weather={weather} h2h={h2h} />
 

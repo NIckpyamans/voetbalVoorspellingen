@@ -87,6 +87,29 @@ type SnapshotSummary = {
   estimatedFeatureBytes?: number;
 };
 
+type HistorySummaryBucket = {
+  key: string;
+  total: number;
+  exactPct: number;
+  outcomePct: number;
+  avgGoalError: number;
+  biasSummary?: string;
+};
+
+type HistoryServerSummary = {
+  total: number;
+  exactPct: number;
+  outcomePct: number;
+  oddsCoveragePct: number;
+  snapshotCoveragePct: number;
+  avgBrier?: number | null;
+  avgLogLoss?: number | null;
+  byModel?: HistorySummaryBucket[];
+  byDataQuality?: HistorySummaryBucket[];
+  byTeam?: HistorySummaryBucket[];
+  generatedAt?: string;
+};
+
 function formatRoi(item: HistoryItem) {
   if (item.roi != null && Number.isFinite(Number(item.roi))) return `${(Number(item.roi) * 100).toFixed(1)}%`;
   if (item.roiStatus === "odds_missing" || item.oddsStatus === "missing" || item.oddsStatus === "historical_market_profile_only") return "geen odds";
@@ -123,6 +146,7 @@ function mergeHistory(localItems: HistoryItem[], serverItems: HistoryItem[]) {
 const PredictionHistory: React.FC = () => {
   const [history, setHistory] = useState<HistoryItem[]>([]);
   const [snapshotSummary, setSnapshotSummary] = useState<SnapshotSummary | null>(null);
+  const [serverSummary, setServerSummary] = useState<HistoryServerSummary | null>(null);
   const [filter, setFilter] = useState<"alle" | "score" | "uitkomst" | "fout">("alle");
   const [search, setSearch] = useState("");
   const [page, setPage] = useState(0);
@@ -145,13 +169,14 @@ const PredictionHistory: React.FC = () => {
       const localItems = readLocal();
       try {
         const [historyResponse, snapshotResponse] = await Promise.all([
-          fetch("/api/history"),
+          fetch("/api/history?summary=1&includeItems=1&limit=750"),
           fetch("/api/prediction-snapshots?summary=1"),
         ]);
         const data = await historyResponse.json();
         const snapshotData = await snapshotResponse.json().catch(() => null);
         const serverItems = Array.isArray(data.items) ? hydrateHistory(data.items) : [];
         if (snapshotData?.summary && !cancelled) setSnapshotSummary(snapshotData.summary);
+        if (data?.summary && !cancelled) setServerSummary(data.summary);
         if (!cancelled) setHistory(mergeHistory(localItems, serverItems));
       } catch {
         if (!cancelled) setHistory(localItems.sort((a, b) => Number(b.timestamp || 0) - Number(a.timestamp || 0)));
@@ -380,6 +405,59 @@ const PredictionHistory: React.FC = () => {
       </div>
 
       <div className="grid grid-cols-1 xl:grid-cols-2 gap-4">
+        <div className="glass-card p-4 rounded-2xl border border-emerald-500/15 bg-emerald-500/5">
+          <div className="flex items-center justify-between gap-3 mb-3">
+            <div>
+              <div className="text-[10px] font-black text-emerald-300 uppercase">Model-feedback uit opgeslagen voorspellingen</div>
+              <div className="text-[11px] text-slate-500 mt-0.5">
+                Compacte aggregatie uit {serverSummary?.total?.toLocaleString() || stats.total.toLocaleString()} reviews; details blijven gepagineerd.
+              </div>
+            </div>
+            <div className="rounded-full bg-emerald-500/15 px-3 py-1 text-[10px] font-black text-emerald-200">
+              {serverSummary?.snapshotCoveragePct ?? Number(stats.snapshotCoverage.replace("%", ""))}% snapshots
+            </div>
+          </div>
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-2 mb-3">
+            <div className="rounded-xl bg-slate-950/40 border border-white/5 p-3">
+              <div className="text-[8px] font-black text-slate-500 uppercase">Exact</div>
+              <div className="text-2xl font-black text-white mt-1">{serverSummary?.exactPct ?? stats.exactPct}%</div>
+            </div>
+            <div className="rounded-xl bg-slate-950/40 border border-white/5 p-3">
+              <div className="text-[8px] font-black text-slate-500 uppercase">1X2</div>
+              <div className="text-2xl font-black text-white mt-1">{serverSummary?.outcomePct ?? stats.outcomePct}%</div>
+            </div>
+            <div className="rounded-xl bg-slate-950/40 border border-white/5 p-3">
+              <div className="text-[8px] font-black text-slate-500 uppercase">Oddsdekking</div>
+              <div className="text-2xl font-black text-white mt-1">{serverSummary?.oddsCoveragePct ?? Number(stats.oddsCoverage.replace("%", ""))}%</div>
+            </div>
+            <div className="rounded-xl bg-slate-950/40 border border-white/5 p-3">
+              <div className="text-[8px] font-black text-slate-500 uppercase">Brier</div>
+              <div className="text-2xl font-black text-white mt-1">{serverSummary?.avgBrier ?? stats.avgBrier}</div>
+            </div>
+          </div>
+          <div className="space-y-2">
+            {(serverSummary?.byModel || []).slice(0, 4).map((model) => (
+              <div key={model.key} className="rounded-xl bg-slate-950/35 border border-white/5 px-3 py-2">
+                <div className="flex items-center justify-between gap-2">
+                  <div className="min-w-0">
+                    <div className="truncate text-[10px] font-black text-white">{model.key}</div>
+                    <div className="text-[8px] text-slate-500">{model.total} reviews - {model.biasSummary || "bias onbekend"}</div>
+                  </div>
+                  <div className="text-right">
+                    <div className="text-[12px] font-black text-emerald-200">{model.outcomePct}% 1X2</div>
+                    <div className="text-[8px] text-slate-500">exact {model.exactPct}%</div>
+                  </div>
+                </div>
+              </div>
+            ))}
+            {!(serverSummary?.byModel || []).length && (
+              <div className="rounded-xl border border-dashed border-white/10 bg-slate-950/30 p-3 text-[11px] font-bold text-slate-500">
+                Nog geen modelaggregatie beschikbaar vanuit de serverhistorie.
+              </div>
+            )}
+          </div>
+        </div>
+
         <div className="glass-card p-4 rounded-2xl border border-yellow-500/15 bg-yellow-500/5">
           <div className="flex items-center justify-between gap-3 mb-3">
             <div>
@@ -406,6 +484,28 @@ const PredictionHistory: React.FC = () => {
               <div className="text-2xl font-black text-white mt-1">{stats.topFive.avgError}</div>
               <div className="text-[9px] text-slate-500">lager is beter</div>
             </div>
+          </div>
+        </div>
+
+        <div className="glass-card p-4 rounded-2xl border border-cyan-500/15 bg-cyan-500/5">
+          <div className="mb-3">
+            <div className="text-[10px] font-black text-cyan-300 uppercase">Datakwaliteit versus resultaat</div>
+            <div className="text-[11px] text-slate-500 mt-0.5">Laat zien waar voorspellingen betrouwbaarder of juist riskant zijn.</div>
+          </div>
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
+            {(serverSummary?.byDataQuality || []).map((bucket) => (
+              <div key={bucket.key} className="rounded-xl bg-slate-950/40 border border-white/5 p-3">
+                <div className="text-[8px] font-black text-slate-500 uppercase">Data {bucket.key}</div>
+                <div className="mt-1 text-xl font-black text-white">{bucket.outcomePct}%</div>
+                <div className="text-[9px] text-slate-500">{bucket.total} reviews - foutmarge {bucket.avgGoalError}</div>
+                <div className="mt-1 text-[8px] text-slate-400">{bucket.biasSummary}</div>
+              </div>
+            ))}
+            {!(serverSummary?.byDataQuality || []).length && (
+              <div className="rounded-xl border border-dashed border-white/10 bg-slate-950/30 p-3 text-[11px] font-bold text-slate-500 sm:col-span-3">
+                Datakwaliteit wordt gevuld zodra reviews sourceReliability/qualityGate meenemen.
+              </div>
+            )}
           </div>
         </div>
 

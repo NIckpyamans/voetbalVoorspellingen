@@ -289,7 +289,7 @@ const App: React.FC = () => {
       }
     };
 
-    fetch("/api/history", { cache: "no-store" })
+    fetch("/api/history?limit=750", { cache: "no-store" })
       .then(async (response) => {
         const data = await response.json().catch(() => ({}));
         if (!response.ok || data.ok === false) throw new Error(data.error || `Historie ophalen mislukt (${response.status})`);
