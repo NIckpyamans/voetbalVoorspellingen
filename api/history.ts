@@ -1,7 +1,7 @@
 import { fetchServerStore } from "./_dataSource.js";
 import { createLogger, getErrorDetails } from "../shared/logger.js";
 import { setCorsHeaders } from "../shared/cors.js";
-import { databaseConfigured, readDatabaseHistoryItems } from "../shared/database.js";
+import { databaseConfigured, getSql, readDatabaseHistoryItems } from "../shared/database.js";
 
 const logger = createLogger("api.history");
 
@@ -91,6 +91,104 @@ function mergeHistoryItems(primary: any[], secondary: any[]) {
     }
   }
   return [...merged.values()].sort((a: any, b: any) => Number(b.timestamp || 0) - Number(a.timestamp || 0));
+}
+
+async function readDatabaseHistoryFallback(limit = 1500) {
+  const sql = getSql();
+  if (!sql) return [];
+  const rows = await sql.query(
+    `
+      select
+        pe.prediction_id,
+        pe.match_id,
+        pe.exact_hit,
+        pe.outcome_hit,
+        pe.probability_outcome_hit,
+        pe.brier_score,
+        pe.log_loss,
+        pe.roi,
+        pe.roi_status,
+        pe.clv,
+        pe.clv_status,
+        pe.evaluation_source,
+        pe.evaluated_at,
+        ps.generated_at,
+        ps.cutoff_at,
+        ps.model_version,
+        ps.feature_schema_version,
+        ps.input_snapshot_hash,
+        ps.prediction_payload,
+        ps.expected_score,
+        ps.confidence,
+        ps.confidence_raw,
+        ps.data_completeness,
+        ps.leakage_guard,
+        ps.feature_source_metadata
+      from prediction_evaluations pe
+      join prediction_snapshots ps on ps.prediction_id = pe.prediction_id
+      order by pe.evaluated_at desc
+      limit $1
+    `,
+    [Math.min(Math.max(Number(limit || 1500), 1), 5000)]
+  );
+  return rows.map((row: any) => {
+    const prediction = row.prediction_payload || {};
+    const input = prediction.inputSnapshot || {};
+    const expected = row.expected_score || prediction.expectedScore || {};
+    const predHome = prediction.predHomeGoals ?? expected.home ?? null;
+    const predAway = prediction.predAwayGoals ?? expected.away ?? null;
+    return {
+      matchId: row.match_id,
+      predictionId: row.prediction_id,
+      predictedScore: predHome != null && predAway != null ? `${predHome}-${predAway}` : expected.label || null,
+      actualScore: prediction.review?.actualScore || null,
+      exactHit: row.exact_hit,
+      outcomeHit: row.outcome_hit,
+      probabilityOutcomeHit: row.probability_outcome_hit,
+      totalGoalError: prediction.review?.totalGoalError ?? null,
+      createdAt: row.evaluated_at ? Date.parse(row.evaluated_at) : Date.now(),
+      evaluatedAt: row.evaluated_at,
+      homeTeamName: prediction.homeTeam || input.homeTeam || null,
+      awayTeamName: prediction.awayTeam || input.awayTeam || null,
+      league: prediction.league || input.league || null,
+      predictedOutcome: prediction.review?.predictedOutcome || null,
+      actualOutcome: prediction.review?.actualOutcome || null,
+      confidence: row.confidence,
+      confidenceRaw: row.confidence_raw,
+      calibration: prediction.calibration || null,
+      exactScoreConfidence: prediction.exactScoreConfidence || null,
+      brierScore: row.brier_score,
+      logLoss: row.log_loss,
+      roi: row.roi,
+      roiStatus: row.roi_status,
+      clv: row.clv,
+      clvStatus: row.clv_status,
+      generatedAt: row.generated_at,
+      cutoffAt: row.cutoff_at,
+      modelVersion: row.model_version,
+      featureSchemaVersion: row.feature_schema_version,
+      inputSnapshotHash: row.input_snapshot_hash,
+      evaluationSource: row.evaluation_source,
+      leakageGuard: row.leakage_guard,
+      oddsAtPrediction: prediction.oddsAtPrediction || prediction.odds || null,
+      oddsStatus: prediction.oddsStatus || null,
+      oddsProviderStatus: prediction.oddsProviderStatus || null,
+      oddsMissingReason: prediction.oddsMissingReason || null,
+      featureSourceMetadata: row.feature_source_metadata,
+      featureImportance: Array.isArray(prediction.featureImportance) ? prediction.featureImportance : [],
+      sourceReliability: prediction.modelEdges?.sourceReliability || prediction.sourceReliability || null,
+      qualityGate: prediction.qualityGate || prediction.modelEdges?.qualityGate || row.data_completeness || null,
+      leagueCalibration: prediction.modelEdges?.leagueCalibration || prediction.leagueCalibration || null,
+      sourceTimestampCoverage: row.leakage_guard?.sourceTimestampCoverage ?? null,
+      bestBetRank: prediction.bestBetRank || null,
+      topConfidencePick: prediction.topConfidencePick || false,
+      topExactScorePick: prediction.topExactScorePick || false,
+      topExactReasons: prediction.topExactReasons || prediction.exactScoreReasons || [],
+      modelName: prediction.modelName || prediction.modelEdges?.modelName || null,
+      modelAgreement: prediction.modelEdges?.modelAgreement || 0,
+      riskProfile: prediction.modelEdges?.riskProfile || null,
+    };
+  });
 }
 
 function pct(value: number, total: number) {
@@ -221,9 +319,13 @@ export default async function handler(req: any, res: any) {
     const serverItems = Object.values(store.postMatchReviews || {})
       .map((review: any) => mapServerReview(review))
       .sort((a: any, b: any) => Number(b.timestamp || 0) - Number(a.timestamp || 0));
-    const databaseItems = databaseConfigured()
-      ? (await readDatabaseHistoryItems({ limit: 1500 }).catch(() => null))?.map((review: any) => mapServerReview(review)) || []
+    let databaseRawItems = databaseConfigured()
+      ? (await readDatabaseHistoryItems({ limit: 1500 }).catch(() => null)) || []
       : [];
+    if (databaseConfigured() && databaseRawItems.length === 0) {
+      databaseRawItems = await readDatabaseHistoryFallback(1500).catch(() => []);
+    }
+    const databaseItems = databaseRawItems.map((review: any) => mapServerReview(review));
     const items = mergeHistoryItems(databaseItems, serverItems);
     const featureImportanceSummary = buildFeatureImportanceSummary(items);
     const summary = buildHistorySummary(items);
