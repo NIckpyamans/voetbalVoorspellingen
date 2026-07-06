@@ -6,6 +6,28 @@ import { databaseConfigured, getSql, readDatabaseHistoryItems } from "../shared/
 const logger = createLogger("api.history");
 
 function mapServerReview(review: any) {
+  const predictedOutcome =
+    review.predictedOutcome === "H"
+      ? "Thuis"
+      : review.predictedOutcome === "A"
+        ? "Uit"
+        : review.predictedOutcome === "D"
+          ? "Gelijk"
+          : review.predictedOutcome || null;
+  const actualOutcome =
+    review.actualOutcome === "H"
+      ? "Thuis"
+      : review.actualOutcome === "A"
+        ? "Uit"
+        : review.actualOutcome === "D"
+          ? "Gelijk"
+          : review.actualOutcome || null;
+  const winnerCorrect =
+    typeof review.outcomeHit === "boolean"
+      ? review.outcomeHit
+      : predictedOutcome && actualOutcome
+        ? predictedOutcome === actualOutcome
+        : false;
   return {
     matchId: review.matchId,
     predictionId: review.predictionId || null,
@@ -17,23 +39,9 @@ function mapServerReview(review: any) {
     homeTeam: review.homeTeamName || null,
     awayTeam: review.awayTeamName || null,
     league: review.league || null,
-    winnerCorrect: review.predictedOutcome === review.actualOutcome,
-    predictedOutcome:
-      review.predictedOutcome === "H"
-        ? "Thuis"
-        : review.predictedOutcome === "A"
-          ? "Uit"
-          : review.predictedOutcome === "D"
-            ? "Gelijk"
-            : review.predictedOutcome || null,
-    actualOutcome:
-      review.actualOutcome === "H"
-        ? "Thuis"
-        : review.actualOutcome === "A"
-          ? "Uit"
-          : review.actualOutcome === "D"
-            ? "Gelijk"
-            : review.actualOutcome || null,
+    winnerCorrect,
+    predictedOutcome,
+    actualOutcome,
     topChanceCorrect: !!review.probabilityOutcomeHit,
     phaseBucket: review.phaseBucket || null,
     confidence: Number(review.confidence || 0),
