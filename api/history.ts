@@ -360,6 +360,48 @@ function buildHistorySummary(items: any[]) {
   };
 }
 
+async function buildOddsDiagnostics(store: any) {
+  if (databaseConfigured()) {
+    const sql = getSql();
+    if (sql) {
+      try {
+        const [summary] = await sql.query(`
+          select
+            (select count(*)::int from prediction_snapshots) as prediction_snapshots,
+            (select count(*)::int from odds_snapshots where status not in ('missing','historical_market_profile_only')) as prediction_odds,
+            (select count(*)::int from historical_odds_snapshots where available_before_kickoff = true) as prematch_odds,
+            (select count(*)::int from historical_odds_snapshots where closing_captured_at is not null) as closing_odds
+        `);
+        const total = Number(summary?.prediction_snapshots || 0);
+        const withOdds = Number(summary?.prediction_odds || 0);
+        return {
+          predictionSnapshots: total,
+          predictionOdds: withOdds,
+          missingPredictionOdds: Math.max(0, total - withOdds),
+          predictionOddsCoveragePct: total ? Number(((withOdds / total) * 100).toFixed(1)) : 0,
+          prematchOdds: Number(summary?.prematch_odds || 0),
+          closingOdds: Number(summary?.closing_odds || 0),
+          nextAction: "Run `npm run db:odds:prematch:collect` met provider keys; prioriteer snapshots zonder odds.",
+        };
+      } catch {
+        // Fall through to JSON snapshot estimate.
+      }
+    }
+  }
+
+  const snapshots = Object.values(store?.predictionSnapshots || {}) as any[];
+  const withOdds = snapshots.filter((snapshot) => snapshot?.oddsAtPrediction || snapshot?.oddsStatus === "available" || snapshot?.oddsStatus === "partial").length;
+  return {
+    predictionSnapshots: snapshots.length,
+    predictionOdds: withOdds,
+    missingPredictionOdds: Math.max(0, snapshots.length - withOdds),
+    predictionOddsCoveragePct: snapshots.length ? Number(((withOdds / snapshots.length) * 100).toFixed(1)) : 0,
+    prematchOdds: null,
+    closingOdds: null,
+    nextAction: "Run `npm run db:odds:prematch:collect`; JSON fallback heeft geen odds table.",
+  };
+}
+
 export default async function handler(req: any, res: any) {
   const started = Date.now();
   setCorsHeaders(req, res);
@@ -382,6 +424,7 @@ export default async function handler(req: any, res: any) {
     const items = mergeHistoryItems(databaseItems, serverItems);
     const featureImportanceSummary = buildFeatureImportanceSummary(items);
     const summary = buildHistorySummary(items);
+    (summary as any).oddsDiagnostics = await buildOddsDiagnostics(store);
     const summaryOnly = req.query?.summary === "1" || req.query?.summary === "true";
     const includeItems = req.query?.includeItems === "1" || req.query?.includeItems === "true";
     const limit = summaryOnly && !includeItems ? 0 : requestedLimit;

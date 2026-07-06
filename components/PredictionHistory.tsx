@@ -108,6 +108,15 @@ type HistoryServerSummary = {
   byDataQuality?: HistorySummaryBucket[];
   byTeam?: HistorySummaryBucket[];
   recommendations?: string[];
+  oddsDiagnostics?: {
+    predictionSnapshots: number;
+    predictionOdds: number;
+    missingPredictionOdds: number;
+    predictionOddsCoveragePct: number;
+    prematchOdds?: number | null;
+    closingOdds?: number | null;
+    nextAction?: string;
+  };
   generatedAt?: string;
 };
 
@@ -455,7 +464,12 @@ const PredictionHistory: React.FC = () => {
             </div>
             <div className="rounded-xl bg-slate-950/40 border border-white/5 p-3">
               <div className="text-[8px] font-black text-slate-500 uppercase">Oddsdekking</div>
-              <div className="text-2xl font-black text-white mt-1">{serverSummary?.oddsCoveragePct ?? Number(stats.oddsCoverage.replace("%", ""))}%</div>
+              <div className="text-2xl font-black text-white mt-1">{serverSummary?.oddsDiagnostics?.predictionOddsCoveragePct ?? serverSummary?.oddsCoveragePct ?? Number(stats.oddsCoverage.replace("%", ""))}%</div>
+              {serverSummary?.oddsDiagnostics && (
+                <div className="text-[8px] text-slate-500">
+                  {serverSummary.oddsDiagnostics.predictionOdds}/{serverSummary.oddsDiagnostics.predictionSnapshots} snapshots
+                </div>
+              )}
             </div>
             <div className="rounded-xl bg-slate-950/40 border border-white/5 p-3">
               <div className="text-[8px] font-black text-slate-500 uppercase">Brier</div>
@@ -470,6 +484,11 @@ const PredictionHistory: React.FC = () => {
                   <div key={item} className="text-[9px] font-bold text-amber-50/90">{item}</div>
                 ))}
               </div>
+            </div>
+          )}
+          {serverSummary?.oddsDiagnostics?.nextAction && (
+            <div className="mb-3 rounded-xl border border-teal-400/15 bg-teal-950/15 p-3 text-[9px] text-teal-50/90">
+              <span className="font-black text-teal-200">Odds actie:</span> {serverSummary.oddsDiagnostics.nextAction}
             </div>
           )}
           <div className="space-y-2">
