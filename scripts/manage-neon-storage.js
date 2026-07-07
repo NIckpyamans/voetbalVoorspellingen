@@ -156,7 +156,14 @@ if (APPLY) {
     }
   }
   if (pressureBeforeCleanup) {
-    for (const table of ["encrypted_database_backups", "app_state_segments"]) {
+    for (const table of [
+      "encrypted_database_backups",
+      "app_state_segments",
+      "source_records",
+      "historical_odds_snapshots",
+      "h2h_edges",
+      "prediction_snapshots",
+    ]) {
       try {
         await sql.query(`vacuum (full, analyze) ${table}`);
         cleanup.push({ target: `vacuum full analyze ${table}`, rows: 0 });

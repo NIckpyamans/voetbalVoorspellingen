@@ -123,7 +123,7 @@ if (APPLY && candidates.length) {
     [ids]
   );
   compacted = Number(result?.rows || 0);
-  await sql.query("vacuum (analyze) source_records");
+  await sql.query("vacuum (full, analyze) source_records");
 }
 
 const db = await sql.query(`
