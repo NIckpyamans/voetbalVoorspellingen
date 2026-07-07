@@ -10,6 +10,16 @@ Voeg deze GitHub repository secret toe als automatische synchronisatie naar Verc
 
 Daarna kan de workflow `Sync odds secret to Vercel` deze waarden naar Production, Preview en Development kopieren.
 
+De workflow synchroniseert ook Cloudflare R2-cachevariabelen en optionele frontend-analytics naar Vercel.
+
+## Cloudflare Web Analytics
+
+Optioneel:
+
+- `VITE_CLOUDFLARE_WEB_ANALYTICS_TOKEN`
+
+Maak deze token in Cloudflare Web Analytics. Zet hem als GitHub repository secret en draai daarna `Sync odds secret to Vercel`. De frontend laadt Cloudflare Web Analytics alleen wanneer deze Vite-env bestaat. Zonder token blijft de app normaal werken.
+
 ## API-Football / RapidAPI
 
 Benodigd:

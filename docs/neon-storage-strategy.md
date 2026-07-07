@@ -59,6 +59,8 @@ Voor Vercel API-cache lezen zijn dezelfde R2-envs in Vercel nodig plus:
 
 - `DASHBOARD_R2_CACHE_ENABLED=true`
 
+Cloudflare Web Analytics is apart van R2. Als `VITE_CLOUDFLARE_WEB_ANALYTICS_TOKEN` in Vercel staat, laadt de frontend automatisch Cloudflare Web Analytics. Dit vergroot Neon/R2-verbruik niet en is alleen bedoeld voor lichte bezoekers- en performance-inzichten.
+
 Aanbevolen R2 bucket:
 
 - Naam: `voetbalvoorspellingen-cold-storage`
