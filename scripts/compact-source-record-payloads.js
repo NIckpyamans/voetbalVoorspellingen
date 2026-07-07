@@ -1,9 +1,12 @@
 #!/usr/bin/env node
 
 import { getSql, loadLocalEnv } from "../shared/database.js";
+import { getR2Config } from "../shared/cloudflare-r2.js";
 
 const APPLY = process.argv.includes("--apply");
 const RETENTION_DAYS = Number(process.env.SOURCE_PAYLOAD_RETENTION_DAYS || 7);
+const r2Configured = getR2Config().configured;
+const allowUnarchivedCompaction = process.env.SOURCE_PAYLOAD_ALLOW_UNARCHIVED_COMPACTION === "true";
 
 loadLocalEnv(process.cwd());
 const sql = getSql();
@@ -27,20 +30,25 @@ const before = await sql.query(`
 `, [RETENTION_DAYS]);
 
 let compacted = 0;
+let skipped = null;
 if (APPLY) {
-  const [result] = await sql.query(`
-    with updated as (
-      update source_records
-      set payload = '{}'::jsonb
-      where fetched_at < now() - ($1::text || ' days')::interval
-        and payload <> '{}'::jsonb
-        and provider not in ('client-browser-favorites')
-      returning 1
-    )
-    select count(*)::int as rows from updated
-  `, [RETENTION_DAYS]);
-  compacted = Number(result?.rows || 0);
-  await sql.query("vacuum (full, analyze) source_records");
+  if (r2Configured && !allowUnarchivedCompaction) {
+    skipped = "r2_configured_archive_script_handles_compaction";
+  } else {
+    const [result] = await sql.query(`
+      with updated as (
+        update source_records
+        set payload = '{}'::jsonb
+        where fetched_at < now() - ($1::text || ' days')::interval
+          and payload <> '{}'::jsonb
+          and provider not in ('client-browser-favorites')
+        returning 1
+      )
+      select count(*)::int as rows from updated
+    `, [RETENTION_DAYS]);
+    compacted = Number(result?.rows || 0);
+    await sql.query("vacuum (full, analyze) source_records");
+  }
 }
 
 const after = await sql.query(`
@@ -62,8 +70,11 @@ console.log(JSON.stringify({
     retentionDays: RETENTION_DAYS,
     retainedFields: ["source_record_id", "provider", "source_url", "entity_type", "entity_key", "content_hash", "trust_score", "timestamps"],
     compactedField: "payload",
+    r2Configured,
+    allowUnarchivedCompaction,
   },
   before,
+  skipped,
   compacted,
   after: after[0],
   database: db[0],

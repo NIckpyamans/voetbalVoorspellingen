@@ -33,6 +33,35 @@ Neon bewaart dan alleen:
 - `entity_key`
 - `fetched_at`
 
+## Cloudflare R2 configuratie
+
+De code ondersteunt Cloudflare R2 via de S3-compatible API. Als de secrets ontbreken, blijft de maintenance veilig werken zonder R2 en worden oude payloads direct in Neon gecompact. Als de secrets aanwezig zijn, worden oude `source_records.payload` records eerst als `json.gz` naar R2 geschreven en daarna in Neon leeg gemaakt.
+
+Benodigde GitHub Actions secrets:
+
+- `CLOUDFLARE_R2_ACCOUNT_ID`
+- `CLOUDFLARE_R2_ACCESS_KEY_ID`
+- `CLOUDFLARE_R2_SECRET_ACCESS_KEY`
+- `CLOUDFLARE_R2_BUCKET`
+
+Optionele GitHub Actions variable:
+
+- `CLOUDFLARE_R2_PREFIX`, standaard `voetbalvoorspellingen/raw`
+
+Aanbevolen R2 bucket:
+
+- Naam: `voetbalvoorspellingen-cold-storage`
+- Public access: uit
+- Lifecycle rule: bewaar raw archives bijvoorbeeld 90 tot 180 dagen, daarna verwijderen of naar goedkopere cold policy verplaatsen wanneer beschikbaar.
+
+Cloudflare dashboardroute:
+
+1. Ga naar `Storage & databases`.
+2. Open `R2 Object Storage`.
+3. Maak een bucket aan.
+4. Maak een R2 API token/access key met alleen toegang tot deze bucket.
+5. Zet de waarden als GitHub Actions secrets en, alleen als Vercel functies dit direct moeten gebruiken, ook als Vercel environment variables.
+
 ## Niet doen
 
 - Geen grote JSON exports opnieuw in Git committen.
