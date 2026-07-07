@@ -18,6 +18,8 @@ Deze matrix bepaalt welke bron waarvoor gebruikt wordt. Doel: zo weinig mogelijk
 | The Odds API | Prematch odds | 1X2 odds, bookmakers, odds timestamp | Sportmonks/API-Football odds | Fixtures, lineups, H2H |
 | Understat | xG profielsignaal | xG, xGA, shotkwaliteit | FBref/Sofascore stats | Kleine competities/friendlies |
 | FBref snapshots | Shots en splits | shots, home/away splits, teamstats | Understat gaten | Live data |
+| ClubElo | Clubkracht en trend | Elo-rating, ratingverschil, ratinghistorie | Afgeleide teamsterkte uit resultaten | Nationale teams/friendlies als harde waarheid |
+| Open-Meteo | Weercontext | forecast, historische temperatuur/wind/neerslag | Venue climate fallback | Wedstrijdplanning of live score |
 | BBC fixtures | Veiligheidsnet voor topfixtures | fixture check, status sanity | ESPN/TheSportsDB gaten | Structurele bulkdata |
 
 ## Uitvoeringsregels
@@ -40,3 +42,6 @@ Gebruik deze matrix als contract voor worker/API/client:
 - Odds: The Odds API/Sportmonks/API-Football primair als echte provider; football-data.co.uk is historische of timestamped fallback, niet automatisch CLV-ready.
 - H2H: API-Football/OpenFootball/canonical history vullen aan, maar bij ontbrekende betrouwbare historie wordt geen kunstmatige H2H gemaakt.
 - Standen/teamlijsten: competitiecatalogus mag nulstanden tonen totdat providerstanden beschikbaar zijn.
+- Clubkracht: ClubElo is een goedkoop primair signaal voor clubwedstrijden, maar krijgt een penalty bij interlands, friendlies en lage aliaszekerheid.
+- Weer: Open-Meteo vult alleen context en confidence; ontbrekend weer mag nooit een voorspelling blokkeren.
+- Opslag: Neon bewaart hot normalized data en lineage. Ruwe payloads ouder dan de retentieperiode worden gecompact; grotere archieven horen in object storage met alleen hash/URL/pointer in Neon.

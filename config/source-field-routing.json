@@ -32,6 +32,16 @@
       "backups": ["FBref", "derived team strength"],
       "notes": "Understat/FBref blijven rate-limited pilots; football-data.co.uk is stabiele basis voor historische shots."
     },
+    "team_strength_ratings": {
+      "primary": ["ClubElo"],
+      "backups": ["derived team strength", "football-data.co.uk form", "canonical match history"],
+      "notes": "ClubElo is goedkoop en sterk voor clubs, maar wordt lager gewogen bij nationale teams, friendlies en naam-matches met lage aliaszekerheid."
+    },
+    "weather": {
+      "primary": ["Open-Meteo"],
+      "backups": ["venue climate fallback", "empty weather with confidence penalty"],
+      "notes": "Open-Meteo is geschikt voor forecast en historische weerscontext; weer mag nooit wedstrijden blokkeren."
+    },
     "standings": {
       "primary": ["ESPN teams/standings", "competition catalog"],
       "backups": ["API-Football standings", "OpenLigaDB"],
@@ -51,6 +61,11 @@
       "primary": ["ESPN teams API", "TheSportsDB"],
       "backups": ["shared club logo aliases", "Reep alias map"],
       "notes": "Team-ID mapping voorkomt verkeerde clubnaam- en logomatches."
+    },
+    "raw_payload_storage": {
+      "primary": ["Neon hot metadata"],
+      "backups": ["object storage cold raw payloads"],
+      "notes": "Neon bewaart bron-ID, hash, URL, trust en timestamp. Ruwe payloads ouder dan de retentieperiode worden gecompact; grote archieven horen in object storage."
     }
   }
 }
