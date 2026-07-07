@@ -47,10 +47,7 @@ export function buildR2ObjectKey(config, relativeKey) {
   return prefix ? `${prefix}/${key}` : key;
 }
 
-export async function putR2Object({ config = getR2Config(), key, body, contentType = "application/octet-stream", metadata = {} }) {
-  if (!config.configured) {
-    return { ok: false, skipped: true, reason: "r2_not_configured" };
-  }
+function buildSignedR2Request({ config, key, method = "GET", body = Buffer.alloc(0), contentType = null, metadata = {} }) {
   const bytes = Buffer.isBuffer(body) ? body : Buffer.from(String(body || ""), "utf8");
   const url = new URL(config.endpoint);
   const objectPath = `/${encodePathPart(config.bucket)}/${String(key).split("/").map(encodePathPart).join("/")}`;
@@ -65,7 +62,7 @@ export async function putR2Object({ config = getR2Config(), key, body, contentTy
       .map(([name, value]) => [`x-amz-meta-${String(name).toLowerCase().replace(/[^a-z0-9-]+/g, "-")}`, String(value)])
   );
   const headers = {
-    "content-type": contentType,
+    ...(contentType ? { "content-type": contentType } : {}),
     host: url.host,
     "x-amz-content-sha256": payloadHash,
     "x-amz-date": amzDate,
@@ -76,7 +73,7 @@ export async function putR2Object({ config = getR2Config(), key, body, contentTy
     .map(([name, value]) => `${name}:${String(value).trim()}\n`)
     .join("");
   const signedHeaders = Object.keys(headers).sort().join(";");
-  const canonicalRequest = ["PUT", objectPath, "", canonicalHeaders, signedHeaders, payloadHash].join("\n");
+  const canonicalRequest = [method, objectPath, "", canonicalHeaders, signedHeaders, payloadHash].join("\n");
   const credentialScope = `${dateStamp}/${config.region}/${config.service}/aws4_request`;
   const stringToSign = ["AWS4-HMAC-SHA256", amzDate, credentialScope, sha256(canonicalRequest)].join("\n");
   const kDate = hmac(`AWS4${config.secretAccessKey}`, dateStamp);
@@ -85,11 +82,19 @@ export async function putR2Object({ config = getR2Config(), key, body, contentTy
   const kSigning = hmac(kService, "aws4_request");
   const signature = hmac(kSigning, stringToSign, "hex");
   const authorization = `AWS4-HMAC-SHA256 Credential=${config.accessKeyId}/${credentialScope}, SignedHeaders=${signedHeaders}, Signature=${signature}`;
-  const response = await fetch(target, {
+  return { target, bytes, headers: { ...headers, authorization } };
+}
+
+export async function putR2Object({ config = getR2Config(), key, body, contentType = "application/octet-stream", metadata = {} }) {
+  if (!config.configured) {
+    return { ok: false, skipped: true, reason: "r2_not_configured" };
+  }
+  const bytes = Buffer.isBuffer(body) ? body : Buffer.from(String(body || ""), "utf8");
+  const signed = buildSignedR2Request({ config, key, method: "PUT", body: bytes, contentType, metadata });
+  const response = await fetch(signed.target, {
     method: "PUT",
     headers: {
-      ...headers,
-      authorization,
+      ...signed.headers,
       "content-length": String(bytes.length),
     },
     body: bytes,
@@ -106,5 +111,24 @@ export async function putR2Object({ config = getR2Config(), key, body, contentTy
     bytes: bytes.length,
     etag: response.headers.get("etag"),
     endpoint: config.endpoint,
+  };
+}
+
+export async function getR2Object({ config = getR2Config(), key }) {
+  if (!config.configured) return { ok: false, skipped: true, reason: "r2_not_configured" };
+  const signed = buildSignedR2Request({ config, key, method: "GET" });
+  const response = await fetch(signed.target, { method: "GET", headers: signed.headers });
+  if (response.status === 404) return { ok: false, skipped: true, reason: "not_found" };
+  const responseText = response.ok ? null : await response.text().catch(() => "");
+  if (!response.ok) {
+    throw new Error(`R2 download failed ${response.status} ${response.statusText}: ${String(responseText || "").slice(0, 500)}`);
+  }
+  return {
+    ok: true,
+    skipped: false,
+    body: Buffer.from(await response.arrayBuffer()),
+    contentType: response.headers.get("content-type"),
+    etag: response.headers.get("etag"),
+    bytes: Number(response.headers.get("content-length") || 0),
   };
 }

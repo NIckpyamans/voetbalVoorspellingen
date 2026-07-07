@@ -7,6 +7,7 @@ import { setCorsHeaders } from "../shared/cors.js";
 import { mergeDuplicateServedMatches, normalizeServedMatch } from "../shared/matchNormalization.js";
 import { buildMatchSourceCoverage, databaseConfigured, readDatabaseCounts, readDatabaseDay } from "../shared/database.js";
 import { filterVisibleMatches } from "../shared/competitionVisibility.js";
+import { readDashboardDayCache } from "../shared/dashboardR2Cache.js";
 
 const logger = createLogger("api.matches");
 
@@ -246,6 +247,12 @@ export default async function handler(req: any, res: any) {
     let sourceBranch = "split-data";
 
     try {
+      const cachedDay = !isLiveSensitiveRequest ? await readDashboardDayCache(targetDate).catch(() => null) : null;
+      if (cachedDay?.matches?.length) {
+        baseMatches = cachedDay.matches.map((match: any) => attachReviewAndNormalize(match, {}));
+        sourceBranch = "r2-dashboard-cache";
+        lastRun = cachedDay.generatedAt || lastRun;
+      } else {
       const dbDay = databaseConfigured() ? await readDatabaseDay(targetDate).catch(() => null) : null;
       if (dbDay?.matches?.length) {
         baseMatches = dbDay.matches.map((match: any) => attachReviewAndNormalize(match, {}));
@@ -256,6 +263,7 @@ export default async function handler(req: any, res: any) {
         lastRun = day.lastRun || lastRun;
         workerVersion = day.workerVersion || workerVersion;
         sourceBranch = day.branch || sourceBranch;
+      }
       }
     } catch {
       const { store, branch } = await fetchServerStore();
@@ -301,7 +309,11 @@ export default async function handler(req: any, res: any) {
       databaseIntegration,
       rufloReport,
       sourceBranch,
-      source: matches.length && sourceBranch === "postgres" ? "postgres-database" : matches.length ? "github-worker-v4-split" : "no-matches-yet",
+      source: matches.length && sourceBranch === "postgres"
+        ? "postgres-database"
+        : matches.length && sourceBranch === "r2-dashboard-cache"
+          ? "cloudflare-r2-dashboard-cache"
+          : matches.length ? "github-worker-v4-split" : "no-matches-yet",
       message: matches.length ? null : "Nog geen wedstrijden gevonden voor deze dag in de actuele workerdata.",
       durationMs: Date.now() - started,
     });

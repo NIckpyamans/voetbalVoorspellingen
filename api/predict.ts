@@ -4,6 +4,7 @@ import { createLogger, getErrorDetails } from "../shared/logger.js";
 import { setCorsHeaders } from "../shared/cors.js";
 import { databaseConfigured, readDatabaseDay } from "../shared/database.js";
 import { filterVisibleMatches, filterVisiblePredictions } from "../shared/competitionVisibility.js";
+import { readDashboardDayCache } from "../shared/dashboardR2Cache.js";
 
 const logger = createLogger("api.predict");
 
@@ -104,6 +105,13 @@ export default async function handler(req: any, res: any) {
     let reviewCount = 0;
 
     try {
+      const cachedDay = await readDashboardDayCache(date).catch(() => null);
+      if (cachedDay?.predictions?.length || cachedDay?.matches?.length) {
+        predictions = cachedDay.predictions || [];
+        matches = cachedDay.matches || [];
+        branch = "r2-dashboard-cache";
+        lastRun = cachedDay.generatedAt || null;
+      } else {
       const dbDay = databaseConfigured() ? await readDatabaseDay(date).catch(() => null) : null;
       if (dbDay?.matches?.length || dbDay?.predictions?.length) {
         predictions = dbDay.predictions || [];
@@ -122,6 +130,7 @@ export default async function handler(req: any, res: any) {
       branch = dayResponse.branch || branch;
       lastRun = day.lastRun || meta.lastRun || null;
       reviewCount = Number(meta.reviewCount || Object.keys(reviews).length || 0);
+      }
       }
     } catch {
       const full = await fetchServerStore();
@@ -145,7 +154,11 @@ export default async function handler(req: any, res: any) {
       date,
       predictions: predictions.map((prediction) => enrichPrediction(prediction, matchMap, splitStore)),
       total: predictions.length,
-      source: predictions.length && branch === "postgres" ? "postgres-prediction-snapshots" : predictions.length ? "server-data-v6-split-review-market" : "none",
+      source: predictions.length && branch === "postgres"
+        ? "postgres-prediction-snapshots"
+        : predictions.length && branch === "r2-dashboard-cache"
+          ? "cloudflare-r2-dashboard-cache"
+          : predictions.length ? "server-data-v6-split-review-market" : "none",
       sourceBranch: branch,
       lastRun,
       reviewCount,

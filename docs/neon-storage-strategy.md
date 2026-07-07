@@ -37,6 +37,13 @@ Neon bewaart dan alleen:
 
 De code ondersteunt Cloudflare R2 via de S3-compatible API. Als de secrets ontbreken, blijft de maintenance veilig werken zonder R2 en worden oude payloads direct in Neon gecompact. Als de secrets aanwezig zijn, worden oude `source_records.payload` records eerst als `json.gz` naar R2 geschreven en daarna in Neon leeg gemaakt.
 
+R2 wordt nu gebruikt voor:
+
+- Oude raw `source_records.payload` archieven.
+- Repo/server exports zoals `server_data.json`, `data/meta.json` en `data/standings.json`.
+- Oude, niet-essentiele prediction snapshots voordat ze uit Neon worden verwijderd.
+- Dashboard day-cache voor recente dagen, zodat Vercel API-routes later uit R2 kunnen lezen wanneer de R2-envs ook in Vercel staan.
+
 Benodigde GitHub Actions secrets:
 
 - `CLOUDFLARE_R2_ACCOUNT_ID`
@@ -44,9 +51,13 @@ Benodigde GitHub Actions secrets:
 - `CLOUDFLARE_R2_SECRET_ACCESS_KEY`
 - `CLOUDFLARE_R2_BUCKET`
 
-Optionele GitHub Actions variable:
+Optionele GitHub Actions secret:
 
 - `CLOUDFLARE_R2_PREFIX`, standaard `voetbalvoorspellingen/raw`
+
+Voor Vercel API-cache lezen zijn dezelfde R2-envs in Vercel nodig plus:
+
+- `DASHBOARD_R2_CACHE_ENABLED=true`
 
 Aanbevolen R2 bucket:
 
