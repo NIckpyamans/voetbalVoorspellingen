@@ -198,6 +198,15 @@ function enrichPrediction(prediction: any, matchMap: Record<string, any>, store:
   return full ? enriched : compactPrediction(enriched);
 }
 
+function latestPredictionPerMatch(predictions: any[]) {
+  const byMatch = new Map<string, any>();
+  for (const prediction of predictions || []) {
+    if (!prediction?.matchId) continue;
+    byMatch.set(prediction.matchId, prediction);
+  }
+  return [...byMatch.values()];
+}
+
 export default async function handler(req: any, res: any) {
   const started = Date.now();
   setCorsHeaders(req, res);
@@ -255,6 +264,8 @@ export default async function handler(req: any, res: any) {
 
     matches = filterVisibleMatches(matches);
     predictions = filterVisiblePredictions(predictions, matches);
+    const rawTotal = predictions.length;
+    const responsePredictions = full ? predictions : latestPredictionPerMatch(predictions);
 
     const matchMap = Object.fromEntries(matches.map((match: any) => [match.id, { ...match, review: reviews?.[match.id] || null }]));
     const splitStore = { postMatchReviews: reviews };
@@ -262,14 +273,15 @@ export default async function handler(req: any, res: any) {
     return res.status(200).json({
       ok: true,
       date,
-      predictions: predictions.map((prediction) => enrichPrediction(prediction, matchMap, splitStore, full)),
-      total: predictions.length,
+      predictions: responsePredictions.map((prediction) => enrichPrediction(prediction, matchMap, splitStore, full)),
+      total: responsePredictions.length,
+      rawTotal,
       view: full ? "full" : "compact",
-      source: predictions.length && branch === "postgres"
+      source: responsePredictions.length && branch === "postgres"
         ? "postgres-prediction-snapshots"
-        : predictions.length && branch === "r2-dashboard-cache"
+        : responsePredictions.length && branch === "r2-dashboard-cache"
           ? "cloudflare-r2-dashboard-cache"
-          : predictions.length ? "server-data-v6-split-review-market" : "none",
+          : responsePredictions.length ? "server-data-v6-split-review-market" : "none",
       sourceBranch: branch,
       lastRun,
       reviewCount,
