@@ -44,10 +44,117 @@ function buildValueFlags(prediction: any) {
   };
 }
 
-function enrichPrediction(prediction: any, matchMap: Record<string, any>, store: any) {
+function compactScoreMatrix(scoreMatrix: any) {
+  if (!scoreMatrix || typeof scoreMatrix !== "object") return undefined;
+  return Object.fromEntries(
+    Object.entries(scoreMatrix)
+      .sort((a: any, b: any) => Number(b[1] || 0) - Number(a[1] || 0))
+      .slice(0, 6)
+  );
+}
+
+function compactModelEdges(modelEdges: any) {
+  if (!modelEdges || typeof modelEdges !== "object") return undefined;
+  return {
+    clubEloDiff: modelEdges.clubEloDiff,
+    rest: modelEdges.rest,
+    riskProfile: modelEdges.riskProfile,
+    modelAgreement: modelEdges.modelAgreement,
+    modelAgreementPenalty: modelEdges.modelAgreementPenalty,
+    lineupImpact: modelEdges.lineupImpact,
+    lineupAdjustment: modelEdges.lineupAdjustment,
+    lineupUncertaintyPenalty: modelEdges.lineupUncertaintyPenalty,
+    tacticalMismatch: modelEdges.tacticalMismatch,
+    formShift: modelEdges.formShift,
+    travelEdge: modelEdges.travelEdge,
+    keeperEdge: modelEdges.keeperEdge,
+    learningEdge: modelEdges.learningEdge,
+    marketCalibration: modelEdges.marketCalibration,
+    leagueReliability: modelEdges.leagueReliability,
+    phaseReliability: modelEdges.phaseReliability,
+    refereeProfile: modelEdges.refereeProfile,
+    sourceReliability: modelEdges.sourceReliability,
+    dataCompleteness: modelEdges.dataCompleteness,
+    qualityGate: modelEdges.qualityGate,
+    featureImportance: Array.isArray(modelEdges.featureImportance)
+      ? modelEdges.featureImportance.slice(0, 8)
+      : modelEdges.featureImportance,
+    leagueCalibration: modelEdges.leagueCalibration,
+    confidenceCalibration: modelEdges.confidenceCalibration,
+    modelWarnings: Array.isArray(modelEdges.modelWarnings)
+      ? modelEdges.modelWarnings.slice(0, 4)
+      : modelEdges.modelWarnings,
+    teamAiSummary: modelEdges.teamAiSummary,
+  };
+}
+
+function compactPrediction(prediction: any) {
+  return {
+    matchId: prediction.matchId,
+    model: prediction.model,
+    predHomeGoals: prediction.predHomeGoals,
+    predAwayGoals: prediction.predAwayGoals,
+    homeProb: prediction.homeProb,
+    drawProb: prediction.drawProb,
+    awayProb: prediction.awayProb,
+    confidence: prediction.confidence,
+    exactProb: prediction.exactProb,
+    exactScoreConfidence: prediction.exactScoreConfidence,
+    exactScoreReasons: Array.isArray(prediction.exactScoreReasons)
+      ? prediction.exactScoreReasons.slice(0, 4)
+      : prediction.exactScoreReasons,
+    bestBetRank: prediction.bestBetRank,
+    topConfidencePick: prediction.topConfidencePick,
+    topExactScorePick: prediction.topExactScorePick,
+    topExactReasons: Array.isArray(prediction.topExactReasons)
+      ? prediction.topExactReasons.slice(0, 4)
+      : prediction.topExactReasons,
+    homeXG: prediction.homeXG,
+    awayXG: prediction.awayXG,
+    over15: prediction.over15,
+    over25: prediction.over25,
+    over35: prediction.over35,
+    btts: prediction.btts,
+    homeForm: prediction.homeForm,
+    awayForm: prediction.awayForm,
+    homeRecent: prediction.homeRecent,
+    awayRecent: prediction.awayRecent,
+    weather: prediction.weather,
+    h2h: prediction.h2h,
+    h2hStatus: prediction.h2hStatus,
+    aggregate: prediction.aggregate,
+    context: prediction.context ? { summary: prediction.context.summary } : null,
+    homeRestDays: prediction.homeRestDays,
+    awayRestDays: prediction.awayRestDays,
+    homeClubElo: prediction.homeClubElo,
+    awayClubElo: prediction.awayClubElo,
+    odds: prediction.odds,
+    oddsAtPrediction: prediction.oddsAtPrediction,
+    derivedOdds: prediction.derivedOdds,
+    valueFlags: prediction.valueFlags,
+    lineupSummary: prediction.lineupSummary,
+    homeTeamProfile: prediction.homeTeamProfile,
+    awayTeamProfile: prediction.awayTeamProfile,
+    modelEdges: compactModelEdges(prediction.modelEdges),
+    ensembleMeta: prediction.ensembleMeta,
+    learningSummary: prediction.learningSummary,
+    marketCalibration: prediction.marketCalibration,
+    dataCompleteness: prediction.dataCompleteness,
+    qualityGate: prediction.qualityGate,
+    freeSourceCoverage: prediction.freeSourceCoverage,
+    featureImportance: Array.isArray(prediction.featureImportance)
+      ? prediction.featureImportance.slice(0, 8)
+      : prediction.featureImportance,
+    scoreMatrix: compactScoreMatrix(prediction.scoreMatrix),
+    monteCarlo: prediction.monteCarlo,
+    review: prediction.review,
+  };
+}
+
+function enrichPrediction(prediction: any, matchMap: Record<string, any>, store: any, full = false) {
   const match = matchMap[prediction.matchId] || null;
   const dbFeatureContext = prediction.dbFeatureContext || match?.dbFeatureContext || null;
-  return {
+  const enriched = {
     ...prediction,
     derivedOdds: buildDerivedOdds(prediction),
     valueFlags: buildValueFlags(prediction),
@@ -88,6 +195,7 @@ function enrichPrediction(prediction: any, matchMap: Record<string, any>, store:
     review: prediction.review || match?.review || store.postMatchReviews?.[prediction.matchId] || null,
     match,
   };
+  return full ? enriched : compactPrediction(enriched);
 }
 
 export default async function handler(req: any, res: any) {
@@ -97,6 +205,8 @@ export default async function handler(req: any, res: any) {
 
   try {
     const date = (req.query?.date as string) || todayAmsterdamKey();
+    const view = String(req.query?.view || req.query?.mode || "compact").toLowerCase();
+    const full = view === "full" || view === "debug";
     let predictions: any[] = [];
     let matches: any[] = [];
     let reviews: Record<string, any> = {};
@@ -152,8 +262,9 @@ export default async function handler(req: any, res: any) {
     return res.status(200).json({
       ok: true,
       date,
-      predictions: predictions.map((prediction) => enrichPrediction(prediction, matchMap, splitStore)),
+      predictions: predictions.map((prediction) => enrichPrediction(prediction, matchMap, splitStore, full)),
       total: predictions.length,
+      view: full ? "full" : "compact",
       source: predictions.length && branch === "postgres"
         ? "postgres-prediction-snapshots"
         : predictions.length && branch === "r2-dashboard-cache"
