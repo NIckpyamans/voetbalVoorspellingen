@@ -174,7 +174,22 @@ if (APPLY) {
   }
 }
 
-const after = APPLY ? await measure() : before;
+function sleep(ms) {
+  return new Promise((resolve) => setTimeout(resolve, ms));
+}
+
+let after = APPLY ? await measure() : before;
+let recheck = null;
+if (APPLY && after.database.status === "critical") {
+  // VACUUM FULL can briefly inflate pg_database_size while relation rewrites settle.
+  // Recheck once before failing the workflow so transient maintenance bloat does not
+  // create a false critical alert.
+  await sleep(Number(process.env.NEON_STORAGE_CRITICAL_RECHECK_MS || 5000));
+  recheck = await measure();
+  if (recheck.database.bytes <= after.database.bytes) {
+    after = recheck;
+  }
+}
 const report = {
   generatedAt: new Date().toISOString(),
   mode: APPLY ? "apply" : "audit",
@@ -187,6 +202,7 @@ const report = {
   before,
   cleanup,
   after,
+  recheck,
 };
 
 console.log(JSON.stringify(report, null, 2));
