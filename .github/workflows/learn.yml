@@ -69,13 +69,13 @@ jobs:
         run: npm ci
 
       - name: Refresh match data and reviews
-        run: npm run worker:once
+        run: node scripts/ci-neon-safe.js -- npm run worker:once
 
       - name: Prepare training export
-        run: npm run train:prepare
+        run: node scripts/ci-neon-safe.js -- npm run train:prepare
 
       - name: Analyze snapshot database context
-        run: npm run train:snapshot-context:analyze
+        run: node scripts/ci-neon-safe.js -- npm run train:snapshot-context:analyze
 
       - name: Commit and push learning data
         run: |
