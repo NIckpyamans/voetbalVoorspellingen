@@ -34,10 +34,10 @@ jobs:
       - run: npm ci
 
       - name: Backfill generated logo fallbacks
-        run: npm run db:logos:backfill:apply
+        run: node scripts/ci-neon-safe.js -- npm run db:logos:backfill:apply
 
       - name: Recalibrate league/model profiles
-        run: npm run db:models:recalibrate:apply
+        run: node scripts/ci-neon-safe.js -- npm run db:models:recalibrate:apply
 
       - name: Monitor calibration sample health
-        run: npm run db:models:samples:monitor
+        run: node scripts/ci-neon-safe.js -- npm run db:models:samples:monitor

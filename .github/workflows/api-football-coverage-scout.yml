@@ -45,7 +45,7 @@ jobs:
           cache: npm
       - run: npm ci
       - name: Scout API-Football fixture and odds coverage
-        run: npm run db:api-football:coverage-scout
+        run: node scripts/ci-neon-safe.js -- npm run db:api-football:coverage-scout
       - name: Commit API-Football scout report
         run: |
           git config user.name "github-actions[bot]"
