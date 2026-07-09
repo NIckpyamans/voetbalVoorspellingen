@@ -35,7 +35,7 @@ const SettingsView: React.FC = () => {
   useEffect(() => {
     const fetchSettingsMetadata = async () => {
       try {
-        const response = await fetch(`/api/matches?date=${todayAmsterdamKey()}`);
+        const response = await fetch(`/api/matches?date=${todayAmsterdamKey()}&view=full`);
         const contentType = response.headers.get("content-type") || "";
         if (!response.ok || !contentType.includes("json")) {
           throw new Error(`Instellingen ophalen mislukt (${response.status})`);

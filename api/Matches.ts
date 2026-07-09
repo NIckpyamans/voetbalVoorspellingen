@@ -8,6 +8,7 @@ import { mergeDuplicateServedMatches, normalizeServedMatch } from "../shared/mat
 import { buildMatchSourceCoverage, databaseConfigured, readDatabaseCounts, readDatabaseDay } from "../shared/database.js";
 import { filterVisibleMatches } from "../shared/competitionVisibility.js";
 import { readDashboardDayCache } from "../shared/dashboardR2Cache.js";
+import { compactDashboardMatch } from "../shared/dashboardCompact.js";
 
 const logger = createLogger("api.matches");
 
@@ -156,6 +157,9 @@ async function readSplitDay(dateKey: string) {
 export default async function handler(req: any, res: any) {
   const started = Date.now();
   const { date, live, days } = req.query;
+  const view = String(req.query?.view || req.query?.mode || "compact").toLowerCase();
+  const full = view === "full" || view === "debug";
+  const includeDiagnostics = full || req.query?.diagnostics === "true";
   const today = todayAmsterdamKey();
   const targetDate = typeof date === "string" && date ? date : today;
   const isLiveSensitiveRequest = targetDate === today || live === "true";
@@ -167,11 +171,36 @@ export default async function handler(req: any, res: any) {
   );
 
   try {
-    const biweeklyDigest = await readBiweeklyDigest();
-    const dataContext = await readDataContext();
-    const databaseIntegration = await buildDatabaseIntegration(dataContext);
-    const rufloReport = await readRufloReport();
     const meta = await readSplitMeta();
+    let diagnosticsPayload = {};
+    if (includeDiagnostics) {
+      const [biweeklyDigest, dataContext, rufloReport] = await Promise.all([
+        readBiweeklyDigest(),
+        readDataContext(),
+        readRufloReport(),
+      ]);
+      const databaseIntegration = await buildDatabaseIntegration(dataContext);
+      diagnosticsPayload = {
+        featureDiagnostics: meta.featureDiagnostics || null,
+        sourceCoverage: meta.sourceCoverage || null,
+        dataScout: meta.dataScout || null,
+        dataCompletenessAudit: meta.dataCompletenessAudit || null,
+        oddsIntegrationReadiness: meta.oddsIntegrationReadiness || null,
+        modelPerformance: meta.modelPerformance || null,
+        backtestSummary: meta.backtestSummary || null,
+        backtestSegmentation: meta.backtestSegmentation || null,
+        leagueCalibrationProfiles: meta.leagueCalibrationProfiles || {},
+        leagueCalibrationProfilesByWindow: meta.leagueCalibrationProfilesByWindow || {},
+        leagueCalibrationRollbackProfiles: meta.leagueCalibrationRollbackProfiles || {},
+        anomalyReport: meta.anomalyReport || null,
+        competitionArchiveIndex: meta.competitionArchiveIndex || null,
+        teamSquadSummary: meta.teamSquadSummary || null,
+        biweeklyDigest,
+        dataContext,
+        databaseIntegration,
+        rufloReport,
+      };
+    }
 
     if (days && typeof days === "string") {
       const numDays = parseInt(days, 10);
@@ -203,12 +232,15 @@ export default async function handler(req: any, res: any) {
         }
 
         const uniqueMultiDayMatches = filterVisibleMatches(mergeDuplicateServedMatches(multiDayMatches));
+        const responseMatches = full ? uniqueMultiDayMatches : uniqueMultiDayMatches.map(compactDashboardMatch);
 
-      return res.status(200).json({
+        return res.status(200).json({
           ok: true,
-          matches: uniqueMultiDayMatches,
-          events: uniqueMultiDayMatches,
-          total: uniqueMultiDayMatches.length,
+          view: full ? "full" : "compact",
+          matches: responseMatches,
+          events: responseMatches,
+          total: responseMatches.length,
+          rawTotal: uniqueMultiDayMatches.length,
           date: targetDate,
           dateRange: `${numDays} dagen`,
           lastRun: meta.lastRun || null,
@@ -216,24 +248,7 @@ export default async function handler(req: any, res: any) {
           reviewCount: meta.reviewCount || 0,
           teamLearningCount: meta.teamLearningCount || 0,
           aiAdvice: meta.aiAdvice || [],
-          featureDiagnostics: meta.featureDiagnostics || null,
-          sourceCoverage: meta.sourceCoverage || null,
-          dataScout: meta.dataScout || null,
-          dataCompletenessAudit: meta.dataCompletenessAudit || null,
-          oddsIntegrationReadiness: meta.oddsIntegrationReadiness || null,
-          modelPerformance: meta.modelPerformance || null,
-          backtestSummary: meta.backtestSummary || null,
-          backtestSegmentation: meta.backtestSegmentation || null,
-          leagueCalibrationProfiles: meta.leagueCalibrationProfiles || {},
-          leagueCalibrationProfilesByWindow: meta.leagueCalibrationProfilesByWindow || {},
-          leagueCalibrationRollbackProfiles: meta.leagueCalibrationRollbackProfiles || {},
-          anomalyReport: meta.anomalyReport || null,
-          competitionArchiveIndex: meta.competitionArchiveIndex || null,
-          teamSquadSummary: meta.teamSquadSummary || null,
-          biweeklyDigest,
-          dataContext,
-          databaseIntegration,
-          rufloReport,
+          ...diagnosticsPayload,
           sourceBranch,
           source: sourceBranch === "postgres" ? "postgres-database-multiday" : "github-worker-v4-split-multiday",
           durationMs: Date.now() - started,
@@ -278,43 +293,29 @@ export default async function handler(req: any, res: any) {
     const matches = live === "true"
       ? uniqueBaseMatches.filter((m: any) => String(m.status || "").toUpperCase() === "LIVE")
       : uniqueBaseMatches;
+    const responseMatches = full ? matches : matches.map(compactDashboardMatch);
 
     return res.status(200).json({
       ok: true,
-      matches,
-      events: matches,
-      total: matches.length,
+      view: full ? "full" : "compact",
+      matches: responseMatches,
+      events: responseMatches,
+      total: responseMatches.length,
+      rawTotal: matches.length,
       date: targetDate,
       lastRun,
       workerVersion,
       reviewCount: meta.reviewCount || 0,
       teamLearningCount: meta.teamLearningCount || 0,
       aiAdvice: meta.aiAdvice || [],
-      featureDiagnostics: meta.featureDiagnostics || null,
-      sourceCoverage: meta.sourceCoverage || null,
-      dataScout: meta.dataScout || null,
-      dataCompletenessAudit: meta.dataCompletenessAudit || null,
-      oddsIntegrationReadiness: meta.oddsIntegrationReadiness || null,
-      modelPerformance: meta.modelPerformance || null,
-      backtestSummary: meta.backtestSummary || null,
-      backtestSegmentation: meta.backtestSegmentation || null,
-      leagueCalibrationProfiles: meta.leagueCalibrationProfiles || {},
-      leagueCalibrationProfilesByWindow: meta.leagueCalibrationProfilesByWindow || {},
-      leagueCalibrationRollbackProfiles: meta.leagueCalibrationRollbackProfiles || {},
-      anomalyReport: meta.anomalyReport || null,
-      competitionArchiveIndex: meta.competitionArchiveIndex || null,
-      teamSquadSummary: meta.teamSquadSummary || null,
-      biweeklyDigest,
-      dataContext,
-      databaseIntegration,
-      rufloReport,
+      ...diagnosticsPayload,
       sourceBranch,
-      source: matches.length && sourceBranch === "postgres"
+      source: responseMatches.length && sourceBranch === "postgres"
         ? "postgres-database"
-        : matches.length && sourceBranch === "r2-dashboard-cache"
+        : responseMatches.length && sourceBranch === "r2-dashboard-cache"
           ? "cloudflare-r2-dashboard-cache"
-          : matches.length ? "github-worker-v4-split" : "no-matches-yet",
-      message: matches.length ? null : "Nog geen wedstrijden gevonden voor deze dag in de actuele workerdata.",
+          : responseMatches.length ? "github-worker-v4-split" : "no-matches-yet",
+      message: responseMatches.length ? null : "Nog geen wedstrijden gevonden voor deze dag in de actuele workerdata.",
       durationMs: Date.now() - started,
     });
   } catch (err: any) {

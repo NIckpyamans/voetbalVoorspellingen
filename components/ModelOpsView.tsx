@@ -21,7 +21,7 @@ const ModelOpsView: React.FC = () => {
 
   useEffect(() => {
     let cancelled = false;
-    fetch(`/api/matches?t=${Date.now()}`, { cache: "no-store" })
+    fetch(`/api/matches?view=full&t=${Date.now()}`, { cache: "no-store" })
       .then((response) => response.json())
       .then((data) => {
         if (!cancelled) setPayload(data || {});

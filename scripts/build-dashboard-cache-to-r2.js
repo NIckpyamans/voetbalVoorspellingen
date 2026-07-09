@@ -4,6 +4,11 @@ import { gzipSync } from "zlib";
 import { addDaysToDateKey, todayAmsterdamKey } from "../shared/date.js";
 import { databaseConfigured, getSql, loadLocalEnv, readDatabaseDay } from "../shared/database.js";
 import { buildR2ObjectKey, getR2Config, putR2Object } from "../shared/cloudflare-r2.js";
+import {
+  compactDashboardMatch,
+  compactDashboardPrediction,
+  latestPredictionPerMatch,
+} from "../shared/dashboardCompact.js";
 
 const APPLY = process.argv.includes("--apply");
 const DAYS = String(process.env.DASHBOARD_CACHE_DAYS || "-1,0,1,2")
@@ -25,15 +30,19 @@ const uploads = [];
 for (const offset of DAYS) {
   const date = addDaysToDateKey(today, offset);
   const day = await readDatabaseDay(date).catch(() => null);
+  const matches = (day?.matches || []).map(compactDashboardMatch);
+  const predictions = latestPredictionPerMatch(day?.predictions || []).map(compactDashboardPrediction);
   const payload = {
     ok: true,
     source: "postgres-r2-dashboard-cache",
+    view: "compact",
     generatedAt: new Date().toISOString(),
     date,
-    matches: day?.matches || [],
-    predictions: day?.predictions || [],
+    matches,
+    predictions,
     totalMatches: Number(day?.matches?.length || 0),
-    totalPredictions: Number(day?.predictions?.length || 0),
+    totalPredictions: Number(predictions.length || 0),
+    rawTotalPredictions: Number(day?.predictions?.length || 0),
   };
   const raw = Buffer.from(JSON.stringify(payload), "utf8");
   const compressed = gzipSync(raw, { level: 9 });
@@ -50,6 +59,7 @@ for (const offset of DAYS) {
         date,
         matches: String(payload.totalMatches),
         predictions: String(payload.totalPredictions),
+        rawPredictions: String(payload.rawTotalPredictions),
       },
     });
   }
@@ -58,6 +68,7 @@ for (const offset of DAYS) {
     objectKey: key,
     matches: payload.totalMatches,
     predictions: payload.totalPredictions,
+    rawPredictions: payload.rawTotalPredictions,
     bytes: raw.length,
     compressedBytes: compressed.length,
     upload,

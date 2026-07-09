@@ -370,6 +370,17 @@ async function upsertMatch(sql, match, fallbackDate = null) {
         weather_payload = excluded.weather_payload,
         source_coverage = excluded.source_coverage,
         updated_at = now()
+      where (
+        matches.source_match_id, matches.data_source, matches.league, matches.season, matches.kickoff_at,
+        matches.home_team_id, matches.away_team_id, matches.home_team_name, matches.away_team_name,
+        matches.team_identity, matches.status, matches.status_normalized, matches.date_key,
+        matches.raw_payload, matches.weather_payload, matches.source_coverage
+      ) is distinct from (
+        excluded.source_match_id, excluded.data_source, excluded.league, excluded.season, excluded.kickoff_at,
+        excluded.home_team_id, excluded.away_team_id, excluded.home_team_name, excluded.away_team_name,
+        excluded.team_identity, excluded.status, excluded.status_normalized, excluded.date_key,
+        excluded.raw_payload, excluded.weather_payload, excluded.source_coverage
+      )
     `,
     [
       String(match.id),
@@ -404,6 +415,13 @@ async function upsertMatch(sql, match, fallbackDate = null) {
           actual_outcome = excluded.actual_outcome,
           result_source = excluded.result_source,
           settled_at = excluded.settled_at
+        where (
+          match_results.final_home_goals, match_results.final_away_goals,
+          match_results.actual_outcome, match_results.result_source
+        ) is distinct from (
+          excluded.final_home_goals, excluded.final_away_goals,
+          excluded.actual_outcome, excluded.result_source
+        )
       `,
       [String(match.id), score.home, score.away, outcomeFromGoals(score.home, score.away), match.dataSource || "worker-json"]
     );
@@ -537,6 +555,25 @@ async function upsertPredictionSnapshot(sql, snapshot, matchById) {
         feature_source_metadata = excluded.feature_source_metadata,
         leakage_guard = excluded.leakage_guard,
         prediction_payload = excluded.prediction_payload
+      where (
+        prediction_snapshots.match_id, prediction_snapshots.generated_at, prediction_snapshots.cutoff_at,
+        prediction_snapshots.model_version, prediction_snapshots.feature_schema_version,
+        prediction_snapshots.algorithm_version, prediction_snapshots.input_snapshot_hash,
+        prediction_snapshots.input_snapshot, prediction_snapshots.features, prediction_snapshots.probabilities,
+        prediction_snapshots.confidence, prediction_snapshots.confidence_raw, prediction_snapshots.calibration,
+        prediction_snapshots.expected_score, prediction_snapshots.explanation,
+        prediction_snapshots.data_completeness, prediction_snapshots.feature_source_metadata,
+        prediction_snapshots.leakage_guard, prediction_snapshots.prediction_payload
+      ) is distinct from (
+        excluded.match_id, excluded.generated_at, excluded.cutoff_at,
+        excluded.model_version, excluded.feature_schema_version,
+        excluded.algorithm_version, excluded.input_snapshot_hash,
+        excluded.input_snapshot, excluded.features, excluded.probabilities,
+        excluded.confidence, excluded.confidence_raw, excluded.calibration,
+        excluded.expected_score, excluded.explanation,
+        excluded.data_completeness, excluded.feature_source_metadata,
+        excluded.leakage_guard, excluded.prediction_payload
+      )
     `,
     [
       String(predictionId),
