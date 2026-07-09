@@ -16,7 +16,7 @@ jobs:
           node-version: 22
           cache: npm
       - run: npm ci
-      - run: npm run db:odds:prematch:collect
+      - run: node scripts/ci-neon-safe.js -- npm run db:odds:prematch:collect
         env:
           DATABASE_URL: ${{ secrets.DATABASE_URL }}
           POSTGRES_URL: ${{ secrets.POSTGRES_URL }}
@@ -38,12 +38,12 @@ jobs:
           ODDS_API_DAYS_AHEAD: 21
           ODDS_API_CLOSING_LIMIT: 180
           ODDS_API_CLOSING_LOOKAHEAD_MINUTES: 180
-      - run: node scripts/evaluate-prediction-snapshots.js
+      - run: node scripts/ci-neon-safe.js -- node scripts/evaluate-prediction-snapshots.js
         env:
           DATABASE_URL: ${{ secrets.DATABASE_URL }}
           POSTGRES_URL: ${{ secrets.POSTGRES_URL }}
           PREDICTION_EVALUATION_LIMIT: 5000
-      - run: npm run db:roi-clv:analyze && npm run db:integrity:snapshot
+      - run: node scripts/ci-neon-safe.js -- bash -lc "npm run db:roi-clv:analyze && npm run db:integrity:snapshot"
         env:
           DATABASE_URL: ${{ secrets.DATABASE_URL }}
           POSTGRES_URL: ${{ secrets.POSTGRES_URL }}

@@ -17,7 +17,7 @@ jobs:
           cache: npm
       - run: npm ci
       - name: Maintain Neon storage budget before heavy writes
-        run: npm run db:neon-storage:maintain
+        run: node scripts/ci-neon-safe.js -- npm run db:neon-storage:maintain
         env:
           DATABASE_URL: ${{ secrets.DATABASE_URL }}
           POSTGRES_URL: ${{ secrets.POSTGRES_URL }}
@@ -27,59 +27,59 @@ jobs:
           CLOUDFLARE_R2_BUCKET: ${{ secrets.CLOUDFLARE_R2_BUCKET }}
           CLOUDFLARE_R2_PREFIX: ${{ secrets.CLOUDFLARE_R2_PREFIX }}
       - name: Apply database contracts
-        run: npm run db:schema:apply
+        run: node scripts/ci-neon-safe.js -- npm run db:schema:apply
         env:
           DATABASE_URL: ${{ secrets.DATABASE_URL }}
           POSTGRES_URL: ${{ secrets.POSTGRES_URL }}
       - name: Quarantine unresolved match identities
-        run: npm run db:matches:quarantine
+        run: node scripts/ci-neon-safe.js -- npm run db:matches:quarantine
         env:
           DATABASE_URL: ${{ secrets.DATABASE_URL }}
           POSTGRES_URL: ${{ secrets.POSTGRES_URL }}
       - name: Resolve quarantined identities using aliases and provider evidence
-        run: npm run db:matches:resolve
+        run: node scripts/ci-neon-safe.js -- npm run db:matches:resolve
         env:
           DATABASE_URL: ${{ secrets.DATABASE_URL }}
           POSTGRES_URL: ${{ secrets.POSTGRES_URL }}
       - name: Link fuzzy canonical fixtures and club aliases
-        run: npm run db:fixtures:fuzzy-link:apply
+        run: node scripts/ci-neon-safe.js -- npm run db:fixtures:fuzzy-link:apply
         env:
           DATABASE_URL: ${{ secrets.DATABASE_URL }}
           POSTGRES_URL: ${{ secrets.POSTGRES_URL }}
       - name: Complete direct match source lineage
-        run: npm run db:matches:lineage && npm run db:sources:redundancy:backfill && npm run db:sources:espn:backfill && npm run db:sources:thesportsdb:backfill
+        run: node scripts/ci-neon-safe.js -- bash -lc "npm run db:matches:lineage && npm run db:sources:redundancy:backfill && npm run db:sources:espn:backfill && npm run db:sources:thesportsdb:backfill"
         env:
           DATABASE_URL: ${{ secrets.DATABASE_URL }}
           POSTGRES_URL: ${{ secrets.POSTGRES_URL }}
           THESPORTSDB_API_KEY: ${{ secrets.THESPORTSDB_API_KEY }}
       - name: Score providers, run trials and evaluate shadow calibrations
-        run: npm run db:sources:trust && npm run db:sources:circuit-breaker && npm run db:models:recalibrate && npm run db:models:shadow:evaluate && npm run db:models:samples:monitor
+        run: node scripts/ci-neon-safe.js -- bash -lc "npm run db:sources:trust && npm run db:sources:circuit-breaker && npm run db:models:recalibrate && npm run db:models:shadow:evaluate && npm run db:models:samples:monitor"
         env:
           DATABASE_URL: ${{ secrets.DATABASE_URL }}
           POSTGRES_URL: ${{ secrets.POSTGRES_URL }}
       - name: Detect field-level source conflicts
-        run: npm run db:sources:conflicts
+        run: node scripts/ci-neon-safe.js -- npm run db:sources:conflicts
         env:
           DATABASE_URL: ${{ secrets.DATABASE_URL }}
           POSTGRES_URL: ${{ secrets.POSTGRES_URL }}
       - name: Merge confirmed canonical club aliases and create encrypted recovery backup
-        run: npm run db:clubs:merge && npm run db:clubs:merge:backup:encrypted
+        run: node scripts/ci-neon-safe.js -- bash -lc "npm run db:clubs:merge && npm run db:clubs:merge:backup:encrypted"
         env:
           DATABASE_URL: ${{ secrets.DATABASE_URL }}
           POSTGRES_URL: ${{ secrets.POSTGRES_URL }}
           CLUB_MERGE_BACKUP_KEY: ${{ secrets.CLUB_MERGE_BACKUP_KEY }}
       - name: Repair trusted field-level source conflicts
-        run: npm run db:sources:conflicts:repair
+        run: node scripts/ci-neon-safe.js -- npm run db:sources:conflicts:repair
         env:
           DATABASE_URL: ${{ secrets.DATABASE_URL }}
           POSTGRES_URL: ${{ secrets.POSTGRES_URL }}
       - name: Audit every prediction source field
-        run: npm run db:sources:audit
+        run: node scripts/ci-neon-safe.js -- npm run db:sources:audit
         env:
           DATABASE_URL: ${{ secrets.DATABASE_URL }}
           POSTGRES_URL: ${{ secrets.POSTGRES_URL }}
       - name: Capture free timestamped prematch odds
-        run: npm run db:odds:prematch:collect
+        run: node scripts/ci-neon-safe.js -- npm run db:odds:prematch:collect
         env:
           DATABASE_URL: ${{ secrets.DATABASE_URL }}
           POSTGRES_URL: ${{ secrets.POSTGRES_URL }}
@@ -102,17 +102,17 @@ jobs:
           ODDS_API_CLOSING_LIMIT: 180
           ODDS_API_CLOSING_LOOKAHEAD_MINUTES: 180
       - name: Enforce odds leakage classifications
-        run: npm run db:odds:leakage
+        run: node scripts/ci-neon-safe.js -- npm run db:odds:leakage
         env:
           DATABASE_URL: ${{ secrets.DATABASE_URL }}
           POSTGRES_URL: ${{ secrets.POSTGRES_URL }}
       - name: Rebuild H2H using set-based SQL
-        run: npm run db:h2h:rebuild
+        run: node scripts/ci-neon-safe.js -- npm run db:h2h:rebuild
         env:
           DATABASE_URL: ${{ secrets.DATABASE_URL }}
           POSTGRES_URL: ${{ secrets.POSTGRES_URL }}
       - name: Backfill upcoming H2H using configured providers
-        run: npm run db:h2h:backfill-upcoming
+        run: node scripts/ci-neon-safe.js -- npm run db:h2h:backfill-upcoming
         env:
           DATABASE_URL: ${{ secrets.DATABASE_URL }}
           POSTGRES_URL: ${{ secrets.POSTGRES_URL }}
@@ -122,17 +122,17 @@ jobs:
           H2H_BACKFILL_DAYS_AHEAD: "21"
           H2H_BACKFILL_LIMIT: "40"
       - name: Rebuild phase reliability from evaluated snapshots
-        run: npm run db:phase:rebuild
+        run: node scripts/ci-neon-safe.js -- npm run db:phase:rebuild
         env:
           DATABASE_URL: ${{ secrets.DATABASE_URL }}
           POSTGRES_URL: ${{ secrets.POSTGRES_URL }}
       - name: Capture integrity trends and partition readiness
-        run: npm run db:integrity:snapshot && npm run db:quality:alerts && npm run db:partition:assess
+        run: node scripts/ci-neon-safe.js -- bash -lc "npm run db:integrity:snapshot && npm run db:quality:alerts && npm run db:partition:assess"
         env:
           DATABASE_URL: ${{ secrets.DATABASE_URL }}
           POSTGRES_URL: ${{ secrets.POSTGRES_URL }}
       - name: Audit source redundancy and maintain Neon storage budget
-        run: npm run monitor:source-redundancy && npm run db:neon-storage:maintain
+        run: node scripts/ci-neon-safe.js -- bash -lc "npm run monitor:source-redundancy && npm run db:neon-storage:maintain"
         env:
           DATABASE_URL: ${{ secrets.DATABASE_URL }}
           POSTGRES_URL: ${{ secrets.POSTGRES_URL }}
@@ -142,7 +142,7 @@ jobs:
           CLOUDFLARE_R2_BUCKET: ${{ secrets.CLOUDFLARE_R2_BUCKET }}
           CLOUDFLARE_R2_PREFIX: ${{ secrets.CLOUDFLARE_R2_PREFIX }}
       - name: Send configured quality alerts
-        run: npm run monitor:alerts
+        run: node scripts/ci-neon-safe.js -- npm run monitor:alerts
         env:
           DATABASE_URL: ${{ secrets.DATABASE_URL }}
           POSTGRES_URL: ${{ secrets.POSTGRES_URL }}

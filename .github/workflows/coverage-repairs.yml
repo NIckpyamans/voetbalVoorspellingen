@@ -21,8 +21,8 @@ jobs:
           cache: npm
       - run: npm ci
       - name: Process dashboard repair requests
-        run: node scripts/process-coverage-repairs.js
+        run: node scripts/ci-neon-safe.js -- node scripts/process-coverage-repairs.js
         env:
           DATABASE_URL: ${{ secrets.DATABASE_URL }}
           POSTGRES_URL: ${{ secrets.POSTGRES_URL }}
-          COVERAGE_REPAIR_BATCH_LIMIT: 25
+          COVERAGE_REPAIR_BATCH_LIMIT: 10

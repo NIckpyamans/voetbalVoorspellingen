@@ -2,8 +2,7 @@ name: Free timestamped prematch odds
 
 on:
   schedule:
-    - cron: "17 * * * *"
-    - cron: "13 */4 * * *"
+    - cron: "17 */6 * * *"
   workflow_dispatch:
 
 jobs:
@@ -17,7 +16,7 @@ jobs:
           node-version: 22
           cache: npm
       - run: npm ci
-      - run: npm run db:odds:prematch:collect
+      - run: node scripts/ci-neon-safe.js -- npm run db:odds:prematch:collect
         env:
           DATABASE_URL: ${{ secrets.DATABASE_URL }}
           POSTGRES_URL: ${{ secrets.POSTGRES_URL }}
@@ -39,7 +38,7 @@ jobs:
           ODDS_API_DAYS_AHEAD: 28
           ODDS_API_CLOSING_LIMIT: 240
           ODDS_API_CLOSING_LOOKAHEAD_MINUTES: 240
-      - run: npm run db:odds:leakage
+      - run: node scripts/ci-neon-safe.js -- npm run db:odds:leakage
         env:
           DATABASE_URL: ${{ secrets.DATABASE_URL }}
           POSTGRES_URL: ${{ secrets.POSTGRES_URL }}

@@ -22,12 +22,12 @@ jobs:
           cache: npm
       - run: npm ci
       - name: Maintain Neon storage budget before fixture import
-        run: npm run db:neon-storage:maintain
+        run: node scripts/ci-neon-safe.js -- npm run db:neon-storage:maintain
         env:
           DATABASE_URL: ${{ secrets.DATABASE_URL }}
           POSTGRES_URL: ${{ secrets.POSTGRES_URL }}
       - name: Discover Football-Data 2026/2027 fixtures
-        run: node scripts/import-free-sources.js --source=football-data --league=${{ matrix.league }} --season-folder=2627
+        run: node scripts/ci-neon-safe.js -- node scripts/import-free-sources.js --source=football-data --league=${{ matrix.league }} --season-folder=2627
         env:
           DATABASE_URL: ${{ secrets.DATABASE_URL }}
           POSTGRES_URL: ${{ secrets.POSTGRES_URL }}
@@ -50,12 +50,12 @@ jobs:
           cache: npm
       - run: npm ci
       - name: Maintain Neon storage budget before fixture import
-        run: npm run db:neon-storage:maintain
+        run: node scripts/ci-neon-safe.js -- npm run db:neon-storage:maintain
         env:
           DATABASE_URL: ${{ secrets.DATABASE_URL }}
           POSTGRES_URL: ${{ secrets.POSTGRES_URL }}
       - name: Discover OpenFootball upcoming fixtures
-        run: node scripts/import-free-sources.js --source=openfootball --league=${{ matrix.league }}
+        run: node scripts/ci-neon-safe.js -- node scripts/import-free-sources.js --source=openfootball --league=${{ matrix.league }}
         env:
           DATABASE_URL: ${{ secrets.DATABASE_URL }}
           POSTGRES_URL: ${{ secrets.POSTGRES_URL }}
@@ -74,23 +74,23 @@ jobs:
           cache: npm
       - run: npm ci
       - name: Maintain Neon storage budget before canonical merges
-        run: npm run db:neon-storage:maintain
+        run: node scripts/ci-neon-safe.js -- npm run db:neon-storage:maintain
         env:
           DATABASE_URL: ${{ secrets.DATABASE_URL }}
           POSTGRES_URL: ${{ secrets.POSTGRES_URL }}
-      - run: node scripts/merge-source-competitions.js
+      - run: node scripts/ci-neon-safe.js -- node scripts/merge-source-competitions.js
         env:
           DATABASE_URL: ${{ secrets.DATABASE_URL }}
           POSTGRES_URL: ${{ secrets.POSTGRES_URL }}
-      - run: node scripts/merge-source-clubs.js
+      - run: node scripts/ci-neon-safe.js -- node scripts/merge-source-clubs.js
         env:
           DATABASE_URL: ${{ secrets.DATABASE_URL }}
           POSTGRES_URL: ${{ secrets.POSTGRES_URL }}
-      - run: node scripts/merge-canonical-fixtures.js
+      - run: node scripts/ci-neon-safe.js -- node scripts/merge-canonical-fixtures.js
         env:
           DATABASE_URL: ${{ secrets.DATABASE_URL }}
           POSTGRES_URL: ${{ secrets.POSTGRES_URL }}
-      - run: node scripts/reset-competition-seasons.js
+      - run: node scripts/ci-neon-safe.js -- node scripts/reset-competition-seasons.js
         env:
           DATABASE_URL: ${{ secrets.DATABASE_URL }}
           POSTGRES_URL: ${{ secrets.POSTGRES_URL }}

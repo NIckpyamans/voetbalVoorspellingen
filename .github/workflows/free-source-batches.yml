@@ -125,7 +125,7 @@ jobs:
           POSTGRES_URL: ${{ secrets.POSTGRES_URL }}
           FREE_SOURCE_WEATHER_LIMIT: 700
       - name: Process requested coverage repairs
-        run: node scripts/process-coverage-repairs.js
+        run: node scripts/ci-neon-safe.js -- node scripts/process-coverage-repairs.js
         env:
           DATABASE_URL: ${{ secrets.DATABASE_URL }}
           POSTGRES_URL: ${{ secrets.POSTGRES_URL }}

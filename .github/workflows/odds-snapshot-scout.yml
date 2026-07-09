@@ -48,7 +48,7 @@ jobs:
           ODDS_SCOUT_LIMIT: 40
           ODDS_SCOUT_DAYS_AHEAD: 21
       - run: npm run monitor:snapshot-growth
-      - run: npm run monitor:lineups
+      - run: node scripts/ci-neon-safe.js -- npm run monitor:lineups
         env:
           LINEUP_MONITOR_DAYS_AHEAD: 14
           LINEUP_MONITOR_LIMIT: 120

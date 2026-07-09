@@ -42,4 +42,4 @@ jobs:
           sudo apt-get install -y postgresql-client
 
       - name: Apply schema
-        run: npm run db:schema:apply
+        run: node scripts/ci-neon-safe.js -- npm run db:schema:apply
