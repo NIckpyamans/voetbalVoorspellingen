@@ -55,5 +55,17 @@ child.on("close", (code, signal) => {
     process.exit(0);
   }
 
+  const transientNeonFailure =
+    /NeonDbError: Error connecting to database/i.test(output) ||
+    /TypeError: fetch failed/i.test(output) ||
+    /connect E(?:ACCES|CONNRESET|TIMEDOUT|HOSTUNREACH)/i.test(output);
+
+  if (transientNeonFailure) {
+    console.warn(
+      "[ci-neon-safe] Neon/network temporarily unavailable. Treating this scheduled data job as a soft skip; the next orchestrated run can retry."
+    );
+    process.exit(0);
+  }
+
   process.exit(code || 1);
 });

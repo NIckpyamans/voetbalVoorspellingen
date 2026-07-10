@@ -1,8 +1,6 @@
 name: Odds and snapshot scout
 
 on:
-  schedule:
-    - cron: "23 8 * * *"
   workflow_dispatch:
 
 permissions:
@@ -43,11 +41,11 @@ jobs:
           node-version: 22
           cache: npm
       - run: npm ci
-      - run: npm run monitor:odds-coverage
+      - run: node scripts/ci-neon-safe.js -- npm run monitor:odds-coverage
         env:
           ODDS_SCOUT_LIMIT: 40
           ODDS_SCOUT_DAYS_AHEAD: 21
-      - run: npm run monitor:snapshot-growth
+      - run: node scripts/ci-neon-safe.js -- npm run monitor:snapshot-growth
       - run: node scripts/ci-neon-safe.js -- npm run monitor:lineups
         env:
           LINEUP_MONITOR_DAYS_AHEAD: 14

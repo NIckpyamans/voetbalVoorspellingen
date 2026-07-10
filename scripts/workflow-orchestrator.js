@@ -51,6 +51,7 @@ function plannedWorkflows() {
     if (hour === 5) workflows.push("data-integrity-maintenance.yml");
     if (hour === 6) workflows.push("api-football-coverage-scout.yml");
     if (hour === 7) workflows.push("learn.yml");
+    if (hour === 8) workflows.push("odds-snapshot-scout.yml");
   }
 
   if (mode === "full") {
