@@ -275,7 +275,7 @@ export default async function handler(req: any, res: any) {
     const date = (req.query?.date as string) || todayAmsterdamKey();
     const view = String(req.query?.view || req.query?.mode || "compact").toLowerCase();
     const matchId = req.query?.matchId || req.query?.id || null;
-    const full = view === "full" || view === "debug" || Boolean(matchId);
+    const full = view === "full" || view === "debug";
     let predictions: any[] = [];
     let matches: any[] = [];
     let reviews: Record<string, any> = {};
