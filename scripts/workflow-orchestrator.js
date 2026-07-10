@@ -55,6 +55,7 @@ function plannedWorkflows() {
   if (mode === "full") {
     if (day === 1 || day === 15) workflows.push("prediction-evaluation.yml");
     if (hour === 9) workflows.push("coverage-repairs.yml");
+    if (hour === 3) workflows.push("free-source-batches.yml");
   }
 
   return unique(workflows);

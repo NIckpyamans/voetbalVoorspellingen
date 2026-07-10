@@ -1,8 +1,6 @@
 name: Free source database batches
 
 on:
-  schedule:
-    - cron: "17 3 * * 2,5"
   workflow_dispatch:
     inputs:
       source:
@@ -30,7 +28,7 @@ jobs:
           cache: npm
       - run: npm ci
       - name: Apply database schema once before parallel imports
-        run: node scripts/apply-database-schema.js
+        run: node scripts/ci-neon-safe.js -- node scripts/apply-database-schema.js
         env:
           DATABASE_URL: ${{ secrets.DATABASE_URL }}
           POSTGRES_URL: ${{ secrets.POSTGRES_URL }}
@@ -52,7 +50,7 @@ jobs:
           cache: npm
       - run: npm ci
       - name: Detect newly published season files
-        run: node scripts/import-free-sources.js --source=football-data --league=${{ matrix.league }}
+        run: node scripts/ci-neon-safe.js -- node scripts/import-free-sources.js --source=football-data --league=${{ matrix.league }}
         env:
           DATABASE_URL: ${{ secrets.DATABASE_URL }}
           POSTGRES_URL: ${{ secrets.POSTGRES_URL }}
@@ -75,7 +73,7 @@ jobs:
           cache: npm
       - run: npm ci
       - name: Detect newly published OpenFootball seasons
-        run: node scripts/import-free-sources.js --source=openfootball --league=${{ matrix.league }}
+        run: node scripts/ci-neon-safe.js -- node scripts/import-free-sources.js --source=openfootball --league=${{ matrix.league }}
         env:
           DATABASE_URL: ${{ secrets.DATABASE_URL }}
           POSTGRES_URL: ${{ secrets.POSTGRES_URL }}
@@ -93,33 +91,33 @@ jobs:
           cache: npm
       - run: npm ci
       - name: Merge source competitions into canonical seasons
-        run: node scripts/merge-source-competitions.js
+        run: node scripts/ci-neon-safe.js -- node scripts/merge-source-competitions.js
         env:
           DATABASE_URL: ${{ secrets.DATABASE_URL }}
           POSTGRES_URL: ${{ secrets.POSTGRES_URL }}
       - name: Merge source clubs into canonical identities
-        run: node scripts/merge-source-clubs.js
+        run: node scripts/ci-neon-safe.js -- node scripts/merge-source-clubs.js
         env:
           DATABASE_URL: ${{ secrets.DATABASE_URL }}
           POSTGRES_URL: ${{ secrets.POSTGRES_URL }}
       - name: Merge duplicate source fixtures
-        run: node scripts/merge-canonical-fixtures.js
+        run: node scripts/ci-neon-safe.js -- node scripts/merge-canonical-fixtures.js
         env:
           DATABASE_URL: ${{ secrets.DATABASE_URL }}
           POSTGRES_URL: ${{ secrets.POSTGRES_URL }}
       - name: Rebuild season memberships and H2H after discovery
-        run: node scripts/reset-competition-seasons.js
+        run: node scripts/ci-neon-safe.js -- node scripts/reset-competition-seasons.js
         env:
           DATABASE_URL: ${{ secrets.DATABASE_URL }}
           POSTGRES_URL: ${{ secrets.POSTGRES_URL }}
       - name: Backfill free match stats and historical odds
-        run: node scripts/import-free-sources.js --source=football-data
+        run: node scripts/ci-neon-safe.js -- node scripts/import-free-sources.js --source=football-data
         env:
           DATABASE_URL: ${{ secrets.DATABASE_URL }}
           POSTGRES_URL: ${{ secrets.POSTGRES_URL }}
           FREE_SOURCE_IMPORT_LIMIT: 700
       - name: Backfill weather after season discovery
-        run: node scripts/import-free-sources.js --source=weather
+        run: node scripts/ci-neon-safe.js -- node scripts/import-free-sources.js --source=weather
         env:
           DATABASE_URL: ${{ secrets.DATABASE_URL }}
           POSTGRES_URL: ${{ secrets.POSTGRES_URL }}
@@ -148,12 +146,12 @@ jobs:
           node-version: 22
           cache: npm
       - run: npm ci
-      - run: node scripts/import-free-sources.js --source=football-data --league=${{ matrix.league }} --season-folder=${{ matrix.season_folder }}
+      - run: node scripts/ci-neon-safe.js -- node scripts/import-free-sources.js --source=football-data --league=${{ matrix.league }} --season-folder=${{ matrix.season_folder }}
         env:
           DATABASE_URL: ${{ secrets.DATABASE_URL }}
           POSTGRES_URL: ${{ secrets.POSTGRES_URL }}
           FREE_SOURCE_IMPORT_LIMIT: 420
-      - run: node scripts/reset-competition-seasons.js
+      - run: node scripts/ci-neon-safe.js -- node scripts/reset-competition-seasons.js
         env:
           DATABASE_URL: ${{ secrets.DATABASE_URL }}
           POSTGRES_URL: ${{ secrets.POSTGRES_URL }}
@@ -170,7 +168,7 @@ jobs:
           cache: npm
       - run: npm ci
       - name: Import reliable free StatsBomb xG and style data
-        run: node scripts/import-free-sources.js --source=statsbomb
+        run: node scripts/ci-neon-safe.js -- node scripts/import-free-sources.js --source=statsbomb
         env:
           DATABASE_URL: ${{ secrets.DATABASE_URL }}
           POSTGRES_URL: ${{ secrets.POSTGRES_URL }}
@@ -186,11 +184,11 @@ jobs:
           node-version: 22
           cache: npm
       - run: npm ci
-      - run: node scripts/apply-database-schema.js
+      - run: node scripts/ci-neon-safe.js -- node scripts/apply-database-schema.js
         env:
           DATABASE_URL: ${{ secrets.DATABASE_URL }}
           POSTGRES_URL: ${{ secrets.POSTGRES_URL }}
-      - run: node scripts/import-free-sources.js --source=${{ inputs.source }} --league=${{ inputs.league }} --season-folder=${{ inputs.season_folder }}
+      - run: node scripts/ci-neon-safe.js -- node scripts/import-free-sources.js --source=${{ inputs.source }} --league=${{ inputs.league }} --season-folder=${{ inputs.season_folder }}
         env:
           DATABASE_URL: ${{ secrets.DATABASE_URL }}
           POSTGRES_URL: ${{ secrets.POSTGRES_URL }}
@@ -199,7 +197,7 @@ jobs:
           STATSBOMB_EVENT_LIMIT: 24
           STATSBOMB_COMPETITION_LIMIT: 16
           VENUE_GEOCODE_LIMIT: 20
-      - run: node scripts/reset-competition-seasons.js
+      - run: node scripts/ci-neon-safe.js -- node scripts/reset-competition-seasons.js
         env:
           DATABASE_URL: ${{ secrets.DATABASE_URL }}
           POSTGRES_URL: ${{ secrets.POSTGRES_URL }}
