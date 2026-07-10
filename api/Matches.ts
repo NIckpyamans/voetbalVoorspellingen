@@ -226,6 +226,22 @@ function compactDetailMatch(match: any, section: string) {
   };
 }
 
+function detailIdentityText(value: any) {
+  return String(value || "")
+    .toLowerCase()
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .replace(/[^a-z0-9]+/g, " ")
+    .trim();
+}
+
+function sameDetailFixture(a: any, b: any) {
+  return Boolean(a && b) &&
+    detailIdentityText(a.league) === detailIdentityText(b.league) &&
+    detailIdentityText(a.homeTeamName) === detailIdentityText(b.homeTeamName) &&
+    detailIdentityText(a.awayTeamName) === detailIdentityText(b.awayTeamName);
+}
+
 async function readSplitMeta() {
   try {
     const { data } = await fetchMetaData();
@@ -391,9 +407,19 @@ export default async function handler(req: any, res: any) {
     const matches = live === "true"
       ? uniqueBaseMatches.filter((m: any) => String(m.status || "").toUpperCase() === "LIVE")
       : uniqueBaseMatches;
-    const selectedMatches = detailRequest
+    let selectedMatches = detailRequest
       ? matches.filter((match: any) => String(match?.id || "") === detailMatchId)
       : matches;
+    if (detailRequest && selectedMatches.length === 0 && !isLiveSensitiveRequest) {
+      const cachedDay = await readDashboardDayCache(targetDate).catch(() => null);
+      const cachedMatch = (cachedDay?.matches || []).find((match: any) => String(match?.id || "") === detailMatchId);
+      if (cachedMatch) {
+        const fullMatch = matches.find((match: any) => sameDetailFixture(match, cachedMatch));
+        selectedMatches = [{ ...cachedMatch, ...(fullMatch || {}) }];
+        sourceBranch = fullMatch ? `${sourceBranch}-identity-fallback` : "r2-dashboard-cache-detail-fallback";
+        lastRun = cachedDay.generatedAt || lastRun;
+      }
+    }
     const responseMatches = sectionDetailRequest
       ? selectedMatches.map((match: any) => compactDetailMatch(match, section))
       : full ? selectedMatches : selectedMatches.map(compactDashboardMatch);
