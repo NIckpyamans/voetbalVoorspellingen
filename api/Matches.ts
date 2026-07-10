@@ -162,6 +162,98 @@ function baseDetailMatch(match: any) {
   };
 }
 
+function compactPlayer(player: any) {
+  if (!player || typeof player !== "object") return null;
+  const rawPlayer = player.player || {};
+  const name = String(player.name || rawPlayer.name || "").trim();
+  if (!name) return null;
+  return {
+    name,
+    position: player.position || rawPlayer.position || null,
+    shirtNumber: player.shirtNumber || player.jerseyNumber || rawPlayer.jerseyNumber || null,
+    nationality: player.nationality || rawPlayer.nationality || "",
+    availability: player.availability || player.status || "beschikbaar",
+    status: player.status || player.availability || null,
+    loan: Boolean(player.loan),
+    source: player.source || null,
+  };
+}
+
+function compactPlayers(players: any, limit = 28) {
+  return (Array.isArray(players) ? players : [])
+    .map(compactPlayer)
+    .filter(Boolean)
+    .slice(0, limit);
+}
+
+function compactLineupSide(side: any) {
+  if (!side || typeof side !== "object") return null;
+  return {
+    confirmed: Boolean(side.confirmed),
+    projected: Boolean(side.projected),
+    formation: side.formation || null,
+    starters: side.starters || side.players?.length || side.startingXI?.length || null,
+    bench: side.bench ?? null,
+    avgRating: side.avgRating ?? null,
+    keeperName: side.keeperName || null,
+    players: compactPlayers(side.players || side.startersList || side.startingXI, 16),
+    startersList: compactPlayers(side.startersList, 16),
+    startingXI: compactPlayers(side.startingXI, 16),
+  };
+}
+
+function compactLineupSummary(lineup: any) {
+  if (!lineup || typeof lineup !== "object") return null;
+  return {
+    confirmed: Boolean(lineup.confirmed),
+    projected: Boolean(lineup.projected),
+    source: lineup.source || null,
+    summary: lineup.summary || null,
+    homeContinuity: lineup.homeContinuity ?? null,
+    awayContinuity: lineup.awayContinuity ?? null,
+    homeFormation: lineup.homeFormation || null,
+    awayFormation: lineup.awayFormation || null,
+    homeChanges: lineup.homeChanges ?? null,
+    awayChanges: lineup.awayChanges ?? null,
+    home: compactLineupSide(lineup.home),
+    away: compactLineupSide(lineup.away),
+  };
+}
+
+function compactLineupProfile(profile: any) {
+  if (!profile || typeof profile !== "object") return null;
+  const squad = profile.squad || profile;
+  return {
+    pointsPerGame: profile.pointsPerGame ?? null,
+    teamStrengthRating: profile.teamStrengthRating ?? squad.rating ?? null,
+    rating: squad.rating ?? profile.rating ?? null,
+    source: squad.source || profile.source || null,
+    sources: Array.isArray(squad.sources) ? squad.sources.slice(0, 4) : undefined,
+    playerCount: squad.playerCount || (Array.isArray(squad.players) ? squad.players.length : undefined),
+    squad: {
+      source: squad.source || profile.source || null,
+      sources: Array.isArray(squad.sources) ? squad.sources.slice(0, 4) : undefined,
+      rating: squad.rating ?? profile.teamStrengthRating ?? profile.rating ?? null,
+      playerCount: squad.playerCount || (Array.isArray(squad.players) ? squad.players.length : undefined),
+      players: compactPlayers(squad.players, 28),
+    },
+  };
+}
+
+function compactInjuries(injuries: any) {
+  if (!injuries || typeof injuries !== "object") return null;
+  return {
+    injuredCount: injuries.injuredCount ?? injuries.count ?? 0,
+    count: injuries.count ?? injuries.injuredCount ?? 0,
+    suspendedCount: injuries.suspendedCount ?? 0,
+    doubtsCount: injuries.doubtsCount ?? 0,
+    keyPlayers: Array.isArray(injuries.keyPlayers) ? injuries.keyPlayers.slice(0, 8) : undefined,
+    injuredPlayers: compactPlayers(injuries.injuredPlayers, 10),
+    keyPlayersMissing: compactPlayers(injuries.keyPlayersMissing, 10),
+    suspendedPlayers: compactPlayers(injuries.suspendedPlayers, 10),
+  };
+}
+
 function compactDetailMatch(match: any, section: string) {
   const base = baseDetailMatch(match);
   if (section === "h2h") {
@@ -170,11 +262,11 @@ function compactDetailMatch(match: any, section: string) {
   if (section === "opstelling") {
     return {
       ...base,
-      lineupSummary: match.lineupSummary,
-      homeTeamProfile: match.homeTeamProfile,
-      awayTeamProfile: match.awayTeamProfile,
-      homeInjuries: match.homeInjuries,
-      awayInjuries: match.awayInjuries,
+      lineupSummary: compactLineupSummary(match.lineupSummary),
+      homeTeamProfile: compactLineupProfile(match.homeTeamProfile),
+      awayTeamProfile: compactLineupProfile(match.awayTeamProfile),
+      homeInjuries: compactInjuries(match.homeInjuries),
+      awayInjuries: compactInjuries(match.awayInjuries),
     };
   }
   if (section === "vorm") {
