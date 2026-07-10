@@ -1,10 +1,6 @@
 name: Football AI Worker
 
 on:
-  schedule:
-    - cron: "7 5 * * *"
-    - cron: "7 11 * * *"
-    - cron: "7 17 * * *"
   workflow_dispatch:
 
 concurrency:
@@ -70,6 +66,7 @@ jobs:
         run: node scripts/ci-neon-safe.js -- npm run db:schema:apply
 
       - name: Run worker
+        timeout-minutes: 10
         run: node scripts/ci-neon-safe.js -- node scripts/server-worker.js
 
       - name: Commit and push data

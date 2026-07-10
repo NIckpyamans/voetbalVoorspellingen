@@ -1,8 +1,6 @@
 name: Live Score Refresh
 
 on:
-  schedule:
-    - cron: "17 */2 * * *"
   workflow_dispatch:
 
 concurrency:
@@ -57,6 +55,7 @@ jobs:
         run: node scripts/ci-neon-safe.js -- npm run db:schema:apply
 
       - name: Refresh scores and standings
+        timeout-minutes: 8
         run: node scripts/ci-neon-safe.js -- node scripts/server-worker.js
 
       - name: Commit and push data only
