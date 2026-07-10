@@ -4,7 +4,7 @@ import { getSql, loadLocalEnv } from "../shared/database.js";
 import { getR2Config } from "../shared/cloudflare-r2.js";
 
 const APPLY = process.argv.includes("--apply");
-const RETENTION_DAYS = Number(process.env.SOURCE_PAYLOAD_RETENTION_DAYS || 7);
+const RETENTION_DAYS = Number(process.env.SOURCE_PAYLOAD_RETENTION_DAYS || 3);
 const r2Configured = getR2Config().configured;
 const allowUnarchivedCompaction = process.env.SOURCE_PAYLOAD_ALLOW_UNARCHIVED_COMPACTION === "true";
 

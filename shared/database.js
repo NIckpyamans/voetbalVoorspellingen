@@ -152,6 +152,13 @@ export async function syncAppStateSegmentsToDatabase(store, options = {}) {
           payload = excluded.payload,
           payload_bytes = excluded.payload_bytes,
           updated_at = excluded.updated_at
+        where (
+          app_state_segments.payload,
+          app_state_segments.payload_bytes
+        ) is distinct from (
+          excluded.payload,
+          excluded.payload_bytes
+        )
       `,
       [segment.group, segment.key, JSON.stringify(segment.payload), payloadBytes(segment.payload)]
     );

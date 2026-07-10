@@ -3,8 +3,8 @@
 import { getSql, loadLocalEnv } from "../shared/database.js";
 
 const APPLY = process.argv.includes("--apply");
-const KEEP_PER_MATCH = Number(process.env.SNAPSHOT_KEEP_PER_MATCH || 3);
-const RECENT_DAYS = Number(process.env.SNAPSHOT_COMPACTION_RECENT_DAYS || 7);
+const KEEP_PER_MATCH = Number(process.env.SNAPSHOT_KEEP_PER_MATCH || 2);
+const RECENT_DAYS = Number(process.env.SNAPSHOT_COMPACTION_RECENT_DAYS || 3);
 
 loadLocalEnv(process.cwd());
 const sql = getSql();

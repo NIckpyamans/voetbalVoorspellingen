@@ -151,6 +151,65 @@ function compactPrediction(prediction: any) {
   };
 }
 
+function compactPredictionListItem(prediction: any) {
+  return {
+    matchId: prediction.matchId,
+    model: prediction.model,
+    predHomeGoals: prediction.predHomeGoals,
+    predAwayGoals: prediction.predAwayGoals,
+    homeProb: prediction.homeProb,
+    drawProb: prediction.drawProb,
+    awayProb: prediction.awayProb,
+    confidence: prediction.confidence,
+    exactProb: prediction.exactProb,
+    exactScoreConfidence: prediction.exactScoreConfidence,
+    bestBetRank: prediction.bestBetRank,
+    topConfidencePick: prediction.topConfidencePick,
+    topExactScorePick: prediction.topExactScorePick,
+    exactScoreReasons: Array.isArray(prediction.exactScoreReasons)
+      ? prediction.exactScoreReasons.slice(0, 2)
+      : prediction.exactScoreReasons,
+    topExactReasons: Array.isArray(prediction.topExactReasons)
+      ? prediction.topExactReasons.slice(0, 2)
+      : prediction.topExactReasons,
+    odds: prediction.odds
+      ? {
+          home: prediction.odds.home,
+          draw: prediction.odds.draw,
+          away: prediction.odds.away,
+          provider: prediction.odds.provider || null,
+          bookmaker: prediction.odds.bookmaker || null,
+        }
+      : null,
+    h2hStatus: prediction.h2hStatus,
+    lineupSummary: prediction.lineupSummary
+      ? {
+          confirmed: Boolean(prediction.lineupSummary.confirmed),
+          projected: Boolean(prediction.lineupSummary.projected),
+          source: prediction.lineupSummary.source || null,
+        }
+      : null,
+    dataCompletenessScore:
+      prediction.dataCompletenessScore ??
+      prediction.dataCompleteness?.score ??
+      null,
+    dataCompleteness: prediction.dataCompleteness
+      ? {
+          score: prediction.dataCompleteness.score,
+          percent: prediction.dataCompleteness.percent,
+          status: prediction.dataCompleteness.status,
+        }
+      : null,
+    qualityGate: prediction.qualityGate
+      ? {
+          summary: prediction.qualityGate.summary,
+          blockedHighConfidence: prediction.qualityGate.blockedHighConfidence,
+          confidenceCap: prediction.qualityGate.confidenceCap,
+        }
+      : null,
+  };
+}
+
 function enrichPrediction(prediction: any, matchMap: Record<string, any>, store: any, full = false) {
   const match = matchMap[prediction.matchId] || null;
   const dbFeatureContext = prediction.dbFeatureContext || match?.dbFeatureContext || null;
@@ -195,7 +254,7 @@ function enrichPrediction(prediction: any, matchMap: Record<string, any>, store:
     review: prediction.review || match?.review || store.postMatchReviews?.[prediction.matchId] || null,
     match,
   };
-  return full ? enriched : compactPrediction(enriched);
+  return full ? enriched : compactPredictionListItem(enriched);
 }
 
 function latestPredictionPerMatch(predictions: any[]) {
@@ -215,7 +274,8 @@ export default async function handler(req: any, res: any) {
   try {
     const date = (req.query?.date as string) || todayAmsterdamKey();
     const view = String(req.query?.view || req.query?.mode || "compact").toLowerCase();
-    const full = view === "full" || view === "debug";
+    const matchId = req.query?.matchId || req.query?.id || null;
+    const full = view === "full" || view === "debug" || Boolean(matchId);
     let predictions: any[] = [];
     let matches: any[] = [];
     let reviews: Record<string, any> = {};
@@ -224,7 +284,7 @@ export default async function handler(req: any, res: any) {
     let reviewCount = 0;
 
     try {
-      const cachedDay = await readDashboardDayCache(date).catch(() => null);
+      const cachedDay = full ? null : await readDashboardDayCache(date).catch(() => null);
       if (cachedDay?.predictions?.length || cachedDay?.matches?.length) {
         predictions = cachedDay.predictions || [];
         matches = cachedDay.matches || [];
@@ -264,6 +324,11 @@ export default async function handler(req: any, res: any) {
 
     matches = filterVisibleMatches(matches);
     predictions = filterVisiblePredictions(predictions, matches);
+    if (matchId) {
+      const wanted = String(matchId);
+      matches = matches.filter((match: any) => String(match.id) === wanted);
+      predictions = predictions.filter((prediction: any) => String(prediction.matchId) === wanted);
+    }
     const rawTotal = predictions.length;
     const responsePredictions = full ? predictions : latestPredictionPerMatch(predictions);
 
@@ -276,6 +341,8 @@ export default async function handler(req: any, res: any) {
       predictions: responsePredictions.map((prediction) => enrichPrediction(prediction, matchMap, splitStore, full)),
       total: responsePredictions.length,
       rawTotal,
+      matchId: matchId ? String(matchId) : null,
+      found: matchId ? responsePredictions.length > 0 : undefined,
       view: full ? "full" : "compact",
       source: responsePredictions.length && branch === "postgres"
         ? "postgres-prediction-snapshots"

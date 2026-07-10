@@ -48,7 +48,15 @@ export function compactDashboardMatch(match) {
           topExactScorePick: match.prediction.topExactScorePick,
         }
       : null,
-    odds: match.odds,
+    odds: match.odds
+      ? {
+          home: match.odds.home,
+          draw: match.odds.draw,
+          away: match.odds.away,
+          provider: match.odds.provider || null,
+          bookmaker: match.odds.bookmaker || null,
+        }
+      : null,
     hasOdds: Boolean(match.odds || match.oddsAtPrediction),
     h2hStatus: match.h2hStatus,
     lineupStatus: match.lineupStatus,
@@ -113,9 +121,17 @@ export function compactDashboardPrediction(prediction) {
     bestBetRank: prediction.bestBetRank,
     topConfidencePick: prediction.topConfidencePick,
     topExactScorePick: prediction.topExactScorePick,
-    exactScoreReasons: pickArray(prediction.exactScoreReasons, 4),
-    topExactReasons: pickArray(prediction.topExactReasons, 4),
-    odds: prediction.odds,
+    exactScoreReasons: pickArray(prediction.exactScoreReasons, 2),
+    topExactReasons: pickArray(prediction.topExactReasons, 2),
+    odds: prediction.odds
+      ? {
+          home: prediction.odds.home,
+          draw: prediction.odds.draw,
+          away: prediction.odds.away,
+          provider: prediction.odds.provider || null,
+          bookmaker: prediction.odds.bookmaker || null,
+        }
+      : null,
     h2hStatus: prediction.h2hStatus,
     lineupSummary: prediction.lineupSummary
       ? {
@@ -124,8 +140,20 @@ export function compactDashboardPrediction(prediction) {
           source: prediction.lineupSummary.source || null,
         }
       : null,
-    dataCompleteness: prediction.dataCompleteness,
-    qualityGate: prediction.qualityGate,
+    dataCompleteness: prediction.dataCompleteness
+      ? {
+          score: prediction.dataCompleteness.score,
+          percent: prediction.dataCompleteness.percent,
+          status: prediction.dataCompleteness.status,
+        }
+      : null,
+    qualityGate: prediction.qualityGate
+      ? {
+          summary: prediction.qualityGate.summary,
+          blockedHighConfidence: prediction.qualityGate.blockedHighConfidence,
+          confidenceCap: prediction.qualityGate.confidenceCap,
+        }
+      : null,
     sourceCoverage: compactSourceCoverage(prediction.sourceCoverage),
     freeSourceCoverage: compactSourceCoverage(prediction.freeSourceCoverage),
   };

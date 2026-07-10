@@ -42,6 +42,7 @@ function plannedWorkflows() {
   const activeDaytime = hour >= 7 && hour <= 23;
 
   if (activeDaytime) workflows.push("live-score.yml");
+  if ([10, 14, 18, 21].includes(hour)) workflows.push("pre-kickoff-lineups.yml");
   if ([6, 12, 18].includes(hour)) workflows.push("worker.yml");
   if ([8, 11, 14, 17, 20].includes(hour)) workflows.push("free-prematch-odds.yml");
 

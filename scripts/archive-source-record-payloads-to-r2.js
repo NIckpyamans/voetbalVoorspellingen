@@ -6,8 +6,8 @@ import { getSql, loadLocalEnv } from "../shared/database.js";
 import { buildR2ObjectKey, getR2Config, putR2Object } from "../shared/cloudflare-r2.js";
 
 const APPLY = process.argv.includes("--apply");
-const RETENTION_DAYS = Number(process.env.SOURCE_PAYLOAD_RETENTION_DAYS || 7);
-const LIMIT = Math.min(Math.max(Number(process.env.SOURCE_PAYLOAD_ARCHIVE_LIMIT || 10000), 1), 50000);
+const RETENTION_DAYS = Number(process.env.SOURCE_PAYLOAD_RETENTION_DAYS || 3);
+const LIMIT = Math.min(Math.max(Number(process.env.SOURCE_PAYLOAD_ARCHIVE_LIMIT || 20000), 1), 50000);
 
 function digest(value) {
   return crypto.createHash("sha256").update(value).digest("hex").slice(0, 16);
