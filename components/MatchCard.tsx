@@ -13,6 +13,8 @@ interface MatchCardProps {
   onFavoriteChange?: () => void;
 }
 
+type MatchDetailTab = "analyse" | "opstelling" | "h2h" | "vorm" | "markten";
+
 function useLiveMinute(match: any) {
   const [now, setNow] = useState(() => Date.now());
   const status = String(match?.status || "").toUpperCase();
@@ -1311,10 +1313,11 @@ function detailDateKey(match: Match) {
 }
 
 const MatchCard: React.FC<MatchCardProps> = ({ match: initialMatch, prediction: initialPrediction, onFavoriteChange }) => {
-  const [tab, setTab] = useState<"analyse" | "opstelling" | "h2h" | "vorm" | "markten">("analyse");
+  const [tab, setTab] = useState<MatchDetailTab>("analyse");
   const [detailsOpen, setDetailsOpen] = useState(false);
   const [detailPayload, setDetailPayload] = useState<{ match?: any; prediction?: any } | null>(null);
   const [detailLoading, setDetailLoading] = useState(false);
+  const [loadedDetailTabs, setLoadedDetailTabs] = useState<MatchDetailTab[]>([]);
   const [aiAnalysis, setAiAnalysis] = useState<string | null>(null);
   const [aiLoading, setAiLoading] = useState(false);
   const [selectedSquadSide, setSelectedSquadSide] = useState<"home" | "away" | null>(null);
@@ -1337,12 +1340,12 @@ const MatchCard: React.FC<MatchCardProps> = ({ match: initialMatch, prediction: 
   const liveMinute = useLiveMinute(match as any);
 
   useEffect(() => {
-    if (!detailsOpen || detailPayload || detailLoading || !initialMatch.id) return;
+    if (!detailsOpen || loadedDetailTabs.includes(tab) || detailLoading || !initialMatch.id) return;
     const dateKey = detailDateKey(initialMatch);
     if (!dateKey) return;
     let cancelled = false;
     setDetailLoading(true);
-    fetch(`/api/matches?date=${encodeURIComponent(dateKey)}&matchId=${encodeURIComponent(initialMatch.id)}`, { cache: "no-store" })
+    fetch(`/api/matches?date=${encodeURIComponent(dateKey)}&matchId=${encodeURIComponent(initialMatch.id)}&section=${encodeURIComponent(tab)}`, { cache: "no-store" })
       .then(async (response) => {
         const contentType = response.headers.get("content-type") || "";
         if (!response.ok || !contentType.includes("json")) return null;
@@ -1351,7 +1354,23 @@ const MatchCard: React.FC<MatchCardProps> = ({ match: initialMatch, prediction: 
       .then((data) => {
         if (!cancelled && data?.ok && data?.found) {
           const detailedMatch = Array.isArray(data.matches) ? data.matches[0] : null;
-          setDetailPayload({ match: detailedMatch || null, prediction: detailedMatch?.prediction || null });
+          setDetailPayload((current) => {
+            const nextPrediction = detailedMatch?.prediction
+              ? {
+                  ...(current?.prediction || {}),
+                  ...(detailedMatch.prediction || {}),
+                  modelEdges: {
+                    ...(current?.prediction?.modelEdges || {}),
+                    ...(detailedMatch.prediction?.modelEdges || {}),
+                  },
+                }
+              : current?.prediction || null;
+            return {
+              match: { ...(current?.match || {}), ...(detailedMatch || {}) },
+              prediction: nextPrediction,
+            };
+          });
+          setLoadedDetailTabs((current) => current.includes(tab) ? current : [...current, tab]);
         }
       })
       .catch(() => {})
@@ -1361,7 +1380,7 @@ const MatchCard: React.FC<MatchCardProps> = ({ match: initialMatch, prediction: 
     return () => {
       cancelled = true;
     };
-  }, [detailsOpen, detailPayload, detailLoading, initialMatch]);
+  }, [detailsOpen, loadedDetailTabs, tab, detailLoading, initialMatch]);
 
   useEffect(() => {
     if (!detailsOpen || tab !== "analyse" || triedRef.current || !prediction) return;

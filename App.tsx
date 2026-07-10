@@ -29,6 +29,8 @@ import { filterVisibleMatches, filterVisiblePredictionMap } from "./shared/compe
 type View = "dashboard" | "knowledge" | "history" | "standings" | "modelops" | "integrity" | "providers" | "settings";
 type FilterMode = "alle" | "favorieten" | "live" | "gepland" | "gespeeld" | "brondekking" | "odds" | "xg" | "weer" | "mistdata";
 
+const MATCH_RENDER_BATCH = 80;
+
 const PredictionHistory = lazy(() => import("./components/PredictionHistory"));
 const MatchCard = lazy(() => import("./components/MatchCard"));
 const StandingsView = lazy(() => import("./components/StandingsView"));
@@ -224,6 +226,7 @@ const App: React.FC = () => {
   const [selectedLeague, setSelectedLeague] = useState<string>("alle");
   const [expandedTopClub, setExpandedTopClub] = useState<string | null>(null);
   const [expandedMatchId, setExpandedMatchId] = useState<string | null>(null);
+  const [visibleMatchLimit, setVisibleMatchLimit] = useState(MATCH_RENDER_BATCH);
   const [favoriteStandingLabel, setFavoriteStandingLabel] = useState<string>(readFavoriteStandingLabel);
   const [favRefresh, setFavRefresh] = useState(0);
   const learnedRef = useRef<Set<string>>(new Set());
@@ -451,6 +454,15 @@ const App: React.FC = () => {
       return a.league.localeCompare(b.league);
     });
   }, [filteredMatches, activeFilter]);
+
+  useEffect(() => {
+    setVisibleMatchLimit(MATCH_RENDER_BATCH);
+  }, [selectedDate, selectedLeague, activeFilter]);
+
+  const visibleSortedMatches = useMemo(
+    () => sortedMatches.slice(0, visibleMatchLimit),
+    [sortedMatches, visibleMatchLimit]
+  );
 
   const allLeagues = useMemo(() => {
     const uniqueLeagues = Array.from(new Set(dayMatches.map((match) => match.league))) as string[];
@@ -1025,7 +1037,7 @@ const App: React.FC = () => {
               </div>
             ) : (
               <div className="space-y-3">
-                {sortedMatches.map((match) => {
+                {visibleSortedMatches.map((match) => {
                   const enriched = enrichMatch(match);
                   const expanded = expandedMatchId === match.id;
                   return (
@@ -1048,6 +1060,15 @@ const App: React.FC = () => {
                     </div>
                   );
                 })}
+                {visibleSortedMatches.length < sortedMatches.length && (
+                  <button
+                    type="button"
+                    onClick={() => setVisibleMatchLimit((value) => value + MATCH_RENDER_BATCH)}
+                    className="w-full rounded-2xl border border-cyan-400/20 bg-cyan-500/10 px-4 py-3 text-sm font-black text-cyan-100 hover:bg-cyan-500/15"
+                  >
+                    Toon meer wedstrijden ({visibleSortedMatches.length}/{sortedMatches.length})
+                  </button>
+                )}
                 {false && (
                   <>
                 {activeFilter === "alle" && favoriteCount > 0 && (

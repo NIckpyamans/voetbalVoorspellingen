@@ -133,6 +133,99 @@ function attachReviewAndNormalize(match: any, store: any) {
   return normalizeServedMatch(attachReview(match, store));
 }
 
+function baseDetailMatch(match: any) {
+  return {
+    id: match.id,
+    date: match.date,
+    kickoff: match.kickoff,
+    status: match.status,
+    score: match.score,
+    homeScore: match.homeScore,
+    awayScore: match.awayScore,
+    minute: match.minute,
+    league: match.league,
+    roundLabel: match.roundLabel,
+    homeTeamId: match.homeTeamId,
+    awayTeamId: match.awayTeamId,
+    homeTeamName: match.homeTeamName,
+    awayTeamName: match.awayTeamName,
+    homeLogo: match.homeLogo,
+    awayLogo: match.awayLogo,
+    homeForm: match.homeForm,
+    awayForm: match.awayForm,
+    homeClubElo: match.homeClubElo,
+    awayClubElo: match.awayClubElo,
+    homePos: match.homePos,
+    awayPos: match.awayPos,
+    aggregate: match.aggregate,
+    review: match.review,
+  };
+}
+
+function compactDetailMatch(match: any, section: string) {
+  const base = baseDetailMatch(match);
+  if (section === "h2h") {
+    return { ...base, h2h: match.h2h, h2hStatus: match.h2hStatus };
+  }
+  if (section === "opstelling") {
+    return {
+      ...base,
+      lineupSummary: match.lineupSummary,
+      homeTeamProfile: match.homeTeamProfile,
+      awayTeamProfile: match.awayTeamProfile,
+      homeInjuries: match.homeInjuries,
+      awayInjuries: match.awayInjuries,
+    };
+  }
+  if (section === "vorm") {
+    return {
+      ...base,
+      homeRecent: match.homeRecent,
+      awayRecent: match.awayRecent,
+      homeTeamProfile: match.homeTeamProfile,
+      awayTeamProfile: match.awayTeamProfile,
+      learningSummary: match.learningSummary,
+      marketCalibration: match.marketCalibration,
+    };
+  }
+  if (section === "markten") {
+    return {
+      ...base,
+      odds: match.odds,
+      oddsAtPrediction: match.oddsAtPrediction,
+      marketCalibration: match.marketCalibration,
+      modelEdges: match.modelEdges
+        ? {
+            marketCalibration: match.modelEdges.marketCalibration,
+            leagueReliability: match.modelEdges.leagueReliability,
+            phaseReliability: match.modelEdges.phaseReliability,
+          }
+        : null,
+    };
+  }
+  return {
+    ...base,
+    context: match.context,
+    weather: match.weather,
+    h2hStatus: match.h2hStatus,
+    homeRestDays: match.homeRestDays,
+    awayRestDays: match.awayRestDays,
+    modelEdges: match.modelEdges
+      ? {
+          riskProfile: match.modelEdges.riskProfile,
+          modelAgreement: match.modelEdges.modelAgreement,
+          clubEloDiff: match.modelEdges.clubEloDiff,
+          tacticalMismatch: match.modelEdges.tacticalMismatch,
+          formShift: match.modelEdges.formShift,
+          keeperEdge: match.modelEdges.keeperEdge,
+          travelEdge: match.modelEdges.travelEdge,
+          lineupImpact: match.modelEdges.lineupImpact,
+          phaseReliability: match.modelEdges.phaseReliability,
+        }
+      : null,
+  };
+}
+
 async function readSplitMeta() {
   try {
     const { data } = await fetchMetaData();
@@ -160,7 +253,9 @@ export default async function handler(req: any, res: any) {
   const detailMatchId = String(req.query?.matchId || req.query?.id || "");
   const detailRequest = Boolean(detailMatchId);
   const view = String(req.query?.view || req.query?.mode || "compact").toLowerCase();
-  const full = view === "full" || view === "debug" || detailRequest;
+  const section = String(req.query?.section || "").toLowerCase();
+  const sectionDetailRequest = detailRequest && ["analyse", "opstelling", "h2h", "vorm", "markten"].includes(section);
+  const full = view === "full" || view === "debug" || (detailRequest && !sectionDetailRequest);
   const includeEvents = full || req.query?.includeEvents === "true" || req.query?.compat === "events";
   const includeDiagnostics = !detailRequest && (full || req.query?.diagnostics === "true");
   const today = todayAmsterdamKey();
@@ -299,7 +394,9 @@ export default async function handler(req: any, res: any) {
     const selectedMatches = detailRequest
       ? matches.filter((match: any) => String(match?.id || "") === detailMatchId)
       : matches;
-    const responseMatches = full ? selectedMatches : selectedMatches.map(compactDashboardMatch);
+    const responseMatches = sectionDetailRequest
+      ? selectedMatches.map((match: any) => compactDetailMatch(match, section))
+      : full ? selectedMatches : selectedMatches.map(compactDashboardMatch);
 
     return res.status(200).json({
       ok: true,
