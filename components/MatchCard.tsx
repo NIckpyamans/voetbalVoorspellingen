@@ -1342,7 +1342,7 @@ const MatchCard: React.FC<MatchCardProps> = ({ match: initialMatch, prediction: 
     if (!dateKey) return;
     let cancelled = false;
     setDetailLoading(true);
-    fetch(`/api/match-detail?date=${encodeURIComponent(dateKey)}&matchId=${encodeURIComponent(initialMatch.id)}`, { cache: "no-store" })
+    fetch(`/api/matches?date=${encodeURIComponent(dateKey)}&matchId=${encodeURIComponent(initialMatch.id)}`, { cache: "no-store" })
       .then(async (response) => {
         const contentType = response.headers.get("content-type") || "";
         if (!response.ok || !contentType.includes("json")) return null;
@@ -1350,7 +1350,8 @@ const MatchCard: React.FC<MatchCardProps> = ({ match: initialMatch, prediction: 
       })
       .then((data) => {
         if (!cancelled && data?.ok && data?.found) {
-          setDetailPayload({ match: data.match || null, prediction: data.prediction || null });
+          const detailedMatch = Array.isArray(data.matches) ? data.matches[0] : null;
+          setDetailPayload({ match: detailedMatch || null, prediction: detailedMatch?.prediction || null });
         }
       })
       .catch(() => {})

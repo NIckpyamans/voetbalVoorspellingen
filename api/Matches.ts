@@ -157,9 +157,11 @@ async function readSplitDay(dateKey: string) {
 export default async function handler(req: any, res: any) {
   const started = Date.now();
   const { date, live, days } = req.query;
+  const detailMatchId = String(req.query?.matchId || req.query?.id || "");
+  const detailRequest = Boolean(detailMatchId);
   const view = String(req.query?.view || req.query?.mode || "compact").toLowerCase();
-  const full = view === "full" || view === "debug";
-  const includeDiagnostics = full || req.query?.diagnostics === "true";
+  const full = view === "full" || view === "debug" || detailRequest;
+  const includeDiagnostics = !detailRequest && (full || req.query?.diagnostics === "true");
   const today = todayAmsterdamKey();
   const targetDate = typeof date === "string" && date ? date : today;
   const isLiveSensitiveRequest = targetDate === today || live === "true";
@@ -262,13 +264,13 @@ export default async function handler(req: any, res: any) {
     let sourceBranch = "split-data";
 
     try {
-      const cachedDay = !isLiveSensitiveRequest ? await readDashboardDayCache(targetDate).catch(() => null) : null;
+      const cachedDay = !detailRequest && !isLiveSensitiveRequest ? await readDashboardDayCache(targetDate).catch(() => null) : null;
       if (cachedDay?.matches?.length) {
         baseMatches = cachedDay.matches.map((match: any) => attachReviewAndNormalize(match, {}));
         sourceBranch = "r2-dashboard-cache";
         lastRun = cachedDay.generatedAt || lastRun;
       } else {
-      const dbDay = databaseConfigured() ? await readDatabaseDay(targetDate).catch(() => null) : null;
+      const dbDay = !detailRequest && databaseConfigured() ? await readDatabaseDay(targetDate).catch(() => null) : null;
       if (dbDay?.matches?.length) {
         baseMatches = dbDay.matches.map((match: any) => attachReviewAndNormalize(match, {}));
         sourceBranch = "postgres";
@@ -293,7 +295,10 @@ export default async function handler(req: any, res: any) {
     const matches = live === "true"
       ? uniqueBaseMatches.filter((m: any) => String(m.status || "").toUpperCase() === "LIVE")
       : uniqueBaseMatches;
-    const responseMatches = full ? matches : matches.map(compactDashboardMatch);
+    const selectedMatches = detailRequest
+      ? matches.filter((match: any) => String(match?.id || "") === detailMatchId)
+      : matches;
+    const responseMatches = full ? selectedMatches : selectedMatches.map(compactDashboardMatch);
 
     return res.status(200).json({
       ok: true,
@@ -302,6 +307,8 @@ export default async function handler(req: any, res: any) {
       events: responseMatches,
       total: responseMatches.length,
       rawTotal: matches.length,
+      matchId: detailRequest ? detailMatchId : undefined,
+      found: detailRequest ? responseMatches.length > 0 : undefined,
       date: targetDate,
       lastRun,
       workerVersion,
