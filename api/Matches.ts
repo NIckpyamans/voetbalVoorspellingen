@@ -161,6 +161,7 @@ export default async function handler(req: any, res: any) {
   const detailRequest = Boolean(detailMatchId);
   const view = String(req.query?.view || req.query?.mode || "compact").toLowerCase();
   const full = view === "full" || view === "debug" || detailRequest;
+  const includeEvents = full || req.query?.includeEvents === "true" || req.query?.compat === "events";
   const includeDiagnostics = !detailRequest && (full || req.query?.diagnostics === "true");
   const today = todayAmsterdamKey();
   const targetDate = typeof date === "string" && date ? date : today;
@@ -240,7 +241,7 @@ export default async function handler(req: any, res: any) {
           ok: true,
           view: full ? "full" : "compact",
           matches: responseMatches,
-          events: responseMatches,
+          ...(includeEvents ? { events: responseMatches } : {}),
           total: responseMatches.length,
           rawTotal: uniqueMultiDayMatches.length,
           date: targetDate,
@@ -304,7 +305,7 @@ export default async function handler(req: any, res: any) {
       ok: true,
       view: full ? "full" : "compact",
       matches: responseMatches,
-      events: responseMatches,
+      ...(includeEvents ? { events: responseMatches } : {}),
       total: responseMatches.length,
       rawTotal: matches.length,
       matchId: detailRequest ? detailMatchId : undefined,

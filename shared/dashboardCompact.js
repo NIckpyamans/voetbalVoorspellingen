@@ -35,6 +35,11 @@ function h2hPlayed(match) {
   );
 }
 
+function compactLogo(value) {
+  const logo = String(value || "");
+  return logo.startsWith("data:") ? "" : logo;
+}
+
 export function compactDashboardMatch(match) {
   if (!match || typeof match !== "object") return match;
   return {
@@ -50,8 +55,8 @@ export function compactDashboardMatch(match) {
     awayTeamId: match.awayTeamId,
     homeTeamName: match.homeTeamName,
     awayTeamName: match.awayTeamName,
-    homeLogo: match.homeLogo,
-    awayLogo: match.awayLogo,
+    homeLogo: compactLogo(match.homeLogo),
+    awayLogo: compactLogo(match.awayLogo),
     score: match.score,
     favorite: match.favorite,
     prediction: match.prediction
