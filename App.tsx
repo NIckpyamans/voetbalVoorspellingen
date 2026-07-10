@@ -464,6 +464,60 @@ const App: React.FC = () => {
     });
   }, [dayMatches]);
 
+  const leagueSummaries = useMemo(() => {
+    const byLeague = new Map<string, {
+      total: number;
+      live: number;
+      planned: number;
+      finished: number;
+      coverage: number;
+      odds: number;
+      xg: number;
+      weather: number;
+      missing: number;
+      providers: string[];
+    }>();
+
+    for (const league of allLeagues) {
+      const rows = dayMatches.filter((match) => match.league === league);
+      const providerNames = new Set<string>();
+      for (const match of rows) {
+        const coverage = (match as any).freeSourceCoverage || (match as any).sourceCoverage || {};
+        const sources = [
+          ...(Array.isArray(coverage.sources) ? coverage.sources : []),
+          ...(Array.isArray(coverage.providers) ? coverage.providers : []),
+          ...(Array.isArray(coverage.backupSources) ? coverage.backupSources : []),
+        ];
+        sources.filter(Boolean).slice(0, 6).forEach((source: string) => providerNames.add(String(source)));
+      }
+
+      const total = rows.length;
+      const coverageAverage = total
+        ? Math.round(rows.reduce((sum, match) => sum + freeSourceCoveragePercent(match), 0) / total)
+        : 0;
+      const odds = rows.filter(hasOddsData).length;
+      const xg = rows.filter(hasXgData).length;
+      const weather = rows.filter(hasWeatherData).length;
+
+      byLeague.set(league, {
+        total,
+        live: rows.filter(isLive).length,
+        planned: rows.filter((match) => !isLive(match) && !isFinished(match)).length,
+        finished: rows.filter(isFinished).length,
+        coverage: coverageAverage,
+        odds,
+        xg,
+        weather,
+        missing: rows.filter((match) => freeSourceCoveragePercent(match) < 60 || !hasOddsData(match) || !hasXgData(match) || !hasWeatherData(match)).length,
+        providers: Array.from(providerNames).slice(0, 5),
+      });
+    }
+
+    return byLeague;
+  }, [allLeagues, dayMatches]);
+
+  const selectedLeagueSummary = selectedLeague === "alle" ? null : leagueSummaries.get(selectedLeague) || null;
+
   const favoriteMatches = useMemo(() => {
     return dayMatches.filter((match) => {
       const homeKey = (match as any).homeTeamId || match.homeTeamName.toLowerCase();
@@ -748,14 +802,18 @@ const App: React.FC = () => {
               </button>
 
               {allLeagues.map((league) => {
-                const total = dayMatches.filter((match) => match.league === league).length;
-                const leagueLiveCount = dayMatches.filter((match) => match.league === league && isLive(match)).length;
+                const summary = leagueSummaries.get(league);
+                const total = summary?.total || 0;
+                const leagueLiveCount = summary?.live || 0;
+                const coverage = summary?.coverage || 0;
+                const coverageTone =
+                  coverage >= 75 ? "text-emerald-300" : coverage >= 50 ? "text-amber-300" : "text-red-300";
 
                 return (
                   <button
                     key={league}
                     onClick={() => setSelectedLeague(league)}
-                    title={league}
+                    title={`${league} - brondekking ${coverage}% - odds ${summary?.odds || 0}/${total} - xG ${summary?.xg || 0}/${total}`}
                     className={`flex-shrink-0 px-2.5 py-1 rounded-lg text-[10px] font-black whitespace-nowrap ${
                       selectedLeague === league
                         ? "bg-blue-600 text-white"
@@ -770,10 +828,48 @@ const App: React.FC = () => {
                     ) : (
                       <span className="ml-1 opacity-50 text-[9px]">{total}</span>
                     )}
+                    <span className={`ml-1 text-[8px] ${selectedLeague === league ? "text-white" : coverageTone}`}>
+                      {coverage}%
+                    </span>
                   </button>
                 );
               })}
             </div>
+
+            {selectedLeagueSummary && (
+              <div className="mb-4 rounded-2xl border border-cyan-500/15 bg-slate-950/45 p-3">
+                <div className="mb-2 flex flex-wrap items-center justify-between gap-2">
+                  <div>
+                    <div className="text-[9px] font-black uppercase text-cyan-300">Competitiebronstatus</div>
+                    <h3 className="text-sm font-black text-white">{selectedLeague}</h3>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={() => setActiveFilter(selectedLeagueSummary.missing > 0 ? "mistdata" : "alle")}
+                    className="rounded-full bg-cyan-500/15 px-3 py-1 text-[10px] font-black text-cyan-200 hover:bg-cyan-500/25"
+                  >
+                    {selectedLeagueSummary.missing > 0 ? `${selectedLeagueSummary.missing} mist data` : "Bronnen ok"}
+                  </button>
+                </div>
+                <div className="grid grid-cols-2 md:grid-cols-5 gap-2">
+                  {[
+                    { label: "Wedstrijden", value: selectedLeagueSummary.total },
+                    { label: "Brondekking", value: `${selectedLeagueSummary.coverage}%` },
+                    { label: "Odds", value: `${selectedLeagueSummary.odds}/${selectedLeagueSummary.total}` },
+                    { label: "xG/Stats", value: `${selectedLeagueSummary.xg}/${selectedLeagueSummary.total}` },
+                    { label: "Weer", value: `${selectedLeagueSummary.weather}/${selectedLeagueSummary.total}` },
+                  ].map((item) => (
+                    <div key={item.label} className="rounded-xl border border-white/5 bg-slate-900/55 p-2">
+                      <div className="text-[8px] font-black uppercase text-slate-500">{item.label}</div>
+                      <div className="text-sm font-black text-white">{item.value}</div>
+                    </div>
+                  ))}
+                </div>
+                <div className="mt-2 text-[10px] text-slate-400">
+                  Bronnen: {selectedLeagueSummary.providers.length ? selectedLeagueSummary.providers.join(", ") : "nog geen providerlabel beschikbaar"}
+                </div>
+              </div>
+            )}
 
             <div className="space-y-4 mb-6">
               <section className="glass-card rounded-2xl border border-yellow-500/20 p-4 bg-yellow-500/5">
