@@ -471,44 +471,81 @@ const App: React.FC = () => {
       planned: number;
       finished: number;
       coverage: number;
+      coverageTotal: number;
       odds: number;
       xg: number;
       weather: number;
       missing: number;
+      providerSet: Set<string>;
       providers: string[];
     }>();
 
-    for (const league of allLeagues) {
-      const rows = dayMatches.filter((match) => match.league === league);
-      const providerNames = new Set<string>();
-      for (const match of rows) {
-        const coverage = (match as any).freeSourceCoverage || (match as any).sourceCoverage || {};
-        const sources = [
-          ...(Array.isArray(coverage.sources) ? coverage.sources : []),
-          ...(Array.isArray(coverage.providers) ? coverage.providers : []),
-          ...(Array.isArray(coverage.backupSources) ? coverage.backupSources : []),
-        ];
-        sources.filter(Boolean).slice(0, 6).forEach((source: string) => providerNames.add(String(source)));
-      }
+    for (const match of dayMatches) {
+      const league = match.league;
+      const current = byLeague.get(league) || {
+        total: 0,
+        live: 0,
+        planned: 0,
+        finished: 0,
+        coverage: 0,
+        coverageTotal: 0,
+        odds: 0,
+        xg: 0,
+        weather: 0,
+        missing: 0,
+        providerSet: new Set<string>(),
+        providers: [],
+      };
+      const coveragePercent = freeSourceCoveragePercent(match);
+      const hasOdds = hasOddsData(match);
+      const hasXg = hasXgData(match);
+      const hasWeather = hasWeatherData(match);
+      const live = isLive(match);
+      const finished = isFinished(match);
+      const coverage = (match as any).freeSourceCoverage || (match as any).sourceCoverage || {};
+      const sources = [
+        ...(Array.isArray(coverage.sources) ? coverage.sources : []),
+        ...(Array.isArray(coverage.providers) ? coverage.providers : []),
+        ...(Array.isArray(coverage.backupSources) ? coverage.backupSources : []),
+      ];
+      sources.filter(Boolean).slice(0, 6).forEach((source: string) => current.providerSet.add(String(source)));
 
-      const total = rows.length;
-      const coverageAverage = total
-        ? Math.round(rows.reduce((sum, match) => sum + freeSourceCoveragePercent(match), 0) / total)
-        : 0;
-      const odds = rows.filter(hasOddsData).length;
-      const xg = rows.filter(hasXgData).length;
-      const weather = rows.filter(hasWeatherData).length;
+      current.total += 1;
+      current.live += live ? 1 : 0;
+      current.planned += !live && !finished ? 1 : 0;
+      current.finished += finished ? 1 : 0;
+      current.coverageTotal += coveragePercent;
+      current.odds += hasOdds ? 1 : 0;
+      current.xg += hasXg ? 1 : 0;
+      current.weather += hasWeather ? 1 : 0;
+      current.missing += coveragePercent < 60 || !hasOdds || !hasXg || !hasWeather ? 1 : 0;
 
+      byLeague.set(league, current);
+    }
+
+    for (const [league, summary] of byLeague.entries()) {
       byLeague.set(league, {
-        total,
-        live: rows.filter(isLive).length,
-        planned: rows.filter((match) => !isLive(match) && !isFinished(match)).length,
-        finished: rows.filter(isFinished).length,
-        coverage: coverageAverage,
-        odds,
-        xg,
-        weather,
-        missing: rows.filter((match) => freeSourceCoveragePercent(match) < 60 || !hasOddsData(match) || !hasXgData(match) || !hasWeatherData(match)).length,
+        ...summary,
+        coverage: summary.total ? Math.round(summary.coverageTotal / summary.total) : 0,
+        providers: Array.from(summary.providerSet).slice(0, 5),
+      });
+    }
+
+    for (const league of allLeagues) {
+      if (byLeague.has(league)) continue;
+      const providerNames = new Set<string>();
+      byLeague.set(league, {
+        total: 0,
+        live: 0,
+        planned: 0,
+        finished: 0,
+        coverage: 0,
+        coverageTotal: 0,
+        odds: 0,
+        xg: 0,
+        weather: 0,
+        missing: 0,
+        providerSet: providerNames,
         providers: Array.from(providerNames).slice(0, 5),
       });
     }
