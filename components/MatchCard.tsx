@@ -1305,18 +1305,67 @@ function compactAnalyzePayload(match: any, prediction: any) {
   };
 }
 
-const MatchCard: React.FC<MatchCardProps> = ({ match, prediction, onFavoriteChange }) => {
+function detailDateKey(match: Match) {
+  const direct = String(match.date || match.kickoff || "").slice(0, 10);
+  return /^\d{4}-\d{2}-\d{2}$/.test(direct) ? direct : "";
+}
+
+const MatchCard: React.FC<MatchCardProps> = ({ match: initialMatch, prediction: initialPrediction, onFavoriteChange }) => {
   const [tab, setTab] = useState<"analyse" | "opstelling" | "h2h" | "vorm" | "markten">("analyse");
   const [detailsOpen, setDetailsOpen] = useState(false);
+  const [detailPayload, setDetailPayload] = useState<{ match?: any; prediction?: any } | null>(null);
+  const [detailLoading, setDetailLoading] = useState(false);
   const [aiAnalysis, setAiAnalysis] = useState<string | null>(null);
   const [aiLoading, setAiLoading] = useState(false);
   const [selectedSquadSide, setSelectedSquadSide] = useState<"home" | "away" | null>(null);
   const triedRef = useRef(false);
+  const match = useMemo(
+    () => ({ ...initialMatch, ...(detailPayload?.match || {}) }) as Match,
+    [initialMatch, detailPayload]
+  );
+  const prediction = useMemo(
+    () =>
+      initialPrediction || detailPayload?.prediction
+        ? {
+            ...(initialPrediction || {}),
+            ...(detailPayload?.prediction || {}),
+            matchId: initialPrediction?.matchId || detailPayload?.prediction?.matchId || initialMatch.id,
+          }
+        : undefined,
+    [initialPrediction, detailPayload, initialMatch.id]
+  );
   const liveMinute = useLiveMinute(match as any);
 
   useEffect(() => {
-    if (triedRef.current || !prediction) return;
+    if (!detailsOpen || detailPayload || detailLoading || !initialMatch.id) return;
+    const dateKey = detailDateKey(initialMatch);
+    if (!dateKey) return;
+    let cancelled = false;
+    setDetailLoading(true);
+    fetch(`/api/match-detail?date=${encodeURIComponent(dateKey)}&matchId=${encodeURIComponent(initialMatch.id)}`, { cache: "no-store" })
+      .then(async (response) => {
+        const contentType = response.headers.get("content-type") || "";
+        if (!response.ok || !contentType.includes("json")) return null;
+        return response.json();
+      })
+      .then((data) => {
+        if (!cancelled && data?.ok && data?.found) {
+          setDetailPayload({ match: data.match || null, prediction: data.prediction || null });
+        }
+      })
+      .catch(() => {})
+      .finally(() => {
+        if (!cancelled) setDetailLoading(false);
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [detailsOpen, detailPayload, detailLoading, initialMatch]);
+
+  useEffect(() => {
+    if (!detailsOpen || tab !== "analyse" || triedRef.current || !prediction) return;
     triedRef.current = true;
+    setAiLoading(true);
     setAiAnalysis(buildLocalAiAnalysis(match, prediction));
     fetch("/api/analyze", {
       method: "POST",
@@ -1333,7 +1382,7 @@ const MatchCard: React.FC<MatchCardProps> = ({ match, prediction, onFavoriteChan
       })
       .catch(() => {})
       .finally(() => setAiLoading(false));
-  }, [match, prediction]);
+  }, [detailsOpen, tab, match, prediction]);
 
   if (!prediction) {
     return <div className="glass-card rounded-2xl p-4 border border-white/5 animate-pulse h-72" />;
@@ -1534,7 +1583,9 @@ const MatchCard: React.FC<MatchCardProps> = ({ match, prediction, onFavoriteChan
       >
         <span>
           <span className="block text-[8px] uppercase font-black text-slate-400">Analyse, H2H, vorm en markt</span>
-          <span className="block text-[9px] text-slate-500">Uitklappen voor alle AI-details onder deze wedstrijd</span>
+          <span className="block text-[9px] text-slate-500">
+            {detailLoading ? "Details laden..." : "Details worden pas geladen wanneer je dit opent"}
+          </span>
         </span>
         <span className="rounded-full bg-blue-500/15 px-2 py-1 text-[9px] font-black text-blue-200">
           {detailsOpen ? "Sluiten" : "Meer info"}

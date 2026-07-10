@@ -1,0 +1,53 @@
+name: Football AI orchestrator
+
+on:
+  schedule:
+    - cron: "15 * * * *"
+  workflow_dispatch:
+    inputs:
+      mode:
+        description: "minimal, conservative of full"
+        required: false
+        default: "conservative"
+      target:
+        description: "auto, all of workflow filename"
+        required: false
+        default: "auto"
+
+permissions:
+  actions: write
+  contents: read
+
+concurrency:
+  group: football-ai-orchestrator
+  cancel-in-progress: false
+
+jobs:
+  plan-and-dispatch:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    env:
+      DATA_BRANCH: codex/step3b-layout
+      ORCHESTRATOR_MODE: ${{ inputs.mode || 'conservative' }}
+      ORCHESTRATOR_TARGET: ${{ inputs.target || 'auto' }}
+      GH_TOKEN: ${{ github.token }}
+    steps:
+      - uses: actions/checkout@v5
+        with:
+          ref: ${{ env.DATA_BRANCH }}
+      - uses: actions/setup-node@v5
+        with:
+          node-version: 22
+      - id: plan
+        name: Build orchestration plan
+        run: node scripts/workflow-orchestrator.js --emit-github-output
+      - name: Dispatch planned workflows
+        if: steps.plan.outputs.count != '0'
+        run: |
+          for workflow in ${{ steps.plan.outputs.workflows }}; do
+            echo "Dispatching $workflow on $DATA_BRANCH"
+            gh workflow run "$workflow" --ref "$DATA_BRANCH"
+          done
+      - name: No work planned
+        if: steps.plan.outputs.count == '0'
+        run: echo "No workflows planned for this hour."

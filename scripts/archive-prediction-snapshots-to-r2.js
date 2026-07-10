@@ -6,9 +6,9 @@ import { getSql, loadLocalEnv } from "../shared/database.js";
 import { buildR2ObjectKey, getR2Config, putR2Object } from "../shared/cloudflare-r2.js";
 
 const APPLY = process.argv.includes("--apply");
-const KEEP_PER_MATCH = Number(process.env.SNAPSHOT_KEEP_PER_MATCH || 3);
-const RECENT_DAYS = Number(process.env.SNAPSHOT_COMPACTION_RECENT_DAYS || 7);
-const LIMIT = Math.min(Math.max(Number(process.env.SNAPSHOT_ARCHIVE_LIMIT || 5000), 1), 25000);
+const KEEP_PER_MATCH = Number(process.env.SNAPSHOT_KEEP_PER_MATCH || 2);
+const RECENT_DAYS = Number(process.env.SNAPSHOT_COMPACTION_RECENT_DAYS || 3);
+const LIMIT = Math.min(Math.max(Number(process.env.SNAPSHOT_ARCHIVE_LIMIT || 15000), 1), 50000);
 
 function digest(value) {
   return crypto.createHash("sha256").update(value).digest("hex").slice(0, 16);
