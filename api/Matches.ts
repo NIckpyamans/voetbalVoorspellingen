@@ -412,7 +412,8 @@ export default async function handler(req: any, res: any) {
       : matches;
     if (detailRequest && selectedMatches.length === 0 && !isLiveSensitiveRequest) {
       const cachedDay = await readDashboardDayCache(targetDate).catch(() => null);
-      const cachedMatch = (cachedDay?.matches || []).find((match: any) => String(match?.id || "") === detailMatchId);
+      const cachedMatches = (cachedDay?.matches || []).map((match: any) => attachReviewAndNormalize(match, {}));
+      const cachedMatch = cachedMatches.find((match: any) => String(match?.id || "") === detailMatchId);
       if (cachedMatch) {
         const fullMatch = matches.find((match: any) => sameDetailFixture(match, cachedMatch));
         selectedMatches = [{ ...cachedMatch, ...(fullMatch || {}) }];
