@@ -6,12 +6,33 @@ function compactSourceCoverage(coverage) {
   if (!coverage || typeof coverage !== "object") return coverage;
   return {
     score: coverage.score,
+    percent: coverage.percent,
     status: coverage.status,
+    entries: pickArray(coverage.entries, 8)?.map((entry) => ({
+      key: entry?.key,
+      available: Boolean(entry?.available),
+      source: entry?.source || null,
+    })),
     providers: pickArray(coverage.providers, 6),
     missing: pickArray(coverage.missing, 6),
-    warnings: pickArray(coverage.warnings, 6),
     backupSources: pickArray(coverage.backupSources, 6),
   };
+}
+
+function coverageHas(match, key) {
+  const entries = [
+    ...(Array.isArray(match?.sourceCoverage?.entries) ? match.sourceCoverage.entries : []),
+    ...(Array.isArray(match?.freeSourceCoverage?.entries) ? match.freeSourceCoverage.entries : []),
+  ];
+  return entries.some((entry) => entry?.key === key && entry?.available);
+}
+
+function h2hPlayed(match) {
+  return Math.max(
+    Number(match?.h2h?.played || 0),
+    Array.isArray(match?.h2h?.results) ? match.h2h.results.length : 0,
+    Array.isArray(match?.h2h?.lastMatches) ? match.h2h.lastMatches.length : 0
+  );
 }
 
 export function compactDashboardMatch(match) {
@@ -48,47 +69,20 @@ export function compactDashboardMatch(match) {
           topExactScorePick: match.prediction.topExactScorePick,
         }
       : null,
-    odds: match.odds
-      ? {
-          home: match.odds.home,
-          draw: match.odds.draw,
-          away: match.odds.away,
-          provider: match.odds.provider || null,
-          bookmaker: match.odds.bookmaker || null,
-        }
-      : null,
-    hasOdds: Boolean(match.odds || match.oddsAtPrediction),
+    hasOdds: Boolean(match.odds || match.oddsAtPrediction || match.dbFeatureContext?.historicalOdds?.samples || coverageHas(match, "odds")),
+    hasXg: Boolean(
+      coverageHas(match, "xg_style") ||
+      match.dbFeatureContext?.matchStats?.homeXg != null ||
+      match.dbFeatureContext?.matchStats?.awayXg != null ||
+      Number(match.dbFeatureContext?.matchStats?.homeShots || 0) > 0 ||
+      Number(match.dbFeatureContext?.matchStats?.awayShots || 0) > 0
+    ),
+    hasWeather: Boolean(coverageHas(match, "weather") || match.weather?.conditions || match.weather?.temperature != null),
+    h2hPlayed: h2hPlayed(match),
     h2hStatus: match.h2hStatus,
     lineupStatus: match.lineupStatus,
-    lineupSummary: match.lineupSummary
-      ? {
-          confirmed: Boolean(match.lineupSummary.confirmed),
-          projected: Boolean(match.lineupSummary.projected),
-          source: match.lineupSummary.source || null,
-          home: match.lineupSummary.home
-            ? {
-                formation: match.lineupSummary.home.formation || null,
-                starters: match.lineupSummary.home.starters || null,
-                avgRating: match.lineupSummary.home.avgRating || null,
-              }
-            : null,
-          away: match.lineupSummary.away
-            ? {
-                formation: match.lineupSummary.away.formation || null,
-                starters: match.lineupSummary.away.starters || null,
-                avgRating: match.lineupSummary.away.avgRating || null,
-              }
-            : null,
-        }
-      : null,
-    weather: match.weather
-      ? {
-          summary: match.weather.summary,
-          temperature: match.weather.temperature,
-          windKph: match.weather.windKph,
-          precipitationMm: match.weather.precipitationMm,
-        }
-      : null,
+    lineupConfirmed: Boolean(match.lineupSummary?.confirmed),
+    lineupProjected: Boolean(match.lineupSummary?.projected),
     sourceCoverage: compactSourceCoverage(match.sourceCoverage),
     freeSourceCoverage: compactSourceCoverage(match.freeSourceCoverage),
     review: match.review

@@ -56,9 +56,9 @@ const CompactMatchRow: React.FC<CompactMatchRowProps> = ({ match, prediction, ex
   const predictedScore = prediction ? `${prediction.predHomeGoals ?? 0}-${prediction.predAwayGoals ?? 0}` : "-";
   const confidence = Number(prediction?.confidence || Math.max(prediction?.homeProb || 0, prediction?.drawProb || 0, prediction?.awayProb || 0));
   const exactConfidence = Number(prediction?.exactScoreConfidence || prediction?.exactProb || 0);
-  const lineupConfirmed = Boolean(match.lineupSummary?.confirmed || prediction?.lineupSummary?.confirmed);
-  const hasOdds = Boolean(prediction?.odds || prediction?.oddsAtPrediction || match.dbFeatureContext?.historicalOdds?.samples);
-  const h2hPlayed = Number(match.h2h?.played || prediction?.h2h?.played || 0);
+  const lineupConfirmed = Boolean((match as any).lineupConfirmed || match.lineupSummary?.confirmed || prediction?.lineupSummary?.confirmed);
+  const hasOdds = Boolean((match as any).hasOdds || prediction?.odds || prediction?.oddsAtPrediction || match.dbFeatureContext?.historicalOdds?.samples);
+  const h2hPlayed = Number((match as any).h2hPlayed || match.h2h?.played || prediction?.h2h?.played || 0);
   const coverage = sourcePct(match);
 
   return (

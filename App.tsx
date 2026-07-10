@@ -1,6 +1,5 @@
 import React, { Suspense, lazy, useCallback, useEffect, useMemo, useRef, useState } from "react";
 import Header from "./components/Header";
-import MatchCard from "./components/MatchCard";
 import BestBetCard from "./components/BestBetCard";
 import CompactMatchRow from "./components/CompactMatchRow";
 import DateNavigation from "./components/DateNavigation"; // NIEUW IMPORT
@@ -31,6 +30,7 @@ type View = "dashboard" | "knowledge" | "history" | "standings" | "modelops" | "
 type FilterMode = "alle" | "favorieten" | "live" | "gepland" | "gespeeld" | "brondekking" | "odds" | "xg" | "weer" | "mistdata";
 
 const PredictionHistory = lazy(() => import("./components/PredictionHistory"));
+const MatchCard = lazy(() => import("./components/MatchCard"));
 const StandingsView = lazy(() => import("./components/StandingsView"));
 const SettingsView = lazy(() => import("./components/SettingsView"));
 const ModelOpsView = lazy(() => import("./components/ModelOpsView"));
@@ -148,16 +148,16 @@ function hasCoverageEntry(match: Match, key: string) {
 }
 
 function hasOddsData(match: Match) {
-  return hasCoverageEntry(match, "odds") || Number((match as any).dbFeatureContext?.historicalOdds?.samples || 0) > 0;
+  return Boolean((match as any).hasOdds) || hasCoverageEntry(match, "odds") || Number((match as any).dbFeatureContext?.historicalOdds?.samples || 0) > 0;
 }
 
 function hasXgData(match: Match) {
   const stats = (match as any).dbFeatureContext?.matchStats || {};
-  return hasCoverageEntry(match, "xg_style") || stats.homeXg != null || stats.awayXg != null || Number(stats.homeShots || 0) > 0 || Number(stats.awayShots || 0) > 0;
+  return Boolean((match as any).hasXg) || hasCoverageEntry(match, "xg_style") || stats.homeXg != null || stats.awayXg != null || Number(stats.homeShots || 0) > 0 || Number(stats.awayShots || 0) > 0;
 }
 
 function hasWeatherData(match: Match) {
-  return hasCoverageEntry(match, "weather") || Boolean(match.weather?.conditions || match.weather?.temperature != null);
+  return Boolean((match as any).hasWeather) || hasCoverageEntry(match, "weather") || Boolean(match.weather?.conditions || match.weather?.temperature != null);
 }
 
 function dedupeDashboardMatches(items: Match[]) {
@@ -1037,11 +1037,13 @@ const App: React.FC = () => {
                         onToggle={() => setExpandedMatchId(expanded ? null : match.id)}
                       />
                       {expanded && (
-                        <MatchCard
-                          match={enriched}
-                          prediction={predictions[match.id]}
-                          onFavoriteChange={() => setFavRefresh((value) => value + 1)}
-                        />
+                        <Suspense fallback={<div className="glass-card rounded-2xl border border-white/5 p-4 text-sm font-bold text-slate-400">Wedstrijddetails laden...</div>}>
+                          <MatchCard
+                            match={enriched}
+                            prediction={predictions[match.id]}
+                            onFavoriteChange={() => setFavRefresh((value) => value + 1)}
+                          />
+                        </Suspense>
                       )}
                     </div>
                   );
