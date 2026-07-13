@@ -8344,6 +8344,34 @@ async function fetchR2LineupSummary(matchId, kickoffAt, now = Date.now()) {
   return payload;
 }
 
+async function fetchR2OddsSnapshot(matchId, kickoffAt) {
+  if (String(process.env.R2_CRITICAL_CAPTURE_ENABLED || "false").toLowerCase() !== "true") return null;
+  const kickoffMs = Date.parse(kickoffAt || "");
+  if (!Number.isFinite(kickoffMs)) return null;
+  const config = getR2Config();
+  if (!config.configured) return null;
+  const object = await getR2Object({
+    config,
+    key: buildR2ObjectKey(config, `critical-captures/odds/${matchId}.json`),
+  }).catch(() => null);
+  if (!object?.ok) return null;
+  const ledger = JSON.parse(object.body.toString("utf8"));
+  const prematch = ledger?.prematch;
+  if (!prematch || Date.parse(prematch.capturedAt || "") >= kickoffMs) return null;
+  return {
+    status: "available_r2_fallback",
+    provider: prematch.provider || "cloudflare-r2-odds-ledger",
+    reason: "Timestamped prematch odds geladen uit de Cloudflare R2 critical-capture ledger.",
+    oddsAtPrediction: {
+      ...prematch,
+      closingHome: ledger?.closing?.home ?? null,
+      closingDraw: ledger?.closing?.draw ?? null,
+      closingAway: ledger?.closing?.away ?? null,
+      closingCapturedAt: ledger?.closing?.capturedAt || null,
+    },
+  };
+}
+
 async function fetchH2H(eventId, currentHomeId, currentAwayId, tournamentId, seasonId) {
   const json = await safeFetch(`${SOFA}/event/${eventId}/h2h`);
   const raw = json?.events || [];
@@ -11504,7 +11532,7 @@ async function main() {
       });
 
       const generatedAtIso = isoFromMs(now) || new Date(now).toISOString();
-      const oddsCapture = ODDS_FETCH_ENABLED
+      let oddsCapture = ODDS_FETCH_ENABLED
         ? await fetchOddsAtPrediction(
             {
               matchId,
@@ -11519,6 +11547,9 @@ async function main() {
             }
           )
         : { status: "disabled", oddsAtPrediction: null, reason: "ODDS_FETCH_ENABLED=false" };
+      if (!oddsCapture?.oddsAtPrediction) {
+        oddsCapture = (await fetchR2OddsSnapshot(matchId, kickoff)) || oddsCapture;
+      }
       const oddsAtPrediction = oddsCapture?.oddsAtPrediction || null;
       const score =
         event.homeScore?.current != null && event.awayScore?.current != null

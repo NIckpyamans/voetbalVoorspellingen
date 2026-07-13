@@ -18,6 +18,25 @@ jobs:
           node-version: 22
           cache: npm
       - run: npm ci
+      - name: Capture critical odds to R2
+        run: npm run db:odds:critical:r2
+        env:
+          ODDS_PROVIDER_NAME: ${{ secrets.ODDS_PROVIDER_NAME }}
+          ODDS_API_URL_TEMPLATE: ${{ secrets.ODDS_API_URL_TEMPLATE }}
+          ODDS_API_KEY: ${{ secrets.ODDS_API_KEY }}
+          THE_ODDS_API_KEY: ${{ secrets.THE_ODDS_API_KEY }}
+          SPORTMONKS_API_KEY: ${{ secrets.SPORTMONKS_API_KEY }}
+          MYSPORTS_API_KEY: ${{ secrets.MYSPORTS_API_KEY }}
+          SPORTMONKS_ODDS_API_URL_TEMPLATE: ${{ secrets.SPORTMONKS_ODDS_API_URL_TEMPLATE }}
+          ODDS_API_EXTRA_SPORTS: soccer_uefa_champs_league_qualification,soccer_uefa_champs_league,soccer_uefa_europa_league,soccer_uefa_europa_conference_league,soccer_club_friendly,soccer_friendly
+          CLOUDFLARE_R2_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_R2_ACCOUNT_ID }}
+          CLOUDFLARE_R2_ACCESS_KEY_ID: ${{ secrets.CLOUDFLARE_R2_ACCESS_KEY_ID }}
+          CLOUDFLARE_R2_SECRET_ACCESS_KEY: ${{ secrets.CLOUDFLARE_R2_SECRET_ACCESS_KEY }}
+          CLOUDFLARE_R2_BUCKET: ${{ secrets.CLOUDFLARE_R2_BUCKET }}
+          CLOUDFLARE_R2_ENDPOINT: ${{ secrets.CLOUDFLARE_R2_ENDPOINT }}
+          CLOUDFLARE_R2_PREFIX: ${{ secrets.CLOUDFLARE_R2_PREFIX }}
+          CRITICAL_ODDS_HOURS_AHEAD: 36
+          CRITICAL_ODDS_MATCH_LIMIT: 40
       - run: node scripts/ci-neon-safe.js -- npm run db:odds:prematch:collect
         env:
           DATABASE_URL: ${{ secrets.DATABASE_URL }}
