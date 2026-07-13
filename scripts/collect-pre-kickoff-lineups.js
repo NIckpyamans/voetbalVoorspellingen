@@ -15,6 +15,7 @@ const GRACE_MINUTES = Math.max(0, Number(process.env.LINEUP_KICKOFF_GRACE_MINUTE
 const MAX_MATCHES = Math.max(1, Number(process.env.LINEUP_PROVIDER_MAX_MATCHES || 16));
 const OUTPUT = path.join(ROOT, "monitor", "pre-kickoff-lineup-collector.json");
 const apiFootballFixtureCache = new Map();
+const sofaScheduleCache = new Map();
 
 function digest(value, size = 40) {
   return crypto.createHash("sha1").update(String(value || "")).digest("hex").slice(0, size);
@@ -123,6 +124,30 @@ export function normalizeSportmonks(payload) {
   };
 }
 
+export function normalizeSofaScore(payload) {
+  const build = (team) => {
+    if (!team) return null;
+    const rows = asArray(team.players);
+    return lineupSide({
+      formation: team.formation || null,
+      starters: rows.filter((item) => item?.substitute === false),
+      substitutes: rows.filter((item) => item?.substitute === true),
+      source: "SofaScore confirmed lineups",
+    });
+  };
+  const home = build(payload?.home || payload?.homeTeam);
+  const away = build(payload?.away || payload?.awayTeam);
+  if (!home && !away) return null;
+  return {
+    home,
+    away,
+    confirmed: Boolean(home?.confirmed && away?.confirmed),
+    projected: false,
+    source: "SofaScore confirmed lineups",
+    summary: "Bevestigde opstellingen opgehaald uit de wedstrijdfeed vlak voor de aftrap.",
+  };
+}
+
 async function fetchJson(url, headers = {}) {
   const controller = new AbortController();
   const timeout = setTimeout(() => controller.abort(), 12000);
@@ -146,6 +171,31 @@ async function fetchApiFootballLineup(fixtureId) {
     : { "x-apisports-key": key };
   const result = await fetchJson(url, headers);
   return { ...result, status: result.ok ? "ok" : `http_${result.status}`, lineup: result.ok ? normalizeApiFootball(result.payload) : null, url };
+}
+
+async function fetchSofaScoreLineup(match) {
+  const date = String(match?.kickoff_at || "").slice(0, 10);
+  if (!date) return { status: "invalid_date" };
+  if (!sofaScheduleCache.has(date)) {
+    sofaScheduleCache.set(date, fetchJson(`https://www.sofascore.com/api/v1/sport/football/scheduled-events/${date}`, {
+      "User-Agent": "voetbalvoorspellingen-lineup-resolver/1.0",
+    }));
+  }
+  const schedule = await sofaScheduleCache.get(date);
+  if (!schedule?.ok) return { status: `schedule_http_${schedule?.status || "unknown"}` };
+  let best = null;
+  for (const event of asArray(schedule.payload?.events)) {
+    const score = Math.min(
+      teamSimilarity(match.home_team_name, event?.homeTeam?.name),
+      teamSimilarity(match.away_team_name, event?.awayTeam?.name)
+    );
+    if (score < 0.82 || (best && best.score >= score)) continue;
+    best = { eventId: event?.id, score };
+  }
+  if (!best?.eventId) return { status: "fixture_not_found" };
+  const url = `https://www.sofascore.com/api/v1/event/${encodeURIComponent(best.eventId)}/lineups`;
+  const result = await fetchJson(url, { "User-Agent": "voetbalvoorspellingen-lineup-resolver/1.0" });
+  return { ...result, status: result.ok ? "ok" : `http_${result.status}`, lineup: result.ok ? normalizeSofaScore(result.payload) : null, url };
 }
 
 async function resolveApiFootballFixture(match) {
@@ -288,9 +338,13 @@ async function main() {
   }
   const report = { generatedAt: new Date().toISOString(), checked: matches.length, confirmed: 0, partial: 0, missing: 0, r2Stored: 0, databaseWritable, databaseError, providers: {}, matches: [] };
   for (const match of matches) {
-    const apiFootballFixtureId = match.api_football_fixture_id || await resolveApiFootballFixture(match);
-    let result = await fetchApiFootballLineup(apiFootballFixtureId);
-    let provider = "api-football";
+    let result = await fetchSofaScoreLineup(match);
+    let provider = "sofascore";
+    if (!result.lineup) {
+      const apiFootballFixtureId = match.api_football_fixture_id || await resolveApiFootballFixture(match);
+      result = await fetchApiFootballLineup(apiFootballFixtureId);
+      provider = "api-football";
+    }
     if (!result.lineup) {
       result = await fetchSportmonksLineup(databaseWritable ? sql : null, match);
       provider = "sportmonks";

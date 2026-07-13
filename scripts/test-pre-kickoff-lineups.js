@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 
 import assert from "node:assert/strict";
-import { normalizeApiFootball, normalizeSportmonks } from "./collect-pre-kickoff-lineups.js";
+import { normalizeApiFootball, normalizeSofaScore, normalizeSportmonks } from "./collect-pre-kickoff-lineups.js";
 
 const apiPlayers = Array.from({ length: 11 }, (_, index) => ({
   player: { name: `API speler ${index + 1}`, number: index + 1, pos: index === 0 ? "G" : "M" },
@@ -31,4 +31,11 @@ const sportmonks = normalizeSportmonks({
 assert.equal(sportmonks?.confirmed, true);
 assert.equal(sportmonks?.home?.players?.[0]?.name, "Sportmonks 1-1");
 
-console.log("[test-pre-kickoff-lineups] API-Football en Sportmonks contracten: PASS");
+const sofa = normalizeSofaScore({
+  home: { formation: "4-3-3", players: apiPlayers.map((item) => ({ ...item, substitute: false })) },
+  away: { formation: "4-4-2", players: apiPlayers.map((item) => ({ ...item, substitute: false })) },
+});
+assert.equal(sofa?.confirmed, true);
+assert.equal(sofa?.away?.starters, 11);
+
+console.log("[test-pre-kickoff-lineups] SofaScore, API-Football en Sportmonks contracten: PASS");
