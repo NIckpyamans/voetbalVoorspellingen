@@ -12,7 +12,8 @@ interface BestBetCardProps {
 }
 
 const BestBetCard: React.FC<BestBetCardProps> = ({ bet }) => {
-  const exactScoreConfidence = Number(bet.exactScoreConfidence || bet.exactProb || 0);
+  const exactProbability = Number(bet.exactProb || 0);
+  const selectionStrength = Number(bet.exactScoreConfidence || 0);
   const confidence = Number(bet.confidence || 0);
   const isFinished = String(bet.status || "").toUpperCase() === "FT";
   const scoreWasExact = isFinished && bet.score === `${bet.predHomeGoals}-${bet.predAwayGoals}`;
@@ -43,14 +44,18 @@ const BestBetCard: React.FC<BestBetCardProps> = ({ bet }) => {
         )}
       </div>
 
-      <div className="relative grid grid-cols-2 gap-2 pt-2 border-t border-white/5">
+      <div className="relative grid grid-cols-3 gap-2 pt-2 border-t border-white/5">
         <div>
           <span className="text-[7px] text-slate-500 font-bold uppercase">Exact-score kans</span>
-          <span className="block text-xs font-black text-yellow-300">{Math.round(exactScoreConfidence * 100)}%</span>
+          <span className="block text-xs font-black text-yellow-300">{Math.round(exactProbability * 100)}%</span>
         </div>
         <div>
           <span className="text-[7px] text-slate-500 font-bold uppercase">Vertrouwen</span>
           <span className="block text-xs font-black text-blue-400">{Math.round(confidence * 100)}%</span>
+        </div>
+        <div>
+          <span className="text-[7px] text-slate-500 font-bold uppercase">Selectiesterkte</span>
+          <span className="block text-xs font-black text-emerald-300">{Math.round(selectionStrength * 100)}%</span>
         </div>
       </div>
 

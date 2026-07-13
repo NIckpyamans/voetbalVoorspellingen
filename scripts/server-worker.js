@@ -60,6 +60,7 @@ import {
   seededRandom,
   sourceReliabilityScore,
 } from "./worker/prediction.js";
+import { selectUniqueTeamTopPicks } from "./worker/top-picks.js";
 
 const SOFA = "https://api.sofascore.com/api/v1";
 const THESPORTSDB_BASE = "https://www.thesportsdb.com/api/v1/json";
@@ -6619,7 +6620,7 @@ function buildExactScoreTipScore(prediction, match) {
 
 function assignTopConfidenceRanks(dayMatches, dayPredictions) {
   const matchMap = new Map((dayMatches || []).map((match) => [match.id, match]));
-  const ranked = [...(dayPredictions || [])]
+  const rankedCandidates = [...(dayPredictions || [])]
     .map((prediction) => {
       const match = matchMap.get(prediction.matchId);
       const exactScoreTip = buildExactScoreTipScore(prediction, match);
@@ -6628,10 +6629,15 @@ function assignTopConfidenceRanks(dayMatches, dayPredictions) {
       return {
         matchId: prediction.matchId,
         exactScoreConfidence: exactScoreTip.score,
+        homeTeam: match?.homeTeamName || match?.homeTeam || "",
+        awayTeam: match?.awayTeamName || match?.awayTeam || "",
       };
     })
-    .sort((a, b) => b.exactScoreConfidence - a.exactScoreConfidence)
-    .slice(0, 5);
+    .sort((a, b) => b.exactScoreConfidence - a.exactScoreConfidence);
+  const ranked = selectUniqueTeamTopPicks(rankedCandidates, {
+    limit: 5,
+    normalizeTeam: normalizeName,
+  });
 
   const rankMap = new Map(ranked.map((item, index) => [item.matchId, index + 1]));
 

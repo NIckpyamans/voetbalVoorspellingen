@@ -55,7 +55,7 @@ const CompactMatchRow: React.FC<CompactMatchRowProps> = ({ match, prediction, ex
   const finished = isMatchFinished(match);
   const predictedScore = prediction ? `${prediction.predHomeGoals ?? 0}-${prediction.predAwayGoals ?? 0}` : "-";
   const confidence = Number(prediction?.confidence || Math.max(prediction?.homeProb || 0, prediction?.drawProb || 0, prediction?.awayProb || 0));
-  const exactConfidence = Number(prediction?.exactScoreConfidence || prediction?.exactProb || 0);
+  const exactProbability = Number(prediction?.exactProb || 0);
   const lineupConfirmed = Boolean((match as any).lineupConfirmed || match.lineupSummary?.confirmed || prediction?.lineupSummary?.confirmed);
   const hasOdds = Boolean((match as any).hasOdds || prediction?.odds || prediction?.oddsAtPrediction || match.dbFeatureContext?.historicalOdds?.samples);
   const h2hPlayed = Number((match as any).h2hPlayed || match.h2h?.played || prediction?.h2h?.played || 0);
@@ -103,7 +103,7 @@ const CompactMatchRow: React.FC<CompactMatchRowProps> = ({ match, prediction, ex
         <div className="hidden text-center md:block">
           <div className="text-[8px] font-black uppercase text-slate-500">Zekerheid</div>
           <div className="text-sm font-black text-cyan-200">{pct(confidence)}</div>
-          <div className="text-[9px] text-slate-500">exact {pct(exactConfidence)}</div>
+          <div className="text-[9px] text-slate-500">exact {pct(exactProbability)}</div>
         </div>
 
         <div className="flex flex-col items-end gap-1">
