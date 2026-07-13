@@ -1,6 +1,6 @@
 {
-  "generatedAt": "2026-07-13T07:16:54.843Z",
-  "date": "2026-07-13",
+  "generatedAt": "2026-07-13T23:14:15.953Z",
+  "date": "2026-07-14",
   "name": "Ruflo-style gratis AI monitor",
   "mode": "naast-productie",
   "productionSafe": true,
@@ -62,16 +62,6 @@
       ],
       "actions": [
         {
-          "priority": "high",
-          "title": "Wedstrijddag fallbackketen strakker maken",
-          "freeSolution": "Laat de worker altijd meerdere gratis bronnen proberen: SofaScore -> TheSportsDB -> OpenLigaDB -> football-data/openfootball.",
-          "files": [
-            "scripts/server-worker.js",
-            "api/Matches.ts"
-          ],
-          "status": "bewaken"
-        },
-        {
           "priority": "medium",
           "title": "H2H-backfill verder vullen",
           "freeSolution": "Gebruik openfootball en football-data rows per competitie als historische H2H fallback voordat de UI 'leeg' toont.",
@@ -84,109 +74,21 @@
       ]
     },
     "learning": {
-      "score": 12,
-      "summary": "Leerlaag: 691 reviews, exact 12%, winnaar/gelijk 41%, top-5 exact 14%.",
-      "topConfidence": {
-        "matches": 117,
-        "exactHitRate": 0.145,
-        "outcomeHitRate": 0.41,
-        "probabilityOutcomeHitRate": 0.538,
-        "avgGoalError": 1.65,
-        "rank1ExactHitRate": 0.103,
-        "rank1OutcomeHitRate": 0.379,
-        "versusOverallOutcomeDelta": -0.002
-      },
-      "topClubs": [
-        {
-          "teamName": "Verona",
-          "reviewedMatches": 2,
-          "exactHitRate": 1,
-          "outcomeHitRate": 1,
-          "avgGoalError": 0
-        },
-        {
-          "teamName": "Angers",
-          "reviewedMatches": 2,
-          "exactHitRate": 1,
-          "outcomeHitRate": 1,
-          "avgGoalError": 0
-        },
-        {
-          "teamName": "Alverca",
-          "reviewedMatches": 2,
-          "exactHitRate": 1,
-          "outcomeHitRate": 1,
-          "avgGoalError": 0
-        },
-        {
-          "teamName": "Roda JC",
-          "reviewedMatches": 2,
-          "exactHitRate": 1,
-          "outcomeHitRate": 1,
-          "avgGoalError": 0
-        },
-        {
-          "teamName": "Nottingham Forest",
-          "reviewedMatches": 2,
-          "exactHitRate": 1,
-          "outcomeHitRate": 1,
-          "avgGoalError": 0
-        },
-        {
-          "teamName": "RKC Waalwijk",
-          "reviewedMatches": 4,
-          "exactHitRate": 0.75,
-          "outcomeHitRate": 0.75,
-          "avgGoalError": 0.25
-        },
-        {
-          "teamName": "Nottingham Forest",
-          "reviewedMatches": 3,
-          "exactHitRate": 0.67,
-          "outcomeHitRate": 0.67,
-          "avgGoalError": 1
-        },
-        {
-          "teamName": "Fiorentina",
-          "reviewedMatches": 3,
-          "exactHitRate": 0.67,
-          "outcomeHitRate": 0.67,
-          "avgGoalError": 1.67
-        },
-        {
-          "teamName": "KAA Gent",
-          "reviewedMatches": 5,
-          "exactHitRate": 0.6,
-          "outcomeHitRate": 1,
-          "avgGoalError": 0.8
-        },
-        {
-          "teamName": "Castellon",
-          "reviewedMatches": 4,
-          "exactHitRate": 0.5,
-          "outcomeHitRate": 0.5,
-          "avgGoalError": 0.5
-        }
-      ],
+      "score": 0,
+      "summary": "Leerlaag: 0 reviews, exact 0%, winnaar/gelijk 0%, top-5 exact 0%.",
+      "topConfidence": {},
+      "topClubs": [],
       "actions": []
     },
     "control": {
       "score": 100,
-      "summary": "Ontwikkelcontrole: 0 actieve monitorissues op 2026-07-13; digest 2026-06-18 t/m 2026-07-01.",
-      "latestDay": "2026-07-13",
+      "summary": "Ontwikkelcontrole: 0 actieve monitorissues op 2026-07-14; digest 2026-06-18 t/m 2026-07-01.",
+      "latestDay": "2026-07-14",
       "shouldPropose": false,
       "actions": []
     }
   },
   "topThemes": [
-    {
-      "title": "Wedstrijddag fallbackketen strakker maken",
-      "count": 1,
-      "priority": "high",
-      "agents": [
-        "data"
-      ]
-    },
     {
       "title": "H2H-backfill verder vullen",
       "count": 1,
@@ -197,17 +99,6 @@
     }
   ],
   "recommendedNextActions": [
-    {
-      "priority": "high",
-      "title": "Wedstrijddag fallbackketen strakker maken",
-      "freeSolution": "Laat de worker altijd meerdere gratis bronnen proberen: SofaScore -> TheSportsDB -> OpenLigaDB -> football-data/openfootball.",
-      "files": [
-        "scripts/server-worker.js",
-        "api/Matches.ts"
-      ],
-      "status": "bewaken",
-      "agent": "data"
-    },
     {
       "priority": "medium",
       "title": "H2H-backfill verder vullen",
