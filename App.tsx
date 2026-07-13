@@ -920,25 +920,25 @@ const App: React.FC = () => {
               </div>
             )}
 
-            <div className="space-y-4 mb-6">
-              <section className="glass-card rounded-2xl border border-yellow-500/20 p-4 bg-yellow-500/5">
-                <div className="flex items-center justify-between gap-3 mb-3">
+            <div className="grid gap-3 mb-4 xl:grid-cols-[minmax(0,1fr)_320px]">
+              <section className="glass-card rounded-2xl border border-yellow-500/20 p-3 bg-yellow-500/5">
+                <div className="flex items-center justify-between gap-3 mb-2">
                   <div>
                     <h2 className="text-sm font-black uppercase text-white flex items-center gap-2">
                       <span className="w-2 h-2 bg-yellow-400 rounded-full" />
                       Top 5 exacte-score voorspellingen vandaag
                     </h2>
-                    <p className="text-[11px] text-slate-500 mt-0.5">
-                      AI kiest deze 5 omdat de kans op de exacte uitslag het hoogst is. Deze picks worden achteraf apart gemonitord.
+                    <p className="text-[10px] text-slate-500 mt-0.5">
+                      De vijf hoogste exacte-score kansen voor deze speeldag.
                     </p>
                   </div>
-                  <div className="hidden md:block rounded-full bg-yellow-500/15 px-3 py-1 text-[10px] font-black text-yellow-200">
+                  <div className="rounded-full bg-yellow-500/15 px-3 py-1 text-[10px] font-black text-yellow-200">
                     {bestBets.length}/5 gevuld
                   </div>
                 </div>
 
                 {bestBets.length > 0 ? (
-                  <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-5 gap-3">
+                  <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-2">
                     {bestBets.map((bet: any) => (
                       <BestBetCard key={bet.matchId} bet={bet} />
                     ))}
@@ -949,29 +949,15 @@ const App: React.FC = () => {
                   </div>
                 )}
 
-                <div className="mt-3 grid grid-cols-2 md:grid-cols-4 gap-2">
-                  <div className="rounded-xl bg-slate-950/40 border border-white/5 p-3">
-                    <div className="text-[8px] font-black text-slate-500 uppercase">Top-5 exact</div>
-                    <div className="text-xl font-black text-white">{dashboardInsights.topFiveExactPct}%</div>
-                    <div className="text-[9px] text-slate-500">{dashboardInsights.topFiveExact}/{dashboardInsights.topFiveTotal}</div>
-                  </div>
-                  <div className="rounded-xl bg-slate-950/40 border border-white/5 p-3">
-                    <div className="text-[8px] font-black text-slate-500 uppercase">Winnaar/gelijk</div>
-                    <div className="text-xl font-black text-white">{dashboardInsights.topFiveOutcomePct}%</div>
-                    <div className="text-[9px] text-slate-500">top-5 monitor</div>
-                  </div>
-                  <div className="rounded-xl bg-slate-950/40 border border-white/5 p-3">
-                    <div className="text-[8px] font-black text-slate-500 uppercase">Rest exact</div>
-                    <div className="text-xl font-black text-white">{dashboardInsights.otherExactPct}%</div>
-                    <div className="text-[9px] text-slate-500">{dashboardInsights.otherExactCount}/{dashboardInsights.otherTotal}</div>
-                  </div>
-                  <div className={`rounded-xl border p-3 ${dashboardInsights.topSelectionIsBetter ? "border-green-500/20 bg-green-500/10" : "border-amber-500/20 bg-amber-500/10"}`}>
-                    <div className="text-[8px] font-black text-slate-500 uppercase">Selectiecheck</div>
-                    <div className={`text-[12px] font-black mt-1 ${dashboardInsights.topSelectionIsBetter ? "text-green-300" : "text-amber-300"}`}>
-                      {dashboardInsights.topSelectionIsBetter ? "AI kiest beter" : "Bijsturen nodig"}
-                    </div>
-                    <div className="text-[9px] text-slate-500">foutmarge {dashboardInsights.topFiveAvgError}</div>
-                  </div>
+                <div className="mt-2 flex flex-wrap items-center gap-2 rounded-xl border border-white/5 bg-slate-950/35 px-3 py-2 text-[10px] font-bold text-slate-400">
+                  <span>Top-5 exact <strong className="text-white">{dashboardInsights.topFiveExactPct}%</strong></span>
+                  <span className="text-slate-600">|</span>
+                  <span>Winnaar/gelijk <strong className="text-white">{dashboardInsights.topFiveOutcomePct}%</strong></span>
+                  <span className="text-slate-600">|</span>
+                  <span>Rest exact <strong className="text-white">{dashboardInsights.otherExactPct}%</strong></span>
+                  <span className={`ml-auto rounded-full px-2 py-0.5 text-[9px] font-black ${dashboardInsights.topSelectionIsBetter ? "bg-green-500/10 text-green-300" : "bg-amber-500/10 text-amber-300"}`}>
+                    {dashboardInsights.topSelectionIsBetter ? "AI kiest beter" : "bijsturen nodig"} · foutmarge {dashboardInsights.topFiveAvgError}
+                  </span>
                 </div>
               </section>
 
@@ -993,9 +979,8 @@ const App: React.FC = () => {
                   </div>
 
                   {favoriteStanding?.rows?.length ? (
-                    <div className="grid grid-cols-1 gap-1.5 rounded-xl border border-white/5 bg-slate-950/45 p-1.5 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6">
-                      {favoriteStanding.rows.slice(0, 6).map((row: any) => {
-                        const goalDiff = Number(row.gf || 0) - Number(row.ga || 0);
+                    <div className="grid grid-cols-1 gap-1.5 rounded-xl border border-white/5 bg-slate-950/45 p-1.5 sm:grid-cols-2 xl:grid-cols-1">
+                      {favoriteStanding.rows.slice(0, 4).map((row: any) => {
                         return (
                           <div
                             key={`${favoriteStanding.key}-${row.teamId || row.team}`}
