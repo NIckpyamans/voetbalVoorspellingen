@@ -2,6 +2,11 @@ name: Pre-kickoff lineup refresh
 
 on:
   workflow_dispatch:
+    inputs:
+      lookahead_minutes:
+        description: "Diagnostisch zoekvenster; automatisch gebruikt de orchestrator 150 minuten"
+        required: false
+        default: "150"
 
 concurrency:
   group: football-lineup-refresh
@@ -61,7 +66,7 @@ jobs:
           node scripts/ci-neon-safe.js -- npm run db:lineups:prematch:collect
           node scripts/ci-neon-safe.js -- node scripts/server-worker.js
         env:
-          LINEUP_LOOKAHEAD_MINUTES: 150
+          LINEUP_LOOKAHEAD_MINUTES: ${{ inputs.lookahead_minutes || '150' }}
           LINEUP_PROVIDER_MAX_MATCHES: 16
 
       - name: Monitor lineup coverage
