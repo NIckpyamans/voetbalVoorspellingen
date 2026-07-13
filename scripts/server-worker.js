@@ -26,6 +26,7 @@ import {
 } from "./worker/date-window.js";
 import { buildCupSheetsFromMatches } from "../shared/cupSheets.js";
 import { loadLocalEnv, readDatabaseFeatureContext, syncStoreToDatabase } from "../shared/database.js";
+import { buildR2ObjectKey, getR2Config, getR2Object } from "../shared/cloudflare-r2.js";
 import {
   createSafeFetch,
   fetchBbcScheduledEvents as fetchBbcScheduledEventsSource,
@@ -8326,6 +8327,23 @@ async function fetchLineupSummary(eventId) {
   };
 }
 
+async function fetchR2LineupSummary(matchId, kickoffAt, now = Date.now()) {
+  if (String(process.env.R2_CRITICAL_CAPTURE_ENABLED || "false").toLowerCase() !== "true") return null;
+  const kickoffMs = Date.parse(kickoffAt || "");
+  if (!Number.isFinite(kickoffMs) || kickoffMs < now - 10 * 60000 || kickoffMs > now + 180 * 60000) return null;
+  const config = getR2Config();
+  if (!config.configured) return null;
+  const object = await getR2Object({
+    config,
+    key: buildR2ObjectKey(config, `critical-captures/lineups/${matchId}.json`),
+  }).catch(() => null);
+  if (!object?.ok) return null;
+  const payload = JSON.parse(object.body.toString("utf8"));
+  if (!payload?.lineupSummary?.confirmed) return null;
+  if (Date.parse(payload.capturedAt || "") >= kickoffMs) return null;
+  return payload;
+}
+
 async function fetchH2H(eventId, currentHomeId, currentAwayId, tournamentId, seasonId) {
   const json = await safeFetch(`${SOFA}/event/${eventId}/h2h`);
   const raw = json?.events || [];
@@ -11366,6 +11384,51 @@ async function main() {
         historicalRefereeProfile
       );
       const teamIdentity = buildTeamIdentity(homeId, awayId, homeName, awayName, String(event.source || "sofascore"));
+      let sourceAsOfFallbackLineup = null;
+      const matchId = `ss-${event.id}`;
+      const dbFeatureContext = await readDatabaseFeatureContext({
+        matchId,
+        homeClubId: homeId ? String(homeId) : null,
+        awayClubId: awayId ? String(awayId) : null,
+        competitionId: null,
+        dateKey: date,
+        homeTeamName: homeName,
+        awayTeamName: awayName,
+      }).catch(() => null);
+      if (dbFeatureContext?.lineupSummary?.confirmed && !lineupSummary?.confirmed) {
+        lineupSummary = {
+          ...dbFeatureContext.lineupSummary,
+          source: dbFeatureContext.lineupSource || dbFeatureContext.lineupSummary.source || "database confirmed lineup",
+        };
+      }
+      if (!lineupSummary?.confirmed) {
+        const r2Lineup = await fetchR2LineupSummary(matchId, event?.kickoff || (event?.startTimestamp ? new Date(Number(event.startTimestamp) * 1000).toISOString() : null), now);
+        if (r2Lineup?.lineupSummary?.confirmed) {
+          lineupSummary = {
+            ...r2Lineup.lineupSummary,
+            source: `${r2Lineup.provider || "provider"} via Cloudflare R2`,
+          };
+          // Houd de bron-timestamp beschikbaar wanneer Neon tijdelijk niet leesbaar of nog niet bijgewerkt is.
+          sourceAsOfFallbackLineup = r2Lineup.capturedAt || null;
+        }
+      }
+      if (Number(h2h?.played || 0) === 0 && Number(dbFeatureContext?.h2hEdge?.played || 0) > 0) {
+        const edge = dbFeatureContext.h2hEdge;
+        const currentHomeIsStoredHome = String(edge.home_club_id || "") === String(dbFeatureContext.resolvedHomeClubId || homeId || "");
+        h2h = {
+          played: Number(edge.played || 0),
+          homeWins: Number(currentHomeIsStoredHome ? edge.home_wins : edge.away_wins) || 0,
+          draws: Number(edge.draws || 0),
+          awayWins: Number(currentHomeIsStoredHome ? edge.away_wins : edge.home_wins) || 0,
+          sameCompetitionPlayed: Number(edge.played || 0),
+          weightedRecentBalance: Number(edge.weighted_recent_balance || 0) * (currentHomeIsStoredHome ? 1 : -1),
+          results: Array.isArray(edge.results) ? edge.results : [],
+          homeTeamId: homeId,
+          awayTeamId: awayId,
+          status: "database-h2h-edge",
+          source: "Neon h2h_edges",
+        };
+      }
       const lineupStatus = resolveLineupStatus(lineupSummary);
       const availabilitySummary = buildAvailabilitySummary(
         store.teamInjuries[homeId] || null,
@@ -11389,21 +11452,10 @@ async function main() {
         openfootballProfile: isoFromTimestamp(store.openfootballProfilesUpdated?.[leagueInfo.label]),
         understat: isoFromTimestamp(store.understatSnapshotsUpdated?.[leagueInfo.label]),
         fbref: isoFromTimestamp(store.fbrefSnapshotsUpdated?.[leagueInfo.label]),
-        lineups: lineupSummary ? isoFromTimestamp(now) : null,
+        lineups: dbFeatureContext?.lineupCapturedAt || sourceAsOfFallbackLineup || (lineupSummary ? isoFromTimestamp(now) : null),
         availability: availabilitySummary?.coverage > 0 ? availabilitySummary.capturedAt : null,
         referee: refereeProfile?.name ? isoFromTimestamp(store.marketProfilesUpdated?.[leagueInfo.label] || now) : null,
       };
-      const matchId = `ss-${event.id}`;
-      const dbFeatureContext = await readDatabaseFeatureContext({
-        matchId,
-        homeClubId: homeId ? String(homeId) : null,
-        awayClubId: awayId ? String(awayId) : null,
-        competitionId: null,
-        dateKey: date,
-        homeTeamName: homeName,
-        awayTeamName: awayName,
-      }).catch(() => null);
-
       const prediction = predict({
         homeTeamId: homeId,
         awayTeamId: awayId,

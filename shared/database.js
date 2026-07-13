@@ -1070,6 +1070,16 @@ export async function readDatabaseFeatureContext({
               from historical_odds_snapshots
               where match_id = $1
             ) as historical_odds_payload
+            ,(
+              select sr.payload
+              from source_records sr
+              where sr.entity_type = 'lineup'
+                and sr.entity_key = $1
+                and coalesce(sr.source_timestamp, sr.fetched_at) <= m.kickoff_at
+              order by (sr.payload->'lineupSummary'->>'confirmed')::boolean desc,
+                coalesce(sr.source_timestamp, sr.fetched_at) desc
+              limit 1
+            ) as lineup_payload
           from matches m
           left join match_stats ms on ms.match_id = m.match_id
           where m.match_id = $1
@@ -1137,12 +1147,16 @@ export async function readDatabaseFeatureContext({
     weather: row.weather_payload || null,
     teamSeasonStyle: teamSeasonRows,
     h2hEdge: h2hRows[0] || null,
+    lineupSummary: row.lineup_payload?.lineupSummary || null,
+    lineupSource: row.lineup_payload?.provider || row.lineup_payload?.lineupSummary?.source || null,
+    lineupCapturedAt: row.lineup_payload?.capturedAt || null,
     featureSources: [
       row.stats_source ? "match_stats" : null,
       row.team_match_stats_payload?.length ? "team_match_stats" : null,
       row.historical_odds_payload?.samples ? "historical_odds_snapshots" : null,
       teamSeasonRows.length ? "team_season_stats" : null,
       h2hRows.length ? "h2h_edges" : null,
+      row.lineup_payload?.lineupSummary ? "source_records.lineup" : null,
     ].filter(Boolean),
   };
 }

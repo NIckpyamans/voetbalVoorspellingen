@@ -7,7 +7,7 @@ const emitGithubOutput = process.argv.includes("--emit-github-output");
 const mode = String(process.env.ORCHESTRATOR_MODE || "conservative").toLowerCase();
 const target = String(process.env.ORCHESTRATOR_TARGET || "").trim();
 const branch = String(process.env.DATA_BRANCH || "codex/step3b-layout");
-const now = new Date();
+const now = new Date(process.env.ORCHESTRATOR_NOW || Date.now());
 const hour = Number(new Intl.DateTimeFormat("en-GB", {
   timeZone: "Europe/Amsterdam",
   hour: "2-digit",
@@ -21,6 +21,43 @@ const day = Number(new Intl.DateTimeFormat("en-GB", {
 function unique(values) {
   return [...new Set(values.filter(Boolean))];
 }
+
+function readUpcomingFixtures(reference = now) {
+  const fixtures = [];
+  for (let offset = 0; offset <= 1; offset += 1) {
+    const date = new Date(reference);
+    date.setUTCDate(date.getUTCDate() + offset);
+    const dateKey = date.toISOString().slice(0, 10);
+    const filePath = path.join(process.cwd(), "data", "days", `${dateKey}.json`);
+    if (!fs.existsSync(filePath)) continue;
+    try {
+      const payload = JSON.parse(fs.readFileSync(filePath, "utf8"));
+      for (const match of Array.isArray(payload?.matches) ? payload.matches : []) {
+        const kickoffAt = Date.parse(match?.kickoff || "");
+        const home = String(match?.homeTeamName || "").trim();
+        const away = String(match?.awayTeamName || "").trim();
+        if (!Number.isFinite(kickoffAt) || !home || !away || /\b(tbd|unknown|null)\b/i.test(`${home} ${away}`)) continue;
+        const minutesToKickoff = Math.round((kickoffAt - reference.getTime()) / 60000);
+        if (minutesToKickoff < -15 || minutesToKickoff > 36 * 60) continue;
+        fixtures.push({
+          matchId: String(match.id || match.sofaId || ""),
+          kickoff: new Date(kickoffAt).toISOString(),
+          minutesToKickoff,
+          league: match.league || null,
+          homeTeam: home,
+          awayTeam: away,
+        });
+      }
+    } catch (error) {
+      console.warn(`[orchestrator] Kon ${filePath} niet lezen: ${error?.message || error}`);
+    }
+  }
+  return fixtures.sort((left, right) => left.minutesToKickoff - right.minutesToKickoff);
+}
+
+const upcomingFixtures = readUpcomingFixtures();
+const lineupWindow = upcomingFixtures.filter((fixture) => fixture.minutesToKickoff >= 15 && fixture.minutesToKickoff <= 75);
+const closingOddsWindow = upcomingFixtures.filter((fixture) => fixture.minutesToKickoff >= 20 && fixture.minutesToKickoff <= 75);
 
 function plannedWorkflows() {
   if (target && target !== "auto") {
@@ -42,9 +79,9 @@ function plannedWorkflows() {
   const activeDaytime = hour >= 7 && hour <= 23;
 
   if (activeDaytime) workflows.push("live-score.yml");
-  if ([10, 14, 18, 21].includes(hour)) workflows.push("pre-kickoff-lineups.yml");
+  if (lineupWindow.length || [10, 14, 18, 21].includes(hour)) workflows.push("pre-kickoff-lineups.yml");
   if ([6, 12, 18].includes(hour)) workflows.push("worker.yml");
-  if ([8, 11, 14, 17, 20].includes(hour)) workflows.push("free-prematch-odds.yml");
+  if (closingOddsWindow.length || [8, 11, 14, 17, 20].includes(hour)) workflows.push("free-prematch-odds.yml");
 
   if (mode !== "minimal") {
     if (hour === 4) workflows.push("nightly-model-maintenance.yml");
@@ -71,6 +108,12 @@ const plan = {
   target: target || "auto",
   localHourAmsterdam: hour,
   localDayAmsterdam: day,
+  fixtureSignals: {
+    upcoming: upcomingFixtures.length,
+    nearestKickoff: upcomingFixtures[0] || null,
+    lineupWindow: lineupWindow.length,
+    closingOddsWindow: closingOddsWindow.length,
+  },
   workflows,
 };
 

@@ -3,6 +3,10 @@ name: Free timestamped prematch odds
 on:
   workflow_dispatch:
 
+concurrency:
+  group: football-prematch-odds
+  cancel-in-progress: true
+
 jobs:
   capture:
     runs-on: ubuntu-latest

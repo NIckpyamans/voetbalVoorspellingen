@@ -5,7 +5,7 @@ on:
 
 concurrency:
   group: football-lineup-refresh
-  cancel-in-progress: false
+  cancel-in-progress: true
 
 permissions:
   contents: read
@@ -19,10 +19,18 @@ env:
   API_KEY_API_FOOTBALL: ${{ secrets.API_KEY_API_FOOTBALL }}
   API_FOOTBALL_BASE_URL: ${{ vars.API_FOOTBALL_BASE_URL }}
   API_FOOTBALL_H2H_ENABLED: "false"
+  SPORTMONKS_API_KEY: ${{ secrets.SPORTMONKS_API_KEY || secrets.MYSPORTS_API_KEY }}
   ODDS_FETCH_ENABLED: "false"
   DATABASE_URL: ${{ secrets.DATABASE_URL }}
   POSTGRES_URL: ${{ secrets.POSTGRES_URL }}
   SUPABASE_DB_URL: ${{ secrets.SUPABASE_DB_URL }}
+  CLOUDFLARE_R2_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_R2_ACCOUNT_ID }}
+  CLOUDFLARE_R2_ACCESS_KEY_ID: ${{ secrets.CLOUDFLARE_R2_ACCESS_KEY_ID }}
+  CLOUDFLARE_R2_SECRET_ACCESS_KEY: ${{ secrets.CLOUDFLARE_R2_SECRET_ACCESS_KEY }}
+  CLOUDFLARE_R2_BUCKET: ${{ secrets.CLOUDFLARE_R2_BUCKET }}
+  CLOUDFLARE_R2_ENDPOINT: ${{ secrets.CLOUDFLARE_R2_ENDPOINT }}
+  CLOUDFLARE_R2_PREFIX: ${{ secrets.CLOUDFLARE_R2_PREFIX }}
+  R2_CRITICAL_CAPTURE_ENABLED: "true"
 
 jobs:
   refresh-lineups:
@@ -49,7 +57,12 @@ jobs:
 
       - name: Refresh near-kickoff lineups
         timeout-minutes: 8
-        run: node scripts/ci-neon-safe.js -- node scripts/server-worker.js
+        run: |
+          node scripts/ci-neon-safe.js -- npm run db:lineups:prematch:collect
+          node scripts/ci-neon-safe.js -- node scripts/server-worker.js
+        env:
+          LINEUP_LOOKAHEAD_MINUTES: 150
+          LINEUP_PROVIDER_MAX_MATCHES: 16
 
       - name: Monitor lineup coverage
         run: node scripts/ci-neon-safe.js -- npm run monitor:lineups

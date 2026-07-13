@@ -50,6 +50,15 @@ async function upsertH2HEdge(sql, match, profile) {
   const awayWins = oriented.filter((item) => Number(item.storedAwayScore) > Number(item.storedHomeScore)).length;
   const draws = oriented.length - homeWins - awayWins;
   const weightedRecentBalance = Number(((homeWins - awayWins) / Math.max(oriented.length, 1)).toFixed(3));
+  const provider = String(profile.source || "h2h-backfill").toLowerCase().includes("database") ? "database-results" : "api-football";
+  const sourceRecordId = `${provider}-h2h:${digest(`${match.match_id}|${profile.asOf || ""}|${JSON.stringify(oriented)}`)}`;
+
+  await sql.query(
+    `insert into source_records(source_record_id,provider,entity_type,entity_key,fetched_at,source_timestamp,content_hash,trust_score,payload)
+     values($1,$2,'h2h',$3,now(),$4,$5,$6,$7::jsonb)
+     on conflict(source_record_id) do update set fetched_at=excluded.fetched_at,payload=excluded.payload`,
+    [sourceRecordId, provider, match.match_id, profile.asOf || new Date().toISOString(), digest(JSON.stringify(oriented), 40), provider === "database-results" ? 0.94 : 0.86, JSON.stringify({ matchId: match.match_id, source: profile.source, results: oriented })]
+  );
 
   await sql.query(
     `
@@ -58,7 +67,7 @@ async function upsertH2HEdge(sql, match, profile) {
         home_wins, draws, away_wins, weighted_recent_balance, results, source_record_id, updated_at
       )
       values($1,$2,$3,$4,$5,$6,$7,$8,$9,$10::jsonb,$11,now())
-      on conflict(home_club_id, away_club_id, competition_id) do update set
+      on conflict(h2h_edge_id) do update set
         played = excluded.played,
         home_wins = excluded.home_wins,
         draws = excluded.draws,
@@ -79,9 +88,38 @@ async function upsertH2HEdge(sql, match, profile) {
       awayWins,
       weightedRecentBalance,
       JSON.stringify(oriented),
-      `api-football-h2h:${digest(`${match.match_id}|${profile.asOf || ""}`)}`,
+      sourceRecordId,
     ]
   );
+}
+
+async function readDatabaseH2HProfile(sql, match) {
+  const rows = await sql.query(
+    `select m.match_id,m.date_key,m.league,m.home_club_id,m.away_club_id,m.home_team_name,m.away_team_name,
+       mr.final_home_goals,mr.final_away_goals,mr.result_source,mr.settled_at
+     from matches m
+     join match_results mr on mr.match_id=m.match_id
+     where m.kickoff_at < $1
+       and ((m.home_club_id=$2 and m.away_club_id=$3) or (m.home_club_id=$3 and m.away_club_id=$2))
+       and mr.final_home_goals is not null and mr.final_away_goals is not null
+     order by m.kickoff_at desc
+     limit 20`,
+    [match.kickoff_at, match.home_club_id, match.away_club_id]
+  );
+  if (!rows.length) return null;
+  const results = rows.map((row) => {
+    const currentOrientation = String(row.home_club_id) === String(match.home_club_id);
+    return {
+      date: row.date_key,
+      league: row.league,
+      homeTeam: currentOrientation ? row.home_team_name : row.away_team_name,
+      awayTeam: currentOrientation ? row.away_team_name : row.home_team_name,
+      homeScore: Number(currentOrientation ? row.final_home_goals : row.final_away_goals),
+      awayScore: Number(currentOrientation ? row.final_away_goals : row.final_home_goals),
+      source: row.result_source || "match_results",
+    };
+  });
+  return { results, source: "database historical match results", asOf: rows[0]?.settled_at || new Date().toISOString() };
 }
 
 function buildNoDirectHistoryProfile(match, status) {
@@ -113,7 +151,7 @@ async function main() {
 
   const candidates = await sql.query(
     `
-      select m.match_id, m.date_key, m.league, m.competition_id, m.home_team_name, m.away_team_name,
+      select m.match_id, m.date_key, m.kickoff_at, m.league, m.competition_id, m.home_team_name, m.away_team_name,
         m.home_club_id, m.away_club_id
       from matches m
       where m.kickoff_at >= now()
@@ -125,7 +163,7 @@ async function main() {
           select 1 from h2h_edges h
           where h.home_club_id = least(m.home_club_id, m.away_club_id)
             and h.away_club_id = greatest(m.home_club_id, m.away_club_id)
-            and h.competition_id = m.competition_id
+            and h.competition_id is not distinct from m.competition_id
             and h.played > 0
         )
       order by m.kickoff_at, m.match_id
@@ -142,6 +180,19 @@ async function main() {
 
   for (const match of candidates) {
     try {
+      const databaseProfile = await readDatabaseH2HProfile(sql, match);
+      if (databaseProfile?.results?.length) {
+        await upsertH2HEdge(sql, match, databaseProfile);
+        filled.push({
+          matchId: match.match_id,
+          date: match.date_key,
+          homeTeam: match.home_team_name,
+          awayTeam: match.away_team_name,
+          played: databaseProfile.results.length,
+          source: databaseProfile.source,
+        });
+        continue;
+      }
       if (!providerConfigured) {
         noDirectHistory.push(buildNoDirectHistoryProfile(match, "provider_not_configured"));
         continue;
