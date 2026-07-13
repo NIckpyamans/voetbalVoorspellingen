@@ -38,7 +38,7 @@ function readUpcomingFixtures(reference = now) {
         const away = String(match?.awayTeamName || "").trim();
         if (!Number.isFinite(kickoffAt) || !home || !away || /\b(tbd|unknown|null)\b/i.test(`${home} ${away}`)) continue;
         const minutesToKickoff = Math.round((kickoffAt - reference.getTime()) / 60000);
-        if (minutesToKickoff < -15 || minutesToKickoff > 36 * 60) continue;
+        if (minutesToKickoff < -180 || minutesToKickoff > 36 * 60) continue;
         fixtures.push({
           matchId: String(match.id || match.sofaId || ""),
           kickoff: new Date(kickoffAt).toISOString(),
@@ -58,6 +58,7 @@ function readUpcomingFixtures(reference = now) {
 const upcomingFixtures = readUpcomingFixtures();
 const lineupWindow = upcomingFixtures.filter((fixture) => fixture.minutesToKickoff >= 15 && fixture.minutesToKickoff <= 75);
 const closingOddsWindow = upcomingFixtures.filter((fixture) => fixture.minutesToKickoff >= 20 && fixture.minutesToKickoff <= 75);
+const activeMatchWindow = upcomingFixtures.filter((fixture) => fixture.minutesToKickoff >= -180 && fixture.minutesToKickoff <= 180);
 
 function plannedWorkflows() {
   if (target && target !== "auto") {
@@ -78,7 +79,7 @@ function plannedWorkflows() {
   const workflows = [];
   const activeDaytime = hour >= 7 && hour <= 23;
 
-  if (activeDaytime) workflows.push("live-score.yml");
+  if (activeDaytime || activeMatchWindow.length) workflows.push("live-score.yml");
   if (lineupWindow.length || [10, 14, 18, 21].includes(hour)) workflows.push("pre-kickoff-lineups.yml");
   if ([6, 12, 18].includes(hour)) workflows.push("worker.yml");
   if (closingOddsWindow.length || [8, 11, 14, 17, 20].includes(hour)) workflows.push("free-prematch-odds.yml");
@@ -113,6 +114,7 @@ const plan = {
     nearestKickoff: upcomingFixtures[0] || null,
     lineupWindow: lineupWindow.length,
     closingOddsWindow: closingOddsWindow.length,
+    activeMatchWindow: activeMatchWindow.length,
   },
   workflows,
 };
