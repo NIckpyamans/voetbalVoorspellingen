@@ -10439,7 +10439,8 @@ function buildAiRecommendations(store, todayKey) {
   const diagnostics = store.featureDiagnostics || null;
   const topFailure = diagnostics?.topFailureSignals?.[0] || null;
   if (topFailure) {
-    if (topFailure.signal !== "low_model_agreement") {
+    const implementedFailureSignals = new Set(["low_model_agreement", "open_lineups", "h2h_signal"]);
+    if (!implementedFailureSignals.has(topFailure.signal)) {
       issues.push({
         title: "Top faalsignaal",
         summary: `${topFailure.signal} kwam ${topFailure.count} keer terug in de reviewdata.`,

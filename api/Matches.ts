@@ -254,6 +254,74 @@ function compactInjuries(injuries: any) {
   };
 }
 
+function compactFormSplit(split: any) {
+  if (!split || typeof split !== "object") return null;
+  return {
+    avgScored: split.avgScored ?? null,
+    avgConceded: split.avgConceded ?? null,
+    winRate: split.winRate ?? null,
+    over25Rate: split.over25Rate ?? null,
+  };
+}
+
+function compactRecentForm(recent: any) {
+  if (!recent || typeof recent !== "object") return null;
+  return {
+    form: recent.form || null,
+    source: recent.source || null,
+    gamesPlayed: recent.gamesPlayed ?? null,
+    wins: recent.wins ?? null,
+    draws: recent.draws ?? null,
+    losses: recent.losses ?? null,
+    cleanSheetRate: recent.cleanSheetRate ?? null,
+    failToScoreRate: recent.failToScoreRate ?? null,
+    bttsRate: recent.bttsRate ?? null,
+    yellowCardRate: recent.yellowCardRate ?? null,
+    redCardRate: recent.redCardRate ?? null,
+    strongestSide: recent.strongestSide || null,
+    formTrend: recent.formTrend || null,
+    momentum: recent.momentum ?? null,
+    splits: {
+      home: compactFormSplit(recent.splits?.home),
+      away: compactFormSplit(recent.splits?.away),
+    },
+    recentMatches: (Array.isArray(recent.recentMatches) ? recent.recentMatches : [])
+      .slice(-10)
+      .map((item: any) => ({
+        date: item.date || null,
+        venue: item.venue || null,
+        opponent: item.opponent || null,
+        score: item.score || null,
+        result: item.result || null,
+      })),
+  };
+}
+
+function compactFormProfile(profile: any) {
+  if (!profile || typeof profile !== "object") return null;
+  return {
+    pointsPerGame: profile.pointsPerGame ?? null,
+    consistency: profile.consistency ?? null,
+    strongestSide: profile.strongestSide || null,
+    attackTrend: profile.attackTrend || null,
+    setPieceScore: profile.setPieceScore ?? null,
+    cornersTrend: profile.cornersTrend ?? null,
+    fatigueIndex: profile.fatigueIndex ?? null,
+  };
+}
+
+function compactLearningSummary(summary: any) {
+  if (!summary || typeof summary !== "object") return null;
+  return {
+    summary: summary.summary || null,
+    homeOutcomeHitRate: summary.homeOutcomeHitRate ?? null,
+    awayOutcomeHitRate: summary.awayOutcomeHitRate ?? null,
+    homeBias: summary.homeBias ?? null,
+    awayBias: summary.awayBias ?? null,
+    combinedReliability: summary.combinedReliability ?? null,
+  };
+}
+
 function compactDetailMatch(match: any, section: string) {
   const base = baseDetailMatch(match);
   if (section === "h2h") {
@@ -272,12 +340,11 @@ function compactDetailMatch(match: any, section: string) {
   if (section === "vorm") {
     return {
       ...base,
-      homeRecent: match.homeRecent,
-      awayRecent: match.awayRecent,
-      homeTeamProfile: match.homeTeamProfile,
-      awayTeamProfile: match.awayTeamProfile,
-      learningSummary: match.learningSummary,
-      marketCalibration: match.marketCalibration,
+      homeRecent: compactRecentForm(match.homeRecent),
+      awayRecent: compactRecentForm(match.awayRecent),
+      homeTeamProfile: compactFormProfile(match.homeTeamProfile),
+      awayTeamProfile: compactFormProfile(match.awayTeamProfile),
+      learningSummary: compactLearningSummary(match.learningSummary),
     };
   }
   if (section === "markten") {

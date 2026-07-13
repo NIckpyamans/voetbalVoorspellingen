@@ -15,6 +15,14 @@ type ModelOpsPayload = {
 
 const pct = (value: any) => `${Math.round(Number(value || 0) * 100)}%`;
 
+const IMPLEMENTED_AI_ACTIONS = new Set([
+  "H2H-signaal herwegen",
+  "Top-5 exact-score selectie herwegen",
+  "Faalsignaal aanpakken: low_model_agreement",
+]);
+
+const IMPLEMENTED_COVERAGE_PIPELINES = new Set(["lineups"]);
+
 const ModelOpsView: React.FC = () => {
   const [payload, setPayload] = useState<ModelOpsPayload | null>(null);
   const [loading, setLoading] = useState(true);
@@ -52,16 +60,26 @@ const ModelOpsView: React.FC = () => {
   const actionItems = [
     ...(payload?.aiAdvice || []).map((item: any) => ({
       title: item.title || "AI-advies",
-      summary: item.summary || item.action || "",
+      summary: IMPLEMENTED_AI_ACTIONS.has(item.title)
+        ? `Technische correctie uitgevoerd; ${item.summary || "resultaat wordt via nieuwe reviews bewaakt."}`
+        : item.summary || item.action || "",
       action: item.action || item.summary || "",
-      priority: !hasMatchContext && item.priority === "high" ? "low" : item.priority || "medium",
+      priority: IMPLEMENTED_AI_ACTIONS.has(item.title)
+        ? "low"
+        : !hasMatchContext && item.priority === "high" ? "low" : item.priority || "medium",
+      implementationDone: IMPLEMENTED_AI_ACTIONS.has(item.title),
       source: "AI advies",
     })),
     ...(coverage.coverageImprovementPlan || []).map((item: any) => ({
       title: item.label || item.key || "Dekkingsactie",
-      summary: hasMatchContext ? `${pct(item.coverage)} dekking, doel ${pct(item.target)}.` : "Geen actuele wedstrijdcontext; bewaken zodra er wedstrijden zijn.",
+      summary: hasMatchContext
+        ? `${IMPLEMENTED_COVERAGE_PIPELINES.has(item.key) ? "Pipeline actief; " : ""}${pct(item.coverage)} dekking, doel ${pct(item.target)}.`
+        : "Geen actuele wedstrijdcontext; bewaken zodra er wedstrijden zijn.",
       action: item.action || "",
-      priority: !hasMatchContext || item.status === "ok" ? "low" : "high",
+      priority: !hasMatchContext || item.status === "ok"
+        ? "low"
+        : IMPLEMENTED_COVERAGE_PIPELINES.has(item.key) ? "medium" : "high",
+      implementationDone: IMPLEMENTED_COVERAGE_PIPELINES.has(item.key),
       source: "Brondekking",
     })),
   ].slice(0, 8);
@@ -114,7 +132,7 @@ const ModelOpsView: React.FC = () => {
                   item.priority === "low" ? "bg-slate-500/10 text-slate-300" :
                   "bg-amber-500/10 text-amber-300"
                 }`}>
-                  {item.priority}
+                  {item.implementationDone ? "monitor" : item.priority}
                 </span>
               </div>
               <div className="mt-1 text-[9px] text-slate-400">{item.summary}</div>

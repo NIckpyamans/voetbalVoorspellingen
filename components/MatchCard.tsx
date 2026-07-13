@@ -225,6 +225,58 @@ function TeamDeepStats({
   );
 }
 
+function FormComparison({ match }: { match: any }) {
+  const rows = [
+    {
+      label: "Punten per duel",
+      home: match.homeTeamProfile?.pointsPerGame,
+      away: match.awayTeamProfile?.pointsPerGame,
+    },
+    {
+      label: "Goals thuis / uit",
+      home: match.homeRecent?.splits?.home
+        ? `${match.homeRecent.splits.home.avgScored ?? "-"}-${match.homeRecent.splits.home.avgConceded ?? "-"}`
+        : null,
+      away: match.awayRecent?.splits?.away
+        ? `${match.awayRecent.splits.away.avgScored ?? "-"}-${match.awayRecent.splits.away.avgConceded ?? "-"}`
+        : null,
+    },
+    {
+      label: "Clean sheets",
+      home: match.homeRecent?.cleanSheetRate != null ? `${Math.round(match.homeRecent.cleanSheetRate * 100)}%` : null,
+      away: match.awayRecent?.cleanSheetRate != null ? `${Math.round(match.awayRecent.cleanSheetRate * 100)}%` : null,
+    },
+    {
+      label: "Vormtrend",
+      home: match.homeRecent?.formTrend || match.homeTeamProfile?.attackTrend,
+      away: match.awayRecent?.formTrend || match.awayTeamProfile?.attackTrend,
+    },
+  ];
+
+  return (
+    <div className="overflow-hidden rounded-xl border border-white/8 bg-slate-950/35">
+      <div className="grid grid-cols-[1fr_1.25fr_1fr] gap-2 border-b border-white/6 px-3 py-2 text-[8px] font-black uppercase text-slate-500">
+        <div className="truncate text-blue-300">{match.homeTeamName}</div>
+        <div className="text-center">Vormvergelijking</div>
+        <div className="truncate text-right text-red-300">{match.awayTeamName}</div>
+      </div>
+      {rows.map((row) => (
+        <div key={row.label} className="grid grid-cols-[1fr_1.25fr_1fr] gap-2 border-b border-white/5 px-3 py-2 text-[9px] last:border-0">
+          <div className="font-black text-white">{row.home ?? "-"}</div>
+          <div className="text-center text-slate-500">{row.label}</div>
+          <div className="text-right font-black text-white">{row.away ?? "-"}</div>
+        </div>
+      ))}
+      {match.learningSummary?.summary && (
+        <div className="border-t border-cyan-500/10 bg-cyan-950/15 px-3 py-2 text-[9px] leading-relaxed text-cyan-100/80">
+          <span className="font-black text-cyan-300">Modelreview: </span>
+          {match.learningSummary.summary}
+        </div>
+      )}
+    </div>
+  );
+}
+
 function collectAvailabilityNames(injuries: any) {
   return [
     ...(Array.isArray(injuries?.injuredPlayers) ? injuries.injuredPlayers : []),
@@ -1748,11 +1800,11 @@ const MatchCard: React.FC<MatchCardProps> = ({ match: initialMatch, prediction: 
 
       {tab === "vorm" && (
         <div className="space-y-2">
-          <div className="grid grid-cols-2 gap-2">
+          <FormComparison match={match} />
+          <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
             <RecentList title={`${match.homeTeamName} laatste 10`} recent={match.homeRecent} />
             <RecentList title={`${match.awayTeamName} laatste 10`} recent={match.awayRecent} />
           </div>
-          <ExpandableInsights match={match} prediction={prediction} />
         </div>
       )}
 
