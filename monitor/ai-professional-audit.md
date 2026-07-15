@@ -1,28 +1,28 @@
 # FootyAI professionele AI-audit
 
-Gegenereerd: 2026-07-01T10:30:16.124Z
+Gegenereerd: 2026-07-15T08:36:08.433Z
 Bron: https://voetbalvoorspellingen-clean.vercel.app
 
 ## Samenvatting
-Professionele audit actief. Grootste aandachtspunt: Brier/log loss.
+Professionele audit actief, maar live fetch is beperkt: snapshots.
 
 ## Live status
-- Wedstrijden vandaag: 3
-- Voorspellingen vandaag: 3
-- Reviews: 0
-- Prediction snapshots: 25
+- Wedstrijden vandaag: 5
+- Voorspellingen vandaag: 5
+- Reviews: 3
+- Prediction snapshots: 0
 - Worker: v23-calibrated-odds-ledger
 - Feature coverage: 0%
 - Echte odds coverage: 0%
 - Alleen historisch marktprofiel: 0%
-- Gemiddelde datacompleetheid: 18%
-- Datacompleetheid-audit: Geen wedstrijden voor datacompleetheid-audit.
-- Odds readiness: Provider staat klaar: controleer eerst een kleine wedstrijddag en bewaar closing odds apart.
+- Gemiddelde datacompleetheid: 46%
+- Datacompleetheid-audit: onbekend
+- Odds readiness: onbekend
 
 ## Opslag-audit
 - prediction_id: aanwezig (kritiek) - Voeg een stabiele prediction_id toe per voorspelling.
 - generated_at / cutoff_at: aanwezig (kritiek) - Sla tijdstip en cutoff expliciet op zodat latere uitslagen geen input kunnen worden.
-- featureVector: aanwezig (hoog) - Aanwezig waar predictions gevuld zijn; maak hem immutable per prediction_id.
+- featureVector: mist (hoog) - Aanwezig waar predictions gevuld zijn; maak hem immutable per prediction_id.
 - model_version: aanwezig (hoog) - Gebruik naast ensembleMeta ook workerVersion en feature_schema_version.
 - odds_at_prediction: mist (hoog) - Sla echte bookmaker, markt, odds en timestamp op; historische marktprofielen tellen niet als ROI-basis.
 - odds_status / missing_reason: aanwezig (hoog) - Markeer per voorspelling of odds echt, deels, historisch-only of ontbrekend zijn.

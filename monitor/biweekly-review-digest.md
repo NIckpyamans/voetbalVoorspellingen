@@ -1,22 +1,16 @@
 # FootyAI tweewekelijkse AI-digest
 
-Periode: 2026-06-18 t/m 2026-07-01
+Periode: 2026-07-02 t/m 2026-07-15
 
-AI bundel over de laatste 14 dagen: 4 hoofdthema's uit 10 monitorbevindingen.
+AI bundel over de laatste 14 dagen: 1 hoofdthema's uit 5 monitorbevindingen.
 
-- Runs: 17
-- Bevindingen: 10
-- Thema's: 4
+- Runs: 14
+- Bevindingen: 5
+- Thema's: 1
 
 ## Hoofdpunten
-- Fasebetrouwbaarheid ontbreekt (3x, severity: medium)
-  - Gebruik het reviewbranch-voorstel als veilige volgende patchronde.
-- H2H niet gevuld (3x, severity: medium)
+- H2H niet gevuld (5x, severity: medium)
   - Trek H2H verder uit historische competitiebestanden en bewaak fallbackdekking in de worker.
-- Workerdata verouderd (3x, severity: high)
-  - Gebruik het reviewbranch-voorstel als veilige volgende patchronde.
-- worker data missing (1x, severity: high)
-  - Gebruik het reviewbranch-voorstel als veilige volgende patchronde.
 
 ## Architectuuranalyse
 Professionele architectuuranalyse voor schaalbaarheid, datakwaliteit, AI-agentwaarde, databasegroei en modelbetrouwbaarheid.
@@ -50,16 +44,16 @@ Professionele architectuuranalyse voor schaalbaarheid, datakwaliteit, AI-agentwa
 ## Datakwaliteit
 - Pending result backfills: 0
 - Ontbrekende oude scores: 0
-- H2H-dekking: 0%
+- H2H-dekking: 27%
 - Resultaatbackfill is schoon binnen de auditperiode.
 - Breid H2H via historische competitieprofielen en team-id mappings uit tot minimaal 85% dekking.
 
 ## Widgetintegraties
-- Status: ok
-- Neon: verbonden
-- Checks: 10/10 geslaagd
+- Status: degraded
+- Neon: niet verbonden
+- Checks: 6/10 geslaagd
 - Vul gratis pre-match odds snapshots voordat ROI/CLV wordt beoordeeld.
-- Prioriteer open bronconflicten op impact en providertrust.
+- Herstel de mislukte widgetcontracten: Neon database, Provider- en integriteitswidget, Dashboard/matches-widget, Prediction-snapshot-widget.
 
 ## Standaard uitgevoerde acties
 - Database migratieplan bijwerken: docs/database-migration-plan.md (auto-maintained)
@@ -68,15 +62,14 @@ Professionele architectuuranalyse voor schaalbaarheid, datakwaliteit, AI-agentwa
 - Herbruikbare data context bewaken: docs/data-context/analysis-context.json (context-active)
 
 ## Volgende aanbevelingen
-1. Neon datadekking verder uitbreiden (Hoog, impact: Zeer hoog) - Neon werkt met 12408 matches; maak nu meer dashboardsecties database-backed en verhoog source-auditdekking.
+1. Database credentials activeren en schema toepassen (Hoog, impact: Zeer hoog) - Het migratieplan is nu vastgelegd; de volgende stap is DATABASE_URL/POSTGRES_URL koppelen en npm run db:schema:apply draaien.
 2. Resultaat- en H2H-normalisatie centraliseren (Hoog, impact: Hoog) - Dit verlaagt risico op conflicterende eindstanden tussen worker, API en client.
 3. Resultaatbackfill schoon houden (Middel, impact: Middel) - De audit meldt 0 pending backfills; behoud dit met automatische bronvergelijking na iedere worker-run.
 4. Snapshot-training naar 150 rows opschalen (Middel, impact: Hoog) - 76 snapshot-backed rows is volwassen; volgende kwaliteitsdoel is 150 voor stabielere league/phase-kalibratie.
 5. Odds en closing-line kalibratie live beoordelen (Middel, impact: Hoog) - ROI/CLV is pas betrouwbaar zodra echte odds_at_prediction en closing odds consequent binnenkomen.
 
 ## Reviewbranch voorstel
-- codex/review-20260701
-- AI reviewvoorstel voor 2026-07-01: 1 aandachtspunt(en) met patchadvies, niet automatisch live.
+- Geen voorstel nodig.
 
 ## Mailstatus
 - Mailverzending vereist nog aparte mailcredentials of een mailservice. De bundel wordt nu wel automatisch opgebouwd en opgeslagen.

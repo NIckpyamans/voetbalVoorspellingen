@@ -1,18 +1,18 @@
 {
-  "generatedAt": "2026-07-01T10:30:13.414Z",
+  "generatedAt": "2026-07-15T08:36:06.951Z",
   "baseUrl": "https://voetbalvoorspellingen-clean.vercel.app",
-  "status": "ok",
+  "status": "degraded",
   "totals": {
     "checks": 10,
-    "passed": 10,
-    "failed": 0
+    "passed": 6,
+    "failed": 4
   },
   "neon": {
-    "connected": true,
-    "matches": 12408,
-    "predictionSnapshots": 4448,
-    "h2hEdges": 3370,
-    "auditRows": 70647
+    "connected": false,
+    "matches": 0,
+    "predictionSnapshots": 0,
+    "h2hEdges": 0,
+    "auditRows": 0
   },
   "checks": [
     {
@@ -25,69 +25,69 @@
     {
       "key": "neon",
       "label": "Neon database",
-      "passed": true,
-      "status": 200,
-      "detail": "12408 matches, 4448 snapshots"
+      "passed": false,
+      "status": 500,
+      "detail": "HTTP 500"
     },
     {
       "key": "provider_widget",
       "label": "Provider- en integriteitswidget",
-      "passed": true,
-      "status": 200,
-      "detail": "24 providers, 2181 conflicten"
+      "passed": false,
+      "status": 500,
+      "detail": "HTTP 500"
     },
     {
       "key": "matches_widget",
       "label": "Dashboard/matches-widget",
-      "passed": true,
+      "passed": false,
       "status": 200,
-      "detail": "3 actuele matches, bron postgres"
+      "detail": "5 actuele matches, bron unknown"
     },
     {
       "key": "standings_widget",
       "label": "Standen-widget",
       "passed": true,
       "status": 200,
-      "detail": "15 standen"
+      "detail": "16 standen"
     },
     {
       "key": "cup_widget",
       "label": "Bekerschema-widget",
       "passed": true,
       "status": 200,
-      "detail": "2 actief; leeg is geldig buiten bekerrondes"
+      "detail": "3 actief; leeg is geldig buiten bekerrondes"
     },
     {
       "key": "season_widget",
       "label": "Neon seizoen-widget",
       "passed": true,
       "status": 200,
-      "detail": "136 seizoenovergangen"
+      "detail": "0 seizoenovergangen"
     },
     {
       "key": "history_widget",
       "label": "Geschiedenis-widget",
       "passed": true,
       "status": 200,
-      "detail": "0 reviews"
+      "detail": "478 reviews"
     },
     {
       "key": "snapshot_widget",
       "label": "Prediction-snapshot-widget",
-      "passed": true,
-      "status": 200,
-      "detail": "1 snapshots"
+      "passed": false,
+      "status": 503,
+      "detail": "HTTP 503"
     },
     {
       "key": "knowledge_widget",
       "label": "Vraag FootyAI-widget",
       "passed": true,
       "status": 200,
-      "detail": "26 brongebonden resultaten"
+      "detail": "30 brongebonden resultaten"
     }
   ],
   "opportunities": [
     "Vul gratis pre-match odds snapshots voordat ROI/CLV wordt beoordeeld.",
-    "Prioriteer open bronconflicten op impact en providertrust."
+    "Herstel de mislukte widgetcontracten: Neon database, Provider- en integriteitswidget, Dashboard/matches-widget, Prediction-snapshot-widget."
   ]
 }
