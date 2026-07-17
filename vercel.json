@@ -4,6 +4,11 @@
   "ignoreCommand": "node scripts/vercel-ignore-build.js",
   "buildCommand": "npm run build",
   "outputDirectory": "dist",
+  "functions": {
+    "api/prediction-snapshots.ts": {
+      "includeFiles": "data/recovery/prediction-snapshot-ledger.json.gz"
+    }
+  },
   "env": {
     "DATA_BRANCH": "codex/step3b-layout",
     "VERCEL_PRODUCTION_BRANCH": "codex/step3b-layout",

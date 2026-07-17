@@ -2,7 +2,7 @@ import { fetchServerStore } from "./_dataSource.js";
 import { createLogger, getErrorDetails } from "../shared/logger.js";
 import { setCorsHeaders } from "../shared/cors.js";
 import { databaseConfigured, getSql } from "../shared/database.js";
-import { readR2SnapshotLedger } from "../shared/predictionSnapshotLedger.js";
+import { readLocalSnapshotLedger, readR2SnapshotLedger } from "../shared/predictionSnapshotLedger.js";
 
 const logger = createLogger("api.prediction-snapshots");
 
@@ -163,6 +163,8 @@ export default async function handler(req: any, res: any) {
     }
 
     const r2Ledger = await readR2SnapshotLedger();
+    const recoveryLedger = readLocalSnapshotLedger();
+    const durableLedger = r2Ledger.available ? r2Ledger : recoveryLedger;
     let store: any = { predictionSnapshots: {}, predictionSnapshotIndex: {}, postMatchReviews: {} };
     let branch = "unavailable";
     try {
@@ -172,22 +174,26 @@ export default async function handler(req: any, res: any) {
     } catch (dataSourceError: any) {
       logger.warning("prediction_snapshots_datasource_fallback", {
         error: getErrorDetails(dataSourceError),
-        fallback: r2Ledger.available ? "r2-immutable-ledger" : "none",
+        fallback: durableLedger.available
+          ? (r2Ledger.available ? "r2-immutable-ledger" : "bundled-recovery-ledger")
+          : "none",
       });
-      if (!r2Ledger.available) throw dataSourceError;
+      if (!durableLedger.available) throw dataSourceError;
     }
-    const r2Snapshots = r2Ledger.available ? r2Ledger.ledger.predictionSnapshots || {} : {};
-    const snapshots = Object.keys(r2Snapshots).length >= Object.keys(store.predictionSnapshots || {}).length
-      ? r2Snapshots
+    const durableSnapshots = durableLedger.available ? durableLedger.ledger.predictionSnapshots || {} : {};
+    const snapshots = Object.keys(durableSnapshots).length >= Object.keys(store.predictionSnapshots || {}).length
+      ? durableSnapshots
       : store.predictionSnapshots || {};
-    const index = snapshots === r2Snapshots ? r2Ledger.ledger.predictionSnapshotIndex || {} : store.predictionSnapshotIndex || {};
-    const snapshotBranch = snapshots === r2Snapshots ? "r2-immutable-ledger" : branch;
+    const index = snapshots === durableSnapshots ? durableLedger.ledger.predictionSnapshotIndex || {} : store.predictionSnapshotIndex || {};
+    const snapshotBranch = snapshots === durableSnapshots
+      ? (r2Ledger.available ? "r2-immutable-ledger" : "bundled-recovery-ledger")
+      : branch;
 
     if (summaryOnly) {
       const serverSummary = buildSnapshotSummary(
         snapshots,
-        snapshots === r2Snapshots
-          ? r2Ledger.ledger.evaluations || r2Ledger.ledger.postMatchReviews || {}
+        snapshots === durableSnapshots
+          ? durableLedger.ledger.evaluations || durableLedger.ledger.postMatchReviews || {}
           : store.postMatchReviews || {}
       );
       const summary = databaseSummary && Number(databaseSummary.total || 0) >= Number(serverSummary.total || 0)
