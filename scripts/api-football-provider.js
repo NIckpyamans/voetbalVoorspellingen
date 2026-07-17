@@ -1,4 +1,5 @@
 import { getApiFootballKey } from "./provider-env.js";
+import { getKnownProviderIds } from "./worker/team-identity.js";
 
 const API_FOOTBALL_BASE = "https://v3.football.api-sports.io";
 const DEFAULT_TIMEOUT_MS = 12_000;
@@ -185,6 +186,16 @@ async function resolveTeamId(store, teamName, leagueLabel, options = {}) {
   const country = leagueCountry(leagueLabel);
   const key = `${normalizeName(country)}:${normalizeName(teamName)}`;
   if (!store.apiFootballTeamMap) store.apiFootballTeamMap = {};
+  const knownProviderId = String(options.providerTeamId || getKnownProviderIds(teamName).apiFootball || "").trim();
+  if (knownProviderId) {
+    store.apiFootballTeamMap[key] = {
+      teamId: knownProviderId,
+      updatedAt: new Date().toISOString(),
+      status: "configured_provider_id",
+      source: "friendly-team-sources",
+    };
+    return knownProviderId;
+  }
   const cached = store.apiFootballTeamMap[key];
   const retryableCacheStatuses = new Set(["provider_error", "provider_exception", "fetch_unavailable"]);
   if (cached && isFresh(cached, TEAM_CACHE_TTL_MS) && !retryableCacheStatuses.has(cached.status)) {
@@ -272,7 +283,7 @@ function normalizeFixtureH2H(fixtures, homeName, awayName, homeId, awayId) {
     .slice(-8);
 }
 
-export async function fetchApiFootballH2HProfile({ store, homeName, awayName, homeId, awayId, leagueLabel }, options = {}) {
+export async function fetchApiFootballH2HProfile({ store, homeName, awayName, homeId, awayId, homeProviderIds, awayProviderIds, leagueLabel }, options = {}) {
   if (String(process.env.API_FOOTBALL_H2H_ENABLED || "true").toLowerCase() === "false") return null;
   if (!getApiFootballKey()) return null;
   if (!store || !homeName || !awayName) return null;
@@ -282,8 +293,8 @@ export async function fetchApiFootballH2HProfile({ store, homeName, awayName, ho
   const cached = store.apiFootballH2HCache[pairKey];
   if (cached?.data && isFresh(cached, H2H_CACHE_TTL_MS)) return cached.data;
 
-  const resolvedHomeId = await resolveTeamId(store, homeName, leagueLabel, options);
-  const resolvedAwayId = await resolveTeamId(store, awayName, leagueLabel, options);
+  const resolvedHomeId = await resolveTeamId(store, homeName, leagueLabel, { ...options, providerTeamId: homeProviderIds?.apiFootball });
+  const resolvedAwayId = await resolveTeamId(store, awayName, leagueLabel, { ...options, providerTeamId: awayProviderIds?.apiFootball });
   if (!resolvedHomeId || !resolvedAwayId) {
     store.apiFootballH2HCache[pairKey] = {
       updatedAt: new Date().toISOString(),

@@ -17,3 +17,12 @@ Deze map is de veilige opsplitsing van `scripts/server-worker.js`.
 - Elke extract moet `npm run check`, `npm run monitor:regressions`, `npm run readiness` en `npm run build` halen.
 - `server_data.json` en `data/*.json` moeten dezelfde contracten blijven houden.
 - BBC en ESPN event-fetchers blijven de volgende data-collection extract, omdat die nog gekoppeld zijn aan logo-cache, minuten en eventstatus-mapping.
+# Worker modules
+
+- `data-collection.js`: public source requests, rate limits and source fallbacks.
+- `team-identity.js`: canonical team-name normalization and configured provider IDs.
+- `critical-captures.js`: immutable pre-kickoff lineup, odds and H2H captures.
+- `training-builder.js`: derives training rows from active matches and immutable snapshots.
+- `training-snapshot.js`: preserves the highest-quality row for each prediction ID.
+
+`server-worker.js` is the orchestrator: it composes these modules, writes the app state and schedules source work. Provider IDs must remain provider-specific; a canonical match ID must never be sent to a provider endpoint as though it were that provider's team ID.

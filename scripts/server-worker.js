@@ -67,6 +67,8 @@ import {
 } from "./worker/prediction.js";
 import { selectUniqueTeamTopPicks } from "./worker/top-picks.js";
 import { mergeTrainingSnapshots } from "./worker/training-snapshot.js";
+import { buildTrainingSnapshot } from "./worker/training-builder.js";
+import { buildTeamIdentity } from "./worker/team-identity.js";
 import { fetchR2H2HProfile, fetchR2LineupSummary, fetchR2OddsSnapshot } from "./worker/critical-captures.js";
 
 const SOFA = "https://api.sofascore.com/api/v1";
@@ -435,65 +437,6 @@ function normalizeOddsAtPrediction(prediction) {
 
 function resolveOddsAtPrediction(prediction) {
   return normalizeOddsAtPrediction(prediction).oddsAtPrediction;
-}
-
-let friendlyTeamProviderIndex = null;
-
-function getFriendlyTeamProviderIndex() {
-  if (friendlyTeamProviderIndex) return friendlyTeamProviderIndex;
-  friendlyTeamProviderIndex = new Map();
-  const file = path.join(ROOT, "config", "friendly-team-sources.json");
-  if (!fs.existsSync(file)) return friendlyTeamProviderIndex;
-  try {
-    const payload = JSON.parse(fs.readFileSync(file, "utf8"));
-    for (const team of payload.teams || []) {
-      if (team?.active === false) continue;
-      const providerIds = {
-        espn: team?.espnTeamId ? String(team.espnTeamId) : null,
-        sofascore: team?.sofascoreTeamId ? String(team.sofascoreTeamId) : null,
-        apiFootball: team?.apiFootballTeamId ? String(team.apiFootballTeamId) : null,
-        sportmonks: team?.sportmonksTeamId ? String(team.sportmonksTeamId) : null,
-        footballData: team?.footballDataTeamId ? String(team.footballDataTeamId) : null,
-      };
-      const aliases = [team?.name, ...(team?.aliases || [])].map(normalizeName).filter(Boolean);
-      for (const alias of aliases) friendlyTeamProviderIndex.set(alias, providerIds);
-    }
-  } catch (error) {
-    console.warn("[team-identity] provider-ID config kon niet worden gelezen:", error.message);
-  }
-  return friendlyTeamProviderIndex;
-}
-
-function buildTeamIdentity(homeId, awayId, homeName, awayName, source = "unknown") {
-  const providerIndex = getFriendlyTeamProviderIndex();
-  const homeProviderIds = { ...(providerIndex.get(normalizeName(homeName)) || {}) };
-  const awayProviderIds = { ...(providerIndex.get(normalizeName(awayName)) || {}) };
-  if (homeId) homeProviderIds[source] = String(homeId);
-  if (awayId) awayProviderIds[source] = String(awayId);
-  const homeKey = homeId ? `id:${homeId}` : `name:${normalizeName(homeName)}`;
-  const awayKey = awayId ? `id:${awayId}` : `name:${normalizeName(awayName)}`;
-  const bothHaveProviderIds = [homeProviderIds, awayProviderIds].every((ids) => Object.values(ids).some(Boolean));
-  const status = homeId && awayId || bothHaveProviderIds ? "provider_ids" : homeKey && awayKey ? "name_fallback" : "incomplete";
-  return {
-    status,
-    source,
-    home: {
-      id: homeId || null,
-      name: homeName || null,
-      normalizedName: normalizeName(homeName),
-      key: homeKey || null,
-      identityType: homeId ? "provider_id" : "name_fallback",
-      providerIds: homeProviderIds,
-    },
-    away: {
-      id: awayId || null,
-      name: awayName || null,
-      normalizedName: normalizeName(awayName),
-      key: awayKey || null,
-      identityType: awayId ? "provider_id" : "name_fallback",
-      providerIds: awayProviderIds,
-    },
-  };
 }
 
 function lookupWorldCupSeedPosition(teamName) {
@@ -3960,124 +3903,6 @@ function buildTeamAiSummary(side, teamName, recent, profile, injuries) {
       strengths.length || risks.length
         ? `${teamName}: ${[...strengths.slice(0, 2), ...risks.slice(0, 2)].join(", ")}`
         : `${teamName}: weinig afwijkende signalen`,
-  };
-}
-
-function buildTrainingSnapshot(store) {
-  const rows = [];
-  const emittedPredictionIds = new Set();
-  const snapshotsByMatchId = new Map();
-  for (const snapshot of Object.values(store.predictionSnapshots || {}).flat()) {
-    if (!snapshot?.matchId) continue;
-    const list = snapshotsByMatchId.get(snapshot.matchId) || [];
-    list.push(snapshot);
-    snapshotsByMatchId.set(snapshot.matchId, list);
-  }
-
-  for (const date of Object.keys(store.matches || {})) {
-    const matches = store.matches?.[date] || [];
-    const predictions = Object.fromEntries(
-      (store.predictions?.[date] || []).map((prediction) => [prediction.matchId, prediction])
-    );
-
-    for (const match of matches) {
-      if (isHiddenInternationalOrWorldCupEntity(match)) continue;
-      const prediction = predictions[match.id] || {};
-      const reviewPrediction = selectPredictionForReview(store, match, prediction);
-      const label =
-        String(match.status || "").toUpperCase() === "FT" && match.score?.includes("-")
-          ? (() => {
-              const [homeGoals, awayGoals] = String(match.score).split("-").map(Number);
-              if (homeGoals > awayGoals) return "H";
-              if (homeGoals < awayGoals) return "A";
-              return "D";
-            })()
-          : null;
-      const baseRow = {
-        date,
-        matchId: match.id,
-        league: match.league,
-        homeTeam: match.homeTeamName,
-        awayTeam: match.awayTeamName,
-        status: match.status || "NS",
-        score: match.score || null,
-        label,
-        review: store.postMatchReviews?.[match.id] || null,
-        dbFeatureContext: match.dbFeatureContext || prediction.dbFeatureContext || reviewPrediction?.dbFeatureContext || null,
-      };
-      const snapshotCandidates = (snapshotsByMatchId.get(match.id) || [])
-        .filter((snapshot) => snapshot?.predictionId && snapshot?.generatedAt)
-        .map((snapshot) => ({
-          predictionId: snapshot.predictionId,
-          generatedAt: snapshot.generatedAt,
-          cutoffAt: snapshot.cutoffAt || snapshot.generatedAt,
-          featureVector: snapshot.featureVector || snapshot.features || snapshot.inputSnapshot?.featureVector || null,
-          ensembleMeta: snapshot.ensembleMeta || snapshot.prediction?.ensembleMeta || null,
-          dbFeatureContext: snapshot.dbFeatureContext || snapshot.inputSnapshot?.dbFeatureContext || null,
-          snapshotStatus: snapshot.status || null,
-          snapshotBacked: true,
-        }));
-      const candidates = [
-        {
-          predictionId: reviewPrediction?.predictionId || prediction.predictionId || null,
-          generatedAt: reviewPrediction?.generatedAt || prediction.generatedAt || null,
-          cutoffAt: reviewPrediction?.cutoffAt || prediction.cutoffAt || null,
-          featureVector: reviewPrediction?.featureVector || prediction.featureVector || null,
-          ensembleMeta: reviewPrediction?.ensembleMeta || prediction.ensembleMeta || null,
-          dbFeatureContext:
-            reviewPrediction?.dbFeatureContext ||
-            prediction.dbFeatureContext ||
-            match.dbFeatureContext ||
-            baseRow.dbFeatureContext ||
-            null,
-          snapshotBacked: false,
-        },
-        ...snapshotCandidates,
-      ];
-      const seenCandidateIds = new Set();
-      for (const candidate of candidates) {
-        const candidateKey = candidate.predictionId || `${match.id}:${candidate.generatedAt || "latest"}`;
-        if (seenCandidateIds.has(candidateKey)) continue;
-        seenCandidateIds.add(candidateKey);
-        if (candidate.predictionId) emittedPredictionIds.add(candidate.predictionId);
-        rows.push({ ...baseRow, ...candidate });
-      }
-    }
-  }
-
-  // Snapshots blijven bruikbaar nadat de bijbehorende dag uit het actieve
-  // fixturevenster is verdwenen. Dit voorkomt dat training bij elke worker-run krimpt.
-  for (const snapshot of Object.values(store.predictionSnapshots || {})) {
-    if (!snapshot?.predictionId || !snapshot?.matchId || emittedPredictionIds.has(snapshot.predictionId)) continue;
-    if (isHiddenInternationalOrWorldCupEntity(snapshot)) continue;
-    const review = store.postMatchReviews?.[snapshot.matchId] || null;
-    const label = String(review?.actualOutcome || "").toUpperCase();
-    rows.push({
-      date: snapshot.date || String(snapshot.kickoff || "").slice(0, 10) || null,
-      matchId: snapshot.matchId,
-      league: snapshot.league || review?.league || null,
-      homeTeam: snapshot.homeTeam || review?.homeTeamName || null,
-      awayTeam: snapshot.awayTeam || review?.awayTeamName || null,
-      status: review ? "FT" : snapshot.status || "NS",
-      score: review?.actualScore || null,
-      label: ["H", "D", "A"].includes(label) ? label : null,
-      review,
-      dbFeatureContext: snapshot.dbFeatureContext || snapshot.inputSnapshot?.dbFeatureContext || null,
-      predictionId: snapshot.predictionId,
-      generatedAt: snapshot.generatedAt,
-      cutoffAt: snapshot.cutoffAt || snapshot.generatedAt,
-      featureVector: snapshot.featureVector || snapshot.features || snapshot.inputSnapshot?.featureVector || null,
-      ensembleMeta: snapshot.ensembleMeta || snapshot.prediction?.ensembleMeta || null,
-      snapshotStatus: snapshot.status || null,
-      snapshotBacked: true,
-    });
-  }
-
-  return {
-    generatedAt: new Date().toISOString(),
-    version: "v9-snapshot-expanded",
-    reviewCount: Object.keys(store.postMatchReviews || {}).length,
-    rows,
   };
 }
 
@@ -11971,7 +11796,13 @@ async function main() {
   } catch (error) {
     console.warn(`[worker] bestaande trainingssnapshot kon niet worden gelezen: ${error?.message || error}`);
   }
-  const trainingSnapshot = mergeTrainingSnapshots(previousTrainingSnapshot, buildTrainingSnapshot(store));
+  const trainingSnapshot = mergeTrainingSnapshots(
+    previousTrainingSnapshot,
+    buildTrainingSnapshot(store, {
+      isHiddenEntity: isHiddenInternationalOrWorldCupEntity,
+      selectPredictionForReview,
+    })
+  );
   fs.writeFileSync(TRAINING_SNAPSHOT_FILE, JSON.stringify(trainingSnapshot));
   console.log(
     `[worker] training behouden: ${trainingSnapshot.rows.length} rows, ` +

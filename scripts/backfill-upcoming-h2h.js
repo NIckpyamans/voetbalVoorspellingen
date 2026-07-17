@@ -8,6 +8,7 @@ import { getApiFootballKey } from "./provider-env.js";
 import { getSql, loadLocalEnv } from "../shared/database.js";
 import { buildR2ObjectKey, getR2Config, putR2Object } from "../shared/cloudflare-r2.js";
 import { isHiddenInternationalOrWorldCupEntity } from "../shared/competitionVisibility.js";
+import { getKnownProviderIds } from "./worker/team-identity.js";
 
 const ROOT = process.cwd();
 const OUTPUT_JSON = path.join(ROOT, "monitor", "h2h-upcoming-backfill.json");
@@ -286,6 +287,8 @@ async function main() {
         awayName: match.away_team_name,
         homeId: match.home_club_id,
         awayId: match.away_club_id,
+        homeProviderIds: getKnownProviderIds(match.home_team_name),
+        awayProviderIds: getKnownProviderIds(match.away_team_name),
         leagueLabel: match.league,
       });
       if (profile?.results?.length) {
