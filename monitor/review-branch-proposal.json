@@ -1,50 +1,66 @@
 {
-  "generatedAt": "2026-07-16T23:11:45.856Z",
-  "date": "2026-07-17",
+  "generatedAt": "2026-07-17T23:08:58.387Z",
+  "date": "2026-07-18",
   "proposalOnly": true,
-  "shouldPropose": false,
-  "branchName": "codex/review-20260717",
-  "summary": "Geen reviewbranch nodig op 2026-07-17.",
+  "shouldPropose": true,
+  "branchName": "codex/review-20260718",
+  "summary": "AI reviewvoorstel voor 2026-07-18: 1 aandachtspunt(en) met patchadvies, niet automatisch live.",
   "latestStats": {
-    "today": "2026-07-17",
-    "tomorrow": "2026-07-18",
+    "today": "2026-07-18",
+    "tomorrow": "2026-07-19",
     "dataPresent": true,
-    "lastRun": 1784238760354,
-    "ageMinutes": 79,
+    "lastRun": 1784322759208,
+    "ageMinutes": 116,
     "maxWorkerAgeMinutes": 180,
-    "todayMatches": 2,
-    "tomorrowMatches": 6,
+    "todayMatches": 6,
+    "tomorrowMatches": 0,
     "fixtureCalendar": {
       "status": "has_current_matches",
       "healthy": true,
       "emptyWindowOk": true,
       "severity": "none",
-      "todayCount": 2,
-      "tomorrowCount": 6,
+      "todayCount": 6,
+      "tomorrowCount": 0,
       "windowDays": 7,
       "checkedDates": [
-        "2026-07-17",
         "2026-07-18",
         "2026-07-19",
         "2026-07-20",
         "2026-07-21",
         "2026-07-22",
         "2026-07-23",
-        "2026-07-24"
+        "2026-07-24",
+        "2026-07-25"
       ],
-      "nextMatchDate": "2026-07-17",
-      "nextMatchCount": 2,
+      "nextMatchDate": "2026-07-18",
+      "nextMatchCount": 6,
       "explanation": "Vandaag of morgen staan er wedstrijden in de actuele data."
     },
     "liveMatches": 0,
     "liveWithoutMinute": 0,
-    "h2hFilled": 1,
-    "h2hMissing": 1,
+    "h2hFilled": 0,
+    "h2hMissing": 6,
     "standingsCount": 1,
-    "cupSheetCount": 1,
-    "phaseReliabilityCount": 1
+    "cupSheetCount": 3,
+    "phaseReliabilityCount": 3
   },
-  "findings": [],
-  "recommendedFiles": [],
-  "nextStep": "Geen actie nodig; monitor blijft op de achtergrond doorlopen."
+  "findings": [
+    {
+      "priority": 1,
+      "key": "h2h_empty",
+      "severity": "medium",
+      "message": "Alle wedstrijden van vandaag hebben lege H2H-data.",
+      "whyItMatters": "Onderlinge duels worden niet sterk genoeg gevuld.",
+      "recommendedFiles": [
+        "scripts/server-worker.js",
+        "components/MatchCard.tsx"
+      ],
+      "details": {}
+    }
+  ],
+  "recommendedFiles": [
+    "scripts/server-worker.js",
+    "components/MatchCard.tsx"
+  ],
+  "nextStep": "Gebruik deze proposal om gericht een reviewbranch te maken en alleen na controle te mergen."
 }
