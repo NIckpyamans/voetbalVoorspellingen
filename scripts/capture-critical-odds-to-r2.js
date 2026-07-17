@@ -5,6 +5,7 @@ import path from "path";
 import { buildR2ObjectKey, getR2Config, getR2Object, putR2Object } from "../shared/cloudflare-r2.js";
 import { loadLocalEnv } from "../shared/database.js";
 import { fetchOddsAtPrediction } from "./odds-provider.js";
+import { findSportmonksFixture } from "./sportmonks-fixture-resolver.js";
 import { mergeOddsCaptureLedger } from "./worker/critical-captures.js";
 
 const ROOT = process.cwd();
@@ -57,14 +58,20 @@ async function main() {
     closingCaptured: 0,
     closingPairs: 0,
     statuses: {},
+    sportmonksMapped: 0,
+    sportmonksMappingStatuses: {},
     matches: [],
   };
   for (const match of matches) {
-    const result = await fetchOddsAtPrediction(match, { generatedAt: new Date().toISOString(), cutoffAt: new Date().toISOString() });
+    const sportmonks = await findSportmonksFixture(match).catch((error) => ({ status: "resolver_error", error: error?.message || String(error) }));
+    report.sportmonksMappingStatuses[sportmonks?.status || "unknown"] = Number(report.sportmonksMappingStatuses[sportmonks?.status || "unknown"] || 0) + 1;
+    if (sportmonks?.fixtureId) report.sportmonksMapped += 1;
+    const oddsMatch = { ...match, sportmonksFixtureId: sportmonks?.fixtureId || null };
+    const result = await fetchOddsAtPrediction(oddsMatch, { generatedAt: new Date().toISOString(), cutoffAt: new Date().toISOString() });
     report.statuses[result?.status || "unknown"] = Number(report.statuses[result?.status || "unknown"] || 0) + 1;
     const odds = result?.oddsAtPrediction;
     if (!odds || ![odds.home, odds.draw, odds.away].every((value) => Number(value) > 1)) {
-      report.matches.push({ ...match, status: result?.status || "not_found" });
+      report.matches.push({ ...match, status: result?.status || "not_found", sportmonksMapping: sportmonks?.status || "unknown" });
       continue;
     }
     const key = buildR2ObjectKey(config, `critical-captures/odds/${match.matchId}.json`);
@@ -76,7 +83,7 @@ async function main() {
     if (latestRole === "prematch") report.prematchCaptured += 1;
     if (latestRole === "closing") report.closingCaptured += 1;
     if (ledger.closing) report.closingPairs += 1;
-    report.matches.push({ ...match, status: "captured", provider: odds.provider, captureRole: latestRole, opening: Boolean(ledger.opening), prematch: Boolean(ledger.prematch), closing: Boolean(ledger.closing) });
+    report.matches.push({ ...match, status: "captured", provider: odds.provider, captureRole: latestRole, sportmonksFixtureId: sportmonks?.fixtureId || null, opening: Boolean(ledger.opening), prematch: Boolean(ledger.prematch), closing: Boolean(ledger.closing) });
   }
   fs.mkdirSync(path.dirname(OUTPUT), { recursive: true });
   fs.writeFileSync(OUTPUT, `${JSON.stringify(report, null, 2)}\n`);
