@@ -54,9 +54,17 @@ function compactSnapshot(snapshot: any) {
   };
 }
 
-function buildSnapshotSummary(snapshots: Record<string, any>, evaluations: Record<string, any> = {}) {
+function buildSnapshotSummary(
+  snapshots: Record<string, any>,
+  evaluations: Record<string, any> = {},
+  reviews: Record<string, any> = {}
+) {
   const items = Object.values(snapshots || {});
-  const evaluatedMatchIds = new Set(Object.keys(evaluations || {}));
+  const evaluatedPredictionIds = new Set(Object.keys(evaluations || {}));
+  const evaluatedMatchIds = new Set([
+    ...Object.keys(reviews || {}),
+    ...Object.values(evaluations || {}).map((evaluation: any) => String(evaluation?.matchId || "")).filter(Boolean),
+  ]);
   const byModel = new Map<string, number>();
   const byLeague = new Map<string, number>();
   let featureBytes = 0;
@@ -69,7 +77,10 @@ function buildSnapshotSummary(snapshots: Record<string, any>, evaluations: Recor
     byModel.set(model, (byModel.get(model) || 0) + 1);
     byLeague.set(league, (byLeague.get(league) || 0) + 1);
     if (snapshot?.inputSnapshotHash) withSnapshotHash += 1;
-    if (evaluatedMatchIds.has(String(snapshot?.matchId || ""))) evaluated += 1;
+    if (
+      evaluatedPredictionIds.has(String(snapshot?.predictionId || "")) ||
+      evaluatedMatchIds.has(String(snapshot?.matchId || ""))
+    ) evaluated += 1;
     if (snapshot?.oddsAtPrediction || snapshot?.oddsStatus === "available" || snapshot?.oddsStatus === "partial") withOdds += 1;
     featureBytes += Buffer.byteLength(JSON.stringify(snapshot?.features || {}), "utf8");
   }
@@ -193,7 +204,10 @@ export default async function handler(req: any, res: any) {
       const serverSummary = buildSnapshotSummary(
         snapshots,
         snapshots === durableSnapshots
-          ? durableLedger.ledger.evaluations || durableLedger.ledger.postMatchReviews || {}
+          ? durableLedger.ledger.evaluations || {}
+          : store.predictionEvaluations || {},
+        snapshots === durableSnapshots
+          ? durableLedger.ledger.postMatchReviews || {}
           : store.postMatchReviews || {}
       );
       const summary = databaseSummary && Number(databaseSummary.total || 0) >= Number(serverSummary.total || 0)

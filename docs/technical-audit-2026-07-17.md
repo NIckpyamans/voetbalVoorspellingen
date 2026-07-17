@@ -6,7 +6,7 @@ Deze audit behandelt frontend, Vercel API's, Neon, Cloudflare R2, GitHub Actions
 
 ## 1. Samenvatting huidige kwaliteit
 
-De app is een bruikbaar data- en voorspellingsplatform met een goede club-only UI, een Dixon-Coles/Poisson-ensemble, bronlineage, leakage-controles, evaluatiemetrics en geautomatiseerde workflows. De grootste zwakte is niet de frontend maar de bewijsbasis: er zijn 78 snapshotrecords, maar slechts 7 unieke wedstrijden en 5 unieke afgeronde wedstrijden met een label. Daardoor mag het model nog niet als professioneel gekalibreerd worden beschouwd.
+De app is een bruikbaar data- en voorspellingsplatform met een goede club-only UI, een Dixon-Coles/Poisson-ensemble, bronlineage, leakage-controles, evaluatiemetrics en geautomatiseerde workflows. De grootste zwakte is niet de frontend maar de bewijsbasis: de productie-ledger groeide tijdens deze audit van 78 naar 114 snapshotrecords, maar de gecontroleerde trainingsset bevatte slechts 7 unieke wedstrijden en 5 unieke afgeronde wedstrijden met een label. Daardoor mag het model nog niet als professioneel gekalibreerd worden beschouwd.
 
 De gemiddelde datacompleetheid van 36 toekomstige voorspellingen is na de laatste worker-run ongeveer 69,4%. Daarmee is het doel van gemiddeld 65% gehaald. De verdeling blijft ongelijk: 18 van 36 wedstrijden halen individueel 65%; kleinere UEFA-kwalificatiewedstrijden missen vaak H2H, vorm, xG, odds en bevestigde opstellingen.
 
