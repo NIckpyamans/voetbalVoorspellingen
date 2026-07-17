@@ -1,45 +1,56 @@
 {
-  "generatedAt": "2026-07-08T10:33:13.543Z",
+  "generatedAt": "2026-07-17T06:56:04.372Z",
   "training": {
-    "totalRows": 76,
+    "totalRows": 77,
     "snapshotBackedRows": 76,
-    "fallbackRows": 0,
+    "uniqueSnapshotMatches": 5,
+    "fallbackRows": 1,
     "target": 150,
-    "gap": 74,
-    "maturity": "mature"
+    "gap": 145,
+    "maturity": "warming_up"
   },
   "database": {
     "configured": true,
-    "prediction_snapshots": 7374,
-    "prematch_snapshots": 7374,
-    "scheduled_evaluations": 3387,
-    "snapshot_evaluations": 3387,
-    "future_matches": 89,
-    "future_matches_14d": 36,
-    "club_snapshot_evaluations": 76,
-    "future_club_matches": 89,
-    "snapshot_evaluations_by_league": [
-      {
-        "league": "World - FIFA World Cup 2026",
-        "rows": 3311
-      },
-      {
-        "league": "Belgium - Pro League",
-        "rows": 27
-      },
-      {
-        "league": "Europe - Champions League",
-        "rows": 25
-      },
-      {
-        "league": "France - Ligue 1",
-        "rows": 14
-      },
-      {
-        "league": "Europe - Conference League",
-        "rows": 10
-      }
-    ]
+    "available": false,
+    "error": "Server error (HTTP status 402): {\"message\":\"Your project has exceeded the data transfer quota. Upgrade your plan to increase limits.\",\"code\":\"\",\"detail\":null,\"hint\":null,\"position\":null,\"internalPosition\":null,\"internalQuery\":null,\"severity\":\"\",\"where\":null,\"table\":null,\"column\":null,\"schema\":null,\"dataType\":null,\"constraint\":null,\"file\":null,\"line\":null,\"routine\":null,\"neon:retryable\":true}"
+  },
+  "snapshotSources": {
+    "r2": {
+      "configured": false,
+      "available": false,
+      "snapshotsRead": 0,
+      "error": null
+    },
+    "fallback": {
+      "available": true,
+      "snapshotsRead": 78
+    },
+    "merged": {
+      "clubSnapshots": 78,
+      "evaluatedClubSnapshots": 76,
+      "byLeague": [
+        {
+          "league": "Belgium - Pro League",
+          "rows": 27
+        },
+        {
+          "league": "Europe - Champions League",
+          "rows": 25
+        },
+        {
+          "league": "France - Ligue 1",
+          "rows": 14
+        },
+        {
+          "league": "Europe - Conference League",
+          "rows": 10
+        },
+        {
+          "league": "World - Club Friendlies",
+          "rows": 2
+        }
+      ]
+    }
   },
   "automation": {
     "workerCadence": "3x per dag volledige worker + 2-uurlijkse live score refresh",

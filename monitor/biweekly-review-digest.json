@@ -1,8 +1,8 @@
 {
-  "generatedAt": "2026-07-15T08:36:08.569Z",
+  "generatedAt": "2026-07-17T06:56:05.075Z",
   "range": {
-    "from": "2026-07-02",
-    "to": "2026-07-15",
+    "from": "2026-07-03",
+    "to": "2026-07-16",
     "days": 14
   },
   "shouldNotify": false,
@@ -15,42 +15,42 @@
     "uniqueIssueTypes": 1
   },
   "latestStats": {
-    "today": "2026-07-15",
-    "tomorrow": "2026-07-16",
+    "today": "2026-07-16",
+    "tomorrow": "2026-07-17",
     "dataPresent": true,
-    "lastRun": 1784065397020,
-    "ageMinutes": 88,
+    "lastRun": 1784150376994,
+    "ageMinutes": 114,
     "maxWorkerAgeMinutes": 180,
-    "todayMatches": 5,
-    "tomorrowMatches": 4,
+    "todayMatches": 4,
+    "tomorrowMatches": 2,
     "fixtureCalendar": {
       "status": "has_current_matches",
       "healthy": true,
       "emptyWindowOk": true,
       "severity": "none",
-      "todayCount": 5,
-      "tomorrowCount": 4,
+      "todayCount": 4,
+      "tomorrowCount": 2,
       "windowDays": 7,
       "checkedDates": [
-        "2026-07-15",
         "2026-07-16",
         "2026-07-17",
         "2026-07-18",
         "2026-07-19",
         "2026-07-20",
         "2026-07-21",
-        "2026-07-22"
+        "2026-07-22",
+        "2026-07-23"
       ],
-      "nextMatchDate": "2026-07-15",
-      "nextMatchCount": 5,
+      "nextMatchDate": "2026-07-16",
+      "nextMatchCount": 4,
       "explanation": "Vandaag of morgen staan er wedstrijden in de actuele data."
     },
     "liveMatches": 0,
     "liveWithoutMinute": 0,
     "h2hFilled": 4,
-    "h2hMissing": 1,
+    "h2hMissing": 0,
     "standingsCount": 1,
-    "cupSheetCount": 3,
+    "cupSheetCount": 2,
     "phaseReliabilityCount": 1
   },
   "topFindings": [
@@ -64,15 +64,15 @@
     }
   ],
   "dataQuality": {
-    "generatedAt": "2026-07-15T08:36:03.414Z",
+    "generatedAt": "2026-07-16T14:26:01.836Z",
     "totals": {
-      "matches": 37,
-      "pastMatches": 3,
+      "matches": 39,
+      "pastMatches": 1,
       "pendingResultBackfills": 0,
       "missingPastScores": 0,
-      "h2hMissing": 27,
+      "h2hMissing": 29,
       "h2hCovered": 10,
-      "h2hCoverage": 0.27
+      "h2hCoverage": 0.256
     },
     "status": {
       "resultBackfill": "clean",
@@ -176,8 +176,98 @@
       "Herstel de mislukte widgetcontracten: Neon database, Provider- en integriteitswidget, Dashboard/matches-widget, Prediction-snapshot-widget."
     ]
   },
+  "predictionEvaluation": {
+    "generatedAt": "2026-07-17T06:56:02.965Z",
+    "status": "completed",
+    "outcome": "evaluated",
+    "sources": {
+      "neon": {
+        "configured": true,
+        "available": false,
+        "candidates": 0,
+        "evaluated": 0,
+        "error": "Server error (HTTP status 402): {\"message\":\"Your project has exceeded the data transfer quota. Upgrade your plan to increase limits.\",\"code\":\"\",\"detail\":null,\"hint\":null,\"position\":null,\"internalPosition\":null,\"internalQuery\":null,\"severity\":\"\",\"where\":null,\"table\":null,\"column\":null,\"schema\":null,\"dataType\":null,\"constraint\":null,\"file\":null,\"line\":null,\"routine\":null,\"neon:retryable\":true}"
+      },
+      "r2": {
+        "configured": false,
+        "available": false,
+        "snapshotsRead": 0,
+        "evaluated": 0,
+        "persisted": false,
+        "error": null
+      },
+      "fallback": {
+        "available": true,
+        "snapshotsRead": 78,
+        "staticResultsRead": 692,
+        "evaluated": 76
+      }
+    },
+    "totals": {
+      "snapshotsRead": 78,
+      "uniqueSnapshotMatches": 7,
+      "eligibleResults": 76,
+      "evaluatedThisRun": 76,
+      "evaluationsStoredInLedger": 76
+    }
+  },
+  "snapshotGrowth": {
+    "generatedAt": "2026-07-17T06:56:04.372Z",
+    "training": {
+      "totalRows": 77,
+      "snapshotBackedRows": 76,
+      "uniqueSnapshotMatches": 5,
+      "fallbackRows": 1,
+      "target": 150,
+      "gap": 145,
+      "maturity": "warming_up"
+    },
+    "database": {
+      "configured": true,
+      "available": false,
+      "error": "Server error (HTTP status 402): {\"message\":\"Your project has exceeded the data transfer quota. Upgrade your plan to increase limits.\",\"code\":\"\",\"detail\":null,\"hint\":null,\"position\":null,\"internalPosition\":null,\"internalQuery\":null,\"severity\":\"\",\"where\":null,\"table\":null,\"column\":null,\"schema\":null,\"dataType\":null,\"constraint\":null,\"file\":null,\"line\":null,\"routine\":null,\"neon:retryable\":true}"
+    },
+    "snapshotSources": {
+      "r2": {
+        "configured": false,
+        "available": false,
+        "snapshotsRead": 0,
+        "error": null
+      },
+      "fallback": {
+        "available": true,
+        "snapshotsRead": 78
+      },
+      "merged": {
+        "clubSnapshots": 78,
+        "evaluatedClubSnapshots": 76,
+        "byLeague": [
+          {
+            "league": "Belgium - Pro League",
+            "rows": 27
+          },
+          {
+            "league": "Europe - Champions League",
+            "rows": 25
+          },
+          {
+            "league": "France - Ligue 1",
+            "rows": 14
+          },
+          {
+            "league": "Europe - Conference League",
+            "rows": 10
+          },
+          {
+            "league": "World - Club Friendlies",
+            "rows": 2
+          }
+        ]
+      }
+    }
+  },
   "architectureAudit": {
-    "generatedAt": "2026-07-15T08:36:08.569Z",
+    "generatedAt": "2026-07-17T06:56:05.075Z",
     "summary": "Professionele architectuuranalyse voor schaalbaarheid, datakwaliteit, AI-agentwaarde, databasegroei en modelbetrouwbaarheid.",
     "findings": [
       {
@@ -277,10 +367,10 @@
         "reason": "De audit meldt 0 pending backfills; behoud dit met automatische bronvergelijking na iedere worker-run."
       },
       {
-        "title": "Snapshot-training naar 150 rows opschalen",
+        "title": "Snapshot-training uitbreiden",
         "priority": "Middel",
         "expectedImpact": "Hoog",
-        "reason": "76 snapshot-backed rows is volwassen; volgende kwaliteitsdoel is 150 voor stabielere league/phase-kalibratie."
+        "reason": "76 snapshots vertegenwoordigen 5 unieke wedstrijden. Minimaal 50 unieke wedstrijden zijn nodig voordat zelflerende gewichten volwassen worden."
       },
       {
         "title": "Odds en closing-line kalibratie live beoordelen",
@@ -336,10 +426,10 @@
       "reason": "De audit meldt 0 pending backfills; behoud dit met automatische bronvergelijking na iedere worker-run."
     },
     {
-      "title": "Snapshot-training naar 150 rows opschalen",
+      "title": "Snapshot-training uitbreiden",
       "priority": "Middel",
       "expectedImpact": "Hoog",
-      "reason": "76 snapshot-backed rows is volwassen; volgende kwaliteitsdoel is 150 voor stabielere league/phase-kalibratie."
+      "reason": "76 snapshots vertegenwoordigen 5 unieke wedstrijden. Minimaal 50 unieke wedstrijden zijn nodig voordat zelflerende gewichten volwassen worden."
     },
     {
       "title": "Odds en closing-line kalibratie live beoordelen",

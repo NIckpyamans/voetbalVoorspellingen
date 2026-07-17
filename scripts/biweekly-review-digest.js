@@ -9,6 +9,8 @@ const PROPOSAL_FILE = path.join(ROOT, "monitor", "review-branch-proposal.json");
 const DATA_QUALITY_FILE = path.join(ROOT, "monitor", "data-quality-audit.json");
 const WIDGET_AUDIT_FILE = path.join(ROOT, "monitor", "widget-integration-audit.json");
 const CATBOOST_READY_FILE = path.join(ROOT, "training", "catboost-ready.json");
+const PREDICTION_EVALUATION_FILE = path.join(ROOT, "monitor", "prediction-evaluation-report.json");
+const SNAPSHOT_GROWTH_FILE = path.join(ROOT, "monitor", "snapshot-growth-monitor.json");
 const OUTPUT_JSON = path.join(ROOT, "monitor", "biweekly-review-digest.json");
 const OUTPUT_MD = path.join(ROOT, "monitor", "biweekly-review-digest.md");
 const DATABASE_PLAN_MD = path.join(ROOT, "docs", "database-migration-plan.md");
@@ -297,6 +299,8 @@ function buildDigest() {
   const dataQuality = readJsonSafe(DATA_QUALITY_FILE, null);
   const widgetAudit = readJsonSafe(WIDGET_AUDIT_FILE, null);
   const catboostReady = readJsonSafe(CATBOOST_READY_FILE, []);
+  const predictionEvaluation = readJsonSafe(PREDICTION_EVALUATION_FILE, null);
+  const snapshotGrowth = readJsonSafe(SNAPSHOT_GROWTH_FILE, null);
   const allFindingDays = Object.keys(findings.days || {}).sort();
   const latestFindingDay = allFindingDays.at(-1) || getAmsterdamDate();
   const fromDate = subtractDays(latestFindingDay, 13);
@@ -350,6 +354,7 @@ function buildDigest() {
   const snapshotBackedRows = trainingRows.filter(
     (row) => row?.snapshotBacked || row?.evaluationSource === "prediction_snapshot" || row?.inputSnapshotHash
   ).length;
+  const uniqueSnapshotMatches = Number(catboostReady?.uniqueSnapshotMatches || catboostReady?.trainingPolicy?.uniqueSnapshotMatches || 0);
   const nextRecommendations = [
     {
       title: widgetAudit?.neon?.connected ? "Neon datadekking verder uitbreiden" : "Database credentials activeren en schema toepassen",
@@ -378,13 +383,13 @@ function buildDigest() {
           : "Pending eindstanden remmen learning, modelkalibratie en dashboardvertrouwen.",
     },
     {
-      title: snapshotBackedRows >= 50 ? "Snapshot-training naar 150 rows opschalen" : "Snapshot-training uitbreiden",
+      title: uniqueSnapshotMatches >= 50 ? "Snapshot-training naar 150 unieke wedstrijden opschalen" : "Snapshot-training uitbreiden",
       priority: "Middel",
       expectedImpact: "Hoog",
       reason:
-        snapshotBackedRows >= 50
-          ? `${snapshotBackedRows} snapshot-backed rows is volwassen; volgende kwaliteitsdoel is 150 voor stabielere league/phase-kalibratie.`
-          : "Minimaal 50 betrouwbare snapshot-backed rows zijn nodig voordat zelflerende gewichten volwassen worden.",
+        uniqueSnapshotMatches >= 50
+          ? `${snapshotBackedRows} snapshots over ${uniqueSnapshotMatches} unieke wedstrijden; volgende kwaliteitsdoel is 150 unieke wedstrijden voor stabielere league/phase-kalibratie.`
+          : `${snapshotBackedRows} snapshots vertegenwoordigen ${uniqueSnapshotMatches} unieke wedstrijden. Minimaal 50 unieke wedstrijden zijn nodig voordat zelflerende gewichten volwassen worden.`,
     },
     {
       title: "Odds en closing-line kalibratie live beoordelen",
@@ -423,6 +428,23 @@ function buildDigest() {
         }
       : null,
     widgetAudit,
+    predictionEvaluation: predictionEvaluation
+      ? {
+          generatedAt: predictionEvaluation.generatedAt,
+          status: predictionEvaluation.status,
+          outcome: predictionEvaluation.outcome,
+          sources: predictionEvaluation.sources,
+          totals: predictionEvaluation.totals,
+        }
+      : null,
+    snapshotGrowth: snapshotGrowth
+      ? {
+          generatedAt: snapshotGrowth.generatedAt,
+          training: snapshotGrowth.training,
+          database: snapshotGrowth.database,
+          snapshotSources: snapshotGrowth.snapshotSources,
+        }
+      : null,
     architectureAudit: {
       generatedAt,
       summary:
@@ -482,6 +504,14 @@ function buildDigest() {
     widgetAudit
       ? `## Widgetintegraties\n- Status: ${widgetAudit.status}\n- Neon: ${widgetAudit.neon?.connected ? "verbonden" : "niet verbonden"}\n- Checks: ${widgetAudit.totals?.passed || 0}/${widgetAudit.totals?.checks || 0} geslaagd\n${(widgetAudit.opportunities || []).map((item) => `- ${item}`).join("\n")}`
       : "## Widgetintegraties\n- Nog geen widget-audit beschikbaar. Draai npm run monitor:widgets.",
+    "",
+    predictionEvaluation
+      ? `## Snapshot-evaluatie\n- Status: ${predictionEvaluation.status} (${predictionEvaluation.outcome})\n- Neon: ${predictionEvaluation.sources?.neon?.available ? "beschikbaar" : "fallback actief"}\n- R2: ${Number(predictionEvaluation.sources?.r2?.snapshotsRead || 0)} gelezen, ${Number(predictionEvaluation.sources?.r2?.evaluated || 0)} geëvalueerd\n- Lokale fallback: ${Number(predictionEvaluation.sources?.fallback?.snapshotsRead || 0)} gelezen, ${Number(predictionEvaluation.sources?.fallback?.evaluated || 0)} geëvalueerd\n- Werkelijk geëvalueerd: ${Number(predictionEvaluation.totals?.evaluatedThisRun || 0)}`
+      : "## Snapshot-evaluatie\n- Nog geen evaluatierapport beschikbaar.",
+    "",
+    snapshotGrowth
+      ? `## Snapshotgroei\n- Snapshotrecords: ${Number(snapshotGrowth.training?.snapshotBackedRows || 0)}\n- Unieke snapshotwedstrijden: ${Number(snapshotGrowth.training?.uniqueSnapshotMatches || 0)}/${Number(snapshotGrowth.training?.target || 150)}\n- Resterend: ${Number(snapshotGrowth.training?.gap || 0)}\n- Samengevoegde snapshotbron: ${Number(snapshotGrowth.snapshotSources?.merged?.clubSnapshots || 0)} club-snapshots`
+      : "## Snapshotgroei\n- Nog geen groeirapport beschikbaar.",
     "",
     "## Standaard uitgevoerde acties",
     ...standardActions.map((item) => `- ${item.title}: ${item.output} (${item.status})`),

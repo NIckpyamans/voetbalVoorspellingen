@@ -28,6 +28,12 @@ import { buildCupSheetsFromMatches } from "../shared/cupSheets.js";
 import { loadLocalEnv, readDatabaseFeatureContext, syncStoreToDatabase } from "../shared/database.js";
 import { buildR2ObjectKey, getR2Config, getR2Object } from "../shared/cloudflare-r2.js";
 import {
+  hydrateStoreFromSnapshotLedger,
+  ledgerFromStore,
+  loadSnapshotLedger,
+  persistSnapshotLedger,
+} from "../shared/predictionSnapshotLedger.js";
+import {
   createSafeFetch,
   fetchBbcScheduledEvents as fetchBbcScheduledEventsSource,
   fetchEspnScoreboardEvents as fetchEspnScoreboardEventsSource,
@@ -61,6 +67,7 @@ import {
   sourceReliabilityScore,
 } from "./worker/prediction.js";
 import { selectUniqueTeamTopPicks } from "./worker/top-picks.js";
+import { mergeTrainingSnapshots } from "./worker/training-snapshot.js";
 
 const SOFA = "https://api.sofascore.com/api/v1";
 const THESPORTSDB_BASE = "https://www.thesportsdb.com/api/v1/json";
@@ -430,10 +437,43 @@ function resolveOddsAtPrediction(prediction) {
   return normalizeOddsAtPrediction(prediction).oddsAtPrediction;
 }
 
+let friendlyTeamProviderIndex = null;
+
+function getFriendlyTeamProviderIndex() {
+  if (friendlyTeamProviderIndex) return friendlyTeamProviderIndex;
+  friendlyTeamProviderIndex = new Map();
+  const file = path.join(ROOT, "config", "friendly-team-sources.json");
+  if (!fs.existsSync(file)) return friendlyTeamProviderIndex;
+  try {
+    const payload = JSON.parse(fs.readFileSync(file, "utf8"));
+    for (const team of payload.teams || []) {
+      if (team?.active === false) continue;
+      const providerIds = {
+        espn: team?.espnTeamId ? String(team.espnTeamId) : null,
+        sofascore: team?.sofascoreTeamId ? String(team.sofascoreTeamId) : null,
+        apiFootball: team?.apiFootballTeamId ? String(team.apiFootballTeamId) : null,
+        sportmonks: team?.sportmonksTeamId ? String(team.sportmonksTeamId) : null,
+        footballData: team?.footballDataTeamId ? String(team.footballDataTeamId) : null,
+      };
+      const aliases = [team?.name, ...(team?.aliases || [])].map(normalizeName).filter(Boolean);
+      for (const alias of aliases) friendlyTeamProviderIndex.set(alias, providerIds);
+    }
+  } catch (error) {
+    console.warn("[team-identity] provider-ID config kon niet worden gelezen:", error.message);
+  }
+  return friendlyTeamProviderIndex;
+}
+
 function buildTeamIdentity(homeId, awayId, homeName, awayName, source = "unknown") {
+  const providerIndex = getFriendlyTeamProviderIndex();
+  const homeProviderIds = { ...(providerIndex.get(normalizeName(homeName)) || {}) };
+  const awayProviderIds = { ...(providerIndex.get(normalizeName(awayName)) || {}) };
+  if (homeId) homeProviderIds[source] = String(homeId);
+  if (awayId) awayProviderIds[source] = String(awayId);
   const homeKey = homeId ? `id:${homeId}` : `name:${normalizeName(homeName)}`;
   const awayKey = awayId ? `id:${awayId}` : `name:${normalizeName(awayName)}`;
-  const status = homeId && awayId ? "provider_ids" : homeKey && awayKey ? "name_fallback" : "incomplete";
+  const bothHaveProviderIds = [homeProviderIds, awayProviderIds].every((ids) => Object.values(ids).some(Boolean));
+  const status = homeId && awayId || bothHaveProviderIds ? "provider_ids" : homeKey && awayKey ? "name_fallback" : "incomplete";
   return {
     status,
     source,
@@ -443,6 +483,7 @@ function buildTeamIdentity(homeId, awayId, homeName, awayName, source = "unknown
       normalizedName: normalizeName(homeName),
       key: homeKey || null,
       identityType: homeId ? "provider_id" : "name_fallback",
+      providerIds: homeProviderIds,
     },
     away: {
       id: awayId || null,
@@ -450,6 +491,7 @@ function buildTeamIdentity(homeId, awayId, homeName, awayName, source = "unknown
       normalizedName: normalizeName(awayName),
       key: awayKey || null,
       identityType: awayId ? "provider_id" : "name_fallback",
+      providerIds: awayProviderIds,
     },
   };
 }
@@ -3923,6 +3965,7 @@ function buildTeamAiSummary(side, teamName, recent, profile, injuries) {
 
 function buildTrainingSnapshot(store) {
   const rows = [];
+  const emittedPredictionIds = new Set();
   const snapshotsByMatchId = new Map();
   for (const snapshot of Object.values(store.predictionSnapshots || {}).flat()) {
     if (!snapshot?.matchId) continue;
@@ -3996,9 +4039,38 @@ function buildTrainingSnapshot(store) {
         const candidateKey = candidate.predictionId || `${match.id}:${candidate.generatedAt || "latest"}`;
         if (seenCandidateIds.has(candidateKey)) continue;
         seenCandidateIds.add(candidateKey);
+        if (candidate.predictionId) emittedPredictionIds.add(candidate.predictionId);
         rows.push({ ...baseRow, ...candidate });
       }
     }
+  }
+
+  // Snapshots blijven bruikbaar nadat de bijbehorende dag uit het actieve
+  // fixturevenster is verdwenen. Dit voorkomt dat training bij elke worker-run krimpt.
+  for (const snapshot of Object.values(store.predictionSnapshots || {})) {
+    if (!snapshot?.predictionId || !snapshot?.matchId || emittedPredictionIds.has(snapshot.predictionId)) continue;
+    if (isHiddenInternationalOrWorldCupEntity(snapshot)) continue;
+    const review = store.postMatchReviews?.[snapshot.matchId] || null;
+    const label = String(review?.actualOutcome || "").toUpperCase();
+    rows.push({
+      date: snapshot.date || String(snapshot.kickoff || "").slice(0, 10) || null,
+      matchId: snapshot.matchId,
+      league: snapshot.league || review?.league || null,
+      homeTeam: snapshot.homeTeam || review?.homeTeamName || null,
+      awayTeam: snapshot.awayTeam || review?.awayTeamName || null,
+      status: review ? "FT" : snapshot.status || "NS",
+      score: review?.actualScore || null,
+      label: ["H", "D", "A"].includes(label) ? label : null,
+      review,
+      dbFeatureContext: snapshot.dbFeatureContext || snapshot.inputSnapshot?.dbFeatureContext || null,
+      predictionId: snapshot.predictionId,
+      generatedAt: snapshot.generatedAt,
+      cutoffAt: snapshot.cutoffAt || snapshot.generatedAt,
+      featureVector: snapshot.featureVector || snapshot.features || snapshot.inputSnapshot?.featureVector || null,
+      ensembleMeta: snapshot.ensembleMeta || snapshot.prediction?.ensembleMeta || null,
+      snapshotStatus: snapshot.status || null,
+      snapshotBacked: true,
+    });
   }
 
   return {
@@ -8350,6 +8422,48 @@ async function fetchR2LineupSummary(matchId, kickoffAt, now = Date.now()) {
   return payload;
 }
 
+function buildTeamFormFromReviews(reviews, teamName, cutoffDate) {
+  const variants = buildPossibleNames(teamName);
+  const matches = [];
+  for (const review of Object.values(reviews || {})) {
+    if (!review?.actualScore || !review?.date || (cutoffDate && String(review.date) >= String(cutoffDate))) continue;
+    const homeVariants = buildPossibleNames(review.homeTeamName || review.homeTeam || "");
+    const awayVariants = buildPossibleNames(review.awayTeamName || review.awayTeam || "");
+    const isHome = homeVariants.some((name) => variants.includes(name));
+    const isAway = awayVariants.some((name) => variants.includes(name));
+    if (!isHome && !isAway) continue;
+    const scoreParts = String(review.actualScore).match(/(\d+)\s*-\s*(\d+)/);
+    if (!scoreParts) continue;
+    const homeGoals = Number(scoreParts[1]);
+    const awayGoals = Number(scoreParts[2]);
+    matches.push({
+      date: review.date,
+      eventId: review.matchId || null,
+      league: review.league || null,
+      venue: isHome ? "H" : "A",
+      opponent: isHome ? review.awayTeamName : review.homeTeamName,
+      opponentId: isHome ? review.awayTeamId : review.homeTeamId,
+      goalsFor: isHome ? homeGoals : awayGoals,
+      goalsAgainst: isHome ? awayGoals : homeGoals,
+      source: "immutable-reviewed-result",
+    });
+  }
+  return buildTeamFormFromRecentMatches(matches, "immutable-reviewed-results");
+}
+
+function mergeTeamFormWithReviews(currentForm, reviews, teamName, cutoffDate) {
+  const reviewed = buildTeamFormFromReviews(reviews, teamName, cutoffDate);
+  const currentMatches = Array.isArray(currentForm?.recentMatches) ? currentForm.recentMatches : [];
+  const reviewedMatches = Array.isArray(reviewed?.recentMatches) ? reviewed.recentMatches : [];
+  if (!reviewedMatches.length) return currentForm;
+  const byKey = new Map();
+  for (const item of [...reviewedMatches, ...currentMatches]) {
+    const key = `${item?.date || ""}|${normalizeName(item?.opponent || "")}|${item?.venue || ""}|${item?.score || ""}`;
+    byKey.set(key, item);
+  }
+  return buildTeamFormFromRecentMatches([...byKey.values()], "historical+immutable-reviewed-results");
+}
+
 async function fetchR2OddsSnapshot(matchId, kickoffAt) {
   if (String(process.env.R2_CRITICAL_CAPTURE_ENABLED || "false").toLowerCase() !== "true") return null;
   const kickoffMs = Date.parse(kickoffAt || "");
@@ -10707,6 +10821,21 @@ async function main() {
     }
   }
 
+  const snapshotLedgerLoad = await loadSnapshotLedger({ root: ROOT });
+  const snapshotLedgerHydration = hydrateStoreFromSnapshotLedger(store, snapshotLedgerLoad.ledger);
+  store.snapshotLedger = {
+    hydratedAt: new Date().toISOString(),
+    ...snapshotLedgerHydration,
+    localAvailable: !!snapshotLedgerLoad.sources.local?.available,
+    r2Configured: !!snapshotLedgerLoad.sources.r2?.configured,
+    r2Available: !!snapshotLedgerLoad.sources.r2?.available,
+    r2Error: snapshotLedgerLoad.sources.r2?.error || null,
+  };
+  console.log(
+    `[worker] snapshot-ledger: ${snapshotLedgerHydration.snapshots} snapshots, ${snapshotLedgerHydration.reviews} reviews ` +
+      `(R2 ${store.snapshotLedger.r2Available ? "geladen" : store.snapshotLedger.r2Configured ? "leeg/onbereikbaar" : "niet geconfigureerd"})`
+  );
+
   const now = Date.now();
   const today = toAmsterdamDateKey(new Date());
   const yesterday = addDaysToDateKey(today, -1);
@@ -11198,6 +11327,8 @@ async function main() {
         awayName,
         globalTeamFormProfiles
       );
+      homeRecent = mergeTeamFormWithReviews(homeRecent, store.postMatchReviews, homeName, date);
+      awayRecent = mergeTeamFormWithReviews(awayRecent, store.postMatchReviews, awayName, date);
       if (homeId && (homeRecent?.recentMatches || []).length > (store.teamStats[homeId]?.recentMatches || []).length) {
         store.teamStats[homeId] = homeRecent;
         store.teamStatsUpdated[homeId] = now;
@@ -11475,8 +11606,12 @@ async function main() {
         fixture: isoFromTimestamp(now),
         h2h: isoFromTimestamp(store.h2hCache?.[h2hKey]?.updated),
         weather: weatherKey ? isoFromTimestamp(store.weatherCache?.[weatherKey]?.updated) : null,
-        homeForm: homeId ? isoFromTimestamp(store.teamStatsUpdated?.[homeId]) : null,
-        awayForm: awayId ? isoFromTimestamp(store.teamStatsUpdated?.[awayId]) : null,
+        homeForm:
+          (homeId ? isoFromTimestamp(store.teamStatsUpdated?.[homeId]) : null) ||
+          (homeRecent?.lastMatchKickoff ? new Date(homeRecent.lastMatchKickoff).toISOString() : null),
+        awayForm:
+          (awayId ? isoFromTimestamp(store.teamStatsUpdated?.[awayId]) : null) ||
+          (awayRecent?.lastMatchKickoff ? new Date(awayRecent.lastMatchKickoff).toISOString() : null),
         homeSeasonStats: homeId ? isoFromTimestamp(store.teamSeasonStatsUpdated?.[homeId]) : null,
         awaySeasonStats: awayId ? isoFromTimestamp(store.teamSeasonStatsUpdated?.[awayId]) : null,
         homeInjuries: homeId ? isoFromTimestamp(store.teamInjuriesUpdated?.[homeId]) : null,
@@ -11848,8 +11983,37 @@ async function main() {
   console.log(`[worker] Vandaag: ${(store.matches?.[today] || []).length} wedstrijden`);
   console.log(`[worker] Morgen: ${(store.matches?.[tomorrow] || []).length} wedstrijden`);
   
+  try {
+    const persistedLedger = await persistSnapshotLedger(ledgerFromStore(store));
+    store.snapshotLedger = {
+      ...(store.snapshotLedger || {}),
+      persistedAt: new Date().toISOString(),
+      r2Persisted: !!persistedLedger.ok,
+      r2PersistReason: persistedLedger.reason || null,
+      snapshots: Object.keys(persistedLedger.ledger?.predictionSnapshots || store.predictionSnapshots || {}).length,
+      reviews: Object.keys(persistedLedger.ledger?.postMatchReviews || store.postMatchReviews || {}).length,
+      evaluations: Object.keys(persistedLedger.ledger?.evaluations || store.predictionEvaluations || {}).length,
+    };
+  } catch (error) {
+    store.snapshotLedger = { ...(store.snapshotLedger || {}), r2Persisted: false, r2PersistError: error?.message || String(error) };
+    console.warn(`[worker] snapshot-ledger R2 opslag mislukt: ${store.snapshotLedger.r2PersistError}`);
+  }
+
   fs.mkdirSync(path.dirname(TRAINING_SNAPSHOT_FILE), { recursive: true });
-  fs.writeFileSync(TRAINING_SNAPSHOT_FILE, JSON.stringify(buildTrainingSnapshot(store)));
+  let previousTrainingSnapshot = { rows: [] };
+  try {
+    if (fs.existsSync(TRAINING_SNAPSHOT_FILE)) {
+      previousTrainingSnapshot = JSON.parse(fs.readFileSync(TRAINING_SNAPSHOT_FILE, "utf8"));
+    }
+  } catch (error) {
+    console.warn(`[worker] bestaande trainingssnapshot kon niet worden gelezen: ${error?.message || error}`);
+  }
+  const trainingSnapshot = mergeTrainingSnapshots(previousTrainingSnapshot, buildTrainingSnapshot(store));
+  fs.writeFileSync(TRAINING_SNAPSHOT_FILE, JSON.stringify(trainingSnapshot));
+  console.log(
+    `[worker] training behouden: ${trainingSnapshot.rows.length} rows, ` +
+      `${trainingSnapshot.preservation.snapshotBackedRows} snapshot-backed`
+  );
   writeSplitDataFiles(store, {
     splitDataDir: SPLIT_DATA_DIR,
     writeCompetitionArchiveFiles,

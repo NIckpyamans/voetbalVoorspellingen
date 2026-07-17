@@ -371,7 +371,13 @@ export function scoreDataCompleteness(input, edges = {}, deps) {
   const marketCoverage = Number(marketCalibration.closingCoverage || 0);
   const hasOdds = bookmakerSignals.length > 0 || marketCoverage >= 0.15;
   const hasStanding = Number(input?.homeStandingPos || input?.homePos || 0) > 0 && Number(input?.awayStandingPos || input?.awayPos || 0) > 0;
+  const hasStrengthRanking =
+    Number(input?.homeClubElo || input?.homeTeamProfile?.clubElo || 0) > 0 &&
+    Number(input?.awayClubElo || input?.awayTeamProfile?.clubElo || 0) > 0;
   const hasTeamIds = !!input?.homeTeamId && !!input?.awayTeamId;
+  const hasProviderIds = [input?.teamIdentity?.home, input?.teamIdentity?.away].every((team) =>
+    Object.values(team?.providerIds || {}).some(Boolean)
+  );
   const hasStableTeamIdentity =
     hasTeamIds ||
     !!(input?.teamIdentity?.home?.key && input?.teamIdentity?.away?.key) ||
@@ -379,21 +385,33 @@ export function scoreDataCompleteness(input, edges = {}, deps) {
   const sourceQuality = Math.max(Number(input?.homeSeasonStats?.sourceQuality || 0), Number(input?.awaySeasonStats?.sourceQuality || 0));
   const lineupsKnown = !!input?.lineupSummary?.confirmed;
   const lineupsProjected = !!input?.lineupSummary?.projected;
-  const postMatchCoverage = Number(input?.postMatchStats?.coverageScore || 0);
-  const postMatchPresent = Number(postMatchCoverage || 0) > 0;
   const availabilitySignal = buildAvailabilitySignal(input, deps);
+  const sourceAsOf = input?.sourceAsOf || input?.featureSourceMetadata?.sourceAsOf || {};
+  const relevantTimestamps = [
+    "fixture",
+    "h2h",
+    "homeForm",
+    "awayForm",
+    "homeSeasonStats",
+    "awaySeasonStats",
+    "standings",
+    "lineups",
+    "availability",
+    "marketProfile",
+  ];
+  const timestampCoverage = relevantTimestamps.filter((key) => sourceAsOf?.[key]).length / relevantTimestamps.length;
 
   const score =
     add(h2hPlayed >= 3, 0.16, "H2H gevuld", "H2H ontbreekt", h2hPlayed >= 1 ? 0.45 : 0) +
     add(homeFormGames >= 5 && awayFormGames >= 5, 0.16, "vormdata gevuld", "vormdata dun", homeFormGames >= 3 && awayFormGames >= 3 ? 0.65 : 0) +
-    add(hasStanding, 0.12, "stand/positie gevuld", "stand/positie ontbreekt") +
-    add(hasTeamIds, 0.1, "team-id match aanwezig", "team-id match ontbreekt", hasStableTeamIdentity ? 0.55 : 0) +
+    add(hasStanding || hasStrengthRanking, 0.12, "stand/sterkterang gevuld", "stand/sterkterang ontbreekt") +
+    add(hasTeamIds || hasProviderIds, 0.1, "provider-team-ID aanwezig", "provider-team-ID ontbreekt", hasStableTeamIdentity ? 0.55 : 0) +
     add(hasXg || sourceQuality >= 0.45, 0.18, "xG/shot-bronnen aanwezig", "xG/shot-bronnen dun", sourceQuality >= 0.25 ? 0.55 : 0) +
     add(hasOdds, 0.14, "odds/marktdekking aanwezig", "odds/marktdekking dun", marketCoverage > 0 ? 0.45 : 0) +
     add(lineupsKnown, 0.06, "opstellingsdata bevestigd", "opstellingsdata open", lineupsProjected ? 0.7 : 0.35) +
     add(availabilitySignal.coverage >= 1, 0.04, "availability gevuld", "availability ontbreekt", availabilitySignal.coverage) +
     add(edges.resultFresh !== false, 0.08, "uitslagbron actueel", "uitslagbron verouderd", edges.resultFresh == null ? 0.65 : 0) +
-    add(postMatchPresent, 0.06, "post-match stats verrijkt", "post-match stats ontbreken", 0);
+    add(timestampCoverage >= 0.8, 0.06, "brontimestamps compleet", "brontimestamps dun", timestampCoverage);
 
   const normalized = deps.clamp(score, 0, 1);
   const label = normalized >= 0.75 ? "hoog" : normalized >= 0.58 ? "voldoende" : normalized >= 0.42 ? "laag" : "kritiek";

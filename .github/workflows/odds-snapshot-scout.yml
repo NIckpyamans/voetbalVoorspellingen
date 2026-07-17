@@ -25,6 +25,12 @@ env:
   ODDS_API_EXTRA_SPORTS: soccer_uefa_champs_league_qualification,soccer_uefa_europa_league_qualification,soccer_uefa_europa_conference_league_qualification,soccer_uefa_champs_league,soccer_uefa_europa_league,soccer_uefa_europa_conference_league
   DATABASE_URL: ${{ secrets.DATABASE_URL }}
   POSTGRES_URL: ${{ secrets.POSTGRES_URL }}
+  CLOUDFLARE_R2_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_R2_ACCOUNT_ID }}
+  CLOUDFLARE_R2_ACCESS_KEY_ID: ${{ secrets.CLOUDFLARE_R2_ACCESS_KEY_ID }}
+  CLOUDFLARE_R2_SECRET_ACCESS_KEY: ${{ secrets.CLOUDFLARE_R2_SECRET_ACCESS_KEY }}
+  CLOUDFLARE_R2_BUCKET: ${{ secrets.CLOUDFLARE_R2_BUCKET }}
+  CLOUDFLARE_R2_ENDPOINT: ${{ secrets.CLOUDFLARE_R2_ENDPOINT }}
+  CLOUDFLARE_R2_PREFIX: ${{ secrets.CLOUDFLARE_R2_PREFIX }}
 
 jobs:
   scout:
@@ -45,7 +51,7 @@ jobs:
         env:
           ODDS_SCOUT_LIMIT: 40
           ODDS_SCOUT_DAYS_AHEAD: 21
-      - run: node scripts/ci-neon-safe.js -- npm run monitor:snapshot-growth
+      - run: npm run monitor:snapshot-growth
       - run: node scripts/ci-neon-safe.js -- npm run monitor:lineups
         env:
           LINEUP_MONITOR_DAYS_AHEAD: 14

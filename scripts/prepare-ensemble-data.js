@@ -251,27 +251,29 @@ function buildFeaturePayload(row, primaryFeatures) {
   };
 }
 
-function buildTrainingPolicy(snapshotBackedRows) {
-  const mature = snapshotBackedRows >= MIN_SNAPSHOT_ROWS;
-  const nextTargetGap = Math.max(0, NEXT_SNAPSHOT_TARGET_ROWS - snapshotBackedRows);
+function buildTrainingPolicy(snapshotBackedRows, uniqueSnapshotMatches) {
+  const mature = uniqueSnapshotMatches >= MIN_SNAPSHOT_ROWS;
+  const nextTargetGap = Math.max(0, NEXT_SNAPSHOT_TARGET_ROWS - uniqueSnapshotMatches);
   return {
     minSnapshotRows: MIN_SNAPSHOT_ROWS,
     nextTargetRows: NEXT_SNAPSHOT_TARGET_ROWS,
     nextTargetGap,
     snapshotBackedRows,
+    uniqueSnapshotMatches,
+    effectiveSnapshotRows: uniqueSnapshotMatches,
     maturity: mature ? "mature" : "warming_up",
     snapshotBoostActive: mature,
     snapshotWeight: mature ? 1 : 0.65,
     fallbackWeight: mature ? 0.25 : 0.35,
     qualityGate:
-      snapshotBackedRows >= NEXT_SNAPSHOT_TARGET_ROWS
+      uniqueSnapshotMatches >= NEXT_SNAPSHOT_TARGET_ROWS
         ? "expert_sample"
         : mature
           ? "mature_but_growing"
           : "warming_up",
     note: mature
-      ? `Snapshot-backed rows zijn voldoende aanwezig en mogen zwaarder meewegen dan fallback rows. Volgende expert-target: ${NEXT_SNAPSHOT_TARGET_ROWS} rows.`
-      : `Snapshot-backed rows blijven conservatief gewogen tot minimaal ${MIN_SNAPSHOT_ROWS} afgeronde snapshotvoorspellingen beschikbaar zijn.`,
+      ? `Er zijn voldoende unieke snapshotwedstrijden. Meerdere snapshots van dezelfde wedstrijd delen samen één wedstrijdgewicht. Volgende expert-target: ${NEXT_SNAPSHOT_TARGET_ROWS} unieke wedstrijden.`
+      : `Snapshottraining blijft conservatief gewogen tot minimaal ${MIN_SNAPSHOT_ROWS} unieke afgeronde wedstrijden beschikbaar zijn; meerdere snapshots van één wedstrijd tellen niet als extra onafhankelijke waarnemingen.`,
   };
 }
 
@@ -406,7 +408,8 @@ async function readDatabaseSnapshotTrainingRows() {
   if (!TRAINING_DB_SNAPSHOT_LIMIT) return [];
   const sql = getSql();
   if (!sql) return [];
-  const rows = await sql.query(
+  try {
+    const rows = await sql.query(
     `
       select ps.prediction_id, ps.match_id, ps.generated_at,
         ps.prediction_payload->>'date' as date,
@@ -444,7 +447,11 @@ async function readDatabaseSnapshotTrainingRows() {
     `,
     [TRAINING_DB_SNAPSHOT_LIMIT]
   );
-  return rows.map(normalizeDbPayloadRow).filter(Boolean);
+    return rows.map(normalizeDbPayloadRow).filter(Boolean);
+  } catch (error) {
+    console.warn(`[train-prepare] Neon snapshots niet beschikbaar; behouden lokale/R2-herstelset: ${error?.message || error}`);
+    return [];
+  }
 }
 
 function rowKey(row) {
@@ -490,12 +497,19 @@ async function main() {
     })
     .filter(Boolean);
   const snapshotBackedRows = rawExportRows.filter((row) => row.snapshotBacked).length;
+  const snapshotMatchCounts = new Map();
+  for (const row of rawExportRows.filter((item) => item.snapshotBacked)) {
+    snapshotMatchCounts.set(row.matchId, (snapshotMatchCounts.get(row.matchId) || 0) + 1);
+  }
+  const uniqueSnapshotMatches = snapshotMatchCounts.size;
   const oddsReadyRows = rows.filter(hasUsableOdds).length;
   const closingLineRows = rows.filter(hasUsableClosingLine).length;
-  const trainingPolicy = buildTrainingPolicy(snapshotBackedRows);
+  const trainingPolicy = buildTrainingPolicy(snapshotBackedRows, uniqueSnapshotMatches);
   const exportRows = rawExportRows.map((row) => ({
     ...row,
-    trainingWeight: row.snapshotBacked ? trainingPolicy.snapshotWeight : trainingPolicy.fallbackWeight,
+    trainingWeight: row.snapshotBacked
+      ? Number((trainingPolicy.snapshotWeight / Math.max(1, snapshotMatchCounts.get(row.matchId) || 1)).toFixed(6))
+      : trainingPolicy.fallbackWeight,
     trainingGroup: row.snapshotBacked ? "snapshot_backed" : "fallback_review",
     snapshotMaturity: trainingPolicy.maturity,
   }));
@@ -510,6 +524,7 @@ async function main() {
         modelTarget: config.target || "1X2",
         totalRows: exportRows.length,
         snapshotBackedRows,
+        uniqueSnapshotMatches,
         fallbackRows: exportRows.filter((row) => !row.snapshotBacked).length,
         oddsReadyRows,
         closingLineRows,
@@ -527,7 +542,7 @@ async function main() {
         modelQualityByDbFeatureSourceCount,
         featureNames,
         leakageNote:
-          "snapshotBackedRows zijn lekvrijer. fallbackRows gebruiken alleen opgeslagen prediction/review-signalen en blijven gemarkeerd als fallback tot prediction snapshots met featureVector beschikbaar zijn. trainingWeight voorkomt dat een te kleine snapshotgroep te vroeg dominant wordt.",
+          "Snapshot-backed rows zijn lekvrijer. Alle snapshots van dezelfde match delen samen maximaal één wedstrijdgewicht, zodat herhaalde snapshots geen labelbias veroorzaken. Fallback rows blijven apart en conservatief gewogen.",
         rows: exportRows,
       },
       null,
@@ -577,6 +592,7 @@ async function main() {
         ok: true,
         totalRows: exportRows.length,
         snapshotBackedRows,
+        uniqueSnapshotMatches,
         trainingPolicy,
         output: EXPORT_FILE,
         csvOutput: EXPORT_CSV_FILE,

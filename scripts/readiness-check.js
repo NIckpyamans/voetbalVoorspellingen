@@ -192,6 +192,7 @@ const report = {
     exportExists: exists(path.join("training", "catboost-ready.json")),
     totalRows: Number(trainingExport.totalRows || 0),
     snapshotBackedRows: Number(trainingExport.snapshotBackedRows || 0),
+    uniqueSnapshotMatches: Number(trainingExport.uniqueSnapshotMatches || trainingExport.trainingPolicy?.uniqueSnapshotMatches || 0),
     fallbackRows: Number(trainingExport.fallbackRows || 0),
     minSnapshotRows: Number(trainingExport.trainingPolicy?.minSnapshotRows || DEFAULT_MIN_SNAPSHOT_ROWS),
     snapshotBoostActive: Boolean(trainingExport.trainingPolicy?.snapshotBoostActive),
@@ -201,13 +202,13 @@ const report = {
     generatedAt: trainingExport.generatedAt || null,
     scheduledLearning: learnWorkflow.includes("schedule:"),
     status:
-      Number(trainingExport.snapshotBackedRows || 0) >= Number(trainingExport.trainingPolicy?.minSnapshotRows || DEFAULT_MIN_SNAPSHOT_ROWS)
+      Number(trainingExport.uniqueSnapshotMatches || trainingExport.trainingPolicy?.uniqueSnapshotMatches || 0) >= Number(trainingExport.trainingPolicy?.minSnapshotRows || DEFAULT_MIN_SNAPSHOT_ROWS)
         ? "snapshot_training_mature"
-        : Number(trainingExport.snapshotBackedRows || 0) > 0
+        : Number(trainingExport.uniqueSnapshotMatches || trainingExport.trainingPolicy?.uniqueSnapshotMatches || 0) > 0
           ? "snapshot_training_warming_up"
           : "waiting_for_finished_snapshot_predictions",
     nextTargetRows: Number(trainingExport.trainingPolicy?.nextTargetRows || 150),
-    nextTargetGap: Math.max(0, Number(trainingExport.trainingPolicy?.nextTargetRows || 150) - Number(trainingExport.snapshotBackedRows || 0)),
+    nextTargetGap: Math.max(0, Number(trainingExport.trainingPolicy?.nextTargetRows || 150) - Number(trainingExport.uniqueSnapshotMatches || trainingExport.trainingPolicy?.uniqueSnapshotMatches || 0)),
     modelQualityByDbFeatureSourceCount: trainingExport.modelQualityByDbFeatureSourceCount || [],
   },
   dataQuality: {

@@ -38,11 +38,28 @@ jobs:
           ODDS_API_DAYS_AHEAD: 21
           ODDS_API_CLOSING_LIMIT: 180
           ODDS_API_CLOSING_LOOKAHEAD_MINUTES: 180
-      - run: node scripts/ci-neon-safe.js -- node scripts/evaluate-prediction-snapshots.js
+      - name: Evaluate immutable snapshots (Neon with R2 fallback)
+        run: node scripts/evaluate-prediction-snapshots.js
         env:
           DATABASE_URL: ${{ secrets.DATABASE_URL }}
           POSTGRES_URL: ${{ secrets.POSTGRES_URL }}
+          CLOUDFLARE_R2_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_R2_ACCOUNT_ID }}
+          CLOUDFLARE_R2_ACCESS_KEY_ID: ${{ secrets.CLOUDFLARE_R2_ACCESS_KEY_ID }}
+          CLOUDFLARE_R2_SECRET_ACCESS_KEY: ${{ secrets.CLOUDFLARE_R2_SECRET_ACCESS_KEY }}
+          CLOUDFLARE_R2_BUCKET: ${{ secrets.CLOUDFLARE_R2_BUCKET }}
+          CLOUDFLARE_R2_PREFIX: ${{ secrets.CLOUDFLARE_R2_PREFIX }}
+          R2_ACCOUNT_ID: ${{ secrets.R2_ACCOUNT_ID }}
+          R2_ACCESS_KEY_ID: ${{ secrets.R2_ACCESS_KEY_ID }}
+          R2_SECRET_ACCESS_KEY: ${{ secrets.R2_SECRET_ACCESS_KEY }}
+          R2_BUCKET_NAME: ${{ secrets.R2_BUCKET_NAME }}
           PREDICTION_EVALUATION_LIMIT: 5000
+      - name: Upload evaluation evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: prediction-evaluation-report
+          path: monitor/prediction-evaluation-report.json
+          if-no-files-found: error
       - run: node scripts/ci-neon-safe.js -- bash -lc "npm run db:roi-clv:analyze && npm run db:integrity:snapshot"
         env:
           DATABASE_URL: ${{ secrets.DATABASE_URL }}

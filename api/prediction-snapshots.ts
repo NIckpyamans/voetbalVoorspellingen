@@ -2,6 +2,7 @@ import { fetchServerStore } from "./_dataSource.js";
 import { createLogger, getErrorDetails } from "../shared/logger.js";
 import { setCorsHeaders } from "../shared/cors.js";
 import { databaseConfigured, getSql } from "../shared/database.js";
+import { readR2SnapshotLedger } from "../shared/predictionSnapshotLedger.js";
 
 const logger = createLogger("api.prediction-snapshots");
 
@@ -101,7 +102,8 @@ export default async function handler(req: any, res: any) {
     const limit = Math.min(Math.max(Number(req.query?.limit || 25), 1), 100);
 
     let databaseSummary: any = null;
-    if (databaseConfigured()) {
+    try {
+      if (databaseConfigured()) {
       const sql = getSql();
       if (sql) {
         if (summaryOnly) {
@@ -152,11 +154,22 @@ export default async function handler(req: any, res: any) {
           }
         }
       }
+      }
+    } catch (databaseError: any) {
+      logger.warning("prediction_snapshots_database_fallback", {
+        error: getErrorDetails(databaseError),
+        fallback: "r2-or-split-store",
+      });
     }
 
     const { store, branch } = await fetchServerStore();
-    const snapshots = store.predictionSnapshots || {};
-    const index = store.predictionSnapshotIndex || {};
+    const r2Ledger = await readR2SnapshotLedger();
+    const r2Snapshots = r2Ledger.available ? r2Ledger.ledger.predictionSnapshots || {} : {};
+    const snapshots = Object.keys(r2Snapshots).length >= Object.keys(store.predictionSnapshots || {}).length
+      ? r2Snapshots
+      : store.predictionSnapshots || {};
+    const index = snapshots === r2Snapshots ? r2Ledger.ledger.predictionSnapshotIndex || {} : store.predictionSnapshotIndex || {};
+    const snapshotBranch = snapshots === r2Snapshots ? "r2-immutable-ledger" : branch;
 
     if (summaryOnly) {
       const serverSummary = buildSnapshotSummary(snapshots, store.postMatchReviews || {});
@@ -166,7 +179,7 @@ export default async function handler(req: any, res: any) {
       return res.status(200).json({
         ok: true,
         summary,
-        sourceBranch: databaseSummary ? `postgres+${branch}` : branch,
+        sourceBranch: databaseSummary ? `postgres+${snapshotBranch}` : snapshotBranch,
         workerVersion: store.workerVersion || "unknown",
         durationMs: Date.now() - started,
       });
@@ -192,7 +205,7 @@ export default async function handler(req: any, res: any) {
       ok: true,
       items,
       total: items.length,
-      sourceBranch: branch,
+      sourceBranch: snapshotBranch,
       workerVersion: store.workerVersion || "unknown",
       durationMs: Date.now() - started,
     });

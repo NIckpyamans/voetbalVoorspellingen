@@ -4,6 +4,7 @@ import fs from "fs";
 import path from "path";
 import { getSql, loadLocalEnv } from "../shared/database.js";
 import { isHiddenInternationalOrWorldCupEntity } from "../shared/competitionVisibility.js";
+import { loadSnapshotLedger } from "../shared/predictionSnapshotLedger.js";
 
 const ROOT = process.cwd();
 loadLocalEnv(ROOT);
@@ -21,13 +22,15 @@ function readJsonSafe(relativePath, fallback) {
 const training = readJsonSafe(path.join("training", "catboost-ready.json"), {});
 const target = Number(training?.trainingPolicy?.nextTargetRows || process.env.SNAPSHOT_NEXT_TARGET_ROWS || 150);
 const snapshotBackedRows = Number(training?.snapshotBackedRows || 0);
+const uniqueSnapshotMatches = Number(training?.uniqueSnapshotMatches || training?.trainingPolicy?.uniqueSnapshotMatches || 0);
 const totalRows = Number(training?.totalRows || 0);
-const gap = Math.max(0, target - snapshotBackedRows);
+const gap = Math.max(0, target - uniqueSnapshotMatches);
 const sql = getSql();
 
-let database = { configured: false };
+let database = { configured: false, available: false, error: null };
 if (sql) {
-  const [counts] = await sql.query(`
+  try {
+    const [counts] = await sql.query(`
     select
       (select count(1)::int from prediction_snapshots) prediction_snapshots,
       (select count(1)::int from prediction_snapshots ps join matches m on m.match_id=ps.match_id where ps.generated_at < m.kickoff_at) prematch_snapshots,
@@ -60,13 +63,32 @@ if (sql) {
   const futureClubMatches = futureMatchesByLeague
     .filter((row) => !isHiddenInternationalOrWorldCupEntity({ league: row.league }))
     .reduce((sum, row) => sum + Number(row.rows || 0), 0);
-  database = {
-    configured: true,
-    ...counts,
-    club_snapshot_evaluations: clubSnapshotEvaluations,
-    future_club_matches: futureClubMatches,
-    snapshot_evaluations_by_league: snapshotEvaluationsByLeague.slice(0, 12),
-  };
+    database = {
+      configured: true,
+      available: true,
+      error: null,
+      ...counts,
+      club_snapshot_evaluations: clubSnapshotEvaluations,
+      future_club_matches: futureClubMatches,
+      snapshot_evaluations_by_league: snapshotEvaluationsByLeague.slice(0, 12),
+    };
+  } catch (error) {
+    database = { configured: true, available: false, error: error?.message || String(error) };
+  }
+}
+
+const loadedLedger = await loadSnapshotLedger({ root: ROOT });
+const ledgerSnapshots = Object.values(loadedLedger.ledger.predictionSnapshots || {}).filter(
+  (snapshot) => !isHiddenInternationalOrWorldCupEntity(snapshot)
+);
+const ledgerPredictionIds = new Set(ledgerSnapshots.map((snapshot) => snapshot.predictionId));
+const ledgerEvaluations = Object.values(loadedLedger.ledger.evaluations || {}).filter((evaluation) =>
+  ledgerPredictionIds.has(evaluation.predictionId)
+);
+const ledgerByLeague = new Map();
+for (const snapshot of ledgerSnapshots) {
+  const league = String(snapshot.league || "unknown");
+  ledgerByLeague.set(league, (ledgerByLeague.get(league) || 0) + 1);
 }
 
 const report = {
@@ -74,12 +96,33 @@ const report = {
   training: {
     totalRows,
     snapshotBackedRows,
+    uniqueSnapshotMatches,
     fallbackRows: Number(training?.fallbackRows || 0),
     target,
     gap,
     maturity: training?.trainingPolicy?.maturity || "unknown",
   },
   database,
+  snapshotSources: {
+    r2: {
+      configured: !!loadedLedger.sources.r2?.configured,
+      available: !!loadedLedger.sources.r2?.available,
+      snapshotsRead: Object.keys(loadedLedger.sources.r2?.ledger?.predictionSnapshots || {}).length,
+      error: loadedLedger.sources.r2?.error || null,
+    },
+    fallback: {
+      available: !!loadedLedger.sources.local?.available,
+      snapshotsRead: Object.keys(loadedLedger.sources.local?.ledger?.predictionSnapshots || {}).length,
+    },
+    merged: {
+      clubSnapshots: ledgerSnapshots.length,
+      evaluatedClubSnapshots: ledgerEvaluations.length,
+      byLeague: [...ledgerByLeague.entries()]
+        .map(([league, rows]) => ({ league, rows }))
+        .sort((a, b) => b.rows - a.rows)
+        .slice(0, 12),
+    },
+  },
   automation: {
     workerCadence: "3x per dag volledige worker + 2-uurlijkse live score refresh",
     learningCadence: "dagelijks train:prepare",
