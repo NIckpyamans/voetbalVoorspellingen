@@ -9,6 +9,7 @@ const APPLY_LIVE = process.argv.includes("--apply-live");
 const MIN_ROWS = Math.max(10, Number(process.env.MODEL_RECALIBRATION_MIN_ROWS || 20));
 const MIN_VALIDATION_ROWS = Math.max(5, Number(process.env.MODEL_RECALIBRATION_MIN_VALIDATION_ROWS || 8));
 const MIN_BRIER_IMPROVEMENT = Number(process.env.MODEL_RECALIBRATION_MIN_BRIER_IMPROVEMENT || 0.001);
+const MIN_UNIQUE_COMPLETED_SNAPSHOT_MATCHES = Math.max(10, Number(process.env.MODEL_RECALIBRATION_MIN_UNIQUE_COMPLETED_SNAPSHOTS || 150));
 const REPORT_PATH = path.join(ROOT, "monitor", "model-recalibration-report.json");
 
 function clamp(value, min, max) {
@@ -115,8 +116,42 @@ async function writeRootSegment(sql, key, payload) {
   );
 }
 
+function uniqueCompletedSnapshotMatches() {
+  const trainingPath = path.join(ROOT, "training", "training-snapshot.json");
+  if (!fs.existsSync(trainingPath)) return 0;
+  try {
+    const training = JSON.parse(fs.readFileSync(trainingPath, "utf8"));
+    return new Set(
+      (Array.isArray(training?.rows) ? training.rows : [])
+        .filter((row) => row?.snapshotBacked)
+        .filter((row) => /^(FT|AET|PEN)$/i.test(String(row?.status || "")))
+        .map((row) => String(row?.matchId || "").trim())
+        .filter(Boolean)
+    ).size;
+  } catch (error) {
+    console.warn(`[model-recalibration] training snapshot kon niet worden gelezen: ${error?.message || error}`);
+    return 0;
+  }
+}
+
 async function main() {
   loadLocalEnv(ROOT);
+  const completedSnapshotMatches = uniqueCompletedSnapshotMatches();
+  if (completedSnapshotMatches < MIN_UNIQUE_COMPLETED_SNAPSHOT_MATCHES) {
+    const report = {
+      ok: true,
+      skipped: true,
+      generatedAt: new Date().toISOString(),
+      reason: "insufficient_unique_completed_snapshot_matches",
+      uniqueCompletedSnapshotMatches: completedSnapshotMatches,
+      minimumUniqueCompletedSnapshotMatches: MIN_UNIQUE_COMPLETED_SNAPSHOT_MATCHES,
+      nextAction: `Wacht op ${Math.max(0, MIN_UNIQUE_COMPLETED_SNAPSHOT_MATCHES - completedSnapshotMatches)} extra unieke afgeronde clubwedstrijden met pre-match snapshots voordat league/phase-kalibratie draait.`,
+    };
+    fs.mkdirSync(path.dirname(REPORT_PATH), { recursive: true });
+    fs.writeFileSync(REPORT_PATH, `${JSON.stringify(report, null, 2)}\n`);
+    console.log(JSON.stringify(report, null, 2));
+    return;
+  }
   const sql = getSql();
   if (!sql) throw new Error("DATABASE_URL/POSTGRES_URL ontbreekt");
 
