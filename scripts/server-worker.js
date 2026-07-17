@@ -15,6 +15,7 @@ import {
   calibrateOutcomeProbabilities,
 } from "./prediction-analytics.js";
 import { fetchApiFootballH2HProfile, summarizeApiFootballUsage } from "./api-football-provider.js";
+import { fetchEspnH2HProfile } from "./providers/espn-h2h-provider.js";
 import { fetchOddsAtPrediction } from "./odds-provider.js";
 import { getApiFootballKey, getFootballDataApiKey } from "./provider-env.js";
 import { writeJsonFile, writeSplitDataFiles } from "./worker/archive.js";
@@ -68,7 +69,7 @@ import {
 import { selectUniqueTeamTopPicks } from "./worker/top-picks.js";
 import { mergeTrainingSnapshots } from "./worker/training-snapshot.js";
 import { buildTrainingSnapshot } from "./worker/training-builder.js";
-import { buildTeamIdentity } from "./worker/team-identity.js";
+import { buildTeamIdentity, getKnownProviderIds } from "./worker/team-identity.js";
 import { fetchR2H2HProfile, fetchR2LineupSummary, fetchR2OddsSnapshot } from "./worker/critical-captures.js";
 
 const SOFA = "https://api.sofascore.com/api/v1";
@@ -8905,6 +8906,7 @@ function buildH2HAgentProfile({
   openFootballProfile,
   nationalProfile,
   apiFootballProfile,
+  espnProfile,
   extraProfiles = [],
   homeName,
   awayName,
@@ -8953,6 +8955,12 @@ function buildH2HAgentProfile({
     results = mergeH2HResultLists(results, apiFootballProfile.results);
     sources.push(apiFootballProfile.status || "api-football-h2h");
     sameCompetitionPlayed += Number(apiFootballProfile.sameCompetitionPlayed || apiFootballProfile.played || 0);
+  }
+
+  if (espnProfile?.results?.length) {
+    results = mergeH2HResultLists(results, espnProfile.results);
+    sources.push(espnProfile.status || "espn-team-schedule-h2h");
+    sameCompetitionPlayed += Number(espnProfile.sameCompetitionPlayed || espnProfile.played || 0);
   }
 
   if (!results.length) {
@@ -11136,7 +11144,17 @@ async function main() {
         awayName,
         homeId,
         awayId,
+        homeProviderIds: getKnownProviderIds(homeName),
+        awayProviderIds: getKnownProviderIds(awayName),
         leagueLabel: leagueInfo.label,
+      });
+      const espnProfile = apiFootballProfile?.results?.length ? null : await fetchEspnH2HProfile({
+        store,
+        homeName,
+        awayName,
+        homeProviderIds: getKnownProviderIds(homeName),
+        awayProviderIds: getKnownProviderIds(awayName),
+        kickoff,
       });
       h2h = buildH2HAgentProfile({
         baseH2H: h2h,
@@ -11145,6 +11163,7 @@ async function main() {
         openFootballProfile,
         nationalProfile: nationalH2HProfile,
         apiFootballProfile,
+        espnProfile,
         extraProfiles: globalTeamFormProfiles,
         homeName,
         awayName,

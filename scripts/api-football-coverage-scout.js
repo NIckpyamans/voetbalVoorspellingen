@@ -27,6 +27,7 @@ const maxDates = Math.max(1, Number(process.env.API_FOOTBALL_COVERAGE_MAX_DATES 
 const maxOddsRequests = Math.max(0, Number(process.env.API_FOOTBALL_ODDS_PROBE_LIMIT || 20));
 const timeoutMs = Math.max(1000, Number(process.env.API_FOOTBALL_COVERAGE_TIMEOUT_MS || 12000));
 const reportPath = path.join(root, "monitor", "api-football-coverage-scout.json");
+const teamMapPath = path.join(root, "monitor", "api-football-team-map.json");
 const startedAt = Date.now();
 const quotaSamples = [];
 
@@ -208,7 +209,22 @@ let oddsCaptured = 0;
 const statusCounts = {};
 const errors = [];
 const examples = [];
+const learnedTeams = new Map();
 let quotaBlocked = false;
+
+function learnApiFootballTeam(name, fixtureTeam) {
+  const teamId = fixtureTeam?.id;
+  if (!name || !teamId) return;
+  const key = normalize(name);
+  if (!key) return;
+  learnedTeams.set(key, {
+    name,
+    aliases: [fixtureTeam?.name].filter(Boolean),
+    apiFootballTeamId: String(teamId),
+    source: "api-football-coverage-scout",
+    updatedAt: new Date().toISOString(),
+  });
+}
 
 for (const [key, dateMatches] of [...byDate.entries()].slice(0, maxDates)) {
   const fixtureFeed = await apiGet("/fixtures", { date: key });
@@ -238,6 +254,12 @@ for (const [key, dateMatches] of [...byDate.entries()].slice(0, maxDates)) {
       ? { id: match.api_football_fixture_id, confidence: 1, home: null, away: null, raw: null, stored: true }
       : findBestFixture(match, fixtures);
     if (!best?.id) continue;
+    if (best.raw?.teams) {
+      const providerHome = best.reversed ? best.raw.teams.away : best.raw.teams.home;
+      const providerAway = best.reversed ? best.raw.teams.home : best.raw.teams.away;
+      learnApiFootballTeam(match.home_team_name, providerHome);
+      learnApiFootballTeam(match.away_team_name, providerAway);
+    }
     const sourceRecordId = `api_football_fixture_${digest(`${match.match_id}|${best.id}`)}`;
     const matchSourceRecordId = `msr_${digest(`${match.match_id}|${sourceRecordId}`)}`;
     const aliasId = `fixture_alias_${digest(`api-football|${best.id}`)}`;
@@ -356,5 +378,9 @@ const report = {
 };
 
 fs.mkdirSync(path.dirname(reportPath), { recursive: true });
+const existingTeamMap = fs.existsSync(teamMapPath) ? JSON.parse(fs.readFileSync(teamMapPath, "utf8")) : { teams: [] };
+const mergedTeamMap = new Map((existingTeamMap.teams || []).map((team) => [normalize(team?.name), team]).filter(([key]) => key));
+for (const [key, team] of learnedTeams) mergedTeamMap.set(key, team);
+fs.writeFileSync(teamMapPath, `${JSON.stringify({ generatedAt: new Date().toISOString(), provider: "api-football", teams: [...mergedTeamMap.values()].sort((a, b) => a.name.localeCompare(b.name)) }, null, 2)}\n`);
 fs.writeFileSync(reportPath, `${JSON.stringify(report, null, 2)}\n`);
 console.log(JSON.stringify(report, null, 2));

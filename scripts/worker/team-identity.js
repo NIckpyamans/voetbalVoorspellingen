@@ -15,6 +15,7 @@ export function normalizeTeamIdentityName(value) {
 function providerIdsForTeam(team = {}) {
   return {
     espn: team?.espnTeamId ? String(team.espnTeamId) : null,
+    espnLeagueCode: team?.espnLeagueCode ? String(team.espnLeagueCode) : null,
     sofascore: team?.sofascoreTeamId ? String(team.sofascoreTeamId) : null,
     apiFootball: team?.apiFootballTeamId ? String(team.apiFootballTeamId) : null,
     sportmonks: team?.sportmonksTeamId ? String(team.sportmonksTeamId) : null,
@@ -35,6 +36,17 @@ export function loadTeamProviderIndex(root = process.cwd(), logger = console) {
       const ids = providerIdsForTeam(team);
       for (const alias of [team?.name, ...(team?.aliases || [])].map(normalizeTeamIdentityName).filter(Boolean)) {
         providerIndex.set(alias, ids);
+      }
+    }
+    const learnedFile = path.join(root, "monitor", "api-football-team-map.json");
+    if (fs.existsSync(learnedFile)) {
+      const learned = JSON.parse(fs.readFileSync(learnedFile, "utf8"));
+      for (const team of learned?.teams || []) {
+        const apiFootball = team?.apiFootballTeamId ? String(team.apiFootballTeamId) : null;
+        if (!apiFootball) continue;
+        for (const alias of [team?.name, ...(team?.aliases || [])].map(normalizeTeamIdentityName).filter(Boolean)) {
+          providerIndex.set(alias, { ...(providerIndex.get(alias) || {}), apiFootball });
+        }
       }
     }
   } catch (error) {

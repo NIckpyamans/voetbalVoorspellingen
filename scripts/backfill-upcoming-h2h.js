@@ -9,6 +9,7 @@ import { getSql, loadLocalEnv } from "../shared/database.js";
 import { buildR2ObjectKey, getR2Config, putR2Object } from "../shared/cloudflare-r2.js";
 import { isHiddenInternationalOrWorldCupEntity } from "../shared/competitionVisibility.js";
 import { getKnownProviderIds } from "./worker/team-identity.js";
+import { fetchEspnH2HProfile } from "./providers/espn-h2h-provider.js";
 
 const ROOT = process.cwd();
 const OUTPUT_JSON = path.join(ROOT, "monitor", "h2h-upcoming-backfill.json");
@@ -111,14 +112,15 @@ async function upsertH2HEdge(sql, match, profile) {
   const awayWins = oriented.filter((item) => Number(item.storedAwayScore) > Number(item.storedHomeScore)).length;
   const draws = oriented.length - homeWins - awayWins;
   const weightedRecentBalance = Number(((homeWins - awayWins) / Math.max(oriented.length, 1)).toFixed(3));
-  const provider = String(profile.source || "h2h-backfill").toLowerCase().includes("database") ? "database-results" : "api-football";
+  const profileSource = String(profile.source || "h2h-backfill").toLowerCase();
+  const provider = profileSource.includes("database") ? "database-results" : profileSource.includes("espn") ? "espn-team-schedule" : "api-football";
   const sourceRecordId = `${provider}-h2h:${digest(`${match.match_id}|${profile.asOf || ""}|${JSON.stringify(oriented)}`)}`;
 
   await sql.query(
     `insert into source_records(source_record_id,provider,entity_type,entity_key,fetched_at,source_timestamp,content_hash,trust_score,payload)
      values($1,$2,'h2h',$3,now(),$4,$5,$6,$7::jsonb)
      on conflict(source_record_id) do update set fetched_at=excluded.fetched_at,payload=excluded.payload`,
-    [sourceRecordId, provider, match.match_id, profile.asOf || new Date().toISOString(), digest(JSON.stringify(oriented), 40), provider === "database-results" ? 0.94 : 0.86, JSON.stringify({ matchId: match.match_id, source: profile.source, results: oriented })]
+    [sourceRecordId, provider, match.match_id, profile.asOf || new Date().toISOString(), digest(JSON.stringify(oriented), 40), provider === "database-results" ? 0.94 : provider === "espn-team-schedule" ? 0.82 : 0.86, JSON.stringify({ matchId: match.match_id, source: profile.source, results: oriented })]
   );
 
   await sql.query(
@@ -291,12 +293,21 @@ async function main() {
         awayProviderIds: getKnownProviderIds(match.away_team_name),
         leagueLabel: match.league,
       });
-      if (profile?.results?.length) {
-        const r2 = await storeR2H2H(match, profile).catch((error) => ({ ok: false, error: error?.message || String(error) }));
+      const espnProfile = profile?.results?.length ? null : await fetchEspnH2HProfile({
+        store,
+        homeName: match.home_team_name,
+        awayName: match.away_team_name,
+        homeProviderIds: getKnownProviderIds(match.home_team_name),
+        awayProviderIds: getKnownProviderIds(match.away_team_name),
+        kickoff: match.kickoff_at,
+      });
+      const resolvedProfile = profile?.results?.length ? profile : espnProfile;
+      if (resolvedProfile?.results?.length) {
+        const r2 = await storeR2H2H(match, resolvedProfile).catch((error) => ({ ok: false, error: error?.message || String(error) }));
         if (r2?.ok) r2Stored += 1;
         if (databaseWritable) {
           try {
-            await upsertH2HEdge(sql, match, profile);
+            await upsertH2HEdge(sql, match, resolvedProfile);
           } catch (error) {
             databaseWritable = false;
             databaseError = error?.message || String(error);
@@ -307,8 +318,8 @@ async function main() {
           date: match.date_key,
           homeTeam: match.home_team_name,
           awayTeam: match.away_team_name,
-          played: profile.results.length,
-          source: profile.source,
+          played: resolvedProfile.results.length,
+          source: resolvedProfile.source,
         });
       } else {
         const cacheKey = `${String(match.league || "").toLowerCase()}:${String(match.home_team_name || "").toLowerCase()}__${String(match.away_team_name || "").toLowerCase()}`;

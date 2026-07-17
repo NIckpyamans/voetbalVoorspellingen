@@ -21,6 +21,7 @@ Deze map is de veilige opsplitsing van `scripts/server-worker.js`.
 
 - `data-collection.js`: public source requests, rate limits and source fallbacks.
 - `team-identity.js`: canonical team-name normalization and configured provider IDs.
+- `../providers/espn-h2h-provider.js`: second H2H source, restricted to matching ESPN team IDs and completed fixtures.
 - `critical-captures.js`: immutable pre-kickoff lineup, odds and H2H captures.
 - `training-builder.js`: derives training rows from active matches and immutable snapshots.
 - `training-snapshot.js`: preserves the highest-quality row for each prediction ID.
