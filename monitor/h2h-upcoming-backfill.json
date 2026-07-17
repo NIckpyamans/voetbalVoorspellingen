@@ -1,99 +1,219 @@
 {
-  "generatedAt": "2026-07-01T12:49:53.847Z",
+  "generatedAt": "2026-07-17T08:02:46.139Z",
   "daysAhead": 14,
-  "checked": 8,
+  "checked": 24,
+  "databaseWritable": false,
+  "databaseError": "Server error (HTTP status 402): {\"message\":\"Your project has exceeded the data transfer quota. Upgrade your plan to increase limits.\",\"code\":\"\",\"detail\":null,\"hint\":null,\"position\":null,\"internalPosition\":null,\"internalQuery\":null,\"severity\":\"\",\"where\":null,\"table\":null,\"column\":null,\"schema\":null,\"dataType\":null,\"constraint\":null,\"file\":null,\"line\":null,\"routine\":null,\"neon:retryable\":true}",
+  "r2Stored": 0,
   "filled": 0,
-  "noDirectHistory": 8,
+  "noDirectHistory": 24,
   "errors": 0,
   "apiFootball": {
-    "configured": false,
+    "configured": true,
     "enabled": true,
-    "requests": 0,
-    "statusCounts": {},
+    "baseUrl": "api-football-v1.p.rapidapi.com/v3",
+    "requests": 43,
+    "statusCounts": {
+      "provider_error": 8,
+      "rate_limited_locally": 35
+    },
+    "errorCategories": {
+      "http_403": 1,
+      "quota_or_rate_limit": 7,
+      "provider_payload_error": 35
+    },
     "resolvedTeams": 0,
-    "failedTeamMappings": 0,
-    "cachedPairs": 0,
+    "failedTeamMappings": 40,
+    "cachedPairs": 24,
     "availablePairs": 0,
     "providerResultCount": 0,
-    "lastStatus": null,
-    "lastStatusCode": null,
-    "lastCheckedAt": null
+    "lastStatus": "rate_limited_locally",
+    "lastStatusCode": 429,
+    "lastCheckedAt": "2026-07-17T08:02:46.139Z"
   },
   "filledSamples": [],
   "noDirectHistorySamples": [
     {
-      "matchId": "ss-bbc-2026-07-07-ararat armenia-riga",
-      "date": "2026-07-07",
+      "matchId": "ss-espn-club.friendly-401886526",
+      "date": "2026-07-17",
+      "league": "World - Club Friendlies",
+      "homeTeam": "Feyenoord Rotterdam",
+      "awayTeam": "Royal Charleroi SC",
+      "status": "not_found",
+      "note": "Geen betrouwbare directe H2H gevonden bij de gekoppelde provider. Dit wordt niet als gespeelde H2H gefaket."
+    },
+    {
+      "matchId": "ss-espn-club.friendly-401888891",
+      "date": "2026-07-17",
+      "league": "World - Club Friendlies",
+      "homeTeam": "Umraniyespor",
+      "awayTeam": "Galatasaray",
+      "status": "not_found",
+      "note": "Geen betrouwbare directe H2H gevonden bij de gekoppelde provider. Dit wordt niet als gespeelde H2H gefaket."
+    },
+    {
+      "matchId": "ss-espn-club.friendly-401886455",
+      "date": "2026-07-18",
+      "league": "World - Club Friendlies",
+      "homeTeam": "PSV Eindhoven",
+      "awayTeam": "Union St.-Gilloise",
+      "status": "not_found",
+      "note": "Geen betrouwbare directe H2H gevonden bij de gekoppelde provider. Dit wordt niet als gespeelde H2H gefaket."
+    },
+    {
+      "matchId": "ss-espn-club.friendly-401891721",
+      "date": "2026-07-18",
+      "league": "World - Club Friendlies",
+      "homeTeam": "Crystal Palace",
+      "awayTeam": "Swindon Town",
+      "status": "not_found",
+      "note": "Geen betrouwbare directe H2H gevonden bij de gekoppelde provider. Dit wordt niet als gespeelde H2H gefaket."
+    },
+    {
+      "matchId": "ss-espn-club.friendly-401886544",
+      "date": "2026-07-18",
+      "league": "World - Club Friendlies",
+      "homeTeam": "Ajax Amsterdam",
+      "awayTeam": "Olympiacos",
+      "status": "not_found",
+      "note": "Geen betrouwbare directe H2H gevonden bij de gekoppelde provider. Dit wordt niet als gespeelde H2H gefaket."
+    },
+    {
+      "matchId": "ss-espn-club.friendly-401886543",
+      "date": "2026-07-18",
+      "league": "World - Club Friendlies",
+      "homeTeam": "FC Basel",
+      "awayTeam": "Juventus",
+      "status": "not_found",
+      "note": "Geen betrouwbare directe H2H gevonden bij de gekoppelde provider. Dit wordt niet als gespeelde H2H gefaket."
+    },
+    {
+      "matchId": "ss-espn-club.friendly-401863531",
+      "date": "2026-07-18",
+      "league": "World - Club Friendlies",
+      "homeTeam": "Manchester United",
+      "awayTeam": "Wrexham",
+      "status": "not_found",
+      "note": "Geen betrouwbare directe H2H gevonden bij de gekoppelde provider. Dit wordt niet als gespeelde H2H gefaket."
+    },
+    {
+      "matchId": "ss-espn-club.friendly-401873310",
+      "date": "2026-07-18",
+      "league": "World - Club Friendlies",
+      "homeTeam": "RW Oberhausen",
+      "awayTeam": "Borussia Dortmund",
+      "status": "not_found",
+      "note": "Geen betrouwbare directe H2H gevonden bij de gekoppelde provider. Dit wordt niet als gespeelde H2H gefaket."
+    },
+    {
+      "matchId": "ss-bbc-2026-07-21-ararat armenia-shamrock rovers",
+      "date": "2026-07-21",
       "league": "Europe - Champions League",
       "homeTeam": "Ararat-Armenia",
-      "awayTeam": "Riga",
-      "status": "provider_not_configured",
-      "note": "API-Football is in deze omgeving niet geconfigureerd; GitHub Actions kan dit wel uitvoeren als de secret aanwezig is."
+      "awayTeam": "Shamrock Rovers",
+      "status": "not_found",
+      "note": "Geen betrouwbare directe H2H gevonden bij de gekoppelde provider. Dit wordt niet als gespeelde H2H gefaket."
     },
     {
-      "matchId": "ss-bbc-2026-07-07-kauno zalgiris-drita",
-      "date": "2026-07-07",
+      "matchId": "ss-bbc-2026-07-21-iberia 1999-slovan bratislava",
+      "date": "2026-07-21",
       "league": "Europe - Champions League",
-      "homeTeam": "Kauno Žalgiris",
-      "awayTeam": "Drita",
-      "status": "provider_not_configured",
-      "note": "API-Football is in deze omgeving niet geconfigureerd; GitHub Actions kan dit wel uitvoeren als de secret aanwezig is."
+      "homeTeam": "Iberia 1999",
+      "awayTeam": "Slovan Bratislava",
+      "status": "not_found",
+      "note": "Geen betrouwbare directe H2H gevonden bij de gekoppelde provider. Dit wordt niet als gespeelde H2H gefaket."
     },
     {
-      "matchId": "ss-bbc-2026-07-07-una strassen-la fiorita",
-      "date": "2026-07-07",
-      "league": "Europe - Conference League",
-      "homeTeam": "UNA Strassen",
-      "awayTeam": "La Fiorita",
-      "status": "provider_not_configured",
-      "note": "API-Football is in deze omgeving niet geconfigureerd; GitHub Actions kan dit wel uitvoeren als de secret aanwezig is."
+      "matchId": "ss-espn-club.friendly-401886545",
+      "date": "2026-07-22",
+      "league": "World - Club Friendlies",
+      "homeTeam": "Tottenham Hotspur",
+      "awayTeam": "Milton Keynes Dons",
+      "status": "not_found",
+      "note": "Geen betrouwbare directe H2H gevonden bij de gekoppelde provider. Dit wordt niet als gespeelde H2H gefaket."
     },
     {
-      "matchId": "ss-bbc-2026-07-07-af elbasani-bate",
-      "date": "2026-07-07",
-      "league": "Europe - Conference League",
-      "homeTeam": "AF Elbasani",
-      "awayTeam": "BATE",
-      "status": "provider_not_configured",
-      "note": "API-Football is in deze omgeving niet geconfigureerd; GitHub Actions kan dit wel uitvoeren als de secret aanwezig is."
-    },
-    {
-      "matchId": "ss-bbc-2026-07-08-kairat-sutjeska",
-      "date": "2026-07-08",
+      "matchId": "ss-bbc-2026-07-22-omonia nicosia-kairat",
+      "date": "2026-07-22",
       "league": "Europe - Champions League",
-      "homeTeam": "Kairat",
-      "awayTeam": "Sutjeska",
-      "status": "provider_not_configured",
-      "note": "API-Football is in deze omgeving niet geconfigureerd; GitHub Actions kan dit wel uitvoeren als de secret aanwezig is."
+      "homeTeam": "Omonia Nicosia",
+      "awayTeam": "Kairat",
+      "status": "not_found",
+      "note": "Geen betrouwbare directe H2H gevonden bij de gekoppelde provider. Dit wordt niet als gespeelde H2H gefaket."
     },
     {
-      "matchId": "ss-bbc-2026-07-08-flora-iberia 1999",
-      "date": "2026-07-08",
+      "matchId": "ss-bbc-2026-07-22-levski sofia-universitatea craiova",
+      "date": "2026-07-22",
       "league": "Europe - Champions League",
-      "homeTeam": "Flora",
-      "awayTeam": "Iberia 1999",
-      "status": "provider_not_configured",
-      "note": "API-Football is in deze omgeving niet geconfigureerd; GitHub Actions kan dit wel uitvoeren als de secret aanwezig is."
+      "homeTeam": "Levski Sofia",
+      "awayTeam": "Universitatea Craiova",
+      "status": "not_found",
+      "note": "Geen betrouwbare directe H2H gevonden bij de gekoppelde provider. Dit wordt niet als gespeelde H2H gefaket."
     },
     {
-      "matchId": "ss-bbc-2026-07-08-zira-torpedo kutaisi",
-      "date": "2026-07-08",
-      "league": "Europe - Conference League",
-      "homeTeam": "Zira",
-      "awayTeam": "Torpedo Kutaisi",
-      "status": "provider_not_configured",
-      "note": "API-Football is in deze omgeving niet geconfigureerd; GitHub Actions kan dit wel uitvoeren als de secret aanwezig is."
+      "matchId": "ss-espn-club.friendly-401869196",
+      "date": "2026-07-24",
+      "league": "World - Club Friendlies",
+      "homeTeam": "Rosenborg",
+      "awayTeam": "Manchester United",
+      "status": "not_found",
+      "note": "Geen betrouwbare directe H2H gevonden bij de gekoppelde provider. Dit wordt niet als gespeelde H2H gefaket."
     },
     {
-      "matchId": "ss-bbc-2026-07-08-connah s quay nomads-ballkani",
-      "date": "2026-07-08",
-      "league": "Europe - Conference League",
-      "homeTeam": "Connah's Quay Nomads",
-      "awayTeam": "Ballkani",
-      "status": "provider_not_configured",
-      "note": "API-Football is in deze omgeving niet geconfigureerd; GitHub Actions kan dit wel uitvoeren als de secret aanwezig is."
+      "matchId": "ss-espn-club.friendly-401886528",
+      "date": "2026-07-24",
+      "league": "World - Club Friendlies",
+      "homeTeam": "Galatasaray",
+      "awayTeam": "Monza",
+      "status": "not_found",
+      "note": "Geen betrouwbare directe H2H gevonden bij de gekoppelde provider. Dit wordt niet als gespeelde H2H gefaket."
+    },
+    {
+      "matchId": "ss-espn-club.friendly-401886527",
+      "date": "2026-07-25",
+      "league": "World - Club Friendlies",
+      "homeTeam": "Fortuna Düsseldorf",
+      "awayTeam": "Borussia Dortmund",
+      "status": "not_found",
+      "note": "Geen betrouwbare directe H2H gevonden bij de gekoppelde provider. Dit wordt niet als gespeelde H2H gefaket."
+    },
+    {
+      "matchId": "ss-espn-club.friendly-401869197",
+      "date": "2026-07-25",
+      "league": "World - Club Friendlies",
+      "homeTeam": "SV Wehen Wiesbaden",
+      "awayTeam": "Bayern Munich",
+      "status": "not_found",
+      "note": "Geen betrouwbare directe H2H gevonden bij de gekoppelde provider. Dit wordt niet als gespeelde H2H gefaket."
+    },
+    {
+      "matchId": "ss-espn-club.friendly-401891770",
+      "date": "2026-07-25",
+      "league": "World - Club Friendlies",
+      "homeTeam": "Bromley",
+      "awayTeam": "Crystal Palace",
+      "status": "not_found",
+      "note": "Geen betrouwbare directe H2H gevonden bij de gekoppelde provider. Dit wordt niet als gespeelde H2H gefaket."
+    },
+    {
+      "matchId": "ss-espn-club.friendly-401886529",
+      "date": "2026-07-25",
+      "league": "World - Club Friendlies",
+      "homeTeam": "Celtic",
+      "awayTeam": "AC Milan",
+      "status": "not_found",
+      "note": "Geen betrouwbare directe H2H gevonden bij de gekoppelde provider. Dit wordt niet als gespeelde H2H gefaket."
+    },
+    {
+      "matchId": "ss-espn-club.friendly-401886521",
+      "date": "2026-07-25",
+      "league": "World - Club Friendlies",
+      "homeTeam": "PSV Eindhoven",
+      "awayTeam": "Villarreal",
+      "status": "not_found",
+      "note": "Geen betrouwbare directe H2H gevonden bij de gekoppelde provider. Dit wordt niet als gespeelde H2H gefaket."
     }
   ],
   "errorSamples": [],
-  "recommendation": "API-Football is lokaal niet geconfigureerd. Laat de GitHub workflow draaien met API_KEY_API_FOOTBALL of voeg de key lokaal toe voor handmatige backfill."
+  "recommendation": "Geen directe H2H gevonden voor de gecontroleerde wedstrijden. Breid team-ID mapping/providerdekking uit of accepteer expliciet no-direct-history voor deze fixtures."
 }
