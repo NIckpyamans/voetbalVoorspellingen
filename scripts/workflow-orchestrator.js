@@ -56,8 +56,14 @@ function readUpcomingFixtures(reference = now) {
 }
 
 const upcomingFixtures = readUpcomingFixtures();
-const lineupWindow = upcomingFixtures.filter((fixture) => fixture.minutesToKickoff >= 15 && fixture.minutesToKickoff <= 75);
-const closingOddsWindow = upcomingFixtures.filter((fixture) => fixture.minutesToKickoff >= 20 && fixture.minutesToKickoff <= 75);
+const lineupWindows = {
+  t75: upcomingFixtures.filter((fixture) => fixture.minutesToKickoff >= 61 && fixture.minutesToKickoff <= 90),
+  t45: upcomingFixtures.filter((fixture) => fixture.minutesToKickoff >= 31 && fixture.minutesToKickoff <= 60),
+  t20: upcomingFixtures.filter((fixture) => fixture.minutesToKickoff >= 5 && fixture.minutesToKickoff <= 30),
+};
+const lineupWindow = unique(Object.values(lineupWindows).flat().map((fixture) => fixture.matchId))
+  .map((matchId) => upcomingFixtures.find((fixture) => fixture.matchId === matchId));
+const closingOddsWindow = upcomingFixtures.filter((fixture) => fixture.minutesToKickoff >= 5 && fixture.minutesToKickoff <= 30);
 const activeMatchWindow = upcomingFixtures.filter((fixture) => fixture.minutesToKickoff >= -180 && fixture.minutesToKickoff <= 180);
 
 function plannedWorkflows() {
@@ -113,6 +119,7 @@ const plan = {
     upcoming: upcomingFixtures.length,
     nearestKickoff: upcomingFixtures[0] || null,
     lineupWindow: lineupWindow.length,
+    lineupWindows: Object.fromEntries(Object.entries(lineupWindows).map(([key, rows]) => [key, rows.length])),
     closingOddsWindow: closingOddsWindow.length,
     activeMatchWindow: activeMatchWindow.length,
   },

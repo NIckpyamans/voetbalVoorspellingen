@@ -72,6 +72,13 @@ jobs:
       - name: Apply database schema
         run: node scripts/ci-neon-safe.js -- npm run db:schema:apply
 
+      - name: Backfill upcoming club H2H to R2 and Neon when available
+        run: npm run db:h2h:backfill-upcoming
+        env:
+          API_FOOTBALL_MAX_FETCHES_PER_RUN: "8"
+          H2H_BACKFILL_DAYS_AHEAD: "14"
+          H2H_BACKFILL_LIMIT: "24"
+
       - name: Run worker
         timeout-minutes: 10
         run: node scripts/ci-neon-safe.js -- node scripts/server-worker.js

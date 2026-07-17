@@ -6,6 +6,8 @@ import path from "path";
 import { fetchApiFootballH2HProfile, summarizeApiFootballUsage } from "./api-football-provider.js";
 import { getApiFootballKey } from "./provider-env.js";
 import { getSql, loadLocalEnv } from "../shared/database.js";
+import { buildR2ObjectKey, getR2Config, putR2Object } from "../shared/cloudflare-r2.js";
+import { isHiddenInternationalOrWorldCupEntity } from "../shared/competitionVisibility.js";
 
 const ROOT = process.cwd();
 const OUTPUT_JSON = path.join(ROOT, "monitor", "h2h-upcoming-backfill.json");
@@ -30,6 +32,64 @@ function edgeIds(homeClubId, awayClubId, competitionId) {
     clubB,
     edgeId: `h2h_${digest(`${clubA}|${clubB}|${competitionId}`)}`,
   };
+}
+
+function staticCandidates() {
+  const now = Date.now();
+  const rows = [];
+  for (let offset = 0; offset <= DAYS_AHEAD; offset += 1) {
+    const date = new Date(now);
+    date.setUTCDate(date.getUTCDate() + offset);
+    const dateKey = date.toISOString().slice(0, 10);
+    const filePath = path.join(ROOT, "data", "days", `${dateKey}.json`);
+    if (!fs.existsSync(filePath)) continue;
+    try {
+      const payload = JSON.parse(fs.readFileSync(filePath, "utf8"));
+      for (const match of Array.isArray(payload?.matches) ? payload.matches : []) {
+        if (isHiddenInternationalOrWorldCupEntity(match)) continue;
+        if (!match?.homeTeamName || !match?.awayTeamName) continue;
+        const kickoff = match.kickoff || `${dateKey}T12:00:00.000Z`;
+        if (Date.parse(kickoff) < now) continue;
+        const homeKey = `name_${digest(match.homeTeamName)}`;
+        const awayKey = `name_${digest(match.awayTeamName)}`;
+        rows.push({
+          match_id: String(match.id || `static_${digest(`${dateKey}|${match.homeTeamName}|${match.awayTeamName}`)}`),
+          date_key: dateKey,
+          kickoff_at: kickoff,
+          league: match.league || "unknown",
+          competition_id: `competition_${digest(match.league || "unknown")}`,
+          home_team_name: match.homeTeamName,
+          away_team_name: match.awayTeamName,
+          home_club_id: String(match.homeTeamId || homeKey),
+          away_club_id: String(match.awayTeamId || awayKey),
+        });
+      }
+    } catch (error) {
+      console.warn(`[h2h-backfill] kon ${filePath} niet lezen: ${error?.message || error}`);
+    }
+  }
+  return rows.slice(0, LIMIT);
+}
+
+async function storeR2H2H(match, profile) {
+  const config = getR2Config();
+  if (!config.configured || !profile?.results?.length) return { ok: false, skipped: true, reason: "r2_not_configured_or_empty" };
+  const capturedAt = new Date().toISOString();
+  if (Date.parse(capturedAt) >= Date.parse(match.kickoff_at)) return { ok: false, skipped: true, reason: "after_kickoff" };
+  return putR2Object({
+    config,
+    key: buildR2ObjectKey(config, `critical-captures/h2h/${match.match_id}.json`),
+    body: `${JSON.stringify({
+      schemaVersion: "critical-h2h-v1",
+      matchId: match.match_id,
+      kickoff: match.kickoff_at,
+      capturedAt,
+      provider: profile.source || "h2h-backfill",
+      h2h: profile,
+    })}\n`,
+    contentType: "application/json",
+    metadata: { match: match.match_id, provider: profile.source || "h2h-backfill" },
+  });
 }
 
 function orientResultForStoredEdge(result, clubA, homeClubId, awayClubId) {
@@ -147,10 +207,12 @@ function buildNoDirectHistoryProfile(match, status) {
 async function main() {
   loadLocalEnv(ROOT);
   const sql = getSql();
-  if (!sql) process.exit(2);
-
-  const candidates = await sql.query(
-    `
+  let databaseWritable = Boolean(sql);
+  let databaseError = sql ? null : "database_not_configured";
+  let candidates = [];
+  try {
+    if (!sql) throw new Error("database_not_configured");
+    candidates = await sql.query(`
       select m.match_id, m.date_key, m.kickoff_at, m.league, m.competition_id, m.home_team_name, m.away_team_name,
         m.home_club_id, m.away_club_id
       from matches m
@@ -168,21 +230,42 @@ async function main() {
         )
       order by m.kickoff_at, m.match_id
       limit $2
-    `,
-    [DAYS_AHEAD, LIMIT]
-  );
+    `, [DAYS_AHEAD, LIMIT]);
+  } catch (error) {
+    databaseWritable = false;
+    databaseError = error?.message || String(error);
+    candidates = staticCandidates();
+  }
 
   const store = {};
   const providerConfigured = Boolean(getApiFootballKey());
   const filled = [];
   const noDirectHistory = [];
   const errors = [];
+  let r2Stored = 0;
 
   for (const match of candidates) {
     try {
-      const databaseProfile = await readDatabaseH2HProfile(sql, match);
+      let databaseProfile = null;
+      if (databaseWritable) {
+        try {
+          databaseProfile = await readDatabaseH2HProfile(sql, match);
+        } catch (error) {
+          databaseWritable = false;
+          databaseError = error?.message || String(error);
+        }
+      }
       if (databaseProfile?.results?.length) {
-        await upsertH2HEdge(sql, match, databaseProfile);
+        const r2 = await storeR2H2H(match, databaseProfile).catch(() => null);
+        if (r2?.ok) r2Stored += 1;
+        if (databaseWritable) {
+          try {
+            await upsertH2HEdge(sql, match, databaseProfile);
+          } catch (error) {
+            databaseWritable = false;
+            databaseError = error?.message || String(error);
+          }
+        }
         filled.push({
           matchId: match.match_id,
           date: match.date_key,
@@ -206,7 +289,16 @@ async function main() {
         leagueLabel: match.league,
       });
       if (profile?.results?.length) {
-        await upsertH2HEdge(sql, match, profile);
+        const r2 = await storeR2H2H(match, profile).catch((error) => ({ ok: false, error: error?.message || String(error) }));
+        if (r2?.ok) r2Stored += 1;
+        if (databaseWritable) {
+          try {
+            await upsertH2HEdge(sql, match, profile);
+          } catch (error) {
+            databaseWritable = false;
+            databaseError = error?.message || String(error);
+          }
+        }
         filled.push({
           matchId: match.match_id,
           date: match.date_key,
@@ -234,6 +326,9 @@ async function main() {
     generatedAt: new Date().toISOString(),
     daysAhead: DAYS_AHEAD,
     checked: candidates.length,
+    databaseWritable,
+    databaseError,
+    r2Stored,
     filled: filled.length,
     noDirectHistory: noDirectHistory.length,
     errors: errors.length,
@@ -246,7 +341,7 @@ async function main() {
         ? "API-Football is lokaal niet geconfigureerd. Laat de GitHub workflow draaien met API_KEY_API_FOOTBALL of voeg de key lokaal toe voor handmatige backfill."
         :
       filled.length > 0
-        ? "H2H-profielen zijn naar Neon geschreven. Laat de worker draaien zodat voorspellingen de nieuwe edges gebruiken."
+        ? `H2H-profielen zijn ${databaseWritable ? "naar Neon en R2" : "naar R2"} geschreven. Laat de worker draaien zodat voorspellingen de nieuwe captures gebruikt.`
         : "Geen directe H2H gevonden voor de gecontroleerde wedstrijden. Breid team-ID mapping/providerdekking uit of accepteer expliciet no-direct-history voor deze fixtures.",
   };
 

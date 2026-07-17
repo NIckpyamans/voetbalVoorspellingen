@@ -5,14 +5,22 @@ import fs from "fs";
 import path from "path";
 import { fileURLToPath } from "url";
 import { getSql, loadLocalEnv } from "../shared/database.js";
-import { buildR2ObjectKey, getR2Config, putR2Object } from "../shared/cloudflare-r2.js";
+import { buildR2ObjectKey, getR2Config, getR2Object, putR2Object } from "../shared/cloudflare-r2.js";
 import { getApiFootballKey, getSportmonksApiKey } from "./provider-env.js";
 import { findSportmonksFixture, resolveSportmonksFixtureId } from "./sportmonks-fixture-resolver.js";
+import { normalizeApiFootball, normalizeSofaScore, normalizeSportmonks } from "./providers/lineup-normalizers.js";
+export { normalizeApiFootball, normalizeSofaScore, normalizeSportmonks } from "./providers/lineup-normalizers.js";
+import {
+  classifyLineupCaptureWindow,
+  mergeLineupCaptureLedger,
+  minutesUntilKickoff,
+} from "./worker/critical-captures.js";
 
 const ROOT = process.cwd();
-const LOOKAHEAD_MINUTES = Math.max(30, Number(process.env.LINEUP_LOOKAHEAD_MINUTES || 150));
+const LOOKAHEAD_MINUTES = Math.max(30, Number(process.env.LINEUP_LOOKAHEAD_MINUTES || 90));
 const GRACE_MINUTES = Math.max(0, Number(process.env.LINEUP_KICKOFF_GRACE_MINUTES || 10));
 const MAX_MATCHES = Math.max(1, Number(process.env.LINEUP_PROVIDER_MAX_MATCHES || 16));
+const CAPTURE_WINDOWS_ONLY = String(process.env.LINEUP_CAPTURE_WINDOWS_ONLY || "true").toLowerCase() !== "false";
 const OUTPUT = path.join(ROOT, "monitor", "pre-kickoff-lineup-collector.json");
 const apiFootballFixtureCache = new Map();
 const sofaScheduleCache = new Map();
@@ -46,106 +54,6 @@ function teamSimilarity(left, right) {
   const bTokens = new Set(b.split(" "));
   const overlap = [...aTokens].filter((token) => bTokens.has(token)).length;
   return overlap / Math.max(1, Math.min(aTokens.size, bTokens.size));
-}
-
-function playerRow(item, source) {
-  const player = item?.player || item || {};
-  const position = player?.position || item?.position?.code || item?.position?.name || item?.position || "";
-  return {
-    name: String(player?.name || player?.display_name || item?.player_name || "").trim(),
-    position: String(position || "").trim(),
-    shirtNumber: item?.number ?? item?.jersey_number ?? item?.shirt_number ?? null,
-    rating: Number(item?.rating || player?.rating || 0) || null,
-    source,
-  };
-}
-
-function lineupSide({ formation = null, starters = [], substitutes = [], source }) {
-  const players = starters.map((item) => playerRow(item, source)).filter((item) => item.name).slice(0, 11);
-  const keeper = players.find((item) => /^g|goal/i.test(item.position));
-  const ratings = players.map((item) => Number(item.rating || 0)).filter((value) => value > 0);
-  return {
-    formation,
-    starters: players.length,
-    bench: substitutes.length,
-    players,
-    avgRating: ratings.length ? Number((ratings.reduce((sum, value) => sum + value, 0) / ratings.length).toFixed(2)) : null,
-    keeperName: keeper?.name || null,
-    keeperRating: keeper?.rating || null,
-    confirmed: players.length >= 10,
-    projected: false,
-  };
-}
-
-export function normalizeApiFootball(payload) {
-  const teams = asArray(payload?.response);
-  if (teams.length < 2) return null;
-  const sides = teams.slice(0, 2).map((team) => lineupSide({
-    formation: team?.formation || null,
-    starters: asArray(team?.startXI),
-    substitutes: asArray(team?.substitutes),
-    source: "API-Football confirmed lineups",
-  }));
-  if (!sides.some((side) => side.starters > 0)) return null;
-  return {
-    home: sides[0],
-    away: sides[1],
-    confirmed: sides.every((side) => side.confirmed),
-    projected: false,
-    source: "API-Football confirmed lineups",
-    summary: "Officiele wedstrijselecties opgehaald vlak voor de aftrap.",
-  };
-}
-
-export function normalizeSportmonks(payload) {
-  const fixture = payload?.data || null;
-  const participants = asArray(fixture?.participants);
-  const lineups = asArray(fixture?.lineups);
-  if (!fixture || !lineups.length) return null;
-  const homeParticipant = participants.find((item) => item?.meta?.location === "home") || participants[0];
-  const awayParticipant = participants.find((item) => item?.meta?.location === "away") || participants[1];
-  const teamRows = (teamId) => lineups.filter((item) => String(item?.team_id || item?.participant_id || "") === String(teamId || ""));
-  const build = (participant) => {
-    const rows = teamRows(participant?.id);
-    const starters = rows.filter((item) => item?.type_id === 11 || item?.starter === true || item?.formation_position != null);
-    const substitutes = rows.filter((item) => !starters.includes(item));
-    return lineupSide({ formation: participant?.meta?.formation || null, starters, substitutes, source: "Sportmonks confirmed lineups" });
-  };
-  const home = build(homeParticipant);
-  const away = build(awayParticipant);
-  if (!home.starters && !away.starters) return null;
-  return {
-    home,
-    away,
-    confirmed: home.confirmed && away.confirmed,
-    projected: false,
-    source: "Sportmonks confirmed lineups",
-    summary: "Officiele wedstrijselecties opgehaald vlak voor de aftrap.",
-  };
-}
-
-export function normalizeSofaScore(payload) {
-  const build = (team) => {
-    if (!team) return null;
-    const rows = asArray(team.players);
-    return lineupSide({
-      formation: team.formation || null,
-      starters: rows.filter((item) => item?.substitute === false),
-      substitutes: rows.filter((item) => item?.substitute === true),
-      source: "SofaScore confirmed lineups",
-    });
-  };
-  const home = build(payload?.home || payload?.homeTeam);
-  const away = build(payload?.away || payload?.awayTeam);
-  if (!home && !away) return null;
-  return {
-    home,
-    away,
-    confirmed: Boolean(home?.confirmed && away?.confirmed),
-    projected: false,
-    source: "SofaScore confirmed lineups",
-    summary: "Bevestigde opstellingen opgehaald uit de wedstrijdfeed vlak voor de aftrap.",
-  };
 }
 
 async function fetchJson(url, headers = {}) {
@@ -245,16 +153,14 @@ async function fetchSportmonksLineup(sql, match) {
 async function storeR2Lineup(match, provider, lineup) {
   const config = getR2Config();
   if (!config.configured || !lineup) return { ok: false, skipped: true, reason: "r2_not_configured" };
-  const payload = {
-    matchId: match.match_id,
-    kickoff: match.kickoff_at,
-    capturedAt: new Date().toISOString(),
-    provider,
-    lineupSummary: lineup,
-  };
+  const key = buildR2ObjectKey(config, `critical-captures/lineups/${match.match_id}.json`);
+  const current = await getR2Object({ config, key })
+    .then((object) => object?.ok ? JSON.parse(object.body.toString("utf8")) : null)
+    .catch(() => null);
+  const payload = mergeLineupCaptureLedger(current, { match, provider, lineup });
   return putR2Object({
     config,
-    key: buildR2ObjectKey(config, `critical-captures/lineups/${match.match_id}.json`),
+    key,
     body: `${JSON.stringify(payload)}\n`,
     contentType: "application/json",
     metadata: { provider, match: match.match_id },
@@ -291,10 +197,12 @@ function staticMatchesInWindow() {
 
 async function storeLineup(sql, match, provider, sourceUrl, lineup) {
   const capturedAt = new Date().toISOString();
+  const minutesBeforeKickoff = minutesUntilKickoff(match.kickoff_at, capturedAt);
+  const captureWindow = classifyLineupCaptureWindow(minutesBeforeKickoff);
   const contentHash = digest(JSON.stringify(lineup));
   const sourceRecordId = `lineup_${digest(`${match.match_id}|${provider}|${contentHash}`)}`;
   const matchSourceRecordId = `msr_${digest(`${match.match_id}|${sourceRecordId}`)}`;
-  const payload = { matchId: match.match_id, kickoff: match.kickoff_at, capturedAt, provider, lineupSummary: lineup };
+  const payload = { matchId: match.match_id, kickoff: match.kickoff_at, capturedAt, minutesBeforeKickoff, captureWindow, provider, lineupSummary: lineup };
   await sql.query(
     `insert into source_records(source_record_id,provider,source_url,entity_type,entity_key,fetched_at,source_timestamp,content_hash,trust_score,payload)
      values($1,$2,$3,'lineup',$4,now(),$5,$6,$7,$8::jsonb)
@@ -336,8 +244,26 @@ async function main() {
     databaseError = error?.message || String(error);
     matches = staticMatchesInWindow();
   }
-  const report = { generatedAt: new Date().toISOString(), checked: matches.length, confirmed: 0, partial: 0, missing: 0, r2Stored: 0, databaseWritable, databaseError, providers: {}, matches: [] };
+  if (CAPTURE_WINDOWS_ONLY) {
+    matches = matches.filter((match) => classifyLineupCaptureWindow(minutesUntilKickoff(match.kickoff_at)) !== "outside");
+  }
+  const report = {
+    generatedAt: new Date().toISOString(),
+    checked: matches.length,
+    confirmed: 0,
+    partial: 0,
+    missing: 0,
+    r2Stored: 0,
+    databaseWritable,
+    databaseError,
+    captureWindows: { t75: 0, t45: 0, t20: 0, outside: 0 },
+    providers: {},
+    matches: [],
+  };
   for (const match of matches) {
+    const minutesBeforeKickoff = minutesUntilKickoff(match.kickoff_at);
+    const captureWindow = classifyLineupCaptureWindow(minutesBeforeKickoff);
+    report.captureWindows[captureWindow] = Number(report.captureWindows[captureWindow] || 0) + 1;
     let result = await fetchSofaScoreLineup(match);
     let provider = "sofascore";
     if (!result.lineup) {
@@ -361,7 +287,17 @@ async function main() {
     } else {
       report.missing += 1;
     }
-    report.matches.push({ matchId: match.match_id, kickoff: match.kickoff_at, homeTeam: match.home_team_name, awayTeam: match.away_team_name, provider, status: result.status, confirmed: Boolean(result.lineup?.confirmed) });
+    report.matches.push({
+      matchId: match.match_id,
+      kickoff: match.kickoff_at,
+      minutesBeforeKickoff,
+      captureWindow,
+      homeTeam: match.home_team_name,
+      awayTeam: match.away_team_name,
+      provider,
+      status: result.status,
+      confirmed: Boolean(result.lineup?.confirmed),
+    });
   }
   fs.mkdirSync(path.dirname(OUTPUT), { recursive: true });
   fs.writeFileSync(OUTPUT, `${JSON.stringify(report, null, 2)}\n`);

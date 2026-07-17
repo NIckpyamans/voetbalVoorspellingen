@@ -19,7 +19,10 @@ jobs:
           cache: npm
       - run: npm ci
       - run: npm run check
+      - run: npm run test:unit
       - run: npm run build
       - run: npm run test:archive-retention
       - run: npm run monitor:repository-size
       - run: npm run monitor:regressions
+      - run: npx playwright install --with-deps chromium
+      - run: npm run test:e2e

@@ -32,6 +32,8 @@ jobs:
         run: npm ci
       - name: Run regression assertions
         run: npm run monitor:regressions
+      - name: Run unit and provider contract tests
+        run: npm run test:unit
       - name: Verify static export retention
         run: npm run test:archive-retention
       - name: Enforce repository size budget

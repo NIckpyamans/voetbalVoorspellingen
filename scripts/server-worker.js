@@ -26,7 +26,6 @@ import {
 } from "./worker/date-window.js";
 import { buildCupSheetsFromMatches } from "../shared/cupSheets.js";
 import { loadLocalEnv, readDatabaseFeatureContext, syncStoreToDatabase } from "../shared/database.js";
-import { buildR2ObjectKey, getR2Config, getR2Object } from "../shared/cloudflare-r2.js";
 import {
   hydrateStoreFromSnapshotLedger,
   ledgerFromStore,
@@ -68,6 +67,7 @@ import {
 } from "./worker/prediction.js";
 import { selectUniqueTeamTopPicks } from "./worker/top-picks.js";
 import { mergeTrainingSnapshots } from "./worker/training-snapshot.js";
+import { fetchR2H2HProfile, fetchR2LineupSummary, fetchR2OddsSnapshot } from "./worker/critical-captures.js";
 
 const SOFA = "https://api.sofascore.com/api/v1";
 const THESPORTSDB_BASE = "https://www.thesportsdb.com/api/v1/json";
@@ -8405,23 +8405,6 @@ async function fetchLineupSummary(eventId) {
   };
 }
 
-async function fetchR2LineupSummary(matchId, kickoffAt, now = Date.now()) {
-  if (String(process.env.R2_CRITICAL_CAPTURE_ENABLED || "false").toLowerCase() !== "true") return null;
-  const kickoffMs = Date.parse(kickoffAt || "");
-  if (!Number.isFinite(kickoffMs) || kickoffMs < now - 10 * 60000 || kickoffMs > now + 180 * 60000) return null;
-  const config = getR2Config();
-  if (!config.configured) return null;
-  const object = await getR2Object({
-    config,
-    key: buildR2ObjectKey(config, `critical-captures/lineups/${matchId}.json`),
-  }).catch(() => null);
-  if (!object?.ok) return null;
-  const payload = JSON.parse(object.body.toString("utf8"));
-  if (!payload?.lineupSummary?.confirmed) return null;
-  if (Date.parse(payload.capturedAt || "") >= kickoffMs) return null;
-  return payload;
-}
-
 function buildTeamFormFromReviews(reviews, teamName, cutoffDate) {
   const variants = buildPossibleNames(teamName);
   const matches = [];
@@ -8462,34 +8445,6 @@ function mergeTeamFormWithReviews(currentForm, reviews, teamName, cutoffDate) {
     byKey.set(key, item);
   }
   return buildTeamFormFromRecentMatches([...byKey.values()], "historical+immutable-reviewed-results");
-}
-
-async function fetchR2OddsSnapshot(matchId, kickoffAt) {
-  if (String(process.env.R2_CRITICAL_CAPTURE_ENABLED || "false").toLowerCase() !== "true") return null;
-  const kickoffMs = Date.parse(kickoffAt || "");
-  if (!Number.isFinite(kickoffMs)) return null;
-  const config = getR2Config();
-  if (!config.configured) return null;
-  const object = await getR2Object({
-    config,
-    key: buildR2ObjectKey(config, `critical-captures/odds/${matchId}.json`),
-  }).catch(() => null);
-  if (!object?.ok) return null;
-  const ledger = JSON.parse(object.body.toString("utf8"));
-  const prematch = ledger?.prematch;
-  if (!prematch || Date.parse(prematch.capturedAt || "") >= kickoffMs) return null;
-  return {
-    status: "available_r2_fallback",
-    provider: prematch.provider || "cloudflare-r2-odds-ledger",
-    reason: "Timestamped prematch odds geladen uit de Cloudflare R2 critical-capture ledger.",
-    oddsAtPrediction: {
-      ...prematch,
-      closingHome: ledger?.closing?.home ?? null,
-      closingDraw: ledger?.closing?.draw ?? null,
-      closingAway: ledger?.closing?.away ?? null,
-      closingCapturedAt: ledger?.closing?.capturedAt || null,
-    },
-  };
 }
 
 async function fetchH2H(eventId, currentHomeId, currentAwayId, tournamentId, seasonId) {
@@ -11594,6 +11549,14 @@ async function main() {
           source: "Neon h2h_edges",
         };
       }
+      let sourceAsOfFallbackH2H = null;
+      if (Number(h2h?.played || 0) === 0) {
+        const r2H2H = await fetchR2H2HProfile(matchId, kickoff);
+        if (Number(r2H2H?.h2h?.played || 0) > 0) {
+          h2h = ensureH2HContract({ ...r2H2H.h2h, source: `${r2H2H.provider || "provider"} via Cloudflare R2` }, homeId, awayId);
+          sourceAsOfFallbackH2H = r2H2H.capturedAt || null;
+        }
+      }
       const lineupStatus = resolveLineupStatus(lineupSummary);
       const availabilitySummary = buildAvailabilitySummary(
         store.teamInjuries[homeId] || null,
@@ -11604,7 +11567,7 @@ async function main() {
       const refereeStatus = resolveRefereeStatus(refereeProfile);
       const sourceAsOf = {
         fixture: isoFromTimestamp(now),
-        h2h: isoFromTimestamp(store.h2hCache?.[h2hKey]?.updated),
+        h2h: isoFromTimestamp(store.h2hCache?.[h2hKey]?.updated) || sourceAsOfFallbackH2H,
         weather: weatherKey ? isoFromTimestamp(store.weatherCache?.[weatherKey]?.updated) : null,
         homeForm:
           (homeId ? isoFromTimestamp(store.teamStatsUpdated?.[homeId]) : null) ||

@@ -4,9 +4,9 @@ on:
   workflow_dispatch:
     inputs:
       lookahead_minutes:
-        description: "Diagnostisch zoekvenster; automatisch gebruikt de orchestrator 150 minuten"
+        description: "Zoekvenster; automatische captures vallen in T-75, T-45 en T-20"
         required: false
-        default: "150"
+        default: "90"
 
 concurrency:
   group: football-lineup-refresh
@@ -66,7 +66,8 @@ jobs:
           node scripts/ci-neon-safe.js -- npm run db:lineups:prematch:collect
           node scripts/ci-neon-safe.js -- node scripts/server-worker.js
         env:
-          LINEUP_LOOKAHEAD_MINUTES: ${{ inputs.lookahead_minutes || '150' }}
+          LINEUP_LOOKAHEAD_MINUTES: ${{ inputs.lookahead_minutes || '90' }}
+          LINEUP_CAPTURE_WINDOWS_ONLY: "true"
           LINEUP_PROVIDER_MAX_MATCHES: 16
 
       - name: Monitor lineup coverage
@@ -79,3 +80,12 @@ jobs:
         run: |
           git status --short data training monitor || true
           echo "Pre-kickoff refresh schrijft naar Neon via de worker. Statische exports blijven eigendom van de hoofdworker/scout workflows."
+
+      - name: Upload lineup capture report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: pre-kickoff-lineup-capture
+          path: monitor/pre-kickoff-lineup-collector.json
+          if-no-files-found: ignore
+          retention-days: 14

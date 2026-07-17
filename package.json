@@ -39,6 +39,8 @@
     "test:pre-kickoff-lineups": "node scripts/test-pre-kickoff-lineups.js",
     "test:top-picks": "node scripts/test-top-picks.js",
     "test:snapshot-resilience": "node scripts/test-snapshot-resilience.js",
+    "test:unit": "vitest run",
+    "test:e2e": "playwright test",
     "train:snapshots:recover": "node scripts/recover-snapshot-training.js",
     "monitor:repository-size": "node scripts/repository-size-check.js",
     "monitor:provider-quotas": "node scripts/provider-quota-audit.js",
@@ -96,6 +98,7 @@
     "db:odds:leakage": "node scripts/enforce-odds-leakage-rules.js",
     "db:odds:prematch:collect": "node scripts/collect-free-prematch-odds.js",
     "db:odds:critical:r2": "node scripts/capture-critical-odds-to-r2.js",
+    "db:critical-captures:replay": "node scripts/replay-r2-critical-captures.js",
     "db:predictions:evaluate": "node scripts/evaluate-prediction-snapshots.js",
     "odds:free:analyze": "node scripts/analyze-free-odds-readiness.js",
     "db:seasons:reset": "node scripts/reset-competition-seasons.js",
@@ -123,11 +126,13 @@
   "devDependencies": {
     "@emnapi/core": "^1.11.1",
     "@emnapi/runtime": "^1.11.1",
+    "@playwright/test": "^1.61.1",
     "@types/node": "^22.14.0",
     "@vitejs/plugin-react": "^6.0.2",
     "autoprefixer": "^10.4.20",
     "tailwindcss": "^3.4.17",
     "typescript": "~5.8.2",
-    "vite": "^8.0.16"
+    "vite": "^8.0.16",
+    "vitest": "^4.1.10"
   }
 }

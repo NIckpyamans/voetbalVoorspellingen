@@ -24,7 +24,6 @@ const target = Number(training?.trainingPolicy?.nextTargetRows || process.env.SN
 const snapshotBackedRows = Number(training?.snapshotBackedRows || 0);
 const uniqueSnapshotMatches = Number(training?.uniqueSnapshotMatches || training?.trainingPolicy?.uniqueSnapshotMatches || 0);
 const totalRows = Number(training?.totalRows || 0);
-const gap = Math.max(0, target - uniqueSnapshotMatches);
 const sql = getSql();
 
 let database = { configured: false, available: false, error: null };
@@ -85,6 +84,10 @@ const ledgerPredictionIds = new Set(ledgerSnapshots.map((snapshot) => snapshot.p
 const ledgerEvaluations = Object.values(loadedLedger.ledger.evaluations || {}).filter((evaluation) =>
   ledgerPredictionIds.has(evaluation.predictionId)
 );
+const uniqueLedgerMatches = new Set(ledgerSnapshots.map((snapshot) => snapshot.matchId).filter(Boolean)).size;
+const uniqueEvaluatedMatches = new Set(ledgerEvaluations.map((evaluation) => evaluation.matchId).filter(Boolean)).size;
+const effectiveUniqueTrainingMatches = Math.max(uniqueSnapshotMatches, uniqueEvaluatedMatches);
+const gap = Math.max(0, target - effectiveUniqueTrainingMatches);
 const ledgerByLeague = new Map();
 for (const snapshot of ledgerSnapshots) {
   const league = String(snapshot.league || "unknown");
@@ -97,6 +100,8 @@ const report = {
     totalRows,
     snapshotBackedRows,
     uniqueSnapshotMatches,
+    uniqueEvaluatedMatches,
+    effectiveUniqueTrainingMatches,
     fallbackRows: Number(training?.fallbackRows || 0),
     target,
     gap,
@@ -116,7 +121,9 @@ const report = {
     },
     merged: {
       clubSnapshots: ledgerSnapshots.length,
+      uniqueClubMatches: uniqueLedgerMatches,
       evaluatedClubSnapshots: ledgerEvaluations.length,
+      uniqueEvaluatedClubMatches: uniqueEvaluatedMatches,
       byLeague: [...ledgerByLeague.entries()]
         .map(([league, rows]) => ({ league, rows }))
         .sort((a, b) => b.rows - a.rows)
@@ -124,11 +131,11 @@ const report = {
     },
   },
   automation: {
-    workerCadence: "3x per dag volledige worker + 2-uurlijkse live score refresh",
+    workerCadence: "3x per dag volledige worker + fixturegestuurde refresh via de 30-minutenorchestrator",
     learningCadence: "dagelijks train:prepare",
     recommendedNext:
       gap > 0
-        ? "Laat worker en learning doorlopen; verhoog snapshot-backed rows door meer toekomstige clubwedstrijden en pre-match snapshots vast te leggen."
+        ? `Laat worker en learning doorlopen; nog ${gap} unieke afgeronde clubwedstrijden nodig voor het doel van ${target}.`
         : "Snapshot target gehaald; start league/phase recalibration op club-only dataset.",
   },
   nextFocus:

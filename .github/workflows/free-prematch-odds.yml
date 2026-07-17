@@ -63,3 +63,11 @@ jobs:
         env:
           DATABASE_URL: ${{ secrets.DATABASE_URL }}
           POSTGRES_URL: ${{ secrets.POSTGRES_URL }}
+      - name: Upload odds capture report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: critical-odds-capture
+          path: monitor/critical-odds-capture.json
+          if-no-files-found: ignore
+          retention-days: 14
