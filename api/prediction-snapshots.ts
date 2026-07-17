@@ -162,8 +162,20 @@ export default async function handler(req: any, res: any) {
       });
     }
 
-    const { store, branch } = await fetchServerStore();
     const r2Ledger = await readR2SnapshotLedger();
+    let store: any = { predictionSnapshots: {}, predictionSnapshotIndex: {}, postMatchReviews: {} };
+    let branch = "unavailable";
+    try {
+      const fetched = await fetchServerStore();
+      store = fetched.store || store;
+      branch = fetched.branch || branch;
+    } catch (dataSourceError: any) {
+      logger.warning("prediction_snapshots_datasource_fallback", {
+        error: getErrorDetails(dataSourceError),
+        fallback: r2Ledger.available ? "r2-immutable-ledger" : "none",
+      });
+      if (!r2Ledger.available) throw dataSourceError;
+    }
     const r2Snapshots = r2Ledger.available ? r2Ledger.ledger.predictionSnapshots || {} : {};
     const snapshots = Object.keys(r2Snapshots).length >= Object.keys(store.predictionSnapshots || {}).length
       ? r2Snapshots
@@ -172,7 +184,12 @@ export default async function handler(req: any, res: any) {
     const snapshotBranch = snapshots === r2Snapshots ? "r2-immutable-ledger" : branch;
 
     if (summaryOnly) {
-      const serverSummary = buildSnapshotSummary(snapshots, store.postMatchReviews || {});
+      const serverSummary = buildSnapshotSummary(
+        snapshots,
+        snapshots === r2Snapshots
+          ? r2Ledger.ledger.evaluations || r2Ledger.ledger.postMatchReviews || {}
+          : store.postMatchReviews || {}
+      );
       const summary = databaseSummary && Number(databaseSummary.total || 0) >= Number(serverSummary.total || 0)
         ? databaseSummary
         : serverSummary;
