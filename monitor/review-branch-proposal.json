@@ -1,36 +1,36 @@
 {
-  "generatedAt": "2026-07-19T23:12:43.751Z",
-  "date": "2026-07-20",
+  "generatedAt": "2026-07-20T23:15:28.846Z",
+  "date": "2026-07-21",
   "proposalOnly": true,
-  "shouldPropose": false,
-  "branchName": "codex/review-20260720",
-  "summary": "Geen reviewbranch nodig op 2026-07-20.",
+  "shouldPropose": true,
+  "branchName": "codex/review-20260721",
+  "summary": "AI reviewvoorstel voor 2026-07-21: 2 aandachtspunt(en) met patchadvies, niet automatisch live.",
   "latestStats": {
-    "today": "2026-07-20",
-    "tomorrow": "2026-07-21",
+    "today": "2026-07-21",
+    "tomorrow": "2026-07-22",
     "dataPresent": true,
-    "lastRun": 1784495646311,
-    "ageMinutes": 119,
+    "lastRun": 1784533976602,
+    "ageMinutes": 923,
     "maxWorkerAgeMinutes": 180,
-    "todayMatches": 0,
-    "tomorrowMatches": 4,
+    "todayMatches": 4,
+    "tomorrowMatches": 6,
     "fixtureCalendar": {
       "status": "has_current_matches",
       "healthy": true,
       "emptyWindowOk": true,
       "severity": "none",
-      "todayCount": 0,
-      "tomorrowCount": 4,
+      "todayCount": 4,
+      "tomorrowCount": 6,
       "windowDays": 7,
       "checkedDates": [
-        "2026-07-20",
         "2026-07-21",
         "2026-07-22",
         "2026-07-23",
         "2026-07-24",
         "2026-07-25",
         "2026-07-26",
-        "2026-07-27"
+        "2026-07-27",
+        "2026-07-28"
       ],
       "nextMatchDate": "2026-07-21",
       "nextMatchCount": 4,
@@ -39,12 +39,41 @@
     "liveMatches": 0,
     "liveWithoutMinute": 0,
     "h2hFilled": 0,
-    "h2hMissing": 0,
-    "standingsCount": 1,
+    "h2hMissing": 4,
+    "standingsCount": 0,
     "cupSheetCount": 3,
     "phaseReliabilityCount": 3
   },
-  "findings": [],
-  "recommendedFiles": [],
-  "nextStep": "Geen actie nodig; monitor blijft op de achtergrond doorlopen."
+  "findings": [
+    {
+      "priority": 1,
+      "key": "worker_stale",
+      "severity": "high",
+      "message": "Workerdata is 923 minuten oud.",
+      "whyItMatters": "Workerdata is te oud en verdient een workflow- of broncheck.",
+      "recommendedFiles": [
+        ".github/workflows/worker.yml",
+        "scripts/server-worker.js"
+      ],
+      "details": {}
+    },
+    {
+      "priority": 2,
+      "key": "h2h_empty",
+      "severity": "medium",
+      "message": "Alle wedstrijden van vandaag hebben lege H2H-data.",
+      "whyItMatters": "Onderlinge duels worden niet sterk genoeg gevuld.",
+      "recommendedFiles": [
+        "scripts/server-worker.js",
+        "components/MatchCard.tsx"
+      ],
+      "details": {}
+    }
+  ],
+  "recommendedFiles": [
+    ".github/workflows/worker.yml",
+    "scripts/server-worker.js",
+    "components/MatchCard.tsx"
+  ],
+  "nextStep": "Gebruik deze proposal om gericht een reviewbranch te maken en alleen na controle te mergen."
 }
