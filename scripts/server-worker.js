@@ -1045,7 +1045,9 @@ const MAX_INTERNATIONAL_AVAILABILITY = 160;
 const MAX_TEAM_SQUADS = 850;
 const MAX_TEAM_TRANSFERS = 850;
 const MAX_THESPORTSDB_TEAM_FORM_CACHE = 160;
-const MAX_THESPORTSDB_TEAM_FORM_FETCHES_PER_RUN = 32;
+// De hoofdworker verwerkt een brede kalender. Verrijk deze gratis bron daarom
+// in kleine batches; de 12-uurs cache bouwt dekking op zonder CI-time-outs.
+const MAX_THESPORTSDB_TEAM_FORM_FETCHES_PER_RUN = 12;
 const sportsDbSquadFetchState = {
   count: 0,
   lastAt: 0,
@@ -11152,7 +11154,10 @@ async function main() {
       let awaySportsDbForm = null;
       // BBC fallback fixtures often lack provider team IDs. Use a small, exact-name
       // TheSportsDB cache only when the primary form window is still thin.
-      if (isFallbackEvent && Number(homeRecent?.gamesPlayed || 0) < TEAM_FORM_BADGE_WINDOW) {
+      const isEuropeanClubFixture =
+        leagueInfo.type === "cup" &&
+        /^Europe - (Champions League|Europa League|Conference League)$/i.test(String(leagueInfo.label || ""));
+      if (isFallbackEvent && isEuropeanClubFixture && Number(homeRecent?.gamesPlayed || 0) < TEAM_FORM_BADGE_WINDOW) {
         homeSportsDbForm = await fetchTheSportsDbTeamForm({
           teamName: homeName,
           cache: store.sportsDbTeamFormCache,
@@ -11162,7 +11167,7 @@ async function main() {
         });
         homeRecent = mergeTeamFormWithExternalRecent(homeRecent, homeSportsDbForm, "thesportsdb-recent-results");
       }
-      if (isFallbackEvent && Number(awayRecent?.gamesPlayed || 0) < TEAM_FORM_BADGE_WINDOW) {
+      if (isFallbackEvent && isEuropeanClubFixture && Number(awayRecent?.gamesPlayed || 0) < TEAM_FORM_BADGE_WINDOW) {
         awaySportsDbForm = await fetchTheSportsDbTeamForm({
           teamName: awayName,
           cache: store.sportsDbTeamFormCache,

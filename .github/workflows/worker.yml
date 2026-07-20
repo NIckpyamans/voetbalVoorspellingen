@@ -80,7 +80,9 @@ jobs:
           H2H_BACKFILL_LIMIT: "24"
 
       - name: Run worker
-        timeout-minutes: 10
+        # De worker verwerkt een breed veertiendaags venster met gecontroleerde
+        # publieke fallbackbronnen. Laat hem afronden, binnen de joblimiet.
+        timeout-minutes: 14
         run: node scripts/ci-neon-safe.js -- node scripts/server-worker.js
 
       - name: Commit and push data
