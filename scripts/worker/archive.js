@@ -60,6 +60,44 @@ function pickPredictionSnapshotsForMatches(store, matches) {
   return snapshots;
 }
 
+function pickDefined(source, fields) {
+  const output = {};
+  for (const field of fields) if (source?.[field] !== undefined) output[field] = source[field];
+  return output;
+}
+
+const HISTORY_REVIEW_FIELDS = [
+  "matchId", "predictionId", "date", "league", "homeTeamName", "awayTeamName", "predictedScore", "actualScore",
+  "predictedOutcome", "probabilityOutcome", "actualOutcome", "confidence", "exactScoreConfidence", "brierScore",
+  "logLoss", "roi", "roiStatus", "clv", "clvStatus", "oddsStatus", "modelVersion", "featureSchemaVersion",
+  "generatedAt", "cutoffAt", "evaluationSource", "leakageRisk", "sourceTimestampCoverage", "outcomeHit",
+  "probabilityOutcomeHit", "exactHit", "totalGoalError", "totalGoalBias", "homeGoalBias", "awayGoalBias",
+  "bestBetRank", "topConfidencePick", "topExactScorePick", "modelName", "modelAgreement", "riskProfile", "createdAt",
+];
+
+export function compactHistorySummary(history = {}) {
+  const predictionSnapshots = {};
+  for (const [predictionId, snapshot] of Object.entries(history.predictionSnapshots || {})) {
+    predictionSnapshots[predictionId] = {
+      predictionId,
+      ...pickDefined(snapshot, [
+        "matchId", "date", "league", "homeTeam", "awayTeam", "generatedAt", "cutoffAt", "kickoff", "expectedScore",
+        "confidence", "confidenceRaw", "exactScoreConfidence", "probabilities", "modelVersion", "featureSchemaVersion",
+        "inputSnapshotHash", "snapshotStatus", "oddsStatus", "lineupsConfirmed",
+      ]),
+    };
+  }
+  const postMatchReviews = {};
+  for (const [matchId, review] of Object.entries(history.postMatchReviews || {})) {
+    postMatchReviews[matchId] = pickDefined(review, HISTORY_REVIEW_FIELDS);
+  }
+  return {
+    ...history,
+    postMatchReviews,
+    predictionSnapshots,
+  };
+}
+
 export function buildSplitMeta(store) {
   return {
     lastRun: store.lastRun || null,
@@ -130,7 +168,7 @@ export function writeSplitDataFiles(store, options = {}) {
     lastRun: store.lastRun || null,
     workerVersion: store.workerVersion || "unknown",
   });
-  writeJsonFile(path.join(splitDataDir, "history-summary.json"), {
+  writeJsonFile(path.join(splitDataDir, "history-summary.json"), compactHistorySummary({
     postMatchReviews: store.postMatchReviews || {},
     predictionSnapshots: store.predictionSnapshots || {},
     predictionSnapshotIndex: store.predictionSnapshotIndex || {},
@@ -146,7 +184,7 @@ export function writeSplitDataFiles(store, options = {}) {
     competitionArchiveIndex: store.competitionArchiveIndex || null,
     teamSquadSummary: store.teamSquadSummary || null,
     lastRun: store.lastRun || null,
-  });
+  }));
   writeJsonFile(path.join(splitDataDir, "teams.json"), {
     teamSquads: store.teamSquads || {},
     teamTransfers: store.teamTransfers || {},
