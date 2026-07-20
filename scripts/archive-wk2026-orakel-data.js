@@ -5,6 +5,7 @@ import fs from "fs";
 import path from "path";
 import { pathToFileURL } from "url";
 import { buildR2ObjectKey, getR2Config, putR2Object } from "../shared/cloudflare-r2.js";
+import { buildWk2026ReferenceManifest } from "../shared/wk2026-reference-archive.js";
 
 const ROOT = process.cwd();
 const SOURCE_BASE = String(process.env.WK2026_ORAKEL_SOURCE_URL || "https://wk-2026-orakel.vercel.app").replace(/\/+$/, "");
@@ -33,17 +34,7 @@ function archiveName(relativePath) {
 }
 
 export function buildReferenceManifest({ capturedAt, datasets }) {
-  return {
-    schemaVersion: "wk2026-orakel-reference-v1",
-    capturedAt,
-    source: {
-      url: SOURCE_BASE,
-      kind: "public-static-data",
-      usage: "reference_only",
-      policy: "Do not treat imported ratings, predictions, squads or source claims as independently verified. The club-only prediction pipeline must not consume this archive.",
-    },
-    datasets,
-  };
+  return buildWk2026ReferenceManifest({ sourceUrl: SOURCE_BASE, capturedAt, datasets });
 }
 
 async function fetchDataset(relativePath) {

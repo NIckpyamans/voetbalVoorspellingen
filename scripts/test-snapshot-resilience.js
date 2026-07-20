@@ -3,7 +3,7 @@
 import assert from "node:assert/strict";
 import { mergeSnapshotLedgers } from "../shared/predictionSnapshotLedger.js";
 import { evaluateImmutableSnapshot } from "./worker/snapshot-evaluation.js";
-import { mergeTrainingSnapshots } from "./worker/training-snapshot.js";
+import { compactTrainingSnapshotRow, mergeTrainingSnapshots } from "./worker/training-snapshot.js";
 
 const original = {
   predictionId: "p1",
@@ -29,5 +29,19 @@ const mergedTraining = mergeTrainingSnapshots(
 );
 assert.equal(mergedTraining.rows.length, 1, "a smaller fallback may not erase training rows");
 assert.equal(mergedTraining.preservation.snapshotBackedRows, 1);
+
+const compactFallback = compactTrainingSnapshotRow({
+  matchId: "fallback-1",
+  snapshotBacked: false,
+  label: "H",
+  featureVector: { shouldNot: "be stored" },
+  dbFeatureContext: { shouldNot: "be stored" },
+  review: { predictedOutcome: "H", confidence: 0.5, featureImportance: [{ huge: true }] },
+  ensembleMeta: { agreement: 0.2, monteCarloProbabilities: { simulations: 10000 } },
+});
+assert.equal(compactFallback.featureVector, undefined, "fallback feature vectors belong in R2, not the repository");
+assert.equal(compactFallback.dbFeatureContext, undefined);
+assert.deepEqual(compactFallback.review, { predictedOutcome: "H", confidence: 0.5 });
+assert.deepEqual(compactFallback.ensembleMeta, { agreement: 0.2 });
 
 console.log("[snapshot-resilience] immutable ledger, evaluation and non-shrinking training: PASS");
