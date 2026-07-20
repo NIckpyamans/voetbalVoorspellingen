@@ -16,6 +16,7 @@ import {
 } from "./prediction-analytics.js";
 import { fetchApiFootballH2HProfile, summarizeApiFootballUsage } from "./api-football-provider.js";
 import { fetchEspnH2HProfile } from "./providers/espn-h2h-provider.js";
+import { fetchTheSportsDbTeamForm, findTheSportsDbDirectResult } from "./providers/thesportsdb-team-form-provider.js";
 import { fetchOddsAtPrediction } from "./odds-provider.js";
 import { getApiFootballKey, getFootballDataApiKey } from "./provider-env.js";
 import { writeJsonFile, writeSplitDataFiles } from "./worker/archive.js";
@@ -1043,12 +1044,20 @@ const MAX_OPENFOOTBALL_CACHE = 48;
 const MAX_INTERNATIONAL_AVAILABILITY = 160;
 const MAX_TEAM_SQUADS = 850;
 const MAX_TEAM_TRANSFERS = 850;
+const MAX_THESPORTSDB_TEAM_FORM_CACHE = 160;
+const MAX_THESPORTSDB_TEAM_FORM_FETCHES_PER_RUN = 32;
 const sportsDbSquadFetchState = {
   count: 0,
   lastAt: 0,
   blockedUntil: 0,
   loggedLimit: false,
   loggedRateLimit: false,
+};
+const sportsDbTeamFormFetchState = {
+  count: 0,
+  max: MAX_THESPORTSDB_TEAM_FORM_FETCHES_PER_RUN,
+  lastAt: 0,
+  blockedUntil: 0,
 };
 const safeFetch = createSafeFetch({
   sofaBase: SOFA,
@@ -7296,6 +7305,25 @@ function mergeTeamFormWithHistorical(currentForm, leagueMarketProfile, openFootb
   return buildTeamFormFromRecentMatches(mergedMatches, source);
 }
 
+function mergeTeamFormWithExternalRecent(currentForm, externalProfile, source = "external-team-form") {
+  const currentMatches = Array.isArray(currentForm?.recentMatches) ? currentForm.recentMatches : [];
+  const externalMatches = Array.isArray(externalProfile?.recentMatches) ? externalProfile.recentMatches : [];
+  if (!externalMatches.length) return currentForm || buildEmptyTeamForm("no-external-form");
+
+  const byKey = new Map();
+  for (const item of [...externalMatches, ...currentMatches]) {
+    const key = [item?.date || "", normalizeName(item?.opponent || ""), item?.venue || "", item?.score || ""].join("|");
+    if (!byKey.has(key)) byKey.set(key, item);
+  }
+  const mergedMatches = [...byKey.values()]
+    .sort((a, b) => String(a?.date || "").localeCompare(String(b?.date || "")))
+    .slice(-TEAM_RECENT_MATCH_WINDOW);
+  return buildTeamFormFromRecentMatches(
+    mergedMatches,
+    currentMatches.length ? `${currentForm?.source || "existing-team-form"}+${source}` : source
+  );
+}
+
 function buildTeamMatchesFromH2HResults(results, teamName) {
   const variants = buildPossibleNames(teamName);
   return (results || []).map((result) => {
@@ -9620,6 +9648,7 @@ function compactStore(store, referenceDateKey, now) {
   pruneEmbeddedUpdatedMap(store, "h2hCache", H2H_TTL, now, MAX_H2H_CACHE);
   pruneEmbeddedUpdatedMap(store, "nationalH2hCache", NATIONAL_H2H_CACHE_TTL, now, MAX_NATIONAL_H2H_CACHE);
   pruneEmbeddedUpdatedMap(store, "weatherCache", WEATHER_TTL, now, MAX_WEATHER_CACHE);
+  pruneEmbeddedUpdatedMap(store, "sportsDbTeamFormCache", 12 * 60 * 60 * 1000, now, MAX_THESPORTSDB_TEAM_FORM_CACHE);
 
   if (store.clubEloUpdated && now - Number(store.clubEloUpdated || 0) > CLUB_ELO_TTL * 2) {
     store.clubEloCache = null;
@@ -9718,6 +9747,7 @@ function defaultStore() {
     eventCache: {},
     eventCacheUpdated: {},
     h2hCache: {},
+    sportsDbTeamFormCache: {},
     weatherCache: {},
     clubEloCache: null,
     clubEloUpdated: null,
@@ -10654,6 +10684,7 @@ async function main() {
   if (!store.teamSquadsUpdated) store.teamSquadsUpdated = {};
   if (!store.teamTransfers) store.teamTransfers = {};
   if (!store.teamTransfersUpdated) store.teamTransfersUpdated = {};
+  if (!store.sportsDbTeamFormCache) store.sportsDbTeamFormCache = {};
   purgeExcludedContent(store);
   await repairStoredLogos(store);
   repairStoredPredictionScoreSelections(store);
@@ -11117,6 +11148,30 @@ async function main() {
       );
       homeRecent = mergeTeamFormWithReviews(homeRecent, store.postMatchReviews, homeName, date);
       awayRecent = mergeTeamFormWithReviews(awayRecent, store.postMatchReviews, awayName, date);
+      let homeSportsDbForm = null;
+      let awaySportsDbForm = null;
+      // BBC fallback fixtures often lack provider team IDs. Use a small, exact-name
+      // TheSportsDB cache only when the primary form window is still thin.
+      if (isFallbackEvent && Number(homeRecent?.gamesPlayed || 0) < TEAM_FORM_BADGE_WINDOW) {
+        homeSportsDbForm = await fetchTheSportsDbTeamForm({
+          teamName: homeName,
+          cache: store.sportsDbTeamFormCache,
+          nameVariants: buildPossibleNames,
+          now,
+          requestState: sportsDbTeamFormFetchState,
+        });
+        homeRecent = mergeTeamFormWithExternalRecent(homeRecent, homeSportsDbForm, "thesportsdb-recent-results");
+      }
+      if (isFallbackEvent && Number(awayRecent?.gamesPlayed || 0) < TEAM_FORM_BADGE_WINDOW) {
+        awaySportsDbForm = await fetchTheSportsDbTeamForm({
+          teamName: awayName,
+          cache: store.sportsDbTeamFormCache,
+          nameVariants: buildPossibleNames,
+          now,
+          requestState: sportsDbTeamFormFetchState,
+        });
+        awayRecent = mergeTeamFormWithExternalRecent(awayRecent, awaySportsDbForm, "thesportsdb-recent-results");
+      }
       if (homeId && (homeRecent?.recentMatches || []).length > (store.teamStats[homeId]?.recentMatches || []).length) {
         store.teamStats[homeId] = homeRecent;
         store.teamStatsUpdated[homeId] = now;
@@ -11137,7 +11192,14 @@ async function main() {
         event.id
       );
       const aggregatePreviousLeg = buildH2HFromAggregateMeta(event, homeId, awayId, homeName, awayName, date);
-      const h2hFallbackLegs = [fallbackPreviousLeg, aggregatePreviousLeg].filter(Boolean);
+      const sportsDbDirectFixture = findTheSportsDbDirectResult(
+        homeSportsDbForm,
+        awaySportsDbForm,
+        homeName,
+        awayName,
+        buildPossibleNames
+      );
+      const h2hFallbackLegs = [fallbackPreviousLeg, aggregatePreviousLeg, sportsDbDirectFixture].filter(Boolean);
       const apiFootballProfile = await fetchApiFootballH2HProfile({
         store,
         homeName,
@@ -11348,6 +11410,18 @@ async function main() {
         historicalRefereeProfile
       );
       const teamIdentity = buildTeamIdentity(homeId, awayId, homeName, awayName, String(event.source || "sofascore"));
+      if (homeSportsDbForm?.providerTeamId) {
+        teamIdentity.home.providerIds.theSportsDb = homeSportsDbForm.providerTeamId;
+        teamIdentity.home.identityType = "provider_id";
+      }
+      if (awaySportsDbForm?.providerTeamId) {
+        teamIdentity.away.providerIds.theSportsDb = awaySportsDbForm.providerTeamId;
+        teamIdentity.away.identityType = "provider_id";
+      }
+      if (homeSportsDbForm?.providerTeamId && awaySportsDbForm?.providerTeamId) {
+        teamIdentity.status = "provider_ids";
+        teamIdentity.source = `${teamIdentity.source}+thesportsdb`;
+      }
       let sourceAsOfFallbackLineup = null;
       const matchId = `ss-${event.id}`;
       const dbFeatureContext = await readDatabaseFeatureContext({
@@ -11411,13 +11485,18 @@ async function main() {
       const refereeStatus = resolveRefereeStatus(refereeProfile);
       const sourceAsOf = {
         fixture: isoFromTimestamp(now),
-        h2h: isoFromTimestamp(store.h2hCache?.[h2hKey]?.updated) || sourceAsOfFallbackH2H,
+        h2h:
+          isoFromTimestamp(store.h2hCache?.[h2hKey]?.updated) ||
+          sourceAsOfFallbackH2H ||
+          (sportsDbDirectFixture ? homeSportsDbForm?.asOf || awaySportsDbForm?.asOf || null : null),
         weather: weatherKey ? isoFromTimestamp(store.weatherCache?.[weatherKey]?.updated) : null,
         homeForm:
           (homeId ? isoFromTimestamp(store.teamStatsUpdated?.[homeId]) : null) ||
+          homeSportsDbForm?.asOf ||
           (homeRecent?.lastMatchKickoff ? new Date(homeRecent.lastMatchKickoff).toISOString() : null),
         awayForm:
           (awayId ? isoFromTimestamp(store.teamStatsUpdated?.[awayId]) : null) ||
+          awaySportsDbForm?.asOf ||
           (awayRecent?.lastMatchKickoff ? new Date(awayRecent.lastMatchKickoff).toISOString() : null),
         homeSeasonStats: homeId ? isoFromTimestamp(store.teamSeasonStatsUpdated?.[homeId]) : null,
         awaySeasonStats: awayId ? isoFromTimestamp(store.teamSeasonStatsUpdated?.[awayId]) : null,
