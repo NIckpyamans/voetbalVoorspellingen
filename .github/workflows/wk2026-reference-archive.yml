@@ -8,6 +8,10 @@ on:
 permissions:
   contents: write
 
+concurrency:
+  group: wk2026-reference-archive
+  cancel-in-progress: false
+
 jobs:
   archive:
     runs-on: ubuntu-latest
