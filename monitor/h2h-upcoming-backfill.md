@@ -1,6 +1,6 @@
 # Upcoming H2H Backfill
 
-Laatst bijgewerkt: 2026-07-19T16:42:05.619Z
+Laatst bijgewerkt: 2026-07-20T04:10:35.099Z
 Gecontroleerd: 24
 Gevuld: 0
 Geen directe H2H: 24
@@ -16,6 +16,7 @@ Geen directe H2H gevonden voor de gecontroleerde wedstrijden. Breid team-ID mapp
 - 2026-07-21: Iberia 1999 - Slovan Bratislava (not_found)
 - 2026-07-21: IFK Göteborg - FCI Levadia (not_found)
 - 2026-07-21: Floriana - Drita (not_found)
+- 2026-07-22: Cádiz - Leicester City (not_found)
 - 2026-07-22: Tottenham Hotspur - Milton Keynes Dons (not_found)
 - 2026-07-22: Omonia Nicosia - Kairat (not_found)
 - 2026-07-22: Levski Sofia - Universitatea Craiova (not_found)
@@ -31,4 +32,3 @@ Geen directe H2H gevonden voor de gecontroleerde wedstrijden. Breid team-ID mapp
 - 2026-07-25: SV Wehen Wiesbaden - Bayern Munich (not_found)
 - 2026-07-25: Bromley - Crystal Palace (not_found)
 - 2026-07-25: Celtic - AC Milan (not_found)
-- 2026-07-25: PSV Eindhoven - Villarreal (not_found)
