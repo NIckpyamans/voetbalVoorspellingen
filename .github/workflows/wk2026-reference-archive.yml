@@ -1,0 +1,41 @@
+name: Archive WK 2026 reference data
+
+on:
+  workflow_dispatch:
+  schedule:
+    - cron: "25 4 * * 1"
+
+permissions:
+  contents: write
+
+jobs:
+  archive:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v5
+        with:
+          ref: codex/step3b-layout
+      - uses: actions/setup-node@v5
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+      - name: Archive public WK 2026 reference datasets to R2
+        run: npm run archive:wk2026:reference
+        env:
+          CLOUDFLARE_R2_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_R2_ACCOUNT_ID }}
+          CLOUDFLARE_R2_ACCESS_KEY_ID: ${{ secrets.CLOUDFLARE_R2_ACCESS_KEY_ID }}
+          CLOUDFLARE_R2_SECRET_ACCESS_KEY: ${{ secrets.CLOUDFLARE_R2_SECRET_ACCESS_KEY }}
+          CLOUDFLARE_R2_BUCKET: ${{ secrets.CLOUDFLARE_R2_BUCKET }}
+          CLOUDFLARE_R2_ENDPOINT: ${{ secrets.CLOUDFLARE_R2_ENDPOINT }}
+          CLOUDFLARE_R2_PREFIX: ${{ secrets.CLOUDFLARE_R2_PREFIX }}
+      - name: Commit reference manifest
+        run: |
+          git config user.name github-actions
+          git config user.email github-actions@github.com
+          git add data/archives/wk-2026-orakel-reference.json
+          git diff --staged --quiet && exit 0
+          git commit -m "archive WK 2026 reference metadata [skip vercel]"
+          git pull --rebase origin codex/step3b-layout
+          git push origin HEAD:codex/step3b-layout
