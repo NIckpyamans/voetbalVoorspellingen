@@ -3269,7 +3269,11 @@ async function updateTeamIntelligence(store, args) {
   if (!store.teamTransfers) store.teamTransfers = {};
   if (!store.teamTransfersUpdated) store.teamTransfersUpdated = {};
 
-  let existingSquad = store.teamSquads[key] || null;
+  // Provider IDs are not available for every fixture. The separate roster job
+  // stores a stable name key, which is a safe fallback after the match's team
+  // identity has been resolved to an ID.
+  const nameKey = buildTeamStoreKey("", teamName);
+  let existingSquad = store.teamSquads[key] || store.teamSquads[nameKey] || null;
   if (
     existingSquad?.source === "Wikidata" &&
     Number(existingSquad?.players?.length || existingSquad?.playerCount || 0) > 42
@@ -3296,11 +3300,14 @@ async function updateTeamIntelligence(store, args) {
     };
   }
   const hasRosterPlayers = Number(existingSquad?.players?.length || existingSquad?.playerCount || 0) > 0;
-  const rosterSourceCheckedAt = Number(existingSquad?.rosterSourceCheckedAt || existingSquad?.fetchedAt || 0);
+  const rosterSourceCheckedAt =
+    Number(existingSquad?.rosterSourceCheckedAt || 0) ||
+    Date.parse(existingSquad?.fetchedAt || existingSquad?.checkedAt || "") ||
+    0;
   const rosterRefreshTtl = transferWindow.watchMode ? TRANSFER_WINDOW_SQUAD_TTL : SQUAD_TTL;
   const rosterRefreshDue = !rosterSourceCheckedAt || now - rosterSourceCheckedAt > rosterRefreshTtl;
   const rosterBackfillStale =
-    existingSquad?.rosterBackfillVersion !== ROSTER_BACKFILL_VERSION ||
+    (!existingSquad?.rosterDataQuality && existingSquad?.rosterBackfillVersion !== ROSTER_BACKFILL_VERSION) ||
     (!hasRosterPlayers && now - Number(existingSquad?.rosterBackfillAttemptedAt || 0) > EMPTY_SQUAD_RETRY_TTL);
   const shouldFetchRoster =
     !existingSquad ||

@@ -179,6 +179,8 @@ for (const candidate of pending) {
     playerCount: players.length,
     players,
     fetchedAt: new Date().toISOString(),
+    rosterSourceCheckedAt: Date.now(),
+    rosterBackfillVersion: "v5-fill-empty-rosters",
     unavailable: false,
     rosterDataQuality: "identity-and-roster-only",
   };
