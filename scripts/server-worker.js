@@ -1310,10 +1310,10 @@ const DATA_SCOUT_SOURCES = [
   {
     key: "forza-football",
     name: "Forza Football",
-    category: "selecties/transfers",
-    freeUse: "publieke teampagina's, alleen als aanvullende fallback",
-    data: ["spelerslijsten", "posities", "unavailable spelers", "transfers"],
-    priority: "fallback",
+    category: "handmatige fixturecontrole",
+    freeUse: "geen publieke API of herbruikbare gratis datalicentie gevonden",
+    data: ["handmatige vergelijking van fixtures, lineups en tabellen"],
+    priority: "niet-automatisch",
   },
   {
     key: "football-data-org",
