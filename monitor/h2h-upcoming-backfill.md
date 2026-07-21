@@ -1,6 +1,6 @@
 # Upcoming H2H Backfill
 
-Laatst bijgewerkt: 2026-07-21T17:44:04.351Z
+Laatst bijgewerkt: 2026-07-21T21:33:23.424Z
 Gecontroleerd: 32
 Gevuld: 0
 Geen directe H2H: 32
@@ -12,16 +12,6 @@ Geen directe H2H gevonden voor de gecontroleerde wedstrijden. Breid team-ID mapp
 ## Gevuld
 
 ## Geen Directe H2H
-- 2026-07-21: Thun - Dinamo Zagreb (not_found)
-- 2026-07-21: Fenerbahce - Gornik Zabrze (not_found)
-- 2026-07-21: Sturm Graz - Heart of Midlothian (not_found)
-- 2026-07-21: KI Klaksvik - Kauno Zalgiris (not_found)
-- 2026-07-21: Vikingur Reykjavik - Hapoel Be'er Sheva (not_found)
-- 2026-07-21: Larne - Crvena zvezda (not_found)
-- 2026-07-21: Atert Bissen - Gyori ETO (not_found)
-- 2026-07-21: Gillingham - Millwall (not_found)
-- 2026-07-21: Aldershot Town - Oxford United (not_found)
-- 2026-07-21: Walsall - Aston Villa (not_found)
 - 2026-07-22: Tottenham Hotspur - Milton Keynes Dons (not_found)
 - 2026-07-22: Cádiz - Leicester City (not_found)
 - 2026-07-22: SL Benfica - Al Nassr (not_found)
@@ -32,3 +22,13 @@ Geen directe H2H gevonden voor de gecontroleerde wedstrijden. Breid team-ID mapp
 - 2026-07-23: Qarabağ - CSKA Sofia (not_found)
 - 2026-07-23: Dynamo Kyiv - PAOK (not_found)
 - 2026-07-23: Malisheva - Hibernian (not_found)
+- 2026-07-23: Alashkert - CFR Cluj (not_found)
+- 2026-07-24: Rosenborg - Manchester United (not_found)
+- 2026-07-24: Galatasaray - Monza (not_found)
+- 2026-07-25: Fortuna Düsseldorf - Borussia Dortmund (not_found)
+- 2026-07-25: SV Wehen Wiesbaden - Bayern Munich (not_found)
+- 2026-07-25: Bromley - Crystal Palace (not_found)
+- 2026-07-25: Celtic - AC Milan (not_found)
+- 2026-07-25: PSV Eindhoven - Villarreal (not_found)
+- 2026-07-25: Standard Liege - Juventus (not_found)
+- 2026-07-26: Liverpool - Sunderland (not_found)
