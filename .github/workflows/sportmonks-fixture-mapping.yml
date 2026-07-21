@@ -46,11 +46,11 @@ jobs:
           path: monitor/sportmonks-fixture-mapping.json
           if-no-files-found: ignore
           retention-days: 14
-      - name: Commit compact mapping cache and coverage report
+      - name: Commit changed mapping cache
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
-          git add data/sportmonks-fixture-cache.json monitor/sportmonks-fixture-mapping.json
+          git add data/sportmonks-fixture-cache.json
           git diff --cached --quiet && exit 0
           git commit -m "update Sportmonks fixture mapping [skip vercel]"
           git pull --rebase origin "$DATA_BRANCH"

@@ -66,6 +66,23 @@ function competitionReport(rows) {
   return byCompetition;
 }
 
+function mappingFingerprint(entry) {
+  return JSON.stringify({
+    status: entry.status,
+    fixtureId: entry.fixtureId,
+    confidence: entry.confidence,
+    homeName: entry.homeName,
+    awayName: entry.awayName,
+    startingAt: entry.startingAt,
+    hasOdds: entry.hasOdds,
+    sportmonksLeagueId: entry.sportmonksLeagueId,
+    sportmonksLeagueName: entry.sportmonksLeagueName,
+    sportmonksSeasonId: entry.sportmonksSeasonId,
+    sportmonksSeasonName: entry.sportmonksSeasonName,
+    sourceUrl: entry.sourceUrl,
+  });
+}
+
 async function main() {
   loadLocalEnv(ROOT);
   if (!getSportmonksApiKey()) {
@@ -73,7 +90,7 @@ async function main() {
   }
   const previous = readJson(CACHE_PATH, { matches: {} });
   const rows = upcomingMatches();
-  const cache = { schemaVersion: 1, generatedAt: new Date().toISOString(), matches: { ...(previous.matches || {}) } };
+  const cache = { schemaVersion: 1, generatedAt: previous.generatedAt || null, matches: { ...(previous.matches || {}) } };
   const reportRows = [];
   for (const match of rows) {
     const resolved = await findSportmonksFixture(match, { useCache: false }).catch((error) => ({ status: "resolver_error", error: error?.message || String(error) }));
@@ -94,8 +111,12 @@ async function main() {
       mappedAt: new Date().toISOString(),
     };
     // A transient provider failure must never replace a previously verified mapping.
-    if (entry.status === "provider_error" && previous.matches?.[match.matchId]?.fixtureId) {
+    const existing = previous.matches?.[match.matchId];
+    if (entry.status === "provider_error" && existing?.fixtureId) {
       cache.matches[match.matchId] = { ...previous.matches[match.matchId], lastAttemptAt: entry.mappedAt, lastAttemptStatus: entry.status };
+    } else if (existing && mappingFingerprint(existing) === mappingFingerprint(entry)) {
+      // Keep the persisted cache byte-stable when the provider has nothing new to report.
+      cache.matches[match.matchId] = existing;
     } else {
       cache.matches[match.matchId] = entry;
     }
@@ -113,6 +134,7 @@ async function main() {
     matches: reportRows,
     nextAction: "Gebruik alleen voor aantoonbaar ontbrekende odds per competitie een tweede provider.",
   };
+  if (JSON.stringify(cache.matches) !== JSON.stringify(previous.matches || {})) cache.generatedAt = report.generatedAt;
   fs.mkdirSync(path.dirname(CACHE_PATH), { recursive: true });
   fs.mkdirSync(path.dirname(REPORT_PATH), { recursive: true });
   fs.writeFileSync(CACHE_PATH, `${JSON.stringify(cache, null, 2)}\n`);
