@@ -15,11 +15,12 @@ permissions:
 jobs:
   enrich-form:
     runs-on: ubuntu-latest
-    timeout-minutes: 10
+    timeout-minutes: 8
     env:
       DATA_BRANCH: codex/step3b-layout
       FORM_ENRICHMENT_DAYS_AHEAD: "8"
-      FORM_ENRICHMENT_MAX_TEAMS: "60"
+      FORM_ENRICHMENT_MAX_TEAMS: "20"
+      FORM_ENRICHMENT_REQUEST_TIMEOUT_MS: "3000"
     steps:
       - uses: actions/checkout@v5
         with:

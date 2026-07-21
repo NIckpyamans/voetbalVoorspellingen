@@ -6,7 +6,8 @@ import { fetchTheSportsDbTeamForm } from "./providers/thesportsdb-team-form-prov
 
 const ROOT = process.cwd();
 const DAYS_AHEAD = Math.max(1, Number(process.env.FORM_ENRICHMENT_DAYS_AHEAD || 7));
-const MAX_TEAMS = Math.max(1, Number(process.env.FORM_ENRICHMENT_MAX_TEAMS || 60));
+const MAX_TEAMS = Math.max(1, Number(process.env.FORM_ENRICHMENT_MAX_TEAMS || 20));
+const REQUEST_TIMEOUT_MS = Math.max(1000, Number(process.env.FORM_ENRICHMENT_REQUEST_TIMEOUT_MS || 3000));
 const CACHE_FILE = path.join(ROOT, "data", "team-form-cache.json");
 const REPORT_FILE = path.join(ROOT, "monitor", "upcoming-team-form-enrichment.json");
 
@@ -60,15 +61,37 @@ const now = Date.now();
 const requestState = { count: 0, max: MAX_TEAMS, lastAt: 0, blockedUntil: 0 };
 const report = { generatedAt: new Date().toISOString(), daysAhead: DAYS_AHEAD, candidates: teamNames.size, checked: 0, enriched: 0, unavailable: 0, skippedFresh: 0, samples: [] };
 
-for (const teamName of [...teamNames].sort().slice(0, MAX_TEAMS)) {
-  const key = normalize(teamName);
-  const existing = cache[key];
-  if (existing?.data && now - Number(existing.updatedAt || 0) < 12 * 60 * 60 * 1000) {
-    report.skippedFresh += 1;
-    continue;
+async function fetchWithTimeout(url, options = {}) {
+  const controller = new AbortController();
+  const timeout = setTimeout(() => controller.abort(), REQUEST_TIMEOUT_MS);
+  try {
+    return await fetch(url, { ...options, signal: controller.signal });
+  } finally {
+    clearTimeout(timeout);
   }
+}
+
+const pendingTeams = [...teamNames]
+  .sort()
+  .filter((teamName) => {
+    const existing = cache[normalize(teamName)];
+    if (!existing?.data || now - Number(existing.updatedAt || 0) >= 12 * 60 * 60 * 1000) return true;
+    report.skippedFresh += 1;
+    return false;
+  })
+  .slice(0, MAX_TEAMS);
+
+for (const teamName of pendingTeams) {
+  const key = normalize(teamName);
   report.checked += 1;
-  const profile = await fetchTheSportsDbTeamForm({ teamName, cache, nameVariants: variants, now, requestState });
+  const profile = await fetchTheSportsDbTeamForm({
+    teamName,
+    cache,
+    nameVariants: variants,
+    now,
+    requestState,
+    fetchImpl: fetchWithTimeout,
+  });
   if (profile?.recentMatches?.length) {
     report.enriched += 1;
     report.samples.push({ team: teamName, matches: profile.recentMatches.length, providerTeam: profile.providerTeamName });
