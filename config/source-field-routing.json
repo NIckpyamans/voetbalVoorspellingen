@@ -1,5 +1,5 @@
 {
-  "version": "2026-07-06",
+  "version": "2026-07-21",
   "policy": "Gebruik per dataveld de bron met de beste betrouwbaarheid en laagste quota-kosten. Backups vullen alleen ontbrekende velden of bevestigen conflicten; ze overschrijven geen primaire waarheid zonder betere timestamp/trust.",
   "fields": {
     "fixtures": {
@@ -14,13 +14,13 @@
     },
     "confirmed_lineups": {
       "primary": ["Sofascore lineups"],
-      "backups": ["projected-squad-profile", "football-data.org squad", "Forza Football configured pages"],
-      "notes": "Projected lineups tellen als modelinput met penalty, niet als confirmed."
+      "backups": ["projected-squad-profile", "football-data.org squad"],
+      "notes": "Forza Football is alleen een handmatige controlebron: er is geen publieke API of herbruikbare gratis datalicentie gevonden. Projected lineups tellen als modelinput met penalty, niet als confirmed."
     },
     "availability_injuries_suspensions": {
       "primary": ["Sofascore player status"],
-      "backups": ["Forza Football configured pages", "football-data.org squad", "derived transfer watch"],
-      "notes": "Availability wordt vooral vlak voor kickoff opnieuw opgehaald."
+      "backups": ["football-data.org squad", "derived transfer watch"],
+      "notes": "Availability wordt vooral vlak voor kickoff opnieuw opgehaald. Forza Football kan handmatig controleren, maar wordt niet gescrapet."
     },
     "h2h": {
       "primary": ["API-Football", "OpenFootball"],

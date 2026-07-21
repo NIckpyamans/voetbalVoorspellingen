@@ -1398,6 +1398,27 @@ const BBC_COMPETITION_TO_LABEL = {
 
 
 const CURATED_FIXTURE_BACKFILL = [
+  // User-verified fixture list. This is a temporary visibility safety net;
+  // ESPN/BBC/official provider events win whenever they become available.
+  { date: "2026-07-21", time: "18:00", league: "Europe - Champions League", tournament: "Champions League", country: "Europe", home: "Iberia 1999", away: "Slovan Bratislava", round: "Second qualifying round", sourceNote: "user-verified Forza fixture list", sourceUrl: "https://forzafootball.com" },
+  { date: "2026-07-21", time: "18:00", league: "Europe - Champions League", tournament: "Champions League", country: "Europe", home: "Mjallby AIF", away: "Lincoln Red Imps", round: "Second qualifying round", sourceNote: "user-verified Forza fixture list", sourceUrl: "https://forzafootball.com" },
+  { date: "2026-07-21", time: "18:00", league: "Europe - Champions League", tournament: "Champions League", country: "Europe", home: "Sabah", away: "KuPS", round: "Second qualifying round", sourceNote: "user-verified Forza fixture list", sourceUrl: "https://forzafootball.com" },
+  { date: "2026-07-21", time: "18:00", league: "Europe - Champions League", tournament: "Champions League", country: "Europe", home: "Ararat-Armenia", away: "Shamrock Rovers", round: "Second qualifying round", sourceNote: "user-verified Forza fixture list", sourceUrl: "https://forzafootball.com" },
+  { date: "2026-07-21", time: "19:00", league: "Europe - Champions League", tournament: "Champions League", country: "Europe", home: "AGF", away: "Lech Poznan", round: "Second qualifying round", sourceNote: "user-verified Forza fixture list", sourceUrl: "https://forzafootball.com" },
+  { date: "2026-07-21", time: "20:00", league: "Europe - Champions League", tournament: "Champions League", country: "Europe", home: "Thun", away: "Dinamo Zagreb", round: "Second qualifying round", sourceNote: "user-verified Forza fixture list", sourceUrl: "https://forzafootball.com" },
+  { date: "2026-07-21", time: "20:00", league: "Europe - Champions League", tournament: "Champions League", country: "Europe", home: "Fenerbahce", away: "Gornik Zabrze", round: "Second qualifying round", sourceNote: "user-verified Forza fixture list", sourceUrl: "https://forzafootball.com" },
+  { date: "2026-07-21", time: "20:30", league: "Europe - Champions League", tournament: "Champions League", country: "Europe", home: "Sturm Graz", away: "Heart of Midlothian", round: "Second qualifying round", sourceNote: "user-verified Forza fixture list", sourceUrl: "https://forzafootball.com" },
+  { date: "2026-07-21", time: "20:45", league: "Europe - Champions League", tournament: "Champions League", country: "Europe", home: "KI Klaksvik", away: "Kauno Zalgiris", round: "Second qualifying round", sourceNote: "user-verified Forza fixture list", sourceUrl: "https://forzafootball.com" },
+  { date: "2026-07-21", time: "21:00", league: "Europe - Champions League", tournament: "Champions League", country: "Europe", home: "Vikingur Reykjavik", away: "Hapoel Be'er Sheva", round: "Second qualifying round", sourceNote: "user-verified Forza fixture list", sourceUrl: "https://forzafootball.com" },
+  { date: "2026-07-21", time: "21:00", league: "Europe - Champions League", tournament: "Champions League", country: "Europe", home: "Larne", away: "Crvena zvezda", round: "Second qualifying round", sourceNote: "user-verified Forza fixture list", sourceUrl: "https://forzafootball.com" },
+  { date: "2026-07-21", time: "19:00", league: "Europe - Conference League", tournament: "Conference League", country: "Europe", home: "IFK Goteborg", away: "FCI Levadia", round: "Second qualifying round", sourceNote: "user-verified Forza fixture list", sourceUrl: "https://forzafootball.com" },
+  { date: "2026-07-21", time: "19:30", league: "Europe - Conference League", tournament: "Conference League", country: "Europe", home: "Floriana", away: "Drita", round: "Second qualifying round", sourceNote: "user-verified Forza fixture list", sourceUrl: "https://forzafootball.com" },
+  { date: "2026-07-21", time: "20:15", league: "Europe - Conference League", tournament: "Conference League", country: "Europe", home: "Atert Bissen", away: "Gyori ETO", round: "Second qualifying round", sourceNote: "user-verified Forza fixture list", sourceUrl: "https://forzafootball.com" },
+  { date: "2026-07-21", time: "19:00", league: "World - Club Friendlies", tournament: "Club Friendlies", country: "World", home: "EVV", away: "MVV Maastricht", sourceNote: "user-verified Forza fixture list", sourceUrl: "https://forzafootball.com" },
+  { date: "2026-07-21", time: "19:30", league: "World - Club Friendlies", tournament: "Club Friendlies", country: "World", home: "Pau FC", away: "RCD Espanyol", sourceNote: "user-verified Forza fixture list", sourceUrl: "https://forzafootball.com" },
+  { date: "2026-07-21", time: "20:00", league: "World - Club Friendlies", tournament: "Club Friendlies", country: "World", home: "Gillingham", away: "Millwall", sourceNote: "user-verified Forza fixture list", sourceUrl: "https://forzafootball.com" },
+  { date: "2026-07-21", time: "20:00", league: "World - Club Friendlies", tournament: "Club Friendlies", country: "World", home: "Aldershot Town", away: "Oxford United", sourceNote: "user-verified Forza fixture list", sourceUrl: "https://forzafootball.com" },
+  { date: "2026-07-21", time: "20:30", league: "World - Club Friendlies", tournament: "Club Friendlies", country: "World", home: "Walsall", away: "Aston Villa", sourceNote: "user-verified Forza fixture list", sourceUrl: "https://forzafootball.com" },
   {
     date: "2026-05-04",
     time: "21:00",
@@ -4585,6 +4606,7 @@ function fetchCuratedFixtureBackfill(dateISO) {
         awayScore: {},
         curatedMeta: {
           sourceNote: item.sourceNote || "curated fixture backfill",
+          sourceUrl: item.sourceUrl || null,
           aggregateLabel: item.aggregateLabel || null,
         },
         source: "curated-fixture-fallback",
