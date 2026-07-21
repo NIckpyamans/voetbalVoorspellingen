@@ -6,6 +6,7 @@ function playerRow(item, source) {
   const player = item?.player || item || {};
   const position = player?.position || item?.position?.code || item?.position?.name || item?.position || "";
   return {
+    id: player?.id || item?.player_id || null,
     name: String(player?.name || player?.display_name || item?.player_name || "").trim(),
     position: String(position || "").trim(),
     shirtNumber: item?.number ?? item?.jersey_number ?? item?.shirt_number ?? null,
@@ -74,6 +75,7 @@ export function normalizeSportmonks(payload) {
     confirmed: home.confirmed && away.confirmed,
     projected: false,
     source: "Sportmonks confirmed lineups",
+    playerFixtureStatsCaptured: lineups.reduce((total, item) => total + asArray(item?.details).length, 0),
     summary: "Officiele wedstrijselecties opgehaald vlak voor de aftrap.",
   };
 }

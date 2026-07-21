@@ -1,8 +1,13 @@
 import crypto from "crypto";
+import fs from "fs";
+import path from "path";
 import { getSportmonksApiKey } from "./provider-env.js";
 
 const fetchCache = new Map();
 const DEFAULT_TIMEOUT_MS = Math.max(1000, Number(process.env.SPORTMONKS_FETCH_TIMEOUT_MS || 12000));
+const ROOT = process.cwd();
+const FIXTURE_CACHE_PATH = path.join(ROOT, "data", "sportmonks-fixture-cache.json");
+let localFixtureCache = null;
 
 function digest(value, size = 24) {
   return crypto.createHash("sha1").update(String(value || "")).digest("hex").slice(0, size);
@@ -97,7 +102,7 @@ async function fetchFixturesForDateRange(startDate, endDate) {
   if (!key) return { ok: false, status: "missing_key", fixtures: [] };
   const cacheKey = `${startDate}|${endDate}`;
   if (fetchCache.has(cacheKey)) return fetchCache.get(cacheKey);
-  const url = `https://api.sportmonks.com/v3/football/fixtures/between/${encodeURIComponent(startDate)}/${encodeURIComponent(endDate)}?api_token=${encodeURIComponent(key)}&include=participants&per_page=100`;
+  const url = `https://api.sportmonks.com/v3/football/fixtures/between/${encodeURIComponent(startDate)}/${encodeURIComponent(endDate)}?api_token=${encodeURIComponent(key)}&include=participants;league;season&per_page=100`;
   const result = await fetchJson(url);
   const fixtures = Array.isArray(result.payload?.data) ? result.payload.data : [];
   const value = { ok: result.ok, status: result.status, fixtures, url };
@@ -105,9 +110,34 @@ async function fetchFixturesForDateRange(startDate, endDate) {
   return value;
 }
 
-export async function findSportmonksFixture(match) {
+function readLocalFixtureCache() {
+  if (localFixtureCache) return localFixtureCache;
+  try {
+    localFixtureCache = JSON.parse(fs.readFileSync(FIXTURE_CACHE_PATH, "utf8"));
+  } catch {
+    localFixtureCache = { matches: {} };
+  }
+  return localFixtureCache;
+}
+
+export function getCachedSportmonksFixture(match) {
+  const matchId = String(match?.matchId || match?.id || "");
+  const cached = readLocalFixtureCache()?.matches?.[matchId];
+  if (!cached?.fixtureId || cached.status !== "matched") return null;
+  const kickoffDate = dateKey(match?.kickoff || match?.kickoff_at || match?.date_key);
+  if (!kickoffDate || dateKey(cached.startingAt || cached.kickoff) !== kickoffDate) return null;
+  if (teamSimilarity(match?.homeTeam, cached.homeName || cached.homeTeam) < 0.82) return null;
+  if (teamSimilarity(match?.awayTeam, cached.awayName || cached.awayTeam) < 0.82) return null;
+  return { ...cached, status: "cache_matched", sourceUrl: "local:sportmonks-fixture-cache" };
+}
+
+export async function findSportmonksFixture(match, { useCache = true } = {}) {
   const kickoffDate = dateKey(match?.kickoff || match?.kickoff_at || match?.date_key);
   if (!kickoffDate || !match?.homeTeam || !match?.awayTeam) return null;
+  if (useCache) {
+    const cached = getCachedSportmonksFixture(match);
+    if (cached) return cached;
+  }
   const feed = await fetchFixturesForDateRange(addDays(kickoffDate, -1), addDays(kickoffDate, 1));
   if (!feed.ok) return { status: "provider_error", statusCode: feed.status, sourceUrl: feed.url };
   let best = null;
@@ -133,6 +163,10 @@ export async function findSportmonksFixture(match) {
         awayName: teams.away,
         startingAt: fixture.starting_at || null,
         hasOdds: Boolean(fixture.has_odds || fixture.has_premium_odds),
+        sportmonksLeagueId: fixture?.league_id || fixture?.league?.id || null,
+        sportmonksLeagueName: fixture?.league?.name || null,
+        sportmonksSeasonId: fixture?.season_id || fixture?.season?.id || null,
+        sportmonksSeasonName: fixture?.season?.name || fixture?.season?.display_name || null,
         raw: fixture,
         sourceUrl: feed.url,
       };

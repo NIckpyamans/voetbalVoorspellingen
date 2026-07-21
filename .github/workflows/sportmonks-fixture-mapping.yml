@@ -1,0 +1,57 @@
+name: Sportmonks Fixture Mapping
+
+on:
+  schedule:
+    - cron: "50 */4 * * *"
+  workflow_dispatch:
+    inputs:
+      days_ahead:
+        description: "Aantal dagen vooruit om te mappen"
+        required: false
+        default: "8"
+
+concurrency:
+  group: sportmonks-fixture-mapping
+  cancel-in-progress: false
+
+permissions:
+  contents: write
+
+jobs:
+  map-upcoming-fixtures:
+    runs-on: ubuntu-latest
+    timeout-minutes: 12
+    env:
+      DATA_BRANCH: codex/step3b-layout
+      SPORTMONKS_API_KEY: ${{ secrets.SPORTMONKS_API_KEY || secrets.MYSPORTS_API_KEY }}
+      SPORTMONKS_MAPPING_DAYS_AHEAD: ${{ inputs.days_ahead || '8' }}
+      SPORTMONKS_MAPPING_LIMIT: "80"
+    steps:
+      - uses: actions/checkout@v5
+        with:
+          ref: ${{ env.DATA_BRANCH }}
+          fetch-depth: 0
+      - uses: actions/setup-node@v5
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+      - name: Map league, season and fixture ids
+        run: npm run map:sportmonks:upcoming
+      - name: Upload fixture mapping report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: sportmonks-fixture-mapping
+          path: monitor/sportmonks-fixture-mapping.json
+          if-no-files-found: ignore
+          retention-days: 14
+      - name: Commit compact mapping cache and coverage report
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add data/sportmonks-fixture-cache.json monitor/sportmonks-fixture-mapping.json
+          git diff --cached --quiet && exit 0
+          git commit -m "update Sportmonks fixture mapping [skip vercel]"
+          git pull --rebase origin "$DATA_BRANCH"
+          git push origin "HEAD:$DATA_BRANCH"

@@ -145,7 +145,10 @@ async function fetchSportmonksLineup(sql, match) {
   };
   const resolved = sql ? await resolveSportmonksFixtureId(sql, fixtureInput) : await findSportmonksFixture(fixtureInput);
   if (!resolved?.fixtureId) return { status: resolved?.status || "unmapped" };
-  const url = `https://api.sportmonks.com/v3/football/fixtures/${encodeURIComponent(resolved.fixtureId)}?api_token=${encodeURIComponent(key)}&include=participants;lineups.player;lineups.position`;
+  // One bounded fixture call supplies confirmed XI, formations and availability context.
+  // Player fixture statistics only exist once a match has started, so they are retained when present
+  // but are never fabricated as a pre-match feature.
+  const url = `https://api.sportmonks.com/v3/football/fixtures/${encodeURIComponent(resolved.fixtureId)}?api_token=${encodeURIComponent(key)}&include=participants;formations;lineups.player;lineups.position;lineups.details;sidelined.player`;
   const result = await fetchJson(url);
   return { ...result, status: result.ok ? "ok" : `http_${result.status}`, lineup: result.ok ? normalizeSportmonks(result.payload) : null, url };
 }
@@ -254,6 +257,7 @@ async function main() {
     partial: 0,
     missing: 0,
     r2Stored: 0,
+    playerFixtureStatsCaptured: 0,
     databaseWritable,
     databaseError,
     captureWindows: { t75: 0, t45: 0, t20: 0, outside: 0 },
@@ -277,6 +281,7 @@ async function main() {
     }
     report.providers[`${provider}:${result.status}`] = Number(report.providers[`${provider}:${result.status}`] || 0) + 1;
     if (result.lineup) {
+      report.playerFixtureStatsCaptured += Number(result.lineup.playerFixtureStatsCaptured || 0);
       const r2 = await storeR2Lineup(match, provider, result.lineup).catch((error) => ({ ok: false, error: error?.message || String(error) }));
       if (r2.ok) report.r2Stored += 1;
       if (databaseWritable) {
