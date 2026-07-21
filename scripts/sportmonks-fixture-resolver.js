@@ -63,6 +63,17 @@ function asArray(value) {
   return Array.isArray(value) ? value : [value];
 }
 
+function publicSourceUrl(value) {
+  try {
+    const url = new URL(value);
+    // Lineage needs the endpoint, never query parameters or credentials.
+    url.search = "";
+    return url.toString();
+  } catch {
+    return null;
+  }
+}
+
 function participants(fixture) {
   const rows = asArray(fixture?.participants || fixture?.participant || fixture?.teams);
   const home =
@@ -105,7 +116,7 @@ async function fetchFixturesForDateRange(startDate, endDate) {
   const url = `https://api.sportmonks.com/v3/football/fixtures/between/${encodeURIComponent(startDate)}/${encodeURIComponent(endDate)}?api_token=${encodeURIComponent(key)}&include=participants;league;season&per_page=100`;
   const result = await fetchJson(url);
   const fixtures = Array.isArray(result.payload?.data) ? result.payload.data : [];
-  const value = { ok: result.ok, status: result.status, fixtures, url };
+  const value = { ok: result.ok, status: result.status, fixtures, url: publicSourceUrl(url) };
   fetchCache.set(cacheKey, value);
   return value;
 }
