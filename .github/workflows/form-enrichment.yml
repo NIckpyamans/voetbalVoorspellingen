@@ -1,30 +1,25 @@
-name: Week ahead fixture calendar
+name: Upcoming team form enrichment
 
 on:
   schedule:
-    - cron: "37 */4 * * *"
+    - cron: "0 */4 * * *"
   workflow_dispatch:
 
 concurrency:
-  group: football-data-refresh
+  group: football-form-enrichment
   cancel-in-progress: false
 
 permissions:
   contents: write
 
-env:
-  TZ: Europe/Amsterdam
-  FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: "true"
-  DATA_BRANCH: codex/step3b-layout
-  FOOTYAI_DATE_WINDOW: today,+1,+2,+3,+4,+5,+6,+7
-  FOOTYAI_LIGHTWEIGHT_REFRESH: "true"
-  API_FOOTBALL_H2H_ENABLED: "false"
-  ODDS_FETCH_ENABLED: "false"
-
 jobs:
-  refresh-calendar:
+  enrich-form:
     runs-on: ubuntu-latest
-    timeout-minutes: 12
+    timeout-minutes: 10
+    env:
+      DATA_BRANCH: codex/step3b-layout
+      FORM_ENRICHMENT_DAYS_AHEAD: "8"
+      FORM_ENRICHMENT_MAX_TEAMS: "60"
     steps:
       - uses: actions/checkout@v5
         with:
@@ -36,16 +31,14 @@ jobs:
           node-version: 22
           cache: npm
       - run: npm ci
-      - name: Discover today and the next seven days
-        timeout-minutes: 9
-        run: node scripts/server-worker.js
-      - name: Commit calendar changes
+      - run: npm run enrich:form:upcoming
+      - name: Commit form cache
         run: |
           git config user.name github-actions
           git config user.email github-actions@github.com
-          git add data training monitor
-          git diff --staged --quiet && echo "geen kalenderwijzigingen" && exit 0
-          git commit -m "refresh week vooruit kalender [skip vercel]"
+          git add data/team-form-cache.json monitor/upcoming-team-form-enrichment.json
+          git diff --staged --quiet && exit 0
+          git commit -m "refresh upcoming team form cache [skip vercel]"
           for attempt in 1 2 3; do
             git pull --rebase --autostash origin "$DATA_BRANCH"
             if git push origin HEAD:"$DATA_BRANCH"; then exit 0; fi

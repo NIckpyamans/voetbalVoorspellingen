@@ -1,0 +1,59 @@
+name: Upcoming H2H enrichment
+
+on:
+  schedule:
+    - cron: "10 */4 * * *"
+  workflow_dispatch:
+
+concurrency:
+  group: football-h2h-enrichment
+  cancel-in-progress: false
+
+permissions:
+  contents: write
+
+jobs:
+  enrich-h2h:
+    runs-on: ubuntu-latest
+    timeout-minutes: 12
+    env:
+      DATA_BRANCH: codex/step3b-layout
+      API_KEY_API_FOOTBALL: ${{ secrets.API_KEY_API_FOOTBALL }}
+      API_FOOTBALL_BASE_URL: ${{ vars.API_FOOTBALL_BASE_URL }}
+      API_FOOTBALL_MAX_FETCHES_PER_RUN: "16"
+      H2H_BACKFILL_DAYS_AHEAD: "8"
+      H2H_BACKFILL_LIMIT: "32"
+      DATABASE_URL: ${{ secrets.DATABASE_URL }}
+      POSTGRES_URL: ${{ secrets.POSTGRES_URL }}
+      CLOUDFLARE_R2_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_R2_ACCOUNT_ID }}
+      CLOUDFLARE_R2_ACCESS_KEY_ID: ${{ secrets.CLOUDFLARE_R2_ACCESS_KEY_ID }}
+      CLOUDFLARE_R2_SECRET_ACCESS_KEY: ${{ secrets.CLOUDFLARE_R2_SECRET_ACCESS_KEY }}
+      CLOUDFLARE_R2_BUCKET: ${{ secrets.CLOUDFLARE_R2_BUCKET }}
+      CLOUDFLARE_R2_ENDPOINT: ${{ secrets.CLOUDFLARE_R2_ENDPOINT }}
+      CLOUDFLARE_R2_PREFIX: ${{ secrets.CLOUDFLARE_R2_PREFIX }}
+    steps:
+      - uses: actions/checkout@v5
+        with:
+          fetch-depth: 0
+          token: ${{ secrets.GITHUB_TOKEN }}
+          ref: ${{ env.DATA_BRANCH }}
+      - uses: actions/setup-node@v5
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+      - name: Capture upcoming H2H independently
+        run: node scripts/ci-neon-safe.js -- npm run db:h2h:backfill-upcoming
+      - name: Commit H2H report
+        run: |
+          git config user.name github-actions
+          git config user.email github-actions@github.com
+          git add monitor/h2h-upcoming-backfill.json monitor/h2h-upcoming-backfill.md
+          git diff --staged --quiet && exit 0
+          git commit -m "update upcoming H2H enrichment [skip vercel]"
+          for attempt in 1 2 3; do
+            git pull --rebase --autostash origin "$DATA_BRANCH"
+            if git push origin HEAD:"$DATA_BRANCH"; then exit 0; fi
+            sleep $((attempt * 5))
+          done
+          exit 1

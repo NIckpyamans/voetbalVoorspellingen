@@ -1,6 +1,8 @@
 name: Pre-kickoff lineup refresh
 
 on:
+  schedule:
+    - cron: "*/15 * * * *"
   workflow_dispatch:
     inputs:
       lookahead_minutes:
@@ -57,14 +59,9 @@ jobs:
       - name: Install dependencies
         run: npm ci
 
-      - name: Apply database schema
-        run: node scripts/ci-neon-safe.js -- npm run db:schema:apply
-
       - name: Refresh near-kickoff lineups
         timeout-minutes: 8
-        run: |
-          node scripts/ci-neon-safe.js -- npm run db:lineups:prematch:collect
-          node scripts/ci-neon-safe.js -- node scripts/server-worker.js
+        run: node scripts/ci-neon-safe.js -- npm run db:lineups:prematch:collect
         env:
           LINEUP_LOOKAHEAD_MINUTES: ${{ inputs.lookahead_minutes || '90' }}
           LINEUP_CAPTURE_WINDOWS_ONLY: "true"
@@ -79,7 +76,7 @@ jobs:
       - name: Report local data changes
         run: |
           git status --short data training monitor || true
-          echo "Pre-kickoff refresh schrijft naar Neon via de worker. Statische exports blijven eigendom van de hoofdworker/scout workflows."
+          echo "Pre-kickoff refresh schrijft alleen critical captures naar R2/Neon. De kalender verwerkt deze zonder volledige worker-run."
 
       - name: Upload lineup capture report
         if: always()

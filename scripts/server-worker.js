@@ -80,6 +80,7 @@ const sofaFetchCircuit = { blocked: false, failures: 0, logged: false };
 const ROOT = process.cwd();
 const DATA_FILE = path.resolve(process.cwd(), "server_data.json");
 const SPLIT_DATA_DIR = path.resolve(process.cwd(), "data");
+const TEAM_FORM_CACHE_FILE = path.join(SPLIT_DATA_DIR, "team-form-cache.json");
 const COMPETITION_ARCHIVE_DIR = path.join(SPLIT_DATA_DIR, "competitions");
 const TRAINING_SNAPSHOT_FILE = path.resolve(process.cwd(), "training", "training-snapshot.json");
 const ODDS_FETCH_ENABLED = process.env.ODDS_FETCH_ENABLED !== "false";
@@ -10722,6 +10723,23 @@ async function main() {
   } else {
     compactStore(store, today, now);
   }
+
+  // Form is collected separately before calendar refreshes. Loading this small
+  // cache lets the lightweight calendar use real recent results without doing
+  // per-team provider calls itself.
+  try {
+    const persistedFormCache = fs.existsSync(TEAM_FORM_CACHE_FILE)
+      ? JSON.parse(fs.readFileSync(TEAM_FORM_CACHE_FILE, "utf8"))
+      : null;
+    if (persistedFormCache?.teams && typeof persistedFormCache.teams === "object") {
+      store.sportsDbTeamFormCache = {
+        ...(persistedFormCache.teams || {}),
+        ...(store.sportsDbTeamFormCache || {}),
+      };
+    }
+  } catch (error) {
+    console.warn(`[worker] team-form-cache kon niet worden gelezen: ${error?.message || error}`);
+  }
   for (const date of dates) store.knockoutOverview[date] = [];
   rebuildReviewsAndLearning(store);
 
@@ -11185,14 +11203,14 @@ async function main() {
       );
       homeRecent = mergeTeamFormWithReviews(homeRecent, store.postMatchReviews, homeName, date);
       awayRecent = mergeTeamFormWithReviews(awayRecent, store.postMatchReviews, awayName, date);
-      let homeSportsDbForm = null;
-      let awaySportsDbForm = null;
+      let homeSportsDbForm = store.sportsDbTeamFormCache?.[normalizeName(homeName)]?.data || null;
+      let awaySportsDbForm = store.sportsDbTeamFormCache?.[normalizeName(awayName)]?.data || null;
       // BBC fallback fixtures often lack provider team IDs. Use a small, exact-name
       // TheSportsDB cache only when the primary form window is still thin.
       const isEuropeanClubFixture =
         leagueInfo.type === "cup" &&
         /^Europe - (Champions League|Europa League|Conference League)$/i.test(String(leagueInfo.label || ""));
-      if (!LIGHTWEIGHT_REFRESH && isFallbackEvent && isEuropeanClubFixture && Number(homeRecent?.gamesPlayed || 0) < TEAM_FORM_BADGE_WINDOW) {
+      if (!homeSportsDbForm && !LIGHTWEIGHT_REFRESH && isFallbackEvent && isEuropeanClubFixture && Number(homeRecent?.gamesPlayed || 0) < TEAM_FORM_BADGE_WINDOW) {
         homeSportsDbForm = await fetchTheSportsDbTeamForm({
           teamName: homeName,
           cache: store.sportsDbTeamFormCache,
@@ -11200,9 +11218,8 @@ async function main() {
           now,
           requestState: sportsDbTeamFormFetchState,
         });
-        homeRecent = mergeTeamFormWithExternalRecent(homeRecent, homeSportsDbForm, "thesportsdb-recent-results");
       }
-      if (!LIGHTWEIGHT_REFRESH && isFallbackEvent && isEuropeanClubFixture && Number(awayRecent?.gamesPlayed || 0) < TEAM_FORM_BADGE_WINDOW) {
+      if (!awaySportsDbForm && !LIGHTWEIGHT_REFRESH && isFallbackEvent && isEuropeanClubFixture && Number(awayRecent?.gamesPlayed || 0) < TEAM_FORM_BADGE_WINDOW) {
         awaySportsDbForm = await fetchTheSportsDbTeamForm({
           teamName: awayName,
           cache: store.sportsDbTeamFormCache,
@@ -11210,8 +11227,9 @@ async function main() {
           now,
           requestState: sportsDbTeamFormFetchState,
         });
-        awayRecent = mergeTeamFormWithExternalRecent(awayRecent, awaySportsDbForm, "thesportsdb-recent-results");
       }
+      if (homeSportsDbForm) homeRecent = mergeTeamFormWithExternalRecent(homeRecent, homeSportsDbForm, "thesportsdb-recent-results");
+      if (awaySportsDbForm) awayRecent = mergeTeamFormWithExternalRecent(awayRecent, awaySportsDbForm, "thesportsdb-recent-results");
       if (homeId && (homeRecent?.recentMatches || []).length > (store.teamStats[homeId]?.recentMatches || []).length) {
         store.teamStats[homeId] = homeRecent;
         store.teamStatsUpdated[homeId] = now;
