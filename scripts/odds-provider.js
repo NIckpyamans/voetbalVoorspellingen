@@ -4,6 +4,10 @@ const responseCache = new Map();
 // Een volledige worker kan meerdere minuten duren; dezelfde sportmarkt hoeft binnen die run maar eenmaal opgehaald te worden.
 const RESPONSE_CACHE_TTL_MS = 30 * 60 * 1000;
 const DEFAULT_FETCH_TIMEOUT_MS = Math.max(1000, Number(process.env.ODDS_PROVIDER_FETCH_TIMEOUT_MS || 12000));
+// The Odds API credits are shared by all scheduled jobs. Keep a small reserve
+// for the pre-kickoff and closing snapshots that are most valuable for CLV.
+const ODDS_API_MIN_REMAINING = Math.max(0, Number(process.env.ODDS_API_MIN_REMAINING || 50));
+let oddsApiRemaining = null;
 
 function normalizeName(value) {
   return String(value || "")
@@ -397,6 +401,18 @@ export async function fetchOddsAtPrediction(match, options = {}) {
         ? inferOddsApiSportKeys(match)
         : [inferOddsApiSportKey(match)];
       for (const sport of sports) {
+        const isTheOddsApi = /the-odds-api\.com/i.test(configTemplate);
+        if (isTheOddsApi && oddsApiRemaining !== null && oddsApiRemaining <= ODDS_API_MIN_REMAINING) {
+          attempts.push({ provider: configProvider, sport, status: "quota_reserve", remaining: oddsApiRemaining });
+          lastResult = {
+            status: "quota_reserve",
+            oddsAtPrediction: null,
+            provider: configProvider,
+            reason: `The Odds API reserve van ${ODDS_API_MIN_REMAINING} credits is bereikt; alleen kritieke captures blijven toegestaan.`,
+            requestMeta: { attempts, attemptedSports: sports, attemptedProviders: configs.map((item) => item.provider) },
+          };
+          break;
+        }
         const sportmonksFixtureId = match?.sportmonksFixtureId ? String(match.sportmonksFixtureId).trim() : "";
         if (/\{sportmonksFixtureId\}/i.test(configTemplate) && !/^\d+$/.test(sportmonksFixtureId)) {
           attempts.push({ provider: configProvider, sport, status: "fixture_id_missing" });
@@ -448,6 +464,7 @@ export async function fetchOddsAtPrediction(match, options = {}) {
           reset: response.headers.get("x-ratelimit-reset") || response.headers.get("x-requestcounter-reset"),
           retryAfter: response.headers.get("retry-after"),
         };
+        if (isTheOddsApi && Number.isFinite(Number(quota.remaining))) oddsApiRemaining = Number(quota.remaining);
       }
       if (response && !response.ok) {
         attempts.push({ provider: configProvider, sport, status: "provider_error", statusCode: response.status });

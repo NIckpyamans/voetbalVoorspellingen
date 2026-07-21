@@ -39,6 +39,7 @@ jobs:
           CLOUDFLARE_R2_PREFIX: ${{ secrets.CLOUDFLARE_R2_PREFIX }}
           CRITICAL_ODDS_HOURS_AHEAD: 36
           CRITICAL_ODDS_MATCH_LIMIT: 40
+          ODDS_API_MIN_REMAINING: 50
       - run: node scripts/ci-neon-safe.js -- npm run db:odds:prematch:collect
         env:
           DATABASE_URL: ${{ secrets.DATABASE_URL }}
@@ -61,6 +62,7 @@ jobs:
           ODDS_API_DAYS_AHEAD: 28
           ODDS_API_CLOSING_LIMIT: 240
           ODDS_API_CLOSING_LOOKAHEAD_MINUTES: 240
+          ODDS_API_MIN_REMAINING: 50
       - run: node scripts/ci-neon-safe.js -- npm run db:odds:leakage
         env:
           DATABASE_URL: ${{ secrets.DATABASE_URL }}
