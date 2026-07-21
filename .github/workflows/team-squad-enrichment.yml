@@ -1,0 +1,48 @@
+name: Upcoming team squad enrichment
+
+on:
+  schedule:
+    - cron: "40 */6 * * *"
+  workflow_dispatch:
+
+concurrency:
+  group: football-squad-enrichment
+  cancel-in-progress: false
+
+permissions:
+  contents: write
+
+jobs:
+  enrich-squads:
+    runs-on: ubuntu-latest
+    timeout-minutes: 8
+    env:
+      DATA_BRANCH: codex/step3b-layout
+      SQUAD_ENRICHMENT_DAYS_AHEAD: "8"
+      SQUAD_ENRICHMENT_MAX_TEAMS: "6"
+      SQUAD_ENRICHMENT_REQUEST_TIMEOUT_MS: "6000"
+    steps:
+      - uses: actions/checkout@v5
+        with:
+          fetch-depth: 0
+          token: ${{ secrets.GITHUB_TOKEN }}
+          ref: ${{ env.DATA_BRANCH }}
+      - uses: actions/setup-node@v5
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+      - run: npm run enrich:squads:upcoming
+      - name: Commit squad cache
+        run: |
+          git config user.name github-actions
+          git config user.email github-actions@github.com
+          git add data/team-squad-cache.json monitor/upcoming-team-squad-enrichment.json
+          git diff --staged --quiet && exit 0
+          git commit -m "refresh upcoming team squad cache [skip vercel]"
+          for attempt in 1 2 3; do
+            git pull --rebase --autostash origin "$DATA_BRANCH"
+            if git push origin HEAD:"$DATA_BRANCH"; then exit 0; fi
+            sleep $((attempt * 5))
+          done
+          exit 1

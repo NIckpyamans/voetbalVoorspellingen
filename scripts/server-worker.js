@@ -81,6 +81,7 @@ const ROOT = process.cwd();
 const DATA_FILE = path.resolve(process.cwd(), "server_data.json");
 const SPLIT_DATA_DIR = path.resolve(process.cwd(), "data");
 const TEAM_FORM_CACHE_FILE = path.join(SPLIT_DATA_DIR, "team-form-cache.json");
+const TEAM_SQUAD_CACHE_FILE = path.join(SPLIT_DATA_DIR, "team-squad-cache.json");
 const COMPETITION_ARCHIVE_DIR = path.join(SPLIT_DATA_DIR, "competitions");
 const TRAINING_SNAPSHOT_FILE = path.resolve(process.cwd(), "training", "training-snapshot.json");
 const ODDS_FETCH_ENABLED = process.env.ODDS_FETCH_ENABLED !== "false";
@@ -3151,13 +3152,8 @@ async function fetchOpenSquadProfile(teamName, existing = null) {
   if (wikipedia) profiles.push(wikipedia);
   let merged = mergeSquadProfiles(profiles);
 
-  if (shouldAskFallbackSquadSources(merged)) {
-    const forza = await fetchForzaSquadProfile(teamName, existing || merged);
-    if (forza) {
-      profiles.push(forza);
-      merged = mergeSquadProfiles(profiles);
-    }
-  }
+  // Forza Football is a manual verification source. It has no reusable public
+  // data API, so automated roster scraping must not become model input.
 
   if (shouldAskFallbackSquadSources(merged)) {
     const footballDataOrg = await fetchFootballDataOrgSquadProfile(teamName, existing || merged);
@@ -10739,6 +10735,21 @@ async function main() {
     }
   } catch (error) {
     console.warn(`[worker] team-form-cache kon niet worden gelezen: ${error?.message || error}`);
+  }
+  // The roster job is separate from fixture discovery. Its cache is merged here
+  // so a lightweight calendar run can use new roster data without provider calls.
+  try {
+    const persistedSquadCache = fs.existsSync(TEAM_SQUAD_CACHE_FILE)
+      ? JSON.parse(fs.readFileSync(TEAM_SQUAD_CACHE_FILE, "utf8"))
+      : null;
+    if (persistedSquadCache?.teams && typeof persistedSquadCache.teams === "object") {
+      store.teamSquads = {
+        ...(store.teamSquads || {}),
+        ...(persistedSquadCache.teams || {}),
+      };
+    }
+  } catch (error) {
+    console.warn(`[worker] team-squad-cache kon niet worden gelezen: ${error?.message || error}`);
   }
   for (const date of dates) store.knockoutOverview[date] = [];
   rebuildReviewsAndLearning(store);

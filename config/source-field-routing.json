@@ -22,6 +22,16 @@
       "backups": ["football-data.org squad", "derived transfer watch"],
       "notes": "Availability wordt vooral vlak voor kickoff opnieuw opgehaald. Forza Football kan handmatig controleren, maar wordt niet gescrapet."
     },
+    "team_rosters": {
+      "primary": ["football-data.org squad met veilige team-ID mapping"],
+      "backups": ["TheSportsDB officiële API", "Wikidata", "Wikipedia"],
+      "notes": "De competitiegestuurde rosterjob vult uitsluitend speleridentiteit, positie en selectiecontext. Onbevestigde rosters verlagen de modelzekerheid en overschrijven nooit confirmed lineups."
+    },
+    "player_ratings": {
+      "primary": ["confirmed-lineup provider met expliciete wedstrijdrating", "Sportmonks player statistics indien abonnement dit omvat"],
+      "backups": [],
+      "notes": "Er is geen brede gratis, herbruikbare bron voor professionele pre-match spelersratings. Gratis rosterbronnen leveren geen rating; de app gebruikt dan teamsterkte en bevestigde opstelling, geen verzonnen spelersscore."
+    },
     "h2h": {
       "primary": ["API-Football", "OpenFootball"],
       "backups": ["canonical match history", "football-data.co.uk archive"],
