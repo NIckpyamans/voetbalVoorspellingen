@@ -8,6 +8,10 @@ const ROOT = process.cwd();
 const DAYS_AHEAD = Math.max(1, Number(process.env.FORM_ENRICHMENT_DAYS_AHEAD || 7));
 const MAX_TEAMS = Math.max(1, Number(process.env.FORM_ENRICHMENT_MAX_TEAMS || 20));
 const REQUEST_TIMEOUT_MS = Math.max(1000, Number(process.env.FORM_ENRICHMENT_REQUEST_TIMEOUT_MS || 3000));
+const TEAM_TIMEOUT_MS = Math.max(1000, Number(process.env.FORM_ENRICHMENT_TEAM_TIMEOUT_MS || 7000));
+const RUN_BUDGET_MS = Math.max(10000, Number(process.env.FORM_ENRICHMENT_RUN_BUDGET_MS || 90000));
+const SUCCESS_CACHE_TTL_MS = 12 * 60 * 60 * 1000;
+const UNAVAILABLE_CACHE_TTL_MS = 2 * 60 * 60 * 1000;
 const CACHE_FILE = path.join(ROOT, "data", "team-form-cache.json");
 const REPORT_FILE = path.join(ROOT, "monitor", "upcoming-team-form-enrichment.json");
 
@@ -59,7 +63,20 @@ for (let offset = 0; offset <= DAYS_AHEAD; offset += 1) {
 
 const now = Date.now();
 const requestState = { count: 0, max: MAX_TEAMS, lastAt: 0, blockedUntil: 0 };
-const report = { generatedAt: new Date().toISOString(), daysAhead: DAYS_AHEAD, candidates: teamNames.size, checked: 0, enriched: 0, unavailable: 0, skippedFresh: 0, samples: [] };
+const report = {
+  generatedAt: new Date().toISOString(),
+  daysAhead: DAYS_AHEAD,
+  candidates: teamNames.size,
+  checked: 0,
+  enriched: 0,
+  unavailable: 0,
+  timedOut: 0,
+  skippedFresh: 0,
+  runBudgetMs: RUN_BUDGET_MS,
+  teamTimeoutMs: TEAM_TIMEOUT_MS,
+  budgetExceeded: false,
+  samples: [],
+};
 
 async function fetchWithTimeout(url, options = {}) {
   const controller = new AbortController();
@@ -71,32 +88,58 @@ async function fetchWithTimeout(url, options = {}) {
   }
 }
 
+async function fetchTeamProfile(args) {
+  let timer;
+  try {
+    return await Promise.race([
+      fetchTheSportsDbTeamForm(args),
+      new Promise((resolve) => {
+        timer = setTimeout(() => resolve({ timedOut: true }), TEAM_TIMEOUT_MS);
+      }),
+    ]);
+  } finally {
+    clearTimeout(timer);
+  }
+}
+
 const pendingTeams = [...teamNames]
   .sort()
   .filter((teamName) => {
     const existing = cache[normalize(teamName)];
-    if (!existing?.data || now - Number(existing.updatedAt || 0) >= 12 * 60 * 60 * 1000) return true;
+    const cacheTtl = existing?.data ? SUCCESS_CACHE_TTL_MS : UNAVAILABLE_CACHE_TTL_MS;
+    if (!existing?.updatedAt || now - Number(existing.updatedAt) >= cacheTtl) return true;
     report.skippedFresh += 1;
     return false;
   })
   .slice(0, MAX_TEAMS);
 
 for (const teamName of pendingTeams) {
+  if (Date.now() - now >= RUN_BUDGET_MS) {
+    report.budgetExceeded = true;
+    break;
+  }
   const key = normalize(teamName);
   report.checked += 1;
-  const profile = await fetchTheSportsDbTeamForm({
+  const profile = await fetchTeamProfile({
     teamName,
     cache,
     nameVariants: variants,
     now,
     requestState,
     fetchImpl: fetchWithTimeout,
+    maxSearchVariants: 1,
   });
   if (profile?.recentMatches?.length) {
     report.enriched += 1;
     report.samples.push({ team: teamName, matches: profile.recentMatches.length, providerTeam: profile.providerTeamName });
   } else {
     report.unavailable += 1;
+    if (profile?.timedOut) report.timedOut += 1;
+    cache[key] = {
+      updatedAt: new Date().toISOString(),
+      unavailable: true,
+      reason: profile?.timedOut ? "team_timeout" : "not_found",
+    };
   }
 }
 

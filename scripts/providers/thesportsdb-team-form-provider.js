@@ -95,6 +95,7 @@ export async function fetchTheSportsDbTeamForm({
   baseUrl = DEFAULT_BASE_URL,
   requestState = null,
   minDelayMs = 250,
+  maxSearchVariants = 4,
 }) {
   const key = normalized(teamName);
   if (!key || typeof fetchImpl !== "function") return null;
@@ -108,7 +109,8 @@ export async function fetchTheSportsDbTeamForm({
       requestState.count = Number(requestState.count || 0) + 1;
       requestState.lastAt = Date.now();
     }
-    const queryVariants = [...new Set([teamName, ...(nameVariants?.(teamName) || [])].map(String).filter(Boolean))].slice(0, 4);
+    const queryVariants = [...new Set([teamName, ...(nameVariants?.(teamName) || [])].map(String).filter(Boolean))]
+      .slice(0, Math.max(1, Number(maxSearchVariants) || 1));
     let team = null;
     for (const query of queryVariants) {
       const search = await fetchImpl(`${baseUrl}/searchteams.php?t=${encodeURIComponent(query)}`, { headers: { Accept: "application/json" } });
