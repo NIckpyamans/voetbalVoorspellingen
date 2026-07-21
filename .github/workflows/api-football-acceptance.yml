@@ -1,0 +1,46 @@
+name: API-Football Pro Acceptance
+
+on:
+  workflow_dispatch:
+    inputs:
+      strict:
+        description: "Laat de run falen wanneer de dekkingsdoelen niet gehaald worden"
+        required: false
+        default: "true"
+
+permissions:
+  contents: read
+
+jobs:
+  verify-pro-coverage:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    env:
+      API_KEY_API_FOOTBALL: ${{ secrets.API_KEY_API_FOOTBALL }}
+      API_FOOTBALL_KEY: ${{ secrets.API_FOOTBALL_KEY }}
+      APISPORTS_KEY: ${{ secrets.APISPORTS_KEY }}
+      API_FOOTBALL_BASE_URL: ${{ vars.API_FOOTBALL_BASE_URL }}
+      API_FOOTBALL_ACCEPTANCE_DAYS_AHEAD: "8"
+      API_FOOTBALL_ACCEPTANCE_LIMIT: "80"
+      API_FOOTBALL_QUALIFIER_TARGET: "0.80"
+      API_FOOTBALL_FRIENDLY_TARGET: "0.60"
+      API_FOOTBALL_ACCEPTANCE_STRICT: ${{ inputs.strict || 'true' }}
+    steps:
+      - uses: actions/checkout@v5
+        with:
+          ref: codex/step3b-layout
+      - uses: actions/setup-node@v5
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+      - name: Verify UEFA qualifier and friendly coverage
+        run: npm run provider:api-football:acceptance
+      - name: Upload acceptance report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: api-football-provider-acceptance
+          path: monitor/api-football-provider-acceptance.json
+          if-no-files-found: ignore
+          retention-days: 30
