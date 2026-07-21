@@ -14,6 +14,10 @@ on:
   schedule:
     - cron: "41 3 * * 2"
 
+concurrency:
+  group: sportmonks-catalog-sync
+  cancel-in-progress: false
+
 permissions:
   contents: write
 
@@ -41,12 +45,15 @@ jobs:
           cache: npm
       - run: npm ci
       - name: Sync Sportmonks catalog to Neon
-        run: npm run db:sportmonks:sync-catalog
+        # Een 402 is een tijdelijke Neon-quota-status, geen corrupte catalogus.
+        # De wrapper is extra bescherming naast de preflight in het sync-script.
+        run: node scripts/ci-neon-safe.js -- npm run db:sportmonks:sync-catalog
       - name: Commit Sportmonks monitor report
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
           git add monitor/sportmonks-catalog-sync.json
+          git add monitor/ci-neon-soft-skips.json 2>/dev/null || true
           git diff --cached --quiet && exit 0
           git commit -m "update sportmonks catalog sync report [skip vercel]"
           git pull --rebase origin "$DATA_BRANCH"

@@ -27,6 +27,43 @@ const perPage = Math.min(100, Math.max(1, Number(process.env.SPORTMONKS_SYNC_PER
 const timeoutMs = Math.max(1000, Number(process.env.SPORTMONKS_SYNC_TIMEOUT_MS || 12000));
 const reportPath = path.join(root, "monitor", "sportmonks-catalog-sync.json");
 
+function isNeonQuotaError(error) {
+  const message = String(error?.message || error || "");
+  return /HTTP status 402|exceeded the data transfer quota|NeonDbError.*402/i.test(message);
+}
+
+function writeQuotaSkipReport(error) {
+  const report = {
+    ok: true,
+    status: "skipped_neon_quota",
+    generatedAt: new Date().toISOString(),
+    apiLimits: {
+      maxLeagues,
+      maxSeasonTeamFetches,
+      perPage,
+    },
+    reason: "Neon data-transferquota is bereikt; Sportmonks is niet aangeroepen en de bestaande catalogus blijft actief.",
+    retry: "De volgende geplande run probeert opnieuw zodra Neon weer schrijfbaar is.",
+    error: String(error?.message || error || "Neon quota exceeded").slice(0, 500),
+    durationMs: Date.now() - startedAt,
+  };
+  fs.mkdirSync(path.dirname(reportPath), { recursive: true });
+  fs.writeFileSync(reportPath, `${JSON.stringify(report, null, 2)}\n`);
+  console.warn(`[sportmonks-catalog-sync] ${report.reason}`);
+}
+
+// Stop voor de eerste provider-call wanneer Neon tijdelijk geen writes accepteert.
+// Dit voorkomt verbruik van Sportmonks-quota en houdt de bestaande catalogus intact.
+try {
+  await sql.query("select 1 as catalog_sync_preflight");
+} catch (error) {
+  if (isNeonQuotaError(error)) {
+    writeQuotaSkipReport(error);
+    process.exit(0);
+  }
+  throw error;
+}
+
 function digest(value, size = 24) {
   return crypto.createHash("sha1").update(String(value || "")).digest("hex").slice(0, size);
 }
