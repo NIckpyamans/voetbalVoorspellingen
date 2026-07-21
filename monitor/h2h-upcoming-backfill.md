@@ -1,9 +1,9 @@
 # Upcoming H2H Backfill
 
-Laatst bijgewerkt: 2026-07-20T07:50:00.038Z
-Gecontroleerd: 24
+Laatst bijgewerkt: 2026-07-21T11:17:15.047Z
+Gecontroleerd: 32
 Gevuld: 0
-Geen directe H2H: 24
+Geen directe H2H: 32
 Errors: 0
 
 ## Aanbeveling
@@ -12,23 +12,23 @@ Geen directe H2H gevonden voor de gecontroleerde wedstrijden. Breid team-ID mapp
 ## Gevuld
 
 ## Geen Directe H2H
-- 2026-07-22: Cádiz - Leicester City (not_found)
+- 2026-07-21: Ararat-Armenia - Shamrock Rovers (not_found)
+- 2026-07-21: Iberia 1999 - Slovan Bratislava (not_found)
+- 2026-07-21: IFK Göteborg - FCI Levadia (not_found)
+- 2026-07-21: Floriana - Drita (not_found)
+- 2026-07-21: Mjallby AIF - Lincoln Red Imps (not_found)
+- 2026-07-21: Sabah - KuPS (not_found)
+- 2026-07-21: AGF - Lech Poznan (not_found)
+- 2026-07-21: Thun - Dinamo Zagreb (not_found)
+- 2026-07-21: Fenerbahce - Gornik Zabrze (not_found)
+- 2026-07-21: Sturm Graz - Heart of Midlothian (not_found)
+- 2026-07-21: KI Klaksvik - Kauno Zalgiris (not_found)
+- 2026-07-21: Vikingur Reykjavik - Hapoel Be'er Sheva (not_found)
+- 2026-07-21: Larne - Crvena zvezda (not_found)
+- 2026-07-21: Atert Bissen - Gyori ETO (not_found)
+- 2026-07-21: EVV - MVV Maastricht (not_found)
+- 2026-07-21: Pau FC - RCD Espanyol (not_found)
+- 2026-07-21: Gillingham - Millwall (not_found)
+- 2026-07-21: Aldershot Town - Oxford United (not_found)
+- 2026-07-21: Walsall - Aston Villa (not_found)
 - 2026-07-22: Tottenham Hotspur - Milton Keynes Dons (not_found)
-- 2026-07-24: Rosenborg - Manchester United (not_found)
-- 2026-07-24: Galatasaray - Monza (not_found)
-- 2026-07-25: Fortuna Düsseldorf - Borussia Dortmund (not_found)
-- 2026-07-25: SV Wehen Wiesbaden - Bayern Munich (not_found)
-- 2026-07-25: Bromley - Crystal Palace (not_found)
-- 2026-07-25: Celtic - AC Milan (not_found)
-- 2026-07-25: PSV Eindhoven - Villarreal (not_found)
-- 2026-07-25: Standard Liege - Juventus (not_found)
-- 2026-07-26: Liverpool - Sunderland (not_found)
-- 2026-07-26: Wrexham - Leeds United (not_found)
-- 2026-07-26: Auckland FC - Tottenham Hotspur (not_found)
-- 2026-07-26: Ajax Amsterdam - Burnley (not_found)
-- 2026-07-26: Karlsruher SC - Internazionale (not_found)
-- 2026-07-26: AS Roma - AS Cannes (not_found)
-- 2026-07-27: Galatasaray - Venezia (not_found)
-- 2026-07-28: PSV Eindhoven - FC Eindhoven (not_found)
-- 2026-07-29: Cerezo Osaka - Borussia Dortmund (not_found)
-- 2026-07-29: Atlético Madrid - Getafe (not_found)
