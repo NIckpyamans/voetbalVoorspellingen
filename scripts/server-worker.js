@@ -10693,7 +10693,13 @@ async function main() {
   purgeExcludedContent(store);
   await repairStoredLogos(store);
   repairStoredPredictionScoreSelections(store);
-  compactStore(store, today, now);
+  // A lightweight calendar run owns only its requested date window. Retaining
+  // the rest prevents a short week-ahead scan from deleting later fixtures.
+  if (LIGHTWEIGHT_REFRESH) {
+    console.log("[worker] lichte kalenderrefresh: behoud bestaande toekomstige planning buiten datumvenster");
+  } else {
+    compactStore(store, today, now);
+  }
   for (const date of dates) store.knockoutOverview[date] = [];
   rebuildReviewsAndLearning(store);
 
