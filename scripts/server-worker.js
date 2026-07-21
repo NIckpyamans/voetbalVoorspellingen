@@ -11926,7 +11926,8 @@ async function main() {
   );
   writeSplitDataFiles(store, {
     splitDataDir: SPLIT_DATA_DIR,
-    writeCompetitionArchiveFiles,
+    preserveExistingDayFiles: LIGHTWEIGHT_REFRESH,
+    writeCompetitionArchiveFiles: LIGHTWEIGHT_REFRESH ? null : writeCompetitionArchiveFiles,
   });
   fs.writeFileSync(DATA_FILE, JSON.stringify(store));
   try {

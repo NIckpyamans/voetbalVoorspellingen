@@ -133,14 +133,24 @@ export function writeSplitDataFiles(store, options = {}) {
   const splitDataDir = options.splitDataDir || path.resolve(process.cwd(), "data");
   const daysDir = path.join(splitDataDir, "days");
   fs.mkdirSync(daysDir, { recursive: true });
+  const preserveExistingDayFiles = options.preserveExistingDayFiles === true;
+  const existingDateKeys = fs.existsSync(daysDir)
+    ? fs.readdirSync(daysDir)
+        .filter((fileName) => DAY_FILE_PATTERN.test(fileName))
+        .map((fileName) => fileName.slice(0, -5))
+    : [];
 
   const populatedDateKeys = Object.keys(store.matches || {}).filter(
     (dateKey) => (store.matches?.[dateKey] || []).length > 0 || (store.predictions?.[dateKey] || []).length > 0
   );
-  const retainedDateKeys = retainedStaticDateKeys(populatedDateKeys, options.retention);
-  pruneStaticDayFiles(daysDir, retainedDateKeys);
+  const retainedDateKeys = retainedStaticDateKeys(
+    preserveExistingDayFiles ? [...new Set([...existingDateKeys, ...populatedDateKeys])] : populatedDateKeys,
+    options.retention
+  );
+  if (!preserveExistingDayFiles) pruneStaticDayFiles(daysDir, retainedDateKeys);
 
   for (const dateKey of retainedDateKeys) {
+    if (preserveExistingDayFiles && !Object.prototype.hasOwnProperty.call(store.matches || {}, dateKey)) continue;
     const matches = store.matches?.[dateKey] || [];
     writeJsonFile(path.join(daysDir, `${dateKey}.json`), {
       date: dateKey,
@@ -153,7 +163,9 @@ export function writeSplitDataFiles(store, options = {}) {
     });
   }
 
-  writeJsonFile(path.join(splitDataDir, "meta.json"), buildSplitMeta(store));
+  const meta = buildSplitMeta(store);
+  if (preserveExistingDayFiles) meta.dates = retainedDateKeys.sort();
+  writeJsonFile(path.join(splitDataDir, "meta.json"), meta);
   writeJsonFile(path.join(splitDataDir, "standings.json"), {
     standings: store.standings || {},
     knockoutOverview: store.knockoutOverview || {},
