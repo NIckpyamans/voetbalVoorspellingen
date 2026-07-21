@@ -1,0 +1,54 @@
+name: Week ahead fixture calendar
+
+on:
+  schedule:
+    - cron: "7 */4 * * *"
+  workflow_dispatch:
+
+concurrency:
+  group: football-data-refresh
+  cancel-in-progress: false
+
+permissions:
+  contents: write
+
+env:
+  TZ: Europe/Amsterdam
+  FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: "true"
+  DATA_BRANCH: codex/step3b-layout
+  FOOTYAI_DATE_WINDOW: today,+1,+2,+3,+4,+5,+6,+7
+  FOOTYAI_LIGHTWEIGHT_REFRESH: "true"
+  API_FOOTBALL_H2H_ENABLED: "false"
+  ODDS_FETCH_ENABLED: "false"
+
+jobs:
+  refresh-calendar:
+    runs-on: ubuntu-latest
+    timeout-minutes: 12
+    steps:
+      - uses: actions/checkout@v5
+        with:
+          fetch-depth: 0
+          token: ${{ secrets.GITHUB_TOKEN }}
+          ref: ${{ env.DATA_BRANCH }}
+      - uses: actions/setup-node@v5
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+      - name: Discover today and the next seven days
+        timeout-minutes: 9
+        run: node scripts/server-worker.js
+      - name: Commit calendar changes
+        run: |
+          git config user.name github-actions
+          git config user.email github-actions@github.com
+          git add data training monitor
+          git diff --staged --quiet && echo "geen kalenderwijzigingen" && exit 0
+          git commit -m "refresh week vooruit kalender [skip vercel]"
+          for attempt in 1 2 3; do
+            git pull --rebase --autostash origin "$DATA_BRANCH"
+            if git push origin HEAD:"$DATA_BRANCH"; then exit 0; fi
+            sleep $((attempt * 5))
+          done
+          exit 1

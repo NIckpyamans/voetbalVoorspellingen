@@ -83,6 +83,9 @@ const SPLIT_DATA_DIR = path.resolve(process.cwd(), "data");
 const COMPETITION_ARCHIVE_DIR = path.join(SPLIT_DATA_DIR, "competitions");
 const TRAINING_SNAPSHOT_FILE = path.resolve(process.cwd(), "training", "training-snapshot.json");
 const ODDS_FETCH_ENABLED = process.env.ODDS_FETCH_ENABLED !== "false";
+// Calendar refreshes must finish even when a provider is slow. They publish
+// fixtures first; the full worker enriches lineups, H2H, odds and form later.
+const LIGHTWEIGHT_REFRESH = process.env.FOOTYAI_LIGHTWEIGHT_REFRESH === "true";
 
 loadLocalEnv(process.cwd());
 
@@ -10838,8 +10841,8 @@ async function main() {
         event.uniqueTournament?.id || event.tournament?.uniqueTournament?.id || event.tournament?.id || null;
       const seasonId = event.season?.id || null;
 
-      if (!friendliesDiscoveryMode && homeId) requiredTeamIds.add(homeId);
-      if (!friendliesDiscoveryMode && awayId) requiredTeamIds.add(awayId);
+      if (!friendliesDiscoveryMode && !LIGHTWEIGHT_REFRESH && homeId) requiredTeamIds.add(homeId);
+      if (!friendliesDiscoveryMode && !LIGHTWEIGHT_REFRESH && awayId) requiredTeamIds.add(awayId);
       if (homeId && tournamentId && seasonId) {
         teamTournamentMap.set(homeId, {
           tournamentId,
@@ -10872,7 +10875,9 @@ async function main() {
         .filter(Boolean)
     ),
   ];
-  const activeLeagueLabels = [
+  const activeLeagueLabels = LIGHTWEIGHT_REFRESH
+    ? []
+    : [
     ...new Set([
       ...allActiveLeagueLabels.filter((label) => MARKET_LEAGUE_CODES[label]),
       ...TEAM_FORM_HISTORY_LEAGUES,
@@ -10904,7 +10909,7 @@ async function main() {
     }
   }
 
-  for (const leagueLabel of allActiveLeagueLabels) {
+  for (const leagueLabel of LIGHTWEIGHT_REFRESH ? [] : allActiveLeagueLabels) {
     const existingOpenFootballProfile = store.openfootballProfiles[leagueLabel] || null;
     const missingOpenFootballTeamForm =
       existingOpenFootballProfile?.h2hPairs &&
@@ -11018,7 +11023,7 @@ async function main() {
   }
 
   const standingsByTournament = {};
-  for (const [key, info] of tournamentsMap.entries()) {
+  for (const [key, info] of (LIGHTWEIGHT_REFRESH ? [] : tournamentsMap.entries())) {
     if (!isStandingLeagueLabel(info.label)) continue;
     const cached = store.standings[key];
     const cachedIsOverlay = String(cached?.source || "").includes("live-match-overlay");
@@ -11036,7 +11041,7 @@ async function main() {
     }
   }
 
-  for (const leagueLabel of allActiveLeagueLabels.filter(isStandingLeagueLabel)) {
+  for (const leagueLabel of (LIGHTWEIGHT_REFRESH ? [] : allActiveLeagueLabels.filter(isStandingLeagueLabel))) {
     const labelKey = `label:${leagueLabel}`;
     const cached = store.standings[labelKey];
     const cachedIsOverlay = String(cached?.source || "").includes("live-match-overlay");
@@ -11090,7 +11095,7 @@ async function main() {
       getTeam(store.teams, awayId, awayName);
 
       let eventDetails = isFallbackEvent ? null : store.eventCache?.[event.id] || null;
-      if (!isFallbackEvent && (!eventDetails || now - Number(store.eventCacheUpdated?.[event.id] || 0) > EVENT_TTL)) {
+      if (!LIGHTWEIGHT_REFRESH && !isFallbackEvent && (!eventDetails || now - Number(store.eventCacheUpdated?.[event.id] || 0) > EVENT_TTL)) {
         eventDetails = await fetchEventDetails(event.id);
         if (eventDetails) {
           store.eventCache[event.id] = eventDetails;
@@ -11099,12 +11104,12 @@ async function main() {
         await sleep(60);
       }
 
-      let lineupSummary = isFallbackEvent ? null : await fetchLineupSummary(event.id);
+      let lineupSummary = LIGHTWEIGHT_REFRESH || isFallbackEvent ? null : await fetchLineupSummary(event.id);
       if (lineupSummary) lineupSummary = { ...lineupSummary, source: "sofascore lineups" };
 
       const h2hKey = `${event.id}_${homeId}_${awayId}`;
       let h2h = isFallbackEvent ? null : store.h2hCache?.[h2hKey]?.data || null;
-      if (!isFallbackEvent && (!h2h || now - Number(store.h2hCache?.[h2hKey]?.updated || 0) > H2H_TTL)) {
+      if (!LIGHTWEIGHT_REFRESH && !isFallbackEvent && (!h2h || now - Number(store.h2hCache?.[h2hKey]?.updated || 0) > H2H_TTL)) {
         h2h = await fetchH2H(event.id, homeId, awayId, tournamentId, seasonId);
         store.h2hCache[h2hKey] = { updated: now, data: h2h };
         await sleep(60);
@@ -11125,15 +11130,17 @@ async function main() {
         ...Object.values(store.marketProfiles || {}),
         ...Object.values(store.openfootballProfiles || {}),
       ];
-      const nationalH2HProfile = await fetchNationalTeamH2HProfile(
-        store,
-        homeName,
-        awayName,
-        homeId,
-        awayId,
-        date,
-        leagueInfo.label
-      );
+      const nationalH2HProfile = LIGHTWEIGHT_REFRESH
+        ? null
+        : await fetchNationalTeamH2HProfile(
+            store,
+            homeName,
+            awayName,
+            homeId,
+            awayId,
+            date,
+            leagueInfo.label
+          );
       let homeRecent = mergeTeamFormWithHistorical(
         store.teamStats[homeId] || null,
         leagueMarketProfile,
@@ -11157,7 +11164,7 @@ async function main() {
       const isEuropeanClubFixture =
         leagueInfo.type === "cup" &&
         /^Europe - (Champions League|Europa League|Conference League)$/i.test(String(leagueInfo.label || ""));
-      if (isFallbackEvent && isEuropeanClubFixture && Number(homeRecent?.gamesPlayed || 0) < TEAM_FORM_BADGE_WINDOW) {
+      if (!LIGHTWEIGHT_REFRESH && isFallbackEvent && isEuropeanClubFixture && Number(homeRecent?.gamesPlayed || 0) < TEAM_FORM_BADGE_WINDOW) {
         homeSportsDbForm = await fetchTheSportsDbTeamForm({
           teamName: homeName,
           cache: store.sportsDbTeamFormCache,
@@ -11167,7 +11174,7 @@ async function main() {
         });
         homeRecent = mergeTeamFormWithExternalRecent(homeRecent, homeSportsDbForm, "thesportsdb-recent-results");
       }
-      if (isFallbackEvent && isEuropeanClubFixture && Number(awayRecent?.gamesPlayed || 0) < TEAM_FORM_BADGE_WINDOW) {
+      if (!LIGHTWEIGHT_REFRESH && isFallbackEvent && isEuropeanClubFixture && Number(awayRecent?.gamesPlayed || 0) < TEAM_FORM_BADGE_WINDOW) {
         awaySportsDbForm = await fetchTheSportsDbTeamForm({
           teamName: awayName,
           cache: store.sportsDbTeamFormCache,
@@ -11205,7 +11212,7 @@ async function main() {
         buildPossibleNames
       );
       const h2hFallbackLegs = [fallbackPreviousLeg, aggregatePreviousLeg, sportsDbDirectFixture].filter(Boolean);
-      const apiFootballProfile = await fetchApiFootballH2HProfile({
+      const apiFootballProfile = LIGHTWEIGHT_REFRESH ? null : await fetchApiFootballH2HProfile({
         store,
         homeName,
         awayName,
@@ -11215,7 +11222,7 @@ async function main() {
         awayProviderIds: getKnownProviderIds(awayName),
         leagueLabel: leagueInfo.label,
       });
-      const espnProfile = apiFootballProfile?.results?.length ? null : await fetchEspnH2HProfile({
+      const espnProfile = LIGHTWEIGHT_REFRESH || apiFootballProfile?.results?.length ? null : await fetchEspnH2HProfile({
         store,
         homeName,
         awayName,
