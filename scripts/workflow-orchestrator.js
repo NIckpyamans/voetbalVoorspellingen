@@ -13,6 +13,10 @@ const hour = Number(new Intl.DateTimeFormat("en-GB", {
   hour: "2-digit",
   hour12: false,
 }).format(now));
+const minute = Number(new Intl.DateTimeFormat("en-GB", {
+  timeZone: "Europe/Amsterdam",
+  minute: "2-digit",
+}).format(now));
 const day = Number(new Intl.DateTimeFormat("en-GB", {
   timeZone: "Europe/Amsterdam",
   day: "2-digit",
@@ -90,6 +94,9 @@ function plannedWorkflows() {
   if (closingOddsWindow.length || [8, 11, 14, 17, 20].includes(hour)) workflows.push("free-prematch-odds.yml");
 
   if (mode !== "minimal") {
+    // One full refresh after the European evening window captures final xG/shots,
+    // referee assignments and incidents that lightweight live refreshes omit.
+    if (hour === 1 && minute < 30) workflows.push("worker.yml");
     if (hour === 4) workflows.push("nightly-model-maintenance.yml");
     if (hour === 5) workflows.push("data-integrity-maintenance.yml");
     if (hour === 6) workflows.push("api-football-coverage-scout.yml");
@@ -113,6 +120,7 @@ const plan = {
   mode,
   target: target || "auto",
   localHourAmsterdam: hour,
+  localMinuteAmsterdam: minute,
   localDayAmsterdam: day,
   fixtureSignals: {
     upcoming: upcomingFixtures.length,

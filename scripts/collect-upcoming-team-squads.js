@@ -3,6 +3,7 @@
 import fs from "fs";
 import path from "path";
 import { fetchEspnSquad } from "./providers/espn-squad-provider.js";
+import { fetchWikipediaSquad } from "./providers/wikipedia-squad-provider.js";
 
 const ROOT = process.cwd();
 const DAYS_AHEAD = Math.max(1, Number(process.env.SQUAD_ENRICHMENT_DAYS_AHEAD || 8));
@@ -87,7 +88,13 @@ async function fetchJson(url) {
   const controller = new AbortController();
   const timeout = setTimeout(() => controller.abort(), REQUEST_TIMEOUT_MS);
   try {
-    const response = await fetch(url, { headers: { Accept: "application/json" }, signal: controller.signal });
+    const response = await fetch(url, {
+      headers: {
+        Accept: "application/json",
+        "User-Agent": "Voetbal-Ai-tactics/1.0 (personal prediction app; cached public source enrichment)",
+      },
+      signal: controller.signal,
+    });
     if (response.status === 429) {
       throw new ProviderRateLimitError(Number(response.headers.get("retry-after") || 0));
     }
@@ -149,7 +156,7 @@ for (let offset = 0; offset <= DAYS_AHEAD; offset += 1) {
 }
 
 const now = Date.now();
-const report = { generatedAt: new Date().toISOString(), daysAhead: DAYS_AHEAD, candidates: candidates.size, checked: 0, enriched: 0, unavailable: 0, skippedFresh: 0, rateLimited: false, retryAfterSeconds: 0, byProvider: { TheSportsDB: 0, ESPN: 0 }, byCompetition: {}, samples: [] };
+const report = { generatedAt: new Date().toISOString(), daysAhead: DAYS_AHEAD, candidates: candidates.size, checked: 0, enriched: 0, unavailable: 0, skippedFresh: 0, rateLimited: false, retryAfterSeconds: 0, byProvider: { TheSportsDB: 0, ESPN: 0, Wikipedia: 0 }, byCompetition: {}, samples: [] };
 const pending = [...candidates.values()]
   .map((candidate) => {
     const existing = cache[candidate.key] || exportedTeams[candidate.key] || null;
@@ -206,6 +213,10 @@ for (const candidate of pending) {
       }
     }
   }
+  if (!profile) {
+    profile = await fetchWikipediaSquad({ teamName: candidate.teamName, fetchJson });
+    if (profile) provider = "Wikipedia";
+  }
   const competition = [...candidate.leagues][0] || "onbekend";
   report.byCompetition[competition] = report.byCompetition[competition] || { checked: 0, enriched: 0, unavailable: 0 };
   report.byCompetition[competition].checked += 1;
@@ -226,6 +237,7 @@ for (const candidate of pending) {
       ...(candidate.existing?.sourceIds || {}),
       ...(provider === "TheSportsDB" ? { theSportsDb: profile.providerTeamId } : {}),
       ...(provider === "ESPN" ? { espn: profile.providerTeamId, espnLeagueCode: profile.leagueCode } : {}),
+      ...(provider === "Wikipedia" ? { wikipediaTitle: profile.pageTitle } : {}),
     },
     playerCount: players.length,
     players,

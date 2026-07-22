@@ -63,6 +63,8 @@ async function fetchJson(url, headers = {}) {
     const response = await fetch(url, { headers: { Accept: "application/json", ...headers }, signal: controller.signal });
     const payload = await response.json().catch(() => null);
     return { ok: response.ok, status: response.status, payload };
+  } catch (error) {
+    return { ok: false, status: "request_failed", payload: null, error: error?.name || error?.message || "request_failed" };
   } finally {
     clearTimeout(timeout);
   }
@@ -143,7 +145,8 @@ async function fetchSportmonksLineup(sql, match) {
     homeTeam: match.home_team_name,
     awayTeam: match.away_team_name,
   };
-  const resolved = sql ? await resolveSportmonksFixtureId(sql, fixtureInput) : await findSportmonksFixture(fixtureInput);
+  const resolved = await (sql ? resolveSportmonksFixtureId(sql, fixtureInput) : findSportmonksFixture(fixtureInput))
+    .catch((error) => ({ status: "resolver_failed", error: error?.message || String(error) }));
   if (!resolved?.fixtureId) return { status: resolved?.status || "unmapped" };
   // One bounded fixture call supplies confirmed XI, formations and availability context.
   // Player fixture statistics only exist once a match has started, so they are retained when present
