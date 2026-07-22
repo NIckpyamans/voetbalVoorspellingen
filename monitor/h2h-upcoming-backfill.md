@@ -1,9 +1,9 @@
 # Upcoming H2H Backfill
 
-Laatst bijgewerkt: 2026-07-22T03:43:27.479Z
-Gecontroleerd: 32
+Laatst bijgewerkt: 2026-07-22T06:42:08.664Z
+Gecontroleerd: 26
 Gevuld: 0
-Geen directe H2H: 32
+Geen directe H2H: 26
 Errors: 0
 
 ## Aanbeveling
@@ -15,14 +15,6 @@ Geen directe H2H gevonden voor de gecontroleerde wedstrijden. Breid team-ID mapp
 - 2026-07-22: Tottenham Hotspur - Milton Keynes Dons (not_found)
 - 2026-07-22: Cádiz - Leicester City (not_found)
 - 2026-07-22: SL Benfica - Al Nassr (not_found)
-- 2026-07-22: Omonia Nicosia - Kairat (not_found)
-- 2026-07-22: Levski Sofia - Universitatea Craiova (not_found)
-- 2026-07-22: Neftçi - Dinamo Minsk (not_found)
-- 2026-07-22: Bohemians - Ballkani (not_found)
-- 2026-07-23: Qarabağ - CSKA Sofia (not_found)
-- 2026-07-23: Dynamo Kyiv - PAOK (not_found)
-- 2026-07-23: Malisheva - Hibernian (not_found)
-- 2026-07-23: Alashkert - CFR Cluj (not_found)
 - 2026-07-24: Rosenborg - Manchester United (not_found)
 - 2026-07-24: Galatasaray - Monza (not_found)
 - 2026-07-25: Fortuna Düsseldorf - Borussia Dortmund (not_found)
@@ -32,3 +24,11 @@ Geen directe H2H gevonden voor de gecontroleerde wedstrijden. Breid team-ID mapp
 - 2026-07-25: PSV Eindhoven - Villarreal (not_found)
 - 2026-07-25: Standard Liege - Juventus (not_found)
 - 2026-07-26: Liverpool - Sunderland (not_found)
+- 2026-07-26: Wrexham - Leeds United (not_found)
+- 2026-07-26: Auckland FC - Tottenham Hotspur (not_found)
+- 2026-07-26: Ajax Amsterdam - Burnley (not_found)
+- 2026-07-26: Trabzonspor - Eintracht Frankfurt (not_found)
+- 2026-07-26: Karlsruher SC - Internazionale (not_found)
+- 2026-07-26: AS Roma - AS Cannes (not_found)
+- 2026-07-27: Galatasaray - Venezia (not_found)
+- 2026-07-28: Real Madrid - Leganés (not_found)
