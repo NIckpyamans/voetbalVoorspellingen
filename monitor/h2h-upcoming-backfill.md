@@ -1,6 +1,6 @@
 # Upcoming H2H Backfill
 
-Laatst bijgewerkt: 2026-07-22T17:41:11.391Z
+Laatst bijgewerkt: 2026-07-22T21:22:46.118Z
 Gecontroleerd: 32
 Gevuld: 0
 Geen directe H2H: 32
@@ -12,7 +12,6 @@ Geen directe H2H gevonden voor de gecontroleerde wedstrijden. Breid team-ID mapp
 ## Gevuld
 
 ## Geen Directe H2H
-- 2026-07-22: Zeleznicar Pancevo - Braga (not_found)
 - 2026-07-23: Qarabag FK - CSKA Sofia (not_found)
 - 2026-07-23: Dynamo Kyiv - PAOK Salonika (not_found)
 - 2026-07-23: Hammarby IF - Anderlecht (not_found)
@@ -32,3 +31,4 @@ Geen directe H2H gevonden voor de gecontroleerde wedstrijden. Breid team-ID mapp
 - 2026-07-23: HJK Helsinki - Coleraine (not_found)
 - 2026-07-23: Paide Linnameeskond - FC Zire (not_found)
 - 2026-07-23: AEK Larnaca - Beitar Jerusalem (not_found)
+- 2026-07-23: DAC Dunajská Streda - Velez Mostar (not_found)
