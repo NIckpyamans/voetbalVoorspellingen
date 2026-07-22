@@ -19,10 +19,11 @@ const ESPN_TEAMS_FILE = path.join(ROOT, "config", "friendly-team-sources.json");
 const SPORTS_DB_BASE = "https://www.thesportsdb.com/api/v1/json/123";
 
 class ProviderRateLimitError extends Error {
-  constructor(retryAfterSeconds = 0) {
-    super("TheSportsDB rate limit reached");
+  constructor(retryAfterSeconds = 0, provider = "squad provider") {
+    super(`${provider} rate limit reached`);
     this.code = "provider_rate_limited";
     this.retryAfterSeconds = retryAfterSeconds;
+    this.provider = provider;
   }
 }
 
@@ -85,7 +86,7 @@ function mergePlayers(existing, incoming) {
   return [...byName.values()].sort((left, right) => String(left.position).localeCompare(String(right.position)) || left.name.localeCompare(right.name)).slice(0, 60);
 }
 
-async function fetchJson(url) {
+async function fetchJson(url, { ignoreRateLimit = false } = {}) {
   const controller = new AbortController();
   const timeout = setTimeout(() => controller.abort(), REQUEST_TIMEOUT_MS);
   try {
@@ -97,7 +98,8 @@ async function fetchJson(url) {
       signal: controller.signal,
     });
     if (response.status === 429) {
-      throw new ProviderRateLimitError(Number(response.headers.get("retry-after") || 0));
+      if (ignoreRateLimit) return null;
+      throw new ProviderRateLimitError(Number(response.headers.get("retry-after") || 0), new URL(url).hostname);
     }
     return response.ok ? await response.json() : null;
   } catch (error) {
@@ -105,6 +107,20 @@ async function fetchJson(url) {
     return null;
   } finally {
     clearTimeout(timeout);
+  }
+}
+
+let publicRateLimitWaited = false;
+async function fetchPublicJson(url) {
+  try {
+    return await fetchJson(url);
+  } catch (error) {
+    if (error?.code !== "provider_rate_limited") throw error;
+    if (publicRateLimitWaited) return null;
+    publicRateLimitWaited = true;
+    const waitSeconds = Math.max(1, Math.min(45, Number(error.retryAfterSeconds || 5)));
+    await new Promise((resolve) => setTimeout(resolve, waitSeconds * 1000));
+    return fetchJson(url, { ignoreRateLimit: true });
   }
 }
 
@@ -200,10 +216,10 @@ for (const candidate of pending) {
   if (!profile) {
     try {
       profile = await fetchEspnSquad({
-        teamName: candidate.teamName,
-        leagues: [...candidate.leagues],
-        knownTeams: knownEspnTeams,
-        fetchJson,
+      teamName: candidate.teamName,
+      leagues: [...candidate.leagues],
+      knownTeams: knownEspnTeams,
+      fetchJson: (url) => fetchJson(url, { ignoreRateLimit: true }),
       });
       if (profile) provider = "ESPN";
     } catch (error) {
@@ -216,7 +232,7 @@ for (const candidate of pending) {
     }
   }
   if (!profile) {
-    profile = await fetchWikipediaSquad({ teamName: candidate.teamName, fetchJson });
+    profile = await fetchWikipediaSquad({ teamName: candidate.teamName, fetchJson: fetchPublicJson });
     if (profile) provider = "Wikipedia";
   }
   const competition = [...candidate.leagues][0] || "onbekend";
