@@ -1,6 +1,6 @@
 # Upcoming H2H Backfill
 
-Laatst bijgewerkt: 2026-07-22T14:21:09.724Z
+Laatst bijgewerkt: 2026-07-22T17:41:11.391Z
 Gecontroleerd: 32
 Gevuld: 0
 Geen directe H2H: 32
@@ -12,14 +12,6 @@ Geen directe H2H gevonden voor de gecontroleerde wedstrijden. Breid team-ID mapp
 ## Gevuld
 
 ## Geen Directe H2H
-- 2026-07-22: Tottenham Hotspur - Milton Keynes Dons (not_found)
-- 2026-07-22: Cádiz - Leicester City (not_found)
-- 2026-07-22: SL Benfica - Al Nassr (not_found)
-- 2026-07-22: Neftchi Baku - Dinamo Minsk (not_found)
-- 2026-07-22: Bohemians - Ballkani (not_found)
-- 2026-07-22: Istanbul Basaksehir - FC Inter Turku (not_found)
-- 2026-07-22: Vardar - Riga FC (not_found)
-- 2026-07-22: FC Spartak Trnava - CSKA 1948 Sofia (not_found)
 - 2026-07-22: Zeleznicar Pancevo - Braga (not_found)
 - 2026-07-23: Qarabag FK - CSKA Sofia (not_found)
 - 2026-07-23: Dynamo Kyiv - PAOK Salonika (not_found)
@@ -32,3 +24,11 @@ Geen directe H2H gevonden voor de gecontroleerde wedstrijden. Breid team-ID mapp
 - 2026-07-23: Hajduk Split - Pafos (not_found)
 - 2026-07-23: Malisheva - Hibernian (not_found)
 - 2026-07-23: Alashkert FC - CFR Cluj-Napoca (not_found)
+- 2026-07-23: FK Liepaja - Austria Wien (not_found)
+- 2026-07-23: Panevezys - Tobol Kostanay (not_found)
+- 2026-07-23: Debreceni Vasutas Sport Club - Pyunik Yerevan (not_found)
+- 2026-07-23: Dila Gori - Apollon Limassol (not_found)
+- 2026-07-23: FC Flora Tallinn - The New Saints FC (not_found)
+- 2026-07-23: HJK Helsinki - Coleraine (not_found)
+- 2026-07-23: Paide Linnameeskond - FC Zire (not_found)
+- 2026-07-23: AEK Larnaca - Beitar Jerusalem (not_found)
