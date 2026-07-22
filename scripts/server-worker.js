@@ -1281,9 +1281,9 @@ const DATA_SCOUT_SOURCES = [
   {
     key: "espn-scoreboard",
     name: "ESPN Scoreboard",
-    category: "scores/logo",
+    category: "scores/logo/selecties",
     freeUse: "publieke scoreboard endpoint",
-    data: ["fixtures", "live/FT scores", "clublogo's", "competitiedekking"],
+    data: ["fixtures", "live/FT scores", "clublogo's", "competitiedekking", "selecties", "spelersposities"],
     priority: "hoog",
   },
   {
@@ -1317,6 +1317,30 @@ const DATA_SCOUT_SOURCES = [
     freeUse: "geen publieke API of herbruikbare gratis datalicentie gevonden",
     data: ["handmatige vergelijking van fixtures, lineups en tabellen"],
     priority: "niet-automatisch",
+  },
+  {
+    key: "vi-nl",
+    name: "Voetbal International",
+    category: "redactionele verificatie",
+    freeUse: "publieke wedstrijd- en clubpagina's; geen stabiele publieke data-API",
+    data: ["handmatige controle van programma", "selectienieuws", "blessure- en transfercontext"],
+    priority: "niet-automatisch",
+  },
+  {
+    key: "unibet-nl",
+    name: "Unibet Nederland",
+    category: "bookmakercontrole",
+    freeUse: "geen publieke gratis odds-API; directe bots/scraping niet toegestaan als databron",
+    data: ["alleen odds via een gelicentieerde aggregator wanneer Unibet als bookmaker wordt geleverd"],
+    priority: "niet-rechtstreeks",
+  },
+  {
+    key: "toto-nl",
+    name: "TOTO",
+    category: "bookmakercontrole",
+    freeUse: "geen publieke gratis odds-API; websitefeed is geen stabiel datacontract",
+    data: ["alleen odds via een gelicentieerde provider of officieel datacontract"],
+    priority: "niet-rechtstreeks",
   },
   {
     key: "football-data-org",

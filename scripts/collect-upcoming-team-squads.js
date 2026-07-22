@@ -2,6 +2,7 @@
 
 import fs from "fs";
 import path from "path";
+import { fetchEspnSquad } from "./providers/espn-squad-provider.js";
 
 const ROOT = process.cwd();
 const DAYS_AHEAD = Math.max(1, Number(process.env.SQUAD_ENRICHMENT_DAYS_AHEAD || 8));
@@ -12,6 +13,7 @@ const UNAVAILABLE_TTL_MS = 6 * 60 * 60 * 1000;
 const CACHE_FILE = path.join(ROOT, "data", "team-squad-cache.json");
 const TEAMS_FILE = path.join(ROOT, "data", "teams.json");
 const REPORT_FILE = path.join(ROOT, "monitor", "upcoming-team-squad-enrichment.json");
+const ESPN_TEAMS_FILE = path.join(ROOT, "config", "friendly-team-sources.json");
 const SPORTS_DB_BASE = "https://www.thesportsdb.com/api/v1/json/123";
 
 class ProviderRateLimitError extends Error {
@@ -130,6 +132,7 @@ async function fetchSportsDbSquad(teamName) {
 const cachePayload = readJson(CACHE_FILE, { teams: {} });
 const cache = cachePayload?.teams && typeof cachePayload.teams === "object" ? cachePayload.teams : {};
 const exportedTeams = readJson(TEAMS_FILE, {}).teamSquads || {};
+const knownEspnTeams = readJson(ESPN_TEAMS_FILE, { teams: [] }).teams || [];
 const candidates = new Map();
 for (let offset = 0; offset <= DAYS_AHEAD; offset += 1) {
   const date = addDays(todayKey(), offset);
@@ -146,7 +149,7 @@ for (let offset = 0; offset <= DAYS_AHEAD; offset += 1) {
 }
 
 const now = Date.now();
-const report = { generatedAt: new Date().toISOString(), daysAhead: DAYS_AHEAD, candidates: candidates.size, checked: 0, enriched: 0, unavailable: 0, skippedFresh: 0, rateLimited: false, retryAfterSeconds: 0, byCompetition: {}, samples: [] };
+const report = { generatedAt: new Date().toISOString(), daysAhead: DAYS_AHEAD, candidates: candidates.size, checked: 0, enriched: 0, unavailable: 0, skippedFresh: 0, rateLimited: false, retryAfterSeconds: 0, byProvider: { TheSportsDB: 0, ESPN: 0 }, byCompetition: {}, samples: [] };
 const pending = [...candidates.values()]
   .map((candidate) => {
     const existing = cache[candidate.key] || exportedTeams[candidate.key] || null;
@@ -170,16 +173,38 @@ const pending = [...candidates.values()]
 
 for (const candidate of pending) {
   report.checked += 1;
-  let profile;
-  try {
-    profile = await fetchSportsDbSquad(candidate.teamName);
-  } catch (error) {
-    if (error?.code === "provider_rate_limited") {
-      report.rateLimited = true;
-      report.retryAfterSeconds = Number(error.retryAfterSeconds || 0);
-      break;
+  let profile = null;
+  let provider = "";
+  if (!report.rateLimited) {
+    try {
+      profile = await fetchSportsDbSquad(candidate.teamName);
+      if (profile) provider = "TheSportsDB";
+    } catch (error) {
+      if (error?.code === "provider_rate_limited") {
+        report.rateLimited = true;
+        report.retryAfterSeconds = Number(error.retryAfterSeconds || 0);
+      } else {
+        throw error;
+      }
     }
-    throw error;
+  }
+  if (!profile) {
+    try {
+      profile = await fetchEspnSquad({
+        teamName: candidate.teamName,
+        leagues: [...candidate.leagues],
+        knownTeams: knownEspnTeams,
+        fetchJson,
+      });
+      if (profile) provider = "ESPN";
+    } catch (error) {
+      if (error?.code === "provider_rate_limited") {
+        report.rateLimited = true;
+        report.retryAfterSeconds = Math.max(report.retryAfterSeconds, Number(error.retryAfterSeconds || 0));
+      } else {
+        throw error;
+      }
+    }
   }
   const competition = [...candidate.leagues][0] || "onbekend";
   report.byCompetition[competition] = report.byCompetition[competition] || { checked: 0, enriched: 0, unavailable: 0 };
@@ -187,7 +212,7 @@ for (const candidate of pending) {
   if (!profile) {
     report.unavailable += 1;
     report.byCompetition[competition].unavailable += 1;
-    cache[candidate.key] = { ...(candidate.existing || {}), teamName: candidate.teamName, fetchedAt: new Date().toISOString(), unavailable: true, source: candidate.existing?.source || "TheSportsDB" };
+    cache[candidate.key] = { ...(candidate.existing || {}), teamName: candidate.teamName, fetchedAt: new Date().toISOString(), unavailable: true, source: candidate.existing?.source || "TheSportsDB + ESPN" };
     continue;
   }
   const players = mergePlayers(candidate.existing?.players, profile.players);
@@ -195,9 +220,13 @@ for (const candidate of pending) {
     ...(candidate.existing || {}),
     key: candidate.key,
     teamName: candidate.teamName,
-    source: [candidate.existing?.source, "TheSportsDB"].filter(Boolean).join(" + "),
-    sources: [...new Set([...(candidate.existing?.sources || []), "TheSportsDB"])],
-    sourceIds: { ...(candidate.existing?.sourceIds || {}), theSportsDb: profile.providerTeamId },
+    source: [...new Set([candidate.existing?.source, provider].filter(Boolean))].join(" + "),
+    sources: [...new Set([...(candidate.existing?.sources || []), provider])],
+    sourceIds: {
+      ...(candidate.existing?.sourceIds || {}),
+      ...(provider === "TheSportsDB" ? { theSportsDb: profile.providerTeamId } : {}),
+      ...(provider === "ESPN" ? { espn: profile.providerTeamId, espnLeagueCode: profile.leagueCode } : {}),
+    },
     playerCount: players.length,
     players,
     fetchedAt: new Date().toISOString(),
@@ -207,8 +236,9 @@ for (const candidate of pending) {
     rosterDataQuality: "identity-and-roster-only",
   };
   report.enriched += 1;
+  report.byProvider[provider] += 1;
   report.byCompetition[competition].enriched += 1;
-  report.samples.push({ team: candidate.teamName, competition, players: players.length, providerTeam: profile.providerTeamName });
+  report.samples.push({ team: candidate.teamName, competition, players: players.length, provider, providerTeam: profile.providerTeamName });
   await new Promise((resolve) => setTimeout(resolve, 250));
 }
 
