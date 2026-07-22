@@ -48,8 +48,17 @@ jobs:
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
-          git add monitor/api-football-coverage-scout.json monitor/api-football-team-map.json
+          for report in monitor/api-football-coverage-scout.json monitor/api-football-team-map.json monitor/ci-neon-soft-skips.json; do
+            if [ -f "$report" ]; then git add "$report"; fi
+          done
           git diff --cached --quiet && exit 0
           git commit -m "update api-football coverage scout [skip vercel]"
-          git pull --rebase origin "$DATA_BRANCH"
-          git push origin "HEAD:$DATA_BRANCH"
+          if ! git pull --rebase origin "$DATA_BRANCH"; then
+            echo "::warning::Rapport is gemaakt, maar kon niet worden gerebased; een volgende run probeert opnieuw."
+            git rebase --abort || true
+            exit 0
+          fi
+          if ! git push origin "HEAD:$DATA_BRANCH"; then
+            echo "::warning::Rapport is gemaakt, maar kon door een gelijktijdige update niet worden gepubliceerd."
+            exit 0
+          fi
