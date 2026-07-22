@@ -37,6 +37,7 @@ import {
 import {
   createSafeFetch,
   fetchBbcScheduledEvents as fetchBbcScheduledEventsSource,
+  fetchSkySportsScheduledEvents as fetchSkySportsScheduledEventsSource,
   fetchEspnScoreboardEvents as fetchEspnScoreboardEventsSource,
   fetchEspnTeamScheduleEvents as fetchEspnTeamScheduleEventsSource,
   fetchExternalJson,
@@ -1381,6 +1382,14 @@ const DATA_SCOUT_SOURCES = [
     data: ["topwedstrijd controle", "noodbackfill"],
     priority: "veiligheidsnet",
   },
+  {
+    key: "sky-fixtures",
+    name: "Sky Sports fixtures",
+    category: "fixture-check",
+    freeUse: "publieke wedstrijdkalender",
+    data: ["UEFA-kwalificatiewedstrijden", "aanvangstijden", "teamlogo's", "provider-team-ID's"],
+    priority: "hoog voor UEFA-kalenderdekking",
+  },
 ];
 
 const BBC_COMPETITION_TO_LABEL = {
@@ -1396,6 +1405,14 @@ const BBC_COMPETITION_TO_LABEL = {
   "Dutch Eredivisie": "Netherlands - Eredivisie",
   "Portuguese Primeira Liga": "Portugal - Liga Portugal",
   "Belgian First Division A": "Belgium - Pro League",
+};
+
+const SKY_COMPETITION_TO_LABEL = {
+  "Champions League Qualifying": "Europe - Champions League",
+  "Europa League Qualifying": "Europe - Europa League",
+  "UEFA Conference League Qualifying": "Europe - Conference League",
+  "Club Friendly": "World - Club Friendlies",
+  "Club Friendlies": "World - Club Friendlies",
 };
 
 
@@ -1421,6 +1438,15 @@ const CURATED_FIXTURE_BACKFILL = [
   { date: "2026-07-21", time: "20:00", league: "World - Club Friendlies", tournament: "Club Friendlies", country: "World", home: "Gillingham", away: "Millwall", sourceNote: "user-verified Forza fixture list", sourceUrl: "https://forzafootball.com" },
   { date: "2026-07-21", time: "20:00", league: "World - Club Friendlies", tournament: "Club Friendlies", country: "World", home: "Aldershot Town", away: "Oxford United", sourceNote: "user-verified Forza fixture list", sourceUrl: "https://forzafootball.com" },
   { date: "2026-07-21", time: "20:30", league: "World - Club Friendlies", tournament: "Club Friendlies", country: "World", home: "Walsall", away: "Aston Villa", sourceNote: "user-verified Forza fixture list", sourceUrl: "https://forzafootball.com" },
+  { date: "2026-07-23", time: "10:30", league: "World - Club Friendlies", tournament: "Club Friendlies", country: "World", home: "Liefering", away: "Eintracht Braunschweig", sourceNote: "user-verified Forza fixture list", sourceUrl: "https://forzafootball.com" },
+  { date: "2026-07-23", time: "17:00", league: "World - Club Friendlies", tournament: "Club Friendlies", country: "World", home: "Cagliari", away: "Sampdoria", sourceNote: "user-verified Forza fixture list", sourceUrl: "https://forzafootball.com" },
+  { date: "2026-07-23", time: "17:30", league: "World - Club Friendlies", tournament: "Club Friendlies", country: "World", home: "Venezia", away: "Vis Pesaro", sourceNote: "user-verified Forza fixture list", sourceUrl: "https://forzafootball.com" },
+  { date: "2026-07-23", time: "17:30", league: "World - Club Friendlies", tournament: "Club Friendlies", country: "World", home: "Zorya Luhansk", away: "Goztepe", sourceNote: "user-verified Forza fixture list", sourceUrl: "https://forzafootball.com" },
+  { date: "2026-07-23", time: "18:00", league: "World - Club Friendlies", tournament: "Club Friendlies", country: "World", home: "Bergisch Gladbach", away: "1. FC Koln", sourceNote: "user-verified Forza fixture list", sourceUrl: "https://forzafootball.com" },
+  { date: "2026-07-23", time: "18:00", league: "World - Club Friendlies", tournament: "Club Friendlies", country: "World", home: "Shakhtar Donetsk", away: "HNK Gorica", sourceNote: "user-verified Forza fixture list", sourceUrl: "https://forzafootball.com" },
+  { date: "2026-07-23", time: "18:00", league: "World - Club Friendlies", tournament: "Club Friendlies", country: "World", home: "Ascoli", away: "Grosseto", sourceNote: "user-verified Forza fixture list", sourceUrl: "https://forzafootball.com" },
+  { date: "2026-07-23", time: "19:00", league: "World - Club Friendlies", tournament: "Club Friendlies", country: "World", home: "Bayern Alzenau", away: "Wormatia Worms", sourceNote: "user-verified Forza fixture list", sourceUrl: "https://forzafootball.com" },
+  { date: "2026-07-23", time: "20:45", league: "World - Club Friendlies", tournament: "Club Friendlies", country: "World", home: "Sporting Club Inkberrow", away: "Evesham United", sourceNote: "user-verified Forza fixture list", sourceUrl: "https://forzafootball.com" },
   {
     date: "2026-05-04",
     time: "21:00",
@@ -10840,7 +10866,19 @@ async function main() {
       isYouthContext,
       sleep,
     });
+    const skyEvents = friendliesDiscoveryMode ? [] : await fetchSkySportsScheduledEventsSource(date, {
+      skyCompetitionToLabel: SKY_COMPETITION_TO_LABEL,
+      leagues: LEAGUES,
+      normalizeName,
+      buildFootballDataKickoffIso,
+      isWomenContext,
+      isYouthContext,
+    });
     const curatedEvents = friendliesDiscoveryMode ? fetchCuratedClubFriendlies(date) : fetchCuratedFixtureBackfill(date);
+    // Sky exposes the complete UEFA qualifier slate as structured match data.
+    // Do not merge the smaller BBC fallback on those days: provider name
+    // variants (for example PAOK/PAOK Salonika) would otherwise duplicate games.
+    const bbcMergeEvents = skyEvents.length ? [] : bbcEvents;
     fixtureSourceDiagnostics[date] = {
       checkedAt: new Date(now).toISOString(),
       sofascore: apiEvents.length,
@@ -10851,6 +10889,7 @@ async function main() {
       espnTeamSchedule: espnTeamEvents.length,
       openLigaDb: openLigaDbEvents.length,
       bbc: bbcEvents.length,
+      skySports: skyEvents.length,
       curated: curatedEvents.length,
     };
     const combinedFallbacks = dedupeFallbackEvents([
@@ -10860,7 +10899,8 @@ async function main() {
       ...espnEvents,
       ...espnTeamEvents,
       ...openLigaDbEvents,
-      ...bbcEvents,
+      ...bbcMergeEvents,
+      ...skyEvents,
       ...curatedEvents,
     ]);
 
@@ -10878,6 +10918,9 @@ async function main() {
     }
     if (bbcEvents.length) {
       console.log(`[worker] ${date}: ${bbcEvents.length} fallback events uit BBC fixtures`);
+    }
+    if (skyEvents.length) {
+      console.log(`[worker] ${date}: ${skyEvents.length} fallback events uit Sky Sports fixtures`);
     }
     if (curatedEvents.length) {
       console.log(`[worker] ${date}: ${curatedEvents.length} fallback events uit curated fixtures`);

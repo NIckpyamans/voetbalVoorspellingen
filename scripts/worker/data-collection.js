@@ -500,6 +500,80 @@ export async function fetchEspnScoreboardEvents(dateISO, deps) {
   return fallbackEvents;
 }
 
+function decodeHtmlAttribute(value) {
+  return String(value || "")
+    .replace(/&quot;/g, '"')
+    .replace(/&amp;/g, "&")
+    .replace(/&#x([0-9a-f]+);/gi, (_, code) => String.fromCodePoint(Number.parseInt(code, 16)))
+    .replace(/&#([0-9]+);/g, (_, code) => String.fromCodePoint(Number.parseInt(code, 10)));
+}
+
+export function parseSkySportsScheduledEventsHtml(html, dateISO, deps) {
+  const events = [];
+  const pattern = /data-component-name="ui-sport-match-score"[\s\S]*?data-state="([^"]+)"/g;
+  for (const match of String(html || "").matchAll(pattern)) {
+    let state;
+    try {
+      state = JSON.parse(decodeHtmlAttribute(match[1]));
+    } catch {
+      continue;
+    }
+    const competitionName = String(state?.competition?.name?.full || "").trim();
+    const leagueLabel = deps.skyCompetitionToLabel?.[competitionName] || null;
+    const homeName = String(state?.teams?.home?.name?.full || "").trim();
+    const awayName = String(state?.teams?.away?.name?.full || "").trim();
+    const time = String(state?.start?.time || "").trim();
+    if (!leagueLabel || !homeName || !awayName || !/^\d{1,2}:\d{2}$/.test(time)) continue;
+    if (deps.isWomenContext(leagueLabel, homeName, awayName) || deps.isYouthContext(leagueLabel, homeName, awayName)) continue;
+
+    const leagueInfo = deps.leagues.find((item) => item.label === leagueLabel) || {
+      label: leagueLabel,
+      name: leagueLabel.split(" - ").at(-1),
+      country: leagueLabel.split(" - ")[0],
+      type: leagueLabel.includes("Europe -") ? "cup" : "league",
+    };
+    const kickoffIso = deps.buildFootballDataKickoffIso(dateISO, time);
+    events.push({
+      id: `sky-${state?.id || `${dateISO}-${deps.normalizeName(homeName)}-${deps.normalizeName(awayName)}`}`,
+      startTimestamp: Math.floor(new Date(kickoffIso).getTime() / 1000),
+      homeTeam: {
+        id: state?.teams?.home?.id ? `sky-${state.teams.home.id}` : "",
+        name: homeName,
+        country: { name: leagueInfo.country || "" },
+        logoUrl: String(state?.teams?.home?.badge || ""),
+      },
+      awayTeam: {
+        id: state?.teams?.away?.id ? `sky-${state.teams.away.id}` : "",
+        name: awayName,
+        country: { name: leagueInfo.country || "" },
+        logoUrl: String(state?.teams?.away?.badge || ""),
+      },
+      uniqueTournament: { id: null, name: leagueInfo.name },
+      tournament: {
+        id: null,
+        name: leagueInfo.name,
+        category: { name: leagueInfo.country || "" },
+        uniqueTournament: { id: null },
+      },
+      season: { id: null },
+      roundInfo: state?.competition?.round?.name?.full
+        ? { name: state.competition.round.name.full, roundType: state.competition.round.name.full }
+        : null,
+      status: { type: "notstarted", description: "NS" },
+      homeScore: {},
+      awayScore: {},
+      skyMeta: { matchId: state?.id || null, competition: competitionName },
+      source: "sky-fixture-fallback",
+    });
+  }
+  return events;
+}
+
+export async function fetchSkySportsScheduledEvents(dateISO, deps) {
+  const html = await fetchText(`https://www.skysports.com/football-scores-fixtures/${dateISO}`);
+  return html ? parseSkySportsScheduledEventsHtml(html, dateISO, deps) : [];
+}
+
 const espnTeamScheduleCache = new Map();
 
 async function fetchEspnTeamSchedule(teamId, seasonYear) {

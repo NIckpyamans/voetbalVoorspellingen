@@ -14,6 +14,14 @@ const TEAMS_FILE = path.join(ROOT, "data", "teams.json");
 const REPORT_FILE = path.join(ROOT, "monitor", "upcoming-team-squad-enrichment.json");
 const SPORTS_DB_BASE = "https://www.thesportsdb.com/api/v1/json/123";
 
+class ProviderRateLimitError extends Error {
+  constructor(retryAfterSeconds = 0) {
+    super("TheSportsDB rate limit reached");
+    this.code = "provider_rate_limited";
+    this.retryAfterSeconds = retryAfterSeconds;
+  }
+}
+
 function normalize(value) {
   return String(value || "")
     .toLowerCase()
@@ -78,8 +86,12 @@ async function fetchJson(url) {
   const timeout = setTimeout(() => controller.abort(), REQUEST_TIMEOUT_MS);
   try {
     const response = await fetch(url, { headers: { Accept: "application/json" }, signal: controller.signal });
+    if (response.status === 429) {
+      throw new ProviderRateLimitError(Number(response.headers.get("retry-after") || 0));
+    }
     return response.ok ? await response.json() : null;
-  } catch {
+  } catch (error) {
+    if (error?.code === "provider_rate_limited") throw error;
     return null;
   } finally {
     clearTimeout(timeout);
@@ -134,7 +146,7 @@ for (let offset = 0; offset <= DAYS_AHEAD; offset += 1) {
 }
 
 const now = Date.now();
-const report = { generatedAt: new Date().toISOString(), daysAhead: DAYS_AHEAD, candidates: candidates.size, checked: 0, enriched: 0, unavailable: 0, skippedFresh: 0, byCompetition: {}, samples: [] };
+const report = { generatedAt: new Date().toISOString(), daysAhead: DAYS_AHEAD, candidates: candidates.size, checked: 0, enriched: 0, unavailable: 0, skippedFresh: 0, rateLimited: false, retryAfterSeconds: 0, byCompetition: {}, samples: [] };
 const pending = [...candidates.values()]
   .map((candidate) => {
     const existing = cache[candidate.key] || exportedTeams[candidate.key] || null;
@@ -158,7 +170,17 @@ const pending = [...candidates.values()]
 
 for (const candidate of pending) {
   report.checked += 1;
-  const profile = await fetchSportsDbSquad(candidate.teamName);
+  let profile;
+  try {
+    profile = await fetchSportsDbSquad(candidate.teamName);
+  } catch (error) {
+    if (error?.code === "provider_rate_limited") {
+      report.rateLimited = true;
+      report.retryAfterSeconds = Number(error.retryAfterSeconds || 0);
+      break;
+    }
+    throw error;
+  }
   const competition = [...candidate.leagues][0] || "onbekend";
   report.byCompetition[competition] = report.byCompetition[competition] || { checked: 0, enriched: 0, unavailable: 0 };
   report.byCompetition[competition].checked += 1;

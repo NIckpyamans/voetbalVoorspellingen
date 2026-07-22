@@ -2,7 +2,7 @@ name: Upcoming team squad enrichment
 
 on:
   schedule:
-    - cron: "40 */6 * * *"
+    - cron: "40 */2 * * *"
   workflow_dispatch:
 
 concurrency:
@@ -19,7 +19,7 @@ jobs:
     env:
       DATA_BRANCH: codex/step3b-layout
       SQUAD_ENRICHMENT_DAYS_AHEAD: "8"
-      SQUAD_ENRICHMENT_MAX_TEAMS: "6"
+      SQUAD_ENRICHMENT_MAX_TEAMS: "12"
       SQUAD_ENRICHMENT_REQUEST_TIMEOUT_MS: "6000"
     steps:
       - uses: actions/checkout@v5
@@ -37,7 +37,9 @@ jobs:
         run: |
           git config user.name github-actions
           git config user.email github-actions@github.com
-          git add data/team-squad-cache.json monitor/upcoming-team-squad-enrichment.json
+          for report in data/team-squad-cache.json monitor/upcoming-team-squad-enrichment.json; do
+            if [ -f "$report" ]; then git add "$report"; fi
+          done
           git diff --staged --quiet && exit 0
           git commit -m "refresh upcoming team squad cache [skip vercel]"
           for attempt in 1 2 3; do
