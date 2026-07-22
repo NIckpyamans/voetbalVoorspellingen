@@ -4,6 +4,12 @@ on:
   schedule:
     - cron: "40 */2 * * *"
   workflow_dispatch:
+    inputs:
+      retry_unavailable:
+        description: "Probeer alleen eerder missende selecties direct opnieuw via fallbacks"
+        required: false
+        type: boolean
+        default: false
 
 concurrency:
   group: football-squad-enrichment
@@ -21,6 +27,7 @@ jobs:
       SQUAD_ENRICHMENT_DAYS_AHEAD: "8"
       SQUAD_ENRICHMENT_MAX_TEAMS: "12"
       SQUAD_ENRICHMENT_REQUEST_TIMEOUT_MS: "6000"
+      SQUAD_ENRICHMENT_FORCE_UNAVAILABLE: ${{ inputs.retry_unavailable || 'false' }}
     steps:
       - uses: actions/checkout@v5
         with:

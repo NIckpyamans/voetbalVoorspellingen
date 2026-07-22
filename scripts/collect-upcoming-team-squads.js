@@ -11,6 +11,7 @@ const MAX_TEAMS = Math.max(1, Number(process.env.SQUAD_ENRICHMENT_MAX_TEAMS || 6
 const REQUEST_TIMEOUT_MS = Math.max(1000, Number(process.env.SQUAD_ENRICHMENT_REQUEST_TIMEOUT_MS || 6000));
 const REFRESH_TTL_MS = Math.max(60 * 60 * 1000, Number(process.env.SQUAD_ENRICHMENT_REFRESH_TTL_MS || 48 * 60 * 60 * 1000));
 const UNAVAILABLE_TTL_MS = 6 * 60 * 60 * 1000;
+const FORCE_UNAVAILABLE = String(process.env.SQUAD_ENRICHMENT_FORCE_UNAVAILABLE || "false").toLowerCase() === "true";
 const CACHE_FILE = path.join(ROOT, "data", "team-squad-cache.json");
 const TEAMS_FILE = path.join(ROOT, "data", "teams.json");
 const REPORT_FILE = path.join(ROOT, "monitor", "upcoming-team-squad-enrichment.json");
@@ -163,6 +164,7 @@ const pending = [...candidates.values()]
     return { ...candidate, existing, playerCount: Number(existing?.playerCount || existing?.players?.length || 0) };
   })
   .filter((candidate) => {
+    if (FORCE_UNAVAILABLE && candidate.existing?.unavailable) return true;
     const age = now - Date.parse(candidate.existing?.fetchedAt || candidate.existing?.checkedAt || 0);
     const ttl = candidate.existing?.unavailable ? UNAVAILABLE_TTL_MS : REFRESH_TTL_MS;
     if (candidate.existing?.fetchedAt && age < ttl) {
