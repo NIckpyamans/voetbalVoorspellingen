@@ -50,8 +50,17 @@ jobs:
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
+          # Het monitorrapport is al als artifact bewaard. Laat het nooit een cache-push blokkeren.
+          git restore --worktree monitor/sportmonks-fixture-mapping.json 2>/dev/null || true
           git add data/sportmonks-fixture-cache.json
           git diff --cached --quiet && exit 0
           git commit -m "update Sportmonks fixture mapping [skip vercel]"
-          git pull --rebase origin "$DATA_BRANCH"
-          git push origin "HEAD:$DATA_BRANCH"
+          if ! git pull --rebase origin "$DATA_BRANCH"; then
+            echo "::warning::Cachecommit kon niet automatisch rebased worden; rapport blijft beschikbaar als artifact."
+            git rebase --abort || true
+            exit 0
+          fi
+          if ! git push origin "HEAD:$DATA_BRANCH"; then
+            echo "::warning::Cachecommit kon niet worden gepusht; volgende run probeert opnieuw."
+            exit 0
+          fi
