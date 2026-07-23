@@ -8,12 +8,12 @@ const ROOT = process.cwd();
 const OUTPUT = path.join(ROOT, "monitor", "snapshot-db-context.json");
 loadLocalEnv(ROOT);
 const sql = getSql();
-if (!sql) {
-  console.error("DATABASE_URL of POSTGRES_URL ontbreekt.");
-  process.exit(2);
-}
-
-const [summary] = await sql.query(`
+let source = "neon";
+let databaseError = null;
+let summary = null;
+if (sql) {
+  try {
+    [summary] = await sql.query(`
   select
     count(*)::int as snapshots,
     count(*) filter (
@@ -27,9 +27,29 @@ const [summary] = await sql.query(`
     max(generated_at) as latest_snapshot_at
   from prediction_snapshots
 `);
+  } catch (error) {
+    databaseError = error?.message || String(error);
+  }
+}
+
+if (!summary) {
+  source = "immutable_training_fallback";
+  const trainingPath = path.join(ROOT, "training", "training-snapshot.json");
+  const training = fs.existsSync(trainingPath) ? JSON.parse(fs.readFileSync(trainingPath, "utf8")) : { rows: [] };
+  const rows = (Array.isArray(training?.rows) ? training.rows : []).filter((row) => row?.snapshotBacked);
+  const withContext = rows.filter((row) => row?.dbFeatureContext && Object.keys(row.dbFeatureContext).length > 0);
+  summary = {
+    snapshots: rows.length,
+    snapshots_with_db_context: withContext.length,
+    snapshots_with_db_sources: withContext.filter((row) => Array.isArray(row.dbFeatureContext?.featureSources) && row.dbFeatureContext.featureSources.length > 0).length,
+    latest_snapshot_at: rows.map((row) => row.generatedAt).filter(Boolean).sort().at(-1) || null,
+  };
+}
 const total = Math.max(Number(summary.snapshots || 0), 1);
 const report = {
   generatedAt: new Date().toISOString(),
+  source,
+  database: { configured: !!sql, available: source === "neon", error: databaseError },
   snapshots: Number(summary.snapshots || 0),
   snapshotsWithDbContext: Number(summary.snapshots_with_db_context || 0),
   snapshotsWithDbSources: Number(summary.snapshots_with_db_sources || 0),

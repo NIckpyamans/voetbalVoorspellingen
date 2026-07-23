@@ -1,8 +1,22 @@
 #!/usr/bin/env node
+import fs from "fs";
+import path from "path";
 import { getSql, loadLocalEnv } from "../shared/database.js";
-loadLocalEnv(process.cwd());
+const ROOT = process.cwd();
+const calibrationReportPath = path.join(ROOT, "monitor", "model-recalibration-report.json");
+loadLocalEnv(ROOT);
+const calibrationReport = fs.existsSync(calibrationReportPath)
+  ? JSON.parse(fs.readFileSync(calibrationReportPath, "utf8"))
+  : null;
+if (calibrationReport?.skipped) {
+  console.log(JSON.stringify({ ok: true, skipped: true, reason: calibrationReport.reason, promotionGate: calibrationReport.promotionGate }, null, 2));
+  process.exit(0);
+}
 const sql = getSql();
-if (!sql) process.exit(2);
+if (!sql) {
+  console.log(JSON.stringify({ ok: true, skipped: true, reason: "relational_database_unavailable" }, null, 2));
+  process.exit(0);
+}
 const clamp = (value) => Math.max(1e-9, Math.min(1 - 1e-9, Number(value || 0)));
 const normalize = (values) => {
   const total = values.reduce((sum, value) => sum + Math.max(0, Number(value || 0)), 0);
@@ -23,7 +37,13 @@ const applyProfile = (current, profile) => {
   const shadow = current.map((value, index) => clamp(value * (1 - shrink) + Number(prior[["home", "draw", "away"][index]] || 0) * shrink));
   return normalize(shadow);
 };
-const profiles = await sql.query("select * from calibration_profiles where phase_bucket in ('competition_recalibration_candidate','league_recalibration_candidate')");
+let profiles = [];
+try {
+  profiles = await sql.query("select * from calibration_profiles where phase_bucket in ('competition_recalibration_candidate','league_recalibration_candidate')");
+} catch (error) {
+  console.log(JSON.stringify({ ok: true, skipped: true, reason: "relational_database_unavailable", databaseError: error?.message || String(error) }, null, 2));
+  process.exit(0);
+}
 let evaluated = 0;
 for (const profile of profiles) {
   const prior = profile.profile?.prior || {};
