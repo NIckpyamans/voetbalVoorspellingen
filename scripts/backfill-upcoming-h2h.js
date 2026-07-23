@@ -10,10 +10,12 @@ import { buildR2ObjectKey, getR2Config, putR2Object } from "../shared/cloudflare
 import { isHiddenInternationalOrWorldCupEntity } from "../shared/competitionVisibility.js";
 import { getKnownProviderIds } from "./worker/team-identity.js";
 import { fetchEspnH2HProfile } from "./providers/espn-h2h-provider.js";
+import { buildProviderAcceptanceState } from "./worker/orchestration-policy.js";
 
 const ROOT = process.cwd();
 const OUTPUT_JSON = path.join(ROOT, "monitor", "h2h-upcoming-backfill.json");
 const OUTPUT_MD = path.join(ROOT, "monitor", "h2h-upcoming-backfill.md");
+const API_FOOTBALL_ACCEPTANCE_FILE = path.join(ROOT, "monitor", "api-football-provider-acceptance.json");
 const DAYS_AHEAD = Math.max(1, Number(process.env.H2H_BACKFILL_DAYS_AHEAD || 14));
 const LIMIT = Math.max(1, Number(process.env.H2H_BACKFILL_LIMIT || 40));
 
@@ -24,6 +26,14 @@ function digest(value, size = 20) {
 function writeJson(filePath, value) {
   fs.mkdirSync(path.dirname(filePath), { recursive: true });
   fs.writeFileSync(filePath, `${JSON.stringify(value, null, 2)}\n`);
+}
+
+function readJson(filePath) {
+  try {
+    return JSON.parse(fs.readFileSync(filePath, "utf8"));
+  } catch {
+    return null;
+  }
 }
 
 function edgeIds(homeClubId, awayClubId, competitionId) {
@@ -196,6 +206,8 @@ function buildNoDirectHistoryProfile(match, status) {
     note:
       status === "provider_not_configured"
         ? "API-Football is in deze omgeving niet geconfigureerd; GitHub Actions kan dit wel uitvoeren als de secret aanwezig is."
+        : status === "provider_acceptance_blocked"
+          ? "API-Football is overgeslagen totdat de account- en dekkingstest slaagt; ESPN blijft als onafhankelijke bron actief."
         : status === "team_mapping_missing"
           ? "Providerteam-ID mapping ontbreekt; voeg aliases of provider-ID's toe voor dit clubpaar."
           : status === "rate_limited_locally"
@@ -242,6 +254,8 @@ async function main() {
 
   const store = {};
   const providerConfigured = Boolean(getApiFootballKey());
+  const apiFootballAcceptance = buildProviderAcceptanceState(readJson(API_FOOTBALL_ACCEPTANCE_FILE));
+  const apiFootballEnabled = providerConfigured && apiFootballAcceptance.accepted;
   const filled = [];
   const noDirectHistory = [];
   const errors = [];
@@ -279,20 +293,18 @@ async function main() {
         });
         continue;
       }
-      if (!providerConfigured) {
-        noDirectHistory.push(buildNoDirectHistoryProfile(match, "provider_not_configured"));
-        continue;
-      }
-      const profile = await fetchApiFootballH2HProfile({
-        store,
-        homeName: match.home_team_name,
-        awayName: match.away_team_name,
-        homeId: match.home_club_id,
-        awayId: match.away_club_id,
-        homeProviderIds: getKnownProviderIds(match.home_team_name),
-        awayProviderIds: getKnownProviderIds(match.away_team_name),
-        leagueLabel: match.league,
-      });
+      const profile = apiFootballEnabled
+        ? await fetchApiFootballH2HProfile({
+            store,
+            homeName: match.home_team_name,
+            awayName: match.away_team_name,
+            homeId: match.home_club_id,
+            awayId: match.away_club_id,
+            homeProviderIds: getKnownProviderIds(match.home_team_name),
+            awayProviderIds: getKnownProviderIds(match.away_team_name),
+            leagueLabel: match.league,
+          })
+        : null;
       const espnProfile = profile?.results?.length ? null : await fetchEspnH2HProfile({
         store,
         homeName: match.home_team_name,
@@ -323,7 +335,8 @@ async function main() {
         });
       } else {
         const cacheKey = `${String(match.league || "").toLowerCase()}:${String(match.home_team_name || "").toLowerCase()}__${String(match.away_team_name || "").toLowerCase()}`;
-        const status = store.apiFootballH2HCache?.[cacheKey]?.status || "not_found";
+        const status = store.apiFootballH2HCache?.[cacheKey]?.status ||
+          (!providerConfigured ? "provider_not_configured" : !apiFootballEnabled ? "provider_acceptance_blocked" : "not_found");
         noDirectHistory.push(buildNoDirectHistoryProfile(match, status));
       }
     } catch (error) {
@@ -346,6 +359,12 @@ async function main() {
     filled: filled.length,
     noDirectHistory: noDirectHistory.length,
     errors: errors.length,
+    apiFootballAcceptance: {
+      configured: providerConfigured,
+      enabled: apiFootballEnabled,
+      accepted: apiFootballAcceptance.accepted,
+      reason: apiFootballAcceptance.reason,
+    },
     apiFootball: summarizeApiFootballUsage(store),
     filledSamples: filled.slice(0, 20),
     noDirectHistorySamples: noDirectHistory.slice(0, 20),
@@ -353,6 +372,8 @@ async function main() {
     recommendation:
       !providerConfigured
         ? "API-Football is lokaal niet geconfigureerd. Laat de GitHub workflow draaien met API_KEY_API_FOOTBALL of voeg de key lokaal toe voor handmatige backfill."
+        : !apiFootballEnabled
+          ? "API-Football blijft quota-bewust geblokkeerd totdat de acceptatietest slaagt; ESPN is wel gecontroleerd voor alle kandidaten."
         :
       filled.length > 0
         ? `H2H-profielen zijn ${databaseWritable ? "naar Neon en R2" : "naar R2"} geschreven. Laat de worker draaien zodat voorspellingen de nieuwe captures gebruikt.`
