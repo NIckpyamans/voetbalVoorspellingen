@@ -74,6 +74,10 @@ import { buildTrainingSnapshot } from "./worker/training-builder.js";
 import { buildTeamIdentity, getKnownProviderIds } from "./worker/team-identity.js";
 import { fetchR2H2HProfile, fetchR2LineupSummary, fetchR2OddsSnapshot } from "./worker/critical-captures.js";
 import { buildH2HAgentProfile } from "./worker/h2h.js";
+import {
+  dedupeStoredMatches as dedupeFixtureMatches,
+  dedupeStoredPredictions as dedupeFixturePredictions,
+} from "./worker/fixture-deduplication.js";
 
 const SOFA = "https://api.sofascore.com/api/v1";
 const THESPORTSDB_BASE = "https://www.thesportsdb.com/api/v1/json";
@@ -4523,6 +4527,11 @@ function canonicalLeagueKey(label) {
   return LEAGUE_DEDUPE_ALIASES.get(normalized) || normalized;
 }
 
+const fixtureDeduplicationOptions = {
+  teamKey: canonicalMatchTeamKey,
+  leagueKey: canonicalLeagueKey,
+};
+
 function buildEventDedupeKey(event) {
   const kickoff = Number(event?.startTimestamp || 0);
   const dateKey = Number.isFinite(kickoff) && kickoff > 0
@@ -4535,91 +4544,12 @@ function buildEventDedupeKey(event) {
   return `${dateKey}|${canonicalLeagueKey(league)}|${home}|${away}`;
 }
 
-function buildStoredMatchDedupeKey(match) {
-  const dateKey = String(match?.date || match?.kickoff || "").slice(0, 10);
-  const home = canonicalMatchTeamKey(match?.homeTeamName || match?.homeTeam || "");
-  const away = canonicalMatchTeamKey(match?.awayTeamName || match?.awayTeam || "");
-  if (!dateKey || !home || !away) return "";
-  return `${dateKey}|${canonicalLeagueKey(match?.league || "")}|${home}|${away}`;
-}
-
-function storedMatchQuality(match) {
-  const status = String(match?.status || "").toUpperCase();
-  const hasScore = Number.isFinite(Number(match?.homeScore)) && Number.isFinite(Number(match?.awayScore));
-  const statusScore =
-    status === "FT" ? 70 :
-    status === "LIVE" || status === "HT" ? 55 :
-    status === "RESULT_PENDING" ? 20 :
-    status === "NS" ? 8 :
-    0;
-  const scoreScore = hasScore ? 35 : 0;
-  const logoScore = Number(Boolean(match?.homeLogo)) + Number(Boolean(match?.awayLogo));
-  const sourceText = String(match?.dataSource || "");
-  const sourceScore =
-    /espn/i.test(sourceText) ? 9 :
-    /thesportsdb/i.test(sourceText) ? 7 :
-    /openligadb/i.test(sourceText) ? 5 :
-    /football-data/i.test(sourceText) ? 4 :
-    /bbc/i.test(sourceText) ? 2 :
-    1;
-  return statusScore + scoreScore + logoScore + sourceScore + Number(match?.dataCompletenessScore || 0) * 10;
-}
-
-function mergeStoredDuplicateMatch(current, incoming) {
-  const incomingPreferred = storedMatchQuality(incoming) > storedMatchQuality(current);
-  const preferred = incomingPreferred ? { ...incoming } : { ...current };
-  const fallback = incomingPreferred ? current : incoming;
-
-  preferred.homeLogo = preferred.homeLogo || fallback?.homeLogo || "";
-  preferred.awayLogo = preferred.awayLogo || fallback?.awayLogo || "";
-  preferred.homeTeamId = preferred.homeTeamId || fallback?.homeTeamId || "";
-  preferred.awayTeamId = preferred.awayTeamId || fallback?.awayTeamId || "";
-  preferred.h2h = Number(preferred?.h2h?.played || 0) >= Number(fallback?.h2h?.played || 0) ? preferred.h2h : fallback?.h2h;
-  preferred.homeRecent = preferred.homeRecent || fallback?.homeRecent || null;
-  preferred.awayRecent = preferred.awayRecent || fallback?.awayRecent || null;
-  preferred.dataSource = [...new Set([preferred.dataSource, fallback?.dataSource].filter(Boolean))].join("+");
-
-  const preferredHasScore = Number.isFinite(Number(preferred.homeScore)) && Number.isFinite(Number(preferred.awayScore));
-  const fallbackHasScore = Number.isFinite(Number(fallback?.homeScore)) && Number.isFinite(Number(fallback?.awayScore));
-  if (!preferredHasScore && fallbackHasScore) {
-    preferred.homeScore = fallback.homeScore;
-    preferred.awayScore = fallback.awayScore;
-    preferred.score = fallback.score;
-    preferred.status = fallback.status || preferred.status;
-  }
-  return preferred;
-}
-
 function dedupeStoredMatches(matches = []) {
-  const seen = new Map();
-  for (const match of matches || []) {
-    const key = buildStoredMatchDedupeKey(match);
-    if (!key) continue;
-    const current = seen.get(key);
-    seen.set(key, current ? mergeStoredDuplicateMatch(current, match) : match);
-  }
-  return [...seen.values()];
+  return dedupeFixtureMatches(matches, fixtureDeduplicationOptions);
 }
 
 function dedupeStoredPredictions(predictions = [], matches = []) {
-  const keptMatchIds = new Set(matches.map((match) => String(match?.id || "")).filter(Boolean));
-  const byDedupeKey = new Map();
-  for (const match of matches) {
-    const key = buildStoredMatchDedupeKey(match);
-    if (key && match?.id) byDedupeKey.set(key, String(match.id));
-  }
-  const seen = new Set();
-  const output = [];
-  for (const prediction of predictions || []) {
-    const predictionKey = `${String(prediction?.date || "").slice(0, 10)}|${canonicalLeagueKey(prediction?.league || "")}|${canonicalMatchTeamKey(prediction?.homeTeam || prediction?.homeTeamName || "")}|${canonicalMatchTeamKey(prediction?.awayTeam || prediction?.awayTeamName || "")}`;
-    const canonicalMatchId = byDedupeKey.get(predictionKey) || prediction?.matchId;
-    if (canonicalMatchId && !keptMatchIds.has(String(canonicalMatchId))) continue;
-    const unique = canonicalMatchId || predictionKey || prediction?.matchId;
-    if (seen.has(unique)) continue;
-    seen.add(unique);
-    output.push({ ...prediction, matchId: canonicalMatchId || prediction.matchId });
-  }
-  return output;
+  return dedupeFixturePredictions(predictions, matches, fixtureDeduplicationOptions);
 }
 
 function getSportsDbSeasonLabel(dateISO) {

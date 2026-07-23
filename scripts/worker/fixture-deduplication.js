@@ -1,0 +1,71 @@
+export function storedMatchQuality(match) {
+  const status = String(match?.status || "").toUpperCase();
+  const hasScore = Number.isFinite(Number(match?.homeScore)) && Number.isFinite(Number(match?.awayScore));
+  const statusScore = status === "FT" ? 70 : status === "LIVE" || status === "HT" ? 55 : status === "RESULT_PENDING" ? 20 : status === "NS" ? 8 : 0;
+  const sourceText = String(match?.dataSource || "");
+  const sourceScore = /espn/i.test(sourceText) ? 9 : /thesportsdb/i.test(sourceText) ? 7 : /openligadb/i.test(sourceText) ? 5 : /football-data/i.test(sourceText) ? 4 : /bbc/i.test(sourceText) ? 2 : 1;
+  return statusScore + (hasScore ? 35 : 0) + Number(Boolean(match?.homeLogo)) + Number(Boolean(match?.awayLogo)) + sourceScore + Number(match?.dataCompletenessScore || 0) * 10;
+}
+
+export function buildStoredMatchDedupeKey(match, options) {
+  const dateKey = String(match?.date || match?.kickoff || "").slice(0, 10);
+  const home = options.teamKey(match?.homeTeamName || match?.homeTeam || "");
+  const away = options.teamKey(match?.awayTeamName || match?.awayTeam || "");
+  if (!dateKey || !home || !away) return "";
+  return `${dateKey}|${options.leagueKey(match?.league || "")}|${home}|${away}`;
+}
+
+export function mergeStoredDuplicateMatch(current, incoming) {
+  const incomingPreferred = storedMatchQuality(incoming) > storedMatchQuality(current);
+  const preferred = incomingPreferred ? { ...incoming } : { ...current };
+  const fallback = incomingPreferred ? current : incoming;
+  preferred.homeLogo ||= fallback?.homeLogo || "";
+  preferred.awayLogo ||= fallback?.awayLogo || "";
+  preferred.homeTeamId ||= fallback?.homeTeamId || "";
+  preferred.awayTeamId ||= fallback?.awayTeamId || "";
+  preferred.h2h = Number(preferred?.h2h?.played || 0) >= Number(fallback?.h2h?.played || 0) ? preferred.h2h : fallback?.h2h;
+  preferred.homeRecent ||= fallback?.homeRecent || null;
+  preferred.awayRecent ||= fallback?.awayRecent || null;
+  preferred.dataSource = [...new Set([preferred.dataSource, fallback?.dataSource].filter(Boolean))].join("+");
+  const preferredHasScore = Number.isFinite(Number(preferred.homeScore)) && Number.isFinite(Number(preferred.awayScore));
+  const fallbackHasScore = Number.isFinite(Number(fallback?.homeScore)) && Number.isFinite(Number(fallback?.awayScore));
+  if (!preferredHasScore && fallbackHasScore) {
+    preferred.homeScore = fallback.homeScore;
+    preferred.awayScore = fallback.awayScore;
+    preferred.score = fallback.score;
+    preferred.status = fallback.status || preferred.status;
+  }
+  return preferred;
+}
+
+export function dedupeStoredMatches(matches = [], options) {
+  const seen = new Map();
+  for (const match of matches || []) {
+    const key = buildStoredMatchDedupeKey(match, options);
+    if (!key) continue;
+    const current = seen.get(key);
+    seen.set(key, current ? mergeStoredDuplicateMatch(current, match) : match);
+  }
+  return [...seen.values()];
+}
+
+export function dedupeStoredPredictions(predictions = [], matches = [], options) {
+  const keptMatchIds = new Set(matches.map((match) => String(match?.id || "")).filter(Boolean));
+  const byDedupeKey = new Map();
+  for (const match of matches) {
+    const key = buildStoredMatchDedupeKey(match, options);
+    if (key && match?.id) byDedupeKey.set(key, String(match.id));
+  }
+  const seen = new Set();
+  const output = [];
+  for (const prediction of predictions || []) {
+    const predictionKey = `${String(prediction?.date || "").slice(0, 10)}|${options.leagueKey(prediction?.league || "")}|${options.teamKey(prediction?.homeTeam || prediction?.homeTeamName || "")}|${options.teamKey(prediction?.awayTeam || prediction?.awayTeamName || "")}`;
+    const canonicalMatchId = byDedupeKey.get(predictionKey) || prediction?.matchId;
+    if (canonicalMatchId && !keptMatchIds.has(String(canonicalMatchId))) continue;
+    const unique = canonicalMatchId || predictionKey || prediction?.matchId;
+    if (seen.has(unique)) continue;
+    seen.add(unique);
+    output.push({ ...prediction, matchId: canonicalMatchId || prediction.matchId });
+  }
+  return output;
+}

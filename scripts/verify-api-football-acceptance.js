@@ -158,6 +158,19 @@ async function main() {
 }
 
 main().catch((error) => {
-  console.error(error);
-  process.exit(1);
+  const report = {
+    generatedAt: new Date().toISOString(),
+    provider: "api-football",
+    accepted: false,
+    targets: {
+      uefaQualification: { checked: 0, mapped: 0, coverage: 0, target: QUALIFIER_TARGET, passed: false },
+      clubFriendly: { checked: 0, mapped: 0, coverage: 0, target: FRIENDLY_TARGET, passed: false },
+    },
+    errors: [{ endpoint: "acceptance", status: null, message: error?.message || String(error) }],
+    matches: [],
+  };
+  fs.mkdirSync(path.dirname(REPORT_PATH), { recursive: true });
+  fs.writeFileSync(REPORT_PATH, `${JSON.stringify(report, null, 2)}\n`);
+  console.log(JSON.stringify(report, null, 2));
+  if (STRICT) process.exitCode = 1;
 });

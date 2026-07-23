@@ -3,6 +3,7 @@
 import fs from "fs";
 import path from "path";
 import { buildProviderCooldown } from "./worker/provider-quota.js";
+import { buildProviderAcceptanceState, buildTrainingAutomationState } from "./worker/orchestration-policy.js";
 
 const emitGithubOutput = process.argv.includes("--emit-github-output");
 const mode = String(process.env.ORCHESTRATOR_MODE || "conservative").toLowerCase();
@@ -95,8 +96,16 @@ const reports = {
   lineups: readJson("monitor/lineup-availability-monitor.json"),
   odds: readJson("monitor/odds-coverage-scout.json"),
   sportmonks: readJson("monitor/sportmonks-fixture-mapping.json"),
+  apiFootballAcceptance: readJson("monitor/api-football-provider-acceptance.json"),
+  apiFootballCoverage: readJson("monitor/api-football-coverage-scout.json"),
   evaluation: readJson("monitor/prediction-evaluation-report.json"),
+  snapshotGrowth: readJson("monitor/snapshot-growth-monitor.json"),
 };
+const trainingAutomation = buildTrainingAutomationState(readJson("training/catboost-ready.json"), {
+  calibrationMin: 50,
+  promotionMin: 150,
+});
+const apiFootballAcceptance = buildProviderAcceptanceState(reports.apiFootballAcceptance, { now, retryHours: 24 });
 const providerQuota = {
   apiFootballH2h: buildProviderCooldown(reports.h2h, { now, cooldownHours: 12 }),
 };
@@ -114,6 +123,9 @@ const dataNeeds = {
   odds: needsRefresh(reports.odds, 6, (report) => Number(report?.coverage || 0) < 0.6),
   sportmonks: needsRefresh(reports.sportmonks, 12, (report) => Number(report?.mappedFixtures || 0) < 1),
   evaluation: needsRefresh(reports.evaluation, 24),
+  learning: needsRefresh(reports.snapshotGrowth, 24, () => trainingAutomation.calibrationGap > 0),
+  apiFootballAcceptance: apiFootballAcceptance.checkDue,
+  apiFootballMapping: apiFootballAcceptance.accepted && needsRefresh(reports.apiFootballCoverage, 24),
 };
 
 function plannedWorkflows() {
@@ -130,6 +142,7 @@ function plannedWorkflows() {
         "free-prematch-odds.yml",
         "data-integrity-maintenance.yml",
         "learn.yml",
+        "api-football-acceptance.yml",
         "api-football-coverage-scout.yml",
         "nightly-model-maintenance.yml",
       ];
@@ -152,6 +165,10 @@ function plannedWorkflows() {
     if (dataNeeds.sportmonks && hour % 6 === 3) workflows.push("sportmonks-fixture-mapping.yml");
     if (hour === 2) workflows.push("dashboard-cache-r2.yml", "friendly-discovery.yml");
     if (hour === 3 && dataNeeds.evaluation) workflows.push("prediction-evaluation.yml");
+    if (hour === 4 && dataNeeds.learning) workflows.push("learn.yml");
+    if (hour === 5) workflows.push("odds-snapshot-scout.yml");
+    if (hour === 6 && dataNeeds.apiFootballAcceptance) workflows.push("api-football-acceptance.yml");
+    if (hour % 6 === 0 && dataNeeds.apiFootballMapping) workflows.push("api-football-coverage-scout.yml");
     if (hour === 4) workflows.push("competition-catalog-sync.yml");
     if (hour === 5 && day === 1) workflows.push("fixture-discovery.yml");
   }
@@ -160,11 +177,8 @@ function plannedWorkflows() {
     // One full refresh after the European evening window captures final xG/shots,
     // referee assignments and incidents that lightweight live refreshes omit.
     if (hour === 1 && primarySlot) workflows.push("worker.yml");
-    if (hour === 4 && primarySlot) workflows.push("nightly-model-maintenance.yml");
+    if (hour === 6 && primarySlot && trainingAutomation.canCalibrate) workflows.push("nightly-model-maintenance.yml");
     if (hour === 5 && primarySlot) workflows.push("data-integrity-maintenance.yml");
-    if (hour === 6 && primarySlot) workflows.push("api-football-coverage-scout.yml");
-    if (hour === 7 && primarySlot) workflows.push("learn.yml");
-    if (hour === 8 && primarySlot) workflows.push("odds-snapshot-scout.yml");
   }
 
   if (mode === "full") {
@@ -195,6 +209,8 @@ const plan = {
   },
   dataNeeds,
   providerQuota,
+  trainingAutomation,
+  apiFootballAcceptance,
   reportAgeHours: Object.fromEntries(Object.entries(reports).map(([key, report]) => [key, Number(reportAgeHours(report).toFixed(2))])),
   workflows,
 };

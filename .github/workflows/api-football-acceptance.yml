@@ -9,7 +9,7 @@ on:
         default: "true"
 
 permissions:
-  contents: read
+  contents: write
 
 jobs:
   verify-pro-coverage:
@@ -24,17 +24,20 @@ jobs:
       API_FOOTBALL_ACCEPTANCE_LIMIT: "80"
       API_FOOTBALL_QUALIFIER_TARGET: "0.80"
       API_FOOTBALL_FRIENDLY_TARGET: "0.60"
-      API_FOOTBALL_ACCEPTANCE_STRICT: ${{ inputs.strict || 'true' }}
+      API_FOOTBALL_ACCEPTANCE_STRICT: ${{ github.event_name == 'workflow_dispatch' && (inputs.strict || 'true') || 'false' }}
     steps:
       - uses: actions/checkout@v5
         with:
           ref: codex/step3b-layout
+          fetch-depth: 0
       - uses: actions/setup-node@v5
         with:
           node-version: 22
           cache: npm
       - run: npm ci
-      - name: Verify UEFA qualifier and friendly coverage
+      - id: acceptance
+        name: Verify UEFA qualifier and friendly coverage
+        continue-on-error: true
         run: npm run provider:api-football:acceptance
       - name: Upload acceptance report
         if: always()
@@ -44,3 +47,17 @@ jobs:
           path: monitor/api-football-provider-acceptance.json
           if-no-files-found: ignore
           retention-days: 30
+      - name: Persist provider health report
+        if: always()
+        run: |
+          test -f monitor/api-football-provider-acceptance.json || exit 0
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add monitor/api-football-provider-acceptance.json
+          git diff --cached --quiet && exit 0
+          git commit -m "update api-football acceptance [skip vercel]"
+          git pull --rebase --autostash origin codex/step3b-layout
+          git push origin HEAD:codex/step3b-layout
+      - name: Enforce requested strict gate
+        if: github.event_name == 'workflow_dispatch' && inputs.strict == 'true' && steps.acceptance.outcome == 'failure'
+        run: exit 1
