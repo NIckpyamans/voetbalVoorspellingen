@@ -533,6 +533,28 @@ export function parseSkySportsScheduledEventsHtml(html, dateISO, deps) {
       type: leagueLabel.includes("Europe -") ? "cup" : "league",
     };
     const kickoffIso = deps.buildFootballDataKickoffIso(dateISO, time);
+    const homeGoals = Number(state?.teams?.home?.score?.current);
+    const awayGoals = Number(state?.teams?.away?.score?.current);
+    const statusShort = Array.isArray(state?.statusDescription?.short)
+      ? state.statusDescription.short.join(" ")
+      : String(state?.statusDescription?.short || "");
+    const statusDescription = String(state?.statusDescription?.full || statusShort || "").trim();
+    const scoreAvailable = Number.isFinite(homeGoals) && Number.isFinite(awayGoals);
+    const finished = Boolean(state?.isResult || state?.matchState === "post" || /\b(?:FT|AET|PEN)\b/i.test(statusShort));
+    const halftime = /\bHT\b|half.?time/i.test(`${statusShort} ${statusDescription}`);
+    const live = !finished && Boolean(state?.currentlyPlaying || state?.isInPlay || state?.matchState === "live");
+    const statusType = state?.isPostponed
+      ? "postponed"
+      : state?.isCancelled || state?.isAbandoned || state?.isSuspended
+        ? "cancelled"
+        : finished
+          ? "finished"
+          : halftime
+            ? "halftime"
+            : live
+              ? "inprogress"
+              : "notstarted";
+    const publishScore = scoreAvailable && ["finished", "halftime", "inprogress"].includes(statusType);
     events.push({
       id: `sky-${state?.id || `${dateISO}-${deps.normalizeName(homeName)}-${deps.normalizeName(awayName)}`}`,
       startTimestamp: Math.floor(new Date(kickoffIso).getTime() / 1000),
@@ -559,9 +581,9 @@ export function parseSkySportsScheduledEventsHtml(html, dateISO, deps) {
       roundInfo: state?.competition?.round?.name?.full
         ? { name: state.competition.round.name.full, roundType: state.competition.round.name.full }
         : null,
-      status: { type: "notstarted", description: "NS" },
-      homeScore: {},
-      awayScore: {},
+      status: { type: statusType, description: statusDescription || (finished ? "FT" : "NS") },
+      homeScore: publishScore ? { current: homeGoals } : {},
+      awayScore: publishScore ? { current: awayGoals } : {},
       skyMeta: { matchId: state?.id || null, competition: competitionName },
       source: "sky-fixture-fallback",
     });

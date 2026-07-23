@@ -59,4 +59,49 @@ describe("Sky Sports fixture parser", () => {
 
     expect(parseSkySportsScheduledEventsHtml(html, "2026-07-23", deps)).toEqual([]);
   });
+
+  it("preserves a verified final score instead of returning RESULT_PENDING later", () => {
+    const state = {
+      id: 558272,
+      start: { time: "17:00" },
+      competition: { name: { full: "Europa League Qualifying" } },
+      teams: {
+        home: { name: { full: "Neftchi Baku" }, score: { current: 2 } },
+        away: { name: { full: "Dinamo Minsk" }, score: { current: 4 } },
+      },
+      matchState: "post",
+      isResult: true,
+      statusDescription: { full: "Full Time", short: ["FT"] },
+    };
+    const encoded = JSON.stringify(state).replace(/&/g, "&amp;").replace(/"/g, "&quot;");
+    const html = `<div data-component-name="ui-sport-match-score" data-state="${encoded}"></div>`;
+
+    expect(parseSkySportsScheduledEventsHtml(html, "2026-07-22", deps)[0]).toMatchObject({
+      status: { type: "finished", description: "Full Time" },
+      homeScore: { current: 2 },
+      awayScore: { current: 4 },
+    });
+  });
+
+  it("keeps postponed fixtures scoreless and non-final", () => {
+    const state = {
+      id: 2,
+      start: { time: "20:00" },
+      competition: { name: { full: "Europa League Qualifying" } },
+      teams: {
+        home: { name: { full: "Home" }, score: { current: 0 } },
+        away: { name: { full: "Away" }, score: { current: 0 } },
+      },
+      isPostponed: true,
+      statusDescription: { full: "Postponed", short: ["P-P"] },
+    };
+    const encoded = JSON.stringify(state).replace(/"/g, "&quot;");
+    const html = `<div data-component-name="ui-sport-match-score" data-state="${encoded}"></div>`;
+
+    expect(parseSkySportsScheduledEventsHtml(html, "2026-07-22", deps)[0]).toMatchObject({
+      status: { type: "postponed", description: "Postponed" },
+      homeScore: {},
+      awayScore: {},
+    });
+  });
 });
