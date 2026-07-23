@@ -55,7 +55,7 @@ env:
 jobs:
   learn:
     runs-on: ubuntu-latest
-    timeout-minutes: 20
+    timeout-minutes: 10
 
     steps:
       - name: Checkout repository
@@ -74,10 +74,10 @@ jobs:
       - name: Install dependencies
         run: npm ci
 
-      - name: Refresh match data and reviews
-        run: node scripts/ci-neon-safe.js -- npm run worker:once
+      - name: Verify immutable R2 training ledger
+        run: npm run test:r2-snapshot-canary
 
-      - name: Prepare training export
+      - name: Recover and prepare training export
         run: |
           npm run train:snapshots:recover
           node scripts/ci-neon-safe.js -- npm run train:prepare
