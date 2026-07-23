@@ -25,4 +25,11 @@ describe("provider quota cooldown", () => {
       remainingHours: 0,
     });
   });
+
+  it("also cools down a suspended or unavailable provider plan", () => {
+    expect(buildProviderCooldown({
+      generatedAt: "2026-07-23T10:00:00.000Z",
+      apiFootball: { errorCategories: { auth_or_plan: 1 } },
+    }, { now: "2026-07-23T11:00:00.000Z" })).toMatchObject({ active: true, blockedRequests: 1 });
+  });
 });

@@ -15,6 +15,7 @@ import {
   mergeLineupCaptureLedger,
   minutesUntilKickoff,
 } from "./worker/critical-captures.js";
+import { summarizeLeagueCoverage } from "./worker/coverage-summary.js";
 
 const ROOT = process.cwd();
 const LOOKAHEAD_MINUTES = Math.max(30, Number(process.env.LINEUP_LOOKAHEAD_MINUTES || 90));
@@ -297,6 +298,7 @@ async function main() {
     }
     report.matches.push({
       matchId: match.match_id,
+      league: match.league || null,
       kickoff: match.kickoff_at,
       minutesBeforeKickoff,
       captureWindow,
@@ -305,8 +307,14 @@ async function main() {
       provider,
       status: result.status,
       confirmed: Boolean(result.lineup?.confirmed),
+      partial: Boolean(result.lineup && !result.lineup.confirmed),
     });
   }
+  report.leagueCoverage = summarizeLeagueCoverage(report.matches, {
+    success: (row) => row.confirmed,
+    partial: (row) => row.partial,
+  });
+  report.confirmedCoverage = report.checked ? Number((report.confirmed / report.checked).toFixed(3)) : 0;
   fs.mkdirSync(path.dirname(OUTPUT), { recursive: true });
   fs.writeFileSync(OUTPUT, `${JSON.stringify(report, null, 2)}\n`);
   console.log(JSON.stringify(report, null, 2));

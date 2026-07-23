@@ -4,6 +4,7 @@ import fs from "fs";
 import path from "path";
 import { getSql, loadLocalEnv } from "../shared/database.js";
 import { buildModelPromotionGate } from "./worker/model-promotion.js";
+import { trainingCalibrationRows } from "./worker/model-calibration-data.js";
 
 const ROOT = process.cwd();
 const APPLY_LIVE = process.argv.includes("--apply-live");
@@ -139,6 +140,17 @@ function uniqueCompletedSnapshotMatches() {
   }
 }
 
+function localCalibrationRows() {
+  const trainingPath = path.join(ROOT, "training", "training-snapshot.json");
+  if (!fs.existsSync(trainingPath)) return [];
+  try {
+    return trainingCalibrationRows(JSON.parse(fs.readFileSync(trainingPath, "utf8")));
+  } catch (error) {
+    console.warn(`[model-recalibration] lokale shadowset kon niet worden gelezen: ${error?.message || error}`);
+    return [];
+  }
+}
+
 async function main() {
   loadLocalEnv(ROOT);
   const completedSnapshotMatches = uniqueCompletedSnapshotMatches();
@@ -163,9 +175,11 @@ async function main() {
     return;
   }
   const sql = getSql();
-  if (!sql) throw new Error("DATABASE_URL/POSTGRES_URL ontbreekt");
-
-  const rows = await sql.query(`
+  const database = { configured: !!sql, available: false, error: null, rows: 0 };
+  let rows = [];
+  if (sql) {
+    try {
+      rows = await sql.query(`
     select
       ps.prediction_id,
       ps.match_id,
@@ -182,7 +196,16 @@ async function main() {
     where mr.actual_outcome in ('H','D','A')
       and ps.probabilities is not null
     order by ps.generated_at asc
-  `);
+      `);
+      database.available = true;
+      database.rows = rows.length;
+    } catch (error) {
+      database.error = error?.message || String(error);
+    }
+  }
+  const localRows = localCalibrationRows();
+  const calibrationSource = database.available && rows.length ? "neon" : "immutable_training_fallback";
+  if (calibrationSource === "immutable_training_fallback") rows = localRows;
 
   const groups = new Map();
   for (const row of rows) {
@@ -221,7 +244,7 @@ async function main() {
       ...best,
     };
     const calibrationProfileId = `league_bias_${slug(group.league)}_${slug(group.model)}`;
-    await sql.query(
+    if (database.available) await sql.query(
       `insert into calibration_profiles(
         calibration_profile_id, competition_id, phase_bucket, sample_size,
         brier_score, probability_shrinkage, confidence_bias, profile, generated_at
@@ -276,7 +299,7 @@ async function main() {
     ])
   );
 
-  const livePromotionApplied = APPLY_LIVE && promotionGate.canPromote;
+  const livePromotionApplied = APPLY_LIVE && promotionGate.canPromote && database.available;
   if (livePromotionApplied) {
     await writeRootSegment(sql, "leagueCalibrationProfiles", liveProfiles);
     await writeRootSegment(sql, "modelRecalibrationSummary", {
@@ -294,6 +317,9 @@ async function main() {
     applyLive: APPLY_LIVE,
     livePromotionApplied,
     promotionGate,
+    calibrationSource,
+    database,
+    calibrationRows: rows.length,
     generatedAt: new Date().toISOString(),
     groups: groups.size,
     candidates: candidates.length,
@@ -302,7 +328,9 @@ async function main() {
     topCandidates: candidates.sort((a, b) => b.improvement - a.improvement).slice(0, 20),
     nextAction: livePromotionApplied
       ? "Shadow-evaluatie draaien en Model Ops controleren op accepted league profiles."
-      : APPLY_LIVE
+      : APPLY_LIVE && promotionGate.canPromote && !database.available
+        ? "Live-promotie geblokkeerd omdat Neon niet schrijfbaar is; shadow-resultaten blijven wel beschikbaar."
+        : APPLY_LIVE
         ? `Live-promotie geblokkeerd; verzamel nog ${promotionGate.promotionGap} unieke afgeronde clubwedstrijden.`
         : promotionGate.canPromote
           ? "Run met --apply-live om accepted profielen in app_state_segments te zetten."

@@ -98,7 +98,7 @@ export async function safeFetchText(url) {
   }
 }
 
-export async function fetchExternalJson(url, headers = {}) {
+export async function fetchExternalJson(url, headers = {}, timeoutMs = 12000) {
   try {
     const response = await fetchWithTimeout(url, {
       headers: {
@@ -106,7 +106,7 @@ export async function fetchExternalJson(url, headers = {}) {
         "User-Agent": DEFAULT_USER_AGENT,
         ...headers,
       },
-    }, 12000);
+    }, timeoutMs);
     if (!response.ok) return null;
     return await response.json();
   } catch {

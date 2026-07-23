@@ -7,6 +7,7 @@ import { loadLocalEnv } from "../shared/database.js";
 import { fetchOddsAtPrediction } from "./odds-provider.js";
 import { findSportmonksFixture } from "./sportmonks-fixture-resolver.js";
 import { mergeOddsCaptureLedger } from "./worker/critical-captures.js";
+import { summarizeLeagueCoverage } from "./worker/coverage-summary.js";
 
 const ROOT = process.cwd();
 const HOURS_AHEAD = Math.max(3, Number(process.env.CRITICAL_ODDS_HOURS_AHEAD || 36));
@@ -85,6 +86,10 @@ async function main() {
     if (ledger.closing) report.closingPairs += 1;
     report.matches.push({ ...match, status: "captured", provider: odds.provider, captureRole: latestRole, sportmonksFixtureId: sportmonks?.fixtureId || null, opening: Boolean(ledger.opening), prematch: Boolean(ledger.prematch), closing: Boolean(ledger.closing) });
   }
+  report.leagueCoverage = summarizeLeagueCoverage(report.matches, {
+    success: (row) => row.status === "captured",
+  });
+  report.coverage = report.checked ? Number((report.captured / report.checked).toFixed(3)) : 0;
   fs.mkdirSync(path.dirname(OUTPUT), { recursive: true });
   fs.writeFileSync(OUTPUT, `${JSON.stringify(report, null, 2)}\n`);
   console.log(JSON.stringify(report, null, 2));

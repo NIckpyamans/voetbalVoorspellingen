@@ -29,5 +29,8 @@ Deze map is de veilige opsplitsing van `scripts/server-worker.js`.
 - `model-promotion.js`: shared 50-match calibration and 150-match live-promotion gates.
 - `r2-snapshot-canary.js`: pure R2 write/read/checksum/evaluation canary contract.
 - `provider-quota.js`: shared provider 403/429 cooldown decisions for scheduled work.
+- `training-recovery.js`: reconstructs leakage-safe training rows from immutable reviews or evaluations.
+- `model-calibration-data.js`: builds the immutable local/R2 shadow-calibration fallback.
+- `coverage-summary.js`: consistent per-league lineup and odds coverage metrics.
 
 `server-worker.js` is the orchestrator: it composes these modules, writes the app state and schedules source work. Provider IDs must remain provider-specific; a canonical match ID must never be sent to a provider endpoint as though it were that provider's team ID.

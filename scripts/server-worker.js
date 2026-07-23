@@ -7762,16 +7762,6 @@ function extractPostMatchStatsFromSofa(eventDetails, homeId, awayId) {
   return stats;
 }
 
-async function fetchJsonWithHeaders(url, headers = {}, timeoutMs = 12000) {
-  try {
-    const response = await fetchWithTimeout(url, { headers: { Accept: "application/json", ...headers } }, timeoutMs);
-    if (!response.ok) return null;
-    return await response.json();
-  } catch {
-    return null;
-  }
-}
-
 async function fetchPostMatchStatsFromTheSportsDb(match) {
   const apiKey = String(process.env.THESPORTSDB_API_KEY || "3").trim();
   if (!apiKey) return null;
@@ -7849,7 +7839,7 @@ async function fetchPostMatchStatsFromFootballData(match) {
   const awayName = normalizeName(match?.awayTeamName || "");
   for (const code of competitions) {
     const url = `${FOOTBALL_DATA_BASE}/competitions/${encodeURIComponent(code)}/matches?dateFrom=${encodeURIComponent(dateFrom)}&dateTo=${encodeURIComponent(dateTo)}&status=FINISHED`;
-    const payload = await fetchJsonWithHeaders(url, { "X-Auth-Token": apiKey }, 14000);
+    const payload = await fetchExternalJson(url, { "X-Auth-Token": apiKey }, 14000);
     const matchRow = (payload?.matches || []).find((row) => {
       const h = normalizeName(row?.homeTeam?.name || "");
       const a = normalizeName(row?.awayTeam?.name || "");

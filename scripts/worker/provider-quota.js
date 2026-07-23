@@ -1,6 +1,8 @@
 function countFailures(values = {}) {
   return Object.entries(values).reduce((sum, [key, value]) => {
-    return /quota|rate_limit|http_403|http_429/i.test(key) ? sum + Math.max(0, Number(value) || 0) : sum;
+    return /quota|rate_limit|http_403|http_429|auth_or_plan|suspend/i.test(key)
+      ? sum + Math.max(0, Number(value) || 0)
+      : sum;
   }, 0);
 }
 

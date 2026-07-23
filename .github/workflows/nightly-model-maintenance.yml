@@ -18,7 +18,8 @@ jobs:
       MODEL_RECALIBRATION_MIN_ROWS: "20"
       MODEL_RECALIBRATION_MIN_VALIDATION_ROWS: "8"
       MODEL_RECALIBRATION_MIN_BRIER_IMPROVEMENT: "0.001"
-      MODEL_RECALIBRATION_MIN_UNIQUE_COMPLETED_SNAPSHOTS: "150"
+      MODEL_RECALIBRATION_MIN_UNIQUE_COMPLETED_SNAPSHOTS: "50"
+      MODEL_PROMOTION_MIN_UNIQUE_COMPLETED_SNAPSHOTS: "150"
       LOGO_BACKFILL_LIMIT: "80"
     steps:
       - uses: actions/checkout@v5
@@ -40,3 +41,12 @@ jobs:
 
       - name: Monitor calibration sample health
         run: node scripts/ci-neon-safe.js -- npm run db:models:samples:monitor
+
+      - name: Upload shadow calibration evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: model-recalibration-report
+          path: monitor/model-recalibration-report.json
+          if-no-files-found: error
+          retention-days: 30
