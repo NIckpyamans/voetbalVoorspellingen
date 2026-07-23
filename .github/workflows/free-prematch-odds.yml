@@ -18,6 +18,12 @@ jobs:
           node-version: 22
           cache: npm
       - run: npm ci
+      - name: Check Neon availability once
+        id: database
+        run: npm run db:availability -- --emit-github-output
+        env:
+          DATABASE_URL: ${{ secrets.DATABASE_URL }}
+          POSTGRES_URL: ${{ secrets.POSTGRES_URL }}
       - name: Capture critical odds to R2
         run: npm run db:odds:critical:r2
         env:
@@ -38,7 +44,9 @@ jobs:
           CRITICAL_ODDS_HOURS_AHEAD: 36
           CRITICAL_ODDS_MATCH_LIMIT: 40
           ODDS_API_MIN_REMAINING: 50
-      - run: node scripts/ci-neon-safe.js -- npm run db:odds:prematch:collect
+      - name: Persist prematch odds to Neon
+        if: steps.database.outputs.available == 'true'
+        run: node scripts/ci-neon-safe.js -- npm run db:odds:prematch:collect
         env:
           DATABASE_URL: ${{ secrets.DATABASE_URL }}
           POSTGRES_URL: ${{ secrets.POSTGRES_URL }}
@@ -61,12 +69,15 @@ jobs:
           ODDS_API_CLOSING_LIMIT: 240
           ODDS_API_CLOSING_LOOKAHEAD_MINUTES: 240
           ODDS_API_MIN_REMAINING: 50
-      - run: node scripts/ci-neon-safe.js -- npm run db:odds:leakage
+      - name: Enforce Neon odds leakage classifications
+        if: steps.database.outputs.available == 'true'
+        run: node scripts/ci-neon-safe.js -- npm run db:odds:leakage
         env:
           DATABASE_URL: ${{ secrets.DATABASE_URL }}
           POSTGRES_URL: ${{ secrets.POSTGRES_URL }}
       - name: Upload odds capture report
         if: always()
+        continue-on-error: true
         uses: actions/upload-artifact@v4
         with:
           name: critical-odds-capture
