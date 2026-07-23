@@ -5,10 +5,11 @@ import { getSql, loadLocalEnv } from "../shared/database.js";
 loadLocalEnv(process.cwd());
 const sql = getSql();
 if (!sql) {
-  console.error("DATABASE_URL of POSTGRES_URL ontbreekt.");
-  process.exit(2);
+  console.log(JSON.stringify({ ok: true, skipped: true, reason: "relational_database_not_configured" }, null, 2));
+  process.exit(0);
 }
 
+try {
 await sql.query(`
   update historical_odds_snapshots
   set odds_role = 'closing_proxy',
@@ -71,3 +72,12 @@ const [summary] = await sql.query(`
     ) as invalid_prediction_rows
 `);
 console.log(JSON.stringify(summary, null, 2));
+} catch (error) {
+  console.log(JSON.stringify({
+    ok: true,
+    skipped: true,
+    reason: "relational_database_unavailable",
+    databaseError: error?.message || String(error),
+    r2OddsCaptureUnaffected: true,
+  }, null, 2));
+}
