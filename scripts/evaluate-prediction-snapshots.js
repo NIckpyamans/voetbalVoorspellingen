@@ -10,13 +10,18 @@ import {
   persistSnapshotLedger,
 } from "../shared/predictionSnapshotLedger.js";
 import { evaluateImmutableSnapshot, normalizeEvaluationResult } from "./worker/snapshot-evaluation.js";
+import {
+  addEvaluationResult,
+  createEvaluationResultIndex,
+  resolveEvaluationResult,
+} from "./worker/evaluation-result-matching.js";
 
 const ROOT = process.cwd();
 const REPORT_FILE = path.join(ROOT, "monitor", "prediction-evaluation-report.json");
 const limit = Math.max(1, Number(process.env.PREDICTION_EVALUATION_LIMIT || 5000));
 
 function readStaticResults() {
-  const results = new Map();
+  const results = createEvaluationResultIndex();
   const daysDir = path.join(ROOT, "data", "days");
   if (!fs.existsSync(daysDir)) return results;
   for (const fileName of fs.readdirSync(daysDir).filter((name) => /^\d{4}-\d{2}-\d{2}\.json$/.test(name))) {
@@ -24,10 +29,14 @@ function readStaticResults() {
       const day = JSON.parse(fs.readFileSync(path.join(daysDir, fileName), "utf8"));
       for (const match of day.matches || []) {
         if (!normalizeEvaluationResult(match)) continue;
-        results.set(String(match.id), { ...match, kickoff: match.kickoff || null });
+        addEvaluationResult(results, match.id, {
+          ...match,
+          date: match.date || fileName.slice(0, 10),
+          kickoff: match.kickoff || null,
+        });
       }
       for (const [matchId, review] of Object.entries(day.reviews || {})) {
-        if (normalizeEvaluationResult(review)) results.set(String(matchId), review);
+        if (normalizeEvaluationResult(review)) addEvaluationResult(results, matchId, review);
       }
     } catch (error) {
       console.warn(`[prediction-evaluation] kon ${fileName} niet lezen: ${error?.message || error}`);
@@ -90,21 +99,32 @@ async function main() {
   let ledger = loaded.ledger;
   const results = readStaticResults();
   for (const [matchId, review] of Object.entries(ledger.postMatchReviews || {})) {
-    if (normalizeEvaluationResult(review)) results.set(String(matchId), review);
+    if (normalizeEvaluationResult(review)) addEvaluationResult(results, matchId, review);
   }
 
   let r2Evaluated = 0;
   let fallbackEvaluated = 0;
   let eligible = 0;
+  let directResultMatches = 0;
+  let canonicalResultMatches = 0;
+  let ambiguousResultMatches = 0;
   const r2PredictionIds = new Set(Object.keys(loaded.sources.r2?.ledger?.predictionSnapshots || {}));
   const snapshots = Object.values(ledger.predictionSnapshots || {})
     .sort((a, b) => Date.parse(a?.generatedAt || "") - Date.parse(b?.generatedAt || ""))
     .slice(-limit);
   for (const snapshot of snapshots) {
-    const result = results.get(String(snapshot?.matchId || ""));
+    const resolved = resolveEvaluationResult(results, snapshot);
+    const result = resolved.result;
+    if (resolved.matchType === "ambiguous") ambiguousResultMatches += 1;
     if (!result) continue;
+    if (resolved.matchType === "canonical") canonicalResultMatches += 1;
+    else directResultMatches += 1;
     eligible += 1;
-    const evaluation = evaluateImmutableSnapshot(snapshot, result);
+    const evaluation = evaluateImmutableSnapshot(snapshot, result, {
+      evaluationSource: resolved.matchType === "canonical"
+        ? "r2-immutable-ledger-canonical-fixture-evaluator"
+        : "r2-immutable-ledger-evaluator",
+    });
     if (!evaluation) continue;
     ledger.evaluations[evaluation.predictionId] = evaluation;
     if (r2PredictionIds.has(evaluation.predictionId)) r2Evaluated += 1;
@@ -137,7 +157,7 @@ async function main() {
       fallback: {
         available: !!loaded.sources.local?.available,
         snapshotsRead: Object.keys(loaded.sources.local?.ledger?.predictionSnapshots || {}).length,
-        staticResultsRead: results.size,
+        staticResultsRead: results.byId.size,
         evaluated: fallbackEvaluated,
       },
     },
@@ -145,6 +165,9 @@ async function main() {
       snapshotsRead: snapshots.length,
       uniqueSnapshotMatches: new Set(snapshots.map((snapshot) => snapshot?.matchId).filter(Boolean)).size,
       eligibleResults: eligible,
+      directResultMatches,
+      canonicalResultMatches,
+      ambiguousResultMatches,
       evaluatedThisRun: neon.evaluated + r2Evaluated + fallbackEvaluated,
       evaluationsStoredInLedger: Object.keys(ledger.evaluations || {}).length,
     },
@@ -166,6 +189,7 @@ async function main() {
       `- R2: ${report.sources.r2.snapshotsRead} snapshots gelezen, ${r2Evaluated} geëvalueerd`,
       `- Lokale fallback: ${report.sources.fallback.snapshotsRead} snapshots, ${fallbackEvaluated} geëvalueerd`,
       `- Totaal werkelijk geëvalueerd: ${report.totals.evaluatedThisRun}`,
+      `- Resultaatkoppeling: ${directResultMatches} direct, ${canonicalResultMatches} canoniek, ${ambiguousResultMatches} ambigu overgeslagen`,
       "",
     ].join("\n"));
   }
