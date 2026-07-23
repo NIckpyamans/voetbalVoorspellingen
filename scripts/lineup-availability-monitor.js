@@ -9,10 +9,6 @@ const ROOT = process.cwd();
 loadLocalEnv(ROOT);
 
 const sql = getSql();
-if (!sql) {
-  console.error("DATABASE_URL of POSTGRES_URL ontbreekt.");
-  process.exit(2);
-}
 
 const daysAhead = Math.max(1, Number(process.env.LINEUP_MONITOR_DAYS_AHEAD || 14));
 const limit = Math.max(1, Number(process.env.LINEUP_MONITOR_LIMIT || 120));
@@ -57,7 +53,31 @@ function latestSnapshotForMatch(rows, matchId) {
   return rows.find((row) => row.match_id === matchId) || null;
 }
 
-const matches = await sql.query(
+function writeCaptureFallback(error = null) {
+  const capturePath = path.join(ROOT, "monitor", "pre-kickoff-lineup-collector.json");
+  const capture = fs.existsSync(capturePath) ? JSON.parse(fs.readFileSync(capturePath, "utf8")) : null;
+  const report = {
+    generatedAt: new Date().toISOString(),
+    source: "pre_kickoff_r2_capture_fallback",
+    database: { configured: !!sql, available: false, error: error?.message || String(error || "database_not_configured") },
+    daysAhead,
+    checked: Number(capture?.checked || 0),
+    confirmedLineups: Number(capture?.confirmed || 0),
+    projectedLineups: Number(capture?.partial || 0),
+    availabilityCovered: 0,
+    confirmedLineupCoverage: Number(capture?.confirmedCoverage || 0),
+    leagueCoverage: capture?.leagueCoverage || [],
+    recommendation: "R2-capture blijft actief; relationele lineupmonitoring wordt hervat zodra Neon beschikbaar is.",
+  };
+  fs.mkdirSync(path.join(ROOT, "monitor"), { recursive: true });
+  fs.writeFileSync(path.join(ROOT, "monitor", "lineup-availability-monitor.json"), `${JSON.stringify(report, null, 2)}\n`);
+  console.log(JSON.stringify(report, null, 2));
+}
+
+let matches = [];
+try {
+  if (!sql) throw new Error("database_not_configured");
+  matches = await sql.query(
   `select m.match_id, m.date_key, m.league, m.home_team_name, m.away_team_name, m.kickoff_at
    from matches m
    where m.kickoff_at > now()
@@ -66,7 +86,11 @@ const matches = await sql.query(
    order by m.kickoff_at asc
    limit $2`,
   [String(daysAhead), limit]
-);
+  );
+} catch (error) {
+  writeCaptureFallback(error);
+  process.exit(0);
+}
 
 const snapshots = matches.length
   ? await sql.query(
