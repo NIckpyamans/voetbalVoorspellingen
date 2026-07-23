@@ -3,13 +3,18 @@
 import fs from "fs";
 import path from "path";
 import { getSql, loadLocalEnv } from "../shared/database.js";
+import { buildModelPromotionGate } from "./worker/model-promotion.js";
 
 const ROOT = process.cwd();
 const APPLY_LIVE = process.argv.includes("--apply-live");
 const MIN_ROWS = Math.max(10, Number(process.env.MODEL_RECALIBRATION_MIN_ROWS || 20));
 const MIN_VALIDATION_ROWS = Math.max(5, Number(process.env.MODEL_RECALIBRATION_MIN_VALIDATION_ROWS || 8));
 const MIN_BRIER_IMPROVEMENT = Number(process.env.MODEL_RECALIBRATION_MIN_BRIER_IMPROVEMENT || 0.001);
-const MIN_UNIQUE_COMPLETED_SNAPSHOT_MATCHES = Math.max(10, Number(process.env.MODEL_RECALIBRATION_MIN_UNIQUE_COMPLETED_SNAPSHOTS || 150));
+const MIN_UNIQUE_COMPLETED_SNAPSHOT_MATCHES = Math.max(10, Number(process.env.MODEL_RECALIBRATION_MIN_UNIQUE_COMPLETED_SNAPSHOTS || 50));
+const MIN_UNIQUE_COMPLETED_SNAPSHOT_MATCHES_FOR_LIVE = Math.max(
+  MIN_UNIQUE_COMPLETED_SNAPSHOT_MATCHES,
+  Number(process.env.MODEL_PROMOTION_MIN_UNIQUE_COMPLETED_SNAPSHOTS || 150)
+);
 const REPORT_PATH = path.join(ROOT, "monitor", "model-recalibration-report.json");
 
 function clamp(value, min, max) {
@@ -137,7 +142,11 @@ function uniqueCompletedSnapshotMatches() {
 async function main() {
   loadLocalEnv(ROOT);
   const completedSnapshotMatches = uniqueCompletedSnapshotMatches();
-  if (completedSnapshotMatches < MIN_UNIQUE_COMPLETED_SNAPSHOT_MATCHES) {
+  const promotionGate = buildModelPromotionGate(completedSnapshotMatches, {
+    calibrationMin: MIN_UNIQUE_COMPLETED_SNAPSHOT_MATCHES,
+    promotionMin: MIN_UNIQUE_COMPLETED_SNAPSHOT_MATCHES_FOR_LIVE,
+  });
+  if (!promotionGate.canCalibrate) {
     const report = {
       ok: true,
       skipped: true,
@@ -145,6 +154,7 @@ async function main() {
       reason: "insufficient_unique_completed_snapshot_matches",
       uniqueCompletedSnapshotMatches: completedSnapshotMatches,
       minimumUniqueCompletedSnapshotMatches: MIN_UNIQUE_COMPLETED_SNAPSHOT_MATCHES,
+      promotionGate,
       nextAction: `Wacht op ${Math.max(0, MIN_UNIQUE_COMPLETED_SNAPSHOT_MATCHES - completedSnapshotMatches)} extra unieke afgeronde clubwedstrijden met pre-match snapshots voordat league/phase-kalibratie draait.`,
     };
     fs.mkdirSync(path.dirname(REPORT_PATH), { recursive: true });
@@ -266,7 +276,8 @@ async function main() {
     ])
   );
 
-  if (APPLY_LIVE) {
+  const livePromotionApplied = APPLY_LIVE && promotionGate.canPromote;
+  if (livePromotionApplied) {
     await writeRootSegment(sql, "leagueCalibrationProfiles", liveProfiles);
     await writeRootSegment(sql, "modelRecalibrationSummary", {
       generatedAt: new Date().toISOString(),
@@ -281,15 +292,21 @@ async function main() {
   const report = {
     ok: true,
     applyLive: APPLY_LIVE,
+    livePromotionApplied,
+    promotionGate,
     generatedAt: new Date().toISOString(),
     groups: groups.size,
     candidates: candidates.length,
     accepted: Object.keys(liveProfiles).length,
     liveProfileKeys: Object.keys(liveProfiles),
     topCandidates: candidates.sort((a, b) => b.improvement - a.improvement).slice(0, 20),
-    nextAction: APPLY_LIVE
+    nextAction: livePromotionApplied
       ? "Shadow-evaluatie draaien en Model Ops controleren op accepted league profiles."
-      : "Run met --apply-live om accepted profielen in app_state_segments te zetten.",
+      : APPLY_LIVE
+        ? `Live-promotie geblokkeerd; verzamel nog ${promotionGate.promotionGap} unieke afgeronde clubwedstrijden.`
+        : promotionGate.canPromote
+          ? "Run met --apply-live om accepted profielen in app_state_segments te zetten."
+          : `Gebruik de uitkomst alleen experimenteel; nog ${promotionGate.promotionGap} unieke wedstrijden nodig voor live-promotie.`,
   };
   fs.mkdirSync(path.dirname(REPORT_PATH), { recursive: true });
   fs.writeFileSync(REPORT_PATH, `${JSON.stringify(report, null, 2)}\n`);

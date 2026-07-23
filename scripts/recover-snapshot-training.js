@@ -7,8 +7,8 @@ import { isHiddenInternationalOrWorldCupEntity } from "../shared/competitionVisi
 import {
   SNAPSHOT_LEDGER_LOCAL_FILE,
   SNAPSHOT_LEDGER_VERSION,
+  loadSnapshotLedger,
   mergeSnapshotLedgers,
-  readLocalSnapshotLedger,
 } from "../shared/predictionSnapshotLedger.js";
 import { mergeTrainingSnapshots } from "./worker/training-snapshot.js";
 
@@ -47,9 +47,10 @@ function snapshotTrainingRow(snapshot, review) {
   };
 }
 
-function main() {
+async function main() {
   const source = readJson(SERVER_DATA_FILE, {});
-  const existingLedger = readLocalSnapshotLedger(ROOT).ledger;
+  const loadedLedger = await loadSnapshotLedger({ root: ROOT });
+  const existingLedger = loadedLedger.ledger;
   const ledger = mergeSnapshotLedgers(existingLedger, {
     version: SNAPSHOT_LEDGER_VERSION,
     generatedAt: new Date().toISOString(),
@@ -83,7 +84,16 @@ function main() {
     recoveredRows: recoveredRows.length,
     trainingRows: training.rows.length,
     snapshotBackedRows: training.rows.filter((row) => row.snapshotBacked).length,
+    sources: {
+      r2Available: !!loadedLedger.sources.r2?.available,
+      r2Snapshots: Object.keys(loadedLedger.sources.r2?.ledger?.predictionSnapshots || {}).length,
+      localAvailable: !!loadedLedger.sources.local?.available,
+      localSnapshots: Object.keys(loadedLedger.sources.local?.ledger?.predictionSnapshots || {}).length,
+    },
   }, null, 2));
 }
 
-main();
+main().catch((error) => {
+  console.error(error?.stack || error);
+  process.exit(1);
+});

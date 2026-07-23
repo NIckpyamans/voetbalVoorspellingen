@@ -1,8 +1,6 @@
 name: Prediction evaluation
 
 on:
-  schedule:
-    - cron: "47 3 * * *"
   workflow_dispatch:
 
 jobs:
@@ -16,6 +14,15 @@ jobs:
           node-version: 22
           cache: npm
       - run: npm ci
+      - name: Prove R2 snapshot write/read/evaluation
+        run: npm run test:r2-snapshot-canary
+        env:
+          CLOUDFLARE_R2_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_R2_ACCOUNT_ID }}
+          CLOUDFLARE_R2_ACCESS_KEY_ID: ${{ secrets.CLOUDFLARE_R2_ACCESS_KEY_ID }}
+          CLOUDFLARE_R2_SECRET_ACCESS_KEY: ${{ secrets.CLOUDFLARE_R2_SECRET_ACCESS_KEY }}
+          CLOUDFLARE_R2_BUCKET: ${{ secrets.CLOUDFLARE_R2_BUCKET }}
+          CLOUDFLARE_R2_ENDPOINT: ${{ secrets.CLOUDFLARE_R2_ENDPOINT }}
+          CLOUDFLARE_R2_PREFIX: ${{ secrets.CLOUDFLARE_R2_PREFIX }}
       - run: node scripts/ci-neon-safe.js -- npm run db:odds:prematch:collect
         env:
           DATABASE_URL: ${{ secrets.DATABASE_URL }}
@@ -53,6 +60,22 @@ jobs:
           R2_SECRET_ACCESS_KEY: ${{ secrets.R2_SECRET_ACCESS_KEY }}
           R2_BUCKET_NAME: ${{ secrets.R2_BUCKET_NAME }}
           PREDICTION_EVALUATION_LIMIT: 5000
+      - name: Recover immutable training set from evaluated R2 ledger
+        run: |
+          npm run train:snapshots:recover
+          npm run train:prepare
+        env:
+          DATABASE_URL: ${{ secrets.DATABASE_URL }}
+          POSTGRES_URL: ${{ secrets.POSTGRES_URL }}
+          CLOUDFLARE_R2_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_R2_ACCOUNT_ID }}
+          CLOUDFLARE_R2_ACCESS_KEY_ID: ${{ secrets.CLOUDFLARE_R2_ACCESS_KEY_ID }}
+          CLOUDFLARE_R2_SECRET_ACCESS_KEY: ${{ secrets.CLOUDFLARE_R2_SECRET_ACCESS_KEY }}
+          CLOUDFLARE_R2_BUCKET: ${{ secrets.CLOUDFLARE_R2_BUCKET }}
+          CLOUDFLARE_R2_PREFIX: ${{ secrets.CLOUDFLARE_R2_PREFIX }}
+          R2_ACCOUNT_ID: ${{ secrets.R2_ACCOUNT_ID }}
+          R2_ACCESS_KEY_ID: ${{ secrets.R2_ACCESS_KEY_ID }}
+          R2_SECRET_ACCESS_KEY: ${{ secrets.R2_SECRET_ACCESS_KEY }}
+          R2_BUCKET_NAME: ${{ secrets.R2_BUCKET_NAME }}
       - name: Upload evaluation evidence
         if: always()
         uses: actions/upload-artifact@v4
@@ -60,6 +83,24 @@ jobs:
           name: prediction-evaluation-report
           path: monitor/prediction-evaluation-report.json
           if-no-files-found: error
+      - name: Upload R2 canary evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: r2-snapshot-canary
+          path: monitor/r2-snapshot-canary.json
+          if-no-files-found: error
+          retention-days: 30
+      - name: Upload recovered training evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: r2-recovered-training
+          path: |
+            training/training-snapshot.json
+            training/catboost-ready.json
+          if-no-files-found: error
+          retention-days: 30
       - run: node scripts/ci-neon-safe.js -- bash -lc "npm run db:roi-clv:analyze && npm run db:integrity:snapshot"
         env:
           DATABASE_URL: ${{ secrets.DATABASE_URL }}

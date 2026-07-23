@@ -4,6 +4,7 @@ import fs from "fs";
 import path from "path";
 import { getSql, loadLocalEnv, readDatabaseFeatureContext } from "../shared/database.js";
 import { isHiddenInternationalOrWorldCupEntity } from "../shared/competitionVisibility.js";
+import { buildModelPromotionGate } from "./worker/model-promotion.js";
 
 const ROOT = process.cwd();
 const SNAPSHOT_FILE = path.join(ROOT, "training", "training-snapshot.json");
@@ -252,8 +253,12 @@ function buildFeaturePayload(row, primaryFeatures) {
 }
 
 function buildTrainingPolicy(snapshotBackedRows, uniqueSnapshotMatches) {
-  const mature = uniqueSnapshotMatches >= MIN_SNAPSHOT_ROWS;
-  const nextTargetGap = Math.max(0, NEXT_SNAPSHOT_TARGET_ROWS - uniqueSnapshotMatches);
+  const promotionGate = buildModelPromotionGate(uniqueSnapshotMatches, {
+    calibrationMin: MIN_SNAPSHOT_ROWS,
+    promotionMin: NEXT_SNAPSHOT_TARGET_ROWS,
+  });
+  const mature = promotionGate.canCalibrate;
+  const nextTargetGap = promotionGate.promotionGap;
   return {
     minSnapshotRows: MIN_SNAPSHOT_ROWS,
     nextTargetRows: NEXT_SNAPSHOT_TARGET_ROWS,
@@ -261,12 +266,13 @@ function buildTrainingPolicy(snapshotBackedRows, uniqueSnapshotMatches) {
     snapshotBackedRows,
     uniqueSnapshotMatches,
     effectiveSnapshotRows: uniqueSnapshotMatches,
+    promotionGate,
     maturity: mature ? "mature" : "warming_up",
     snapshotBoostActive: mature,
     snapshotWeight: mature ? 1 : 0.65,
     fallbackWeight: mature ? 0.25 : 0.35,
     qualityGate:
-      uniqueSnapshotMatches >= NEXT_SNAPSHOT_TARGET_ROWS
+      promotionGate.canPromote
         ? "expert_sample"
         : mature
           ? "mature_but_growing"

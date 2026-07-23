@@ -5,6 +5,7 @@ import path from "path";
 import { getSql, loadLocalEnv } from "../shared/database.js";
 import { isHiddenInternationalOrWorldCupEntity } from "../shared/competitionVisibility.js";
 import { loadSnapshotLedger } from "../shared/predictionSnapshotLedger.js";
+import { buildModelPromotionGate } from "./worker/model-promotion.js";
 
 const ROOT = process.cwd();
 loadLocalEnv(ROOT);
@@ -88,6 +89,10 @@ const uniqueLedgerMatches = new Set(ledgerSnapshots.map((snapshot) => snapshot.m
 const uniqueEvaluatedMatches = new Set(ledgerEvaluations.map((evaluation) => evaluation.matchId).filter(Boolean)).size;
 const effectiveUniqueTrainingMatches = Math.max(uniqueSnapshotMatches, uniqueEvaluatedMatches);
 const gap = Math.max(0, target - effectiveUniqueTrainingMatches);
+const promotionGate = buildModelPromotionGate(effectiveUniqueTrainingMatches, {
+  calibrationMin: Number(training?.trainingPolicy?.minSnapshotRows || process.env.SNAPSHOT_MIN_TRAINING_ROWS || 50),
+  promotionMin: target,
+});
 const ledgerByLeague = new Map();
 for (const snapshot of ledgerSnapshots) {
   const league = String(snapshot.league || "unknown");
@@ -105,6 +110,7 @@ const report = {
     fallbackRows: Number(training?.fallbackRows || 0),
     target,
     gap,
+    promotionGate,
     maturity: training?.trainingPolicy?.maturity || "unknown",
   },
   database,

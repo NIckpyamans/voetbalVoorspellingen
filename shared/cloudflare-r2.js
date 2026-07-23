@@ -22,7 +22,7 @@ export function getR2Config(env = process.env) {
   const accountId = env.CLOUDFLARE_R2_ACCOUNT_ID || env.R2_ACCOUNT_ID || "";
   const accessKeyId = env.CLOUDFLARE_R2_ACCESS_KEY_ID || env.R2_ACCESS_KEY_ID || "";
   const secretAccessKey = env.CLOUDFLARE_R2_SECRET_ACCESS_KEY || env.R2_SECRET_ACCESS_KEY || "";
-  const bucket = env.CLOUDFLARE_R2_BUCKET || env.R2_BUCKET || "";
+  const bucket = env.CLOUDFLARE_R2_BUCKET || env.R2_BUCKET || env.R2_BUCKET_NAME || "";
   const endpoint =
     env.CLOUDFLARE_R2_ENDPOINT ||
     env.R2_ENDPOINT ||
