@@ -2333,6 +2333,7 @@ const TEAM_ALIAS_GROUPS = [
   ["atletico madrid", "ath madrid", "atletico"],
   ["athletic club", "athletic bilbao", "ath bilbao", "athletic club bilbao"],
   ["espanyol", "espanol", "rcd espanyol", "espanyol barcelona"],
+  ["racing santander", "racing de santander"],
   ["barcelona", "fc barcelona", "barca"],
   ["crystal palace", "crystal palace fc"],
   ["real sociedad", "sociedad"],
@@ -4467,7 +4468,19 @@ function dedupeFallbackEvents(events) {
   const mergeEvent = (current, incoming) => {
     const incomingPreferred = quality(incoming) > quality(current);
     const preferred = incomingPreferred ? { ...incoming } : { ...current };
-    const fallback = incomingPreferred ? current : incoming;
+    const rawFallback = incomingPreferred ? current : incoming;
+    const reversed =
+      canonicalMatchTeamKey(preferred?.homeTeam?.name) === canonicalMatchTeamKey(rawFallback?.awayTeam?.name) &&
+      canonicalMatchTeamKey(preferred?.awayTeam?.name) === canonicalMatchTeamKey(rawFallback?.homeTeam?.name);
+    const fallback = reversed
+      ? {
+          ...rawFallback,
+          homeTeam: rawFallback?.awayTeam,
+          awayTeam: rawFallback?.homeTeam,
+          homeScore: rawFallback?.awayScore,
+          awayScore: rawFallback?.homeScore,
+        }
+      : rawFallback;
 
     preferred.homeTeam = {
       ...(fallback?.homeTeam || {}),
@@ -4589,7 +4602,7 @@ function buildEventDedupeKey(event) {
   const home = canonicalMatchTeamKey(event?.homeTeam?.name || "");
   const away = canonicalMatchTeamKey(event?.awayTeam?.name || "");
   if (!dateKey || !home || !away) return "";
-  return `${dateKey}|${canonicalLeagueKey(league)}|${home}|${away}`;
+  return `${dateKey}|${canonicalLeagueKey(league)}|${[home, away].sort().join("|")}`;
 }
 
 function dedupeStoredMatches(matches = []) {
