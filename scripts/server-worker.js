@@ -10784,7 +10784,9 @@ async function main() {
       toAmsterdamDateKey,
       toNumber,
     });
-    const curatedEvents = friendliesDiscoveryMode ? fetchCuratedClubFriendlies(date) : fetchCuratedFixtureBackfill(date);
+    const curatedEvents = friendliesDiscoveryMode
+      ? fetchCuratedClubFriendlies(date)
+      : [...fetchCuratedFixtureBackfill(date), ...fetchCuratedClubFriendlies(date)];
     // Sky exposes the complete UEFA qualifier slate as structured match data.
     // Do not merge the smaller BBC fallback on those days: provider name
     // variants (for example PAOK/PAOK Salonika) would otherwise duplicate games.

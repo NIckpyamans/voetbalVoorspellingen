@@ -63,10 +63,25 @@ export function mergeH2HResultLists(existingResults = [], extraResults = []) {
 
 export function lookupCuratedResultBackfill(curatedResultBackfill, buildPairKey, dateISO, homeName, awayName) {
   const pairKey = buildPairKey(homeName, awayName);
-  return (
-    (curatedResultBackfill || []).find((item) => item.date === dateISO && buildPairKey(item.home, item.away) === pairKey) ||
-    null
+  const result = (curatedResultBackfill || []).find(
+    (item) => item.date === dateISO && buildPairKey(item.home, item.away) === pairKey
   );
+  if (!result) return null;
+
+  const normalize = (value) => String(value || "")
+    .toLowerCase()
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .replace(/[^a-z0-9]+/g, " ")
+    .trim();
+  const reversed = normalize(result.home) === normalize(awayName) && normalize(result.away) === normalize(homeName);
+  if (!reversed || !/^\d+\s*-\s*\d+$/.test(String(result.score || ""))) return result;
+  const [homeGoals, awayGoals] = String(result.score).split("-").map((value) => value.trim());
+  return {
+    ...result,
+    score: `${awayGoals}-${homeGoals}`,
+    orientedFromReverse: true,
+  };
 }
 
 export function lookupHistoricalResultBackfill(store, match, dateKey, deps) {
