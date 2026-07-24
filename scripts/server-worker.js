@@ -75,6 +75,7 @@ import { buildTrainingSnapshot } from "./worker/training-builder.js";
 import { buildTeamIdentity, getKnownProviderIds } from "./worker/team-identity.js";
 import { fetchR2H2HProfile, fetchR2LineupSummary, fetchR2OddsSnapshot } from "./worker/critical-captures.js";
 import { buildH2HAgentProfile } from "./worker/h2h.js";
+import { buildTwoLegAggregate, deriveH2HWinnerId, findOrientedPreviousLeg } from "./worker/two-leg.js";
 import { mergePersistedTeamFormCache } from "./worker/local-team-form-history.js";
 import {
   dedupeStoredMatches as dedupeFixtureMatches,
@@ -5353,7 +5354,7 @@ function h2hCompareKeys(homeName, awayName, homeId, awayId) {
 function normalizeH2HWinnerId(item, homeName, awayName, homeId, awayId) {
   const keys = h2hCompareKeys(homeName, awayName, homeId, awayId);
   const winner = String(item?.winnerId || "");
-  if (!winner) return "";
+  if (!winner) return deriveH2HWinnerId(item, homeName, awayName, homeId, awayId);
   if (winner === String(homeId || "") || winner === normalizeName(homeName)) return keys.home;
   if (winner === String(awayId || "") || winner === normalizeName(awayName)) return keys.away;
   return winner;
@@ -8596,9 +8597,9 @@ function extractRoundLabel(eventDetails) {
 function buildAggregateInfo(event, eventDetails, h2h, fallbackPreviousLeg = null) {
   const bbcAggregate = event?.bbcMeta?.aggregate || null;
   const results = h2h?.results || [];
-  const currentEventId = Number(event.id || 0);
+  const currentEventId = String(event.id || "");
   const previousLeg = [...results]
-    .filter((result) => Number(result.eventId || 0) !== currentEventId)
+    .filter((result) => !currentEventId || String(result.eventId || "") !== currentEventId)
     .filter((result) => {
       const d = result.date ? new Date(result.date).getTime() : 0;
       const now = Number(event.startTimestamp || 0) * 1000;
@@ -8631,17 +8632,11 @@ function buildAggregateInfo(event, eventDetails, h2h, fallbackPreviousLeg = null
     firstLegAwayGoals = Number(bbcAggregate.awayAggregateBeforeMatch || 0);
     firstLegText = bbcAggregate.previousLegText || bbcAggregate.aggregateText || null;
   } else if (previousLeg?.score) {
-    const [prevHomeGoals, prevAwayGoals] = previousLeg.score.split("-").map(Number);
-    if (!Number.isNaN(prevHomeGoals) && !Number.isNaN(prevAwayGoals)) {
-      const currentHomeId = String(event.homeTeam?.id || "");
-      if (String(previousLeg.homeTeamId || "") === currentHomeId) {
-        firstLegHomeGoals = prevHomeGoals;
-        firstLegAwayGoals = prevAwayGoals;
-      } else if (String(previousLeg.awayTeamId || "") === currentHomeId) {
-        firstLegHomeGoals = prevAwayGoals;
-        firstLegAwayGoals = prevHomeGoals;
-      }
-      firstLegText = `${previousLeg.home} ${previousLeg.score} ${previousLeg.away}`;
+    const oriented = buildTwoLegAggregate(event, previousLeg);
+    if (oriented) {
+      firstLegHomeGoals = oriented.firstLegHomeGoals;
+      firstLegAwayGoals = oriented.firstLegAwayGoals;
+      firstLegText = oriented.firstLegText;
     }
   }
 
@@ -8658,7 +8653,7 @@ function buildAggregateInfo(event, eventDetails, h2h, fallbackPreviousLeg = null
 
   return {
     active: !!previousLeg || isKnockoutHint || !!bbcAggregate,
-    firstLegScore: bbcAggregate?.previousLegScore || previousLeg?.score || null,
+    firstLegScore: bbcAggregate?.previousLegScore || buildTwoLegAggregate(event, previousLeg)?.firstLegScore || null,
     firstLegText,
     aggregateScore: `${homeAggregate}-${awayAggregate}`,
     homeAggregate,
@@ -8733,49 +8728,17 @@ function findPreviousLegFromRecent(
   seasonId,
   currentEventId
 ) {
-  const combined = [
-    ...(homeRecent?.recentMatches || []),
-    ...(awayRecent?.recentMatches || []),
-  ];
-
-  const homeNameNorm = normalizeName(currentHomeName);
-  const awayNameNorm = normalizeName(currentAwayName);
-
-  const match = combined.find((item) => {
-    if (String(item.eventId || "") === String(currentEventId || "")) return false;
-    if (tournamentId && item.tournamentId && item.tournamentId !== tournamentId) return false;
-    if (seasonId && item.seasonId && item.seasonId !== seasonId) return false;
-    const opponentIdMatch =
-      String(item.opponentId || "") === String(currentAwayId || "") ||
-      String(item.opponentId || "") === String(currentHomeId || "");
-    const opponentNameNorm = normalizeName(item.opponent || "");
-    const opponentNameMatch =
-      opponentNameNorm === homeNameNorm || opponentNameNorm === awayNameNorm;
-    return (
-      opponentIdMatch || opponentNameMatch
-    );
+  return findOrientedPreviousLeg({
+    homeRecent,
+    awayRecent,
+    currentHomeId,
+    currentAwayId,
+    currentHomeName,
+    currentAwayName,
+    tournamentId,
+    seasonId,
+    currentEventId,
   });
-
-  if (!match?.score) return null;
-
-  const [goalsFor, goalsAgainst] = String(match.score).split("-").map(Number);
-  if (Number.isNaN(goalsFor) || Number.isNaN(goalsAgainst)) return null;
-
-  const currentHomeWasHome = String(match.opponentId || "") === String(currentAwayId || "");
-  const homeTeamId = currentHomeWasHome ? String(currentHomeId || "") : String(currentAwayId || "");
-  const awayTeamId = currentHomeWasHome ? String(currentAwayId || "") : String(currentHomeId || "");
-  const home = currentHomeWasHome ? currentHomeName : currentAwayName;
-  const away = currentHomeWasHome ? currentAwayName : currentHomeName;
-
-  return {
-    eventId: match.eventId || null,
-    date: match.date || null,
-    homeTeamId,
-    awayTeamId,
-    home,
-    away,
-    score: `${goalsFor}-${goalsAgainst}`,
-  };
 }
 
 function buildH2HFromAggregateMeta(event, homeId, awayId, homeName, awayName, currentDate) {

@@ -51,7 +51,9 @@ export function mergeH2HResultLists(existingResults = [], extraResults = []) {
   const seen = new Set();
   const merged = [];
   for (const item of [...existingResults, ...extraResults]) {
-    const key = `${item?.date || ""}_${item?.home || ""}_${item?.away || ""}_${item?.score || ""}`;
+    const key = item?.eventId
+      ? `event_${item.eventId}`
+      : `${item?.date || ""}_${item?.home || ""}_${item?.away || ""}_${item?.score || ""}`;
     if (seen.has(key)) continue;
     seen.add(key);
     merged.push(item);

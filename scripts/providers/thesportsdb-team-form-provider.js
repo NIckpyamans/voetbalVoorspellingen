@@ -75,14 +75,19 @@ export function findTheSportsDbDirectResult(homeProfile, awayProfile, homeName, 
     const key = String(item.eventId || `${item.date}|${item.score}|${item.opponent}`);
     if (seen.has(key)) continue;
     seen.add(key);
-    const homeGoals = isHomePerspective ? Number(item.goalsFor) : Number(item.goalsAgainst);
-    const awayGoals = isHomePerspective ? Number(item.goalsAgainst) : Number(item.goalsFor);
+    const perspectiveName = isHomePerspective ? homeName : awayName;
+    const opponentName = isHomePerspective ? awayName : homeName;
+    const perspectiveWasAway = String(item.venue || "").toUpperCase() === "A";
+    const home = perspectiveWasAway ? opponentName : perspectiveName;
+    const away = perspectiveWasAway ? perspectiveName : opponentName;
+    const homeGoals = perspectiveWasAway ? Number(item.goalsAgainst) : Number(item.goalsFor);
+    const awayGoals = perspectiveWasAway ? Number(item.goalsFor) : Number(item.goalsAgainst);
     if (!Number.isFinite(homeGoals) || !Number.isFinite(awayGoals)) continue;
     return {
       eventId: item.eventId || null,
       date: item.date || null,
-      home: homeName,
-      away: awayName,
+      home,
+      away,
       score: `${homeGoals}-${awayGoals}`,
       source: "thesportsdb-direct-fixture",
     };
