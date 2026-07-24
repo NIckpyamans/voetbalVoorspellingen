@@ -37,6 +37,7 @@ import {
 import {
   createSafeFetch,
   fetchBbcScheduledEvents as fetchBbcScheduledEventsSource,
+  fetchFotmobScheduledEvents as fetchFotmobScheduledEventsSource,
   fetchSkySportsScheduledEvents as fetchSkySportsScheduledEventsSource,
   fetchEspnScoreboardEvents as fetchEspnScoreboardEventsSource,
   fetchEspnTeamScheduleEvents as fetchEspnTeamScheduleEventsSource,
@@ -1301,6 +1302,14 @@ const DATA_SCOUT_SOURCES = [
     priority: "hoog",
   },
   {
+    key: "fotmob-fixtures",
+    name: "FotMob Fixtures",
+    category: "gevolgde oefenwedstrijden",
+    freeUse: "publieke wedstrijdkalender als fallback",
+    data: ["club friendlies", "kickoff", "live/FT scores", "teamlogo's"],
+    priority: "hoog; alleen gevolgd eerste elftal",
+  },
+  {
     key: "official-club-fixtures",
     name: "Officiele clubsites",
     category: "curated oefenwedstrijden",
@@ -1568,6 +1577,26 @@ const CURATED_FIXTURE_BACKFILL = [
 ];
 
 const CURATED_CLUB_FRIENDLIES = [
+  // Visibility safety net for 24 July. FotMob is the automatic source; these
+  // user-verified Forza fixtures cover followed clubs missing from its feed.
+  { date: "2026-07-24", time: "10:00", home: "Como", away: "Paris FC", sourceName: "user-verified Forza fixture list", sourceUrl: "https://forzafootball.com" },
+  { date: "2026-07-24", time: "10:00", home: "Preston North End", away: "Cambridge United", sourceName: "user-verified Forza fixture list", sourceUrl: "https://forzafootball.com" },
+  { date: "2026-07-24", time: "10:00", home: "Amiens", away: "Boulogne", sourceName: "user-verified Forza fixture list", sourceUrl: "https://forzafootball.com" },
+  { date: "2026-07-24", time: "10:00", home: "Swansea City", away: "Udinese", sourceName: "user-verified Forza fixture list", sourceUrl: "https://forzafootball.com" },
+  { date: "2026-07-24", time: "14:00", home: "Lommel", away: "ADO Den Haag", sourceName: "user-verified Forza fixture list", sourceUrl: "https://forzafootball.com" },
+  { date: "2026-07-24", time: "14:00", home: "VfL Wolfsburg", away: "Olympique Lyonnais", sourceName: "user-verified Forza fixture list", sourceUrl: "https://forzafootball.com" },
+  { date: "2026-07-24", time: "16:00", home: "Derby County", away: "SC Freiburg", sourceName: "user-verified Forza fixture list", sourceUrl: "https://forzafootball.com" },
+  { date: "2026-07-24", time: "16:00", home: "Bournemouth", away: "FC St. Pauli", sourceName: "user-verified Forza fixture list", sourceUrl: "https://forzafootball.com" },
+  { date: "2026-07-24", time: "18:00", home: "Rosenborg", away: "Manchester United", sourceName: "user-verified Forza fixture list", sourceUrl: "https://forzafootball.com" },
+  { date: "2026-07-24", time: "18:30", home: "Heracles", away: "Excelsior", sourceName: "user-verified Forza fixture list", sourceUrl: "https://forzafootball.com" },
+  { date: "2026-07-24", time: "19:00", home: "Royal Antwerp FC", away: "Olympiakos Piraeus", sourceName: "user-verified Forza fixture list", sourceUrl: "https://forzafootball.com" },
+  { date: "2026-07-24", time: "19:00", home: "Benfica", away: "CF Os Belenenses", sourceName: "user-verified Forza fixture list", sourceUrl: "https://forzafootball.com" },
+  { date: "2026-07-24", time: "19:00", home: "Emmen", away: "Twente", sourceName: "user-verified Forza fixture list", sourceUrl: "https://forzafootball.com" },
+  { date: "2026-07-24", time: "19:30", home: "Osasuna", away: "Racing de Santander", sourceName: "user-verified Forza fixture list", sourceUrl: "https://forzafootball.com" },
+  { date: "2026-07-24", time: "20:00", home: "Galatasaray", away: "Monza", sourceName: "user-verified Forza fixture list", sourceUrl: "https://forzafootball.com" },
+  { date: "2026-07-24", time: "20:00", home: "FC Barcelona", away: "CE Europa", sourceName: "user-verified Forza fixture list", sourceUrl: "https://forzafootball.com" },
+  { date: "2026-07-24", time: "20:00", home: "Eintracht Braunschweig", away: "Southampton", sourceName: "user-verified Forza fixture list", sourceUrl: "https://forzafootball.com" },
+  { date: "2026-07-24", time: "20:30", home: "Guiseley", away: "Blackburn Rovers", sourceName: "user-verified Forza fixture list", sourceUrl: "https://forzafootball.com" },
   {
     date: "2026-07-04",
     time: "17:00",
@@ -1616,6 +1645,10 @@ const CURATED_CLUB_FRIENDLIES = [
 ];
 
 const CURATED_RESULT_BACKFILL = [
+  { date: "2026-07-24", home: "Como", away: "Paris FC", score: "2-2", status: "FT", sourceNote: "user-verified Forza result" },
+  { date: "2026-07-24", home: "Preston North End", away: "Cambridge United", score: "0-1", status: "FT", sourceNote: "user-verified Forza result" },
+  { date: "2026-07-24", home: "Amiens", away: "Boulogne", score: "0-1", status: "FT", sourceNote: "user-verified Forza result" },
+  { date: "2026-07-24", home: "Swansea City", away: "Udinese", score: "2-0", status: "FT", sourceNote: "user-verified Forza result" },
   {
     date: "2026-05-23",
     home: "Hull City",
@@ -4422,6 +4455,8 @@ function dedupeFallbackEvents(events) {
     const logoQuality = Number(Boolean(event?.homeTeam?.logoUrl)) + Number(Boolean(event?.awayTeam?.logoUrl));
     const sourceQuality = String(event?.source || "").includes("espn")
       ? 8
+      : String(event?.source || "").includes("fotmob")
+        ? 7
       : String(event?.source || "").includes("thesportsdb")
         ? 6
         : String(event?.source || "").includes("openligadb")
@@ -4526,6 +4561,18 @@ function canonicalLeagueKey(label) {
     .replace(/\s+/g, " ")
     .trim();
   return LEAGUE_DEDUPE_ALIASES.get(normalized) || normalized;
+}
+
+function readTrackedCompetitionTeamNames() {
+  const file = path.join(ROOT, "config", "competition-catalog.json");
+  if (!fs.existsSync(file)) return [];
+  try {
+    const payload = JSON.parse(fs.readFileSync(file, "utf8"));
+    return [...new Set((payload.competitions || []).flatMap((competition) => competition.teams || []))];
+  } catch (error) {
+    console.warn("[competition-catalog] gevolgde teams konden niet worden gelezen:", error.message);
+    return [];
+  }
 }
 
 const fixtureDeduplicationOptions = {
@@ -10652,6 +10699,7 @@ async function main() {
 
   const allEvents = {};
   const fixtureSourceDiagnostics = {};
+  const trackedCompetitionTeamNames = readTrackedCompetitionTeamNames();
   const teamTournamentMap = new Map();
   const tournamentsMap = new Map();
   const requiredTeamIds = new Set();
@@ -10728,6 +10776,14 @@ async function main() {
       isWomenContext,
       isYouthContext,
     });
+    const fotmobEvents = await fetchFotmobScheduledEventsSource(date, {
+      trackedTeamNames: trackedCompetitionTeamNames,
+      normalizeName,
+      isWomenContext,
+      isYouthContext,
+      toAmsterdamDateKey,
+      toNumber,
+    });
     const curatedEvents = friendliesDiscoveryMode ? fetchCuratedClubFriendlies(date) : fetchCuratedFixtureBackfill(date);
     // Sky exposes the complete UEFA qualifier slate as structured match data.
     // Do not merge the smaller BBC fallback on those days: provider name
@@ -10744,6 +10800,7 @@ async function main() {
       openLigaDb: openLigaDbEvents.length,
       bbc: bbcEvents.length,
       skySports: skyEvents.length,
+      fotmob: fotmobEvents.length,
       curated: curatedEvents.length,
     };
     const combinedFallbacks = dedupeFallbackEvents([
@@ -10755,6 +10812,7 @@ async function main() {
       ...openLigaDbEvents,
       ...bbcMergeEvents,
       ...skyEvents,
+      ...fotmobEvents,
       ...curatedEvents,
     ]);
 
@@ -10775,6 +10833,9 @@ async function main() {
     }
     if (skyEvents.length) {
       console.log(`[worker] ${date}: ${skyEvents.length} fallback events uit Sky Sports fixtures`);
+    }
+    if (fotmobEvents.length) {
+      console.log(`[worker] ${date}: ${fotmobEvents.length} gevolgde oefenduels uit FotMob`);
     }
     if (curatedEvents.length) {
       console.log(`[worker] ${date}: ${curatedEvents.length} fallback events uit curated fixtures`);

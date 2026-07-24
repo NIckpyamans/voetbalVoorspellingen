@@ -596,6 +596,97 @@ export async function fetchSkySportsScheduledEvents(dateISO, deps) {
   return html ? parseSkySportsScheduledEventsHtml(html, dateISO, deps) : [];
 }
 
+function isTrackedClubName(name, trackedTeamNames, normalizeName) {
+  const normalized = normalizeName(name);
+  if (!normalized) return false;
+  const withoutPrefix = normalized.replace(/^(?:afc|ac|cf|fc|sc|vfl)\s+/, "");
+  return trackedTeamNames.some((candidate) => {
+    const tracked = normalizeName(candidate);
+    if (!tracked) return false;
+    const trackedWithoutPrefix = tracked.replace(/^(?:afc|ac|cf|fc|sc|vfl)\s+/, "");
+    if (normalized === tracked || withoutPrefix === trackedWithoutPrefix) return true;
+    return Math.min(withoutPrefix.length, trackedWithoutPrefix.length) >= 6 &&
+      (withoutPrefix.includes(trackedWithoutPrefix) || trackedWithoutPrefix.includes(withoutPrefix));
+  });
+}
+
+export function parseFotmobScheduledEvents(payload, dateISO, deps) {
+  const trackedTeamNames = Array.isArray(deps.trackedTeamNames) ? deps.trackedTeamNames : [];
+  const events = [];
+  for (const league of Array.isArray(payload?.leagues) ? payload.leagues : []) {
+    if (!/club friendl/i.test(String(league?.name || ""))) continue;
+    for (const match of Array.isArray(league?.matches) ? league.matches : []) {
+      const homeName = String(match?.home?.longName || match?.home?.name || "").trim();
+      const awayName = String(match?.away?.longName || match?.away?.name || "").trim();
+      if (!homeName || !awayName) continue;
+      if (!isTrackedClubName(homeName, trackedTeamNames, deps.normalizeName) &&
+          !isTrackedClubName(awayName, trackedTeamNames, deps.normalizeName)) continue;
+      if (deps.isWomenContext("World - Club Friendlies", homeName, awayName) ||
+          deps.isYouthContext("World - Club Friendlies", homeName, awayName)) continue;
+
+      const kickoff = new Date(match?.status?.utcTime || Number(match?.timeTS || 0));
+      if (!Number.isFinite(kickoff.getTime()) || deps.toAmsterdamDateKey(kickoff) !== dateISO) continue;
+      const finished = Boolean(match?.status?.finished || Number(match?.statusId) === 6);
+      const live = !finished && Boolean(match?.status?.started || match?.status?.ongoing);
+      const cancelled = Boolean(match?.status?.cancelled);
+      const statusType = cancelled ? "cancelled" : finished ? "finished" : live ? "inprogress" : "notstarted";
+      const homeGoals = deps.toNumber(match?.home?.score);
+      const awayGoals = deps.toNumber(match?.away?.score);
+      const publishScore = Number.isFinite(homeGoals) && Number.isFinite(awayGoals) && (finished || live);
+      const liveLabel = String(match?.status?.liveTime?.short || "").replace(/[^0-9+]/g, "");
+
+      events.push({
+        id: `fotmob-${match?.id || `${dateISO}-${deps.normalizeName(homeName)}-${deps.normalizeName(awayName)}`}`,
+        startTimestamp: Math.floor(kickoff.getTime() / 1000),
+        homeTeam: {
+          id: match?.home?.id ? `fotmob-${match.home.id}` : "",
+          name: homeName,
+          country: { name: "World" },
+          logoUrl: match?.home?.id ? `https://images.fotmob.com/image_resources/logo/teamlogo/${match.home.id}.png` : "",
+        },
+        awayTeam: {
+          id: match?.away?.id ? `fotmob-${match.away.id}` : "",
+          name: awayName,
+          country: { name: "World" },
+          logoUrl: match?.away?.id ? `https://images.fotmob.com/image_resources/logo/teamlogo/${match.away.id}.png` : "",
+        },
+        uniqueTournament: { id: league?.id || null, name: "Club Friendlies" },
+        tournament: {
+          id: league?.id || null,
+          name: "Club Friendlies",
+          category: { name: "World" },
+          uniqueTournament: { id: league?.id || null },
+        },
+        season: { id: null },
+        status: { type: statusType, description: cancelled ? "Cancelled" : finished ? "FT" : live ? "LIVE" : "NS" },
+        time: liveLabel ? { current: Number.parseInt(liveLabel, 10) || 0, extra: 0 } : {},
+        homeScore: publishScore ? { current: homeGoals } : {},
+        awayScore: publishScore ? { current: awayGoals } : {},
+        fotmobMeta: { matchId: match?.id || null, leagueId: league?.id || null },
+        source: "fotmob-fixture-fallback",
+      });
+    }
+  }
+  return events;
+}
+
+export async function fetchFotmobScheduledEvents(dateISO, deps) {
+  const date = String(dateISO || "").replace(/-/g, "");
+  try {
+    const response = await fetchWithTimeout(`https://www.fotmob.com/api/data/matches?date=${date}`, {
+      headers: {
+        Accept: "application/json",
+        Referer: "https://www.fotmob.com/",
+        "User-Agent": DEFAULT_USER_AGENT,
+      },
+    }, 12000);
+    if (!response.ok) return [];
+    return parseFotmobScheduledEvents(await response.json(), dateISO, deps);
+  } catch {
+    return [];
+  }
+}
+
 const espnTeamScheduleCache = new Map();
 
 async function fetchEspnTeamSchedule(teamId, seasonYear) {
