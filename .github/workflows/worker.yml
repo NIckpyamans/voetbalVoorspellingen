@@ -14,7 +14,9 @@ env:
   TZ: Europe/Amsterdam
   FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: "true"
   DATA_BRANCH: codex/step3b-layout
-  FOOTYAI_DATE_WINDOW: yesterday,today,tomorrow,+2,+3,+4,+5,+6,+7,+8,+9,+10,+11,+12,+13,+14
+  # De losse vorm-, H2H-, odds- en lineup-jobs verrijken verder vooruit.
+  # De zware hoofdworker houdt het operationele weekvenster compact.
+  FOOTYAI_DATE_WINDOW: yesterday,today,tomorrow,+2,+3,+4,+5,+6,+7
   FOOTBALL_DATA_TOKEN: ${{ secrets.FOOTBALL_DATA_TOKEN }}
   API_KEY_FOOTBALL_DATA: ${{ secrets.API_KEY_FOOTBALL_DATA }}
   FOOTBALL_DATA_TEAM_MAP: ${{ secrets.FOOTBALL_DATA_TEAM_MAP }}
