@@ -1,5 +1,9 @@
 import { describe, expect, it } from "vitest";
-import { buildLocalTeamFormIndex, mergeLocalTeamForm } from "../../scripts/worker/local-team-form-history.js";
+import {
+  buildLocalTeamFormIndex,
+  mergeLocalTeamForm,
+  mergePersistedTeamFormCache,
+} from "../../scripts/worker/local-team-form-history.js";
 
 describe("local completed fixture form history", () => {
   const completedFriendly = {
@@ -32,5 +36,12 @@ describe("local completed fixture form history", () => {
     }, [...local, ...local], "Tottenham Hotspur", { now: Date.parse("2026-07-23T00:00:00.000Z") });
     expect(profile.recentMatches).toHaveLength(2);
     expect(profile.source).toContain("local-finished-results");
+  });
+
+  it("lets the separately refreshed cache replace stale worker state", () => {
+    expect(mergePersistedTeamFormCache(
+      { ajax: { updatedAt: "old", data: { recentMatches: [] } } },
+      { ajax: { updatedAt: "new", data: { recentMatches: [{ eventId: "latest" }] } } },
+    ).ajax).toMatchObject({ updatedAt: "new", data: { recentMatches: [{ eventId: "latest" }] } });
   });
 });

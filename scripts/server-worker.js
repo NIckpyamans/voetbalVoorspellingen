@@ -74,6 +74,7 @@ import { buildTrainingSnapshot } from "./worker/training-builder.js";
 import { buildTeamIdentity, getKnownProviderIds } from "./worker/team-identity.js";
 import { fetchR2H2HProfile, fetchR2LineupSummary, fetchR2OddsSnapshot } from "./worker/critical-captures.js";
 import { buildH2HAgentProfile } from "./worker/h2h.js";
+import { mergePersistedTeamFormCache } from "./worker/local-team-form-history.js";
 import {
   dedupeStoredMatches as dedupeFixtureMatches,
   dedupeStoredPredictions as dedupeFixturePredictions,
@@ -10614,10 +10615,10 @@ async function main() {
       ? JSON.parse(fs.readFileSync(TEAM_FORM_CACHE_FILE, "utf8"))
       : null;
     if (persistedFormCache?.teams && typeof persistedFormCache.teams === "object") {
-      store.sportsDbTeamFormCache = {
-        ...(persistedFormCache.teams || {}),
-        ...(store.sportsDbTeamFormCache || {}),
-      };
+      store.sportsDbTeamFormCache = mergePersistedTeamFormCache(
+        store.sportsDbTeamFormCache,
+        persistedFormCache.teams,
+      );
     }
   } catch (error) {
     console.warn(`[worker] team-form-cache kon niet worden gelezen: ${error?.message || error}`);

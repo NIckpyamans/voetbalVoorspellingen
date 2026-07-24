@@ -80,3 +80,10 @@ export function mergeLocalTeamForm(profile, localMatches, teamName, options = {}
     asOf: new Date(Number(options.now || Date.now())).toISOString(),
   };
 }
+
+export function mergePersistedTeamFormCache(storedCache, persistedCache) {
+  return {
+    ...(storedCache || {}),
+    ...(persistedCache || {}),
+  };
+}
