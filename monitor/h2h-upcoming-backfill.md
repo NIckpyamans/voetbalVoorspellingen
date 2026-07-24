@@ -1,9 +1,9 @@
 # Upcoming H2H Backfill
 
-Laatst bijgewerkt: 2026-07-24T08:59:42.120Z
-Gecontroleerd: 24
+Laatst bijgewerkt: 2026-07-24T10:01:37.934Z
+Gecontroleerd: 32
 Gevuld: 0
-Geen directe H2H: 24
+Geen directe H2H: 32
 Errors: 0
 
 ## Aanbeveling
