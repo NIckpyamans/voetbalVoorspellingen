@@ -29,6 +29,20 @@ describe("TheSportsDB team form provider", () => {
     expect(normalizeTheSportsDbRecentEvents([{ strHomeTeam: "Kairat Almaty", strAwayTeam: "Sutjeska", intHomeScore: "2", intAwayScore: "1" }], "Kairat", "1")).toEqual([]);
   });
 
+  it("rejects an exact team name from a different sport", async () => {
+    const fetchImpl = async () => ({
+      ok: true,
+      json: async () => ({ teams: [{ idTeam: "volley-1", strTeam: "AS Cannes", strSport: "Volleyball" }] }),
+    });
+    const data = await fetchTheSportsDbTeamForm({
+      teamName: "AS Cannes",
+      cache: {},
+      nameVariants: () => ["AS Cannes"],
+      fetchImpl,
+    });
+    expect(data).toBeNull();
+  });
+
   it("tries a safe alias query when the provider rejects punctuation in the club name", async () => {
     const calls = [];
     const fetchImpl = async (url) => {

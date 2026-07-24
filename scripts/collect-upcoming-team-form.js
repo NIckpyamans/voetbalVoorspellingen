@@ -3,6 +3,8 @@
 import fs from "fs";
 import path from "path";
 import { fetchTheSportsDbTeamForm } from "./providers/thesportsdb-team-form-provider.js";
+import { canonicalDedupeTeam } from "../shared/matchNormalization.js";
+import { buildLocalTeamFormIndex, mergeLocalTeamForm } from "./worker/local-team-form-history.js";
 
 const ROOT = process.cwd();
 const DAYS_AHEAD = Math.max(1, Number(process.env.FORM_ENRICHMENT_DAYS_AHEAD || 7));
@@ -51,6 +53,14 @@ function readJson(file, fallback) {
 
 const cachePayload = readJson(CACHE_FILE, { teams: {} });
 const cache = cachePayload?.teams && typeof cachePayload.teams === "object" ? cachePayload.teams : {};
+const rejectedSportsPattern = /volleyball|basketball|baseball|ice hockey|handball|rugby|cricket/i;
+let rejectedWrongSport = 0;
+for (const [key, value] of Object.entries(cache)) {
+  if (value?.data?.recentMatches?.some((match) => rejectedSportsPattern.test(String(match?.league || "")))) {
+    delete cache[key];
+    rejectedWrongSport += 1;
+  }
+}
 const teamNames = new Set();
 for (let offset = 0; offset <= DAYS_AHEAD; offset += 1) {
   const dateKey = addDays(todayKey(), offset);
@@ -75,6 +85,10 @@ const report = {
   runBudgetMs: RUN_BUDGET_MS,
   teamTimeoutMs: TEAM_TIMEOUT_MS,
   budgetExceeded: false,
+  rejectedWrongSport,
+  localHistoryTeams: 0,
+  localHistoryMatches: 0,
+  localFriendlyHistoryMatches: 0,
   samples: [],
 };
 
@@ -101,6 +115,11 @@ async function fetchTeamProfile(args) {
     clearTimeout(timer);
   }
 }
+const historicalDays = fs.readdirSync(path.join(ROOT, "data", "days"))
+  .filter((fileName) => /^\d{4}-\d{2}-\d{2}\.json$/.test(fileName))
+  .map((fileName) => readJson(path.join(ROOT, "data", "days", fileName), null))
+  .filter(Boolean);
+const localFormIndex = buildLocalTeamFormIndex(historicalDays, { now: Date.now() });
 
 const pendingTeams = [...teamNames]
   .sort()
@@ -141,6 +160,18 @@ for (const teamName of pendingTeams) {
       reason: profile?.timedOut ? "team_timeout" : "not_found",
     };
   }
+}
+
+for (const teamName of teamNames) {
+  const key = normalize(teamName);
+  const localMatches = localFormIndex.get(canonicalDedupeTeam(teamName)) || [];
+  if (!localMatches.length) continue;
+  const current = cache[key] || {};
+  const data = mergeLocalTeamForm(current.data || null, localMatches, teamName, { now });
+  cache[key] = { updatedAt: new Date(now).toISOString(), data };
+  report.localHistoryTeams += 1;
+  report.localHistoryMatches += localMatches.length;
+  report.localFriendlyHistoryMatches += localMatches.filter((match) => match.friendly).length;
 }
 
 fs.mkdirSync(path.dirname(CACHE_FILE), { recursive: true });

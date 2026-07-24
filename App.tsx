@@ -140,7 +140,20 @@ function dashboardMatchQuality(match: Match) {
 
 function freeSourceCoveragePercent(match: Match) {
   const coverage = match.freeSourceCoverage || match.sourceCoverage || (match as any).sourceCoverage;
-  return Number(coverage?.percent ?? (coverage?.score != null ? coverage.score * 100 : 0));
+  if (coverage?.percent != null || coverage?.score != null) {
+    return Number(coverage?.percent ?? coverage.score * 100);
+  }
+  const observed = [
+    Boolean(match.id && match.homeTeamName && match.awayTeamName && (match.kickoff || match.date)),
+    Boolean(match.score || match.homeScore != null || match.awayScore != null),
+    Boolean(match.h2h?.played || match.h2h?.results?.length || match.h2h?.lastMatches?.length),
+    Boolean(match.homeForm || match.awayForm || match.homeRecent?.recentMatches?.length || match.awayRecent?.recentMatches?.length),
+    Boolean((match as any).homePos != null || (match as any).awayPos != null),
+    hasWeatherData(match),
+    hasXgData(match),
+    hasOddsData(match),
+  ];
+  return Math.round((observed.filter(Boolean).length / observed.length) * 100);
 }
 
 function hasCoverageEntry(match: Match, key: string) {
@@ -878,7 +891,7 @@ const App: React.FC = () => {
                       <span className="ml-1 opacity-50 text-[9px]">{total}</span>
                     )}
                     <span className={`ml-1 text-[8px] ${selectedLeague === league ? "text-white" : coverageTone}`}>
-                      {coverage}%
+                      bron {coverage}%
                     </span>
                   </button>
                 );

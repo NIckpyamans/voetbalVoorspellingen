@@ -9,7 +9,7 @@ import { todayAmsterdamKey } from "../shared/date.js";
 import { filterVisibleMatches, filterVisiblePredictionMap } from "../shared/competitionVisibility.js";
 import { isGeneratedLogoUrl } from "../shared/clubLogos.js";
 
-const CACHE_VERSION = "v10_live_render_recovery";
+const CACHE_VERSION = "v11_source_coverage_and_form";
 const LIVE_CACHE_AGE_MS = 30_000;
 const TODAY_CACHE_AGE_MS = 90_000;
 const OTHER_CACHE_AGE_MS = 30 * 60_000;
@@ -148,6 +148,8 @@ function mergeDuplicateMatch(current: Match, incoming: Match): Match {
     awayRecent: preferred.awayRecent || fallback.awayRecent,
     homeSeasonStats: preferred.homeSeasonStats || fallback.homeSeasonStats,
     awaySeasonStats: preferred.awaySeasonStats || fallback.awaySeasonStats,
+    sourceCoverage: preferred.sourceCoverage || fallback.sourceCoverage,
+    freeSourceCoverage: preferred.freeSourceCoverage || fallback.freeSourceCoverage,
     coverage: preferred.coverage || fallback.coverage,
   };
 }
@@ -519,6 +521,8 @@ function mapRawMatch(m: any): Match {
     ...(m.importance ? { importance: m.importance } : {}),
     ...(m.dataCompleteness ? { dataCompleteness: m.dataCompleteness } : {}),
     ...(m.dataCompletenessScore != null ? { dataCompletenessScore: m.dataCompletenessScore } : {}),
+    ...(m.sourceCoverage ? { sourceCoverage: m.sourceCoverage } : {}),
+    ...(m.freeSourceCoverage ? { freeSourceCoverage: m.freeSourceCoverage } : {}),
     ...(m.phaseBucket ? { phaseBucket: m.phaseBucket } : {}),
     ...(m.leagueType ? { leagueType: m.leagueType } : {}),
 

@@ -17,7 +17,11 @@ function score(value) {
 
 function pickExactTeam(teams, teamName, nameVariants) {
   const variants = new Set((nameVariants?.(teamName) || [teamName]).map(normalized).filter(Boolean));
-  return (teams || []).find((team) => variants.has(normalized(team?.strTeam))) || null;
+  return (teams || []).find((team) => {
+    const sport = normalized(team?.strSport);
+    const isFootball = !sport || sport === "soccer" || sport === "football";
+    return isFootball && variants.has(normalized(team?.strTeam));
+  }) || null;
 }
 
 export function normalizeTheSportsDbRecentEvents(events, teamName, teamId) {

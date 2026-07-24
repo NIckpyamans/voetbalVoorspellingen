@@ -285,8 +285,15 @@ export function buildMatchSourceCoverage(match = {}, prediction = null) {
     {
       key: "form",
       label: "Vorm",
-      available: Boolean(match.homeForm || match.awayForm || homeStats.gamesPlayed || awayStats.gamesPlayed),
-      source: homeStats.source || awayStats.source || "worker-form",
+      available: Boolean(
+        match.homeForm ||
+        match.awayForm ||
+        Number(match.homeRecent?.gamesPlayed || 0) > 0 ||
+        Number(match.awayRecent?.gamesPlayed || 0) > 0 ||
+        homeStats.gamesPlayed ||
+        awayStats.gamesPlayed
+      ),
+      source: match.homeRecent?.source || match.awayRecent?.source || homeStats.source || awayStats.source || "worker-form",
     },
     {
       key: "standings",
