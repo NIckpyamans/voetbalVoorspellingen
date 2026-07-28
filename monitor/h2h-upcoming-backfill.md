@@ -1,9 +1,9 @@
 # Upcoming H2H Backfill
 
-Laatst bijgewerkt: 2026-07-27T23:21:29.306Z
-Gecontroleerd: 24
+Laatst bijgewerkt: 2026-07-28T04:31:29.663Z
+Gecontroleerd: 32
 Gevuld: 0
-Geen directe H2H: 24
+Geen directe H2H: 32
 Errors: 0
 
 ## Aanbeveling
@@ -30,5 +30,5 @@ API-Football blijft quota-bewust geblokkeerd totdat de acceptatietest slaagt; ES
 - 2026-07-28: Stoke City - Everton (provider_acceptance_blocked)
 - 2026-07-28: Lens - Famalicao (provider_acceptance_blocked)
 - 2026-07-29: Cerezo Osaka - Borussia Dortmund (provider_acceptance_blocked)
+- 2026-07-29: Mérida - Al Nassr (provider_acceptance_blocked)
 - 2026-07-29: Atlético Madrid - Getafe (provider_acceptance_blocked)
-- 2026-07-29: Dukagjini - FC Lugano (provider_acceptance_blocked)
