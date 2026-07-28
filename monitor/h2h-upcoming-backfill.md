@@ -1,6 +1,6 @@
 # Upcoming H2H Backfill
 
-Laatst bijgewerkt: 2026-07-28T04:31:29.663Z
+Laatst bijgewerkt: 2026-07-28T10:16:27.658Z
 Gecontroleerd: 32
 Gevuld: 0
 Geen directe H2H: 32
@@ -12,13 +12,11 @@ API-Football blijft quota-bewust geblokkeerd totdat de acceptatietest slaagt; ES
 ## Gevuld
 
 ## Geen Directe H2H
-- 2026-07-28: Real Madrid - Leganés (provider_acceptance_blocked)
 - 2026-07-28: PSV Eindhoven - FC Eindhoven (provider_acceptance_blocked)
 - 2026-07-28: Apollon Limassol - Dila Gori (provider_acceptance_blocked)
 - 2026-07-28: Riga FC - Vardar (provider_acceptance_blocked)
 - 2026-07-28: CSKA 1948 Sofia - FC Spartak Trnava (provider_acceptance_blocked)
 - 2026-07-28: Drita Gjilan - Floriana FC (provider_acceptance_blocked)
-- 2026-07-28: Chelsea - Western Sydney Wanderers FC (provider_acceptance_blocked)
 - 2026-07-28: Derby County - Valencia (provider_acceptance_blocked)
 - 2026-07-28: Cagliari - Modena (provider_acceptance_blocked)
 - 2026-07-28: Udinese - Shabab Al-Ahli Dubai FC (provider_acceptance_blocked)
@@ -32,3 +30,5 @@ API-Football blijft quota-bewust geblokkeerd totdat de acceptatietest slaagt; ES
 - 2026-07-29: Cerezo Osaka - Borussia Dortmund (provider_acceptance_blocked)
 - 2026-07-29: Mérida - Al Nassr (provider_acceptance_blocked)
 - 2026-07-29: Atlético Madrid - Getafe (provider_acceptance_blocked)
+- 2026-07-29: Dukagjini - FC Lugano (provider_acceptance_blocked)
+- 2026-07-29: FC Copenhagen - Polessya Zhitomir (provider_acceptance_blocked)
