@@ -1,6 +1,6 @@
 # Upcoming H2H Backfill
 
-Laatst bijgewerkt: 2026-07-30T16:17:23.024Z
+Laatst bijgewerkt: 2026-07-31T04:15:14.393Z
 Gecontroleerd: 32
 Gevuld: 0
 Geen directe H2H: 32
@@ -12,23 +12,23 @@ API-Football blijft quota-bewust geblokkeerd totdat de acceptatietest slaagt; ES
 ## Gevuld
 
 ## Geen Directe H2H
-- 2026-07-30: PAOK Salonika - Dynamo Kyiv (provider_acceptance_blocked)
-- 2026-07-30: CSKA Sofia - Qarabag FK (provider_acceptance_blocked)
-- 2026-07-30: Anderlecht - Hammarby IF (provider_acceptance_blocked)
-- 2026-07-30: Ferencvaros - FC Twente (provider_acceptance_blocked)
-- 2026-07-30: Benfica - St Gallen (provider_acceptance_blocked)
-- 2026-07-30: Beitar Jerusalem - AEK Larnaca (provider_acceptance_blocked)
-- 2026-07-30: Derry City - Rijeka (provider_acceptance_blocked)
-- 2026-07-30: The New Saints FC - FC Flora Tallinn (provider_acceptance_blocked)
-- 2026-07-30: Valletta FC - Raków Czestochowa (provider_acceptance_blocked)
-- 2026-07-30: Ajax - FK Vojvodina (provider_acceptance_blocked)
-- 2026-07-30: Ballkani - Bohemians (provider_acceptance_blocked)
-- 2026-07-30: Ludogorets - Hapoel Tel-Aviv (provider_acceptance_blocked)
-- 2026-07-30: Shkendija Tetovo - Bravo (provider_acceptance_blocked)
-- 2026-07-30: Vestri - Rigas Futbola Skola (provider_acceptance_blocked)
-- 2026-07-30: FC Sion - BATE Borisov (provider_acceptance_blocked)
-- 2026-07-30: UNA Strassen - Partizan Belgrade (provider_acceptance_blocked)
-- 2026-07-30: AA Gent - LNZ Cherkasy (provider_acceptance_blocked)
-- 2026-07-30: Austria Wien - FK Liepaja (provider_acceptance_blocked)
-- 2026-07-30: CFR Cluj-Napoca - Alashkert FC (provider_acceptance_blocked)
-- 2026-07-30: GKS Katowice - MSK Zilina (provider_acceptance_blocked)
+- 2026-07-31: Juventus - Nice (provider_acceptance_blocked)
+- 2026-07-31: Birmingham City - Barcelona (provider_acceptance_blocked)
+- 2026-07-31: Crystal Palace - Al Ula (provider_acceptance_blocked)
+- 2026-07-31: Deportivo Alaves - Castellon (provider_acceptance_blocked)
+- 2026-07-31: Freiburg - Greuther Fürth (provider_acceptance_blocked)
+- 2026-07-31: Monaco - Cercle Brugge (provider_acceptance_blocked)
+- 2026-07-31: ADO Den Haag - Asteras Tripolis (provider_acceptance_blocked)
+- 2026-07-31: NEC Nijmegen - Sevilla (provider_acceptance_blocked)
+- 2026-07-31: Toulouse - Real Sociedad (provider_acceptance_blocked)
+- 2026-07-31: Sporting CP - Nottingham Forest (provider_acceptance_blocked)
+- 2026-08-01: FC Tokyo - Borussia Dortmund (provider_acceptance_blocked)
+- 2026-08-01: Manchester City - Internazionale (provider_acceptance_blocked)
+- 2026-08-01: Manchester United - Atlético Madrid (provider_acceptance_blocked)
+- 2026-08-01: Cardiff City - AS Roma (provider_acceptance_blocked)
+- 2026-08-01: Real Madrid - Fiorentina (provider_acceptance_blocked)
+- 2026-08-01: Estrela - Al Nassr (provider_acceptance_blocked)
+- 2026-08-01: Girona - Arsenal (provider_acceptance_blocked)
+- 2026-08-01: Lazio - Avellino (provider_acceptance_blocked)
+- 2026-08-01: RW Essen - Bayer Leverkusen (provider_acceptance_blocked)
+- 2026-08-01: Chelsea - Tottenham Hotspur (provider_acceptance_blocked)
