@@ -1,6 +1,6 @@
 # Upcoming H2H Backfill
 
-Laatst bijgewerkt: 2026-07-31T04:15:14.393Z
+Laatst bijgewerkt: 2026-07-31T10:19:38.516Z
 Gecontroleerd: 32
 Gevuld: 0
 Geen directe H2H: 32
@@ -15,7 +15,6 @@ API-Football blijft quota-bewust geblokkeerd totdat de acceptatietest slaagt; ES
 - 2026-07-31: Juventus - Nice (provider_acceptance_blocked)
 - 2026-07-31: Birmingham City - Barcelona (provider_acceptance_blocked)
 - 2026-07-31: Crystal Palace - Al Ula (provider_acceptance_blocked)
-- 2026-07-31: Deportivo Alaves - Castellon (provider_acceptance_blocked)
 - 2026-07-31: Freiburg - Greuther Fürth (provider_acceptance_blocked)
 - 2026-07-31: Monaco - Cercle Brugge (provider_acceptance_blocked)
 - 2026-07-31: ADO Den Haag - Asteras Tripolis (provider_acceptance_blocked)
@@ -32,3 +31,4 @@ API-Football blijft quota-bewust geblokkeerd totdat de acceptatietest slaagt; ES
 - 2026-08-01: Lazio - Avellino (provider_acceptance_blocked)
 - 2026-08-01: RW Essen - Bayer Leverkusen (provider_acceptance_blocked)
 - 2026-08-01: Chelsea - Tottenham Hotspur (provider_acceptance_blocked)
+- 2026-08-01: Brighton & Hove Albion - Strasbourg (provider_acceptance_blocked)
