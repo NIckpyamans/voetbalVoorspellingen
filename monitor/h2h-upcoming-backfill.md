@@ -1,9 +1,9 @@
 # Upcoming H2H Backfill
 
-Laatst bijgewerkt: 2026-07-31T23:17:38.756Z
-Gecontroleerd: 24
+Laatst bijgewerkt: 2026-08-01T22:13:06.789Z
+Gecontroleerd: 32
 Gevuld: 0
-Geen directe H2H: 24
+Geen directe H2H: 32
 Errors: 0
 
 ## Aanbeveling
@@ -12,23 +12,23 @@ API-Football blijft quota-bewust geblokkeerd totdat de acceptatietest slaagt; ES
 ## Gevuld
 
 ## Geen Directe H2H
-- 2026-08-01: FC TOKYO FC TOKYO - Borussia Dortmund (provider_acceptance_blocked)
-- 2026-08-01: Manchester City - Internazionale (provider_acceptance_blocked)
-- 2026-08-01: Manchester United - Atlético Madrid (provider_acceptance_blocked)
-- 2026-08-01: Cardiff City - AS Roma (provider_acceptance_blocked)
-- 2026-08-01: Real Madrid - Fiorentina (provider_acceptance_blocked)
-- 2026-08-01: Estrela - Al Nassr (provider_acceptance_blocked)
-- 2026-08-01: Girona - Arsenal (provider_acceptance_blocked)
-- 2026-08-01: Lazio - Avellino (provider_acceptance_blocked)
-- 2026-08-01: RW Essen - Bayer Leverkusen (provider_acceptance_blocked)
-- 2026-08-01: RB Leipzig - SC Verl (provider_acceptance_blocked)
-- 2026-08-01: Chelsea - Tottenham Hotspur (provider_acceptance_blocked)
-- 2026-08-01: Brighton & Hove Albion - Strasbourg (provider_acceptance_blocked)
-- 2026-08-01: FC Tokyo - Borussia Dortmund (provider_acceptance_blocked)
-- 2026-08-01: Oxford United - Ipswich Town (provider_acceptance_blocked)
-- 2026-08-01: Sparta Rotterdam - MSV Duisburg (provider_acceptance_blocked)
-- 2026-08-01: Bologna - Cambuur (provider_acceptance_blocked)
-- 2026-08-01: Darmstadt - Portsmouth (provider_acceptance_blocked)
-- 2026-08-01: Dynamo Dresden - Union Berlin (provider_acceptance_blocked)
-- 2026-08-01: Farense - Fulham (provider_acceptance_blocked)
-- 2026-08-01: Hansa Rostock - Borussia Mönchengladbach (provider_acceptance_blocked)
+- 2026-08-02: FC Volendam - Ajax Amsterdam (provider_acceptance_blocked)
+- 2026-08-02: Feyenoord Rotterdam - Atalanta (provider_acceptance_blocked)
+- 2026-08-02: Trabzonspor - Udinese (provider_acceptance_blocked)
+- 2026-08-02: Sunderland - Wrexham (provider_acceptance_blocked)
+- 2026-08-02: Galatasaray - Stade Rennais (provider_acceptance_blocked)
+- 2026-08-02: Liverpool - Leeds United (provider_acceptance_blocked)
+- 2026-08-02: Luton Town - Go Ahead Eagles (provider_acceptance_blocked)
+- 2026-08-02: Union Berlin - Cagliari (provider_acceptance_blocked)
+- 2026-08-02: FC Utrecht - Sevilla (provider_acceptance_blocked)
+- 2026-08-02: Burnley - Torino (provider_acceptance_blocked)
+- 2026-08-02: Parma - Iraklis (provider_acceptance_blocked)
+- 2026-08-02: Genk - FC Twente (provider_acceptance_blocked)
+- 2026-08-02: Galatasaray - Rennes (provider_acceptance_blocked)
+- 2026-08-02: Ascoli - Lazio (provider_acceptance_blocked)
+- 2026-08-04: JEJU UNITED JEJU UNITED - Bayern Munich (provider_acceptance_blocked)
+- 2026-08-04: Al Nassr - Almería (provider_acceptance_blocked)
+- 2026-08-04: Newport County - AS Roma (provider_acceptance_blocked)
+- 2026-08-04: Larne - FC Iberia 1999 Tiflis (provider_acceptance_blocked)
+- 2026-08-04: Shamrock Rovers - Egnatia (provider_acceptance_blocked)
+- 2026-08-04: FK Auda - KS Dynamo Tirana (provider_acceptance_blocked)
