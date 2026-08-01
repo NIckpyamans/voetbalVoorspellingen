@@ -6,14 +6,14 @@
     "owner": "Nick",
     "status": "active"
   },
-  "generatedAt": "2026-07-15T08:36:08.433Z",
+  "generatedAt": "2026-08-01T08:34:51.241Z",
   "baseUrl": "https://voetbalvoorspellingen-clean.vercel.app",
-  "summary": "Professionele audit actief, maar live fetch is beperkt: snapshots.",
+  "summary": "Professionele audit actief. Grootste aandachtspunt: Brier/log loss.",
   "live": {
-    "matchesTotal": 5,
-    "predictionsTotal": 5,
-    "reviewCount": 3,
-    "predictionSnapshotCount": 0,
+    "matchesTotal": 53,
+    "predictionsTotal": 53,
+    "reviewCount": 708,
+    "predictionSnapshotCount": 25,
     "workerVersion": "v23-calibrated-odds-ledger",
     "sourceBranch": "codex/step3b-layout",
     "sourceCoverage": null,
@@ -26,16 +26,16 @@
       "matches": null,
       "predict": null,
       "history": null,
-      "snapshots": "/api/prediction-snapshots?limit=25 returned 503"
+      "snapshots": null
     }
   },
   "predictions": {
-    "total": 5,
+    "total": 53,
     "featureCoverage": 0,
     "oddsCoverage": 0,
     "historicalMarketOnly": 0,
     "reviewCoverage": 0,
-    "averageCompleteness": 0.4596
+    "averageCompleteness": 0.6956603773584904
   },
   "storageAudit": [
     {
@@ -52,7 +52,7 @@
     },
     {
       "field": "featureVector",
-      "present": false,
+      "present": true,
       "importance": "hoog",
       "advice": "Aanwezig waar predictions gevuld zijn; maak hem immutable per prediction_id."
     },

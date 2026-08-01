@@ -1,28 +1,28 @@
 # FootyAI professionele AI-audit
 
-Gegenereerd: 2026-07-15T08:36:08.433Z
+Gegenereerd: 2026-08-01T08:34:51.241Z
 Bron: https://voetbalvoorspellingen-clean.vercel.app
 
 ## Samenvatting
-Professionele audit actief, maar live fetch is beperkt: snapshots.
+Professionele audit actief. Grootste aandachtspunt: Brier/log loss.
 
 ## Live status
-- Wedstrijden vandaag: 5
-- Voorspellingen vandaag: 5
-- Reviews: 3
-- Prediction snapshots: 0
+- Wedstrijden vandaag: 53
+- Voorspellingen vandaag: 53
+- Reviews: 708
+- Prediction snapshots: 25
 - Worker: v23-calibrated-odds-ledger
 - Feature coverage: 0%
 - Echte odds coverage: 0%
 - Alleen historisch marktprofiel: 0%
-- Gemiddelde datacompleetheid: 46%
+- Gemiddelde datacompleetheid: 70%
 - Datacompleetheid-audit: onbekend
 - Odds readiness: onbekend
 
 ## Opslag-audit
 - prediction_id: aanwezig (kritiek) - Voeg een stabiele prediction_id toe per voorspelling.
 - generated_at / cutoff_at: aanwezig (kritiek) - Sla tijdstip en cutoff expliciet op zodat latere uitslagen geen input kunnen worden.
-- featureVector: mist (hoog) - Aanwezig waar predictions gevuld zijn; maak hem immutable per prediction_id.
+- featureVector: aanwezig (hoog) - Aanwezig waar predictions gevuld zijn; maak hem immutable per prediction_id.
 - model_version: aanwezig (hoog) - Gebruik naast ensembleMeta ook workerVersion en feature_schema_version.
 - odds_at_prediction: mist (hoog) - Sla echte bookmaker, markt, odds en timestamp op; historische marktprofielen tellen niet als ROI-basis.
 - odds_status / missing_reason: aanwezig (hoog) - Markeer per voorspelling of odds echt, deels, historisch-only of ontbrekend zijn.
