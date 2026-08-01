@@ -1,9 +1,9 @@
 # Upcoming H2H Backfill
 
-Laatst bijgewerkt: 2026-08-01T22:13:06.789Z
-Gecontroleerd: 32
+Laatst bijgewerkt: 2026-08-01T23:14:52.831Z
+Gecontroleerd: 24
 Gevuld: 0
-Geen directe H2H: 32
+Geen directe H2H: 24
 Errors: 0
 
 ## Aanbeveling
@@ -26,7 +26,7 @@ API-Football blijft quota-bewust geblokkeerd totdat de acceptatietest slaagt; ES
 - 2026-08-02: Genk - FC Twente (provider_acceptance_blocked)
 - 2026-08-02: Galatasaray - Rennes (provider_acceptance_blocked)
 - 2026-08-02: Ascoli - Lazio (provider_acceptance_blocked)
-- 2026-08-04: JEJU UNITED JEJU UNITED - Bayern Munich (provider_acceptance_blocked)
+- 2026-08-04: Jeju United - Bayern Munich (provider_acceptance_blocked)
 - 2026-08-04: Al Nassr - Almería (provider_acceptance_blocked)
 - 2026-08-04: Newport County - AS Roma (provider_acceptance_blocked)
 - 2026-08-04: Larne - FC Iberia 1999 Tiflis (provider_acceptance_blocked)
