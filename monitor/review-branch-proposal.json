@@ -1,25 +1,25 @@
 {
-  "generatedAt": "2026-08-02T23:12:57.208Z",
-  "date": "2026-08-03",
+  "generatedAt": "2026-08-03T23:20:02.383Z",
+  "date": "2026-08-04",
   "proposalOnly": true,
-  "shouldPropose": false,
-  "branchName": "codex/review-20260803",
-  "summary": "Geen reviewbranch nodig op 2026-08-03.",
+  "shouldPropose": true,
+  "branchName": "codex/review-20260804",
+  "summary": "AI reviewvoorstel voor 2026-08-04: 1 aandachtspunt(en) met patchadvies, niet automatisch live.",
   "latestStats": {
-    "today": "2026-08-03",
-    "tomorrow": "2026-08-04",
+    "today": "2026-08-04",
+    "tomorrow": "2026-08-05",
     "dataPresent": true,
-    "lastRun": 1785710547044,
-    "ageMinutes": 31,
+    "lastRun": 1785793901954,
+    "ageMinutes": 88,
     "maxWorkerAgeMinutes": 180,
-    "todayMatches": 0,
+    "todayMatches": 13,
     "tomorrowMatches": 11,
     "fixtureCalendar": {
       "status": "has_current_matches",
       "healthy": true,
       "emptyWindowOk": true,
       "severity": "none",
-      "todayCount": 0,
+      "todayCount": 13,
       "tomorrowCount": 11,
       "windowDays": 7,
       "checkedDates": [
@@ -28,21 +28,38 @@
         "2026-08-06",
         "2026-08-07",
         "2026-08-08",
-        "2026-08-09"
+        "2026-08-09",
+        "2026-08-11"
       ],
       "nextMatchDate": "2026-08-04",
-      "nextMatchCount": 11,
+      "nextMatchCount": 13,
       "explanation": "Vandaag of morgen staan er wedstrijden in de actuele data."
     },
     "liveMatches": 0,
     "liveWithoutMinute": 0,
     "h2hFilled": 0,
-    "h2hMissing": 0,
+    "h2hMissing": 13,
     "standingsCount": 1,
     "cupSheetCount": 2,
     "phaseReliabilityCount": 3
   },
-  "findings": [],
-  "recommendedFiles": [],
-  "nextStep": "Geen actie nodig; monitor blijft op de achtergrond doorlopen."
+  "findings": [
+    {
+      "priority": 1,
+      "key": "h2h_empty",
+      "severity": "medium",
+      "message": "Alle wedstrijden van vandaag hebben lege H2H-data.",
+      "whyItMatters": "Onderlinge duels worden niet sterk genoeg gevuld.",
+      "recommendedFiles": [
+        "scripts/server-worker.js",
+        "components/MatchCard.tsx"
+      ],
+      "details": {}
+    }
+  ],
+  "recommendedFiles": [
+    "scripts/server-worker.js",
+    "components/MatchCard.tsx"
+  ],
+  "nextStep": "Gebruik deze proposal om gericht een reviewbranch te maken en alleen na controle te mergen."
 }
