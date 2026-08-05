@@ -1,6 +1,6 @@
 # Upcoming H2H Backfill
 
-Laatst bijgewerkt: 2026-08-05T04:31:19.340Z
+Laatst bijgewerkt: 2026-08-05T10:17:50.368Z
 Gecontroleerd: 32
 Gevuld: 0
 Geen directe H2H: 32
@@ -15,7 +15,6 @@ API-Football blijft quota-bewust geblokkeerd totdat de acceptatietest slaagt; ES
 - 2026-08-05: Ferencvaros - Gornik Zabrze (provider_acceptance_blocked)
 - 2026-08-05: Brann - Apollon Limassol (provider_acceptance_blocked)
 - 2026-08-05: Panathinaikos - CSKA 1948 Sofia (provider_acceptance_blocked)
-- 2026-08-05: Villarreal - Levante (provider_acceptance_blocked)
 - 2026-08-05: Milan - Inter (provider_acceptance_blocked)
 - 2026-08-05: K-League All Stars - Manchester City (provider_acceptance_blocked)
 - 2026-08-05: Chelsea - Juventus (provider_acceptance_blocked)
@@ -32,3 +31,4 @@ API-Football blijft quota-bewust geblokkeerd totdat de acceptatietest slaagt; ES
 - 2026-08-06: Maccabi Tel Aviv - CSKA Sofia (provider_acceptance_blocked)
 - 2026-08-06: Hradec Králové - Besiktas (provider_acceptance_blocked)
 - 2026-08-06: Lech Poznan - KI Klaksvík (provider_acceptance_blocked)
+- 2026-08-06: Lincoln Red Imps - Omonia Nicosia (provider_acceptance_blocked)
