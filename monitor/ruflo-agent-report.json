@@ -1,6 +1,6 @@
 {
-  "generatedAt": "2026-08-05T23:18:47.016Z",
-  "date": "2026-08-06",
+  "generatedAt": "2026-08-07T01:34:58.422Z",
+  "date": "2026-08-07",
   "name": "Ruflo-style gratis AI monitor",
   "mode": "naast-productie",
   "productionSafe": true,
@@ -81,18 +81,17 @@
       "actions": []
     },
     "control": {
-      "score": 60,
-      "summary": "Ontwikkelcontrole: 1 actieve monitorissues op 2026-08-06; digest 2026-07-19 t/m 2026-08-01.",
-      "latestDay": "2026-08-06",
+      "score": 52,
+      "summary": "Ontwikkelcontrole: 1 actieve monitorissues op 2026-08-07; digest 2026-07-19 t/m 2026-08-01.",
+      "latestDay": "2026-08-07",
       "shouldPropose": true,
       "actions": [
         {
-          "priority": "medium",
-          "title": "Alle wedstrijden van vandaag hebben lege H2H-data.",
-          "freeSolution": "Vul H2H uit openfootball/football-data competitiebestanden voordat de UI leeg toont.",
+          "priority": "high",
+          "title": "Workerdata is 632 minuten oud.",
+          "freeSolution": "Laat GitHub Actions schedule + manual dispatch draaien; geen mail nodig, alleen data committen.",
           "files": [
-            "scripts/server-worker.js",
-            "components/MatchCard.tsx"
+            ".github/workflows/worker.yml"
           ],
           "status": "monitor"
         }
@@ -101,23 +100,33 @@
   },
   "topThemes": [
     {
+      "title": "Workerdata is 632 minuten oud.",
+      "count": 1,
+      "priority": "high",
+      "agents": [
+        "control"
+      ]
+    },
+    {
       "title": "H2H-backfill verder vullen",
       "count": 1,
       "priority": "medium",
       "agents": [
         "data"
       ]
-    },
-    {
-      "title": "Alle wedstrijden van vandaag hebben lege H2H-data.",
-      "count": 1,
-      "priority": "medium",
-      "agents": [
-        "control"
-      ]
     }
   ],
   "recommendedNextActions": [
+    {
+      "priority": "high",
+      "title": "Workerdata is 632 minuten oud.",
+      "freeSolution": "Laat GitHub Actions schedule + manual dispatch draaien; geen mail nodig, alleen data committen.",
+      "files": [
+        ".github/workflows/worker.yml"
+      ],
+      "status": "monitor",
+      "agent": "control"
+    },
     {
       "priority": "medium",
       "title": "H2H-backfill verder vullen",
@@ -128,17 +137,6 @@
       ],
       "status": "aanbevolen",
       "agent": "data"
-    },
-    {
-      "priority": "medium",
-      "title": "Alle wedstrijden van vandaag hebben lege H2H-data.",
-      "freeSolution": "Vul H2H uit openfootball/football-data competitiebestanden voordat de UI leeg toont.",
-      "files": [
-        "scripts/server-worker.js",
-        "components/MatchCard.tsx"
-      ],
-      "status": "monitor",
-      "agent": "control"
     }
   ],
   "freeOnlyGuardrails": [
