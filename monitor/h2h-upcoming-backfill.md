@@ -1,6 +1,6 @@
 # Upcoming H2H Backfill
 
-Laatst bijgewerkt: 2026-08-07T16:10:34.122Z
+Laatst bijgewerkt: 2026-08-07T22:20:12.364Z
 Gecontroleerd: 32
 Gevuld: 0
 Geen directe H2H: 32
@@ -12,12 +12,8 @@ API-Football blijft quota-bewust geblokkeerd totdat de acceptatietest slaagt; ES
 ## Gevuld
 
 ## Geen Directe H2H
-- 2026-08-07: Club Brugge - Kortrijk (provider_acceptance_blocked)
-- 2026-08-07: VfL Bochum - Hertha BSC (provider_acceptance_blocked)
-- 2026-08-07: Cambuur - Excelsior (provider_acceptance_blocked)
-- 2026-08-07: Estoril - Famalicão (provider_acceptance_blocked)
-- 2026-08-08: 1. FC Heidenheim 1846 - VfL Osnabrück (provider_acceptance_blocked)
 - 2026-08-08: SV Darmstadt 98 - Holstein Kiel (provider_acceptance_blocked)
+- 2026-08-08: 1. FC Heidenheim 1846 - VfL Osnabrück (provider_acceptance_blocked)
 - 2026-08-08: Karlsruher SC - DSC Arminia Bielefeld (provider_acceptance_blocked)
 - 2026-08-08: 1. FC Magdeburg - Eintracht Braunschweig (provider_acceptance_blocked)
 - 2026-08-08: VfL Wolfsburg - 1. FC Kaiserslautern (provider_acceptance_blocked)
@@ -32,3 +28,7 @@ API-Football blijft quota-bewust geblokkeerd totdat de acceptatietest slaagt; ES
 - 2026-08-08: Werder Bremen - Paderborn (provider_acceptance_blocked)
 - 2026-08-08: Eintracht Frankfurt - Hull City (provider_acceptance_blocked)
 - 2026-08-08: Leeds United - RB Leipzig (provider_acceptance_blocked)
+- 2026-08-08: Bayer Leverkusen - Sevilla (provider_acceptance_blocked)
+- 2026-08-08: 1. FC Köln - Real Sociedad (provider_acceptance_blocked)
+- 2026-08-08: Brighton & Hove Albion - Roma (provider_acceptance_blocked)
+- 2026-08-08: Ipswich Town - Rayo Vallecano (provider_acceptance_blocked)
