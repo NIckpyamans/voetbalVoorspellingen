@@ -1,6 +1,6 @@
 # Upcoming H2H Backfill
 
-Laatst bijgewerkt: 2026-08-09T04:06:08.161Z
+Laatst bijgewerkt: 2026-08-09T10:17:59.375Z
 Gecontroleerd: 32
 Gevuld: 0
 Geen directe H2H: 32
@@ -13,7 +13,6 @@ API-Football blijft quota-bewust geblokkeerd totdat de acceptatietest slaagt; ES
 
 ## Geen Directe H2H
 - 2026-08-09: Gent - Mechelen (provider_acceptance_blocked)
-- 2026-08-09: Sparta Rotterdam - Feyenoord (provider_acceptance_blocked)
 - 2026-08-09: FC St. Pauli - SpVgg Greuther Fürth (provider_acceptance_blocked)
 - 2026-08-09: 1. FC Nürnberg - Dynamo Dresden (provider_acceptance_blocked)
 - 2026-08-09: Energie Cottbus - Hannover 96 (provider_acceptance_blocked)
@@ -32,3 +31,4 @@ API-Football blijft quota-bewust geblokkeerd totdat de acceptatietest slaagt; ES
 - 2026-08-11: Apollon Limassol - Brann (provider_acceptance_blocked)
 - 2026-08-11: CSKA 1948 Sofia - Panathinaikos (provider_acceptance_blocked)
 - 2026-08-11: Juventus - Palermo (provider_acceptance_blocked)
+- 2026-08-12: FC Copenhagen - Debreceni Vasutas Sport Club (provider_acceptance_blocked)
