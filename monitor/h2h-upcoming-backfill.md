@@ -1,6 +1,6 @@
 # Upcoming H2H Backfill
 
-Laatst bijgewerkt: 2026-08-10T04:20:12.431Z
+Laatst bijgewerkt: 2026-08-10T22:21:43.108Z
 Gecontroleerd: 32
 Gevuld: 0
 Geen directe H2H: 32
@@ -12,7 +12,6 @@ API-Football blijft quota-bewust geblokkeerd totdat de acceptatietest slaagt; ES
 ## Gevuld
 
 ## Geen Directe H2H
-- 2026-08-10: Santa Clara - Nacional (provider_acceptance_blocked)
 - 2026-08-11: FC Iberia 1999 Tiflis - Larne (provider_acceptance_blocked)
 - 2026-08-11: Apollon Limassol - Brann (provider_acceptance_blocked)
 - 2026-08-11: CSKA 1948 Sofia - Panathinaikos (provider_acceptance_blocked)
@@ -32,3 +31,4 @@ API-Football blijft quota-bewust geblokkeerd totdat de acceptatietest slaagt; ES
 - 2026-08-13: Besiktas - Hradec Králové (provider_acceptance_blocked)
 - 2026-08-13: CS Universitatea Craiova - KuPS Kuopio (provider_acceptance_blocked)
 - 2026-08-13: Gornik Zabrze - Ferencvaros (provider_acceptance_blocked)
+- 2026-08-13: Omonia Nicosia - Lincoln Red Imps (provider_acceptance_blocked)
