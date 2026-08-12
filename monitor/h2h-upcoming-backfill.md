@@ -1,9 +1,9 @@
 # Upcoming H2H Backfill
 
-Laatst bijgewerkt: 2026-08-11T23:25:00.437Z
-Gecontroleerd: 24
+Laatst bijgewerkt: 2026-08-12T16:14:48.981Z
+Gecontroleerd: 32
 Gevuld: 0
-Geen directe H2H: 24
+Geen directe H2H: 32
 Errors: 0
 
 ## Aanbeveling
@@ -12,11 +12,6 @@ API-Football blijft quota-bewust geblokkeerd totdat de acceptatietest slaagt; ES
 ## Gevuld
 
 ## Geen Directe H2H
-- 2026-08-12: FC Copenhagen - Debreceni Vasutas Sport Club (provider_acceptance_blocked)
-- 2026-08-12: GKS Katowice - Hapoel Tel-Aviv (provider_acceptance_blocked)
-- 2026-08-12: SK Rapid Wien - Paide Linnameeskond (provider_acceptance_blocked)
-- 2026-08-12: Paris FC - Auxerre (provider_acceptance_blocked)
-- 2026-08-12: Velbert - Borussia Mönchengladbach (provider_acceptance_blocked)
 - 2026-08-12: Everton - Newcastle United (provider_acceptance_blocked)
 - 2026-08-12: Eintracht Frankfurt - FSV Frankfurt (provider_acceptance_blocked)
 - 2026-08-12: Arsenal - Como (provider_acceptance_blocked)
@@ -32,3 +27,8 @@ API-Football blijft quota-bewust geblokkeerd totdat de acceptatietest slaagt; ES
 - 2026-08-13: Pafos - Red Bull Salzburg (provider_acceptance_blocked)
 - 2026-08-13: KI Klaksvík - Lech Poznan (provider_acceptance_blocked)
 - 2026-08-13: Vikingur Reykjavík - FC Thun (provider_acceptance_blocked)
+- 2026-08-13: CSKA Sofia - Maccabi Tel Aviv (provider_acceptance_blocked)
+- 2026-08-13: Anderlecht - PAOK Salonika (provider_acceptance_blocked)
+- 2026-08-13: Rangers - Jagiellonia Bialystok (provider_acceptance_blocked)
+- 2026-08-13: Hearts - Benfica (provider_acceptance_blocked)
+- 2026-08-13: Egnatia - Shamrock Rovers (provider_acceptance_blocked)
