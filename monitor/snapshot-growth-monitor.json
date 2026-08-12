@@ -1,13 +1,25 @@
 {
-  "generatedAt": "2026-07-17T07:00:53.217Z",
+  "generatedAt": "2026-08-12T03:14:43.041Z",
   "training": {
-    "totalRows": 77,
-    "snapshotBackedRows": 76,
-    "uniqueSnapshotMatches": 5,
-    "fallbackRows": 1,
+    "totalRows": 1328,
+    "snapshotBackedRows": 1273,
+    "uniqueSnapshotMatches": 231,
+    "uniqueEvaluatedMatches": 227,
+    "effectiveUniqueTrainingMatches": 231,
+    "fallbackRows": 55,
     "target": 150,
-    "gap": 145,
-    "maturity": "warming_up"
+    "gap": 0,
+    "promotionGate": {
+      "uniqueCompletedMatches": 231,
+      "calibrationMin": 50,
+      "promotionMin": 150,
+      "calibrationGap": 0,
+      "promotionGap": 0,
+      "canCalibrate": true,
+      "canPromote": true,
+      "stage": "professional_ready"
+    },
+    "maturity": "mature"
   },
   "database": {
     "configured": true,
@@ -18,48 +30,73 @@
     "r2": {
       "configured": true,
       "available": true,
-      "snapshotsRead": 78,
+      "snapshotsRead": 2482,
       "error": null
     },
     "fallback": {
       "available": true,
-      "snapshotsRead": 78
+      "snapshotsRead": 2267
     },
     "merged": {
-      "clubSnapshots": 78,
-      "evaluatedClubSnapshots": 76,
+      "clubSnapshots": 2482,
+      "uniqueClubMatches": 545,
+      "evaluatedClubSnapshots": 1250,
+      "uniqueEvaluatedClubMatches": 227,
       "byLeague": [
         {
-          "league": "Belgium - Pro League",
-          "rows": 27
+          "league": "World - Club Friendlies",
+          "rows": 1344
+        },
+        {
+          "league": "Europe - Conference League",
+          "rows": 587
+        },
+        {
+          "league": "Europe - Europa League",
+          "rows": 182
         },
         {
           "league": "Europe - Champions League",
-          "rows": 25
+          "rows": 117
+        },
+        {
+          "league": "Portugal - Liga Portugal",
+          "rows": 57
+        },
+        {
+          "league": "Germany - Bundesliga",
+          "rows": 53
+        },
+        {
+          "league": "Belgium - Pro League",
+          "rows": 50
+        },
+        {
+          "league": "Netherlands - Eredivisie",
+          "rows": 50
+        },
+        {
+          "league": "England - Championship",
+          "rows": 15
         },
         {
           "league": "France - Ligue 1",
           "rows": 14
         },
         {
-          "league": "Europe - Conference League",
-          "rows": 10
-        },
-        {
-          "league": "World - Club Friendlies",
-          "rows": 2
+          "league": "Spain - LaLiga",
+          "rows": 13
         }
       ]
     }
   },
   "automation": {
-    "workerCadence": "3x per dag volledige worker + 2-uurlijkse live score refresh",
+    "workerCadence": "3x per dag volledige worker + fixturegestuurde refresh via de 30-minutenorchestrator",
     "learningCadence": "dagelijks train:prepare",
-    "recommendedNext": "Laat worker en learning doorlopen; verhoog snapshot-backed rows door meer toekomstige clubwedstrijden en pre-match snapshots vast te leggen."
+    "recommendedNext": "Snapshot target gehaald; start league/phase recalibration op club-only dataset."
   },
   "nextFocus": [
-    "meer clubfixtures in venster",
-    "worker snapshot cadence bewaken",
-    "prediction evaluation dagelijks blijven draaien"
+    "league/phase recalibration",
+    "exact-score calibration later"
   ]
 }
