@@ -47,11 +47,28 @@ function pickReviewsForMatches(store, matches) {
   return reviews;
 }
 
+export function selectStaticSnapshotIds(ids, snapshots, maxPerMatch = 2) {
+  const available = [...new Set(ids || [])]
+    .filter((predictionId) => snapshots?.[predictionId])
+    .sort((left, right) =>
+      Date.parse(snapshots[left]?.generatedAt || "") - Date.parse(snapshots[right]?.generatedAt || "")
+    );
+  const limit = Math.max(1, Number(maxPerMatch || 2));
+  if (available.length <= limit) return available;
+  if (limit === 1) return [available.at(-1)];
+  const selected = [];
+  for (let index = 0; index < limit; index += 1) {
+    selected.push(available[Math.round(index * (available.length - 1) / (limit - 1))]);
+  }
+  return [...new Set(selected)];
+}
+
 function pickPredictionSnapshotsForMatches(store, matches) {
   const snapshots = {};
+  const maxPerMatch = Math.max(1, Number(process.env.STATIC_SNAPSHOTS_PER_MATCH || 2));
   for (const match of matches || []) {
     const ids = store.predictionSnapshotIndex?.[match.id] || [];
-    for (const predictionId of ids) {
+    for (const predictionId of selectStaticSnapshotIds(ids, store.predictionSnapshots, maxPerMatch)) {
       if (store.predictionSnapshots?.[predictionId]) {
         snapshots[predictionId] = store.predictionSnapshots[predictionId];
       }
