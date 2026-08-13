@@ -7916,15 +7916,15 @@ function getReliabilityBucket(input) {
   const leagueType = String(input?.leagueType || "").toLowerCase();
   const isFriendly =
     leagueType === "friendly" ||
-    league.includes("friendly") ||
+    /friendl/.test(league) ||
     league.includes("oefen") ||
-    summary.includes("friendly") ||
+    /friendl/.test(summary) ||
     summary.includes("oefen");
   const isInternational =
     league.startsWith("europe -") &&
     (league.includes("nations league") ||
       league.includes("qualification") ||
-      league.includes("friendly") ||
+      /friendl/.test(league) ||
       league.includes("international") ||
       league.includes("world cup") ||
       league.includes("championship"));
@@ -7996,7 +7996,9 @@ function buildPhaseReliabilityFromReviews(reviews) {
   const phases = {};
 
   for (const review of Object.values(reviews || {})) {
-    const phase = String(review?.phaseBucket || "league").trim();
+    const phase = /friendl|oefen/i.test(String(review?.league || ""))
+      ? "friendly"
+      : String(review?.phaseBucket || "league").trim();
     if (!phases[phase]) {
       phases[phase] = {
         phase,

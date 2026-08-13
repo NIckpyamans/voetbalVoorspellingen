@@ -272,18 +272,25 @@ async function main() {
     const minutesBeforeKickoff = minutesUntilKickoff(match.kickoff_at);
     const captureWindow = classifyLineupCaptureWindow(minutesBeforeKickoff);
     report.captureWindows[captureWindow] = Number(report.captureWindows[captureWindow] || 0) + 1;
+    const attempts = [];
     let result = await fetchSofaScoreLineup(match);
     let provider = "sofascore";
+    attempts.push({ provider, status: result.status, lineup: Boolean(result.lineup), confirmed: Boolean(result.lineup?.confirmed) });
     if (!result.lineup) {
       const apiFootballFixtureId = match.api_football_fixture_id || await resolveApiFootballFixture(match);
       result = await fetchApiFootballLineup(apiFootballFixtureId);
       provider = "api-football";
+      attempts.push({ provider, status: result.status, fixtureMapped: Boolean(apiFootballFixtureId), lineup: Boolean(result.lineup), confirmed: Boolean(result.lineup?.confirmed) });
     }
     if (!result.lineup) {
       result = await fetchSportmonksLineup(databaseWritable ? sql : null, match);
       provider = "sportmonks";
+      attempts.push({ provider, status: result.status, lineup: Boolean(result.lineup), confirmed: Boolean(result.lineup?.confirmed) });
     }
-    report.providers[`${provider}:${result.status}`] = Number(report.providers[`${provider}:${result.status}`] || 0) + 1;
+    for (const attempt of attempts) {
+      const key = `${attempt.provider}:${attempt.status}`;
+      report.providers[key] = Number(report.providers[key] || 0) + 1;
+    }
     if (result.lineup) {
       report.playerFixtureStatsCaptured += Number(result.lineup.playerFixtureStatsCaptured || 0);
       const r2 = await storeR2Lineup(match, provider, result.lineup).catch((error) => ({ ok: false, error: error?.message || String(error) }));
@@ -306,6 +313,7 @@ async function main() {
       awayTeam: match.away_team_name,
       provider,
       status: result.status,
+      attempts,
       confirmed: Boolean(result.lineup?.confirmed),
       partial: Boolean(result.lineup && !result.lineup.confirmed),
     });

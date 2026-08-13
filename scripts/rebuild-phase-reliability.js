@@ -4,6 +4,7 @@ import fs from "fs";
 import path from "path";
 import { getSql, loadLocalEnv } from "../shared/database.js";
 import { isHiddenInternationalOrWorldCupEntity } from "../shared/competitionVisibility.js";
+import { buildR2ObjectKey, getR2Config, putR2Object } from "../shared/cloudflare-r2.js";
 
 const ROOT = process.cwd();
 const OUTPUT_JSON = path.join(ROOT, "data", "phase-reliability.json");
@@ -11,10 +12,12 @@ const MONITOR_JSON = path.join(ROOT, "monitor", "phase-reliability-rebuild.json"
 const MIN_PHASE_ROWS = Math.max(1, Number(process.env.PHASE_RELIABILITY_MIN_ROWS || 5));
 
 function phaseFromRow(row) {
+  const league = String(row.league || "").toLowerCase();
+  // Legacy snapshots labelled some club friendlies as "league". Competition
+  // identity is authoritative here so friendlies keep their own calibration.
+  if (/friendl|oefen/.test(league)) return "friendly";
   const explicit = String(row.phase_bucket || "").trim();
   if (explicit) return explicit;
-  const league = String(row.league || "").toLowerCase();
-  if (league.includes("friendly") || league.includes("oefen")) return "friendly";
   if (league.includes("champions league") || league.includes("europa league") || league.includes("conference league")) {
     return "qualification";
   }
@@ -44,12 +47,46 @@ function summarizePhase(row) {
   return `${row.phase}: ${Math.round(row.outcomeHitRate * 100)}% 1X2, ${Math.round(row.exactHitRate * 100)}% exact uit ${row.matches} review(s)`;
 }
 
+function parseScore(value) {
+  const match = String(value || "").match(/(\d+)\s*[-:]\s*(\d+)/);
+  return match ? { home: Number(match[1]), away: Number(match[2]) } : { home: null, away: null };
+}
+
+function localEvaluationRows() {
+  const filePath = path.join(ROOT, "training", "training-snapshot.json");
+  if (!fs.existsSync(filePath)) return [];
+  const payload = JSON.parse(fs.readFileSync(filePath, "utf8"));
+  const unique = new Map();
+  for (const row of Array.isArray(payload?.rows) ? payload.rows : []) {
+    if (!row?.snapshotBacked || !/^(FT|AET|PEN)$/i.test(String(row?.status || ""))) continue;
+    const review = row.review || {};
+    const matchId = String(row.matchId || review.matchId || "").trim();
+    if (!matchId) continue;
+    const actual = parseScore(row.score || review.actualScore);
+    const predicted = parseScore(review.predictedScore);
+    if (actual.home === null || actual.away === null) continue;
+    unique.set(matchId, {
+      prediction_id: row.predictionId || review.predictionId || null,
+      expected_score: predicted,
+      phase_bucket: review.phaseBucket || null,
+      league: row.league || review.league || null,
+      final_home_goals: actual.home,
+      final_away_goals: actual.away,
+      outcome_hit: Boolean(review.outcomeHit),
+      exact_hit: Boolean(review.exactHit),
+    });
+  }
+  return [...unique.values()];
+}
+
 async function main() {
   loadLocalEnv(ROOT);
   const sql = getSql();
-  if (!sql) process.exit(2);
-
-  const rows = await sql.query(`
+  let databaseAvailable = false;
+  let databaseError = sql ? null : "database_not_configured";
+  let rows = [];
+  if (sql) try {
+    rows = await sql.query(`
     select ps.prediction_id, ps.expected_score, ps.prediction_payload->>'phaseBucket' as phase_bucket,
       m.league, mr.final_home_goals, mr.final_away_goals, pe.outcome_hit, pe.exact_hit
     from prediction_evaluations pe
@@ -58,7 +95,13 @@ async function main() {
     join match_results mr on mr.match_id = pe.match_id
     where pe.evaluation_source = 'scheduled-database-evaluator'
       and mr.actual_outcome in ('H','D','A')
-  `);
+    `);
+    databaseAvailable = true;
+  } catch (error) {
+    databaseError = error?.message || String(error);
+  }
+  const source = databaseAvailable && rows.length ? "prediction_evaluations" : "immutable_training_fallback";
+  if (source === "immutable_training_fallback") rows = localEvaluationRows();
 
   const groups = new Map();
   for (const row of rows) {
@@ -96,13 +139,13 @@ async function main() {
       ...row,
       reliabilityScore: reliabilityScore(row),
       summary: summarizePhase(row),
-      source: "prediction_evaluations",
+      source,
       generatedAt: new Date().toISOString(),
       minRows: MIN_PHASE_ROWS,
       mature: row.matches >= MIN_PHASE_ROWS,
     };
 
-    await sql.query(
+    if (databaseAvailable) await sql.query(
       `
         insert into calibration_profiles(
           calibration_profile_id, competition_id, phase_bucket, sample_size,
@@ -127,7 +170,7 @@ async function main() {
   }
 
   const activeProfileIds = Object.keys(phaseReliability).map((phase) => `phase_reliability_${phase}`);
-  await sql.query(
+  if (databaseAvailable) await sql.query(
     `
       delete from calibration_profiles
       where calibration_profile_id like 'phase_reliability_%'
@@ -144,16 +187,31 @@ async function main() {
   fs.mkdirSync(path.dirname(OUTPUT_JSON), { recursive: true });
   fs.mkdirSync(path.dirname(MONITOR_JSON), { recursive: true });
   fs.writeFileSync(OUTPUT_JSON, `${JSON.stringify(payload, null, 2)}\n`);
+  const r2Config = getR2Config();
+  let r2 = { ok: false, skipped: true, reason: "r2_not_configured" };
+  if (r2Config.configured) {
+    r2 = await putR2Object({
+      config: r2Config,
+      key: buildR2ObjectKey(r2Config, "model/phase-reliability.json"),
+      body: `${JSON.stringify(payload)}\n`,
+      contentType: "application/json",
+      metadata: { source, phases: String(Object.keys(phaseReliability).length) },
+    }).catch((error) => ({ ok: false, skipped: false, error: error?.message || String(error) }));
+  }
   fs.writeFileSync(
     MONITOR_JSON,
     `${JSON.stringify(
       {
         generatedAt: payload.lastRun,
+        source,
+        evaluatedRows: rows.length,
+        database: { configured: Boolean(sql), available: databaseAvailable, error: databaseError },
+        r2,
         phaseCount: Object.keys(phaseReliability).length,
         rows: Object.values(phaseReliability),
         recommendation:
           Object.keys(phaseReliability).length > 0
-            ? "Phase reliability is gevuld uit Neon-evaluaties. Gebruik dit pas zwaar bij voldoende samples per phase."
+            ? `Phase reliability is gevuld uit ${source}. Gebruik dit pas zwaar bij voldoende unieke samples per phase.`
             : "Nog geen phase reliability beschikbaar; er zijn meer geëvalueerde snapshotvoorspellingen nodig.",
       },
       null,

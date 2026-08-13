@@ -4,6 +4,7 @@ import crypto from "crypto";
 import fs from "fs";
 import path from "path";
 import { getSql, loadLocalEnv } from "../shared/database.js";
+import { buildR2ObjectKey, getR2Config, putR2Object } from "../shared/cloudflare-r2.js";
 import { getSportmonksApiKey } from "./provider-env.js";
 
 const root = process.cwd();
@@ -11,10 +12,6 @@ loadLocalEnv(root);
 const sql = getSql();
 const apiKey = getSportmonksApiKey();
 
-if (!sql) {
-  console.error("DATABASE_URL of POSTGRES_URL ontbreekt.");
-  process.exit(2);
-}
 if (!apiKey) {
   console.error("SPORTMONKS_API_KEY of MYSPORTS_API_KEY ontbreekt.");
   process.exit(2);
@@ -26,42 +23,36 @@ const maxSeasonTeamFetches = Math.max(0, Number(process.env.SPORTMONKS_SYNC_TEAM
 const perPage = Math.min(100, Math.max(1, Number(process.env.SPORTMONKS_SYNC_PER_PAGE || 100)));
 const timeoutMs = Math.max(1000, Number(process.env.SPORTMONKS_SYNC_TIMEOUT_MS || 12000));
 const reportPath = path.join(root, "monitor", "sportmonks-catalog-sync.json");
+const cachePath = path.join(root, "data", "sportmonks-catalog-cache.json");
+let databaseWritable = Boolean(sql);
+let databaseError = sql ? null : "database_not_configured";
 
 function isNeonQuotaError(error) {
   const message = String(error?.message || error || "");
   return /HTTP status 402|exceeded the data transfer quota|NeonDbError.*402/i.test(message);
 }
 
-function writeQuotaSkipReport(error) {
-  const report = {
-    ok: true,
-    status: "skipped_neon_quota",
-    generatedAt: new Date().toISOString(),
-    apiLimits: {
-      maxLeagues,
-      maxSeasonTeamFetches,
-      perPage,
-    },
-    reason: "Neon data-transferquota is bereikt; Sportmonks is niet aangeroepen en de bestaande catalogus blijft actief.",
-    retry: "De volgende geplande run probeert opnieuw zodra Neon weer schrijfbaar is.",
-    error: String(error?.message || error || "Neon quota exceeded").slice(0, 500),
-    durationMs: Date.now() - startedAt,
-  };
-  fs.mkdirSync(path.dirname(reportPath), { recursive: true });
-  fs.writeFileSync(reportPath, `${JSON.stringify(report, null, 2)}\n`);
-  console.warn(`[sportmonks-catalog-sync] ${report.reason}`);
+// Providerdata blijft naar de compacte cache en R2 gaan als Neon geen writes accepteert.
+if (sql) {
+  try {
+    await sql.query("select 1 as catalog_sync_preflight");
+  } catch (error) {
+    if (!isNeonQuotaError(error)) throw error;
+    databaseWritable = false;
+    databaseError = error?.message || String(error);
+  }
 }
 
-// Stop voor de eerste provider-call wanneer Neon tijdelijk geen writes accepteert.
-// Dit voorkomt verbruik van Sportmonks-quota en houdt de bestaande catalogus intact.
-try {
-  await sql.query("select 1 as catalog_sync_preflight");
-} catch (error) {
-  if (isNeonQuotaError(error)) {
-    writeQuotaSkipReport(error);
-    process.exit(0);
+async function writeQuery(query, params = []) {
+  if (!databaseWritable || !sql) return [];
+  try {
+    return await sql.query(query, params);
+  } catch (error) {
+    if (!isNeonQuotaError(error)) throw error;
+    databaseWritable = false;
+    databaseError = error?.message || String(error);
+    return [];
   }
-  throw error;
 }
 
 function digest(value, size = 24) {
@@ -288,7 +279,7 @@ const uniqueCompetitions = uniqueBy(competitions, (row) => row.competition_id);
 const uniqueSeasons = uniqueBy(seasons, (row) => row.season_id);
 
 if (uniqueCountries.length) {
-  await sql.query(
+  await writeQuery(
     `with incoming as (
        select * from jsonb_to_recordset($1::jsonb) as x(country_id text, name text, fifa_code text, region text)
      )
@@ -304,7 +295,7 @@ if (uniqueCountries.length) {
 }
 
 if (uniqueCompetitions.length) {
-  await sql.query(
+  await writeQuery(
     `with incoming as (
        select * from jsonb_to_recordset($1::jsonb) as x(
          competition_id text, name text, country_id text, country_name text, competition_type text, provider_ids jsonb
@@ -325,7 +316,7 @@ if (uniqueCompetitions.length) {
 
 for (const table of ["seasons", "competition_seasons"]) {
   if (!uniqueSeasons.length) continue;
-  await sql.query(
+  await writeQuery(
     `with incoming as (
        select * from jsonb_to_recordset($1::jsonb) as x(
          season_id text, competition_id text, year_label text, start_date date, end_date date, status text
@@ -345,7 +336,7 @@ for (const table of ["seasons", "competition_seasons"]) {
 }
 
 if (sourceRecords.length) {
-  await sql.query(
+  await writeQuery(
     `with incoming as (
        select * from jsonb_to_recordset($1::jsonb) as x(
          source_record_id text, provider text, source_url text, entity_type text, entity_key text,
@@ -375,6 +366,9 @@ let teamRows = 0;
 let memberships = 0;
 const teamErrors = [];
 const teamExamples = [];
+const cachedClubs = [];
+const cachedAliases = [];
+const cachedMemberships = [];
 
 for (const target of teamSeasonTargets) {
   const url =
@@ -399,7 +393,7 @@ for (const target of teamSeasonTargets) {
     (row) => row.country_id
   );
   if (teamCountries.length) {
-    await sql.query(
+    await writeQuery(
       `with incoming as (
          select * from jsonb_to_recordset($1::jsonb) as x(country_id text, name text, fifa_code text, region text)
        )
@@ -430,7 +424,8 @@ for (const target of teamSeasonTargets) {
       },
     },
   })), (club) => club.club_id);
-  await sql.query(
+  cachedClubs.push(...clubs);
+  await writeQuery(
     `with incoming as (
        select * from jsonb_to_recordset($1::jsonb) as x(
          club_id text, name text, country_id text, country_name text, stadium text, founded_year integer, provider_ids jsonb
@@ -454,7 +449,8 @@ for (const target of teamSeasonTargets) {
       ? { club_id: club.club_id, alias: club.provider_ids.sportmonks.shortCode, normalized_alias: normalizeAlias(club.provider_ids.sportmonks.shortCode), source: "sportmonks-short-code" }
       : null,
   ].filter(Boolean)), (alias) => `${alias.club_id}|${alias.normalized_alias}`);
-  await sql.query(
+  cachedAliases.push(...aliases);
+  await writeQuery(
     `with incoming as (
        select * from jsonb_to_recordset($1::jsonb) as x(club_id text, alias text, normalized_alias text, source text)
      )
@@ -475,7 +471,8 @@ for (const target of teamSeasonTargets) {
     entry_reason: "sportmonks-season-teams",
     source: "sportmonks",
   })), (membership) => `${membership.season_id}|${membership.club_id}`);
-  await sql.query(
+  cachedMemberships.push(...membershipRows);
+  await writeQuery(
     `with incoming as (
        select * from jsonb_to_recordset($1::jsonb) as x(
          season_id text, competition_id text, club_id text, club_name text, status text, entry_reason text, source text
@@ -529,6 +526,32 @@ const smallLeagueExamples = leagues
   }))
   .slice(0, 40);
 
+const catalogCache = {
+  schemaVersion: 1,
+  generatedAt: new Date().toISOString(),
+  provider: "sportmonks",
+  countries: uniqueCountries,
+  competitions: uniqueCompetitions,
+  seasons: uniqueSeasons,
+  clubs: uniqueBy(cachedClubs, (row) => row.club_id),
+  aliases: uniqueBy(cachedAliases, (row) => `${row.club_id}|${row.normalized_alias}`),
+  memberships: uniqueBy(cachedMemberships, (row) => `${row.season_id}|${row.club_id}`),
+};
+fs.mkdirSync(path.dirname(cachePath), { recursive: true });
+fs.writeFileSync(cachePath, `${JSON.stringify(catalogCache)}\n`);
+const r2Config = getR2Config();
+let r2 = { ok: false, skipped: true, reason: "r2_not_configured" };
+if (r2Config.configured) {
+  const key = buildR2ObjectKey(r2Config, "catalog/sportmonks/catalog.json");
+  r2 = await putR2Object({
+    config: r2Config,
+    key,
+    body: `${JSON.stringify(catalogCache)}\n`,
+    contentType: "application/json",
+    metadata: { provider: "sportmonks", schema: "1" },
+  }).catch((error) => ({ ok: false, skipped: false, error: error?.message || String(error) }));
+}
+
 const report = {
   ok: true,
   generatedAt: new Date().toISOString(),
@@ -536,6 +559,14 @@ const report = {
     maxLeagues,
     maxSeasonTeamFetches,
     perPage,
+  },
+  persistence: {
+    databaseConfigured: Boolean(sql),
+    databaseWritable,
+    databaseError,
+    localCache: path.relative(root, cachePath).replace(/\\/g, "/"),
+    localCacheBytes: fs.statSync(cachePath).size,
+    r2,
   },
   accessible: {
     leagues: leagues.length,

@@ -1,33 +1,84 @@
 {
-  "generatedAt": "2026-07-01T12:59:16.505Z",
-  "phaseCount": 2,
+  "generatedAt": "2026-08-13T14:49:32.620Z",
+  "source": "immutable_training_fallback",
+  "evaluatedRows": 394,
+  "database": {
+    "configured": true,
+    "available": false,
+    "error": "Error connecting to database: TypeError: fetch failed"
+  },
+  "r2": {
+    "ok": false,
+    "skipped": true,
+    "reason": "r2_not_configured"
+  },
+  "phaseCount": 5,
   "rows": [
     {
-      "phase": "league",
-      "matches": 41,
-      "outcomeHitRate": 0,
+      "phase": "two-leg-knockout",
+      "matches": 55,
+      "outcomeHitRate": 0.455,
+      "exactHitRate": 0.055,
+      "avgGoalError": 2.182,
+      "reliabilityScore": 0.417,
+      "summary": "two-leg-knockout: 46% 1X2, 6% exact uit 55 review(s)",
+      "source": "immutable_training_fallback",
+      "generatedAt": "2026-08-13T14:49:32.619Z",
+      "minRows": 5,
+      "mature": true
+    },
+    {
+      "phase": "cup",
+      "matches": 9,
+      "outcomeHitRate": 0.444,
       "exactHitRate": 0,
-      "avgGoalError": 2.341,
-      "reliabilityScore": 0.164,
-      "summary": "league: 0% 1X2, 0% exact uit 41 review(s)",
-      "source": "prediction_evaluations",
-      "generatedAt": "2026-07-01T12:59:15.952Z",
+      "avgGoalError": 1.556,
+      "reliabilityScore": 0.321,
+      "summary": "cup: 44% 1X2, 0% exact uit 9 review(s)",
+      "source": "immutable_training_fallback",
+      "generatedAt": "2026-08-13T14:49:32.620Z",
+      "minRows": 5,
+      "mature": true
+    },
+    {
+      "phase": "friendly",
+      "matches": 212,
+      "outcomeHitRate": 0.425,
+      "exactHitRate": 0.071,
+      "avgGoalError": 2.538,
+      "reliabilityScore": 0.399,
+      "summary": "friendly: 43% 1X2, 7% exact uit 212 review(s)",
+      "source": "immutable_training_fallback",
+      "generatedAt": "2026-08-13T14:49:32.620Z",
       "minRows": 5,
       "mature": true
     },
     {
       "phase": "qualification",
-      "matches": 35,
-      "outcomeHitRate": 0,
-      "exactHitRate": 0,
-      "avgGoalError": 1,
-      "reliabilityScore": 0.194,
-      "summary": "qualification: 0% 1X2, 0% exact uit 35 review(s)",
-      "source": "prediction_evaluations",
-      "generatedAt": "2026-07-01T12:59:16.287Z",
+      "matches": 101,
+      "outcomeHitRate": 0.455,
+      "exactHitRate": 0.089,
+      "avgGoalError": 2.851,
+      "reliabilityScore": 0.412,
+      "summary": "qualification: 46% 1X2, 9% exact uit 101 review(s)",
+      "source": "immutable_training_fallback",
+      "generatedAt": "2026-08-13T14:49:32.620Z",
+      "minRows": 5,
+      "mature": true
+    },
+    {
+      "phase": "league",
+      "matches": 17,
+      "outcomeHitRate": 0.588,
+      "exactHitRate": 0.235,
+      "avgGoalError": 1.706,
+      "reliabilityScore": 0.447,
+      "summary": "league: 59% 1X2, 24% exact uit 17 review(s)",
+      "source": "immutable_training_fallback",
+      "generatedAt": "2026-08-13T14:49:32.620Z",
       "minRows": 5,
       "mature": true
     }
   ],
-  "recommendation": "Phase reliability is gevuld uit Neon-evaluaties. Gebruik dit pas zwaar bij voldoende samples per phase."
+  "recommendation": "Phase reliability is gevuld uit immutable_training_fallback. Gebruik dit pas zwaar bij voldoende unieke samples per phase."
 }

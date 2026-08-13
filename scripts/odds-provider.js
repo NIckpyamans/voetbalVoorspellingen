@@ -1,6 +1,7 @@
 import { getOddsApiKey, getOddsApiUrlTemplate, getOddsProviderConfigs, getOddsProviderName } from "./provider-env.js";
 
 const responseCache = new Map();
+const activeSportsCache = new Map();
 // Een volledige worker kan meerdere minuten duren; dezelfde sportmarkt hoeft binnen die run maar eenmaal opgehaald te worden.
 const RESPONSE_CACHE_TTL_MS = 30 * 60 * 1000;
 const DEFAULT_FETCH_TIMEOUT_MS = Math.max(1000, Number(process.env.ODDS_PROVIDER_FETCH_TIMEOUT_MS || 12000));
@@ -8,6 +9,34 @@ const DEFAULT_FETCH_TIMEOUT_MS = Math.max(1000, Number(process.env.ODDS_PROVIDER
 // for the pre-kickoff and closing snapshots that are most valuable for CLV.
 const ODDS_API_MIN_REMAINING = Math.max(0, Number(process.env.ODDS_API_MIN_REMAINING || 50));
 let oddsApiRemaining = null;
+
+async function discoverTheOddsApiSports(fetchImpl, apiKey) {
+  if (!apiKey) return { active: null, quota: null, status: "not_configured" };
+  const cached = activeSportsCache.get(apiKey);
+  if (cached && Date.now() - cached.cachedAt <= RESPONSE_CACHE_TTL_MS) return cached;
+  const url = `https://api.the-odds-api.com/v4/sports/?apiKey=${encodeURIComponent(apiKey)}`;
+  try {
+    const response = await fetchWithTimeout(fetchImpl, url, { headers: { Accept: "application/json" } });
+    const quota = {
+      remaining: response.headers.get("x-requests-remaining"),
+      used: response.headers.get("x-requests-used"),
+      lastCost: response.headers.get("x-requests-last"),
+    };
+    if (Number.isFinite(Number(quota.remaining))) oddsApiRemaining = Number(quota.remaining);
+    if (!response.ok) return { active: null, quota, status: `http_${response.status}`, cachedAt: Date.now() };
+    const payload = await response.json();
+    const value = {
+      active: new Set(asArray(payload).filter((sport) => sport?.active !== false).map((sport) => String(sport?.key || "")).filter(Boolean)),
+      quota,
+      status: "ok",
+      cachedAt: Date.now(),
+    };
+    activeSportsCache.set(apiKey, value);
+    return value;
+  } catch (error) {
+    return { active: null, quota: null, status: "discovery_failed", error: error?.message || String(error), cachedAt: Date.now() };
+  }
+}
 
 function normalizeName(value) {
   return String(value || "")
@@ -397,9 +426,28 @@ export async function fetchOddsAtPrediction(match, options = {}) {
         };
         continue;
       }
-      const sports = /the-odds-api\.com/i.test(configTemplate) && /\{sport\}/i.test(configTemplate)
+      let sports = /the-odds-api\.com/i.test(configTemplate) && /\{sport\}/i.test(configTemplate)
         ? inferOddsApiSportKeys(match)
         : [inferOddsApiSportKey(match)];
+      let sportDiscovery = null;
+      if (/the-odds-api\.com/i.test(configTemplate) && /\{sport\}/i.test(configTemplate)) {
+        sportDiscovery = await discoverTheOddsApiSports(fetchImpl, configApiKey);
+        if (sportDiscovery.active) {
+          const unsupported = sports.filter((sport) => !sportDiscovery.active.has(sport));
+          attempts.push(...unsupported.map((sport) => ({ provider: configProvider, sport, status: "unsupported_sport" })));
+          sports = sports.filter((sport) => sportDiscovery.active.has(sport));
+        }
+        if (!sports.length) {
+          lastResult = {
+            status: "unsupported_competition",
+            oddsAtPrediction: null,
+            provider: configProvider,
+            reason: "The Odds API biedt momenteel geen actieve sportkey voor deze competitie.",
+            requestMeta: { attempts, sportDiscoveryStatus: sportDiscovery.status },
+          };
+          continue;
+        }
+      }
       for (const sport of sports) {
         const isTheOddsApi = /the-odds-api\.com/i.test(configTemplate);
         if (isTheOddsApi && oddsApiRemaining !== null && oddsApiRemaining <= ODDS_API_MIN_REMAINING) {
@@ -506,6 +554,7 @@ export async function fetchOddsAtPrediction(match, options = {}) {
         requestMeta: {
           cached: Boolean(cacheFresh),
           quota,
+          sportDiscoveryStatus: sportDiscovery?.status || null,
           sport,
           attemptedSports: sports,
           attemptedProviders: configs.map((item) => item.provider),
