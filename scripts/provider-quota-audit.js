@@ -3,6 +3,7 @@
 import fs from "fs";
 import path from "path";
 import { getApiFootballKey, getFootballDataApiKey, getSportmonksApiKey } from "./provider-env.js";
+import { interpretApiFootballStatus } from "./worker/provider-account-status.js";
 
 const timeoutMs = 12_000;
 
@@ -97,19 +98,16 @@ async function auditApiFootball() {
     const { response, payload } = await requestJson("https://v3.football.api-sports.io/status", {
       "x-apisports-key": key,
     });
-    const details = payload?.response || {};
-    const current = Number(details?.requests?.current || 0);
-    const limit = Number(details?.requests?.limit_day || 0);
-    const remaining = limit > 0 ? Math.max(0, limit - current) : null;
-    const reserve = limit > 0 ? Math.max(10, Math.ceil(limit * 0.1)) : null;
+    const interpreted = interpretApiFootballStatus(response.ok, payload);
     return {
       configured: true,
-      valid: response.ok && !payload?.errors?.token,
+      valid: interpreted.valid,
       status: response.status,
-      plan: details?.subscription?.plan || null,
-      subscriptionEndsAt: details?.subscription?.end || null,
-      requests: { current, limitPerDay: limit, remaining, reserve },
+      plan: interpreted.plan,
+      subscriptionEndsAt: interpreted.subscriptionEndsAt,
+      requests: interpreted.requests,
       quota: quotaHeaders(response),
+      errorCode: interpreted.errorCode,
     };
   } catch (error) {
     return { configured: true, valid: false, status: "request_failed", errorCode: error?.name || "request_failed" };
