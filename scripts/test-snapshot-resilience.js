@@ -30,6 +30,20 @@ const mergedTraining = mergeTrainingSnapshots(
 assert.equal(mergedTraining.rows.length, 1, "a smaller fallback may not erase training rows");
 assert.equal(mergedTraining.preservation.snapshotBackedRows, 1);
 
+const uniqueMatchTraining = mergeTrainingSnapshots(
+  { rows: [{ predictionId: "early", matchId: "m1", modelVersion: "v1", generatedAt: "2026-07-15T10:00:00.000Z", snapshotBacked: true, featureVector: { ppg_diff: 0.2 }, label: "H" }] },
+  { rows: [{ predictionId: "latest", matchId: "m1", modelVersion: "v1", generatedAt: "2026-07-15T12:00:00.000Z", snapshotBacked: true, featureVector: { ppg_diff: 0.4 }, label: "H" }] }
+);
+assert.equal(uniqueMatchTraining.rows.length, 1, "training uses one independent row per match and model");
+assert.equal(uniqueMatchTraining.rows[0].predictionId, "latest", "latest equal-quality pre-match snapshot wins");
+
+const snapshotBeatsFallback = mergeTrainingSnapshots(
+  { rows: [{ predictionId: "fallback", matchId: "m2", modelVersion: "v1", generatedAt: "2026-07-15T13:00:00.000Z", snapshotBacked: false, label: "A" }] },
+  { rows: [{ predictionId: "snapshot", matchId: "m2", modelVersion: "v1", generatedAt: "2026-07-15T12:00:00.000Z", snapshotBacked: true, featureVector: { ppg_diff: -0.4 }, label: "A" }] }
+);
+assert.equal(snapshotBeatsFallback.rows.length, 1);
+assert.equal(snapshotBeatsFallback.rows[0].predictionId, "snapshot", "immutable snapshot wins over a newer fallback review");
+
 const compactFallback = compactTrainingSnapshotRow({
   matchId: "fallback-1",
   snapshotBacked: false,

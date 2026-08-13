@@ -1,9 +1,19 @@
 function rowKey(row) {
+  if (row?.matchId) {
+    const modelVersion = row?.modelVersion || row?.review?.modelVersion || "unknown";
+    return `match:${row.matchId}:${modelVersion}`;
+  }
   return String(row?.predictionId || `${row?.matchId || "unknown"}:${row?.generatedAt || "latest"}`);
 }
 
 function rowQuality(row) {
   return (row?.snapshotBacked ? 100 : 0) + (row?.label ? 10 : 0) + (row?.featureVector ? 5 : 0) + (row?.review ? 1 : 0);
+}
+
+function shouldReplace(existing, candidate) {
+  const qualityDelta = rowQuality(candidate) - rowQuality(existing);
+  if (qualityDelta !== 0) return qualityDelta > 0;
+  return Date.parse(candidate?.generatedAt || "") >= Date.parse(existing?.generatedAt || "");
 }
 
 const COMPACT_REVIEW_FIELDS = [
@@ -45,7 +55,7 @@ export function mergeTrainingSnapshots(previous, next) {
   for (const row of [...(previous?.rows || []), ...(next?.rows || [])]) {
     const key = rowKey(row);
     const existing = rows.get(key);
-    if (!existing || rowQuality(row) >= rowQuality(existing)) rows.set(key, row);
+    if (!existing || shouldReplace(existing, row)) rows.set(key, row);
   }
   const mergedRows = [...rows.values()].map(compactTrainingSnapshotRow).sort((a, b) =>
     String(a?.date || "").localeCompare(String(b?.date || "")) || String(a?.matchId || "").localeCompare(String(b?.matchId || ""))
