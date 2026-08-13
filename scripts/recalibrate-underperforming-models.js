@@ -283,13 +283,13 @@ async function main() {
       {
         matches: row.sampleSize,
         windowDays: null,
-        selectedWindow: "database_time_split",
+        selectedWindow: "time_split_unique_matches",
         stabilityScore: Number(Math.min(0.95, row.validationRows / 60 + Math.max(0, row.improvement) * 20).toFixed(3)),
         confidenceBias: row.confidenceBias,
         drawBias: row.drawBias,
         homeBias: row.homeBias,
         updatedAt: new Date().toISOString(),
-        source: "database_recalibration",
+        source: `${calibrationSource}_recalibration`,
         calibrationProfileId: row.calibrationProfileId,
         validationRows: row.validationRows,
         baselineBrier: row.baselineBrier,
@@ -299,7 +299,8 @@ async function main() {
     ])
   );
 
-  const livePromotionApplied = APPLY_LIVE && promotionGate.canPromote && database.available;
+  const acceptedCount = Object.keys(liveProfiles).length;
+  const livePromotionApplied = APPLY_LIVE && promotionGate.canPromote && database.available && acceptedCount > 0;
   if (livePromotionApplied) {
     await writeRootSegment(sql, "leagueCalibrationProfiles", liveProfiles);
     await writeRootSegment(sql, "modelRecalibrationSummary", {
@@ -323,13 +324,15 @@ async function main() {
     generatedAt: new Date().toISOString(),
     groups: groups.size,
     candidates: candidates.length,
-    accepted: Object.keys(liveProfiles).length,
+    accepted: acceptedCount,
     liveProfileKeys: Object.keys(liveProfiles),
     topCandidates: candidates.sort((a, b) => b.improvement - a.improvement).slice(0, 20),
     nextAction: livePromotionApplied
       ? "Shadow-evaluatie draaien en Model Ops controleren op accepted league profiles."
       : APPLY_LIVE && promotionGate.canPromote && !database.available
         ? "Live-promotie geblokkeerd omdat Neon niet schrijfbaar is; shadow-resultaten blijven wel beschikbaar."
+        : acceptedCount === 0
+          ? "Geen profiel promoveren: geen unieke-wedstrijdenkandidaat haalt de minimale Brier-verbetering. Verzamel meer complete wedstrijden en herhaal de shadowrun."
         : APPLY_LIVE
         ? `Live-promotie geblokkeerd; verzamel nog ${promotionGate.promotionGap} unieke afgeronde clubwedstrijden.`
         : promotionGate.canPromote

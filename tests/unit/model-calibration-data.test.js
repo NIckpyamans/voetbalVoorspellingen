@@ -24,4 +24,22 @@ describe("shadow calibration data", () => {
     expect(rows).toHaveLength(1);
     expect(rows[0]).toMatchObject({ prediction_id: "prediction", actual_outcome: "H" });
   });
+
+  it("uses one latest snapshot per unique match and model", () => {
+    const base = {
+      snapshotBacked: true,
+      status: "FT",
+      matchId: "same-match",
+      league: "Europe - Champions League",
+      label: "D",
+      modelVersion: "v1",
+      probabilities: { home: 0.4, draw: 0.3, away: 0.3 },
+    };
+    const rows = trainingCalibrationRows({ rows: [
+      { ...base, predictionId: "early", generatedAt: "2026-08-01T10:00:00.000Z" },
+      { ...base, predictionId: "latest", generatedAt: "2026-08-01T12:00:00.000Z" },
+    ] });
+    expect(rows).toHaveLength(1);
+    expect(rows[0].prediction_id).toBe("latest");
+  });
 });

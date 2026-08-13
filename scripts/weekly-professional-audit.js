@@ -2,54 +2,25 @@
 
 import fs from "fs";
 import path from "path";
+import {
+  buildAppRecommendations,
+  loadRecentDayDocuments,
+  summarizeRecentDays,
+  values,
+} from "./professional-audit-metrics.js";
 
 const ROOT = process.cwd();
 const BASE_URL = (process.env.FOOTYAI_BASE_URL || "https://voetbalvoorspellingen-clean.vercel.app").replace(/\/$/, "");
 const OUTPUT_JSON = path.join(ROOT, "monitor", "ai-professional-audit.json");
 const OUTPUT_MD = path.join(ROOT, "monitor", "ai-professional-audit.md");
 
-const recommendations = [
-  {
-    key: "immutable_prediction_snapshots",
-    title: "Maak pre-match voorspellingen immutable",
-    impact: "zeer hoog",
-    difficulty: "middel",
-    files: ["scripts/server-worker.js", "data/predictions"],
-    advice: "Sla prediction_id, generated_at, cutoff_at, model_version, feature_schema_version, input_snapshot_hash en result_status op. Overschrijf deze records nooit bij latere worker-runs."
-  },
-  {
-    key: "leakage_cutoff",
-    title: "Dwing data-cutoff voor kickoff af",
-    impact: "zeer hoog",
-    difficulty: "middel",
-    files: ["scripts/server-worker.js"],
-    advice: "Filter vorm, H2H, standings, odds, blessures en lineups op informatie die beschikbaar was voor generated_at/cutoff_at. Markeer elk veld met source_timestamp en as_of."
-  },
-  {
-    key: "evaluation_metrics",
-    title: "Voeg Brier score, log loss, CLV en ROI toe",
-    impact: "zeer hoog",
-    difficulty: "laag-middel",
-    files: ["scripts/server-worker.js", "api/history.ts", "components/PredictionHistory.tsx"],
-    advice: "Bereken per review Brier score en log loss op 1X2. Voeg ROI en closing line value toe zodra odds_at_prediction en closing_odds gevuld zijn."
-  },
-  {
-    key: "storage_backend",
-    title: "Breid Neon-opslag gecontroleerd uit",
-    impact: "hoog",
-    difficulty: "middel",
-    files: ["api/_dataSource.ts", "scripts/server-worker.js"],
-    advice: "Neon is actief. Migreer resterende JSON-afhankelijke widgets per contract naar Neon en behoud JSON/GitHub alleen als compatibele export- en fallbacklaag."
-  },
-  {
-    key: "modular_worker",
-    title: "Splits de worker in domeinmodules",
-    impact: "hoog",
-    difficulty: "middel",
-    files: ["scripts/server-worker.js"],
-    advice: "Splits data sources, normalisatie, feature builder, model, evaluation en storage. Dit maakt competities, bronnen en modellen makkelijker uitbreidbaar."
+function readJson(relativePath) {
+  try {
+    return JSON.parse(fs.readFileSync(path.join(ROOT, relativePath), "utf8"));
+  } catch {
+    return null;
   }
-];
+}
 
 async function fetchJson(pathname) {
   const controller = new AbortController();
@@ -147,11 +118,28 @@ function buildMarkdown(report) {
     `- Datacompleetheid-audit: ${report.live.dataCompletenessAudit?.summary || "onbekend"}`,
     `- Odds readiness: ${report.live.oddsIntegrationReadiness?.nextAction || "onbekend"}`,
     "",
-    "## Opslag-audit",
-    ...report.storageAudit.map((item) => `- ${item.field}: ${item.present ? "aanwezig" : "mist"} (${item.importance}) - ${item.advice}`),
+    "## Recente keten (14 dagen)",
+    `- Afgeronde wedstrijden met eindstand: ${report.recent.finishedWithScore}/${report.recent.finishedMatches} (${pct(report.recent.resultCoverage)})`,
+    `- Geëvalueerde wedstrijden: ${report.recent.reviewedMatches}/${report.recent.finishedMatches} (${pct(report.recent.evaluationCoverage)})`,
+    `- Snapshot-backed reviews: ${report.recent.snapshotBackedReviews} (${pct(report.recent.snapshotBackedReviewCoverage)})`,
+    `- Uitkomsthit: ${pct(report.recent.performance.outcomeHitRate)}`,
+    `- Exacte-scorehit: ${pct(report.recent.performance.exactHitRate)}`,
+    `- Gemiddelde Brier score: ${report.recent.performance.averageBrier?.toFixed(3) || "onbekend"}`,
+    `- Gemiddelde log loss: ${report.recent.performance.averageLogLoss?.toFixed(3) || "onbekend"}`,
+    `- Echte odds: ${pct(report.recent.actualOddsCoverage)}`,
+    `- Confirmed lineups: ${pct(report.recent.confirmedLineupCoverage)}`,
     "",
-    "## Top verbeteringen",
-    ...report.recommendations.map((item, index) => `${index + 1}. ${item.title} - impact ${item.impact}, moeite ${item.difficulty}. ${item.advice}`),
+    "## Segmenten",
+    ...Object.entries(report.recent.segments).map(([key, item]) => `- ${key}: ${item.reviews} reviews, uitkomst ${pct(item.outcomeHitRate)}, exact ${pct(item.exactHitRate)}, Brier ${item.averageBrier?.toFixed(3) || "onbekend"}`),
+    "",
+    "## Opslag-audit",
+    ...report.storageAudit.map((item) => `- ${item.field}: ${item.present ? "aanwezig; gate voldaan" : `mist (${item.importance}) - ${item.advice}`}`),
+    "",
+    "## Aantoonbaar afgerond",
+    ...(report.completed.length ? report.completed.map((item) => `- ${item}`) : ["- Nog geen gate aantoonbaar afgerond."]),
+    "",
+    "## Open verbeteringen",
+    ...report.recommendations.map((item, index) => `${index + 1}. P${item.priority} ${item.title}. ${item.advice}`),
     "",
     "## Volgende actie",
     report.nextAction,
@@ -160,6 +148,7 @@ function buildMarkdown(report) {
 }
 
 async function main() {
+  const generatedAt = new Date().toISOString();
   const [matchesJson, predictJson, historyJson, snapshotsJson] = await Promise.all([
     fetchJson("/api/matches").catch((error) => ({ error: error.message, matches: [] })),
     fetchJson("/api/predict").catch((error) => ({ error: error.message, predictions: [] })),
@@ -167,9 +156,17 @@ async function main() {
     fetchJson("/api/prediction-snapshots?limit=25").catch((error) => ({ error: error.message, items: [] }))
   ]);
 
-  const predictions = Array.isArray(predictJson.predictions) ? predictJson.predictions : [];
-  const historyItems = Array.isArray(historyJson.items) ? historyJson.items : [];
-  const snapshotItems = Array.isArray(snapshotsJson.items) ? snapshotsJson.items : [];
+  const recent = summarizeRecentDays(loadRecentDayDocuments(ROOT, generatedAt, 14));
+  // The public endpoints intentionally return compact records. Full day exports are
+  // the authoritative audit source for feature, review and snapshot contracts.
+  const predictions = recent.predictionsList.length ? recent.predictionsList : values(predictJson.predictions);
+  const historyItems = recent.reviewsList.length ? recent.reviewsList : values(historyJson.items);
+  const snapshotItems = recent.snapshotsList.length ? recent.snapshotsList : values(snapshotsJson.items);
+  const snapshotGrowth = readJson("monitor/snapshot-growth-monitor.json");
+  const lineupMonitor = readJson("monitor/lineup-availability-monitor.json");
+  const recalibrationReport = readJson("monitor/model-recalibration-report.json");
+  const databaseAvailable = snapshotGrowth?.database?.available !== false;
+  const appRecommendations = buildAppRecommendations({ recent, snapshotGrowth, lineupMonitor, recalibrationReport, databaseAvailable });
   const fetchErrors = {
     matches: matchesJson.error || null,
     predict: predictJson.error || null,
@@ -188,7 +185,7 @@ async function main() {
       owner: "Nick",
       status: "active"
     },
-    generatedAt: new Date().toISOString(),
+    generatedAt,
     baseUrl: BASE_URL,
     summary: hasFetchErrors
       ? `Professionele audit actief, maar live fetch is beperkt: ${Object.entries(fetchErrors).filter(([, value]) => value).map(([key]) => key).join(", ")}.`
@@ -211,9 +208,17 @@ async function main() {
       fetchErrors
     },
     predictions: summarizePredictions(predictions),
+    recent: {
+      ...recent,
+      matchesList: undefined,
+      predictionsList: undefined,
+      reviewsList: undefined,
+      snapshotsList: undefined,
+    },
     storageAudit,
-    recommendations,
-    nextAction: "Verbeter nu odds-inname en source_timestamp dekking; train pas zwaarder wanneer ROI/CLV op echte odds gebaseerd zijn."
+    completed: appRecommendations.completed,
+    recommendations: appRecommendations.recommendations,
+    nextAction: appRecommendations.recommendations[0]?.advice || "Bewaak de bestaande kwaliteitsgates en herhaal de segmentanalyse."
   };
 
   fs.mkdirSync(path.dirname(OUTPUT_JSON), { recursive: true });
