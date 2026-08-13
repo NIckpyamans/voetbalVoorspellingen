@@ -62,12 +62,15 @@ function readUpcomingFixtures(reference = now) {
         const away = String(match?.awayTeamName || "").trim();
         if (!Number.isFinite(kickoffAt) || !home || !away || /\b(tbd|unknown|null)\b/i.test(`${home} ${away}`)) continue;
         const minutesToKickoff = Math.round((kickoffAt - reference.getTime()) / 60000);
-        if (minutesToKickoff < -180 || minutesToKickoff > 36 * 60) continue;
+        if (minutesToKickoff < -180 || minutesToKickoff > 7 * 24 * 60) continue;
+        const league = String(match.league || "");
+        const friendly = /friendl|oefen/i.test(league);
         fixtures.push({
           matchId: String(match.id || match.sofaId || ""),
           kickoff: new Date(kickoffAt).toISOString(),
           minutesToKickoff,
           league: match.league || null,
+          friendly,
           homeTeam: home,
           awayTeam: away,
           hasPreMatchSnapshot: snapshots.some((snapshot) =>
@@ -95,9 +98,14 @@ const lineupWindow = unique(Object.values(lineupWindows).flat().map((fixture) =>
 const closingOddsWindow = upcomingFixtures.filter((fixture) => fixture.minutesToKickoff >= 5 && fixture.minutesToKickoff <= 30);
 const prematchOddsWindow = upcomingFixtures.filter((fixture) => fixture.minutesToKickoff >= 31 && fixture.minutesToKickoff <= 360);
 const openingOddsWindow = upcomingFixtures.filter((fixture) => fixture.minutesToKickoff > 360 && fixture.minutesToKickoff <= 36 * 60);
-const missingSnapshotWindow = upcomingFixtures.filter((fixture) =>
-  fixture.minutesToKickoff > 30 && fixture.minutesToKickoff <= 36 * 60 && !fixture.hasPreMatchSnapshot
-);
+// Reguliere competitiewedstrijden krijgen maximaal een week vooraf een
+// immutable snapshot. Friendlies blijven bewust in het compacte 36-uursvenster
+// omdat selecties en speeldata daar vaker wijzigen.
+const missingSnapshotWindow = upcomingFixtures.filter((fixture) => {
+  const horizon = fixture.friendly ? 36 * 60 : 7 * 24 * 60;
+  return fixture.minutesToKickoff > 30 && fixture.minutesToKickoff <= horizon && !fixture.hasPreMatchSnapshot;
+});
+const missingRegularSnapshotWindow = missingSnapshotWindow.filter((fixture) => !fixture.friendly);
 const activeMatchWindow = upcomingFixtures.filter((fixture) => fixture.minutesToKickoff >= -180 && fixture.minutesToKickoff <= 180);
 const primarySlot = minute < 30;
 const reports = {
@@ -230,6 +238,7 @@ const plan = {
     prematchOddsWindow: prematchOddsWindow.length,
     openingOddsWindow: openingOddsWindow.length,
     missingPreMatchSnapshots: missingSnapshotWindow.length,
+    missingRegularPreMatchSnapshots: missingRegularSnapshotWindow.length,
     activeMatchWindow: activeMatchWindow.length,
   },
   dataNeeds,

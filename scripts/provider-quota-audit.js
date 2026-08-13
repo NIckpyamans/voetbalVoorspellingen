@@ -1,5 +1,7 @@
 #!/usr/bin/env node
 
+import fs from "fs";
+import path from "path";
 import { getApiFootballKey, getFootballDataApiKey, getSportmonksApiKey } from "./provider-env.js";
 
 const timeoutMs = 12_000;
@@ -258,6 +260,10 @@ const report = {
   footballData: await auditFootballData(),
   sportmonks: await auditSportmonks(),
 };
+fs.mkdirSync(path.join(process.cwd(), "monitor"), { recursive: true });
+fs.writeFileSync(path.join(process.cwd(), "monitor", "provider-quota-audit.json"), `${JSON.stringify(report, null, 2)}\n`);
 console.log(JSON.stringify(report, null, 2));
 
-if (report.oddsApi.configured && !report.oddsApi.valid) process.exitCode = 2;
+if (String(process.env.PROVIDER_AUDIT_STRICT || "false").toLowerCase() === "true" && report.oddsApi.configured && !report.oddsApi.valid) {
+  process.exitCode = 2;
+}

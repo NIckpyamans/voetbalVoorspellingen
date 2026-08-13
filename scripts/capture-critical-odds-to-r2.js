@@ -101,10 +101,10 @@ async function main() {
     await putR2Object({ config, key, body: `${JSON.stringify(ledger)}\n`, contentType: "application/json", metadata: { match: match.matchId, provider: odds.provider } });
     report.captured += 1;
     const latestRole = ledger.snapshots.at(-1)?.roleAtCapture;
-    if (latestRole === "opening") report.openingCaptured += 1;
-    if (latestRole === "prematch") report.prematchCaptured += 1;
-    if (latestRole === "closing") report.closingCaptured += 1;
-    if (ledger.closing) report.closingPairs += 1;
+    if (ledger.opening) report.openingCaptured += 1;
+    if (ledger.prematch) report.prematchCaptured += 1;
+    if (ledger.closing) report.closingCaptured += 1;
+    if (ledger.opening && ledger.prematch && ledger.closing) report.closingPairs += 1;
     report.matches.push({ ...match, status: "captured", provider: odds.provider, captureRole: latestRole, sportmonksFixtureId: sportmonks?.fixtureId || null, opening: Boolean(ledger.opening), prematch: Boolean(ledger.prematch), closing: Boolean(ledger.closing) });
   }
   report.leagueCoverage = summarizeLeagueCoverage(report.matches, {

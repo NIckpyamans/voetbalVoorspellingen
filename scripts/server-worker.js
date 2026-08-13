@@ -77,6 +77,7 @@ import { fetchR2H2HProfile, fetchR2LineupSummary, fetchR2OddsSnapshot } from "./
 import { buildH2HAgentProfile } from "./worker/h2h.js";
 import { buildTwoLegAggregate, deriveH2HWinnerId, findOrientedPreviousLeg } from "./worker/two-leg.js";
 import { mergePersistedTeamFormCache } from "./worker/local-team-form-history.js";
+import { hydrateR2ModelProfiles } from "./worker/r2-model-profiles.js";
 import {
   dedupeStoredMatches as dedupeFixtureMatches,
   dedupeStoredPredictions as dedupeFixturePredictions,
@@ -11864,6 +11865,17 @@ async function main() {
   rebuildReviewsAndLearning(store);
   store.backtestSegmentation = buildBacktestSegmentation(store);
   rebuildLeagueCalibrationProfilesFromReviews(store);
+  const r2ModelProfiles = await hydrateR2ModelProfiles(store).catch((error) => ({
+    configured: true,
+    calibrationProfiles: 0,
+    phaseProfiles: 0,
+    error: error?.message || String(error),
+  }));
+  store.r2ModelProfiles = { ...r2ModelProfiles, hydratedAt: new Date().toISOString() };
+  console.log(
+    `[worker] R2-modelprofielen: ${r2ModelProfiles.calibrationProfiles || 0} kalibratie, ` +
+      `${r2ModelProfiles.phaseProfiles || 0} fase${r2ModelProfiles.error ? ` (${r2ModelProfiles.error})` : ""}`
+  );
   const selfHealing = await runSelfHealingRetries(store, today, now);
   store.cupSheets = buildCupSheetsFromMatches(store);
   store.sourceCoverage = buildSourceCoverage(store, today);

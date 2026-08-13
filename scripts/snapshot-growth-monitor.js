@@ -87,6 +87,20 @@ const ledgerEvaluations = Object.values(loadedLedger.ledger.evaluations || {}).f
 );
 const uniqueLedgerMatches = new Set(ledgerSnapshots.map((snapshot) => snapshot.matchId).filter(Boolean)).size;
 const uniqueEvaluatedMatches = new Set(ledgerEvaluations.map((evaluation) => evaluation.matchId).filter(Boolean)).size;
+function trainingPhase(row) {
+  const league = String(row?.league || "").toLowerCase();
+  if (/friendl|oefen/.test(league)) return "friendly";
+  if (/champions league|europa league|conference league/.test(league)) return "uefa_qualification";
+  if (/cup|beker/.test(league)) return "cup";
+  return "regular_league";
+}
+const uniqueMatchesByPhase = {};
+for (const snapshot of ledgerSnapshots) {
+  const phase = trainingPhase(snapshot);
+  uniqueMatchesByPhase[phase] ||= new Set();
+  if (snapshot.matchId) uniqueMatchesByPhase[phase].add(snapshot.matchId);
+}
+const phaseMix = Object.fromEntries(Object.entries(uniqueMatchesByPhase).map(([phase, ids]) => [phase, ids.size]));
 const effectiveUniqueTrainingMatches = Math.max(uniqueSnapshotMatches, uniqueEvaluatedMatches);
 const gap = Math.max(0, target - effectiveUniqueTrainingMatches);
 const promotionGate = buildModelPromotionGate(effectiveUniqueTrainingMatches, {
@@ -134,6 +148,7 @@ const report = {
         .map(([league, rows]) => ({ league, rows }))
         .sort((a, b) => b.rows - a.rows)
         .slice(0, 12),
+      uniqueMatchesByPhase: phaseMix,
     },
   },
   automation: {
@@ -146,7 +161,7 @@ const report = {
   },
   nextFocus:
     gap > 0
-      ? ["meer clubfixtures in venster", "worker snapshot cadence bewaken", "prediction evaluation dagelijks blijven draaien"]
+      ? ["reguliere clubfixtures zeven dagen vooraf vastleggen", "worker snapshot cadence bewaken", "prediction evaluation dagelijks blijven draaien"]
       : ["league/phase recalibration", "exact-score calibration later"],
 };
 

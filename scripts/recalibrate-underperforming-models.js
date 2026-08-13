@@ -5,6 +5,7 @@ import path from "path";
 import { getSql, loadLocalEnv } from "../shared/database.js";
 import { buildModelPromotionGate } from "./worker/model-promotion.js";
 import { trainingCalibrationRows } from "./worker/model-calibration-data.js";
+import { publishActiveCalibration } from "./worker/r2-model-profiles.js";
 
 const ROOT = process.cwd();
 const APPLY_LIVE = process.argv.includes("--apply-live");
@@ -300,8 +301,16 @@ async function main() {
   );
 
   const acceptedCount = Object.keys(liveProfiles).length;
-  const livePromotionApplied = APPLY_LIVE && promotionGate.canPromote && database.available && acceptedCount > 0;
-  if (livePromotionApplied) {
+  let r2Promotion = { ok: false, skipped: true, reason: "not_requested" };
+  if (APPLY_LIVE && promotionGate.canPromote && acceptedCount > 0) {
+    r2Promotion = await publishActiveCalibration({
+      profiles: liveProfiles,
+      promotionGate,
+      source: `${calibrationSource}_recalibration`,
+    }).catch((error) => ({ ok: false, skipped: false, error: error?.message || String(error) }));
+  }
+  const neonPromotionApplied = APPLY_LIVE && promotionGate.canPromote && database.available && acceptedCount > 0;
+  if (neonPromotionApplied) {
     await writeRootSegment(sql, "leagueCalibrationProfiles", liveProfiles);
     await writeRootSegment(sql, "modelRecalibrationSummary", {
       generatedAt: new Date().toISOString(),
@@ -312,11 +321,13 @@ async function main() {
       minBrierImprovement: MIN_BRIER_IMPROVEMENT,
     });
   }
+  const livePromotionApplied = neonPromotionApplied || r2Promotion.ok;
 
   const report = {
     ok: true,
     applyLive: APPLY_LIVE,
     livePromotionApplied,
+    promotionTargets: { neon: neonPromotionApplied, r2: r2Promotion },
     promotionGate,
     calibrationSource,
     database,
@@ -329,8 +340,8 @@ async function main() {
     topCandidates: candidates.sort((a, b) => b.improvement - a.improvement).slice(0, 20),
     nextAction: livePromotionApplied
       ? "Shadow-evaluatie draaien en Model Ops controleren op accepted league profiles."
-      : APPLY_LIVE && promotionGate.canPromote && !database.available
-        ? "Live-promotie geblokkeerd omdat Neon niet schrijfbaar is; shadow-resultaten blijven wel beschikbaar."
+      : APPLY_LIVE && promotionGate.canPromote && !database.available && !r2Promotion.ok
+        ? "Live-promotie geblokkeerd: Neon is niet schrijfbaar en R2 kon geen actieve profielversie opslaan."
         : acceptedCount === 0
           ? "Geen profiel promoveren: geen unieke-wedstrijdenkandidaat haalt de minimale Brier-verbetering. Verzamel meer complete wedstrijden en herhaal de shadowrun."
         : APPLY_LIVE

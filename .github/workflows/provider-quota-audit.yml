@@ -36,3 +36,11 @@ jobs:
           MYSPORTS_API_KEY: ${{ secrets.MYSPORTS_API_KEY }}
           FOOTBALL_DATA_TOKEN: ${{ secrets.FOOTBALL_DATA_TOKEN }}
           ODDS_PROBE: ${{ inputs.probe_odds || 'false' }}
+      - name: Upload provider quota evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: provider-quota-audit
+          path: monitor/provider-quota-audit.json
+          if-no-files-found: error
+          retention-days: 30
