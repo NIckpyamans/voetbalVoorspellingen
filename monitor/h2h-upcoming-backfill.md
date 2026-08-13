@@ -1,6 +1,6 @@
 # Upcoming H2H Backfill
 
-Laatst bijgewerkt: 2026-08-12T23:03:43.179Z
+Laatst bijgewerkt: 2026-08-13T15:50:42.477Z
 Gecontroleerd: 24
 Gevuld: 0
 Geen directe H2H: 24
@@ -24,11 +24,11 @@ API-Football blijft quota-bewust geblokkeerd totdat de acceptatietest slaagt; ES
 - 2026-08-13: Rangers - Jagiellonia Bialystok (provider_acceptance_blocked)
 - 2026-08-13: Hearts - Benfica (provider_acceptance_blocked)
 - 2026-08-13: Egnatia - Shamrock Rovers (provider_acceptance_blocked)
-- 2026-08-13: Tobol Kostanay - Partizan Belgrade (provider_acceptance_blocked)
-- 2026-08-13: FC Flora Tallinn - Inter Club D'Escaldes (provider_acceptance_blocked)
-- 2026-08-13: Ilves - Rijeka (provider_acceptance_blocked)
-- 2026-08-13: Qarabag FK - Dynamo Kyiv (provider_acceptance_blocked)
-- 2026-08-13: Rigas Futbola Skola - FK Jablonec (provider_acceptance_blocked)
 - 2026-08-13: DAC Dunajská Streda - FC Twente (provider_acceptance_blocked)
 - 2026-08-13: Dinamo Minsk - Braga (provider_acceptance_blocked)
 - 2026-08-13: FC Midtjylland - Bohemians (provider_acceptance_blocked)
+- 2026-08-13: FC Nordsjaelland - Valur Reykjavik (provider_acceptance_blocked)
+- 2026-08-13: Hammarby IF - Raków Czestochowa (provider_acceptance_blocked)
+- 2026-08-13: ML Vitebsk - Borac (provider_acceptance_blocked)
+- 2026-08-13: Tromso - CFR Cluj-Napoca (provider_acceptance_blocked)
+- 2026-08-13: FC Vaduz - FC Inter Turku (provider_acceptance_blocked)
