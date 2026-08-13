@@ -1,14 +1,204 @@
 {
   "ok": true,
-  "status": "skipped_neon_quota",
-  "generatedAt": "2026-08-11T04:53:29.240Z",
+  "generatedAt": "2026-08-13T14:58:36.666Z",
   "apiLimits": {
     "maxLeagues": 250,
     "maxSeasonTeamFetches": 60,
     "perPage": 100
   },
-  "reason": "Neon data-transferquota is bereikt; Sportmonks is niet aangeroepen en de bestaande catalogus blijft actief.",
-  "retry": "De volgende geplande run probeert opnieuw zodra Neon weer schrijfbaar is.",
-  "error": "Server error (HTTP status 402): {\"message\":\"Your project has exceeded the data transfer quota. Upgrade your plan to increase limits.\",\"code\":\"\",\"detail\":null,\"hint\":null,\"position\":null,\"internalPosition\":null,\"internalQuery\":null,\"severity\":\"\",\"where\":null,\"table\":null,\"column\":null,\"schema\":null,\"dataType\":null,\"constraint\":null,\"file\":null,\"line\":null,\"routine\":null,\"neon:retryable\":true}",
-  "durationMs": 261
+  "persistence": {
+    "databaseConfigured": true,
+    "databaseWritable": false,
+    "databaseError": "Server error (HTTP status 402): {\"message\":\"Your project has exceeded the data transfer quota. Upgrade your plan to increase limits.\",\"code\":\"\",\"detail\":null,\"hint\":null,\"position\":null,\"internalPosition\":null,\"internalQuery\":null,\"severity\":\"\",\"where\":null,\"table\":null,\"column\":null,\"schema\":null,\"dataType\":null,\"constraint\":null,\"file\":null,\"line\":null,\"routine\":null,\"neon:retryable\":true}",
+    "localCache": "data/sportmonks-catalog-cache.json",
+    "localCacheBytes": 41513,
+    "r2": {
+      "ok": true,
+      "skipped": false,
+      "bucket": "voetbalvoorspellingen-cold-storage",
+      "key": "voetbalvoorspellingen/raw/catalog/sportmonks/catalog.json",
+      "bytes": 41513,
+      "etag": "\"7c094edb2e7ea3f390694bde8943ab04\"",
+      "endpoint": "https://1e7e119c26075bf248bb33ff40b522cb.r2.cloudflarestorage.com"
+    }
+  },
+  "accessible": {
+    "leagues": 4,
+    "countries": 2,
+    "seasons": 11,
+    "teamSeasonFetches": 11,
+    "teams": 92,
+    "memberships": 92,
+    "buckets": {
+      "domestic": 4
+    }
+  },
+  "uefaOrEuropeLeagues": [],
+  "domesticLeagueExamples": [
+    {
+      "id": 271,
+      "name": "Superliga",
+      "country": "Denmark",
+      "active": true,
+      "seasons": 22
+    },
+    {
+      "id": 501,
+      "name": "Premiership",
+      "country": "Scotland",
+      "active": true,
+      "seasons": 22
+    },
+    {
+      "id": 513,
+      "name": "Premiership Play-Offs",
+      "country": "Scotland",
+      "active": true,
+      "seasons": 13
+    },
+    {
+      "id": 1659,
+      "name": "Superliga Play-offs",
+      "country": "Denmark",
+      "active": true,
+      "seasons": 2
+    }
+  ],
+  "teamExamples": [
+    {
+      "league": "Superliga",
+      "seasonId": "27897",
+      "teams": 12,
+      "sample": [
+        "Viborg FF",
+        "Lyngby Boldklub",
+        "Nordsjælland",
+        "Odense BK",
+        "Horsens"
+      ]
+    },
+    {
+      "league": "Premiership",
+      "seasonId": "28275",
+      "teams": 12,
+      "sample": [
+        "Motherwell",
+        "Kilmarnock",
+        "Aberdeen",
+        "Falkirk",
+        "Hibernian"
+      ]
+    },
+    {
+      "league": "Superliga",
+      "seasonId": "25536",
+      "teams": 12,
+      "sample": [
+        "Viborg FF",
+        "Vejle Boldklub",
+        "Nordsjælland",
+        "Odense BK",
+        "Randers FC"
+      ]
+    },
+    {
+      "league": "Premiership",
+      "seasonId": "25598",
+      "teams": 12,
+      "sample": [
+        "Motherwell",
+        "Kilmarnock",
+        "Aberdeen",
+        "Falkirk",
+        "Hibernian"
+      ]
+    },
+    {
+      "league": "Premiership Play-Offs",
+      "seasonId": "27622",
+      "teams": 4,
+      "sample": [
+        "Arbroath",
+        "Dunfermline Athletic",
+        "St. Mirren",
+        "Partick Thistle"
+      ]
+    },
+    {
+      "league": "Superliga",
+      "seasonId": "23584",
+      "teams": 12,
+      "sample": [
+        "Viborg FF",
+        "Lyngby Boldklub",
+        "Vejle Boldklub",
+        "Nordsjælland",
+        "Aalborg BK"
+      ]
+    },
+    {
+      "league": "Premiership",
+      "seasonId": "23690",
+      "teams": 12,
+      "sample": [
+        "Motherwell",
+        "Kilmarnock",
+        "Aberdeen",
+        "Hibernian",
+        "Celtic"
+      ]
+    },
+    {
+      "league": "Premiership Play-Offs",
+      "seasonId": "25438",
+      "teams": 4,
+      "sample": [
+        "Livingston",
+        "Ross County",
+        "Ayr United",
+        "Partick Thistle"
+      ]
+    },
+    {
+      "league": "Superliga Play-offs",
+      "seasonId": "18101",
+      "teams": 6,
+      "sample": [
+        "Viborg FF",
+        "Horsens",
+        "Vendsyssel",
+        "FC Helsingør",
+        "Esbjerg"
+      ]
+    },
+    {
+      "league": "Superliga Play-offs",
+      "seasonId": "15949",
+      "teams": 6,
+      "sample": [
+        "Viborg FF",
+        "Lyngby Boldklub",
+        "Vejle Boldklub",
+        "Horsens",
+        "Hobro"
+      ]
+    }
+  ],
+  "errors": [],
+  "quotaSamples": [
+    {
+      "status": 200,
+      "quota": {
+        "limit": "3000",
+        "remaining": "2999",
+        "retryAfter": null
+      },
+      "rateLimit": {
+        "resets_in_seconds": 3600,
+        "remaining": 2999,
+        "requested_entity": "League"
+      }
+    }
+  ],
+  "durationMs": 7406
 }
