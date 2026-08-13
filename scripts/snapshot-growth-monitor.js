@@ -101,6 +101,14 @@ for (const snapshot of ledgerSnapshots) {
   if (snapshot.matchId) uniqueMatchesByPhase[phase].add(snapshot.matchId);
 }
 const phaseMix = Object.fromEntries(Object.entries(uniqueMatchesByPhase).map(([phase, ids]) => [phase, ids.size]));
+const regularLeagueCalibrationMin = Number(process.env.REGULAR_LEAGUE_CALIBRATION_MIN_MATCHES || 50);
+const uniqueRegularLeagueMatches = Number(phaseMix.regular_league || 0);
+const regularLeagueGate = {
+  uniqueCompletedMatches: uniqueRegularLeagueMatches,
+  calibrationMin: regularLeagueCalibrationMin,
+  canCalibrate: uniqueRegularLeagueMatches >= regularLeagueCalibrationMin,
+  gap: Math.max(0, regularLeagueCalibrationMin - uniqueRegularLeagueMatches),
+};
 const effectiveUniqueTrainingMatches = Math.max(uniqueSnapshotMatches, uniqueEvaluatedMatches);
 const gap = Math.max(0, target - effectiveUniqueTrainingMatches);
 const promotionGate = buildModelPromotionGate(effectiveUniqueTrainingMatches, {
@@ -125,6 +133,7 @@ const report = {
     target,
     gap,
     promotionGate,
+    regularLeagueGate,
     maturity: training?.trainingPolicy?.maturity || "unknown",
   },
   database,
@@ -157,12 +166,16 @@ const report = {
     recommendedNext:
       gap > 0
         ? `Laat worker en learning doorlopen; nog ${gap} unieke afgeronde clubwedstrijden nodig voor het doel van ${target}.`
-        : "Snapshot target gehaald; start league/phase recalibration op club-only dataset.",
+        : regularLeagueGate.canCalibrate
+          ? "Snapshot- en reguliere league-gates gehaald; beoordeel league/phase-kalibratie in shadow mode."
+          : `Algemene snapshotgate gehaald; verzamel nog ${regularLeagueGate.gap} reguliere competitiewedstrijden voor league-kalibratie.`,
   },
   nextFocus:
     gap > 0
       ? ["reguliere clubfixtures zeven dagen vooraf vastleggen", "worker snapshot cadence bewaken", "prediction evaluation dagelijks blijven draaien"]
-      : ["league/phase recalibration", "exact-score calibration later"],
+      : regularLeagueGate.canCalibrate
+        ? ["league/phase recalibration in shadow mode", "exact-score calibration later"]
+        : ["reguliere competitiewedstrijden laten doorgroeien", "friendlies apart gekalibreerd houden"],
 };
 
 fs.mkdirSync(path.join(ROOT, "monitor"), { recursive: true });
