@@ -10622,6 +10622,17 @@ async function main() {
   if (!store.teamTransfers) store.teamTransfers = {};
   if (!store.teamTransfersUpdated) store.teamTransfersUpdated = {};
   if (!store.sportsDbTeamFormCache) store.sportsDbTeamFormCache = {};
+  const initialR2ModelProfiles = await hydrateR2ModelProfiles(store).catch((error) => ({
+    configured: true,
+    calibrationProfiles: 0,
+    phaseProfiles: 0,
+    error: error?.message || String(error),
+  }));
+  store.r2ModelProfiles = { ...initialR2ModelProfiles, hydratedAt: new Date().toISOString() };
+  console.log(
+    `[worker] R2-modelprofielen voor voorspelling: ${initialR2ModelProfiles.calibrationProfiles || 0} kalibratie, ` +
+      `${initialR2ModelProfiles.phaseProfiles || 0} fase${initialR2ModelProfiles.error ? ` (${initialR2ModelProfiles.error})` : ""}`
+  );
   purgeExcludedContent(store);
   await repairStoredLogos(store);
   repairStoredPredictionScoreSelections(store);
