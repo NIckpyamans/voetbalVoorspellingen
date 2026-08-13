@@ -59,6 +59,9 @@ async function main() {
     closingCaptured: 0,
     closingPairs: 0,
     statuses: {},
+    attemptStatuses: {},
+    providerStatuses: {},
+    providerQuota: {},
     sportmonksMapped: 0,
     sportmonksMappingStatuses: {},
     matches: [],
@@ -70,6 +73,24 @@ async function main() {
     const oddsMatch = { ...match, sportmonksFixtureId: sportmonks?.fixtureId || null };
     const result = await fetchOddsAtPrediction(oddsMatch, { generatedAt: new Date().toISOString(), cutoffAt: new Date().toISOString() });
     report.statuses[result?.status || "unknown"] = Number(report.statuses[result?.status || "unknown"] || 0) + 1;
+    for (const attempt of result?.requestMeta?.attempts || []) {
+      const provider = attempt?.provider || "unknown";
+      const status = attempt?.status || "unknown";
+      const statusKey = `${provider}:${status}`;
+      report.attemptStatuses[statusKey] = Number(report.attemptStatuses[statusKey] || 0) + 1;
+      report.providerStatuses[provider] ||= {};
+      report.providerStatuses[provider][status] = Number(report.providerStatuses[provider][status] || 0) + 1;
+      if (attempt?.remaining != null) report.providerQuota[provider] = { remaining: Number(attempt.remaining) };
+    }
+    const quota = result?.requestMeta?.quota;
+    if (quota && result?.provider) {
+      report.providerQuota[result.provider] = {
+        remaining: quota.remaining != null ? Number(quota.remaining) : null,
+        used: quota.used != null ? Number(quota.used) : null,
+        limit: quota.limit != null ? Number(quota.limit) : null,
+        reset: quota.reset || null,
+      };
+    }
     const odds = result?.oddsAtPrediction;
     if (!odds || ![odds.home, odds.draw, odds.away].every((value) => Number(value) > 1)) {
       report.matches.push({ ...match, status: result?.status || "not_found", sportmonksMapping: sportmonks?.status || "unknown" });

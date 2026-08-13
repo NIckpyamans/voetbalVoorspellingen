@@ -3,12 +3,26 @@ name: Prediction evaluation
 on:
   workflow_dispatch:
 
+permissions:
+  contents: write
+
+concurrency:
+  group: football-data-refresh
+  cancel-in-progress: false
+
+env:
+  DATA_BRANCH: codex/step3b-layout
+
 jobs:
   evaluate:
     runs-on: ubuntu-latest
     timeout-minutes: 20
     steps:
       - uses: actions/checkout@v5
+        with:
+          fetch-depth: 0
+          token: ${{ secrets.GITHUB_TOKEN }}
+          ref: ${{ env.DATA_BRANCH }}
       - uses: actions/setup-node@v5
         with:
           node-version: 22
@@ -62,6 +76,7 @@ jobs:
           PREDICTION_EVALUATION_LIMIT: 5000
       - name: Recover immutable training set from evaluated R2 ledger
         run: |
+          npm run db:predictions:materialize-reviews
           npm run train:snapshots:recover
           npm run train:prepare
         env:
@@ -101,6 +116,19 @@ jobs:
             training/catboost-ready.json
           if-no-files-found: error
           retention-days: 30
+      - name: Commit immutable review links and training evidence
+        run: |
+          git config user.name github-actions
+          git config user.email github-actions@github.com
+          git add data/days data/history-summary.json training monitor/prediction-evaluation-report.json monitor/snapshot-review-linking.json
+          git diff --staged --quiet && echo "geen evaluatiewijzigingen" && exit 0
+          git commit -m "link immutable prediction reviews [skip vercel]"
+          for attempt in 1 2 3; do
+            git pull --rebase --autostash origin "$DATA_BRANCH"
+            if git push origin HEAD:"$DATA_BRANCH"; then exit 0; fi
+            sleep $((attempt * 5))
+          done
+          exit 1
       - run: node scripts/ci-neon-safe.js -- bash -lc "npm run db:roi-clv:analyze && npm run db:integrity:snapshot"
         env:
           DATABASE_URL: ${{ secrets.DATABASE_URL }}

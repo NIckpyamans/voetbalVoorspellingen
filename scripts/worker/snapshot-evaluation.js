@@ -81,3 +81,52 @@ export function evaluateImmutableSnapshot(snapshot, rawResult, options = {}) {
     evaluatedAt: new Date().toISOString(),
   };
 }
+
+function expectedScoreLabel(snapshot) {
+  const expected = snapshot?.expectedScore || snapshot?.prediction?.expectedScore || {};
+  if (typeof expected === "string" && /^\d+\s*-\s*\d+$/.test(expected)) return expected.replace(/\s+/g, "");
+  const home = Number(expected?.home ?? snapshot?.prediction?.predHomeGoals);
+  const away = Number(expected?.away ?? snapshot?.prediction?.predAwayGoals);
+  return Number.isFinite(home) && Number.isFinite(away) ? `${home}-${away}` : null;
+}
+
+export function buildSnapshotBackedReview(snapshot, rawResult, evaluation, previousReview = null) {
+  if (!snapshot?.predictionId || !evaluation?.predictionId || snapshot.predictionId !== evaluation.predictionId) return null;
+  const actualScore = Number.isFinite(Number(evaluation.finalHomeGoals)) && Number.isFinite(Number(evaluation.finalAwayGoals))
+    ? `${Number(evaluation.finalHomeGoals)}-${Number(evaluation.finalAwayGoals)}`
+    : previousReview?.actualScore || rawResult?.actualScore || rawResult?.score || null;
+  const predictedScore = expectedScoreLabel(snapshot) || previousReview?.predictedScore || null;
+  if (!actualScore || !predictedScore) return null;
+  return {
+    ...(previousReview || {}),
+    matchId: snapshot.matchId,
+    predictionId: snapshot.predictionId,
+    date: snapshot.date || previousReview?.date || String(snapshot.kickoff || "").slice(0, 10) || null,
+    league: snapshot.league || previousReview?.league || rawResult?.league || null,
+    homeTeamName: snapshot.homeTeam || snapshot.inputSnapshot?.homeTeam || previousReview?.homeTeamName || rawResult?.homeTeamName || null,
+    awayTeamName: snapshot.awayTeam || snapshot.inputSnapshot?.awayTeam || previousReview?.awayTeamName || rawResult?.awayTeamName || null,
+    predictedScore,
+    actualScore,
+    predictedOutcome: evaluation.predictedOutcome,
+    probabilityOutcome: evaluation.predictedOutcome,
+    actualOutcome: evaluation.actualOutcome,
+    exactHit: evaluation.exactHit,
+    outcomeHit: evaluation.outcomeHit,
+    probabilityOutcomeHit: evaluation.outcomeHit,
+    brierScore: evaluation.brierScore,
+    logLoss: evaluation.logLoss,
+    roi: evaluation.roi,
+    roiStatus: evaluation.roiStatus,
+    clv: evaluation.clv,
+    clvStatus: evaluation.clvStatus,
+    generatedAt: snapshot.generatedAt || evaluation.generatedAt || null,
+    cutoffAt: snapshot.cutoffAt || snapshot.generatedAt || evaluation.cutoffAt || null,
+    modelVersion: snapshot.modelVersion || snapshot.prediction?.modelVersion || previousReview?.modelVersion || null,
+    featureSchemaVersion: snapshot.featureSchemaVersion || previousReview?.featureSchemaVersion || null,
+    sourceTimestampCoverage: snapshot.sourceTimestampCoverage ?? snapshot.prediction?.sourceTimestampCoverage ?? previousReview?.sourceTimestampCoverage ?? null,
+    evaluationSource: "prediction_snapshot",
+    immutableEvaluationSource: evaluation.evaluationSource,
+    leakageRisk: null,
+    evaluatedAt: evaluation.evaluatedAt,
+  };
+}

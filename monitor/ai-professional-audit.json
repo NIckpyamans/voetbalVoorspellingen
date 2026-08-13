@@ -6,16 +6,16 @@
     "owner": "Nick",
     "status": "active"
   },
-  "generatedAt": "2026-08-13T10:25:59.069Z",
+  "generatedAt": "2026-08-13T12:41:58.975Z",
   "baseUrl": "https://voetbalvoorspellingen-clean.vercel.app",
-  "summary": "Professionele audit actief. Kritieke opslagvelden lijken aanwezig; blijf kalibratie en bronkwaliteit bewaken.",
+  "summary": "Professionele audit actief, maar live fetch is beperkt: matches, predict, history, snapshots.",
   "live": {
-    "matchesTotal": 37,
-    "predictionsTotal": 37,
-    "reviewCount": 922,
-    "predictionSnapshotCount": 25,
-    "workerVersion": "v23-calibrated-odds-ledger",
-    "sourceBranch": "codex/step3b-layout",
+    "matchesTotal": 0,
+    "predictionsTotal": 228,
+    "reviewCount": 0,
+    "predictionSnapshotCount": 382,
+    "workerVersion": "unknown",
+    "sourceBranch": "unknown",
     "sourceCoverage": null,
     "featureDiagnostics": null,
     "backtestSummary": null,
@@ -23,10 +23,10 @@
     "dataCompletenessAudit": null,
     "oddsIntegrationReadiness": null,
     "fetchErrors": {
-      "matches": null,
-      "predict": null,
-      "history": null,
-      "snapshots": null
+      "matches": "fetch failed",
+      "predict": "fetch failed",
+      "history": "fetch failed",
+      "snapshots": "fetch failed"
     }
   },
   "predictions": {
@@ -46,8 +46,8 @@
     "resultCoverage": 1,
     "reviewedMatches": 189,
     "evaluationCoverage": 1,
-    "snapshotBackedReviews": 65,
-    "snapshotBackedReviewCoverage": 0.3439153439153439,
+    "snapshotBackedReviews": 185,
+    "snapshotBackedReviewCoverage": 0.9788359788359788,
     "predictionSnapshots": 382,
     "uniqueSnapshotMatches": 104,
     "dataCompleteness": 0.7506973684210528,
@@ -56,36 +56,36 @@
     "confirmedLineupCoverage": 0,
     "performance": {
       "reviews": 189,
-      "outcomeHitRate": 0.4708994708994709,
-      "exactHitRate": 0.08994708994708994,
-      "averageBrier": 0.6018116402116401,
-      "averageLogLoss": 1.0068259259259262,
-      "averageConfidence": 0.4167724867724869
+      "outcomeHitRate": 0.42857142857142855,
+      "exactHitRate": 0.08465608465608465,
+      "averageBrier": 0.2302954708994709,
+      "averageLogLoss": 1.0928905502645498,
+      "averageConfidence": 0.3979113924050634
     },
     "segments": {
       "club_friendlies": {
         "reviews": 129,
-        "outcomeHitRate": 0.4263565891472868,
+        "outcomeHitRate": 0.40310077519379844,
         "exactHitRate": 0.06976744186046512,
-        "averageBrier": 0.6382465116279068,
-        "averageLogLoss": 1.057204651162791,
-        "averageConfidence": 0.40951162790697726
+        "averageBrier": 0.23244640310077525,
+        "averageLogLoss": 1.1212634573643405,
+        "averageConfidence": 0.40111267605633816
       },
       "european_knockout": {
         "reviews": 49,
-        "outcomeHitRate": 0.5918367346938775,
-        "exactHitRate": 0.12244897959183673,
-        "averageBrier": 0.498534693877551,
-        "averageLogLoss": 0.8650959183673469,
-        "averageConfidence": 0.4385714285714286
+        "outcomeHitRate": 0.4897959183673469,
+        "exactHitRate": 0.10204081632653061,
+        "averageBrier": 0.20527059183673468,
+        "averageLogLoss": 1.028407367346939,
+        "averageConfidence": 0.3766666666666667
       },
       "domestic_competitions": {
         "reviews": 11,
         "outcomeHitRate": 0.45454545454545453,
         "exactHitRate": 0.18181818181818182,
-        "averageBrier": 0.6345818181818182,
-        "averageLogLoss": 1.047363636363636,
-        "averageConfidence": 0.40481818181818185
+        "averageBrier": 0.3165453636363637,
+        "averageLogLoss": 1.0473970000000001,
+        "averageConfidence": 0.348
       }
     }
   },
@@ -174,12 +174,6 @@
       "priority": 1,
       "title": "Herstel Neon-quota of verlaag datatransfer",
       "advice": "R2 houdt de leerlijn beschikbaar, maar relationele writes en monitors blijven beperkt zolang Neon HTTP 402 geeft."
-    },
-    {
-      "key": "snapshot_review_linking",
-      "priority": 2,
-      "title": "Koppel recente reviews vaker aan immutable snapshots",
-      "advice": "Verhoog de recente snapshot-backed reviewdekking naar minimaal 80%; gebruik actuele prediction fallback niet voor modelpromotie."
     }
   ],
   "nextAction": "Meet per provider en competitie; gebruik ROI/CLV pas wanneer timestamped oddsparen aantoonbaar compleet zijn."

@@ -1,17 +1,17 @@
 # FootyAI professionele AI-audit
 
-Gegenereerd: 2026-08-13T10:25:59.069Z
+Gegenereerd: 2026-08-13T12:41:58.975Z
 Bron: https://voetbalvoorspellingen-clean.vercel.app
 
 ## Samenvatting
-Professionele audit actief. Kritieke opslagvelden lijken aanwezig; blijf kalibratie en bronkwaliteit bewaken.
+Professionele audit actief, maar live fetch is beperkt: matches, predict, history, snapshots.
 
 ## Live status
-- Wedstrijden vandaag: 37
-- Voorspellingen vandaag: 37
-- Reviews: 922
-- Prediction snapshots: 25
-- Worker: v23-calibrated-odds-ledger
+- Wedstrijden vandaag: 0
+- Voorspellingen vandaag: 228
+- Reviews: 0
+- Prediction snapshots: 382
+- Worker: unknown
 - Feature coverage: 16%
 - Echte odds coverage: 0%
 - Alleen historisch marktprofiel: 16%
@@ -22,18 +22,18 @@ Professionele audit actief. Kritieke opslagvelden lijken aanwezig; blijf kalibra
 ## Recente keten (14 dagen)
 - Afgeronde wedstrijden met eindstand: 189/189 (100%)
 - Geëvalueerde wedstrijden: 189/189 (100%)
-- Snapshot-backed reviews: 65 (34%)
-- Uitkomsthit: 47%
-- Exacte-scorehit: 9%
-- Gemiddelde Brier score: 0.602
-- Gemiddelde log loss: 1.007
+- Snapshot-backed reviews: 185 (98%)
+- Uitkomsthit: 43%
+- Exacte-scorehit: 8%
+- Gemiddelde Brier score: 0.230
+- Gemiddelde log loss: 1.093
 - Echte odds: 0%
 - Confirmed lineups: 0%
 
 ## Segmenten
-- club_friendlies: 129 reviews, uitkomst 43%, exact 7%, Brier 0.638
-- european_knockout: 49 reviews, uitkomst 59%, exact 12%, Brier 0.499
-- domestic_competitions: 11 reviews, uitkomst 45%, exact 18%, Brier 0.635
+- club_friendlies: 129 reviews, uitkomst 40%, exact 7%, Brier 0.232
+- european_knockout: 49 reviews, uitkomst 49%, exact 10%, Brier 0.205
+- domestic_competitions: 11 reviews, uitkomst 45%, exact 18%, Brier 0.317
 
 ## Opslag-audit
 - prediction_id: aanwezig; gate voldaan
@@ -56,7 +56,6 @@ Professionele audit actief. Kritieke opslagvelden lijken aanwezig; blijf kalibra
 1. P1 Vul opening-, prematch- en closing odds. Meet per provider en competitie; gebruik ROI/CLV pas wanneer timestamped oddsparen aantoonbaar compleet zijn.
 2. P1 Verhoog confirmed-lineupdekking. Haal alleen rond T-75, T-45 en T-20 op en rapporteer dekking per competitie en provider.
 3. P1 Herstel Neon-quota of verlaag datatransfer. R2 houdt de leerlijn beschikbaar, maar relationele writes en monitors blijven beperkt zolang Neon HTTP 402 geeft.
-4. P2 Koppel recente reviews vaker aan immutable snapshots. Verhoog de recente snapshot-backed reviewdekking naar minimaal 80%; gebruik actuele prediction fallback niet voor modelpromotie.
 
 ## Volgende actie
 Meet per provider en competitie; gebruik ROI/CLV pas wanneer timestamped oddsparen aantoonbaar compleet zijn.

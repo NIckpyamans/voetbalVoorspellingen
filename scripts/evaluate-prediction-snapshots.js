@@ -9,7 +9,11 @@ import {
   persistLocalSnapshotLedger,
   persistSnapshotLedger,
 } from "../shared/predictionSnapshotLedger.js";
-import { evaluateImmutableSnapshot, normalizeEvaluationResult } from "./worker/snapshot-evaluation.js";
+import {
+  buildSnapshotBackedReview,
+  evaluateImmutableSnapshot,
+  normalizeEvaluationResult,
+} from "./worker/snapshot-evaluation.js";
 import {
   addEvaluationResult,
   createEvaluationResultIndex,
@@ -108,6 +112,7 @@ async function main() {
   let directResultMatches = 0;
   let canonicalResultMatches = 0;
   let ambiguousResultMatches = 0;
+  const linkedReviewMatches = new Set();
   const r2PredictionIds = new Set(Object.keys(loaded.sources.r2?.ledger?.predictionSnapshots || {}));
   const snapshots = Object.values(ledger.predictionSnapshots || {})
     .sort((a, b) => Date.parse(a?.generatedAt || "") - Date.parse(b?.generatedAt || ""))
@@ -127,6 +132,16 @@ async function main() {
     });
     if (!evaluation) continue;
     ledger.evaluations[evaluation.predictionId] = evaluation;
+    const linkedReview = buildSnapshotBackedReview(
+      snapshot,
+      result,
+      evaluation,
+      ledger.postMatchReviews?.[snapshot.matchId] || null
+    );
+    if (linkedReview) {
+      ledger.postMatchReviews[snapshot.matchId] = linkedReview;
+      linkedReviewMatches.add(snapshot.matchId);
+    }
     if (r2PredictionIds.has(evaluation.predictionId)) r2Evaluated += 1;
     else fallbackEvaluated += 1;
   }
@@ -170,6 +185,9 @@ async function main() {
       ambiguousResultMatches,
       evaluatedThisRun: neon.evaluated + r2Evaluated + fallbackEvaluated,
       evaluationsStoredInLedger: Object.keys(ledger.evaluations || {}).length,
+      snapshotBackedReviewsStoredInLedger: Object.values(ledger.postMatchReviews || {})
+        .filter((review) => review?.evaluationSource === "prediction_snapshot").length,
+      reviewsLinkedThisRun: linkedReviewMatches.size,
     },
     outcome:
       neon.evaluated + r2Evaluated + fallbackEvaluated > 0
@@ -190,6 +208,7 @@ async function main() {
       `- Lokale fallback: ${report.sources.fallback.snapshotsRead} snapshots, ${fallbackEvaluated} geëvalueerd`,
       `- Totaal werkelijk geëvalueerd: ${report.totals.evaluatedThisRun}`,
       `- Resultaatkoppeling: ${directResultMatches} direct, ${canonicalResultMatches} canoniek, ${ambiguousResultMatches} ambigu overgeslagen`,
+      `- Snapshot-backed reviews gekoppeld: ${linkedReviewMatches.size} deze run`,
       "",
     ].join("\n"));
   }

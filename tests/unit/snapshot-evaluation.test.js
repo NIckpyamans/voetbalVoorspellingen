@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { evaluateImmutableSnapshot } from "../../scripts/worker/snapshot-evaluation.js";
+import { buildSnapshotBackedReview, evaluateImmutableSnapshot } from "../../scripts/worker/snapshot-evaluation.js";
 
 describe("immutable snapshot evaluation", () => {
   it("evaluates a pre-kickoff exact result", () => {
@@ -12,5 +12,35 @@ describe("immutable snapshot evaluation", () => {
       expectedScore: { home: 1, away: 0 },
     }, { finalHomeGoals: 1, finalAwayGoals: 0, actualOutcome: "H" });
     expect(result).toMatchObject({ exactHit: true, outcomeHit: true });
+  });
+
+  it("links an immutable evaluation back to a snapshot-backed review", () => {
+    const snapshot = {
+      predictionId: "prediction",
+      matchId: "match",
+      date: "2026-08-13",
+      league: "Netherlands - Eredivisie",
+      homeTeam: "Ajax",
+      awayTeam: "Excelsior",
+      generatedAt: "2026-08-13T10:00:00.000Z",
+      kickoff: "2026-08-13T18:00:00.000Z",
+      probabilities: { home: 0.6, draw: 0.25, away: 0.15 },
+      expectedScore: { home: 2, away: 0 },
+      modelVersion: "v23",
+    };
+    const evaluation = evaluateImmutableSnapshot(snapshot, {
+      finalHomeGoals: 2,
+      finalAwayGoals: 1,
+      actualOutcome: "H",
+    });
+    expect(buildSnapshotBackedReview(snapshot, {}, evaluation)).toMatchObject({
+      predictionId: "prediction",
+      predictedScore: "2-0",
+      actualScore: "2-1",
+      outcomeHit: true,
+      exactHit: false,
+      evaluationSource: "prediction_snapshot",
+      leakageRisk: null,
+    });
   });
 });

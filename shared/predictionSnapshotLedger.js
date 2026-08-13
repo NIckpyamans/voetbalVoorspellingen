@@ -78,6 +78,31 @@ export function mergeSnapshotLedgers(...values) {
   return merged;
 }
 
+export function compactSnapshotLedgerForLocalRecovery(value) {
+  const source = normalizeSnapshotLedger(value);
+  const selected = new Map();
+  for (const snapshot of Object.values(source.predictionSnapshots || {})) {
+    if (!snapshot?.predictionId || !snapshot?.matchId) continue;
+    const modelVersion = snapshot.modelVersion || snapshot.prediction?.modelVersion || "unknown";
+    const key = `${snapshot.matchId}|${modelVersion}`;
+    const current = selected.get(key);
+    const currentTime = Date.parse(current?.generatedAt || current?.cutoffAt || "") || 0;
+    const candidateTime = Date.parse(snapshot.generatedAt || snapshot.cutoffAt || "") || 0;
+    if (!current || candidateTime >= currentTime) selected.set(key, snapshot);
+  }
+  const predictionSnapshots = Object.fromEntries(
+    [...selected.values()].map((snapshot) => [snapshot.predictionId, snapshot])
+  );
+  const keptPredictionIds = new Set(Object.keys(predictionSnapshots));
+  return mergeSnapshotLedgers({
+    ...source,
+    predictionSnapshots,
+    evaluations: Object.fromEntries(
+      Object.entries(source.evaluations || {}).filter(([predictionId]) => keptPredictionIds.has(predictionId))
+    ),
+  });
+}
+
 export function ledgerFromStore(store) {
   return normalizeSnapshotLedger({
     generatedAt: new Date().toISOString(),
@@ -115,10 +140,11 @@ export function persistLocalSnapshotLedger(ledger, root = process.cwd()) {
   const filePath = path.resolve(root, SNAPSHOT_LEDGER_LOCAL_FILE);
   const current = readLocalSnapshotLedger(root);
   const merged = mergeSnapshotLedgers(current?.ledger, ledger);
-  const body = gzipSync(Buffer.from(JSON.stringify(merged), "utf8"), { level: 9 });
+  const compact = compactSnapshotLedgerForLocalRecovery(merged);
+  const body = gzipSync(Buffer.from(JSON.stringify(compact), "utf8"), { level: 9 });
   fs.mkdirSync(path.dirname(filePath), { recursive: true });
   fs.writeFileSync(filePath, body);
-  return { ok: true, filePath, bytes: body.length, ledger: merged };
+  return { ok: true, filePath, bytes: body.length, ledger: compact };
 }
 
 export async function readR2SnapshotLedger(options = {}) {

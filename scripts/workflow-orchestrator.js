@@ -55,6 +55,7 @@ function readUpcomingFixtures(reference = now) {
     if (!fs.existsSync(filePath)) continue;
     try {
       const payload = JSON.parse(fs.readFileSync(filePath, "utf8"));
+      const snapshots = Object.values(payload?.predictionSnapshots || {});
       for (const match of Array.isArray(payload?.matches) ? payload.matches : []) {
         const kickoffAt = Date.parse(match?.kickoff || "");
         const home = String(match?.homeTeamName || "").trim();
@@ -69,6 +70,11 @@ function readUpcomingFixtures(reference = now) {
           league: match.league || null,
           homeTeam: home,
           awayTeam: away,
+          hasPreMatchSnapshot: snapshots.some((snapshot) =>
+            String(snapshot?.matchId || "") === String(match.id || match.sofaId || "") &&
+            Number.isFinite(Date.parse(snapshot?.generatedAt || snapshot?.cutoffAt || "")) &&
+            Date.parse(snapshot?.generatedAt || snapshot?.cutoffAt || "") < kickoffAt
+          ),
         });
       }
     } catch (error) {
@@ -87,6 +93,11 @@ const lineupWindows = {
 const lineupWindow = unique(Object.values(lineupWindows).flat().map((fixture) => fixture.matchId))
   .map((matchId) => upcomingFixtures.find((fixture) => fixture.matchId === matchId));
 const closingOddsWindow = upcomingFixtures.filter((fixture) => fixture.minutesToKickoff >= 5 && fixture.minutesToKickoff <= 30);
+const prematchOddsWindow = upcomingFixtures.filter((fixture) => fixture.minutesToKickoff >= 31 && fixture.minutesToKickoff <= 360);
+const openingOddsWindow = upcomingFixtures.filter((fixture) => fixture.minutesToKickoff > 360 && fixture.minutesToKickoff <= 36 * 60);
+const missingSnapshotWindow = upcomingFixtures.filter((fixture) =>
+  fixture.minutesToKickoff > 30 && fixture.minutesToKickoff <= 36 * 60 && !fixture.hasPreMatchSnapshot
+);
 const activeMatchWindow = upcomingFixtures.filter((fixture) => fixture.minutesToKickoff >= -180 && fixture.minutesToKickoff <= 180);
 const primarySlot = minute < 30;
 const reports = {
@@ -154,8 +165,19 @@ function plannedWorkflows() {
   const activeDaytime = hour >= 7 && hour <= 23;
 
   if (activeDaytime || activeMatchWindow.length) workflows.push("live-score.yml");
-  if (lineupWindow.length && dataNeeds.lineups) workflows.push("pre-kickoff-lineups.yml");
-  if (closingOddsWindow.length || (primarySlot && hour % 3 === 2 && dataNeeds.odds)) workflows.push("free-prematch-odds.yml");
+  // Capturevensters zijn leidend. Een verouderd algemeen dekkingsrapport mag
+  // een eenmalige T-75/T-45/T-20- of closing-capture nooit blokkeren.
+  if (lineupWindow.length) workflows.push("pre-kickoff-lineups.yml");
+  if (
+    closingOddsWindow.length ||
+    (primarySlot && prematchOddsWindow.length) ||
+    (primarySlot && hour % 3 === 2 && openingOddsWindow.length)
+  ) workflows.push("free-prematch-odds.yml");
+
+  // Iedere wedstrijd krijgt prospectief minimaal een immutable pre-match
+  // snapshot. Dit voorkomt dat later alleen een current-prediction fallback
+  // beschikbaar is voor de evaluatie.
+  if (primarySlot && missingSnapshotWindow.length) workflows.push("worker.yml");
 
   if (primarySlot) {
     if (dataNeeds.calendar || hour % 4 === 0) workflows.push("week-ahead-fixtures.yml");
@@ -205,6 +227,9 @@ const plan = {
     lineupWindow: lineupWindow.length,
     lineupWindows: Object.fromEntries(Object.entries(lineupWindows).map(([key, rows]) => [key, rows.length])),
     closingOddsWindow: closingOddsWindow.length,
+    prematchOddsWindow: prematchOddsWindow.length,
+    openingOddsWindow: openingOddsWindow.length,
+    missingPreMatchSnapshots: missingSnapshotWindow.length,
     activeMatchWindow: activeMatchWindow.length,
   },
   dataNeeds,
