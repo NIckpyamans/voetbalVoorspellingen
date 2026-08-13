@@ -5,10 +5,12 @@ import fs from "node:fs";
 import path from "node:path";
 import { buildR2ObjectKey, getR2Config, getR2Object } from "../shared/cloudflare-r2.js";
 import { getSql, loadLocalEnv } from "../shared/database.js";
+import { readApiFootballFixtureCache } from "./worker/api-football-fixture-cache.js";
 
 const ROOT = process.cwd();
 const DAYS_BACK = Math.max(0, Number(process.env.R2_REPLAY_DAYS_BACK || 1));
 const DAYS_AHEAD = Math.max(1, Number(process.env.R2_REPLAY_DAYS_AHEAD || 14));
+const OUTPUT = path.join(ROOT, "monitor", "r2-critical-capture-replay.json");
 
 function digest(value, size = 32) {
   return crypto.createHash("sha256").update(String(value || "")).digest("hex").slice(0, size);
@@ -85,8 +87,9 @@ async function replayOdds(sql, matchId, payload) {
     );
     writes += inserted.length;
   }
+  let closingPairs = 0;
   if (payload?.closing && payload?.prematch) {
-    await sql.query(
+    const updated = await sql.query(
       `update historical_odds_snapshots
        set closing_home=$2,closing_draw=$3,closing_away=$4,closing_captured_at=$5
        where historical_odds_snapshot_id=(
@@ -95,11 +98,62 @@ async function replayOdds(sql, matchId, payload) {
          order by captured_at asc limit 1
        )
        and (closing_home,closing_draw,closing_away,closing_captured_at)
-         is distinct from ($2::numeric,$3::numeric,$4::numeric,$5::timestamptz)`,
+         is distinct from ($2::numeric,$3::numeric,$4::numeric,$5::timestamptz)
+       returning historical_odds_snapshot_id`,
       [matchId, Number(payload.closing.home), Number(payload.closing.draw), Number(payload.closing.away), payload.closing.capturedAt]
     );
+    closingPairs = updated.length;
   }
-  return writes;
+  return { snapshots: writes, closingPairs };
+}
+
+async function replayFixtureMapping(sql, match, cached) {
+  if (!cached?.providerFixtureId) return 0;
+  const providerFixtureId = String(cached.providerFixtureId);
+  const payload = {
+    source: "API-Football",
+    sourceMatchId: providerFixtureId,
+    matchId: match.matchId,
+    homeTeam: cached.homeTeam || null,
+    awayTeam: cached.awayTeam || null,
+    confidence: Number(cached.confidence || 0),
+    mappedAt: cached.mappedAt || null,
+  };
+  const sourceRecordId = `api_football_fixture_${digest(`${match.matchId}|${providerFixtureId}`, 24)}`;
+  const matchSourceRecordId = `msr_${digest(`${match.matchId}|${sourceRecordId}`, 24)}`;
+  const aliasId = `fixture_alias_${digest(`api-football|${providerFixtureId}`, 24)}`;
+  await sql.query(
+    `insert into source_records(
+       source_record_id,provider,source_url,entity_type,entity_key,fetched_at,source_timestamp,content_hash,trust_score,payload
+     ) values($1,'api-football',$2,'fixture',$3,now(),$4,$5,0.8,$6::jsonb)
+     on conflict(source_record_id) do update set
+       fetched_at=excluded.fetched_at,
+       source_timestamp=coalesce(excluded.source_timestamp,source_records.source_timestamp),
+       content_hash=excluded.content_hash,
+       payload=excluded.payload`,
+    [sourceRecordId, "https://v3.football.api-sports.io/fixtures", match.matchId, cached.mappedAt || null, digest(JSON.stringify(payload), 40), JSON.stringify(payload)]
+  );
+  await sql.query(
+    `insert into match_source_records(match_source_record_id,match_id,source_record_id,provider,source_match_id,is_primary,trust_score)
+     values($1,$2,$3,'api-football',$4,false,0.8)
+     on conflict(match_source_record_id) do update set
+       source_match_id=excluded.source_match_id,
+       trust_score=greatest(coalesce(match_source_records.trust_score,0),excluded.trust_score),
+       updated_at=now()`,
+    [matchSourceRecordId, match.matchId, sourceRecordId, providerFixtureId]
+  );
+  await sql.query(
+    `insert into fixture_source_aliases(
+       fixture_source_alias_id,canonical_fixture_id,canonical_match_id,source_match_id,provider,source_payload
+     ) values($1,$2,$3,$4,'api-football',$5::jsonb)
+     on conflict(provider,source_match_id) do update set
+       canonical_fixture_id=excluded.canonical_fixture_id,
+       canonical_match_id=excluded.canonical_match_id,
+       source_payload=excluded.source_payload,
+       updated_at=now()`,
+    [aliasId, String(match.canonicalFixtureId || match.matchId), match.matchId, providerFixtureId, JSON.stringify(payload)]
+  );
+  return 1;
 }
 
 async function replayH2H(sql, matchId, payload) {
@@ -124,27 +178,48 @@ async function main() {
   if (!sql) throw new Error("DATABASE_URL ontbreekt voor R2 replay.");
   if (!config.configured) throw new Error("Cloudflare R2 is niet geconfigureerd voor replay.");
   const fixtures = fixtureIds();
-  const report = { generatedAt: new Date().toISOString(), fixtures: fixtures.length, lineups: 0, odds: 0, h2h: 0, missingDatabaseMatches: 0 };
+  const apiFootballCache = readApiFootballFixtureCache(ROOT);
+  const report = {
+    generatedAt: new Date().toISOString(),
+    fixtures: fixtures.length,
+    lineups: 0,
+    odds: 0,
+    closingPairs: 0,
+    h2h: 0,
+    fixtureMappings: 0,
+    missingDatabaseMatches: 0,
+  };
   if (!fixtures.length) {
+    fs.mkdirSync(path.dirname(OUTPUT), { recursive: true });
+    fs.writeFileSync(OUTPUT, `${JSON.stringify(report, null, 2)}\n`);
     console.log(JSON.stringify(report, null, 2));
     return;
   }
-  const existingRows = await sql.query("select match_id from matches where match_id = any($1::text[])", [fixtures.map((fixture) => fixture.matchId)]);
-  const existingMatchIds = new Set(existingRows.map((row) => String(row.match_id)));
+  const existingRows = await sql.query("select match_id,canonical_fixture_id from matches where match_id = any($1::text[])", [fixtures.map((fixture) => fixture.matchId)]);
+  const existingMatches = new Map(existingRows.map((row) => [String(row.match_id), {
+    matchId: String(row.match_id),
+    canonicalFixtureId: row.canonical_fixture_id ? String(row.canonical_fixture_id) : String(row.match_id),
+  }]));
   for (const fixture of fixtures) {
-    if (!existingMatchIds.has(fixture.matchId)) {
+    const databaseMatch = existingMatches.get(fixture.matchId);
+    if (!databaseMatch) {
       report.missingDatabaseMatches += 1;
       continue;
     }
+    report.fixtureMappings += await replayFixtureMapping(sql, databaseMatch, apiFootballCache.fixtures?.[fixture.matchId]);
     const [lineup, odds, h2h] = await Promise.all([
       readCapture(config, "lineups", fixture.matchId),
       readCapture(config, "odds", fixture.matchId),
       readCapture(config, "h2h", fixture.matchId),
     ]);
     report.lineups += await replayLineup(sql, fixture.matchId, lineup);
-    report.odds += await replayOdds(sql, fixture.matchId, odds);
+    const replayedOdds = await replayOdds(sql, fixture.matchId, odds);
+    report.odds += replayedOdds.snapshots;
+    report.closingPairs += replayedOdds.closingPairs;
     report.h2h += await replayH2H(sql, fixture.matchId, h2h);
   }
+  fs.mkdirSync(path.dirname(OUTPUT), { recursive: true });
+  fs.writeFileSync(OUTPUT, `${JSON.stringify(report, null, 2)}\n`);
   console.log(JSON.stringify(report, null, 2));
 }
 

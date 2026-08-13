@@ -16,6 +16,7 @@ import {
   minutesUntilKickoff,
 } from "./worker/critical-captures.js";
 import { summarizeLeagueCoverage } from "./worker/coverage-summary.js";
+import { findCachedApiFootballFixtureId, readApiFootballFixtureCache } from "./worker/api-football-fixture-cache.js";
 
 const ROOT = process.cwd();
 const LOOKAHEAD_MINUTES = Math.max(30, Number(process.env.LINEUP_LOOKAHEAD_MINUTES || 90));
@@ -24,6 +25,7 @@ const MAX_MATCHES = Math.max(1, Number(process.env.LINEUP_PROVIDER_MAX_MATCHES |
 const CAPTURE_WINDOWS_ONLY = String(process.env.LINEUP_CAPTURE_WINDOWS_ONLY || "true").toLowerCase() !== "false";
 const OUTPUT = path.join(ROOT, "monitor", "pre-kickoff-lineup-collector.json");
 const apiFootballFixtureCache = new Map();
+const persistedApiFootballFixtureCache = readApiFootballFixtureCache(ROOT);
 const sofaScheduleCache = new Map();
 
 function digest(value, size = 40) {
@@ -277,7 +279,9 @@ async function main() {
     let provider = "sofascore";
     attempts.push({ provider, status: result.status, lineup: Boolean(result.lineup), confirmed: Boolean(result.lineup?.confirmed) });
     if (!result.lineup) {
-      const apiFootballFixtureId = match.api_football_fixture_id || await resolveApiFootballFixture(match);
+      const apiFootballFixtureId = match.api_football_fixture_id ||
+        findCachedApiFootballFixtureId(persistedApiFootballFixtureCache, match) ||
+        await resolveApiFootballFixture(match);
       result = await fetchApiFootballLineup(apiFootballFixtureId);
       provider = "api-football";
       attempts.push({ provider, status: result.status, fixtureMapped: Boolean(apiFootballFixtureId), lineup: Boolean(result.lineup), confirmed: Boolean(result.lineup?.confirmed) });

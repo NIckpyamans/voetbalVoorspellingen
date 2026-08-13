@@ -4,11 +4,12 @@ on:
   workflow_dispatch:
     inputs:
       strict:
-        description: "Laat de run falen wanneer de dekkingsdoelen niet gehaald worden"
+        description: "Alleen handmatig aanzetten om onvoldoende externe providerdekking als fout te behandelen"
         required: false
-        default: "true"
+        default: "false"
 
 permissions:
+  actions: write
   contents: write
 
 jobs:
@@ -24,7 +25,7 @@ jobs:
       API_FOOTBALL_ACCEPTANCE_LIMIT: "80"
       API_FOOTBALL_QUALIFIER_TARGET: "0.80"
       API_FOOTBALL_FRIENDLY_TARGET: "0.60"
-      API_FOOTBALL_ACCEPTANCE_STRICT: ${{ github.event_name == 'workflow_dispatch' && (inputs.strict || 'true') || 'false' }}
+      API_FOOTBALL_ACCEPTANCE_STRICT: ${{ github.event_name == 'workflow_dispatch' && (inputs.strict || 'false') || 'false' }}
     steps:
       - uses: actions/checkout@v5
         with:
@@ -39,6 +40,10 @@ jobs:
         name: Verify UEFA qualifier and friendly coverage
         continue-on-error: true
         run: npm run provider:api-football:acceptance
+      - id: state
+        name: Read acceptance state
+        if: always()
+        run: node -e "const fs=require('fs');const p=JSON.parse(fs.readFileSync('monitor/api-football-provider-acceptance.json','utf8'));fs.appendFileSync(process.env.GITHUB_OUTPUT,'accepted='+(p.accepted===true)+'\n');"
       - name: Upload acceptance report
         if: always()
         uses: actions/upload-artifact@v4
@@ -54,10 +59,24 @@ jobs:
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
           git add monitor/api-football-provider-acceptance.json
+          test ! -f data/api-football-fixture-cache.json || git add data/api-football-fixture-cache.json
           git diff --cached --quiet && exit 0
           git commit -m "update api-football acceptance [skip vercel]"
-          git pull --rebase --autostash origin codex/step3b-layout
-          git push origin HEAD:codex/step3b-layout
+          for attempt in 1 2 3; do
+            git pull --rebase --autostash origin codex/step3b-layout
+            if git push origin HEAD:codex/step3b-layout; then exit 0; fi
+            sleep $((attempt * 5))
+          done
+          exit 1
+      - name: Dispatch accepted provider recovery chain
+        if: steps.state.outputs.accepted == 'true'
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          gh workflow run api-football-coverage-scout.yml --ref codex/step3b-layout
+          gh workflow run pre-kickoff-lineups.yml --ref codex/step3b-layout
+          gh workflow run free-prematch-odds.yml --ref codex/step3b-layout
+          gh workflow run storage-recovery.yml --ref codex/step3b-layout
       - name: Enforce requested strict gate
         if: github.event_name == 'workflow_dispatch' && inputs.strict == 'true' && steps.acceptance.outcome == 'failure'
         run: exit 1

@@ -163,6 +163,7 @@ function plannedWorkflows() {
         "learn.yml",
         "api-football-acceptance.yml",
         "api-football-coverage-scout.yml",
+        "storage-recovery.yml",
         "nightly-model-maintenance.yml",
       ];
     }
@@ -197,8 +198,9 @@ function plannedWorkflows() {
     if (hour === 3 && dataNeeds.evaluation) workflows.push("prediction-evaluation.yml");
     if (hour === 4 && dataNeeds.learning) workflows.push("learn.yml");
     if (hour === 5) workflows.push("odds-snapshot-scout.yml");
-    if (hour === 6 && dataNeeds.apiFootballAcceptance) workflows.push("api-football-acceptance.yml");
+    if (hour % 6 === 0 && dataNeeds.apiFootballAcceptance) workflows.push("api-football-acceptance.yml");
     if (hour % 6 === 0 && dataNeeds.apiFootballMapping) workflows.push("api-football-coverage-scout.yml");
+    if (hour % 6 === 0) workflows.push("storage-recovery.yml");
     if (hour === 4) workflows.push("competition-catalog-sync.yml");
     if (hour === 5 && day === 1) workflows.push("fixture-discovery.yml");
   }

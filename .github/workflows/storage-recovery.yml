@@ -1,0 +1,66 @@
+name: R2 and Neon recovery
+
+on:
+  workflow_dispatch:
+
+concurrency:
+  group: r2-neon-recovery
+  cancel-in-progress: false
+
+permissions:
+  contents: read
+
+jobs:
+  recover:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    env:
+      DATABASE_URL: ${{ secrets.DATABASE_URL }}
+      POSTGRES_URL: ${{ secrets.POSTGRES_URL }}
+      CLOUDFLARE_R2_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_R2_ACCOUNT_ID }}
+      CLOUDFLARE_R2_ACCESS_KEY_ID: ${{ secrets.CLOUDFLARE_R2_ACCESS_KEY_ID }}
+      CLOUDFLARE_R2_SECRET_ACCESS_KEY: ${{ secrets.CLOUDFLARE_R2_SECRET_ACCESS_KEY }}
+      CLOUDFLARE_R2_BUCKET: ${{ secrets.CLOUDFLARE_R2_BUCKET }}
+      CLOUDFLARE_R2_ENDPOINT: ${{ secrets.CLOUDFLARE_R2_ENDPOINT }}
+      CLOUDFLARE_R2_PREFIX: ${{ secrets.CLOUDFLARE_R2_PREFIX }}
+      R2_REPLAY_DAYS_BACK: "3"
+      R2_REPLAY_DAYS_AHEAD: "21"
+      ROI_CLV_MINIMUM_SAMPLE: "100"
+    steps:
+      - uses: actions/checkout@v5
+        with:
+          ref: codex/step3b-layout
+      - uses: actions/setup-node@v5
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+      - name: Verify immutable R2 storage
+        run: npm run test:r2-snapshot-canary
+      - id: database
+        name: Check Neon availability
+        run: npm run db:availability -- --emit-github-output
+      - name: Replay fixture mappings, lineups, odds and H2H
+        if: steps.database.outputs.available == 'true'
+        run: npm run db:critical-captures:replay
+      - name: Reclassify timestamped odds safely
+        if: steps.database.outputs.available == 'true'
+        run: npm run db:odds:leakage
+      - name: Evaluate professional ROI and CLV gates
+        if: steps.database.outputs.available == 'true'
+        run: npm run db:roi-clv:analyze
+      - name: Rebuild phase reliability with R2 fallback
+        run: npm run db:phase:rebuild
+      - name: Upload recovery evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: r2-neon-recovery
+          path: |
+            monitor/database-availability.json
+            monitor/r2-snapshot-canary.json
+            monitor/r2-critical-capture-replay.json
+            monitor/roi-clv-coverage.json
+            monitor/phase-reliability-rebuild.json
+          if-no-files-found: warn
+          retention-days: 30

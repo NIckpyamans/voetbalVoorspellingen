@@ -4,6 +4,11 @@ import fs from "fs";
 import path from "path";
 import { loadLocalEnv } from "../shared/database.js";
 import { getApiFootballKey } from "./provider-env.js";
+import {
+  mergeApiFootballFixtureMappings,
+  readApiFootballFixtureCache,
+  writeApiFootballFixtureCache,
+} from "./worker/api-football-fixture-cache.js";
 
 const ROOT = process.cwd();
 const DAYS_AHEAD = Math.max(1, Number(process.env.API_FOOTBALL_ACCEPTANCE_DAYS_AHEAD || 8));
@@ -150,6 +155,13 @@ async function main() {
     targets: { uefaQualification, clubFriendly },
     accepted: uefaQualification.passed && clubFriendly.passed,
     matches: rows.map(({ id, date, league, homeTeam, awayTeam, category: matchCategory, fixtureId, confidence }) => ({ id, date, league, homeTeam, awayTeam, category: matchCategory, fixtureId: fixtureId || null, confidence: confidence || 0 })),
+  };
+  const fixtureCache = mergeApiFootballFixtureMappings(readApiFootballFixtureCache(ROOT), rows);
+  writeApiFootballFixtureCache(ROOT, fixtureCache);
+  report.fixtureCache = {
+    mappedThisRun: fixtureCache.mapped,
+    total: fixtureCache.total,
+    storage: "git_cache_with_neon_replay",
   };
   fs.mkdirSync(path.dirname(REPORT_PATH), { recursive: true });
   fs.writeFileSync(REPORT_PATH, `${JSON.stringify(report, null, 2)}\n`);
