@@ -124,7 +124,7 @@ const trainingAutomation = buildTrainingAutomationState(readJson("training/catbo
   calibrationMin: 50,
   promotionMin: 150,
 });
-const apiFootballAcceptance = buildProviderAcceptanceState(reports.apiFootballAcceptance, { now, retryHours: 24 });
+const apiFootballAcceptance = buildProviderAcceptanceState(reports.apiFootballAcceptance, { now, retryHours: 6 });
 const providerQuota = {
   apiFootballH2h: buildProviderCooldown(reports.h2h, { now, cooldownHours: 12 }),
 };
