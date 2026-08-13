@@ -1,6 +1,6 @@
 # Upcoming H2H Backfill
 
-Laatst bijgewerkt: 2026-08-13T16:08:39.103Z
+Laatst bijgewerkt: 2026-08-13T22:05:39.792Z
 Gecontroleerd: 32
 Gevuld: 0
 Geen directe H2H: 32
@@ -12,23 +12,23 @@ API-Football blijft quota-bewust geblokkeerd totdat de acceptatietest slaagt; ES
 ## Gevuld
 
 ## Geen Directe H2H
-- 2026-08-13: KI Klaksvík - Lech Poznan (provider_acceptance_blocked)
-- 2026-08-13: Vikingur Reykjavík - FC Thun (provider_acceptance_blocked)
-- 2026-08-13: CSKA Sofia - Maccabi Tel Aviv (provider_acceptance_blocked)
-- 2026-08-13: Anderlecht - PAOK Salonika (provider_acceptance_blocked)
-- 2026-08-13: Rangers - Jagiellonia Bialystok (provider_acceptance_blocked)
-- 2026-08-13: Hearts - Benfica (provider_acceptance_blocked)
-- 2026-08-13: Egnatia - Shamrock Rovers (provider_acceptance_blocked)
-- 2026-08-13: FC Vaduz - FC Inter Turku (provider_acceptance_blocked)
-- 2026-08-13: NSI Runavik - FC Lugano (provider_acceptance_blocked)
-- 2026-08-13: Drita Gjilan - Tre Fiori (provider_acceptance_blocked)
-- 2026-08-13: Shkendija Tetovo - Hibernian (provider_acceptance_blocked)
-- 2026-08-13: St Gallen - Sheriff Tiraspol (Mol) (provider_acceptance_blocked)
-- 2026-08-13: FC Sion - Noah (provider_acceptance_blocked)
-- 2026-08-13: AA Gent - IFK Gothenburg (provider_acceptance_blocked)
-- 2026-08-13: Austria Wien - Beitar Jerusalem (provider_acceptance_blocked)
-- 2026-08-13: Gyor - Riga FC (provider_acceptance_blocked)
-- 2026-08-13: Motherwell - HJK Helsinki (provider_acceptance_blocked)
-- 2026-08-13: Shelbourne - Ajax (provider_acceptance_blocked)
-- 2026-08-13: Hajduk Split - VMFD Zalgiris (provider_acceptance_blocked)
-- 2026-08-13: KS Dynamo Tirana - FK Auda (provider_acceptance_blocked)
+- 2026-08-14: Holstein Kiel - FC St. Pauli (provider_acceptance_blocked)
+- 2026-08-14: Eintracht Braunschweig - VfL Bochum (provider_acceptance_blocked)
+- 2026-08-14: KI Klaksvík - Lech Poznan (provider_acceptance_blocked)
+- 2026-08-14: Marseille - Atletico Madrid (provider_acceptance_blocked)
+- 2026-08-14: Coventry City - Monaco (provider_acceptance_blocked)
+- 2026-08-14: Atalanta - Athletic Club (provider_acceptance_blocked)
+- 2026-08-15: Hertha BSC - 1. FC Heidenheim 1846 (provider_acceptance_blocked)
+- 2026-08-15: SpVgg Greuther Fürth - 1. FC Nürnberg (provider_acceptance_blocked)
+- 2026-08-15: VfL Osnabrück - 1. FC Magdeburg (provider_acceptance_blocked)
+- 2026-08-15: 1. FC Kaiserslautern - Karlsruher SC (provider_acceptance_blocked)
+- 2026-08-15: Bolton Wanderers - Preston North End (provider_acceptance_blocked)
+- 2026-08-15: Bristol City - Millwall (provider_acceptance_blocked)
+- 2026-08-15: Alavés - Getafe (provider_acceptance_blocked)
+- 2026-08-15: Sevilla - Rayo Vallecano (provider_acceptance_blocked)
+- 2026-08-15: Willem II - NEC (provider_acceptance_blocked)
+- 2026-08-15: Utrecht - AZ (provider_acceptance_blocked)
+- 2026-08-15: Alverca - Estrela (provider_acceptance_blocked)
+- 2026-08-15: Académico de Viseu - Santa Clara (provider_acceptance_blocked)
+- 2026-08-15: Freiburg - Crystal Palace (provider_acceptance_blocked)
+- 2026-08-15: Chelsea - Real Sociedad (provider_acceptance_blocked)
