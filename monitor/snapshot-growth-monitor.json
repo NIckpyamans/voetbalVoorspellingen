@@ -1,16 +1,16 @@
 {
-  "generatedAt": "2026-08-12T03:14:43.041Z",
+  "generatedAt": "2026-08-15T03:07:18.329Z",
   "training": {
-    "totalRows": 1328,
-    "snapshotBackedRows": 1273,
-    "uniqueSnapshotMatches": 231,
-    "uniqueEvaluatedMatches": 227,
-    "effectiveUniqueTrainingMatches": 231,
-    "fallbackRows": 55,
+    "totalRows": 244,
+    "snapshotBackedRows": 227,
+    "uniqueSnapshotMatches": 221,
+    "uniqueEvaluatedMatches": 392,
+    "effectiveUniqueTrainingMatches": 392,
+    "fallbackRows": 17,
     "target": 150,
     "gap": 0,
     "promotionGate": {
-      "uniqueCompletedMatches": 231,
+      "uniqueCompletedMatches": 392,
       "calibrationMin": 50,
       "promotionMin": 150,
       "calibrationGap": 0,
@@ -18,6 +18,12 @@
       "canCalibrate": true,
       "canPromote": true,
       "stage": "professional_ready"
+    },
+    "regularLeagueGate": {
+      "uniqueCompletedMatches": 113,
+      "calibrationMin": 50,
+      "canCalibrate": true,
+      "gap": 0
     },
     "maturity": "mature"
   },
@@ -30,73 +36,82 @@
     "r2": {
       "configured": true,
       "available": true,
-      "snapshotsRead": 2482,
+      "snapshotsRead": 3171,
       "error": null
     },
     "fallback": {
       "available": true,
-      "snapshotsRead": 2267
+      "snapshotsRead": 708
     },
     "merged": {
-      "clubSnapshots": 2482,
-      "uniqueClubMatches": 545,
-      "evaluatedClubSnapshots": 1250,
-      "uniqueEvaluatedClubMatches": 227,
+      "clubSnapshots": 3171,
+      "uniqueClubMatches": 670,
+      "evaluatedClubSnapshots": 1843,
+      "uniqueEvaluatedClubMatches": 392,
       "byLeague": [
         {
           "league": "World - Club Friendlies",
-          "rows": 1344
+          "rows": 1501
         },
         {
           "league": "Europe - Conference League",
-          "rows": 587
+          "rows": 811
         },
         {
           "league": "Europe - Europa League",
-          "rows": 182
+          "rows": 295
         },
         {
           "league": "Europe - Champions League",
-          "rows": 117
-        },
-        {
-          "league": "Portugal - Liga Portugal",
-          "rows": 57
+          "rows": 137
         },
         {
           "league": "Germany - Bundesliga",
-          "rows": 53
+          "rows": 96
         },
         {
-          "league": "Belgium - Pro League",
-          "rows": 50
+          "league": "Portugal - Liga Portugal",
+          "rows": 87
         },
         {
           "league": "Netherlands - Eredivisie",
-          "rows": 50
+          "rows": 75
         },
         {
-          "league": "England - Championship",
-          "rows": 15
-        },
-        {
-          "league": "France - Ligue 1",
-          "rows": 14
+          "league": "Belgium - Pro League",
+          "rows": 52
         },
         {
           "league": "Spain - LaLiga",
-          "rows": 13
+          "rows": 47
+        },
+        {
+          "league": "England - Championship",
+          "rows": 46
+        },
+        {
+          "league": "France - Ligue 1",
+          "rows": 18
+        },
+        {
+          "league": "England - Premier League",
+          "rows": 4
         }
-      ]
+      ],
+      "uniqueMatchesByPhase": {
+        "friendly": 300,
+        "regular_league": 113,
+        "uefa_qualification": 257
+      }
     }
   },
   "automation": {
     "workerCadence": "3x per dag volledige worker + fixturegestuurde refresh via de 30-minutenorchestrator",
     "learningCadence": "dagelijks train:prepare",
-    "recommendedNext": "Snapshot target gehaald; start league/phase recalibration op club-only dataset."
+    "recommendedNext": "Snapshot- en reguliere league-gates gehaald; beoordeel league/phase-kalibratie in shadow mode."
   },
   "nextFocus": [
-    "league/phase recalibration",
+    "league/phase recalibration in shadow mode",
     "exact-score calibration later"
   ]
 }
