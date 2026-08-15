@@ -1,62 +1,63 @@
 {
-  "generatedAt": "2026-08-01T08:34:51.381Z",
+  "generatedAt": "2026-08-15T06:57:45.906Z",
   "range": {
-    "from": "2026-07-19",
-    "to": "2026-08-01",
+    "from": "2026-08-02",
+    "to": "2026-08-15",
     "days": 14
   },
   "shouldNotify": false,
   "shouldRefresh": false,
   "cadence": "tweewekelijks",
-  "summary": "AI bundel over de laatste 14 dagen: 2 hoofdthema's uit 6 monitorbevindingen.",
+  "summary": "AI bundel over de laatste 14 dagen: 2 hoofdthema's uit 5 monitorbevindingen.",
   "totals": {
-    "totalRuns": 15,
-    "totalIssues": 6,
+    "totalRuns": 14,
+    "totalIssues": 5,
     "uniqueIssueTypes": 2
   },
   "latestStats": {
-    "today": "2026-08-01",
-    "tomorrow": "2026-08-02",
+    "today": "2026-08-15",
+    "tomorrow": "2026-08-16",
     "dataPresent": true,
-    "lastRun": 1785534596201,
-    "ageMinutes": 87,
+    "lastRun": 1786745077211,
+    "ageMinutes": 37,
     "maxWorkerAgeMinutes": 180,
-    "todayMatches": 55,
-    "tomorrowMatches": 13,
+    "todayMatches": 33,
+    "tomorrowMatches": 16,
     "fixtureCalendar": {
       "status": "has_current_matches",
       "healthy": true,
       "emptyWindowOk": true,
       "severity": "none",
-      "todayCount": 55,
-      "tomorrowCount": 13,
+      "todayCount": 33,
+      "tomorrowCount": 16,
       "windowDays": 7,
       "checkedDates": [
-        "2026-08-01",
-        "2026-08-02",
-        "2026-08-04",
-        "2026-08-05",
-        "2026-08-06",
-        "2026-08-07",
-        "2026-08-08"
+        "2026-08-15",
+        "2026-08-16",
+        "2026-08-17",
+        "2026-08-18",
+        "2026-08-19",
+        "2026-08-20",
+        "2026-08-21",
+        "2026-08-22"
       ],
-      "nextMatchDate": "2026-08-01",
-      "nextMatchCount": 55,
+      "nextMatchDate": "2026-08-15",
+      "nextMatchCount": 33,
       "explanation": "Vandaag of morgen staan er wedstrijden in de actuele data."
     },
     "liveMatches": 0,
     "liveWithoutMinute": 0,
     "h2hFilled": 1,
-    "h2hMissing": 54,
-    "standingsCount": 1,
-    "cupSheetCount": 2,
-    "phaseReliabilityCount": 3
+    "h2hMissing": 32,
+    "standingsCount": 0,
+    "cupSheetCount": 6,
+    "phaseReliabilityCount": 4
   },
   "topFindings": [
     {
       "key": "h2h_empty",
       "title": "H2H niet gevuld",
-      "count": 5,
+      "count": 4,
       "highestSeverity": "medium",
       "sampleMessage": "Alle wedstrijden van vandaag hebben lege H2H-data.",
       "recommendation": "Trek H2H verder uit historische competitiebestanden en bewaak fallbackdekking in de worker."
@@ -66,20 +67,20 @@
       "title": "Workerdata verouderd",
       "count": 1,
       "highestSeverity": "high",
-      "sampleMessage": "Workerdata is 923 minuten oud.",
+      "sampleMessage": "Workerdata is 632 minuten oud.",
       "recommendation": "Gebruik het reviewbranch-voorstel als veilige volgende patchronde."
     }
   ],
   "dataQuality": {
-    "generatedAt": "2026-08-01T08:34:42.870Z",
+    "generatedAt": "2026-08-15T06:57:34.331Z",
     "totals": {
-      "matches": 298,
-      "pastMatches": 66,
+      "matches": 121,
+      "pastMatches": 9,
       "pendingResultBackfills": 0,
       "missingPastScores": 0,
-      "h2hMissing": 235,
-      "h2hCovered": 63,
-      "h2hCoverage": 0.211
+      "h2hMissing": 112,
+      "h2hCovered": 9,
+      "h2hCoverage": 0.074
     },
     "status": {
       "resultBackfill": "clean",
@@ -91,7 +92,7 @@
     ]
   },
   "widgetAudit": {
-    "generatedAt": "2026-08-01T08:34:48.140Z",
+    "generatedAt": "2026-08-15T06:57:41.144Z",
     "baseUrl": "https://voetbalvoorspellingen-clean.vercel.app",
     "status": "degraded",
     "totals": {
@@ -133,21 +134,21 @@
         "label": "Dashboard/matches-widget",
         "passed": false,
         "status": 200,
-        "detail": "53 actuele matches, bron unknown"
+        "detail": "33 actuele matches, bron unknown"
       },
       {
         "key": "standings_widget",
         "label": "Standen-widget",
         "passed": true,
         "status": 200,
-        "detail": "16 standen"
+        "detail": "15 standen"
       },
       {
         "key": "cup_widget",
         "label": "Bekerschema-widget",
         "passed": true,
         "status": 200,
-        "detail": "0 actief; leeg is geldig buiten bekerrondes"
+        "detail": "6 actief; leeg is geldig buiten bekerrondes"
       },
       {
         "key": "season_widget",
@@ -184,7 +185,7 @@
     ]
   },
   "predictionEvaluation": {
-    "generatedAt": "2026-07-17T06:56:02.965Z",
+    "generatedAt": "2026-08-13T12:55:00.563Z",
     "status": "completed",
     "outcome": "evaluated",
     "sources": {
@@ -196,38 +197,61 @@
         "error": "Server error (HTTP status 402): {\"message\":\"Your project has exceeded the data transfer quota. Upgrade your plan to increase limits.\",\"code\":\"\",\"detail\":null,\"hint\":null,\"position\":null,\"internalPosition\":null,\"internalQuery\":null,\"severity\":\"\",\"where\":null,\"table\":null,\"column\":null,\"schema\":null,\"dataType\":null,\"constraint\":null,\"file\":null,\"line\":null,\"routine\":null,\"neon:retryable\":true}"
       },
       "r2": {
-        "configured": false,
-        "available": false,
-        "snapshotsRead": 0,
-        "evaluated": 0,
-        "persisted": false,
+        "configured": true,
+        "available": true,
+        "snapshotsRead": 2604,
+        "evaluated": 1350,
+        "persisted": true,
         "error": null
       },
       "fallback": {
         "available": true,
-        "snapshotsRead": 78,
-        "staticResultsRead": 692,
-        "evaluated": 76
+        "snapshotsRead": 708,
+        "staticResultsRead": 1046,
+        "evaluated": 98
       }
     },
     "totals": {
-      "snapshotsRead": 78,
-      "uniqueSnapshotMatches": 7,
-      "eligibleResults": 76,
-      "evaluatedThisRun": 76,
-      "evaluationsStoredInLedger": 76
+      "snapshotsRead": 2722,
+      "uniqueSnapshotMatches": 633,
+      "eligibleResults": 1448,
+      "directResultMatches": 1448,
+      "canonicalResultMatches": 0,
+      "ambiguousResultMatches": 0,
+      "evaluatedThisRun": 1448,
+      "evaluationsStoredInLedger": 1843,
+      "snapshotBackedReviewsStoredInLedger": 315,
+      "reviewsLinkedThisRun": 315
     }
   },
   "snapshotGrowth": {
-    "generatedAt": "2026-07-17T07:00:53.217Z",
+    "generatedAt": "2026-08-15T03:07:18.329Z",
     "training": {
-      "totalRows": 77,
-      "snapshotBackedRows": 76,
-      "uniqueSnapshotMatches": 5,
-      "fallbackRows": 1,
+      "totalRows": 244,
+      "snapshotBackedRows": 227,
+      "uniqueSnapshotMatches": 221,
+      "uniqueEvaluatedMatches": 392,
+      "effectiveUniqueTrainingMatches": 392,
+      "fallbackRows": 17,
       "target": 150,
-      "gap": 145,
-      "maturity": "warming_up"
+      "gap": 0,
+      "promotionGate": {
+        "uniqueCompletedMatches": 392,
+        "calibrationMin": 50,
+        "promotionMin": 150,
+        "calibrationGap": 0,
+        "promotionGap": 0,
+        "canCalibrate": true,
+        "canPromote": true,
+        "stage": "professional_ready"
+      },
+      "regularLeagueGate": {
+        "uniqueCompletedMatches": 113,
+        "calibrationMin": 50,
+        "canCalibrate": true,
+        "gap": 0
+      },
+      "maturity": "mature"
     },
     "database": {
       "configured": true,
@@ -238,43 +262,78 @@
       "r2": {
         "configured": true,
         "available": true,
-        "snapshotsRead": 78,
+        "snapshotsRead": 3171,
         "error": null
       },
       "fallback": {
         "available": true,
-        "snapshotsRead": 78
+        "snapshotsRead": 708
       },
       "merged": {
-        "clubSnapshots": 78,
-        "evaluatedClubSnapshots": 76,
+        "clubSnapshots": 3171,
+        "uniqueClubMatches": 670,
+        "evaluatedClubSnapshots": 1843,
+        "uniqueEvaluatedClubMatches": 392,
         "byLeague": [
           {
-            "league": "Belgium - Pro League",
-            "rows": 27
-          },
-          {
-            "league": "Europe - Champions League",
-            "rows": 25
-          },
-          {
-            "league": "France - Ligue 1",
-            "rows": 14
+            "league": "World - Club Friendlies",
+            "rows": 1501
           },
           {
             "league": "Europe - Conference League",
-            "rows": 10
+            "rows": 811
           },
           {
-            "league": "World - Club Friendlies",
-            "rows": 2
+            "league": "Europe - Europa League",
+            "rows": 295
+          },
+          {
+            "league": "Europe - Champions League",
+            "rows": 137
+          },
+          {
+            "league": "Germany - Bundesliga",
+            "rows": 96
+          },
+          {
+            "league": "Portugal - Liga Portugal",
+            "rows": 87
+          },
+          {
+            "league": "Netherlands - Eredivisie",
+            "rows": 75
+          },
+          {
+            "league": "Belgium - Pro League",
+            "rows": 52
+          },
+          {
+            "league": "Spain - LaLiga",
+            "rows": 47
+          },
+          {
+            "league": "England - Championship",
+            "rows": 46
+          },
+          {
+            "league": "France - Ligue 1",
+            "rows": 18
+          },
+          {
+            "league": "England - Premier League",
+            "rows": 4
           }
-        ]
+        ],
+        "uniqueMatchesByPhase": {
+          "friendly": 300,
+          "regular_league": 113,
+          "uefa_qualification": 257
+        }
       }
     }
   },
   "architectureAudit": {
-    "generatedAt": "2026-08-01T08:34:51.381Z",
+    "generatedAt": "2026-08-15T06:57:45.906Z",
     "summary": "Professionele architectuuranalyse voor schaalbaarheid, datakwaliteit, AI-agentwaarde, databasegroei en modelbetrouwbaarheid.",
     "findings": [
       {
@@ -374,10 +433,10 @@
         "reason": "De audit meldt 0 pending backfills; behoud dit met automatische bronvergelijking na iedere worker-run."
       },
       {
-        "title": "Snapshot-training uitbreiden",
+        "title": "Snapshot-training naar 150 unieke wedstrijden opschalen",
         "priority": "Middel",
         "expectedImpact": "Hoog",
-        "reason": "182 snapshots vertegenwoordigen 15 unieke wedstrijden. Minimaal 50 unieke wedstrijden zijn nodig voordat zelflerende gewichten volwassen worden."
+        "reason": "227 snapshots over 221 unieke wedstrijden; volgende kwaliteitsdoel is 150 unieke wedstrijden voor stabielere league/phase-kalibratie."
       },
       {
         "title": "Odds en closing-line kalibratie live beoordelen",
@@ -433,10 +492,10 @@
       "reason": "De audit meldt 0 pending backfills; behoud dit met automatische bronvergelijking na iedere worker-run."
     },
     {
-      "title": "Snapshot-training uitbreiden",
+      "title": "Snapshot-training naar 150 unieke wedstrijden opschalen",
       "priority": "Middel",
       "expectedImpact": "Hoog",
-      "reason": "182 snapshots vertegenwoordigen 15 unieke wedstrijden. Minimaal 50 unieke wedstrijden zijn nodig voordat zelflerende gewichten volwassen worden."
+      "reason": "227 snapshots over 221 unieke wedstrijden; volgende kwaliteitsdoel is 150 unieke wedstrijden voor stabielere league/phase-kalibratie."
     },
     {
       "title": "Odds en closing-line kalibratie live beoordelen",

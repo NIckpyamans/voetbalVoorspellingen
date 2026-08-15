@@ -1,27 +1,27 @@
 # Data Quality Audit
 
-Laatst bijgewerkt: 2026-08-01T08:34:42.870Z
+Laatst bijgewerkt: 2026-08-15T06:57:34.331Z
 Lookback: 45 dagen
 
 ## Scores
-- Wedstrijden: 298
-- Oude wedstrijden: 66
+- Wedstrijden: 121
+- Oude wedstrijden: 9
 - Pending result backfills: 0
 - Ontbrekende oude scores: 0
-- H2H-dekking: 21%
+- H2H-dekking: 7%
 
 ## Aanbevelingen
 - Resultaatbackfill is schoon binnen de auditperiode.
 - Breid H2H via historische competitieprofielen en team-id mappings uit tot minimaal 85% dekking.
 
 ## Samples
-- H2H mist: 2026-07-30: FC Levadia Tallinn - IFK Gothenburg
-- H2H mist: 2026-07-30: Gyor - Atert Bissen
-- H2H mist: 2026-07-30: Parma - Arezzo
-- H2H mist: 2026-07-30: Marseille - Nimes
-- H2H mist: 2026-07-30: Malaga - Al Ittihad
-- H2H mist: 2026-07-31: Juventus - Nice
-- H2H mist: 2026-07-31: Birmingham City - Barcelona
-- H2H mist: 2026-07-31: Crystal Palace - Al Ula
-- H2H mist: 2026-07-31: Deportivo Alaves - Castellon
-- H2H mist: 2026-07-31: ADO Den Haag - Asteras Tripolis
+- H2H mist: 2026-08-14: Cercle Brugge - Sint-Truiden
+- H2H mist: 2026-08-14: Wolverhampton Wanderers - Blackburn Rovers
+- H2H mist: 2026-08-14: Telstar - Sparta Rotterdam
+- H2H mist: 2026-08-14: Holstein Kiel - FC St. Pauli
+- H2H mist: 2026-08-15: Union Saint-Gilloise - Zulte Waregem
+- H2H mist: 2026-08-15: Bolton Wanderers - Preston North End
+- H2H mist: 2026-08-15: Willem II - NEC Nijmegen
+- H2H mist: 2026-08-15: Deportivo Alavés - Getafe
+- H2H mist: 2026-08-15: Hertha BSC - 1. FC Heidenheim 1846
+- H2H mist: 2026-08-15: VfL Osnabrück - 1. FC Magdeburg

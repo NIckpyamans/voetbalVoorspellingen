@@ -1,15 +1,15 @@
 # FootyAI tweewekelijkse AI-digest
 
-Periode: 2026-07-19 t/m 2026-08-01
+Periode: 2026-08-02 t/m 2026-08-15
 
-AI bundel over de laatste 14 dagen: 2 hoofdthema's uit 6 monitorbevindingen.
+AI bundel over de laatste 14 dagen: 2 hoofdthema's uit 5 monitorbevindingen.
 
-- Runs: 15
-- Bevindingen: 6
+- Runs: 14
+- Bevindingen: 5
 - Thema's: 2
 
 ## Hoofdpunten
-- H2H niet gevuld (5x, severity: medium)
+- H2H niet gevuld (4x, severity: medium)
   - Trek H2H verder uit historische competitiebestanden en bewaak fallbackdekking in de worker.
 - Workerdata verouderd (1x, severity: high)
   - Gebruik het reviewbranch-voorstel als veilige volgende patchronde.
@@ -46,7 +46,7 @@ Professionele architectuuranalyse voor schaalbaarheid, datakwaliteit, AI-agentwa
 ## Datakwaliteit
 - Pending result backfills: 0
 - Ontbrekende oude scores: 0
-- H2H-dekking: 21%
+- H2H-dekking: 7%
 - Resultaatbackfill is schoon binnen de auditperiode.
 - Breid H2H via historische competitieprofielen en team-id mappings uit tot minimaal 85% dekking.
 
@@ -60,15 +60,15 @@ Professionele architectuuranalyse voor schaalbaarheid, datakwaliteit, AI-agentwa
 ## Snapshot-evaluatie
 - Status: completed (evaluated)
 - Neon: fallback actief
-- R2: 0 gelezen, 0 geëvalueerd
-- Lokale fallback: 78 gelezen, 76 geëvalueerd
-- Werkelijk geëvalueerd: 76
+- R2: 2604 gelezen, 1350 geëvalueerd
+- Lokale fallback: 708 gelezen, 98 geëvalueerd
+- Werkelijk geëvalueerd: 1448
 
 ## Snapshotgroei
-- Snapshotrecords: 76
-- Unieke snapshotwedstrijden: 5/150
-- Resterend: 145
-- Samengevoegde snapshotbron: 78 club-snapshots
+- Snapshotrecords: 227
+- Unieke snapshotwedstrijden: 221/150
+- Resterend: 0
+- Samengevoegde snapshotbron: 3171 club-snapshots
 
 ## Standaard uitgevoerde acties
 - Database migratieplan bijwerken: docs/database-migration-plan.md (auto-maintained)
@@ -80,7 +80,7 @@ Professionele architectuuranalyse voor schaalbaarheid, datakwaliteit, AI-agentwa
 1. Database credentials activeren en schema toepassen (Hoog, impact: Zeer hoog) - Het migratieplan is nu vastgelegd; de volgende stap is DATABASE_URL/POSTGRES_URL koppelen en npm run db:schema:apply draaien.
 2. Resultaat- en H2H-normalisatie centraliseren (Hoog, impact: Hoog) - Dit verlaagt risico op conflicterende eindstanden tussen worker, API en client.
 3. Resultaatbackfill schoon houden (Middel, impact: Middel) - De audit meldt 0 pending backfills; behoud dit met automatische bronvergelijking na iedere worker-run.
-4. Snapshot-training uitbreiden (Middel, impact: Hoog) - 182 snapshots vertegenwoordigen 15 unieke wedstrijden. Minimaal 50 unieke wedstrijden zijn nodig voordat zelflerende gewichten volwassen worden.
+4. Snapshot-training naar 150 unieke wedstrijden opschalen (Middel, impact: Hoog) - 227 snapshots over 221 unieke wedstrijden; volgende kwaliteitsdoel is 150 unieke wedstrijden voor stabielere league/phase-kalibratie.
 5. Odds en closing-line kalibratie live beoordelen (Middel, impact: Hoog) - ROI/CLV is pas betrouwbaar zodra echte odds_at_prediction en closing odds consequent binnenkomen.
 
 ## Reviewbranch voorstel

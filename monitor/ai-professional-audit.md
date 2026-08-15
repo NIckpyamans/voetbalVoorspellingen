@@ -1,39 +1,39 @@
 # FootyAI professionele AI-audit
 
-Gegenereerd: 2026-08-13T12:41:58.975Z
+Gegenereerd: 2026-08-15T06:57:41.252Z
 Bron: https://voetbalvoorspellingen-clean.vercel.app
 
 ## Samenvatting
-Professionele audit actief, maar live fetch is beperkt: matches, predict, history, snapshots.
+Professionele audit actief. Kritieke opslagvelden lijken aanwezig; blijf kalibratie en bronkwaliteit bewaken.
 
 ## Live status
-- Wedstrijden vandaag: 0
-- Voorspellingen vandaag: 228
-- Reviews: 0
-- Prediction snapshots: 382
-- Worker: unknown
-- Feature coverage: 16%
+- Wedstrijden vandaag: 33
+- Voorspellingen vandaag: 33
+- Reviews: 1042
+- Prediction snapshots: 25
+- Worker: v23-calibrated-odds-ledger
+- Feature coverage: 79%
 - Echte odds coverage: 0%
-- Alleen historisch marktprofiel: 16%
-- Gemiddelde datacompleetheid: 75%
+- Alleen historisch marktprofiel: 79%
+- Gemiddelde datacompleetheid: 74%
 - Datacompleetheid-audit: onbekend
 - Odds readiness: onbekend
 
 ## Recente keten (14 dagen)
-- Afgeronde wedstrijden met eindstand: 189/189 (100%)
-- Geëvalueerde wedstrijden: 189/189 (100%)
-- Snapshot-backed reviews: 185 (98%)
-- Uitkomsthit: 43%
-- Exacte-scorehit: 8%
-- Gemiddelde Brier score: 0.230
-- Gemiddelde log loss: 1.093
+- Afgeronde wedstrijden met eindstand: 9/9 (100%)
+- Geëvalueerde wedstrijden: 9/9 (100%)
+- Snapshot-backed reviews: 4 (44%)
+- Uitkomsthit: 11%
+- Exacte-scorehit: 0%
+- Gemiddelde Brier score: 0.825
+- Gemiddelde log loss: 1.338
 - Echte odds: 0%
 - Confirmed lineups: 0%
 
 ## Segmenten
-- club_friendlies: 129 reviews, uitkomst 40%, exact 7%, Brier 0.232
-- european_knockout: 49 reviews, uitkomst 49%, exact 10%, Brier 0.205
-- domestic_competitions: 11 reviews, uitkomst 45%, exact 18%, Brier 0.317
+- club_friendlies: 3 reviews, uitkomst 33%, exact 0%, Brier 0.662
+- european_knockout: 1 reviews, uitkomst 0%, exact 0%, Brier 0.624
+- domestic_competitions: 5 reviews, uitkomst 0%, exact 0%, Brier 0.963
 
 ## Opslag-audit
 - prediction_id: aanwezig; gate voldaan
@@ -49,13 +49,14 @@ Professionele audit actief, maar live fetch is beperkt: matches, predict, histor
 
 ## Aantoonbaar afgerond
 - Recente eindstanden en evaluaties zijn vrijwel volledig opgeslagen.
-- Professionele snapshotgate gehaald met 227 unieke geëvalueerde wedstrijden.
-- Shadowkalibratie gecontroleerd op 283 unieke wedstrijdsamples; geen profiel voldeed aan de promotiedrempel.
+- Professionele snapshotgate gehaald met 392 unieke geëvalueerde wedstrijden.
 
 ## Open verbeteringen
 1. P1 Vul opening-, prematch- en closing odds. Meet per provider en competitie; gebruik ROI/CLV pas wanneer timestamped oddsparen aantoonbaar compleet zijn.
 2. P1 Verhoog confirmed-lineupdekking. Haal alleen rond T-75, T-45 en T-20 op en rapporteer dekking per competitie en provider.
 3. P1 Herstel Neon-quota of verlaag datatransfer. R2 houdt de leerlijn beschikbaar, maar relationele writes en monitors blijven beperkt zolang Neon HTTP 402 geeft.
+4. P2 Kalibreer league en fase in shadow mode. Gebruik de volwassen club-only set, vergelijk Brier/log loss per segment en promoveer alleen aantoonbaar betere gewichten.
+5. P2 Koppel recente reviews vaker aan immutable snapshots. Verhoog de recente snapshot-backed reviewdekking naar minimaal 80%; gebruik actuele prediction fallback niet voor modelpromotie.
 
 ## Volgende actie
 Meet per provider en competitie; gebruik ROI/CLV pas wanneer timestamped oddsparen aantoonbaar compleet zijn.

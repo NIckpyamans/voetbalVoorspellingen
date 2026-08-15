@@ -6,16 +6,16 @@
     "owner": "Nick",
     "status": "active"
   },
-  "generatedAt": "2026-08-13T12:41:58.975Z",
+  "generatedAt": "2026-08-15T06:57:41.252Z",
   "baseUrl": "https://voetbalvoorspellingen-clean.vercel.app",
-  "summary": "Professionele audit actief, maar live fetch is beperkt: matches, predict, history, snapshots.",
+  "summary": "Professionele audit actief. Kritieke opslagvelden lijken aanwezig; blijf kalibratie en bronkwaliteit bewaken.",
   "live": {
-    "matchesTotal": 0,
-    "predictionsTotal": 228,
-    "reviewCount": 0,
-    "predictionSnapshotCount": 382,
-    "workerVersion": "unknown",
-    "sourceBranch": "unknown",
+    "matchesTotal": 33,
+    "predictionsTotal": 33,
+    "reviewCount": 1042,
+    "predictionSnapshotCount": 25,
+    "workerVersion": "v23-calibrated-odds-ledger",
+    "sourceBranch": "codex/step3b-layout",
     "sourceCoverage": null,
     "featureDiagnostics": null,
     "backtestSummary": null,
@@ -23,69 +23,69 @@
     "dataCompletenessAudit": null,
     "oddsIntegrationReadiness": null,
     "fetchErrors": {
-      "matches": "fetch failed",
-      "predict": "fetch failed",
-      "history": "fetch failed",
-      "snapshots": "fetch failed"
+      "matches": null,
+      "predict": null,
+      "history": null,
+      "snapshots": null
     }
   },
   "predictions": {
-    "total": 228,
-    "featureCoverage": 0.16228070175438597,
+    "total": 42,
+    "featureCoverage": 0.7857142857142857,
     "oddsCoverage": 0,
-    "historicalMarketOnly": 0.16228070175438597,
+    "historicalMarketOnly": 0.7857142857142857,
     "reviewCoverage": 0,
-    "averageCompleteness": 0.7506973684210528
+    "averageCompleteness": 0.7394761904761897
   },
   "recent": {
-    "days": 12,
-    "matches": 228,
-    "predictions": 228,
-    "finishedMatches": 189,
-    "finishedWithScore": 189,
+    "days": 2,
+    "matches": 42,
+    "predictions": 42,
+    "finishedMatches": 9,
+    "finishedWithScore": 9,
     "resultCoverage": 1,
-    "reviewedMatches": 189,
+    "reviewedMatches": 9,
     "evaluationCoverage": 1,
-    "snapshotBackedReviews": 185,
-    "snapshotBackedReviewCoverage": 0.9788359788359788,
-    "predictionSnapshots": 382,
-    "uniqueSnapshotMatches": 104,
-    "dataCompleteness": 0.7506973684210528,
+    "snapshotBackedReviews": 4,
+    "snapshotBackedReviewCoverage": 0.4444444444444444,
+    "predictionSnapshots": 61,
+    "uniqueSnapshotMatches": 37,
+    "dataCompleteness": 0.7394761904761897,
     "sourceMetadataCoverage": 1,
     "actualOddsCoverage": 0,
     "confirmedLineupCoverage": 0,
     "performance": {
-      "reviews": 189,
-      "outcomeHitRate": 0.42857142857142855,
-      "exactHitRate": 0.08465608465608465,
-      "averageBrier": 0.2302954708994709,
-      "averageLogLoss": 1.0928905502645498,
-      "averageConfidence": 0.3979113924050634
+      "reviews": 9,
+      "outcomeHitRate": 0.1111111111111111,
+      "exactHitRate": 0,
+      "averageBrier": 0.8250000000000001,
+      "averageLogLoss": 1.3375444444444446,
+      "averageConfidence": 0.46155555555555555
     },
     "segments": {
       "club_friendlies": {
-        "reviews": 129,
-        "outcomeHitRate": 0.40310077519379844,
-        "exactHitRate": 0.06976744186046512,
-        "averageBrier": 0.23244640310077525,
-        "averageLogLoss": 1.1212634573643405,
-        "averageConfidence": 0.40111267605633816
+        "reviews": 3,
+        "outcomeHitRate": 0.3333333333333333,
+        "exactHitRate": 0,
+        "averageBrier": 0.6624666666666666,
+        "averageLogLoss": 1.1144333333333334,
+        "averageConfidence": 0.37400000000000005
       },
       "european_knockout": {
-        "reviews": 49,
-        "outcomeHitRate": 0.4897959183673469,
-        "exactHitRate": 0.10204081632653061,
-        "averageBrier": 0.20527059183673468,
-        "averageLogLoss": 1.028407367346939,
-        "averageConfidence": 0.3766666666666667
+        "reviews": 1,
+        "outcomeHitRate": 0,
+        "exactHitRate": 0,
+        "averageBrier": 0.6241,
+        "averageLogLoss": 1.0356,
+        "averageConfidence": 0.452
       },
       "domestic_competitions": {
-        "reviews": 11,
-        "outcomeHitRate": 0.45454545454545453,
-        "exactHitRate": 0.18181818181818182,
-        "averageBrier": 0.3165453636363637,
-        "averageLogLoss": 1.0473970000000001,
-        "averageConfidence": 0.348
+        "reviews": 5,
+        "outcomeHitRate": 0,
+        "exactHitRate": 0,
+        "averageBrier": 0.9627000000000001,
+        "averageLogLoss": 1.5318,
+        "averageConfidence": 0.516
       }
     }
   },
@@ -153,8 +153,7 @@
   ],
   "completed": [
     "Recente eindstanden en evaluaties zijn vrijwel volledig opgeslagen.",
-    "Professionele snapshotgate gehaald met 227 unieke geëvalueerde wedstrijden.",
-    "Shadowkalibratie gecontroleerd op 283 unieke wedstrijdsamples; geen profiel voldeed aan de promotiedrempel."
+    "Professionele snapshotgate gehaald met 392 unieke geëvalueerde wedstrijden."
   ],
   "recommendations": [
     {
@@ -174,6 +173,18 @@
       "priority": 1,
       "title": "Herstel Neon-quota of verlaag datatransfer",
       "advice": "R2 houdt de leerlijn beschikbaar, maar relationele writes en monitors blijven beperkt zolang Neon HTTP 402 geeft."
+    },
+    {
+      "key": "shadow_calibration",
+      "priority": 2,
+      "title": "Kalibreer league en fase in shadow mode",
+      "advice": "Gebruik de volwassen club-only set, vergelijk Brier/log loss per segment en promoveer alleen aantoonbaar betere gewichten."
+    },
+    {
+      "key": "snapshot_review_linking",
+      "priority": 2,
+      "title": "Koppel recente reviews vaker aan immutable snapshots",
+      "advice": "Verhoog de recente snapshot-backed reviewdekking naar minimaal 80%; gebruik actuele prediction fallback niet voor modelpromotie."
     }
   ],
   "nextAction": "Meet per provider en competitie; gebruik ROI/CLV pas wanneer timestamped oddsparen aantoonbaar compleet zijn."
