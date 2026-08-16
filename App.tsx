@@ -12,16 +12,13 @@ import { logClientWarning } from "./shared/clientLogger";
 import { isMatchFinished, isMatchLive } from "./shared/matchStatus.js";
 import {
   DashboardHistoryItem,
-  DEFAULT_FAVORITE_STANDING_LABEL,
   LEAGUE_ORDER,
   belongsToSelectedDate,
   formatDateLabel,
-  getStandingLabel,
   hydrateDashboardHistory,
   isoDate,
   mergeDashboardHistory,
   pct,
-  readFavoriteStandingLabel,
   shortLeague,
 } from "./shared/dashboard.js";
 import { filterVisibleMatches, filterVisiblePredictionMap } from "./shared/competitionVisibility.js";
@@ -240,7 +237,6 @@ const App: React.FC = () => {
   const [expandedTopClub, setExpandedTopClub] = useState<string | null>(null);
   const [expandedMatchId, setExpandedMatchId] = useState<string | null>(null);
   const [visibleMatchLimit, setVisibleMatchLimit] = useState(MATCH_RENDER_BATCH);
-  const [favoriteStandingLabel, setFavoriteStandingLabel] = useState<string>(readFavoriteStandingLabel);
   const [favRefresh, setFavRefresh] = useState(0);
   const learnedRef = useRef<Set<string>>(new Set());
 
@@ -274,16 +270,6 @@ const App: React.FC = () => {
     return () => {
       window.removeEventListener("storage", updateTransparency);
       window.removeEventListener("footyai-glass-change", updateTransparency);
-    };
-  }, []);
-
-  useEffect(() => {
-    const updateFavoriteStanding = () => setFavoriteStandingLabel(readFavoriteStandingLabel());
-    window.addEventListener("storage", updateFavoriteStanding);
-    window.addEventListener("footyai-favorite-standing-change", updateFavoriteStanding);
-    return () => {
-      window.removeEventListener("storage", updateFavoriteStanding);
-      window.removeEventListener("footyai-favorite-standing-change", updateFavoriteStanding);
     };
   }, []);
 
@@ -389,28 +375,6 @@ const App: React.FC = () => {
     }
     return map;
   }, [standings]);
-
-  const favoriteStanding = useMemo(() => {
-    const entries = Object.entries(standings || {}) as Array<[string, any]>;
-    if (entries.length === 0) return null;
-
-    const exact =
-      entries.find(([key, table]) => getStandingLabel(table, key) === favoriteStandingLabel) ||
-      entries.find(([key, table]) => getStandingLabel(table, key) === DEFAULT_FAVORITE_STANDING_LABEL) ||
-      entries.find(([, table]) => String(table?.label || "").toLowerCase().includes("eredivisie")) ||
-      entries[0];
-
-    if (!exact) return null;
-    const [key, table] = exact;
-    return {
-      key,
-      label: getStandingLabel(table, key),
-      rows: Array.isArray(table?.rows) ? table.rows : [],
-      updated: table?.updated || null,
-      source: table?.source || "",
-      liveOverlay: table?.liveOverlay || null,
-    };
-  }, [favoriteStandingLabel, standings]);
 
   const enrichMatch = useCallback(
     (match: Match) => ({
@@ -933,7 +897,7 @@ const App: React.FC = () => {
               </div>
             )}
 
-            <div className="grid gap-3 mb-4 xl:grid-cols-[minmax(0,1fr)_320px]">
+            <div className="mb-4">
               <section className="glass-card rounded-2xl border border-yellow-500/20 p-3 bg-yellow-500/5">
                 <div className="flex items-center justify-between gap-3 mb-2">
                   <div>
@@ -945,8 +909,17 @@ const App: React.FC = () => {
                       De vijf hoogste exacte-score kansen voor deze speeldag.
                     </p>
                   </div>
-                  <div className="rounded-full bg-yellow-500/15 px-3 py-1 text-[10px] font-black text-yellow-200">
-                    {bestBets.length}/5 gevuld
+                  <div className="flex items-center gap-2">
+                    <button
+                      type="button"
+                      onClick={() => setView("standings")}
+                      className="rounded-full bg-white/5 px-3 py-1 text-[10px] font-black text-slate-300 hover:bg-white/10"
+                    >
+                      Competities en standen
+                    </button>
+                    <div className="rounded-full bg-yellow-500/15 px-3 py-1 text-[10px] font-black text-yellow-200">
+                      {bestBets.length}/5 gevuld
+                    </div>
                   </div>
                 </div>
 
@@ -974,48 +947,6 @@ const App: React.FC = () => {
                 </div>
               </section>
 
-              <aside className="glass-card rounded-2xl border border-emerald-400/20 bg-emerald-500/5 p-3">
-                <div className="rounded-2xl border border-emerald-400/25 bg-emerald-500/10 p-3 shadow-[0_0_30px_rgba(16,185,129,0.08)]">
-                  <div className="mb-2 flex items-start justify-between gap-2">
-                    <div>
-                      <h2 className="text-sm font-black uppercase text-white">Favoriete competitie</h2>
-                      <p className="text-[11px] text-slate-400">
-                        {favoriteStanding?.label || DEFAULT_FAVORITE_STANDING_LABEL}
-                      </p>
-                    </div>
-                    <button
-                      onClick={() => setView("standings")}
-                      className="rounded-lg bg-emerald-500/15 px-2 py-1 text-[9px] font-black text-emerald-200 hover:bg-emerald-500/25"
-                    >
-                      beheren
-                    </button>
-                  </div>
-
-                  {favoriteStanding?.rows?.length ? (
-                    <div className="grid grid-cols-1 gap-1.5 rounded-xl border border-white/5 bg-slate-950/45 p-1.5 sm:grid-cols-2 xl:grid-cols-1">
-                      {favoriteStanding.rows.slice(0, 4).map((row: any) => {
-                        return (
-                          <div
-                            key={`${favoriteStanding.key}-${row.teamId || row.team}`}
-                            className="grid grid-cols-[22px_minmax(0,1fr)_34px] items-center gap-2 rounded-lg bg-slate-950/55 px-2 py-2"
-                          >
-                            <div className="text-[10px] font-black text-slate-400">{row.pos}</div>
-                            <div className="min-w-0">
-                              <div className="truncate text-[10px] font-black text-white">{row.team}</div>
-                              <div className="text-[8px] text-slate-500">{row.p || 0} gespeeld</div>
-                            </div>
-                            <div className="text-right text-[12px] font-black text-white">{row.pts}</div>
-                          </div>
-                        );
-                      })}
-                    </div>
-                  ) : (
-                    <div className="rounded-xl border border-dashed border-emerald-500/20 bg-slate-950/30 p-4 text-[11px] font-bold text-slate-400">
-                      Nog geen standdata gevonden. Standaard probeert de app de Eredivisie te tonen.
-                    </div>
-                  )}
-                </div>
-              </aside>
             </div>
 
             {loading ? (

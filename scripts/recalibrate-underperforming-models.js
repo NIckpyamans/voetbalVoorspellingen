@@ -6,6 +6,7 @@ import { getSql, loadLocalEnv } from "../shared/database.js";
 import { buildModelPromotionGate } from "./worker/model-promotion.js";
 import { trainingCalibrationRows } from "./worker/model-calibration-data.js";
 import { publishActiveCalibration } from "./worker/r2-model-profiles.js";
+import { isRegularCompetitionRow, uniqueRegularMatchCount } from "./worker/competition-segmentation.js";
 
 const ROOT = process.cwd();
 const APPLY_LIVE = process.argv.includes("--apply-live");
@@ -123,24 +124,6 @@ async function writeRootSegment(sql, key, payload) {
   );
 }
 
-function uniqueCompletedSnapshotMatches() {
-  const trainingPath = path.join(ROOT, "training", "training-snapshot.json");
-  if (!fs.existsSync(trainingPath)) return 0;
-  try {
-    const training = JSON.parse(fs.readFileSync(trainingPath, "utf8"));
-    return new Set(
-      (Array.isArray(training?.rows) ? training.rows : [])
-        .filter((row) => row?.snapshotBacked)
-        .filter((row) => /^(FT|AET|PEN)$/i.test(String(row?.status || "")))
-        .map((row) => String(row?.matchId || "").trim())
-        .filter(Boolean)
-    ).size;
-  } catch (error) {
-    console.warn(`[model-recalibration] training snapshot kon niet worden gelezen: ${error?.message || error}`);
-    return 0;
-  }
-}
-
 function localCalibrationRows() {
   const trainingPath = path.join(ROOT, "training", "training-snapshot.json");
   if (!fs.existsSync(trainingPath)) return [];
@@ -154,8 +137,10 @@ function localCalibrationRows() {
 
 async function main() {
   loadLocalEnv(ROOT);
-  const completedSnapshotMatches = uniqueCompletedSnapshotMatches();
-  const promotionGate = buildModelPromotionGate(completedSnapshotMatches, {
+  const localRows = localCalibrationRows();
+  const completedSnapshotMatches = new Set(localRows.map((row) => row.match_id).filter(Boolean)).size;
+  const completedRegularSnapshotMatches = uniqueRegularMatchCount(localRows);
+  const promotionGate = buildModelPromotionGate(completedRegularSnapshotMatches, {
     calibrationMin: MIN_UNIQUE_COMPLETED_SNAPSHOT_MATCHES,
     promotionMin: MIN_UNIQUE_COMPLETED_SNAPSHOT_MATCHES_FOR_LIVE,
   });
@@ -164,11 +149,12 @@ async function main() {
       ok: true,
       skipped: true,
       generatedAt: new Date().toISOString(),
-      reason: "insufficient_unique_completed_snapshot_matches",
+      reason: "insufficient_unique_completed_regular_snapshot_matches",
       uniqueCompletedSnapshotMatches: completedSnapshotMatches,
-      minimumUniqueCompletedSnapshotMatches: MIN_UNIQUE_COMPLETED_SNAPSHOT_MATCHES,
+      uniqueCompletedRegularSnapshotMatches: completedRegularSnapshotMatches,
+      minimumUniqueCompletedRegularSnapshotMatches: MIN_UNIQUE_COMPLETED_SNAPSHOT_MATCHES,
       promotionGate,
-      nextAction: `Wacht op ${Math.max(0, MIN_UNIQUE_COMPLETED_SNAPSHOT_MATCHES - completedSnapshotMatches)} extra unieke afgeronde clubwedstrijden met pre-match snapshots voordat league/phase-kalibratie draait.`,
+      nextAction: `Wacht op ${Math.max(0, MIN_UNIQUE_COMPLETED_SNAPSHOT_MATCHES - completedRegularSnapshotMatches)} extra unieke afgeronde reguliere competitiewedstrijden met pre-match snapshots voordat league/phase-kalibratie draait.`,
     };
     fs.mkdirSync(path.dirname(REPORT_PATH), { recursive: true });
     fs.writeFileSync(REPORT_PATH, `${JSON.stringify(report, null, 2)}\n`);
@@ -204,9 +190,9 @@ async function main() {
       database.error = error?.message || String(error);
     }
   }
-  const localRows = localCalibrationRows();
   const calibrationSource = database.available && rows.length ? "neon" : "immutable_training_fallback";
   if (calibrationSource === "immutable_training_fallback") rows = localRows;
+  rows = rows.filter(isRegularCompetitionRow);
 
   const groups = new Map();
   for (const row of rows) {
@@ -332,6 +318,8 @@ async function main() {
     calibrationSource,
     database,
     calibrationRows: rows.length,
+    uniqueCompletedSnapshotMatches: completedSnapshotMatches,
+    uniqueCompletedRegularSnapshotMatches: completedRegularSnapshotMatches,
     generatedAt: new Date().toISOString(),
     groups: groups.size,
     candidates: candidates.length,

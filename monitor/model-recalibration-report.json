@@ -1,146 +1,20 @@
 {
   "ok": true,
-  "applyLive": false,
-  "livePromotionApplied": false,
-  "promotionTargets": {
-    "neon": false,
-    "r2": {
-      "ok": false,
-      "skipped": true,
-      "reason": "not_requested"
-    }
-  },
+  "skipped": true,
+  "generatedAt": "2026-08-16T18:52:49.475Z",
+  "reason": "insufficient_unique_completed_regular_snapshot_matches",
+  "uniqueCompletedSnapshotMatches": 436,
+  "uniqueCompletedRegularSnapshotMatches": 22,
+  "minimumUniqueCompletedRegularSnapshotMatches": 50,
   "promotionGate": {
-    "uniqueCompletedMatches": 436,
+    "uniqueCompletedMatches": 22,
     "calibrationMin": 50,
     "promotionMin": 150,
-    "calibrationGap": 0,
-    "promotionGap": 0,
-    "canCalibrate": true,
-    "canPromote": true,
-    "stage": "professional_ready"
+    "calibrationGap": 28,
+    "promotionGap": 128,
+    "canCalibrate": false,
+    "canPromote": false,
+    "stage": "collecting"
   },
-  "calibrationSource": "immutable_training_fallback",
-  "database": {
-    "configured": true,
-    "available": false,
-    "error": "Server error (HTTP status 402): {\"message\":\"Your project has exceeded the data transfer quota. Upgrade your plan to increase limits.\",\"code\":\"\",\"detail\":null,\"hint\":null,\"position\":null,\"internalPosition\":null,\"internalQuery\":null,\"severity\":\"\",\"where\":null,\"table\":null,\"column\":null,\"schema\":null,\"dataType\":null,\"constraint\":null,\"file\":null,\"line\":null,\"routine\":null,\"neon:retryable\":true}",
-    "rows": 0
-  },
-  "calibrationRows": 442,
-  "generatedAt": "2026-08-16T12:05:18.444Z",
-  "groups": 14,
-  "candidates": 3,
-  "accepted": 1,
-  "liveProfileKeys": [
-    "Europe - Europa League"
-  ],
-  "topCandidates": [
-    {
-      "calibrationProfileId": "league_bias_europe_europa_league_v23_calibrated_odds_ledger",
-      "accepted": true,
-      "status": "accepted_live_candidate",
-      "adjustmentType": "league_bias_v1",
-      "modelVersion": "v23-calibrated-odds-ledger",
-      "league": "Europe - Europa League",
-      "competitionId": null,
-      "trainRows": 31,
-      "validationRows": 14,
-      "sampleSize": 45,
-      "minimumRows": 20,
-      "minimumValidationRows": 8,
-      "leakageSafe": true,
-      "method": "time_split_league_probability_bias_v1",
-      "scale": 1,
-      "homeBias": 0.0045,
-      "drawBias": 0.0006,
-      "confidenceBias": -0.0037,
-      "baselineBrier": 0.262358,
-      "calibratedBrier": 0.261247,
-      "improvement": 0.001111,
-      "baselineOutcomeHitRate": 0.4286,
-      "calibratedOutcomeHitRate": 0.4286,
-      "actualRates": {
-        "home": 0.5,
-        "draw": 0.2647058823529412,
-        "away": 0.23529411764705882
-      },
-      "avgPredicted": {
-        "home": 0.4401854157477574,
-        "draw": 0.2568808789646797,
-        "away": 0.30293370528756286
-      }
-    },
-    {
-      "calibrationProfileId": "league_bias_world_club_friendlies_v23_calibrated_odds_ledger",
-      "accepted": false,
-      "status": "candidate_no_improvement",
-      "adjustmentType": "league_bias_v1",
-      "modelVersion": "v23-calibrated-odds-ledger",
-      "league": "World - Club Friendlies",
-      "competitionId": null,
-      "trainRows": 150,
-      "validationRows": 65,
-      "sampleSize": 215,
-      "minimumRows": 20,
-      "minimumValidationRows": 8,
-      "leakageSafe": true,
-      "method": "time_split_league_probability_bias_v1",
-      "scale": 1,
-      "homeBias": -0.0014,
-      "drawBias": -0.0005,
-      "confidenceBias": -0.0036,
-      "baselineBrier": 0.233659,
-      "calibratedBrier": 0.233649,
-      "improvement": 0.000009,
-      "baselineOutcomeHitRate": 0.4154,
-      "calibratedOutcomeHitRate": 0.4308,
-      "actualRates": {
-        "home": 0.38562091503267976,
-        "draw": 0.23529411764705882,
-        "away": 0.3790849673202614
-      },
-      "avgPredicted": {
-        "home": 0.4026988646835019,
-        "draw": 0.2409361756628152,
-        "away": 0.356364959653683
-      }
-    },
-    {
-      "calibrationProfileId": "league_bias_europe_conference_league_v23_calibrated_odds_ledger",
-      "accepted": false,
-      "status": "candidate_no_improvement",
-      "adjustmentType": "league_bias_v1",
-      "modelVersion": "v23-calibrated-odds-ledger",
-      "league": "Europe - Conference League",
-      "competitionId": null,
-      "trainRows": 107,
-      "validationRows": 46,
-      "sampleSize": 153,
-      "minimumRows": 20,
-      "minimumValidationRows": 8,
-      "leakageSafe": true,
-      "method": "time_split_league_probability_bias_v1",
-      "scale": 0.25,
-      "homeBias": 0.0023,
-      "drawBias": -0.0017,
-      "confidenceBias": -0.0017,
-      "baselineBrier": 0.220741,
-      "calibratedBrier": 0.220762,
-      "improvement": -0.000022,
-      "baselineOutcomeHitRate": 0.4783,
-      "calibratedOutcomeHitRate": 0.4783,
-      "actualRates": {
-        "home": 0.5454545454545454,
-        "draw": 0.19090909090909092,
-        "away": 0.2636363636363636
-      },
-      "avgPredicted": {
-        "home": 0.3721692154339632,
-        "draw": 0.2749292775568722,
-        "away": 0.3529015070091646
-      }
-    }
-  ],
-  "nextAction": "Run met --apply-live om accepted profielen in app_state_segments te zetten."
+  "nextAction": "Wacht op 28 extra unieke afgeronde reguliere competitiewedstrijden met pre-match snapshots voordat league/phase-kalibratie draait."
 }

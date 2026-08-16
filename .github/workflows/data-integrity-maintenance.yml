@@ -28,6 +28,8 @@ jobs:
           CLOUDFLARE_R2_SECRET_ACCESS_KEY: ${{ secrets.CLOUDFLARE_R2_SECRET_ACCESS_KEY }}
           CLOUDFLARE_R2_BUCKET: ${{ secrets.CLOUDFLARE_R2_BUCKET }}
           CLOUDFLARE_R2_PREFIX: ${{ secrets.CLOUDFLARE_R2_PREFIX }}
+      - name: Validate fixtures, results, providers and training growth
+        run: npm run monitor:daily-quality
       - name: Maintain Neon storage budget before heavy writes
         if: steps.database.outputs.available == 'true'
         run: node scripts/ci-neon-safe.js -- npm run db:neon-storage:maintain
@@ -198,3 +200,10 @@ jobs:
           DATABASE_URL: ${{ secrets.DATABASE_URL }}
           POSTGRES_URL: ${{ secrets.POSTGRES_URL }}
           SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
+      - name: Upload daily quality evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: daily-quality-gate
+          path: monitor/daily-quality-gate.json
+          if-no-files-found: error

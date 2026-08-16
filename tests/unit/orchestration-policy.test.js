@@ -23,6 +23,17 @@ describe("orchestration policy", () => {
     });
   });
 
+  it("recognizes known domestic leagues when a legacy phase flag is wrong", () => {
+    const rows = [
+      { matchId: "bundesliga-1", league: "Germany - Bundesliga", features: { phase_knockout: 1 } },
+      { matchId: "ligue1-1", league: "France - Ligue 1", features: {} },
+    ];
+    expect(buildTrainingAutomationState({ rows })).toMatchObject({
+      uniqueRegularCompleted: 2,
+      regularCalibrationGap: 48,
+    });
+  });
+
   it("keeps a suspended provider on a bounded retry cadence", () => {
     const report = { generatedAt: "2026-07-23T10:00:00Z", accepted: false, errors: [{ message: "Your account is suspended" }] };
     expect(buildProviderAcceptanceState(report, { now: "2026-07-23T12:00:00Z" })).toMatchObject({ externallyBlocked: true, checkDue: false });

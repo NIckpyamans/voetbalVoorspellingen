@@ -1,3 +1,5 @@
+import { competitionSegment } from "./competition-segmentation.js";
+
 function probabilities(row) {
   const value = row?.probabilities || row?.ensembleMeta?.baseProbabilities || null;
   if (!value) return null;
@@ -19,6 +21,7 @@ export function trainingCalibrationRows(training) {
       generated_at: row.generatedAt,
       competition_id: null,
       league: row.league,
+      competition_segment: competitionSegment(row),
       actual_outcome: String(row.label || row.review?.actualOutcome || "").toUpperCase(),
     }))
     .filter((row) => row.prediction_id && row.match_id && row.league && row.probabilities)

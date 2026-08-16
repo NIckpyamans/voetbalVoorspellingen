@@ -221,7 +221,7 @@ function plannedWorkflows() {
     // One full refresh after the European evening window captures final xG/shots,
     // referee assignments and incidents that lightweight live refreshes omit.
     if (hour === 1 && primarySlot) workflows.push("worker.yml");
-    if (hour === 6 && primarySlot && trainingAutomation.canCalibrate) workflows.push("nightly-model-maintenance.yml");
+    if (hour === 6 && primarySlot && trainingAutomation.canCalibrateRegular) workflows.push("nightly-model-maintenance.yml");
     if (hour === 5 && primarySlot) workflows.push("data-integrity-maintenance.yml");
   }
 

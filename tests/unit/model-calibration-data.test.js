@@ -22,7 +22,7 @@ describe("shadow calibration data", () => {
       probabilities: { home: 0.5, draw: 0.3, away: 0.2 },
     }] });
     expect(rows).toHaveLength(1);
-    expect(rows[0]).toMatchObject({ prediction_id: "prediction", actual_outcome: "H" });
+    expect(rows[0]).toMatchObject({ prediction_id: "prediction", actual_outcome: "H", competition_segment: "regular_league" });
   });
 
   it("uses one latest snapshot per unique match and model", () => {

@@ -34,5 +34,8 @@ Deze map is de veilige opsplitsing van `scripts/server-worker.js`.
 - `coverage-summary.js`: consistent per-league lineup and odds coverage metrics.
 - `fixture-deduplication.js`: canonical stored-fixture selection, merging and prediction relinking.
 - `orchestration-policy.js`: provider retry state and the 50/150 calibration and promotion gates.
+- `competition-segmentation.js`: one shared regular-league, cup and friendly classification for training and calibration.
+- `league-calibration.js`: static/dynamic league probability calibration and review-profile rebuilding.
+- `daily-quality-gate.js`: pure fixture, result, provider-freshness and training-growth checks.
 
 `server-worker.js` is the orchestrator: it composes these modules, writes the app state and schedules source work. Provider IDs must remain provider-specific; a canonical match ID must never be sent to a provider endpoint as though it were that provider's team ID.
