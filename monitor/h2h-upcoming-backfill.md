@@ -1,6 +1,6 @@
 # Upcoming H2H Backfill
 
-Laatst bijgewerkt: 2026-08-16T04:04:28.563Z
+Laatst bijgewerkt: 2026-08-16T10:03:32.289Z
 Gecontroleerd: 32
 Gevuld: 0
 Geen directe H2H: 32
@@ -12,14 +12,14 @@ API-Football blijft quota-bewust geblokkeerd totdat de acceptatietest slaagt; ES
 ## Gevuld
 
 ## Geen Directe H2H
+- 2026-08-16: Beveren - Anderlecht (provider_acceptance_blocked)
+- 2026-08-16: Watford - Southampton (provider_acceptance_blocked)
 - 2026-08-16: Hannover 96 - VfL Wolfsburg (provider_acceptance_blocked)
 - 2026-08-16: Dynamo Dresden - SV Darmstadt 98 (provider_acceptance_blocked)
 - 2026-08-16: DSC Arminia Bielefeld - Energie Cottbus (provider_acceptance_blocked)
-- 2026-08-16: Watford - Southampton (provider_acceptance_blocked)
 - 2026-08-16: Burnley - West Ham United (provider_acceptance_blocked)
 - 2026-08-16: Racing de Santander - Villarreal (provider_acceptance_blocked)
 - 2026-08-16: Espanyol - Levante (provider_acceptance_blocked)
-- 2026-08-16: ADO Den Haag - Groningen (provider_acceptance_blocked)
 - 2026-08-16: Feyenoord - Go Ahead Eagles (provider_acceptance_blocked)
 - 2026-08-16: Nacional - Estoril (provider_acceptance_blocked)
 - 2026-08-16: Arouca - Moreirense (provider_acceptance_blocked)
