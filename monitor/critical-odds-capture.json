@@ -1,31 +1,34 @@
 {
-  "generatedAt": "2026-08-16T15:01:40.876Z",
+  "generatedAt": "2026-08-16T15:38:08.072Z",
   "checked": 6,
-  "captured": 0,
-  "openingCaptured": 0,
-  "prematchCaptured": 0,
-  "closingCaptured": 0,
-  "closingPairs": 0,
+  "captured": 2,
+  "openingCaptured": 2,
+  "prematchCaptured": 2,
+  "closingCaptured": 2,
+  "closingPairs": 2,
   "statuses": {
-    "not_found": 6
+    "available": 2,
+    "not_found": 4
   },
   "attemptStatuses": {
     "the-odds-api:unsupported_sport": 30,
-    "the-odds-api:quota_reserve": 6,
-    "sportmonks:fixture_id_missing": 6
+    "the-odds-api:available": 2,
+    "the-odds-api:quota_reserve": 4,
+    "sportmonks:fixture_id_missing": 4
   },
   "providerStatuses": {
     "the-odds-api": {
       "unsupported_sport": 30,
-      "quota_reserve": 6
+      "available": 2,
+      "quota_reserve": 4
     },
     "sportmonks": {
-      "fixture_id_missing": 6
+      "fixture_id_missing": 4
     }
   },
   "providerQuota": {
     "the-odds-api": {
-      "remaining": 50
+      "remaining": 48
     }
   },
   "sportmonksMapped": 0,
@@ -39,10 +42,15 @@
       "league": "Spain - LaLiga",
       "homeTeam": "Espanyol",
       "awayTeam": "Levante",
-      "minutesBeforeKickoff": 58,
-      "closingWindow": false,
-      "status": "not_found",
-      "sportmonksMapping": "not_found"
+      "minutesBeforeKickoff": 22,
+      "closingWindow": true,
+      "status": "captured",
+      "provider": "the-odds-api",
+      "captureRole": "closing",
+      "sportmonksFixtureId": null,
+      "opening": true,
+      "prematch": true,
+      "closing": true
     },
     {
       "matchId": "ss-bbc-2026-08-16-arouca-moreirense",
@@ -50,10 +58,15 @@
       "league": "Portugal - Liga Portugal",
       "homeTeam": "Arouca",
       "awayTeam": "Moreirense",
-      "minutesBeforeKickoff": 58,
-      "closingWindow": false,
-      "status": "not_found",
-      "sportmonksMapping": "not_found"
+      "minutesBeforeKickoff": 22,
+      "closingWindow": true,
+      "status": "captured",
+      "provider": "the-odds-api",
+      "captureRole": "closing",
+      "sportmonksFixtureId": null,
+      "opening": true,
+      "prematch": true,
+      "closing": true
     },
     {
       "matchId": "ss-tsdb-Belgium - Pro League-2496706",
@@ -61,7 +74,7 @@
       "league": "Belgium - Pro League",
       "homeTeam": "Mechelen",
       "awayTeam": "Standard Liège",
-      "minutesBeforeKickoff": 88,
+      "minutesBeforeKickoff": 52,
       "closingWindow": false,
       "status": "not_found",
       "sportmonksMapping": "not_found"
@@ -72,7 +85,7 @@
       "league": "England - Championship",
       "homeTeam": "Cardiff City",
       "awayTeam": "Wrexham",
-      "minutesBeforeKickoff": 1618,
+      "minutesBeforeKickoff": 1582,
       "closingWindow": false,
       "status": "not_found",
       "sportmonksMapping": "not_found"
@@ -83,7 +96,7 @@
       "league": "Spain - LaLiga",
       "homeTeam": "Deportivo de A Coruña",
       "awayTeam": "Elche",
-      "minutesBeforeKickoff": 1618,
+      "minutesBeforeKickoff": 1582,
       "closingWindow": false,
       "status": "not_found",
       "sportmonksMapping": "not_found"
@@ -94,29 +107,13 @@
       "league": "Portugal - Liga Portugal",
       "homeTeam": "Casa Pia",
       "awayTeam": "Benfica",
-      "minutesBeforeKickoff": 1633,
+      "minutesBeforeKickoff": 1597,
       "closingWindow": false,
       "status": "not_found",
       "sportmonksMapping": "not_found"
     }
   ],
   "leagueCoverage": [
-    {
-      "league": "Portugal - Liga Portugal",
-      "checked": 2,
-      "covered": 0,
-      "partial": 0,
-      "missing": 2,
-      "coverage": 0
-    },
-    {
-      "league": "Spain - LaLiga",
-      "checked": 2,
-      "covered": 0,
-      "partial": 0,
-      "missing": 2,
-      "coverage": 0
-    },
     {
       "league": "Belgium - Pro League",
       "checked": 1,
@@ -132,7 +129,23 @@
       "partial": 0,
       "missing": 1,
       "coverage": 0
+    },
+    {
+      "league": "Portugal - Liga Portugal",
+      "checked": 2,
+      "covered": 1,
+      "partial": 0,
+      "missing": 1,
+      "coverage": 0.5
+    },
+    {
+      "league": "Spain - LaLiga",
+      "checked": 2,
+      "covered": 1,
+      "partial": 0,
+      "missing": 1,
+      "coverage": 0.5
     }
   ],
-  "coverage": 0
+  "coverage": 0.333
 }
