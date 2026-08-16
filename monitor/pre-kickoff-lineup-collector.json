@@ -1,0 +1,153 @@
+{
+  "generatedAt": "2026-08-16T12:05:16.429Z",
+  "checked": 3,
+  "confirmed": 0,
+  "partial": 0,
+  "missing": 3,
+  "r2Stored": 0,
+  "playerFixtureStatsCaptured": 0,
+  "databaseWritable": false,
+  "databaseError": "Server error (HTTP status 402): {\"message\":\"Your project has exceeded the data transfer quota. Upgrade your plan to increase limits.\",\"code\":\"\",\"detail\":null,\"hint\":null,\"position\":null,\"internalPosition\":null,\"internalQuery\":null,\"severity\":\"\",\"where\":null,\"table\":null,\"column\":null,\"schema\":null,\"dataType\":null,\"constraint\":null,\"file\":null,\"line\":null,\"routine\":null,\"neon:retryable\":true}",
+  "captureWindows": {
+    "t75": 1,
+    "t45": 1,
+    "t20": 1,
+    "outside": 0
+  },
+  "providers": {
+    "sofascore:schedule_http_403": 3,
+    "api-football:not_configured_or_unmapped": 3,
+    "sportmonks:not_found": 3
+  },
+  "matches": [
+    {
+      "matchId": "ss-tsdb-England - Championship-2501258",
+      "league": "England - Championship",
+      "kickoff": "2026-08-16T12:30:00.000Z",
+      "minutesBeforeKickoff": 24,
+      "captureWindow": "t20",
+      "homeTeam": "Watford",
+      "awayTeam": "Southampton",
+      "provider": "sportmonks",
+      "status": "not_found",
+      "attempts": [
+        {
+          "provider": "sofascore",
+          "status": "schedule_http_403",
+          "lineup": false,
+          "confirmed": false
+        },
+        {
+          "provider": "api-football",
+          "status": "not_configured_or_unmapped",
+          "fixtureMapped": false,
+          "lineup": false,
+          "confirmed": false
+        },
+        {
+          "provider": "sportmonks",
+          "status": "not_found",
+          "lineup": false,
+          "confirmed": false
+        }
+      ],
+      "confirmed": false,
+      "partial": false
+    },
+    {
+      "matchId": "ss-fotmob-5899097",
+      "league": "World - Club Friendlies",
+      "kickoff": "2026-08-16T13:00:00.000Z",
+      "minutesBeforeKickoff": 54,
+      "captureWindow": "t45",
+      "homeTeam": "Nottingham Forest",
+      "awayTeam": "Brest",
+      "provider": "sportmonks",
+      "status": "not_found",
+      "attempts": [
+        {
+          "provider": "sofascore",
+          "status": "schedule_http_403",
+          "lineup": false,
+          "confirmed": false
+        },
+        {
+          "provider": "api-football",
+          "status": "not_configured_or_unmapped",
+          "fixtureMapped": false,
+          "lineup": false,
+          "confirmed": false
+        },
+        {
+          "provider": "sportmonks",
+          "status": "not_found",
+          "lineup": false,
+          "confirmed": false
+        }
+      ],
+      "confirmed": false,
+      "partial": false
+    },
+    {
+      "matchId": "ss-bbc-2026-08-16-nacional-estoril",
+      "league": "Portugal - Liga Portugal",
+      "kickoff": "2026-08-16T13:30:00.000Z",
+      "minutesBeforeKickoff": 84,
+      "captureWindow": "t75",
+      "homeTeam": "Nacional",
+      "awayTeam": "Estoril",
+      "provider": "sportmonks",
+      "status": "not_found",
+      "attempts": [
+        {
+          "provider": "sofascore",
+          "status": "schedule_http_403",
+          "lineup": false,
+          "confirmed": false
+        },
+        {
+          "provider": "api-football",
+          "status": "not_configured_or_unmapped",
+          "fixtureMapped": false,
+          "lineup": false,
+          "confirmed": false
+        },
+        {
+          "provider": "sportmonks",
+          "status": "not_found",
+          "lineup": false,
+          "confirmed": false
+        }
+      ],
+      "confirmed": false,
+      "partial": false
+    }
+  ],
+  "leagueCoverage": [
+    {
+      "league": "England - Championship",
+      "checked": 1,
+      "covered": 0,
+      "partial": 0,
+      "missing": 1,
+      "coverage": 0
+    },
+    {
+      "league": "Portugal - Liga Portugal",
+      "checked": 1,
+      "covered": 0,
+      "partial": 0,
+      "missing": 1,
+      "coverage": 0
+    },
+    {
+      "league": "World - Club Friendlies",
+      "checked": 1,
+      "covered": 0,
+      "partial": 0,
+      "missing": 1,
+      "coverage": 0
+    }
+  ],
+  "confirmedCoverage": 0
+}
