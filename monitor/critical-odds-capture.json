@@ -1,48 +1,48 @@
 {
-  "generatedAt": "2026-08-16T15:38:08.072Z",
-  "checked": 6,
-  "captured": 2,
-  "openingCaptured": 2,
-  "prematchCaptured": 2,
-  "closingCaptured": 2,
-  "closingPairs": 2,
+  "generatedAt": "2026-08-16T16:44:36.604Z",
+  "checked": 4,
+  "captured": 1,
+  "openingCaptured": 1,
+  "prematchCaptured": 1,
+  "closingCaptured": 1,
+  "closingPairs": 1,
   "statuses": {
-    "available": 2,
-    "not_found": 4
+    "available": 1,
+    "not_found": 3
   },
   "attemptStatuses": {
-    "the-odds-api:unsupported_sport": 30,
-    "the-odds-api:available": 2,
-    "the-odds-api:quota_reserve": 4,
-    "sportmonks:fixture_id_missing": 4
+    "the-odds-api:unsupported_sport": 20,
+    "the-odds-api:available": 1,
+    "the-odds-api:quota_reserve": 3,
+    "sportmonks:fixture_id_missing": 3
   },
   "providerStatuses": {
     "the-odds-api": {
-      "unsupported_sport": 30,
-      "available": 2,
-      "quota_reserve": 4
+      "unsupported_sport": 20,
+      "available": 1,
+      "quota_reserve": 3
     },
     "sportmonks": {
-      "fixture_id_missing": 4
+      "fixture_id_missing": 3
     }
   },
   "providerQuota": {
     "the-odds-api": {
-      "remaining": 48
+      "remaining": 47
     }
   },
   "sportmonksMapped": 0,
   "sportmonksMappingStatuses": {
-    "not_found": 6
+    "not_found": 4
   },
   "matches": [
     {
-      "matchId": "ss-bbc-2026-08-16-espanyol-levante",
-      "kickoff": "2026-08-16T16:00:00.000Z",
+      "matchId": "ss-tsdb-Spain - LaLiga-2506174",
+      "kickoff": "2026-08-16T17:00:00.000Z",
       "league": "Spain - LaLiga",
       "homeTeam": "Espanyol",
       "awayTeam": "Levante",
-      "minutesBeforeKickoff": 22,
+      "minutesBeforeKickoff": 15,
       "closingWindow": true,
       "status": "captured",
       "provider": "the-odds-api",
@@ -51,44 +51,6 @@
       "opening": true,
       "prematch": true,
       "closing": true
-    },
-    {
-      "matchId": "ss-bbc-2026-08-16-arouca-moreirense",
-      "kickoff": "2026-08-16T16:00:00.000Z",
-      "league": "Portugal - Liga Portugal",
-      "homeTeam": "Arouca",
-      "awayTeam": "Moreirense",
-      "minutesBeforeKickoff": 22,
-      "closingWindow": true,
-      "status": "captured",
-      "provider": "the-odds-api",
-      "captureRole": "closing",
-      "sportmonksFixtureId": null,
-      "opening": true,
-      "prematch": true,
-      "closing": true
-    },
-    {
-      "matchId": "ss-tsdb-Belgium - Pro League-2496706",
-      "kickoff": "2026-08-16T16:30:00.000Z",
-      "league": "Belgium - Pro League",
-      "homeTeam": "Mechelen",
-      "awayTeam": "Standard Liège",
-      "minutesBeforeKickoff": 52,
-      "closingWindow": false,
-      "status": "not_found",
-      "sportmonksMapping": "not_found"
-    },
-    {
-      "matchId": "ss-bbc-2026-08-17-cardiff city-wrexham",
-      "kickoff": "2026-08-17T18:00:00.000Z",
-      "league": "England - Championship",
-      "homeTeam": "Cardiff City",
-      "awayTeam": "Wrexham",
-      "minutesBeforeKickoff": 1582,
-      "closingWindow": false,
-      "status": "not_found",
-      "sportmonksMapping": "not_found"
     },
     {
       "matchId": "ss-bbc-2026-08-17-deportivo de a coruna-elche",
@@ -96,7 +58,7 @@
       "league": "Spain - LaLiga",
       "homeTeam": "Deportivo de A Coruña",
       "awayTeam": "Elche",
-      "minutesBeforeKickoff": 1582,
+      "minutesBeforeKickoff": 1515,
       "closingWindow": false,
       "status": "not_found",
       "sportmonksMapping": "not_found"
@@ -107,21 +69,24 @@
       "league": "Portugal - Liga Portugal",
       "homeTeam": "Casa Pia",
       "awayTeam": "Benfica",
-      "minutesBeforeKickoff": 1597,
+      "minutesBeforeKickoff": 1530,
+      "closingWindow": false,
+      "status": "not_found",
+      "sportmonksMapping": "not_found"
+    },
+    {
+      "matchId": "ss-tsdb-England - Championship-2501260",
+      "kickoff": "2026-08-17T19:00:00.000Z",
+      "league": "England - Championship",
+      "homeTeam": "Cardiff City",
+      "awayTeam": "Wrexham",
+      "minutesBeforeKickoff": 1575,
       "closingWindow": false,
       "status": "not_found",
       "sportmonksMapping": "not_found"
     }
   ],
   "leagueCoverage": [
-    {
-      "league": "Belgium - Pro League",
-      "checked": 1,
-      "covered": 0,
-      "partial": 0,
-      "missing": 1,
-      "coverage": 0
-    },
     {
       "league": "England - Championship",
       "checked": 1,
@@ -132,11 +97,11 @@
     },
     {
       "league": "Portugal - Liga Portugal",
-      "checked": 2,
-      "covered": 1,
+      "checked": 1,
+      "covered": 0,
       "partial": 0,
       "missing": 1,
-      "coverage": 0.5
+      "coverage": 0
     },
     {
       "league": "Spain - LaLiga",
@@ -147,5 +112,5 @@
       "coverage": 0.5
     }
   ],
-  "coverage": 0.333
+  "coverage": 0.25
 }
