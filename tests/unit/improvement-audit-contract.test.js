@@ -16,7 +16,7 @@ function readWorkflow(file) {
 describe("improvement audit automation contract", () => {
   it("schedules exactly five audits per month", () => {
     const workflow = readWorkflow("biweekly-review-digest.yml");
-    expect(workflow.on.schedule).toEqual([{ cron: "15 6 1,7,13,19,25 * *" }]);
+    expect(workflow.on.schedule).toEqual([{ cron: "15 6 1,8,15,22,28 * *" }]);
     expect(workflow.jobs["build-digest"].permissions).toMatchObject({ contents: "write", actions: "write" });
   });
 
