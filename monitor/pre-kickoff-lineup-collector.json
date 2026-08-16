@@ -1,99 +1,31 @@
 {
-  "generatedAt": "2026-08-16T15:38:07.987Z",
-  "checked": 3,
+  "generatedAt": "2026-08-16T15:59:32.791Z",
+  "checked": 1,
   "confirmed": 0,
   "partial": 0,
-  "missing": 3,
+  "missing": 1,
   "r2Stored": 0,
   "playerFixtureStatsCaptured": 0,
   "databaseWritable": false,
   "databaseError": "Server error (HTTP status 402): {\"message\":\"Your project has exceeded the data transfer quota. Upgrade your plan to increase limits.\",\"code\":\"\",\"detail\":null,\"hint\":null,\"position\":null,\"internalPosition\":null,\"internalQuery\":null,\"severity\":\"\",\"where\":null,\"table\":null,\"column\":null,\"schema\":null,\"dataType\":null,\"constraint\":null,\"file\":null,\"line\":null,\"routine\":null,\"neon:retryable\":true}",
   "captureWindows": {
     "t75": 0,
-    "t45": 1,
-    "t20": 2,
+    "t45": 0,
+    "t20": 1,
     "outside": 0
   },
   "providers": {
-    "sofascore:schedule_http_403": 3,
-    "api-football:not_configured_or_unmapped": 3,
-    "sportmonks:not_found": 3
+    "sofascore:schedule_http_403": 1,
+    "api-football:not_configured_or_unmapped": 1,
+    "sportmonks:not_found": 1
   },
   "matches": [
-    {
-      "matchId": "ss-bbc-2026-08-16-espanyol-levante",
-      "league": "Spain - LaLiga",
-      "kickoff": "2026-08-16T16:00:00.000Z",
-      "minutesBeforeKickoff": 21,
-      "captureWindow": "t20",
-      "homeTeam": "Espanyol",
-      "awayTeam": "Levante",
-      "provider": "sportmonks",
-      "status": "not_found",
-      "attempts": [
-        {
-          "provider": "sofascore",
-          "status": "schedule_http_403",
-          "lineup": false,
-          "confirmed": false
-        },
-        {
-          "provider": "api-football",
-          "status": "not_configured_or_unmapped",
-          "fixtureMapped": false,
-          "lineup": false,
-          "confirmed": false
-        },
-        {
-          "provider": "sportmonks",
-          "status": "not_found",
-          "lineup": false,
-          "confirmed": false
-        }
-      ],
-      "confirmed": false,
-      "partial": false
-    },
-    {
-      "matchId": "ss-bbc-2026-08-16-arouca-moreirense",
-      "league": "Portugal - Liga Portugal",
-      "kickoff": "2026-08-16T16:00:00.000Z",
-      "minutesBeforeKickoff": 21,
-      "captureWindow": "t20",
-      "homeTeam": "Arouca",
-      "awayTeam": "Moreirense",
-      "provider": "sportmonks",
-      "status": "not_found",
-      "attempts": [
-        {
-          "provider": "sofascore",
-          "status": "schedule_http_403",
-          "lineup": false,
-          "confirmed": false
-        },
-        {
-          "provider": "api-football",
-          "status": "not_configured_or_unmapped",
-          "fixtureMapped": false,
-          "lineup": false,
-          "confirmed": false
-        },
-        {
-          "provider": "sportmonks",
-          "status": "not_found",
-          "lineup": false,
-          "confirmed": false
-        }
-      ],
-      "confirmed": false,
-      "partial": false
-    },
     {
       "matchId": "ss-tsdb-Belgium - Pro League-2496706",
       "league": "Belgium - Pro League",
       "kickoff": "2026-08-16T16:30:00.000Z",
-      "minutesBeforeKickoff": 51,
-      "captureWindow": "t45",
+      "minutesBeforeKickoff": 30,
+      "captureWindow": "t20",
       "homeTeam": "Mechelen",
       "awayTeam": "Standard Liège",
       "provider": "sportmonks",
@@ -126,22 +58,6 @@
   "leagueCoverage": [
     {
       "league": "Belgium - Pro League",
-      "checked": 1,
-      "covered": 0,
-      "partial": 0,
-      "missing": 1,
-      "coverage": 0
-    },
-    {
-      "league": "Portugal - Liga Portugal",
-      "checked": 1,
-      "covered": 0,
-      "partial": 0,
-      "missing": 1,
-      "coverage": 0
-    },
-    {
-      "league": "Spain - LaLiga",
       "checked": 1,
       "covered": 0,
       "partial": 0,
