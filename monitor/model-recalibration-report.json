@@ -2,8 +2,16 @@
   "ok": true,
   "applyLive": false,
   "livePromotionApplied": false,
+  "promotionTargets": {
+    "neon": false,
+    "r2": {
+      "ok": false,
+      "skipped": true,
+      "reason": "not_requested"
+    }
+  },
   "promotionGate": {
-    "uniqueCompletedMatches": 394,
+    "uniqueCompletedMatches": 436,
     "calibrationMin": 50,
     "promotionMin": 150,
     "calibrationGap": 0,
@@ -19,83 +27,48 @@
     "error": "Server error (HTTP status 402): {\"message\":\"Your project has exceeded the data transfer quota. Upgrade your plan to increase limits.\",\"code\":\"\",\"detail\":null,\"hint\":null,\"position\":null,\"internalPosition\":null,\"internalQuery\":null,\"severity\":\"\",\"where\":null,\"table\":null,\"column\":null,\"schema\":null,\"dataType\":null,\"constraint\":null,\"file\":null,\"line\":null,\"routine\":null,\"neon:retryable\":true}",
     "rows": 0
   },
-  "calibrationRows": 400,
-  "generatedAt": "2026-08-13T14:46:20.440Z",
+  "calibrationRows": 442,
+  "generatedAt": "2026-08-16T12:05:18.444Z",
   "groups": 14,
   "candidates": 3,
   "accepted": 1,
   "liveProfileKeys": [
-    "Europe - Conference League"
+    "Europe - Europa League"
   ],
   "topCandidates": [
     {
-      "calibrationProfileId": "league_bias_europe_conference_league_v23_calibrated_odds_ledger",
+      "calibrationProfileId": "league_bias_europe_europa_league_v23_calibrated_odds_ledger",
       "accepted": true,
       "status": "accepted_live_candidate",
       "adjustmentType": "league_bias_v1",
       "modelVersion": "v23-calibrated-odds-ledger",
-      "league": "Europe - Conference League",
-      "competitionId": null,
-      "trainRows": 89,
-      "validationRows": 39,
-      "sampleSize": 128,
-      "minimumRows": 20,
-      "minimumValidationRows": 8,
-      "leakageSafe": true,
-      "method": "time_split_league_probability_bias_v1",
-      "scale": 1,
-      "homeBias": 0.0101,
-      "drawBias": -0.008,
-      "confidenceBias": -0.0023,
-      "baselineBrier": 0.206782,
-      "calibratedBrier": 0.205423,
-      "improvement": 0.001359,
-      "baselineOutcomeHitRate": 0.4615,
-      "calibratedOutcomeHitRate": 0.4615,
-      "actualRates": {
-        "home": 0.5543478260869565,
-        "draw": 0.1956521739130435,
-        "away": 0.25
-      },
-      "avgPredicted": {
-        "home": 0.3606171667058458,
-        "draw": 0.2955744344278456,
-        "away": 0.34380839886630876
-      }
-    },
-    {
-      "calibrationProfileId": "league_bias_europe_europa_league_v23_calibrated_odds_ledger",
-      "accepted": false,
-      "status": "candidate_no_improvement",
-      "adjustmentType": "league_bias_v1",
-      "modelVersion": "v23-calibrated-odds-ledger",
       "league": "Europe - Europa League",
       "competitionId": null,
-      "trainRows": 23,
-      "validationRows": 10,
-      "sampleSize": 33,
+      "trainRows": 31,
+      "validationRows": 14,
+      "sampleSize": 45,
       "minimumRows": 20,
       "minimumValidationRows": 8,
       "leakageSafe": true,
       "method": "time_split_league_probability_bias_v1",
       "scale": 1,
-      "homeBias": 0.0069,
-      "drawBias": -0.0005,
-      "confidenceBias": -0.0088,
-      "baselineBrier": 0.228995,
-      "calibratedBrier": 0.228809,
-      "improvement": 0.000186,
-      "baselineOutcomeHitRate": 0.3,
-      "calibratedOutcomeHitRate": 0.3,
+      "homeBias": 0.0045,
+      "drawBias": 0.0006,
+      "confidenceBias": -0.0037,
+      "baselineBrier": 0.262358,
+      "calibratedBrier": 0.261247,
+      "improvement": 0.001111,
+      "baselineOutcomeHitRate": 0.4286,
+      "calibratedOutcomeHitRate": 0.4286,
       "actualRates": {
         "home": 0.5,
-        "draw": 0.2692307692307692,
-        "away": 0.23076923076923078
+        "draw": 0.2647058823529412,
+        "away": 0.23529411764705882
       },
       "avgPredicted": {
-        "home": 0.3981494423355379,
-        "draw": 0.2753100853563617,
-        "away": 0.3265404723081004
+        "home": 0.4401854157477574,
+        "draw": 0.2568808789646797,
+        "away": 0.30293370528756286
       }
     },
     {
@@ -106,31 +79,66 @@
       "modelVersion": "v23-calibrated-odds-ledger",
       "league": "World - Club Friendlies",
       "competitionId": null,
-      "trainRows": 148,
-      "validationRows": 64,
-      "sampleSize": 212,
+      "trainRows": 150,
+      "validationRows": 65,
+      "sampleSize": 215,
       "minimumRows": 20,
       "minimumValidationRows": 8,
       "leakageSafe": true,
       "method": "time_split_league_probability_bias_v1",
       "scale": 1,
-      "homeBias": -0.0001,
-      "drawBias": -0.0019,
-      "confidenceBias": -0.0033,
-      "baselineBrier": 0.2163,
-      "calibratedBrier": 0.216202,
-      "improvement": 0.000098,
-      "baselineOutcomeHitRate": 0.4375,
-      "calibratedOutcomeHitRate": 0.4375,
+      "homeBias": -0.0014,
+      "drawBias": -0.0005,
+      "confidenceBias": -0.0036,
+      "baselineBrier": 0.233659,
+      "calibratedBrier": 0.233649,
+      "improvement": 0.000009,
+      "baselineOutcomeHitRate": 0.4154,
+      "calibratedOutcomeHitRate": 0.4308,
       "actualRates": {
-        "home": 0.39072847682119205,
-        "draw": 0.23178807947019867,
-        "away": 0.37748344370860926
+        "home": 0.38562091503267976,
+        "draw": 0.23529411764705882,
+        "away": 0.3790849673202614
       },
       "avgPredicted": {
-        "home": 0.38108383620256825,
-        "draw": 0.2550788300945924,
-        "away": 0.3638373337028396
+        "home": 0.4026988646835019,
+        "draw": 0.2409361756628152,
+        "away": 0.356364959653683
+      }
+    },
+    {
+      "calibrationProfileId": "league_bias_europe_conference_league_v23_calibrated_odds_ledger",
+      "accepted": false,
+      "status": "candidate_no_improvement",
+      "adjustmentType": "league_bias_v1",
+      "modelVersion": "v23-calibrated-odds-ledger",
+      "league": "Europe - Conference League",
+      "competitionId": null,
+      "trainRows": 107,
+      "validationRows": 46,
+      "sampleSize": 153,
+      "minimumRows": 20,
+      "minimumValidationRows": 8,
+      "leakageSafe": true,
+      "method": "time_split_league_probability_bias_v1",
+      "scale": 0.25,
+      "homeBias": 0.0023,
+      "drawBias": -0.0017,
+      "confidenceBias": -0.0017,
+      "baselineBrier": 0.220741,
+      "calibratedBrier": 0.220762,
+      "improvement": -0.000022,
+      "baselineOutcomeHitRate": 0.4783,
+      "calibratedOutcomeHitRate": 0.4783,
+      "actualRates": {
+        "home": 0.5454545454545454,
+        "draw": 0.19090909090909092,
+        "away": 0.2636363636363636
+      },
+      "avgPredicted": {
+        "home": 0.3721692154339632,
+        "draw": 0.2749292775568722,
+        "away": 0.3529015070091646
       }
     }
   ],
