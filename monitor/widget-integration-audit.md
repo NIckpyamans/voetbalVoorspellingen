@@ -1,6 +1,6 @@
 # Widget Integration Audit
 
-Gegenereerd: 2026-08-16T11:53:57.306Z
+Gegenereerd: 2026-08-16T12:03:35.826Z
 Status: degraded
 
 ## Neon
@@ -14,7 +14,7 @@ Status: degraded
 - OK Systeemstatus: status ok
 - FOUT Neon database: HTTP 500
 - FOUT Provider- en integriteitswidget: HTTP 500
-- FOUT Dashboard/matches-widget: 17 actuele matches, bron unknown
+- FOUT Dashboard/matches-widget: 18 actuele matches, bron unknown
 - OK Standen-widget: 16 standen
 - OK Bekerschema-widget: 3 actief; leeg is geldig buiten bekerrondes
 - OK Neon seizoen-widget: 0 seizoenovergangen
