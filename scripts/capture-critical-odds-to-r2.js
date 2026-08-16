@@ -6,6 +6,7 @@ import { buildR2ObjectKey, getR2Config, getR2Object, putR2Object } from "../shar
 import { loadLocalEnv } from "../shared/database.js";
 import { fetchOddsAtPrediction } from "./odds-provider.js";
 import { findSportmonksFixture } from "./sportmonks-fixture-resolver.js";
+import { sportmonksEligibleFixtures } from "./worker/sportmonks-coverage-policy.js";
 import { mergeOddsCaptureLedger } from "./worker/critical-captures.js";
 import { summarizeLeagueCoverage } from "./worker/coverage-summary.js";
 
@@ -13,6 +14,14 @@ const ROOT = process.cwd();
 const HOURS_AHEAD = Math.max(3, Number(process.env.CRITICAL_ODDS_HOURS_AHEAD || 36));
 const LIMIT = Math.max(1, Number(process.env.CRITICAL_ODDS_MATCH_LIMIT || 40));
 const OUTPUT = path.join(ROOT, "monitor", "critical-odds-capture.json");
+
+function readJson(filePath, fallback) {
+  try {
+    return JSON.parse(fs.readFileSync(filePath, "utf8"));
+  } catch {
+    return fallback;
+  }
+}
 
 function upcomingMatches() {
   const now = Date.now();
@@ -66,8 +75,11 @@ async function main() {
     sportmonksMappingStatuses: {},
     matches: [],
   };
+  const sportmonksCatalog = readJson(path.join(ROOT, "monitor", "sportmonks-catalog-sync.json"), {});
   for (const match of matches) {
-    const sportmonks = await findSportmonksFixture(match).catch((error) => ({ status: "resolver_error", error: error?.message || String(error) }));
+    const sportmonks = sportmonksEligibleFixtures([match], sportmonksCatalog).length
+      ? await findSportmonksFixture(match).catch((error) => ({ status: "resolver_error", error: error?.message || String(error) }))
+      : { status: "plan_coverage_unavailable" };
     report.sportmonksMappingStatuses[sportmonks?.status || "unknown"] = Number(report.sportmonksMappingStatuses[sportmonks?.status || "unknown"] || 0) + 1;
     if (sportmonks?.fixtureId) report.sportmonksMapped += 1;
     const oddsMatch = { ...match, sportmonksFixtureId: sportmonks?.fixtureId || null };

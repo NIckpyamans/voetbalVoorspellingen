@@ -10,8 +10,46 @@ function playerRow(item, source) {
     name: String(player?.name || player?.display_name || item?.player_name || "").trim(),
     position: String(position || "").trim(),
     shirtNumber: item?.number ?? item?.jersey_number ?? item?.shirt_number ?? null,
-    rating: Number(item?.rating || player?.rating || 0) || null,
+    rating: Number(item?.rating || player?.rating || item?.performance?.rating || player?.performance?.rating || 0) || null,
     source,
+  };
+}
+
+export function normalizeFotMob(payload) {
+  const lineup = payload?.content?.lineup || payload?.lineup || null;
+  if (!lineup?.homeTeam || !lineup?.awayTeam) return null;
+  const predicted = /predict|probable|expected/i.test(String(lineup?.lineupType || ""));
+  const build = (team) => {
+    const starters = asArray(team?.starters).map((player) => ({
+      ...player,
+      position: player?.usualPlayingPositionId === 0 ? "Goalkeeper" : String(player?.usualPlayingPositionId ?? ""),
+    }));
+    const side = lineupSide({
+      formation: team?.formation || null,
+      starters,
+      substitutes: asArray(team?.subs),
+      source: "FotMob confirmed lineups",
+    });
+    return {
+      ...side,
+      confirmed: side.confirmed && !predicted,
+      projected: predicted,
+      teamRating: Number(team?.rating || 0) || null,
+      unavailable: asArray(team?.unavailable).map((player) => playerRow(player, "FotMob availability")).filter((player) => player.name),
+    };
+  };
+  const home = build(lineup.homeTeam);
+  const away = build(lineup.awayTeam);
+  if (!home.starters && !away.starters) return null;
+  return {
+    home,
+    away,
+    confirmed: home.confirmed && away.confirmed,
+    projected: predicted,
+    source: predicted ? "FotMob projected lineups" : "FotMob confirmed lineups",
+    summary: predicted
+      ? "Verwachte opstellingen uit de wedstrijdfeed; nog niet als bevestigd gewogen."
+      : "Bevestigde opstellingen uit de wedstrijdfeed vlak voor de aftrap.",
   };
 }
 

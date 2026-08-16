@@ -8,8 +8,8 @@ import { getSql, loadLocalEnv } from "../shared/database.js";
 import { buildR2ObjectKey, getR2Config, getR2Object, putR2Object } from "../shared/cloudflare-r2.js";
 import { getApiFootballKey, getSportmonksApiKey } from "./provider-env.js";
 import { findSportmonksFixture, resolveSportmonksFixtureId } from "./sportmonks-fixture-resolver.js";
-import { normalizeApiFootball, normalizeSofaScore, normalizeSportmonks } from "./providers/lineup-normalizers.js";
-export { normalizeApiFootball, normalizeSofaScore, normalizeSportmonks } from "./providers/lineup-normalizers.js";
+import { normalizeApiFootball, normalizeFotMob, normalizeSofaScore, normalizeSportmonks } from "./providers/lineup-normalizers.js";
+export { normalizeApiFootball, normalizeFotMob, normalizeSofaScore, normalizeSportmonks } from "./providers/lineup-normalizers.js";
 import {
   classifyLineupCaptureWindow,
   mergeLineupCaptureLedger,
@@ -17,6 +17,7 @@ import {
 } from "./worker/critical-captures.js";
 import { summarizeLeagueCoverage } from "./worker/coverage-summary.js";
 import { findCachedApiFootballFixtureId, readApiFootballFixtureCache } from "./worker/api-football-fixture-cache.js";
+import { sportmonksEligibleFixtures } from "./worker/sportmonks-coverage-policy.js";
 
 const ROOT = process.cwd();
 const LOOKAHEAD_MINUTES = Math.max(30, Number(process.env.LINEUP_LOOKAHEAD_MINUTES || 90));
@@ -27,6 +28,17 @@ const OUTPUT = path.join(ROOT, "monitor", "pre-kickoff-lineup-collector.json");
 const apiFootballFixtureCache = new Map();
 const persistedApiFootballFixtureCache = readApiFootballFixtureCache(ROOT);
 const sofaScheduleCache = new Map();
+const fotmobScheduleCache = new Map();
+const providerHealth = readJson(path.join(ROOT, "monitor", "provider-quota-audit.json"), {});
+const sportmonksCatalog = readJson(path.join(ROOT, "monitor", "sportmonks-catalog-sync.json"), {});
+
+function readJson(filePath, fallback) {
+  try {
+    return JSON.parse(fs.readFileSync(filePath, "utf8"));
+  } catch {
+    return fallback;
+  }
+}
 
 function digest(value, size = 40) {
   return crypto.createHash("sha1").update(String(value || "")).digest("hex").slice(0, size);
@@ -111,10 +123,49 @@ async function fetchSofaScoreLineup(match) {
   return { ...result, status: result.ok ? "ok" : `http_${result.status}`, lineup: result.ok ? normalizeSofaScore(result.payload) : null, url };
 }
 
+async function fetchFotMobLineup(match) {
+  if (String(process.env.FOTMOB_LINEUP_ENABLED || "true").toLowerCase() === "false") {
+    return { status: "disabled" };
+  }
+  const date = String(match?.kickoff_at || "").slice(0, 10);
+  if (!date) return { status: "invalid_date" };
+  const compactDate = date.replace(/-/g, "");
+  if (!fotmobScheduleCache.has(date)) {
+    fotmobScheduleCache.set(date, fetchJson(`https://www.fotmob.com/api/data/matches?date=${compactDate}`, {
+      "User-Agent": "Mozilla/5.0 (compatible; voetbalvoorspellingen-lineup-resolver/1.0)",
+      Referer: "https://www.fotmob.com/",
+    }));
+  }
+  const schedule = await fotmobScheduleCache.get(date);
+  if (!schedule?.ok) return { status: `schedule_http_${schedule?.status || "unknown"}` };
+  let best = null;
+  for (const league of asArray(schedule.payload?.leagues)) {
+    for (const event of asArray(league?.matches)) {
+      const score = Math.min(
+        teamSimilarity(match.home_team_name, event?.home?.name),
+        teamSimilarity(match.away_team_name, event?.away?.name)
+      );
+      const eventKickoff = Date.parse(event?.status?.utcTime || "");
+      const kickoffGapHours = Number.isFinite(eventKickoff)
+        ? Math.abs(eventKickoff - Date.parse(match.kickoff_at)) / 3600000
+        : Infinity;
+      if (score < 0.82 || kickoffGapHours > 6 || (best && best.score >= score)) continue;
+      best = { eventId: event?.id, score };
+    }
+  }
+  if (!best?.eventId) return { status: "fixture_not_found" };
+  const url = `https://www.fotmob.com/api/data/matchDetails?matchId=${encodeURIComponent(best.eventId)}`;
+  const result = await fetchJson(url, {
+    "User-Agent": "Mozilla/5.0 (compatible; voetbalvoorspellingen-lineup-resolver/1.0)",
+    Referer: "https://www.fotmob.com/",
+  });
+  return { ...result, status: result.ok ? "ok" : `http_${result.status}`, lineup: result.ok ? normalizeFotMob(result.payload) : null, url };
+}
+
 async function resolveApiFootballFixture(match) {
   const key = getApiFootballKey();
   const date = String(match?.kickoff_at || "").slice(0, 10);
-  if (!key || !date) return null;
+  if (!key || !date || providerHealth?.apiFootball?.valid === false) return null;
   if (!apiFootballFixtureCache.has(date)) {
     const base = String(process.env.API_FOOTBALL_BASE_URL || "https://v3.football.api-sports.io").replace(/\/$/, "");
     const url = `${base}/fixtures?date=${encodeURIComponent(date)}`;
@@ -141,6 +192,9 @@ async function resolveApiFootballFixture(match) {
 async function fetchSportmonksLineup(sql, match) {
   const key = getSportmonksApiKey();
   if (!key) return { status: "not_configured" };
+  if (!sportmonksEligibleFixtures([{ league: match?.league }], sportmonksCatalog).length) {
+    return { status: "plan_coverage_unavailable" };
+  }
   const fixtureInput = {
     matchId: match.match_id,
     canonicalFixtureId: match.canonical_fixture_id,
@@ -279,10 +333,20 @@ async function main() {
     let provider = "sofascore";
     attempts.push({ provider, status: result.status, lineup: Boolean(result.lineup), confirmed: Boolean(result.lineup?.confirmed) });
     if (!result.lineup) {
-      const apiFootballFixtureId = match.api_football_fixture_id ||
-        findCachedApiFootballFixtureId(persistedApiFootballFixtureCache, match) ||
-        await resolveApiFootballFixture(match);
-      result = await fetchApiFootballLineup(apiFootballFixtureId);
+      result = await fetchFotMobLineup(match);
+      provider = "fotmob";
+      attempts.push({ provider, status: result.status, lineup: Boolean(result.lineup), confirmed: Boolean(result.lineup?.confirmed) });
+    }
+    if (!result.lineup) {
+      const apiFootballUnavailable = providerHealth?.apiFootball?.valid === false;
+      const apiFootballFixtureId = apiFootballUnavailable
+        ? null
+        : match.api_football_fixture_id ||
+          findCachedApiFootballFixtureId(persistedApiFootballFixtureCache, match) ||
+          await resolveApiFootballFixture(match);
+      result = apiFootballUnavailable
+        ? { status: "account_or_plan_unavailable" }
+        : await fetchApiFootballLineup(apiFootballFixtureId);
       provider = "api-football";
       attempts.push({ provider, status: result.status, fixtureMapped: Boolean(apiFootballFixtureId), lineup: Boolean(result.lineup), confirmed: Boolean(result.lineup?.confirmed) });
     }

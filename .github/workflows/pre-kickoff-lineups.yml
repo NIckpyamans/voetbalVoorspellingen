@@ -64,6 +64,7 @@ jobs:
           LINEUP_LOOKAHEAD_MINUTES: ${{ inputs.lookahead_minutes || '90' }}
           LINEUP_CAPTURE_WINDOWS_ONLY: "true"
           LINEUP_PROVIDER_MAX_MATCHES: 16
+          FOTMOB_LINEUP_ENABLED: "true"
 
       - name: Monitor lineup coverage
         run: node scripts/ci-neon-safe.js -- npm run monitor:lineups
