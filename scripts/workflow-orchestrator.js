@@ -38,7 +38,7 @@ function readJson(relativePath) {
 }
 
 function reportAgeHours(report) {
-  const generatedAt = Date.parse(report?.generatedAt || "");
+  const generatedAt = Date.parse(report?.generatedAt || report?.checkedAt || "");
   return Number.isFinite(generatedAt) ? Math.max(0, (now.getTime() - generatedAt) / 3600000) : Infinity;
 }
 
