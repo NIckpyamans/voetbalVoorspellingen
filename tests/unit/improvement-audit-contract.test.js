@@ -36,4 +36,15 @@ describe("improvement audit automation contract", () => {
     expect(workflow.on.workflow_dispatch.inputs.apply_live.default).toBe(false);
     expect(workflow.jobs.maintain.steps.some((step) => step.name === "Recalibrate league/model profiles in shadow mode")).toBe(true);
   });
+
+  it("gives shared database evidence a single workflow owner", () => {
+    const storage = fs.readFileSync(path.join(ROOT, ".github", "workflows", "storage-recovery.yml"), "utf8");
+    expect(storage).toContain("monitor/database-availability.json");
+    for (const file of ["free-prematch-odds.yml", "pre-kickoff-lineups.yml", "h2h-enrichment.yml", "nightly-model-maintenance.yml"]) {
+      const content = fs.readFileSync(path.join(ROOT, ".github", "workflows", file), "utf8");
+      const persistBlock = content.split("Persist compact").at(-1);
+      expect(persistBlock).not.toContain("monitor/database-availability.json");
+      expect(persistBlock).not.toContain("monitor/ci-neon-soft-skips.json");
+    }
+  });
 });

@@ -46,7 +46,7 @@ jobs:
         run: |
           git config user.name github-actions
           git config user.email github-actions@github.com
-          for report in monitor/h2h-upcoming-backfill.json monitor/h2h-upcoming-backfill.md monitor/ci-neon-soft-skips.json; do
+          for report in monitor/h2h-upcoming-backfill.json monitor/h2h-upcoming-backfill.md; do
             if [ -f "$report" ]; then git add "$report"; fi
           done
           git diff --staged --quiet && exit 0
