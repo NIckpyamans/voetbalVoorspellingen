@@ -66,8 +66,8 @@ async function main() {
       "matches_widget",
       "Dashboard/matches-widget",
       matches,
-      Array.isArray(matches.data?.matches) && !!matches.data?.databaseIntegration,
-      `${matches.data?.total || 0} actuele matches, bron ${matches.data?.databaseIntegration?.sourceOfTruth || "unknown"}`
+      Array.isArray(matches.data?.matches) && Boolean(matches.data?.dataLineage?.sourceOfTruth || matches.data?.source),
+      `${matches.data?.total || 0} actuele matches, bron ${matches.data?.dataLineage?.sourceOfTruth || matches.data?.source || "unknown"}`
     ),
     result(
       "standings_widget",

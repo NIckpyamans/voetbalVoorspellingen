@@ -61,6 +61,7 @@ jobs:
           CRITICAL_ODDS_HOURS_AHEAD: 36
           CRITICAL_ODDS_MATCH_LIMIT: 40
           ODDS_API_MIN_REMAINING: 50
+          ODDS_API_CRITICAL_MIN_REMAINING: 10
       - name: Persist prematch odds to Neon
         if: steps.database.outputs.available == 'true'
         run: node scripts/ci-neon-safe.js -- npm run db:odds:prematch:collect

@@ -4,6 +4,7 @@ import fs from "fs";
 import path from "path";
 import { buildProviderCooldown } from "./worker/provider-quota.js";
 import { buildProviderAcceptanceState, buildTrainingAutomationState } from "./worker/orchestration-policy.js";
+import { sportmonksEligibleFixtures } from "./worker/sportmonks-coverage-policy.js";
 
 const emitGithubOutput = process.argv.includes("--emit-github-output");
 const mode = String(process.env.ORCHESTRATOR_MODE || "conservative").toLowerCase();
@@ -115,16 +116,23 @@ const reports = {
   lineups: readJson("monitor/lineup-availability-monitor.json"),
   odds: readJson("monitor/odds-coverage-scout.json"),
   sportmonks: readJson("monitor/sportmonks-fixture-mapping.json"),
+  sportmonksCatalog: readJson("monitor/sportmonks-catalog-sync.json"),
+  providerHealth: readJson("monitor/provider-quota-audit.json"),
   apiFootballAcceptance: readJson("monitor/api-football-provider-acceptance.json"),
   apiFootballCoverage: readJson("monitor/api-football-coverage-scout.json"),
   evaluation: readJson("monitor/prediction-evaluation-report.json"),
   snapshotGrowth: readJson("monitor/snapshot-growth-monitor.json"),
 };
+const sportmonksFixtures = sportmonksEligibleFixtures(upcomingFixtures, reports.sportmonksCatalog);
 const trainingAutomation = buildTrainingAutomationState(readJson("training/catboost-ready.json"), {
   calibrationMin: 50,
   promotionMin: 150,
 });
-const apiFootballAcceptance = buildProviderAcceptanceState(reports.apiFootballAcceptance, { now, retryHours: 6 });
+const apiFootballUnavailable = reports.providerHealth?.apiFootball?.valid === false;
+const apiFootballAcceptance = buildProviderAcceptanceState(reports.apiFootballAcceptance, {
+  now,
+  retryHours: apiFootballUnavailable ? 24 : 6,
+});
 const providerQuota = {
   apiFootballH2h: buildProviderCooldown(reports.h2h, { now, cooldownHours: 12 }),
 };
@@ -140,7 +148,11 @@ const dataNeeds = {
   squads: needsRefresh(reports.squads, 12, (report) => Number(report?.enriched || 0) < Number(report?.checked || 0)),
   lineups: needsRefresh(reports.lineups, 6, (report) => Number(report?.confirmedLineupCoverage || 0) < 0.45),
   odds: needsRefresh(reports.odds, 6, (report) => Number(report?.coverage || 0) < 0.6),
-  sportmonks: needsRefresh(reports.sportmonks, 12, (report) => Number(report?.mappedFixtures || 0) < 1),
+  sportmonks: sportmonksFixtures.length > 0 && needsRefresh(
+    reports.sportmonks,
+    12,
+    (report) => Number(report?.mapped || 0) < sportmonksFixtures.length
+  ),
   evaluation: needsRefresh(reports.evaluation, 24),
   learning: needsRefresh(reports.snapshotGrowth, 24, () => trainingAutomation.calibrationGap > 0),
   apiFootballAcceptance: apiFootballAcceptance.checkDue,
@@ -242,6 +254,7 @@ const plan = {
     missingPreMatchSnapshots: missingSnapshotWindow.length,
     missingRegularPreMatchSnapshots: missingRegularSnapshotWindow.length,
     activeMatchWindow: activeMatchWindow.length,
+    sportmonksEligible: sportmonksFixtures.length,
   },
   dataNeeds,
   providerQuota,

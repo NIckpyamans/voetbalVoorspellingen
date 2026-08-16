@@ -71,7 +71,15 @@ async function main() {
     report.sportmonksMappingStatuses[sportmonks?.status || "unknown"] = Number(report.sportmonksMappingStatuses[sportmonks?.status || "unknown"] || 0) + 1;
     if (sportmonks?.fixtureId) report.sportmonksMapped += 1;
     const oddsMatch = { ...match, sportmonksFixtureId: sportmonks?.fixtureId || null };
-    const result = await fetchOddsAtPrediction(oddsMatch, { generatedAt: new Date().toISOString(), cutoffAt: new Date().toISOString() });
+    const minutesBeforeKickoff = Math.round((Date.parse(match.kickoff) - Date.now()) / 60000);
+    const closingWindow = minutesBeforeKickoff >= 5 && minutesBeforeKickoff <= 30;
+    const capturedAt = new Date().toISOString();
+    const result = await fetchOddsAtPrediction(oddsMatch, {
+      generatedAt: capturedAt,
+      cutoffAt: capturedAt,
+      // De normale reserve is juist bedoeld om T-20 closing captures over te houden.
+      allowQuotaReserve: closingWindow,
+    });
     report.statuses[result?.status || "unknown"] = Number(report.statuses[result?.status || "unknown"] || 0) + 1;
     for (const attempt of result?.requestMeta?.attempts || []) {
       const provider = attempt?.provider || "unknown";
@@ -93,7 +101,7 @@ async function main() {
     }
     const odds = result?.oddsAtPrediction;
     if (!odds || ![odds.home, odds.draw, odds.away].every((value) => Number(value) > 1)) {
-      report.matches.push({ ...match, status: result?.status || "not_found", sportmonksMapping: sportmonks?.status || "unknown" });
+      report.matches.push({ ...match, minutesBeforeKickoff, closingWindow, status: result?.status || "not_found", sportmonksMapping: sportmonks?.status || "unknown" });
       continue;
     }
     const key = buildR2ObjectKey(config, `critical-captures/odds/${match.matchId}.json`);
@@ -105,7 +113,7 @@ async function main() {
     if (ledger.prematch) report.prematchCaptured += 1;
     if (ledger.closing) report.closingCaptured += 1;
     if (ledger.opening && ledger.prematch && ledger.closing) report.closingPairs += 1;
-    report.matches.push({ ...match, status: "captured", provider: odds.provider, captureRole: latestRole, sportmonksFixtureId: sportmonks?.fixtureId || null, opening: Boolean(ledger.opening), prematch: Boolean(ledger.prematch), closing: Boolean(ledger.closing) });
+    report.matches.push({ ...match, minutesBeforeKickoff, closingWindow, status: "captured", provider: odds.provider, captureRole: latestRole, sportmonksFixtureId: sportmonks?.fixtureId || null, opening: Boolean(ledger.opening), prematch: Boolean(ledger.prematch), closing: Boolean(ledger.closing) });
   }
   report.leagueCoverage = summarizeLeagueCoverage(report.matches, {
     success: (row) => row.status === "captured",

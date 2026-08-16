@@ -9,6 +9,7 @@ import { buildMatchSourceCoverage, databaseConfigured, readDatabaseCounts, readD
 import { filterVisibleMatches } from "../shared/competitionVisibility.js";
 import { readDashboardDayCache } from "../shared/dashboardR2Cache.js";
 import { compactDashboardMatch } from "../shared/dashboardCompact.js";
+import { buildResponseLineage, inferResponseSource } from "../shared/responseLineage.js";
 
 const logger = createLogger("api.matches");
 
@@ -507,6 +508,7 @@ export default async function handler(req: any, res: any) {
         const uniqueMultiDayMatches = filterVisibleMatches(mergeDuplicateServedMatches(multiDayMatches));
         const responseMatches = full ? uniqueMultiDayMatches : uniqueMultiDayMatches.map(compactDashboardMatch);
 
+        const responseSource = sourceBranch === "postgres" ? "postgres-database-multiday" : "github-worker-v4-split-multiday";
         return res.status(200).json({
           ok: true,
           view: full ? "full" : "compact",
@@ -523,7 +525,8 @@ export default async function handler(req: any, res: any) {
           aiAdvice: meta.aiAdvice || [],
           ...diagnosticsPayload,
           sourceBranch,
-          source: sourceBranch === "postgres" ? "postgres-database-multiday" : "github-worker-v4-split-multiday",
+          source: responseSource,
+          dataLineage: buildResponseLineage({ sourceBranch, matchCount: responseMatches.length, meta, source: responseSource }),
           durationMs: Date.now() - started,
         });
       }
@@ -584,6 +587,7 @@ export default async function handler(req: any, res: any) {
       ? selectedMatches.map((match: any) => compactDetailMatch(match, section))
       : full ? selectedMatches : selectedMatches.map(compactDashboardMatch);
 
+    const responseSource = inferResponseSource(sourceBranch, responseMatches.length);
     return res.status(200).json({
       ok: true,
       view: full ? "full" : "compact",
@@ -601,11 +605,8 @@ export default async function handler(req: any, res: any) {
       aiAdvice: meta.aiAdvice || [],
       ...diagnosticsPayload,
       sourceBranch,
-      source: responseMatches.length && sourceBranch === "postgres"
-        ? "postgres-database"
-        : responseMatches.length && sourceBranch === "r2-dashboard-cache"
-          ? "cloudflare-r2-dashboard-cache"
-          : responseMatches.length ? "github-worker-v4-split" : "no-matches-yet",
+      source: responseSource,
+      dataLineage: buildResponseLineage({ sourceBranch, matchCount: responseMatches.length, meta, source: responseSource }),
       message: responseMatches.length ? null : "Nog geen wedstrijden gevonden voor deze dag in de actuele workerdata.",
       durationMs: Date.now() - started,
     });

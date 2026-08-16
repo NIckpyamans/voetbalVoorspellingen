@@ -89,6 +89,7 @@ async function main() {
     throw new Error("Sportmonks API key ontbreekt. Configureer SPORTMONKS_API_KEY of MYSPORTS_API_KEY voordat fixturemapping wordt uitgevoerd.");
   }
   const previous = readJson(CACHE_PATH, { matches: {} });
+  const generatedAt = new Date().toISOString();
   const rows = upcomingMatches();
   const cache = { schemaVersion: 1, generatedAt: previous.generatedAt || null, matches: { ...(previous.matches || {}) } };
   const reportRows = [];
@@ -108,7 +109,7 @@ async function main() {
       sportmonksSeasonId: resolved?.sportmonksSeasonId || null,
       sportmonksSeasonName: resolved?.sportmonksSeasonName || null,
       sourceUrl: resolved?.sourceUrl || null,
-      mappedAt: new Date().toISOString(),
+      mappedAt: generatedAt,
     };
     // A transient provider failure must never replace a previously verified mapping.
     const existing = previous.matches?.[match.matchId];
@@ -123,7 +124,7 @@ async function main() {
     reportRows.push(entry);
   }
   const report = {
-    generatedAt: cache.generatedAt,
+    generatedAt,
     daysAhead: DAYS_AHEAD,
     checked: reportRows.length,
     mapped: reportRows.filter((row) => row.status === "matched").length,
@@ -134,7 +135,7 @@ async function main() {
     matches: reportRows,
     nextAction: "Gebruik alleen voor aantoonbaar ontbrekende odds per competitie een tweede provider.",
   };
-  if (JSON.stringify(cache.matches) !== JSON.stringify(previous.matches || {})) cache.generatedAt = report.generatedAt;
+  if (JSON.stringify(cache.matches) !== JSON.stringify(previous.matches || {})) cache.generatedAt = generatedAt;
   fs.mkdirSync(path.dirname(CACHE_PATH), { recursive: true });
   fs.mkdirSync(path.dirname(REPORT_PATH), { recursive: true });
   fs.writeFileSync(CACHE_PATH, `${JSON.stringify(cache, null, 2)}\n`);

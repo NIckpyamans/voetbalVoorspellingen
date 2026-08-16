@@ -7,8 +7,13 @@ const RESPONSE_CACHE_TTL_MS = 30 * 60 * 1000;
 const DEFAULT_FETCH_TIMEOUT_MS = Math.max(1000, Number(process.env.ODDS_PROVIDER_FETCH_TIMEOUT_MS || 12000));
 // The Odds API credits are shared by all scheduled jobs. Keep a small reserve
 // for the pre-kickoff and closing snapshots that are most valuable for CLV.
-const ODDS_API_MIN_REMAINING = Math.max(0, Number(process.env.ODDS_API_MIN_REMAINING || 50));
 let oddsApiRemaining = null;
+
+export function oddsQuotaFloor(options = {}) {
+  const regularFloor = Math.max(0, Number(process.env.ODDS_API_MIN_REMAINING || 50));
+  const criticalFloor = Math.max(0, Number(process.env.ODDS_API_CRITICAL_MIN_REMAINING || 10));
+  return options.allowQuotaReserve ? Math.min(regularFloor, criticalFloor) : regularFloor;
+}
 
 async function discoverTheOddsApiSports(fetchImpl, apiKey) {
   if (!apiKey) return { active: null, quota: null, status: "not_configured" };
@@ -450,13 +455,16 @@ export async function fetchOddsAtPrediction(match, options = {}) {
       }
       for (const sport of sports) {
         const isTheOddsApi = /the-odds-api\.com/i.test(configTemplate);
-        if (isTheOddsApi && oddsApiRemaining !== null && oddsApiRemaining <= ODDS_API_MIN_REMAINING) {
+        const quotaFloor = oddsQuotaFloor(options);
+        if (isTheOddsApi && oddsApiRemaining !== null && oddsApiRemaining <= quotaFloor) {
           attempts.push({ provider: configProvider, sport, status: "quota_reserve", remaining: oddsApiRemaining });
           lastResult = {
             status: "quota_reserve",
             oddsAtPrediction: null,
             provider: configProvider,
-            reason: `The Odds API reserve van ${ODDS_API_MIN_REMAINING} credits is bereikt; alleen kritieke captures blijven toegestaan.`,
+            reason: options.allowQuotaReserve
+              ? `De harde closing-oddsbodem van ${quotaFloor} credits is bereikt.`
+              : `The Odds API reserve van ${quotaFloor} credits is bereikt; closing captures mogen door tot de aparte harde bodem.`,
             requestMeta: { attempts, attemptedSports: sports, attemptedProviders: configs.map((item) => item.provider) },
           };
           break;
