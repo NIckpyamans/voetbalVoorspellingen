@@ -8,7 +8,10 @@ concurrency:
   cancel-in-progress: false
 
 permissions:
-  contents: read
+  contents: write
+
+env:
+  DATA_BRANCH: codex/step3b-layout
 
 jobs:
   recover:
@@ -29,7 +32,9 @@ jobs:
     steps:
       - uses: actions/checkout@v5
         with:
-          ref: codex/step3b-layout
+          fetch-depth: 0
+          token: ${{ secrets.GITHUB_TOKEN }}
+          ref: ${{ env.DATA_BRANCH }}
       - uses: actions/setup-node@v5
         with:
           node-version: 22
@@ -64,3 +69,19 @@ jobs:
             monitor/phase-reliability-rebuild.json
           if-no-files-found: warn
           retention-days: 30
+      - name: Persist compact recovery evidence
+        if: always()
+        run: |
+          git config user.name github-actions
+          git config user.email github-actions@github.com
+          for report in monitor/database-availability.json monitor/r2-snapshot-canary.json monitor/r2-critical-capture-replay.json monitor/roi-clv-coverage.json monitor/phase-reliability-rebuild.json; do
+            if [ -f "$report" ]; then git add "$report"; fi
+          done
+          git diff --staged --quiet && exit 0
+          git commit -m "update storage recovery evidence [skip vercel]"
+          for attempt in 1 2 3; do
+            git pull --rebase --autostash origin "$DATA_BRANCH"
+            if git push origin "HEAD:$DATA_BRANCH"; then exit 0; fi
+            sleep $((attempt * 5))
+          done
+          exit 1

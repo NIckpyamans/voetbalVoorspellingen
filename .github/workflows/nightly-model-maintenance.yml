@@ -2,10 +2,22 @@ name: Nightly model maintenance
 
 on:
   workflow_dispatch:
+    inputs:
+      apply_live:
+        description: "Promoveer alleen reeds geaccepteerde profielen; standaard blijft shadow-only"
+        required: false
+        type: boolean
+        default: false
 
 concurrency:
   group: nightly-model-maintenance
   cancel-in-progress: false
+
+permissions:
+  contents: write
+
+env:
+  DATA_BRANCH: codex/step3b-layout
 
 jobs:
   maintain:
@@ -30,7 +42,9 @@ jobs:
     steps:
       - uses: actions/checkout@v5
         with:
-          ref: codex/step3b-layout
+          fetch-depth: 0
+          token: ${{ secrets.GITHUB_TOKEN }}
+          ref: ${{ env.DATA_BRANCH }}
 
       - uses: actions/setup-node@v5
         with:
@@ -42,7 +56,12 @@ jobs:
       - name: Backfill generated logo fallbacks
         run: node scripts/ci-neon-safe.js -- npm run db:logos:backfill:apply
 
-      - name: Recalibrate league/model profiles
+      - name: Recalibrate league/model profiles in shadow mode
+        if: inputs.apply_live != true
+        run: node scripts/ci-neon-safe.js -- bash -lc "npm run db:models:recalibrate && npm run db:models:shadow:evaluate"
+
+      - name: Promote accepted profiles explicitly
+        if: inputs.apply_live == true
         run: node scripts/ci-neon-safe.js -- npm run db:models:recalibrate:apply
 
       - name: Monitor calibration sample health
@@ -56,3 +75,20 @@ jobs:
           path: monitor/model-recalibration-report.json
           if-no-files-found: error
           retention-days: 30
+
+      - name: Persist compact calibration evidence
+        if: always()
+        run: |
+          git config user.name github-actions
+          git config user.email github-actions@github.com
+          for report in monitor/model-recalibration-report.json monitor/calibration-sample-health.json monitor/shadow-prediction-evaluation.json monitor/ci-neon-soft-skips.json; do
+            if [ -f "$report" ]; then git add "$report"; fi
+          done
+          git diff --staged --quiet && exit 0
+          git commit -m "update shadow calibration evidence [skip vercel]"
+          for attempt in 1 2 3; do
+            git pull --rebase --autostash origin "$DATA_BRANCH"
+            if git push origin "HEAD:$DATA_BRANCH"; then exit 0; fi
+            sleep $((attempt * 5))
+          done
+          exit 1

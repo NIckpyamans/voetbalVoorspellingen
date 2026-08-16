@@ -13,7 +13,7 @@ concurrency:
   cancel-in-progress: true
 
 permissions:
-  contents: read
+  contents: write
 
 env:
   TZ: Europe/Amsterdam
@@ -84,3 +84,20 @@ jobs:
           path: monitor/pre-kickoff-lineup-collector.json
           if-no-files-found: ignore
           retention-days: 14
+
+      - name: Persist compact lineup evidence
+        if: always()
+        run: |
+          git config user.name github-actions
+          git config user.email github-actions@github.com
+          for report in monitor/pre-kickoff-lineup-collector.json monitor/lineup-availability-monitor.json monitor/ci-neon-soft-skips.json; do
+            if [ -f "$report" ]; then git add "$report"; fi
+          done
+          git diff --staged --quiet && exit 0
+          git commit -m "update lineup coverage evidence [skip vercel]"
+          for attempt in 1 2 3; do
+            git pull --rebase --autostash origin "$DATA_BRANCH"
+            if git push origin "HEAD:$DATA_BRANCH"; then exit 0; fi
+            sleep $((attempt * 5))
+          done
+          exit 1

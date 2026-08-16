@@ -1,18 +1,14 @@
-# FootyAI tweewekelijkse AI-digest
+# FootyAI verbeteraudit
 
-Periode: 2026-08-02 t/m 2026-08-15
+Periode: 2026-08-10 t/m 2026-08-16
 
-AI bundel over de laatste 14 dagen: 2 hoofdthema's uit 5 monitorbevindingen.
+Geen nieuwe dagelijkse alarmsignalen; 5 meetbare verbeteracties blijven actief.
 
-- Runs: 14
-- Bevindingen: 5
-- Thema's: 2
+- Runs: 7
+- Bevindingen: 0
+- Thema's: 0
 
 ## Hoofdpunten
-- H2H niet gevuld (4x, severity: medium)
-  - Trek H2H verder uit historische competitiebestanden en bewaak fallbackdekking in de worker.
-- Workerdata verouderd (1x, severity: high)
-  - Gebruik het reviewbranch-voorstel als veilige volgende patchronde.
 
 ## Architectuuranalyse
 Professionele architectuuranalyse voor schaalbaarheid, datakwaliteit, AI-agentwaarde, databasegroei en modelbetrouwbaarheid.
@@ -22,31 +18,31 @@ Professionele architectuuranalyse voor schaalbaarheid, datakwaliteit, AI-agentwa
   - Oorzaak: De eerste veilige module-extracties zijn uitgevoerd; veel domeinlogica is nog gekoppeld aan de centrale store.
   - Risico: Nieuwe competities, databronnen en modellen worden moeilijk testbaar en vergroten regressierisico.
   - Oplossing: Ga verder met kleine domeinextracties en voeg per module contracttests toe.
-- JSON-compatibiliteitslaag blijft te zwaar (Hoog, impact: Zeer hoog)
-  - Probleem: Neon is actief, maar server_data.json blijft groot en bevat nog gedeelde workerstatus, reviews en snapshots.
-  - Oorzaak: GitHub JSON blijft tegelijk fallback, exportlaag en worker-uitwisselingsformaat.
-  - Risico: Miljoenen wedstrijden zijn niet haalbaar met grote JSON-commits en serverless JSON-parsing.
-  - Oplossing: Maak Neon per dashboardsectie primair en verklein JSON stapsgewijs tot cache/exportlaag.
-- Neon-adoptie is nog onvolledig (Hoog, impact: Zeer hoog)
-  - Probleem: Het schema bevat competities, clubs, seizoenen, wedstrijdstatistieken, H2H, source lineage en archives, maar niet iedere widget gebruikt deze tabellen primair.
-  - Oorzaak: JSON-fallbacks blijven bewust actief tijdens de gefaseerde migratie.
-  - Risico: Widgets kunnen verschillende actualiteit en dekking tonen als Neon en JSON uiteenlopen.
-  - Oplossing: Meet database-backed dekking per widget en migreer secties alleen na contractvergelijking met JSON.
-- Dubbele normalisatie/backfill (Hoog, impact: Hoog)
-  - Probleem: Result-backfill en dedupe staan in worker, API en clientservice.
-  - Oorzaak: Noodvangnetten zijn op meerdere lagen toegevoegd.
-  - Risico: Verschillende lagen kunnen andere eindstanden of matchidentiteiten tonen.
-  - Oplossing: Centraliseer normalisatie in een gedeelde module en laat API/client alleen consumeren.
+- R2/Neon-opslaglagen moeten aantoonbaar synchroon blijven (Hoog, impact: Zeer hoog)
+  - Probleem: R2 houdt snapshots en captures beschikbaar wanneer Neon quota blokkeert, maar relationele replay kan daardoor achterlopen.
+  - Oorzaak: Neon is de relationele kern en R2 is archief/fallback; beide lagen hebben een herstelcontract nodig.
+  - Risico: Dashboard en evaluatie blijven werken, terwijl relationele dekking ongemerkt veroudert.
+  - Oplossing: Test R2 dagelijks, meet Neon-beschikbaarheid en replay critical captures automatisch zodra Neon herstelt.
+- Providerdekking blijft de modelkwaliteit begrenzen (Hoog, impact: Zeer hoog)
+  - Probleem: H2H, confirmed lineups en timestamped odds zijn niet voor iedere gevolgde competitie beschikbaar.
+  - Oorzaak: Gratis providers hebben verschillende competitie-, tijdvenster- en quotabeperkingen.
+  - Risico: Voorspellingen krijgen een te vergelijkbare confidence terwijl de onderliggende bronkwaliteit verschilt.
+  - Oplossing: Meet dekking per veld en competitie, bewaar missing reasons en stuur alleen gerichte fallbackjobs aan.
+- Auditbewijs moet na iedere hersteljob worden vastgelegd (Hoog, impact: Hoog)
+  - Probleem: Een workflow kan groen zijn terwijl het bijbehorende monitorrapport in Git verouderd blijft.
+  - Oorzaak: Sommige specialistische workflows uploaden alleen tijdelijke artifacts.
+  - Risico: Een latere analyse baseert prioriteiten op oude coverage- of quotacijfers.
+  - Oplossing: Commit compacte, niet-gevoelige monitorrapporten met retries na iedere auditgestuurde hersteljob.
 - Modelkalibratie is zwak (Hoog, impact: Hoog)
-  - Probleem: Live analyse meldt een kalibratiefout rond 0.206 en exact-score hitrate rond 12%.
-  - Oorzaak: Exact-score selectie, confidence en 1X2-probabilities worden nog niet volledig op echte odds en closing lines gekalibreerd.
+  - Probleem: League- en phase-profielen hebben verschillende aantallen unieke reviews en niet ieder segment verbetert de Brier-score.
+  - Oorzaak: Reguliere competities, kwalificaties en friendlies hebben aantoonbaar verschillende foutprofielen.
   - Risico: Dashboard kan te zeker ogen terwijl real-world hitrates achterblijven.
-  - Oplossing: Kalibreer per league/phase/model en gebruik echte odds pas zodra odds_at_prediction betrouwbaar is.
+  - Oplossing: Kalibreer in shadow mode per league/phase en promoveer alleen bij voldoende unieke wedstrijden en meetbare Brier-verbetering.
 
 ## Datakwaliteit
 - Pending result backfills: 0
 - Ontbrekende oude scores: 0
-- H2H-dekking: 7%
+- H2H-dekking: 18%
 - Resultaatbackfill is schoon binnen de auditperiode.
 - Breid H2H via historische competitieprofielen en team-id mappings uit tot minimaal 85% dekking.
 
@@ -77,11 +73,18 @@ Professionele architectuuranalyse voor schaalbaarheid, datakwaliteit, AI-agentwa
 - Herbruikbare data context bewaken: docs/data-context/analysis-context.json (context-active)
 
 ## Volgende aanbevelingen
-1. Database credentials activeren en schema toepassen (Hoog, impact: Zeer hoog) - Het migratieplan is nu vastgelegd; de volgende stap is DATABASE_URL/POSTGRES_URL koppelen en npm run db:schema:apply draaien.
-2. Resultaat- en H2H-normalisatie centraliseren (Hoog, impact: Hoog) - Dit verlaagt risico op conflicterende eindstanden tussen worker, API en client.
-3. Resultaatbackfill schoon houden (Middel, impact: Middel) - De audit meldt 0 pending backfills; behoud dit met automatische bronvergelijking na iedere worker-run.
-4. Snapshot-training naar 150 unieke wedstrijden opschalen (Middel, impact: Hoog) - 227 snapshots over 221 unieke wedstrijden; volgende kwaliteitsdoel is 150 unieke wedstrijden voor stabielere league/phase-kalibratie.
-5. Odds en closing-line kalibratie live beoordelen (Middel, impact: Hoog) - ROI/CLV is pas betrouwbaar zodra echte odds_at_prediction en closing odds consequent binnenkomen.
+1. H2H-dekking gericht verhogen (Hoog, impact: Hoog) - Actuele H2H-dekking is 18%; doel is minimaal 85% met betrouwbare historie en expliciete missing reasons.
+2. Confirmed lineups rond kickoff verzamelen (Hoog, impact: Zeer hoog) - Confirmed-lineupdekking is 0%; T-75, T-45 en T-20 blijven de actieve capturevensters.
+3. Opening-, prematch- en closing odds vastleggen (Hoog, impact: Zeer hoog) - Echte oddsdekking is 0%; CLV/ROI blijft geblokkeerd zonder geldige timestamped paren. API-Football accepteert het huidige plan nog niet.
+4. R2/Neon-herstelketen controleren (Hoog, impact: Hoog) - Neon is geconfigureerd maar blokkeert met HTTP 402/quota; R2 blijft actief en replay moet automatisch hervatten na herstel.
+5. League/phase-kalibratie in shadow mode beoordelen (Middel, impact: Hoog) - 113 unieke reguliere wedstrijden; gate gehaald. Promoveer alleen profielen met voldoende Brier-verbetering.
+
+## Automatisch gestarte acties
+1. H2H-dekking gericht verhogen: h2h-enrichment.yml
+2. Confirmed lineups rond kickoff verzamelen: pre-kickoff-lineups.yml
+3. Opening-, prematch- en closing odds vastleggen: free-prematch-odds.yml
+4. R2/Neon-herstelketen controleren: storage-recovery.yml
+5. League/phase-kalibratie in shadow mode beoordelen: nightly-model-maintenance.yml
 
 ## Reviewbranch voorstel
 - Geen voorstel nodig.

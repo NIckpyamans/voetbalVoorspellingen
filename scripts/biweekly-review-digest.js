@@ -8,9 +8,11 @@ const FINDINGS_FILE = path.join(ROOT, "monitor", "daily-findings.json");
 const PROPOSAL_FILE = path.join(ROOT, "monitor", "review-branch-proposal.json");
 const DATA_QUALITY_FILE = path.join(ROOT, "monitor", "data-quality-audit.json");
 const WIDGET_AUDIT_FILE = path.join(ROOT, "monitor", "widget-integration-audit.json");
-const CATBOOST_READY_FILE = path.join(ROOT, "training", "catboost-ready.json");
 const PREDICTION_EVALUATION_FILE = path.join(ROOT, "monitor", "prediction-evaluation-report.json");
 const SNAPSHOT_GROWTH_FILE = path.join(ROOT, "monitor", "snapshot-growth-monitor.json");
+const PROFESSIONAL_AUDIT_FILE = path.join(ROOT, "monitor", "ai-professional-audit.json");
+const LINEUP_MONITOR_FILE = path.join(ROOT, "monitor", "lineup-availability-monitor.json");
+const API_FOOTBALL_ACCEPTANCE_FILE = path.join(ROOT, "monitor", "api-football-provider-acceptance.json");
 const OUTPUT_JSON = path.join(ROOT, "monitor", "biweekly-review-digest.json");
 const OUTPUT_MD = path.join(ROOT, "monitor", "biweekly-review-digest.md");
 const DATABASE_PLAN_MD = path.join(ROOT, "docs", "database-migration-plan.md");
@@ -30,42 +32,42 @@ const architectureFindings = [
     expectedImpact: "Zeer hoog",
   },
   {
-    key: "json_primary_storage",
-    title: "JSON-compatibiliteitslaag blijft te zwaar",
-    problem: "Neon is actief, maar server_data.json blijft groot en bevat nog gedeelde workerstatus, reviews en snapshots.",
-    cause: "GitHub JSON blijft tegelijk fallback, exportlaag en worker-uitwisselingsformaat.",
-    risk: "Miljoenen wedstrijden zijn niet haalbaar met grote JSON-commits en serverless JSON-parsing.",
-    solution: "Maak Neon per dashboardsectie primair en verklein JSON stapsgewijs tot cache/exportlaag.",
+    key: "storage_tiering",
+    title: "R2/Neon-opslaglagen moeten aantoonbaar synchroon blijven",
+    problem: "R2 houdt snapshots en captures beschikbaar wanneer Neon quota blokkeert, maar relationele replay kan daardoor achterlopen.",
+    cause: "Neon is de relationele kern en R2 is archief/fallback; beide lagen hebben een herstelcontract nodig.",
+    risk: "Dashboard en evaluatie blijven werken, terwijl relationele dekking ongemerkt veroudert.",
+    solution: "Test R2 dagelijks, meet Neon-beschikbaarheid en replay critical captures automatisch zodra Neon herstelt.",
     priority: "Hoog",
     expectedImpact: "Zeer hoog",
   },
   {
-    key: "database_schema_too_narrow",
-    title: "Neon-adoptie is nog onvolledig",
-    problem: "Het schema bevat competities, clubs, seizoenen, wedstrijdstatistieken, H2H, source lineage en archives, maar niet iedere widget gebruikt deze tabellen primair.",
-    cause: "JSON-fallbacks blijven bewust actief tijdens de gefaseerde migratie.",
-    risk: "Widgets kunnen verschillende actualiteit en dekking tonen als Neon en JSON uiteenlopen.",
-    solution: "Meet database-backed dekking per widget en migreer secties alleen na contractvergelijking met JSON.",
+    key: "provider_coverage_gates",
+    title: "Providerdekking blijft de modelkwaliteit begrenzen",
+    problem: "H2H, confirmed lineups en timestamped odds zijn niet voor iedere gevolgde competitie beschikbaar.",
+    cause: "Gratis providers hebben verschillende competitie-, tijdvenster- en quotabeperkingen.",
+    risk: "Voorspellingen krijgen een te vergelijkbare confidence terwijl de onderliggende bronkwaliteit verschilt.",
+    solution: "Meet dekking per veld en competitie, bewaar missing reasons en stuur alleen gerichte fallbackjobs aan.",
     priority: "Hoog",
     expectedImpact: "Zeer hoog",
   },
   {
-    key: "duplicate_normalization",
-    title: "Dubbele normalisatie/backfill",
-    problem: "Result-backfill en dedupe staan in worker, API en clientservice.",
-    cause: "Noodvangnetten zijn op meerdere lagen toegevoegd.",
-    risk: "Verschillende lagen kunnen andere eindstanden of matchidentiteiten tonen.",
-    solution: "Centraliseer normalisatie in een gedeelde module en laat API/client alleen consumeren.",
+    key: "audit_evidence_freshness",
+    title: "Auditbewijs moet na iedere hersteljob worden vastgelegd",
+    problem: "Een workflow kan groen zijn terwijl het bijbehorende monitorrapport in Git verouderd blijft.",
+    cause: "Sommige specialistische workflows uploaden alleen tijdelijke artifacts.",
+    risk: "Een latere analyse baseert prioriteiten op oude coverage- of quotacijfers.",
+    solution: "Commit compacte, niet-gevoelige monitorrapporten met retries na iedere auditgestuurde hersteljob.",
     priority: "Hoog",
     expectedImpact: "Hoog",
   },
   {
     key: "model_calibration_weak",
     title: "Modelkalibratie is zwak",
-    problem: "Live analyse meldt een kalibratiefout rond 0.206 en exact-score hitrate rond 12%.",
-    cause: "Exact-score selectie, confidence en 1X2-probabilities worden nog niet volledig op echte odds en closing lines gekalibreerd.",
+    problem: "League- en phase-profielen hebben verschillende aantallen unieke reviews en niet ieder segment verbetert de Brier-score.",
+    cause: "Reguliere competities, kwalificaties en friendlies hebben aantoonbaar verschillende foutprofielen.",
     risk: "Dashboard kan te zeker ogen terwijl real-world hitrates achterblijven.",
-    solution: "Kalibreer per league/phase/model en gebruik echte odds pas zodra odds_at_prediction betrouwbaar is.",
+    solution: "Kalibreer in shadow mode per league/phase en promoveer alleen bij voldoende unieke wedstrijden en meetbare Brier-verbetering.",
     priority: "Hoog",
     expectedImpact: "Hoog",
   },
@@ -246,13 +248,6 @@ function subtractDays(dateString, days) {
   return getAmsterdamDate(base);
 }
 
-function getIsoWeek(dateString) {
-  const date = new Date(`${dateString}T12:00:00Z`);
-  date.setUTCDate(date.getUTCDate() + 4 - (date.getUTCDay() || 7));
-  const yearStart = new Date(Date.UTC(date.getUTCFullYear(), 0, 1));
-  return Math.ceil((((date - yearStart) / 86400000) + 1) / 7);
-}
-
 function toTitle(key) {
   const labels = {
     live_minute_missing: "Live minuten missen",
@@ -298,12 +293,15 @@ function buildDigest() {
   const proposal = readJsonSafe(PROPOSAL_FILE, null);
   const dataQuality = readJsonSafe(DATA_QUALITY_FILE, null);
   const widgetAudit = readJsonSafe(WIDGET_AUDIT_FILE, null);
-  const catboostReady = readJsonSafe(CATBOOST_READY_FILE, []);
   const predictionEvaluation = readJsonSafe(PREDICTION_EVALUATION_FILE, null);
   const snapshotGrowth = readJsonSafe(SNAPSHOT_GROWTH_FILE, null);
+  const professionalAudit = readJsonSafe(PROFESSIONAL_AUDIT_FILE, null);
+  const lineupMonitor = readJsonSafe(LINEUP_MONITOR_FILE, null);
+  const apiFootballAcceptance = readJsonSafe(API_FOOTBALL_ACCEPTANCE_FILE, null);
   const allFindingDays = Object.keys(findings.days || {}).sort();
   const latestFindingDay = allFindingDays.at(-1) || getAmsterdamDate();
-  const fromDate = subtractDays(latestFindingDay, 13);
+  const lookbackDays = Math.max(1, Number(process.env.AUDIT_LOOKBACK_DAYS || 7));
+  const fromDate = subtractDays(latestFindingDay, lookbackDays - 1);
   const includedDays = Object.keys(findings.days || {})
     .filter((key) => key >= fromDate && key <= latestFindingDay)
     .sort();
@@ -345,59 +343,74 @@ function buildDigest() {
       recommendation: recommendationFor(item.key),
     }));
 
-  const week = getIsoWeek(latestFindingDay);
-  const shouldRefresh = week % 2 === 0;
+  const shouldRefresh = true;
   const dataQualityTotals = dataQuality?.totals || {};
-  const pendingResultBackfills = Number(dataQualityTotals.pendingResultBackfills || 0);
   const h2hCoverage = Number(dataQualityTotals.h2hCoverage || 0);
-  const trainingRows = Array.isArray(catboostReady) ? catboostReady : catboostReady?.rows || [];
-  const snapshotBackedRows = trainingRows.filter(
-    (row) => row?.snapshotBacked || row?.evaluationSource === "prediction_snapshot" || row?.inputSnapshotHash
-  ).length;
-  const uniqueSnapshotMatches = Number(catboostReady?.uniqueSnapshotMatches || catboostReady?.trainingPolicy?.uniqueSnapshotMatches || 0);
-  const nextRecommendations = [
+  const regularLeagueGate = snapshotGrowth?.training?.regularLeagueGate || {};
+  const confirmedLineupCoverage = Number(
+    professionalAudit?.recent?.confirmedLineupCoverage ?? lineupMonitor?.confirmedLineupCoverage ?? 0
+  );
+  const actualOddsCoverage = Number(professionalAudit?.recent?.actualOddsCoverage || 0);
+  const neonError = String(snapshotGrowth?.database?.error || lineupMonitor?.database?.error || "");
+  const neonQuotaBlocked = /\b402\b|quota/i.test(neonError);
+  const apiFootballAccepted = apiFootballAcceptance?.accepted === true;
+  const actionPlan = [
     {
-      title: widgetAudit?.neon?.connected ? "Neon datadekking verder uitbreiden" : "Database credentials activeren en schema toepassen",
+      key: "h2h_coverage",
+      title: "H2H-dekking gericht verhogen",
+      priority: "Hoog",
+      expectedImpact: "Hoog",
+      metric: h2hCoverage,
+      target: 0.85,
+      workflow: "h2h-enrichment.yml",
+      reason: `Actuele H2H-dekking is ${Math.round(h2hCoverage * 100)}%; doel is minimaal 85% met betrouwbare historie en expliciete missing reasons.`,
+    },
+    {
+      key: "confirmed_lineups",
+      title: "Confirmed lineups rond kickoff verzamelen",
       priority: "Hoog",
       expectedImpact: "Zeer hoog",
-      reason: widgetAudit?.neon?.connected
-        ? `Neon werkt met ${Number(widgetAudit.neon.matches || 0)} matches; maak nu meer dashboardsecties database-backed en verhoog source-auditdekking.`
-        : "Het migratieplan is nu vastgelegd; de volgende stap is DATABASE_URL/POSTGRES_URL koppelen en npm run db:schema:apply draaien.",
+      metric: confirmedLineupCoverage,
+      target: 0.45,
+      workflow: "pre-kickoff-lineups.yml",
+      reason: `Confirmed-lineupdekking is ${Math.round(confirmedLineupCoverage * 100)}%; T-75, T-45 en T-20 blijven de actieve capturevensters.`,
     },
     {
-      title: h2hCoverage >= 0.85 ? "H2H/result-contract bewaken met regressietests" : "Resultaat- en H2H-normalisatie centraliseren",
+      key: "timestamped_odds",
+      title: "Opening-, prematch- en closing odds vastleggen",
       priority: "Hoog",
+      expectedImpact: "Zeer hoog",
+      metric: actualOddsCoverage,
+      target: 0.6,
+      workflow: "free-prematch-odds.yml",
+      reason: `Echte oddsdekking is ${Math.round(actualOddsCoverage * 100)}%; CLV/ROI blijft geblokkeerd zonder geldige timestamped paren.${apiFootballAccepted ? "" : " API-Football accepteert het huidige plan nog niet."}`,
+    },
+    {
+      key: "storage_recovery",
+      title: "R2/Neon-herstelketen controleren",
+      priority: neonQuotaBlocked ? "Hoog" : "Middel",
       expectedImpact: "Hoog",
-      reason:
-        h2hCoverage >= 0.85
-          ? `H2H-dekking staat op ${Math.round(h2hCoverage * 100)}%; voorkom terugval door worker/API/client-contracten automatisch te testen.`
-          : "Dit verlaagt risico op conflicterende eindstanden tussen worker, API en client.",
+      metric: neonQuotaBlocked ? 0 : 1,
+      target: 1,
+      workflow: "storage-recovery.yml",
+      reason: neonQuotaBlocked
+        ? "Neon is geconfigureerd maar blokkeert met HTTP 402/quota; R2 blijft actief en replay moet automatisch hervatten na herstel."
+        : "Controleer R2-canary, Neon-beschikbaarheid en replay van critical captures.",
     },
     {
-      title: pendingResultBackfills === 0 ? "Resultaatbackfill schoon houden" : "Openstaande resultaatbackfills opschonen",
-      priority: pendingResultBackfills === 0 ? "Middel" : "Hoog",
-      expectedImpact: pendingResultBackfills === 0 ? "Middel" : "Hoog",
-      reason:
-        pendingResultBackfills === 0
-          ? "De audit meldt 0 pending backfills; behoud dit met automatische bronvergelijking na iedere worker-run."
-          : "Pending eindstanden remmen learning, modelkalibratie en dashboardvertrouwen.",
-    },
-    {
-      title: uniqueSnapshotMatches >= 50 ? "Snapshot-training naar 150 unieke wedstrijden opschalen" : "Snapshot-training uitbreiden",
+      key: "league_phase_shadow",
+      title: "League/phase-kalibratie in shadow mode beoordelen",
       priority: "Middel",
       expectedImpact: "Hoog",
-      reason:
-        uniqueSnapshotMatches >= 50
-          ? `${snapshotBackedRows} snapshots over ${uniqueSnapshotMatches} unieke wedstrijden; volgende kwaliteitsdoel is 150 unieke wedstrijden voor stabielere league/phase-kalibratie.`
-          : `${snapshotBackedRows} snapshots vertegenwoordigen ${uniqueSnapshotMatches} unieke wedstrijden. Minimaal 50 unieke wedstrijden zijn nodig voordat zelflerende gewichten volwassen worden.`,
-    },
-    {
-      title: "Odds en closing-line kalibratie live beoordelen",
-      priority: "Middel",
-      expectedImpact: "Hoog",
-      reason: "ROI/CLV is pas betrouwbaar zodra echte odds_at_prediction en closing odds consequent binnenkomen.",
+      metric: Number(regularLeagueGate.uniqueCompletedMatches || 0),
+      target: Number(regularLeagueGate.calibrationMin || 50),
+      workflow: "nightly-model-maintenance.yml",
+      reason: regularLeagueGate.canCalibrate
+        ? `${Number(regularLeagueGate.uniqueCompletedMatches || 0)} unieke reguliere wedstrijden; gate gehaald. Promoveer alleen profielen met voldoende Brier-verbetering.`
+        : `Nog ${Number(regularLeagueGate.gap || 0)} reguliere wedstrijden nodig voordat league-kalibratie betrouwbaar is.`,
     },
   ];
+  const nextRecommendations = actionPlan.map(({ workflow, ...recommendation }) => recommendation);
   const digest = {
     generatedAt,
     range: {
@@ -407,11 +420,11 @@ function buildDigest() {
     },
     shouldNotify: false,
     shouldRefresh,
-    cadence: "tweewekelijks",
+    cadence: "5x per maand",
     summary:
       topFindings.length > 0
-        ? `AI bundel over de laatste 14 dagen: ${topFindings.length} hoofdthema's uit ${totalIssues} monitorbevindingen.`
-        : "Geen opvallende AI-verbeterpunten in de laatste 14 dagen.",
+        ? `AI bundel over de laatste ${lookbackDays} dagen: ${topFindings.length} monitorthema's en ${actionPlan.length} uitvoerbare verbeteracties.`
+        : `Geen nieuwe dagelijkse alarmsignalen; ${actionPlan.length} meetbare verbeteracties blijven actief.`,
     totals: {
       totalRuns,
       totalIssues,
@@ -455,6 +468,12 @@ function buildDigest() {
     },
     standardActions,
     nextRecommendations,
+    actionPlan,
+    executionPolicy: {
+      automatic: true,
+      maxActionsPerAudit: 5,
+      note: "Alleen bestaande, idempotente GitHub-workflows worden gestart; externe abonnementen of modelpromoties worden nooit geforceerd.",
+    },
     reviewProposal:
       proposal && proposal.shouldPropose
         ? {
@@ -470,7 +489,7 @@ function buildDigest() {
   };
 
   const md = [
-    "# FootyAI tweewekelijkse AI-digest",
+    "# FootyAI verbeteraudit",
     "",
     `Periode: ${fromDate} t/m ${latestFindingDay}`,
     "",
@@ -520,6 +539,9 @@ function buildDigest() {
     ...nextRecommendations.map(
       (item, index) => `${index + 1}. ${item.title} (${item.priority}, impact: ${item.expectedImpact}) - ${item.reason}`
     ),
+    "",
+    "## Automatisch gestarte acties",
+    ...actionPlan.map((item, index) => `${index + 1}. ${item.title}: ${item.workflow}`),
     "",
     proposal?.shouldPropose
       ? `## Reviewbranch voorstel\n- ${proposal.branchName}\n- ${proposal.summary}`

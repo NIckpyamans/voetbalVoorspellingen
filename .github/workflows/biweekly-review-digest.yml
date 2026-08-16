@@ -1,29 +1,41 @@
-name: biweekly-review-digest
+name: Professional improvement audit
 
 on:
   schedule:
-    # GitHub cron has no reliable every-other-week expression. Twice monthly
-    # keeps the cadence close to two weeks without spending weekly minutes.
-    - cron: "15 6 1,15 * *"
+    # Exact vijf vaste controles per kalendermaand.
+    - cron: "15 6 1,7,13,19,25 * *"
   workflow_dispatch:
 
 concurrency:
-  group: football-biweekly-architecture-digest
+  group: football-professional-improvement-audit
   cancel-in-progress: false
 
 env:
   FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: "true"
+  DATA_BRANCH: codex/step3b-layout
+  AUDIT_LOOKBACK_DAYS: "7"
 
 jobs:
   build-digest:
     runs-on: ubuntu-latest
     permissions:
       contents: write
+      actions: write
+    env:
+      DATABASE_URL: ${{ secrets.DATABASE_URL }}
+      POSTGRES_URL: ${{ secrets.POSTGRES_URL }}
+      CLOUDFLARE_R2_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_R2_ACCOUNT_ID }}
+      CLOUDFLARE_R2_ACCESS_KEY_ID: ${{ secrets.CLOUDFLARE_R2_ACCESS_KEY_ID }}
+      CLOUDFLARE_R2_SECRET_ACCESS_KEY: ${{ secrets.CLOUDFLARE_R2_SECRET_ACCESS_KEY }}
+      CLOUDFLARE_R2_BUCKET: ${{ secrets.CLOUDFLARE_R2_BUCKET }}
+      CLOUDFLARE_R2_ENDPOINT: ${{ secrets.CLOUDFLARE_R2_ENDPOINT }}
+      CLOUDFLARE_R2_PREFIX: ${{ secrets.CLOUDFLARE_R2_PREFIX }}
     steps:
       - name: Checkout
         uses: actions/checkout@v5
         with:
           fetch-depth: 0
+          ref: ${{ env.DATA_BRANCH }}
 
       - name: Setup Node
         uses: actions/setup-node@v5
@@ -41,20 +53,30 @@ jobs:
           npm run monitor:professional
           npm run monitor:biweekly
 
-      - name: Check two-week cadence
-        id: cadence
+      - name: Prepare top-five action plan
         run: |
-          SHOULD_REFRESH="$(node -e "const fs=require('fs'); const d=JSON.parse(fs.readFileSync('monitor/biweekly-review-digest.json','utf8')); console.log(d.shouldRefresh ? 'true' : 'false')")"
-          echo "should_refresh=$SHOULD_REFRESH" >> "$GITHUB_OUTPUT"
+          node -e "const fs=require('fs'); const d=JSON.parse(fs.readFileSync('monitor/biweekly-review-digest.json','utf8')); for (const item of (d.actionPlan || []).slice(0,5)) console.log(item.workflow)" > /tmp/audit-workflows.txt
 
       - name: Commit digest
-        if: steps.cadence.outputs.should_refresh == 'true' || github.event_name == 'workflow_dispatch' || github.event_name == 'schedule'
         run: |
-          BRANCH_NAME="${{ github.ref_name }}"
           git config user.name "github-actions"
           git config user.email "github-actions@github.com"
           git add monitor/biweekly-review-digest.json monitor/biweekly-review-digest.md monitor/data-quality-audit.json monitor/data-quality-audit.md monitor/widget-integration-audit.json monitor/widget-integration-audit.md monitor/ai-professional-audit.json monitor/ai-professional-audit.md docs/database-migration-plan.md docs/worker-modularization-plan.md docs/agent-data-collection-policy.md
           git diff --cached --quiet && exit 0
-          git commit -m "update biweekly architecture digest [skip vercel]"
-          git pull --rebase --autostash origin "$BRANCH_NAME" || true
-          git push origin "HEAD:$BRANCH_NAME"
+          git commit -m "update professional improvement audit [skip vercel]"
+          for attempt in 1 2 3; do
+            git pull --rebase --autostash origin "$DATA_BRANCH"
+            if git push origin "HEAD:$DATA_BRANCH"; then exit 0; fi
+            sleep $((attempt * 5))
+          done
+          exit 1
+
+      - name: Dispatch top-five safe improvements
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          while IFS= read -r workflow; do
+            [ -z "$workflow" ] && continue
+            echo "Dispatching $workflow on $DATA_BRANCH"
+            gh workflow run "$workflow" --ref "$DATA_BRANCH"
+          done < /tmp/audit-workflows.txt

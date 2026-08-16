@@ -1,38 +1,37 @@
 {
-  "generatedAt": "2026-08-15T06:57:45.906Z",
+  "generatedAt": "2026-08-16T11:59:17.244Z",
   "range": {
-    "from": "2026-08-02",
-    "to": "2026-08-15",
-    "days": 14
+    "from": "2026-08-10",
+    "to": "2026-08-16",
+    "days": 7
   },
   "shouldNotify": false,
-  "shouldRefresh": false,
-  "cadence": "tweewekelijks",
-  "summary": "AI bundel over de laatste 14 dagen: 2 hoofdthema's uit 5 monitorbevindingen.",
+  "shouldRefresh": true,
+  "cadence": "5x per maand",
+  "summary": "Geen nieuwe dagelijkse alarmsignalen; 5 meetbare verbeteracties blijven actief.",
   "totals": {
-    "totalRuns": 14,
-    "totalIssues": 5,
-    "uniqueIssueTypes": 2
+    "totalRuns": 7,
+    "totalIssues": 0,
+    "uniqueIssueTypes": 0
   },
   "latestStats": {
-    "today": "2026-08-15",
-    "tomorrow": "2026-08-16",
+    "today": "2026-08-16",
+    "tomorrow": "2026-08-17",
     "dataPresent": true,
-    "lastRun": 1786745077211,
-    "ageMinutes": 37,
+    "lastRun": 1786831219261,
+    "ageMinutes": 38,
     "maxWorkerAgeMinutes": 180,
-    "todayMatches": 33,
-    "tomorrowMatches": 16,
+    "todayMatches": 16,
+    "tomorrowMatches": 3,
     "fixtureCalendar": {
       "status": "has_current_matches",
       "healthy": true,
       "emptyWindowOk": true,
       "severity": "none",
-      "todayCount": 33,
-      "tomorrowCount": 16,
+      "todayCount": 16,
+      "tomorrowCount": 3,
       "windowDays": 7,
       "checkedDates": [
-        "2026-08-15",
         "2026-08-16",
         "2026-08-17",
         "2026-08-18",
@@ -41,46 +40,29 @@
         "2026-08-21",
         "2026-08-22"
       ],
-      "nextMatchDate": "2026-08-15",
-      "nextMatchCount": 33,
+      "nextMatchDate": "2026-08-16",
+      "nextMatchCount": 16,
       "explanation": "Vandaag of morgen staan er wedstrijden in de actuele data."
     },
     "liveMatches": 0,
     "liveWithoutMinute": 0,
     "h2hFilled": 1,
-    "h2hMissing": 32,
-    "standingsCount": 0,
-    "cupSheetCount": 6,
+    "h2hMissing": 15,
+    "standingsCount": 4,
+    "cupSheetCount": 4,
     "phaseReliabilityCount": 4
   },
-  "topFindings": [
-    {
-      "key": "h2h_empty",
-      "title": "H2H niet gevuld",
-      "count": 4,
-      "highestSeverity": "medium",
-      "sampleMessage": "Alle wedstrijden van vandaag hebben lege H2H-data.",
-      "recommendation": "Trek H2H verder uit historische competitiebestanden en bewaak fallbackdekking in de worker."
-    },
-    {
-      "key": "worker_stale",
-      "title": "Workerdata verouderd",
-      "count": 1,
-      "highestSeverity": "high",
-      "sampleMessage": "Workerdata is 632 minuten oud.",
-      "recommendation": "Gebruik het reviewbranch-voorstel als veilige volgende patchronde."
-    }
-  ],
+  "topFindings": [],
   "dataQuality": {
-    "generatedAt": "2026-08-15T06:57:34.331Z",
+    "generatedAt": "2026-08-16T11:53:49.384Z",
     "totals": {
-      "matches": 121,
-      "pastMatches": 9,
+      "matches": 124,
+      "pastMatches": 31,
       "pendingResultBackfills": 0,
       "missingPastScores": 0,
-      "h2hMissing": 112,
-      "h2hCovered": 9,
-      "h2hCoverage": 0.074
+      "h2hMissing": 102,
+      "h2hCovered": 22,
+      "h2hCoverage": 0.177
     },
     "status": {
       "resultBackfill": "clean",
@@ -92,7 +74,7 @@
     ]
   },
   "widgetAudit": {
-    "generatedAt": "2026-08-15T06:57:41.144Z",
+    "generatedAt": "2026-08-16T11:53:57.306Z",
     "baseUrl": "https://voetbalvoorspellingen-clean.vercel.app",
     "status": "degraded",
     "totals": {
@@ -134,21 +116,21 @@
         "label": "Dashboard/matches-widget",
         "passed": false,
         "status": 200,
-        "detail": "33 actuele matches, bron unknown"
+        "detail": "17 actuele matches, bron unknown"
       },
       {
         "key": "standings_widget",
         "label": "Standen-widget",
         "passed": true,
         "status": 200,
-        "detail": "15 standen"
+        "detail": "16 standen"
       },
       {
         "key": "cup_widget",
         "label": "Bekerschema-widget",
         "passed": true,
         "status": 200,
-        "detail": "6 actief; leeg is geldig buiten bekerrondes"
+        "detail": "3 actief; leeg is geldig buiten bekerrondes"
       },
       {
         "key": "season_widget",
@@ -225,7 +207,7 @@
     }
   },
   "snapshotGrowth": {
-    "generatedAt": "2026-08-15T03:07:18.329Z",
+    "generatedAt": "2026-08-16T03:14:51.084Z",
     "training": {
       "totalRows": 244,
       "snapshotBackedRows": 227,
@@ -333,7 +315,7 @@
     }
   },
   "architectureAudit": {
-    "generatedAt": "2026-08-15T06:57:45.906Z",
+    "generatedAt": "2026-08-16T11:59:17.244Z",
     "summary": "Professionele architectuuranalyse voor schaalbaarheid, datakwaliteit, AI-agentwaarde, databasegroei en modelbetrouwbaarheid.",
     "findings": [
       {
@@ -347,42 +329,42 @@
         "expectedImpact": "Zeer hoog"
       },
       {
-        "key": "json_primary_storage",
-        "title": "JSON-compatibiliteitslaag blijft te zwaar",
-        "problem": "Neon is actief, maar server_data.json blijft groot en bevat nog gedeelde workerstatus, reviews en snapshots.",
-        "cause": "GitHub JSON blijft tegelijk fallback, exportlaag en worker-uitwisselingsformaat.",
-        "risk": "Miljoenen wedstrijden zijn niet haalbaar met grote JSON-commits en serverless JSON-parsing.",
-        "solution": "Maak Neon per dashboardsectie primair en verklein JSON stapsgewijs tot cache/exportlaag.",
+        "key": "storage_tiering",
+        "title": "R2/Neon-opslaglagen moeten aantoonbaar synchroon blijven",
+        "problem": "R2 houdt snapshots en captures beschikbaar wanneer Neon quota blokkeert, maar relationele replay kan daardoor achterlopen.",
+        "cause": "Neon is de relationele kern en R2 is archief/fallback; beide lagen hebben een herstelcontract nodig.",
+        "risk": "Dashboard en evaluatie blijven werken, terwijl relationele dekking ongemerkt veroudert.",
+        "solution": "Test R2 dagelijks, meet Neon-beschikbaarheid en replay critical captures automatisch zodra Neon herstelt.",
         "priority": "Hoog",
         "expectedImpact": "Zeer hoog"
       },
       {
-        "key": "database_schema_too_narrow",
-        "title": "Neon-adoptie is nog onvolledig",
-        "problem": "Het schema bevat competities, clubs, seizoenen, wedstrijdstatistieken, H2H, source lineage en archives, maar niet iedere widget gebruikt deze tabellen primair.",
-        "cause": "JSON-fallbacks blijven bewust actief tijdens de gefaseerde migratie.",
-        "risk": "Widgets kunnen verschillende actualiteit en dekking tonen als Neon en JSON uiteenlopen.",
-        "solution": "Meet database-backed dekking per widget en migreer secties alleen na contractvergelijking met JSON.",
+        "key": "provider_coverage_gates",
+        "title": "Providerdekking blijft de modelkwaliteit begrenzen",
+        "problem": "H2H, confirmed lineups en timestamped odds zijn niet voor iedere gevolgde competitie beschikbaar.",
+        "cause": "Gratis providers hebben verschillende competitie-, tijdvenster- en quotabeperkingen.",
+        "risk": "Voorspellingen krijgen een te vergelijkbare confidence terwijl de onderliggende bronkwaliteit verschilt.",
+        "solution": "Meet dekking per veld en competitie, bewaar missing reasons en stuur alleen gerichte fallbackjobs aan.",
         "priority": "Hoog",
         "expectedImpact": "Zeer hoog"
       },
       {
-        "key": "duplicate_normalization",
-        "title": "Dubbele normalisatie/backfill",
-        "problem": "Result-backfill en dedupe staan in worker, API en clientservice.",
-        "cause": "Noodvangnetten zijn op meerdere lagen toegevoegd.",
-        "risk": "Verschillende lagen kunnen andere eindstanden of matchidentiteiten tonen.",
-        "solution": "Centraliseer normalisatie in een gedeelde module en laat API/client alleen consumeren.",
+        "key": "audit_evidence_freshness",
+        "title": "Auditbewijs moet na iedere hersteljob worden vastgelegd",
+        "problem": "Een workflow kan groen zijn terwijl het bijbehorende monitorrapport in Git verouderd blijft.",
+        "cause": "Sommige specialistische workflows uploaden alleen tijdelijke artifacts.",
+        "risk": "Een latere analyse baseert prioriteiten op oude coverage- of quotacijfers.",
+        "solution": "Commit compacte, niet-gevoelige monitorrapporten met retries na iedere auditgestuurde hersteljob.",
         "priority": "Hoog",
         "expectedImpact": "Hoog"
       },
       {
         "key": "model_calibration_weak",
         "title": "Modelkalibratie is zwak",
-        "problem": "Live analyse meldt een kalibratiefout rond 0.206 en exact-score hitrate rond 12%.",
-        "cause": "Exact-score selectie, confidence en 1X2-probabilities worden nog niet volledig op echte odds en closing lines gekalibreerd.",
+        "problem": "League- en phase-profielen hebben verschillende aantallen unieke reviews en niet ieder segment verbetert de Brier-score.",
+        "cause": "Reguliere competities, kwalificaties en friendlies hebben aantoonbaar verschillende foutprofielen.",
         "risk": "Dashboard kan te zeker ogen terwijl real-world hitrates achterblijven.",
-        "solution": "Kalibreer per league/phase/model en gebruik echte odds pas zodra odds_at_prediction betrouwbaar is.",
+        "solution": "Kalibreer in shadow mode per league/phase en promoveer alleen bij voldoende unieke wedstrijden en meetbare Brier-verbetering.",
         "priority": "Hoog",
         "expectedImpact": "Hoog"
       }
@@ -415,34 +397,49 @@
     ],
     "nextRecommendations": [
       {
-        "title": "Database credentials activeren en schema toepassen",
+        "key": "h2h_coverage",
+        "title": "H2H-dekking gericht verhogen",
+        "priority": "Hoog",
+        "expectedImpact": "Hoog",
+        "metric": 0.177,
+        "target": 0.85,
+        "reason": "Actuele H2H-dekking is 18%; doel is minimaal 85% met betrouwbare historie en expliciete missing reasons."
+      },
+      {
+        "key": "confirmed_lineups",
+        "title": "Confirmed lineups rond kickoff verzamelen",
         "priority": "Hoog",
         "expectedImpact": "Zeer hoog",
-        "reason": "Het migratieplan is nu vastgelegd; de volgende stap is DATABASE_URL/POSTGRES_URL koppelen en npm run db:schema:apply draaien."
+        "metric": 0,
+        "target": 0.45,
+        "reason": "Confirmed-lineupdekking is 0%; T-75, T-45 en T-20 blijven de actieve capturevensters."
       },
       {
-        "title": "Resultaat- en H2H-normalisatie centraliseren",
+        "key": "timestamped_odds",
+        "title": "Opening-, prematch- en closing odds vastleggen",
+        "priority": "Hoog",
+        "expectedImpact": "Zeer hoog",
+        "metric": 0,
+        "target": 0.6,
+        "reason": "Echte oddsdekking is 0%; CLV/ROI blijft geblokkeerd zonder geldige timestamped paren. API-Football accepteert het huidige plan nog niet."
+      },
+      {
+        "key": "storage_recovery",
+        "title": "R2/Neon-herstelketen controleren",
         "priority": "Hoog",
         "expectedImpact": "Hoog",
-        "reason": "Dit verlaagt risico op conflicterende eindstanden tussen worker, API en client."
+        "metric": 0,
+        "target": 1,
+        "reason": "Neon is geconfigureerd maar blokkeert met HTTP 402/quota; R2 blijft actief en replay moet automatisch hervatten na herstel."
       },
       {
-        "title": "Resultaatbackfill schoon houden",
-        "priority": "Middel",
-        "expectedImpact": "Middel",
-        "reason": "De audit meldt 0 pending backfills; behoud dit met automatische bronvergelijking na iedere worker-run."
-      },
-      {
-        "title": "Snapshot-training naar 150 unieke wedstrijden opschalen",
+        "key": "league_phase_shadow",
+        "title": "League/phase-kalibratie in shadow mode beoordelen",
         "priority": "Middel",
         "expectedImpact": "Hoog",
-        "reason": "227 snapshots over 221 unieke wedstrijden; volgende kwaliteitsdoel is 150 unieke wedstrijden voor stabielere league/phase-kalibratie."
-      },
-      {
-        "title": "Odds en closing-line kalibratie live beoordelen",
-        "priority": "Middel",
-        "expectedImpact": "Hoog",
-        "reason": "ROI/CLV is pas betrouwbaar zodra echte odds_at_prediction en closing odds consequent binnenkomen."
+        "metric": 113,
+        "target": 50,
+        "reason": "113 unieke reguliere wedstrijden; gate gehaald. Promoveer alleen profielen met voldoende Brier-verbetering."
       }
     ]
   },
@@ -474,36 +471,108 @@
   ],
   "nextRecommendations": [
     {
-      "title": "Database credentials activeren en schema toepassen",
+      "key": "h2h_coverage",
+      "title": "H2H-dekking gericht verhogen",
+      "priority": "Hoog",
+      "expectedImpact": "Hoog",
+      "metric": 0.177,
+      "target": 0.85,
+      "reason": "Actuele H2H-dekking is 18%; doel is minimaal 85% met betrouwbare historie en expliciete missing reasons."
+    },
+    {
+      "key": "confirmed_lineups",
+      "title": "Confirmed lineups rond kickoff verzamelen",
       "priority": "Hoog",
       "expectedImpact": "Zeer hoog",
-      "reason": "Het migratieplan is nu vastgelegd; de volgende stap is DATABASE_URL/POSTGRES_URL koppelen en npm run db:schema:apply draaien."
+      "metric": 0,
+      "target": 0.45,
+      "reason": "Confirmed-lineupdekking is 0%; T-75, T-45 en T-20 blijven de actieve capturevensters."
     },
     {
-      "title": "Resultaat- en H2H-normalisatie centraliseren",
+      "key": "timestamped_odds",
+      "title": "Opening-, prematch- en closing odds vastleggen",
+      "priority": "Hoog",
+      "expectedImpact": "Zeer hoog",
+      "metric": 0,
+      "target": 0.6,
+      "reason": "Echte oddsdekking is 0%; CLV/ROI blijft geblokkeerd zonder geldige timestamped paren. API-Football accepteert het huidige plan nog niet."
+    },
+    {
+      "key": "storage_recovery",
+      "title": "R2/Neon-herstelketen controleren",
       "priority": "Hoog",
       "expectedImpact": "Hoog",
-      "reason": "Dit verlaagt risico op conflicterende eindstanden tussen worker, API en client."
+      "metric": 0,
+      "target": 1,
+      "reason": "Neon is geconfigureerd maar blokkeert met HTTP 402/quota; R2 blijft actief en replay moet automatisch hervatten na herstel."
     },
     {
-      "title": "Resultaatbackfill schoon houden",
-      "priority": "Middel",
-      "expectedImpact": "Middel",
-      "reason": "De audit meldt 0 pending backfills; behoud dit met automatische bronvergelijking na iedere worker-run."
-    },
-    {
-      "title": "Snapshot-training naar 150 unieke wedstrijden opschalen",
+      "key": "league_phase_shadow",
+      "title": "League/phase-kalibratie in shadow mode beoordelen",
       "priority": "Middel",
       "expectedImpact": "Hoog",
-      "reason": "227 snapshots over 221 unieke wedstrijden; volgende kwaliteitsdoel is 150 unieke wedstrijden voor stabielere league/phase-kalibratie."
-    },
-    {
-      "title": "Odds en closing-line kalibratie live beoordelen",
-      "priority": "Middel",
-      "expectedImpact": "Hoog",
-      "reason": "ROI/CLV is pas betrouwbaar zodra echte odds_at_prediction en closing odds consequent binnenkomen."
+      "metric": 113,
+      "target": 50,
+      "reason": "113 unieke reguliere wedstrijden; gate gehaald. Promoveer alleen profielen met voldoende Brier-verbetering."
     }
   ],
+  "actionPlan": [
+    {
+      "key": "h2h_coverage",
+      "title": "H2H-dekking gericht verhogen",
+      "priority": "Hoog",
+      "expectedImpact": "Hoog",
+      "metric": 0.177,
+      "target": 0.85,
+      "workflow": "h2h-enrichment.yml",
+      "reason": "Actuele H2H-dekking is 18%; doel is minimaal 85% met betrouwbare historie en expliciete missing reasons."
+    },
+    {
+      "key": "confirmed_lineups",
+      "title": "Confirmed lineups rond kickoff verzamelen",
+      "priority": "Hoog",
+      "expectedImpact": "Zeer hoog",
+      "metric": 0,
+      "target": 0.45,
+      "workflow": "pre-kickoff-lineups.yml",
+      "reason": "Confirmed-lineupdekking is 0%; T-75, T-45 en T-20 blijven de actieve capturevensters."
+    },
+    {
+      "key": "timestamped_odds",
+      "title": "Opening-, prematch- en closing odds vastleggen",
+      "priority": "Hoog",
+      "expectedImpact": "Zeer hoog",
+      "metric": 0,
+      "target": 0.6,
+      "workflow": "free-prematch-odds.yml",
+      "reason": "Echte oddsdekking is 0%; CLV/ROI blijft geblokkeerd zonder geldige timestamped paren. API-Football accepteert het huidige plan nog niet."
+    },
+    {
+      "key": "storage_recovery",
+      "title": "R2/Neon-herstelketen controleren",
+      "priority": "Hoog",
+      "expectedImpact": "Hoog",
+      "metric": 0,
+      "target": 1,
+      "workflow": "storage-recovery.yml",
+      "reason": "Neon is geconfigureerd maar blokkeert met HTTP 402/quota; R2 blijft actief en replay moet automatisch hervatten na herstel."
+    },
+    {
+      "key": "league_phase_shadow",
+      "title": "League/phase-kalibratie in shadow mode beoordelen",
+      "priority": "Middel",
+      "expectedImpact": "Hoog",
+      "metric": 113,
+      "target": 50,
+      "workflow": "nightly-model-maintenance.yml",
+      "reason": "113 unieke reguliere wedstrijden; gate gehaald. Promoveer alleen profielen met voldoende Brier-verbetering."
+    }
+  ],
+  "executionPolicy": {
+    "automatic": true,
+    "maxActionsPerAudit": 5,
+    "note": "Alleen bestaande, idempotente GitHub-workflows worden gestart; externe abonnementen of modelpromoties worden nooit geforceerd."
+  },
   "reviewProposal": null,
   "delivery": {
     "emailConfigured": false,

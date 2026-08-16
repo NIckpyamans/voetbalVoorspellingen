@@ -180,8 +180,8 @@ async function main() {
   const report = {
     registeredAi: {
       name: "FootyAI Professional Prediction Audit",
-      role: "Tweewekelijkse senior engineering, data engineering en voetbaldata-analyse review",
-      cadence: "biweekly",
+      role: "Senior engineering, data engineering en voetbaldata-analyse review, vijf keer per maand",
+      cadence: "5x-monthly",
       owner: "Nick",
       status: "active"
     },

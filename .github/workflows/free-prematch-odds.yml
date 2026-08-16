@@ -7,12 +7,22 @@ concurrency:
   group: football-prematch-odds
   cancel-in-progress: true
 
+permissions:
+  contents: write
+
+env:
+  DATA_BRANCH: codex/step3b-layout
+
 jobs:
   capture:
     runs-on: ubuntu-latest
     timeout-minutes: 20
     steps:
       - uses: actions/checkout@v5
+        with:
+          fetch-depth: 0
+          token: ${{ secrets.GITHUB_TOKEN }}
+          ref: ${{ env.DATA_BRANCH }}
       - uses: actions/setup-node@v5
         with:
           node-version: 22
@@ -91,3 +101,20 @@ jobs:
           path: monitor/critical-odds-capture.json
           if-no-files-found: ignore
           retention-days: 14
+
+      - name: Persist compact odds evidence
+        if: always()
+        run: |
+          git config user.name github-actions
+          git config user.email github-actions@github.com
+          for report in monitor/critical-odds-capture.json monitor/database-availability.json monitor/ci-neon-soft-skips.json; do
+            if [ -f "$report" ]; then git add "$report"; fi
+          done
+          git diff --staged --quiet && exit 0
+          git commit -m "update timestamped odds evidence [skip vercel]"
+          for attempt in 1 2 3; do
+            git pull --rebase --autostash origin "$DATA_BRANCH"
+            if git push origin "HEAD:$DATA_BRANCH"; then exit 0; fi
+            sleep $((attempt * 5))
+          done
+          exit 1
