@@ -5,6 +5,7 @@ import path from "path";
 import { buildProviderCooldown } from "./worker/provider-quota.js";
 import { buildProviderAcceptanceState, buildTrainingAutomationState } from "./worker/orchestration-policy.js";
 import { sportmonksEligibleFixtures } from "./worker/sportmonks-coverage-policy.js";
+import { trainingCalibrationRows } from "./worker/model-calibration-data.js";
 
 const emitGithubOutput = process.argv.includes("--emit-github-output");
 const mode = String(process.env.ORCHESTRATOR_MODE || "conservative").toLowerCase();
@@ -124,7 +125,7 @@ const reports = {
   snapshotGrowth: readJson("monitor/snapshot-growth-monitor.json"),
 };
 const sportmonksFixtures = sportmonksEligibleFixtures(upcomingFixtures, reports.sportmonksCatalog);
-const trainingAutomation = buildTrainingAutomationState(readJson("training/catboost-ready.json"), {
+const trainingAutomation = buildTrainingAutomationState({ rows: trainingCalibrationRows(readJson("training/training-snapshot.json")) }, {
   calibrationMin: 50,
   promotionMin: 150,
 });

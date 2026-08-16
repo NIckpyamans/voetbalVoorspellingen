@@ -3,6 +3,7 @@
 import fs from "fs";
 import path from "path";
 import { evaluateDailyQuality } from "./worker/daily-quality-gate.js";
+import { trainingCalibrationRows } from "./worker/model-calibration-data.js";
 
 const ROOT = process.cwd();
 const readJson = (relativePath, fallback = null) => {
@@ -21,7 +22,7 @@ const matches = dates
   .flatMap((date) => (readJson(`data/days/${date}.json`, { matches: [] })?.matches || []).map((match) => ({ ...match, _dateKey: date })));
 const report = evaluateDailyQuality({
   matches,
-  training: readJson("training/catboost-ready.json", {}),
+  training: { rows: trainingCalibrationRows(readJson("training/training-snapshot.json", {})) },
   providerHealth: readJson("monitor/provider-quota-audit.json", null),
 });
 const output = path.join(ROOT, "monitor", "daily-quality-gate.json");

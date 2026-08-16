@@ -10,23 +10,24 @@ describe("orchestration policy", () => {
 
   it("tracks regular league maturity separately from friendlies and qualifiers", () => {
     const rows = [
-      { matchId: "league-1", league: "Netherlands - Eredivisie", features: { phase_league: 1 } },
-      { matchId: "league-1", league: "Netherlands - Eredivisie", features: { phase_league: 1 } },
-      { matchId: "friendly-1", league: "World - Club Friendlies", features: { phase_league: 1 } },
-      { matchId: "qualifier-1", league: "Europe - Conference League", features: { phase_knockout: 1 } },
+      { matchId: "league-1", league: "Netherlands - Eredivisie", status: "FT", features: { phase_league: 1 } },
+      { matchId: "league-1", league: "Netherlands - Eredivisie", status: "FT", features: { phase_league: 1 } },
+      { matchId: "friendly-1", league: "World - Club Friendlies", status: "FT", features: { phase_league: 1 } },
+      { matchId: "qualifier-1", league: "Europe - Conference League", status: "FT", features: { phase_knockout: 1 } },
     ];
     expect(buildTrainingAutomationState({ uniqueSnapshotMatches: 221, rows })).toMatchObject({
       canPromote: true,
       uniqueRegularCompleted: 1,
       canCalibrateRegular: false,
+      canPromoteRegular: false,
       regularCalibrationGap: 49,
     });
   });
 
   it("recognizes known domestic leagues when a legacy phase flag is wrong", () => {
     const rows = [
-      { matchId: "bundesliga-1", league: "Germany - Bundesliga", features: { phase_knockout: 1 } },
-      { matchId: "ligue1-1", league: "France - Ligue 1", features: {} },
+      { matchId: "bundesliga-1", league: "Germany - Bundesliga", status: "FT", features: { phase_knockout: 1 } },
+      { matchId: "ligue1-1", league: "France - Ligue 1", status: "FT", features: {} },
     ];
     expect(buildTrainingAutomationState({ rows })).toMatchObject({
       uniqueRegularCompleted: 2,

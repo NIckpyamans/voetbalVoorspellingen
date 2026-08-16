@@ -1,10 +1,10 @@
-import { uniqueRegularMatchCount } from "./competition-segmentation.js";
+import { uniqueCompletedMatchCount, uniqueRegularMatchCount } from "./competition-segmentation.js";
 
 export function buildTrainingAutomationState(training = {}, options = {}) {
-  const uniqueCompleted = Math.max(0, Number(
-    training?.uniqueSnapshotMatches ?? training?.trainingPolicy?.uniqueSnapshotMatches ?? 0
-  ));
   const rows = Array.isArray(training?.rows) ? training.rows : [];
+  const uniqueCompleted = Math.max(0, Number(
+    training?.uniqueSnapshotMatches ?? training?.trainingPolicy?.uniqueSnapshotMatches ?? uniqueCompletedMatchCount(rows)
+  ));
   const detectedRegularMatches = uniqueRegularMatchCount(rows);
   const uniqueRegularCompleted = Math.max(0, Number(
     training?.uniqueRegularSnapshotMatches ?? training?.trainingPolicy?.uniqueRegularSnapshotMatches ?? detectedRegularMatches
@@ -21,9 +21,11 @@ export function buildTrainingAutomationState(training = {}, options = {}) {
     canCalibrate: uniqueCompleted >= calibrationMin,
     canPromote: uniqueCompleted >= promotionMin,
     canCalibrateRegular: uniqueRegularCompleted >= regularCalibrationMin,
+    canPromoteRegular: uniqueRegularCompleted >= promotionMin,
     calibrationGap: Math.max(0, calibrationMin - uniqueCompleted),
     promotionGap: Math.max(0, promotionMin - uniqueCompleted),
     regularCalibrationGap: Math.max(0, regularCalibrationMin - uniqueRegularCompleted),
+    regularPromotionGap: Math.max(0, promotionMin - uniqueRegularCompleted),
   };
 }
 

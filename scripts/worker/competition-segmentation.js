@@ -16,9 +16,22 @@ export function isRegularCompetitionRow(row) {
   return competitionSegment(row) === "regular_league";
 }
 
+export function isCompletedTrainingRow(row = {}) {
+  const status = String(row?.status || "").toUpperCase();
+  if (status) return /^(FT|AET|PEN)$/.test(status);
+  return ["H", "D", "A"].includes(String(row?.label || row?.actual_outcome || "").toUpperCase());
+}
+
+export function uniqueCompletedMatchCount(rows = []) {
+  return new Set(rows
+    .filter(isCompletedTrainingRow)
+    .map((row) => String(row?.matchId || row?.match_id || "").trim())
+    .filter(Boolean)).size;
+}
+
 export function uniqueRegularMatchCount(rows = []) {
   return new Set(rows
-    .filter(isRegularCompetitionRow)
+    .filter((row) => isCompletedTrainingRow(row) && isRegularCompetitionRow(row))
     .map((row) => String(row?.matchId || row?.match_id || "").trim())
     .filter(Boolean)).size;
 }
