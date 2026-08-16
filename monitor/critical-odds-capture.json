@@ -1,113 +1,58 @@
 {
-  "generatedAt": "2026-08-16T13:47:08.868Z",
-  "checked": 12,
-  "captured": 8,
-  "openingCaptured": 8,
-  "prematchCaptured": 8,
-  "closingCaptured": 0,
-  "closingPairs": 0,
+  "generatedAt": "2026-08-16T14:41:47.944Z",
+  "checked": 8,
+  "captured": 1,
+  "openingCaptured": 1,
+  "prematchCaptured": 1,
+  "closingCaptured": 1,
+  "closingPairs": 1,
   "statuses": {
-    "not_found": 4,
-    "available": 8
+    "available": 1,
+    "not_found": 7
   },
   "attemptStatuses": {
-    "the-odds-api:unsupported_sport": 60,
-    "the-odds-api:not_found": 8,
-    "sportmonks:fixture_id_missing": 4,
-    "the-odds-api:available": 8
+    "the-odds-api:unsupported_sport": 40,
+    "the-odds-api:available": 1,
+    "the-odds-api:not_found": 4,
+    "sportmonks:fixture_id_missing": 7,
+    "the-odds-api:quota_reserve": 5
   },
   "providerStatuses": {
     "the-odds-api": {
-      "unsupported_sport": 60,
-      "not_found": 8,
-      "available": 8
+      "unsupported_sport": 40,
+      "available": 1,
+      "not_found": 4,
+      "quota_reserve": 5
     },
     "sportmonks": {
-      "fixture_id_missing": 4
+      "fixture_id_missing": 7
     }
   },
   "providerQuota": {
     "the-odds-api": {
-      "remaining": 53,
-      "used": 447,
-      "limit": null,
-      "reset": null
+      "remaining": 50
     }
   },
   "sportmonksMapped": 0,
   "sportmonksMappingStatuses": {
-    "not_found": 12
+    "not_found": 8
   },
   "matches": [
-    {
-      "matchId": "ss-tsdb-Belgium - Pro League-2496705",
-      "kickoff": "2026-08-16T14:00:00.000Z",
-      "league": "Belgium - Pro League",
-      "homeTeam": "RAAL La Louvière",
-      "awayTeam": "Gent",
-      "minutesBeforeKickoff": 13,
-      "closingWindow": true,
-      "status": "not_found",
-      "sportmonksMapping": "not_found"
-    },
-    {
-      "matchId": "ss-fotmob-6000973",
-      "kickoff": "2026-08-16T14:30:00.000Z",
-      "league": "World - Club Friendlies",
-      "homeTeam": "Basel",
-      "awayTeam": "Barcelona",
-      "minutesBeforeKickoff": 43,
-      "closingWindow": false,
-      "status": "not_found",
-      "sportmonksMapping": "not_found"
-    },
-    {
-      "matchId": "ss-tsdb-Netherlands - Eredivisie-2489083",
-      "kickoff": "2026-08-16T14:45:00.000Z",
-      "league": "Netherlands - Eredivisie",
-      "homeTeam": "Ajax",
-      "awayTeam": "Heerenveen",
-      "minutesBeforeKickoff": 58,
-      "closingWindow": false,
-      "status": "captured",
-      "provider": "the-odds-api",
-      "captureRole": "prematch",
-      "sportmonksFixtureId": null,
-      "opening": true,
-      "prematch": true,
-      "closing": false
-    },
     {
       "matchId": "ss-tsdb-England - Championship-2501259",
       "kickoff": "2026-08-16T15:00:00.000Z",
       "league": "England - Championship",
       "homeTeam": "Burnley",
       "awayTeam": "West Ham United",
-      "minutesBeforeKickoff": 73,
-      "closingWindow": false,
+      "minutesBeforeKickoff": 18,
+      "closingWindow": true,
       "status": "captured",
       "provider": "the-odds-api",
-      "captureRole": "prematch",
+      "captureRole": "closing",
       "sportmonksFixtureId": null,
       "opening": true,
       "prematch": true,
-      "closing": false
-    },
-    {
-      "matchId": "ss-tsdb-Spain - LaLiga-2506178",
-      "kickoff": "2026-08-16T15:00:00.000Z",
-      "league": "Spain - LaLiga",
-      "homeTeam": "Racing de Santander",
-      "awayTeam": "Villarreal",
-      "minutesBeforeKickoff": 73,
-      "closingWindow": false,
-      "status": "captured",
-      "provider": "the-odds-api",
-      "captureRole": "prematch",
-      "sportmonksFixtureId": null,
-      "opening": true,
-      "prematch": true,
-      "closing": false
+      "closing": true
     },
     {
       "matchId": "ss-fotmob-5918243",
@@ -115,8 +60,8 @@
       "league": "World - Club Friendlies",
       "homeTeam": "Newcastle United",
       "awayTeam": "Strasbourg",
-      "minutesBeforeKickoff": 73,
-      "closingWindow": false,
+      "minutesBeforeKickoff": 18,
+      "closingWindow": true,
       "status": "not_found",
       "sportmonksMapping": "not_found"
     },
@@ -126,8 +71,8 @@
       "league": "World - Club Friendlies",
       "homeTeam": "Schalke 04",
       "awayTeam": "Real Madrid",
-      "minutesBeforeKickoff": 73,
-      "closingWindow": false,
+      "minutesBeforeKickoff": 18,
+      "closingWindow": true,
       "status": "not_found",
       "sportmonksMapping": "not_found"
     },
@@ -137,15 +82,10 @@
       "league": "Spain - LaLiga",
       "homeTeam": "Espanyol",
       "awayTeam": "Levante",
-      "minutesBeforeKickoff": 133,
+      "minutesBeforeKickoff": 78,
       "closingWindow": false,
-      "status": "captured",
-      "provider": "the-odds-api",
-      "captureRole": "prematch",
-      "sportmonksFixtureId": null,
-      "opening": true,
-      "prematch": true,
-      "closing": false
+      "status": "not_found",
+      "sportmonksMapping": "not_found"
     },
     {
       "matchId": "ss-bbc-2026-08-16-arouca-moreirense",
@@ -153,15 +93,10 @@
       "league": "Portugal - Liga Portugal",
       "homeTeam": "Arouca",
       "awayTeam": "Moreirense",
-      "minutesBeforeKickoff": 133,
+      "minutesBeforeKickoff": 78,
       "closingWindow": false,
-      "status": "captured",
-      "provider": "the-odds-api",
-      "captureRole": "prematch",
-      "sportmonksFixtureId": null,
-      "opening": true,
-      "prematch": true,
-      "closing": false
+      "status": "not_found",
+      "sportmonksMapping": "not_found"
     },
     {
       "matchId": "ss-bbc-2026-08-17-cardiff city-wrexham",
@@ -169,15 +104,10 @@
       "league": "England - Championship",
       "homeTeam": "Cardiff City",
       "awayTeam": "Wrexham",
-      "minutesBeforeKickoff": 1693,
+      "minutesBeforeKickoff": 1638,
       "closingWindow": false,
-      "status": "captured",
-      "provider": "the-odds-api",
-      "captureRole": "opening",
-      "sportmonksFixtureId": null,
-      "opening": true,
-      "prematch": true,
-      "closing": false
+      "status": "not_found",
+      "sportmonksMapping": "not_found"
     },
     {
       "matchId": "ss-bbc-2026-08-17-deportivo de a coruna-elche",
@@ -185,15 +115,10 @@
       "league": "Spain - LaLiga",
       "homeTeam": "Deportivo de A Coruña",
       "awayTeam": "Elche",
-      "minutesBeforeKickoff": 1693,
+      "minutesBeforeKickoff": 1638,
       "closingWindow": false,
-      "status": "captured",
-      "provider": "the-odds-api",
-      "captureRole": "opening",
-      "sportmonksFixtureId": null,
-      "opening": true,
-      "prematch": true,
-      "closing": false
+      "status": "not_found",
+      "sportmonksMapping": "not_found"
     },
     {
       "matchId": "ss-bbc-2026-08-17-casa pia-benfica",
@@ -201,66 +126,45 @@
       "league": "Portugal - Liga Portugal",
       "homeTeam": "Casa Pia",
       "awayTeam": "Benfica",
-      "minutesBeforeKickoff": 1708,
+      "minutesBeforeKickoff": 1653,
       "closingWindow": false,
-      "status": "captured",
-      "provider": "the-odds-api",
-      "captureRole": "opening",
-      "sportmonksFixtureId": null,
-      "opening": true,
-      "prematch": true,
-      "closing": false
+      "status": "not_found",
+      "sportmonksMapping": "not_found"
     }
   ],
   "leagueCoverage": [
     {
-      "league": "World - Club Friendlies",
-      "checked": 3,
+      "league": "Portugal - Liga Portugal",
+      "checked": 2,
       "covered": 0,
       "partial": 0,
-      "missing": 3,
-      "coverage": 0
-    },
-    {
-      "league": "Belgium - Pro League",
-      "checked": 1,
-      "covered": 0,
-      "partial": 0,
-      "missing": 1,
+      "missing": 2,
       "coverage": 0
     },
     {
       "league": "Spain - LaLiga",
-      "checked": 3,
-      "covered": 3,
+      "checked": 2,
+      "covered": 0,
       "partial": 0,
-      "missing": 0,
-      "coverage": 1
+      "missing": 2,
+      "coverage": 0
+    },
+    {
+      "league": "World - Club Friendlies",
+      "checked": 2,
+      "covered": 0,
+      "partial": 0,
+      "missing": 2,
+      "coverage": 0
     },
     {
       "league": "England - Championship",
       "checked": 2,
-      "covered": 2,
-      "partial": 0,
-      "missing": 0,
-      "coverage": 1
-    },
-    {
-      "league": "Portugal - Liga Portugal",
-      "checked": 2,
-      "covered": 2,
-      "partial": 0,
-      "missing": 0,
-      "coverage": 1
-    },
-    {
-      "league": "Netherlands - Eredivisie",
-      "checked": 1,
       "covered": 1,
       "partial": 0,
-      "missing": 0,
-      "coverage": 1
+      "missing": 1,
+      "coverage": 0.5
     }
   ],
-  "coverage": 0.667
+  "coverage": 0.125
 }
