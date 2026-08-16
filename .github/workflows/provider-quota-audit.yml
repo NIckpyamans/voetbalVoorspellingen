@@ -66,11 +66,13 @@ jobs:
           git add monitor/provider-quota-audit.json
           git diff --cached --quiet && exit 0
           git commit -m "update provider quota status [skip vercel]"
-          if ! git pull --rebase origin codex/step3b-layout; then
-            git rebase --abort || true
-            echo "::warning::Providerstatus kon niet automatisch worden rebased."
-            exit 0
-          fi
-          if ! git push origin HEAD:codex/step3b-layout; then
-            echo "::warning::Providerstatus kon niet worden gepusht; het artifact blijft beschikbaar."
-          fi
+          for attempt in 1 2 3; do
+            if ! git pull --rebase --autostash origin codex/step3b-layout; then
+              git rebase --abort || true
+              sleep $((attempt * 5))
+              continue
+            fi
+            if git push origin HEAD:codex/step3b-layout; then exit 0; fi
+            sleep $((attempt * 5))
+          done
+          echo "::warning::Providerstatus kon na drie pogingen niet worden gepusht; het artifact blijft beschikbaar."

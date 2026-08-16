@@ -15,6 +15,11 @@ export function oddsQuotaFloor(options = {}) {
   return options.allowQuotaReserve ? Math.min(regularFloor, criticalFloor) : regularFloor;
 }
 
+export function oddsQuotaStopThreshold(options = {}) {
+  const estimatedRequestCost = Math.max(0, Number(process.env.ODDS_API_REQUEST_COST_RESERVE || 10));
+  return oddsQuotaFloor(options) + estimatedRequestCost;
+}
+
 async function discoverTheOddsApiSports(fetchImpl, apiKey) {
   if (!apiKey) return { active: null, quota: null, status: "not_configured" };
   const cached = activeSportsCache.get(apiKey);
@@ -456,15 +461,16 @@ export async function fetchOddsAtPrediction(match, options = {}) {
       for (const sport of sports) {
         const isTheOddsApi = /the-odds-api\.com/i.test(configTemplate);
         const quotaFloor = oddsQuotaFloor(options);
-        if (isTheOddsApi && oddsApiRemaining !== null && oddsApiRemaining <= quotaFloor) {
+        const stopThreshold = oddsQuotaStopThreshold(options);
+        if (isTheOddsApi && oddsApiRemaining !== null && oddsApiRemaining <= stopThreshold) {
           attempts.push({ provider: configProvider, sport, status: "quota_reserve", remaining: oddsApiRemaining });
           lastResult = {
             status: "quota_reserve",
             oddsAtPrediction: null,
             provider: configProvider,
             reason: options.allowQuotaReserve
-              ? `De harde closing-oddsbodem van ${quotaFloor} credits is bereikt.`
-              : `The Odds API reserve van ${quotaFloor} credits is bereikt; closing captures mogen door tot de aparte harde bodem.`,
+              ? `Closing-call overgeslagen: ${oddsApiRemaining} credits ligt binnen de harde bodem plus kostenmarge (${stopThreshold}).`
+              : `Normale call overgeslagen: ${oddsApiRemaining} credits ligt binnen reserve plus kostenmarge (${stopThreshold}); alleen closing captures blijven toegestaan.`,
             requestMeta: { attempts, attemptedSports: sports, attemptedProviders: configs.map((item) => item.provider) },
           };
           break;
