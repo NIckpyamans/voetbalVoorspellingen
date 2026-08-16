@@ -1,34 +1,33 @@
 {
-  "generatedAt": "2026-08-16T16:44:36.604Z",
+  "generatedAt": "2026-08-16T17:04:23.017Z",
   "checked": 4,
-  "captured": 1,
-  "openingCaptured": 1,
-  "prematchCaptured": 1,
-  "closingCaptured": 1,
-  "closingPairs": 1,
+  "captured": 0,
+  "openingCaptured": 0,
+  "prematchCaptured": 0,
+  "closingCaptured": 0,
+  "closingPairs": 0,
   "statuses": {
-    "available": 1,
-    "not_found": 3
+    "not_found": 4
   },
   "attemptStatuses": {
     "the-odds-api:unsupported_sport": 20,
-    "the-odds-api:available": 1,
-    "the-odds-api:quota_reserve": 3,
-    "sportmonks:fixture_id_missing": 3
+    "the-odds-api:not_found": 2,
+    "sportmonks:fixture_id_missing": 4,
+    "the-odds-api:quota_reserve": 3
   },
   "providerStatuses": {
     "the-odds-api": {
       "unsupported_sport": 20,
-      "available": 1,
+      "not_found": 2,
       "quota_reserve": 3
     },
     "sportmonks": {
-      "fixture_id_missing": 3
+      "fixture_id_missing": 4
     }
   },
   "providerQuota": {
     "the-odds-api": {
-      "remaining": 47
+      "remaining": 45
     }
   },
   "sportmonksMapped": 0,
@@ -37,20 +36,26 @@
   },
   "matches": [
     {
-      "matchId": "ss-tsdb-Spain - LaLiga-2506174",
-      "kickoff": "2026-08-16T17:00:00.000Z",
-      "league": "Spain - LaLiga",
-      "homeTeam": "Espanyol",
-      "awayTeam": "Levante",
-      "minutesBeforeKickoff": 15,
+      "matchId": "ss-tsdb-Belgium - Pro League-2496707",
+      "kickoff": "2026-08-16T17:15:00.000Z",
+      "league": "Belgium - Pro League",
+      "homeTeam": "Lommel",
+      "awayTeam": "Charleroi",
+      "minutesBeforeKickoff": 11,
       "closingWindow": true,
-      "status": "captured",
-      "provider": "the-odds-api",
-      "captureRole": "closing",
-      "sportmonksFixtureId": null,
-      "opening": true,
-      "prematch": true,
-      "closing": true
+      "status": "not_found",
+      "sportmonksMapping": "not_found"
+    },
+    {
+      "matchId": "ss-bbc-2026-08-17-cardiff city-wrexham",
+      "kickoff": "2026-08-17T18:00:00.000Z",
+      "league": "England - Championship",
+      "homeTeam": "Cardiff City",
+      "awayTeam": "Wrexham",
+      "minutesBeforeKickoff": 1496,
+      "closingWindow": false,
+      "status": "not_found",
+      "sportmonksMapping": "not_found"
     },
     {
       "matchId": "ss-bbc-2026-08-17-deportivo de a coruna-elche",
@@ -58,7 +63,7 @@
       "league": "Spain - LaLiga",
       "homeTeam": "Deportivo de A Coruña",
       "awayTeam": "Elche",
-      "minutesBeforeKickoff": 1515,
+      "minutesBeforeKickoff": 1496,
       "closingWindow": false,
       "status": "not_found",
       "sportmonksMapping": "not_found"
@@ -69,24 +74,21 @@
       "league": "Portugal - Liga Portugal",
       "homeTeam": "Casa Pia",
       "awayTeam": "Benfica",
-      "minutesBeforeKickoff": 1530,
-      "closingWindow": false,
-      "status": "not_found",
-      "sportmonksMapping": "not_found"
-    },
-    {
-      "matchId": "ss-tsdb-England - Championship-2501260",
-      "kickoff": "2026-08-17T19:00:00.000Z",
-      "league": "England - Championship",
-      "homeTeam": "Cardiff City",
-      "awayTeam": "Wrexham",
-      "minutesBeforeKickoff": 1575,
+      "minutesBeforeKickoff": 1511,
       "closingWindow": false,
       "status": "not_found",
       "sportmonksMapping": "not_found"
     }
   ],
   "leagueCoverage": [
+    {
+      "league": "Belgium - Pro League",
+      "checked": 1,
+      "covered": 0,
+      "partial": 0,
+      "missing": 1,
+      "coverage": 0
+    },
     {
       "league": "England - Championship",
       "checked": 1,
@@ -105,12 +107,12 @@
     },
     {
       "league": "Spain - LaLiga",
-      "checked": 2,
-      "covered": 1,
+      "checked": 1,
+      "covered": 0,
       "partial": 0,
       "missing": 1,
-      "coverage": 0.5
+      "coverage": 0
     }
   ],
-  "coverage": 0.25
+  "coverage": 0
 }
