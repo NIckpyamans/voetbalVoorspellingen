@@ -1,26 +1,26 @@
 {
-  "generatedAt": "2026-08-16T13:03:17.743Z",
+  "generatedAt": "2026-08-16T13:47:08.868Z",
   "checked": 12,
   "captured": 8,
   "openingCaptured": 8,
   "prematchCaptured": 8,
-  "closingCaptured": 1,
-  "closingPairs": 1,
+  "closingCaptured": 0,
+  "closingPairs": 0,
   "statuses": {
-    "available": 8,
-    "not_found": 4
+    "not_found": 4,
+    "available": 8
   },
   "attemptStatuses": {
     "the-odds-api:unsupported_sport": 60,
-    "the-odds-api:available": 8,
     "the-odds-api:not_found": 8,
-    "sportmonks:fixture_id_missing": 4
+    "sportmonks:fixture_id_missing": 4,
+    "the-odds-api:available": 8
   },
   "providerStatuses": {
     "the-odds-api": {
       "unsupported_sport": 60,
-      "available": 8,
-      "not_found": 8
+      "not_found": 8,
+      "available": 8
     },
     "sportmonks": {
       "fixture_id_missing": 4
@@ -28,8 +28,8 @@
   },
   "providerQuota": {
     "the-odds-api": {
-      "remaining": 63,
-      "used": 437,
+      "remaining": 53,
+      "used": 447,
       "limit": null,
       "reset": null
     }
@@ -40,63 +40,15 @@
   },
   "matches": [
     {
-      "matchId": "ss-bbc-2026-08-16-nacional-estoril",
-      "kickoff": "2026-08-16T13:30:00.000Z",
-      "league": "Portugal - Liga Portugal",
-      "homeTeam": "Nacional",
-      "awayTeam": "Estoril",
-      "minutesBeforeKickoff": 27,
-      "closingWindow": true,
-      "status": "captured",
-      "provider": "the-odds-api",
-      "captureRole": "closing",
-      "sportmonksFixtureId": null,
-      "opening": true,
-      "prematch": true,
-      "closing": true
-    },
-    {
       "matchId": "ss-tsdb-Belgium - Pro League-2496705",
       "kickoff": "2026-08-16T14:00:00.000Z",
       "league": "Belgium - Pro League",
       "homeTeam": "RAAL La Louvière",
       "awayTeam": "Gent",
-      "minutesBeforeKickoff": 57,
-      "closingWindow": false,
+      "minutesBeforeKickoff": 13,
+      "closingWindow": true,
       "status": "not_found",
       "sportmonksMapping": "not_found"
-    },
-    {
-      "matchId": "ss-bbc-2026-08-16-burnley-west ham united",
-      "kickoff": "2026-08-16T14:00:00.000Z",
-      "league": "England - Championship",
-      "homeTeam": "Burnley",
-      "awayTeam": "West Ham United",
-      "minutesBeforeKickoff": 57,
-      "closingWindow": false,
-      "status": "captured",
-      "provider": "the-odds-api",
-      "captureRole": "prematch",
-      "sportmonksFixtureId": null,
-      "opening": true,
-      "prematch": true,
-      "closing": false
-    },
-    {
-      "matchId": "ss-bbc-2026-08-16-racing de santander-villarreal",
-      "kickoff": "2026-08-16T14:00:00.000Z",
-      "league": "Spain - LaLiga",
-      "homeTeam": "Racing de Santander",
-      "awayTeam": "Villarreal",
-      "minutesBeforeKickoff": 57,
-      "closingWindow": false,
-      "status": "captured",
-      "provider": "the-odds-api",
-      "captureRole": "prematch",
-      "sportmonksFixtureId": null,
-      "opening": true,
-      "prematch": true,
-      "closing": false
     },
     {
       "matchId": "ss-fotmob-6000973",
@@ -104,10 +56,58 @@
       "league": "World - Club Friendlies",
       "homeTeam": "Basel",
       "awayTeam": "Barcelona",
-      "minutesBeforeKickoff": 87,
+      "minutesBeforeKickoff": 43,
       "closingWindow": false,
       "status": "not_found",
       "sportmonksMapping": "not_found"
+    },
+    {
+      "matchId": "ss-tsdb-Netherlands - Eredivisie-2489083",
+      "kickoff": "2026-08-16T14:45:00.000Z",
+      "league": "Netherlands - Eredivisie",
+      "homeTeam": "Ajax",
+      "awayTeam": "Heerenveen",
+      "minutesBeforeKickoff": 58,
+      "closingWindow": false,
+      "status": "captured",
+      "provider": "the-odds-api",
+      "captureRole": "prematch",
+      "sportmonksFixtureId": null,
+      "opening": true,
+      "prematch": true,
+      "closing": false
+    },
+    {
+      "matchId": "ss-tsdb-England - Championship-2501259",
+      "kickoff": "2026-08-16T15:00:00.000Z",
+      "league": "England - Championship",
+      "homeTeam": "Burnley",
+      "awayTeam": "West Ham United",
+      "minutesBeforeKickoff": 73,
+      "closingWindow": false,
+      "status": "captured",
+      "provider": "the-odds-api",
+      "captureRole": "prematch",
+      "sportmonksFixtureId": null,
+      "opening": true,
+      "prematch": true,
+      "closing": false
+    },
+    {
+      "matchId": "ss-tsdb-Spain - LaLiga-2506178",
+      "kickoff": "2026-08-16T15:00:00.000Z",
+      "league": "Spain - LaLiga",
+      "homeTeam": "Racing de Santander",
+      "awayTeam": "Villarreal",
+      "minutesBeforeKickoff": 73,
+      "closingWindow": false,
+      "status": "captured",
+      "provider": "the-odds-api",
+      "captureRole": "prematch",
+      "sportmonksFixtureId": null,
+      "opening": true,
+      "prematch": true,
+      "closing": false
     },
     {
       "matchId": "ss-fotmob-5918243",
@@ -115,7 +115,7 @@
       "league": "World - Club Friendlies",
       "homeTeam": "Newcastle United",
       "awayTeam": "Strasbourg",
-      "minutesBeforeKickoff": 117,
+      "minutesBeforeKickoff": 73,
       "closingWindow": false,
       "status": "not_found",
       "sportmonksMapping": "not_found"
@@ -126,7 +126,7 @@
       "league": "World - Club Friendlies",
       "homeTeam": "Schalke 04",
       "awayTeam": "Real Madrid",
-      "minutesBeforeKickoff": 117,
+      "minutesBeforeKickoff": 73,
       "closingWindow": false,
       "status": "not_found",
       "sportmonksMapping": "not_found"
@@ -137,7 +137,7 @@
       "league": "Spain - LaLiga",
       "homeTeam": "Espanyol",
       "awayTeam": "Levante",
-      "minutesBeforeKickoff": 177,
+      "minutesBeforeKickoff": 133,
       "closingWindow": false,
       "status": "captured",
       "provider": "the-odds-api",
@@ -153,7 +153,7 @@
       "league": "Portugal - Liga Portugal",
       "homeTeam": "Arouca",
       "awayTeam": "Moreirense",
-      "minutesBeforeKickoff": 177,
+      "minutesBeforeKickoff": 133,
       "closingWindow": false,
       "status": "captured",
       "provider": "the-odds-api",
@@ -169,7 +169,7 @@
       "league": "England - Championship",
       "homeTeam": "Cardiff City",
       "awayTeam": "Wrexham",
-      "minutesBeforeKickoff": 1737,
+      "minutesBeforeKickoff": 1693,
       "closingWindow": false,
       "status": "captured",
       "provider": "the-odds-api",
@@ -185,7 +185,7 @@
       "league": "Spain - LaLiga",
       "homeTeam": "Deportivo de A Coruña",
       "awayTeam": "Elche",
-      "minutesBeforeKickoff": 1737,
+      "minutesBeforeKickoff": 1693,
       "closingWindow": false,
       "status": "captured",
       "provider": "the-odds-api",
@@ -201,7 +201,7 @@
       "league": "Portugal - Liga Portugal",
       "homeTeam": "Casa Pia",
       "awayTeam": "Benfica",
-      "minutesBeforeKickoff": 1752,
+      "minutesBeforeKickoff": 1708,
       "closingWindow": false,
       "status": "captured",
       "provider": "the-odds-api",
@@ -230,14 +230,6 @@
       "coverage": 0
     },
     {
-      "league": "Portugal - Liga Portugal",
-      "checked": 3,
-      "covered": 3,
-      "partial": 0,
-      "missing": 0,
-      "coverage": 1
-    },
-    {
       "league": "Spain - LaLiga",
       "checked": 3,
       "covered": 3,
@@ -249,6 +241,22 @@
       "league": "England - Championship",
       "checked": 2,
       "covered": 2,
+      "partial": 0,
+      "missing": 0,
+      "coverage": 1
+    },
+    {
+      "league": "Portugal - Liga Portugal",
+      "checked": 2,
+      "covered": 2,
+      "partial": 0,
+      "missing": 0,
+      "coverage": 1
+    },
+    {
+      "league": "Netherlands - Eredivisie",
+      "checked": 1,
+      "covered": 1,
       "partial": 0,
       "missing": 0,
       "coverage": 1
