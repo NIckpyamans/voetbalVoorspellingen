@@ -2,6 +2,11 @@ name: Live Score Refresh
 
 on:
   workflow_dispatch:
+    inputs:
+      date_window:
+        description: "Datums relatief aan vandaag, bijvoorbeeld -14..+1 voor resultatenbackfill"
+        required: false
+        default: "-3..+1"
 
 concurrency:
   group: football-data-refresh
@@ -15,7 +20,7 @@ env:
   FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: "true"
   DATA_BRANCH: codex/step3b-layout
   FOOTYAI_REFRESH_MODE: live-results
-  FOOTYAI_DATE_WINDOW: yesterday,today,tomorrow
+  FOOTYAI_DATE_WINDOW: ${{ inputs.date_window || '-3..+1' }}
   FOOTYAI_LIGHTWEIGHT_REFRESH: "true"
   API_KEY_FOOTBALL_DATA: ${{ secrets.API_KEY_FOOTBALL_DATA }}
   API_KEY_API_FOOTBALL: ${{ secrets.API_KEY_API_FOOTBALL }}
