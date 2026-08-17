@@ -205,13 +205,21 @@ function readFavoriteStanding() {
 
 function sourceLabel(source?: string) {
   const value = String(source || "").toLowerCase();
-  if (value.includes("competition-catalog-zero")) return "Seizoensstart (0-stand)";
   if (value.includes("live-match-overlay")) return "Live berekend";
+  if (value.includes("competition-catalog-zero")) return "Seizoensstart (0-stand)";
   if (value.includes("football-data")) return "football-data.co.uk";
   if (value.includes("openfootball")) return "openfootball";
   if (value.includes("openligadb")) return "OpenLigaDB";
   if (value.includes("sofascore")) return "Sofascore";
   return source || "cache";
+}
+
+function databaseFallbackMessage(error?: string) {
+  const value = String(error || "");
+  if (/\b402\b|data transfer quota|exceeded the data transfer/i.test(value)) {
+    return "Neon heeft tijdelijk geen datatransfer beschikbaar. De volledige clublijst en actuele stand blijven zichtbaar via de lokale competitiecatalogus en opgeslagen wedstrijduitslagen.";
+  }
+  return "Database-seizoensdetails zijn tijdelijk niet beschikbaar. De stand wordt opgebouwd uit de competitiecatalogus en opgeslagen uitslagen.";
 }
 
 function normalizeLeagueLabel(value?: string) {
@@ -742,7 +750,7 @@ const StandingsView: React.FC = () => {
                 <div className="border-b border-white/5 bg-slate-950/55 px-4 py-3">
                   {databaseSeasonOverview?.error ? (
                     <div className="rounded-xl border border-amber-500/20 bg-amber-500/10 p-3 text-[10px] font-bold text-amber-200">
-                      Database seizoenanalyse tijdelijk niet beschikbaar: {databaseSeasonOverview.error}
+                      {databaseFallbackMessage(databaseSeasonOverview.error)}
                     </div>
                   ) : (
                     <div className="grid grid-cols-1 lg:grid-cols-3 gap-3">
@@ -788,15 +796,16 @@ const StandingsView: React.FC = () => {
                   )}
                 </div>
               )}
-              <div className="grid grid-cols-12 gap-1 px-4 py-2 bg-slate-900/60 text-[8px] font-black text-slate-400 uppercase">
-                <div className="col-span-1">#</div>
-                <div className="col-span-4">Club</div>
-                <div className="col-span-1 text-center">W</div>
-                <div className="col-span-1 text-center">G</div>
-                <div className="col-span-1 text-center">V</div>
-                <div className="col-span-1 text-center">+/-</div>
-                <div className="col-span-1 text-center">Dg</div>
-                <div className="col-span-2 text-right text-white">Pnt</div>
+              <div className="grid grid-cols-[30px_minmax(145px,1fr)_38px_38px_38px_38px_68px_44px_52px] gap-1 px-4 py-2 bg-slate-900/60 text-[8px] font-black text-slate-400 uppercase">
+                <div>#</div>
+                <div>Club</div>
+                <div className="text-center">GS</div>
+                <div className="text-center">W</div>
+                <div className="text-center">G</div>
+                <div className="text-center">V</div>
+                <div className="text-center">DV-DT</div>
+                <div className="text-center">DS</div>
+                <div className="text-right text-white">Pnt</div>
               </div>
 
               <div className="max-h-[68vh] overflow-y-auto">
@@ -810,10 +819,10 @@ const StandingsView: React.FC = () => {
                   return (
                     <div
                       key={row.teamId || `${row.team}-${index}`}
-                      className={`grid grid-cols-12 gap-1 px-4 py-2.5 border-b border-white/5 last:border-0 text-sm items-center hover:bg-white/3 transition border-l-2 ${zoneClasses(zone?.color)}`}
+                      className={`grid grid-cols-[30px_minmax(145px,1fr)_38px_38px_38px_38px_68px_44px_52px] gap-1 px-4 py-2.5 border-b border-white/5 last:border-0 text-sm items-center hover:bg-white/3 transition border-l-2 ${zoneClasses(zone?.color)}`}
                     >
-                      <div className="col-span-1 text-[11px] font-black">{row.pos}</div>
-                      <div className="col-span-4">
+                      <div className="text-[11px] font-black">{row.pos}</div>
+                      <div>
                         <div className="flex items-center gap-2">
                           {row.teamId && (
                             <img
@@ -836,14 +845,15 @@ const StandingsView: React.FC = () => {
                           </div>
                         )}
                       </div>
-                      <div className="col-span-1 text-center text-[11px] text-green-400 font-bold">{row.w}</div>
-                      <div className="col-span-1 text-center text-[11px] text-slate-400 font-bold">{row.d}</div>
-                      <div className="col-span-1 text-center text-[11px] text-red-400 font-bold">{row.l}</div>
-                      <div className={`col-span-1 text-center text-[11px] font-bold ${goalDiff > 0 ? "text-green-400" : goalDiff < 0 ? "text-red-400" : "text-slate-500"}`}>
+                      <div className="text-center text-[11px] text-slate-300 font-bold">{row.p}</div>
+                      <div className="text-center text-[11px] text-green-400 font-bold">{row.w}</div>
+                      <div className="text-center text-[11px] text-slate-400 font-bold">{row.d}</div>
+                      <div className="text-center text-[11px] text-red-400 font-bold">{row.l}</div>
+                      <div className="text-center text-[10px] font-bold text-slate-300">{row.gf || 0}-{row.ga || 0}</div>
+                      <div className={`text-center text-[11px] font-bold ${goalDiff > 0 ? "text-green-400" : goalDiff < 0 ? "text-red-400" : "text-slate-500"}`}>
                         {goalDiff > 0 ? `+${goalDiff}` : goalDiff}
                       </div>
-                      <div className="col-span-1 text-center text-[10px] text-slate-500">{row.p}</div>
-                      <div className="col-span-2 text-right">
+                      <div className="text-right">
                         <span className="text-sm font-black text-white bg-slate-800 px-2 py-0.5 rounded-lg">{row.pts}</span>
                       </div>
                     </div>

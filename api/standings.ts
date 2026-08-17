@@ -4,46 +4,12 @@ import { setCorsHeaders } from "../shared/cors.js";
 import { databaseConfigured, getSql } from "../shared/database.js";
 import { buildCupSheetsFromMatches } from "../shared/cupSheets.js";
 import competitionCatalog from "../config/competition-catalog.json" with { type: "json" };
+import { mergeCatalogStandings } from "../shared/standingsCatalog.js";
 
 const logger = createLogger("api.standings");
 
 function buildCatalogStandings(existingStandings: Record<string, any> = {}) {
-  const existingLabels = new Set(
-    Object.values(existingStandings || {}).map((standing: any) => String(standing?.label || "").trim()).filter(Boolean)
-  );
-  const planned: Record<string, any> = {};
-  const updated = Date.parse(String(competitionCatalog.generatedAt || "")) || Date.now();
-
-  for (const competition of competitionCatalog.competitions || []) {
-    if (!competition.teams?.length || existingLabels.has(competition.league)) continue;
-    planned[`planned:${competition.slug}`] = {
-      label: competition.league,
-      rows: competition.teams.map((team: string, index: number) => ({
-        pos: index + 1,
-        team,
-        teamId: `catalog:${competition.slug}:${team.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "")}`,
-        p: 0,
-        w: 0,
-        d: 0,
-        l: 0,
-        gf: 0,
-        ga: 0,
-        pts: 0,
-      })),
-      updated,
-      source: "competition-catalog-zero",
-      sources: [{ source: "competition-catalog-zero", rows: competition.teams.length }],
-      lastResultDate: null,
-      meta: {
-        format: competition.format,
-        notes: [
-          `Seizoen ${competitionCatalog.season}: alle statistieken starten op 0.`,
-          `${competition.teams.length}/${competition.expectedTeams} teams; status ${competition.membershipStatus}.`,
-        ],
-      },
-    };
-  }
-  return { ...planned, ...existingStandings };
+  return mergeCatalogStandings(existingStandings, competitionCatalog);
 }
 
 async function readDatabaseSeasonOverview() {
