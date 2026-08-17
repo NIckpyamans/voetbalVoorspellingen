@@ -3,6 +3,7 @@ import {
   fetchFotmobStanding,
   fotmobSeasonFromDate,
   normalizeFotmobStanding,
+  selectCurrentStandingCandidate,
 } from "../../scripts/worker/fotmob-standings.js";
 
 const response = {
@@ -34,5 +35,11 @@ describe("FotMob standings adapter", () => {
     await fetchFotmobStanding("Netherlands - Eredivisie", "2026-08-17", fetchJson);
     expect(fetchJson.mock.calls[0][0]).toContain("id=57");
     expect(fetchJson.mock.calls[0][0]).toContain("season=2026%2F2027");
+  });
+
+  it("prefers a current table over a larger previous-season table", () => {
+    const current = { source: "fotmob", rows: [{ p: 2 }] };
+    const previous = { source: "football-data.co.uk", rows: [{ p: 34 }] };
+    expect(selectCurrentStandingCandidate([previous, current], (item) => item.rows[0].p)).toBe(current);
   });
 });

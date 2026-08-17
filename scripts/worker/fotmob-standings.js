@@ -67,6 +67,14 @@ export function normalizeFotmobStanding(payload, label, expectedLeagueId) {
   };
 }
 
+export function selectCurrentStandingCandidate(candidates, strength) {
+  const valid = (candidates || []).filter((item) => item?.rows?.length);
+  if (!valid.length) return null;
+  const currentFotmob = valid.find((item) => item.source === "fotmob");
+  if (currentFotmob) return currentFotmob;
+  return [...valid].sort((left, right) => strength(right) - strength(left))[0];
+}
+
 export async function fetchFotmobStanding(label, dateISO, fetchJson) {
   const competition = FOTMOB_STANDINGS_LEAGUES[label];
   const season = fotmobSeasonFromDate(dateISO);

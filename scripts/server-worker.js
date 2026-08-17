@@ -79,7 +79,11 @@ import { buildH2HAgentProfile } from "./worker/h2h.js";
 import { buildTwoLegAggregate, deriveH2HWinnerId, findOrientedPreviousLeg } from "./worker/two-leg.js";
 import { mergePersistedTeamFormCache } from "./worker/local-team-form-history.js";
 import { hydrateR2ModelProfiles } from "./worker/r2-model-profiles.js";
-import { FOTMOB_STANDINGS_LEAGUES, fetchFotmobStanding } from "./worker/fotmob-standings.js";
+import {
+  FOTMOB_STANDINGS_LEAGUES,
+  fetchFotmobStanding,
+  selectCurrentStandingCandidate,
+} from "./worker/fotmob-standings.js";
 import { applyLeagueCalibration, rebuildLeagueCalibrationProfilesFromReviews } from "./worker/league-calibration.js";
 import {
   dedupeStoredMatches as dedupeFixtureMatches,
@@ -6831,7 +6835,8 @@ async function fetchFootballDataStandings(label, dateISO) {
   const marketCode = MARKET_LEAGUE_CODES[label];
   if (!marketCode) return null;
   const results = [];
-  for (const seasonFolder of getSeasonFolders(dateISO, 2)) {
+  // A previous season is useful for model history, never as the live table.
+  for (const seasonFolder of getSeasonFolders(dateISO, 1)) {
     const csvText = await fetchText(`https://www.football-data.co.uk/mmz4281/${seasonFolder}/${marketCode}.csv`);
     if (!csvText) continue;
     for (const row of parseCsv(csvText)) {
@@ -6855,7 +6860,8 @@ async function fetchOpenfootballStandings(label, dateISO) {
   const competitionCode = OPENFOOTBALL_COMPETITIONS[label];
   if (!competitionCode) return null;
   const results = [];
-  for (const seasonTag of getOpenfootballSeasonTags(dateISO, 2)) {
+  // Do not let a complete previous season masquerade as the current standing.
+  for (const seasonTag of getOpenfootballSeasonTags(dateISO, 1)) {
     const json = await fetchExternalJson(`https://raw.githubusercontent.com/openfootball/football.json/master/${seasonTag}/${competitionCode}.json`);
     const matches = Array.isArray(json?.matches) ? json.matches : [];
     for (const match of matches) {
@@ -6885,7 +6891,7 @@ function standingStrength(standing) {
 function mergeStandingCandidates(label, candidates) {
   const valid = candidates.filter((item) => item?.rows?.length);
   if (!valid.length) return null;
-  const best = valid.sort((a, b) => standingStrength(b) - standingStrength(a))[0];
+  const best = selectCurrentStandingCandidate(valid, standingStrength);
   const sources = valid.map((item) => ({
     source: item.source || "sofascore",
     rows: item.rows.length,
