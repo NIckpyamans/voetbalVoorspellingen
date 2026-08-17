@@ -217,9 +217,9 @@ function sourceLabel(source?: string) {
 function databaseFallbackMessage(error?: string) {
   const value = String(error || "");
   if (/\b402\b|data transfer quota|exceeded the data transfer/i.test(value)) {
-    return "Neon heeft tijdelijk geen datatransfer beschikbaar. De volledige clublijst en actuele stand blijven zichtbaar via de lokale competitiecatalogus en opgeslagen wedstrijduitslagen.";
+    return "Neon heeft tijdelijk geen datatransfer beschikbaar. De volledige clublijst blijft zichtbaar; de stand bevat alleen opgeslagen, bronbevestigde uitslagen. Ontbrekende wedstrijden blijven op 0 totdat een bron ze bevestigt.";
   }
-  return "Database-seizoensdetails zijn tijdelijk niet beschikbaar. De stand wordt opgebouwd uit de competitiecatalogus en opgeslagen uitslagen.";
+  return "Database-seizoensdetails zijn tijdelijk niet beschikbaar. De stand wordt opgebouwd uit de competitiecatalogus en uitsluitend bronbevestigde, opgeslagen uitslagen.";
 }
 
 function normalizeLeagueLabel(value?: string) {
