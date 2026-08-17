@@ -27,7 +27,7 @@ import {
   toAmsterdamDateKey,
 } from "./worker/date-window.js";
 import { buildCupSheetsFromMatches } from "../shared/cupSheets.js";
-import { mergeCatalogStandings } from "../shared/standingsCatalog.js";
+import { mergeCatalogStandings, sameTeam } from "../shared/standingsCatalog.js";
 import { loadLocalEnv, readDatabaseFeatureContext, syncStoreToDatabase } from "../shared/database.js";
 import {
   hydrateStoreFromSnapshotLedger,
@@ -6959,7 +6959,7 @@ function applyLiveMatchesToStanding(baseStanding, matches, label) {
     const goals = parseScoreToGoals(match.score);
     if (!goals) continue;
     const resultKey = buildStandingResultKey(match.date || "", match.homeTeamName, match.awayTeamName);
-    if (resultKeys.has(resultKey)) continue;
+    if (standingResultWasApplied(resultKeys, String(match.date || "").slice(0, 10), match.homeTeamName, match.awayTeamName)) continue;
 
     const appliedResult = applyResultToStandingRows(rows, {
       date: match.date || "",
@@ -7038,6 +7038,13 @@ function applyLiveStandingsOverlay(store) {
       if (standing?.rows?.length) store.standings[key] = overlaid;
     }
   }
+}
+
+function standingResultWasApplied(resultKeys, date, home, away) {
+  return [...resultKeys].some((key) => {
+    const [keyDate, keyHome, keyAway] = String(key || "").split("|");
+    return keyDate === date && sameTeam(keyHome, home) && sameTeam(keyAway, away);
+  });
 }
 
 function rebuildStandingsFromArchivedSeasonDays(store) {
@@ -10976,7 +10983,8 @@ async function main() {
     const labelKey = `label:${leagueLabel}`;
     const cached = store.standings[labelKey];
     const cachedIsOverlay = String(cached?.source || "").includes("live-match-overlay");
-    if (cached?.rows?.length && !cachedIsOverlay && now - Number(cached.updated || 0) <= STANDINGS_TTL) {
+    const cachedNeedsResultLedger = String(cached?.source || "").includes("fotmob") && !cached?.resultKeys?.length;
+    if (cached?.rows?.length && !cachedIsOverlay && !cachedNeedsResultLedger && now - Number(cached.updated || 0) <= STANDINGS_TTL) {
       standingsByTournament[labelKey] = cached;
       continue;
     }

@@ -8,6 +8,11 @@ import {
 
 const response = {
   details: { id: 57 },
+  fixtures: { allMatches: [{
+    home: { name: "Ajax" },
+    away: { name: "PSV" },
+    status: { finished: true, utcTime: "2026-08-08T18:00:00Z" },
+  }] },
   table: [{ data: { table: { all: [
     { idx: 1, id: 1, name: "Ajax", played: 2, wins: 2, draws: 0, losses: 0, scoresStr: "5-1", pts: 6 },
     { idx: 2, id: 2, name: "PSV", played: 2, wins: 1, draws: 0, losses: 1, scoresStr: "3-2", pts: 3 },
@@ -24,6 +29,7 @@ describe("FotMob standings adapter", () => {
     const standing = normalizeFotmobStanding(response, "Netherlands - Eredivisie", 57);
     expect(standing.source).toBe("fotmob");
     expect(standing.rows[0]).toMatchObject({ team: "Ajax", p: 2, w: 2, gf: 5, ga: 1, pts: 6 });
+    expect(standing.resultKeys).toEqual(["2026-08-08|Ajax|PSV"]);
   });
 
   it("rejects a response from another competition", () => {

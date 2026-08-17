@@ -52,6 +52,11 @@ export function normalizeFotmobStanding(payload, label, expectedLeagueId) {
   }).filter((row) => row.team);
   if (rows.length < 2 || rows.some((row) => !Number.isFinite(row.p) || !Number.isFinite(row.pts))) return null;
 
+  const resultKeys = (payload?.fixtures?.allMatches || [])
+    .filter((match) => match?.status?.finished && match?.home?.name && match?.away?.name)
+    .map((match) => `${String(match.status.utcTime || "").slice(0, 10)}|${match.home.name}|${match.away.name}`)
+    .filter((key) => key[0] !== "|");
+
   return {
     label,
     rows,
@@ -62,7 +67,7 @@ export function normalizeFotmobStanding(payload, label, expectedLeagueId) {
       rows: rows.length,
       totalPlayed: rows.reduce((sum, row) => sum + row.p, 0),
     }],
-    resultKeys: [],
+    resultKeys,
     lastResultDate: null,
   };
 }
