@@ -79,6 +79,7 @@ import { buildH2HAgentProfile } from "./worker/h2h.js";
 import { buildTwoLegAggregate, deriveH2HWinnerId, findOrientedPreviousLeg } from "./worker/two-leg.js";
 import { mergePersistedTeamFormCache } from "./worker/local-team-form-history.js";
 import { hydrateR2ModelProfiles } from "./worker/r2-model-profiles.js";
+import { FOTMOB_STANDINGS_LEAGUES, fetchFotmobStanding } from "./worker/fotmob-standings.js";
 import { applyLeagueCalibration, rebuildLeagueCalibrationProfilesFromReviews } from "./worker/league-calibration.js";
 import {
   dedupeStoredMatches as dedupeFixtureMatches,
@@ -7088,10 +7089,12 @@ async function fetchStandings(tournamentId, seasonId, label, dateISO) {
     }
   }
 
-  const [footballDataStanding, openfootballStanding] = await Promise.all([
+  const [fotmobStanding, footballDataStanding, openfootballStanding] = await Promise.all([
+    fetchFotmobStanding(label, dateISO, fetchExternalJson),
     fetchFootballDataStandings(label, dateISO),
     fetchOpenfootballStandings(label, dateISO),
   ]);
+  if (fotmobStanding) candidates.push(fotmobStanding);
   if (footballDataStanding) candidates.push(footballDataStanding);
   if (openfootballStanding) candidates.push(openfootballStanding);
   return mergeStandingCandidates(label, candidates);
@@ -10960,7 +10963,10 @@ async function main() {
     }
   }
 
-  for (const leagueLabel of (LIGHTWEIGHT_REFRESH ? [] : allActiveLeagueLabels.filter(isStandingLeagueLabel))) {
+  const standingLabels = LIGHTWEIGHT_REFRESH
+    ? Object.keys(FOTMOB_STANDINGS_LEAGUES)
+    : allActiveLeagueLabels.filter(isStandingLeagueLabel);
+  for (const leagueLabel of standingLabels) {
     const labelKey = `label:${leagueLabel}`;
     const cached = store.standings[labelKey];
     const cachedIsOverlay = String(cached?.source || "").includes("live-match-overlay");
