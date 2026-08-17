@@ -1,6 +1,6 @@
 # Upcoming H2H Backfill
 
-Laatst bijgewerkt: 2026-08-17T10:17:07.456Z
+Laatst bijgewerkt: 2026-08-17T16:02:17.985Z
 Gecontroleerd: 32
 Gevuld: 0
 Geen directe H2H: 32
@@ -13,8 +13,11 @@ API-Football blijft quota-bewust geblokkeerd totdat de acceptatietest slaagt; ES
 
 ## Geen Directe H2H
 - 2026-08-17: Cardiff City - Wrexham (provider_acceptance_blocked)
-- 2026-08-17: Deportivo de A Coruña - Elche (provider_acceptance_blocked)
-- 2026-08-17: Casa Pia - Benfica (provider_acceptance_blocked)
+- 2026-08-17: Deportivo A Coruña - Elche (provider_acceptance_blocked)
+- 2026-08-17: Casa Pia AC - Benfica (provider_acceptance_blocked)
+- 2026-08-17: De Graafschap - Jong AZ Alkmaar (provider_acceptance_blocked)
+- 2026-08-17: Jong Ajax - FC Emmen (provider_acceptance_blocked)
+- 2026-08-17: Jong FC Utrecht - Vitesse (provider_acceptance_blocked)
 - 2026-08-18: Dinamo Zagreb - Viking (provider_acceptance_blocked)
 - 2026-08-18: Fenerbahçe - Olympique Lyonnais (provider_acceptance_blocked)
 - 2026-08-19: Celtic - LASK (provider_acceptance_blocked)
@@ -29,6 +32,3 @@ API-Football blijft quota-bewust geblokkeerd totdat de acceptatietest slaagt; ES
 - 2026-08-20: Egnatia - Lillestrom (provider_acceptance_blocked)
 - 2026-08-20: Lech Poznan - FC Thun (provider_acceptance_blocked)
 - 2026-08-20: Trabzonspor - Ferencvaros (provider_acceptance_blocked)
-- 2026-08-20: Crvena Zvezda - FC Viktoria Plzen (provider_acceptance_blocked)
-- 2026-08-20: OFI - CSKA Sofia (provider_acceptance_blocked)
-- 2026-08-20: Sint-Truidense VV - Omonia Nicosia (provider_acceptance_blocked)
