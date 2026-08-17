@@ -1,9 +1,9 @@
 # Upcoming H2H Backfill
 
-Laatst bijgewerkt: 2026-08-17T22:03:44.838Z
-Gecontroleerd: 32
+Laatst bijgewerkt: 2026-08-17T23:03:53.677Z
+Gecontroleerd: 24
 Gevuld: 0
-Geen directe H2H: 32
+Geen directe H2H: 24
 Errors: 0
 
 ## Aanbeveling
@@ -16,7 +16,7 @@ API-Football blijft quota-bewust geblokkeerd totdat de acceptatietest slaagt; ES
 - 2026-08-18: Fenerbahçe - Olympique Lyonnais (provider_acceptance_blocked)
 - 2026-08-19: Celtic - LASK (provider_acceptance_blocked)
 - 2026-08-19: Hapoel Be'er Sheva - Sabah (provider_acceptance_blocked)
-- 2026-08-19: Atletico Madrid - Málaga (provider_acceptance_blocked)
+- 2026-08-19: Atletico Madrid - Malaga (provider_acceptance_blocked)
 - 2026-08-19: Barcelona - Al Ahly SC (provider_acceptance_blocked)
 - 2026-08-20: Kairat Almaty - Anderlecht (provider_acceptance_blocked)
 - 2026-08-20: Jagiellonia Bialystok - FC Iberia 1999 Tiflis (provider_acceptance_blocked)
