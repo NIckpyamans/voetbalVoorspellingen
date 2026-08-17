@@ -45,7 +45,85 @@ function sortRows(rows) {
   ).map((row, index) => ({ ...row, pos: index + 1 }));
 }
 
-export function mergeCatalogStandings(existingStandings = {}, catalog = {}) {
+function completedScore(match) {
+  if (String(match?.status || "").toUpperCase() !== "FT") return null;
+  const explicitHome = Number(match?.homeScore);
+  const explicitAway = Number(match?.awayScore);
+  if (Number.isFinite(explicitHome) && Number.isFinite(explicitAway)) {
+    return { homeGoals: explicitHome, awayGoals: explicitAway };
+  }
+  const parsed = String(match?.score || "").match(/^(\d+)\s*-\s*(\d+)$/);
+  if (!parsed) return null;
+  return { homeGoals: Number(parsed[1]), awayGoals: Number(parsed[2]) };
+}
+
+function resultWasApplied(resultKeys, date, home, away) {
+  return [...resultKeys].some((key) => {
+    const [keyDate, keyHome, keyAway] = String(key || "").split("|");
+    return keyDate === date && sameTeam(keyHome, home) && sameTeam(keyAway, away);
+  });
+}
+
+function resultKeyBelongsToRows(key, rows) {
+  const [, home, away] = String(key || "").split("|");
+  return Boolean(home && away && rows.some((row) => sameTeam(row.team, home)) && rows.some((row) => sameTeam(row.team, away)));
+}
+
+function composeSource(baseSource, hasBaseResults, appliedResults) {
+  const parts = hasBaseResults
+    ? String(baseSource || "").split("+").map((part) => part.trim()).filter(Boolean)
+    : [];
+  const withoutCatalog = parts.filter((part) => part !== "competition-catalog" && part !== "competition-catalog-zero");
+  return [...new Set([
+    ...(withoutCatalog.length ? withoutCatalog : ["competition-catalog-zero"]),
+    "competition-catalog",
+    appliedResults > 0 ? "split-day-results" : null,
+  ].filter(Boolean))].join(" + ");
+}
+
+function applyCompletedResults(rows, resultKeys, matches, label) {
+  let applied = 0;
+  let lastResultDate = null;
+  for (const match of matches || []) {
+    if (String(match?.league || "") !== label) continue;
+    const score = completedScore(match);
+    if (!score) continue;
+    const homeIndex = rows.findIndex((row) => sameTeam(row.team, match?.homeTeamName));
+    const awayIndex = rows.findIndex((row) => sameTeam(row.team, match?.awayTeamName));
+    if (homeIndex < 0 || awayIndex < 0 || homeIndex === awayIndex) continue;
+    const date = String(match?.date || match?.kickoff || "").slice(0, 10);
+    if (!date || resultWasApplied(resultKeys, date, match.homeTeamName, match.awayTeamName)) continue;
+
+    const home = rows[homeIndex];
+    const away = rows[awayIndex];
+    home.p += 1;
+    away.p += 1;
+    home.gf += score.homeGoals;
+    home.ga += score.awayGoals;
+    away.gf += score.awayGoals;
+    away.ga += score.homeGoals;
+    if (score.homeGoals > score.awayGoals) {
+      home.w += 1;
+      away.l += 1;
+      home.pts += 3;
+    } else if (score.homeGoals < score.awayGoals) {
+      away.w += 1;
+      home.l += 1;
+      away.pts += 3;
+    } else {
+      home.d += 1;
+      away.d += 1;
+      home.pts += 1;
+      away.pts += 1;
+    }
+    resultKeys.add(`${date}|${normalizedTeamName(match.homeTeamName)}|${normalizedTeamName(match.awayTeamName)}`);
+    applied += 1;
+    if (!lastResultDate || date > lastResultDate) lastResultDate = date;
+  }
+  return { applied, lastResultDate };
+}
+
+export function mergeCatalogStandings(existingStandings = {}, catalog = {}, completedMatches = []) {
   const existingEntries = Object.entries(existingStandings || {});
   const usedLabels = new Set();
   const merged = {};
@@ -79,15 +157,24 @@ export function mergeCatalogStandings(existingStandings = {}, catalog = {}) {
         if (row.p > 0 && !rows.some((item) => sameTeam(item.team, row.team))) rows.push(row);
       }
     }
+    const hasBaseResults = rows.some((row) => Number(row.p || 0) > 0);
+    const resultKeys = new Set(
+      (Array.isArray(base?.resultKeys) ? base.resultKeys : []).filter((key) => resultKeyBelongsToRows(key, rows))
+    );
+    const appliedResults = applyCompletedResults(rows, resultKeys, completedMatches, label);
     const catalogSource = { source: "competition-catalog", rows: competition.teams.length };
+    const resultSource = appliedResults.applied > 0
+      ? [{ source: "split-day-results", rows: rows.length, results: appliedResults.applied }]
+      : [];
     merged[`label:${label}`] = {
       ...(base || {}),
       label,
       rows: sortRows(rows),
       updated: Math.max(Number(base?.updated || 0), updated),
-      source: base?.source ? `${base.source} + competition-catalog` : "competition-catalog-zero",
-      sources: [...(Array.isArray(base?.sources) ? base.sources : []), catalogSource],
-      lastResultDate: base?.lastResultDate || null,
+      source: composeSource(base?.source, hasBaseResults, appliedResults.applied),
+      sources: [...(Array.isArray(base?.sources) ? base.sources : []), catalogSource, ...resultSource],
+      resultKeys: [...resultKeys],
+      lastResultDate: appliedResults.lastResultDate || base?.lastResultDate || null,
       meta: {
         ...(base?.meta || {}),
         format: competition.format,

@@ -27,6 +27,7 @@ import {
   toAmsterdamDateKey,
 } from "./worker/date-window.js";
 import { buildCupSheetsFromMatches } from "../shared/cupSheets.js";
+import { mergeCatalogStandings } from "../shared/standingsCatalog.js";
 import { loadLocalEnv, readDatabaseFeatureContext, syncStoreToDatabase } from "../shared/database.js";
 import {
   hydrateStoreFromSnapshotLedger,
@@ -1110,9 +1111,12 @@ const ESPN_SCOREBOARD_LEAGUES = {
   "Europe - Conference League": "uefa.europa.conf",
   "Europe - Europa League": "uefa.europa",
   "France - Ligue 1": "fra.1",
+  "France - Ligue 2": "fra.2",
   "Germany - 2. Bundesliga": "ger.2",
   "Germany - Bundesliga": "ger.1",
   "Italy - Serie A": "ita.1",
+  "Italy - Serie B": "ita.2",
+  "Netherlands - Eerste Divisie": "ned.2",
   "Netherlands - Eredivisie": "ned.1",
   "Portugal - Liga Portugal": "por.1",
   "Spain - LaLiga": "esp.1",
@@ -7029,6 +7033,30 @@ function applyLiveStandingsOverlay(store) {
   }
 }
 
+function rebuildStandingsFromArchivedSeasonDays(store) {
+  const catalogPath = path.join(ROOT, "config", "competition-catalog.json");
+  const daysPath = path.join(SPLIT_DATA_DIR, "days");
+  if (!fs.existsSync(catalogPath) || !fs.existsSync(daysPath)) return;
+  try {
+    const catalog = JSON.parse(fs.readFileSync(catalogPath, "utf8"));
+    const seasonStartYear = Number(String(catalog?.season || "").match(/^\d{4}/)?.[0] || new Date().getUTCFullYear());
+    const seasonStart = `${seasonStartYear}-07-01`;
+    const completedMatches = fs.readdirSync(daysPath)
+      .filter((fileName) => /^\d{4}-\d{2}-\d{2}\.json$/.test(fileName) && fileName.slice(0, 10) >= seasonStart)
+      .flatMap((fileName) => {
+        try {
+          const day = JSON.parse(fs.readFileSync(path.join(daysPath, fileName), "utf8"));
+          return Array.isArray(day?.matches) ? day.matches : [];
+        } catch {
+          return [];
+        }
+      });
+    store.standings = mergeCatalogStandings(store.standings || {}, catalog, completedMatches);
+  } catch (error) {
+    console.warn(`[standings] seizoensherbouw uit dagarchief mislukt: ${error?.message || error}`);
+  }
+}
+
 async function fetchStandings(tournamentId, seasonId, label, dateISO) {
   const candidates = [];
   if (tournamentId && seasonId) {
@@ -11168,9 +11196,9 @@ async function main() {
         store.teamStats[awayId] = awayRecent;
         store.teamStatsUpdated[awayId] = now;
       }
-      const aggregate = leagueInfo.type === "friendly"
-        ? null
-        : buildAggregateInfo(event, eventDetails, h2h, fallbackPreviousLeg);
+      const aggregate = leagueInfo.type === "cup"
+        ? buildAggregateInfo(event, eventDetails, h2h, fallbackPreviousLeg)
+        : null;
       const homeRestDays = calcRestDays(homeRecent?.lastMatchKickoff, kickoff);
       const awayRestDays = calcRestDays(awayRecent?.lastMatchKickoff, kickoff);
       const matchImportance = calcMatchImportance(homePos, awayPos, standing?.rows?.length || 20);
@@ -11747,6 +11775,7 @@ async function main() {
     await sleep(30);
   }
 
+  rebuildStandingsFromArchivedSeasonDays(store);
   applyLiveStandingsOverlay(store);
   removeHiddenInternationalStoreData(store);
   compactStore(store, today, now);

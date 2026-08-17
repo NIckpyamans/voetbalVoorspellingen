@@ -41,8 +41,59 @@ describe("standings catalog fallback", () => {
     const standings = mergeCatalogStandings({ polluted: {
       label: "Netherlands - Eredivisie",
       rows: [{ team: "Foreign Division Club", p: 1, w: 1, gf: 4, ga: 0, pts: 3 }],
+      resultKeys: ["2026-08-20|foreign division club|another foreign club"],
+      source: "live-match-overlay + live-match-overlay",
     } }, catalog);
     expect(standings["label:Netherlands - Eredivisie"].rows).toHaveLength(3);
     expect(standings["label:Netherlands - Eredivisie"].rows.some((row) => row.team === "Foreign Division Club")).toBe(false);
+    expect(standings["label:Netherlands - Eredivisie"].resultKeys).toEqual([]);
+    expect(standings["label:Netherlands - Eredivisie"].source).toBe("competition-catalog-zero + competition-catalog");
+  });
+
+  it("rebuilds points and goals from completed archived day matches", () => {
+    const standings = mergeCatalogStandings({}, catalog, [{
+      date: "2026-08-20",
+      league: "Netherlands - Eredivisie",
+      status: "FT",
+      homeTeamName: "PSV",
+      awayTeamName: "Ajax",
+      score: "3-1",
+    }]);
+    const rows = standings["label:Netherlands - Eredivisie"].rows;
+    expect(rows.find((row) => row.team === "PSV Eindhoven")).toMatchObject({ p: 1, w: 1, gf: 3, ga: 1, pts: 3 });
+    expect(rows.find((row) => row.team === "Ajax Amsterdam")).toMatchObject({ p: 1, l: 1, gf: 1, ga: 3, pts: 0 });
+  });
+
+  it("does not apply archived results with a club outside the competition", () => {
+    const standings = mergeCatalogStandings({}, catalog, [{
+      date: "2026-08-20",
+      league: "Netherlands - Eredivisie",
+      status: "FT",
+      homeTeamName: "PSV",
+      awayTeamName: "Foreign Division Club",
+      score: "3-1",
+    }]);
+    const rows = standings["label:Netherlands - Eredivisie"].rows;
+    expect(rows.reduce((sum, row) => sum + row.p, 0)).toBe(0);
+  });
+
+  it("does not count a completed result twice when it is already in the standing", () => {
+    const standings = mergeCatalogStandings({ partial: {
+      label: "Netherlands - Eredivisie",
+      rows: [
+        { team: "PSV", p: 1, w: 1, d: 0, l: 0, gf: 3, ga: 1, pts: 3 },
+        { team: "Ajax", p: 1, w: 0, d: 0, l: 1, gf: 1, ga: 3, pts: 0 },
+      ],
+      resultKeys: ["2026-08-20|psv|ajax"],
+    } }, catalog, [{
+      date: "2026-08-20",
+      league: "Netherlands - Eredivisie",
+      status: "FT",
+      homeTeamName: "PSV Eindhoven",
+      awayTeamName: "Ajax Amsterdam",
+      score: "3-1",
+    }]);
+    const rows = standings["label:Netherlands - Eredivisie"].rows;
+    expect(rows.reduce((sum, row) => sum + row.p, 0)).toBe(2);
   });
 });

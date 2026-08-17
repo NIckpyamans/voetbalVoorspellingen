@@ -1,4 +1,4 @@
-import { fetchStandingsData, fetchServerStore } from "./_dataSource.js";
+import { fetchDayData, fetchMetaData, fetchStandingsData, fetchServerStore } from "./_dataSource.js";
 import { createLogger, getErrorDetails } from "../shared/logger.js";
 import { setCorsHeaders } from "../shared/cors.js";
 import { databaseConfigured, getSql } from "../shared/database.js";
@@ -8,8 +8,20 @@ import { mergeCatalogStandings } from "../shared/standingsCatalog.js";
 
 const logger = createLogger("api.standings");
 
-function buildCatalogStandings(existingStandings: Record<string, any> = {}) {
-  return mergeCatalogStandings(existingStandings, competitionCatalog);
+function buildCatalogStandings(existingStandings: Record<string, any> = {}, completedMatches: any[] = []) {
+  return mergeCatalogStandings(existingStandings, competitionCatalog, completedMatches);
+}
+
+async function readArchivedSeasonMatches() {
+  const seasonStartYear = Number(String(competitionCatalog.season || "").match(/^\d{4}/)?.[0] || new Date().getUTCFullYear());
+  const seasonStart = `${seasonStartYear}-07-01`;
+  const today = new Intl.DateTimeFormat("en-CA", { timeZone: "Europe/Amsterdam" }).format(new Date());
+  const meta = await fetchMetaData().catch(() => ({ data: { dates: [] } }));
+  const dates = (Array.isArray(meta.data?.dates) ? meta.data.dates : [])
+    .filter((date: string) => date >= seasonStart && date <= today)
+    .slice(-120);
+  const days = await Promise.all(dates.map((date: string) => fetchDayData(date).catch(() => null)));
+  return days.flatMap((day: any) => Array.isArray(day?.data?.matches) ? day.data.matches : []);
 }
 
 async function readDatabaseSeasonOverview() {
@@ -246,6 +258,7 @@ export default async function handler(req: any, res: any) {
       branch = full.branch;
     }
 
+    const archivedSeasonMatches = await readArchivedSeasonMatches();
     const cupSheets =
       Object.keys(store.cupSheets || {}).length > 0
         ? store.cupSheets
@@ -261,7 +274,7 @@ export default async function handler(req: any, res: any) {
 
     return res.status(200).json({
       ok: true,
-      standings: buildCatalogStandings(store.standings || {}),
+      standings: buildCatalogStandings(store.standings || {}, archivedSeasonMatches),
       competitionCatalog: {
         season: competitionCatalog.season,
         generatedAt: competitionCatalog.generatedAt,
