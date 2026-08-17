@@ -11854,6 +11854,7 @@ async function main() {
   store.sourceCoverage = buildSourceCoverage(store, today);
   store.dataCompletenessAudit = buildDataCompletenessAudit(store, today);
   store.oddsIntegrationReadiness = buildOddsIntegrationReadiness(store, today);
+  store.fixtureSourceDiagnostics = fixtureSourceDiagnostics;
   store.dataScout = {
     ...buildDataScoutReport(store, today),
     selfHealing,
