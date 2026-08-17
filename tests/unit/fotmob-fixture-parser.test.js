@@ -68,6 +68,7 @@ describe("FotMob fixture parser", () => {
     const events = parseFotmobScheduledEvents(leaguePayload, "2026-07-24", deps);
     expect(events).toHaveLength(3);
     expect(events.every((event) => event.tournament.category.name === "Netherlands")).toBe(true);
+    expect(events.every((event) => event.leagueLabel === "Netherlands - Eerste Divisie")).toBe(true);
     expect(events.map((event) => event.homeTeam.name)).toEqual(["De Graafschap", "Jong Ajax", "Jong FC Utrecht"]);
   });
 });

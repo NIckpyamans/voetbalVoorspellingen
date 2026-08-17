@@ -126,6 +126,7 @@ export function buildSplitMeta(store) {
     aiAdvice: store.aiAdvice || [],
     featureDiagnostics: store.featureDiagnostics || null,
     sourceCoverage: store.sourceCoverage || null,
+    fixtureSourceDiagnostics: store.fixtureSourceDiagnostics || {},
     predictionSnapshotCount: Object.keys(store.predictionSnapshots || {}).length,
     predictionSnapshotIndexCount: Object.keys(store.predictionSnapshotIndex || {}).length,
     dataScout: store.dataScout || null,

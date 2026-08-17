@@ -644,6 +644,7 @@ export function parseFotmobScheduledEvents(payload, dateISO, deps) {
 
       events.push({
         id: `fotmob-${match?.id || `${dateISO}-${deps.normalizeName(homeName)}-${deps.normalizeName(awayName)}`}`,
+        leagueLabel,
         startTimestamp: Math.floor(kickoff.getTime() / 1000),
         homeTeam: {
           id: match?.home?.id ? `fotmob-${match.home.id}` : "",

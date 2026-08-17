@@ -4431,6 +4431,7 @@ function canonicalMatchTeamKey(name) {
     const rawAlias = teamAliasLookup.get(raw);
     if (rawAlias) return rawAlias;
   }
+  if (/^deportivo (?:de )?a coruna$/.test(key)) return "deportivo la coruna";
   return key;
 }
 
@@ -4472,6 +4473,18 @@ function readTrackedCompetitionTeamNames() {
     return [...new Set((payload.competitions || []).flatMap((competition) => competition.teams || []))];
   } catch (error) {
     console.warn("[competition-catalog] gevolgde teams konden niet worden gelezen:", error.message);
+    return [];
+  }
+}
+
+function readTrackedCompetitionLabels() {
+  const file = path.join(ROOT, "config", "competition-catalog.json");
+  if (!fs.existsSync(file)) return [];
+  try {
+    const payload = JSON.parse(fs.readFileSync(file, "utf8"));
+    return [...new Set((payload.competitions || []).map((competition) => competition.league).filter(Boolean))];
+  } catch (error) {
+    console.warn("[competition-catalog] gevolgde competities konden niet worden gelezen:", error.message);
     return [];
   }
 }
@@ -6561,6 +6574,8 @@ function calibrateScoreMatrixWithReviewBias(scoreMatrix, input, selectedScore) {
 
 function getLeagueInfo(event) {
   if (shouldExcludeEvent(event)) return null;
+  const explicitLeague = LEAGUES.find((league) => league.label === event?.leagueLabel);
+  if (explicitLeague) return explicitLeague;
   const tournament = String(
     event?.uniqueTournament?.name || event?.tournament?.name || ""
   ).toLowerCase();
@@ -10611,6 +10626,10 @@ async function main() {
   const allEvents = {};
   const fixtureSourceDiagnostics = {};
   const trackedCompetitionTeamNames = readTrackedCompetitionTeamNames();
+  const trackedCompetitionLabels = readTrackedCompetitionLabels();
+  const followedFotmobLeagues = Object.fromEntries(
+    Object.entries(FOTMOB_STANDINGS_LEAGUES).filter(([label]) => trackedCompetitionLabels.includes(label))
+  );
   const teamTournamentMap = new Map();
   const tournamentsMap = new Map();
   const requiredTeamIds = new Set();
@@ -10689,7 +10708,7 @@ async function main() {
     });
     const fotmobEvents = await fetchFotmobScheduledEventsSource(date, {
       trackedTeamNames: trackedCompetitionTeamNames,
-      fotmobStandingLeagues: FOTMOB_STANDINGS_LEAGUES,
+      fotmobStandingLeagues: followedFotmobLeagues,
       normalizeName,
       isWomenContext,
       isYouthContext,
@@ -10697,7 +10716,7 @@ async function main() {
       toNumber,
     });
     const fotmobByCompetition = Object.fromEntries(
-      Object.keys(FOTMOB_STANDINGS_LEAGUES).map((label) => [label, 0])
+      Object.keys(followedFotmobLeagues).map((label) => [label, 0])
     );
     for (const event of fotmobEvents) {
       const label = getLeagueInfo(event)?.label;
@@ -10722,7 +10741,7 @@ async function main() {
       bbc: bbcEvents.length,
       skySports: skyEvents.length,
       fotmob: fotmobEvents.length,
-      fotmobCompetitionsChecked: Object.keys(FOTMOB_STANDINGS_LEAGUES).length,
+      fotmobCompetitionsChecked: Object.keys(followedFotmobLeagues).length,
       fotmobByCompetition,
       curated: curatedEvents.length,
     };
@@ -10738,6 +10757,13 @@ async function main() {
       ...fotmobEvents,
       ...curatedEvents,
     ]);
+    const combinedByCompetition = Object.fromEntries(trackedCompetitionLabels.map((label) => [label, 0]));
+    for (const event of combinedFallbacks) {
+      const label = getLeagueInfo(event)?.label;
+      if (label && Object.hasOwn(combinedByCompetition, label)) combinedByCompetition[label] += 1;
+    }
+    fixtureSourceDiagnostics[date].competitionsChecked = trackedCompetitionLabels.length;
+    fixtureSourceDiagnostics[date].byCompetition = combinedByCompetition;
 
     if (fallbackEvents.length) {
       console.log(`[worker] ${date}: ${fallbackEvents.length} fallback events uit football-data.co.uk`);
@@ -10987,7 +11013,7 @@ async function main() {
   }
 
   const standingLabels = LIGHTWEIGHT_REFRESH
-    ? Object.keys(FOTMOB_STANDINGS_LEAGUES)
+    ? Object.keys(followedFotmobLeagues)
     : allActiveLeagueLabels.filter(isStandingLeagueLabel);
   for (const leagueLabel of standingLabels) {
     const labelKey = `label:${leagueLabel}`;
