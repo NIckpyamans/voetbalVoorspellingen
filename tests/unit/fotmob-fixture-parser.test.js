@@ -3,6 +3,10 @@ import { parseFotmobScheduledEvents } from "../../scripts/worker/data-collection
 
 const deps = {
   trackedTeamNames: ["FC Barcelona", "ADO Den Haag", "Heracles Almelo", "Excelsior"],
+  fotmobStandingLeagues: {
+    "Netherlands - Eredivisie": { id: 57 },
+    "Netherlands - Eerste Divisie": { id: 111 },
+  },
   normalizeName: (value) => String(value || "").toLowerCase().replace(/[^a-z0-9]+/g, " ").trim(),
   isWomenContext: () => false,
   isYouthContext: (_league, home, away) => /u-?\d{2}/i.test(`${home} ${away}`),
@@ -47,5 +51,23 @@ describe("FotMob fixture parser", () => {
       homeScore: { current: 0 },
       awayScore: { current: 4 },
     });
+  });
+
+  it("keeps every fixture from each mapped followed competition", () => {
+    const leaguePayload = {
+      leagues: [{
+        id: 111,
+        name: "Eerste Divisie",
+        matches: [
+          { id: 11, status: { utcTime: "2026-07-24T18:00:00.000Z" }, home: { id: 1, name: "De Graafschap" }, away: { id: 2, name: "Jong AZ Alkmaar" } },
+          { id: 12, status: { utcTime: "2026-07-24T18:00:00.000Z" }, home: { id: 3, name: "Jong Ajax" }, away: { id: 4, name: "FC Emmen" } },
+          { id: 13, status: { utcTime: "2026-07-24T18:00:00.000Z" }, home: { id: 5, name: "Jong FC Utrecht" }, away: { id: 6, name: "Vitesse" } },
+        ],
+      }],
+    };
+    const events = parseFotmobScheduledEvents(leaguePayload, "2026-07-24", deps);
+    expect(events).toHaveLength(3);
+    expect(events.every((event) => event.tournament.category.name === "Netherlands")).toBe(true);
+    expect(events.map((event) => event.homeTeam.name)).toEqual(["De Graafschap", "Jong Ajax", "Jong FC Utrecht"]);
   });
 });

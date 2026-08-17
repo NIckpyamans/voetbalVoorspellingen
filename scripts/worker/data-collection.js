@@ -612,17 +612,24 @@ function isTrackedClubName(name, trackedTeamNames, normalizeName) {
 
 export function parseFotmobScheduledEvents(payload, dateISO, deps) {
   const trackedTeamNames = Array.isArray(deps.trackedTeamNames) ? deps.trackedTeamNames : [];
+  const competitionById = new Map(
+    Object.entries(deps.fotmobStandingLeagues || {}).map(([label, competition]) => [Number(competition?.id), label])
+  );
   const events = [];
   for (const league of Array.isArray(payload?.leagues) ? payload.leagues : []) {
-    if (!/club friendl/i.test(String(league?.name || ""))) continue;
+    const mappedLeagueLabel = competitionById.get(Number(league?.id)) || null;
+    const isFriendly = /club friendl/i.test(String(league?.name || ""));
+    if (!mappedLeagueLabel && !isFriendly) continue;
+    const leagueLabel = mappedLeagueLabel || "World - Club Friendlies";
+    const countryName = mappedLeagueLabel ? mappedLeagueLabel.split(" - ")[0] : "World";
     for (const match of Array.isArray(league?.matches) ? league.matches : []) {
       const homeName = String(match?.home?.longName || match?.home?.name || "").trim();
       const awayName = String(match?.away?.longName || match?.away?.name || "").trim();
       if (!homeName || !awayName) continue;
-      if (!isTrackedClubName(homeName, trackedTeamNames, deps.normalizeName) &&
+      if (isFriendly && !isTrackedClubName(homeName, trackedTeamNames, deps.normalizeName) &&
           !isTrackedClubName(awayName, trackedTeamNames, deps.normalizeName)) continue;
-      if (deps.isWomenContext("World - Club Friendlies", homeName, awayName) ||
-          deps.isYouthContext("World - Club Friendlies", homeName, awayName)) continue;
+      if (deps.isWomenContext(leagueLabel, homeName, awayName) ||
+          deps.isYouthContext(leagueLabel, homeName, awayName)) continue;
 
       const kickoff = new Date(match?.status?.utcTime || Number(match?.timeTS || 0));
       if (!Number.isFinite(kickoff.getTime()) || deps.toAmsterdamDateKey(kickoff) !== dateISO) continue;
@@ -641,20 +648,20 @@ export function parseFotmobScheduledEvents(payload, dateISO, deps) {
         homeTeam: {
           id: match?.home?.id ? `fotmob-${match.home.id}` : "",
           name: homeName,
-          country: { name: "World" },
+          country: { name: countryName },
           logoUrl: match?.home?.id ? `https://images.fotmob.com/image_resources/logo/teamlogo/${match.home.id}.png` : "",
         },
         awayTeam: {
           id: match?.away?.id ? `fotmob-${match.away.id}` : "",
           name: awayName,
-          country: { name: "World" },
+          country: { name: countryName },
           logoUrl: match?.away?.id ? `https://images.fotmob.com/image_resources/logo/teamlogo/${match.away.id}.png` : "",
         },
-        uniqueTournament: { id: league?.id || null, name: "Club Friendlies" },
+        uniqueTournament: { id: league?.id || null, name: league?.name || leagueLabel.split(" - ").slice(1).join(" - ") },
         tournament: {
           id: league?.id || null,
-          name: "Club Friendlies",
-          category: { name: "World" },
+          name: league?.name || leagueLabel.split(" - ").slice(1).join(" - "),
+          category: { name: countryName },
           uniqueTournament: { id: league?.id || null },
         },
         season: { id: null },

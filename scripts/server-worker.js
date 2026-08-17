@@ -10689,12 +10689,20 @@ async function main() {
     });
     const fotmobEvents = await fetchFotmobScheduledEventsSource(date, {
       trackedTeamNames: trackedCompetitionTeamNames,
+      fotmobStandingLeagues: FOTMOB_STANDINGS_LEAGUES,
       normalizeName,
       isWomenContext,
       isYouthContext,
       toAmsterdamDateKey,
       toNumber,
     });
+    const fotmobByCompetition = Object.fromEntries(
+      Object.keys(FOTMOB_STANDINGS_LEAGUES).map((label) => [label, 0])
+    );
+    for (const event of fotmobEvents) {
+      const label = getLeagueInfo(event)?.label;
+      if (label && Object.hasOwn(fotmobByCompetition, label)) fotmobByCompetition[label] += 1;
+    }
     const curatedEvents = friendliesDiscoveryMode
       ? fetchCuratedClubFriendlies(date)
       : [...fetchCuratedFixtureBackfill(date), ...fetchCuratedClubFriendlies(date)];
@@ -10714,6 +10722,8 @@ async function main() {
       bbc: bbcEvents.length,
       skySports: skyEvents.length,
       fotmob: fotmobEvents.length,
+      fotmobCompetitionsChecked: Object.keys(FOTMOB_STANDINGS_LEAGUES).length,
+      fotmobByCompetition,
       curated: curatedEvents.length,
     };
     const combinedFallbacks = dedupeFallbackEvents([
@@ -10748,7 +10758,7 @@ async function main() {
       console.log(`[worker] ${date}: ${skyEvents.length} fallback events uit Sky Sports fixtures`);
     }
     if (fotmobEvents.length) {
-      console.log(`[worker] ${date}: ${fotmobEvents.length} gevolgde oefenduels uit FotMob`);
+      console.log(`[worker] ${date}: ${fotmobEvents.length} gevolgde competitie- en oefenduels uit FotMob`);
     }
     if (curatedEvents.length) {
       console.log(`[worker] ${date}: ${curatedEvents.length} fallback events uit curated fixtures`);
