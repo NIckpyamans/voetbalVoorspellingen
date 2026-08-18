@@ -1,6 +1,6 @@
 # Upcoming H2H Backfill
 
-Laatst bijgewerkt: 2026-08-18T08:16:15.562Z
+Laatst bijgewerkt: 2026-08-18T08:34:28.340Z
 Gecontroleerd: 32
 Gevuld: 0
 Geen directe H2H: 32
@@ -12,23 +12,23 @@ API-Football blijft quota-bewust geblokkeerd totdat de acceptatietest slaagt; ES
 ## Gevuld
 
 ## Geen Directe H2H
-- 2026-08-18: Dinamo Zagreb - Viking (provider_acceptance_blocked)
-- 2026-08-18: Fenerbahçe - Olympique Lyonnais (provider_acceptance_blocked)
-- 2026-08-19: Celtic - LASK (provider_acceptance_blocked)
-- 2026-08-19: Hapoel Be'er Sheva - Sabah (provider_acceptance_blocked)
-- 2026-08-19: Barcelona - Al Ahly SC (provider_acceptance_blocked)
-- 2026-08-19: Atletico Madrid - Malaga (provider_acceptance_blocked)
-- 2026-08-20: Kairat Almaty - Anderlecht (provider_acceptance_blocked)
-- 2026-08-20: Jagiellonia Bialystok - FC Iberia 1999 Tiflis (provider_acceptance_blocked)
-- 2026-08-20: Mjällby AIF - Red Bull Salzburg (provider_acceptance_blocked)
-- 2026-08-20: FC Inter Turku - FC Copenhagen (provider_acceptance_blocked)
-- 2026-08-20: Lincoln Red Imps - Larne (provider_acceptance_blocked)
-- 2026-08-20: Besiktas - Kauno Zalgiris (provider_acceptance_blocked)
-- 2026-08-20: CS Universitatea Craiova - Ararat-Armenia (provider_acceptance_blocked)
-- 2026-08-20: Egnatia - Lillestrom (provider_acceptance_blocked)
-- 2026-08-20: Lech Poznan - FC Thun (provider_acceptance_blocked)
-- 2026-08-20: Trabzonspor - Ferencvaros (provider_acceptance_blocked)
-- 2026-08-20: FC Midtjylland - Rijeka (provider_acceptance_blocked)
-- 2026-08-20: FC Nordsjaelland - St Gallen (provider_acceptance_blocked)
-- 2026-08-20: Tromso - Brighton and Hove Albion (provider_acceptance_blocked)
-- 2026-08-20: KI Klaksvík - Riga FC (provider_acceptance_blocked)
+- 2026-08-20: Motherwell - SC Freiburg (provider_acceptance_blocked)
+- 2026-08-20: Panathinaikos - Hradec Králové (provider_acceptance_blocked)
+- 2026-08-20: Hearts - SK Rapid Wien (provider_acceptance_blocked)
+- 2026-08-20: Rangers - FK Jablonec (provider_acceptance_blocked)
+- 2026-08-20: Benfica - AGF Aarhus (provider_acceptance_blocked)
+- 2026-08-20: Braga - Austria Wien (provider_acceptance_blocked)
+- 2026-08-20: Getafe - Partizan Belgrade (provider_acceptance_blocked)
+- 2026-08-20: Hajduk Split - Raków Czestochowa (provider_acceptance_blocked)
+- 2026-08-20: KS Dynamo Tirana - Pafos (provider_acceptance_blocked)
+- 2026-08-20: Shamrock Rovers - KuPS Kuopio (provider_acceptance_blocked)
+- 2026-08-20: Rayo Vallecano - Deportivo Alaves (provider_acceptance_blocked)
+- 2026-08-21: Real Zaragoza - Athletic Club (provider_acceptance_blocked)
+- 2026-08-21: FC Den Bosch - FC Eindhoven (provider_acceptance_blocked)
+- 2026-08-21: FC Dordrecht - Roda JC Kerkrade (provider_acceptance_blocked)
+- 2026-08-21: FC Emmen - Jong AZ Alkmaar (provider_acceptance_blocked)
+- 2026-08-21: Helmond Sport - RKC Waalwijk (provider_acceptance_blocked)
+- 2026-08-21: MVV Maastricht - FC Volendam (provider_acceptance_blocked)
+- 2026-08-21: Vitesse - Almere City FC (provider_acceptance_blocked)
+- 2026-08-21: Boulogne - Red Star (provider_acceptance_blocked)
+- 2026-08-21: Clermont Foot - Dijon (provider_acceptance_blocked)
