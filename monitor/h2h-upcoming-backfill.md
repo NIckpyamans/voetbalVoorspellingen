@@ -1,9 +1,9 @@
 # Upcoming H2H Backfill
 
-Laatst bijgewerkt: 2026-08-18T08:34:28.340Z
-Gecontroleerd: 32
+Laatst bijgewerkt: 2026-08-18T23:04:30.258Z
+Gecontroleerd: 24
 Gevuld: 0
-Geen directe H2H: 32
+Geen directe H2H: 24
 Errors: 0
 
 ## Aanbeveling
@@ -12,23 +12,23 @@ API-Football blijft quota-bewust geblokkeerd totdat de acceptatietest slaagt; ES
 ## Gevuld
 
 ## Geen Directe H2H
-- 2026-08-20: Motherwell - SC Freiburg (provider_acceptance_blocked)
-- 2026-08-20: Panathinaikos - Hradec Králové (provider_acceptance_blocked)
-- 2026-08-20: Hearts - SK Rapid Wien (provider_acceptance_blocked)
-- 2026-08-20: Rangers - FK Jablonec (provider_acceptance_blocked)
-- 2026-08-20: Benfica - AGF Aarhus (provider_acceptance_blocked)
-- 2026-08-20: Braga - Austria Wien (provider_acceptance_blocked)
-- 2026-08-20: Getafe - Partizan Belgrade (provider_acceptance_blocked)
-- 2026-08-20: Hajduk Split - Raków Czestochowa (provider_acceptance_blocked)
-- 2026-08-20: KS Dynamo Tirana - Pafos (provider_acceptance_blocked)
-- 2026-08-20: Shamrock Rovers - KuPS Kuopio (provider_acceptance_blocked)
-- 2026-08-20: Rayo Vallecano - Deportivo Alaves (provider_acceptance_blocked)
-- 2026-08-21: Real Zaragoza - Athletic Club (provider_acceptance_blocked)
-- 2026-08-21: FC Den Bosch - FC Eindhoven (provider_acceptance_blocked)
-- 2026-08-21: FC Dordrecht - Roda JC Kerkrade (provider_acceptance_blocked)
-- 2026-08-21: FC Emmen - Jong AZ Alkmaar (provider_acceptance_blocked)
-- 2026-08-21: Helmond Sport - RKC Waalwijk (provider_acceptance_blocked)
-- 2026-08-21: MVV Maastricht - FC Volendam (provider_acceptance_blocked)
-- 2026-08-21: Vitesse - Almere City FC (provider_acceptance_blocked)
-- 2026-08-21: Boulogne - Red Star (provider_acceptance_blocked)
-- 2026-08-21: Clermont Foot - Dijon (provider_acceptance_blocked)
+- 2026-08-22: Birmingham City - Bristol City (provider_acceptance_blocked)
+- 2026-08-22: Fortuna Sittard - AZ (provider_acceptance_blocked)
+- 2026-08-22: Everton - Crystal Palace (provider_acceptance_blocked)
+- 2026-08-22: Ipswich Town - Sunderland (provider_acceptance_blocked)
+- 2026-08-22: Nottingham Forest - Leeds United (provider_acceptance_blocked)
+- 2026-08-22: Maritimo - Academico Viseu (provider_acceptance_blocked)
+- 2026-08-22: NAC Breda - Jong Ajax (provider_acceptance_blocked)
+- 2026-08-22: Athletic Club - Sevilla (provider_acceptance_blocked)
+- 2026-08-22: Lens - Auxerre (provider_acceptance_blocked)
+- 2026-08-22: Sparta Rotterdam - Utrecht (provider_acceptance_blocked)
+- 2026-08-22: Inter - Monza (provider_acceptance_blocked)
+- 2026-08-22: Udinese - Como (provider_acceptance_blocked)
+- 2026-08-22: Brentford - Tottenham Hotspur (provider_acceptance_blocked)
+- 2026-08-22: Estoril - Rio Ave (provider_acceptance_blocked)
+- 2026-08-22: Valencia - Celta Vigo (provider_acceptance_blocked)
+- 2026-08-22: Saint-Etienne - Grenoble (provider_acceptance_blocked)
+- 2026-08-22: Le Mans - Brest (provider_acceptance_blocked)
+- 2026-08-22: Nice - Lorient (provider_acceptance_blocked)
+- 2026-08-22: Toulouse - Lyon (provider_acceptance_blocked)
+- 2026-08-22: Troyes - Paris FC (provider_acceptance_blocked)
