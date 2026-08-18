@@ -61,6 +61,41 @@ describe("TheSportsDB team form provider", () => {
     expect(calls).toHaveLength(3);
   });
 
+  it("refreshes a partial recent-form cache before the full cache TTL expires", async () => {
+    const now = Date.parse("2026-08-18T12:00:00Z");
+    const calls = [];
+    const cache = {
+      ajax: {
+        updatedAt: now - 3 * 60 * 60 * 1000,
+        data: { providerTeamId: "old", recentMatches: [{ eventId: "old" }] },
+      },
+    };
+    const fetchImpl = async (url) => {
+      calls.push(url);
+      if (url.includes("searchteams")) return { ok: true, json: async () => ({ teams: [{ idTeam: "1", strTeam: "Ajax" }] }) };
+      return { ok: true, json: async () => ({ results: [] }) };
+    };
+    const data = await fetchTheSportsDbTeamForm({ teamName: "Ajax", cache, nameVariants: () => ["Ajax"], fetchImpl, now });
+    expect(data.providerTeamId).toBe("1");
+    expect(calls).toHaveLength(2);
+  });
+
+  it("keeps a complete ten-match cache for the normal TTL", async () => {
+    const now = Date.parse("2026-08-18T12:00:00Z");
+    const cached = { providerTeamId: "cached", recentMatches: Array.from({ length: 10 }, (_, index) => ({ eventId: String(index) })) };
+    const fetchImpl = async () => {
+      throw new Error("complete cache should avoid provider calls");
+    };
+    const data = await fetchTheSportsDbTeamForm({
+      teamName: "Ajax",
+      cache: { ajax: { updatedAt: now - 3 * 60 * 60 * 1000, data: cached } },
+      nameVariants: () => ["Ajax"],
+      fetchImpl,
+      now,
+    });
+    expect(data).toBe(cached);
+  });
+
   it("only exposes a direct completed fixture as H2H", () => {
     const direct = findTheSportsDbDirectResult(
       { recentMatches: [{ eventId: "e1", date: "2026-07-08", opponent: "Sutjeska", goalsFor: 2, goalsAgainst: 1, score: "2-1", providerTeamName: "Kairat Almaty" }] },

@@ -1,5 +1,6 @@
 const DEFAULT_BASE_URL = "https://www.thesportsdb.com/api/v1/json/123";
 const DEFAULT_TTL_MS = 12 * 60 * 60 * 1000;
+const DEFAULT_PARTIAL_TTL_MS = 2 * 60 * 60 * 1000;
 
 function normalized(value) {
   return String(value || "")
@@ -105,11 +106,15 @@ export async function fetchTheSportsDbTeamForm({
   requestState = null,
   minDelayMs = 250,
   maxSearchVariants = 4,
+  minRecentMatches = 10,
+  partialTtlMs = DEFAULT_PARTIAL_TTL_MS,
 }) {
   const key = normalized(teamName);
   if (!key || typeof fetchImpl !== "function") return null;
   const cached = cache?.[key];
-  if (cached?.data && now - Number(cached.updatedAt || 0) < DEFAULT_TTL_MS) return cached.data;
+  const cachedMatchCount = Number(cached?.data?.recentMatches?.length || 0);
+  const cacheTtl = cachedMatchCount >= minRecentMatches ? DEFAULT_TTL_MS : partialTtlMs;
+  if (cached?.data && now - Number(cached.updatedAt || 0) < cacheTtl) return cached.data;
   if (requestState?.blockedUntil > now || (requestState?.max && requestState.count >= requestState.max)) return null;
   try {
     if (requestState) {

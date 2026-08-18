@@ -13,7 +13,9 @@ const REQUEST_TIMEOUT_MS = Math.max(1000, Number(process.env.FORM_ENRICHMENT_REQ
 const TEAM_TIMEOUT_MS = Math.max(1000, Number(process.env.FORM_ENRICHMENT_TEAM_TIMEOUT_MS || 7000));
 const RUN_BUDGET_MS = Math.max(10000, Number(process.env.FORM_ENRICHMENT_RUN_BUDGET_MS || 90000));
 const SUCCESS_CACHE_TTL_MS = 12 * 60 * 60 * 1000;
+const PARTIAL_CACHE_TTL_MS = 2 * 60 * 60 * 1000;
 const UNAVAILABLE_CACHE_TTL_MS = 2 * 60 * 60 * 1000;
+const TARGET_FORM_MATCHES = Math.max(5, Number(process.env.FORM_ENRICHMENT_TARGET_MATCHES || 10));
 const CACHE_FILE = path.join(ROOT, "data", "team-form-cache.json");
 const REPORT_FILE = path.join(ROOT, "monitor", "upcoming-team-form-enrichment.json");
 
@@ -76,6 +78,7 @@ const requestState = { count: 0, max: MAX_TEAMS, lastAt: 0, blockedUntil: 0 };
 const report = {
   generatedAt: new Date().toISOString(),
   daysAhead: DAYS_AHEAD,
+  targetMatchesPerTeam: TARGET_FORM_MATCHES,
   candidates: teamNames.size,
   checked: 0,
   enriched: 0,
@@ -125,7 +128,10 @@ const pendingTeams = [...teamNames]
   .sort()
   .filter((teamName) => {
     const existing = cache[normalize(teamName)];
-    const cacheTtl = existing?.data ? SUCCESS_CACHE_TTL_MS : UNAVAILABLE_CACHE_TTL_MS;
+    const recentCount = Number(existing?.data?.recentMatches?.length || 0);
+    const cacheTtl = existing?.data
+      ? recentCount >= TARGET_FORM_MATCHES ? SUCCESS_CACHE_TTL_MS : PARTIAL_CACHE_TTL_MS
+      : UNAVAILABLE_CACHE_TTL_MS;
     if (!existing?.updatedAt || now - Number(existing.updatedAt) >= cacheTtl) return true;
     report.skippedFresh += 1;
     return false;
@@ -147,6 +153,8 @@ for (const teamName of pendingTeams) {
     requestState,
     fetchImpl: fetchWithTimeout,
     maxSearchVariants: 1,
+    minRecentMatches: TARGET_FORM_MATCHES,
+    partialTtlMs: PARTIAL_CACHE_TTL_MS,
   });
   if (profile?.recentMatches?.length) {
     report.enriched += 1;

@@ -10,7 +10,9 @@ const DAYS_AHEAD = Math.max(1, Number(process.env.SQUAD_ENRICHMENT_DAYS_AHEAD ||
 const MAX_TEAMS = Math.max(1, Number(process.env.SQUAD_ENRICHMENT_MAX_TEAMS || 6));
 const REQUEST_TIMEOUT_MS = Math.max(1000, Number(process.env.SQUAD_ENRICHMENT_REQUEST_TIMEOUT_MS || 6000));
 const REFRESH_TTL_MS = Math.max(60 * 60 * 1000, Number(process.env.SQUAD_ENRICHMENT_REFRESH_TTL_MS || 48 * 60 * 60 * 1000));
+const PARTIAL_REFRESH_TTL_MS = Math.max(60 * 60 * 1000, Number(process.env.SQUAD_ENRICHMENT_PARTIAL_REFRESH_TTL_MS || 6 * 60 * 60 * 1000));
 const UNAVAILABLE_TTL_MS = 6 * 60 * 60 * 1000;
+const TARGET_SQUAD_PLAYERS = Math.max(11, Number(process.env.SQUAD_ENRICHMENT_TARGET_PLAYERS || 18));
 const FORCE_UNAVAILABLE = String(process.env.SQUAD_ENRICHMENT_FORCE_UNAVAILABLE || "false").toLowerCase() === "true";
 const CACHE_FILE = path.join(ROOT, "data", "team-squad-cache.json");
 const TEAMS_FILE = path.join(ROOT, "data", "teams.json");
@@ -173,7 +175,7 @@ for (let offset = 0; offset <= DAYS_AHEAD; offset += 1) {
 }
 
 const now = Date.now();
-const report = { generatedAt: new Date().toISOString(), daysAhead: DAYS_AHEAD, candidates: candidates.size, checked: 0, enriched: 0, unavailable: 0, skippedFresh: 0, rateLimited: false, retryAfterSeconds: 0, byProvider: { TheSportsDB: 0, ESPN: 0, Wikipedia: 0 }, byCompetition: {}, samples: [] };
+const report = { generatedAt: new Date().toISOString(), daysAhead: DAYS_AHEAD, targetPlayersPerTeam: TARGET_SQUAD_PLAYERS, candidates: candidates.size, checked: 0, enriched: 0, unavailable: 0, skippedFresh: 0, rateLimited: false, retryAfterSeconds: 0, byProvider: { TheSportsDB: 0, ESPN: 0, Wikipedia: 0 }, byCompetition: {}, samples: [] };
 const pending = [...candidates.values()]
   .map((candidate) => {
     const existing = cache[candidate.key] || exportedTeams[candidate.key] || null;
@@ -182,7 +184,9 @@ const pending = [...candidates.values()]
   .filter((candidate) => {
     if (FORCE_UNAVAILABLE && candidate.existing?.unavailable) return true;
     const age = now - Date.parse(candidate.existing?.fetchedAt || candidate.existing?.checkedAt || 0);
-    const ttl = candidate.existing?.unavailable ? UNAVAILABLE_TTL_MS : REFRESH_TTL_MS;
+    const ttl = candidate.existing?.unavailable
+      ? UNAVAILABLE_TTL_MS
+      : candidate.playerCount >= TARGET_SQUAD_PLAYERS ? REFRESH_TTL_MS : PARTIAL_REFRESH_TTL_MS;
     if (candidate.existing?.fetchedAt && age < ttl) {
       report.skippedFresh += 1;
       return false;
@@ -198,12 +202,14 @@ const pending = [...candidates.values()]
 
 for (const candidate of pending) {
   report.checked += 1;
-  let profile = null;
-  let provider = "";
+  let sportsDbProfile = null;
+  let espnProfile = null;
+  let wikipediaProfile = null;
+  const providerProfiles = [];
   if (!report.rateLimited) {
     try {
-      profile = await fetchSportsDbSquad(candidate.teamName);
-      if (profile) provider = "TheSportsDB";
+      sportsDbProfile = await fetchSportsDbSquad(candidate.teamName);
+      if (sportsDbProfile) providerProfiles.push({ provider: "TheSportsDB", profile: sportsDbProfile });
     } catch (error) {
       if (error?.code === "provider_rate_limited") {
         report.rateLimited = true;
@@ -213,15 +219,15 @@ for (const candidate of pending) {
       }
     }
   }
-  if (!profile) {
+  if (mergePlayers(candidate.existing?.players, providerProfiles.flatMap((item) => item.profile.players)).length < TARGET_SQUAD_PLAYERS) {
     try {
-      profile = await fetchEspnSquad({
+      espnProfile = await fetchEspnSquad({
       teamName: candidate.teamName,
       leagues: [...candidate.leagues],
       knownTeams: knownEspnTeams,
       fetchJson: (url) => fetchJson(url, { ignoreRateLimit: true }),
       });
-      if (profile) provider = "ESPN";
+      if (espnProfile) providerProfiles.push({ provider: "ESPN", profile: espnProfile });
     } catch (error) {
       if (error?.code === "provider_rate_limited") {
         report.rateLimited = true;
@@ -231,10 +237,17 @@ for (const candidate of pending) {
       }
     }
   }
-  if (!profile) {
-    profile = await fetchWikipediaSquad({ teamName: candidate.teamName, fetchJson: fetchPublicJson });
-    if (profile) provider = "Wikipedia";
+  if (mergePlayers(candidate.existing?.players, providerProfiles.flatMap((item) => item.profile.players)).length < TARGET_SQUAD_PLAYERS) {
+    wikipediaProfile = await fetchWikipediaSquad({ teamName: candidate.teamName, fetchJson: fetchPublicJson });
+    if (wikipediaProfile) providerProfiles.push({ provider: "Wikipedia", profile: wikipediaProfile });
   }
+  const providers = providerProfiles.map((item) => item.provider);
+  const profile = providerProfiles.length
+    ? {
+        providerTeamName: providerProfiles.find((item) => item.profile?.providerTeamName)?.profile.providerTeamName || candidate.teamName,
+        players: mergePlayers([], providerProfiles.flatMap((item) => item.profile.players)),
+      }
+    : null;
   const competition = [...candidate.leagues][0] || "onbekend";
   report.byCompetition[competition] = report.byCompetition[competition] || { checked: 0, enriched: 0, unavailable: 0 };
   report.byCompetition[competition].checked += 1;
@@ -249,13 +262,13 @@ for (const candidate of pending) {
     ...(candidate.existing || {}),
     key: candidate.key,
     teamName: candidate.teamName,
-    source: [...new Set([candidate.existing?.source, provider].filter(Boolean))].join(" + "),
-    sources: [...new Set([...(candidate.existing?.sources || []), provider])],
+    source: [...new Set([candidate.existing?.source, ...providers].filter(Boolean))].join(" + "),
+    sources: [...new Set([...(candidate.existing?.sources || []), ...providers])],
     sourceIds: {
       ...(candidate.existing?.sourceIds || {}),
-      ...(provider === "TheSportsDB" ? { theSportsDb: profile.providerTeamId } : {}),
-      ...(provider === "ESPN" ? { espn: profile.providerTeamId, espnLeagueCode: profile.leagueCode } : {}),
-      ...(provider === "Wikipedia" ? { wikipediaTitle: profile.pageTitle } : {}),
+      ...(sportsDbProfile ? { theSportsDb: sportsDbProfile.providerTeamId } : {}),
+      ...(espnProfile ? { espn: espnProfile.providerTeamId, espnLeagueCode: espnProfile.leagueCode } : {}),
+      ...(wikipediaProfile ? { wikipediaTitle: wikipediaProfile.pageTitle } : {}),
     },
     playerCount: players.length,
     players,
@@ -266,9 +279,9 @@ for (const candidate of pending) {
     rosterDataQuality: "identity-and-roster-only",
   };
   report.enriched += 1;
-  report.byProvider[provider] += 1;
+  for (const provider of providers) report.byProvider[provider] += 1;
   report.byCompetition[competition].enriched += 1;
-  report.samples.push({ team: candidate.teamName, competition, players: players.length, provider, providerTeam: profile.providerTeamName });
+  report.samples.push({ team: candidate.teamName, competition, players: players.length, provider: providers.join(" + "), providerTeam: profile.providerTeamName });
   await new Promise((resolve) => setTimeout(resolve, 250));
 }
 

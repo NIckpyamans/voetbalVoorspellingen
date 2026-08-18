@@ -11,6 +11,7 @@ import { isHiddenInternationalOrWorldCupEntity } from "../shared/competitionVisi
 import { getKnownProviderIds } from "./worker/team-identity.js";
 import { fetchEspnH2HProfile } from "./providers/espn-h2h-provider.js";
 import { buildProviderAcceptanceState } from "./worker/orchestration-policy.js";
+import { orderH2HCandidatesByLastAttempt } from "./worker/h2h-candidate-priority.js";
 
 const ROOT = process.cwd();
 const OUTPUT_JSON = path.join(ROOT, "monitor", "h2h-upcoming-backfill.json");
@@ -48,6 +49,7 @@ function edgeIds(homeClubId, awayClubId, competitionId) {
 
 function staticCandidates() {
   const now = Date.now();
+  const attemptLedger = readJson(OUTPUT_JSON)?.attemptLedger || {};
   const rows = [];
   for (let offset = 0; offset <= DAYS_AHEAD; offset += 1) {
     const date = new Date(now);
@@ -80,7 +82,7 @@ function staticCandidates() {
       console.warn(`[h2h-backfill] kon ${filePath} niet lezen: ${error?.message || error}`);
     }
   }
-  return rows.slice(0, LIMIT);
+  return orderH2HCandidatesByLastAttempt(rows, attemptLedger).slice(0, LIMIT);
 }
 
 async function storeR2H2H(match, profile) {
@@ -369,6 +371,21 @@ async function main() {
     filledSamples: filled.slice(0, 20),
     noDirectHistorySamples: noDirectHistory.slice(0, 20),
     errorSamples: errors.slice(0, 10),
+    attemptLedger: (() => {
+      const previous = readJson(OUTPUT_JSON)?.attemptLedger || {};
+      const checkedAt = new Date().toISOString();
+      const filledIds = new Set(filled.map((item) => item.matchId));
+      const errorIds = new Set(errors.map((item) => item.matchId));
+      for (const match of candidates) {
+        previous[match.match_id] = {
+          checkedAt,
+          status: filledIds.has(match.match_id) ? "filled" : errorIds.has(match.match_id) ? "error" : "no_direct_history",
+        };
+      }
+      return Object.fromEntries(
+        Object.entries(previous).filter(([, value]) => Date.parse(value?.checkedAt || "") >= Date.now() - 30 * 24 * 60 * 60 * 1000)
+      );
+    })(),
     recommendation:
       !providerConfigured
         ? "API-Football is lokaal niet geconfigureerd. Laat de GitHub workflow draaien met API_KEY_API_FOOTBALL of voeg de key lokaal toe voor handmatige backfill."
