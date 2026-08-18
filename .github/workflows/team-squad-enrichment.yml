@@ -23,7 +23,9 @@ jobs:
     env:
       DATA_BRANCH: codex/step3b-layout
       SQUAD_ENRICHMENT_DAYS_AHEAD: "8"
-      SQUAD_ENRICHMENT_MAX_TEAMS: "12"
+      # Een volledige batch blijft ruim binnen de workflow-timeout en werkt de
+      # selectieachterstand ongeveer twee keer zo snel weg.
+      SQUAD_ENRICHMENT_MAX_TEAMS: "24"
       SQUAD_ENRICHMENT_REQUEST_TIMEOUT_MS: "6000"
       SQUAD_ENRICHMENT_FORCE_UNAVAILABLE: ${{ inputs.retry_unavailable || 'false' }}
     steps:
