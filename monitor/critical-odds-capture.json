@@ -1,31 +1,36 @@
 {
-  "generatedAt": "2026-08-18T13:10:35.478Z",
+  "generatedAt": "2026-08-18T17:46:15.959Z",
   "checked": 6,
-  "captured": 0,
-  "openingCaptured": 0,
-  "prematchCaptured": 0,
-  "closingCaptured": 0,
-  "closingPairs": 0,
+  "captured": 1,
+  "openingCaptured": 1,
+  "prematchCaptured": 1,
+  "closingCaptured": 1,
+  "closingPairs": 1,
   "statuses": {
-    "not_found": 6
+    "available": 1,
+    "not_found": 5
   },
   "attemptStatuses": {
     "the-odds-api:unsupported_sport": 38,
-    "the-odds-api:quota_reserve": 6,
-    "sportmonks:fixture_id_missing": 6
+    "the-odds-api:available": 1,
+    "the-odds-api:not_found": 1,
+    "sportmonks:fixture_id_missing": 5,
+    "the-odds-api:quota_reserve": 4
   },
   "providerStatuses": {
     "the-odds-api": {
       "unsupported_sport": 38,
-      "quota_reserve": 6
+      "available": 1,
+      "not_found": 1,
+      "quota_reserve": 4
     },
     "sportmonks": {
-      "fixture_id_missing": 6
+      "fixture_id_missing": 5
     }
   },
   "providerQuota": {
     "the-odds-api": {
-      "remaining": 41
+      "remaining": 40
     }
   },
   "sportmonksMapped": 0,
@@ -39,10 +44,15 @@
       "league": "Europe - Champions League",
       "homeTeam": "Dinamo Zagreb",
       "awayTeam": "Viking",
-      "minutesBeforeKickoff": 289,
-      "closingWindow": false,
-      "status": "not_found",
-      "sportmonksMapping": "plan_coverage_unavailable"
+      "minutesBeforeKickoff": 14,
+      "closingWindow": true,
+      "status": "captured",
+      "provider": "the-odds-api",
+      "captureRole": "closing",
+      "sportmonksFixtureId": null,
+      "opening": true,
+      "prematch": true,
+      "closing": true
     },
     {
       "matchId": "ss-bbc-2026-08-18-fenerbahce-olympique lyonnais",
@@ -50,8 +60,8 @@
       "league": "Europe - Champions League",
       "homeTeam": "Fenerbahçe",
       "awayTeam": "Olympique Lyonnais",
-      "minutesBeforeKickoff": 289,
-      "closingWindow": false,
+      "minutesBeforeKickoff": 14,
+      "closingWindow": true,
       "status": "not_found",
       "sportmonksMapping": "plan_coverage_unavailable"
     },
@@ -61,7 +71,7 @@
       "league": "Europe - Champions League",
       "homeTeam": "Celtic",
       "awayTeam": "LASK",
-      "minutesBeforeKickoff": 1729,
+      "minutesBeforeKickoff": 1454,
       "closingWindow": false,
       "status": "not_found",
       "sportmonksMapping": "plan_coverage_unavailable"
@@ -72,7 +82,7 @@
       "league": "Europe - Champions League",
       "homeTeam": "Hapoel Be'er Sheva",
       "awayTeam": "Sabah",
-      "minutesBeforeKickoff": 1729,
+      "minutesBeforeKickoff": 1454,
       "closingWindow": false,
       "status": "not_found",
       "sportmonksMapping": "plan_coverage_unavailable"
@@ -83,7 +93,7 @@
       "league": "World - Club Friendlies",
       "homeTeam": "Barcelona",
       "awayTeam": "Al Ahly SC",
-      "minutesBeforeKickoff": 1729,
+      "minutesBeforeKickoff": 1454,
       "closingWindow": false,
       "status": "not_found",
       "sportmonksMapping": "plan_coverage_unavailable"
@@ -94,21 +104,13 @@
       "league": "Spain - LaLiga",
       "homeTeam": "Atletico Madrid",
       "awayTeam": "Malaga",
-      "minutesBeforeKickoff": 1789,
+      "minutesBeforeKickoff": 1514,
       "closingWindow": false,
       "status": "not_found",
       "sportmonksMapping": "plan_coverage_unavailable"
     }
   ],
   "leagueCoverage": [
-    {
-      "league": "Europe - Champions League",
-      "checked": 4,
-      "covered": 0,
-      "partial": 0,
-      "missing": 4,
-      "coverage": 0
-    },
     {
       "league": "Spain - LaLiga",
       "checked": 1,
@@ -124,7 +126,15 @@
       "partial": 0,
       "missing": 1,
       "coverage": 0
+    },
+    {
+      "league": "Europe - Champions League",
+      "checked": 4,
+      "covered": 1,
+      "partial": 0,
+      "missing": 3,
+      "coverage": 0.25
     }
   ],
-  "coverage": 0
+  "coverage": 0.167
 }
