@@ -1,127 +1,30 @@
 {
-  "generatedAt": "2026-08-19T17:44:05.596Z",
-  "checked": 4,
-  "confirmed": 2,
+  "generatedAt": "2026-08-19T18:03:14.267Z",
+  "checked": 1,
+  "confirmed": 0,
   "partial": 1,
-  "missing": 1,
-  "r2Stored": 3,
+  "missing": 0,
+  "r2Stored": 1,
   "playerFixtureStatsCaptured": 0,
   "databaseWritable": false,
   "databaseError": "Server error (HTTP status 402): {\"message\":\"Your project has exceeded the data transfer quota. Upgrade your plan to increase limits.\",\"code\":\"\",\"detail\":null,\"hint\":null,\"position\":null,\"internalPosition\":null,\"internalQuery\":null,\"severity\":\"\",\"where\":null,\"table\":null,\"column\":null,\"schema\":null,\"dataType\":null,\"constraint\":null,\"file\":null,\"line\":null,\"routine\":null,\"neon:retryable\":true}",
   "captureWindows": {
-    "t75": 1,
-    "t45": 0,
-    "t20": 3,
+    "t75": 0,
+    "t45": 1,
+    "t20": 0,
     "outside": 0
   },
   "providers": {
-    "sofascore:schedule_http_403": 4,
-    "fotmob:ok": 3,
-    "fotmob:fixture_not_found": 1,
-    "api-football:account_or_plan_unavailable": 1,
-    "sportmonks:plan_coverage_unavailable": 1
+    "sofascore:schedule_http_403": 1,
+    "fotmob:ok": 1
   },
   "matches": [
-    {
-      "matchId": "ss-bbc-2026-08-19-celtic-lask",
-      "league": "Europe - Champions League",
-      "kickoff": "2026-08-19T18:00:00.000Z",
-      "minutesBeforeKickoff": 15,
-      "captureWindow": "t20",
-      "homeTeam": "Celtic",
-      "awayTeam": "LASK",
-      "provider": "fotmob",
-      "status": "ok",
-      "attempts": [
-        {
-          "provider": "sofascore",
-          "status": "schedule_http_403",
-          "lineup": false,
-          "confirmed": false
-        },
-        {
-          "provider": "fotmob",
-          "status": "ok",
-          "lineup": true,
-          "confirmed": true
-        }
-      ],
-      "confirmed": true,
-      "partial": false
-    },
-    {
-      "matchId": "ss-bbc-2026-08-19-hapoel be er sheva-sabah",
-      "league": "Europe - Champions League",
-      "kickoff": "2026-08-19T18:00:00.000Z",
-      "minutesBeforeKickoff": 15,
-      "captureWindow": "t20",
-      "homeTeam": "Hapoel Be'er Sheva",
-      "awayTeam": "Sabah",
-      "provider": "sportmonks",
-      "status": "plan_coverage_unavailable",
-      "attempts": [
-        {
-          "provider": "sofascore",
-          "status": "schedule_http_403",
-          "lineup": false,
-          "confirmed": false
-        },
-        {
-          "provider": "fotmob",
-          "status": "fixture_not_found",
-          "lineup": false,
-          "confirmed": false
-        },
-        {
-          "provider": "api-football",
-          "status": "account_or_plan_unavailable",
-          "fixtureMapped": false,
-          "lineup": false,
-          "confirmed": false
-        },
-        {
-          "provider": "sportmonks",
-          "status": "plan_coverage_unavailable",
-          "lineup": false,
-          "confirmed": false
-        }
-      ],
-      "confirmed": false,
-      "partial": false
-    },
-    {
-      "matchId": "ss-fotmob-5995928",
-      "league": "World - Club Friendlies",
-      "kickoff": "2026-08-19T18:00:00.000Z",
-      "minutesBeforeKickoff": 15,
-      "captureWindow": "t20",
-      "homeTeam": "Barcelona",
-      "awayTeam": "Al Ahly SC",
-      "provider": "fotmob",
-      "status": "ok",
-      "attempts": [
-        {
-          "provider": "sofascore",
-          "status": "schedule_http_403",
-          "lineup": false,
-          "confirmed": false
-        },
-        {
-          "provider": "fotmob",
-          "status": "ok",
-          "lineup": true,
-          "confirmed": true
-        }
-      ],
-      "confirmed": true,
-      "partial": false
-    },
     {
       "matchId": "ss-fotmob-5868012",
       "league": "Spain - LaLiga",
       "kickoff": "2026-08-19T19:00:00.000Z",
-      "minutesBeforeKickoff": 75,
-      "captureWindow": "t75",
+      "minutesBeforeKickoff": 56,
+      "captureWindow": "t45",
       "homeTeam": "Atletico Madrid",
       "awayTeam": "Malaga",
       "provider": "fotmob",
@@ -152,23 +55,7 @@
       "partial": 1,
       "missing": 0,
       "coverage": 0
-    },
-    {
-      "league": "Europe - Champions League",
-      "checked": 2,
-      "covered": 1,
-      "partial": 0,
-      "missing": 1,
-      "coverage": 0.5
-    },
-    {
-      "league": "World - Club Friendlies",
-      "checked": 1,
-      "covered": 1,
-      "partial": 0,
-      "missing": 0,
-      "coverage": 1
     }
   ],
-  "confirmedCoverage": 0.5
+  "confirmedCoverage": 0
 }
