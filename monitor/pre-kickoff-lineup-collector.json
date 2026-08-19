@@ -1,33 +1,33 @@
 {
-  "generatedAt": "2026-08-19T16:49:04.241Z",
-  "checked": 3,
-  "confirmed": 1,
-  "partial": 0,
-  "missing": 2,
-  "r2Stored": 1,
+  "generatedAt": "2026-08-19T17:44:05.596Z",
+  "checked": 4,
+  "confirmed": 2,
+  "partial": 1,
+  "missing": 1,
+  "r2Stored": 3,
   "playerFixtureStatsCaptured": 0,
   "databaseWritable": false,
   "databaseError": "Server error (HTTP status 402): {\"message\":\"Your project has exceeded the data transfer quota. Upgrade your plan to increase limits.\",\"code\":\"\",\"detail\":null,\"hint\":null,\"position\":null,\"internalPosition\":null,\"internalQuery\":null,\"severity\":\"\",\"where\":null,\"table\":null,\"column\":null,\"schema\":null,\"dataType\":null,\"constraint\":null,\"file\":null,\"line\":null,\"routine\":null,\"neon:retryable\":true}",
   "captureWindows": {
-    "t75": 3,
+    "t75": 1,
     "t45": 0,
-    "t20": 0,
+    "t20": 3,
     "outside": 0
   },
   "providers": {
-    "sofascore:schedule_http_403": 3,
-    "fotmob:ok": 2,
+    "sofascore:schedule_http_403": 4,
+    "fotmob:ok": 3,
     "fotmob:fixture_not_found": 1,
-    "api-football:account_or_plan_unavailable": 2,
-    "sportmonks:plan_coverage_unavailable": 2
+    "api-football:account_or_plan_unavailable": 1,
+    "sportmonks:plan_coverage_unavailable": 1
   },
   "matches": [
     {
       "matchId": "ss-bbc-2026-08-19-celtic-lask",
       "league": "Europe - Champions League",
       "kickoff": "2026-08-19T18:00:00.000Z",
-      "minutesBeforeKickoff": 70,
-      "captureWindow": "t75",
+      "minutesBeforeKickoff": 15,
+      "captureWindow": "t20",
       "homeTeam": "Celtic",
       "awayTeam": "LASK",
       "provider": "fotmob",
@@ -53,8 +53,8 @@
       "matchId": "ss-bbc-2026-08-19-hapoel be er sheva-sabah",
       "league": "Europe - Champions League",
       "kickoff": "2026-08-19T18:00:00.000Z",
-      "minutesBeforeKickoff": 70,
-      "captureWindow": "t75",
+      "minutesBeforeKickoff": 15,
+      "captureWindow": "t20",
       "homeTeam": "Hapoel Be'er Sheva",
       "awayTeam": "Sabah",
       "provider": "sportmonks",
@@ -93,12 +93,12 @@
       "matchId": "ss-fotmob-5995928",
       "league": "World - Club Friendlies",
       "kickoff": "2026-08-19T18:00:00.000Z",
-      "minutesBeforeKickoff": 70,
-      "captureWindow": "t75",
+      "minutesBeforeKickoff": 15,
+      "captureWindow": "t20",
       "homeTeam": "Barcelona",
       "awayTeam": "Al Ahly SC",
-      "provider": "sportmonks",
-      "status": "plan_coverage_unavailable",
+      "provider": "fotmob",
+      "status": "ok",
       "attempts": [
         {
           "provider": "sofascore",
@@ -109,34 +109,48 @@
         {
           "provider": "fotmob",
           "status": "ok",
+          "lineup": true,
+          "confirmed": true
+        }
+      ],
+      "confirmed": true,
+      "partial": false
+    },
+    {
+      "matchId": "ss-fotmob-5868012",
+      "league": "Spain - LaLiga",
+      "kickoff": "2026-08-19T19:00:00.000Z",
+      "minutesBeforeKickoff": 75,
+      "captureWindow": "t75",
+      "homeTeam": "Atletico Madrid",
+      "awayTeam": "Malaga",
+      "provider": "fotmob",
+      "status": "ok",
+      "attempts": [
+        {
+          "provider": "sofascore",
+          "status": "schedule_http_403",
           "lineup": false,
           "confirmed": false
         },
         {
-          "provider": "api-football",
-          "status": "account_or_plan_unavailable",
-          "fixtureMapped": false,
-          "lineup": false,
-          "confirmed": false
-        },
-        {
-          "provider": "sportmonks",
-          "status": "plan_coverage_unavailable",
-          "lineup": false,
+          "provider": "fotmob",
+          "status": "ok",
+          "lineup": true,
           "confirmed": false
         }
       ],
       "confirmed": false,
-      "partial": false
+      "partial": true
     }
   ],
   "leagueCoverage": [
     {
-      "league": "World - Club Friendlies",
+      "league": "Spain - LaLiga",
       "checked": 1,
       "covered": 0,
-      "partial": 0,
-      "missing": 1,
+      "partial": 1,
+      "missing": 0,
       "coverage": 0
     },
     {
@@ -146,7 +160,15 @@
       "partial": 0,
       "missing": 1,
       "coverage": 0.5
+    },
+    {
+      "league": "World - Club Friendlies",
+      "checked": 1,
+      "covered": 1,
+      "partial": 0,
+      "missing": 0,
+      "coverage": 1
     }
   ],
-  "confirmedCoverage": 0.333
+  "confirmedCoverage": 0.5
 }
