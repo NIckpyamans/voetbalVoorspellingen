@@ -1,5 +1,5 @@
 {
-  "checkedAt": "2026-08-20T14:30:46.487Z",
+  "checkedAt": "2026-08-20T14:39:27.528Z",
   "oddsApi": {
     "configured": true,
     "valid": true,
@@ -87,6 +87,7 @@
     "configured": true,
     "valid": true,
     "status": 200,
+    "competitionsAvailable": 1019,
     "competitions": [
       "Germany - 2. Bundesliga",
       "Australia - A-League Men",
@@ -119,8 +120,53 @@
       "Netherlands - KNVB Beker",
       "Netherlands - KNVB Beker"
     ],
-    "freeScopeDetected": 61,
+    "freeScopeDetected": 2,
     "quota": {},
+    "testedLeague": {
+      "id": "153",
+      "name": "Championship",
+      "country": "England"
+    },
+    "testedFixture": {
+      "id": "812111",
+      "home": "Lincoln",
+      "away": "Portsmouth",
+      "date": "2026-08-22"
+    },
+    "endpointAccess": {
+      "events": {
+        "tested": true,
+        "valid": true,
+        "status": 200,
+        "records": 36,
+        "quota": {},
+        "errorCode": null
+      },
+      "lineups": {
+        "tested": true,
+        "valid": true,
+        "status": 200,
+        "records": 1,
+        "quota": {},
+        "errorCode": null
+      },
+      "odds": {
+        "tested": true,
+        "valid": true,
+        "status": 200,
+        "records": 14,
+        "quota": {},
+        "errorCode": null
+      },
+      "h2h": {
+        "tested": true,
+        "valid": true,
+        "status": 200,
+        "records": 3,
+        "quota": {},
+        "errorCode": null
+      }
+    },
     "policy": "Alleen gebruiken voor Championship en Ligue 2; 180 calls/uur/endpoint volgens providerplan."
   },
   "goalApi": {
@@ -130,7 +176,7 @@
     "records": 50,
     "quota": {
       "x-ratelimit-limit": "1000",
-      "x-ratelimit-remaining": "999",
+      "x-ratelimit-remaining": "966",
       "x-ratelimit-reset": "1787270400"
     },
     "accepted": false,
@@ -152,13 +198,13 @@
     "status": 200,
     "records": 1,
     "rateLimit": {
-      "resets_in_seconds": 3600,
-      "remaining": 2999,
+      "resets_in_seconds": 3076,
+      "remaining": 2998,
       "requested_entity": "League"
     },
     "quota": {
       "x-ratelimit-limit": "3000",
-      "x-ratelimit-remaining": "2999"
+      "x-ratelimit-remaining": "2998"
     },
     "endpointAccess": {
       "leagues": {
@@ -169,13 +215,13 @@
         "firstName": "Superliga",
         "hasOddsFlag": false,
         "rateLimit": {
-          "resets_in_seconds": 3600,
-          "remaining": 2999,
+          "resets_in_seconds": 3076,
+          "remaining": 2998,
           "requested_entity": "League"
         },
         "quota": {
           "x-ratelimit-limit": "3000",
-          "x-ratelimit-remaining": "2999"
+          "x-ratelimit-remaining": "2998"
         },
         "errorCode": null
       },
@@ -187,13 +233,13 @@
         "firstName": "Esbjerg vs OB",
         "hasOddsFlag": false,
         "rateLimit": {
-          "resets_in_seconds": 3600,
-          "remaining": 2999,
+          "resets_in_seconds": 3077,
+          "remaining": 2996,
           "requested_entity": "Fixture"
         },
         "quota": {
           "x-ratelimit-limit": "3000",
-          "x-ratelimit-remaining": "2999"
+          "x-ratelimit-remaining": "2996"
         },
         "errorCode": null
       },
@@ -205,13 +251,13 @@
         "firstName": null,
         "hasOddsFlag": false,
         "rateLimit": {
-          "resets_in_seconds": 3600,
-          "remaining": 2998,
+          "resets_in_seconds": 3076,
+          "remaining": 2995,
           "requested_entity": "Fixture"
         },
         "quota": {
           "x-ratelimit-limit": "3000",
-          "x-ratelimit-remaining": "2998"
+          "x-ratelimit-remaining": "2995"
         },
         "errorCode": null
       },
@@ -223,13 +269,13 @@
         "firstName": "St. Johnstone vs Celtic",
         "hasOddsFlag": true,
         "rateLimit": {
-          "resets_in_seconds": 3599,
-          "remaining": 2997,
+          "resets_in_seconds": 3076,
+          "remaining": 2994,
           "requested_entity": "Fixture"
         },
         "quota": {
           "x-ratelimit-limit": "3000",
-          "x-ratelimit-remaining": "2997"
+          "x-ratelimit-remaining": "2994"
         },
         "errorCode": null
       },
@@ -243,13 +289,13 @@
         "firstName": null,
         "hasOddsFlag": false,
         "rateLimit": {
-          "resets_in_seconds": 3600,
-          "remaining": 2999,
+          "resets_in_seconds": 3076,
+          "remaining": 2996,
           "requested_entity": "Odd"
         },
         "quota": {
           "x-ratelimit-limit": "3000",
-          "x-ratelimit-remaining": "2999"
+          "x-ratelimit-remaining": "2996"
         },
         "errorCode": null
       },
@@ -263,13 +309,13 @@
         "firstName": "1",
         "hasOddsFlag": false,
         "rateLimit": {
-          "resets_in_seconds": 3599,
-          "remaining": 2998,
+          "resets_in_seconds": 3076,
+          "remaining": 2995,
           "requested_entity": "Odd"
         },
         "quota": {
           "x-ratelimit-limit": "3000",
-          "x-ratelimit-remaining": "2998"
+          "x-ratelimit-remaining": "2995"
         },
         "errorCode": null
       },
@@ -282,13 +328,13 @@
         "firstName": null,
         "hasOddsFlag": false,
         "rateLimit": {
-          "resets_in_seconds": 3599,
-          "remaining": 2997,
+          "resets_in_seconds": 3076,
+          "remaining": 2994,
           "requested_entity": "Odd"
         },
         "quota": {
           "x-ratelimit-limit": "3000",
-          "x-ratelimit-remaining": "2997"
+          "x-ratelimit-remaining": "2994"
         },
         "errorCode": null
       }
