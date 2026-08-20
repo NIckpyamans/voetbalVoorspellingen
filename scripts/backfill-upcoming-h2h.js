@@ -13,6 +13,7 @@ import { fetchEspnH2HProfile } from "./providers/espn-h2h-provider.js";
 import { buildProviderAcceptanceState } from "./worker/orchestration-policy.js";
 import { orderH2HCandidatesByCompetition } from "./worker/h2h-candidate-priority.js";
 import { getCompetitionAgent } from "./worker/competition-agents.js";
+import { readLocalH2HProfile } from "./worker/local-h2h-history.js";
 
 const ROOT = process.cwd();
 const OUTPUT_JSON = path.join(ROOT, "monitor", "h2h-upcoming-backfill.json");
@@ -126,14 +127,20 @@ async function upsertH2HEdge(sql, match, profile) {
   const draws = oriented.length - homeWins - awayWins;
   const weightedRecentBalance = Number(((homeWins - awayWins) / Math.max(oriented.length, 1)).toFixed(3));
   const profileSource = String(profile.source || "h2h-backfill").toLowerCase();
-  const provider = profileSource.includes("database") ? "database-results" : profileSource.includes("espn") ? "espn-team-schedule" : "api-football";
+  const provider = profileSource.includes("database")
+    ? "database-results"
+    : profileSource.includes("local immutable")
+      ? "local-reviewed-results"
+      : profileSource.includes("espn")
+        ? "espn-team-schedule"
+        : "api-football";
   const sourceRecordId = `${provider}-h2h:${digest(`${match.match_id}|${profile.asOf || ""}|${JSON.stringify(oriented)}`)}`;
 
   await sql.query(
     `insert into source_records(source_record_id,provider,entity_type,entity_key,fetched_at,source_timestamp,content_hash,trust_score,payload)
      values($1,$2,'h2h',$3,now(),$4,$5,$6,$7::jsonb)
      on conflict(source_record_id) do update set fetched_at=excluded.fetched_at,payload=excluded.payload`,
-    [sourceRecordId, provider, match.match_id, profile.asOf || new Date().toISOString(), digest(JSON.stringify(oriented), 40), provider === "database-results" ? 0.94 : provider === "espn-team-schedule" ? 0.82 : 0.86, JSON.stringify({ matchId: match.match_id, source: profile.source, results: oriented })]
+    [sourceRecordId, provider, match.match_id, profile.asOf || new Date().toISOString(), digest(JSON.stringify(oriented), 40), ["database-results", "local-reviewed-results"].includes(provider) ? 0.94 : provider === "espn-team-schedule" ? 0.82 : 0.86, JSON.stringify({ matchId: match.match_id, source: profile.source, results: oriented })]
   );
 
   await sql.query(
@@ -297,7 +304,10 @@ async function main() {
         });
         continue;
       }
-      const profile = apiFootballEnabled
+      const localProfile = readLocalH2HProfile(ROOT, match);
+      const profile = localProfile?.results?.length
+        ? localProfile
+        : apiFootballEnabled
         ? await fetchApiFootballH2HProfile({
             store,
             homeName: match.home_team_name,
