@@ -141,15 +141,56 @@ async function auditApiFootballCom() {
   const key = getApiFootballComKey();
   if (!key) return { configured: false, valid: false, status: "missing", scope: ["England - Championship", "France - Ligue 2"] };
   try {
-    const { response, payload } = await requestJson(`https://apiv3.apifootball.com/?action=get_leagues&APIkey=${encodeURIComponent(key)}`);
+    const encodedKey = encodeURIComponent(key);
+    const { response, payload } = await requestJson(`https://apiv3.apifootball.com/?action=get_leagues&APIkey=${encodedKey}`);
     const leagues = Array.isArray(payload) ? payload : [];
+    const freeLeagues = leagues.filter((league) => {
+      const country = String(league.country_name || "").toLowerCase();
+      const name = String(league.league_name || "").toLowerCase();
+      return (country === "england" && name === "championship") || (country === "france" && name === "ligue 2");
+    });
+    const selectedLeague = freeLeagues[0] || leagues.find((league) => /championship|ligue 2/i.test(String(league.league_name || ""))) || null;
+    const today = new Date();
+    const until = new Date(today);
+    until.setUTCDate(until.getUTCDate() + 14);
+    const eventsUrl = selectedLeague
+      ? `https://apiv3.apifootball.com/?action=get_events&from=${today.toISOString().slice(0, 10)}&to=${until.toISOString().slice(0, 10)}&league_id=${encodeURIComponent(selectedLeague.league_id)}&APIkey=${encodedKey}`
+      : null;
+    const eventsResult = eventsUrl ? await requestJson(eventsUrl) : null;
+    const events = Array.isArray(eventsResult?.payload) ? eventsResult.payload : [];
+    const fixture = events.find((event) => event?.match_id) || null;
+    const matchId = fixture?.match_id || null;
+    const homeId = fixture?.match_hometeam_id || null;
+    const awayId = fixture?.match_awayteam_id || null;
+    const [lineupsResult, oddsResult, h2hResult] = await Promise.all([
+      matchId ? requestJson(`https://apiv3.apifootball.com/?action=get_lineups&match_id=${encodeURIComponent(matchId)}&APIkey=${encodedKey}`) : null,
+      matchId ? requestJson(`https://apiv3.apifootball.com/?action=get_odds&match_id=${encodeURIComponent(matchId)}&APIkey=${encodedKey}`) : null,
+      homeId && awayId ? requestJson(`https://apiv3.apifootball.com/?action=get_H2H&firstTeamId=${encodeURIComponent(homeId)}&secondTeamId=${encodeURIComponent(awayId)}&APIkey=${encodedKey}`) : null,
+    ]);
+    const compact = (result) => {
+      if (!result) return { tested: false, valid: false, status: "skipped" };
+      const rows = Array.isArray(result.payload) ? result.payload : result.payload && typeof result.payload === "object" ? Object.keys(result.payload) : [];
+      const errorCode = !result.response.ok
+        ? String(result.payload?.message || result.payload?.error || `HTTP ${result.response.status}`).slice(0, 160)
+        : null;
+      return { tested: true, valid: result.response.ok && rows.length > 0, status: result.response.status, records: rows.length, quota: quotaHeaders(result.response), errorCode };
+    };
     return {
       configured: true,
       valid: response.ok && leagues.length > 0,
       status: response.status,
+      competitionsAvailable: leagues.length,
       competitions: leagues.map((league) => `${league.country_name} - ${league.league_name}`).slice(0, 30),
-      freeScopeDetected: leagues.filter((league) => /championship|ligue 2/i.test(String(league.league_name || ""))).length,
+      freeScopeDetected: freeLeagues.length,
       quota: quotaHeaders(response),
+      testedLeague: selectedLeague ? { id: selectedLeague.league_id, name: selectedLeague.league_name, country: selectedLeague.country_name } : null,
+      testedFixture: fixture ? { id: matchId, home: fixture.match_hometeam_name, away: fixture.match_awayteam_name, date: fixture.match_date } : null,
+      endpointAccess: {
+        events: compact(eventsResult),
+        lineups: compact(lineupsResult),
+        odds: compact(oddsResult),
+        h2h: compact(h2hResult),
+      },
       policy: "Alleen gebruiken voor Championship en Ligue 2; 180 calls/uur/endpoint volgens providerplan.",
     };
   } catch (error) {

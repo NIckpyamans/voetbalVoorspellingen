@@ -41,20 +41,31 @@ function localFixtures() {
 }
 
 async function requestDate(date, apiKey) {
-  const response = await fetch(`https://api.goal-api.com/v1/fixtures/date/${date}`, {
-    headers: { Accept: "application/json", Authorization: `Bearer ${apiKey}` },
-  });
-  const payload = await response.json().catch(() => null);
-  return {
-    ok: response.ok,
-    status: response.status,
-    rows: Array.isArray(payload?.data) ? payload.data : Array.isArray(payload) ? payload : [],
-    limits: {
+  const rows = [];
+  const maximumPages = Math.max(1, Math.min(10, Number(process.env.GOAL_API_MAX_PAGES_PER_DATE || 5)));
+  let status = 0;
+  let limits = null;
+  let pages = 0;
+  let hasMore = true;
+  for (let page = 0; page < maximumPages && hasMore; page += 1) {
+    const offset = page * 100;
+    const response = await fetch(`https://api.goal-api.com/v1/fixtures/date/${date}?limit=100&offset=${offset}`, {
+      headers: { Accept: "application/json", Authorization: `Bearer ${apiKey}` },
+    });
+    const payload = await response.json().catch(() => null);
+    status = response.status;
+    limits = {
       remaining: response.headers.get("x-ratelimit-remaining"),
       limit: response.headers.get("x-ratelimit-limit"),
       dailyRemaining: response.headers.get("x-ratelimit-daily-remaining"),
-    },
-  };
+    };
+    pages += 1;
+    if (!response.ok) return { ok: false, status, rows, limits, pages, hasMore: false };
+    rows.push(...(Array.isArray(payload?.data) ? payload.data : Array.isArray(payload) ? payload : []));
+    hasMore = Boolean(payload?.pagination?.hasMore);
+    if (!hasMore) break;
+  }
+  return { ok: status >= 200 && status < 300, status, rows, limits, pages, hasMore };
 }
 
 function matchFixture(local, providerRows) {
@@ -86,7 +97,7 @@ async function main() {
   for (const date of byDate.keys()) {
     const result = await requestDate(date, apiKey).catch((error) => ({ ok: false, status: "request_failed", rows: [], error: error?.message || String(error) }));
     providerByDate.set(date, result.rows || []);
-    requestStatuses.push({ date, status: result.status, records: result.rows?.length || 0, limits: result.limits || null });
+    requestStatuses.push({ date, status: result.status, records: result.rows?.length || 0, pages: result.pages || 0, truncated: Boolean(result.hasMore), limits: result.limits || null });
   }
   const segments = Object.fromEntries(SEGMENTS.map((key) => [key, { checked: 0, mapped: 0 }]));
   const samples = [];
