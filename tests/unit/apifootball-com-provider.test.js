@@ -3,7 +3,9 @@ import {
   apiFootballComSupportsLeague,
   apiFootballComRequest,
   fetchApiFootballComH2HProfile,
+  fetchApiFootballComOdds,
   normalizeApiFootballComLineup,
+  normalizeApiFootballComOdds,
   resetApiFootballComBudgetForTests,
 } from "../../scripts/providers/apifootball-com-provider.js";
 
@@ -36,5 +38,25 @@ describe("APIfootball.com free competition policy", () => {
     });
     expect(result.url).not.toContain("sensitive-key");
     expect(result.url).toContain("%5Bredacted%5D");
+  });
+
+  it("creates robust 1X2 consensus odds", () => {
+    const odds = normalizeApiFootballComOdds([
+      { match_id: "42", odd_bookmakers: "A", odd_1: "2.0", odd_x: "3.1", odd_2: "4.0", odd_date: "2026-08-20 10:00:00" },
+      { match_id: "42", odd_bookmakers: "B", odd_1: "2.2", odd_x: "3.3", odd_2: "3.8", odd_date: "2026-08-20 11:00:00" },
+    ], "42", "2026-08-20T11:05:00.000Z");
+    expect(odds).toMatchObject({ home: 2.1, draw: 3.2, away: 3.9, provider: "apifootball-com" });
+  });
+
+  it("resolves a supported fixture before requesting its odds", async () => {
+    resetApiFootballComBudgetForTests();
+    const fetchImpl = async (url) => {
+      const action = new URL(url).searchParams.get("action");
+      if (action === "get_events") return new Response(JSON.stringify([{ match_id: "42", match_hometeam_name: "Leeds", match_awayteam_name: "Derby" }]), { status: 200 });
+      return new Response(JSON.stringify([{ match_id: "42", odd_bookmakers: "A", odd_1: "2", odd_x: "3", odd_2: "4" }]), { status: 200 });
+    };
+    const result = await fetchApiFootballComOdds({ league: "England - Championship", homeTeam: "Leeds", awayTeam: "Derby", kickoff: "2026-08-22T14:00:00.000Z" }, { apiKey: "test", fetchImpl, generatedAt: "2026-08-20T12:00:00.000Z" });
+    expect(result.status).toBe("available");
+    expect(result.oddsAtPrediction).toMatchObject({ home: 2, draw: 3, away: 4 });
   });
 });

@@ -80,8 +80,8 @@ export async function resolveApiFootballComFixture(match, options = {}) {
   let best = null;
   for (const row of eventRows(result.payload)) {
     const score = Math.min(
-      similarity(match.home_team_name || match.homeTeamName, row.match_hometeam_name),
-      similarity(match.away_team_name || match.awayTeamName, row.match_awayteam_name)
+      similarity(match.home_team_name || match.homeTeamName || match.homeTeam, row.match_hometeam_name),
+      similarity(match.away_team_name || match.awayTeamName || match.awayTeam, row.match_awayteam_name)
     );
     if (score >= 0.82 && (!best || score > best.score)) best = { fixtureId: String(row.match_id), score, row };
   }
@@ -140,6 +140,50 @@ export async function fetchApiFootballComLineup(match, options = {}) {
     status: result.status === "ok" ? "ok" : result.status,
     fixtureId: fixture.fixtureId,
     lineup: result.status === "ok" ? normalizeApiFootballComLineup(result.payload, fixture.fixtureId) : null,
+  };
+}
+
+function median(values) {
+  const sorted = values.map(Number).filter((value) => Number.isFinite(value) && value > 1).sort((left, right) => left - right);
+  if (!sorted.length) return null;
+  const middle = Math.floor(sorted.length / 2);
+  return sorted.length % 2 ? sorted[middle] : Number(((sorted[middle - 1] + sorted[middle]) / 2).toFixed(3));
+}
+
+export function normalizeApiFootballComOdds(payload, fixtureId, capturedAt = new Date().toISOString()) {
+  const rows = (Array.isArray(payload) ? payload : []).filter((row) => String(row.match_id || "") === String(fixtureId || ""));
+  const complete = rows.filter((row) => [row.odd_1, row.odd_x, row.odd_2].every((value) => Number(value) > 1));
+  if (!complete.length) return null;
+  const home = median(complete.map((row) => row.odd_1));
+  const draw = median(complete.map((row) => row.odd_x));
+  const away = median(complete.map((row) => row.odd_2));
+  if (![home, draw, away].every((value) => Number(value) > 1)) return null;
+  return {
+    home,
+    draw,
+    away,
+    bookmaker: `APIfootball.com consensus (${complete.length})`,
+    market: "h2h",
+    provider: "apifootball-com",
+    capturedAt,
+    sourceUpdatedAt: complete.map((row) => row.odd_date).filter(Boolean).sort().at(-1) || null,
+  };
+}
+
+export async function fetchApiFootballComOdds(match, options = {}) {
+  if (!apiFootballComSupportsLeague(match?.league)) return { status: "unsupported_free_league", oddsAtPrediction: null, provider: "apifootball-com" };
+  const fixture = await resolveApiFootballComFixture(match, options);
+  if (!fixture.fixtureId) return { status: fixture.status, oddsAtPrediction: null, provider: "apifootball-com" };
+  const capturedAt = options.generatedAt || new Date().toISOString();
+  const result = await apiFootballComRequest("get_odds", { match_id: fixture.fixtureId }, options);
+  const oddsAtPrediction = result.status === "ok" ? normalizeApiFootballComOdds(result.payload, fixture.fixtureId, capturedAt) : null;
+  return {
+    status: oddsAtPrediction ? "available" : result.status === "ok" ? "not_found" : result.status,
+    oddsAtPrediction,
+    provider: "apifootball-com",
+    fixtureId: fixture.fixtureId,
+    requestMeta: { quota: result.quota || null, fixtureScore: fixture.score || null },
+    reason: oddsAtPrediction ? null : "APIfootball.com gaf geen complete 1X2-odds voor deze wedstrijd.",
   };
 }
 

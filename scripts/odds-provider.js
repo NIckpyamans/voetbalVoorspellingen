@@ -1,4 +1,5 @@
 import { getOddsApiKey, getOddsApiUrlTemplate, getOddsProviderConfigs, getOddsProviderName } from "./provider-env.js";
+import { apiFootballComSupportsLeague, fetchApiFootballComOdds } from "./providers/apifootball-com-provider.js";
 
 const responseCache = new Map();
 const activeSportsCache = new Map();
@@ -371,16 +372,20 @@ export async function fetchOddsAtPrediction(match, options = {}) {
       reason: "Odds ophalen is uitgeschakeld voor deze refreshmodus.",
     };
   }
+  const apiFootballComResult = apiFootballComSupportsLeague(match?.league)
+    ? await fetchApiFootballComOdds(match, options)
+    : null;
+  if (["available", "partial"].includes(apiFootballComResult?.status)) return apiFootballComResult;
   const template = getOddsApiUrlTemplate();
   const apiKey = getOddsApiKey(template);
   const provider = getOddsProviderName(template);
   const providerConfigs = getOddsProviderConfigs();
   if (!providerConfigs.length && !apiKey && !template) {
     return {
-      status: "not_configured",
+      status: apiFootballComResult?.status || "not_configured",
       oddsAtPrediction: null,
-      provider,
-      reason: "Geen ODDS_API_URL_TEMPLATE of ODDS_API_KEY geconfigureerd.",
+      provider: apiFootballComResult?.provider || provider,
+      reason: apiFootballComResult?.reason || "Geen ODDS_API_URL_TEMPLATE of ODDS_API_KEY geconfigureerd.",
     };
   }
   if (!providerConfigs.length && !template) {
