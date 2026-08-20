@@ -1,6 +1,6 @@
 {
   "schemaVersion": "goal-api-acceptance-v1",
-  "checkedAt": "2026-08-20T14:44:54.009Z",
+  "checkedAt": "2026-08-20T15:45:43.298Z",
   "configured": true,
   "accepted": false,
   "enoughTime": false,
@@ -10,25 +10,29 @@
   "requiredDays": 14,
   "aggregate": {
     "domestic": {
-      "checked": 77,
-      "mapped": 64,
-      "coverage": 0.831,
+      "checked": 153,
+      "mapped": 127,
+      "coverage": 0.83,
       "target": 0.8
     },
     "uefa": {
-      "checked": 65,
-      "mapped": 55,
+      "checked": 130,
+      "mapped": 110,
       "coverage": 0.846,
       "target": 0.8
     },
     "friendly": {
-      "checked": 1,
-      "mapped": 1,
+      "checked": 2,
+      "mapped": 2,
       "coverage": 1,
       "target": 0.6
     }
   },
-  "promotionMode": "manual_after_gate",
+  "promotionMode": "waiting_for_14_day_gate",
+  "enabledFeatures": [],
+  "disabledFeatures": [
+    "odds"
+  ],
   "history": [
     {
       "checkedAt": "2026-08-20T14:30:50.820Z",
@@ -379,6 +383,161 @@
           "records": 1,
           "available": true,
           "remaining": "929",
+          "errorCode": null
+        }
+      }
+    },
+    {
+      "measurementVersion": "goal-pagination-v2",
+      "checkedAt": "2026-08-20T15:45:43.298Z",
+      "providerReachable": true,
+      "checked": 142,
+      "mapped": 119,
+      "segments": {
+        "domestic": {
+          "checked": 76,
+          "mapped": 63
+        },
+        "uefa": {
+          "checked": 65,
+          "mapped": 55
+        },
+        "friendly": {
+          "checked": 1,
+          "mapped": 1
+        }
+      },
+      "requestStatuses": [
+        {
+          "date": "2026-08-20",
+          "status": 200,
+          "records": 206,
+          "pages": 3,
+          "truncated": false,
+          "limits": {
+            "remaining": "925",
+            "limit": "1000",
+            "dailyRemaining": null
+          }
+        },
+        {
+          "date": "2026-08-21",
+          "status": 200,
+          "records": 368,
+          "pages": 4,
+          "truncated": false,
+          "limits": {
+            "remaining": "921",
+            "limit": "1000",
+            "dailyRemaining": null
+          }
+        },
+        {
+          "date": "2026-08-22",
+          "status": 200,
+          "records": 1000,
+          "pages": 10,
+          "truncated": true,
+          "limits": {
+            "remaining": "911",
+            "limit": "1000",
+            "dailyRemaining": null
+          }
+        },
+        {
+          "date": "2026-08-23",
+          "status": 200,
+          "records": 735,
+          "pages": 8,
+          "truncated": false,
+          "limits": {
+            "remaining": "903",
+            "limit": "1000",
+            "dailyRemaining": null
+          }
+        },
+        {
+          "date": "2026-08-24",
+          "status": 200,
+          "records": 139,
+          "pages": 2,
+          "truncated": false,
+          "limits": {
+            "remaining": "901",
+            "limit": "1000",
+            "dailyRemaining": null
+          }
+        },
+        {
+          "date": "2026-08-25",
+          "status": 200,
+          "records": 202,
+          "pages": 3,
+          "truncated": false,
+          "limits": {
+            "remaining": "898",
+            "limit": "1000",
+            "dailyRemaining": null
+          }
+        },
+        {
+          "date": "2026-08-26",
+          "status": 200,
+          "records": 298,
+          "pages": 3,
+          "truncated": false,
+          "limits": {
+            "remaining": "895",
+            "limit": "1000",
+            "dailyRemaining": null
+          }
+        }
+      ],
+      "endpointAccess": {
+        "testedFixtureId": "cmsp4lkwxty75pn06gk3qzzod",
+        "fixture": {
+          "tested": true,
+          "valid": true,
+          "status": 200,
+          "records": 1,
+          "available": true,
+          "remaining": "894",
+          "errorCode": null
+        },
+        "lineups": {
+          "tested": true,
+          "valid": true,
+          "status": 200,
+          "records": 1,
+          "available": true,
+          "remaining": "893",
+          "errorCode": null
+        },
+        "statistics": {
+          "tested": true,
+          "valid": true,
+          "status": 200,
+          "records": 1,
+          "available": true,
+          "remaining": "892",
+          "errorCode": null
+        },
+        "odds": {
+          "tested": true,
+          "valid": false,
+          "status": 403,
+          "records": 0,
+          "available": false,
+          "remaining": null,
+          "errorCode": "HTTP 403"
+        },
+        "h2h": {
+          "tested": true,
+          "valid": true,
+          "status": 200,
+          "records": 1,
+          "available": true,
+          "remaining": "891",
           "errorCode": null
         }
       }
