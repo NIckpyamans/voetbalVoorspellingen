@@ -7,6 +7,9 @@ const deps = {
     "Netherlands - Eredivisie": { id: 57 },
     "Netherlands - Eerste Divisie": { id: 111 },
   },
+  fotmobCompetitionToLabel: {
+    "Champions League Qualification": "Europe - Champions League",
+  },
   normalizeName: (value) => String(value || "").toLowerCase().replace(/[^a-z0-9]+/g, " ").trim(),
   isWomenContext: () => false,
   isYouthContext: (_league, home, away) => /u-?\d{2}/i.test(`${home} ${away}`),
@@ -70,5 +73,32 @@ describe("FotMob fixture parser", () => {
     expect(events.every((event) => event.tournament.category.name === "Netherlands")).toBe(true);
     expect(events.every((event) => event.leagueLabel === "Netherlands - Eerste Divisie")).toBe(true);
     expect(events.map((event) => event.homeTeam.name)).toEqual(["De Graafschap", "Jong Ajax", "Jong FC Utrecht"]);
+  });
+
+  it("keeps season-specific UEFA qualifier ids by competition name", () => {
+    const qualifierPayload = {
+      leagues: [{
+        id: 937348,
+        name: "Champions League Qualification",
+        matches: [{
+          id: 5987804,
+          statusId: 6,
+          status: { utcTime: "2026-08-19T19:00:00.000Z", finished: true },
+          home: { id: 1020, name: "NEC Nijmegen", score: 1 },
+          away: { id: 8514, name: "Bodø/Glimt", score: 3 },
+        }],
+      }],
+    };
+    const events = parseFotmobScheduledEvents(qualifierPayload, "2026-08-19", {
+      ...deps,
+      toAmsterdamDateKey: () => "2026-08-19",
+    });
+    expect(events).toHaveLength(1);
+    expect(events[0]).toMatchObject({
+      leagueLabel: "Europe - Champions League",
+      status: { type: "finished" },
+      homeScore: { current: 1 },
+      awayScore: { current: 3 },
+    });
   });
 });

@@ -61,6 +61,9 @@ jobs:
         timeout-minutes: 8
         run: node scripts/ci-neon-safe.js -- node scripts/server-worker.js
 
+      - name: Audit competition agents
+        run: npm run monitor:competition-agents
+
       - name: Commit and push data only
         run: |
           BRANCH_NAME="${DATA_BRANCH:-${{ github.ref_name }}}"

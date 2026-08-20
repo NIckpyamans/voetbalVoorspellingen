@@ -1,21 +1,21 @@
 {
-  "version": "2026-07-21",
+  "version": "2026-08-20",
   "policy": "Gebruik per dataveld de bron met de beste betrouwbaarheid en laagste quota-kosten. Backups vullen alleen ontbrekende velden of bevestigen conflicten; ze overschrijven geen primaire waarheid zonder betere timestamp/trust.",
   "fields": {
     "fixtures": {
-      "primary": ["ESPN Scoreboard", "Sofascore"],
-      "backups": ["ESPN Team Schedule", "BBC fixtures", "TheSportsDB", "official club fixtures"],
-      "notes": "Club friendlies worden expliciet via ESPN Team Schedule en curated official club fixtures aangevuld."
+      "primary": ["FotMob", "ESPN Scoreboard", "Sky Sports voor UEFA"],
+      "backups": ["football-data.org", "BBC fixtures", "TheSportsDB", "official club fixtures"],
+      "notes": "Dynamische FotMob-competitie-ID's worden op competitienaam gerouteerd. Club friendlies blijven beperkt tot gevolgde clubs."
     },
     "scores_live_status": {
-      "primary": ["ESPN Scoreboard", "Sofascore"],
-      "backups": ["TheSportsDB", "OpenLigaDB", "BBC fixtures"],
+      "primary": ["FotMob", "ESPN Scoreboard", "Sofascore"],
+      "backups": ["Sky Sports voor UEFA", "TheSportsDB", "OpenLigaDB", "BBC fixtures"],
       "notes": "Live status mag alleen van actuele scoreboard/detailbronnen komen."
     },
     "confirmed_lineups": {
-      "primary": ["Sofascore lineups"],
-      "backups": ["projected-squad-profile", "football-data.org squad"],
-      "notes": "Forza Football is alleen een handmatige controlebron: er is geen publieke API of herbruikbare gratis datalicentie gevonden. Projected lineups tellen als modelinput met penalty, niet als confirmed."
+      "primary": ["FotMob lineups", "Sofascore lineups"],
+      "backups": ["Sportmonks binnen abonnement", "API-Football na geslaagde acceptatietest"],
+      "notes": "T-75, T-45 en T-20 worden automatisch gecontroleerd. Projected lineups blijven apart en tellen nooit als confirmed."
     },
     "availability_injuries_suspensions": {
       "primary": ["Sofascore player status"],
@@ -33,9 +33,9 @@
       "notes": "Er is geen brede gratis, herbruikbare bron voor professionele pre-match spelersratings. Gratis rosterbronnen leveren geen rating; de app gebruikt dan teamsterkte en bevestigde opstelling, geen verzonnen spelersscore."
     },
     "h2h": {
-      "primary": ["API-Football", "OpenFootball"],
-      "backups": ["canonical match history", "football-data.co.uk archive"],
-      "notes": "Voor obscure qualifiers/friendlies blijft H2H soms laag; geen fictieve H2H aanvullen."
+      "primary": ["canonical match history", "football-data.co.uk archive", "OpenFootball"],
+      "backups": ["ESPN team history", "API-Football na geslaagde acceptatietest"],
+      "notes": "De queue wordt eerlijk over competities verdeeld. Eerste ontmoetingen blijven expliciet zonder directe H2H; er wordt niets verzonnen."
     },
     "xg_shots_form": {
       "primary": ["football-data.co.uk", "Understat"],

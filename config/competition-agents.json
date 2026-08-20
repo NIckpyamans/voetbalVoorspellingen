@@ -1,0 +1,69 @@
+{
+  "schemaVersion": "competition-data-agents-v1",
+  "policy": "Een centrale quota-bewuste orchestrator voert per competitie een expliciet bronprofiel uit. Agents verzinnen nooit ontbrekende data.",
+  "sourceStatus": {
+    "fotmob": "active",
+    "sky": "active_uefa",
+    "espn": "active_when_available",
+    "bbc": "fallback",
+    "sofascore": "lineups_and_live_when_available",
+    "football-data-org": "active_rosters_and_fixtures",
+    "football-data-co-uk": "active_history",
+    "openfootball": "active_history",
+    "thesportsdb": "fallback_identity_and_fixtures",
+    "api-football": "blocked_until_acceptance_test_passes",
+    "sportmonks": "restricted_to_subscribed_leagues",
+    "forza": "manual_verification_only",
+    "vi": "manual_verification_only",
+    "unibet": "not_ingested_no_public_licensed_api",
+    "toto": "not_ingested_no_public_licensed_api"
+  },
+  "profiles": {
+    "domestic": {
+      "fixtures": ["fotmob", "espn", "football-data-org", "thesportsdb"],
+      "h2h": ["canonical-history", "football-data-co-uk", "openfootball", "espn", "api-football"],
+      "lineups": ["sofascore", "fotmob", "sportmonks", "api-football"],
+      "rosters": ["football-data-org", "thesportsdb", "sportmonks"],
+      "form": ["canonical-history", "football-data-co-uk", "espn"]
+    },
+    "uefa": {
+      "fixtures": ["sky", "fotmob", "espn", "bbc"],
+      "h2h": ["canonical-history", "espn", "openfootball", "api-football"],
+      "lineups": ["fotmob", "sofascore", "api-football", "sportmonks"],
+      "rosters": ["football-data-org", "thesportsdb", "sportmonks"],
+      "form": ["canonical-history", "espn", "football-data-co-uk"]
+    },
+    "friendly": {
+      "fixtures": ["fotmob", "espn", "official-club", "thesportsdb"],
+      "h2h": ["canonical-history", "espn", "api-football"],
+      "lineups": ["fotmob", "sofascore", "api-football"],
+      "rosters": ["football-data-org", "thesportsdb", "sportmonks"],
+      "form": ["canonical-history", "espn"]
+    }
+  },
+  "targets": {
+    "fixtureSources": 2,
+    "formMatches": 10,
+    "h2hMatches": 5,
+    "rosterPlayers": 18,
+    "captureWindows": ["t75", "t45", "t20"]
+  },
+  "agents": [
+    { "key": "belgium-pro-league-agent", "league": "Belgium - Pro League", "profile": "domestic" },
+    { "key": "england-championship-agent", "league": "England - Championship", "profile": "domestic" },
+    { "key": "england-premier-league-agent", "league": "England - Premier League", "profile": "domestic" },
+    { "key": "champions-league-agent", "league": "Europe - Champions League", "profile": "uefa" },
+    { "key": "conference-league-agent", "league": "Europe - Conference League", "profile": "uefa" },
+    { "key": "europa-league-agent", "league": "Europe - Europa League", "profile": "uefa" },
+    { "key": "france-ligue-1-agent", "league": "France - Ligue 1", "profile": "domestic" },
+    { "key": "france-ligue-2-agent", "league": "France - Ligue 2", "profile": "domestic" },
+    { "key": "germany-bundesliga-agent", "league": "Germany - Bundesliga", "profile": "domestic" },
+    { "key": "italy-serie-a-agent", "league": "Italy - Serie A", "profile": "domestic" },
+    { "key": "italy-serie-b-agent", "league": "Italy - Serie B", "profile": "domestic" },
+    { "key": "netherlands-eerste-divisie-agent", "league": "Netherlands - Eerste Divisie", "profile": "domestic" },
+    { "key": "netherlands-eredivisie-agent", "league": "Netherlands - Eredivisie", "profile": "domestic" },
+    { "key": "portugal-liga-portugal-agent", "league": "Portugal - Liga Portugal", "profile": "domestic" },
+    { "key": "spain-laliga-agent", "league": "Spain - LaLiga", "profile": "domestic" },
+    { "key": "club-friendlies-agent", "league": "World - Club Friendlies", "profile": "friendly" }
+  ]
+}

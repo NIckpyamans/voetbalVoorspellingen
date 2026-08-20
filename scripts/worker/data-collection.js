@@ -615,9 +615,15 @@ export function parseFotmobScheduledEvents(payload, dateISO, deps) {
   const competitionById = new Map(
     Object.entries(deps.fotmobStandingLeagues || {}).map(([label, competition]) => [Number(competition?.id), label])
   );
+  const competitionByName = new Map(
+    Object.entries(deps.fotmobCompetitionToLabel || {}).map(([name, label]) => [deps.normalizeName(name), label])
+  );
   const events = [];
   for (const league of Array.isArray(payload?.leagues) ? payload.leagues : []) {
-    const mappedLeagueLabel = competitionById.get(Number(league?.id)) || null;
+    // Qualifying competitions receive a new FotMob id each season. Name routing
+    // keeps those fixtures visible without weakening the tracked competition filter.
+    const mappedLeagueLabel = competitionById.get(Number(league?.id)) ||
+      competitionByName.get(deps.normalizeName(league?.name)) || null;
     const isFriendly = /club friendl/i.test(String(league?.name || ""));
     if (!mappedLeagueLabel && !isFriendly) continue;
     const leagueLabel = mappedLeagueLabel || "World - Club Friendlies";

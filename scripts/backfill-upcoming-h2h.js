@@ -11,7 +11,8 @@ import { isHiddenInternationalOrWorldCupEntity } from "../shared/competitionVisi
 import { getKnownProviderIds } from "./worker/team-identity.js";
 import { fetchEspnH2HProfile } from "./providers/espn-h2h-provider.js";
 import { buildProviderAcceptanceState } from "./worker/orchestration-policy.js";
-import { orderH2HCandidatesByLastAttempt } from "./worker/h2h-candidate-priority.js";
+import { orderH2HCandidatesByCompetition } from "./worker/h2h-candidate-priority.js";
+import { getCompetitionAgent } from "./worker/competition-agents.js";
 
 const ROOT = process.cwd();
 const OUTPUT_JSON = path.join(ROOT, "monitor", "h2h-upcoming-backfill.json");
@@ -82,7 +83,7 @@ function staticCandidates() {
       console.warn(`[h2h-backfill] kon ${filePath} niet lezen: ${error?.message || error}`);
     }
   }
-  return orderH2HCandidatesByLastAttempt(rows, attemptLedger).slice(0, LIMIT);
+  return orderH2HCandidatesByCompetition(rows, attemptLedger).slice(0, LIMIT);
 }
 
 async function storeR2H2H(match, profile) {
@@ -247,7 +248,8 @@ async function main() {
         )
       order by m.kickoff_at, m.match_id
       limit $2
-    `, [DAYS_AHEAD, LIMIT]);
+    `, [DAYS_AHEAD, LIMIT * 4]);
+    candidates = orderH2HCandidatesByCompetition(candidates, readJson(OUTPUT_JSON)?.attemptLedger || {}).slice(0, LIMIT);
   } catch (error) {
     databaseWritable = false;
     databaseError = error?.message || String(error);
@@ -355,6 +357,13 @@ async function main() {
     generatedAt: new Date().toISOString(),
     daysAhead: DAYS_AHEAD,
     checked: candidates.length,
+    byCompetition: Object.fromEntries([...new Set(candidates.map((match) => match.league || "unknown"))].map((league) => [
+      league,
+      {
+        agent: getCompetitionAgent(league)?.key || "default-agent",
+        checked: candidates.filter((match) => (match.league || "unknown") === league).length,
+      },
+    ])),
     databaseWritable,
     databaseError,
     r2Stored,

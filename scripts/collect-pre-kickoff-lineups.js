@@ -18,6 +18,7 @@ import {
 import { summarizeLeagueCoverage } from "./worker/coverage-summary.js";
 import { findCachedApiFootballFixtureId, readApiFootballFixtureCache } from "./worker/api-football-fixture-cache.js";
 import { sportmonksEligibleFixtures } from "./worker/sportmonks-coverage-policy.js";
+import { getCompetitionAgent, getCompetitionProviderOrder } from "./worker/competition-agents.js";
 
 const ROOT = process.cwd();
 const LOOKAHEAD_MINUTES = Math.max(30, Number(process.env.LINEUP_LOOKAHEAD_MINUTES || 90));
@@ -329,31 +330,38 @@ async function main() {
     const captureWindow = classifyLineupCaptureWindow(minutesBeforeKickoff);
     report.captureWindows[captureWindow] = Number(report.captureWindows[captureWindow] || 0) + 1;
     const attempts = [];
-    let result = await fetchSofaScoreLineup(match);
-    let provider = "sofascore";
-    attempts.push({ provider, status: result.status, lineup: Boolean(result.lineup), confirmed: Boolean(result.lineup?.confirmed) });
-    if (!result.lineup) {
-      result = await fetchFotMobLineup(match);
-      provider = "fotmob";
-      attempts.push({ provider, status: result.status, lineup: Boolean(result.lineup), confirmed: Boolean(result.lineup?.confirmed) });
-    }
-    if (!result.lineup) {
-      const apiFootballUnavailable = providerHealth?.apiFootball?.valid === false;
-      const apiFootballFixtureId = apiFootballUnavailable
-        ? null
-        : match.api_football_fixture_id ||
-          findCachedApiFootballFixtureId(persistedApiFootballFixtureCache, match) ||
-          await resolveApiFootballFixture(match);
-      result = apiFootballUnavailable
-        ? { status: "account_or_plan_unavailable" }
-        : await fetchApiFootballLineup(apiFootballFixtureId);
-      provider = "api-football";
-      attempts.push({ provider, status: result.status, fixtureMapped: Boolean(apiFootballFixtureId), lineup: Boolean(result.lineup), confirmed: Boolean(result.lineup?.confirmed) });
-    }
-    if (!result.lineup) {
-      result = await fetchSportmonksLineup(databaseWritable ? sql : null, match);
-      provider = "sportmonks";
-      attempts.push({ provider, status: result.status, lineup: Boolean(result.lineup), confirmed: Boolean(result.lineup?.confirmed) });
+    let result = { status: "not_attempted", lineup: null };
+    let provider = "none";
+    let apiFootballFixtureId;
+    const fetchers = {
+      sofascore: () => fetchSofaScoreLineup(match),
+      fotmob: () => fetchFotMobLineup(match),
+      "api-football": async () => {
+        const apiFootballUnavailable = providerHealth?.apiFootball?.valid === false;
+        apiFootballFixtureId = apiFootballUnavailable
+          ? null
+          : match.api_football_fixture_id ||
+            findCachedApiFootballFixtureId(persistedApiFootballFixtureCache, match) ||
+            await resolveApiFootballFixture(match);
+        return apiFootballUnavailable
+          ? { status: "account_or_plan_unavailable" }
+          : fetchApiFootballLineup(apiFootballFixtureId);
+      },
+      sportmonks: () => fetchSportmonksLineup(databaseWritable ? sql : null, match),
+    };
+    const providerOrder = getCompetitionProviderOrder(match.league, "lineups", ["sofascore", "fotmob", "api-football", "sportmonks"]);
+    for (const candidateProvider of providerOrder) {
+      if (!fetchers[candidateProvider]) continue;
+      provider = candidateProvider;
+      result = await fetchers[candidateProvider]();
+      attempts.push({
+        provider,
+        status: result.status,
+        ...(provider === "api-football" ? { fixtureMapped: Boolean(apiFootballFixtureId) } : {}),
+        lineup: Boolean(result.lineup),
+        confirmed: Boolean(result.lineup?.confirmed),
+      });
+      if (result.lineup) break;
     }
     for (const attempt of attempts) {
       const key = `${attempt.provider}:${attempt.status}`;
@@ -374,6 +382,7 @@ async function main() {
     report.matches.push({
       matchId: match.match_id,
       league: match.league || null,
+      agent: getCompetitionAgent(match.league)?.key || "default-agent",
       kickoff: match.kickoff_at,
       minutesBeforeKickoff,
       captureWindow,

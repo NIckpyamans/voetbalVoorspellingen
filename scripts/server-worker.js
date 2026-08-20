@@ -1342,6 +1342,21 @@ const SKY_COMPETITION_TO_LABEL = {
   "Club Friendlies": "World - Club Friendlies",
 };
 
+const FOTMOB_COMPETITION_TO_LABEL = {
+  "UEFA Champions League": "Europe - Champions League",
+  "Champions League": "Europe - Champions League",
+  "Champions League Qualification": "Europe - Champions League",
+  "UEFA Champions League Qualifying": "Europe - Champions League",
+  "UEFA Europa League": "Europe - Europa League",
+  "Europa League": "Europe - Europa League",
+  "Europa League Qualification": "Europe - Europa League",
+  "UEFA Europa League Qualifying": "Europe - Europa League",
+  "UEFA Conference League": "Europe - Conference League",
+  "Conference League": "Europe - Conference League",
+  "Conference League Qualification": "Europe - Conference League",
+  "UEFA Conference League Qualifying": "Europe - Conference League",
+};
+
 
 const CURATED_FIXTURE_BACKFILL = [
   // User-verified fixture list. This is a temporary visibility safety net;
@@ -10709,6 +10724,7 @@ async function main() {
     const fotmobEvents = await fetchFotmobScheduledEventsSource(date, {
       trackedTeamNames: trackedCompetitionTeamNames,
       fotmobStandingLeagues: followedFotmobLeagues,
+      fotmobCompetitionToLabel: FOTMOB_COMPETITION_TO_LABEL,
       normalizeName,
       isWomenContext,
       isYouthContext,
