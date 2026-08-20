@@ -10,6 +10,7 @@ import { buildR2ObjectKey, getR2Config, putR2Object } from "../shared/cloudflare
 import { isHiddenInternationalOrWorldCupEntity } from "../shared/competitionVisibility.js";
 import { getKnownProviderIds } from "./worker/team-identity.js";
 import { fetchEspnH2HProfile } from "./providers/espn-h2h-provider.js";
+import { fetchApiFootballComH2HProfile } from "./providers/apifootball-com-provider.js";
 import { buildProviderAcceptanceState } from "./worker/orchestration-policy.js";
 import { orderH2HCandidatesByCompetition } from "./worker/h2h-candidate-priority.js";
 import { getCompetitionAgent } from "./worker/competition-agents.js";
@@ -133,6 +134,8 @@ async function upsertH2HEdge(sql, match, profile) {
       ? "local-reviewed-results"
       : profileSource.includes("espn")
         ? "espn-team-schedule"
+        : profileSource.includes("apifootball-com")
+          ? "apifootball-com"
         : "api-football";
   const sourceRecordId = `${provider}-h2h:${digest(`${match.match_id}|${profile.asOf || ""}|${JSON.stringify(oriented)}`)}`;
 
@@ -305,9 +308,16 @@ async function main() {
         continue;
       }
       const localProfile = readLocalH2HProfile(ROOT, match);
+      const apiFootballComProfile = localProfile?.results?.length ? null : await fetchApiFootballComH2HProfile({
+        homeName: match.home_team_name,
+        awayName: match.away_team_name,
+        leagueLabel: match.league,
+      });
       const profile = localProfile?.results?.length
         ? localProfile
-        : apiFootballEnabled
+        : apiFootballComProfile?.results?.length
+          ? apiFootballComProfile
+          : apiFootballEnabled
         ? await fetchApiFootballH2HProfile({
             store,
             homeName: match.home_team_name,
@@ -318,7 +328,7 @@ async function main() {
             awayProviderIds: getKnownProviderIds(match.away_team_name),
             leagueLabel: match.league,
           })
-        : null;
+          : null;
       const espnProfile = profile?.results?.length ? null : await fetchEspnH2HProfile({
         store,
         homeName: match.home_team_name,

@@ -4,6 +4,7 @@ import fs from "fs";
 import path from "path";
 import { fetchEspnSquad } from "./providers/espn-squad-provider.js";
 import { fetchWikipediaSquad } from "./providers/wikipedia-squad-provider.js";
+import { fetchTransfermarktDatasetSquad } from "./providers/transfermarkt-squad-provider.js";
 
 const ROOT = process.cwd();
 const DAYS_AHEAD = Math.max(1, Number(process.env.SQUAD_ENRICHMENT_DAYS_AHEAD || 8));
@@ -175,7 +176,7 @@ for (let offset = 0; offset <= DAYS_AHEAD; offset += 1) {
 }
 
 const now = Date.now();
-const report = { generatedAt: new Date().toISOString(), daysAhead: DAYS_AHEAD, targetPlayersPerTeam: TARGET_SQUAD_PLAYERS, candidates: candidates.size, checked: 0, enriched: 0, unavailable: 0, skippedFresh: 0, rateLimited: false, retryAfterSeconds: 0, byProvider: { TheSportsDB: 0, ESPN: 0, Wikipedia: 0 }, byCompetition: {}, samples: [] };
+const report = { generatedAt: new Date().toISOString(), daysAhead: DAYS_AHEAD, targetPlayersPerTeam: TARGET_SQUAD_PLAYERS, candidates: candidates.size, checked: 0, enriched: 0, unavailable: 0, skippedFresh: 0, rateLimited: false, retryAfterSeconds: 0, byProvider: { "Transfermarkt Datasets": 0, TheSportsDB: 0, ESPN: 0, Wikipedia: 0 }, byCompetition: {}, samples: [] };
 const pending = [...candidates.values()]
   .map((candidate) => {
     const existing = cache[candidate.key] || exportedTeams[candidate.key] || null;
@@ -206,6 +207,8 @@ for (const candidate of pending) {
   let espnProfile = null;
   let wikipediaProfile = null;
   const providerProfiles = [];
+  const transfermarktProfile = fetchTransfermarktDatasetSquad({ teamName: candidate.teamName, root: ROOT });
+  if (transfermarktProfile) providerProfiles.push({ provider: "Transfermarkt Datasets", profile: transfermarktProfile });
   if (!report.rateLimited) {
     try {
       sportsDbProfile = await fetchSportsDbSquad(candidate.teamName);
@@ -269,6 +272,7 @@ for (const candidate of pending) {
       ...(sportsDbProfile ? { theSportsDb: sportsDbProfile.providerTeamId } : {}),
       ...(espnProfile ? { espn: espnProfile.providerTeamId, espnLeagueCode: espnProfile.leagueCode } : {}),
       ...(wikipediaProfile ? { wikipediaTitle: wikipediaProfile.pageTitle } : {}),
+      ...(transfermarktProfile ? { transfermarkt: transfermarktProfile.providerTeamId } : {}),
     },
     playerCount: players.length,
     players,

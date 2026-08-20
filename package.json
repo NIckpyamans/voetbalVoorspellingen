@@ -127,7 +127,13 @@
     "db:partition:assess": "node scripts/assess-partition-readiness.js",
     "db:sync-app-state": "node scripts/sync-app-state-to-database.js",
     "db:sync-json": "node scripts/sync-json-to-database.js",
-    "db:verify": "node scripts/verify-database-state.js"
+    "db:verify": "node scripts/verify-database-state.js",
+    "provider:apifootball-com:audit": "node scripts/provider-quota-audit.js",
+    "provider:goal-api:acceptance": "node scripts/goal-api-acceptance.js",
+    "data:transfermarkt:sync": "node scripts/sync-transfermarkt-datasets.js --apply",
+    "data:wikidata:sync": "node scripts/sync-wikidata-football-identities.js",
+    "data:betfair:import": "node scripts/import-betfair-historical-data.js --apply",
+    "data:open-training:sync": "node scripts/sync-open-training-data.js --apply"
   },
   "dependencies": {
     "@neondatabase/serverless": "^1.1.0",

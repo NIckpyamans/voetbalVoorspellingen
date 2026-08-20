@@ -19,6 +19,7 @@ import { summarizeLeagueCoverage } from "./worker/coverage-summary.js";
 import { findCachedApiFootballFixtureId, readApiFootballFixtureCache } from "./worker/api-football-fixture-cache.js";
 import { sportmonksEligibleFixtures } from "./worker/sportmonks-coverage-policy.js";
 import { getCompetitionAgent, getCompetitionProviderOrder } from "./worker/competition-agents.js";
+import { fetchApiFootballComLineup } from "./providers/apifootball-com-provider.js";
 
 const ROOT = process.cwd();
 const LOOKAHEAD_MINUTES = Math.max(30, Number(process.env.LINEUP_LOOKAHEAD_MINUTES || 90));
@@ -336,6 +337,7 @@ async function main() {
     const fetchers = {
       sofascore: () => fetchSofaScoreLineup(match),
       fotmob: () => fetchFotMobLineup(match),
+      "apifootball-com": () => fetchApiFootballComLineup(match),
       "api-football": async () => {
         const apiFootballUnavailable = providerHealth?.apiFootball?.valid === false;
         apiFootballFixtureId = apiFootballUnavailable

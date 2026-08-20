@@ -14,7 +14,7 @@
     },
     "confirmed_lineups": {
       "primary": ["FotMob lineups", "Sofascore lineups"],
-      "backups": ["Sportmonks binnen abonnement", "API-Football na geslaagde acceptatietest"],
+      "backups": ["APIfootball.com alleen Championship/Ligue 2", "Sportmonks binnen abonnement", "API-Football na geslaagde acceptatietest"],
       "notes": "T-75, T-45 en T-20 worden automatisch gecontroleerd. Projected lineups blijven apart en tellen nooit als confirmed."
     },
     "availability_injuries_suspensions": {
@@ -23,7 +23,7 @@
       "notes": "Availability wordt vooral vlak voor kickoff opnieuw opgehaald. Forza Football kan handmatig controleren, maar wordt niet gescrapet."
     },
     "team_rosters": {
-      "primary": ["football-data.org squad met veilige team-ID mapping"],
+      "primary": ["Transfermarkt Datasets wekelijkse CC0-export", "football-data.org squad met veilige team-ID mapping"],
       "backups": ["TheSportsDB officiële API", "Wikidata", "Wikipedia"],
       "notes": "De competitiegestuurde rosterjob vult uitsluitend speleridentiteit, positie en selectiecontext. Onbevestigde rosters verlagen de modelzekerheid en overschrijven nooit confirmed lineups."
     },
@@ -34,7 +34,7 @@
     },
     "h2h": {
       "primary": ["canonical match history", "football-data.co.uk archive", "OpenFootball"],
-      "backups": ["ESPN team history", "API-Football na geslaagde acceptatietest"],
+      "backups": ["ESPN team history", "APIfootball.com alleen Championship/Ligue 2", "API-Football na geslaagde acceptatietest"],
       "notes": "De queue wordt eerlijk over competities verdeeld. Eerste ontmoetingen blijven expliciet zonder directe H2H; er wordt niets verzonnen."
     },
     "xg_shots_form": {
@@ -64,12 +64,12 @@
     },
     "closing_odds_clv": {
       "primary": ["The Odds API near kickoff", "Sportmonks odds template near kickoff"],
-      "backups": ["football-data.co.uk historical closing proxy"],
+      "backups": ["Betfair Historical Basic voor offline kalibratie", "football-data.co.uk historical closing proxy"],
       "notes": "CLV blijft geblokkeerd zonder aparte closing timestamp."
     },
     "logos_team_identity": {
       "primary": ["ESPN teams API", "TheSportsDB"],
-      "backups": ["shared club logo aliases", "Reep alias map"],
+      "backups": ["Wikidata aliases en stadion-ID", "shared club logo aliases", "Reep alias map"],
       "notes": "Team-ID mapping voorkomt verkeerde clubnaam- en logomatches."
     },
     "raw_payload_storage": {

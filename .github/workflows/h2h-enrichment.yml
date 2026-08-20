@@ -17,6 +17,7 @@ jobs:
     env:
       DATA_BRANCH: codex/step3b-layout
       API_KEY_API_FOOTBALL: ${{ secrets.API_KEY_API_FOOTBALL }}
+      APIFOOTBALL_API_KEY: ${{ secrets.APIFOOTBALL_API_KEY }}
       API_FOOTBALL_BASE_URL: ${{ vars.API_FOOTBALL_BASE_URL }}
       API_FOOTBALL_MAX_FETCHES_PER_RUN: "16"
       H2H_BACKFILL_DAYS_AHEAD: "8"

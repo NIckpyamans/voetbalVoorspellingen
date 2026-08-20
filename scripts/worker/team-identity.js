@@ -20,6 +20,7 @@ function providerIdsForTeam(team = {}) {
     apiFootball: team?.apiFootballTeamId ? String(team.apiFootballTeamId) : null,
     sportmonks: team?.sportmonksTeamId ? String(team.sportmonksTeamId) : null,
     footballData: team?.footballDataTeamId ? String(team.footballDataTeamId) : null,
+    wikidata: team?.wikidataId ? String(team.wikidataId) : null,
   };
 }
 
@@ -46,6 +47,17 @@ export function loadTeamProviderIndex(root = process.cwd(), logger = console) {
         if (!apiFootball) continue;
         for (const alias of [team?.name, ...(team?.aliases || [])].map(normalizeTeamIdentityName).filter(Boolean)) {
           providerIndex.set(alias, { ...(providerIndex.get(alias) || {}), apiFootball });
+        }
+      }
+    }
+    const wikidataFile = path.join(root, "data", "wikidata-football-identities.json");
+    if (fs.existsSync(wikidataFile)) {
+      const wikidata = JSON.parse(fs.readFileSync(wikidataFile, "utf8"));
+      for (const team of wikidata?.teams || []) {
+        if (!team?.wikidataId) continue;
+        const ids = { ...(providerIndex.get(normalizeTeamIdentityName(team.teamName)) || {}), wikidata: String(team.wikidataId) };
+        for (const alias of [team.teamName, team.label, ...(team.aliases || [])].map(normalizeTeamIdentityName).filter(Boolean)) {
+          providerIndex.set(alias, ids);
         }
       }
     }

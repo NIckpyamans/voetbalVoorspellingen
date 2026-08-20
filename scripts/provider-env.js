@@ -92,6 +92,18 @@ function providerForTemplate(template, suffix = "") {
   return getOddsProviderName(template);
 }
 
+export function getApiFootballComKey() {
+  return String(
+    process.env.APIFOOTBALL_API_KEY ||
+      process.env.API_FOOTBALL_COM_KEY ||
+      ""
+  ).trim();
+}
+
+export function getGoalApiKey() {
+  return String(process.env.GOAL_API_KEY || "").trim();
+}
+
 export function getOddsProviderConfigs() {
   const configs = [];
   const add = (template, suffix = "") => {
@@ -122,6 +134,8 @@ export function buildProviderEnvStatus() {
   return {
     footballDataConfigured: !!getFootballDataApiKey(),
     apiFootballConfigured: !!getApiFootballKey(),
+    apiFootballComConfigured: !!getApiFootballComKey(),
+    goalApiConfigured: !!getGoalApiKey(),
     sportmonksConfigured: !!getSportmonksApiKey(),
     oddsConfigured: !!getOddsApiKey(oddsTemplate),
     oddsProviderCount: oddsProviderConfigs.length,

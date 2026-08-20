@@ -12,6 +12,11 @@
     "openfootball": "active_history",
     "thesportsdb": "fallback_identity_and_fixtures",
     "api-football": "blocked_until_acceptance_test_passes",
+    "apifootball-com": "active_free_for_championship_and_ligue_2_only",
+    "goal-api": "acceptance_test_only_not_primary",
+    "transfermarkt-datasets": "weekly_roster_and_history_cache",
+    "wikidata": "monthly_identity_and_venue_metadata",
+    "betfair-historical": "offline_market_calibration_only",
     "sportmonks": "restricted_to_subscribed_leagues",
     "forza": "manual_verification_only",
     "vi": "manual_verification_only",
@@ -21,9 +26,9 @@
   "profiles": {
     "domestic": {
       "fixtures": ["fotmob", "espn", "football-data-org", "thesportsdb"],
-      "h2h": ["canonical-history", "football-data-co-uk", "openfootball", "espn", "api-football"],
-      "lineups": ["sofascore", "fotmob", "sportmonks", "api-football"],
-      "rosters": ["football-data-org", "thesportsdb", "sportmonks"],
+      "h2h": ["canonical-history", "football-data-co-uk", "openfootball", "espn", "apifootball-com", "api-football"],
+      "lineups": ["sofascore", "fotmob", "apifootball-com", "sportmonks", "api-football"],
+      "rosters": ["transfermarkt-datasets", "football-data-org", "thesportsdb", "sportmonks"],
       "form": ["canonical-history", "football-data-co-uk", "espn"]
     },
     "uefa": {

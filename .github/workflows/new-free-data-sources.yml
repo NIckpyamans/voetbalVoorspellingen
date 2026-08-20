@@ -1,0 +1,130 @@
+name: New free data sources
+
+on:
+  workflow_dispatch:
+    inputs:
+      target:
+        description: "goal, transfermarkt, wikidata, betfair, open-data of all"
+        required: false
+        default: "all"
+  schedule:
+    - cron: "23 3 * * *"
+    - cron: "41 2 * * 1"
+    - cron: "17 1 1 * *"
+
+permissions:
+  contents: write
+
+concurrency:
+  group: new-free-data-sources-${{ github.event.schedule || inputs.target || 'manual' }}
+  cancel-in-progress: false
+
+env:
+  DATA_BRANCH: codex/step3b-layout
+  CLOUDFLARE_R2_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_R2_ACCOUNT_ID }}
+  CLOUDFLARE_R2_ACCESS_KEY_ID: ${{ secrets.CLOUDFLARE_R2_ACCESS_KEY_ID }}
+  CLOUDFLARE_R2_SECRET_ACCESS_KEY: ${{ secrets.CLOUDFLARE_R2_SECRET_ACCESS_KEY }}
+  CLOUDFLARE_R2_BUCKET: ${{ secrets.CLOUDFLARE_R2_BUCKET }}
+  CLOUDFLARE_R2_ENDPOINT: ${{ secrets.CLOUDFLARE_R2_ENDPOINT }}
+  CLOUDFLARE_R2_PREFIX: ${{ secrets.CLOUDFLARE_R2_PREFIX }}
+
+jobs:
+  goal-acceptance:
+    if: github.event.schedule == '23 3 * * *' || inputs.target == 'goal' || inputs.target == 'all'
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v5
+        with: { ref: codex/step3b-layout, fetch-depth: 0 }
+      - uses: actions/setup-node@v5
+        with: { node-version: 22, cache: npm }
+      - run: npm ci
+      - run: npm run provider:goal-api:acceptance
+        env:
+          GOAL_API_KEY: ${{ secrets.GOAL_API_KEY }}
+      - name: Persist acceptance evidence
+        run: |
+          git config user.name github-actions
+          git config user.email github-actions@github.com
+          git add monitor/goal-api-acceptance.json
+          git diff --cached --quiet && exit 0
+          git commit -m "update GOAL API acceptance evidence [skip vercel]"
+          for attempt in 1 2 3; do
+            git pull --rebase --autostash origin "$DATA_BRANCH" && git push origin HEAD:"$DATA_BRANCH" && exit 0
+            sleep $((attempt * 5))
+          done
+          exit 1
+
+  transfermarkt:
+    if: github.event.schedule == '41 2 * * 1' || inputs.target == 'transfermarkt' || inputs.target == 'all'
+    runs-on: ubuntu-latest
+    timeout-minutes: 35
+    steps:
+      - uses: actions/checkout@v5
+        with: { ref: codex/step3b-layout, fetch-depth: 0 }
+      - uses: actions/setup-node@v5
+        with: { node-version: 22, cache: npm }
+      - run: npm ci
+      - run: npm run data:transfermarkt:sync
+      - run: npm run enrich:squads:upcoming
+        env:
+          SQUAD_ENRICHMENT_MAX_TEAMS: "80"
+          SQUAD_ENRICHMENT_DAYS_AHEAD: "8"
+      - name: Persist compact active squad cache
+        run: |
+          git config user.name github-actions
+          git config user.email github-actions@github.com
+          git add data/team-squad-cache.json monitor/upcoming-team-squad-enrichment.json
+          git diff --cached --quiet && exit 0
+          git commit -m "refresh squads from weekly open dataset [skip vercel]"
+          for attempt in 1 2 3; do
+            git pull --rebase --autostash origin "$DATA_BRANCH" && git push origin HEAD:"$DATA_BRANCH" && exit 0
+            sleep $((attempt * 5))
+          done
+          exit 1
+
+  monthly-reference-data:
+    if: github.event.schedule == '17 1 1 * *' || inputs.target == 'wikidata' || inputs.target == 'open-data' || inputs.target == 'all'
+    runs-on: ubuntu-latest
+    timeout-minutes: 35
+    steps:
+      - uses: actions/checkout@v5
+        with: { ref: codex/step3b-layout, fetch-depth: 0 }
+      - uses: actions/setup-node@v5
+        with: { node-version: 22, cache: npm }
+      - run: npm ci
+      - if: inputs.target != 'open-data'
+        run: npm run data:wikidata:sync
+      - if: inputs.target != 'wikidata'
+        run: npm run data:open-training:sync
+      - name: Persist compact identity metadata
+        run: |
+          git config user.name github-actions
+          git config user.email github-actions@github.com
+          if [ -f data/wikidata-football-identities.json ]; then git add data/wikidata-football-identities.json; fi
+          if [ -f monitor/open-training-data-sync.json ]; then git add monitor/open-training-data-sync.json; fi
+          git diff --cached --quiet && exit 0
+          git commit -m "refresh open identity and training references [skip vercel]"
+          for attempt in 1 2 3; do
+            git pull --rebase --autostash origin "$DATA_BRANCH" && git push origin HEAD:"$DATA_BRANCH" && exit 0
+            sleep $((attempt * 5))
+          done
+          exit 1
+
+  betfair-import:
+    if: inputs.target == 'betfair'
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v5
+        with: { ref: codex/step3b-layout }
+      - uses: actions/setup-node@v5
+        with: { node-version: 22, cache: npm }
+      - run: npm ci
+      - run: npm run data:betfair:import
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: betfair-historical-import
+          path: monitor/betfair-historical-import.json
+          retention-days: 30

@@ -2,7 +2,7 @@
 
 import fs from "fs";
 import path from "path";
-import { getApiFootballKey, getFootballDataApiKey, getSportmonksApiKey } from "./provider-env.js";
+import { getApiFootballComKey, getApiFootballKey, getFootballDataApiKey, getGoalApiKey, getSportmonksApiKey } from "./provider-env.js";
 import { interpretApiFootballStatus } from "./worker/provider-account-status.js";
 
 const timeoutMs = 12_000;
@@ -137,6 +137,45 @@ function sportmonksRateLimitFromPayload(payload) {
   return payload?.rate_limit || payload?.meta?.rate_limit || payload?.meta?.pagination?.rate_limit || null;
 }
 
+async function auditApiFootballCom() {
+  const key = getApiFootballComKey();
+  if (!key) return { configured: false, valid: false, status: "missing", scope: ["England - Championship", "France - Ligue 2"] };
+  try {
+    const { response, payload } = await requestJson(`https://apiv3.apifootball.com/?action=get_leagues&APIkey=${encodeURIComponent(key)}`);
+    const leagues = Array.isArray(payload) ? payload : [];
+    return {
+      configured: true,
+      valid: response.ok && leagues.length > 0,
+      status: response.status,
+      competitions: leagues.map((league) => `${league.country_name} - ${league.league_name}`).slice(0, 30),
+      freeScopeDetected: leagues.filter((league) => /championship|ligue 2/i.test(String(league.league_name || ""))).length,
+      quota: quotaHeaders(response),
+      policy: "Alleen gebruiken voor Championship en Ligue 2; 180 calls/uur/endpoint volgens providerplan.",
+    };
+  } catch (error) {
+    return { configured: true, valid: false, status: "request_failed", errorCode: error?.name || "request_failed" };
+  }
+}
+
+async function auditGoalApi() {
+  const key = getGoalApiKey();
+  if (!key) return { configured: false, valid: false, status: "missing", accepted: false };
+  try {
+    const { response, payload } = await requestJson("https://api.goal-api.com/v1/leagues", { Authorization: `Bearer ${key}` });
+    return {
+      configured: true,
+      valid: response.ok,
+      status: response.status,
+      records: Array.isArray(payload?.data) ? payload.data.length : Array.isArray(payload) ? payload.length : 0,
+      quota: quotaHeaders(response),
+      accepted: false,
+      policy: "Veertien dagen meten; nooit automatisch promoveren op basis van alleen een geldige key.",
+    };
+  } catch (error) {
+    return { configured: true, valid: false, status: "request_failed", accepted: false, errorCode: error?.name || "request_failed" };
+  }
+}
+
 function compactSportmonksStatus(response, payload) {
   return {
     valid: response.ok && !payload?.message?.toLowerCase?.().includes("unauthenticated"),
@@ -255,6 +294,8 @@ const report = {
   oddsApi: await auditOddsApi(),
   clubOddsProbe: await probeClubOdds(),
   apiFootball: await auditApiFootball(),
+  apiFootballCom: await auditApiFootballCom(),
+  goalApi: await auditGoalApi(),
   footballData: await auditFootballData(),
   sportmonks: await auditSportmonks(),
 };
