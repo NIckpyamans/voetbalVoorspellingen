@@ -13,7 +13,7 @@
     "thesportsdb": "fallback_identity_and_fixtures",
     "api-football": "blocked_until_acceptance_test_passes",
     "apifootball-com": "active_free_for_championship_and_ligue_2_only",
-    "goal-api": "acceptance_test_only_not_primary",
+    "goal-api": "auto_after_14_day_acceptance_for_fixtures_h2h_lineups_stats_no_odds",
     "transfermarkt-datasets": "weekly_roster_and_history_cache",
     "wikidata": "monthly_identity_and_venue_metadata",
     "betfair-historical": "offline_market_calibration_only",
@@ -25,23 +25,23 @@
   },
   "profiles": {
     "domestic": {
-      "fixtures": ["fotmob", "espn", "football-data-org", "thesportsdb"],
-      "h2h": ["canonical-history", "football-data-co-uk", "openfootball", "espn", "apifootball-com", "api-football"],
-      "lineups": ["sofascore", "fotmob", "apifootball-com", "sportmonks", "api-football"],
+      "fixtures": ["fotmob", "espn", "football-data-org", "thesportsdb", "goal-api"],
+      "h2h": ["canonical-history", "football-data-co-uk", "openfootball", "espn", "apifootball-com", "goal-api", "api-football"],
+      "lineups": ["sofascore", "fotmob", "apifootball-com", "goal-api", "sportmonks", "api-football"],
       "rosters": ["transfermarkt-datasets", "football-data-org", "thesportsdb", "sportmonks"],
       "form": ["canonical-history", "football-data-co-uk", "espn"]
     },
     "uefa": {
-      "fixtures": ["sky", "fotmob", "espn", "bbc"],
-      "h2h": ["canonical-history", "espn", "openfootball", "api-football"],
-      "lineups": ["fotmob", "sofascore", "api-football", "sportmonks"],
+      "fixtures": ["sky", "fotmob", "espn", "bbc", "goal-api"],
+      "h2h": ["canonical-history", "espn", "openfootball", "goal-api", "api-football"],
+      "lineups": ["fotmob", "sofascore", "goal-api", "api-football", "sportmonks"],
       "rosters": ["football-data-org", "thesportsdb", "sportmonks"],
       "form": ["canonical-history", "espn", "football-data-co-uk"]
     },
     "friendly": {
-      "fixtures": ["fotmob", "espn", "official-club", "thesportsdb"],
-      "h2h": ["canonical-history", "espn", "api-football"],
-      "lineups": ["fotmob", "sofascore", "api-football"],
+      "fixtures": ["fotmob", "espn", "official-club", "thesportsdb", "goal-api"],
+      "h2h": ["canonical-history", "espn", "goal-api", "api-football"],
+      "lineups": ["fotmob", "sofascore", "goal-api", "api-football"],
       "rosters": ["football-data-org", "thesportsdb", "sportmonks"],
       "form": ["canonical-history", "espn"]
     }

@@ -155,7 +155,17 @@ async function main() {
   const run = { measurementVersion: "goal-pagination-v2", checkedAt, providerReachable: requestStatuses.some((item) => item.status === 200), checked: fixtures.length, mapped: Object.values(segments).reduce((sum, item) => sum + item.mapped, 0), segments, requestStatuses, endpointAccess };
   const history = [...(previous.history || []), run].slice(-21);
   const evaluation = evaluateGoalApiAcceptance(history, checkedAt);
-  const report = { schemaVersion: "goal-api-acceptance-v1", checkedAt, configured: true, ...evaluation, promotionMode: "manual_after_gate", history, missingSamples: samples };
+  const report = {
+    schemaVersion: "goal-api-acceptance-v1",
+    checkedAt,
+    configured: true,
+    ...evaluation,
+    promotionMode: evaluation.accepted ? "automatic_feature_gated_no_odds" : "waiting_for_14_day_gate",
+    enabledFeatures: evaluation.accepted ? ["fixtures", "h2h", "lineups", "statistics"] : [],
+    disabledFeatures: ["odds"],
+    history,
+    missingSamples: samples,
+  };
   fs.mkdirSync(path.dirname(OUTPUT), { recursive: true });
   fs.writeFileSync(OUTPUT, `${JSON.stringify(report, null, 2)}\n`);
   console.log(JSON.stringify({ ...report, history: undefined }, null, 2));

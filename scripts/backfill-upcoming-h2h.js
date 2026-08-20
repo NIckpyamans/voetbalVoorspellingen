@@ -11,6 +11,7 @@ import { isHiddenInternationalOrWorldCupEntity } from "../shared/competitionVisi
 import { getKnownProviderIds } from "./worker/team-identity.js";
 import { fetchEspnH2HProfile } from "./providers/espn-h2h-provider.js";
 import { fetchApiFootballComH2HProfile } from "./providers/apifootball-com-provider.js";
+import { fetchGoalApiH2HProfile } from "./providers/goal-api-provider.js";
 import { buildProviderAcceptanceState } from "./worker/orchestration-policy.js";
 import { orderH2HCandidatesByCompetition } from "./worker/h2h-candidate-priority.js";
 import { getCompetitionAgent } from "./worker/competition-agents.js";
@@ -136,6 +137,8 @@ async function upsertH2HEdge(sql, match, profile) {
         ? "espn-team-schedule"
         : profileSource.includes("apifootball-com")
           ? "apifootball-com"
+        : profileSource.includes("goal-api")
+          ? "goal-api"
         : "api-football";
   const sourceRecordId = `${provider}-h2h:${digest(`${match.match_id}|${profile.asOf || ""}|${JSON.stringify(oriented)}`)}`;
 
@@ -313,10 +316,15 @@ async function main() {
         awayName: match.away_team_name,
         leagueLabel: match.league,
       });
+      const goalApiProfile = localProfile?.results?.length || apiFootballComProfile?.results?.length
+        ? null
+        : await fetchGoalApiH2HProfile(match);
       const profile = localProfile?.results?.length
         ? localProfile
         : apiFootballComProfile?.results?.length
           ? apiFootballComProfile
+          : goalApiProfile?.results?.length
+            ? goalApiProfile
           : apiFootballEnabled
         ? await fetchApiFootballH2HProfile({
             store,
