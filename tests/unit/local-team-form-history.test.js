@@ -16,6 +16,12 @@ describe("local completed fixture form history", () => {
     status: "FT",
     score: "1-0",
     dataSource: "espn-scoreboard-fallback",
+    postMatchStats: {
+      goalQuarters: {
+        home: { q4_46_60: 1 },
+        away: {},
+      },
+    },
   };
 
   it("orients a completed friendly for both clubs and ignores pending fixtures", () => {
@@ -25,6 +31,8 @@ describe("local completed fixture form history", () => {
     ] }], { now: Date.parse("2026-07-23T00:00:00.000Z") });
     expect(index.get("tottenham hotspur")).toMatchObject([{ result: "W", score: "1-0", venue: "H", friendly: true }]);
     expect(index.get("milton keynes dons")).toMatchObject([{ result: "L", score: "0-1", venue: "A", friendly: true }]);
+    expect(index.get("tottenham hotspur")[0].goalQuartersFor).toMatchObject({ q4_46_60: 1 });
+    expect(index.get("milton keynes dons")[0].goalQuartersAgainst).toMatchObject({ q4_46_60: 1 });
   });
 
   it("merges provider and local history without duplicate events", () => {
@@ -36,6 +44,7 @@ describe("local completed fixture form history", () => {
     }, [...local, ...local], "Tottenham Hotspur", { now: Date.parse("2026-07-23T00:00:00.000Z") });
     expect(profile.recentMatches).toHaveLength(2);
     expect(profile.source).toContain("local-finished-results");
+    expect(profile.goalTiming).toMatchObject({ scoredGoals: 1, firstHalfScoringShare: 0 });
   });
 
   it("lets the separately refreshed cache replace stale worker state", () => {

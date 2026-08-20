@@ -1,3 +1,5 @@
+import { summarizeGoalTiming } from "./goal-timing.js";
+
 export const PREDICTION_MODULE = {
   name: "prediction",
   owns: ["feature vector construction", "Poisson score matrix", "ensemble probabilities", "confidence calibration"],
@@ -224,6 +226,18 @@ export function buildFeatureVector(input, deps) {
   const dbHomeTeamStats = dbTeamMatchStats.find((item) => item.side === "home") || {};
   const dbAwayTeamStats = dbTeamMatchStats.find((item) => item.side === "away") || {};
   const dbHistoricalOdds = dbFeatureContext.historicalOdds || {};
+  const homeGoalTiming = Number(input.homeRecent?.goalTiming?.reliability || 0) > 0
+    ? input.homeRecent.goalTiming
+    : summarizeGoalTiming(
+        input.homeRecent?.recentMatches,
+        Number(input.homeTeamProfile?.goalTimingMatches || 0) >= 3 ? input.homeTeamProfile?.goalQuarterProfile : null,
+      );
+  const awayGoalTiming = Number(input.awayRecent?.goalTiming?.reliability || 0) > 0
+    ? input.awayRecent.goalTiming
+    : summarizeGoalTiming(
+        input.awayRecent?.recentMatches,
+        Number(input.awayTeamProfile?.goalTimingMatches || 0) >= 3 ? input.awayTeamProfile?.goalQuarterProfile : null,
+      );
   const dbOddsSamples = Number(dbHistoricalOdds.samples || 0);
   const dbAvgHomeOdds = Number(dbHistoricalOdds.avgHome || 0);
   const dbAvgAwayOdds = Number(dbHistoricalOdds.avgAway || 0);
@@ -302,6 +316,14 @@ export function buildFeatureVector(input, deps) {
     away_yellow_rate: Number(input.awayRecent?.yellowCardRate || 0),
     home_cards_rate: Number((Number(input.homeRecent?.yellowCardRate || 0) + Number(input.homeRecent?.redCardRate || 0) * 1.8).toFixed(2)),
     away_cards_rate: Number((Number(input.awayRecent?.yellowCardRate || 0) + Number(input.awayRecent?.redCardRate || 0) * 1.8).toFixed(2)),
+    home_goal_timing_reliability: Number(homeGoalTiming?.reliability || 0),
+    away_goal_timing_reliability: Number(awayGoalTiming?.reliability || 0),
+    home_first_half_scoring_share: Number(homeGoalTiming?.firstHalfScoringShare || 0),
+    away_first_half_scoring_share: Number(awayGoalTiming?.firstHalfScoringShare || 0),
+    home_late_scoring_share: Number(homeGoalTiming?.lateScoringShare || 0),
+    away_late_scoring_share: Number(awayGoalTiming?.lateScoringShare || 0),
+    home_late_conceding_share: Number(homeGoalTiming?.lateConcedingShare || 0),
+    away_late_conceding_share: Number(awayGoalTiming?.lateConcedingShare || 0),
     home_avg_corners: Number(input.homeSeasonStats?.avgCorners ?? dbMatchStats.homeCorners ?? dbHomeTeamStats.corners ?? 0),
     away_avg_corners: Number(input.awaySeasonStats?.avgCorners ?? dbMatchStats.awayCorners ?? dbAwayTeamStats.corners ?? 0),
     home_avg_shots: Number(input.homeSeasonStats?.avgShots ?? dbMatchStats.homeShots ?? dbHomeTeamStats.shots ?? 0),

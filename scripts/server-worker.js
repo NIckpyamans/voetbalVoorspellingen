@@ -78,6 +78,7 @@ import { fetchR2H2HProfile, fetchR2LineupSummary, fetchR2OddsSnapshot } from "./
 import { buildH2HAgentProfile } from "./worker/h2h.js";
 import { buildTwoLegAggregate, deriveH2HWinnerId, findOrientedPreviousLeg } from "./worker/two-leg.js";
 import { mergePersistedTeamFormCache } from "./worker/local-team-form-history.js";
+import { summarizeGoalTiming } from "./worker/goal-timing.js";
 import { hydrateR2ModelProfiles } from "./worker/r2-model-profiles.js";
 import {
   FOTMOB_STANDINGS_LEAGUES,
@@ -3507,6 +3508,9 @@ function buildTeamProfile({ teamName, recent, seasonStats, postMatchStatsProfile
     season: seasonStats || postMatchStatsProfile ? blendedSeason : null,
     postMatchRolling: postMatchStatsProfile?.rolling || null,
     goalQuarterProfile: postMatchStatsProfile?.quarterScoring || null,
+    goalTimingMatches: Array.isArray(postMatchStatsProfile?.processedMatchIds)
+      ? postMatchStatsProfile.processedMatchIds.length
+      : 0,
     injuries: {
       count: Number(injuries?.injuredCount || 0),
       ratingImpact: Number(injuries?.injuredRating || 0),
@@ -3767,6 +3771,18 @@ function buildHeuristicEnsemble(featureVector) {
   awayScore -= featureVector.away_injuries * 0.05;
   homeScore -= featureVector.home_cards_rate * 0.015;
   awayScore -= featureVector.away_cards_rate * 0.015;
+  // Goal timing is deliberately a small, sample-gated signal until shadow
+  // evaluation proves that a larger weight improves real outcomes.
+  const timingReliability = Math.min(
+    Number(featureVector.home_goal_timing_reliability || 0),
+    Number(featureVector.away_goal_timing_reliability || 0),
+  );
+  if (timingReliability >= 0.25) {
+    const homeLateEdge = Number(featureVector.home_late_scoring_share || 0) - Number(featureVector.away_late_conceding_share || 0);
+    const awayLateEdge = Number(featureVector.away_late_scoring_share || 0) - Number(featureVector.home_late_conceding_share || 0);
+    homeScore += clamp(homeLateEdge * 0.04 * timingReliability, -0.025, 0.025);
+    awayScore += clamp(awayLateEdge * 0.04 * timingReliability, -0.025, 0.025);
+  }
   // H2H algemeen patroon (lichte weging)
   const h2hWeight = Number(featureVector.h2h_reliability || 0);
   homeScore += featureVector.h2h_balance * 0.05 * h2hWeight;
@@ -7222,6 +7238,8 @@ function buildTeamFormFromRecentMatches(matches, source = "historical-form") {
         goalsAgainst: ga,
         result: gf > ga ? "W" : gf === ga ? "D" : "L",
         source: item.source || source,
+        goalQuartersFor: item.goalQuartersFor || null,
+        goalQuartersAgainst: item.goalQuartersAgainst || null,
       };
     });
 
@@ -7283,6 +7301,7 @@ function buildTeamFormFromRecentMatches(matches, source = "historical-form") {
     recentMatches: sample,
     lastMatchKickoff: sample[sample.length - 1]?.date ? `${sample[sample.length - 1].date}T00:00:00.000Z` : null,
     strongestSide,
+    goalTiming: summarizeGoalTiming(sample),
     source,
   };
 }
@@ -7746,7 +7765,8 @@ async function fetchPostMatchStatsFromTheSportsDb(match) {
     if (side === awayName) quarterStats.away[bucket] += 1;
     quarterStats.total[bucket] += 1;
   }
-  const hasAny = [possession.home, possession.away, shots.home, shots.away, shotsOn.home, shotsOn.away].some((n) => Number.isFinite(n));
+  const hasTimelineGoals = Object.values(quarterStats.total).some((value) => Number(value || 0) > 0);
+  const hasAny = hasTimelineGoals || [possession.home, possession.away, shots.home, shots.away, shotsOn.home, shotsOn.away].some((n) => Number.isFinite(n));
   if (!hasAny) return null;
   return normalizePostMatchStats(
     {
@@ -9584,9 +9604,27 @@ function updateTeamPostMatchStats(store, match) {
         bigChances: [],
         freeKicks: [],
         quarterScoring: emptyGoalQuarters(),
+        processedMatchIds: [],
       };
     }
     const row = store.teamPostMatchStats[key];
+    const matchId = String(match?.id || "").trim();
+    if (!Array.isArray(row.processedMatchIds)) {
+      // Older stores counted the same finished fixture again on every worker
+      // run. Drop that unverifiable aggregate once and rebuild from unique IDs.
+      row.matches = 0;
+      row.possession = [];
+      row.shotsOnTarget = [];
+      row.corners = [];
+      row.fouls = [];
+      row.bigChances = [];
+      row.freeKicks = [];
+      row.quarterScoring = emptyGoalQuarters();
+      row.rolling = {};
+      row.processedMatchIds = [];
+      row.legacyAggregateResetAt = new Date().toISOString();
+    }
+    if (matchId && row.processedMatchIds.includes(matchId)) return;
     row.matches += 1;
     row.teamName = teamName || row.teamName;
     row.teamId = teamId || row.teamId;
@@ -9609,6 +9647,7 @@ function updateTeamPostMatchStats(store, match) {
     };
     row.lastSource = stats?.source || null;
     row.lastUpdated = Date.now();
+    if (matchId) row.processedMatchIds = [...row.processedMatchIds, matchId].slice(-100);
   };
   upsert(match.homeTeamId, match.homeTeamName, "home");
   upsert(match.awayTeamId, match.awayTeamName, "away");

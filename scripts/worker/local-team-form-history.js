@@ -1,4 +1,5 @@
 import { canonicalDedupeTeam } from "../../shared/matchNormalization.js";
+import { extractGoalTimingFromMatch, summarizeGoalTiming } from "./goal-timing.js";
 
 function scoreFor(match) {
   const score = String(match?.score || "").match(/^(\d+)\s*-\s*(\d+)$/);
@@ -33,6 +34,8 @@ function addTeamResult(index, teamName, opponent, match, goalsFor, goalsAgainst,
     result: goalsFor > goalsAgainst ? "W" : goalsFor === goalsAgainst ? "D" : "L",
     source: `local-finished-results:${match?.dataSource || match?.source || "worker"}`,
     friendly: /friendl|oefen/i.test(String(match?.league || "")),
+    goalQuartersFor: extractGoalTimingFromMatch(match, venue === "H" ? "home" : "away"),
+    goalQuartersAgainst: extractGoalTimingFromMatch(match, venue === "H" ? "away" : "home"),
   };
   if (!index.has(key)) index.set(key, []);
   index.get(key).push(item);
@@ -72,10 +75,12 @@ export function mergeLocalTeamForm(profile, localMatches, teamName, options = {}
     .sort((a, b) => String(a?.kickoff || a?.date || "").localeCompare(String(b?.kickoff || b?.date || "")))
     .slice(-limit);
   if (!recentMatches.length) return profile || null;
+  const goalTiming = summarizeGoalTiming(recentMatches, profile?.goalTiming?.scored);
   return {
     ...(profile || {}),
     providerTeamName: profile?.providerTeamName || teamName,
     recentMatches,
+    goalTiming,
     source: current.length ? `${profile?.source || "provider"}+local-finished-results` : "local-finished-results",
     asOf: new Date(Number(options.now || Date.now())).toISOString(),
   };
