@@ -42,7 +42,7 @@ function localFixtures() {
 
 async function requestDate(date, apiKey) {
   const rows = [];
-  const maximumPages = Math.max(1, Math.min(10, Number(process.env.GOAL_API_MAX_PAGES_PER_DATE || 5)));
+  const maximumPages = Math.max(1, Math.min(10, Number(process.env.GOAL_API_MAX_PAGES_PER_DATE || 10)));
   let status = 0;
   let limits = null;
   let pages = 0;
@@ -73,6 +73,36 @@ function matchFixture(local, providerRows) {
     similarity(local.home, row?.homeTeam?.name || row?.home_team?.name || row?.homeTeamName),
     similarity(local.away, row?.awayTeam?.name || row?.away_team?.name || row?.awayTeamName)
   ) >= 0.82) || null;
+}
+
+function goalFixtureId(row) {
+  return row?.id || row?.fixture?.id || row?.match_id || row?.matchId || null;
+}
+
+function goalTeamId(row, side) {
+  const key = side === "home" ? "homeTeam" : "awayTeam";
+  return row?.[key]?.id || row?.[key]?.apiId || row?.[`${side}_team`]?.id || row?.[`${side}TeamId`] || null;
+}
+
+async function probeGoalEndpoint(pathname, apiKey) {
+  try {
+    const response = await fetch(`https://api.goal-api.com/v1${pathname}`, {
+      headers: { Accept: "application/json", Authorization: `Bearer ${apiKey}` },
+    });
+    const payload = await response.json().catch(() => null);
+    const rows = Array.isArray(payload?.data) ? payload.data : payload?.data ? [payload.data] : [];
+    return {
+      tested: true,
+      valid: response.ok,
+      status: response.status,
+      records: rows.length,
+      available: rows.length > 0,
+      remaining: response.headers.get("x-ratelimit-remaining"),
+      errorCode: response.ok ? null : String(payload?.error?.message || payload?.message || `HTTP ${response.status}`).slice(0, 160),
+    };
+  } catch (error) {
+    return { tested: true, valid: false, status: "request_failed", records: 0, available: false, errorCode: error?.name || "request_failed" };
+  }
 }
 
 async function main() {
@@ -108,7 +138,21 @@ async function main() {
     if (hit) segments[segment].mapped += 1;
     else if (samples.length < 30) samples.push({ ...fixture, segment, status: "not_mapped" });
   }
-  const run = { checkedAt, providerReachable: requestStatuses.some((item) => item.status === 200), checked: fixtures.length, mapped: Object.values(segments).reduce((sum, item) => sum + item.mapped, 0), segments, requestStatuses };
+  const sampleFixture = [...providerByDate.values()].flat().find((row) => goalFixtureId(row)) || null;
+  const fixtureId = goalFixtureId(sampleFixture);
+  const homeTeamId = goalTeamId(sampleFixture, "home");
+  const awayTeamId = goalTeamId(sampleFixture, "away");
+  const endpointAccess = fixtureId ? {
+    testedFixtureId: fixtureId,
+    fixture: await probeGoalEndpoint(`/fixtures/${encodeURIComponent(fixtureId)}`, apiKey),
+    lineups: await probeGoalEndpoint(`/fixtures/${encodeURIComponent(fixtureId)}/lineups`, apiKey),
+    statistics: await probeGoalEndpoint(`/fixtures/${encodeURIComponent(fixtureId)}/statistics`, apiKey),
+    odds: await probeGoalEndpoint(`/fixtures/${encodeURIComponent(fixtureId)}/odds`, apiKey),
+    h2h: homeTeamId && awayTeamId
+      ? await probeGoalEndpoint(`/h2h/${encodeURIComponent(homeTeamId)}/${encodeURIComponent(awayTeamId)}`, apiKey)
+      : { tested: false, valid: false, status: "skipped_missing_team_ids", records: 0, available: false },
+  } : { testedFixtureId: null };
+  const run = { measurementVersion: "goal-pagination-v2", checkedAt, providerReachable: requestStatuses.some((item) => item.status === 200), checked: fixtures.length, mapped: Object.values(segments).reduce((sum, item) => sum + item.mapped, 0), segments, requestStatuses, endpointAccess };
   const history = [...(previous.history || []), run].slice(-21);
   const evaluation = evaluateGoalApiAcceptance(history, checkedAt);
   const report = { schemaVersion: "goal-api-acceptance-v1", checkedAt, configured: true, ...evaluation, promotionMode: "manual_after_gate", history, missingSamples: samples };

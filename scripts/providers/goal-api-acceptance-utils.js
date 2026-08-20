@@ -16,7 +16,8 @@ export function segmentForLeague(league) {
 }
 
 export function evaluateGoalApiAcceptance(history, checkedAt = new Date().toISOString()) {
-  const validRuns = (history || []).filter((run) => run.providerReachable && run.checked > 0);
+  const measuredRuns = (history || []).filter((run) => run.measurementVersion === "goal-pagination-v2");
+  const validRuns = (measuredRuns.length ? measuredRuns : history || []).filter((run) => run.providerReachable && run.checked > 0);
   const first = validRuns[0]?.checkedAt;
   const elapsedDays = first ? Math.floor((Date.parse(checkedAt) - Date.parse(first)) / 86400000) + 1 : 0;
   const aggregate = {};
