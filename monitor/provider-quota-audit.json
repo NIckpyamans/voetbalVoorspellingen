@@ -1,10 +1,10 @@
 {
-  "checkedAt": "2026-08-20T04:56:32.499Z",
+  "checkedAt": "2026-08-20T14:30:46.487Z",
   "oddsApi": {
     "configured": true,
     "valid": true,
     "status": 200,
-    "activeSports": 77,
+    "activeSports": 79,
     "soccerSportKeys": [
       "soccer_argentina_primera_division",
       "soccer_austria_bundesliga",
@@ -26,6 +26,7 @@
       "soccer_france_ligue_two",
       "soccer_germany_bundesliga",
       "soccer_germany_bundesliga2",
+      "soccer_germany_bundesliga_women",
       "soccer_germany_dfb_pokal",
       "soccer_germany_liga3",
       "soccer_greece_super_league",
@@ -81,6 +82,59 @@
       "x-ratelimit-remaining": "9"
     },
     "errorCode": "Your account is suspended, check on https://dashboard.api-football.com."
+  },
+  "apiFootballCom": {
+    "configured": true,
+    "valid": true,
+    "status": 200,
+    "competitions": [
+      "Germany - 2. Bundesliga",
+      "Australia - A-League Men",
+      "intl - AFC Champions League",
+      "intl - AFC Champions League Elite",
+      "Sweden - Allsvenskan",
+      "Germany - Bundesliga",
+      "Austria - Bundesliga",
+      "intl - CAF Africa Cup of Nations",
+      "intl - CAF Champions League",
+      "intl - CAF Confederation Cup",
+      "England - Championship",
+      "China PR - Chinese Super League",
+      "England - Community Shield",
+      "N/C America - Concacaf Gold Cup",
+      "intl - CONMEBOL Copa America",
+      "intl - CONMEBOL Libertadores",
+      "intl - CONMEBOL Sudamericana",
+      "South America - CONMEBOL World Cup Qualifiers",
+      "Spain - Copa del Rey",
+      "Italy - Coppa Italia",
+      "France - Coupe de France",
+      "Sweden - Damallsvenskan",
+      "Germany - DFB Pokal",
+      "Norway - Eliteserien",
+      "Netherlands - Eredivisie",
+      "England - FA Cup",
+      "India - Indian Super League",
+      "Korea Republic - K League 1",
+      "Netherlands - KNVB Beker",
+      "Netherlands - KNVB Beker"
+    ],
+    "freeScopeDetected": 61,
+    "quota": {},
+    "policy": "Alleen gebruiken voor Championship en Ligue 2; 180 calls/uur/endpoint volgens providerplan."
+  },
+  "goalApi": {
+    "configured": true,
+    "valid": true,
+    "status": 200,
+    "records": 50,
+    "quota": {
+      "x-ratelimit-limit": "1000",
+      "x-ratelimit-remaining": "999",
+      "x-ratelimit-reset": "1787270400"
+    },
+    "accepted": false,
+    "policy": "Veertien dagen meten; nooit automatisch promoveren op basis van alleen een geldige key."
   },
   "footballData": {
     "configured": true,
@@ -209,7 +263,7 @@
         "firstName": "1",
         "hasOddsFlag": false,
         "rateLimit": {
-          "resets_in_seconds": 3600,
+          "resets_in_seconds": 3599,
           "remaining": 2998,
           "requested_entity": "Odd"
         },
