@@ -1,9 +1,9 @@
 {
-  "generatedAt": "2026-08-20T13:38:04.589Z",
+  "generatedAt": "2026-08-20T14:24:34.711Z",
   "schemaVersion": "competition-data-agents-v1",
   "daysAhead": 7,
-  "totalUpcomingFixtures": 197,
-  "activeAgents": 13,
+  "totalUpcomingFixtures": 198,
+  "activeAgents": 14,
   "configuredAgents": 16,
   "providerBlocks": {
     "neon": null,
@@ -21,6 +21,11 @@
     "openfootball": "active_history",
     "thesportsdb": "fallback_identity_and_fixtures",
     "api-football": "blocked_until_acceptance_test_passes",
+    "apifootball-com": "active_free_for_championship_and_ligue_2_only",
+    "goal-api": "acceptance_test_only_not_primary",
+    "transfermarkt-datasets": "weekly_roster_and_history_cache",
+    "wikidata": "monthly_identity_and_venue_metadata",
+    "betfair-historical": "offline_market_calibration_only",
     "sportmonks": "restricted_to_subscribed_leagues",
     "forza": "manual_verification_only",
     "vi": "manual_verification_only",
@@ -32,8 +37,8 @@
       "key": "belgium-pro-league-agent",
       "league": "Belgium - Pro League",
       "profile": "domestic",
-      "upcomingFixtures": 0,
-      "fixtureMultiSourceCoverage": null,
+      "upcomingFixtures": 1,
+      "fixtureMultiSourceCoverage": 0,
       "h2hChecked": 0,
       "lineupWindowChecks": 0,
       "confirmedLineups": 0,
@@ -49,15 +54,18 @@
           "football-data-co-uk",
           "openfootball",
           "espn",
+          "apifootball-com",
           "api-football"
         ],
         "lineups": [
           "sofascore",
           "fotmob",
+          "apifootball-com",
           "sportmonks",
           "api-football"
         ],
         "rosters": [
+          "transfermarkt-datasets",
           "football-data-org",
           "thesportsdb",
           "sportmonks"
@@ -68,7 +76,7 @@
           "espn"
         ]
       },
-      "status": "idle_no_fixtures_in_window"
+      "status": "active"
     },
     {
       "key": "england-championship-agent",
@@ -91,15 +99,18 @@
           "football-data-co-uk",
           "openfootball",
           "espn",
+          "apifootball-com",
           "api-football"
         ],
         "lineups": [
           "sofascore",
           "fotmob",
+          "apifootball-com",
           "sportmonks",
           "api-football"
         ],
         "rosters": [
+          "transfermarkt-datasets",
           "football-data-org",
           "thesportsdb",
           "sportmonks"
@@ -133,15 +144,18 @@
           "football-data-co-uk",
           "openfootball",
           "espn",
+          "apifootball-com",
           "api-football"
         ],
         "lineups": [
           "sofascore",
           "fotmob",
+          "apifootball-com",
           "sportmonks",
           "api-football"
         ],
         "rosters": [
+          "transfermarkt-datasets",
           "football-data-org",
           "thesportsdb",
           "sportmonks"
@@ -202,7 +216,7 @@
       "upcomingFixtures": 72,
       "fixtureMultiSourceCoverage": 0,
       "h2hChecked": 3,
-      "lineupWindowChecks": 0,
+      "lineupWindowChecks": 1,
       "confirmedLineups": 0,
       "sources": {
         "fixtures": [
@@ -243,8 +257,8 @@
       "upcomingFixtures": 38,
       "fixtureMultiSourceCoverage": 0,
       "h2hChecked": 3,
-      "lineupWindowChecks": 0,
-      "confirmedLineups": 0,
+      "lineupWindowChecks": 3,
+      "confirmedLineups": 1,
       "sources": {
         "fixtures": [
           "sky",
@@ -298,15 +312,18 @@
           "football-data-co-uk",
           "openfootball",
           "espn",
+          "apifootball-com",
           "api-football"
         ],
         "lineups": [
           "sofascore",
           "fotmob",
+          "apifootball-com",
           "sportmonks",
           "api-football"
         ],
         "rosters": [
+          "transfermarkt-datasets",
           "football-data-org",
           "thesportsdb",
           "sportmonks"
@@ -340,15 +357,18 @@
           "football-data-co-uk",
           "openfootball",
           "espn",
+          "apifootball-com",
           "api-football"
         ],
         "lineups": [
           "sofascore",
           "fotmob",
+          "apifootball-com",
           "sportmonks",
           "api-football"
         ],
         "rosters": [
+          "transfermarkt-datasets",
           "football-data-org",
           "thesportsdb",
           "sportmonks"
@@ -382,15 +402,18 @@
           "football-data-co-uk",
           "openfootball",
           "espn",
+          "apifootball-com",
           "api-football"
         ],
         "lineups": [
           "sofascore",
           "fotmob",
+          "apifootball-com",
           "sportmonks",
           "api-football"
         ],
         "rosters": [
+          "transfermarkt-datasets",
           "football-data-org",
           "thesportsdb",
           "sportmonks"
@@ -424,15 +447,18 @@
           "football-data-co-uk",
           "openfootball",
           "espn",
+          "apifootball-com",
           "api-football"
         ],
         "lineups": [
           "sofascore",
           "fotmob",
+          "apifootball-com",
           "sportmonks",
           "api-football"
         ],
         "rosters": [
+          "transfermarkt-datasets",
           "football-data-org",
           "thesportsdb",
           "sportmonks"
@@ -466,15 +492,18 @@
           "football-data-co-uk",
           "openfootball",
           "espn",
+          "apifootball-com",
           "api-football"
         ],
         "lineups": [
           "sofascore",
           "fotmob",
+          "apifootball-com",
           "sportmonks",
           "api-football"
         ],
         "rosters": [
+          "transfermarkt-datasets",
           "football-data-org",
           "thesportsdb",
           "sportmonks"
@@ -508,15 +537,18 @@
           "football-data-co-uk",
           "openfootball",
           "espn",
+          "apifootball-com",
           "api-football"
         ],
         "lineups": [
           "sofascore",
           "fotmob",
+          "apifootball-com",
           "sportmonks",
           "api-football"
         ],
         "rosters": [
+          "transfermarkt-datasets",
           "football-data-org",
           "thesportsdb",
           "sportmonks"
@@ -550,15 +582,18 @@
           "football-data-co-uk",
           "openfootball",
           "espn",
+          "apifootball-com",
           "api-football"
         ],
         "lineups": [
           "sofascore",
           "fotmob",
+          "apifootball-com",
           "sportmonks",
           "api-football"
         ],
         "rosters": [
+          "transfermarkt-datasets",
           "football-data-org",
           "thesportsdb",
           "sportmonks"
@@ -592,15 +627,18 @@
           "football-data-co-uk",
           "openfootball",
           "espn",
+          "apifootball-com",
           "api-football"
         ],
         "lineups": [
           "sofascore",
           "fotmob",
+          "apifootball-com",
           "sportmonks",
           "api-football"
         ],
         "rosters": [
+          "transfermarkt-datasets",
           "football-data-org",
           "thesportsdb",
           "sportmonks"
@@ -634,15 +672,18 @@
           "football-data-co-uk",
           "openfootball",
           "espn",
+          "apifootball-com",
           "api-football"
         ],
         "lineups": [
           "sofascore",
           "fotmob",
+          "apifootball-com",
           "sportmonks",
           "api-football"
         ],
         "rosters": [
+          "transfermarkt-datasets",
           "football-data-org",
           "thesportsdb",
           "sportmonks"
