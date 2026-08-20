@@ -101,7 +101,7 @@ export function getApiFootballComKey() {
 }
 
 export function getGoalApiKey() {
-  return String(process.env.GOAL_API_KEY || "").trim();
+  return String(process.env.GOAL_API_KEY || process.env.API_GOAL || "").trim();
 }
 
 export function getOddsProviderConfigs() {

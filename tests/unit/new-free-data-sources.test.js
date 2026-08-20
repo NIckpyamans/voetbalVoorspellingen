@@ -1,13 +1,13 @@
 import { describe, expect, it } from "vitest";
-import { parseCsv, normalizeClubName } from "../../scripts/sync-transfermarkt-datasets.js";
-import { evaluateGoalApiAcceptance, segmentForLeague } from "../../scripts/goal-api-acceptance.js";
-import { extractBetfairClosingMarkets } from "../../scripts/import-betfair-historical-data.js";
+import { normalizeTransfermarktClubName, parseTransfermarktCsv } from "../../scripts/providers/transfermarkt-dataset-utils.js";
+import { evaluateGoalApiAcceptance, segmentForLeague } from "../../scripts/providers/goal-api-acceptance-utils.js";
+import { extractBetfairClosingMarkets } from "../../scripts/providers/betfair-history-utils.js";
 
 describe("new free data source safety", () => {
   it("parses quoted Transfermarkt CSV fields", () => {
-    const rows = parseCsv('club_id,name,note\n1,"Club, United","a ""quoted"" value"\n');
+    const rows = parseTransfermarktCsv('club_id,name,note\n1,"Club, United","a ""quoted"" value"\n');
     expect(rows).toEqual([{ club_id: "1", name: "Club, United", note: 'a "quoted" value' }]);
-    expect(normalizeClubName("AFC Club United")).toBe("united");
+    expect(normalizeTransfermarktClubName("AFC Club United")).toBe("united");
   });
 
   it("requires fourteen days and segment evidence before GOAL promotion", () => {

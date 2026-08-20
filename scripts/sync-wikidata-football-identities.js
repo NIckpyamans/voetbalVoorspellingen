@@ -2,7 +2,7 @@
 
 import fs from "fs";
 import path from "path";
-import { fileURLToPath } from "url";
+import { pathToFileURL } from "url";
 
 const ROOT = process.cwd();
 const OUTPUT = path.join(ROOT, "data", "wikidata-football-identities.json");
@@ -70,4 +70,4 @@ async function main() {
   console.log(JSON.stringify({ ...report, teams: undefined }, null, 2));
 }
 
-if (process.argv[1] && path.resolve(process.argv[1]) === path.resolve(fileURLToPath(import.meta.url))) main().catch((error) => { console.error(error); process.exit(1); });
+if (process.argv[1] && import.meta.url === pathToFileURL(process.argv[1]).href) main().catch((error) => { console.error(error); process.exit(1); });

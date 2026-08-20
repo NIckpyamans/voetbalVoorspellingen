@@ -2,9 +2,10 @@
 
 import fs from "fs";
 import path from "path";
-import { fileURLToPath } from "url";
+import { pathToFileURL } from "url";
 import { gunzipSync, gzipSync } from "zlib";
 import { buildR2ObjectKey, getR2Config, putR2Object } from "../shared/cloudflare-r2.js";
+import { extractBetfairClosingMarkets } from "./providers/betfair-history-utils.js";
 
 const ROOT = process.cwd();
 const APPLY = process.argv.includes("--apply");
@@ -17,45 +18,6 @@ function filesIn(directory) {
     const full = path.join(directory, entry.name);
     return entry.isDirectory() ? filesIn(full) : /\.(json|jsonl|gz)$/i.test(entry.name) ? [full] : [];
   });
-}
-
-export function extractBetfairClosingMarkets(lines) {
-  const markets = new Map();
-  for (const line of lines) {
-    let payload;
-    try { payload = JSON.parse(line); } catch { continue; }
-    const publishedAt = Number(payload.pt || 0);
-    for (const marketChange of payload.mc || []) {
-      const id = String(marketChange.id || "");
-      if (!id) continue;
-      const state = markets.get(id) || { marketId: id, runners: {}, prices: {}, snapshots: 0 };
-      const definition = marketChange.marketDefinition;
-      if (definition) {
-        state.eventName = definition.eventName || state.eventName;
-        state.marketName = definition.marketType || definition.name || state.marketName;
-        state.marketTime = definition.marketTime || state.marketTime;
-        for (const runner of definition.runners || []) state.runners[String(runner.id)] = runner.name || String(runner.id);
-      }
-      const kickoffMs = Date.parse(state.marketTime || "");
-      for (const runner of marketChange.rc || []) {
-        if (!Number.isFinite(Number(runner.ltp))) continue;
-        if (Number.isFinite(kickoffMs) && publishedAt >= kickoffMs) continue;
-        state.prices[String(runner.id)] = { selectionId: String(runner.id), name: state.runners[String(runner.id)] || null, odds: Number(runner.ltp), capturedAt: publishedAt ? new Date(publishedAt).toISOString() : null };
-        state.snapshots += 1;
-      }
-      markets.set(id, state);
-    }
-  }
-  return [...markets.values()].filter((market) => market.marketTime && Object.keys(market.prices).length >= 2).map((market) => ({
-    provider: "betfair-historical-basic",
-    marketId: market.marketId,
-    eventName: market.eventName || null,
-    marketName: market.marketName || null,
-    kickoff: market.marketTime,
-    closing: Object.values(market.prices),
-    snapshotsObserved: market.snapshots,
-    usage: "offline_calibration_only",
-  }));
 }
 
 async function main() {
@@ -87,4 +49,4 @@ async function main() {
   console.log(JSON.stringify(report, null, 2));
 }
 
-if (process.argv[1] && path.resolve(process.argv[1]) === path.resolve(fileURLToPath(import.meta.url))) main().catch((error) => { console.error(error); process.exit(1); });
+if (process.argv[1] && import.meta.url === pathToFileURL(process.argv[1]).href) main().catch((error) => { console.error(error); process.exit(1); });

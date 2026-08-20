@@ -42,6 +42,7 @@ jobs:
       - run: npm run provider:goal-api:acceptance
         env:
           GOAL_API_KEY: ${{ secrets.GOAL_API_KEY }}
+          API_GOAL: ${{ secrets.API_GOAL }}
       - name: Persist acceptance evidence
         run: |
           git config user.name github-actions

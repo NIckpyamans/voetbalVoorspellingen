@@ -2,24 +2,16 @@
 
 import fs from "fs";
 import path from "path";
-import { fileURLToPath } from "url";
+import { pathToFileURL } from "url";
 import { getGoalApiKey } from "./provider-env.js";
+import { evaluateGoalApiAcceptance, normalizeGoalApiName, segmentForLeague } from "./providers/goal-api-acceptance-utils.js";
 
 const ROOT = process.cwd();
 const OUTPUT = path.join(ROOT, "monitor", "goal-api-acceptance.json");
-const DAYS = 14;
-const TARGETS = {
-  domestic: 0.8,
-  uefa: 0.8,
-  friendly: 0.6,
-};
+const SEGMENTS = ["domestic", "uefa", "friendly"];
 
 function readJson(file, fallback) {
   try { return JSON.parse(fs.readFileSync(file, "utf8")); } catch { return fallback; }
-}
-
-export function normalizeGoalApiName(value) {
-  return String(value || "").toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "").replace(/\b(fc|afc|cf|sc|club|fk|sv|the)\b/g, " ").replace(/[^a-z0-9]+/g, " ").trim().replace(/\s+/g, " ");
 }
 
 function similarity(left, right) {
@@ -31,12 +23,6 @@ function similarity(left, right) {
   const aa = new Set(a.split(" "));
   const bb = new Set(b.split(" "));
   return [...aa].filter((token) => bb.has(token)).length / Math.max(1, Math.min(aa.size, bb.size));
-}
-
-export function segmentForLeague(league) {
-  if (/friendl/i.test(String(league || ""))) return "friendly";
-  if (/^Europe -/i.test(String(league || ""))) return "uefa";
-  return "domestic";
 }
 
 function localFixtures() {
@@ -78,22 +64,6 @@ function matchFixture(local, providerRows) {
   ) >= 0.82) || null;
 }
 
-export function evaluateGoalApiAcceptance(history, checkedAt = new Date().toISOString()) {
-  const validRuns = (history || []).filter((run) => run.providerReachable && run.checked > 0);
-  const first = validRuns[0]?.checkedAt;
-  const elapsedDays = first ? Math.floor((Date.parse(checkedAt) - Date.parse(first)) / 86400000) + 1 : 0;
-  const aggregate = {};
-  for (const segment of Object.keys(TARGETS)) {
-    const checked = validRuns.reduce((sum, run) => sum + Number(run.segments?.[segment]?.checked || 0), 0);
-    const mapped = validRuns.reduce((sum, run) => sum + Number(run.segments?.[segment]?.mapped || 0), 0);
-    aggregate[segment] = { checked, mapped, coverage: checked ? Number((mapped / checked).toFixed(3)) : 0, target: TARGETS[segment] };
-  }
-  const enoughTime = elapsedDays >= DAYS;
-  const enoughEvidence = Object.values(aggregate).every((item) => item.checked >= 5);
-  const targetsMet = Object.values(aggregate).every((item) => item.coverage >= item.target);
-  return { accepted: enoughTime && enoughEvidence && targetsMet, enoughTime, enoughEvidence, targetsMet, elapsedDays, requiredDays: DAYS, aggregate };
-}
-
 async function main() {
   const apiKey = getGoalApiKey();
   const previous = readJson(OUTPUT, { history: [] });
@@ -118,7 +88,7 @@ async function main() {
     providerByDate.set(date, result.rows || []);
     requestStatuses.push({ date, status: result.status, records: result.rows?.length || 0, limits: result.limits || null });
   }
-  const segments = Object.fromEntries(Object.keys(TARGETS).map((key) => [key, { checked: 0, mapped: 0 }]));
+  const segments = Object.fromEntries(SEGMENTS.map((key) => [key, { checked: 0, mapped: 0 }]));
   const samples = [];
   for (const fixture of fixtures) {
     const segment = segmentForLeague(fixture.league);
@@ -136,4 +106,4 @@ async function main() {
   console.log(JSON.stringify({ ...report, history: undefined }, null, 2));
 }
 
-if (process.argv[1] && path.resolve(process.argv[1]) === path.resolve(fileURLToPath(import.meta.url))) main().catch((error) => { console.error(error); process.exit(1); });
+if (process.argv[1] && import.meta.url === pathToFileURL(process.argv[1]).href) main().catch((error) => { console.error(error); process.exit(1); });
