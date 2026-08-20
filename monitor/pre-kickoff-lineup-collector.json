@@ -1,58 +1,77 @@
 {
-  "generatedAt": "2026-08-20T14:22:42.216Z",
-  "checked": 4,
-  "confirmed": 2,
+  "generatedAt": "2026-08-20T15:18:31.221Z",
+  "checked": 10,
+  "confirmed": 6,
   "partial": 0,
-  "missing": 2,
-  "r2Stored": 2,
+  "missing": 4,
+  "r2Stored": 6,
   "playerFixtureStatsCaptured": 0,
   "databaseWritable": false,
   "databaseError": "Server error (HTTP status 402): {\"message\":\"Your project has exceeded the data transfer quota. Upgrade your plan to increase limits.\",\"code\":\"\",\"detail\":null,\"hint\":null,\"position\":null,\"internalPosition\":null,\"internalQuery\":null,\"severity\":\"\",\"where\":null,\"table\":null,\"column\":null,\"schema\":null,\"dataType\":null,\"constraint\":null,\"file\":null,\"line\":null,\"routine\":null,\"neon:retryable\":true}",
   "captureWindows": {
-    "t75": 0,
-    "t45": 4,
+    "t75": 2,
+    "t45": 8,
     "t20": 0,
     "outside": 0
   },
   "providers": {
-    "fotmob:ok": 2,
-    "fotmob:fixture_not_found": 2,
-    "sofascore:schedule_http_403": 2,
-    "api-football:account_or_plan_unavailable": 2,
-    "sportmonks:plan_coverage_unavailable": 2
+    "fotmob:ok": 7,
+    "sofascore:schedule_http_403": 4,
+    "api-football:account_or_plan_unavailable": 4,
+    "sportmonks:plan_coverage_unavailable": 4,
+    "fotmob:fixture_not_found": 3
   },
   "matches": [
     {
-      "matchId": "ss-fotmob-5987962",
+      "matchId": "ss-sky-577479",
       "league": "Europe - Europa League",
       "agent": "europa-league-agent",
-      "kickoff": "2026-08-20T15:00:00.000Z",
-      "minutesBeforeKickoff": 37,
+      "kickoff": "2026-08-20T16:00:00.000Z",
+      "minutesBeforeKickoff": 41,
       "captureWindow": "t45",
-      "homeTeam": "Kairat Almaty",
-      "awayTeam": "Anderlecht",
-      "provider": "fotmob",
-      "status": "ok",
+      "homeTeam": "CS Universitatea Craiova",
+      "awayTeam": "Ararat-Armenia",
+      "provider": "sportmonks",
+      "status": "plan_coverage_unavailable",
       "attempts": [
         {
           "provider": "fotmob",
           "status": "ok",
-          "lineup": true,
-          "confirmed": true
+          "lineup": false,
+          "confirmed": false
+        },
+        {
+          "provider": "sofascore",
+          "status": "schedule_http_403",
+          "lineup": false,
+          "confirmed": false
+        },
+        {
+          "provider": "api-football",
+          "status": "account_or_plan_unavailable",
+          "fixtureMapped": false,
+          "lineup": false,
+          "confirmed": false
+        },
+        {
+          "provider": "sportmonks",
+          "status": "plan_coverage_unavailable",
+          "lineup": false,
+          "confirmed": false
         }
       ],
-      "confirmed": true,
+      "confirmed": false,
       "partial": false
     },
     {
-      "matchId": "ss-sky-577463",
+      "matchId": "ss-sky-577275",
       "league": "Europe - Europa League",
       "agent": "europa-league-agent",
-      "kickoff": "2026-08-20T15:00:00.000Z",
-      "minutesBeforeKickoff": 37,
+      "kickoff": "2026-08-20T16:00:00.000Z",
+      "minutesBeforeKickoff": 41,
       "captureWindow": "t45",
-      "homeTeam": "Jagiellonia Bialystok",
-      "awayTeam": "FC Iberia 1999 Tiflis",
+      "homeTeam": "Egnatia",
+      "awayTeam": "Lillestrom",
       "provider": "sportmonks",
       "status": "plan_coverage_unavailable",
       "attempts": [
@@ -86,14 +105,14 @@
       "partial": false
     },
     {
-      "matchId": "ss-sky-577478",
-      "league": "Europe - Europa League",
-      "agent": "europa-league-agent",
-      "kickoff": "2026-08-20T15:00:00.000Z",
-      "minutesBeforeKickoff": 37,
+      "matchId": "ss-fotmob-5988055",
+      "league": "Europe - Conference League",
+      "agent": "conference-league-agent",
+      "kickoff": "2026-08-20T16:00:00.000Z",
+      "minutesBeforeKickoff": 41,
       "captureWindow": "t45",
-      "homeTeam": "Mjällby AIF",
-      "awayTeam": "Red Bull Salzburg",
+      "homeTeam": "Lincoln Red Imps FC",
+      "awayTeam": "Larne",
       "provider": "fotmob",
       "status": "ok",
       "attempts": [
@@ -108,14 +127,165 @@
       "partial": false
     },
     {
-      "matchId": "ss-sky-577487",
+      "matchId": "ss-sky-577497",
       "league": "Europe - Conference League",
       "agent": "conference-league-agent",
-      "kickoff": "2026-08-20T15:00:00.000Z",
-      "minutesBeforeKickoff": 37,
+      "kickoff": "2026-08-20T16:00:00.000Z",
+      "minutesBeforeKickoff": 41,
+      "captureWindow": "t45",
+      "homeTeam": "FC Nordsjaelland",
+      "awayTeam": "St Gallen",
+      "provider": "sportmonks",
+      "status": "plan_coverage_unavailable",
+      "attempts": [
+        {
+          "provider": "fotmob",
+          "status": "fixture_not_found",
+          "lineup": false,
+          "confirmed": false
+        },
+        {
+          "provider": "sofascore",
+          "status": "schedule_http_403",
+          "lineup": false,
+          "confirmed": false
+        },
+        {
+          "provider": "api-football",
+          "status": "account_or_plan_unavailable",
+          "fixtureMapped": false,
+          "lineup": false,
+          "confirmed": false
+        },
+        {
+          "provider": "sportmonks",
+          "status": "plan_coverage_unavailable",
+          "lineup": false,
+          "confirmed": false
+        }
+      ],
+      "confirmed": false,
+      "partial": false
+    },
+    {
+      "matchId": "ss-sky-577284",
+      "league": "Europe - Conference League",
+      "agent": "conference-league-agent",
+      "kickoff": "2026-08-20T16:00:00.000Z",
+      "minutesBeforeKickoff": 41,
+      "captureWindow": "t45",
+      "homeTeam": "Tromso",
+      "awayTeam": "Brighton and Hove Albion",
+      "provider": "fotmob",
+      "status": "ok",
+      "attempts": [
+        {
+          "provider": "fotmob",
+          "status": "ok",
+          "lineup": true,
+          "confirmed": true
+        }
+      ],
+      "confirmed": true,
+      "partial": false
+    },
+    {
+      "matchId": "ss-fotmob-5988058",
+      "league": "Europe - Conference League",
+      "agent": "conference-league-agent",
+      "kickoff": "2026-08-20T16:00:00.000Z",
+      "minutesBeforeKickoff": 41,
       "captureWindow": "t45",
       "homeTeam": "FC Inter Turku",
-      "awayTeam": "FC Copenhagen",
+      "awayTeam": "FC København",
+      "provider": "fotmob",
+      "status": "ok",
+      "attempts": [
+        {
+          "provider": "fotmob",
+          "status": "ok",
+          "lineup": true,
+          "confirmed": true
+        }
+      ],
+      "confirmed": true,
+      "partial": false
+    },
+    {
+      "matchId": "ss-fotmob-5987960",
+      "league": "Europe - Europa League",
+      "agent": "europa-league-agent",
+      "kickoff": "2026-08-20T16:00:00.000Z",
+      "minutesBeforeKickoff": 41,
+      "captureWindow": "t45",
+      "homeTeam": "Jagiellonia Białystok",
+      "awayTeam": "Iberia 1999",
+      "provider": "fotmob",
+      "status": "ok",
+      "attempts": [
+        {
+          "provider": "fotmob",
+          "status": "ok",
+          "lineup": true,
+          "confirmed": true
+        }
+      ],
+      "confirmed": true,
+      "partial": false
+    },
+    {
+      "matchId": "ss-fotmob-5987961",
+      "league": "Europe - Europa League",
+      "agent": "europa-league-agent",
+      "kickoff": "2026-08-20T16:00:00.000Z",
+      "minutesBeforeKickoff": 41,
+      "captureWindow": "t45",
+      "homeTeam": "Mjällby",
+      "awayTeam": "Salzburg",
+      "provider": "fotmob",
+      "status": "ok",
+      "attempts": [
+        {
+          "provider": "fotmob",
+          "status": "ok",
+          "lineup": true,
+          "confirmed": true
+        }
+      ],
+      "confirmed": true,
+      "partial": false
+    },
+    {
+      "matchId": "ss-sky-577505",
+      "league": "Europe - Conference League",
+      "agent": "conference-league-agent",
+      "kickoff": "2026-08-20T16:30:00.000Z",
+      "minutesBeforeKickoff": 71,
+      "captureWindow": "t75",
+      "homeTeam": "KI Klaksvík",
+      "awayTeam": "Riga FC",
+      "provider": "fotmob",
+      "status": "ok",
+      "attempts": [
+        {
+          "provider": "fotmob",
+          "status": "ok",
+          "lineup": true,
+          "confirmed": true
+        }
+      ],
+      "confirmed": true,
+      "partial": false
+    },
+    {
+      "matchId": "ss-sky-577467",
+      "league": "Europe - Conference League",
+      "agent": "conference-league-agent",
+      "kickoff": "2026-08-20T16:45:00.000Z",
+      "minutesBeforeKickoff": 86,
+      "captureWindow": "t75",
+      "homeTeam": "PAOK Salonika",
+      "awayTeam": "Brann",
       "provider": "sportmonks",
       "status": "plan_coverage_unavailable",
       "attempts": [
@@ -151,21 +321,21 @@
   ],
   "leagueCoverage": [
     {
-      "league": "Europe - Conference League",
-      "checked": 1,
-      "covered": 0,
-      "partial": 0,
-      "missing": 1,
-      "coverage": 0
-    },
-    {
       "league": "Europe - Europa League",
-      "checked": 3,
+      "checked": 4,
       "covered": 2,
       "partial": 0,
-      "missing": 1,
+      "missing": 2,
+      "coverage": 0.5
+    },
+    {
+      "league": "Europe - Conference League",
+      "checked": 6,
+      "covered": 4,
+      "partial": 0,
+      "missing": 2,
       "coverage": 0.667
     }
   ],
-  "confirmedCoverage": 0.5
+  "confirmedCoverage": 0.6
 }
