@@ -1,25 +1,25 @@
 {
-  "generatedAt": "2026-08-20T13:36:04.363Z",
+  "generatedAt": "2026-08-20T14:22:42.216Z",
   "checked": 4,
-  "confirmed": 1,
+  "confirmed": 2,
   "partial": 0,
-  "missing": 3,
-  "r2Stored": 1,
+  "missing": 2,
+  "r2Stored": 2,
   "playerFixtureStatsCaptured": 0,
   "databaseWritable": false,
   "databaseError": "Server error (HTTP status 402): {\"message\":\"Your project has exceeded the data transfer quota. Upgrade your plan to increase limits.\",\"code\":\"\",\"detail\":null,\"hint\":null,\"position\":null,\"internalPosition\":null,\"internalQuery\":null,\"severity\":\"\",\"where\":null,\"table\":null,\"column\":null,\"schema\":null,\"dataType\":null,\"constraint\":null,\"file\":null,\"line\":null,\"routine\":null,\"neon:retryable\":true}",
   "captureWindows": {
-    "t75": 4,
-    "t45": 0,
+    "t75": 0,
+    "t45": 4,
     "t20": 0,
     "outside": 0
   },
   "providers": {
     "fotmob:ok": 2,
-    "sofascore:schedule_http_403": 3,
-    "api-football:account_or_plan_unavailable": 3,
-    "sportmonks:plan_coverage_unavailable": 3,
-    "fotmob:fixture_not_found": 2
+    "fotmob:fixture_not_found": 2,
+    "sofascore:schedule_http_403": 2,
+    "api-football:account_or_plan_unavailable": 2,
+    "sportmonks:plan_coverage_unavailable": 2
   },
   "matches": [
     {
@@ -27,40 +27,21 @@
       "league": "Europe - Europa League",
       "agent": "europa-league-agent",
       "kickoff": "2026-08-20T15:00:00.000Z",
-      "minutesBeforeKickoff": 83,
-      "captureWindow": "t75",
+      "minutesBeforeKickoff": 37,
+      "captureWindow": "t45",
       "homeTeam": "Kairat Almaty",
       "awayTeam": "Anderlecht",
-      "provider": "sportmonks",
-      "status": "plan_coverage_unavailable",
+      "provider": "fotmob",
+      "status": "ok",
       "attempts": [
         {
           "provider": "fotmob",
           "status": "ok",
-          "lineup": false,
-          "confirmed": false
-        },
-        {
-          "provider": "sofascore",
-          "status": "schedule_http_403",
-          "lineup": false,
-          "confirmed": false
-        },
-        {
-          "provider": "api-football",
-          "status": "account_or_plan_unavailable",
-          "fixtureMapped": false,
-          "lineup": false,
-          "confirmed": false
-        },
-        {
-          "provider": "sportmonks",
-          "status": "plan_coverage_unavailable",
-          "lineup": false,
-          "confirmed": false
+          "lineup": true,
+          "confirmed": true
         }
       ],
-      "confirmed": false,
+      "confirmed": true,
       "partial": false
     },
     {
@@ -68,8 +49,8 @@
       "league": "Europe - Europa League",
       "agent": "europa-league-agent",
       "kickoff": "2026-08-20T15:00:00.000Z",
-      "minutesBeforeKickoff": 83,
-      "captureWindow": "t75",
+      "minutesBeforeKickoff": 37,
+      "captureWindow": "t45",
       "homeTeam": "Jagiellonia Bialystok",
       "awayTeam": "FC Iberia 1999 Tiflis",
       "provider": "sportmonks",
@@ -109,8 +90,8 @@
       "league": "Europe - Europa League",
       "agent": "europa-league-agent",
       "kickoff": "2026-08-20T15:00:00.000Z",
-      "minutesBeforeKickoff": 83,
-      "captureWindow": "t75",
+      "minutesBeforeKickoff": 37,
+      "captureWindow": "t45",
       "homeTeam": "Mjällby AIF",
       "awayTeam": "Red Bull Salzburg",
       "provider": "fotmob",
@@ -131,8 +112,8 @@
       "league": "Europe - Conference League",
       "agent": "conference-league-agent",
       "kickoff": "2026-08-20T15:00:00.000Z",
-      "minutesBeforeKickoff": 83,
-      "captureWindow": "t75",
+      "minutesBeforeKickoff": 37,
+      "captureWindow": "t45",
       "homeTeam": "FC Inter Turku",
       "awayTeam": "FC Copenhagen",
       "provider": "sportmonks",
@@ -180,11 +161,11 @@
     {
       "league": "Europe - Europa League",
       "checked": 3,
-      "covered": 1,
+      "covered": 2,
       "partial": 0,
-      "missing": 2,
-      "coverage": 0.333
+      "missing": 1,
+      "coverage": 0.667
     }
   ],
-  "confirmedCoverage": 0.25
+  "confirmedCoverage": 0.5
 }
