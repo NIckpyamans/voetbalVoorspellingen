@@ -1,131 +1,41 @@
 {
-  "generatedAt": "2026-08-20T17:48:16.530Z",
-  "checked": 14,
+  "generatedAt": "2026-08-21T16:53:23.888Z",
+  "checked": 12,
   "confirmed": 11,
-  "partial": 1,
-  "missing": 2,
-  "r2Stored": 12,
+  "partial": 0,
+  "missing": 1,
+  "r2Stored": 11,
   "playerFixtureStatsCaptured": 0,
   "databaseWritable": false,
   "databaseError": "Server error (HTTP status 402): {\"message\":\"Your project has exceeded the data transfer quota. Upgrade your plan to increase limits.\",\"code\":\"\",\"detail\":null,\"hint\":null,\"position\":null,\"internalPosition\":null,\"internalQuery\":null,\"severity\":\"\",\"where\":null,\"table\":null,\"column\":null,\"schema\":null,\"dataType\":null,\"constraint\":null,\"file\":null,\"line\":null,\"routine\":null,\"neon:retryable\":true}",
   "captureWindows": {
-    "t75": 0,
-    "t45": 2,
-    "t20": 12,
+    "t75": 11,
+    "t45": 1,
+    "t20": 0,
     "outside": 0
   },
   "providers": {
     "fotmob:ok": 12,
-    "fotmob:fixture_not_found": 2,
-    "sofascore:schedule_http_403": 2,
-    "goal-api:acceptance_gate_closed": 2,
-    "api-football:account_or_plan_unavailable": 2,
-    "sportmonks:plan_coverage_unavailable": 2
+    "sofascore:schedule_http_403": 12,
+    "goal-api:acceptance_gate_closed": 1,
+    "api-football:account_or_plan_unavailable": 1
   },
   "matches": [
     {
-      "matchId": "ss-fotmob-5987958",
-      "league": "Europe - Europa League",
-      "agent": "europa-league-agent",
-      "kickoff": "2026-08-20T18:00:00.000Z",
-      "minutesBeforeKickoff": 11,
-      "captureWindow": "t20",
-      "homeTeam": "FK Crvena Zvezda",
-      "awayTeam": "Viktoria Plzen",
-      "provider": "fotmob",
-      "status": "ok",
+      "matchId": "ss-fotmob-6000974",
+      "league": "World - Club Friendlies",
+      "agent": "club-friendlies-agent",
+      "kickoff": "2026-08-21T17:30:00.000Z",
+      "minutesBeforeKickoff": 36,
+      "captureWindow": "t45",
+      "homeTeam": "Real Zaragoza",
+      "awayTeam": "Athletic Club",
+      "provider": "api-football",
+      "status": "account_or_plan_unavailable",
       "attempts": [
         {
           "provider": "fotmob",
           "status": "ok",
-          "lineup": true,
-          "confirmed": true
-        }
-      ],
-      "confirmed": true,
-      "partial": false
-    },
-    {
-      "matchId": "ss-sky-577481",
-      "league": "Europe - Europa League",
-      "agent": "europa-league-agent",
-      "kickoff": "2026-08-20T18:00:00.000Z",
-      "minutesBeforeKickoff": 11,
-      "captureWindow": "t20",
-      "homeTeam": "Benfica",
-      "awayTeam": "AGF Aarhus",
-      "provider": "fotmob",
-      "status": "ok",
-      "attempts": [
-        {
-          "provider": "fotmob",
-          "status": "ok",
-          "lineup": true,
-          "confirmed": false
-        }
-      ],
-      "confirmed": false,
-      "partial": true
-    },
-    {
-      "matchId": "ss-fotmob-5988072",
-      "league": "Europe - Conference League",
-      "agent": "conference-league-agent",
-      "kickoff": "2026-08-20T18:00:00.000Z",
-      "minutesBeforeKickoff": 11,
-      "captureWindow": "t20",
-      "homeTeam": "FC Twente",
-      "awayTeam": "Qarabag FK",
-      "provider": "fotmob",
-      "status": "ok",
-      "attempts": [
-        {
-          "provider": "fotmob",
-          "status": "ok",
-          "lineup": true,
-          "confirmed": true
-        }
-      ],
-      "confirmed": true,
-      "partial": false
-    },
-    {
-      "matchId": "ss-fotmob-5988057",
-      "league": "Europe - Conference League",
-      "agent": "conference-league-agent",
-      "kickoff": "2026-08-20T18:00:00.000Z",
-      "minutesBeforeKickoff": 11,
-      "captureWindow": "t20",
-      "homeTeam": "Górnik Zabrze",
-      "awayTeam": "Monaco",
-      "provider": "fotmob",
-      "status": "ok",
-      "attempts": [
-        {
-          "provider": "fotmob",
-          "status": "ok",
-          "lineup": true,
-          "confirmed": true
-        }
-      ],
-      "confirmed": true,
-      "partial": false
-    },
-    {
-      "matchId": "ss-sky-577282",
-      "league": "Europe - Conference League",
-      "agent": "conference-league-agent",
-      "kickoff": "2026-08-20T18:00:00.000Z",
-      "minutesBeforeKickoff": 11,
-      "captureWindow": "t20",
-      "homeTeam": "Getafe",
-      "awayTeam": "Partizan Belgrade",
-      "provider": "sportmonks",
-      "status": "plan_coverage_unavailable",
-      "attempts": [
-        {
-          "provider": "fotmob",
-          "status": "fixture_not_found",
           "lineup": false,
           "confirmed": false
         },
@@ -147,35 +57,23 @@
           "fixtureMapped": false,
           "lineup": false,
           "confirmed": false
-        },
-        {
-          "provider": "sportmonks",
-          "status": "plan_coverage_unavailable",
-          "lineup": false,
-          "confirmed": false
         }
       ],
       "confirmed": false,
       "partial": false
     },
     {
-      "matchId": "ss-sky-577494",
-      "league": "Europe - Conference League",
-      "agent": "conference-league-agent",
-      "kickoff": "2026-08-20T18:00:00.000Z",
-      "minutesBeforeKickoff": 11,
-      "captureWindow": "t20",
-      "homeTeam": "KS Dynamo Tirana",
-      "awayTeam": "Pafos",
-      "provider": "sportmonks",
-      "status": "plan_coverage_unavailable",
+      "matchId": "ss-fotmob-5832825",
+      "league": "Netherlands - Eerste Divisie",
+      "agent": "netherlands-eerste-divisie-agent",
+      "kickoff": "2026-08-21T18:00:00.000Z",
+      "minutesBeforeKickoff": 66,
+      "captureWindow": "t75",
+      "homeTeam": "FC Den Bosch",
+      "awayTeam": "FC Eindhoven",
+      "provider": "fotmob",
+      "status": "ok",
       "attempts": [
-        {
-          "provider": "fotmob",
-          "status": "fixture_not_found",
-          "lineup": false,
-          "confirmed": false
-        },
         {
           "provider": "sofascore",
           "status": "schedule_http_403",
@@ -183,40 +81,89 @@
           "confirmed": false
         },
         {
-          "provider": "goal-api",
-          "status": "acceptance_gate_closed",
+          "provider": "fotmob",
+          "status": "ok",
+          "lineup": true,
+          "confirmed": true
+        }
+      ],
+      "confirmed": true,
+      "partial": false
+    },
+    {
+      "matchId": "ss-fotmob-5832826",
+      "league": "Netherlands - Eerste Divisie",
+      "agent": "netherlands-eerste-divisie-agent",
+      "kickoff": "2026-08-21T18:00:00.000Z",
+      "minutesBeforeKickoff": 66,
+      "captureWindow": "t75",
+      "homeTeam": "FC Dordrecht",
+      "awayTeam": "Roda JC Kerkrade",
+      "provider": "fotmob",
+      "status": "ok",
+      "attempts": [
+        {
+          "provider": "sofascore",
+          "status": "schedule_http_403",
           "lineup": false,
           "confirmed": false
         },
         {
-          "provider": "api-football",
-          "status": "account_or_plan_unavailable",
-          "fixtureMapped": false,
+          "provider": "fotmob",
+          "status": "ok",
+          "lineup": true,
+          "confirmed": true
+        }
+      ],
+      "confirmed": true,
+      "partial": false
+    },
+    {
+      "matchId": "ss-fotmob-5832827",
+      "league": "Netherlands - Eerste Divisie",
+      "agent": "netherlands-eerste-divisie-agent",
+      "kickoff": "2026-08-21T18:00:00.000Z",
+      "minutesBeforeKickoff": 66,
+      "captureWindow": "t75",
+      "homeTeam": "FC Emmen",
+      "awayTeam": "Jong AZ Alkmaar",
+      "provider": "fotmob",
+      "status": "ok",
+      "attempts": [
+        {
+          "provider": "sofascore",
+          "status": "schedule_http_403",
           "lineup": false,
           "confirmed": false
         },
         {
-          "provider": "sportmonks",
-          "status": "plan_coverage_unavailable",
+          "provider": "fotmob",
+          "status": "ok",
+          "lineup": true,
+          "confirmed": true
+        }
+      ],
+      "confirmed": true,
+      "partial": false
+    },
+    {
+      "matchId": "ss-fotmob-5832828",
+      "league": "Netherlands - Eerste Divisie",
+      "agent": "netherlands-eerste-divisie-agent",
+      "kickoff": "2026-08-21T18:00:00.000Z",
+      "minutesBeforeKickoff": 66,
+      "captureWindow": "t75",
+      "homeTeam": "Helmond Sport",
+      "awayTeam": "RKC Waalwijk",
+      "provider": "fotmob",
+      "status": "ok",
+      "attempts": [
+        {
+          "provider": "sofascore",
+          "status": "schedule_http_403",
           "lineup": false,
           "confirmed": false
-        }
-      ],
-      "confirmed": false,
-      "partial": false
-    },
-    {
-      "matchId": "ss-sky-577506",
-      "league": "Europe - Conference League",
-      "agent": "conference-league-agent",
-      "kickoff": "2026-08-20T18:00:00.000Z",
-      "minutesBeforeKickoff": 11,
-      "captureWindow": "t20",
-      "homeTeam": "Shamrock Rovers",
-      "awayTeam": "KuPS Kuopio",
-      "provider": "fotmob",
-      "status": "ok",
-      "attempts": [
+        },
         {
           "provider": "fotmob",
           "status": "ok",
@@ -228,17 +175,23 @@
       "partial": false
     },
     {
-      "matchId": "ss-fotmob-5988053",
-      "league": "Europe - Conference League",
-      "agent": "conference-league-agent",
-      "kickoff": "2026-08-20T18:00:00.000Z",
-      "minutesBeforeKickoff": 11,
-      "captureWindow": "t20",
-      "homeTeam": "Drita",
-      "awayTeam": "Inter Club d'Escaldes",
+      "matchId": "ss-fotmob-5832829",
+      "league": "Netherlands - Eerste Divisie",
+      "agent": "netherlands-eerste-divisie-agent",
+      "kickoff": "2026-08-21T18:00:00.000Z",
+      "minutesBeforeKickoff": 66,
+      "captureWindow": "t75",
+      "homeTeam": "MVV Maastricht",
+      "awayTeam": "FC Volendam",
       "provider": "fotmob",
       "status": "ok",
       "attempts": [
+        {
+          "provider": "sofascore",
+          "status": "schedule_http_403",
+          "lineup": false,
+          "confirmed": false
+        },
         {
           "provider": "fotmob",
           "status": "ok",
@@ -250,17 +203,23 @@
       "partial": false
     },
     {
-      "matchId": "ss-fotmob-5988051",
-      "league": "Europe - Conference League",
-      "agent": "conference-league-agent",
-      "kickoff": "2026-08-20T18:00:00.000Z",
-      "minutesBeforeKickoff": 11,
-      "captureWindow": "t20",
-      "homeTeam": "Vikingur Reykjavik",
-      "awayTeam": "Borac Banja Luka",
+      "matchId": "ss-fotmob-5832830",
+      "league": "Netherlands - Eerste Divisie",
+      "agent": "netherlands-eerste-divisie-agent",
+      "kickoff": "2026-08-21T18:00:00.000Z",
+      "minutesBeforeKickoff": 66,
+      "captureWindow": "t75",
+      "homeTeam": "Vitesse",
+      "awayTeam": "Almere City FC",
       "provider": "fotmob",
       "status": "ok",
       "attempts": [
+        {
+          "provider": "sofascore",
+          "status": "schedule_http_403",
+          "lineup": false,
+          "confirmed": false
+        },
         {
           "provider": "fotmob",
           "status": "ok",
@@ -272,17 +231,23 @@
       "partial": false
     },
     {
-      "matchId": "ss-fotmob-5987966",
-      "league": "Europe - Europa League",
-      "agent": "europa-league-agent",
-      "kickoff": "2026-08-20T18:00:00.000Z",
-      "minutesBeforeKickoff": 11,
-      "captureWindow": "t20",
-      "homeTeam": "OFI Crete",
-      "awayTeam": "CSKA Sofia",
+      "matchId": "ss-fotmob-5803227",
+      "league": "France - Ligue 2",
+      "agent": "france-ligue-2-agent",
+      "kickoff": "2026-08-21T18:00:00.000Z",
+      "minutesBeforeKickoff": 66,
+      "captureWindow": "t75",
+      "homeTeam": "Boulogne",
+      "awayTeam": "Red Star",
       "provider": "fotmob",
       "status": "ok",
       "attempts": [
+        {
+          "provider": "sofascore",
+          "status": "schedule_http_403",
+          "lineup": false,
+          "confirmed": false
+        },
         {
           "provider": "fotmob",
           "status": "ok",
@@ -294,17 +259,23 @@
       "partial": false
     },
     {
-      "matchId": "ss-fotmob-5987957",
-      "league": "Europe - Europa League",
-      "agent": "europa-league-agent",
-      "kickoff": "2026-08-20T18:00:00.000Z",
-      "minutesBeforeKickoff": 11,
-      "captureWindow": "t20",
-      "homeTeam": "St.Truiden",
-      "awayTeam": "Omonia Nicosia",
+      "matchId": "ss-fotmob-5803228",
+      "league": "France - Ligue 2",
+      "agent": "france-ligue-2-agent",
+      "kickoff": "2026-08-21T18:00:00.000Z",
+      "minutesBeforeKickoff": 66,
+      "captureWindow": "t75",
+      "homeTeam": "Clermont Foot",
+      "awayTeam": "Dijon",
       "provider": "fotmob",
       "status": "ok",
       "attempts": [
+        {
+          "provider": "sofascore",
+          "status": "schedule_http_403",
+          "lineup": false,
+          "confirmed": false
+        },
         {
           "provider": "fotmob",
           "status": "ok",
@@ -316,17 +287,23 @@
       "partial": false
     },
     {
-      "matchId": "ss-fotmob-5988070",
-      "league": "Europe - Conference League",
-      "agent": "conference-league-agent",
-      "kickoff": "2026-08-20T18:15:00.000Z",
-      "minutesBeforeKickoff": 26,
-      "captureWindow": "t20",
-      "homeTeam": "Sion",
-      "awayTeam": "Ajax",
+      "matchId": "ss-fotmob-5803229",
+      "league": "France - Ligue 2",
+      "agent": "france-ligue-2-agent",
+      "kickoff": "2026-08-21T18:00:00.000Z",
+      "minutesBeforeKickoff": 66,
+      "captureWindow": "t75",
+      "homeTeam": "Dunkerque",
+      "awayTeam": "Montpellier",
       "provider": "fotmob",
       "status": "ok",
       "attempts": [
+        {
+          "provider": "sofascore",
+          "status": "schedule_http_403",
+          "lineup": false,
+          "confirmed": false
+        },
         {
           "provider": "fotmob",
           "status": "ok",
@@ -338,17 +315,23 @@
       "partial": false
     },
     {
-      "matchId": "ss-fotmob-5988065",
-      "league": "Europe - Conference League",
-      "agent": "conference-league-agent",
-      "kickoff": "2026-08-20T18:30:00.000Z",
-      "minutesBeforeKickoff": 41,
-      "captureWindow": "t45",
-      "homeTeam": "Atalanta",
-      "awayTeam": "Hapoel Tel Aviv",
+      "matchId": "ss-fotmob-5803232",
+      "league": "France - Ligue 2",
+      "agent": "france-ligue-2-agent",
+      "kickoff": "2026-08-21T18:00:00.000Z",
+      "minutesBeforeKickoff": 66,
+      "captureWindow": "t75",
+      "homeTeam": "Pau",
+      "awayTeam": "Nancy",
       "provider": "fotmob",
       "status": "ok",
       "attempts": [
+        {
+          "provider": "sofascore",
+          "status": "schedule_http_403",
+          "lineup": false,
+          "confirmed": false
+        },
         {
           "provider": "fotmob",
           "status": "ok",
@@ -360,17 +343,23 @@
       "partial": false
     },
     {
-      "matchId": "ss-fotmob-5988074",
-      "league": "Europe - Conference League",
-      "agent": "conference-league-agent",
-      "kickoff": "2026-08-20T18:30:00.000Z",
-      "minutesBeforeKickoff": 41,
-      "captureWindow": "t45",
-      "homeTeam": "Lugano",
-      "awayTeam": "Maccabi Tel Aviv",
+      "matchId": "ss-fotmob-5803234",
+      "league": "France - Ligue 2",
+      "agent": "france-ligue-2-agent",
+      "kickoff": "2026-08-21T18:00:00.000Z",
+      "minutesBeforeKickoff": 66,
+      "captureWindow": "t75",
+      "homeTeam": "Sochaux",
+      "awayTeam": "Guingamp",
       "provider": "fotmob",
       "status": "ok",
       "attempts": [
+        {
+          "provider": "sofascore",
+          "status": "schedule_http_403",
+          "lineup": false,
+          "confirmed": false
+        },
         {
           "provider": "fotmob",
           "status": "ok",
@@ -384,21 +373,29 @@
   ],
   "leagueCoverage": [
     {
-      "league": "Europe - Europa League",
-      "checked": 4,
-      "covered": 3,
-      "partial": 1,
-      "missing": 0,
-      "coverage": 0.75
+      "league": "World - Club Friendlies",
+      "checked": 1,
+      "covered": 0,
+      "partial": 0,
+      "missing": 1,
+      "coverage": 0
     },
     {
-      "league": "Europe - Conference League",
-      "checked": 10,
-      "covered": 8,
+      "league": "Netherlands - Eerste Divisie",
+      "checked": 6,
+      "covered": 6,
       "partial": 0,
-      "missing": 2,
-      "coverage": 0.8
+      "missing": 0,
+      "coverage": 1
+    },
+    {
+      "league": "France - Ligue 2",
+      "checked": 5,
+      "covered": 5,
+      "partial": 0,
+      "missing": 0,
+      "coverage": 1
     }
   ],
-  "confirmedCoverage": 0.786
+  "confirmedCoverage": 0.917
 }
