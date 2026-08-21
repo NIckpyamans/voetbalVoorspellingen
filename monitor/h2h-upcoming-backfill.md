@@ -1,46 +1,40 @@
 # Upcoming H2H Backfill
 
-Laatst bijgewerkt: 2026-08-20T22:11:34.369Z
+Laatst bijgewerkt: 2026-08-21T04:25:29.261Z
 Gecontroleerd: 32
-Gevuld: 15
-Geen directe H2H: 17
+Gevuld: 6
+Geen directe H2H: 26
 Errors: 0
 
 ## Aanbeveling
 API-Football blijft quota-bewust geblokkeerd totdat de acceptatietest slaagt; ESPN is wel gecontroleerd voor alle kandidaten.
 
 ## Gevuld
-- 2026-08-26: Rapid Wien - Heart of Midlothian (1)
-- 2026-08-27: Ararat Armenia - Universitatea Craiova (1)
-- 2026-08-24: Roma - Fiorentina (1)
-- 2026-08-21: Dunkerque - Montpellier (2)
-- 2026-08-26: AEK Athens - Levski Sofia (1)
-- 2026-08-22: Lincoln City - Portsmouth (4)
-- 2026-08-27: KuPS - Shamrock Rovers (1)
-- 2026-08-27: Iberia 1999 - Jagiellonia Białystok (1)
-- 2026-08-21: Pau - Nancy (2)
-- 2026-08-22: Everton - Crystal Palace (1)
-- 2026-08-26: Lyon - Fenerbahçe (1)
-- 2026-08-22: Birmingham City - Bristol City (5)
-- 2026-08-27: Jablonec - Rangers (1)
-- 2026-08-27: Viktoria Plzen - FK Crvena Zvezda (1)
-- 2026-08-21: Sochaux - Guingamp (2)
+- 2026-08-28: Crystal Palace - Manchester City (1)
+- 2026-08-28: Rio Ave - Sporting CP (1)
+- 2026-08-28: Laval - Grenoble (5)
+- 2026-08-29: Levante - Real Betis (1)
+- 2026-08-28: Montpellier - Boulogne (2)
+- 2026-08-29: Auxerre - Angers (1)
 
 ## Geen Directe H2H
-- 2026-08-24: Malaga - Deportivo A Coruña (provider_acceptance_blocked)
-- 2026-08-21: FC Emmen - Jong AZ Alkmaar (provider_acceptance_blocked)
-- 2026-08-22: Hull City - Manchester United (provider_acceptance_blocked)
-- 2026-08-22: Marítimo - Académico de Viseu (provider_acceptance_blocked)
-- 2026-08-22: Lens - Auxerre (provider_acceptance_blocked)
-- 2026-08-22: Fortuna Sittard - AZ (provider_acceptance_blocked)
+- 2026-08-27: Maccabi Tel Aviv - Lugano (provider_acceptance_blocked)
+- 2026-08-27: FK Kauno Zalgiris - Beşiktaş (provider_acceptance_blocked)
+- 2026-08-28: Racing Santander - Elche (provider_acceptance_blocked)
+- 2026-08-28: FC Den Bosch - Vitesse (provider_acceptance_blocked)
+- 2026-08-28: Clermont Foot - Sochaux (provider_acceptance_blocked)
+- 2026-08-28: Bayern München - VfB Stuttgart (provider_acceptance_blocked)
+- 2026-08-28: Lille - Paris Saint-Germain (provider_acceptance_blocked)
+- 2026-08-28: Milan - Venezia (provider_acceptance_blocked)
+- 2026-08-26: NK Celje - Slovan Bratislava (provider_acceptance_blocked)
 - 2026-08-21: Real Zaragoza - Athletic Club (provider_acceptance_blocked)
-- 2026-08-22: Inter - Monza (provider_acceptance_blocked)
-- 2026-08-25: Valencia - Real Betis (provider_acceptance_blocked)
-- 2026-08-21: Helmond Sport - RKC Waalwijk (provider_acceptance_blocked)
-- 2026-08-22: Maritimo - Academico Viseu (provider_acceptance_blocked)
-- 2026-08-22: Le Mans - Brest (provider_acceptance_blocked)
-- 2026-08-22: Sparta Rotterdam - Utrecht (provider_acceptance_blocked)
-- 2026-08-22: Udinese - Como (provider_acceptance_blocked)
-- 2026-08-26: Real Madrid - Real Sociedad (provider_acceptance_blocked)
-- 2026-08-21: MVV Maastricht - FC Volendam (provider_acceptance_blocked)
-- 2026-08-22: Ipswich Town - Sunderland (provider_acceptance_blocked)
+- 2026-08-27: Qarabag FK - FC Twente (provider_acceptance_blocked)
+- 2026-08-27: Lillestrøm - Egnatia (provider_acceptance_blocked)
+- 2026-08-28: Deportivo Alaves - Villarreal (provider_acceptance_blocked)
+- 2026-08-28: FC Volendam - FC Dordrecht (provider_acceptance_blocked)
+- 2026-08-29: Elversberg - Bayer Leverkusen (provider_acceptance_blocked)
+- 2026-08-29: Strasbourg - Lens (provider_acceptance_blocked)
+- 2026-08-29: Fiorentina - Frosinone (provider_acceptance_blocked)
+- 2026-08-29: Liverpool - Nottingham Forest (provider_acceptance_blocked)
+- 2026-08-29: Alverca - Santa Clara (provider_acceptance_blocked)
+- 2026-08-25: Sabah FK - Hapoel Beer Sheva (provider_acceptance_blocked)
