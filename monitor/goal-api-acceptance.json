@@ -1,6 +1,6 @@
 {
   "schemaVersion": "goal-api-acceptance-v1",
-  "checkedAt": "2026-08-20T15:45:43.298Z",
+  "checkedAt": "2026-08-21T04:07:54.800Z",
   "configured": true,
   "accepted": false,
   "enoughTime": false,
@@ -10,20 +10,20 @@
   "requiredDays": 14,
   "aggregate": {
     "domestic": {
-      "checked": 153,
-      "mapped": 127,
-      "coverage": 0.83,
+      "checked": 221,
+      "mapped": 189,
+      "coverage": 0.855,
       "target": 0.8
     },
     "uefa": {
-      "checked": 130,
-      "mapped": 110,
-      "coverage": 0.846,
+      "checked": 173,
+      "mapped": 149,
+      "coverage": 0.861,
       "target": 0.8
     },
     "friendly": {
-      "checked": 2,
-      "mapped": 2,
+      "checked": 3,
+      "mapped": 3,
       "coverage": 1,
       "target": 0.6
     }
@@ -541,134 +541,169 @@
           "errorCode": null
         }
       }
+    },
+    {
+      "measurementVersion": "goal-pagination-v2",
+      "checkedAt": "2026-08-21T04:07:54.800Z",
+      "providerReachable": true,
+      "checked": 112,
+      "mapped": 102,
+      "segments": {
+        "domestic": {
+          "checked": 68,
+          "mapped": 62
+        },
+        "uefa": {
+          "checked": 43,
+          "mapped": 39
+        },
+        "friendly": {
+          "checked": 1,
+          "mapped": 1
+        }
+      },
+      "requestStatuses": [
+        {
+          "date": "2026-08-21",
+          "status": 200,
+          "records": 368,
+          "pages": 4,
+          "truncated": false,
+          "limits": {
+            "remaining": "996",
+            "limit": "1000",
+            "dailyRemaining": null
+          }
+        },
+        {
+          "date": "2026-08-22",
+          "status": 200,
+          "records": 1000,
+          "pages": 10,
+          "truncated": true,
+          "limits": {
+            "remaining": "986",
+            "limit": "1000",
+            "dailyRemaining": null
+          }
+        },
+        {
+          "date": "2026-08-23",
+          "status": 200,
+          "records": 719,
+          "pages": 8,
+          "truncated": false,
+          "limits": {
+            "remaining": "978",
+            "limit": "1000",
+            "dailyRemaining": null
+          }
+        },
+        {
+          "date": "2026-08-24",
+          "status": 200,
+          "records": 128,
+          "pages": 2,
+          "truncated": false,
+          "limits": {
+            "remaining": "976",
+            "limit": "1000",
+            "dailyRemaining": null
+          }
+        },
+        {
+          "date": "2026-08-25",
+          "status": 200,
+          "records": 200,
+          "pages": 2,
+          "truncated": false,
+          "limits": {
+            "remaining": "974",
+            "limit": "1000",
+            "dailyRemaining": null
+          }
+        },
+        {
+          "date": "2026-08-26",
+          "status": 200,
+          "records": 303,
+          "pages": 4,
+          "truncated": false,
+          "limits": {
+            "remaining": "970",
+            "limit": "1000",
+            "dailyRemaining": null
+          }
+        },
+        {
+          "date": "2026-08-27",
+          "status": 200,
+          "records": 124,
+          "pages": 2,
+          "truncated": false,
+          "limits": {
+            "remaining": "968",
+            "limit": "1000",
+            "dailyRemaining": null
+          }
+        }
+      ],
+      "endpointAccess": {
+        "testedFixtureId": "cmsp4ltcatzd9pn06ul8ba3hu",
+        "fixture": {
+          "tested": true,
+          "valid": true,
+          "status": 200,
+          "records": 1,
+          "available": true,
+          "remaining": "967",
+          "errorCode": null
+        },
+        "lineups": {
+          "tested": true,
+          "valid": true,
+          "status": 200,
+          "records": 1,
+          "available": true,
+          "remaining": "966",
+          "errorCode": null
+        },
+        "statistics": {
+          "tested": true,
+          "valid": true,
+          "status": 200,
+          "records": 1,
+          "available": true,
+          "remaining": "965",
+          "errorCode": null
+        },
+        "odds": {
+          "tested": true,
+          "valid": false,
+          "status": 403,
+          "records": 0,
+          "available": false,
+          "remaining": null,
+          "errorCode": "HTTP 403"
+        },
+        "h2h": {
+          "tested": true,
+          "valid": true,
+          "status": 200,
+          "records": 1,
+          "available": true,
+          "remaining": "964",
+          "errorCode": null
+        }
+      }
     }
   ],
   "missingSamples": [
-    {
-      "date": "2026-08-20",
-      "league": "Europe - Europa League",
-      "home": "Jagiellonia Bialystok",
-      "away": "FC Iberia 1999 Tiflis",
-      "segment": "uefa",
-      "status": "not_mapped"
-    },
-    {
-      "date": "2026-08-20",
-      "league": "Europe - Europa League",
-      "home": "Egnatia",
-      "away": "Lillestrom",
-      "segment": "uefa",
-      "status": "not_mapped"
-    },
-    {
-      "date": "2026-08-20",
-      "league": "Europe - Conference League",
-      "home": "FC Inter Turku",
-      "away": "FC Copenhagen",
-      "segment": "uefa",
-      "status": "not_mapped"
-    },
-    {
-      "date": "2026-08-20",
-      "league": "Europe - Conference League",
-      "home": "FC Nordsjaelland",
-      "away": "St Gallen",
-      "segment": "uefa",
-      "status": "not_mapped"
-    },
-    {
-      "date": "2026-08-20",
-      "league": "Europe - Conference League",
-      "home": "KS Dynamo Tirana",
-      "away": "Pafos",
-      "segment": "uefa",
-      "status": "not_mapped"
-    },
-    {
-      "date": "2026-08-20",
-      "league": "Europe - Conference League",
-      "home": "Klaksvik",
-      "away": "Riga FC",
-      "segment": "uefa",
-      "status": "not_mapped"
-    },
-    {
-      "date": "2026-08-20",
-      "league": "Europe - Conference League",
-      "home": "Heart of Midlothian",
-      "away": "Rapid Wien",
-      "segment": "uefa",
-      "status": "not_mapped"
-    },
-    {
-      "date": "2026-08-20",
-      "league": "Europe - Europa League",
-      "home": "St.Truiden",
-      "away": "Omonia Nicosia",
-      "segment": "uefa",
-      "status": "not_mapped"
-    },
-    {
-      "date": "2026-08-21",
-      "league": "Netherlands - Eerste Divisie",
-      "home": "FC Dordrecht",
-      "away": "Roda JC Kerkrade",
-      "segment": "domestic",
-      "status": "not_mapped"
-    },
     {
       "date": "2026-08-21",
       "league": "Netherlands - Eerste Divisie",
       "home": "FC Emmen",
       "away": "Jong AZ Alkmaar",
-      "segment": "domestic",
-      "status": "not_mapped"
-    },
-    {
-      "date": "2026-08-21",
-      "league": "Netherlands - Eerste Divisie",
-      "home": "Helmond Sport",
-      "away": "RKC Waalwijk",
-      "segment": "domestic",
-      "status": "not_mapped"
-    },
-    {
-      "date": "2026-08-21",
-      "league": "Netherlands - Eerste Divisie",
-      "home": "MVV Maastricht",
-      "away": "FC Volendam",
-      "segment": "domestic",
-      "status": "not_mapped"
-    },
-    {
-      "date": "2026-08-21",
-      "league": "France - Ligue 2",
-      "home": "Boulogne",
-      "away": "Red Star",
-      "segment": "domestic",
-      "status": "not_mapped"
-    },
-    {
-      "date": "2026-08-21",
-      "league": "France - Ligue 2",
-      "home": "Dunkerque",
-      "away": "Montpellier",
-      "segment": "domestic",
-      "status": "not_mapped"
-    },
-    {
-      "date": "2026-08-22",
-      "league": "England - Premier League",
-      "home": "Everton",
-      "away": "Crystal Palace",
-      "segment": "domestic",
-      "status": "not_mapped"
-    },
-    {
-      "date": "2026-08-22",
-      "league": "England - Premier League",
-      "home": "Ipswich Town",
-      "away": "Sunderland",
       "segment": "domestic",
       "status": "not_mapped"
     },
@@ -725,6 +760,22 @@
       "league": "Europe - Conference League",
       "home": "Rapid Wien",
       "away": "Heart of Midlothian",
+      "segment": "uefa",
+      "status": "not_mapped"
+    },
+    {
+      "date": "2026-08-27",
+      "league": "Europe - Conference League",
+      "home": "Riga FC",
+      "away": "Klaksvik",
+      "segment": "uefa",
+      "status": "not_mapped"
+    },
+    {
+      "date": "2026-08-27",
+      "league": "Europe - Europa League",
+      "home": "Omonia Nicosia",
+      "away": "St.Truiden",
       "segment": "uefa",
       "status": "not_mapped"
     }
