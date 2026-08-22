@@ -1,89 +1,31 @@
 {
-  "generatedAt": "2026-08-22T11:02:11.666Z",
-  "checked": 3,
+  "generatedAt": "2026-08-22T11:37:08.508Z",
+  "checked": 2,
   "confirmed": 2,
   "partial": 0,
-  "missing": 1,
+  "missing": 0,
   "r2Stored": 2,
   "playerFixtureStatsCaptured": 0,
   "databaseWritable": false,
   "databaseError": "Server error (HTTP status 402): {\"message\":\"Your project has exceeded the data transfer quota. Upgrade your plan to increase limits.\",\"code\":\"\",\"detail\":null,\"hint\":null,\"position\":null,\"internalPosition\":null,\"internalQuery\":null,\"severity\":\"\",\"where\":null,\"table\":null,\"column\":null,\"schema\":null,\"dataType\":null,\"constraint\":null,\"file\":null,\"line\":null,\"routine\":null,\"neon:retryable\":true}",
   "captureWindows": {
     "t75": 0,
-    "t45": 2,
-    "t20": 1,
+    "t45": 0,
+    "t20": 2,
     "outside": 0
   },
   "providers": {
-    "sofascore:schedule_http_403": 3,
-    "fotmob:fixture_not_found": 1,
-    "apifootball-com:unsupported_free_league": 1,
-    "goal-api:acceptance_gate_closed": 1,
-    "sportmonks:plan_coverage_unavailable": 1,
-    "api-football:account_or_plan_unavailable": 1,
+    "sofascore:schedule_http_403": 2,
     "fotmob:ok": 2
   },
   "matches": [
-    {
-      "matchId": "ss-fotmob-5795364",
-      "league": "England - Premier League",
-      "agent": "england-premier-league-agent",
-      "kickoff": "2026-08-22T11:30:00.000Z",
-      "minutesBeforeKickoff": 27,
-      "captureWindow": "t20",
-      "homeTeam": "Hull City",
-      "awayTeam": "Manchester United",
-      "provider": "api-football",
-      "status": "account_or_plan_unavailable",
-      "attempts": [
-        {
-          "provider": "sofascore",
-          "status": "schedule_http_403",
-          "lineup": false,
-          "confirmed": false
-        },
-        {
-          "provider": "fotmob",
-          "status": "fixture_not_found",
-          "lineup": false,
-          "confirmed": false
-        },
-        {
-          "provider": "apifootball-com",
-          "status": "unsupported_free_league",
-          "lineup": false,
-          "confirmed": false
-        },
-        {
-          "provider": "goal-api",
-          "status": "acceptance_gate_closed",
-          "lineup": false,
-          "confirmed": false
-        },
-        {
-          "provider": "sportmonks",
-          "status": "plan_coverage_unavailable",
-          "lineup": false,
-          "confirmed": false
-        },
-        {
-          "provider": "api-football",
-          "status": "account_or_plan_unavailable",
-          "fixtureMapped": false,
-          "lineup": false,
-          "confirmed": false
-        }
-      ],
-      "confirmed": false,
-      "partial": false
-    },
     {
       "matchId": "ss-fotmob-5803230",
       "league": "France - Ligue 2",
       "agent": "france-ligue-2-agent",
       "kickoff": "2026-08-22T12:00:00.000Z",
-      "minutesBeforeKickoff": 57,
-      "captureWindow": "t45",
+      "minutesBeforeKickoff": 22,
+      "captureWindow": "t20",
       "homeTeam": "Metz",
       "awayTeam": "Laval",
       "provider": "fotmob",
@@ -110,8 +52,8 @@
       "league": "France - Ligue 2",
       "agent": "france-ligue-2-agent",
       "kickoff": "2026-08-22T12:00:00.000Z",
-      "minutesBeforeKickoff": 57,
-      "captureWindow": "t45",
+      "minutesBeforeKickoff": 22,
+      "captureWindow": "t20",
       "homeTeam": "Nantes",
       "awayTeam": "Rodez",
       "provider": "fotmob",
@@ -136,14 +78,6 @@
   ],
   "leagueCoverage": [
     {
-      "league": "England - Premier League",
-      "checked": 1,
-      "covered": 0,
-      "partial": 0,
-      "missing": 1,
-      "coverage": 0
-    },
-    {
       "league": "France - Ligue 2",
       "checked": 2,
       "covered": 2,
@@ -152,5 +86,5 @@
       "coverage": 1
     }
   ],
-  "confirmedCoverage": 0.667
+  "confirmedCoverage": 1
 }
