@@ -1,22 +1,27 @@
 {
-  "generatedAt": "2026-08-22T09:45:03.863Z",
-  "checked": 2,
+  "generatedAt": "2026-08-22T10:03:28.439Z",
+  "checked": 3,
   "confirmed": 2,
   "partial": 0,
-  "missing": 0,
+  "missing": 1,
   "r2Stored": 2,
   "playerFixtureStatsCaptured": 0,
   "databaseWritable": false,
   "databaseError": "Server error (HTTP status 402): {\"message\":\"Your project has exceeded the data transfer quota. Upgrade your plan to increase limits.\",\"code\":\"\",\"detail\":null,\"hint\":null,\"position\":null,\"internalPosition\":null,\"internalQuery\":null,\"severity\":\"\",\"where\":null,\"table\":null,\"column\":null,\"schema\":null,\"dataType\":null,\"constraint\":null,\"file\":null,\"line\":null,\"routine\":null,\"neon:retryable\":true}",
   "captureWindows": {
-    "t75": 0,
-    "t45": 2,
-    "t20": 0,
+    "t75": 1,
+    "t45": 0,
+    "t20": 2,
     "outside": 0
   },
   "providers": {
-    "sofascore:schedule_http_403": 2,
-    "fotmob:ok": 2
+    "sofascore:schedule_http_403": 3,
+    "fotmob:ok": 2,
+    "fotmob:fixture_not_found": 1,
+    "apifootball-com:unsupported_free_league": 1,
+    "goal-api:acceptance_gate_closed": 1,
+    "sportmonks:plan_coverage_unavailable": 1,
+    "api-football:account_or_plan_unavailable": 1
   },
   "matches": [
     {
@@ -24,8 +29,8 @@
       "league": "England - Championship",
       "agent": "england-championship-agent",
       "kickoff": "2026-08-22T10:30:00.000Z",
-      "minutesBeforeKickoff": 44,
-      "captureWindow": "t45",
+      "minutesBeforeKickoff": 26,
+      "captureWindow": "t20",
       "homeTeam": "Birmingham City",
       "awayTeam": "Bristol City",
       "provider": "fotmob",
@@ -52,8 +57,8 @@
       "league": "England - Championship",
       "agent": "england-championship-agent",
       "kickoff": "2026-08-22T10:30:00.000Z",
-      "minutesBeforeKickoff": 44,
-      "captureWindow": "t45",
+      "minutesBeforeKickoff": 26,
+      "captureWindow": "t20",
       "homeTeam": "Lincoln City",
       "awayTeam": "Portsmouth",
       "provider": "fotmob",
@@ -74,9 +79,70 @@
       ],
       "confirmed": true,
       "partial": false
+    },
+    {
+      "matchId": "ss-fotmob-5795364",
+      "league": "England - Premier League",
+      "agent": "england-premier-league-agent",
+      "kickoff": "2026-08-22T11:30:00.000Z",
+      "minutesBeforeKickoff": 86,
+      "captureWindow": "t75",
+      "homeTeam": "Hull City",
+      "awayTeam": "Manchester United",
+      "provider": "api-football",
+      "status": "account_or_plan_unavailable",
+      "attempts": [
+        {
+          "provider": "sofascore",
+          "status": "schedule_http_403",
+          "lineup": false,
+          "confirmed": false
+        },
+        {
+          "provider": "fotmob",
+          "status": "fixture_not_found",
+          "lineup": false,
+          "confirmed": false
+        },
+        {
+          "provider": "apifootball-com",
+          "status": "unsupported_free_league",
+          "lineup": false,
+          "confirmed": false
+        },
+        {
+          "provider": "goal-api",
+          "status": "acceptance_gate_closed",
+          "lineup": false,
+          "confirmed": false
+        },
+        {
+          "provider": "sportmonks",
+          "status": "plan_coverage_unavailable",
+          "lineup": false,
+          "confirmed": false
+        },
+        {
+          "provider": "api-football",
+          "status": "account_or_plan_unavailable",
+          "fixtureMapped": false,
+          "lineup": false,
+          "confirmed": false
+        }
+      ],
+      "confirmed": false,
+      "partial": false
     }
   ],
   "leagueCoverage": [
+    {
+      "league": "England - Premier League",
+      "checked": 1,
+      "covered": 0,
+      "partial": 0,
+      "missing": 1,
+      "coverage": 0
+    },
     {
       "league": "England - Championship",
       "checked": 2,
@@ -86,5 +152,5 @@
       "coverage": 1
     }
   ],
-  "confirmedCoverage": 1
+  "confirmedCoverage": 0.667
 }
