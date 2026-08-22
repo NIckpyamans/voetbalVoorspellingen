@@ -1,8 +1,8 @@
 {
-  "generatedAt": "2026-08-22T13:03:18.533Z",
+  "generatedAt": "2026-08-22T13:46:14.300Z",
   "checked": 7,
-  "confirmed": 1,
-  "partial": 5,
+  "confirmed": 4,
+  "partial": 2,
   "missing": 1,
   "r2Stored": 6,
   "playerFixtureStatsCaptured": 0,
@@ -10,8 +10,8 @@
   "databaseError": "Server error (HTTP status 402): {\"message\":\"Your project has exceeded the data transfer quota. Upgrade your plan to increase limits.\",\"code\":\"\",\"detail\":null,\"hint\":null,\"position\":null,\"internalPosition\":null,\"internalQuery\":null,\"severity\":\"\",\"where\":null,\"table\":null,\"column\":null,\"schema\":null,\"dataType\":null,\"constraint\":null,\"file\":null,\"line\":null,\"routine\":null,\"neon:retryable\":true}",
   "captureWindows": {
     "t75": 2,
-    "t45": 3,
-    "t20": 2,
+    "t45": 2,
+    "t20": 3,
     "outside": 0
   },
   "providers": {
@@ -25,68 +25,12 @@
   },
   "matches": [
     {
-      "matchId": "ss-bbc-2026-08-22-fortuna sittard-az",
-      "league": "Netherlands - Eredivisie",
-      "agent": "netherlands-eredivisie-agent",
-      "kickoff": "2026-08-22T13:30:00.000Z",
-      "minutesBeforeKickoff": 26,
-      "captureWindow": "t20",
-      "homeTeam": "Fortuna Sittard",
-      "awayTeam": "AZ",
-      "provider": "fotmob",
-      "status": "ok",
-      "attempts": [
-        {
-          "provider": "sofascore",
-          "status": "schedule_http_403",
-          "lineup": false,
-          "confirmed": false
-        },
-        {
-          "provider": "fotmob",
-          "status": "ok",
-          "lineup": true,
-          "confirmed": false
-        }
-      ],
-      "confirmed": false,
-      "partial": true
-    },
-    {
-      "matchId": "ss-bbc-2026-08-22-maritimo-academico de viseu",
-      "league": "Portugal - Liga Portugal",
-      "agent": "portugal-liga-portugal-agent",
-      "kickoff": "2026-08-22T13:30:00.000Z",
-      "minutesBeforeKickoff": 26,
-      "captureWindow": "t20",
-      "homeTeam": "Marítimo",
-      "awayTeam": "Académico de Viseu",
-      "provider": "fotmob",
-      "status": "ok",
-      "attempts": [
-        {
-          "provider": "sofascore",
-          "status": "schedule_http_403",
-          "lineup": false,
-          "confirmed": false
-        },
-        {
-          "provider": "fotmob",
-          "status": "ok",
-          "lineup": true,
-          "confirmed": false
-        }
-      ],
-      "confirmed": false,
-      "partial": true
-    },
-    {
       "matchId": "ss-fotmob-5795365",
       "league": "England - Premier League",
       "agent": "england-premier-league-agent",
       "kickoff": "2026-08-22T14:00:00.000Z",
-      "minutesBeforeKickoff": 56,
-      "captureWindow": "t45",
+      "minutesBeforeKickoff": 13,
+      "captureWindow": "t20",
       "homeTeam": "Everton",
       "awayTeam": "Crystal Palace",
       "provider": "fotmob",
@@ -102,19 +46,19 @@
           "provider": "fotmob",
           "status": "ok",
           "lineup": true,
-          "confirmed": false
+          "confirmed": true
         }
       ],
-      "confirmed": false,
-      "partial": true
+      "confirmed": true,
+      "partial": false
     },
     {
       "matchId": "ss-fotmob-5795366",
       "league": "England - Premier League",
       "agent": "england-premier-league-agent",
       "kickoff": "2026-08-22T14:00:00.000Z",
-      "minutesBeforeKickoff": 56,
-      "captureWindow": "t45",
+      "minutesBeforeKickoff": 13,
+      "captureWindow": "t20",
       "homeTeam": "Ipswich Town",
       "awayTeam": "Sunderland",
       "provider": "fotmob",
@@ -130,19 +74,19 @@
           "provider": "fotmob",
           "status": "ok",
           "lineup": true,
-          "confirmed": false
+          "confirmed": true
         }
       ],
-      "confirmed": false,
-      "partial": true
+      "confirmed": true,
+      "partial": false
     },
     {
       "matchId": "ss-fotmob-5795367",
       "league": "England - Premier League",
       "agent": "england-premier-league-agent",
       "kickoff": "2026-08-22T14:00:00.000Z",
-      "minutesBeforeKickoff": 56,
-      "captureWindow": "t45",
+      "minutesBeforeKickoff": 13,
+      "captureWindow": "t20",
       "homeTeam": "Nottingham Forest",
       "awayTeam": "Leeds United",
       "provider": "api-football",
@@ -194,8 +138,8 @@
       "league": "Netherlands - Eerste Divisie",
       "agent": "netherlands-eerste-divisie-agent",
       "kickoff": "2026-08-22T14:30:00.000Z",
-      "minutesBeforeKickoff": 86,
-      "captureWindow": "t75",
+      "minutesBeforeKickoff": 43,
+      "captureWindow": "t45",
       "homeTeam": "NAC Breda",
       "awayTeam": "Jong Ajax",
       "provider": "fotmob",
@@ -222,10 +166,66 @@
       "league": "Portugal - Liga Portugal",
       "agent": "portugal-liga-portugal-agent",
       "kickoff": "2026-08-22T14:30:00.000Z",
-      "minutesBeforeKickoff": 86,
-      "captureWindow": "t75",
+      "minutesBeforeKickoff": 43,
+      "captureWindow": "t45",
       "homeTeam": "Maritimo",
       "awayTeam": "Academico Viseu",
+      "provider": "fotmob",
+      "status": "ok",
+      "attempts": [
+        {
+          "provider": "sofascore",
+          "status": "schedule_http_403",
+          "lineup": false,
+          "confirmed": false
+        },
+        {
+          "provider": "fotmob",
+          "status": "ok",
+          "lineup": true,
+          "confirmed": true
+        }
+      ],
+      "confirmed": true,
+      "partial": false
+    },
+    {
+      "matchId": "ss-fotmob-5868021",
+      "league": "Spain - LaLiga",
+      "agent": "spain-laliga-agent",
+      "kickoff": "2026-08-22T15:00:00.000Z",
+      "minutesBeforeKickoff": 73,
+      "captureWindow": "t75",
+      "homeTeam": "Athletic Club",
+      "awayTeam": "Sevilla",
+      "provider": "fotmob",
+      "status": "ok",
+      "attempts": [
+        {
+          "provider": "sofascore",
+          "status": "schedule_http_403",
+          "lineup": false,
+          "confirmed": false
+        },
+        {
+          "provider": "fotmob",
+          "status": "ok",
+          "lineup": true,
+          "confirmed": false
+        }
+      ],
+      "confirmed": false,
+      "partial": true
+    },
+    {
+      "matchId": "ss-fotmob-5802904",
+      "league": "France - Ligue 1",
+      "agent": "france-ligue-1-agent",
+      "kickoff": "2026-08-22T15:15:00.000Z",
+      "minutesBeforeKickoff": 88,
+      "captureWindow": "t75",
+      "homeTeam": "Lens",
+      "awayTeam": "Auxerre",
       "provider": "fotmob",
       "status": "ok",
       "attempts": [
@@ -248,28 +248,28 @@
   ],
   "leagueCoverage": [
     {
-      "league": "England - Premier League",
-      "checked": 3,
-      "covered": 0,
-      "partial": 2,
-      "missing": 1,
-      "coverage": 0
-    },
-    {
-      "league": "Portugal - Liga Portugal",
-      "checked": 2,
-      "covered": 0,
-      "partial": 2,
-      "missing": 0,
-      "coverage": 0
-    },
-    {
-      "league": "Netherlands - Eredivisie",
+      "league": "France - Ligue 1",
       "checked": 1,
       "covered": 0,
       "partial": 1,
       "missing": 0,
       "coverage": 0
+    },
+    {
+      "league": "Spain - LaLiga",
+      "checked": 1,
+      "covered": 0,
+      "partial": 1,
+      "missing": 0,
+      "coverage": 0
+    },
+    {
+      "league": "England - Premier League",
+      "checked": 3,
+      "covered": 2,
+      "partial": 0,
+      "missing": 1,
+      "coverage": 0.667
     },
     {
       "league": "Netherlands - Eerste Divisie",
@@ -278,7 +278,15 @@
       "partial": 0,
       "missing": 0,
       "coverage": 1
+    },
+    {
+      "league": "Portugal - Liga Portugal",
+      "checked": 1,
+      "covered": 1,
+      "partial": 0,
+      "missing": 0,
+      "coverage": 1
     }
   ],
-  "confirmedCoverage": 0.143
+  "confirmedCoverage": 0.571
 }
