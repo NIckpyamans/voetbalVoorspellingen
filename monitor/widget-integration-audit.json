@@ -1,11 +1,11 @@
 {
-  "generatedAt": "2026-08-16T12:03:35.826Z",
+  "generatedAt": "2026-08-22T07:02:53.662Z",
   "baseUrl": "https://voetbalvoorspellingen-clean.vercel.app",
   "status": "degraded",
   "totals": {
     "checks": 10,
-    "passed": 7,
-    "failed": 3
+    "passed": 8,
+    "failed": 2
   },
   "neon": {
     "connected": false,
@@ -39,23 +39,23 @@
     {
       "key": "matches_widget",
       "label": "Dashboard/matches-widget",
-      "passed": false,
+      "passed": true,
       "status": 200,
-      "detail": "18 actuele matches, bron unknown"
+      "detail": "30 actuele matches, bron github-worker-v4-split"
     },
     {
       "key": "standings_widget",
       "label": "Standen-widget",
       "passed": true,
       "status": 200,
-      "detail": "16 standen"
+      "detail": "15 standen"
     },
     {
       "key": "cup_widget",
       "label": "Bekerschema-widget",
       "passed": true,
       "status": 200,
-      "detail": "3 actief; leeg is geldig buiten bekerrondes"
+      "detail": "6 actief; leeg is geldig buiten bekerrondes"
     },
     {
       "key": "season_widget",
@@ -88,6 +88,6 @@
   ],
   "opportunities": [
     "Vul gratis pre-match odds snapshots voordat ROI/CLV wordt beoordeeld.",
-    "Herstel de mislukte widgetcontracten: Neon database, Provider- en integriteitswidget, Dashboard/matches-widget."
+    "Herstel de mislukte widgetcontracten: Neon database, Provider- en integriteitswidget."
   ]
 }

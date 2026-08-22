@@ -1,14 +1,16 @@
 # FootyAI verbeteraudit
 
-Periode: 2026-08-10 t/m 2026-08-16
+Periode: 2026-08-16 t/m 2026-08-22
 
-Geen nieuwe dagelijkse alarmsignalen; 5 meetbare verbeteracties blijven actief.
+AI bundel over de laatste 7 dagen: 1 monitorthema's en 5 uitvoerbare verbeteracties.
 
 - Runs: 7
-- Bevindingen: 0
-- Thema's: 0
+- Bevindingen: 4
+- Thema's: 1
 
 ## Hoofdpunten
+- H2H niet gevuld (4x, severity: medium)
+  - Trek H2H verder uit historische competitiebestanden en bewaak fallbackdekking in de worker.
 
 ## Architectuuranalyse
 Professionele architectuuranalyse voor schaalbaarheid, datakwaliteit, AI-agentwaarde, databasegroei en modelbetrouwbaarheid.
@@ -42,16 +44,16 @@ Professionele architectuuranalyse voor schaalbaarheid, datakwaliteit, AI-agentwa
 ## Datakwaliteit
 - Pending result backfills: 0
 - Ontbrekende oude scores: 0
-- H2H-dekking: 18%
+- H2H-dekking: 63%
 - Resultaatbackfill is schoon binnen de auditperiode.
 - Breid H2H via historische competitieprofielen en team-id mappings uit tot minimaal 85% dekking.
 
 ## Widgetintegraties
 - Status: degraded
 - Neon: niet verbonden
-- Checks: 7/10 geslaagd
+- Checks: 8/10 geslaagd
 - Vul gratis pre-match odds snapshots voordat ROI/CLV wordt beoordeeld.
-- Herstel de mislukte widgetcontracten: Neon database, Provider- en integriteitswidget, Dashboard/matches-widget.
+- Herstel de mislukte widgetcontracten: Neon database, Provider- en integriteitswidget.
 
 ## Snapshot-evaluatie
 - Status: completed (evaluated)
@@ -64,7 +66,7 @@ Professionele architectuuranalyse voor schaalbaarheid, datakwaliteit, AI-agentwa
 - Snapshotrecords: 227
 - Unieke snapshotwedstrijden: 221/150
 - Resterend: 0
-- Samengevoegde snapshotbron: 3171 club-snapshots
+- Samengevoegde snapshotbron: 3750 club-snapshots
 
 ## Standaard uitgevoerde acties
 - Database migratieplan bijwerken: docs/database-migration-plan.md (auto-maintained)
@@ -73,11 +75,11 @@ Professionele architectuuranalyse voor schaalbaarheid, datakwaliteit, AI-agentwa
 - Herbruikbare data context bewaken: docs/data-context/analysis-context.json (context-active)
 
 ## Volgende aanbevelingen
-1. H2H-dekking gericht verhogen (Hoog, impact: Hoog) - Actuele H2H-dekking is 18%; doel is minimaal 85% met betrouwbare historie en expliciete missing reasons.
+1. H2H-dekking gericht verhogen (Hoog, impact: Hoog) - Actuele H2H-dekking is 63%; doel is minimaal 85% met betrouwbare historie en expliciete missing reasons.
 2. Confirmed lineups rond kickoff verzamelen (Hoog, impact: Zeer hoog) - Confirmed-lineupdekking is 0%; T-75, T-45 en T-20 blijven de actieve capturevensters.
 3. Opening-, prematch- en closing odds vastleggen (Hoog, impact: Zeer hoog) - Echte oddsdekking is 0%; CLV/ROI blijft geblokkeerd zonder geldige timestamped paren. API-Football accepteert het huidige plan nog niet.
 4. R2/Neon-herstelketen controleren (Hoog, impact: Hoog) - Neon is geconfigureerd maar blokkeert met HTTP 402/quota; R2 blijft actief en replay moet automatisch hervatten na herstel.
-5. League/phase-kalibratie in shadow mode beoordelen (Middel, impact: Hoog) - 113 unieke reguliere wedstrijden; gate gehaald. Promoveer alleen profielen met voldoende Brier-verbetering.
+5. League/phase-kalibratie in shadow mode beoordelen (Middel, impact: Hoog) - 249 unieke reguliere wedstrijden; gate gehaald. Promoveer alleen profielen met voldoende Brier-verbetering.
 
 ## Automatisch gestarte acties
 1. H2H-dekking gericht verhogen: h2h-enrichment.yml

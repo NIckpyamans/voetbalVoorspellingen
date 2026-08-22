@@ -1,6 +1,6 @@
 # Widget Integration Audit
 
-Gegenereerd: 2026-08-16T12:03:35.826Z
+Gegenereerd: 2026-08-22T07:02:53.662Z
 Status: degraded
 
 ## Neon
@@ -14,9 +14,9 @@ Status: degraded
 - OK Systeemstatus: status ok
 - FOUT Neon database: HTTP 500
 - FOUT Provider- en integriteitswidget: HTTP 500
-- FOUT Dashboard/matches-widget: 18 actuele matches, bron unknown
-- OK Standen-widget: 16 standen
-- OK Bekerschema-widget: 3 actief; leeg is geldig buiten bekerrondes
+- OK Dashboard/matches-widget: 30 actuele matches, bron github-worker-v4-split
+- OK Standen-widget: 15 standen
+- OK Bekerschema-widget: 6 actief; leeg is geldig buiten bekerrondes
 - OK Neon seizoen-widget: 0 seizoenovergangen
 - OK Geschiedenis-widget: 478 reviews
 - OK Prediction-snapshot-widget: 1 snapshots
@@ -24,4 +24,4 @@ Status: degraded
 
 ## Kansen
 - Vul gratis pre-match odds snapshots voordat ROI/CLV wordt beoordeeld.
-- Herstel de mislukte widgetcontracten: Neon database, Provider- en integriteitswidget, Dashboard/matches-widget.
+- Herstel de mislukte widgetcontracten: Neon database, Provider- en integriteitswidget.

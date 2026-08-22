@@ -1,68 +1,78 @@
 {
-  "generatedAt": "2026-08-16T12:03:40.652Z",
+  "generatedAt": "2026-08-22T07:02:59.307Z",
   "range": {
-    "from": "2026-08-10",
-    "to": "2026-08-16",
+    "from": "2026-08-16",
+    "to": "2026-08-22",
     "days": 7
   },
   "shouldNotify": false,
   "shouldRefresh": true,
   "cadence": "5x per maand",
-  "summary": "Geen nieuwe dagelijkse alarmsignalen; 5 meetbare verbeteracties blijven actief.",
+  "summary": "AI bundel over de laatste 7 dagen: 1 monitorthema's en 5 uitvoerbare verbeteracties.",
   "totals": {
     "totalRuns": 7,
-    "totalIssues": 0,
-    "uniqueIssueTypes": 0
+    "totalIssues": 4,
+    "uniqueIssueTypes": 1
   },
   "latestStats": {
-    "today": "2026-08-16",
-    "tomorrow": "2026-08-17",
+    "today": "2026-08-22",
+    "tomorrow": "2026-08-23",
     "dataPresent": true,
-    "lastRun": 1786831219261,
-    "ageMinutes": 38,
+    "lastRun": 1787349937113,
+    "ageMinutes": 37,
     "maxWorkerAgeMinutes": 180,
-    "todayMatches": 16,
-    "tomorrowMatches": 3,
+    "todayMatches": 30,
+    "tomorrowMatches": 21,
     "fixtureCalendar": {
       "status": "has_current_matches",
       "healthy": true,
       "emptyWindowOk": true,
       "severity": "none",
-      "todayCount": 16,
-      "tomorrowCount": 3,
+      "todayCount": 30,
+      "tomorrowCount": 21,
       "windowDays": 7,
       "checkedDates": [
-        "2026-08-16",
-        "2026-08-17",
-        "2026-08-18",
-        "2026-08-19",
-        "2026-08-20",
-        "2026-08-21",
-        "2026-08-22"
+        "2026-08-22",
+        "2026-08-23",
+        "2026-08-24",
+        "2026-08-25",
+        "2026-08-26",
+        "2026-08-27",
+        "2026-08-28",
+        "2026-08-29"
       ],
-      "nextMatchDate": "2026-08-16",
-      "nextMatchCount": 16,
+      "nextMatchDate": "2026-08-22",
+      "nextMatchCount": 30,
       "explanation": "Vandaag of morgen staan er wedstrijden in de actuele data."
     },
     "liveMatches": 0,
     "liveWithoutMinute": 0,
-    "h2hFilled": 1,
-    "h2hMissing": 15,
-    "standingsCount": 4,
-    "cupSheetCount": 4,
+    "h2hFilled": 3,
+    "h2hMissing": 27,
+    "standingsCount": 15,
+    "cupSheetCount": 6,
     "phaseReliabilityCount": 4
   },
-  "topFindings": [],
+  "topFindings": [
+    {
+      "key": "h2h_empty",
+      "title": "H2H niet gevuld",
+      "count": 4,
+      "highestSeverity": "medium",
+      "sampleMessage": "Alle wedstrijden van vandaag hebben lege H2H-data.",
+      "recommendation": "Trek H2H verder uit historische competitiebestanden en bewaak fallbackdekking in de worker."
+    }
+  ],
   "dataQuality": {
-    "generatedAt": "2026-08-16T12:03:28.806Z",
+    "generatedAt": "2026-08-22T07:02:45.083Z",
     "totals": {
-      "matches": 125,
-      "pastMatches": 31,
+      "matches": 857,
+      "pastMatches": 77,
       "pendingResultBackfills": 0,
       "missingPastScores": 0,
-      "h2hMissing": 103,
-      "h2hCovered": 22,
-      "h2hCoverage": 0.176
+      "h2hMissing": 314,
+      "h2hCovered": 543,
+      "h2hCoverage": 0.634
     },
     "status": {
       "resultBackfill": "clean",
@@ -74,13 +84,13 @@
     ]
   },
   "widgetAudit": {
-    "generatedAt": "2026-08-16T12:03:35.826Z",
+    "generatedAt": "2026-08-22T07:02:53.662Z",
     "baseUrl": "https://voetbalvoorspellingen-clean.vercel.app",
     "status": "degraded",
     "totals": {
       "checks": 10,
-      "passed": 7,
-      "failed": 3
+      "passed": 8,
+      "failed": 2
     },
     "neon": {
       "connected": false,
@@ -114,23 +124,23 @@
       {
         "key": "matches_widget",
         "label": "Dashboard/matches-widget",
-        "passed": false,
+        "passed": true,
         "status": 200,
-        "detail": "18 actuele matches, bron unknown"
+        "detail": "30 actuele matches, bron github-worker-v4-split"
       },
       {
         "key": "standings_widget",
         "label": "Standen-widget",
         "passed": true,
         "status": 200,
-        "detail": "16 standen"
+        "detail": "15 standen"
       },
       {
         "key": "cup_widget",
         "label": "Bekerschema-widget",
         "passed": true,
         "status": 200,
-        "detail": "3 actief; leeg is geldig buiten bekerrondes"
+        "detail": "6 actief; leeg is geldig buiten bekerrondes"
       },
       {
         "key": "season_widget",
@@ -163,7 +173,7 @@
     ],
     "opportunities": [
       "Vul gratis pre-match odds snapshots voordat ROI/CLV wordt beoordeeld.",
-      "Herstel de mislukte widgetcontracten: Neon database, Provider- en integriteitswidget, Dashboard/matches-widget."
+      "Herstel de mislukte widgetcontracten: Neon database, Provider- en integriteitswidget."
     ]
   },
   "predictionEvaluation": {
@@ -207,7 +217,7 @@
     }
   },
   "snapshotGrowth": {
-    "generatedAt": "2026-08-16T03:14:51.084Z",
+    "generatedAt": "2026-08-22T03:09:53.894Z",
     "training": {
       "totalRows": 244,
       "snapshotBackedRows": 227,
@@ -228,7 +238,7 @@
         "stage": "professional_ready"
       },
       "regularLeagueGate": {
-        "uniqueCompletedMatches": 113,
+        "uniqueCompletedMatches": 249,
         "calibrationMin": 50,
         "canCalibrate": true,
         "gap": 0
@@ -244,7 +254,7 @@
       "r2": {
         "configured": true,
         "available": true,
-        "snapshotsRead": 3171,
+        "snapshotsRead": 3750,
         "error": null
       },
       "fallback": {
@@ -252,70 +262,70 @@
         "snapshotsRead": 708
       },
       "merged": {
-        "clubSnapshots": 3171,
-        "uniqueClubMatches": 670,
+        "clubSnapshots": 3750,
+        "uniqueClubMatches": 887,
         "evaluatedClubSnapshots": 1843,
         "uniqueEvaluatedClubMatches": 392,
         "byLeague": [
           {
             "league": "World - Club Friendlies",
-            "rows": 1501
+            "rows": 1506
           },
           {
             "league": "Europe - Conference League",
-            "rows": 811
+            "rows": 944
           },
           {
             "league": "Europe - Europa League",
-            "rows": 295
+            "rows": 362
           },
           {
             "league": "Europe - Champions League",
-            "rows": 137
-          },
-          {
-            "league": "Germany - Bundesliga",
-            "rows": 96
+            "rows": 157
           },
           {
             "league": "Portugal - Liga Portugal",
-            "rows": 87
+            "rows": 127
           },
           {
-            "league": "Netherlands - Eredivisie",
-            "rows": 75
-          },
-          {
-            "league": "Belgium - Pro League",
-            "rows": 52
+            "league": "Germany - Bundesliga",
+            "rows": 107
           },
           {
             "league": "Spain - LaLiga",
-            "rows": 47
+            "rows": 104
+          },
+          {
+            "league": "Netherlands - Eredivisie",
+            "rows": 94
           },
           {
             "league": "England - Championship",
-            "rows": 46
+            "rows": 61
           },
           {
             "league": "France - Ligue 1",
-            "rows": 18
+            "rows": 59
+          },
+          {
+            "league": "Belgium - Pro League",
+            "rows": 53
           },
           {
             "league": "England - Premier League",
-            "rows": 4
+            "rows": 48
           }
         ],
         "uniqueMatchesByPhase": {
           "friendly": 300,
-          "regular_league": 113,
-          "uefa_qualification": 257
+          "regular_league": 249,
+          "uefa_qualification": 338
         }
       }
     }
   },
   "architectureAudit": {
-    "generatedAt": "2026-08-16T12:03:40.652Z",
+    "generatedAt": "2026-08-22T07:02:59.307Z",
     "summary": "Professionele architectuuranalyse voor schaalbaarheid, datakwaliteit, AI-agentwaarde, databasegroei en modelbetrouwbaarheid.",
     "findings": [
       {
@@ -401,9 +411,9 @@
         "title": "H2H-dekking gericht verhogen",
         "priority": "Hoog",
         "expectedImpact": "Hoog",
-        "metric": 0.176,
+        "metric": 0.634,
         "target": 0.85,
-        "reason": "Actuele H2H-dekking is 18%; doel is minimaal 85% met betrouwbare historie en expliciete missing reasons."
+        "reason": "Actuele H2H-dekking is 63%; doel is minimaal 85% met betrouwbare historie en expliciete missing reasons."
       },
       {
         "key": "confirmed_lineups",
@@ -437,9 +447,9 @@
         "title": "League/phase-kalibratie in shadow mode beoordelen",
         "priority": "Middel",
         "expectedImpact": "Hoog",
-        "metric": 113,
+        "metric": 249,
         "target": 50,
-        "reason": "113 unieke reguliere wedstrijden; gate gehaald. Promoveer alleen profielen met voldoende Brier-verbetering."
+        "reason": "249 unieke reguliere wedstrijden; gate gehaald. Promoveer alleen profielen met voldoende Brier-verbetering."
       }
     ]
   },
@@ -475,9 +485,9 @@
       "title": "H2H-dekking gericht verhogen",
       "priority": "Hoog",
       "expectedImpact": "Hoog",
-      "metric": 0.176,
+      "metric": 0.634,
       "target": 0.85,
-      "reason": "Actuele H2H-dekking is 18%; doel is minimaal 85% met betrouwbare historie en expliciete missing reasons."
+      "reason": "Actuele H2H-dekking is 63%; doel is minimaal 85% met betrouwbare historie en expliciete missing reasons."
     },
     {
       "key": "confirmed_lineups",
@@ -511,9 +521,9 @@
       "title": "League/phase-kalibratie in shadow mode beoordelen",
       "priority": "Middel",
       "expectedImpact": "Hoog",
-      "metric": 113,
+      "metric": 249,
       "target": 50,
-      "reason": "113 unieke reguliere wedstrijden; gate gehaald. Promoveer alleen profielen met voldoende Brier-verbetering."
+      "reason": "249 unieke reguliere wedstrijden; gate gehaald. Promoveer alleen profielen met voldoende Brier-verbetering."
     }
   ],
   "actionPlan": [
@@ -522,10 +532,10 @@
       "title": "H2H-dekking gericht verhogen",
       "priority": "Hoog",
       "expectedImpact": "Hoog",
-      "metric": 0.176,
+      "metric": 0.634,
       "target": 0.85,
       "workflow": "h2h-enrichment.yml",
-      "reason": "Actuele H2H-dekking is 18%; doel is minimaal 85% met betrouwbare historie en expliciete missing reasons."
+      "reason": "Actuele H2H-dekking is 63%; doel is minimaal 85% met betrouwbare historie en expliciete missing reasons."
     },
     {
       "key": "confirmed_lineups",
@@ -562,10 +572,10 @@
       "title": "League/phase-kalibratie in shadow mode beoordelen",
       "priority": "Middel",
       "expectedImpact": "Hoog",
-      "metric": 113,
+      "metric": 249,
       "target": 50,
       "workflow": "nightly-model-maintenance.yml",
-      "reason": "113 unieke reguliere wedstrijden; gate gehaald. Promoveer alleen profielen met voldoende Brier-verbetering."
+      "reason": "249 unieke reguliere wedstrijden; gate gehaald. Promoveer alleen profielen met voldoende Brier-verbetering."
     }
   ],
   "executionPolicy": {

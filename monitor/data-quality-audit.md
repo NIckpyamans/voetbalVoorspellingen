@@ -1,27 +1,27 @@
 # Data Quality Audit
 
-Laatst bijgewerkt: 2026-08-16T12:03:28.806Z
+Laatst bijgewerkt: 2026-08-22T07:02:45.083Z
 Lookback: 45 dagen
 
 ## Scores
-- Wedstrijden: 125
-- Oude wedstrijden: 31
+- Wedstrijden: 857
+- Oude wedstrijden: 77
 - Pending result backfills: 0
 - Ontbrekende oude scores: 0
-- H2H-dekking: 18%
+- H2H-dekking: 63%
 
 ## Aanbevelingen
 - Resultaatbackfill is schoon binnen de auditperiode.
 - Breid H2H via historische competitieprofielen en team-id mappings uit tot minimaal 85% dekking.
 
 ## Samples
-- H2H mist: 2026-08-14: Holstein Kiel - FC St. Pauli
-- H2H mist: 2026-08-15: Hertha BSC - 1. FC Heidenheim 1846
-- H2H mist: 2026-08-15: VfL Osnabrück - 1. FC Magdeburg
-- H2H mist: 2026-08-15: 1. FC Kaiserslautern - Karlsruher SC
-- H2H mist: 2026-08-15: Bayern München - RB Leipzig
-- H2H mist: 2026-08-15: Mainz 05 - AFC Bournemouth
-- H2H mist: 2026-08-15: Union Berlin - Ipswich Town
-- H2H mist: 2026-08-15: Brentford - Eintracht Frankfurt
-- H2H mist: 2026-08-15: Leeds United - Augsburg
-- H2H mist: 2026-08-15: Sunderland - Rennes
+- H2H mist: 2026-08-22: Zulte Waregem - Beveren
+- H2H mist: 2026-08-22: Birmingham City - Bristol City
+- H2H mist: 2026-08-22: Hull City - Manchester United
+- H2H mist: 2026-08-22: Lens - Auxerre
+- H2H mist: 2026-08-22: Udinese - Como
+- H2H mist: 2026-08-22: Fortuna Sittard - AZ Alkmaar
+- H2H mist: 2026-08-22: Athletic Club - Sevilla
+- H2H mist: 2026-08-22: Lincoln City - Portsmouth
+- H2H mist: 2026-08-22: Valencia - Celta Vigo
+- H2H mist: 2026-08-22: Inter - Monza

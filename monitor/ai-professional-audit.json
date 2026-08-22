@@ -6,13 +6,13 @@
     "owner": "Nick",
     "status": "active"
   },
-  "generatedAt": "2026-08-16T12:03:35.963Z",
+  "generatedAt": "2026-08-22T07:02:53.802Z",
   "baseUrl": "https://voetbalvoorspellingen-clean.vercel.app",
   "summary": "Professionele audit actief. Kritieke opslagvelden lijken aanwezig; blijf kalibratie en bronkwaliteit bewaken.",
   "live": {
-    "matchesTotal": 18,
-    "predictionsTotal": 18,
-    "reviewCount": 1068,
+    "matchesTotal": 30,
+    "predictionsTotal": 30,
+    "reviewCount": 1042,
     "predictionSnapshotCount": 25,
     "workerVersion": "v23-calibrated-odds-ledger",
     "sourceBranch": "codex/step3b-layout",
@@ -30,62 +30,62 @@
     }
   },
   "predictions": {
-    "total": 49,
-    "featureCoverage": 0.3673469387755102,
+    "total": 107,
+    "featureCoverage": 0.2803738317757009,
     "oddsCoverage": 0,
-    "historicalMarketOnly": 0.22448979591836735,
+    "historicalMarketOnly": 0.2803738317757009,
     "reviewCoverage": 0,
-    "averageCompleteness": 0.7507142857142854
+    "averageCompleteness": 0.7946448598130834
   },
   "recent": {
-    "days": 3,
-    "matches": 49,
-    "predictions": 49,
-    "finishedMatches": 32,
-    "finishedWithScore": 32,
+    "days": 4,
+    "matches": 107,
+    "predictions": 107,
+    "finishedMatches": 77,
+    "finishedWithScore": 77,
     "resultCoverage": 1,
-    "reviewedMatches": 32,
+    "reviewedMatches": 77,
     "evaluationCoverage": 1,
-    "snapshotBackedReviews": 22,
-    "snapshotBackedReviewCoverage": 0.6875,
-    "predictionSnapshots": 33,
-    "uniqueSnapshotMatches": 33,
-    "dataCompleteness": 0.7507142857142854,
+    "snapshotBackedReviews": 0,
+    "snapshotBackedReviewCoverage": 0,
+    "predictionSnapshots": 30,
+    "uniqueSnapshotMatches": 30,
+    "dataCompleteness": 0.7946448598130834,
     "sourceMetadataCoverage": 1,
     "actualOddsCoverage": 0,
     "confirmedLineupCoverage": 0,
     "performance": {
-      "reviews": 32,
-      "outcomeHitRate": 0.25,
-      "exactHitRate": 0.0625,
-      "averageBrier": 0.7570468750000001,
-      "averageLogLoss": 1.239646875,
-      "averageConfidence": 0.40950000000000003
+      "reviews": 77,
+      "outcomeHitRate": 0.5064935064935064,
+      "exactHitRate": 0.09090909090909091,
+      "averageBrier": 0.5584220779220779,
+      "averageLogLoss": 0.9429285714285717,
+      "averageConfidence": 0.460155844155844
     },
     "segments": {
       "club_friendlies": {
-        "reviews": 23,
-        "outcomeHitRate": 0.30434782608695654,
-        "exactHitRate": 0.08695652173913043,
-        "averageBrier": 0.7397260869565218,
-        "averageLogLoss": 1.2144782608695652,
-        "averageConfidence": 0.3802608695652175
+        "reviews": 2,
+        "outcomeHitRate": 1,
+        "exactHitRate": 0.5,
+        "averageBrier": 0.35919999999999996,
+        "averageLogLoss": 0.67035,
+        "averageConfidence": 0.33199999999999996
       },
       "european_knockout": {
-        "reviews": 1,
-        "outcomeHitRate": 0,
-        "exactHitRate": 0,
-        "averageBrier": 0.6241,
-        "averageLogLoss": 1.0356,
-        "averageConfidence": 0.452
+        "reviews": 59,
+        "outcomeHitRate": 0.4915254237288136,
+        "exactHitRate": 0.1016949152542373,
+        "averageBrier": 0.5670033898305085,
+        "averageLogLoss": 0.9538406779661016,
+        "averageConfidence": 0.46179661016949136
       },
       "domestic_competitions": {
-        "reviews": 8,
-        "outcomeHitRate": 0.125,
+        "reviews": 16,
+        "outcomeHitRate": 0.5,
         "exactHitRate": 0,
-        "averageBrier": 0.8234625,
-        "averageLogLoss": 1.3375125,
-        "averageConfidence": 0.48825
+        "averageBrier": 0.5516812499999999,
+        "averageLogLoss": 0.9367624999999999,
+        "averageConfidence": 0.47012500000000007
       }
     }
   },
@@ -161,12 +161,6 @@
       "priority": 1,
       "title": "Vul opening-, prematch- en closing odds",
       "advice": "Meet per provider en competitie; gebruik ROI/CLV pas wanneer timestamped oddsparen aantoonbaar compleet zijn."
-    },
-    {
-      "key": "confirmed_lineups",
-      "priority": 1,
-      "title": "Verhoog confirmed-lineupdekking",
-      "advice": "Haal alleen rond T-75, T-45 en T-20 op en rapporteer dekking per competitie en provider."
     },
     {
       "key": "neon_quota",
