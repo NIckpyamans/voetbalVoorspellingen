@@ -1,59 +1,31 @@
 {
-  "generatedAt": "2026-08-22T15:36:46.623Z",
-  "checked": 5,
+  "generatedAt": "2026-08-22T15:59:22.462Z",
+  "checked": 4,
   "confirmed": 3,
-  "partial": 2,
+  "partial": 1,
   "missing": 0,
-  "r2Stored": 5,
+  "r2Stored": 4,
   "playerFixtureStatsCaptured": 0,
   "databaseWritable": false,
   "databaseError": "Server error (HTTP status 402): {\"message\":\"Your project has exceeded the data transfer quota. Upgrade your plan to increase limits.\",\"code\":\"\",\"detail\":null,\"hint\":null,\"position\":null,\"internalPosition\":null,\"internalQuery\":null,\"severity\":\"\",\"where\":null,\"table\":null,\"column\":null,\"schema\":null,\"dataType\":null,\"constraint\":null,\"file\":null,\"line\":null,\"routine\":null,\"neon:retryable\":true}",
   "captureWindows": {
-    "t75": 1,
-    "t45": 3,
-    "t20": 1,
+    "t75": 0,
+    "t45": 1,
+    "t20": 3,
     "outside": 0
   },
   "providers": {
-    "sofascore:schedule_http_403": 5,
-    "fotmob:ok": 5
+    "sofascore:schedule_http_403": 4,
+    "fotmob:ok": 4
   },
   "matches": [
-    {
-      "matchId": "ss-bbc-2026-08-22-sparta rotterdam-utrecht",
-      "league": "Netherlands - Eredivisie",
-      "agent": "netherlands-eredivisie-agent",
-      "kickoff": "2026-08-22T15:45:00.000Z",
-      "minutesBeforeKickoff": 8,
-      "captureWindow": "t20",
-      "homeTeam": "Sparta Rotterdam",
-      "awayTeam": "Utrecht",
-      "provider": "fotmob",
-      "status": "ok",
-      "attempts": [
-        {
-          "provider": "sofascore",
-          "status": "schedule_http_403",
-          "lineup": false,
-          "confirmed": false
-        },
-        {
-          "provider": "fotmob",
-          "status": "ok",
-          "lineup": true,
-          "confirmed": false
-        }
-      ],
-      "confirmed": false,
-      "partial": true
-    },
     {
       "matchId": "ss-fotmob-5749645",
       "league": "Italy - Serie A",
       "agent": "italy-serie-a-agent",
       "kickoff": "2026-08-22T16:30:00.000Z",
-      "minutesBeforeKickoff": 53,
-      "captureWindow": "t45",
+      "minutesBeforeKickoff": 30,
+      "captureWindow": "t20",
       "homeTeam": "Inter",
       "awayTeam": "Monza",
       "provider": "fotmob",
@@ -80,8 +52,8 @@
       "league": "Italy - Serie A",
       "agent": "italy-serie-a-agent",
       "kickoff": "2026-08-22T16:30:00.000Z",
-      "minutesBeforeKickoff": 53,
-      "captureWindow": "t45",
+      "minutesBeforeKickoff": 30,
+      "captureWindow": "t20",
       "homeTeam": "Udinese",
       "awayTeam": "Como",
       "provider": "fotmob",
@@ -108,8 +80,8 @@
       "league": "England - Premier League",
       "agent": "england-premier-league-agent",
       "kickoff": "2026-08-22T16:30:00.000Z",
-      "minutesBeforeKickoff": 53,
-      "captureWindow": "t45",
+      "minutesBeforeKickoff": 30,
+      "captureWindow": "t20",
       "homeTeam": "Brentford",
       "awayTeam": "Tottenham Hotspur",
       "provider": "fotmob",
@@ -136,8 +108,8 @@
       "league": "Portugal - Liga Portugal",
       "agent": "portugal-liga-portugal-agent",
       "kickoff": "2026-08-22T17:00:00.000Z",
-      "minutesBeforeKickoff": 83,
-      "captureWindow": "t75",
+      "minutesBeforeKickoff": 60,
+      "captureWindow": "t45",
       "homeTeam": "Estoril",
       "awayTeam": "Rio Ave",
       "provider": "fotmob",
@@ -161,14 +133,6 @@
     }
   ],
   "leagueCoverage": [
-    {
-      "league": "Netherlands - Eredivisie",
-      "checked": 1,
-      "covered": 0,
-      "partial": 1,
-      "missing": 0,
-      "coverage": 0
-    },
     {
       "league": "Portugal - Liga Portugal",
       "checked": 1,
@@ -194,5 +158,5 @@
       "coverage": 1
     }
   ],
-  "confirmedCoverage": 0.6
+  "confirmedCoverage": 0.75
 }
