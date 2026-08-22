@@ -1,26 +1,46 @@
 {
-  "generatedAt": "2026-08-21T23:04:41.812Z",
-  "daysAhead": 14,
-  "checked": 24,
+  "generatedAt": "2026-08-22T07:04:52.091Z",
+  "daysAhead": 8,
+  "checked": 32,
   "byCompetition": {
-    "Belgium - Pro League": {
-      "agent": "belgium-pro-league-agent",
-      "checked": 1
-    },
-    "Netherlands - Eredivisie": {
-      "agent": "netherlands-eredivisie-agent",
-      "checked": 2
-    },
     "Europe - Conference League": {
       "agent": "conference-league-agent",
-      "checked": 2
+      "checked": 3
     },
     "Europe - Europa League": {
       "agent": "europa-league-agent",
-      "checked": 2
+      "checked": 3
+    },
+    "Germany - Bundesliga": {
+      "agent": "germany-bundesliga-agent",
+      "checked": 3
+    },
+    "Netherlands - Eredivisie": {
+      "agent": "netherlands-eredivisie-agent",
+      "checked": 3
     },
     "Netherlands - Eerste Divisie": {
       "agent": "netherlands-eerste-divisie-agent",
+      "checked": 3
+    },
+    "England - Premier League": {
+      "agent": "england-premier-league-agent",
+      "checked": 2
+    },
+    "France - Ligue 1": {
+      "agent": "france-ligue-1-agent",
+      "checked": 2
+    },
+    "Portugal - Liga Portugal": {
+      "agent": "portugal-liga-portugal-agent",
+      "checked": 2
+    },
+    "Spain - LaLiga": {
+      "agent": "spain-laliga-agent",
+      "checked": 2
+    },
+    "Italy - Serie A": {
+      "agent": "italy-serie-a-agent",
       "checked": 2
     },
     "England - Championship": {
@@ -31,40 +51,20 @@
       "agent": "france-ligue-2-agent",
       "checked": 2
     },
-    "Germany - Bundesliga": {
-      "agent": "germany-bundesliga-agent",
-      "checked": 2
-    },
-    "France - Ligue 1": {
-      "agent": "france-ligue-1-agent",
-      "checked": 2
-    },
-    "Spain - LaLiga": {
-      "agent": "spain-laliga-agent",
-      "checked": 2
-    },
-    "England - Premier League": {
-      "agent": "england-premier-league-agent",
-      "checked": 2
-    },
-    "Portugal - Liga Portugal": {
-      "agent": "portugal-liga-portugal-agent",
-      "checked": 1
-    },
-    "Italy - Serie A": {
-      "agent": "italy-serie-a-agent",
-      "checked": 1
-    },
     "Europe - Champions League": {
       "agent": "champions-league-agent",
+      "checked": 2
+    },
+    "Belgium - Pro League": {
+      "agent": "belgium-pro-league-agent",
       "checked": 1
     }
   },
   "databaseWritable": false,
   "databaseError": "Server error (HTTP status 402): {\"message\":\"Your project has exceeded the data transfer quota. Upgrade your plan to increase limits.\",\"code\":\"\",\"detail\":null,\"hint\":null,\"position\":null,\"internalPosition\":null,\"internalQuery\":null,\"severity\":\"\",\"where\":null,\"table\":null,\"column\":null,\"schema\":null,\"dataType\":null,\"constraint\":null,\"file\":null,\"line\":null,\"routine\":null,\"neon:retryable\":true}",
-  "r2Stored": 8,
-  "filled": 8,
-  "noDirectHistory": 16,
+  "r2Stored": 12,
+  "filled": 12,
+  "noDirectHistory": 20,
   "errors": 0,
   "apiFootballAcceptance": {
     "configured": true,
@@ -74,7 +74,7 @@
   },
   "apiFootball": {
     "configured": true,
-    "enabled": false,
+    "enabled": true,
     "baseUrl": "v3.football.api-sports.io",
     "requests": 0,
     "statusCounts": {},
@@ -90,71 +90,166 @@
   },
   "filledSamples": [
     {
-      "matchId": "ss-sky-577520",
+      "matchId": "ss-fotmob-5988082",
       "date": "2026-08-27",
-      "homeTeam": "St Gallen",
-      "awayTeam": "FC Nordsjaelland",
+      "homeTeam": "FC København",
+      "awayTeam": "FC Inter Turku",
       "played": 1,
       "source": "local immutable match history"
     },
     {
-      "matchId": "ss-fotmob-5987978",
+      "matchId": "ss-fotmob-5987967",
       "date": "2026-08-27",
-      "homeTeam": "CSKA Sofia",
-      "awayTeam": "OFI Crete",
+      "homeTeam": "Ferencvaros",
+      "awayTeam": "Trabzonspor",
       "played": 1,
       "source": "local immutable match history"
     },
     {
-      "matchId": "ss-fotmob-5868040",
-      "date": "2026-08-29",
-      "homeTeam": "Sevilla",
-      "awayTeam": "Atletico Madrid",
-      "played": 1,
-      "source": "local immutable match history"
-    },
-    {
-      "matchId": "ss-fotmob-5749658",
+      "matchId": "ss-fotmob-5749652",
       "date": "2026-08-30",
-      "homeTeam": "Napoli",
-      "awayTeam": "Como",
+      "homeTeam": "Cagliari",
+      "awayTeam": "Inter",
       "played": 1,
       "source": "local immutable match history"
     },
     {
-      "matchId": "ss-fotmob-5987811",
+      "matchId": "ss-tsdb-England - Championship-2501263",
+      "date": "2026-08-22",
+      "homeTeam": "Birmingham City",
+      "awayTeam": "Bristol City",
+      "played": 5,
+      "source": "apifootball-com-h2h"
+    },
+    {
+      "matchId": "ss-fotmob-5803230",
+      "date": "2026-08-22",
+      "homeTeam": "Metz",
+      "awayTeam": "Laval",
+      "played": 4,
+      "source": "apifootball-com-h2h"
+    },
+    {
+      "matchId": "ss-fotmob-5987806",
       "date": "2026-08-25",
-      "homeTeam": "Bodø/Glimt",
-      "awayTeam": "NEC Nijmegen",
+      "homeTeam": "LASK",
+      "awayTeam": "Celtic",
       "played": 1,
       "source": "local immutable match history"
     },
     {
-      "matchId": "ss-bbc-2026-08-29-excelsior-sparta rotterdam",
-      "date": "2026-08-29",
-      "homeTeam": "Excelsior",
-      "awayTeam": "Sparta Rotterdam",
-      "played": 1,
-      "source": "local immutable match history"
-    },
-    {
-      "matchId": "ss-fotmob-5988088",
+      "matchId": "ss-fotmob-5988077",
       "date": "2026-08-27",
-      "homeTeam": "Brann",
-      "awayTeam": "PAOK Thessaloniki",
+      "homeTeam": "Inter Club d'Escaldes",
+      "awayTeam": "Drita",
       "played": 1,
       "source": "local immutable match history"
     },
     {
-      "matchId": "ss-fotmob-5987974",
+      "matchId": "ss-sky-577483",
       "date": "2026-08-27",
-      "homeTeam": "Anderlecht",
-      "awayTeam": "Kairat Almaty",
+      "homeTeam": "Ararat-Armenia",
+      "awayTeam": "CS Universitatea Craiova",
+      "played": 1,
+      "source": "local immutable match history"
+    },
+    {
+      "matchId": "ss-fotmob-5868032",
+      "date": "2026-08-30",
+      "homeTeam": "Celta Vigo",
+      "awayTeam": "Athletic Club",
+      "played": 1,
+      "source": "local immutable match history"
+    },
+    {
+      "matchId": "ss-bbc-2026-08-22-lincoln city-portsmouth",
+      "date": "2026-08-22",
+      "homeTeam": "Lincoln City",
+      "awayTeam": "Portsmouth",
+      "played": 4,
+      "source": "apifootball-com-h2h"
+    },
+    {
+      "matchId": "ss-fotmob-5988093",
+      "date": "2026-08-27",
+      "homeTeam": "Pafos FC",
+      "awayTeam": "FC Dinamo City",
+      "played": 1,
+      "source": "local immutable match history"
+    },
+    {
+      "matchId": "ss-sky-577464",
+      "date": "2026-08-27",
+      "homeTeam": "FC Iberia 1999 Tiflis",
+      "awayTeam": "Jagiellonia Bialystok",
       "played": 1,
       "source": "local immutable match history"
     }
   ],
   "noDirectHistorySamples": [
+    {
+      "matchId": "ss-oldb-83162",
+      "date": "2026-08-29",
+      "league": "Germany - Bundesliga",
+      "homeTeam": "1. FC Union Berlin",
+      "awayTeam": "Eintracht Frankfurt",
+      "status": "provider_acceptance_blocked",
+      "note": "API-Football is overgeslagen totdat de account- en dekkingstest slaagt; ESPN blijft als onafhankelijke bron actief."
+    },
+    {
+      "matchId": "ss-bbc-2026-08-29-az-go ahead eagles",
+      "date": "2026-08-29",
+      "league": "Netherlands - Eredivisie",
+      "homeTeam": "AZ",
+      "awayTeam": "Go Ahead Eagles",
+      "status": "provider_acceptance_blocked",
+      "note": "API-Football is overgeslagen totdat de account- en dekkingstest slaagt; ESPN blijft als onafhankelijke bron actief."
+    },
+    {
+      "matchId": "ss-fotmob-5832843",
+      "date": "2026-08-30",
+      "league": "Netherlands - Eerste Divisie",
+      "homeTeam": "FC Eindhoven",
+      "awayTeam": "Heracles",
+      "status": "provider_acceptance_blocked",
+      "note": "API-Football is overgeslagen totdat de account- en dekkingstest slaagt; ESPN blijft als onafhankelijke bron actief."
+    },
+    {
+      "matchId": "ss-fotmob-5795433",
+      "date": "2026-08-30",
+      "league": "England - Premier League",
+      "homeTeam": "Sunderland",
+      "awayTeam": "Fulham",
+      "status": "provider_acceptance_blocked",
+      "note": "API-Football is overgeslagen totdat de account- en dekkingstest slaagt; ESPN blijft als onafhankelijke bron actief."
+    },
+    {
+      "matchId": "ss-fotmob-5802916",
+      "date": "2026-08-30",
+      "league": "France - Ligue 1",
+      "homeTeam": "Rennes",
+      "awayTeam": "Le Mans",
+      "status": "provider_acceptance_blocked",
+      "note": "API-Football is overgeslagen totdat de account- en dekkingstest slaagt; ESPN blijft als onafhankelijke bron actief."
+    },
+    {
+      "matchId": "ss-fotmob-5887613",
+      "date": "2026-08-30",
+      "league": "Portugal - Liga Portugal",
+      "homeTeam": "Casa Pia AC",
+      "awayTeam": "Moreirense",
+      "status": "provider_acceptance_blocked",
+      "note": "API-Football is overgeslagen totdat de account- en dekkingstest slaagt; ESPN blijft als onafhankelijke bron actief."
+    },
+    {
+      "matchId": "ss-fotmob-5868033",
+      "date": "2026-08-30",
+      "league": "Spain - LaLiga",
+      "homeTeam": "Deportivo A Coruña",
+      "awayTeam": "Valencia",
+      "status": "provider_acceptance_blocked",
+      "note": "API-Football is overgeslagen totdat de account- en dekkingstest slaagt; ESPN blijft als onafhankelijke bron actief."
+    },
     {
       "matchId": "ss-tsdb-Belgium - Pro League-2496709",
       "date": "2026-08-22",
@@ -165,137 +260,110 @@
       "note": "API-Football is overgeslagen totdat de account- en dekkingstest slaagt; ESPN blijft als onafhankelijke bron actief."
     },
     {
-      "matchId": "ss-tsdb-Netherlands - Eredivisie-2489084",
+      "matchId": "ss-oldb-83163",
+      "date": "2026-08-29",
+      "league": "Germany - Bundesliga",
+      "homeTeam": "1. FC Köln",
+      "awayTeam": "TSG Hoffenheim",
+      "status": "provider_acceptance_blocked",
+      "note": "API-Football is overgeslagen totdat de account- en dekkingstest slaagt; ESPN blijft als onafhankelijke bron actief."
+    },
+    {
+      "matchId": "ss-bbc-2026-08-22-sparta rotterdam-utrecht",
       "date": "2026-08-22",
       "league": "Netherlands - Eredivisie",
-      "homeTeam": "Fortuna Sittard",
-      "awayTeam": "AZ Alkmaar",
+      "homeTeam": "Sparta Rotterdam",
+      "awayTeam": "Utrecht",
       "status": "provider_acceptance_blocked",
       "note": "API-Football is overgeslagen totdat de account- en dekkingstest slaagt; ESPN blijft als onafhankelijke bron actief."
     },
     {
-      "matchId": "ss-fotmob-5832839",
-      "date": "2026-08-28",
+      "matchId": "ss-fotmob-5832844",
+      "date": "2026-08-30",
       "league": "Netherlands - Eerste Divisie",
-      "homeTeam": "TOP Oss",
-      "awayTeam": "Jong FC Utrecht",
+      "homeTeam": "VVV-Venlo",
+      "awayTeam": "FC Emmen",
       "status": "provider_acceptance_blocked",
       "note": "API-Football is overgeslagen totdat de account- en dekkingstest slaagt; ESPN blijft als onafhankelijke bron actief."
     },
     {
-      "matchId": "ss-bbc-2026-08-29-derby county-swansea city",
-      "date": "2026-08-29",
-      "league": "England - Championship",
-      "homeTeam": "Derby County",
-      "awayTeam": "Swansea City",
-      "status": "provider_acceptance_blocked",
-      "note": "API-Football is overgeslagen totdat de account- en dekkingstest slaagt; ESPN blijft als onafhankelijke bron actief."
-    },
-    {
-      "matchId": "ss-fotmob-5803243",
-      "date": "2026-08-29",
-      "league": "France - Ligue 2",
-      "homeTeam": "Red Star",
-      "awayTeam": "Reims",
-      "status": "provider_acceptance_blocked",
-      "note": "API-Football is overgeslagen totdat de account- en dekkingstest slaagt; ESPN blijft als onafhankelijke bron actief."
-    },
-    {
-      "matchId": "ss-oldb-83164",
-      "date": "2026-08-29",
-      "league": "Germany - Bundesliga",
-      "homeTeam": "SV 07 Elversberg",
-      "awayTeam": "Bayer 04 Leverkusen",
-      "status": "provider_acceptance_blocked",
-      "note": "API-Football is overgeslagen totdat de account- en dekkingstest slaagt; ESPN blijft als onafhankelijke bron actief."
-    },
-    {
-      "matchId": "ss-fotmob-5802913",
-      "date": "2026-08-29",
-      "league": "France - Ligue 1",
-      "homeTeam": "Lyon",
-      "awayTeam": "Le Havre",
-      "status": "provider_acceptance_blocked",
-      "note": "API-Football is overgeslagen totdat de account- en dekkingstest slaagt; ESPN blijft als onafhankelijke bron actief."
-    },
-    {
-      "matchId": "ss-fotmob-5795427",
+      "matchId": "ss-fotmob-5795432",
       "date": "2026-08-30",
       "league": "England - Premier League",
-      "homeTeam": "Chelsea",
-      "awayTeam": "Brighton & Hove Albion",
+      "homeTeam": "Manchester United",
+      "awayTeam": "Ipswich Town",
       "status": "provider_acceptance_blocked",
       "note": "API-Football is overgeslagen totdat de account- en dekkingstest slaagt; ESPN blijft als onafhankelijke bron actief."
     },
     {
-      "matchId": "ss-fotmob-5887615",
+      "matchId": "ss-fotmob-5802914",
+      "date": "2026-08-30",
+      "league": "France - Ligue 1",
+      "homeTeam": "Monaco",
+      "awayTeam": "Marseille",
+      "status": "provider_acceptance_blocked",
+      "note": "API-Football is overgeslagen totdat de account- en dekkingstest slaagt; ESPN blijft als onafhankelijke bron actief."
+    },
+    {
+      "matchId": "ss-fotmob-5887614",
       "date": "2026-08-30",
       "league": "Portugal - Liga Portugal",
-      "homeTeam": "Nacional",
-      "awayTeam": "Estrela da Amadora",
+      "homeTeam": "Famalicao",
+      "awayTeam": "Gil Vicente",
       "status": "provider_acceptance_blocked",
       "note": "API-Football is overgeslagen totdat de account- en dekkingstest slaagt; ESPN blijft als onafhankelijke bron actief."
     },
     {
-      "matchId": "ss-fotmob-5832842",
-      "date": "2026-08-29",
-      "league": "Netherlands - Eerste Divisie",
-      "homeTeam": "De Graafschap",
-      "awayTeam": "Almere City FC",
+      "matchId": "ss-fotmob-5749655",
+      "date": "2026-08-30",
+      "league": "Italy - Serie A",
+      "homeTeam": "Lazio",
+      "awayTeam": "Genoa",
       "status": "provider_acceptance_blocked",
       "note": "API-Football is overgeslagen totdat de account- en dekkingstest slaagt; ESPN blijft als onafhankelijke bron actief."
     },
     {
-      "matchId": "ss-bbc-2026-08-29-middlesbrough-west bromwich albion",
-      "date": "2026-08-29",
-      "league": "England - Championship",
-      "homeTeam": "Middlesbrough",
-      "awayTeam": "West Bromwich Albion",
-      "status": "provider_acceptance_blocked",
-      "note": "API-Football is overgeslagen totdat de account- en dekkingstest slaagt; ESPN blijft als onafhankelijke bron actief."
-    },
-    {
-      "matchId": "ss-fotmob-5803239",
-      "date": "2026-08-29",
+      "matchId": "ss-fotmob-5803231",
+      "date": "2026-08-22",
       "league": "France - Ligue 2",
-      "homeTeam": "Guingamp",
-      "awayTeam": "Nantes",
+      "homeTeam": "Nantes",
+      "awayTeam": "Rodez",
       "status": "provider_acceptance_blocked",
       "note": "API-Football is overgeslagen totdat de account- en dekkingstest slaagt; ESPN blijft als onafhankelijke bron actief."
     },
     {
-      "matchId": "ss-oldb-83161",
+      "matchId": "ss-fotmob-5987805",
+      "date": "2026-08-26",
+      "league": "Europe - Champions League",
+      "homeTeam": "AEK Athens",
+      "awayTeam": "Levski Sofia",
+      "status": "provider_acceptance_blocked",
+      "note": "API-Football is overgeslagen totdat de account- en dekkingstest slaagt; ESPN blijft als onafhankelijke bron actief."
+    },
+    {
+      "matchId": "ss-fotmob-5881151",
       "date": "2026-08-29",
       "league": "Germany - Bundesliga",
-      "homeTeam": "1. FSV Mainz 05",
-      "awayTeam": "SC Paderborn 07",
+      "homeTeam": "Union Berlin",
+      "awayTeam": "Eintracht Frankfurt",
       "status": "provider_acceptance_blocked",
       "note": "API-Football is overgeslagen totdat de account- en dekkingstest slaagt; ESPN blijft als onafhankelijke bron actief."
     },
     {
-      "matchId": "ss-fotmob-5802915",
-      "date": "2026-08-30",
-      "league": "France - Ligue 1",
-      "homeTeam": "Paris FC",
-      "awayTeam": "Nice",
+      "matchId": "ss-bbc-2026-08-23-go ahead eagles-ado den haag",
+      "date": "2026-08-23",
+      "league": "Netherlands - Eredivisie",
+      "homeTeam": "Go Ahead Eagles",
+      "awayTeam": "ADO Den Haag",
       "status": "provider_acceptance_blocked",
       "note": "API-Football is overgeslagen totdat de account- en dekkingstest slaagt; ESPN blijft als onafhankelijke bron actief."
     },
     {
-      "matchId": "ss-fotmob-5868038",
-      "date": "2026-08-30",
-      "league": "Spain - LaLiga",
-      "homeTeam": "Real Madrid",
-      "awayTeam": "Malaga",
-      "status": "provider_acceptance_blocked",
-      "note": "API-Football is overgeslagen totdat de account- en dekkingstest slaagt; ESPN blijft als onafhankelijke bron actief."
-    },
-    {
-      "matchId": "ss-fotmob-5795430",
-      "date": "2026-08-30",
-      "league": "England - Premier League",
-      "homeTeam": "Leeds United",
-      "awayTeam": "Brentford",
+      "matchId": "ss-fotmob-5832831",
+      "date": "2026-08-22",
+      "league": "Netherlands - Eerste Divisie",
+      "homeTeam": "NAC Breda",
+      "awayTeam": "Jong Ajax",
       "status": "provider_acceptance_blocked",
       "note": "API-Football is overgeslagen totdat de account- en dekkingstest slaagt; ESPN blijft als onafhankelijke bron actief."
     }
@@ -535,23 +603,23 @@
       "status": "filled"
     },
     "ss-bbc-2026-08-22-lincoln city-portsmouth": {
-      "checkedAt": "2026-08-20T22:11:34.369Z",
+      "checkedAt": "2026-08-22T07:04:52.092Z",
       "status": "filled"
     },
     "ss-tsdb-England - Championship-2501263": {
-      "checkedAt": "2026-08-18T08:34:28.340Z",
-      "status": "no_direct_history"
+      "checkedAt": "2026-08-22T07:04:52.092Z",
+      "status": "filled"
     },
     "ss-fotmob-5795364": {
       "checkedAt": "2026-08-20T22:11:34.369Z",
       "status": "no_direct_history"
     },
     "ss-fotmob-5803230": {
-      "checkedAt": "2026-08-20T10:49:09.063Z",
-      "status": "no_direct_history"
+      "checkedAt": "2026-08-22T07:04:52.092Z",
+      "status": "filled"
     },
     "ss-fotmob-5803231": {
-      "checkedAt": "2026-08-20T15:46:00.697Z",
+      "checkedAt": "2026-08-22T07:04:52.092Z",
       "status": "no_direct_history"
     },
     "ss-bbc-2026-08-22-maritimo-academico de viseu": {
@@ -583,7 +651,7 @@
       "status": "no_direct_history"
     },
     "ss-fotmob-5832831": {
-      "checkedAt": "2026-08-20T15:46:00.697Z",
+      "checkedAt": "2026-08-22T07:04:52.092Z",
       "status": "no_direct_history"
     },
     "ss-fotmob-5868021": {
@@ -595,7 +663,7 @@
       "status": "no_direct_history"
     },
     "ss-bbc-2026-08-22-sparta rotterdam-utrecht": {
-      "checkedAt": "2026-08-20T22:11:34.369Z",
+      "checkedAt": "2026-08-22T07:04:52.092Z",
       "status": "no_direct_history"
     },
     "ss-fotmob-5749645": {
@@ -655,7 +723,7 @@
       "status": "no_direct_history"
     },
     "ss-bbc-2026-08-23-go ahead eagles-ado den haag": {
-      "checkedAt": "2026-08-21T22:03:10.873Z",
+      "checkedAt": "2026-08-22T07:04:52.092Z",
       "status": "no_direct_history"
     },
     "ss-bbc-2026-08-23-west bromwich albion-burnley": {
@@ -807,12 +875,12 @@
       "status": "no_direct_history"
     },
     "ss-sky-577483": {
-      "checkedAt": "2026-08-19T23:05:13.306Z",
-      "status": "no_direct_history"
+      "checkedAt": "2026-08-22T07:04:52.092Z",
+      "status": "filled"
     },
     "ss-sky-577464": {
-      "checkedAt": "2026-08-19T23:05:13.306Z",
-      "status": "no_direct_history"
+      "checkedAt": "2026-08-22T07:04:52.092Z",
+      "status": "filled"
     },
     "ss-sky-577512": {
       "checkedAt": "2026-08-19T23:05:13.306Z",
@@ -931,7 +999,7 @@
       "status": "no_direct_history"
     },
     "ss-fotmob-5987806": {
-      "checkedAt": "2026-08-20T16:15:16.625Z",
+      "checkedAt": "2026-08-22T07:04:52.092Z",
       "status": "filled"
     },
     "ss-fotmob-5987964": {
@@ -943,8 +1011,8 @@
       "status": "no_direct_history"
     },
     "ss-fotmob-5987805": {
-      "checkedAt": "2026-08-20T22:11:34.369Z",
-      "status": "filled"
+      "checkedAt": "2026-08-22T07:04:52.092Z",
+      "status": "no_direct_history"
     },
     "ss-fotmob-5987963": {
       "checkedAt": "2026-08-20T10:49:09.063Z",
@@ -1267,7 +1335,7 @@
       "status": "no_direct_history"
     },
     "ss-tsdb-Belgium - Pro League-2496709": {
-      "checkedAt": "2026-08-21T23:04:41.813Z",
+      "checkedAt": "2026-08-22T07:04:52.092Z",
       "status": "no_direct_history"
     },
     "ss-tsdb-Netherlands - Eredivisie-2489084": {
@@ -1356,6 +1424,86 @@
     },
     "ss-fotmob-5795430": {
       "checkedAt": "2026-08-21T23:04:41.813Z",
+      "status": "no_direct_history"
+    },
+    "ss-fotmob-5988082": {
+      "checkedAt": "2026-08-22T07:04:52.092Z",
+      "status": "filled"
+    },
+    "ss-fotmob-5987967": {
+      "checkedAt": "2026-08-22T07:04:52.092Z",
+      "status": "filled"
+    },
+    "ss-oldb-83162": {
+      "checkedAt": "2026-08-22T07:04:52.092Z",
+      "status": "no_direct_history"
+    },
+    "ss-bbc-2026-08-29-az-go ahead eagles": {
+      "checkedAt": "2026-08-22T07:04:52.092Z",
+      "status": "no_direct_history"
+    },
+    "ss-fotmob-5832843": {
+      "checkedAt": "2026-08-22T07:04:52.092Z",
+      "status": "no_direct_history"
+    },
+    "ss-fotmob-5795433": {
+      "checkedAt": "2026-08-22T07:04:52.092Z",
+      "status": "no_direct_history"
+    },
+    "ss-fotmob-5802916": {
+      "checkedAt": "2026-08-22T07:04:52.092Z",
+      "status": "no_direct_history"
+    },
+    "ss-fotmob-5887613": {
+      "checkedAt": "2026-08-22T07:04:52.092Z",
+      "status": "no_direct_history"
+    },
+    "ss-fotmob-5868033": {
+      "checkedAt": "2026-08-22T07:04:52.092Z",
+      "status": "no_direct_history"
+    },
+    "ss-fotmob-5749652": {
+      "checkedAt": "2026-08-22T07:04:52.092Z",
+      "status": "filled"
+    },
+    "ss-fotmob-5988077": {
+      "checkedAt": "2026-08-22T07:04:52.092Z",
+      "status": "filled"
+    },
+    "ss-oldb-83163": {
+      "checkedAt": "2026-08-22T07:04:52.092Z",
+      "status": "no_direct_history"
+    },
+    "ss-fotmob-5832844": {
+      "checkedAt": "2026-08-22T07:04:52.092Z",
+      "status": "no_direct_history"
+    },
+    "ss-fotmob-5795432": {
+      "checkedAt": "2026-08-22T07:04:52.092Z",
+      "status": "no_direct_history"
+    },
+    "ss-fotmob-5802914": {
+      "checkedAt": "2026-08-22T07:04:52.092Z",
+      "status": "no_direct_history"
+    },
+    "ss-fotmob-5887614": {
+      "checkedAt": "2026-08-22T07:04:52.092Z",
+      "status": "no_direct_history"
+    },
+    "ss-fotmob-5868032": {
+      "checkedAt": "2026-08-22T07:04:52.092Z",
+      "status": "filled"
+    },
+    "ss-fotmob-5749655": {
+      "checkedAt": "2026-08-22T07:04:52.092Z",
+      "status": "no_direct_history"
+    },
+    "ss-fotmob-5988093": {
+      "checkedAt": "2026-08-22T07:04:52.092Z",
+      "status": "filled"
+    },
+    "ss-fotmob-5881151": {
+      "checkedAt": "2026-08-22T07:04:52.092Z",
       "status": "no_direct_history"
     }
   },
