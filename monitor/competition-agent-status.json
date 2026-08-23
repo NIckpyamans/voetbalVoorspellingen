@@ -1,10 +1,10 @@
 {
-  "generatedAt": "2026-08-23T15:04:41.445Z",
+  "generatedAt": "2026-08-23T15:41:15.090Z",
   "schemaVersion": "competition-data-agents-v1",
   "daysAhead": 7,
-  "totalUpcomingFixtures": 184,
-  "activeAgents": 13,
-  "configuredAgents": 16,
+  "totalUpcomingFixtures": 173,
+  "activeAgents": 11,
+  "configuredAgents": 11,
   "providerBlocks": {
     "neon": null,
     "apiFootball": "acceptance_failed",
@@ -34,12 +34,12 @@
   },
   "agents": [
     {
-      "key": "belgium-pro-league-agent",
-      "league": "Belgium - Pro League",
+      "key": "netherlands-eredivisie-agent",
+      "league": "Netherlands - Eredivisie",
       "profile": "domestic",
-      "upcomingFixtures": 0,
-      "fixtureMultiSourceCoverage": null,
-      "h2hChecked": 0,
+      "upcomingFixtures": 10,
+      "fixtureMultiSourceCoverage": 0,
+      "h2hChecked": 2,
       "lineupWindowChecks": 0,
       "confirmedLineups": 0,
       "sources": {
@@ -79,15 +79,111 @@
           "espn"
         ]
       },
-      "status": "idle_no_fixtures_in_window"
+      "status": "active"
     },
     {
-      "key": "england-championship-agent",
-      "league": "England - Championship",
+      "key": "netherlands-eerste-divisie-agent",
+      "league": "Netherlands - Eerste Divisie",
       "profile": "domestic",
-      "upcomingFixtures": 3,
+      "upcomingFixtures": 14,
       "fixtureMultiSourceCoverage": 0,
       "h2hChecked": 2,
+      "lineupWindowChecks": 0,
+      "confirmedLineups": 0,
+      "sources": {
+        "fixtures": [
+          "fotmob",
+          "espn",
+          "football-data-org",
+          "thesportsdb",
+          "goal-api"
+        ],
+        "h2h": [
+          "canonical-history",
+          "football-data-co-uk",
+          "openfootball",
+          "espn",
+          "apifootball-com",
+          "goal-api",
+          "api-football"
+        ],
+        "lineups": [
+          "sofascore",
+          "fotmob",
+          "apifootball-com",
+          "goal-api",
+          "sportmonks",
+          "api-football"
+        ],
+        "rosters": [
+          "transfermarkt-datasets",
+          "football-data-org",
+          "thesportsdb",
+          "sportmonks"
+        ],
+        "form": [
+          "canonical-history",
+          "football-data-co-uk",
+          "espn"
+        ]
+      },
+      "status": "active"
+    },
+    {
+      "key": "germany-bundesliga-agent",
+      "league": "Germany - Bundesliga",
+      "profile": "domestic",
+      "upcomingFixtures": 23,
+      "fixtureMultiSourceCoverage": 0,
+      "h2hChecked": 3,
+      "lineupWindowChecks": 0,
+      "confirmedLineups": 0,
+      "sources": {
+        "fixtures": [
+          "fotmob",
+          "espn",
+          "football-data-org",
+          "thesportsdb",
+          "goal-api"
+        ],
+        "h2h": [
+          "canonical-history",
+          "football-data-co-uk",
+          "openfootball",
+          "espn",
+          "apifootball-com",
+          "goal-api",
+          "api-football"
+        ],
+        "lineups": [
+          "sofascore",
+          "fotmob",
+          "apifootball-com",
+          "goal-api",
+          "sportmonks",
+          "api-football"
+        ],
+        "rosters": [
+          "transfermarkt-datasets",
+          "football-data-org",
+          "thesportsdb",
+          "sportmonks"
+        ],
+        "form": [
+          "canonical-history",
+          "football-data-co-uk",
+          "espn"
+        ]
+      },
+      "status": "active"
+    },
+    {
+      "key": "germany-2-bundesliga-agent",
+      "league": "Germany - 2. Bundesliga",
+      "profile": "domestic",
+      "upcomingFixtures": 12,
+      "fixtureMultiSourceCoverage": 0,
+      "h2hChecked": 0,
       "lineupWindowChecks": 0,
       "confirmedLineups": 0,
       "sources": {
@@ -178,56 +274,156 @@
       "status": "active"
     },
     {
-      "key": "champions-league-agent",
-      "league": "Europe - Champions League",
-      "profile": "uefa",
-      "upcomingFixtures": 8,
+      "key": "england-championship-agent",
+      "league": "England - Championship",
+      "profile": "domestic",
+      "upcomingFixtures": 13,
       "fixtureMultiSourceCoverage": 0,
       "h2hChecked": 2,
       "lineupWindowChecks": 0,
       "confirmedLineups": 0,
       "sources": {
         "fixtures": [
-          "sky",
           "fotmob",
           "espn",
-          "bbc",
+          "football-data-org",
+          "thesportsdb",
           "goal-api"
         ],
         "h2h": [
           "canonical-history",
-          "espn",
+          "football-data-co-uk",
           "openfootball",
+          "espn",
+          "apifootball-com",
           "goal-api",
           "api-football"
         ],
         "lineups": [
-          "fotmob",
           "sofascore",
+          "fotmob",
+          "apifootball-com",
           "goal-api",
-          "api-football",
-          "sportmonks"
+          "sportmonks",
+          "api-football"
         ],
         "rosters": [
+          "transfermarkt-datasets",
           "football-data-org",
           "thesportsdb",
           "sportmonks"
         ],
         "form": [
           "canonical-history",
-          "espn",
-          "football-data-co-uk"
+          "football-data-co-uk",
+          "espn"
         ]
       },
       "status": "active"
     },
     {
-      "key": "conference-league-agent",
-      "league": "Europe - Conference League",
-      "profile": "uefa",
-      "upcomingFixtures": 36,
+      "key": "france-ligue-1-agent",
+      "league": "France - Ligue 1",
+      "profile": "domestic",
+      "upcomingFixtures": 12,
       "fixtureMultiSourceCoverage": 0,
-      "h2hChecked": 3,
+      "h2hChecked": 2,
+      "lineupWindowChecks": 1,
+      "confirmedLineups": 1,
+      "sources": {
+        "fixtures": [
+          "fotmob",
+          "espn",
+          "football-data-org",
+          "thesportsdb",
+          "goal-api"
+        ],
+        "h2h": [
+          "canonical-history",
+          "football-data-co-uk",
+          "openfootball",
+          "espn",
+          "apifootball-com",
+          "goal-api",
+          "api-football"
+        ],
+        "lineups": [
+          "sofascore",
+          "fotmob",
+          "apifootball-com",
+          "goal-api",
+          "sportmonks",
+          "api-football"
+        ],
+        "rosters": [
+          "transfermarkt-datasets",
+          "football-data-org",
+          "thesportsdb",
+          "sportmonks"
+        ],
+        "form": [
+          "canonical-history",
+          "football-data-co-uk",
+          "espn"
+        ]
+      },
+      "status": "active"
+    },
+    {
+      "key": "france-ligue-2-agent",
+      "league": "France - Ligue 2",
+      "profile": "domestic",
+      "upcomingFixtures": 13,
+      "fixtureMultiSourceCoverage": 0,
+      "h2hChecked": 2,
+      "lineupWindowChecks": 0,
+      "confirmedLineups": 0,
+      "sources": {
+        "fixtures": [
+          "fotmob",
+          "espn",
+          "football-data-org",
+          "thesportsdb",
+          "goal-api"
+        ],
+        "h2h": [
+          "canonical-history",
+          "football-data-co-uk",
+          "openfootball",
+          "espn",
+          "apifootball-com",
+          "goal-api",
+          "api-football"
+        ],
+        "lineups": [
+          "sofascore",
+          "fotmob",
+          "apifootball-com",
+          "goal-api",
+          "sportmonks",
+          "api-football"
+        ],
+        "rosters": [
+          "transfermarkt-datasets",
+          "football-data-org",
+          "thesportsdb",
+          "sportmonks"
+        ],
+        "form": [
+          "canonical-history",
+          "football-data-co-uk",
+          "espn"
+        ]
+      },
+      "status": "active"
+    },
+    {
+      "key": "champions-league-agent",
+      "league": "Europe - Champions League",
+      "profile": "uefa",
+      "upcomingFixtures": 8,
+      "fixtureMultiSourceCoverage": 0,
+      "h2hChecked": 2,
       "lineupWindowChecks": 0,
       "confirmedLineups": 0,
       "sources": {
@@ -310,477 +506,48 @@
       "status": "active"
     },
     {
-      "key": "france-ligue-1-agent",
-      "league": "France - Ligue 1",
-      "profile": "domestic",
-      "upcomingFixtures": 12,
-      "fixtureMultiSourceCoverage": 0,
-      "h2hChecked": 2,
-      "lineupWindowChecks": 1,
-      "confirmedLineups": 0,
-      "sources": {
-        "fixtures": [
-          "fotmob",
-          "espn",
-          "football-data-org",
-          "thesportsdb",
-          "goal-api"
-        ],
-        "h2h": [
-          "canonical-history",
-          "football-data-co-uk",
-          "openfootball",
-          "espn",
-          "apifootball-com",
-          "goal-api",
-          "api-football"
-        ],
-        "lineups": [
-          "sofascore",
-          "fotmob",
-          "apifootball-com",
-          "goal-api",
-          "sportmonks",
-          "api-football"
-        ],
-        "rosters": [
-          "transfermarkt-datasets",
-          "football-data-org",
-          "thesportsdb",
-          "sportmonks"
-        ],
-        "form": [
-          "canonical-history",
-          "football-data-co-uk",
-          "espn"
-        ]
-      },
-      "status": "active"
-    },
-    {
-      "key": "france-ligue-2-agent",
-      "league": "France - Ligue 2",
-      "profile": "domestic",
-      "upcomingFixtures": 9,
-      "fixtureMultiSourceCoverage": 0,
-      "h2hChecked": 2,
-      "lineupWindowChecks": 0,
-      "confirmedLineups": 0,
-      "sources": {
-        "fixtures": [
-          "fotmob",
-          "espn",
-          "football-data-org",
-          "thesportsdb",
-          "goal-api"
-        ],
-        "h2h": [
-          "canonical-history",
-          "football-data-co-uk",
-          "openfootball",
-          "espn",
-          "apifootball-com",
-          "goal-api",
-          "api-football"
-        ],
-        "lineups": [
-          "sofascore",
-          "fotmob",
-          "apifootball-com",
-          "goal-api",
-          "sportmonks",
-          "api-football"
-        ],
-        "rosters": [
-          "transfermarkt-datasets",
-          "football-data-org",
-          "thesportsdb",
-          "sportmonks"
-        ],
-        "form": [
-          "canonical-history",
-          "football-data-co-uk",
-          "espn"
-        ]
-      },
-      "status": "active"
-    },
-    {
-      "key": "germany-bundesliga-agent",
-      "league": "Germany - Bundesliga",
-      "profile": "domestic",
-      "upcomingFixtures": 22,
+      "key": "conference-league-agent",
+      "league": "Europe - Conference League",
+      "profile": "uefa",
+      "upcomingFixtures": 36,
       "fixtureMultiSourceCoverage": 0,
       "h2hChecked": 3,
       "lineupWindowChecks": 0,
       "confirmedLineups": 0,
       "sources": {
         "fixtures": [
+          "sky",
           "fotmob",
           "espn",
-          "football-data-org",
-          "thesportsdb",
+          "bbc",
           "goal-api"
         ],
         "h2h": [
           "canonical-history",
-          "football-data-co-uk",
-          "openfootball",
           "espn",
-          "apifootball-com",
+          "openfootball",
           "goal-api",
           "api-football"
         ],
         "lineups": [
-          "sofascore",
           "fotmob",
-          "apifootball-com",
+          "sofascore",
           "goal-api",
-          "sportmonks",
-          "api-football"
+          "api-football",
+          "sportmonks"
         ],
         "rosters": [
-          "transfermarkt-datasets",
           "football-data-org",
           "thesportsdb",
           "sportmonks"
         ],
         "form": [
           "canonical-history",
-          "football-data-co-uk",
-          "espn"
+          "espn",
+          "football-data-co-uk"
         ]
       },
       "status": "active"
-    },
-    {
-      "key": "italy-serie-a-agent",
-      "league": "Italy - Serie A",
-      "profile": "domestic",
-      "upcomingFixtures": 14,
-      "fixtureMultiSourceCoverage": 0,
-      "h2hChecked": 3,
-      "lineupWindowChecks": 0,
-      "confirmedLineups": 0,
-      "sources": {
-        "fixtures": [
-          "fotmob",
-          "espn",
-          "football-data-org",
-          "thesportsdb",
-          "goal-api"
-        ],
-        "h2h": [
-          "canonical-history",
-          "football-data-co-uk",
-          "openfootball",
-          "espn",
-          "apifootball-com",
-          "goal-api",
-          "api-football"
-        ],
-        "lineups": [
-          "sofascore",
-          "fotmob",
-          "apifootball-com",
-          "goal-api",
-          "sportmonks",
-          "api-football"
-        ],
-        "rosters": [
-          "transfermarkt-datasets",
-          "football-data-org",
-          "thesportsdb",
-          "sportmonks"
-        ],
-        "form": [
-          "canonical-history",
-          "football-data-co-uk",
-          "espn"
-        ]
-      },
-      "status": "active"
-    },
-    {
-      "key": "italy-serie-b-agent",
-      "league": "Italy - Serie B",
-      "profile": "domestic",
-      "upcomingFixtures": 0,
-      "fixtureMultiSourceCoverage": null,
-      "h2hChecked": 0,
-      "lineupWindowChecks": 0,
-      "confirmedLineups": 0,
-      "sources": {
-        "fixtures": [
-          "fotmob",
-          "espn",
-          "football-data-org",
-          "thesportsdb",
-          "goal-api"
-        ],
-        "h2h": [
-          "canonical-history",
-          "football-data-co-uk",
-          "openfootball",
-          "espn",
-          "apifootball-com",
-          "goal-api",
-          "api-football"
-        ],
-        "lineups": [
-          "sofascore",
-          "fotmob",
-          "apifootball-com",
-          "goal-api",
-          "sportmonks",
-          "api-football"
-        ],
-        "rosters": [
-          "transfermarkt-datasets",
-          "football-data-org",
-          "thesportsdb",
-          "sportmonks"
-        ],
-        "form": [
-          "canonical-history",
-          "football-data-co-uk",
-          "espn"
-        ]
-      },
-      "status": "idle_no_fixtures_in_window"
-    },
-    {
-      "key": "netherlands-eerste-divisie-agent",
-      "league": "Netherlands - Eerste Divisie",
-      "profile": "domestic",
-      "upcomingFixtures": 13,
-      "fixtureMultiSourceCoverage": 0,
-      "h2hChecked": 2,
-      "lineupWindowChecks": 0,
-      "confirmedLineups": 0,
-      "sources": {
-        "fixtures": [
-          "fotmob",
-          "espn",
-          "football-data-org",
-          "thesportsdb",
-          "goal-api"
-        ],
-        "h2h": [
-          "canonical-history",
-          "football-data-co-uk",
-          "openfootball",
-          "espn",
-          "apifootball-com",
-          "goal-api",
-          "api-football"
-        ],
-        "lineups": [
-          "sofascore",
-          "fotmob",
-          "apifootball-com",
-          "goal-api",
-          "sportmonks",
-          "api-football"
-        ],
-        "rosters": [
-          "transfermarkt-datasets",
-          "football-data-org",
-          "thesportsdb",
-          "sportmonks"
-        ],
-        "form": [
-          "canonical-history",
-          "football-data-co-uk",
-          "espn"
-        ]
-      },
-      "status": "active"
-    },
-    {
-      "key": "netherlands-eredivisie-agent",
-      "league": "Netherlands - Eredivisie",
-      "profile": "domestic",
-      "upcomingFixtures": 5,
-      "fixtureMultiSourceCoverage": 0,
-      "h2hChecked": 2,
-      "lineupWindowChecks": 0,
-      "confirmedLineups": 0,
-      "sources": {
-        "fixtures": [
-          "fotmob",
-          "espn",
-          "football-data-org",
-          "thesportsdb",
-          "goal-api"
-        ],
-        "h2h": [
-          "canonical-history",
-          "football-data-co-uk",
-          "openfootball",
-          "espn",
-          "apifootball-com",
-          "goal-api",
-          "api-football"
-        ],
-        "lineups": [
-          "sofascore",
-          "fotmob",
-          "apifootball-com",
-          "goal-api",
-          "sportmonks",
-          "api-football"
-        ],
-        "rosters": [
-          "transfermarkt-datasets",
-          "football-data-org",
-          "thesportsdb",
-          "sportmonks"
-        ],
-        "form": [
-          "canonical-history",
-          "football-data-co-uk",
-          "espn"
-        ]
-      },
-      "status": "active"
-    },
-    {
-      "key": "portugal-liga-portugal-agent",
-      "league": "Portugal - Liga Portugal",
-      "profile": "domestic",
-      "upcomingFixtures": 12,
-      "fixtureMultiSourceCoverage": 0,
-      "h2hChecked": 3,
-      "lineupWindowChecks": 0,
-      "confirmedLineups": 0,
-      "sources": {
-        "fixtures": [
-          "fotmob",
-          "espn",
-          "football-data-org",
-          "thesportsdb",
-          "goal-api"
-        ],
-        "h2h": [
-          "canonical-history",
-          "football-data-co-uk",
-          "openfootball",
-          "espn",
-          "apifootball-com",
-          "goal-api",
-          "api-football"
-        ],
-        "lineups": [
-          "sofascore",
-          "fotmob",
-          "apifootball-com",
-          "goal-api",
-          "sportmonks",
-          "api-football"
-        ],
-        "rosters": [
-          "transfermarkt-datasets",
-          "football-data-org",
-          "thesportsdb",
-          "sportmonks"
-        ],
-        "form": [
-          "canonical-history",
-          "football-data-co-uk",
-          "espn"
-        ]
-      },
-      "status": "active"
-    },
-    {
-      "key": "spain-laliga-agent",
-      "league": "Spain - LaLiga",
-      "profile": "domestic",
-      "upcomingFixtures": 18,
-      "fixtureMultiSourceCoverage": 0,
-      "h2hChecked": 3,
-      "lineupWindowChecks": 1,
-      "confirmedLineups": 1,
-      "sources": {
-        "fixtures": [
-          "fotmob",
-          "espn",
-          "football-data-org",
-          "thesportsdb",
-          "goal-api"
-        ],
-        "h2h": [
-          "canonical-history",
-          "football-data-co-uk",
-          "openfootball",
-          "espn",
-          "apifootball-com",
-          "goal-api",
-          "api-football"
-        ],
-        "lineups": [
-          "sofascore",
-          "fotmob",
-          "apifootball-com",
-          "goal-api",
-          "sportmonks",
-          "api-football"
-        ],
-        "rosters": [
-          "transfermarkt-datasets",
-          "football-data-org",
-          "thesportsdb",
-          "sportmonks"
-        ],
-        "form": [
-          "canonical-history",
-          "football-data-co-uk",
-          "espn"
-        ]
-      },
-      "status": "active"
-    },
-    {
-      "key": "club-friendlies-agent",
-      "league": "World - Club Friendlies",
-      "profile": "friendly",
-      "upcomingFixtures": 0,
-      "fixtureMultiSourceCoverage": null,
-      "h2hChecked": 0,
-      "lineupWindowChecks": 0,
-      "confirmedLineups": 0,
-      "sources": {
-        "fixtures": [
-          "fotmob",
-          "espn",
-          "official-club",
-          "thesportsdb",
-          "goal-api"
-        ],
-        "h2h": [
-          "canonical-history",
-          "espn",
-          "goal-api",
-          "api-football"
-        ],
-        "lineups": [
-          "fotmob",
-          "sofascore",
-          "goal-api",
-          "api-football"
-        ],
-        "rosters": [
-          "football-data-org",
-          "thesportsdb",
-          "sportmonks"
-        ],
-        "form": [
-          "canonical-history",
-          "espn"
-        ]
-      },
-      "status": "idle_no_fixtures_in_window"
     }
   ],
   "guarantees": {
