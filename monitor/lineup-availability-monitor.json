@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-08-23T11:03:32.400Z",
+  "generatedAt": "2026-08-23T11:37:14.137Z",
   "source": "pre_kickoff_r2_capture_fallback",
   "database": {
     "configured": true,
@@ -7,19 +7,35 @@
     "error": "Server error (HTTP status 402): {\"message\":\"Your project has exceeded the data transfer quota. Upgrade your plan to increase limits.\",\"code\":\"\",\"detail\":null,\"hint\":null,\"position\":null,\"internalPosition\":null,\"internalQuery\":null,\"severity\":\"\",\"where\":null,\"table\":null,\"column\":null,\"schema\":null,\"dataType\":null,\"constraint\":null,\"file\":null,\"line\":null,\"routine\":null,\"neon:retryable\":true}"
   },
   "daysAhead": 3,
-  "checked": 1,
-  "confirmedLineups": 0,
-  "projectedLineups": 1,
+  "checked": 4,
+  "confirmedLineups": 1,
+  "projectedLineups": 2,
   "availabilityCovered": 0,
-  "confirmedLineupCoverage": 0,
+  "confirmedLineupCoverage": 0.25,
   "leagueCoverage": [
     {
-      "league": "Netherlands - Eredivisie",
+      "league": "England - Premier League",
+      "checked": 2,
+      "covered": 0,
+      "partial": 1,
+      "missing": 1,
+      "coverage": 0
+    },
+    {
+      "league": "France - Ligue 1",
       "checked": 1,
       "covered": 0,
       "partial": 1,
       "missing": 0,
       "coverage": 0
+    },
+    {
+      "league": "Netherlands - Eredivisie",
+      "checked": 1,
+      "covered": 1,
+      "partial": 0,
+      "missing": 0,
+      "coverage": 1
     }
   ],
   "recommendation": "R2-capture blijft actief; relationele lineupmonitoring wordt hervat zodra Neon beschikbaar is."
