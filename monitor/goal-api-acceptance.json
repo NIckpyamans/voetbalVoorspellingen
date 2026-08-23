@@ -1,24 +1,24 @@
 {
   "schemaVersion": "goal-api-acceptance-v1",
-  "checkedAt": "2026-08-22T04:02:49.061Z",
+  "checkedAt": "2026-08-23T04:07:54.143Z",
   "configured": true,
   "accepted": false,
   "enoughTime": false,
   "enoughEvidence": false,
   "targetsMet": true,
-  "elapsedDays": 2,
+  "elapsedDays": 3,
   "requiredDays": 14,
   "aggregate": {
     "domestic": {
-      "checked": 294,
-      "mapped": 251,
-      "coverage": 0.854,
+      "checked": 394,
+      "mapped": 333,
+      "coverage": 0.845,
       "target": 0.8
     },
     "uefa": {
-      "checked": 216,
-      "mapped": 188,
-      "coverage": 0.87,
+      "checked": 279,
+      "mapped": 242,
+      "coverage": 0.867,
       "target": 0.8
     },
     "friendly": {
@@ -851,30 +851,177 @@
           "errorCode": null
         }
       }
+    },
+    {
+      "measurementVersion": "goal-pagination-v2",
+      "checkedAt": "2026-08-23T04:07:54.143Z",
+      "providerReachable": true,
+      "checked": 163,
+      "mapped": 136,
+      "segments": {
+        "domestic": {
+          "checked": 100,
+          "mapped": 82
+        },
+        "uefa": {
+          "checked": 63,
+          "mapped": 54
+        },
+        "friendly": {
+          "checked": 0,
+          "mapped": 0
+        }
+      },
+      "requestStatuses": [
+        {
+          "date": "2026-08-23",
+          "status": 200,
+          "records": 729,
+          "pages": 8,
+          "truncated": false,
+          "limits": {
+            "remaining": "992",
+            "limit": "1000",
+            "dailyRemaining": null
+          }
+        },
+        {
+          "date": "2026-08-24",
+          "status": 200,
+          "records": 139,
+          "pages": 2,
+          "truncated": false,
+          "limits": {
+            "remaining": "990",
+            "limit": "1000",
+            "dailyRemaining": null
+          }
+        },
+        {
+          "date": "2026-08-25",
+          "status": 200,
+          "records": 200,
+          "pages": 2,
+          "truncated": false,
+          "limits": {
+            "remaining": "988",
+            "limit": "1000",
+            "dailyRemaining": null
+          }
+        },
+        {
+          "date": "2026-08-26",
+          "status": 200,
+          "records": 311,
+          "pages": 4,
+          "truncated": false,
+          "limits": {
+            "remaining": "984",
+            "limit": "1000",
+            "dailyRemaining": null
+          }
+        },
+        {
+          "date": "2026-08-27",
+          "status": 200,
+          "records": 125,
+          "pages": 2,
+          "truncated": false,
+          "limits": {
+            "remaining": "982",
+            "limit": "1000",
+            "dailyRemaining": null
+          }
+        },
+        {
+          "date": "2026-08-28",
+          "status": 200,
+          "records": 401,
+          "pages": 5,
+          "truncated": false,
+          "limits": {
+            "remaining": "977",
+            "limit": "1000",
+            "dailyRemaining": null
+          }
+        },
+        {
+          "date": "2026-08-29",
+          "status": 200,
+          "records": 1000,
+          "pages": 10,
+          "truncated": true,
+          "limits": {
+            "remaining": "967",
+            "limit": "1000",
+            "dailyRemaining": null
+          }
+        }
+      ],
+      "endpointAccess": {
+        "testedFixtureId": "cmsp4mumxu5arpn06b2ovpb1u",
+        "fixture": {
+          "tested": true,
+          "valid": true,
+          "status": 200,
+          "records": 1,
+          "available": true,
+          "remaining": "966",
+          "errorCode": null
+        },
+        "lineups": {
+          "tested": true,
+          "valid": true,
+          "status": 200,
+          "records": 1,
+          "available": true,
+          "remaining": "965",
+          "errorCode": null
+        },
+        "statistics": {
+          "tested": true,
+          "valid": true,
+          "status": 200,
+          "records": 1,
+          "available": true,
+          "remaining": "964",
+          "errorCode": null
+        },
+        "odds": {
+          "tested": true,
+          "valid": false,
+          "status": 403,
+          "records": 0,
+          "available": false,
+          "remaining": null,
+          "errorCode": "HTTP 403"
+        },
+        "h2h": {
+          "tested": true,
+          "valid": true,
+          "status": 200,
+          "records": 1,
+          "available": true,
+          "remaining": "963",
+          "errorCode": null
+        }
+      }
     }
   ],
   "missingSamples": [
-    {
-      "date": "2026-08-22",
-      "league": "England - Premier League",
-      "home": "Hull City",
-      "away": "Manchester United",
-      "segment": "domestic",
-      "status": "not_mapped"
-    },
-    {
-      "date": "2026-08-22",
-      "league": "Netherlands - Eerste Divisie",
-      "home": "NAC Breda",
-      "away": "Jong Ajax",
-      "segment": "domestic",
-      "status": "not_mapped"
-    },
     {
       "date": "2026-08-23",
       "league": "France - Ligue 1",
       "home": "Rennes",
       "away": "Paris Saint-Germain",
+      "segment": "domestic",
+      "status": "not_mapped"
+    },
+    {
+      "date": "2026-08-24",
+      "league": "Spain - LaLiga",
+      "home": "Malaga",
+      "away": "Deportivo A Coruña",
       "segment": "domestic",
       "status": "not_mapped"
     },
@@ -891,14 +1038,6 @@
       "league": "Netherlands - Eerste Divisie",
       "home": "Jong PSV",
       "away": "TOP Oss",
-      "segment": "domestic",
-      "status": "not_mapped"
-    },
-    {
-      "date": "2026-08-24",
-      "league": "Spain - LaLiga",
-      "home": "Malaga",
-      "away": "Deportivo A Coruña",
       "segment": "domestic",
       "status": "not_mapped"
     },
@@ -920,6 +1059,46 @@
     },
     {
       "date": "2026-08-27",
+      "league": "Europe - Europa League",
+      "home": "FC Iberia 1999 Tiflis",
+      "away": "Jagiellonia Bialystok",
+      "segment": "uefa",
+      "status": "not_mapped"
+    },
+    {
+      "date": "2026-08-27",
+      "league": "Europe - Europa League",
+      "home": "Lillestrom",
+      "away": "Egnatia",
+      "segment": "uefa",
+      "status": "not_mapped"
+    },
+    {
+      "date": "2026-08-27",
+      "league": "Europe - Conference League",
+      "home": "FC Copenhagen",
+      "away": "FC Inter Turku",
+      "segment": "uefa",
+      "status": "not_mapped"
+    },
+    {
+      "date": "2026-08-27",
+      "league": "Europe - Conference League",
+      "home": "Pafos",
+      "away": "KS Dynamo Tirana",
+      "segment": "uefa",
+      "status": "not_mapped"
+    },
+    {
+      "date": "2026-08-27",
+      "league": "Europe - Conference League",
+      "home": "St Gallen",
+      "away": "FC Nordsjaelland",
+      "segment": "uefa",
+      "status": "not_mapped"
+    },
+    {
+      "date": "2026-08-27",
       "league": "Europe - Conference League",
       "home": "Riga FC",
       "away": "Klaksvik",
@@ -932,6 +1111,14 @@
       "home": "Omonia Nicosia",
       "away": "St.Truiden",
       "segment": "uefa",
+      "status": "not_mapped"
+    },
+    {
+      "date": "2026-08-28",
+      "league": "France - Ligue 1",
+      "home": "Lille",
+      "away": "Paris Saint-Germain",
+      "segment": "domestic",
       "status": "not_mapped"
     },
     {
@@ -967,10 +1154,74 @@
       "status": "not_mapped"
     },
     {
-      "date": "2026-08-28",
-      "league": "France - Ligue 1",
-      "home": "Lille",
-      "away": "Paris Saint-Germain",
+      "date": "2026-08-29",
+      "league": "Germany - Bundesliga",
+      "home": "RB Leipzig",
+      "away": "Borussia Mönchengladbach",
+      "segment": "domestic",
+      "status": "not_mapped"
+    },
+    {
+      "date": "2026-08-29",
+      "league": "Germany - Bundesliga",
+      "home": "1. FC Heidenheim 1846",
+      "away": "Dynamo Dresden",
+      "segment": "domestic",
+      "status": "not_mapped"
+    },
+    {
+      "date": "2026-08-29",
+      "league": "Germany - Bundesliga",
+      "home": "Karlsruher SC",
+      "away": "VfL Wolfsburg",
+      "segment": "domestic",
+      "status": "not_mapped"
+    },
+    {
+      "date": "2026-08-29",
+      "league": "Germany - Bundesliga",
+      "home": "Energie Cottbus",
+      "away": "SpVgg Greuther Fürth",
+      "segment": "domestic",
+      "status": "not_mapped"
+    },
+    {
+      "date": "2026-08-29",
+      "league": "England - Premier League",
+      "home": "Liverpool",
+      "away": "Nottingham Forest",
+      "segment": "domestic",
+      "status": "not_mapped"
+    },
+    {
+      "date": "2026-08-29",
+      "league": "England - Championship",
+      "home": "Derby County",
+      "away": "Swansea City",
+      "segment": "domestic",
+      "status": "not_mapped"
+    },
+    {
+      "date": "2026-08-29",
+      "league": "England - Championship",
+      "home": "Middlesbrough",
+      "away": "West Bromwich Albion",
+      "segment": "domestic",
+      "status": "not_mapped"
+    },
+    {
+      "date": "2026-08-29",
+      "league": "France - Ligue 2",
+      "home": "Annecy FC",
+      "away": "Metz",
+      "segment": "domestic",
+      "status": "not_mapped"
+    },
+    {
+      "date": "2026-08-29",
+      "league": "France - Ligue 2",
+      "home": "Red Star",
+      "away": "Reims",
       "segment": "domestic",
       "status": "not_mapped"
     }
