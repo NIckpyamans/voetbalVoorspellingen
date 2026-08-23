@@ -1,119 +1,33 @@
 {
-  "generatedAt": "2026-08-23T12:00:32.233Z",
-  "checked": 4,
-  "confirmed": 1,
+  "generatedAt": "2026-08-23T13:04:43.758Z",
+  "checked": 2,
+  "confirmed": 0,
   "partial": 2,
-  "missing": 1,
-  "r2Stored": 3,
+  "missing": 0,
+  "r2Stored": 2,
   "playerFixtureStatsCaptured": 0,
   "databaseWritable": false,
   "databaseError": "Server error (HTTP status 402): {\"message\":\"Your project has exceeded the data transfer quota. Upgrade your plan to increase limits.\",\"code\":\"\",\"detail\":null,\"hint\":null,\"position\":null,\"internalPosition\":null,\"internalQuery\":null,\"severity\":\"\",\"where\":null,\"table\":null,\"column\":null,\"schema\":null,\"dataType\":null,\"constraint\":null,\"file\":null,\"line\":null,\"routine\":null,\"neon:retryable\":true}",
   "captureWindows": {
     "t75": 1,
-    "t45": 3,
-    "t20": 0,
+    "t45": 0,
+    "t20": 1,
     "outside": 0
   },
   "providers": {
-    "sofascore:schedule_http_403": 4,
-    "fotmob:ok": 3,
-    "fotmob:fixture_not_found": 1,
-    "apifootball-com:unsupported_free_league": 1,
-    "goal-api:acceptance_gate_closed": 1,
-    "sportmonks:plan_coverage_unavailable": 1,
-    "api-football:account_or_plan_unavailable": 1
+    "sofascore:schedule_http_403": 2,
+    "fotmob:ok": 2
   },
   "matches": [
     {
-      "matchId": "ss-fotmob-5795369",
-      "league": "England - Premier League",
-      "agent": "england-premier-league-agent",
-      "kickoff": "2026-08-23T13:00:00.000Z",
-      "minutesBeforeKickoff": 59,
-      "captureWindow": "t45",
-      "homeTeam": "Brighton & Hove Albion",
-      "awayTeam": "Aston Villa",
-      "provider": "fotmob",
-      "status": "ok",
-      "attempts": [
-        {
-          "provider": "sofascore",
-          "status": "schedule_http_403",
-          "lineup": false,
-          "confirmed": false
-        },
-        {
-          "provider": "fotmob",
-          "status": "ok",
-          "lineup": true,
-          "confirmed": true
-        }
-      ],
-      "confirmed": true,
-      "partial": false
-    },
-    {
-      "matchId": "ss-fotmob-5795370",
-      "league": "England - Premier League",
-      "agent": "england-premier-league-agent",
-      "kickoff": "2026-08-23T13:00:00.000Z",
-      "minutesBeforeKickoff": 59,
-      "captureWindow": "t45",
-      "homeTeam": "Manchester City",
-      "awayTeam": "AFC Bournemouth",
-      "provider": "api-football",
-      "status": "account_or_plan_unavailable",
-      "attempts": [
-        {
-          "provider": "sofascore",
-          "status": "schedule_http_403",
-          "lineup": false,
-          "confirmed": false
-        },
-        {
-          "provider": "fotmob",
-          "status": "fixture_not_found",
-          "lineup": false,
-          "confirmed": false
-        },
-        {
-          "provider": "apifootball-com",
-          "status": "unsupported_free_league",
-          "lineup": false,
-          "confirmed": false
-        },
-        {
-          "provider": "goal-api",
-          "status": "acceptance_gate_closed",
-          "lineup": false,
-          "confirmed": false
-        },
-        {
-          "provider": "sportmonks",
-          "status": "plan_coverage_unavailable",
-          "lineup": false,
-          "confirmed": false
-        },
-        {
-          "provider": "api-football",
-          "status": "account_or_plan_unavailable",
-          "fixtureMapped": false,
-          "lineup": false,
-          "confirmed": false
-        }
-      ],
-      "confirmed": false,
-      "partial": false
-    },
-    {
-      "matchId": "ss-fotmob-5802901",
-      "league": "France - Ligue 1",
-      "agent": "france-ligue-1-agent",
-      "kickoff": "2026-08-23T13:00:00.000Z",
-      "minutesBeforeKickoff": 59,
-      "captureWindow": "t45",
-      "homeTeam": "Angers",
-      "awayTeam": "Lille",
+      "matchId": "ss-bbc-2026-08-23-vitoria guimaraes-nacional",
+      "league": "Portugal - Liga Portugal",
+      "agent": "portugal-liga-portugal-agent",
+      "kickoff": "2026-08-23T13:30:00.000Z",
+      "minutesBeforeKickoff": 25,
+      "captureWindow": "t20",
+      "homeTeam": "Vitória Guimarães",
+      "awayTeam": "Nacional",
       "provider": "fotmob",
       "status": "ok",
       "attempts": [
@@ -134,13 +48,13 @@
       "partial": true
     },
     {
-      "matchId": "ss-bbc-2026-08-23-vitoria guimaraes-nacional",
+      "matchId": "ss-fotmob-5887608",
       "league": "Portugal - Liga Portugal",
       "agent": "portugal-liga-portugal-agent",
-      "kickoff": "2026-08-23T13:30:00.000Z",
-      "minutesBeforeKickoff": 89,
+      "kickoff": "2026-08-23T14:30:00.000Z",
+      "minutesBeforeKickoff": 85,
       "captureWindow": "t75",
-      "homeTeam": "Vitória Guimarães",
+      "homeTeam": "Vitoria de Guimaraes",
       "awayTeam": "Nacional",
       "provider": "fotmob",
       "status": "ok",
@@ -164,29 +78,13 @@
   ],
   "leagueCoverage": [
     {
-      "league": "France - Ligue 1",
-      "checked": 1,
-      "covered": 0,
-      "partial": 1,
-      "missing": 0,
-      "coverage": 0
-    },
-    {
       "league": "Portugal - Liga Portugal",
-      "checked": 1,
+      "checked": 2,
       "covered": 0,
-      "partial": 1,
+      "partial": 2,
       "missing": 0,
       "coverage": 0
-    },
-    {
-      "league": "England - Premier League",
-      "checked": 2,
-      "covered": 1,
-      "partial": 0,
-      "missing": 1,
-      "coverage": 0.5
     }
   ],
-  "confirmedCoverage": 0.25
+  "confirmedCoverage": 0
 }
