@@ -129,6 +129,7 @@ export function compactDashboardPrediction(prediction) {
           away: prediction.odds.away,
           provider: prediction.odds.provider || null,
           bookmaker: prediction.odds.bookmaker || null,
+          capturedAt: prediction.odds.capturedAt || prediction.odds.lastUpdated || null,
         }
       : null,
     h2hStatus: prediction.h2hStatus,

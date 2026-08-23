@@ -15,6 +15,7 @@ import {
   LEAGUE_ORDER,
   belongsToSelectedDate,
   buildLeaguePerformance,
+  buildWagerReadiness,
   formatDateLabel,
   hydrateDashboardHistory,
   isoDate,
@@ -567,6 +568,7 @@ const App: React.FC = () => {
   const xgCoverageCount = dayMatches.filter(hasXgData).length;
   const weatherCoverageCount = dayMatches.filter(hasWeatherData).length;
   const missingCoverageCount = dayMatches.filter((match) => freeSourceCoveragePercent(match) < 60 || !hasOddsData(match) || !hasXgData(match) || !hasWeatherData(match)).length;
+  const leaguePerformance = useMemo(() => buildLeaguePerformance(historyItems), [historyItems]);
 
   const bestBets = useMemo(() => {
     const matchById = new Map<string, Match>();
@@ -603,6 +605,11 @@ const App: React.FC = () => {
           exactScoreConfidence,
           bestBetRank: rank,
           exactScoreReasons: (pred as any).exactScoreReasons || (match as any).exactScoreReasons || [],
+          odds: (pred as any).odds || (match as any).odds || null,
+          dataCompleteness: (pred as any).dataCompleteness || (match as any).dataCompleteness || null,
+          dataCompletenessScore: (pred as any).dataCompletenessScore || (match as any).dataCompletenessScore || 0,
+          qualityGate: (pred as any).qualityGate || (match as any).qualityGate || null,
+          lineupSummary: (pred as any).lineupSummary || (match as any).lineupSummary || null,
           status: match.status,
           score: match.score,
         };
@@ -616,8 +623,15 @@ const App: React.FC = () => {
         if (b.bestBetRank) return 1;
         return (b.exactScoreConfidence || 0) - (a.exactScoreConfidence || 0) || (b.confidence || 0) - (a.confidence || 0);
       })
-      .slice(0, 5);
-  }, [predictions, dayMatches]);
+      .slice(0, 5)
+      .map((bet) => ({
+        ...bet,
+        wagerReadiness: buildWagerReadiness(
+          bet,
+          leaguePerformance.rows.find((row) => row.league === bet.league) || null
+        ),
+      }));
+  }, [predictions, dayMatches, leaguePerformance]);
 
   const dashboardInsights = useMemo(() => {
     const topFiveReviews = historyItems.filter((item) => item.topExactScorePick || (Number(item.bestBetRank || 0) > 0 && Number(item.bestBetRank || 0) <= 5));
@@ -663,8 +677,6 @@ const App: React.FC = () => {
       }))
       .sort((a, b) => b.exactPct - a.exactPct || b.exact - a.exact || b.outcomePct - a.outcomePct || b.total - a.total)
       .slice(0, 10);
-    const leaguePerformance = buildLeaguePerformance(historyItems);
-
     return {
       topFiveTotal: topFiveReviews.length,
       topFiveExact: topExact,
@@ -679,7 +691,7 @@ const App: React.FC = () => {
       topClubs,
       leaguePerformance,
     };
-  }, [historyItems]);
+  }, [historyItems, leaguePerformance]);
 
   return (
     <div
@@ -909,7 +921,7 @@ const App: React.FC = () => {
                       Top 5 exacte-score voorspellingen vandaag
                     </h2>
                     <p className="text-[10px] text-slate-500 mt-0.5">
-                      De vijf hoogste exacte-score kansen voor deze speeldag.
+                      Voorspellingen zijn kansinschattingen, geen garantie. Een inzetlabel verschijnt alleen na alle datagates.
                     </p>
                   </div>
                   <div className="flex items-center gap-2">
@@ -921,7 +933,7 @@ const App: React.FC = () => {
                       Competities en standen
                     </button>
                     <div className="rounded-full bg-yellow-500/15 px-3 py-1 text-[10px] font-black text-yellow-200">
-                      {bestBets.length}/5 gevuld
+                      {bestBets.filter((bet: any) => bet.wagerReadiness?.status === "eligible").length} inzetbaar · {bestBets.length}/5 voorspeld
                     </div>
                   </div>
                 </div>

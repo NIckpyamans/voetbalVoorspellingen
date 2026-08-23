@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { buildLeaguePerformance } from "../../shared/dashboard.ts";
+import { buildLeaguePerformance, buildWagerReadiness } from "../../shared/dashboard.ts";
 
 function reviews(league, total, outcome, exact, extra = {}) {
   return Array.from({ length: total }, (_, index) => ({
@@ -38,5 +38,60 @@ describe("buildLeaguePerformance", () => {
     );
     expect(result.method).toBe("all_evaluated_reviews");
     expect(result.best?.league).toBe("England - Championship");
+  });
+});
+
+describe("buildWagerReadiness", () => {
+  const league = { league: "Germany - Bundesliga", total: 40, exact: 8, outcome: 24, exactPct: 20, outcomePct: 60, avgGoalError: 1.6 };
+
+  it("only marks a pick eligible after every evidence gate passes", () => {
+    const result = buildWagerReadiness({
+      league: league.league,
+      status: "NS",
+      date: "2026-08-23T15:00:00Z",
+      homeProb: 0.56,
+      drawProb: 0.24,
+      awayProb: 0.2,
+      odds: { home: 2.1, draw: 3.4, away: 3.8, capturedAt: "2026-08-23T14:20:00Z" },
+      dataCompleteness: { score: 0.82 },
+      qualityGate: { blockedHighConfidence: false },
+      lineupSummary: { confirmed: true },
+    }, league);
+    expect(result.status).toBe("eligible");
+    expect(result.recommendedOutcome).toBe("Thuis");
+    expect(result.edge).toBeGreaterThanOrEqual(0.03);
+  });
+
+  it("blocks wagering when prematch evidence is incomplete", () => {
+    const result = buildWagerReadiness({
+      league: league.league,
+      status: "NS",
+      homeProb: 0.56,
+      drawProb: 0.24,
+      awayProb: 0.2,
+      dataCompleteness: { score: 0.52 },
+      qualityGate: { blockedHighConfidence: true },
+      lineupSummary: { confirmed: false },
+    }, league);
+    expect(result.status).toBe("analysis_only");
+    expect(result.blockers).toContain("geen complete actuele 1X2-odds");
+    expect(result.blockers).toContain("bevestigde opstelling ontbreekt");
+  });
+
+  it("blocks odds without a trustworthy prematch timestamp", () => {
+    const result = buildWagerReadiness({
+      league: league.league,
+      status: "NS",
+      date: "2026-08-23T15:00:00Z",
+      homeProb: 0.56,
+      drawProb: 0.24,
+      awayProb: 0.2,
+      odds: { home: 2.1, draw: 3.4, away: 3.8 },
+      dataCompleteness: { score: 0.82 },
+      qualityGate: { blockedHighConfidence: false },
+      lineupSummary: { confirmed: true },
+    }, league);
+    expect(result.status).not.toBe("eligible");
+    expect(result.blockers).toContain("odds hebben geen betrouwbare timestamp");
   });
 });

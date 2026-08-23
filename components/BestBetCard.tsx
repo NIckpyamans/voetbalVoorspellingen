@@ -18,6 +18,12 @@ const BestBetCard: React.FC<BestBetCardProps> = ({ bet }) => {
   const isFinished = String(bet.status || "").toUpperCase() === "FT";
   const scoreWasExact = isFinished && bet.score === `${bet.predHomeGoals}-${bet.predAwayGoals}`;
   const reasons = Array.isArray(bet.exactScoreReasons) ? bet.exactScoreReasons.slice(0, 2) : [];
+  const readiness = bet.wagerReadiness;
+  const readinessStyle = readiness?.status === "eligible"
+    ? "bg-green-500/15 text-green-300 border-green-400/20"
+    : readiness?.status === "watch"
+      ? "bg-amber-500/15 text-amber-200 border-amber-400/20"
+      : "bg-slate-700/60 text-slate-300 border-white/10";
 
   return (
     <div className="relative overflow-hidden bg-gradient-to-br from-slate-900 via-slate-900 to-slate-800 border border-yellow-500/25 rounded-2xl p-4 shadow-xl hover:border-yellow-400/60 transition-all group">
@@ -58,6 +64,24 @@ const BestBetCard: React.FC<BestBetCardProps> = ({ bet }) => {
           <span className="block text-xs font-black text-emerald-300">{Math.round(selectionStrength * 100)}%</span>
         </div>
       </div>
+
+      {readiness && (
+        <div className="relative mt-2 space-y-1.5">
+          <div className={`rounded-lg border px-2 py-1 text-[8px] font-black ${readinessStyle}`}>
+            {readiness.label}
+          </div>
+          <div className="flex items-center justify-between text-[8px] font-bold text-slate-400">
+            <span>1X2: <strong className="text-white">{readiness.recommendedOutcome}</strong></span>
+            <span>model <strong className="text-blue-300">{Math.round(readiness.modelProbability * 100)}%</strong></span>
+            <span>odd <strong className="text-yellow-200">{readiness.marketOdds?.toFixed(2) || "-"}</strong></span>
+          </div>
+          {readiness.blockers.length > 0 && (
+            <div className="text-[8px] leading-snug text-slate-500 line-clamp-2" title={readiness.blockers.join("; ")}>
+              Nog nodig: {readiness.blockers.slice(0, 2).join("; ")}
+            </div>
+          )}
+        </div>
+      )}
 
       {reasons.length > 0 && (
         <div className="relative mt-2 flex flex-wrap gap-1">

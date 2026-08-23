@@ -827,8 +827,9 @@ export interface StandingsResponse {
 export type FilterMode = "alle" | "favorieten" | "live" | "gepland" | "gespeeld";
 export type View = "dashboard" | "history" | "standings" | "modelops" | "settings";
 
-export interface BestBet {
-  matchId: string;
+  export interface BestBet {
+    matchId: string;
+    date?: string;
   homeTeam: string;
   awayTeam: string;
   league: string;
@@ -844,6 +845,27 @@ export interface BestBet {
   exactScoreReasons?: string[];
   tip?: string;
   edgeScore?: number;
+  odds?: {
+    home?: number;
+    draw?: number;
+    away?: number;
+    provider?: string | null;
+    bookmaker?: string | null;
+    capturedAt?: string | number | null;
+  } | null;
+  dataCompleteness?: { score?: number; percent?: number; status?: string } | null;
+  qualityGate?: { blockedHighConfidence?: boolean; modelReady?: boolean; summary?: string } | null;
+  lineupSummary?: { confirmed?: boolean; projected?: boolean; source?: string | null } | null;
+  wagerReadiness?: {
+    status: "eligible" | "watch" | "analysis_only";
+    label: string;
+    recommendedOutcome: "Thuis" | "Gelijk" | "Uit";
+    modelProbability: number;
+    marketProbability: number | null;
+    marketOdds: number | null;
+    edge: number | null;
+    blockers: string[];
+  };
 }
 
 // ============================================================================

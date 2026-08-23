@@ -56,7 +56,13 @@ function collectMatches() {
     .filter((dateKey) => dateKey >= fromDate)
     .flatMap((dateKey) => {
       const day = readJsonSafe(path.join("data", "days", `${dateKey}.json`), { matches: [] });
-      return (Array.isArray(day.matches) ? day.matches : []).map((match) => ({ ...match, _dateKey: dateKey }));
+      const predictions = Array.isArray(day.predictions) ? day.predictions : Object.values(day.predictions || {});
+      const predictionByMatch = new Map(predictions.map((prediction) => [prediction?.matchId, prediction]));
+      return (Array.isArray(day.matches) ? day.matches : []).map((match, index) => ({
+        ...match,
+        _dateKey: dateKey,
+        _prediction: predictionByMatch.get(match?.id) || predictions[index] || null,
+      }));
     });
 
   if (splitMatches.length) return splitMatches.filter(isActiveCompetitionEntity);
@@ -74,7 +80,54 @@ function hasRecentForm(match) {
 }
 
 function hasConfirmedLineup(match) {
-  return Boolean(match?.lineupSummary?.confirmed || match?.lineupStatus === "confirmed");
+  return Boolean(match?._prediction?.lineupSummary?.confirmed || match?.lineupSummary?.confirmed || match?.lineupStatus === "confirmed");
+}
+
+function normalizeTeam(value) {
+  return String(value || "")
+    .normalize("NFKD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .toLowerCase()
+    .replace(/\b(fc|afc|cf|sc|sv|fk|nk|ac|club)\b/g, " ")
+    .replace(/[^a-z0-9]+/g, " ")
+    .trim();
+}
+
+function identityKey(date, home, away) {
+  return `${String(date || "").slice(0, 10)}|${normalizeTeam(home)}|${normalizeTeam(away)}`;
+}
+
+function buildReviewIndex(reviews) {
+  const index = new Set();
+  for (const [matchId, review] of Object.entries(reviews || {})) {
+    if (matchId) index.add(`id:${matchId}`);
+    if (review?.matchId) index.add(`id:${review.matchId}`);
+    const key = identityKey(review?.date, review?.homeTeamName || review?.homeTeam, review?.awayTeamName || review?.awayTeam);
+    if (!key.endsWith("||")) index.add(`fixture:${key}`);
+  }
+  return index;
+}
+
+function hasTimestampedPrematchOdds(match) {
+  const odds = match?._prediction?.odds || match?.oddsAtPrediction || match?.odds;
+  const prices = [odds?.home ?? odds?.homeWin, odds?.draw, odds?.away ?? odds?.awayWin].map(Number);
+  if (!prices.every((value) => Number.isFinite(value) && value > 1.01)) return false;
+  const kickoff = Date.parse(String(match?.kickoff || match?.date || ""));
+  const capturedAt = Date.parse(String(odds?.capturedAt || odds?.lastUpdated || ""));
+  return Number.isFinite(kickoff) && Number.isFinite(capturedAt) && capturedAt < kickoff && kickoff - capturedAt <= 24 * 60 * 60 * 1000;
+}
+
+function hasModelReadyData(match) {
+  const prediction = match?._prediction || match;
+  const completeness = Number(prediction?.dataCompleteness?.score ?? prediction?.dataCompletenessScore ?? 0);
+  return completeness >= 0.7 && !prediction?.qualityGate?.blockedHighConfidence;
+}
+
+function hasWagerEvidence(match) {
+  return !/friendl|oefen/i.test(String(match?.league || ""))
+    && hasModelReadyData(match)
+    && hasConfirmedLineup(match)
+    && hasTimestampedPrematchOdds(match);
 }
 
 function hasUsefulPostMatchStats(match) {
@@ -97,15 +150,24 @@ function hasReferee(match) {
   return Boolean(String(match?.refereeProfile?.name || "").trim());
 }
 
+function hasGoalTimeline(match) {
+  const stats = match?.postMatchStats;
+  const events = stats?.events || stats?.timeline || match?.events || match?.goalEvents || [];
+  return Array.isArray(events) && events.some((event) => /goal/i.test(String(event?.type || event?.event || "")) && Number.isFinite(Number(event?.minute)));
+}
+
 function hasSourceLineage(match) {
   return Boolean(String(match?.dataSource || match?.source || "").trim()) && !/^unknown$/i.test(String(match?.dataSource || ""));
 }
 
-function hasReview(match, reviews) {
-  return Boolean(reviews?.[match?.id || match?.match_id]);
+function hasReview(match, reviewIndex) {
+  const matchId = match?.id || match?.match_id;
+  if (matchId && reviewIndex.has(`id:${matchId}`)) return true;
+  const key = identityKey(match?._dateKey || match?.date || match?.kickoff, match?.homeTeamName || match?.homeTeam, match?.awayTeamName || match?.awayTeam);
+  return reviewIndex.has(`fixture:${key}`);
 }
 
-function coverageRow(matches, reviews) {
+function coverageRow(matches, reviewIndex) {
   const finished = matches.filter(hasFinalScore);
   const count = (rows, predicate) => rows.filter(predicate).length;
   const metric = (rows, predicate) => ({
@@ -120,13 +182,17 @@ function coverageRow(matches, reviews) {
       form: metric(matches, hasRecentForm),
       h2h: metric(matches, hasUsableH2H),
       lineupConfirmed: metric(matches, hasConfirmedLineup),
+      timestampedOdds: metric(matches, hasTimestampedPrematchOdds),
+      modelReadyData: metric(matches, hasModelReadyData),
+      wagerEvidence: metric(matches, hasWagerEvidence),
       sourceLineage: metric(matches, hasSourceLineage),
     },
     postMatch: {
       finalScore: metric(finished, hasFinalScore),
-      review: metric(finished, (match) => hasReview(match, reviews)),
+      review: metric(finished, (match) => hasReview(match, reviewIndex)),
       statistics: metric(finished, hasUsefulPostMatchStats),
       referee: metric(finished, hasReferee),
+      goalTimeline: metric(finished, hasGoalTimeline),
     },
   };
 }
@@ -136,6 +202,7 @@ function main() {
   const matches = collectMatches();
   const history = readJsonSafe(path.join("data", "history-summary.json"), {});
   const reviews = history?.postMatchReviews || {};
+  const reviewIndex = buildReviewIndex(reviews);
   const agentConfig = readJsonSafe(path.join("config", "competition-agents.json"), {});
   const pastMatches = matches.filter((match) => isPastMatch(match, today));
   const pendingResultBackfills = pastMatches
@@ -152,7 +219,7 @@ function main() {
   const h2hCoverage = matches.length ? Number((h2hCovered / matches.length).toFixed(3)) : 1;
   const byCompetition = ACTIVE_COMPETITIONS.map((league) => {
     const rows = matches.filter((match) => match.league === league);
-    const coverage = coverageRow(rows, reviews);
+    const coverage = coverageRow(rows, reviewIndex);
     const agent = (agentConfig?.agents || []).find((item) => item.league === league) || {};
     const profile = agentConfig?.profiles?.[agent.profile] || {};
     const sourcePlan = {
@@ -167,13 +234,15 @@ function main() {
       coverage.predictionInputs.form.pct < 0.8 ? "form" : null,
       coverage.predictionInputs.h2h.pct < 0.65 ? "h2h" : null,
       coverage.predictionInputs.lineupConfirmed.pct < 0.45 ? "confirmed_lineups" : null,
+      coverage.predictionInputs.timestampedOdds.pct < 0.45 ? "timestamped_odds" : null,
       coverage.postMatch.review.pct < 0.98 ? "reviews" : null,
       coverage.postMatch.statistics.pct < 0.8 ? "post_match_statistics" : null,
       coverage.postMatch.referee.pct < 0.65 ? "referee" : null,
+      coverage.postMatch.goalTimeline.pct < 0.8 ? "goal_timeline" : null,
     ].filter(Boolean);
     return { league, ...coverage, gaps, sourcePlan };
   });
-  const coverage = coverageRow(matches, reviews);
+  const coverage = coverageRow(matches, reviewIndex);
 
   const report = {
     generatedAt: new Date().toISOString(),
@@ -215,6 +284,9 @@ function main() {
       coverage.postMatch.statistics.pct < 0.8
         ? "Vul post-match statistieken en doelminuten via FotMob, APIfootball.com of GOAL shadow aan; nulvelden tellen niet als echte statistiek."
         : "Post-match statistiekdekking is voldoende.",
+      coverage.predictionInputs.wagerEvidence.pct < 0.45
+        ? "Toon geen inzetadvies zolang bevestigde opstellingen, verse getimestampte 1X2-odds en minimaal 70% modeldata niet samen aanwezig zijn."
+        : "De pre-match bewijsdekking is voldoende om inzetgereedheid per wedstrijd te beoordelen.",
     ],
   };
 
@@ -233,9 +305,12 @@ function main() {
     `- Reviews na afloop: ${Math.round(report.coverage.postMatch.review.pct * 100)}%`,
     `- Bruikbare wedstrijdstatistieken: ${Math.round(report.coverage.postMatch.statistics.pct * 100)}%`,
     `- Bevestigde opstellingen: ${Math.round(report.coverage.predictionInputs.lineupConfirmed.pct * 100)}%`,
+    `- Verse getimestampte prematch-odds: ${Math.round(report.coverage.predictionInputs.timestampedOdds.pct * 100)}%`,
+    `- Volledige pre-match bewijsset: ${Math.round(report.coverage.predictionInputs.wagerEvidence.pct * 100)}%`,
+    `- Doelpunten met tijdlijn: ${Math.round(report.coverage.postMatch.goalTimeline.pct * 100)}%`,
     "",
     "## Per competitie",
-    ...report.byCompetition.map((item) => `- ${item.league}: ${item.matches} duels, vorm ${Math.round(item.predictionInputs.form.pct * 100)}%, H2H ${Math.round(item.predictionInputs.h2h.pct * 100)}%, reviews ${Math.round(item.postMatch.review.pct * 100)}%, stats ${Math.round(item.postMatch.statistics.pct * 100)}%; gaten: ${item.gaps.join(", ") || "geen"}`),
+    ...report.byCompetition.map((item) => `- ${item.league}: ${item.matches} duels, vorm ${Math.round(item.predictionInputs.form.pct * 100)}%, H2H ${Math.round(item.predictionInputs.h2h.pct * 100)}%, inzetbewijs ${Math.round(item.predictionInputs.wagerEvidence.pct * 100)}%, reviews ${Math.round(item.postMatch.review.pct * 100)}%, stats ${Math.round(item.postMatch.statistics.pct * 100)}%; gaten: ${item.gaps.join(", ") || "geen"}`),
     "",
     "## Aanbevelingen",
     ...report.recommendations.map((item) => `- ${item}`),

@@ -34,6 +34,17 @@ export type LeaguePerformanceRow = {
   avgGoalError: number;
 };
 
+export type WagerReadiness = {
+  status: "eligible" | "watch" | "analysis_only";
+  label: string;
+  recommendedOutcome: "Thuis" | "Gelijk" | "Uit";
+  modelProbability: number;
+  marketProbability: number | null;
+  marketOdds: number | null;
+  edge: number | null;
+  blockers: string[];
+};
+
 export const LEAGUE_ORDER = [...ACTIVE_COMPETITIONS];
 
 export const FAVORITE_STANDING_KEY = "footyai-favorite-standing";
@@ -86,6 +97,66 @@ export function buildLeaguePerformance(items: DashboardHistoryItem[], minSample 
     );
 
   return { best: rows[0] || null, rows, method, minSample };
+}
+
+export function buildWagerReadiness(bet: any, leaguePerformance?: LeaguePerformanceRow | null): WagerReadiness {
+  const outcomes = [
+    { key: "home", label: "Thuis" as const, probability: Number(bet?.homeProb || 0) },
+    { key: "draw", label: "Gelijk" as const, probability: Number(bet?.drawProb || 0) },
+    { key: "away", label: "Uit" as const, probability: Number(bet?.awayProb || 0) },
+  ];
+  const selected = outcomes.sort((a, b) => b.probability - a.probability)[0];
+  const odds = bet?.odds || null;
+  const prices = {
+    home: Number(odds?.home ?? odds?.homeWin ?? 0),
+    draw: Number(odds?.draw ?? 0),
+    away: Number(odds?.away ?? odds?.awayWin ?? 0),
+  };
+  const validPrices = Object.values(prices).every((value) => Number.isFinite(value) && value > 1.01);
+  const inverseTotal = validPrices ? 1 / prices.home + 1 / prices.draw + 1 / prices.away : 0;
+  const selectedOdd = validPrices ? prices[selected.key] : null;
+  const marketProbability = selectedOdd && inverseTotal > 0 ? (1 / selectedOdd) / inverseTotal : null;
+  const edge = marketProbability == null ? null : selected.probability - marketProbability;
+  const completeness = Number(bet?.dataCompleteness?.score ?? bet?.dataCompletenessScore ?? 0);
+  const lineupConfirmed = Boolean(bet?.lineupSummary?.confirmed);
+  const blocked = Boolean(bet?.qualityGate?.blockedHighConfidence);
+  const friendly = /friendl|oefen/i.test(String(bet?.league || ""));
+  const finished = String(bet?.status || "").toUpperCase() === "FT";
+  const kickoffAt = Date.parse(String(bet?.date || bet?.kickoff || ""));
+  const oddsCapturedAt = Date.parse(String(odds?.capturedAt || odds?.lastUpdated || ""));
+  const hasKickoffTimestamp = Number.isFinite(kickoffAt) && String(bet?.date || bet?.kickoff || "").includes("T");
+  const hasOddsTimestamp = Number.isFinite(oddsCapturedAt);
+  const oddsBeforeKickoff = hasKickoffTimestamp && hasOddsTimestamp && oddsCapturedAt < kickoffAt;
+  const oddsFreshEnough = oddsBeforeKickoff && kickoffAt - oddsCapturedAt <= 24 * 60 * 60 * 1000;
+  const blockers: string[] = [];
+
+  if (finished) blockers.push("wedstrijd is al gespeeld");
+  if (friendly) blockers.push("oefenwedstrijd heeft te hoge selectieronzekerheid");
+  if (completeness < 0.7) blockers.push("datadekking lager dan 70%");
+  if (blocked) blockers.push("kwaliteitsgate blokkeert hoge zekerheid");
+  if (!lineupConfirmed) blockers.push("bevestigde opstelling ontbreekt");
+  if (!validPrices) blockers.push("geen complete actuele 1X2-odds");
+  else if (!hasKickoffTimestamp) blockers.push("betrouwbare aftraptijd ontbreekt");
+  else if (!hasOddsTimestamp) blockers.push("odds hebben geen betrouwbare timestamp");
+  else if (!oddsBeforeKickoff) blockers.push("odds zijn niet aantoonbaar voor de aftrap vastgelegd");
+  else if (!oddsFreshEnough) blockers.push("odds zijn ouder dan 24 uur voor de aftrap");
+  if (!leaguePerformance || leaguePerformance.total < 30) blockers.push("minder dan 30 lekvrije competitie-evaluaties");
+  else if (leaguePerformance.outcomePct < 55) blockers.push("competitie-hitrate op 1X2 lager dan 55%");
+  if (edge == null) blockers.push("value-edge kan niet worden berekend");
+  else if (edge < 0.03) blockers.push("model-edge lager dan 3 procentpunt");
+
+  const eligible = blockers.length === 0;
+  const watchOnly = !eligible && !finished && !friendly && completeness >= 0.6 && !blocked;
+  return {
+    status: eligible ? "eligible" : watchOnly ? "watch" : "analysis_only",
+    label: eligible ? "Inzetbaar volgens datagate" : watchOnly ? "Volgen - nog niet inzetten" : "Analyse - geen inzetadvies",
+    recommendedOutcome: selected.label,
+    modelProbability: selected.probability,
+    marketProbability: marketProbability == null ? null : Number(marketProbability.toFixed(4)),
+    marketOdds: selectedOdd,
+    edge: edge == null ? null : Number(edge.toFixed(4)),
+    blockers,
+  };
 }
 
 export function isoDate(date: Date) {
