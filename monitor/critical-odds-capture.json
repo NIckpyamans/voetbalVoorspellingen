@@ -1,68 +1,63 @@
 {
-  "generatedAt": "2026-08-23T10:43:20.305Z",
-  "checked": 30,
-  "captured": 2,
-  "openingCaptured": 2,
-  "prematchCaptured": 2,
-  "closingCaptured": 1,
-  "closingPairs": 1,
+  "generatedAt": "2026-08-23T11:03:22.508Z",
+  "checked": 28,
+  "captured": 1,
+  "openingCaptured": 1,
+  "prematchCaptured": 1,
+  "closingCaptured": 0,
+  "closingPairs": 0,
   "statuses": {
-    "available": 2,
-    "not_found": 28
+    "not_found": 27,
+    "available": 1
   },
   "attemptStatuses": {
-    "the-odds-api:unsupported_sport": 140,
-    "the-odds-api:quota_reserve": 28,
-    "sportmonks:fixture_id_missing": 28
+    "the-odds-api:unsupported_sport": 135,
+    "the-odds-api:quota_reserve": 27,
+    "sportmonks:fixture_id_missing": 27
   },
   "providerStatuses": {
     "the-odds-api": {
-      "unsupported_sport": 140,
-      "quota_reserve": 28
+      "unsupported_sport": 135,
+      "quota_reserve": 27
     },
     "sportmonks": {
-      "fixture_id_missing": 28
+      "fixture_id_missing": 27
     }
   },
   "providerQuota": {
+    "the-odds-api": {
+      "remaining": 20
+    },
     "apifootball-com": {
       "remaining": null,
       "used": null,
       "limit": null,
       "reset": null
-    },
-    "the-odds-api": {
-      "remaining": 20
     }
   },
   "sportmonksMapped": 0,
   "sportmonksMappingStatuses": {
-    "plan_coverage_unavailable": 30
+    "plan_coverage_unavailable": 28
   },
   "matches": [
-    {
-      "matchId": "ss-tsdb-England - Championship-2501266",
-      "kickoff": "2026-08-23T11:00:00.000Z",
-      "league": "England - Championship",
-      "homeTeam": "West Bromwich Albion",
-      "awayTeam": "Burnley",
-      "minutesBeforeKickoff": 17,
-      "closingWindow": true,
-      "status": "captured",
-      "provider": "apifootball-com",
-      "captureRole": "closing",
-      "sportmonksFixtureId": null,
-      "opening": true,
-      "prematch": true,
-      "closing": true
-    },
     {
       "matchId": "ss-bbc-2026-08-23-psv-groningen",
       "kickoff": "2026-08-23T11:30:00.000Z",
       "league": "Netherlands - Eredivisie",
       "homeTeam": "PSV",
       "awayTeam": "Groningen",
-      "minutesBeforeKickoff": 47,
+      "minutesBeforeKickoff": 27,
+      "closingWindow": true,
+      "status": "not_found",
+      "sportmonksMapping": "plan_coverage_unavailable"
+    },
+    {
+      "matchId": "ss-fotmob-5795369",
+      "kickoff": "2026-08-23T13:00:00.000Z",
+      "league": "England - Premier League",
+      "homeTeam": "Brighton & Hove Albion",
+      "awayTeam": "Aston Villa",
+      "minutesBeforeKickoff": 117,
       "closingWindow": false,
       "status": "not_found",
       "sportmonksMapping": "plan_coverage_unavailable"
@@ -73,7 +68,7 @@
       "league": "England - Premier League",
       "homeTeam": "Manchester City",
       "awayTeam": "AFC Bournemouth",
-      "minutesBeforeKickoff": 137,
+      "minutesBeforeKickoff": 117,
       "closingWindow": false,
       "status": "not_found",
       "sportmonksMapping": "plan_coverage_unavailable"
@@ -84,18 +79,7 @@
       "league": "France - Ligue 1",
       "homeTeam": "Angers",
       "awayTeam": "Lille",
-      "minutesBeforeKickoff": 137,
-      "closingWindow": false,
-      "status": "not_found",
-      "sportmonksMapping": "plan_coverage_unavailable"
-    },
-    {
-      "matchId": "ss-fotmob-5795369",
-      "kickoff": "2026-08-23T13:00:00.000Z",
-      "league": "England - Premier League",
-      "homeTeam": "Brighton & Hove Albion",
-      "awayTeam": "Aston Villa",
-      "minutesBeforeKickoff": 137,
+      "minutesBeforeKickoff": 117,
       "closingWindow": false,
       "status": "not_found",
       "sportmonksMapping": "plan_coverage_unavailable"
@@ -106,18 +90,7 @@
       "league": "Portugal - Liga Portugal",
       "homeTeam": "Vitória Guimarães",
       "awayTeam": "Nacional",
-      "minutesBeforeKickoff": 167,
-      "closingWindow": false,
-      "status": "not_found",
-      "sportmonksMapping": "plan_coverage_unavailable"
-    },
-    {
-      "matchId": "ss-tsdb-Belgium - Pro League-2496714",
-      "kickoff": "2026-08-23T14:00:00.000Z",
-      "league": "Belgium - Pro League",
-      "homeTeam": "Lommel",
-      "awayTeam": "Westerlo",
-      "minutesBeforeKickoff": 197,
+      "minutesBeforeKickoff": 147,
       "closingWindow": false,
       "status": "not_found",
       "sportmonksMapping": "plan_coverage_unavailable"
@@ -128,7 +101,7 @@
       "league": "Portugal - Liga Portugal",
       "homeTeam": "Vitoria de Guimaraes",
       "awayTeam": "Nacional",
-      "minutesBeforeKickoff": 227,
+      "minutesBeforeKickoff": 207,
       "closingWindow": false,
       "status": "not_found",
       "sportmonksMapping": "plan_coverage_unavailable"
@@ -139,7 +112,7 @@
       "league": "Netherlands - Eerste Divisie",
       "homeTeam": "VVV-Venlo",
       "awayTeam": "De Graafschap",
-      "minutesBeforeKickoff": 242,
+      "minutesBeforeKickoff": 222,
       "closingWindow": false,
       "status": "not_found",
       "sportmonksMapping": "plan_coverage_unavailable"
@@ -150,7 +123,7 @@
       "league": "Spain - LaLiga",
       "homeTeam": "Atletico Madrid",
       "awayTeam": "Villarreal",
-      "minutesBeforeKickoff": 257,
+      "minutesBeforeKickoff": 237,
       "closingWindow": false,
       "status": "not_found",
       "sportmonksMapping": "plan_coverage_unavailable"
@@ -161,7 +134,7 @@
       "league": "France - Ligue 1",
       "homeTeam": "Le Havre",
       "awayTeam": "Monaco",
-      "minutesBeforeKickoff": 272,
+      "minutesBeforeKickoff": 252,
       "closingWindow": false,
       "status": "not_found",
       "sportmonksMapping": "plan_coverage_unavailable"
@@ -172,7 +145,7 @@
       "league": "England - Premier League",
       "homeTeam": "Newcastle United",
       "awayTeam": "Liverpool",
-      "minutesBeforeKickoff": 287,
+      "minutesBeforeKickoff": 267,
       "closingWindow": false,
       "status": "not_found",
       "sportmonksMapping": "plan_coverage_unavailable"
@@ -183,7 +156,7 @@
       "league": "Italy - Serie A",
       "homeTeam": "Frosinone",
       "awayTeam": "Juventus",
-      "minutesBeforeKickoff": 347,
+      "minutesBeforeKickoff": 327,
       "closingWindow": false,
       "status": "not_found",
       "sportmonksMapping": "plan_coverage_unavailable"
@@ -194,7 +167,7 @@
       "league": "Italy - Serie A",
       "homeTeam": "Venezia",
       "awayTeam": "Lecce",
-      "minutesBeforeKickoff": 347,
+      "minutesBeforeKickoff": 327,
       "closingWindow": false,
       "status": "not_found",
       "sportmonksMapping": "plan_coverage_unavailable"
@@ -205,7 +178,7 @@
       "league": "Portugal - Liga Portugal",
       "homeTeam": "Santa Clara",
       "awayTeam": "Famalicao",
-      "minutesBeforeKickoff": 377,
+      "minutesBeforeKickoff": 357,
       "closingWindow": false,
       "status": "not_found",
       "sportmonksMapping": "plan_coverage_unavailable"
@@ -216,7 +189,7 @@
       "league": "Spain - LaLiga",
       "homeTeam": "Getafe",
       "awayTeam": "Racing Santander",
-      "minutesBeforeKickoff": 407,
+      "minutesBeforeKickoff": 387,
       "closingWindow": false,
       "status": "not_found",
       "sportmonksMapping": "plan_coverage_unavailable"
@@ -227,7 +200,7 @@
       "league": "France - Ligue 1",
       "homeTeam": "Rennes",
       "awayTeam": "Paris Saint-Germain",
-      "minutesBeforeKickoff": 482,
+      "minutesBeforeKickoff": 462,
       "closingWindow": false,
       "status": "not_found",
       "sportmonksMapping": "plan_coverage_unavailable"
@@ -238,7 +211,7 @@
       "league": "Italy - Serie A",
       "homeTeam": "Atalanta",
       "awayTeam": "Sassuolo",
-      "minutesBeforeKickoff": 482,
+      "minutesBeforeKickoff": 462,
       "closingWindow": false,
       "status": "not_found",
       "sportmonksMapping": "plan_coverage_unavailable"
@@ -249,7 +222,7 @@
       "league": "Italy - Serie A",
       "homeTeam": "Torino",
       "awayTeam": "Milan",
-      "minutesBeforeKickoff": 482,
+      "minutesBeforeKickoff": 462,
       "closingWindow": false,
       "status": "not_found",
       "sportmonksMapping": "plan_coverage_unavailable"
@@ -260,7 +233,7 @@
       "league": "Spain - LaLiga",
       "homeTeam": "Elche",
       "awayTeam": "Barcelona",
-      "minutesBeforeKickoff": 527,
+      "minutesBeforeKickoff": 507,
       "closingWindow": false,
       "status": "not_found",
       "sportmonksMapping": "plan_coverage_unavailable"
@@ -271,7 +244,7 @@
       "league": "Portugal - Liga Portugal",
       "homeTeam": "FC Porto",
       "awayTeam": "Arouca",
-      "minutesBeforeKickoff": 527,
+      "minutesBeforeKickoff": 507,
       "closingWindow": false,
       "status": "not_found",
       "sportmonksMapping": "plan_coverage_unavailable"
@@ -282,7 +255,7 @@
       "league": "Italy - Serie A",
       "homeTeam": "Bologna",
       "awayTeam": "Lazio",
-      "minutesBeforeKickoff": 1787,
+      "minutesBeforeKickoff": 1767,
       "closingWindow": false,
       "status": "not_found",
       "sportmonksMapping": "plan_coverage_unavailable"
@@ -293,7 +266,7 @@
       "league": "Spain - LaLiga",
       "homeTeam": "Osasuna",
       "awayTeam": "Levante",
-      "minutesBeforeKickoff": 1847,
+      "minutesBeforeKickoff": 1827,
       "closingWindow": false,
       "status": "not_found",
       "sportmonksMapping": "plan_coverage_unavailable"
@@ -304,7 +277,7 @@
       "league": "Netherlands - Eerste Divisie",
       "homeTeam": "Jong FC Utrecht",
       "awayTeam": "Heracles",
-      "minutesBeforeKickoff": 1877,
+      "minutesBeforeKickoff": 1857,
       "closingWindow": false,
       "status": "not_found",
       "sportmonksMapping": "plan_coverage_unavailable"
@@ -315,7 +288,7 @@
       "league": "Netherlands - Eerste Divisie",
       "homeTeam": "Jong PSV",
       "awayTeam": "TOP Oss",
-      "minutesBeforeKickoff": 1877,
+      "minutesBeforeKickoff": 1857,
       "closingWindow": false,
       "status": "not_found",
       "sportmonksMapping": "plan_coverage_unavailable"
@@ -326,7 +299,7 @@
       "league": "Italy - Serie A",
       "homeTeam": "Roma",
       "awayTeam": "Fiorentina",
-      "minutesBeforeKickoff": 1922,
+      "minutesBeforeKickoff": 1902,
       "closingWindow": false,
       "status": "not_found",
       "sportmonksMapping": "plan_coverage_unavailable"
@@ -337,7 +310,7 @@
       "league": "France - Ligue 2",
       "homeTeam": "Reims",
       "awayTeam": "Annecy FC",
-      "minutesBeforeKickoff": 1922,
+      "minutesBeforeKickoff": 1902,
       "closingWindow": false,
       "status": "captured",
       "provider": "apifootball-com",
@@ -353,7 +326,7 @@
       "league": "England - Premier League",
       "homeTeam": "Fulham",
       "awayTeam": "Chelsea",
-      "minutesBeforeKickoff": 1937,
+      "minutesBeforeKickoff": 1917,
       "closingWindow": false,
       "status": "not_found",
       "sportmonksMapping": "plan_coverage_unavailable"
@@ -364,7 +337,7 @@
       "league": "Portugal - Liga Portugal",
       "homeTeam": "Gil Vicente",
       "awayTeam": "Casa Pia AC",
-      "minutesBeforeKickoff": 1952,
+      "minutesBeforeKickoff": 1932,
       "closingWindow": false,
       "status": "not_found",
       "sportmonksMapping": "plan_coverage_unavailable"
@@ -375,7 +348,7 @@
       "league": "Spain - LaLiga",
       "homeTeam": "Malaga",
       "awayTeam": "Deportivo A Coruña",
-      "minutesBeforeKickoff": 1967,
+      "minutesBeforeKickoff": 1947,
       "closingWindow": false,
       "status": "not_found",
       "sportmonksMapping": "plan_coverage_unavailable"
@@ -431,28 +404,12 @@
       "coverage": 0
     },
     {
-      "league": "Belgium - Pro League",
-      "checked": 1,
-      "covered": 0,
-      "partial": 0,
-      "missing": 1,
-      "coverage": 0
-    },
-    {
       "league": "Netherlands - Eredivisie",
       "checked": 1,
       "covered": 0,
       "partial": 0,
       "missing": 1,
       "coverage": 0
-    },
-    {
-      "league": "England - Championship",
-      "checked": 1,
-      "covered": 1,
-      "partial": 0,
-      "missing": 0,
-      "coverage": 1
     },
     {
       "league": "France - Ligue 2",
@@ -463,5 +420,5 @@
       "coverage": 1
     }
   ],
-  "coverage": 0.067
+  "coverage": 0.036
 }
