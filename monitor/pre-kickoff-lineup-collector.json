@@ -1,33 +1,33 @@
 {
-  "generatedAt": "2026-08-23T14:42:41.403Z",
-  "checked": 3,
+  "generatedAt": "2026-08-23T15:02:52.755Z",
+  "checked": 4,
   "confirmed": 2,
-  "partial": 1,
+  "partial": 2,
   "missing": 0,
-  "r2Stored": 3,
+  "r2Stored": 4,
   "playerFixtureStatsCaptured": 0,
   "databaseWritable": false,
   "databaseError": "Server error (HTTP status 402): {\"message\":\"Your project has exceeded the data transfer quota. Upgrade your plan to increase limits.\",\"code\":\"\",\"detail\":null,\"hint\":null,\"position\":null,\"internalPosition\":null,\"internalQuery\":null,\"severity\":\"\",\"where\":null,\"table\":null,\"column\":null,\"schema\":null,\"dataType\":null,\"constraint\":null,\"file\":null,\"line\":null,\"routine\":null,\"neon:retryable\":true}",
   "captureWindows": {
-    "t75": 0,
-    "t45": 2,
-    "t20": 1,
+    "t75": 2,
+    "t45": 0,
+    "t20": 2,
     "outside": 0
   },
   "providers": {
-    "sofascore:schedule_http_403": 3,
-    "fotmob:ok": 3
+    "sofascore:schedule_http_403": 4,
+    "fotmob:ok": 4
   },
   "matches": [
     {
-      "matchId": "ss-fotmob-5868022",
-      "league": "Spain - LaLiga",
-      "agent": "spain-laliga-agent",
-      "kickoff": "2026-08-23T15:00:00.000Z",
-      "minutesBeforeKickoff": 17,
+      "matchId": "ss-fotmob-5802902",
+      "league": "France - Ligue 1",
+      "agent": "france-ligue-1-agent",
+      "kickoff": "2026-08-23T15:15:00.000Z",
+      "minutesBeforeKickoff": 12,
       "captureWindow": "t20",
-      "homeTeam": "Atletico Madrid",
-      "awayTeam": "Villarreal",
+      "homeTeam": "Le Havre",
+      "awayTeam": "Monaco",
       "provider": "fotmob",
       "status": "ok",
       "attempts": [
@@ -48,40 +48,12 @@
       "partial": false
     },
     {
-      "matchId": "ss-fotmob-5802902",
-      "league": "France - Ligue 1",
-      "agent": "france-ligue-1-agent",
-      "kickoff": "2026-08-23T15:15:00.000Z",
-      "minutesBeforeKickoff": 32,
-      "captureWindow": "t45",
-      "homeTeam": "Le Havre",
-      "awayTeam": "Monaco",
-      "provider": "fotmob",
-      "status": "ok",
-      "attempts": [
-        {
-          "provider": "sofascore",
-          "status": "schedule_http_403",
-          "lineup": false,
-          "confirmed": false
-        },
-        {
-          "provider": "fotmob",
-          "status": "ok",
-          "lineup": true,
-          "confirmed": false
-        }
-      ],
-      "confirmed": false,
-      "partial": true
-    },
-    {
       "matchId": "ss-fotmob-5795371",
       "league": "England - Premier League",
       "agent": "england-premier-league-agent",
       "kickoff": "2026-08-23T15:30:00.000Z",
-      "minutesBeforeKickoff": 47,
-      "captureWindow": "t45",
+      "minutesBeforeKickoff": 27,
+      "captureWindow": "t20",
       "homeTeam": "Newcastle United",
       "awayTeam": "Liverpool",
       "provider": "fotmob",
@@ -102,14 +74,70 @@
       ],
       "confirmed": true,
       "partial": false
+    },
+    {
+      "matchId": "ss-fotmob-5749643",
+      "league": "Italy - Serie A",
+      "agent": "italy-serie-a-agent",
+      "kickoff": "2026-08-23T16:30:00.000Z",
+      "minutesBeforeKickoff": 87,
+      "captureWindow": "t75",
+      "homeTeam": "Frosinone",
+      "awayTeam": "Juventus",
+      "provider": "fotmob",
+      "status": "ok",
+      "attempts": [
+        {
+          "provider": "sofascore",
+          "status": "schedule_http_403",
+          "lineup": false,
+          "confirmed": false
+        },
+        {
+          "provider": "fotmob",
+          "status": "ok",
+          "lineup": true,
+          "confirmed": false
+        }
+      ],
+      "confirmed": false,
+      "partial": true
+    },
+    {
+      "matchId": "ss-fotmob-5749649",
+      "league": "Italy - Serie A",
+      "agent": "italy-serie-a-agent",
+      "kickoff": "2026-08-23T16:30:00.000Z",
+      "minutesBeforeKickoff": 87,
+      "captureWindow": "t75",
+      "homeTeam": "Venezia",
+      "awayTeam": "Lecce",
+      "provider": "fotmob",
+      "status": "ok",
+      "attempts": [
+        {
+          "provider": "sofascore",
+          "status": "schedule_http_403",
+          "lineup": false,
+          "confirmed": false
+        },
+        {
+          "provider": "fotmob",
+          "status": "ok",
+          "lineup": true,
+          "confirmed": false
+        }
+      ],
+      "confirmed": false,
+      "partial": true
     }
   ],
   "leagueCoverage": [
     {
-      "league": "France - Ligue 1",
-      "checked": 1,
+      "league": "Italy - Serie A",
+      "checked": 2,
       "covered": 0,
-      "partial": 1,
+      "partial": 2,
       "missing": 0,
       "coverage": 0
     },
@@ -122,7 +150,7 @@
       "coverage": 1
     },
     {
-      "league": "Spain - LaLiga",
+      "league": "France - Ligue 1",
       "checked": 1,
       "covered": 1,
       "partial": 0,
@@ -130,5 +158,5 @@
       "coverage": 1
     }
   ],
-  "confirmedCoverage": 0.667
+  "confirmedCoverage": 0.5
 }
