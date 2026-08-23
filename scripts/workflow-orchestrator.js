@@ -123,6 +123,7 @@ const reports = {
   apiFootballCoverage: readJson("monitor/api-football-coverage-scout.json"),
   evaluation: readJson("monitor/prediction-evaluation-report.json"),
   snapshotGrowth: readJson("monitor/snapshot-growth-monitor.json"),
+  dataQuality: readJson("monitor/data-quality-audit.json"),
 };
 const sportmonksFixtures = sportmonksEligibleFixtures(upcomingFixtures, reports.sportmonksCatalog);
 const trainingAutomation = buildTrainingAutomationState({ rows: trainingCalibrationRows(readJson("training/training-snapshot.json")) }, {
@@ -137,15 +138,20 @@ const apiFootballAcceptance = buildProviderAcceptanceState(reports.apiFootballAc
 const providerQuota = {
   apiFootballH2h: buildProviderCooldown(reports.h2h, { now, cooldownHours: 12 }),
 };
+const activeCompetitionCoverage = Array.isArray(reports.dataQuality?.byCompetition)
+  ? reports.dataQuality.byCompetition.filter((row) => Number(row?.matches || 0) > 0)
+  : [];
+const formBelowTarget = activeCompetitionCoverage.some((row) => Number(row?.predictionInputs?.form?.pct || 0) < 0.85);
+const h2hBelowTarget = activeCompetitionCoverage.some((row) => Number(row?.predictionInputs?.h2h?.pct || 0) < 0.85);
 
 const dataNeeds = {
   calendar: upcomingFixtures.length === 0,
-  form: needsRefresh(reports.form, 8, (report) => Number(report?.enriched || 0) < Number(report?.checked || 0)),
-  h2h: !providerQuota.apiFootballH2h.active && needsRefresh(
+  form: formBelowTarget || needsRefresh(reports.form, 8, (report) => Number(report?.enriched || 0) < Number(report?.checked || 0)),
+  h2h: !providerQuota.apiFootballH2h.active && (h2hBelowTarget || needsRefresh(
     reports.h2h,
     6,
     (report) => Number(report?.filled || 0) < Number(report?.checked || 0)
-  ),
+  )),
   squads: needsRefresh(reports.squads, 6, (report) => Number(report?.enriched || 0) < Number(report?.checked || 0)),
   lineups: needsRefresh(reports.lineups, 6, (report) => Number(report?.confirmedLineupCoverage || 0) < 0.45),
   odds: needsRefresh(reports.odds, 6, (report) => Number(report?.coverage || 0) < 0.6),
@@ -165,6 +171,7 @@ function plannedWorkflows() {
     if (target === "all") {
       return [
         "live-score.yml",
+        "post-match-enrichment.yml",
         "worker.yml",
         "week-ahead-fixtures.yml",
         "form-enrichment.yml",
@@ -207,7 +214,7 @@ function plannedWorkflows() {
     if (dataNeeds.h2h && hour % 6 === 0) workflows.push("h2h-enrichment.yml");
     if (dataNeeds.squads && hour % 6 === 2) workflows.push("team-squad-enrichment.yml");
     if (dataNeeds.sportmonks && hour % 6 === 3) workflows.push("sportmonks-fixture-mapping.yml");
-    if (hour === 2) workflows.push("dashboard-cache-r2.yml", "friendly-discovery.yml");
+    if (hour === 2) workflows.push("dashboard-cache-r2.yml", "friendly-discovery.yml", "post-match-enrichment.yml");
     if (hour === 3 && dataNeeds.evaluation) workflows.push("prediction-evaluation.yml");
     if (hour === 4 && dataNeeds.learning) workflows.push("learn.yml");
     if (hour === 5) workflows.push("odds-snapshot-scout.yml");

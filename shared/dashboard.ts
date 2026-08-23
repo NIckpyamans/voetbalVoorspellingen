@@ -22,6 +22,11 @@ export type DashboardHistoryItem = {
   predictionId?: string | null;
   evaluationSource?: string | null;
   leakageRisk?: string | null;
+  brierScore?: number | null;
+  logLoss?: number | null;
+  roi?: number | null;
+  clv?: number | null;
+  confidence?: number | null;
 };
 
 export type LeaguePerformanceRow = {
@@ -32,6 +37,10 @@ export type LeaguePerformanceRow = {
   exactPct: number;
   outcomePct: number;
   avgGoalError: number;
+  avgBrierScore: number | null;
+  calibrationError: number | null;
+  roiTotal: number | null;
+  roiSamples: number;
 };
 
 export type WagerReadiness = {
@@ -64,16 +73,19 @@ export function buildLeaguePerformance(items: DashboardHistoryItem[], minSample 
   );
   const sourceItems = trustworthy.length >= minSample ? trustworthy : items.filter((item) => active.has(String(item.league || "")));
   const method = trustworthy.length >= minSample ? "immutable_snapshots" : "all_evaluated_reviews";
-  const buckets = new Map<string, { total: number; exact: number; outcome: number; goalError: number }>();
+  const buckets = new Map<string, { total: number; exact: number; outcome: number; goalError: number; brier: number[]; confidence: number[]; roi: number[] }>();
 
   for (const item of sourceItems) {
     const league = String(item.league || "").trim();
     if (!league) continue;
-    const bucket = buckets.get(league) || { total: 0, exact: 0, outcome: 0, goalError: 0 };
+    const bucket = buckets.get(league) || { total: 0, exact: 0, outcome: 0, goalError: 0, brier: [], confidence: [], roi: [] };
     bucket.total += 1;
     bucket.exact += item.wasCorrect ? 1 : 0;
     bucket.outcome += item.winnerCorrect ? 1 : 0;
     bucket.goalError += Number(item.errorMargin || 0);
+    if (Number.isFinite(Number(item.brierScore))) bucket.brier.push(Number(item.brierScore));
+    if (Number.isFinite(Number(item.confidence))) bucket.confidence.push(Number(item.confidence));
+    if (Number.isFinite(Number(item.roi))) bucket.roi.push(Number(item.roi));
     buckets.set(league, bucket);
   }
 
@@ -86,6 +98,12 @@ export function buildLeaguePerformance(items: DashboardHistoryItem[], minSample 
       exactPct: pct(bucket.exact, bucket.total),
       outcomePct: pct(bucket.outcome, bucket.total),
       avgGoalError: Number((bucket.goalError / Math.max(bucket.total, 1)).toFixed(2)),
+      avgBrierScore: bucket.brier.length ? Number((bucket.brier.reduce((sum, value) => sum + value, 0) / bucket.brier.length).toFixed(4)) : null,
+      calibrationError: bucket.confidence.length
+        ? Number((bucket.outcome / bucket.total - bucket.confidence.reduce((sum, value) => sum + value, 0) / bucket.confidence.length).toFixed(3))
+        : null,
+      roiTotal: bucket.roi.length ? Number(bucket.roi.reduce((sum, value) => sum + value, 0).toFixed(3)) : null,
+      roiSamples: bucket.roi.length,
     }))
     .filter((row) => row.total >= minSample)
     .sort(

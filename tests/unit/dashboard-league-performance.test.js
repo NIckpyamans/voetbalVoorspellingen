@@ -42,7 +42,7 @@ describe("buildLeaguePerformance", () => {
 });
 
 describe("buildWagerReadiness", () => {
-  const league = { league: "Germany - Bundesliga", total: 40, exact: 8, outcome: 24, exactPct: 20, outcomePct: 60, avgGoalError: 1.6 };
+  const league = { league: "Germany - Bundesliga", total: 40, exact: 8, outcome: 24, exactPct: 20, outcomePct: 60, avgGoalError: 1.6, avgBrierScore: 0.2, calibrationError: 0.01, roiTotal: null, roiSamples: 0 };
 
   it("only marks a pick eligible after every evidence gate passes", () => {
     const result = buildWagerReadiness({

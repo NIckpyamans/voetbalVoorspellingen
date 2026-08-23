@@ -967,6 +967,19 @@ const App: React.FC = () => {
                     <span>1X2 <strong className="text-green-300">{dashboardInsights.leaguePerformance.best.outcomePct}%</strong></span>
                     <span>exact <strong className="text-yellow-200">{dashboardInsights.leaguePerformance.best.exactPct}%</strong></span>
                     <span>foutmarge <strong className="text-white">{dashboardInsights.leaguePerformance.best.avgGoalError}</strong></span>
+                    {dashboardInsights.leaguePerformance.best.avgBrierScore != null && (
+                      <span>Brier <strong className="text-cyan-200">{dashboardInsights.leaguePerformance.best.avgBrierScore}</strong></span>
+                    )}
+                    {dashboardInsights.leaguePerformance.best.calibrationError != null && (
+                      <span>kalibratie <strong className="text-cyan-200">{Math.round(Math.abs(dashboardInsights.leaguePerformance.best.calibrationError) * 100)} pp</strong></span>
+                    )}
+                    <span>
+                      ROI <strong className={dashboardInsights.leaguePerformance.best.roiSamples >= 100 ? "text-green-300" : "text-slate-400"}>
+                        {dashboardInsights.leaguePerformance.best.roiSamples >= 100 && dashboardInsights.leaguePerformance.best.roiTotal != null
+                          ? dashboardInsights.leaguePerformance.best.roiTotal.toFixed(2)
+                          : `geblokkeerd (${dashboardInsights.leaguePerformance.best.roiSamples}/100)`}
+                      </strong>
+                    </span>
                     <span className="ml-auto text-slate-500">
                       {dashboardInsights.leaguePerformance.best.total} lekvrije evaluaties · minimaal {dashboardInsights.leaguePerformance.minSample}
                     </span>

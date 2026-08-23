@@ -58,11 +58,23 @@ function collectMatches() {
       const day = readJsonSafe(path.join("data", "days", `${dateKey}.json`), { matches: [] });
       const predictions = Array.isArray(day.predictions) ? day.predictions : Object.values(day.predictions || {});
       const predictionByMatch = new Map(predictions.map((prediction) => [prediction?.matchId, prediction]));
-      return (Array.isArray(day.matches) ? day.matches : []).map((match, index) => ({
-        ...match,
-        _dateKey: dateKey,
-        _prediction: predictionByMatch.get(match?.id) || predictions[index] || null,
-      }));
+      const snapshots = Object.values(day.predictionSnapshots || {});
+      return (Array.isArray(day.matches) ? day.matches : []).map((match, index) => {
+        const kickoff = Date.parse(String(match?.kickoff || match?.date || ""));
+        const prematchSnapshot = snapshots
+          .filter((snapshot) => {
+            if (String(snapshot?.matchId || "") !== String(match?.id || "")) return false;
+            const cutoff = Date.parse(String(snapshot?.cutoffAt || snapshot?.generatedAt || ""));
+            return Number.isFinite(cutoff) && Number.isFinite(kickoff) && cutoff < kickoff;
+          })
+          .sort((left, right) => Date.parse(String(right?.cutoffAt || right?.generatedAt || "")) - Date.parse(String(left?.cutoffAt || left?.generatedAt || "")))[0] || null;
+        return {
+          ...match,
+          _dateKey: dateKey,
+          _prediction: predictionByMatch.get(match?.id) || predictions[index] || null,
+          _prematchSnapshot: prematchSnapshot,
+        };
+      });
     });
 
   if (splitMatches.length) return splitMatches.filter(isActiveCompetitionEntity);
@@ -156,6 +168,14 @@ function hasGoalTimeline(match) {
   return Array.isArray(events) && events.some((event) => /goal/i.test(String(event?.type || event?.event || "")) && Number.isFinite(Number(event?.minute)));
 }
 
+function hasCardTimeline(match) {
+  const stats = match?.postMatchStats;
+  const events = stats?.events || stats?.timeline || match?.events || [];
+  if (Array.isArray(events) && events.some((event) => /card/i.test(String(event?.type || event?.event || "")))) return true;
+  const cards = stats?.cards || {};
+  return [cards.homeYellow, cards.awayYellow, cards.homeRed, cards.awayRed].some((value) => Number(value || 0) > 0);
+}
+
 function hasSourceLineage(match) {
   return Boolean(String(match?.dataSource || match?.source || "").trim()) && !/^unknown$/i.test(String(match?.dataSource || ""));
 }
@@ -167,8 +187,17 @@ function hasReview(match, reviewIndex) {
   return reviewIndex.has(`fixture:${key}`);
 }
 
+function hasLeakFreePrematchPrediction(match) {
+  const prediction = match?._prematchSnapshot || match?._prediction;
+  if (!prediction) return false;
+  const kickoff = Date.parse(String(match?.kickoff || match?.date || ""));
+  const cutoff = Date.parse(String(prediction?.cutoffAt || prediction?.generatedAt || prediction?.createdAt || ""));
+  return Number.isFinite(kickoff) && Number.isFinite(cutoff) && cutoff < kickoff;
+}
+
 function coverageRow(matches, reviewIndex) {
   const finished = matches.filter(hasFinalScore);
+  const reviewEligible = finished.filter(hasLeakFreePrematchPrediction);
   const count = (rows, predicate) => rows.filter(predicate).length;
   const metric = (rows, predicate) => ({
     covered: count(rows, predicate),
@@ -190,9 +219,17 @@ function coverageRow(matches, reviewIndex) {
     postMatch: {
       finalScore: metric(finished, hasFinalScore),
       review: metric(finished, (match) => hasReview(match, reviewIndex)),
+      reviewEligible: {
+        covered: count(reviewEligible, (match) => hasReview(match, reviewIndex)),
+        total: reviewEligible.length,
+        pct: reviewEligible.length
+          ? Number((count(reviewEligible, (match) => hasReview(match, reviewIndex)) / reviewEligible.length).toFixed(3))
+          : 0,
+      },
       statistics: metric(finished, hasUsefulPostMatchStats),
       referee: metric(finished, hasReferee),
       goalTimeline: metric(finished, hasGoalTimeline),
+      cardTimeline: metric(finished, hasCardTimeline),
     },
   };
 }
@@ -235,10 +272,11 @@ function main() {
       coverage.predictionInputs.h2h.pct < 0.65 ? "h2h" : null,
       coverage.predictionInputs.lineupConfirmed.pct < 0.45 ? "confirmed_lineups" : null,
       coverage.predictionInputs.timestampedOdds.pct < 0.45 ? "timestamped_odds" : null,
-      coverage.postMatch.review.pct < 0.98 ? "reviews" : null,
+      coverage.postMatch.reviewEligible.pct < 0.95 ? "leak_free_reviews" : null,
       coverage.postMatch.statistics.pct < 0.8 ? "post_match_statistics" : null,
       coverage.postMatch.referee.pct < 0.65 ? "referee" : null,
       coverage.postMatch.goalTimeline.pct < 0.8 ? "goal_timeline" : null,
+      coverage.postMatch.cardTimeline.pct < 0.8 ? "card_timeline" : null,
     ].filter(Boolean);
     return { league, ...coverage, gaps, sourcePlan };
   });
@@ -278,8 +316,8 @@ function main() {
       h2hCoverage < 0.85
         ? "Breid H2H via historische competitieprofielen en team-id mappings uit tot minimaal 85% dekking."
         : "H2H-dekking is voldoende voor de huidige auditperiode.",
-      coverage.postMatch.review.pct < 0.98
-        ? `Koppel de ontbrekende reviews aan de ${coverage.finished} afgeronde wedstrijden voordat opnieuw wordt gekalibreerd.`
+      coverage.postMatch.reviewEligible.pct < 0.95
+        ? `Koppel minimaal 95% van de ${coverage.postMatch.reviewEligible.total} lekvrije pre-matchsnapshots aan een post-matchreview voordat opnieuw wordt gekalibreerd.`
         : "Afgeronde wedstrijden zijn aan post-matchreviews gekoppeld.",
       coverage.postMatch.statistics.pct < 0.8
         ? "Vul post-match statistieken en doelminuten via FotMob, APIfootball.com of GOAL shadow aan; nulvelden tellen niet als echte statistiek."
@@ -303,14 +341,16 @@ function main() {
     `- Ontbrekende oude scores: ${report.totals.missingPastScores}`,
     `- H2H-dekking: ${Math.round(report.totals.h2hCoverage * 100)}%`,
     `- Reviews na afloop: ${Math.round(report.coverage.postMatch.review.pct * 100)}%`,
+    `- Lekvrije post-matchreviews: ${Math.round(report.coverage.postMatch.reviewEligible.pct * 100)}% (${report.coverage.postMatch.reviewEligible.covered}/${report.coverage.postMatch.reviewEligible.total})`,
     `- Bruikbare wedstrijdstatistieken: ${Math.round(report.coverage.postMatch.statistics.pct * 100)}%`,
     `- Bevestigde opstellingen: ${Math.round(report.coverage.predictionInputs.lineupConfirmed.pct * 100)}%`,
     `- Verse getimestampte prematch-odds: ${Math.round(report.coverage.predictionInputs.timestampedOdds.pct * 100)}%`,
     `- Volledige pre-match bewijsset: ${Math.round(report.coverage.predictionInputs.wagerEvidence.pct * 100)}%`,
     `- Doelpunten met tijdlijn: ${Math.round(report.coverage.postMatch.goalTimeline.pct * 100)}%`,
+    `- Kaarten met tijdlijn: ${Math.round(report.coverage.postMatch.cardTimeline.pct * 100)}%`,
     "",
     "## Per competitie",
-    ...report.byCompetition.map((item) => `- ${item.league}: ${item.matches} duels, vorm ${Math.round(item.predictionInputs.form.pct * 100)}%, H2H ${Math.round(item.predictionInputs.h2h.pct * 100)}%, inzetbewijs ${Math.round(item.predictionInputs.wagerEvidence.pct * 100)}%, reviews ${Math.round(item.postMatch.review.pct * 100)}%, stats ${Math.round(item.postMatch.statistics.pct * 100)}%; gaten: ${item.gaps.join(", ") || "geen"}`),
+    ...report.byCompetition.map((item) => `- ${item.league}: ${item.matches} duels, vorm ${Math.round(item.predictionInputs.form.pct * 100)}%, H2H ${Math.round(item.predictionInputs.h2h.pct * 100)}%, inzetbewijs ${Math.round(item.predictionInputs.wagerEvidence.pct * 100)}%, lekvrije reviews ${Math.round(item.postMatch.reviewEligible.pct * 100)}% (${item.postMatch.reviewEligible.covered}/${item.postMatch.reviewEligible.total}), stats ${Math.round(item.postMatch.statistics.pct * 100)}%; gaten: ${item.gaps.join(", ") || "geen"}`),
     "",
     "## Aanbevelingen",
     ...report.recommendations.map((item) => `- ${item}`),

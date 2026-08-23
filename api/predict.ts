@@ -179,6 +179,8 @@ function compactPredictionListItem(prediction: any) {
           away: prediction.odds.away,
           provider: prediction.odds.provider || null,
           bookmaker: prediction.odds.bookmaker || null,
+          capturedAt: prediction.odds.capturedAt || prediction.odds.lastUpdated || null,
+          closingCapturedAt: prediction.odds.closingCapturedAt || null,
         }
       : null,
     h2hStatus: prediction.h2hStatus,

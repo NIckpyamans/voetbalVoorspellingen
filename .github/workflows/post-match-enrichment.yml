@@ -1,0 +1,71 @@
+name: Post-match Enrichment
+
+on:
+  workflow_dispatch:
+
+concurrency:
+  group: football-data-refresh
+  cancel-in-progress: false
+
+permissions:
+  contents: write
+
+env:
+  TZ: Europe/Amsterdam
+  FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: "true"
+  DATA_BRANCH: codex/step3b-layout
+  FOOTYAI_REFRESH_MODE: live-results
+  FOOTYAI_DATE_WINDOW: -7..-1
+  FOOTYAI_LIGHTWEIGHT_REFRESH: "true"
+  API_KEY_FOOTBALL_DATA: ${{ secrets.API_KEY_FOOTBALL_DATA }}
+  API_KEY_API_FOOTBALL: ${{ secrets.API_KEY_API_FOOTBALL }}
+  APIFOOTBALL_API_KEY: ${{ secrets.APIFOOTBALL_API_KEY }}
+  GOAL_API_KEY: ${{ secrets.GOAL_API_KEY }}
+  FOOTBALL_DATA_TOKEN: ${{ secrets.FOOTBALL_DATA_TOKEN }}
+  THESPORTSDB_API_KEY: ${{ secrets.THESPORTSDB_API_KEY }}
+  API_FOOTBALL_H2H_ENABLED: "false"
+  ODDS_FETCH_ENABLED: "false"
+  DATABASE_URL: ${{ secrets.DATABASE_URL }}
+  POSTGRES_URL: ${{ secrets.POSTGRES_URL }}
+  SUPABASE_DB_URL: ${{ secrets.SUPABASE_DB_URL }}
+  CLOUDFLARE_R2_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_R2_ACCOUNT_ID }}
+  CLOUDFLARE_R2_ACCESS_KEY_ID: ${{ secrets.CLOUDFLARE_R2_ACCESS_KEY_ID }}
+  CLOUDFLARE_R2_SECRET_ACCESS_KEY: ${{ secrets.CLOUDFLARE_R2_SECRET_ACCESS_KEY }}
+  CLOUDFLARE_R2_BUCKET: ${{ secrets.CLOUDFLARE_R2_BUCKET }}
+  CLOUDFLARE_R2_ENDPOINT: ${{ secrets.CLOUDFLARE_R2_ENDPOINT }}
+  CLOUDFLARE_R2_PREFIX: ${{ secrets.CLOUDFLARE_R2_PREFIX }}
+
+jobs:
+  enrich-completed-matches:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v5
+        with:
+          fetch-depth: 0
+          token: ${{ secrets.GITHUB_TOKEN }}
+          ref: ${{ env.DATA_BRANCH }}
+      - uses: actions/setup-node@v5
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+      - name: Backfill scores, incidents, cards, referee and match statistics
+        timeout-minutes: 14
+        run: node scripts/ci-neon-safe.js -- node scripts/server-worker.js
+      - name: Rebuild post-match quality audit
+        run: npm run monitor:data-quality
+      - name: Commit enriched day data and audit
+        run: |
+          BRANCH_NAME="${DATA_BRANCH:-${{ github.ref_name }}}"
+          git config user.name github-actions
+          git config user.email github-actions@github.com
+          git add data monitor/data-quality-audit.json monitor/data-quality-audit.md
+          git diff --staged --quiet && echo "geen post-matchwijzigingen" && exit 0
+          git commit -m "post-match enrichment [skip vercel]"
+          for attempt in 1 2 3; do
+            git pull --rebase --autostash origin "$BRANCH_NAME"
+            if git push origin HEAD:"$BRANCH_NAME"; then exit 0; fi
+            sleep $((attempt * 5))
+          done
+          exit 1

@@ -218,6 +218,16 @@ function normalizePostMatchStats(raw, source, sourceDetail = null) {
       away: { ...emptyGoalQuarters(), ...(quarters.away || {}) },
       total: { ...emptyGoalQuarters(), ...(quarters.total || {}) },
     },
+    events: Array.isArray(raw?.events) ? raw.events.slice(0, 80) : [],
+    cards: {
+      homeYellow: toFiniteNumber(raw?.cards?.homeYellow, 0),
+      awayYellow: toFiniteNumber(raw?.cards?.awayYellow, 0),
+      homeRed: toFiniteNumber(raw?.cards?.homeRed, 0),
+      awayRed: toFiniteNumber(raw?.cards?.awayRed, 0),
+    },
+    referee: raw?.referee?.name
+      ? { name: String(raw.referee.name), country: raw.referee.country || null }
+      : null,
   };
 }
 
@@ -7721,6 +7731,22 @@ function buildGoalQuarterStatsFromIncidents(incidents, homeId, awayId) {
 function extractPostMatchStatsFromSofa(eventDetails, homeId, awayId) {
   const items = parseSofaStatisticsItems(eventDetails);
   const incidents = eventDetails?.incidents || [];
+  const events = (incidents || [])
+    .map((item) => {
+      const rawType = String(item?.incidentType || item?.type || item?.incidentClass || "").toLowerCase();
+      const type = rawType.includes("goal") ? "goal" : rawType.includes("card") ? "card" : null;
+      if (!type) return null;
+      const teamId = String(item?.team?.id || item?.teamId || "");
+      return {
+        type,
+        minute: parseMinuteValue(item?.time ?? item?.minute ?? item?.displayTime),
+        side: teamId === String(homeId || "") ? "home" : teamId === String(awayId || "") ? "away" : null,
+        player: item?.player?.name || item?.playerName || null,
+        detail: item?.incidentClass || item?.reason || null,
+      };
+    })
+    .filter(Boolean);
+  const cardCount = (side, color) => events.filter((item) => item.type === "card" && item.side === side && String(item.detail || "").toLowerCase().includes(color)).length;
   const stats = normalizePostMatchStats(
     {
       home: {
@@ -7742,6 +7768,14 @@ function extractPostMatchStatsFromSofa(eventDetails, homeId, awayId) {
         fouls: extractSofaTeamStat(items, ["fouls"], "away"),
       },
       goalQuarters: buildGoalQuarterStatsFromIncidents(incidents, homeId, awayId),
+      events,
+      cards: {
+        homeYellow: cardCount("home", "yellow"),
+        awayYellow: cardCount("away", "yellow"),
+        homeRed: cardCount("home", "red"),
+        awayRed: cardCount("away", "red"),
+      },
+      referee: extractReferee(eventDetails),
     },
     "sofascore-event",
     "event.statistics+incidents"
@@ -7780,8 +7814,20 @@ async function fetchPostMatchStatsFromTheSportsDb(match) {
   const freeKicks = parseHomeAway("intHomeFreeKicks", "intAwayFreeKicks");
   const quarterStats = { home: emptyGoalQuarters(), away: emptyGoalQuarters(), total: emptyGoalQuarters() };
   const timeline = timelineFeed?.timeline || [];
+  const normalizedEvents = [];
   for (const item of timeline) {
-    const isGoal = String(item?.strTimeline || "").toLowerCase().includes("goal");
+    const eventLabel = String(item?.strTimeline || item?.strEvent || "").toLowerCase();
+    const isGoal = eventLabel.includes("goal");
+    const isCard = eventLabel.includes("card");
+    if (isGoal || isCard) {
+      normalizedEvents.push({
+        type: isGoal ? "goal" : "card",
+        minute: parseMinuteValue(item?.intTime || item?.strTime || item?.strMinute),
+        side: normalizeName(item?.strTeam || "") === homeName ? "home" : normalizeName(item?.strTeam || "") === awayName ? "away" : null,
+        player: item?.strPlayer || item?.strPlayerName || null,
+        detail: item?.strTimeline || item?.strEvent || null,
+      });
+    }
     if (!isGoal) continue;
     const bucket = quarterBucketFromMinute(item?.intTime || item?.strTime || item?.strMinute);
     const side = normalizeName(item?.strTeam || "");
@@ -7811,6 +7857,13 @@ async function fetchPostMatchStatsFromTheSportsDb(match) {
         freeKicks: freeKicks.away,
       },
       goalQuarters: quarterStats,
+      events: normalizedEvents,
+      cards: {
+        homeYellow: normalizedEvents.filter((item) => item.type === "card" && item.side === "home" && /yellow/i.test(String(item.detail))).length,
+        awayYellow: normalizedEvents.filter((item) => item.type === "card" && item.side === "away" && /yellow/i.test(String(item.detail))).length,
+        homeRed: normalizedEvents.filter((item) => item.type === "card" && item.side === "home" && /red/i.test(String(item.detail))).length,
+        awayRed: normalizedEvents.filter((item) => item.type === "card" && item.side === "away" && /red/i.test(String(item.detail))).length,
+      },
     },
     "thesportsdb",
     `idEvent:${idEvent}`
@@ -7872,6 +7925,39 @@ function parseFotmobStatValue(value) {
   return Number.isFinite(parsed) ? parsed : null;
 }
 
+const postMatchFotmobScheduleCache = new Map();
+
+function fotmobTeamsMatch(expected, actual) {
+  const expectedNames = buildPossibleNames(expected);
+  const actualNames = buildPossibleNames(actual);
+  return expectedNames.some((name) => actualNames.includes(name));
+}
+
+async function resolvePostMatchFotmobId(match) {
+  const source = String(match?.dataSource || "").toLowerCase();
+  const storedId = String(match?.providerEventId || match?.id || "");
+  if (source.includes("fotmob") || /^fotmob-/i.test(storedId)) {
+    const direct = storedId.replace(/^fotmob-/i, "");
+    if (/^\d+$/.test(direct)) return direct;
+  }
+  const date = String(match?.date || match?.kickoff || "").slice(0, 10);
+  if (!date) return null;
+  if (!postMatchFotmobScheduleCache.has(date)) {
+    postMatchFotmobScheduleCache.set(date, safeFetch(`https://www.fotmob.com/api/data/matches?date=${date.replace(/-/g, "")}`));
+  }
+  const schedule = await postMatchFotmobScheduleCache.get(date);
+  let best = null;
+  for (const league of schedule?.leagues || []) {
+    for (const row of league?.matches || []) {
+      if (!fotmobTeamsMatch(match?.homeTeamName, row?.home?.name) || !fotmobTeamsMatch(match?.awayTeamName, row?.away?.name)) continue;
+      const kickoffGap = Math.abs(Date.parse(row?.status?.utcTime || "") - Date.parse(match?.kickoff || ""));
+      const score = Number.isFinite(kickoffGap) ? kickoffGap : 0;
+      if (!best || score < best.score) best = { id: String(row?.id || ""), score };
+    }
+  }
+  return /^\d+$/.test(best?.id || "") ? best.id : null;
+}
+
 function findFotmobStat(groups, names) {
   const wanted = names.map((name) => name.toLowerCase());
   for (const group of groups || []) {
@@ -7888,8 +7974,8 @@ function findFotmobStat(groups, names) {
 }
 
 async function fetchPostMatchStatsFromFotMob(match) {
-  const rawId = String(match?.providerEventId || match?.sofaId || match?.id || "").replace(/^fotmob-/, "");
-  if (!/^\d+$/.test(rawId)) return null;
+  const rawId = await resolvePostMatchFotmobId(match);
+  if (!rawId) return null;
   const payload = await safeFetch(`https://www.fotmob.com/api/data/matchDetails?matchId=${encodeURIComponent(rawId)}`);
   const allPeriod = payload?.content?.stats?.Periods?.All || payload?.content?.stats?.periods?.all || null;
   const groups = allPeriod?.stats || allPeriod?.groups || [];
@@ -7901,8 +7987,21 @@ async function fetchPostMatchStatsFromFotMob(match) {
   const fouls = findFotmobStat(groups, ["fouls committed", "fouls"]);
   const events = payload?.content?.matchFacts?.events?.events || payload?.content?.matchFacts?.events || [];
   const goalQuarters = { home: emptyGoalQuarters(), away: emptyGoalQuarters(), total: emptyGoalQuarters() };
+  const normalizedEvents = [];
   for (const event of Array.isArray(events) ? events : []) {
-    if (!/goal/i.test(String(event?.type || event?.eventType || ""))) continue;
+    const rawType = String(event?.type || event?.eventType || event?.card || "");
+    const isGoal = /goal/i.test(rawType);
+    const isCard = /card|yellow|red/i.test(rawType);
+    if (isGoal || isCard) {
+      normalizedEvents.push({
+        type: isGoal ? "goal" : "card",
+        minute: parseMinuteValue(event?.time ?? event?.minute ?? event?.timeStr),
+        side: event?.isHome === true ? "home" : event?.isHome === false ? "away" : null,
+        player: event?.name || event?.player?.name || event?.playerName || null,
+        detail: event?.card || event?.type || event?.eventType || null,
+      });
+    }
+    if (!isGoal) continue;
     const bucket = quarterBucketFromMinute(event?.time ?? event?.minute ?? event?.timeStr);
     const side = event?.isHome === true ? "home" : event?.isHome === false ? "away" : null;
     if (side) goalQuarters[side][bucket] += 1;
@@ -7911,6 +8010,9 @@ async function fetchPostMatchStatsFromFotMob(match) {
   const hasSignal = [possession.home, possession.away, shots.home, shots.away, shotsOn.home, shotsOn.away]
     .some((value) => Number(value || 0) > 0);
   if (!hasSignal && !Object.values(goalQuarters.total).some((value) => Number(value || 0) > 0)) return null;
+  const infoBox = payload?.content?.matchFacts?.infoBox || {};
+  const refereeValue = infoBox?.Referee || infoBox?.referee || payload?.header?.referee || null;
+  const refereeName = typeof refereeValue === "string" ? refereeValue : refereeValue?.text || refereeValue?.name || null;
   return normalizePostMatchStats({
     home: {
       possession: possession.home,
@@ -7929,6 +8031,14 @@ async function fetchPostMatchStatsFromFotMob(match) {
       fouls: fouls.away,
     },
     goalQuarters,
+    events: normalizedEvents,
+    cards: {
+      homeYellow: normalizedEvents.filter((item) => item.type === "card" && item.side === "home" && /yellow/i.test(String(item.detail))).length,
+      awayYellow: normalizedEvents.filter((item) => item.type === "card" && item.side === "away" && /yellow/i.test(String(item.detail))).length,
+      homeRed: normalizedEvents.filter((item) => item.type === "card" && item.side === "home" && /red/i.test(String(item.detail))).length,
+      awayRed: normalizedEvents.filter((item) => item.type === "card" && item.side === "away" && /red/i.test(String(item.detail))).length,
+    },
+    referee: refereeName ? { name: refereeName } : null,
   }, "fotmob-match-details", `matchId:${rawId}`);
 }
 
@@ -11734,7 +11844,7 @@ async function main() {
       let postMatchStats = null;
       if (isFinishedMatch) {
         postMatchStats = await buildPostMatchStatsWithFallback({
-          match: { id: matchId, sofaId: event.id, providerEventId: event.id, date, homeTeamName: homeName, awayTeamName: awayName },
+          match: { id: matchId, sofaId: event.id, providerEventId: event.id, dataSource: String(event.source || "sofascore"), date, kickoff, homeTeamName: homeName, awayTeamName: awayName },
           eventDetails,
           homeId,
           awayId,
@@ -11798,7 +11908,7 @@ async function main() {
         learningSummary: prediction.modelEdges?.learningEdge || null,
         competitionReliability: prediction.modelEdges?.leagueReliability || null,
         phaseReliability: prediction.modelEdges?.phaseReliability || null,
-        refereeProfile: prediction.modelEdges?.refereeProfile || refereeProfile || null,
+        refereeProfile: prediction.modelEdges?.refereeProfile || refereeProfile || postMatchStats?.referee || null,
         refereeStatus,
         aggregate,
         homeClubElo,

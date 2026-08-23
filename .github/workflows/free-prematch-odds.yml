@@ -8,6 +8,7 @@ concurrency:
   cancel-in-progress: true
 
 permissions:
+  actions: write
   contents: write
 
 env:
@@ -125,3 +126,16 @@ jobs:
             sleep $((attempt * 5))
           done
           exit 1
+
+      - name: Rebuild predictions after a new timestamped odds capture
+        if: always()
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          CAPTURED=$(node -e "const fs=require('fs');try{const r=JSON.parse(fs.readFileSync('monitor/critical-odds-capture.json','utf8'));process.stdout.write(String(Number(r.captured||0)))}catch{process.stdout.write('0')}")
+          if [ "$CAPTURED" -gt 0 ]; then
+            echo "Nieuwe odds vastgelegd; voorspellingen opnieuw opbouwen."
+            gh workflow run worker.yml --ref "$DATA_BRANCH"
+          else
+            echo "Geen nieuwe odds; geen zware herberekening nodig."
+          fi
