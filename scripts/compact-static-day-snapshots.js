@@ -2,13 +2,13 @@
 
 import fs from "node:fs";
 import path from "node:path";
-import { selectStaticSnapshotIds, writeJsonFile } from "./worker/archive.js";
+import { compactStaticPredictionSnapshot, selectStaticSnapshotIds, writeJsonFile } from "./worker/archive.js";
 
 const ROOT = process.cwd();
 const DAYS_DIR = path.join(ROOT, "data", "days");
 const APPLY = process.argv.includes("--apply");
 const MAX_PER_MATCH = Math.max(1, Number(process.env.STATIC_SNAPSHOTS_PER_MATCH || 2));
-const MIN_FILE_BYTES = Math.max(0, Number(process.env.STATIC_SNAPSHOT_COMPACT_MIN_BYTES || 6 * 1024 * 1024));
+const MIN_FILE_BYTES = Math.max(0, Number(process.env.STATIC_SNAPSHOT_COMPACT_MIN_BYTES || 4 * 1024 * 1024));
 const report = { apply: APPLY, maxPerMatch: MAX_PER_MATCH, minimumFileBytes: MIN_FILE_BYTES, checked: 0, changed: 0, removed: 0, files: [] };
 
 for (const fileName of fs.existsSync(DAYS_DIR) ? fs.readdirSync(DAYS_DIR).filter((name) => /^\d{4}-\d{2}-\d{2}\.json$/.test(name)) : []) {
@@ -28,13 +28,13 @@ for (const fileName of fs.existsSync(DAYS_DIR) ? fs.readdirSync(DAYS_DIR).filter
   const retained = {};
   for (const ids of byMatch.values()) {
     for (const predictionId of selectStaticSnapshotIds(ids, snapshots, MAX_PER_MATCH)) {
-      retained[predictionId] = snapshots[predictionId];
+      retained[predictionId] = compactStaticPredictionSnapshot(snapshots[predictionId]);
     }
   }
   const removed = Object.keys(snapshots).length - Object.keys(retained).length;
-  if (removed <= 0) continue;
   const compacted = { ...payload, predictionSnapshots: retained };
   const afterBytes = Buffer.byteLength(JSON.stringify(compacted));
+  if (removed <= 0 && afterBytes >= beforeBytes) continue;
   report.changed += 1;
   report.removed += removed;
   report.files.push({ file: `data/days/${fileName}`, beforeBytes, afterBytes, removed });

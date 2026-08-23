@@ -63,6 +63,17 @@ export function selectStaticSnapshotIds(ids, snapshots, maxPerMatch = 2) {
   return [...new Set(selected)];
 }
 
+export function compactStaticPredictionSnapshot(snapshot = {}) {
+  return pickDefined(snapshot, [
+    "predictionId", "matchId", "generatedAt", "cutoffAt", "kickoff", "status", "snapshotStatus",
+    "schemaVersion", "featureSchemaVersion", "modelVersion", "algorithmVersion", "workerVersion",
+    "date", "league", "season", "homeTeam", "awayTeam", "homeTeamId", "awayTeamId",
+    "inputSnapshotHash", "probabilities", "confidence", "confidenceRaw", "expectedScore",
+    "oddsAtPrediction", "oddsStatus", "oddsMissingReason", "roiStatus", "clvStatus",
+    "leakageGuard", "dataCompleteness", "missingData",
+  ]);
+}
+
 function pickPredictionSnapshotsForMatches(store, matches) {
   const snapshots = {};
   const maxPerMatch = Math.max(1, Number(process.env.STATIC_SNAPSHOTS_PER_MATCH || 2));
@@ -70,7 +81,7 @@ function pickPredictionSnapshotsForMatches(store, matches) {
     const ids = store.predictionSnapshotIndex?.[match.id] || [];
     for (const predictionId of selectStaticSnapshotIds(ids, store.predictionSnapshots, maxPerMatch)) {
       if (store.predictionSnapshots?.[predictionId]) {
-        snapshots[predictionId] = store.predictionSnapshots[predictionId];
+        snapshots[predictionId] = compactStaticPredictionSnapshot(store.predictionSnapshots[predictionId]);
       }
     }
   }
