@@ -101,7 +101,7 @@ jobs:
           BRANCH_NAME="${DATA_BRANCH:-${{ github.ref_name }}}"
           git config user.name github-actions
           git config user.email github-actions@github.com
-          git add data training monitor
+          git add data monitor
           git diff --staged --quiet && echo "geen wijzigingen" && exit 0
           git commit -m "update wedstrijden [skip vercel]"
           for attempt in 1 2 3; do

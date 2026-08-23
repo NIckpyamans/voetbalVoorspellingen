@@ -76,7 +76,10 @@ jobs:
           BRANCH_NAME="${DATA_BRANCH:-${{ github.ref_name }}}"
           git config user.name github-actions
           git config user.email github-actions@github.com
-          git add data training monitor
+          # Live refresh owns fixture/day data only. Training and audit reports
+          # are committed by their dedicated workflows, preventing rebase
+          # conflicts when a score refresh overlaps an evaluation or code push.
+          git add data
           git diff --staged --quiet && echo "geen scorewijzigingen" && exit 0
           git commit -m "live score update [skip vercel]"
           for attempt in 1 2 3; do
