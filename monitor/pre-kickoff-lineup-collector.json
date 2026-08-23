@@ -1,91 +1,38 @@
 {
-  "generatedAt": "2026-08-23T15:02:52.755Z",
-  "checked": 4,
-  "confirmed": 2,
-  "partial": 2,
-  "missing": 0,
-  "r2Stored": 4,
+  "generatedAt": "2026-08-23T17:36:46.271Z",
+  "checked": 1,
+  "confirmed": 0,
+  "partial": 0,
+  "missing": 1,
+  "r2Stored": 0,
   "playerFixtureStatsCaptured": 0,
   "databaseWritable": false,
   "databaseError": "Server error (HTTP status 402): {\"message\":\"Your project has exceeded the data transfer quota. Upgrade your plan to increase limits.\",\"code\":\"\",\"detail\":null,\"hint\":null,\"position\":null,\"internalPosition\":null,\"internalQuery\":null,\"severity\":\"\",\"where\":null,\"table\":null,\"column\":null,\"schema\":null,\"dataType\":null,\"constraint\":null,\"file\":null,\"line\":null,\"routine\":null,\"neon:retryable\":true}",
   "captureWindows": {
-    "t75": 2,
+    "t75": 1,
     "t45": 0,
-    "t20": 2,
+    "t20": 0,
     "outside": 0
   },
   "providers": {
-    "sofascore:schedule_http_403": 4,
-    "fotmob:ok": 4
+    "sofascore:schedule_http_403": 1,
+    "fotmob:fixture_not_found": 1,
+    "goal-api:acceptance_gate_closed": 1,
+    "sportmonks:plan_coverage_unavailable": 1,
+    "api-football:account_or_plan_unavailable": 1
   },
   "matches": [
     {
-      "matchId": "ss-fotmob-5802902",
+      "matchId": "ss-fotmob-5803105",
       "league": "France - Ligue 1",
       "agent": "france-ligue-1-agent",
-      "kickoff": "2026-08-23T15:15:00.000Z",
-      "minutesBeforeKickoff": 12,
-      "captureWindow": "t20",
-      "homeTeam": "Le Havre",
-      "awayTeam": "Monaco",
-      "provider": "fotmob",
-      "status": "ok",
-      "attempts": [
-        {
-          "provider": "sofascore",
-          "status": "schedule_http_403",
-          "lineup": false,
-          "confirmed": false
-        },
-        {
-          "provider": "fotmob",
-          "status": "ok",
-          "lineup": true,
-          "confirmed": true
-        }
-      ],
-      "confirmed": true,
-      "partial": false
-    },
-    {
-      "matchId": "ss-fotmob-5795371",
-      "league": "England - Premier League",
-      "agent": "england-premier-league-agent",
-      "kickoff": "2026-08-23T15:30:00.000Z",
-      "minutesBeforeKickoff": 27,
-      "captureWindow": "t20",
-      "homeTeam": "Newcastle United",
-      "awayTeam": "Liverpool",
-      "provider": "fotmob",
-      "status": "ok",
-      "attempts": [
-        {
-          "provider": "sofascore",
-          "status": "schedule_http_403",
-          "lineup": false,
-          "confirmed": false
-        },
-        {
-          "provider": "fotmob",
-          "status": "ok",
-          "lineup": true,
-          "confirmed": true
-        }
-      ],
-      "confirmed": true,
-      "partial": false
-    },
-    {
-      "matchId": "ss-fotmob-5749643",
-      "league": "Italy - Serie A",
-      "agent": "italy-serie-a-agent",
-      "kickoff": "2026-08-23T16:30:00.000Z",
-      "minutesBeforeKickoff": 87,
+      "kickoff": "2026-08-23T18:45:00.000Z",
+      "minutesBeforeKickoff": 68,
       "captureWindow": "t75",
-      "homeTeam": "Frosinone",
-      "awayTeam": "Juventus",
-      "provider": "fotmob",
-      "status": "ok",
+      "homeTeam": "Rennes",
+      "awayTeam": "Paris Saint-Germain",
+      "provider": "api-football",
+      "status": "account_or_plan_unavailable",
       "attempts": [
         {
           "provider": "sofascore",
@@ -95,68 +42,43 @@
         },
         {
           "provider": "fotmob",
-          "status": "ok",
-          "lineup": true,
+          "status": "fixture_not_found",
+          "lineup": false,
+          "confirmed": false
+        },
+        {
+          "provider": "goal-api",
+          "status": "acceptance_gate_closed",
+          "lineup": false,
+          "confirmed": false
+        },
+        {
+          "provider": "sportmonks",
+          "status": "plan_coverage_unavailable",
+          "lineup": false,
+          "confirmed": false
+        },
+        {
+          "provider": "api-football",
+          "status": "account_or_plan_unavailable",
+          "fixtureMapped": false,
+          "lineup": false,
           "confirmed": false
         }
       ],
       "confirmed": false,
-      "partial": true
-    },
-    {
-      "matchId": "ss-fotmob-5749649",
-      "league": "Italy - Serie A",
-      "agent": "italy-serie-a-agent",
-      "kickoff": "2026-08-23T16:30:00.000Z",
-      "minutesBeforeKickoff": 87,
-      "captureWindow": "t75",
-      "homeTeam": "Venezia",
-      "awayTeam": "Lecce",
-      "provider": "fotmob",
-      "status": "ok",
-      "attempts": [
-        {
-          "provider": "sofascore",
-          "status": "schedule_http_403",
-          "lineup": false,
-          "confirmed": false
-        },
-        {
-          "provider": "fotmob",
-          "status": "ok",
-          "lineup": true,
-          "confirmed": false
-        }
-      ],
-      "confirmed": false,
-      "partial": true
+      "partial": false
     }
   ],
   "leagueCoverage": [
     {
-      "league": "Italy - Serie A",
-      "checked": 2,
-      "covered": 0,
-      "partial": 2,
-      "missing": 0,
-      "coverage": 0
-    },
-    {
-      "league": "England - Premier League",
-      "checked": 1,
-      "covered": 1,
-      "partial": 0,
-      "missing": 0,
-      "coverage": 1
-    },
-    {
       "league": "France - Ligue 1",
       "checked": 1,
-      "covered": 1,
+      "covered": 0,
       "partial": 0,
-      "missing": 0,
-      "coverage": 1
+      "missing": 1,
+      "coverage": 0
     }
   ],
-  "confirmedCoverage": 0.5
+  "confirmedCoverage": 0
 }
