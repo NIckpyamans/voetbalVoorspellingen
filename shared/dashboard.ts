@@ -1,6 +1,7 @@
 import type { Match } from "../types";
 import { todayAmsterdamKey, toAmsterdamDateKey } from "./date.js";
 import { shortLeagueName } from "./matchText.js";
+import { ACTIVE_COMPETITIONS } from "./competitionVisibility.js";
 
 export type DashboardHistoryItem = {
   matchId: string;
@@ -18,6 +19,19 @@ export type DashboardHistoryItem = {
   bestBetRank?: number | null;
   topExactScorePick?: boolean;
   exactScoreConfidence?: number;
+  predictionId?: string | null;
+  evaluationSource?: string | null;
+  leakageRisk?: string | null;
+};
+
+export type LeaguePerformanceRow = {
+  league: string;
+  total: number;
+  exact: number;
+  outcome: number;
+  exactPct: number;
+  outcomePct: number;
+  avgGoalError: number;
 };
 
 export const LEAGUE_ORDER = [
@@ -48,6 +62,51 @@ export const DEFAULT_FAVORITE_STANDING_LABEL = "Netherlands - Eredivisie";
 
 export function pct(part: number, total: number) {
   return total > 0 ? Math.round((part / total) * 100) : 0;
+}
+
+export function buildLeaguePerformance(items: DashboardHistoryItem[], minSample = 10) {
+  const active = new Set(ACTIVE_COMPETITIONS);
+  const trustworthy = items.filter(
+    (item) =>
+      active.has(String(item.league || "")) &&
+      item.evaluationSource === "prediction_snapshot" &&
+      !item.leakageRisk
+  );
+  const sourceItems = trustworthy.length >= minSample ? trustworthy : items.filter((item) => active.has(String(item.league || "")));
+  const method = trustworthy.length >= minSample ? "immutable_snapshots" : "all_evaluated_reviews";
+  const buckets = new Map<string, { total: number; exact: number; outcome: number; goalError: number }>();
+
+  for (const item of sourceItems) {
+    const league = String(item.league || "").trim();
+    if (!league) continue;
+    const bucket = buckets.get(league) || { total: 0, exact: 0, outcome: 0, goalError: 0 };
+    bucket.total += 1;
+    bucket.exact += item.wasCorrect ? 1 : 0;
+    bucket.outcome += item.winnerCorrect ? 1 : 0;
+    bucket.goalError += Number(item.errorMargin || 0);
+    buckets.set(league, bucket);
+  }
+
+  const rows: LeaguePerformanceRow[] = [...buckets.entries()]
+    .map(([league, bucket]) => ({
+      league,
+      total: bucket.total,
+      exact: bucket.exact,
+      outcome: bucket.outcome,
+      exactPct: pct(bucket.exact, bucket.total),
+      outcomePct: pct(bucket.outcome, bucket.total),
+      avgGoalError: Number((bucket.goalError / Math.max(bucket.total, 1)).toFixed(2)),
+    }))
+    .filter((row) => row.total >= minSample)
+    .sort(
+      (a, b) =>
+        b.outcomePct - a.outcomePct ||
+        b.exactPct - a.exactPct ||
+        a.avgGoalError - b.avgGoalError ||
+        b.total - a.total
+    );
+
+  return { best: rows[0] || null, rows, method, minSample };
 }
 
 export function isoDate(date: Date) {

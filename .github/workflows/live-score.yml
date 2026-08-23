@@ -24,6 +24,10 @@ env:
   FOOTYAI_LIGHTWEIGHT_REFRESH: "true"
   API_KEY_FOOTBALL_DATA: ${{ secrets.API_KEY_FOOTBALL_DATA }}
   API_KEY_API_FOOTBALL: ${{ secrets.API_KEY_API_FOOTBALL }}
+  APIFOOTBALL_API_KEY: ${{ secrets.APIFOOTBALL_API_KEY }}
+  GOAL_API_KEY: ${{ secrets.GOAL_API_KEY }}
+  FOOTBALL_DATA_TOKEN: ${{ secrets.FOOTBALL_DATA_TOKEN }}
+  THESPORTSDB_API_KEY: ${{ secrets.THESPORTSDB_API_KEY }}
   # Bewaar het API-Football-dagquotum voor de volledige workers; live scores hebben geen nieuwe H2H nodig.
   API_FOOTBALL_H2H_ENABLED: "false"
   # Prematch odds worden in de volledige workers vastgelegd; dit voorkomt 12 dubbele odds-calls per dag.
@@ -63,6 +67,9 @@ jobs:
 
       - name: Audit competition agents
         run: npm run monitor:competition-agents
+
+      - name: Audit active competition data completeness
+        run: npm run monitor:competition-data-coverage
 
       - name: Commit and push data only
         run: |

@@ -14,6 +14,7 @@ import {
   DashboardHistoryItem,
   LEAGUE_ORDER,
   belongsToSelectedDate,
+  buildLeaguePerformance,
   formatDateLabel,
   hydrateDashboardHistory,
   isoDate,
@@ -662,6 +663,7 @@ const App: React.FC = () => {
       }))
       .sort((a, b) => b.exactPct - a.exactPct || b.exact - a.exact || b.outcomePct - a.outcomePct || b.total - a.total)
       .slice(0, 10);
+    const leaguePerformance = buildLeaguePerformance(historyItems);
 
     return {
       topFiveTotal: topFiveReviews.length,
@@ -675,6 +677,7 @@ const App: React.FC = () => {
       otherTotal: otherReviews.length,
       topSelectionIsBetter: topExactPct >= otherExactPct,
       topClubs,
+      leaguePerformance,
     };
   }, [historyItems]);
 
@@ -945,6 +948,18 @@ const App: React.FC = () => {
                     {dashboardInsights.topSelectionIsBetter ? "AI kiest beter" : "bijsturen nodig"} · foutmarge {dashboardInsights.topFiveAvgError}
                   </span>
                 </div>
+                {dashboardInsights.leaguePerformance.best && (
+                  <div className="mt-2 flex flex-wrap items-center gap-2 rounded-xl border border-cyan-400/15 bg-cyan-400/5 px-3 py-2 text-[10px] font-bold text-slate-300">
+                    <span className="uppercase tracking-wide text-cyan-300">Best voorspelde competitie</span>
+                    <strong className="text-white">{dashboardInsights.leaguePerformance.best.league}</strong>
+                    <span>1X2 <strong className="text-green-300">{dashboardInsights.leaguePerformance.best.outcomePct}%</strong></span>
+                    <span>exact <strong className="text-yellow-200">{dashboardInsights.leaguePerformance.best.exactPct}%</strong></span>
+                    <span>foutmarge <strong className="text-white">{dashboardInsights.leaguePerformance.best.avgGoalError}</strong></span>
+                    <span className="ml-auto text-slate-500">
+                      {dashboardInsights.leaguePerformance.best.total} lekvrije evaluaties · minimaal {dashboardInsights.leaguePerformance.minSample}
+                    </span>
+                  </div>
+                )}
               </section>
 
             </div>

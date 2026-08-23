@@ -1,47 +1,1161 @@
 {
-  "generatedAt": "2026-08-22T07:02:45.083Z",
+  "generatedAt": "2026-08-23T17:16:32.290Z",
   "lookbackDays": 45,
   "totals": {
-    "matches": 857,
-    "pastMatches": 77,
+    "matches": 659,
+    "pastMatches": 135,
     "pendingResultBackfills": 0,
-    "missingPastScores": 0,
-    "h2hMissing": 314,
-    "h2hCovered": 543,
-    "h2hCoverage": 0.634
+    "missingPastScores": 49,
+    "h2hMissing": 297,
+    "h2hCovered": 362,
+    "h2hCoverage": 0.549
   },
   "status": {
-    "resultBackfill": "clean",
+    "resultBackfill": "needs_backfill",
     "h2h": "needs_backfill"
+  },
+  "coverage": {
+    "matches": 659,
+    "finished": 90,
+    "predictionInputs": {
+      "form": {
+        "covered": 380,
+        "total": 659,
+        "pct": 0.577
+      },
+      "h2h": {
+        "covered": 362,
+        "total": 659,
+        "pct": 0.549
+      },
+      "lineupConfirmed": {
+        "covered": 0,
+        "total": 659,
+        "pct": 0
+      },
+      "sourceLineage": {
+        "covered": 659,
+        "total": 659,
+        "pct": 1
+      }
+    },
+    "postMatch": {
+      "finalScore": {
+        "covered": 90,
+        "total": 90,
+        "pct": 1
+      },
+      "review": {
+        "covered": 86,
+        "total": 90,
+        "pct": 0.956
+      },
+      "statistics": {
+        "covered": 0,
+        "total": 90,
+        "pct": 0
+      },
+      "referee": {
+        "covered": 0,
+        "total": 90,
+        "pct": 0
+      }
+    }
+  },
+  "byCompetition": [
+    {
+      "league": "Netherlands - Eredivisie",
+      "matches": 10,
+      "finished": 0,
+      "predictionInputs": {
+        "form": {
+          "covered": 7,
+          "total": 10,
+          "pct": 0.7
+        },
+        "h2h": {
+          "covered": 2,
+          "total": 10,
+          "pct": 0.2
+        },
+        "lineupConfirmed": {
+          "covered": 0,
+          "total": 10,
+          "pct": 0
+        },
+        "sourceLineage": {
+          "covered": 10,
+          "total": 10,
+          "pct": 1
+        }
+      },
+      "postMatch": {
+        "finalScore": {
+          "covered": 0,
+          "total": 0,
+          "pct": 1
+        },
+        "review": {
+          "covered": 0,
+          "total": 0,
+          "pct": 1
+        },
+        "statistics": {
+          "covered": 0,
+          "total": 0,
+          "pct": 1
+        },
+        "referee": {
+          "covered": 0,
+          "total": 0,
+          "pct": 1
+        }
+      },
+      "gaps": [
+        "form",
+        "h2h",
+        "confirmed_lineups"
+      ],
+      "sourcePlan": {
+        "fixtures": [
+          "fotmob",
+          "espn",
+          "football-data-org",
+          "thesportsdb",
+          "goal-api"
+        ],
+        "form": [
+          "canonical-history",
+          "football-data-co-uk",
+          "espn"
+        ],
+        "h2h": [
+          "canonical-history",
+          "football-data-co-uk",
+          "openfootball",
+          "espn",
+          "goal-api",
+          "api-football"
+        ],
+        "lineups": [
+          "sofascore",
+          "fotmob",
+          "goal-api",
+          "sportmonks",
+          "api-football"
+        ],
+        "odds": [
+          "the-odds-api"
+        ],
+        "postMatch": [
+          "fotmob-match-details",
+          "thesportsdb",
+          "football-data-org",
+          "goal-api-shadow"
+        ]
+      }
+    },
+    {
+      "league": "Netherlands - Eerste Divisie",
+      "matches": 111,
+      "finished": 7,
+      "predictionInputs": {
+        "form": {
+          "covered": 29,
+          "total": 111,
+          "pct": 0.261
+        },
+        "h2h": {
+          "covered": 19,
+          "total": 111,
+          "pct": 0.171
+        },
+        "lineupConfirmed": {
+          "covered": 0,
+          "total": 111,
+          "pct": 0
+        },
+        "sourceLineage": {
+          "covered": 111,
+          "total": 111,
+          "pct": 1
+        }
+      },
+      "postMatch": {
+        "finalScore": {
+          "covered": 7,
+          "total": 7,
+          "pct": 1
+        },
+        "review": {
+          "covered": 7,
+          "total": 7,
+          "pct": 1
+        },
+        "statistics": {
+          "covered": 0,
+          "total": 7,
+          "pct": 0
+        },
+        "referee": {
+          "covered": 0,
+          "total": 7,
+          "pct": 0
+        }
+      },
+      "gaps": [
+        "form",
+        "h2h",
+        "confirmed_lineups",
+        "post_match_statistics",
+        "referee"
+      ],
+      "sourcePlan": {
+        "fixtures": [
+          "fotmob",
+          "espn",
+          "football-data-org",
+          "thesportsdb",
+          "goal-api"
+        ],
+        "form": [
+          "canonical-history",
+          "football-data-co-uk",
+          "espn"
+        ],
+        "h2h": [
+          "canonical-history",
+          "football-data-co-uk",
+          "openfootball",
+          "espn",
+          "goal-api",
+          "api-football"
+        ],
+        "lineups": [
+          "sofascore",
+          "fotmob",
+          "goal-api",
+          "sportmonks",
+          "api-football"
+        ],
+        "odds": [
+          "the-odds-api"
+        ],
+        "postMatch": [
+          "fotmob-match-details",
+          "thesportsdb",
+          "football-data-org",
+          "goal-api-shadow"
+        ]
+      }
+    },
+    {
+      "league": "Germany - Bundesliga",
+      "matches": 86,
+      "finished": 0,
+      "predictionInputs": {
+        "form": {
+          "covered": 80,
+          "total": 86,
+          "pct": 0.93
+        },
+        "h2h": {
+          "covered": 46,
+          "total": 86,
+          "pct": 0.535
+        },
+        "lineupConfirmed": {
+          "covered": 0,
+          "total": 86,
+          "pct": 0
+        },
+        "sourceLineage": {
+          "covered": 86,
+          "total": 86,
+          "pct": 1
+        }
+      },
+      "postMatch": {
+        "finalScore": {
+          "covered": 0,
+          "total": 0,
+          "pct": 1
+        },
+        "review": {
+          "covered": 0,
+          "total": 0,
+          "pct": 1
+        },
+        "statistics": {
+          "covered": 0,
+          "total": 0,
+          "pct": 1
+        },
+        "referee": {
+          "covered": 0,
+          "total": 0,
+          "pct": 1
+        }
+      },
+      "gaps": [
+        "h2h",
+        "confirmed_lineups"
+      ],
+      "sourcePlan": {
+        "fixtures": [
+          "fotmob",
+          "espn",
+          "football-data-org",
+          "thesportsdb",
+          "goal-api"
+        ],
+        "form": [
+          "canonical-history",
+          "football-data-co-uk",
+          "espn"
+        ],
+        "h2h": [
+          "canonical-history",
+          "football-data-co-uk",
+          "openfootball",
+          "espn",
+          "goal-api",
+          "api-football"
+        ],
+        "lineups": [
+          "sofascore",
+          "fotmob",
+          "goal-api",
+          "sportmonks",
+          "api-football"
+        ],
+        "odds": [
+          "the-odds-api"
+        ],
+        "postMatch": [
+          "fotmob-match-details",
+          "thesportsdb",
+          "football-data-org",
+          "goal-api-shadow"
+        ]
+      }
+    },
+    {
+      "league": "Germany - 2. Bundesliga",
+      "matches": 12,
+      "finished": 0,
+      "predictionInputs": {
+        "form": {
+          "covered": 10,
+          "total": 12,
+          "pct": 0.833
+        },
+        "h2h": {
+          "covered": 4,
+          "total": 12,
+          "pct": 0.333
+        },
+        "lineupConfirmed": {
+          "covered": 0,
+          "total": 12,
+          "pct": 0
+        },
+        "sourceLineage": {
+          "covered": 12,
+          "total": 12,
+          "pct": 1
+        }
+      },
+      "postMatch": {
+        "finalScore": {
+          "covered": 0,
+          "total": 0,
+          "pct": 1
+        },
+        "review": {
+          "covered": 0,
+          "total": 0,
+          "pct": 1
+        },
+        "statistics": {
+          "covered": 0,
+          "total": 0,
+          "pct": 1
+        },
+        "referee": {
+          "covered": 0,
+          "total": 0,
+          "pct": 1
+        }
+      },
+      "gaps": [
+        "h2h",
+        "confirmed_lineups"
+      ],
+      "sourcePlan": {
+        "fixtures": [
+          "fotmob",
+          "espn",
+          "football-data-org",
+          "thesportsdb",
+          "goal-api"
+        ],
+        "form": [
+          "canonical-history",
+          "football-data-co-uk",
+          "espn"
+        ],
+        "h2h": [
+          "canonical-history",
+          "football-data-co-uk",
+          "openfootball",
+          "espn",
+          "goal-api",
+          "api-football"
+        ],
+        "lineups": [
+          "sofascore",
+          "fotmob",
+          "goal-api",
+          "sportmonks",
+          "api-football"
+        ],
+        "odds": [
+          "the-odds-api"
+        ],
+        "postMatch": [
+          "fotmob-match-details",
+          "thesportsdb",
+          "football-data-org",
+          "goal-api-shadow"
+        ]
+      }
+    },
+    {
+      "league": "England - Premier League",
+      "matches": 90,
+      "finished": 8,
+      "predictionInputs": {
+        "form": {
+          "covered": 90,
+          "total": 90,
+          "pct": 1
+        },
+        "h2h": {
+          "covered": 60,
+          "total": 90,
+          "pct": 0.667
+        },
+        "lineupConfirmed": {
+          "covered": 0,
+          "total": 90,
+          "pct": 0
+        },
+        "sourceLineage": {
+          "covered": 90,
+          "total": 90,
+          "pct": 1
+        }
+      },
+      "postMatch": {
+        "finalScore": {
+          "covered": 8,
+          "total": 8,
+          "pct": 1
+        },
+        "review": {
+          "covered": 8,
+          "total": 8,
+          "pct": 1
+        },
+        "statistics": {
+          "covered": 0,
+          "total": 8,
+          "pct": 0
+        },
+        "referee": {
+          "covered": 0,
+          "total": 8,
+          "pct": 0
+        }
+      },
+      "gaps": [
+        "confirmed_lineups",
+        "post_match_statistics",
+        "referee"
+      ],
+      "sourcePlan": {
+        "fixtures": [
+          "fotmob",
+          "espn",
+          "football-data-org",
+          "thesportsdb",
+          "goal-api"
+        ],
+        "form": [
+          "canonical-history",
+          "football-data-co-uk",
+          "espn"
+        ],
+        "h2h": [
+          "canonical-history",
+          "football-data-co-uk",
+          "openfootball",
+          "espn",
+          "goal-api",
+          "api-football"
+        ],
+        "lineups": [
+          "sofascore",
+          "fotmob",
+          "goal-api",
+          "sportmonks",
+          "api-football"
+        ],
+        "odds": [
+          "the-odds-api"
+        ],
+        "postMatch": [
+          "fotmob-match-details",
+          "thesportsdb",
+          "football-data-org",
+          "goal-api-shadow"
+        ]
+      }
+    },
+    {
+      "league": "England - Championship",
+      "matches": 13,
+      "finished": 1,
+      "predictionInputs": {
+        "form": {
+          "covered": 1,
+          "total": 13,
+          "pct": 0.077
+        },
+        "h2h": {
+          "covered": 2,
+          "total": 13,
+          "pct": 0.154
+        },
+        "lineupConfirmed": {
+          "covered": 0,
+          "total": 13,
+          "pct": 0
+        },
+        "sourceLineage": {
+          "covered": 13,
+          "total": 13,
+          "pct": 1
+        }
+      },
+      "postMatch": {
+        "finalScore": {
+          "covered": 1,
+          "total": 1,
+          "pct": 1
+        },
+        "review": {
+          "covered": 1,
+          "total": 1,
+          "pct": 1
+        },
+        "statistics": {
+          "covered": 0,
+          "total": 1,
+          "pct": 0
+        },
+        "referee": {
+          "covered": 0,
+          "total": 1,
+          "pct": 0
+        }
+      },
+      "gaps": [
+        "form",
+        "h2h",
+        "confirmed_lineups",
+        "post_match_statistics",
+        "referee"
+      ],
+      "sourcePlan": {
+        "fixtures": [
+          "fotmob",
+          "espn",
+          "football-data-org",
+          "thesportsdb",
+          "goal-api"
+        ],
+        "form": [
+          "canonical-history",
+          "football-data-co-uk",
+          "espn"
+        ],
+        "h2h": [
+          "canonical-history",
+          "football-data-co-uk",
+          "openfootball",
+          "espn",
+          "apifootball-com",
+          "goal-api",
+          "api-football"
+        ],
+        "lineups": [
+          "sofascore",
+          "fotmob",
+          "apifootball-com",
+          "goal-api",
+          "sportmonks",
+          "api-football"
+        ],
+        "odds": [
+          "apifootball-com",
+          "the-odds-api"
+        ],
+        "postMatch": [
+          "fotmob-match-details",
+          "thesportsdb",
+          "football-data-org",
+          "goal-api-shadow"
+        ]
+      }
+    },
+    {
+      "league": "France - Ligue 1",
+      "matches": 81,
+      "finished": 7,
+      "predictionInputs": {
+        "form": {
+          "covered": 76,
+          "total": 81,
+          "pct": 0.938
+        },
+        "h2h": {
+          "covered": 64,
+          "total": 81,
+          "pct": 0.79
+        },
+        "lineupConfirmed": {
+          "covered": 0,
+          "total": 81,
+          "pct": 0
+        },
+        "sourceLineage": {
+          "covered": 81,
+          "total": 81,
+          "pct": 1
+        }
+      },
+      "postMatch": {
+        "finalScore": {
+          "covered": 7,
+          "total": 7,
+          "pct": 1
+        },
+        "review": {
+          "covered": 7,
+          "total": 7,
+          "pct": 1
+        },
+        "statistics": {
+          "covered": 0,
+          "total": 7,
+          "pct": 0
+        },
+        "referee": {
+          "covered": 0,
+          "total": 7,
+          "pct": 0
+        }
+      },
+      "gaps": [
+        "confirmed_lineups",
+        "post_match_statistics",
+        "referee"
+      ],
+      "sourcePlan": {
+        "fixtures": [
+          "fotmob",
+          "espn",
+          "football-data-org",
+          "thesportsdb",
+          "goal-api"
+        ],
+        "form": [
+          "canonical-history",
+          "football-data-co-uk",
+          "espn"
+        ],
+        "h2h": [
+          "canonical-history",
+          "football-data-co-uk",
+          "openfootball",
+          "espn",
+          "goal-api",
+          "api-football"
+        ],
+        "lineups": [
+          "sofascore",
+          "fotmob",
+          "goal-api",
+          "sportmonks",
+          "api-football"
+        ],
+        "odds": [
+          "the-odds-api"
+        ],
+        "postMatch": [
+          "fotmob-match-details",
+          "thesportsdb",
+          "football-data-org",
+          "goal-api-shadow"
+        ]
+      }
+    },
+    {
+      "league": "France - Ligue 2",
+      "matches": 85,
+      "finished": 8,
+      "predictionInputs": {
+        "form": {
+          "covered": 51,
+          "total": 85,
+          "pct": 0.6
+        },
+        "h2h": {
+          "covered": 43,
+          "total": 85,
+          "pct": 0.506
+        },
+        "lineupConfirmed": {
+          "covered": 0,
+          "total": 85,
+          "pct": 0
+        },
+        "sourceLineage": {
+          "covered": 85,
+          "total": 85,
+          "pct": 1
+        }
+      },
+      "postMatch": {
+        "finalScore": {
+          "covered": 8,
+          "total": 8,
+          "pct": 1
+        },
+        "review": {
+          "covered": 8,
+          "total": 8,
+          "pct": 1
+        },
+        "statistics": {
+          "covered": 0,
+          "total": 8,
+          "pct": 0
+        },
+        "referee": {
+          "covered": 0,
+          "total": 8,
+          "pct": 0
+        }
+      },
+      "gaps": [
+        "form",
+        "h2h",
+        "confirmed_lineups",
+        "post_match_statistics",
+        "referee"
+      ],
+      "sourcePlan": {
+        "fixtures": [
+          "fotmob",
+          "espn",
+          "football-data-org",
+          "thesportsdb",
+          "goal-api"
+        ],
+        "form": [
+          "canonical-history",
+          "football-data-co-uk",
+          "espn"
+        ],
+        "h2h": [
+          "canonical-history",
+          "football-data-co-uk",
+          "openfootball",
+          "espn",
+          "apifootball-com",
+          "goal-api",
+          "api-football"
+        ],
+        "lineups": [
+          "sofascore",
+          "fotmob",
+          "apifootball-com",
+          "goal-api",
+          "sportmonks",
+          "api-football"
+        ],
+        "odds": [
+          "apifootball-com",
+          "the-odds-api"
+        ],
+        "postMatch": [
+          "fotmob-match-details",
+          "thesportsdb",
+          "football-data-org",
+          "goal-api-shadow"
+        ]
+      }
+    },
+    {
+      "league": "Europe - Champions League",
+      "matches": 12,
+      "finished": 4,
+      "predictionInputs": {
+        "form": {
+          "covered": 0,
+          "total": 12,
+          "pct": 0
+        },
+        "h2h": {
+          "covered": 12,
+          "total": 12,
+          "pct": 1
+        },
+        "lineupConfirmed": {
+          "covered": 0,
+          "total": 12,
+          "pct": 0
+        },
+        "sourceLineage": {
+          "covered": 12,
+          "total": 12,
+          "pct": 1
+        }
+      },
+      "postMatch": {
+        "finalScore": {
+          "covered": 4,
+          "total": 4,
+          "pct": 1
+        },
+        "review": {
+          "covered": 0,
+          "total": 4,
+          "pct": 0
+        },
+        "statistics": {
+          "covered": 0,
+          "total": 4,
+          "pct": 0
+        },
+        "referee": {
+          "covered": 0,
+          "total": 4,
+          "pct": 0
+        }
+      },
+      "gaps": [
+        "form",
+        "confirmed_lineups",
+        "reviews",
+        "post_match_statistics",
+        "referee"
+      ],
+      "sourcePlan": {
+        "fixtures": [
+          "sky",
+          "fotmob",
+          "espn",
+          "bbc",
+          "goal-api"
+        ],
+        "form": [
+          "canonical-history",
+          "espn",
+          "football-data-co-uk"
+        ],
+        "h2h": [
+          "canonical-history",
+          "espn",
+          "openfootball",
+          "goal-api",
+          "api-football"
+        ],
+        "lineups": [
+          "fotmob",
+          "sofascore",
+          "goal-api",
+          "api-football",
+          "sportmonks"
+        ],
+        "odds": [
+          "the-odds-api"
+        ],
+        "postMatch": [
+          "fotmob-match-details",
+          "thesportsdb",
+          "football-data-org",
+          "goal-api-shadow"
+        ]
+      }
+    },
+    {
+      "league": "Europe - Europa League",
+      "matches": 47,
+      "finished": 19,
+      "predictionInputs": {
+        "form": {
+          "covered": 2,
+          "total": 47,
+          "pct": 0.043
+        },
+        "h2h": {
+          "covered": 38,
+          "total": 47,
+          "pct": 0.809
+        },
+        "lineupConfirmed": {
+          "covered": 0,
+          "total": 47,
+          "pct": 0
+        },
+        "sourceLineage": {
+          "covered": 47,
+          "total": 47,
+          "pct": 1
+        }
+      },
+      "postMatch": {
+        "finalScore": {
+          "covered": 19,
+          "total": 19,
+          "pct": 1
+        },
+        "review": {
+          "covered": 19,
+          "total": 19,
+          "pct": 1
+        },
+        "statistics": {
+          "covered": 0,
+          "total": 19,
+          "pct": 0
+        },
+        "referee": {
+          "covered": 0,
+          "total": 19,
+          "pct": 0
+        }
+      },
+      "gaps": [
+        "form",
+        "confirmed_lineups",
+        "post_match_statistics",
+        "referee"
+      ],
+      "sourcePlan": {
+        "fixtures": [
+          "sky",
+          "fotmob",
+          "espn",
+          "bbc",
+          "goal-api"
+        ],
+        "form": [
+          "canonical-history",
+          "espn",
+          "football-data-co-uk"
+        ],
+        "h2h": [
+          "canonical-history",
+          "espn",
+          "openfootball",
+          "goal-api",
+          "api-football"
+        ],
+        "lineups": [
+          "fotmob",
+          "sofascore",
+          "goal-api",
+          "api-football",
+          "sportmonks"
+        ],
+        "odds": [
+          "the-odds-api"
+        ],
+        "postMatch": [
+          "fotmob-match-details",
+          "thesportsdb",
+          "football-data-org",
+          "goal-api-shadow"
+        ]
+      }
+    },
+    {
+      "league": "Europe - Conference League",
+      "matches": 112,
+      "finished": 36,
+      "predictionInputs": {
+        "form": {
+          "covered": 34,
+          "total": 112,
+          "pct": 0.304
+        },
+        "h2h": {
+          "covered": 72,
+          "total": 112,
+          "pct": 0.643
+        },
+        "lineupConfirmed": {
+          "covered": 0,
+          "total": 112,
+          "pct": 0
+        },
+        "sourceLineage": {
+          "covered": 112,
+          "total": 112,
+          "pct": 1
+        }
+      },
+      "postMatch": {
+        "finalScore": {
+          "covered": 36,
+          "total": 36,
+          "pct": 1
+        },
+        "review": {
+          "covered": 36,
+          "total": 36,
+          "pct": 1
+        },
+        "statistics": {
+          "covered": 0,
+          "total": 36,
+          "pct": 0
+        },
+        "referee": {
+          "covered": 0,
+          "total": 36,
+          "pct": 0
+        }
+      },
+      "gaps": [
+        "form",
+        "h2h",
+        "confirmed_lineups",
+        "post_match_statistics",
+        "referee"
+      ],
+      "sourcePlan": {
+        "fixtures": [
+          "sky",
+          "fotmob",
+          "espn",
+          "bbc",
+          "goal-api"
+        ],
+        "form": [
+          "canonical-history",
+          "espn",
+          "football-data-co-uk"
+        ],
+        "h2h": [
+          "canonical-history",
+          "espn",
+          "openfootball",
+          "goal-api",
+          "api-football"
+        ],
+        "lineups": [
+          "fotmob",
+          "sofascore",
+          "goal-api",
+          "api-football",
+          "sportmonks"
+        ],
+        "odds": [
+          "the-odds-api"
+        ],
+        "postMatch": [
+          "fotmob-match-details",
+          "thesportsdb",
+          "football-data-org",
+          "goal-api-shadow"
+        ]
+      }
+    }
+  ],
+  "backfillPolicy": {
+    "canBackfillAfterMatch": [
+      "finalScore",
+      "postMatchReview",
+      "statistics",
+      "goalMinutes",
+      "cards",
+      "referee",
+      "confirmedLineup"
+    ],
+    "cannotReconstructSafely": [
+      "openingOdds",
+      "prematchOdds",
+      "closingOddsWithoutTimestamp",
+      "preKickoffAvailability"
+    ]
   },
   "samples": {
     "pendingResultBackfills": [],
-    "missingPastScores": [],
+    "missingPastScores": [
+      "2026-07-23: Qarabag FK - CSKA Sofia",
+      "2026-07-23: Dynamo Kyiv - PAOK Salonika",
+      "2026-07-23: Hammarby IF - Anderlecht",
+      "2026-07-23: Sheriff Tiraspol (Mol) - Maccabi Tel Aviv",
+      "2026-07-23: Tromso - Hradec Králové",
+      "2026-07-23: Besiktas - FC Midtjylland",
+      "2026-07-23: FC Twente - Ferencvaros",
+      "2026-07-23: St Gallen - Benfica",
+      "2026-07-23: Hajduk Split - Pafos",
+      "2026-07-23: Malisheva - Hibernian",
+      "2026-07-23: Alashkert FC - CFR Cluj-Napoca",
+      "2026-07-23: FK Liepaja - Austria Wien",
+      "2026-07-23: Panevezys - Tobol Kostanay",
+      "2026-07-23: Debreceni Vasutas Sport Club - Pyunik Yerevan",
+      "2026-07-23: Dila Gori - Apollon Limassol",
+      "2026-07-23: FC Flora Tallinn - The New Saints FC",
+      "2026-07-23: HJK Helsinki - Coleraine",
+      "2026-07-23: Paide Linnameeskond - FC Zire",
+      "2026-07-23: AEK Larnaca - Beitar Jerusalem",
+      "2026-07-23: DAC Dunajská Streda - Velez Mostar"
+    ],
     "h2hMissing": [
-      "2026-08-22: Zulte Waregem - Beveren",
-      "2026-08-22: Birmingham City - Bristol City",
-      "2026-08-22: Hull City - Manchester United",
-      "2026-08-22: Lens - Auxerre",
-      "2026-08-22: Udinese - Como",
-      "2026-08-22: Fortuna Sittard - AZ Alkmaar",
-      "2026-08-22: Athletic Club - Sevilla",
-      "2026-08-22: Lincoln City - Portsmouth",
-      "2026-08-22: Valencia - Celta Vigo",
-      "2026-08-22: Inter - Monza",
-      "2026-08-22: Sparta Rotterdam - Utrecht",
-      "2026-08-22: Le Mans - Brest",
-      "2026-08-22: Marítimo - Académico de Viseu",
-      "2026-08-22: Estoril - Rio Ave",
-      "2026-08-22: Ipswich Town - Sunderland",
-      "2026-08-22: Nottingham Forest - Leeds United",
-      "2026-08-22: Brentford - Tottenham Hotspur",
-      "2026-08-22: Nice - Lorient",
-      "2026-08-22: Troyes - Paris FC",
-      "2026-08-22: Genoa - Napoli"
+      "2026-07-23: Qarabag FK - CSKA Sofia",
+      "2026-07-23: Dynamo Kyiv - PAOK Salonika",
+      "2026-07-23: Hammarby IF - Anderlecht",
+      "2026-07-23: Sheriff Tiraspol (Mol) - Maccabi Tel Aviv",
+      "2026-07-23: Tromso - Hradec Králové",
+      "2026-07-23: Besiktas - FC Midtjylland",
+      "2026-07-23: FC Twente - Ferencvaros",
+      "2026-07-23: St Gallen - Benfica",
+      "2026-07-23: Hajduk Split - Pafos",
+      "2026-07-23: Malisheva - Hibernian",
+      "2026-07-23: Alashkert FC - CFR Cluj-Napoca",
+      "2026-07-23: FK Liepaja - Austria Wien",
+      "2026-07-23: Panevezys - Tobol Kostanay",
+      "2026-07-23: Debreceni Vasutas Sport Club - Pyunik Yerevan",
+      "2026-07-23: Dila Gori - Apollon Limassol",
+      "2026-07-23: FC Flora Tallinn - The New Saints FC",
+      "2026-07-23: HJK Helsinki - Coleraine",
+      "2026-07-23: Paide Linnameeskond - FC Zire",
+      "2026-07-23: AEK Larnaca - Beitar Jerusalem",
+      "2026-07-23: DAC Dunajská Streda - Velez Mostar"
     ]
   },
   "recommendations": [
-    "Resultaatbackfill is schoon binnen de auditperiode.",
-    "Breid H2H via historische competitieprofielen en team-id mappings uit tot minimaal 85% dekking."
+    "Vul eerst betrouwbare eindstanden aan voordat learning en ROI/CLV zwaarder worden gewogen.",
+    "Breid H2H via historische competitieprofielen en team-id mappings uit tot minimaal 85% dekking.",
+    "Koppel de ontbrekende reviews aan de 90 afgeronde wedstrijden voordat opnieuw wordt gekalibreerd.",
+    "Vul post-match statistieken en doelminuten via FotMob, APIfootball.com of GOAL shadow aan; nulvelden tellen niet als echte statistiek."
   ]
 }

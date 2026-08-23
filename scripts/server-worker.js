@@ -7867,6 +7867,71 @@ async function fetchPostMatchStatsFromFootballData(match) {
   return null;
 }
 
+function parseFotmobStatValue(value) {
+  const parsed = toFiniteNumber(String(value ?? "").replace("%", "").trim());
+  return Number.isFinite(parsed) ? parsed : null;
+}
+
+function findFotmobStat(groups, names) {
+  const wanted = names.map((name) => name.toLowerCase());
+  for (const group of groups || []) {
+    for (const row of group?.stats || group?.items || []) {
+      const label = String(row?.title || row?.name || row?.key || "").toLowerCase();
+      if (!wanted.some((name) => label.includes(name))) continue;
+      const pair = row?.stats || row?.values || row?.value;
+      if (Array.isArray(pair) && pair.length >= 2) {
+        return { home: parseFotmobStatValue(pair[0]), away: parseFotmobStatValue(pair[1]) };
+      }
+    }
+  }
+  return { home: null, away: null };
+}
+
+async function fetchPostMatchStatsFromFotMob(match) {
+  const rawId = String(match?.providerEventId || match?.sofaId || match?.id || "").replace(/^fotmob-/, "");
+  if (!/^\d+$/.test(rawId)) return null;
+  const payload = await safeFetch(`https://www.fotmob.com/api/data/matchDetails?matchId=${encodeURIComponent(rawId)}`);
+  const allPeriod = payload?.content?.stats?.Periods?.All || payload?.content?.stats?.periods?.all || null;
+  const groups = allPeriod?.stats || allPeriod?.groups || [];
+  const possession = findFotmobStat(groups, ["ball possession", "possession"]);
+  const shots = findFotmobStat(groups, ["total shots"]);
+  const shotsOn = findFotmobStat(groups, ["shots on target", "shots on goal"]);
+  const bigChances = findFotmobStat(groups, ["big chances"]);
+  const corners = findFotmobStat(groups, ["corners"]);
+  const fouls = findFotmobStat(groups, ["fouls committed", "fouls"]);
+  const events = payload?.content?.matchFacts?.events?.events || payload?.content?.matchFacts?.events || [];
+  const goalQuarters = { home: emptyGoalQuarters(), away: emptyGoalQuarters(), total: emptyGoalQuarters() };
+  for (const event of Array.isArray(events) ? events : []) {
+    if (!/goal/i.test(String(event?.type || event?.eventType || ""))) continue;
+    const bucket = quarterBucketFromMinute(event?.time ?? event?.minute ?? event?.timeStr);
+    const side = event?.isHome === true ? "home" : event?.isHome === false ? "away" : null;
+    if (side) goalQuarters[side][bucket] += 1;
+    goalQuarters.total[bucket] += 1;
+  }
+  const hasSignal = [possession.home, possession.away, shots.home, shots.away, shotsOn.home, shotsOn.away]
+    .some((value) => Number(value || 0) > 0);
+  if (!hasSignal && !Object.values(goalQuarters.total).some((value) => Number(value || 0) > 0)) return null;
+  return normalizePostMatchStats({
+    home: {
+      possession: possession.home,
+      shots: shots.home,
+      shotsOnTarget: shotsOn.home,
+      bigChances: bigChances.home,
+      corners: corners.home,
+      fouls: fouls.home,
+    },
+    away: {
+      possession: possession.away,
+      shots: shots.away,
+      shotsOnTarget: shotsOn.away,
+      bigChances: bigChances.away,
+      corners: corners.away,
+      fouls: fouls.away,
+    },
+    goalQuarters,
+  }, "fotmob-match-details", `matchId:${rawId}`);
+}
+
 function statsCoverageScore(stats) {
   if (!stats) return 0;
   const keys = ["possession", "shots", "shotsOnTarget", "bigChances", "corners", "freeKicks", "fouls"];
@@ -7876,12 +7941,17 @@ function statsCoverageScore(stats) {
     if (Number.isFinite(Number(stats?.home?.[key]))) hit += 1;
     if (Number.isFinite(Number(stats?.away?.[key]))) hit += 1;
   }
-  return Number((hit / Math.max(total, 1)).toFixed(2));
+  const hasRealSignal = keys.some(
+    (key) => Number(stats?.home?.[key] || 0) > 0 || Number(stats?.away?.[key] || 0) > 0
+  );
+  return hasRealSignal ? Number((hit / Math.max(total, 1)).toFixed(2)) : 0;
 }
 
 async function buildPostMatchStatsWithFallback({ match, eventDetails, homeId, awayId }) {
   const sofaStats = extractPostMatchStatsFromSofa(eventDetails, homeId, awayId);
   if (statsCoverageScore(sofaStats) >= 0.5) return { ...sofaStats, coverageScore: statsCoverageScore(sofaStats), fallbackUsed: false };
+  const fotmobStats = await fetchPostMatchStatsFromFotMob(match);
+  if (statsCoverageScore(fotmobStats) >= 0.5) return { ...fotmobStats, coverageScore: statsCoverageScore(fotmobStats), fallbackUsed: true };
   const sportsDbStats = await fetchPostMatchStatsFromTheSportsDb(match);
   if (statsCoverageScore(sportsDbStats) >= 0.5) return { ...sportsDbStats, coverageScore: statsCoverageScore(sportsDbStats), fallbackUsed: true };
   const footballDataStats = await fetchPostMatchStatsFromFootballData(match);
@@ -11664,7 +11734,7 @@ async function main() {
       let postMatchStats = null;
       if (isFinishedMatch) {
         postMatchStats = await buildPostMatchStatsWithFallback({
-          match: { date, homeTeamName: homeName, awayTeamName: awayName },
+          match: { id: matchId, sofaId: event.id, providerEventId: event.id, date, homeTeamName: homeName, awayTeamName: awayName },
           eventDetails,
           homeId,
           awayId,

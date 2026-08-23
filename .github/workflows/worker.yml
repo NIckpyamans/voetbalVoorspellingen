@@ -22,6 +22,8 @@ env:
   API_KEY_FOOTBALL_DATA: ${{ secrets.API_KEY_FOOTBALL_DATA }}
   FOOTBALL_DATA_TEAM_MAP: ${{ secrets.FOOTBALL_DATA_TEAM_MAP }}
   API_KEY_API_FOOTBALL: ${{ secrets.API_KEY_API_FOOTBALL }}
+  APIFOOTBALL_API_KEY: ${{ secrets.APIFOOTBALL_API_KEY }}
+  GOAL_API_KEY: ${{ secrets.GOAL_API_KEY }}
   API_FOOTBALL_BASE_URL: ${{ vars.API_FOOTBALL_BASE_URL }}
   # H2H wordt direct voor de worker door de gerichte backfill bijgewerkt.
   API_FOOTBALL_H2H_ENABLED: "false"
@@ -90,6 +92,9 @@ jobs:
         # caches met het weekvenster en publiceert de voorspellingen.
         timeout-minutes: 9
         run: node scripts/ci-neon-safe.js -- node scripts/server-worker.js
+
+      - name: Audit active competitions and post-match completeness
+        run: npm run monitor:competition-data-coverage
 
       - name: Commit and push data
         run: |
