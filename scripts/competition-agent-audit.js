@@ -3,10 +3,12 @@
 import fs from "fs";
 import path from "path";
 import { getCompetitionAgentConfig } from "./worker/competition-agents.js";
+import { ACTIVE_COMPETITIONS } from "../shared/competitionVisibility.js";
 
 const ROOT = process.cwd();
 const OUTPUT = path.join(ROOT, "monitor", "competition-agent-status.json");
 const DAYS_AHEAD = Math.max(1, Number(process.env.COMPETITION_AGENT_AUDIT_DAYS || 7));
+const activeCompetitionSet = new Set(ACTIVE_COMPETITIONS);
 
 function readJson(filePath, fallback = null) {
   try {
@@ -40,10 +42,12 @@ const matches = [];
 for (let offset = 0; offset <= DAYS_AHEAD; offset += 1) {
   const date = dateKey(offset);
   const day = readJson(path.join(ROOT, "data", "days", `${date}.json`), {});
-  for (const match of Array.isArray(day?.matches) ? day.matches : []) matches.push({ ...match, date });
+  for (const match of Array.isArray(day?.matches) ? day.matches : []) {
+    if (activeCompetitionSet.has(match?.league)) matches.push({ ...match, date });
+  }
 }
 
-const agents = config.agents.map((definition) => {
+const agents = config.agents.filter((definition) => activeCompetitionSet.has(definition.league)).map((definition) => {
   const profile = config.profiles[definition.profile] || {};
   const leagueMatches = matches.filter((match) => match.league === definition.league);
   const multiSource = leagueMatches.filter((match) => matchSourceCount(match) >= Number(config.targets?.fixtureSources || 2)).length;

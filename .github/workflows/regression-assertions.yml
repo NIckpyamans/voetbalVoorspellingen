@@ -32,6 +32,8 @@ jobs:
         run: npm ci
       - name: Run regression assertions
         run: npm run monitor:regressions
+      - name: Verify standings integrity
+        run: npm run monitor:standings-integrity
       - name: Run unit and provider contract tests
         run: npm run test:unit
       - name: Verify static export retention

@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { mergeCatalogStandings } from "../../shared/standingsCatalog.js";
+import { mergeCatalogStandings, sameTeam } from "../../shared/standingsCatalog.js";
 
 const catalog = {
   season: "2026-2027",
@@ -14,9 +14,13 @@ const catalog = {
 };
 
 describe("standings catalog fallback", () => {
+  it("matches provider and catalog aliases for Hertha", () => {
+    expect(sameTeam("Hertha BSC", "Hertha Berlin")).toBe(true);
+  });
   it("keeps every catalog team when the live standing is partial", () => {
     const standings = mergeCatalogStandings({ partial: {
       label: "Netherlands - Eredivisie",
+      season: "2026/2027",
       rows: [
         { team: "Ajax", p: 1, w: 0, d: 1, l: 0, gf: 1, ga: 1, pts: 1 },
         { team: "SC Heerenveen", p: 1, w: 0, d: 1, l: 0, gf: 1, ga: 1, pts: 1 },
@@ -80,6 +84,7 @@ describe("standings catalog fallback", () => {
   it("does not count a completed result twice when it is already in the standing", () => {
     const standings = mergeCatalogStandings({ partial: {
       label: "Netherlands - Eredivisie",
+      season: "2026/2027",
       rows: [
         { team: "PSV", p: 1, w: 1, d: 0, l: 0, gf: 3, ga: 1, pts: 3 },
         { team: "Ajax", p: 1, w: 0, d: 0, l: 1, gf: 1, ga: 3, pts: 0 },
@@ -95,5 +100,110 @@ describe("standings catalog fallback", () => {
     }]);
     const rows = standings["label:Netherlands - Eredivisie"].rows;
     expect(rows.reduce((sum, row) => sum + row.p, 0)).toBe(2);
+  });
+
+  it("prefers the canonical current-season table over a stronger stale cache", () => {
+    const standings = mergeCatalogStandings({
+      stale: {
+        label: "Netherlands - Eredivisie",
+        rows: [{ team: "PSV", p: 34, w: 30, d: 2, l: 2, gf: 100, ga: 20, pts: 92 }],
+        resultKeys: ["2026-05-10|PSV|Ajax"],
+      },
+      "label:Netherlands - Eredivisie": {
+        label: "Netherlands - Eredivisie",
+        season: "2026/2027",
+        rows: [{ team: "PSV", p: 2, w: 2, d: 0, l: 0, gf: 7, ga: 1, pts: 6 }],
+        resultKeys: ["2026-08-10|PSV|Ajax", "2026-08-17|PSV|Heerenveen"],
+      },
+    }, catalog);
+    const psv = standings["label:Netherlands - Eredivisie"].rows.find((row) => row.team === "PSV");
+    expect(psv).toMatchObject({ p: 2, pts: 6, gf: 7, ga: 1 });
+  });
+
+  it("rejects a played table without current-season evidence", () => {
+    const standings = mergeCatalogStandings({ stale: {
+      label: "Netherlands - Eredivisie",
+      rows: [{ team: "PSV", p: 34, w: 30, d: 2, l: 2, gf: 100, ga: 20, pts: 92 }],
+      source: "legacy-provider",
+    } }, catalog);
+    const rows = standings["label:Netherlands - Eredivisie"].rows;
+    expect(rows.reduce((sum, row) => sum + row.p, 0)).toBe(0);
+  });
+
+  it("does not count UEFA qualifiers in a provisional league-phase table", () => {
+    const uefaCatalog = {
+      season: "2026-2027",
+      competitions: [{
+        league: "Europe - Europa League",
+        slug: "europe-europa-league",
+        type: "cup",
+        expectedTeams: 2,
+        format: "league_phase_8_matches_then_knockout",
+        membershipStatus: "provisional_qualification_baseline",
+        teams: ["Ajax", "PSV"],
+      }],
+    };
+    const standings = mergeCatalogStandings({}, uefaCatalog, [{
+      date: "2026-08-20",
+      league: "Europe - Europa League",
+      status: "FT",
+      homeTeamName: "Ajax",
+      awayTeamName: "PSV",
+      score: "2-1",
+    }]);
+    expect(standings["label:Europe - Europa League"].rows.reduce((sum, row) => sum + row.p, 0)).toBe(0);
+  });
+
+  it("does not overlay archived matches on an authoritative provider table", () => {
+    const standings = mergeCatalogStandings({
+      "label:Netherlands - Eredivisie": {
+        label: "Netherlands - Eredivisie",
+        season: "2026/2027",
+        source: "fotmob",
+        rows: [
+          { team: "PSV", p: 2, w: 2, d: 0, l: 0, gf: 5, ga: 1, pts: 6 },
+          { team: "Ajax", p: 2, w: 1, d: 1, l: 0, gf: 3, ga: 2, pts: 4 },
+        ],
+        resultKeys: ["2026-08-10|psv|ajax", "2026-08-17|ajax|heerenveen"],
+      },
+    }, catalog, [{
+      date: "2026-08-20",
+      league: "Netherlands - Eredivisie",
+      status: "FT",
+      homeTeamName: "PSV Eindhoven",
+      awayTeamName: "Heerenveen",
+      score: "4-0",
+    }]);
+
+    const rows = standings["label:Netherlands - Eredivisie"].rows;
+    expect(rows.find((row) => row.team === "PSV")).toMatchObject({ p: 2, pts: 6, gf: 5 });
+    expect(standings["label:Netherlands - Eredivisie"].source).toContain("fotmob");
+  });
+
+  it("clears a stale UEFA league-phase table while membership is provisional", () => {
+    const uefaCatalog = {
+      season: "2026-2027",
+      competitions: [{
+        league: "Europe - Conference League",
+        slug: "europe-conference-league",
+        type: "cup",
+        expectedTeams: 2,
+        format: "league_phase_6_matches_then_knockout",
+        membershipStatus: "provisional_qualification_baseline",
+        teams: ["Ajax", "PSV"],
+      }],
+    };
+    const standings = mergeCatalogStandings({ stale: {
+      label: "Europe - Conference League",
+      season: "2026/2027",
+      source: "split-day-results",
+      rows: [
+        { team: "Ajax", p: 6, w: 5, d: 1, l: 0, gf: 12, ga: 3, pts: 16 },
+        { team: "PSV", p: 6, w: 3, d: 1, l: 2, gf: 9, ga: 7, pts: 10 },
+      ],
+      lastResultDate: "2026-08-01",
+    } }, uefaCatalog);
+
+    expect(standings["label:Europe - Conference League"].rows.every((row) => row.p === 0)).toBe(true);
   });
 });

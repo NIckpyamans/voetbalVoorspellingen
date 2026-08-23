@@ -37,14 +37,12 @@
         "football-data-co-uk",
         "openfootball",
         "espn",
-        "apifootball-com",
         "goal-api",
         "api-football"
       ],
       "lineups": [
         "sofascore",
         "fotmob",
-        "apifootball-com",
         "goal-api",
         "sportmonks",
         "api-football"
@@ -135,7 +133,12 @@
     {
       "key": "england-championship-agent",
       "league": "England - Championship",
-      "profile": "domestic"
+      "profile": "domestic",
+      "sourceOverrides": {
+        "h2h": ["canonical-history", "football-data-co-uk", "openfootball", "espn", "apifootball-com", "goal-api", "api-football"],
+        "lineups": ["sofascore", "fotmob", "apifootball-com", "goal-api", "sportmonks", "api-football"],
+        "odds": ["apifootball-com", "the-odds-api"]
+      }
     },
     {
       "key": "france-ligue-1-agent",
@@ -145,7 +148,12 @@
     {
       "key": "france-ligue-2-agent",
       "league": "France - Ligue 2",
-      "profile": "domestic"
+      "profile": "domestic",
+      "sourceOverrides": {
+        "h2h": ["canonical-history", "football-data-co-uk", "openfootball", "espn", "apifootball-com", "goal-api", "api-football"],
+        "lineups": ["sofascore", "fotmob", "apifootball-com", "goal-api", "sportmonks", "api-football"],
+        "odds": ["apifootball-com", "the-odds-api"]
+      }
     },
     {
       "key": "champions-league-agent",

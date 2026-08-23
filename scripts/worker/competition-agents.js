@@ -16,10 +16,14 @@ const config = readConfig();
 export function getCompetitionAgent(league) {
   const definition = config.agents.find((agent) => agent.league === league);
   if (!definition) return null;
+  const profileSources = config.profiles[definition.profile] || {};
   return {
     ...definition,
     targets: config.targets,
-    sources: config.profiles[definition.profile] || {},
+    sources: {
+      ...profileSources,
+      ...(definition.sourceOverrides || {}),
+    },
   };
 }
 

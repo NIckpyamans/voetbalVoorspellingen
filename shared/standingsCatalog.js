@@ -1,11 +1,16 @@
 function normalizedTeamName(value) {
-  return String(value || "")
+  const normalized = String(value || "")
     .normalize("NFKD")
     .replace(/[\u0300-\u036f]/g, "")
     .toLowerCase()
     .replace(/\b(fc|afc|sc|cf|ac|sv|fk|kv|kvc|kaa|rc|rkc)\b/g, " ")
     .replace(/[^a-z0-9]+/g, " ")
     .trim();
+  const aliases = {
+    "hertha berlin": "hertha",
+    "hertha bsc": "hertha",
+  };
+  return aliases[normalized] || normalized;
 }
 
 function sameTeam(left, right) {
@@ -34,6 +39,32 @@ function numericRow(row, fallback = {}) {
 
 function standingStrength(standing) {
   return (standing?.rows || []).reduce((sum, row) => sum + Number(row?.p || 0), 0) * 100 + (standing?.rows || []).length;
+}
+
+function seasonStartDate(season) {
+  const startYear = String(season || "").match(/^(\d{4})/)?.[1];
+  return startYear ? `${startYear}-07-01` : null;
+}
+
+function standingBelongsToSeason(standing, season) {
+  if (!standing?.rows?.length) return false;
+  const expectedSeason = String(season || "").trim();
+  const standingSeason = String(standing?.season || standing?.seasonLabel || "").trim();
+  if (standingSeason) {
+    const normalizedExpected = expectedSeason.replace("-", "/");
+    if (standingSeason !== expectedSeason && standingSeason !== normalizedExpected) return false;
+  }
+
+  const startDate = seasonStartDate(expectedSeason);
+  if (!startDate) return true;
+  const resultDates = (Array.isArray(standing?.resultKeys) ? standing.resultKeys : [])
+    .map((key) => String(key || "").split("|")[0])
+    .filter((date) => /^\d{4}-\d{2}-\d{2}$/.test(date));
+  if (resultDates.some((date) => date < startDate)) return false;
+
+  const hasPlayedMatches = (standing.rows || []).some((row) => Number(row?.p || 0) > 0);
+  if (hasPlayedMatches && !standingSeason && resultDates.length === 0) return false;
+  return true;
 }
 
 function sortRows(rows) {
@@ -70,9 +101,10 @@ function resultKeyBelongsToRows(key, rows) {
 }
 
 function composeSource(baseSource, hasBaseResults, appliedResults) {
+  const rawParts = String(baseSource || "").split("+").map((part) => part.trim()).filter(Boolean);
   const parts = hasBaseResults
-    ? String(baseSource || "").split("+").map((part) => part.trim()).filter(Boolean)
-    : [];
+    ? rawParts
+    : rawParts.filter((part) => ["fotmob", "sofascore", "espn"].some((provider) => part.toLowerCase().includes(provider)));
   const withoutCatalog = parts.filter((part) => part !== "competition-catalog" && part !== "competition-catalog-zero");
   return [...new Set([
     ...(withoutCatalog.length ? withoutCatalog : ["competition-catalog-zero"]),
@@ -133,11 +165,18 @@ export function mergeCatalogStandings(existingStandings = {}, catalog = {}, comp
     if (!Array.isArray(competition?.teams) || competition.teams.length === 0) continue;
     const label = String(competition.league || "").trim();
     if (!label) continue;
+    const canonicalBase = existingStandings?.[`label:${label}`];
     const candidates = existingEntries
       .filter(([, standing]) => String(standing?.label || "").trim() === label)
       .map(([, standing]) => standing)
+      .filter((standing) => standingBelongsToSeason(standing, catalog?.season))
       .sort((left, right) => standingStrength(right) - standingStrength(left));
-    const base = candidates[0] || null;
+    const acceptsStanding = competition.type !== "cup" || competition.membershipStatus === "provider_confirmed";
+    const base = !acceptsStanding
+      ? null
+      : standingBelongsToSeason(canonicalBase, catalog?.season)
+        ? canonicalBase
+        : candidates[0] || null;
     const baseRows = Array.isArray(base?.rows) ? base.rows : [];
     const consumed = new Set();
     const rows = competition.teams.map((team, index) => {
@@ -150,7 +189,7 @@ export function mergeCatalogStandings(existingStandings = {}, catalog = {}, comp
         teamId: `catalog:${competition.slug}:${normalizedTeamName(team).replace(/\s+/g, "-")}`,
       });
     });
-    if (competition.membershipStatus !== "provider_confirmed") {
+    if (competition.type !== "cup" && competition.membershipStatus !== "provider_confirmed") {
       for (let index = 0; index < baseRows.length; index += 1) {
         if (consumed.has(index)) continue;
         const row = numericRow(baseRows[index]);
@@ -161,7 +200,14 @@ export function mergeCatalogStandings(existingStandings = {}, catalog = {}, comp
     const resultKeys = new Set(
       (Array.isArray(base?.resultKeys) ? base.resultKeys : []).filter((key) => resultKeyBelongsToRows(key, rows))
     );
-    const appliedResults = applyCompletedResults(rows, resultKeys, completedMatches, label);
+    const baseSource = String(base?.source || "").toLowerCase();
+    const hasAuthoritativeProviderStanding = ["fotmob", "sofascore", "espn"].some((source) => baseSource.includes(source));
+    const mayApplyLeagueResults =
+      (competition.type !== "cup" || competition.membershipStatus === "provider_confirmed") &&
+      !hasAuthoritativeProviderStanding;
+    const appliedResults = mayApplyLeagueResults
+      ? applyCompletedResults(rows, resultKeys, completedMatches, label)
+      : { applied: 0, lastResultDate: null };
     const catalogSource = { source: "competition-catalog", rows: competition.teams.length };
     const resultSource = appliedResults.applied > 0
       ? [{ source: "split-day-results", rows: rows.length, results: appliedResults.applied }]
@@ -169,22 +215,28 @@ export function mergeCatalogStandings(existingStandings = {}, catalog = {}, comp
     merged[`label:${label}`] = {
       ...(base || {}),
       label,
+      season: catalog?.season || base?.season || null,
       rows: sortRows(rows),
       updated: Math.max(Number(base?.updated || 0), updated),
       source: composeSource(base?.source, hasBaseResults, appliedResults.applied),
-      sources: [...(Array.isArray(base?.sources) ? base.sources : []), catalogSource, ...resultSource],
+      sources: [...new Map(
+        [...(Array.isArray(base?.sources) ? base.sources : []), catalogSource, ...resultSource]
+          .map((source) => [`${source?.source || "unknown"}:${source?.rows || 0}:${source?.results || 0}`, source])
+      ).values()],
       resultKeys: [...resultKeys],
       lastResultDate: appliedResults.lastResultDate || base?.lastResultDate || null,
       meta: {
         ...(base?.meta || {}),
         format: competition.format,
-        notes: [
+        notes: [...new Set([
           ...(Array.isArray(base?.meta?.notes) ? base.meta.notes : []),
           `${rows.length}/${competition.expectedTeams || rows.length} teams uit de competitiecatalogus; uitslagen worden erbovenop verwerkt.`,
           competition.membershipStatus === "provider_confirmed"
             ? "Niet-herkende clubs worden geweigerd om vervuiling tussen competities te voorkomen."
-            : "Voorlopige deelnemers kunnen worden aangevuld vanuit betrouwbare uitslagen.",
-        ],
+            : competition.type === "cup"
+              ? "Voorlopige UEFA-deelnemers: kwalificatieduels tellen niet mee in de league-phase-stand."
+              : "Voorlopige deelnemers kunnen worden aangevuld vanuit betrouwbare uitslagen.",
+        ])],
       },
     };
     usedLabels.add(label);
@@ -193,4 +245,4 @@ export function mergeCatalogStandings(existingStandings = {}, catalog = {}, comp
   return merged;
 }
 
-export { normalizedTeamName, sameTeam };
+export { normalizedTeamName, sameTeam, standingBelongsToSeason };

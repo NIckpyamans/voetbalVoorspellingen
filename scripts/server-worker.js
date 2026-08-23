@@ -6988,6 +6988,17 @@ function isStandingLeagueLabel(label) {
   return true;
 }
 
+function standingHasValidTotals(standing) {
+  const rows = Array.isArray(standing?.rows) ? standing.rows : [];
+  if (!rows.length) return false;
+  const goalsFor = rows.reduce((sum, row) => sum + Number(row?.gf || 0), 0);
+  const goalsAgainst = rows.reduce((sum, row) => sum + Number(row?.ga || 0), 0);
+  const rowTotalsValid = rows.every((row) =>
+    Number(row?.p || 0) === Number(row?.w || 0) + Number(row?.d || 0) + Number(row?.l || 0)
+  );
+  return goalsFor === goalsAgainst && rowTotalsValid;
+}
+
 function shouldApplyMatchToStanding(match, baseStanding) {
   const status = String(match?.status || "").toUpperCase();
   if (!["FT", "LIVE", "HT", "RESULT_PENDING"].includes(status)) return false;
@@ -11070,7 +11081,7 @@ async function main() {
     if (!isStandingLeagueLabel(info.label)) continue;
     const cached = store.standings[key];
     const cachedIsOverlay = String(cached?.source || "").includes("live-match-overlay");
-    if (cached?.rows?.length && !cachedIsOverlay && now - Number(cached.updated || 0) <= STANDINGS_TTL) {
+    if (cached?.rows?.length && standingHasValidTotals(cached) && !cachedIsOverlay && now - Number(cached.updated || 0) <= STANDINGS_TTL) {
       standingsByTournament[key] = cached;
       continue;
     }
@@ -11092,7 +11103,7 @@ async function main() {
     const cached = store.standings[labelKey];
     const cachedIsOverlay = String(cached?.source || "").includes("live-match-overlay");
     const cachedNeedsResultLedger = String(cached?.source || "").includes("fotmob") && !cached?.resultKeys?.length;
-    if (cached?.rows?.length && !cachedIsOverlay && !cachedNeedsResultLedger && now - Number(cached.updated || 0) <= STANDINGS_TTL) {
+    if (cached?.rows?.length && standingHasValidTotals(cached) && !cachedIsOverlay && !cachedNeedsResultLedger && now - Number(cached.updated || 0) <= STANDINGS_TTL) {
       standingsByTournament[labelKey] = cached;
       continue;
     }
@@ -11904,7 +11915,6 @@ async function main() {
   }
 
   rebuildStandingsFromArchivedSeasonDays(store);
-  applyLiveStandingsOverlay(store);
   removeHiddenInternationalStoreData(store, today);
   compactStore(store, today, now);
   rebuildReviewsAndLearning(store);

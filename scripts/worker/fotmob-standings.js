@@ -30,7 +30,7 @@ function scoreParts(value) {
   return match ? { gf: Number(match[1]), ga: Number(match[2]) } : { gf: 0, ga: 0 };
 }
 
-export function normalizeFotmobStanding(payload, label, expectedLeagueId) {
+export function normalizeFotmobStanding(payload, label, expectedLeagueId, season = null) {
   if (Number(payload?.details?.id) !== Number(expectedLeagueId)) return null;
   const rawRows = payload?.table?.[0]?.data?.table?.all;
   if (!Array.isArray(rawRows) || rawRows.length < 2) return null;
@@ -59,6 +59,7 @@ export function normalizeFotmobStanding(payload, label, expectedLeagueId) {
 
   return {
     label,
+    season,
     rows,
     updated: Date.now(),
     source: "fotmob",
@@ -92,5 +93,5 @@ export async function fetchFotmobStanding(label, dateISO, fetchJson) {
     Referer: "https://www.fotmob.com/",
     "Accept-Language": "en-US,en;q=0.9",
   });
-  return normalizeFotmobStanding(payload, label, competition.id);
+  return normalizeFotmobStanding(payload, label, competition.id, season);
 }

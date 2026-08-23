@@ -26,8 +26,9 @@ describe("FotMob standings adapter", () => {
   });
 
   it("normalizes played matches, goals and points", () => {
-    const standing = normalizeFotmobStanding(response, "Netherlands - Eredivisie", 57);
+    const standing = normalizeFotmobStanding(response, "Netherlands - Eredivisie", 57, "2026/2027");
     expect(standing.source).toBe("fotmob");
+    expect(standing.season).toBe("2026/2027");
     expect(standing.rows[0]).toMatchObject({ team: "Ajax", p: 2, w: 2, gf: 5, ga: 1, pts: 6 });
     expect(standing.resultKeys).toEqual(["2026-08-08|Ajax|PSV"]);
   });

@@ -5,10 +5,12 @@ import path from "path";
 import { pathToFileURL } from "url";
 import { getGoalApiKey } from "./provider-env.js";
 import { evaluateGoalApiAcceptance, normalizeGoalApiName, segmentForLeague } from "./providers/goal-api-acceptance-utils.js";
+import { ACTIVE_COMPETITIONS } from "../shared/competitionVisibility.js";
 
 const ROOT = process.cwd();
 const OUTPUT = path.join(ROOT, "monitor", "goal-api-acceptance.json");
 const SEGMENTS = ["domestic", "uefa", "friendly"];
+const activeCompetitionSet = new Set(ACTIVE_COMPETITIONS);
 
 function readJson(file, fallback) {
   try { return JSON.parse(fs.readFileSync(file, "utf8")); } catch { return fallback; }
@@ -34,6 +36,7 @@ function localFixtures() {
     const payload = readJson(path.join(ROOT, "data", "days", `${date}.json`), {});
     for (const match of payload.matches || []) {
       if (!match.homeTeamName || !match.awayTeamName) continue;
+      if (!activeCompetitionSet.has(match.league)) continue;
       rows.push({ date, league: match.league || "unknown", home: match.homeTeamName, away: match.awayTeamName });
     }
   }
