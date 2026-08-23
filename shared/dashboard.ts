@@ -34,28 +34,7 @@ export type LeaguePerformanceRow = {
   avgGoalError: number;
 };
 
-export const LEAGUE_ORDER = [
-  "Europe - Champions League",
-  "Europe - Europa League",
-  "Europe - Conference League",
-  "England - Premier League",
-  "England - Championship",
-  "Netherlands - Eredivisie",
-  "Netherlands - Eerste Divisie",
-  "Netherlands - KNVB Beker",
-  "Germany - Bundesliga",
-  "Germany - 2. Bundesliga",
-  "Spain - LaLiga",
-  "Spain - LaLiga 2",
-  "Italy - Serie A",
-  "Italy - Serie B",
-  "France - Ligue 1",
-  "France - Ligue 2",
-  "Portugal - Liga Portugal",
-  "Portugal - Liga Portugal 2",
-  "Belgium - Pro League",
-  "Belgium - Challenger Pro League",
-];
+export const LEAGUE_ORDER = [...ACTIVE_COMPETITIONS];
 
 export const FAVORITE_STANDING_KEY = "footyai-favorite-standing";
 export const DEFAULT_FAVORITE_STANDING_LABEL = "Netherlands - Eredivisie";

@@ -1,6 +1,6 @@
 # Data Quality Audit
 
-Laatst bijgewerkt: 2026-08-23T17:32:31.227Z
+Laatst bijgewerkt: 2026-08-23T17:36:05.978Z
 Lookback: 45 dagen
 
 ## Scores
@@ -9,22 +9,22 @@ Lookback: 45 dagen
 - Pending result backfills: 2
 - Ontbrekende oude scores: 0
 - H2H-dekking: 59%
-- Reviews na afloop: 46%
+- Reviews na afloop: 76%
 - Bruikbare wedstrijdstatistieken: 29%
 - Bevestigde opstellingen: 0%
 
 ## Per competitie
 - Netherlands - Eredivisie: 9 duels, vorm 78%, H2H 22%, reviews 100%, stats 100%; gaten: form, h2h, confirmed_lineups
-- Netherlands - Eerste Divisie: 111 duels, vorm 26%, H2H 17%, reviews 0%, stats 0%; gaten: form, h2h, confirmed_lineups, reviews, post_match_statistics, referee
+- Netherlands - Eerste Divisie: 111 duels, vorm 26%, H2H 17%, reviews 100%, stats 0%; gaten: form, h2h, confirmed_lineups, post_match_statistics, referee
 - Germany - Bundesliga: 86 duels, vorm 93%, H2H 54%, reviews 100%, stats 100%; gaten: h2h, confirmed_lineups
 - Germany - 2. Bundesliga: 12 duels, vorm 83%, H2H 33%, reviews 100%, stats 100%; gaten: h2h, confirmed_lineups
-- England - Premier League: 90 duels, vorm 100%, H2H 67%, reviews 0%, stats 0%; gaten: confirmed_lineups, reviews, post_match_statistics, referee
+- England - Premier League: 90 duels, vorm 100%, H2H 67%, reviews 100%, stats 0%; gaten: confirmed_lineups, post_match_statistics, referee
 - England - Championship: 12 duels, vorm 8%, H2H 17%, reviews 100%, stats 100%; gaten: form, h2h, confirmed_lineups
-- France - Ligue 1: 81 duels, vorm 94%, H2H 79%, reviews 0%, stats 0%; gaten: confirmed_lineups, reviews, post_match_statistics, referee
-- France - Ligue 2: 85 duels, vorm 60%, H2H 51%, reviews 0%, stats 0%; gaten: form, h2h, confirmed_lineups, reviews, post_match_statistics, referee
+- France - Ligue 1: 81 duels, vorm 94%, H2H 79%, reviews 100%, stats 0%; gaten: confirmed_lineups, post_match_statistics, referee
+- France - Ligue 2: 85 duels, vorm 60%, H2H 51%, reviews 100%, stats 0%; gaten: form, h2h, confirmed_lineups, post_match_statistics, referee
 - Europe - Champions League: 12 duels, vorm 0%, H2H 100%, reviews 0%, stats 0%; gaten: form, confirmed_lineups, reviews, post_match_statistics, referee
-- Europe - Europa League: 51 duels, vorm 16%, H2H 90%, reviews 39%, stats 29%; gaten: form, confirmed_lineups, reviews, post_match_statistics, referee
-- Europe - Conference League: 136 duels, vorm 25%, H2H 79%, reviews 64%, stats 39%; gaten: form, confirmed_lineups, reviews, post_match_statistics, referee
+- Europe - Europa League: 51 duels, vorm 16%, H2H 90%, reviews 61%, stats 29%; gaten: form, confirmed_lineups, reviews, post_match_statistics, referee
+- Europe - Conference League: 136 duels, vorm 25%, H2H 79%, reviews 76%, stats 39%; gaten: form, confirmed_lineups, reviews, post_match_statistics, referee
 
 ## Aanbevelingen
 - Vul eerst betrouwbare eindstanden aan voordat learning en ROI/CLV zwaarder worden gewogen.
