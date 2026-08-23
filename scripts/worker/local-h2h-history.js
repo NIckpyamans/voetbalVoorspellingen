@@ -1,6 +1,7 @@
 import fs from "fs";
 import path from "path";
 import { normalizeTeamIdentityName } from "./team-identity.js";
+import { canonicalDedupeTeam } from "../../shared/matchNormalization.js";
 
 function scorePair(value) {
   const match = String(value || "").match(/(\d+)\s*[-:]\s*(\d+)/);
@@ -8,10 +9,10 @@ function scorePair(value) {
 }
 
 function samePair(item, homeName, awayName) {
-  const itemHome = normalizeTeamIdentityName(item?.homeTeamName);
-  const itemAway = normalizeTeamIdentityName(item?.awayTeamName);
-  const home = normalizeTeamIdentityName(homeName);
-  const away = normalizeTeamIdentityName(awayName);
+  const itemHome = canonicalDedupeTeam(item?.homeTeamName || item?.homeTeam || item?.home);
+  const itemAway = canonicalDedupeTeam(item?.awayTeamName || item?.awayTeam || item?.away);
+  const home = canonicalDedupeTeam(homeName);
+  const away = canonicalDedupeTeam(awayName);
   return (itemHome === home && itemAway === away) || (itemHome === away && itemAway === home);
 }
 
@@ -21,12 +22,14 @@ function orient(item, homeName) {
       ? [Number(item.homeScore), Number(item.awayScore)]
       : null);
   if (!rawScore) return null;
-  const currentOrientation = normalizeTeamIdentityName(item.homeTeamName) === normalizeTeamIdentityName(homeName);
+  const itemHomeName = item.homeTeamName || item.homeTeam || item.home;
+  const itemAwayName = item.awayTeamName || item.awayTeam || item.away;
+  const currentOrientation = canonicalDedupeTeam(itemHomeName) === canonicalDedupeTeam(homeName);
   return {
     date: item.date,
     league: item.league,
-    homeTeam: currentOrientation ? item.homeTeamName : item.awayTeamName,
-    awayTeam: currentOrientation ? item.awayTeamName : item.homeTeamName,
+    homeTeam: currentOrientation ? itemHomeName : itemAwayName,
+    awayTeam: currentOrientation ? itemAwayName : itemHomeName,
     homeScore: currentOrientation ? rawScore[0] : rawScore[1],
     awayScore: currentOrientation ? rawScore[1] : rawScore[0],
     source: item.dataSource || item.evaluationSource || "local-reviewed-result",

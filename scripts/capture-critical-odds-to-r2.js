@@ -7,7 +7,7 @@ import { loadLocalEnv } from "../shared/database.js";
 import { fetchOddsAtPrediction } from "./odds-provider.js";
 import { findSportmonksFixture } from "./sportmonks-fixture-resolver.js";
 import { sportmonksEligibleFixtures } from "./worker/sportmonks-coverage-policy.js";
-import { mergeOddsCaptureLedger } from "./worker/critical-captures.js";
+import { classifyOddsCaptureRole, mergeOddsCaptureLedger } from "./worker/critical-captures.js";
 import { summarizeLeagueCoverage } from "./worker/coverage-summary.js";
 
 const ROOT = process.cwd();
@@ -71,6 +71,7 @@ async function main() {
     attemptStatuses: {},
     providerStatuses: {},
     providerQuota: {},
+    skippedExistingRole: 0,
     sportmonksMapped: 0,
     sportmonksMappingStatuses: {},
     matches: [],
@@ -86,6 +87,19 @@ async function main() {
     const minutesBeforeKickoff = Math.round((Date.parse(match.kickoff) - Date.now()) / 60000);
     const closingWindow = minutesBeforeKickoff >= 5 && minutesBeforeKickoff <= 30;
     const capturedAt = new Date().toISOString();
+    const key = buildR2ObjectKey(config, `critical-captures/odds/${match.matchId}.json`);
+    const existingLedger = await readLedger(config, key);
+    const captureRole = classifyOddsCaptureRole(minutesBeforeKickoff);
+    const existingRole = captureRole === "closing"
+      ? existingLedger?.closing
+      : captureRole === "prematch"
+        ? existingLedger?.prematch
+        : existingLedger?.opening;
+    if (existingRole) {
+      report.skippedExistingRole += 1;
+      report.matches.push({ ...match, minutesBeforeKickoff, closingWindow, status: "already_captured", captureRole });
+      continue;
+    }
     const result = await fetchOddsAtPrediction(oddsMatch, {
       generatedAt: capturedAt,
       cutoffAt: capturedAt,
@@ -116,8 +130,7 @@ async function main() {
       report.matches.push({ ...match, minutesBeforeKickoff, closingWindow, status: result?.status || "not_found", sportmonksMapping: sportmonks?.status || "unknown" });
       continue;
     }
-    const key = buildR2ObjectKey(config, `critical-captures/odds/${match.matchId}.json`);
-    const ledger = mergeOddsCaptureLedger(await readLedger(config, key), match, odds);
+    const ledger = mergeOddsCaptureLedger(existingLedger, match, odds);
     await putR2Object({ config, key, body: `${JSON.stringify(ledger)}\n`, contentType: "application/json", metadata: { match: match.matchId, provider: odds.provider } });
     report.captured += 1;
     const latestRole = ledger.snapshots.at(-1)?.roleAtCapture;

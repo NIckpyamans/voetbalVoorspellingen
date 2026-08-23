@@ -177,19 +177,19 @@ async function readCriticalCapture(relativeKey) {
 }
 
 export async function fetchR2LineupSummary(matchId, kickoffAt, now = Date.now()) {
-  if (String(process.env.R2_CRITICAL_CAPTURE_ENABLED || "false").toLowerCase() !== "true") return null;
+  if (String(process.env.R2_CRITICAL_CAPTURE_ENABLED || "true").toLowerCase() === "false") return null;
   const kickoffMs = validDate(kickoffAt);
   if (kickoffMs == null || kickoffMs < now - 10 * MINUTE || kickoffMs > now + 180 * MINUTE) return null;
   return selectConfirmedLineupCapture(await readCriticalCapture(`critical-captures/lineups/${matchId}.json`), kickoffAt);
 }
 
 export async function fetchR2OddsSnapshot(matchId, kickoffAt) {
-  if (String(process.env.R2_CRITICAL_CAPTURE_ENABLED || "false").toLowerCase() !== "true") return null;
+  if (String(process.env.R2_CRITICAL_CAPTURE_ENABLED || "true").toLowerCase() === "false") return null;
   return selectOddsCapture(await readCriticalCapture(`critical-captures/odds/${matchId}.json`), kickoffAt);
 }
 
 export async function fetchR2H2HProfile(matchId, kickoffAt) {
-  if (String(process.env.R2_CRITICAL_CAPTURE_ENABLED || "false").toLowerCase() !== "true") return null;
+  if (String(process.env.R2_CRITICAL_CAPTURE_ENABLED || "true").toLowerCase() === "false") return null;
   const payload = await readCriticalCapture(`critical-captures/h2h/${matchId}.json`);
   const capturedMs = validDate(payload?.capturedAt);
   const kickoffMs = validDate(kickoffAt);

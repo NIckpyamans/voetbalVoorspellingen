@@ -63,6 +63,40 @@ export function buildLocalTeamFormIndex(dayPayloads, options = {}) {
   return index;
 }
 
+export function dayPayloadsFromSnapshotLedger(ledger = {}) {
+  const snapshots = ledger?.predictionSnapshots || {};
+  const evaluations = ledger?.evaluations || {};
+  const days = new Map();
+  for (const [predictionId, evaluation] of Object.entries(evaluations)) {
+    const snapshot = snapshots[predictionId];
+    if (!snapshot || !evaluation) continue;
+    if (evaluation.finalHomeGoals == null || evaluation.finalAwayGoals == null) continue;
+    const homeScore = Number(evaluation.finalHomeGoals);
+    const awayScore = Number(evaluation.finalAwayGoals);
+    if (![homeScore, awayScore].every(Number.isFinite)) continue;
+    const date = String(snapshot.date || snapshot.kickoff || evaluation.kickoff || "").slice(0, 10);
+    const homeTeamName = snapshot.homeTeam || snapshot.prediction?.homeTeam;
+    const awayTeamName = snapshot.awayTeam || snapshot.prediction?.awayTeam;
+    if (!date || !homeTeamName || !awayTeamName) continue;
+    const match = {
+      id: snapshot.matchId || evaluation.matchId,
+      date,
+      kickoff: snapshot.kickoff || evaluation.kickoff || `${date}T12:00:00.000Z`,
+      league: snapshot.league || snapshot.prediction?.league || null,
+      homeTeamName,
+      awayTeamName,
+      homeScore,
+      awayScore,
+      score: `${homeScore}-${awayScore}`,
+      status: "FT",
+      dataSource: evaluation.evaluationSource || "immutable-snapshot-ledger",
+    };
+    if (!days.has(date)) days.set(date, { date, matches: [] });
+    days.get(date).matches.push(match);
+  }
+  return [...days.values()];
+}
+
 export function mergeLocalTeamForm(profile, localMatches, teamName, options = {}) {
   const limit = Math.max(1, Number(options.limit || 10));
   const current = Array.isArray(profile?.recentMatches) ? profile.recentMatches : [];

@@ -347,9 +347,13 @@ function buildDigest() {
   const dataQualityTotals = dataQuality?.totals || {};
   const h2hCoverage = Number(dataQualityTotals.h2hCoverage || 0);
   const regularLeagueGate = snapshotGrowth?.training?.regularLeagueGate || {};
-  const confirmedLineupCoverage = Number(
-    professionalAudit?.recent?.confirmedLineupCoverage ?? lineupMonitor?.confirmedLineupCoverage ?? 0
-  );
+  const professionalLineupCoverage = Number(professionalAudit?.recent?.confirmedLineupCoverage || 0);
+  const monitoredLineupCoverage = Number(lineupMonitor?.confirmedLineupCoverage || 0);
+  const professionalLineupAt = Date.parse(professionalAudit?.generatedAt || "") || 0;
+  const monitoredLineupAt = Date.parse(lineupMonitor?.generatedAt || "") || 0;
+  const confirmedLineupCoverage = monitoredLineupAt >= professionalLineupAt
+    ? monitoredLineupCoverage
+    : professionalLineupCoverage;
   const actualOddsCoverage = Number(professionalAudit?.recent?.actualOddsCoverage || 0);
   const neonError = String(snapshotGrowth?.database?.error || lineupMonitor?.database?.error || "");
   const neonQuotaBlocked = /\b402\b|quota/i.test(neonError);

@@ -3,8 +3,9 @@
 import fs from "fs";
 import path from "path";
 import { getSql, loadLocalEnv } from "../shared/database.js";
+import { loadSnapshotLedger } from "../shared/predictionSnapshotLedger.js";
 import { buildModelPromotionGate } from "./worker/model-promotion.js";
-import { trainingCalibrationRows } from "./worker/model-calibration-data.js";
+import { ledgerCalibrationRows, mergeCalibrationRows, trainingCalibrationRows } from "./worker/model-calibration-data.js";
 import { publishActiveCalibration } from "./worker/r2-model-profiles.js";
 import { isRegularCompetitionRow, uniqueRegularMatchCount } from "./worker/competition-segmentation.js";
 
@@ -137,7 +138,11 @@ function localCalibrationRows() {
 
 async function main() {
   loadLocalEnv(ROOT);
-  const localRows = localCalibrationRows();
+  const trainingRows = localCalibrationRows();
+  const snapshotLedgerLoad = await loadSnapshotLedger({ root: ROOT });
+  const ledgerRows = ledgerCalibrationRows(snapshotLedgerLoad.ledger);
+  const localRows = mergeCalibrationRows(trainingRows, ledgerRows);
+  const immutableSource = ledgerRows.length ? "merged_immutable_training_and_r2" : "immutable_training_fallback";
   const completedSnapshotMatches = new Set(localRows.map((row) => row.match_id).filter(Boolean)).size;
   const completedRegularSnapshotMatches = uniqueRegularMatchCount(localRows);
   const promotionGate = buildModelPromotionGate(completedRegularSnapshotMatches, {
@@ -154,6 +159,15 @@ async function main() {
       uniqueCompletedRegularSnapshotMatches: completedRegularSnapshotMatches,
       minimumUniqueCompletedRegularSnapshotMatches: MIN_UNIQUE_COMPLETED_SNAPSHOT_MATCHES,
       promotionGate,
+      immutableSources: {
+        selected: immutableSource,
+        mergedRows: localRows.length,
+        ledgerRows: ledgerRows.length,
+        trainingRows: trainingRows.length,
+        r2Configured: Boolean(snapshotLedgerLoad.sources.r2?.configured),
+        r2Available: Boolean(snapshotLedgerLoad.sources.r2?.available),
+        r2Error: snapshotLedgerLoad.sources.r2?.error || null,
+      },
       nextAction: `Wacht op ${Math.max(0, MIN_UNIQUE_COMPLETED_SNAPSHOT_MATCHES - completedRegularSnapshotMatches)} extra unieke afgeronde reguliere competitiewedstrijden met pre-match snapshots voordat league/phase-kalibratie draait.`,
     };
     fs.mkdirSync(path.dirname(REPORT_PATH), { recursive: true });
@@ -190,8 +204,8 @@ async function main() {
       database.error = error?.message || String(error);
     }
   }
-  const calibrationSource = database.available && rows.length ? "neon" : "immutable_training_fallback";
-  if (calibrationSource === "immutable_training_fallback") rows = localRows;
+  const calibrationSource = database.available && rows.length ? "neon" : immutableSource;
+  if (calibrationSource !== "neon") rows = localRows;
   rows = rows.filter(isRegularCompetitionRow);
 
   const groups = new Map();
@@ -317,6 +331,15 @@ async function main() {
     promotionGate,
     calibrationSource,
     database,
+    immutableSources: {
+      selected: immutableSource,
+      mergedRows: localRows.length,
+      ledgerRows: ledgerRows.length,
+      trainingRows: trainingRows.length,
+      r2Configured: Boolean(snapshotLedgerLoad.sources.r2?.configured),
+      r2Available: Boolean(snapshotLedgerLoad.sources.r2?.available),
+      r2Error: snapshotLedgerLoad.sources.r2?.error || null,
+    },
     calibrationRows: rows.length,
     uniqueCompletedSnapshotMatches: completedSnapshotMatches,
     uniqueCompletedRegularSnapshotMatches: completedRegularSnapshotMatches,

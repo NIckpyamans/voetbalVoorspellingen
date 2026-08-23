@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 import {
   buildLocalTeamFormIndex,
+  dayPayloadsFromSnapshotLedger,
   mergeLocalTeamForm,
   mergePersistedTeamFormCache,
 } from "../../scripts/worker/local-team-form-history.js";
@@ -23,6 +24,24 @@ describe("local completed fixture form history", () => {
       },
     },
   };
+
+  it("converts evaluated immutable snapshots into completed form history", () => {
+    const days = dayPayloadsFromSnapshotLedger({
+      predictionSnapshots: {
+        p1: { predictionId: "p1", matchId: "m1", date: "2026-08-01", league: "Netherlands - Eredivisie", homeTeam: "Ajax", awayTeam: "Twente" },
+      },
+      evaluations: { p1: { finalHomeGoals: 2, finalAwayGoals: 1, evaluationSource: "r2-evaluator" } },
+    });
+    expect(days[0].matches[0]).toMatchObject({ homeTeamName: "Ajax", awayTeamName: "Twente", score: "2-1", status: "FT" });
+  });
+
+  it("does not turn missing final scores into a false 0-0 result", () => {
+    const days = dayPayloadsFromSnapshotLedger({
+      predictionSnapshots: { p1: { predictionId: "p1", matchId: "m1", date: "2026-08-01", homeTeam: "Ajax", awayTeam: "Twente" } },
+      evaluations: { p1: { finalHomeGoals: null, finalAwayGoals: null } },
+    });
+    expect(days).toHaveLength(0);
+  });
 
   it("orients a completed friendly for both clubs and ignores pending fixtures", () => {
     const index = buildLocalTeamFormIndex([{ matches: [

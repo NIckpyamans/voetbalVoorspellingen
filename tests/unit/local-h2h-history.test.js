@@ -27,4 +27,19 @@ describe("local H2H history", () => {
       results: [{ homeTeam: "NEC Nijmegen", awayTeam: "Bodø/Glimt", homeScore: 0, awayScore: 2 }],
     });
   });
+
+  it("matches canonical club aliases in both home-away orientations", () => {
+    const root = fs.mkdtempSync(path.join(os.tmpdir(), "footyai-h2h-alias-"));
+    roots.push(root);
+    fs.mkdirSync(path.join(root, "data", "days"), { recursive: true });
+    fs.writeFileSync(path.join(root, "data", "days", "2026-08-01.json"), JSON.stringify({
+      matches: [{ date: "2026-08-01", league: "World - Club Friendlies", homeTeamName: "FC Barcelona", awayTeamName: "Manchester City FC", status: "FT", score: "2-1" }],
+    }));
+    const profile = readLocalH2HProfile(root, {
+      kickoff_at: "2026-08-20T19:00:00Z",
+      home_team_name: "Manchester City",
+      away_team_name: "Barcelona",
+    });
+    expect(profile?.results).toMatchObject([{ homeTeam: "Manchester City FC", awayTeam: "FC Barcelona", homeScore: 1, awayScore: 2 }]);
+  });
 });

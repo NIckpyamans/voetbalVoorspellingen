@@ -6,6 +6,8 @@ import { getSql, loadLocalEnv } from "../shared/database.js";
 import { isHiddenInternationalOrWorldCupEntity } from "../shared/competitionVisibility.js";
 import { loadSnapshotLedger } from "../shared/predictionSnapshotLedger.js";
 import { buildModelPromotionGate } from "./worker/model-promotion.js";
+import { ledgerCalibrationRows, mergeCalibrationRows, trainingCalibrationRows } from "./worker/model-calibration-data.js";
+import { uniqueRegularMatchCount } from "./worker/competition-segmentation.js";
 
 const ROOT = process.cwd();
 loadLocalEnv(ROOT);
@@ -85,6 +87,9 @@ const ledgerPredictionIds = new Set(ledgerSnapshots.map((snapshot) => snapshot.p
 const ledgerEvaluations = Object.values(loadedLedger.ledger.evaluations || {}).filter((evaluation) =>
   ledgerPredictionIds.has(evaluation.predictionId)
 );
+const ledgerCalibration = ledgerCalibrationRows(loadedLedger.ledger);
+const trainingCalibration = trainingCalibrationRows(readJsonSafe(path.join("training", "training-snapshot.json"), {}));
+const mergedCalibration = mergeCalibrationRows(trainingCalibration, ledgerCalibration);
 const uniqueLedgerMatches = new Set(ledgerSnapshots.map((snapshot) => snapshot.matchId).filter(Boolean)).size;
 const uniqueEvaluatedMatches = new Set(ledgerEvaluations.map((evaluation) => evaluation.matchId).filter(Boolean)).size;
 function trainingPhase(row) {
@@ -102,7 +107,7 @@ for (const snapshot of ledgerSnapshots) {
 }
 const phaseMix = Object.fromEntries(Object.entries(uniqueMatchesByPhase).map(([phase, ids]) => [phase, ids.size]));
 const regularLeagueCalibrationMin = Number(process.env.REGULAR_LEAGUE_CALIBRATION_MIN_MATCHES || 50);
-const uniqueRegularLeagueMatches = Number(phaseMix.regular_league || 0);
+const uniqueRegularLeagueMatches = uniqueRegularMatchCount(mergedCalibration);
 const regularLeagueGate = {
   uniqueCompletedMatches: uniqueRegularLeagueMatches,
   calibrationMin: regularLeagueCalibrationMin,
@@ -158,6 +163,10 @@ const report = {
         .sort((a, b) => b.rows - a.rows)
         .slice(0, 12),
       uniqueMatchesByPhase: phaseMix,
+      calibrationRows: mergedCalibration.length,
+      ledgerCalibrationRows: ledgerCalibration.length,
+      trainingCalibrationRows: trainingCalibration.length,
+      uniqueCompletedRegularMatches: uniqueRegularLeagueMatches,
     },
   },
   automation: {
