@@ -36,7 +36,7 @@ jobs:
     steps:
       - uses: actions/checkout@v5
         with: { ref: codex/step3b-layout, fetch-depth: 0 }
-      - uses: actions/setup-node@v5
+      - uses: actions/setup-node@v7
         with: { node-version: 22, cache: npm }
       - run: npm ci
       - run: npm run provider:goal-api:acceptance
@@ -63,7 +63,7 @@ jobs:
     steps:
       - uses: actions/checkout@v5
         with: { ref: codex/step3b-layout, fetch-depth: 0 }
-      - uses: actions/setup-node@v5
+      - uses: actions/setup-node@v7
         with: { node-version: 22, cache: npm }
       - run: npm ci
       - run: npm run data:transfermarkt:sync
@@ -91,7 +91,7 @@ jobs:
     steps:
       - uses: actions/checkout@v5
         with: { ref: codex/step3b-layout, fetch-depth: 0 }
-      - uses: actions/setup-node@v5
+      - uses: actions/setup-node@v7
         with: { node-version: 22, cache: npm }
       - run: npm ci
       - if: inputs.target != 'open-data'
@@ -119,7 +119,7 @@ jobs:
     steps:
       - uses: actions/checkout@v5
         with: { ref: codex/step3b-layout }
-      - uses: actions/setup-node@v5
+      - uses: actions/setup-node@v7
         with: { node-version: 22, cache: npm }
       - run: npm ci
       - run: npm run data:betfair:import
