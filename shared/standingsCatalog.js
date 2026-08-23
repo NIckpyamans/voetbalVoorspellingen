@@ -9,6 +9,8 @@ function normalizedTeamName(value) {
   const aliases = {
     "hertha berlin": "hertha",
     "hertha bsc": "hertha",
+    "rennes": "rennes",
+    "stade rennais": "rennes",
   };
   return aliases[normalized] || normalized;
 }
