@@ -457,6 +457,7 @@ export async function fetchEspnScoreboardEvents(dateISO, deps) {
 
       fallbackEvents.push({
         id: `espn-${espnCode}-${event.id || `${dateISO}-${deps.normalizeName(homeName)}-${deps.normalizeName(awayName)}`}`,
+        leagueLabel,
         startTimestamp: Math.floor(kickoff.getTime() / 1000),
         homeTeam: {
           id: String(home?.team?.id || ""),

@@ -8,7 +8,12 @@ import {
 import { buildPoissonScoreModel } from "./worker/prediction.js";
 import { fetchApiFootballH2HProfile } from "./api-football-provider.js";
 import { normalizeOddsSnapshot } from "./odds-provider.js";
-import { filterVisibleMatches, isHiddenInternationalOrWorldCupEntity } from "../shared/competitionVisibility.js";
+import {
+  ACTIVE_COMPETITIONS,
+  filterVisibleMatches,
+  isActiveCompetitionEntity,
+  isHiddenInternationalOrWorldCupEntity,
+} from "../shared/competitionVisibility.js";
 
 const root = process.cwd();
 const file = path.join(root, "server_data.json");
@@ -134,6 +139,15 @@ async function runContractAssertions() {
       { id: "empty-1", league: "World - FIFA World Cup 2026", homeTeamName: "", awayTeamName: "" },
     ]).length === 1,
     "Visible match filter should remove World Cup and empty-team fixtures"
+  );
+  assert(ACTIVE_COMPETITIONS.length === 11, "Active catalog should contain eight domestic and three UEFA leagues");
+  assert(
+    isActiveCompetitionEntity({ league: "Netherlands - Eredivisie", homeTeamName: "PSV Eindhoven", awayTeamName: "FC Groningen" }),
+    "Eredivisie fixtures should remain visible"
+  );
+  assert(
+    !isActiveCompetitionEntity({ league: "Spain - LaLiga", homeTeamName: "Barcelona", awayTeamName: "Villarreal" }),
+    "Competitions outside the selected countries should stay hidden"
   );
   assert(serviceWorkerSource.includes('request.mode === "navigate"'), "Service worker navigation should use the network-first path");
   assert(!serviceWorkerSource.includes('const SHELL = ["/", "/index.html"'), "Service worker must not precache stale app-shell HTML");

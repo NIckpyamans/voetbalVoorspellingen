@@ -5,7 +5,11 @@ import path from "path";
 import crypto from "crypto";
 import { spawnSync } from "child_process";
 import { normalizeMinute, parseMinuteValue } from "../shared/minute.js";
-import { filterVisibleMatches, isHiddenInternationalOrWorldCupEntity } from "../shared/competitionVisibility.js";
+import {
+  ACTIVE_COMPETITIONS,
+  filterVisibleMatches,
+  isHiddenInternationalOrWorldCupEntity,
+} from "../shared/competitionVisibility.js";
 import {
   buildBacktestSummaryFromReviews,
   buildDataCompletenessAudit,
@@ -109,7 +113,7 @@ const LIGHTWEIGHT_REFRESH = process.env.FOOTYAI_LIGHTWEIGHT_REFRESH === "true";
 
 loadLocalEnv(process.cwd());
 
-const LEAGUES = [
+const ALL_LEAGUES = [
   { country: "netherlands", name: "eredivisie", label: "Netherlands - Eredivisie", type: "league" },
   { country: "netherlands", name: "eerste divisie", label: "Netherlands - Eerste Divisie", type: "league" },
   { country: "netherlands", name: "knvb beker", label: "Netherlands - KNVB Beker", type: "cup" },
@@ -135,6 +139,8 @@ const LEAGUES = [
   { country: "world", name: "club friendly", label: "World - Club Friendlies", type: "friendly" },
   { country: "world", name: "club friendlies", label: "World - Club Friendlies", type: "friendly" },
 ];
+const ACTIVE_COMPETITION_SET = new Set(ACTIVE_COMPETITIONS);
+const LEAGUES = ALL_LEAGUES.filter((league) => ACTIVE_COMPETITION_SET.has(league.label));
 
 const sleep = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
 const clamp = (value, min, max) => Math.max(min, Math.min(max, value));
@@ -1109,7 +1115,7 @@ const SPORTSDB_NAME_TO_LABEL = {
   "Spanish La Liga": "Spain - LaLiga",
 };
 
-const ESPN_SCOREBOARD_LEAGUES = {
+const ALL_ESPN_SCOREBOARD_LEAGUES = {
   "Belgium - Pro League": "bel.1",
   "England - Championship": "eng.2",
   "England - Premier League": "eng.1",
@@ -1129,8 +1135,14 @@ const ESPN_SCOREBOARD_LEAGUES = {
   "World - Club Friendlies": "club.friendly",
 };
 
+const ESPN_SCOREBOARD_LEAGUES = Object.fromEntries(
+  Object.entries(ALL_ESPN_SCOREBOARD_LEAGUES).filter(([league]) => ACTIVE_COMPETITION_SET.has(league))
+);
+
 const FRIENDLY_SCOREBOARD_LEAGUES = {
-  "World - Club Friendlies": ESPN_SCOREBOARD_LEAGUES["World - Club Friendlies"],
+  ...(ESPN_SCOREBOARD_LEAGUES["World - Club Friendlies"]
+    ? { "World - Club Friendlies": ESPN_SCOREBOARD_LEAGUES["World - Club Friendlies"] }
+    : {}),
 };
 
 const DEFAULT_ESPN_FRIENDLY_TEAM_IDS = [
@@ -2272,6 +2284,7 @@ const TEAM_ALIAS_GROUPS = [
   ["ogc nice", "nice"],
   ["aj auxerre", "auxerre"],
   ["angers sco", "angers"],
+  ["stade rennais", "rennes", "stade rennais fc"],
 ];
 
 // Forza gebruikt numerieke team-id's in publieke squad-URL's. We houden deze lijst klein en veilig:
@@ -9713,10 +9726,14 @@ function defaultStore() {
   };
 }
 
-function removeHiddenInternationalStoreData(store) {
+function removeHiddenInternationalStoreData(store, activeFromDate = null) {
   const hiddenMatchIds = new Set();
   for (const [date, matches] of Object.entries(store.matches || {})) {
-    const visibleMatches = filterVisibleMatches(matches);
+    // Historical club data remains available for training and audit. The
+    // selected competition scope applies to the active calendar only.
+    const visibleMatches = activeFromDate && date < activeFromDate
+      ? (matches || [])
+      : filterVisibleMatches(matches);
     for (const match of matches || []) {
       if (!visibleMatches.includes(match) && match?.id) hiddenMatchIds.add(match.id);
     }
@@ -11888,7 +11905,7 @@ async function main() {
 
   rebuildStandingsFromArchivedSeasonDays(store);
   applyLiveStandingsOverlay(store);
-  removeHiddenInternationalStoreData(store);
+  removeHiddenInternationalStoreData(store, today);
   compactStore(store, today, now);
   rebuildReviewsAndLearning(store);
   store.backtestSegmentation = buildBacktestSegmentation(store);

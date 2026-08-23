@@ -190,11 +190,6 @@ export function mergeCatalogStandings(existingStandings = {}, catalog = {}, comp
     usedLabels.add(label);
   }
 
-  for (const [key, standing] of existingEntries) {
-    const label = String(standing?.label || "").trim();
-    if (!label || usedLabels.has(label)) continue;
-    merged[key] = standing;
-  }
   return merged;
 }
 

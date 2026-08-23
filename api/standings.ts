@@ -5,8 +5,10 @@ import { databaseConfigured, getSql } from "../shared/database.js";
 import { buildCupSheetsFromMatches } from "../shared/cupSheets.js";
 import competitionCatalog from "../config/competition-catalog.json" with { type: "json" };
 import { mergeCatalogStandings } from "../shared/standingsCatalog.js";
+import { ACTIVE_COMPETITIONS } from "../shared/competitionVisibility.js";
 
 const logger = createLogger("api.standings");
+const activeCompetitionSet = new Set(ACTIVE_COMPETITIONS);
 
 function buildCatalogStandings(existingStandings: Record<string, any> = {}, completedMatches: any[] = []) {
   return mergeCatalogStandings(existingStandings, competitionCatalog, completedMatches);
@@ -283,7 +285,9 @@ export default async function handler(req: any, res: any) {
       knockoutOverview: store.knockoutOverview || {},
       cupSheets,
       databaseSeasonOverview,
-      databaseCoverageByCompetition,
+    databaseCoverageByCompetition: Array.isArray(databaseCoverageByCompetition)
+      ? databaseCoverageByCompetition.filter((item: any) => activeCompetitionSet.has(item.label))
+      : databaseCoverageByCompetition,
       lastRun: store.lastRun || null,
       workerVersion: store.workerVersion || "unknown",
       reviewCount: Object.keys(store.postMatchReviews || {}).length,

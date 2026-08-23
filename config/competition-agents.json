@@ -1,6 +1,6 @@
 {
   "schemaVersion": "competition-data-agents-v1",
-  "policy": "Een centrale quota-bewuste orchestrator voert per competitie een expliciet bronprofiel uit. Agents verzinnen nooit ontbrekende data.",
+  "policy": "One quota-aware orchestrator enriches only the selected eight domestic and three UEFA club competitions. Historical matches remain available for learning.",
   "sourceStatus": {
     "fotmob": "active",
     "sky": "active_uefa",
@@ -25,25 +25,74 @@
   },
   "profiles": {
     "domestic": {
-      "fixtures": ["fotmob", "espn", "football-data-org", "thesportsdb", "goal-api"],
-      "h2h": ["canonical-history", "football-data-co-uk", "openfootball", "espn", "apifootball-com", "goal-api", "api-football"],
-      "lineups": ["sofascore", "fotmob", "apifootball-com", "goal-api", "sportmonks", "api-football"],
-      "rosters": ["transfermarkt-datasets", "football-data-org", "thesportsdb", "sportmonks"],
-      "form": ["canonical-history", "football-data-co-uk", "espn"]
+      "fixtures": [
+        "fotmob",
+        "espn",
+        "football-data-org",
+        "thesportsdb",
+        "goal-api"
+      ],
+      "h2h": [
+        "canonical-history",
+        "football-data-co-uk",
+        "openfootball",
+        "espn",
+        "apifootball-com",
+        "goal-api",
+        "api-football"
+      ],
+      "lineups": [
+        "sofascore",
+        "fotmob",
+        "apifootball-com",
+        "goal-api",
+        "sportmonks",
+        "api-football"
+      ],
+      "rosters": [
+        "transfermarkt-datasets",
+        "football-data-org",
+        "thesportsdb",
+        "sportmonks"
+      ],
+      "form": [
+        "canonical-history",
+        "football-data-co-uk",
+        "espn"
+      ]
     },
     "uefa": {
-      "fixtures": ["sky", "fotmob", "espn", "bbc", "goal-api"],
-      "h2h": ["canonical-history", "espn", "openfootball", "goal-api", "api-football"],
-      "lineups": ["fotmob", "sofascore", "goal-api", "api-football", "sportmonks"],
-      "rosters": ["football-data-org", "thesportsdb", "sportmonks"],
-      "form": ["canonical-history", "espn", "football-data-co-uk"]
-    },
-    "friendly": {
-      "fixtures": ["fotmob", "espn", "official-club", "thesportsdb", "goal-api"],
-      "h2h": ["canonical-history", "espn", "goal-api", "api-football"],
-      "lineups": ["fotmob", "sofascore", "goal-api", "api-football"],
-      "rosters": ["football-data-org", "thesportsdb", "sportmonks"],
-      "form": ["canonical-history", "espn"]
+      "fixtures": [
+        "sky",
+        "fotmob",
+        "espn",
+        "bbc",
+        "goal-api"
+      ],
+      "h2h": [
+        "canonical-history",
+        "espn",
+        "openfootball",
+        "goal-api",
+        "api-football"
+      ],
+      "lineups": [
+        "fotmob",
+        "sofascore",
+        "goal-api",
+        "api-football",
+        "sportmonks"
+      ],
+      "rosters": [
+        "football-data-org",
+        "thesportsdb",
+        "sportmonks"
+      ],
+      "form": [
+        "canonical-history",
+        "espn",
+        "football-data-co-uk"
+      ]
     }
   },
   "targets": {
@@ -51,24 +100,67 @@
     "formMatches": 10,
     "h2hMatches": 5,
     "rosterPlayers": 18,
-    "captureWindows": ["t75", "t45", "t20"]
+    "captureWindows": [
+      "t75",
+      "t45",
+      "t20"
+    ]
   },
   "agents": [
-    { "key": "belgium-pro-league-agent", "league": "Belgium - Pro League", "profile": "domestic" },
-    { "key": "england-championship-agent", "league": "England - Championship", "profile": "domestic" },
-    { "key": "england-premier-league-agent", "league": "England - Premier League", "profile": "domestic" },
-    { "key": "champions-league-agent", "league": "Europe - Champions League", "profile": "uefa" },
-    { "key": "conference-league-agent", "league": "Europe - Conference League", "profile": "uefa" },
-    { "key": "europa-league-agent", "league": "Europe - Europa League", "profile": "uefa" },
-    { "key": "france-ligue-1-agent", "league": "France - Ligue 1", "profile": "domestic" },
-    { "key": "france-ligue-2-agent", "league": "France - Ligue 2", "profile": "domestic" },
-    { "key": "germany-bundesliga-agent", "league": "Germany - Bundesliga", "profile": "domestic" },
-    { "key": "italy-serie-a-agent", "league": "Italy - Serie A", "profile": "domestic" },
-    { "key": "italy-serie-b-agent", "league": "Italy - Serie B", "profile": "domestic" },
-    { "key": "netherlands-eerste-divisie-agent", "league": "Netherlands - Eerste Divisie", "profile": "domestic" },
-    { "key": "netherlands-eredivisie-agent", "league": "Netherlands - Eredivisie", "profile": "domestic" },
-    { "key": "portugal-liga-portugal-agent", "league": "Portugal - Liga Portugal", "profile": "domestic" },
-    { "key": "spain-laliga-agent", "league": "Spain - LaLiga", "profile": "domestic" },
-    { "key": "club-friendlies-agent", "league": "World - Club Friendlies", "profile": "friendly" }
+    {
+      "key": "netherlands-eredivisie-agent",
+      "league": "Netherlands - Eredivisie",
+      "profile": "domestic"
+    },
+    {
+      "key": "netherlands-eerste-divisie-agent",
+      "league": "Netherlands - Eerste Divisie",
+      "profile": "domestic"
+    },
+    {
+      "key": "germany-bundesliga-agent",
+      "league": "Germany - Bundesliga",
+      "profile": "domestic"
+    },
+    {
+      "key": "germany-2-bundesliga-agent",
+      "league": "Germany - 2. Bundesliga",
+      "profile": "domestic"
+    },
+    {
+      "key": "england-premier-league-agent",
+      "league": "England - Premier League",
+      "profile": "domestic"
+    },
+    {
+      "key": "england-championship-agent",
+      "league": "England - Championship",
+      "profile": "domestic"
+    },
+    {
+      "key": "france-ligue-1-agent",
+      "league": "France - Ligue 1",
+      "profile": "domestic"
+    },
+    {
+      "key": "france-ligue-2-agent",
+      "league": "France - Ligue 2",
+      "profile": "domestic"
+    },
+    {
+      "key": "champions-league-agent",
+      "league": "Europe - Champions League",
+      "profile": "uefa"
+    },
+    {
+      "key": "europa-league-agent",
+      "league": "Europe - Europa League",
+      "profile": "uefa"
+    },
+    {
+      "key": "conference-league-agent",
+      "league": "Europe - Conference League",
+      "profile": "uefa"
+    }
   ]
 }

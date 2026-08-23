@@ -31,6 +31,22 @@ const HIDDEN_TEAM_PATTERNS = [
   /\bgroup\s+[a-z]\s+(winner|runner[-\s]?up|third)/i,
 ];
 
+export const ACTIVE_COMPETITIONS = Object.freeze([
+  "Netherlands - Eredivisie",
+  "Netherlands - Eerste Divisie",
+  "Germany - Bundesliga",
+  "Germany - 2. Bundesliga",
+  "England - Premier League",
+  "England - Championship",
+  "France - Ligue 1",
+  "France - Ligue 2",
+  "Europe - Champions League",
+  "Europe - Europa League",
+  "Europe - Conference League",
+]);
+
+const ACTIVE_COMPETITION_SET = new Set(ACTIVE_COMPETITIONS.map((league) => league.toLowerCase()));
+
 function text(value) {
   return String(value || "");
 }
@@ -72,8 +88,16 @@ export function isHiddenInternationalOrWorldCupEntity(entity = {}) {
   return false;
 }
 
+export function isActiveCompetitionEntity(entity = {}) {
+  if (isHiddenInternationalOrWorldCupEntity(entity)) return false;
+  const league = text(
+    entity.league || entity.leagueLabel || entity.competition || entity.competitionName || entity.tournament
+  ).trim();
+  return ACTIVE_COMPETITION_SET.has(league.toLowerCase());
+}
+
 export function filterVisibleMatches(matches = []) {
-  return (Array.isArray(matches) ? matches : []).filter((match) => !isHiddenInternationalOrWorldCupEntity(match));
+  return (Array.isArray(matches) ? matches : []).filter(isActiveCompetitionEntity);
 }
 
 export function filterVisiblePredictions(predictions = [], matches = []) {
