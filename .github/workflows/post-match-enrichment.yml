@@ -2,6 +2,13 @@ name: Post-match Enrichment
 
 on:
   workflow_dispatch:
+    inputs:
+      days_back:
+        description: "Aantal recente dagen voor H2H-, vorm- en lineupbackfill"
+        required: false
+        default: "35"
+  schedule:
+    - cron: "37 2 * * *"
 
 concurrency:
   group: football-data-refresh
@@ -17,6 +24,8 @@ env:
   FOOTYAI_REFRESH_MODE: live-results
   FOOTYAI_DATE_WINDOW: -7..-1
   FOOTYAI_LIGHTWEIGHT_REFRESH: "true"
+  RECENT_CONTEXT_DAYS_BACK: ${{ inputs.days_back || '35' }}
+  RECENT_CONTEXT_LINEUP_LIMIT: "60"
   API_KEY_FOOTBALL_DATA: ${{ secrets.API_KEY_FOOTBALL_DATA }}
   API_KEY_API_FOOTBALL: ${{ secrets.API_KEY_API_FOOTBALL }}
   APIFOOTBALL_API_KEY: ${{ secrets.APIFOOTBALL_API_KEY }}
@@ -53,6 +62,9 @@ jobs:
       - name: Backfill scores, incidents, cards, referee and match statistics
         timeout-minutes: 14
         run: node scripts/ci-neon-safe.js -- node scripts/server-worker.js
+      - name: Backfill recent H2H, form and historical confirmed lineups
+        timeout-minutes: 8
+        run: npm run data:recent-context:backfill
       - name: Rebuild post-match quality audit
         run: npm run monitor:data-quality
       - name: Keep static day snapshots compact
@@ -62,7 +74,7 @@ jobs:
           BRANCH_NAME="${DATA_BRANCH:-${{ github.ref_name }}}"
           git config user.name github-actions
           git config user.email github-actions@github.com
-          git add data monitor/data-quality-audit.json monitor/data-quality-audit.md
+          git add data monitor/data-quality-audit.json monitor/data-quality-audit.md monitor/recent-match-context-backfill.json
           git diff --staged --quiet && echo "geen post-matchwijzigingen" && exit 0
           git commit -m "post-match enrichment [skip vercel]"
           for attempt in 1 2 3; do

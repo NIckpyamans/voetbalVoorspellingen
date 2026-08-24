@@ -92,7 +92,15 @@ function hasRecentForm(match) {
 }
 
 function hasConfirmedLineup(match) {
-  return Boolean(match?._prediction?.lineupSummary?.confirmed || match?.lineupSummary?.confirmed || match?.lineupStatus === "confirmed");
+  const predictionLineup = match?._prediction?.lineupSummary;
+  const matchLineup = match?.lineupSummary;
+  const safeMatchLineup = matchLineup?.confirmed && !matchLineup?.historicalBackfill && matchLineup?.preMatchUsable !== false;
+  return Boolean(predictionLineup?.confirmed || safeMatchLineup || match?.lineupStatus === "confirmed");
+}
+
+function hasHistoricalConfirmedLineup(match) {
+  const lineup = match?.lineupSummary;
+  return Boolean(lineup?.confirmed && lineup?.historicalBackfill && lineup?.captureTiming === "post_match");
 }
 
 function normalizeTeam(value) {
@@ -218,6 +226,7 @@ function coverageRow(matches, reviewIndex) {
     },
     postMatch: {
       finalScore: metric(finished, hasFinalScore),
+      historicalLineup: metric(finished, hasHistoricalConfirmedLineup),
       review: metric(finished, (match) => hasReview(match, reviewIndex)),
       reviewEligible: {
         covered: count(reviewEligible, (match) => hasReview(match, reviewIndex)),
@@ -301,7 +310,7 @@ function main() {
     coverage,
     byCompetition,
     backfillPolicy: {
-      canBackfillAfterMatch: ["finalScore", "postMatchReview", "statistics", "goalMinutes", "cards", "referee", "confirmedLineup"],
+      canBackfillAfterMatch: ["finalScore", "postMatchReview", "statistics", "goalMinutes", "cards", "referee", "historicalConfirmedLineup"],
       cannotReconstructSafely: ["openingOdds", "prematchOdds", "closingOddsWithoutTimestamp", "preKickoffAvailability"],
     },
     samples: {
@@ -344,6 +353,7 @@ function main() {
     `- Lekvrije post-matchreviews: ${Math.round(report.coverage.postMatch.reviewEligible.pct * 100)}% (${report.coverage.postMatch.reviewEligible.covered}/${report.coverage.postMatch.reviewEligible.total})`,
     `- Bruikbare wedstrijdstatistieken: ${Math.round(report.coverage.postMatch.statistics.pct * 100)}%`,
     `- Bevestigde opstellingen: ${Math.round(report.coverage.predictionInputs.lineupConfirmed.pct * 100)}%`,
+    `- Historisch teruggevonden basiselftallen: ${Math.round(report.coverage.postMatch.historicalLineup.pct * 100)}%`,
     `- Verse getimestampte prematch-odds: ${Math.round(report.coverage.predictionInputs.timestampedOdds.pct * 100)}%`,
     `- Volledige pre-match bewijsset: ${Math.round(report.coverage.predictionInputs.wagerEvidence.pct * 100)}%`,
     `- Doelpunten met tijdlijn: ${Math.round(report.coverage.postMatch.goalTimeline.pct * 100)}%`,

@@ -482,14 +482,19 @@ function LineupTab({ match, prediction }: { match: any; prediction: any }) {
   const impact = prediction.modelEdges?.lineupImpact || match.modelEdges?.lineupImpact;
   const adjustment = prediction.modelEdges?.lineupAdjustment || match.modelEdges?.lineupAdjustment;
   const source = lineup?.source || "lineup-context";
+  const historicalLineup = Boolean(lineup?.historicalBackfill || lineup?.captureTiming === "post_match");
   return (
     <div className="space-y-2">
       <div className="rounded-xl border border-cyan-400/15 bg-cyan-950/15 p-3">
         <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
           <div>
-            <div className="text-[8px] font-black uppercase text-cyan-300">Voorspelde opstelling</div>
+            <div className="text-[8px] font-black uppercase text-cyan-300">{historicalLineup ? "Werkelijke opstelling" : "Voorspelde opstelling"}</div>
             <div className="text-[9px] text-slate-400">
-              {lineup?.confirmed ? "Bevestigde opstellingen gevonden; model gebruikt deze sterker." : "Nog geen officiële XI; model gebruikt verwachte XI uit squad, vorm en beschikbaarheid."}
+              {historicalLineup
+                ? "Na afloop teruggevonden. Deze XI verbetert toekomstige teamanalyse, maar wordt niet achteraf als pre-match bewijs gebruikt."
+                : lineup?.confirmed
+                  ? "Bevestigde opstellingen gevonden; model gebruikt deze sterker."
+                  : "Nog geen officiële XI; model gebruikt verwachte XI uit squad, vorm en beschikbaarheid."}
             </div>
           </div>
           <div className="flex flex-wrap gap-1">
