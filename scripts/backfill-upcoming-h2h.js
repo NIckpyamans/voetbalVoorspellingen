@@ -3,6 +3,7 @@
 import crypto from "crypto";
 import fs from "fs";
 import path from "path";
+import { pathToFileURL } from "url";
 import { fetchApiFootballH2HProfile, summarizeApiFootballUsage } from "./api-football-provider.js";
 import { getApiFootballKey } from "./provider-env.js";
 import { getSql, loadLocalEnv } from "../shared/database.js";
@@ -16,6 +17,7 @@ import { buildProviderAcceptanceState } from "./worker/orchestration-policy.js";
 import { orderH2HCandidatesByCompetition } from "./worker/h2h-candidate-priority.js";
 import { getCompetitionAgent } from "./worker/competition-agents.js";
 import { readLocalH2HProfile } from "./worker/local-h2h-history.js";
+import { normalizeStaticH2H } from "./worker/h2h-static.js";
 
 const ROOT = process.cwd();
 const OUTPUT_JSON = path.join(ROOT, "monitor", "h2h-upcoming-backfill.json");
@@ -39,6 +41,23 @@ function readJson(filePath) {
   } catch {
     return null;
   }
+}
+
+function persistStaticH2H(match, profile) {
+  if (Date.now() >= Date.parse(match.kickoff_at)) return { updated: false, reason: "after_kickoff" };
+  const filePath = path.join(ROOT, "data", "days", `${match.date_key}.json`);
+  const payload = readJson(filePath);
+  if (!payload || !Array.isArray(payload.matches)) return { updated: false, reason: "day_file_missing" };
+  const target = payload.matches.find((item) => String(item.id) === String(match.match_id));
+  if (!target) return { updated: false, reason: "match_missing" };
+  const h2h = normalizeStaticH2H(match, profile);
+  if (!h2h) return { updated: false, reason: "profile_empty" };
+  if (Number(target?.h2h?.played || 0) >= h2h.played) return { updated: false, reason: "existing_profile_equal_or_better" };
+  target.h2h = h2h;
+  target.h2hStatus = h2h.status;
+  target.sourceAsOf = { ...(target.sourceAsOf || {}), h2h: h2h.asOf };
+  fs.writeFileSync(filePath, `${JSON.stringify(payload)}\n`);
+  return { updated: true, filePath };
 }
 
 function edgeIds(homeClubId, awayClubId, competitionId) {
@@ -277,6 +296,7 @@ async function main() {
   const noDirectHistory = [];
   const errors = [];
   let r2Stored = 0;
+  let staticUpdated = 0;
 
   for (const match of candidates) {
     try {
@@ -290,6 +310,8 @@ async function main() {
         }
       }
       if (databaseProfile?.results?.length) {
+        const staticWrite = persistStaticH2H(match, databaseProfile);
+        if (staticWrite.updated) staticUpdated += 1;
         const r2 = await storeR2H2H(match, databaseProfile).catch(() => null);
         if (r2?.ok) r2Stored += 1;
         if (databaseWritable) {
@@ -347,6 +369,8 @@ async function main() {
       });
       const resolvedProfile = profile?.results?.length ? profile : espnProfile;
       if (resolvedProfile?.results?.length) {
+        const staticWrite = persistStaticH2H(match, resolvedProfile);
+        if (staticWrite.updated) staticUpdated += 1;
         const r2 = await storeR2H2H(match, resolvedProfile).catch((error) => ({ ok: false, error: error?.message || String(error) }));
         if (r2?.ok) r2Stored += 1;
         if (databaseWritable) {
@@ -395,6 +419,7 @@ async function main() {
     databaseWritable,
     databaseError,
     r2Stored,
+    staticUpdated,
     filled: filled.length,
     noDirectHistory: noDirectHistory.length,
     errors: errors.length,
@@ -461,7 +486,9 @@ async function main() {
   console.log(JSON.stringify(report, null, 2));
 }
 
-main().catch((error) => {
-  console.error(error);
-  process.exit(1);
-});
+if (process.argv[1] && import.meta.url === pathToFileURL(process.argv[1]).href) {
+  main().catch((error) => {
+    console.error(error);
+    process.exit(1);
+  });
+}

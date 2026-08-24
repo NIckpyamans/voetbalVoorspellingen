@@ -2,6 +2,8 @@ name: Upcoming H2H enrichment
 
 on:
   workflow_dispatch:
+  schedule:
+    - cron: "17 */3 * * *"
 
 concurrency:
   group: football-h2h-enrichment
@@ -52,6 +54,7 @@ jobs:
           for report in monitor/h2h-upcoming-backfill.json monitor/h2h-upcoming-backfill.md; do
             if [ -f "$report" ]; then git add "$report"; fi
           done
+          git add data/days/*.json
           git diff --staged --quiet && exit 0
           git commit -m "update upcoming H2H enrichment [skip vercel]"
           for attempt in 1 2 3; do
