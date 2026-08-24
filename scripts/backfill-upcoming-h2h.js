@@ -13,6 +13,7 @@ import { getKnownProviderIds } from "./worker/team-identity.js";
 import { fetchEspnH2HProfile } from "./providers/espn-h2h-provider.js";
 import { fetchApiFootballComH2HProfile } from "./providers/apifootball-com-provider.js";
 import { fetchGoalApiH2HProfile } from "./providers/goal-api-provider.js";
+import { fetchFootballDataCoUkH2HProfile } from "./providers/football-data-co-uk-h2h-provider.js";
 import { buildProviderAcceptanceState } from "./worker/orchestration-policy.js";
 import { orderH2HCandidatesByCompetition } from "./worker/h2h-candidate-priority.js";
 import { getCompetitionAgent } from "./worker/competition-agents.js";
@@ -157,9 +158,11 @@ async function upsertH2HEdge(sql, match, profile) {
         ? "espn-team-schedule"
         : profileSource.includes("apifootball-com")
           ? "apifootball-com"
-        : profileSource.includes("goal-api")
-          ? "goal-api"
-        : "api-football";
+          : profileSource.includes("goal-api")
+            ? "goal-api"
+            : profileSource.includes("football-data.co.uk")
+              ? "football-data-co-uk"
+              : "api-football";
   const sourceRecordId = `${provider}-h2h:${digest(`${match.match_id}|${profile.asOf || ""}|${JSON.stringify(oriented)}`)}`;
 
   await sql.query(
@@ -346,32 +349,35 @@ async function main() {
         continue;
       }
       const localProfile = readLocalH2HProfile(ROOT, match);
-      const apiFootballComProfile = localProfile?.results?.length ? null : await fetchApiFootballComH2HProfile({
+      const footballDataProfile = localProfile?.results?.length ? null : await fetchFootballDataCoUkH2HProfile(match);
+      const apiFootballComProfile = localProfile?.results?.length || footballDataProfile?.results?.length ? null : await fetchApiFootballComH2HProfile({
         homeName: match.home_team_name,
         awayName: match.away_team_name,
         leagueLabel: match.league,
       });
-      const goalApiProfile = localProfile?.results?.length || apiFootballComProfile?.results?.length
+      const goalApiProfile = localProfile?.results?.length || footballDataProfile?.results?.length || apiFootballComProfile?.results?.length
         ? null
         : await fetchGoalApiH2HProfile(match);
       const profile = localProfile?.results?.length
         ? localProfile
-        : apiFootballComProfile?.results?.length
-          ? apiFootballComProfile
-          : goalApiProfile?.results?.length
-            ? goalApiProfile
-          : apiFootballEnabled
-        ? await fetchApiFootballH2HProfile({
-            store,
-            homeName: match.home_team_name,
-            awayName: match.away_team_name,
-            homeId: match.home_club_id,
-            awayId: match.away_club_id,
-            homeProviderIds: getKnownProviderIds(match.home_team_name),
-            awayProviderIds: getKnownProviderIds(match.away_team_name),
-            leagueLabel: match.league,
-          })
-          : null;
+        : footballDataProfile?.results?.length
+          ? footballDataProfile
+          : apiFootballComProfile?.results?.length
+            ? apiFootballComProfile
+            : goalApiProfile?.results?.length
+              ? goalApiProfile
+              : apiFootballEnabled
+                ? await fetchApiFootballH2HProfile({
+                    store,
+                    homeName: match.home_team_name,
+                    awayName: match.away_team_name,
+                    homeId: match.home_club_id,
+                    awayId: match.away_club_id,
+                    homeProviderIds: getKnownProviderIds(match.home_team_name),
+                    awayProviderIds: getKnownProviderIds(match.away_team_name),
+                    leagueLabel: match.league,
+                  })
+                : null;
       const espnProfile = profile?.results?.length ? null : await fetchEspnH2HProfile({
         store,
         homeName: match.home_team_name,
