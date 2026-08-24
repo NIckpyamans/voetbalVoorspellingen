@@ -1,6 +1,6 @@
 # Upcoming H2H Backfill
 
-Laatst bijgewerkt: 2026-08-24T21:45:14.501Z
+Laatst bijgewerkt: 2026-08-24T22:11:15.581Z
 Gecontroleerd: 32
 Gevuld: 0
 Geen directe H2H: 32
@@ -26,9 +26,9 @@ API-Football blijft quota-bewust geblokkeerd totdat de acceptatietest slaagt; ES
 - 2026-08-28: RKC Waalwijk - Jong PSV (provider_acceptance_blocked)
 - 2026-08-28: Roda JC Kerkrade - NAC Breda (provider_acceptance_blocked)
 - 2026-08-28: TOP Oss - Jong FC Utrecht (provider_acceptance_blocked)
-- 2026-08-29: RB Leipzig - Borussia Mönchengladbach (provider_acceptance_blocked)
-- 2026-08-29: Karlsruher SC - Wolfsburg (provider_acceptance_blocked)
-- 2026-08-29: Liverpool - Nottingham Forest (provider_acceptance_blocked)
-- 2026-08-29: 1. FSV Mainz 05 - SC Paderborn 07 (provider_acceptance_blocked)
+- 2026-08-29: Karlsruher SC - VfL Wolfsburg (provider_acceptance_blocked)
 - 2026-08-29: Energie Cottbus - Greuther Fürth (provider_acceptance_blocked)
+- 2026-08-29: Liverpool - Nottingham Forest (provider_acceptance_blocked)
+- 2026-08-29: Elversberg - Bayer Leverkusen (provider_acceptance_blocked)
+- 2026-08-29: FC Heidenheim - Dynamo Dresden (provider_acceptance_blocked)
 - 2026-08-29: Coventry City - Hull City (provider_acceptance_blocked)
