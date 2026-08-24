@@ -1,6 +1,6 @@
 {
-  "generatedAt": "2026-08-23T22:39:15.119Z",
-  "date": "2026-08-24",
+  "generatedAt": "2026-08-24T22:45:55.526Z",
+  "date": "2026-08-25",
   "name": "Ruflo-style gratis AI monitor",
   "mode": "naast-productie",
   "productionSafe": true,
@@ -81,22 +81,11 @@
       "actions": []
     },
     "control": {
-      "score": 60,
-      "summary": "Ontwikkelcontrole: 1 actieve monitorissues op 2026-08-24; digest 2026-08-16 t/m 2026-08-22.",
-      "latestDay": "2026-08-24",
-      "shouldPropose": true,
-      "actions": [
-        {
-          "priority": "medium",
-          "title": "Alle wedstrijden van vandaag hebben lege H2H-data.",
-          "freeSolution": "Vul H2H uit openfootball/football-data competitiebestanden voordat de UI leeg toont.",
-          "files": [
-            "scripts/server-worker.js",
-            "components/MatchCard.tsx"
-          ],
-          "status": "monitor"
-        }
-      ]
+      "score": 100,
+      "summary": "Ontwikkelcontrole: 0 actieve monitorissues op 2026-08-25; digest 2026-08-16 t/m 2026-08-22.",
+      "latestDay": "2026-08-25",
+      "shouldPropose": false,
+      "actions": []
     }
   },
   "topThemes": [
@@ -106,14 +95,6 @@
       "priority": "medium",
       "agents": [
         "data"
-      ]
-    },
-    {
-      "title": "Alle wedstrijden van vandaag hebben lege H2H-data.",
-      "count": 1,
-      "priority": "medium",
-      "agents": [
-        "control"
       ]
     }
   ],
@@ -128,17 +109,6 @@
       ],
       "status": "aanbevolen",
       "agent": "data"
-    },
-    {
-      "priority": "medium",
-      "title": "Alle wedstrijden van vandaag hebben lege H2H-data.",
-      "freeSolution": "Vul H2H uit openfootball/football-data competitiebestanden voordat de UI leeg toont.",
-      "files": [
-        "scripts/server-worker.js",
-        "components/MatchCard.tsx"
-      ],
-      "status": "monitor",
-      "agent": "control"
     }
   ],
   "freeOnlyGuardrails": [
