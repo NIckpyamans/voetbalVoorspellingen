@@ -1,9 +1,9 @@
 # Upcoming H2H Backfill
 
-Laatst bijgewerkt: 2026-08-24T17:03:16.142Z
+Laatst bijgewerkt: 2026-08-24T17:53:34.375Z
 Gecontroleerd: 24
-Gevuld: 2
-Geen directe H2H: 22
+Gevuld: 6
+Geen directe H2H: 18
 Errors: 0
 
 ## Aanbeveling
@@ -12,6 +12,10 @@ API-Football blijft quota-bewust geblokkeerd totdat de acceptatietest slaagt; ES
 ## Gevuld
 - 2026-08-24: Reims - Annecy FC (2)
 - 2026-08-24: Fulham - Chelsea (5)
+- 2026-08-28: Lille - Paris Saint-Germain (5)
+- 2026-08-29: Annecy FC - Metz (4)
+- 2026-08-29: Lyon - Le Havre (5)
+- 2026-08-29: AFC Bournemouth - Everton (5)
 
 ## Geen Directe H2H
 - 2026-08-24: Jong FC Utrecht - Heracles (provider_acceptance_blocked)
@@ -30,7 +34,5 @@ API-Football blijft quota-bewust geblokkeerd totdat de acceptatietest slaagt; ES
 - 2026-08-28: RKC Waalwijk - Jong PSV (provider_acceptance_blocked)
 - 2026-08-28: Roda JC Kerkrade - NAC Breda (provider_acceptance_blocked)
 - 2026-08-28: TOP Oss - Jong FC Utrecht (provider_acceptance_blocked)
-- 2026-08-29: Union Berlin - Eintracht Frankfurt (provider_acceptance_blocked)
-- 2026-08-29: Energie Cottbus - Greuther Fürth (provider_acceptance_blocked)
-- 2026-08-29: Liverpool - Nottingham Forest (provider_acceptance_blocked)
-- 2026-08-29: Borussia Dortmund - Hamburger SV (provider_acceptance_blocked)
+- 2026-08-29: 1. FC Heidenheim 1846 - Dynamo Dresden (provider_acceptance_blocked)
+- 2026-08-29: Karlsruher SC - Wolfsburg (provider_acceptance_blocked)
