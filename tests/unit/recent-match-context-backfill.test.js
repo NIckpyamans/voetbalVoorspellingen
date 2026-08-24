@@ -43,4 +43,16 @@ describe("recent match context backfill", () => {
     expect(h2h.played).toBe(2);
     expect(h2h.results.some((result) => result.date === target.date)).toBe(false);
   });
+
+  it("keeps the target result out even when the source row uses compact names", () => {
+    const compactTarget = {
+      eventId: target.id,
+      date: target.date,
+      home: target.homeTeamName,
+      away: target.awayTeamName,
+      score: target.score,
+    };
+    const h2h = buildHistoricalH2H(target, [...history, target]);
+    expect(h2h.results).not.toContainEqual(compactTarget);
+  });
 });

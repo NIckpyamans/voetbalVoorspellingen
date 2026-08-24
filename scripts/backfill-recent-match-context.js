@@ -46,6 +46,29 @@ function fixtureKey(match) {
   return `${String(match?.date || match?._dateKey || "").slice(0, 10)}|${pair}|${match?.score || ""}`;
 }
 
+function containsTargetFixture(rows, target) {
+  const targetId = String(target?.id || "");
+  const targetKey = fixtureKey(target);
+  return (Array.isArray(rows) ? rows : []).some((row) => {
+    if (targetId && String(row?.eventId || row?.id || "") === targetId) return true;
+    return fixtureKey({
+      ...row,
+      homeTeamName: row?.homeTeamName || row?.home,
+      awayTeamName: row?.awayTeamName || row?.away,
+    }) === targetKey;
+  });
+}
+
+function formContainsTarget(rows, target, teamName) {
+  const targetId = String(target?.id || "");
+  const targetDate = String(target?.date || target?._dateKey || "").slice(0, 10);
+  const opponent = teamKey(teamKey(teamName) === teamKey(target?.homeTeamName) ? target?.awayTeamName : target?.homeTeamName);
+  return (Array.isArray(rows) ? rows : []).some((row) => {
+    if (targetId && String(row?.eventId || row?.id || "") === targetId) return true;
+    return String(row?.date || "").slice(0, 10) === targetDate && teamKey(row?.opponent) === opponent;
+  });
+}
+
 export function buildHistoricalH2H(match, history, limit = 5) {
   const homeKey = teamKey(match?.homeTeamName);
   const awayKey = teamKey(match?.awayTeamName);
@@ -175,6 +198,27 @@ export function buildHistoricalForm(match, history, teamName, limit = 10) {
   return rows.length ? summarizeFormRows(rows, teamName) : null;
 }
 
+function rebuildExistingFormBeforeTarget(existing, target, teamName) {
+  const rows = (Array.isArray(existing?.recentMatches) ? existing.recentMatches : [])
+    .filter((row) => !formContainsTarget([row], target, teamName))
+    .map((row) => {
+      const home = row.venue === "H";
+      return {
+        id: row.eventId || null,
+        date: row.date,
+        _dateKey: row.date,
+        _kickoffMs: Date.parse(`${row.date}T12:00:00.000Z`) || 0,
+        kickoff: `${row.date}T12:00:00.000Z`,
+        homeTeamName: home ? teamName : row.opponent,
+        awayTeamName: home ? row.opponent : teamName,
+        score: home ? `${row.goalsFor}-${row.goalsAgainst}` : `${row.goalsAgainst}-${row.goalsFor}`,
+        status: "FT",
+        dataSource: row.source,
+      };
+    });
+  return rows.length ? summarizeFormRows(rows, teamName) : null;
+}
+
 async function fetchJson(url) {
   const controller = new AbortController();
   const timer = setTimeout(() => controller.abort(), FETCH_TIMEOUT_MS);
@@ -234,17 +278,29 @@ async function main() {
   for (const target of targets) {
     const current = { ...target.match, _dateKey: target._dateKey, _kickoffMs: target._kickoffMs };
     const h2h = buildHistoricalH2H(current, history);
-    if (h2h && Number(h2h.played) > Number(target.match?.h2h?.played || 0)) {
-      target.match.h2h = h2h;
-      target.match.h2hStatus = h2h.status;
+    const h2hContainsTarget = containsTargetFixture(target.match?.h2h?.results, current);
+    if (h2hContainsTarget || (h2h && Number(h2h.played) > Number(target.match?.h2h?.played || 0))) {
+      if (h2h) {
+        target.match.h2h = h2h;
+        target.match.h2hStatus = h2h.status;
+      } else {
+        delete target.match.h2h;
+        target.match.h2hStatus = "not_available";
+      }
       h2hFilled += 1;
       changedFiles.add(target.day.filePath);
     }
-    const homeRecent = buildHistoricalForm(current, history, current.homeTeamName);
-    const awayRecent = buildHistoricalForm(current, history, current.awayTeamName);
+    let homeRecent = buildHistoricalForm(current, history, current.homeTeamName);
+    let awayRecent = buildHistoricalForm(current, history, current.awayTeamName);
     const currentFormGames = Math.min(Number(target.match?.homeRecent?.gamesPlayed || 0), Number(target.match?.awayRecent?.gamesPlayed || 0));
     const newFormGames = Math.min(Number(homeRecent?.gamesPlayed || 0), Number(awayRecent?.gamesPlayed || 0));
-    if (homeRecent && awayRecent && newFormGames > currentFormGames) {
+    const existingFormContainsTarget = formContainsTarget(target.match?.homeRecent?.recentMatches, current, current.homeTeamName)
+      || formContainsTarget(target.match?.awayRecent?.recentMatches, current, current.awayTeamName);
+    if (existingFormContainsTarget) {
+      homeRecent ||= rebuildExistingFormBeforeTarget(target.match?.homeRecent, current, current.homeTeamName);
+      awayRecent ||= rebuildExistingFormBeforeTarget(target.match?.awayRecent, current, current.awayTeamName);
+    }
+    if (homeRecent && awayRecent && (existingFormContainsTarget || newFormGames > currentFormGames)) {
       target.match.homeRecent = homeRecent;
       target.match.awayRecent = awayRecent;
       target.match.homeForm = homeRecent.form;
