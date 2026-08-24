@@ -1,43 +1,43 @@
 {
-  "generatedAt": "2026-08-24T17:53:34.375Z",
-  "daysAhead": 14,
-  "checked": 24,
+  "generatedAt": "2026-08-24T19:00:35.401Z",
+  "daysAhead": 8,
+  "checked": 32,
   "byCompetition": {
+    "Germany - Bundesliga": {
+      "agent": "germany-bundesliga-agent",
+      "checked": 7
+    },
+    "Germany - 2. Bundesliga": {
+      "agent": "germany-2-bundesliga-agent",
+      "checked": 5
+    },
+    "Netherlands - Eredivisie": {
+      "agent": "netherlands-eredivisie-agent",
+      "checked": 1
+    },
     "Netherlands - Eerste Divisie": {
       "agent": "netherlands-eerste-divisie-agent",
-      "checked": 9
+      "checked": 7
     },
     "France - Ligue 2": {
       "agent": "france-ligue-2-agent",
       "checked": 3
     },
-    "England - Premier League": {
-      "agent": "england-premier-league-agent",
-      "checked": 2
-    },
     "France - Ligue 1": {
       "agent": "france-ligue-1-agent",
-      "checked": 2
+      "checked": 5
     },
-    "Germany - Bundesliga": {
-      "agent": "germany-bundesliga-agent",
+    "England - Premier League": {
+      "agent": "england-premier-league-agent",
       "checked": 4
-    },
-    "Germany - 2. Bundesliga": {
-      "agent": "germany-2-bundesliga-agent",
-      "checked": 3
-    },
-    "Netherlands - Eredivisie": {
-      "agent": "netherlands-eredivisie-agent",
-      "checked": 1
     }
   },
   "databaseWritable": false,
   "databaseError": "Server error (HTTP status 402): {\"message\":\"Your project has exceeded the data transfer quota. Upgrade your plan to increase limits.\",\"code\":\"\",\"detail\":null,\"hint\":null,\"position\":null,\"internalPosition\":null,\"internalQuery\":null,\"severity\":\"\",\"where\":null,\"table\":null,\"column\":null,\"schema\":null,\"dataType\":null,\"constraint\":null,\"file\":null,\"line\":null,\"routine\":null,\"neon:retryable\":true}",
-  "r2Stored": 6,
-  "staticUpdated": 6,
-  "filled": 6,
-  "noDirectHistory": 18,
+  "r2Stored": 8,
+  "staticUpdated": 8,
+  "filled": 8,
+  "noDirectHistory": 24,
   "errors": 0,
   "apiFootballAcceptance": {
     "configured": true,
@@ -47,7 +47,7 @@
   },
   "apiFootball": {
     "configured": true,
-    "enabled": false,
+    "enabled": true,
     "baseUrl": "v3.football.api-sports.io",
     "requests": 0,
     "statusCounts": {},
@@ -63,26 +63,26 @@
   },
   "filledSamples": [
     {
-      "matchId": "ss-fotmob-5803233",
-      "date": "2026-08-24",
-      "homeTeam": "Reims",
-      "awayTeam": "Annecy FC",
-      "played": 2,
-      "source": "football-data.co.uk historical results"
-    },
-    {
-      "matchId": "ss-fotmob-5795372",
-      "date": "2026-08-24",
-      "homeTeam": "Fulham",
-      "awayTeam": "Chelsea",
-      "played": 5,
-      "source": "football-data.co.uk historical results"
-    },
-    {
       "matchId": "ss-fotmob-5802918",
       "date": "2026-08-28",
       "homeTeam": "Lille",
       "awayTeam": "Paris Saint-Germain",
+      "played": 5,
+      "source": "football-data.co.uk historical results"
+    },
+    {
+      "matchId": "ss-fotmob-5803243",
+      "date": "2026-08-29",
+      "homeTeam": "Red Star",
+      "awayTeam": "Reims",
+      "played": 2,
+      "source": "football-data.co.uk historical results"
+    },
+    {
+      "matchId": "ss-fotmob-5802917",
+      "date": "2026-08-29",
+      "homeTeam": "Strasbourg",
+      "awayTeam": "Lens",
       "played": 5,
       "source": "football-data.co.uk historical results"
     },
@@ -92,6 +92,22 @@
       "homeTeam": "Annecy FC",
       "awayTeam": "Metz",
       "played": 4,
+      "source": "football-data.co.uk historical results"
+    },
+    {
+      "matchId": "ss-fotmob-5802911",
+      "date": "2026-08-29",
+      "homeTeam": "Brest",
+      "awayTeam": "Toulouse",
+      "played": 5,
+      "source": "football-data.co.uk historical results"
+    },
+    {
+      "matchId": "ss-fotmob-5802912",
+      "date": "2026-08-29",
+      "homeTeam": "Lorient",
+      "awayTeam": "Troyes",
+      "played": 2,
       "source": "football-data.co.uk historical results"
     },
     {
@@ -112,24 +128,6 @@
     }
   ],
   "noDirectHistorySamples": [
-    {
-      "matchId": "ss-fotmob-5832834",
-      "date": "2026-08-24",
-      "league": "Netherlands - Eerste Divisie",
-      "homeTeam": "Jong FC Utrecht",
-      "awayTeam": "Heracles",
-      "status": "provider_acceptance_blocked",
-      "note": "API-Football is overgeslagen totdat de account- en dekkingstest slaagt; ESPN blijft als onafhankelijke bron actief."
-    },
-    {
-      "matchId": "ss-fotmob-5832833",
-      "date": "2026-08-24",
-      "league": "Netherlands - Eerste Divisie",
-      "homeTeam": "Jong PSV",
-      "awayTeam": "TOP Oss",
-      "status": "provider_acceptance_blocked",
-      "note": "API-Football is overgeslagen totdat de account- en dekkingstest slaagt; ESPN blijft als onafhankelijke bron actief."
-    },
     {
       "matchId": "ss-oldb-83543",
       "date": "2026-08-28",
@@ -257,20 +255,56 @@
       "note": "API-Football is overgeslagen totdat de account- en dekkingstest slaagt; ESPN blijft als onafhankelijke bron actief."
     },
     {
-      "matchId": "ss-oldb-83540",
+      "matchId": "ss-oldb-83547",
       "date": "2026-08-29",
       "league": "Germany - Bundesliga",
-      "homeTeam": "1. FC Heidenheim 1846",
-      "awayTeam": "Dynamo Dresden",
+      "homeTeam": "Energie Cottbus",
+      "awayTeam": "SpVgg Greuther Fürth",
       "status": "provider_acceptance_blocked",
       "note": "API-Football is overgeslagen totdat de account- en dekkingstest slaagt; ESPN blijft als onafhankelijke bron actief."
     },
     {
-      "matchId": "ss-fotmob-5881650",
+      "matchId": "ss-fotmob-5795434",
+      "date": "2026-08-29",
+      "league": "England - Premier League",
+      "homeTeam": "Tottenham Hotspur",
+      "awayTeam": "Newcastle United",
+      "status": "provider_acceptance_blocked",
+      "note": "API-Football is overgeslagen totdat de account- en dekkingstest slaagt; ESPN blijft als onafhankelijke bron actief."
+    },
+    {
+      "matchId": "ss-fotmob-5881652",
       "date": "2026-08-29",
       "league": "Germany - 2. Bundesliga",
+      "homeTeam": "1. FC Nürnberg",
+      "awayTeam": "Arminia Bielefeld",
+      "status": "provider_acceptance_blocked",
+      "note": "API-Football is overgeslagen totdat de account- en dekkingstest slaagt; ESPN blijft als onafhankelijke bron actief."
+    },
+    {
+      "matchId": "ss-oldb-83544",
+      "date": "2026-08-29",
+      "league": "Germany - Bundesliga",
       "homeTeam": "Karlsruher SC",
-      "awayTeam": "Wolfsburg",
+      "awayTeam": "VfL Wolfsburg",
+      "status": "provider_acceptance_blocked",
+      "note": "API-Football is overgeslagen totdat de account- en dekkingstest slaagt; ESPN blijft als onafhankelijke bron actief."
+    },
+    {
+      "matchId": "ss-fotmob-5795431",
+      "date": "2026-08-29",
+      "league": "England - Premier League",
+      "homeTeam": "Liverpool",
+      "awayTeam": "Nottingham Forest",
+      "status": "provider_acceptance_blocked",
+      "note": "API-Football is overgeslagen totdat de account- en dekkingstest slaagt; ESPN blijft als onafhankelijke bron actief."
+    },
+    {
+      "matchId": "ss-fotmob-5881647",
+      "date": "2026-08-29",
+      "league": "Germany - 2. Bundesliga",
+      "homeTeam": "Energie Cottbus",
+      "awayTeam": "Greuther Fürth",
       "status": "provider_acceptance_blocked",
       "note": "API-Football is overgeslagen totdat de account- en dekkingstest slaagt; ESPN blijft als onafhankelijke bron actief."
     }
@@ -1034,19 +1068,19 @@
       "status": "no_direct_history"
     },
     "ss-fotmob-5832835": {
-      "checkedAt": "2026-08-24T17:53:34.376Z",
+      "checkedAt": "2026-08-24T19:00:35.402Z",
       "status": "no_direct_history"
     },
     "ss-fotmob-5803237": {
-      "checkedAt": "2026-08-24T17:53:34.376Z",
+      "checkedAt": "2026-08-24T19:00:35.402Z",
       "status": "no_direct_history"
     },
     "ss-fotmob-5881143": {
-      "checkedAt": "2026-08-24T17:53:34.376Z",
+      "checkedAt": "2026-08-24T19:00:35.402Z",
       "status": "no_direct_history"
     },
     "ss-fotmob-5802918": {
-      "checkedAt": "2026-08-24T17:53:34.376Z",
+      "checkedAt": "2026-08-24T19:00:35.402Z",
       "status": "filled"
     },
     "ss-fotmob-5749650": {
@@ -1074,7 +1108,7 @@
       "status": "no_direct_history"
     },
     "ss-fotmob-5832836": {
-      "checkedAt": "2026-08-24T17:53:34.376Z",
+      "checkedAt": "2026-08-24T19:00:35.402Z",
       "status": "no_direct_history"
     },
     "ss-fotmob-5803240": {
@@ -1082,11 +1116,11 @@
       "status": "filled"
     },
     "ss-fotmob-5881146": {
-      "checkedAt": "2026-08-24T14:48:31.533Z",
+      "checkedAt": "2026-08-24T19:00:35.402Z",
       "status": "no_direct_history"
     },
     "ss-fotmob-5802917": {
-      "checkedAt": "2026-08-24T14:48:31.533Z",
+      "checkedAt": "2026-08-24T19:00:35.402Z",
       "status": "filled"
     },
     "ss-fotmob-5749653": {
@@ -1094,7 +1128,7 @@
       "status": "no_direct_history"
     },
     "ss-fotmob-5795431": {
-      "checkedAt": "2026-08-24T17:03:16.143Z",
+      "checkedAt": "2026-08-24T19:00:35.402Z",
       "status": "no_direct_history"
     },
     "ss-fotmob-5887610": {
@@ -1114,7 +1148,7 @@
       "status": "filled"
     },
     "ss-fotmob-5832837": {
-      "checkedAt": "2026-08-24T17:53:34.376Z",
+      "checkedAt": "2026-08-24T19:00:35.402Z",
       "status": "no_direct_history"
     },
     "ss-fotmob-5803241": {
@@ -1134,7 +1168,7 @@
       "status": "no_direct_history"
     },
     "ss-fotmob-5795425": {
-      "checkedAt": "2026-08-24T17:53:34.376Z",
+      "checkedAt": "2026-08-24T19:00:35.402Z",
       "status": "filled"
     },
     "ss-fotmob-5988081": {
@@ -1146,7 +1180,7 @@
       "status": "filled"
     },
     "ss-bbc-2026-08-28-groningen-fortuna sittard": {
-      "checkedAt": "2026-08-24T17:53:34.376Z",
+      "checkedAt": "2026-08-24T19:00:35.402Z",
       "status": "no_direct_history"
     },
     "ss-bbc-2026-08-28-wrexham-birmingham city": {
@@ -1154,7 +1188,7 @@
       "status": "filled"
     },
     "ss-fotmob-5832838": {
-      "checkedAt": "2026-08-24T17:53:34.376Z",
+      "checkedAt": "2026-08-24T19:00:35.402Z",
       "status": "no_direct_history"
     },
     "ss-fotmob-5803242": {
@@ -1170,7 +1204,7 @@
       "status": "no_direct_history"
     },
     "ss-fotmob-5795428": {
-      "checkedAt": "2026-08-24T17:03:16.143Z",
+      "checkedAt": "2026-08-24T19:00:35.402Z",
       "status": "no_direct_history"
     },
     "ss-fotmob-5887611": {
@@ -1182,7 +1216,7 @@
       "status": "filled"
     },
     "ss-fotmob-5802911": {
-      "checkedAt": "2026-08-24T14:48:31.533Z",
+      "checkedAt": "2026-08-24T19:00:35.402Z",
       "status": "filled"
     },
     "ss-fotmob-5988086": {
@@ -1194,7 +1228,7 @@
       "status": "filled"
     },
     "ss-fotmob-5832841": {
-      "checkedAt": "2026-08-24T17:53:34.376Z",
+      "checkedAt": "2026-08-24T19:00:35.402Z",
       "status": "no_direct_history"
     },
     "ss-fotmob-5803244": {
@@ -1210,7 +1244,7 @@
       "status": "no_direct_history"
     },
     "ss-fotmob-5795434": {
-      "checkedAt": "2026-08-24T15:57:23.087Z",
+      "checkedAt": "2026-08-24T19:00:35.402Z",
       "status": "no_direct_history"
     },
     "ss-fotmob-5887609": {
@@ -1222,7 +1256,7 @@
       "status": "no_direct_history"
     },
     "ss-fotmob-5802912": {
-      "checkedAt": "2026-08-24T14:48:31.533Z",
+      "checkedAt": "2026-08-24T19:00:35.402Z",
       "status": "filled"
     },
     "ss-fotmob-5988085": {
@@ -1234,11 +1268,11 @@
       "status": "filled"
     },
     "ss-fotmob-5832840": {
-      "checkedAt": "2026-08-24T17:53:34.376Z",
+      "checkedAt": "2026-08-24T19:00:35.402Z",
       "status": "no_direct_history"
     },
     "ss-fotmob-5803236": {
-      "checkedAt": "2026-08-24T17:53:34.376Z",
+      "checkedAt": "2026-08-24T19:00:35.402Z",
       "status": "filled"
     },
     "ss-tsdb-Belgium - Pro League-2496709": {
@@ -1258,7 +1292,7 @@
       "status": "filled"
     },
     "ss-fotmob-5832839": {
-      "checkedAt": "2026-08-24T17:53:34.376Z",
+      "checkedAt": "2026-08-24T19:00:35.402Z",
       "status": "no_direct_history"
     },
     "ss-bbc-2026-08-29-derby county-swansea city": {
@@ -1266,7 +1300,7 @@
       "status": "filled"
     },
     "ss-fotmob-5803243": {
-      "checkedAt": "2026-08-24T14:42:51.454Z",
+      "checkedAt": "2026-08-24T19:00:35.402Z",
       "status": "filled"
     },
     "ss-oldb-83164": {
@@ -1274,7 +1308,7 @@
       "status": "no_direct_history"
     },
     "ss-fotmob-5802913": {
-      "checkedAt": "2026-08-24T17:53:34.376Z",
+      "checkedAt": "2026-08-24T19:00:35.402Z",
       "status": "filled"
     },
     "ss-fotmob-5868040": {
@@ -1454,7 +1488,7 @@
       "status": "filled"
     },
     "ss-oldb-83543": {
-      "checkedAt": "2026-08-24T17:53:34.376Z",
+      "checkedAt": "2026-08-24T19:00:35.402Z",
       "status": "no_direct_history"
     },
     "ss-bbc-2026-08-30-nacional-estrela": {
@@ -1490,7 +1524,7 @@
       "status": "filled"
     },
     "ss-oldb-83546": {
-      "checkedAt": "2026-08-24T17:53:34.376Z",
+      "checkedAt": "2026-08-24T19:00:35.402Z",
       "status": "no_direct_history"
     },
     "ss-fotmob-5887617": {
@@ -1530,7 +1564,7 @@
       "status": "filled"
     },
     "ss-oldb-83544": {
-      "checkedAt": "2026-08-24T14:48:31.533Z",
+      "checkedAt": "2026-08-24T19:00:35.402Z",
       "status": "no_direct_history"
     },
     "ss-fotmob-5988092": {
@@ -1538,7 +1572,7 @@
       "status": "filled"
     },
     "ss-oldb-83547": {
-      "checkedAt": "2026-08-24T14:48:31.533Z",
+      "checkedAt": "2026-08-24T19:00:35.402Z",
       "status": "no_direct_history"
     },
     "ss-fotmob-5988095": {
@@ -1546,7 +1580,7 @@
       "status": "filled"
     },
     "ss-oldb-83542": {
-      "checkedAt": "2026-08-24T14:48:31.533Z",
+      "checkedAt": "2026-08-24T19:00:35.402Z",
       "status": "no_direct_history"
     },
     "ss-fotmob-5988075": {
@@ -1650,7 +1684,7 @@
       "status": "filled"
     },
     "ss-fotmob-5881646": {
-      "checkedAt": "2026-08-24T17:53:34.376Z",
+      "checkedAt": "2026-08-24T19:00:35.402Z",
       "status": "no_direct_history"
     },
     "ss-espn-fra.2-401876767": {
@@ -1662,15 +1696,15 @@
       "status": "no_direct_history"
     },
     "ss-fotmob-5881645": {
-      "checkedAt": "2026-08-24T17:53:34.376Z",
+      "checkedAt": "2026-08-24T19:00:35.402Z",
       "status": "no_direct_history"
     },
     "ss-fotmob-5881647": {
-      "checkedAt": "2026-08-24T17:03:16.143Z",
+      "checkedAt": "2026-08-24T19:00:35.402Z",
       "status": "no_direct_history"
     },
     "ss-fotmob-5881649": {
-      "checkedAt": "2026-08-24T17:03:16.143Z",
+      "checkedAt": "2026-08-24T19:00:35.402Z",
       "status": "no_direct_history"
     },
     "ss-fotmob-5881650": {
@@ -1678,7 +1712,7 @@
       "status": "no_direct_history"
     },
     "ss-fotmob-5881652": {
-      "checkedAt": "2026-08-24T15:57:23.087Z",
+      "checkedAt": "2026-08-24T19:00:35.402Z",
       "status": "no_direct_history"
     },
     "ss-fotmob-5881648": {
