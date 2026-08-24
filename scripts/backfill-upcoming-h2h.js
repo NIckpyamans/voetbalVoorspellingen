@@ -85,6 +85,7 @@ function staticCandidates() {
       for (const match of Array.isArray(payload?.matches) ? payload.matches : []) {
         if (isHiddenInternationalOrWorldCupEntity(match)) continue;
         if (!match?.homeTeamName || !match?.awayTeamName) continue;
+        if (Number(match?.h2h?.played || 0) > 0) continue;
         const kickoff = match.kickoff || `${dateKey}T12:00:00.000Z`;
         if (Date.parse(kickoff) < now) continue;
         const homeKey = `name_${digest(match.homeTeamName)}`;
@@ -287,6 +288,18 @@ async function main() {
     databaseError = error?.message || String(error);
     candidates = staticCandidates();
   }
+
+  // Neon can contain an H2H edge while the static Vercel fallback is still empty.
+  // Always merge both candidate sets so database state cannot hide dashboard gaps.
+  const staticMissing = staticCandidates();
+  const mergedCandidates = new Map();
+  for (const match of [...staticMissing, ...candidates]) {
+    if (!mergedCandidates.has(match.match_id)) mergedCandidates.set(match.match_id, match);
+  }
+  candidates = orderH2HCandidatesByCompetition(
+    [...mergedCandidates.values()],
+    readJson(OUTPUT_JSON)?.attemptLedger || {}
+  ).slice(0, LIMIT);
 
   const store = {};
   const providerConfigured = Boolean(getApiFootballKey());
