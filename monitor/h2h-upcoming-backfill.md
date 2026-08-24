@@ -1,46 +1,38 @@
 # Upcoming H2H Backfill
 
-Laatst bijgewerkt: 2026-08-24T14:27:57.760Z
+Laatst bijgewerkt: 2026-08-24T14:34:06.952Z
 Gecontroleerd: 32
-Gevuld: 14
-Geen directe H2H: 18
+Gevuld: 4
+Geen directe H2H: 28
 Errors: 0
 
 ## Aanbeveling
 API-Football blijft quota-bewust geblokkeerd totdat de acceptatietest slaagt; ESPN is wel gecontroleerd voor alle kandidaten.
 
 ## Gevuld
-- 2026-08-27: FC Copenhagen - FC Inter Turku (1)
-- 2026-08-27: Anderlecht - Kairat Almaty (1)
-- 2026-08-26: Viking - Dinamo Zagreb (1)
-- 2026-08-29: Derby County - Swansea City (4)
-- 2026-08-27: Inter Club D'Escaldes - Drita Gjilan (1)
-- 2026-08-27: Ararat-Armenia - CS Universitatea Craiova (1)
-- 2026-08-29: De Graafschap - Almere City FC (2)
-- 2026-08-25: LASK - Celtic (1)
-- 2026-08-28: Wrexham - Birmingham City (1)
-- 2026-08-27: Pafos - KS Dynamo Tirana (1)
-- 2026-08-27: FC Iberia 1999 Tiflis - Jagiellonia Bialystok (1)
-- 2026-08-31: Dijon - Saint-Etienne (2)
-- 2026-08-26: AEK Athens - Levski Sofia (1)
-- 2026-08-29: Middlesbrough - West Bromwich Albion (5)
+- 2026-08-28: Laval - Grenoble (5)
+- 2026-08-28: Montpellier - Boulogne (2)
+- 2026-08-28: Nancy - Dunkerque (4)
+- 2026-08-28: Rodez - Pau (5)
 
 ## Geen Directe H2H
-- 2026-08-29: Karlsruher SC - Wolfsburg (provider_acceptance_blocked)
-- 2026-08-29: RB Leipzig - Borussia Mönchengladbach (provider_acceptance_blocked)
-- 2026-08-28: TOP Oss - Jong FC Utrecht (provider_acceptance_blocked)
-- 2026-08-30: Leeds United - Brentford (provider_acceptance_blocked)
-- 2026-08-30: Paris FC - Nice (provider_acceptance_blocked)
-- 2026-08-24: Reims - Annecy FC (provider_acceptance_blocked)
-- 2026-08-29: AZ - Go Ahead Eagles (provider_acceptance_blocked)
-- 2026-08-29: 1. FC Nürnberg - Arminia Bielefeld (provider_acceptance_blocked)
-- 2026-08-29: Mainz 05 - Paderborn (provider_acceptance_blocked)
-- 2026-08-30: Sunderland - Fulham (provider_acceptance_blocked)
-- 2026-08-30: Rennes - Le Mans (provider_acceptance_blocked)
-- 2026-08-28: Clermont Foot - Sochaux (provider_acceptance_blocked)
+- 2026-08-30: St. Pauli - Kaiserslautern (provider_acceptance_blocked)
+- 2026-08-29: SV 07 Elversberg - Bayer 04 Leverkusen (provider_acceptance_blocked)
+- 2026-08-30: VVV-Venlo - FC Emmen (provider_acceptance_blocked)
+- 2026-08-31: Aston Villa - Arsenal (provider_acceptance_blocked)
+- 2026-08-28: Lille - Paris Saint-Germain (provider_acceptance_blocked)
+- 2026-08-28: Groningen - Fortuna Sittard (provider_acceptance_blocked)
+- 2026-08-28: Eintracht Braunschweig - Hertha BSC (provider_acceptance_blocked)
+- 2026-08-29: 1. FC Union Berlin - Eintracht Frankfurt (provider_acceptance_blocked)
+- 2026-08-24: Jong FC Utrecht - Heracles (provider_acceptance_blocked)
+- 2026-08-24: Fulham - Chelsea (provider_acceptance_blocked)
+- 2026-08-29: Strasbourg - Lens (provider_acceptance_blocked)
+- 2026-08-30: Feyenoord - ADO Den Haag (provider_acceptance_blocked)
+- 2026-08-28: Bochum - VfL Osnabrück (provider_acceptance_blocked)
+- 2026-08-29: 1. FC Köln - TSG Hoffenheim (provider_acceptance_blocked)
+- 2026-08-31: Jong AZ Alkmaar - Jong FC Utrecht (provider_acceptance_blocked)
+- 2026-08-29: Liverpool - Nottingham Forest (provider_acceptance_blocked)
+- 2026-08-29: Brest - Toulouse (provider_acceptance_blocked)
 - 2026-08-30: Utrecht - PSV (provider_acceptance_blocked)
-- 2026-08-30: Darmstadt - Hannover 96 (provider_acceptance_blocked)
-- 2026-08-29: 1. FSV Mainz 05 - SC Paderborn 07 (provider_acceptance_blocked)
-- 2026-08-30: FC Eindhoven - Heracles (provider_acceptance_blocked)
-- 2026-08-30: Manchester United - Ipswich Town (provider_acceptance_blocked)
-- 2026-08-30: Monaco - Marseille (provider_acceptance_blocked)
+- 2026-08-29: Energie Cottbus - Greuther Fürth (provider_acceptance_blocked)
+- 2026-08-29: Union Berlin - Eintracht Frankfurt (provider_acceptance_blocked)
