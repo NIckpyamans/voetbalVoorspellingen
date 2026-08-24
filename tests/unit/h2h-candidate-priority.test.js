@@ -32,4 +32,14 @@ describe("H2H candidate priority", () => {
     ]);
     expect(ordered.slice(0, 2).map((item) => item.match_id)).toEqual(["ucl-1", "eredivisie"]);
   });
+
+  it("never lets an untried future fixture displace a retried match kicking off today", () => {
+    const ordered = orderH2HCandidatesByCompetition([
+      { match_id: "today-retry", league: "England - Premier League", kickoff_at: "2026-08-24T19:00:00Z" },
+      { match_id: "future-new", league: "England - Premier League", kickoff_at: "2026-08-30T19:00:00Z" },
+    ], {
+      "today-retry": { checkedAt: "2026-08-24T12:00:00Z" },
+    });
+    expect(ordered.map((item) => item.match_id)).toEqual(["today-retry", "future-new"]);
+  });
 });
