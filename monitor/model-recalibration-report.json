@@ -1,29 +1,49 @@
 {
   "ok": true,
-  "skipped": true,
-  "generatedAt": "2026-08-23T14:34:26.569Z",
-  "reason": "insufficient_unique_completed_regular_snapshot_matches",
-  "uniqueCompletedSnapshotMatches": 455,
-  "uniqueCompletedRegularSnapshotMatches": 39,
-  "minimumUniqueCompletedRegularSnapshotMatches": 50,
+  "applyLive": false,
+  "livePromotionApplied": false,
+  "promotionTargets": {
+    "neon": false,
+    "r2": {
+      "ok": false,
+      "skipped": true,
+      "reason": "not_requested"
+    }
+  },
   "promotionGate": {
-    "uniqueCompletedMatches": 39,
+    "uniqueCompletedMatches": 71,
     "calibrationMin": 50,
     "promotionMin": 150,
-    "calibrationGap": 11,
-    "promotionGap": 111,
-    "canCalibrate": false,
+    "calibrationGap": 0,
+    "promotionGap": 79,
+    "canCalibrate": true,
     "canPromote": false,
-    "stage": "collecting"
+    "stage": "experimental_ready"
+  },
+  "calibrationSource": "merged_immutable_training_and_r2",
+  "database": {
+    "configured": true,
+    "available": false,
+    "error": "Server error (HTTP status 402): {\"message\":\"Your project has exceeded the data transfer quota. Upgrade your plan to increase limits.\",\"code\":\"\",\"detail\":null,\"hint\":null,\"position\":null,\"internalPosition\":null,\"internalQuery\":null,\"severity\":\"\",\"where\":null,\"table\":null,\"column\":null,\"schema\":null,\"dataType\":null,\"constraint\":null,\"file\":null,\"line\":null,\"routine\":null,\"neon:retryable\":true}",
+    "rows": 0
   },
   "immutableSources": {
     "selected": "merged_immutable_training_and_r2",
-    "mergedRows": 461,
-    "ledgerRows": 398,
-    "trainingRows": 461,
+    "mergedRows": 531,
+    "ledgerRows": 529,
+    "trainingRows": 531,
     "r2Configured": true,
     "r2Available": true,
     "r2Error": null
   },
-  "nextAction": "Wacht op 11 extra unieke afgeronde reguliere competitiewedstrijden met pre-match snapshots voordat league/phase-kalibratie draait."
+  "calibrationRows": 74,
+  "uniqueCompletedSnapshotMatches": 525,
+  "uniqueCompletedRegularSnapshotMatches": 71,
+  "generatedAt": "2026-08-24T04:31:07.989Z",
+  "groups": 13,
+  "candidates": 0,
+  "accepted": 0,
+  "liveProfileKeys": [],
+  "topCandidates": [],
+  "nextAction": "Geen profiel promoveren: geen unieke-wedstrijdenkandidaat haalt de minimale Brier-verbetering. Verzamel meer complete wedstrijden en herhaal de shadowrun."
 }
