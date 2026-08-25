@@ -1,0 +1,997 @@
+{
+  "schemaVersion": "professional-readiness-v1",
+  "generatedAt": "2026-08-25T11:56:37.285Z",
+  "ok": true,
+  "status": "watch",
+  "targets": {
+    "roster": 0.8,
+    "ratings": 0.6,
+    "form": 0.85,
+    "h2h": 0.85,
+    "confirmedLineups": 0.45,
+    "timestampedOdds": 0.45,
+    "reviews": 0.95,
+    "postMatchStats": 0.8,
+    "sourceLineage": 0.95
+  },
+  "competitions": [
+    {
+      "league": "Netherlands - Eredivisie",
+      "status": "improve",
+      "matches": 5,
+      "finished": 0,
+      "metrics": {
+        "roster": 0.87,
+        "ratings": 0.087,
+        "form": 1,
+        "h2h": 0.4,
+        "confirmedLineups": 0,
+        "timestampedOdds": 0,
+        "reviews": 0,
+        "postMatchStats": 1,
+        "sourceLineage": 1
+      },
+      "gaps": [
+        {
+          "key": "ratings",
+          "actual": 0.087,
+          "target": 0.6
+        },
+        {
+          "key": "h2h",
+          "actual": 0.4,
+          "target": 0.85
+        },
+        {
+          "key": "confirmedLineups",
+          "actual": 0,
+          "target": 0.45
+        },
+        {
+          "key": "timestampedOdds",
+          "actual": 0,
+          "target": 0.45
+        },
+        {
+          "key": "reviews",
+          "actual": 0,
+          "target": 0.95
+        }
+      ],
+      "structural": [],
+      "sources": {
+        "fixtures": [
+          "fotmob",
+          "espn",
+          "football-data-org",
+          "thesportsdb",
+          "goal-api"
+        ],
+        "form": [
+          "canonical-history",
+          "football-data-co-uk",
+          "espn"
+        ],
+        "h2h": [
+          "canonical-history",
+          "football-data-co-uk",
+          "openfootball",
+          "espn",
+          "goal-api",
+          "api-football"
+        ],
+        "lineups": [
+          "sofascore",
+          "fotmob",
+          "goal-api",
+          "sportmonks",
+          "api-football"
+        ],
+        "odds": [
+          "the-odds-api"
+        ],
+        "postMatch": [
+          "fotmob-match-details",
+          "thesportsdb",
+          "football-data-org",
+          "goal-api-shadow"
+        ]
+      },
+      "agent": "netherlands-eredivisie-agent"
+    },
+    {
+      "league": "Netherlands - Eerste Divisie",
+      "status": "improve",
+      "matches": 113,
+      "finished": 13,
+      "metrics": {
+        "roster": 1,
+        "ratings": 0.087,
+        "form": 0.257,
+        "h2h": 0.133,
+        "confirmedLineups": 0,
+        "timestampedOdds": 0,
+        "reviews": 1,
+        "postMatchStats": 1,
+        "sourceLineage": 1
+      },
+      "gaps": [
+        {
+          "key": "ratings",
+          "actual": 0.087,
+          "target": 0.6
+        },
+        {
+          "key": "form",
+          "actual": 0.257,
+          "target": 0.85
+        },
+        {
+          "key": "h2h",
+          "actual": 0.133,
+          "target": 0.85
+        },
+        {
+          "key": "confirmedLineups",
+          "actual": 0,
+          "target": 0.45
+        },
+        {
+          "key": "timestampedOdds",
+          "actual": 0,
+          "target": 0.45
+        }
+      ],
+      "structural": [],
+      "sources": {
+        "fixtures": [
+          "fotmob",
+          "espn",
+          "football-data-org",
+          "thesportsdb",
+          "goal-api"
+        ],
+        "form": [
+          "canonical-history",
+          "football-data-co-uk",
+          "espn"
+        ],
+        "h2h": [
+          "canonical-history",
+          "football-data-co-uk",
+          "openfootball",
+          "espn",
+          "goal-api",
+          "api-football"
+        ],
+        "lineups": [
+          "sofascore",
+          "fotmob",
+          "goal-api",
+          "sportmonks",
+          "api-football"
+        ],
+        "odds": [
+          "the-odds-api"
+        ],
+        "postMatch": [
+          "fotmob-match-details",
+          "thesportsdb",
+          "football-data-org",
+          "goal-api-shadow"
+        ]
+      },
+      "agent": "netherlands-eerste-divisie-agent"
+    },
+    {
+      "league": "Germany - Bundesliga",
+      "status": "improve",
+      "matches": 85,
+      "finished": 0,
+      "metrics": {
+        "roster": 0.816,
+        "ratings": 0,
+        "form": 0.929,
+        "h2h": 0.541,
+        "confirmedLineups": 0,
+        "timestampedOdds": 0,
+        "reviews": 0,
+        "postMatchStats": 1,
+        "sourceLineage": 1
+      },
+      "gaps": [
+        {
+          "key": "ratings",
+          "actual": 0,
+          "target": 0.6
+        },
+        {
+          "key": "h2h",
+          "actual": 0.541,
+          "target": 0.85
+        },
+        {
+          "key": "confirmedLineups",
+          "actual": 0,
+          "target": 0.45
+        },
+        {
+          "key": "timestampedOdds",
+          "actual": 0,
+          "target": 0.45
+        },
+        {
+          "key": "reviews",
+          "actual": 0,
+          "target": 0.95
+        }
+      ],
+      "structural": [],
+      "sources": {
+        "fixtures": [
+          "fotmob",
+          "espn",
+          "football-data-org",
+          "thesportsdb",
+          "goal-api"
+        ],
+        "form": [
+          "canonical-history",
+          "football-data-co-uk",
+          "espn"
+        ],
+        "h2h": [
+          "canonical-history",
+          "football-data-co-uk",
+          "openfootball",
+          "espn",
+          "goal-api",
+          "api-football"
+        ],
+        "lineups": [
+          "sofascore",
+          "fotmob",
+          "goal-api",
+          "sportmonks",
+          "api-football"
+        ],
+        "odds": [
+          "the-odds-api"
+        ],
+        "postMatch": [
+          "fotmob-match-details",
+          "thesportsdb",
+          "football-data-org",
+          "goal-api-shadow"
+        ]
+      },
+      "agent": "germany-bundesliga-agent"
+    },
+    {
+      "league": "Germany - 2. Bundesliga",
+      "status": "improve",
+      "matches": 12,
+      "finished": 3,
+      "metrics": {
+        "roster": 0.808,
+        "ratings": 0.154,
+        "form": 0.667,
+        "h2h": 0.167,
+        "confirmedLineups": 0,
+        "timestampedOdds": 0,
+        "reviews": 0,
+        "postMatchStats": 1,
+        "sourceLineage": 1
+      },
+      "gaps": [
+        {
+          "key": "ratings",
+          "actual": 0.154,
+          "target": 0.6
+        },
+        {
+          "key": "form",
+          "actual": 0.667,
+          "target": 0.85
+        },
+        {
+          "key": "h2h",
+          "actual": 0.167,
+          "target": 0.85
+        },
+        {
+          "key": "confirmedLineups",
+          "actual": 0,
+          "target": 0.45
+        },
+        {
+          "key": "timestampedOdds",
+          "actual": 0,
+          "target": 0.45
+        },
+        {
+          "key": "reviews",
+          "actual": 0,
+          "target": 0.95
+        }
+      ],
+      "structural": [],
+      "sources": {
+        "fixtures": [
+          "fotmob",
+          "espn",
+          "football-data-org",
+          "thesportsdb",
+          "goal-api"
+        ],
+        "form": [
+          "canonical-history",
+          "football-data-co-uk",
+          "espn"
+        ],
+        "h2h": [
+          "canonical-history",
+          "football-data-co-uk",
+          "openfootball",
+          "espn",
+          "goal-api",
+          "api-football"
+        ],
+        "lineups": [
+          "sofascore",
+          "fotmob",
+          "goal-api",
+          "sportmonks",
+          "api-football"
+        ],
+        "odds": [
+          "the-odds-api"
+        ],
+        "postMatch": [
+          "fotmob-match-details",
+          "thesportsdb",
+          "football-data-org",
+          "goal-api-shadow"
+        ]
+      },
+      "agent": "germany-2-bundesliga-agent"
+    },
+    {
+      "league": "England - Premier League",
+      "status": "improve",
+      "matches": 90,
+      "finished": 10,
+      "metrics": {
+        "roster": 1,
+        "ratings": 0.5,
+        "form": 0.989,
+        "h2h": 0.678,
+        "confirmedLineups": 0,
+        "timestampedOdds": 0,
+        "reviews": 1,
+        "postMatchStats": 1,
+        "sourceLineage": 1
+      },
+      "gaps": [
+        {
+          "key": "ratings",
+          "actual": 0.5,
+          "target": 0.6
+        },
+        {
+          "key": "h2h",
+          "actual": 0.678,
+          "target": 0.85
+        },
+        {
+          "key": "confirmedLineups",
+          "actual": 0,
+          "target": 0.45
+        },
+        {
+          "key": "timestampedOdds",
+          "actual": 0,
+          "target": 0.45
+        }
+      ],
+      "structural": [],
+      "sources": {
+        "fixtures": [
+          "fotmob",
+          "espn",
+          "football-data-org",
+          "thesportsdb",
+          "goal-api"
+        ],
+        "form": [
+          "canonical-history",
+          "football-data-co-uk",
+          "espn"
+        ],
+        "h2h": [
+          "canonical-history",
+          "football-data-co-uk",
+          "openfootball",
+          "espn",
+          "goal-api",
+          "api-football"
+        ],
+        "lineups": [
+          "sofascore",
+          "fotmob",
+          "goal-api",
+          "sportmonks",
+          "api-football"
+        ],
+        "odds": [
+          "the-odds-api"
+        ],
+        "postMatch": [
+          "fotmob-match-details",
+          "thesportsdb",
+          "football-data-org",
+          "goal-api-shadow"
+        ]
+      },
+      "agent": "england-premier-league-agent"
+    },
+    {
+      "league": "England - Championship",
+      "status": "improve",
+      "matches": 6,
+      "finished": 1,
+      "metrics": {
+        "roster": 0.75,
+        "ratings": 0,
+        "form": 0,
+        "h2h": 0.667,
+        "confirmedLineups": 0,
+        "timestampedOdds": 0,
+        "reviews": 0,
+        "postMatchStats": 0,
+        "sourceLineage": 1
+      },
+      "gaps": [
+        {
+          "key": "roster",
+          "actual": 0.75,
+          "target": 0.8
+        },
+        {
+          "key": "ratings",
+          "actual": 0,
+          "target": 0.6
+        },
+        {
+          "key": "form",
+          "actual": 0,
+          "target": 0.85
+        },
+        {
+          "key": "h2h",
+          "actual": 0.667,
+          "target": 0.85
+        },
+        {
+          "key": "confirmedLineups",
+          "actual": 0,
+          "target": 0.45
+        },
+        {
+          "key": "timestampedOdds",
+          "actual": 0,
+          "target": 0.45
+        },
+        {
+          "key": "reviews",
+          "actual": 0,
+          "target": 0.95
+        },
+        {
+          "key": "postMatchStats",
+          "actual": 0,
+          "target": 0.8
+        }
+      ],
+      "structural": [],
+      "sources": {
+        "fixtures": [
+          "fotmob",
+          "espn",
+          "football-data-org",
+          "thesportsdb",
+          "goal-api"
+        ],
+        "form": [
+          "canonical-history",
+          "football-data-co-uk",
+          "espn"
+        ],
+        "h2h": [
+          "canonical-history",
+          "football-data-co-uk",
+          "openfootball",
+          "espn",
+          "apifootball-com",
+          "goal-api",
+          "api-football"
+        ],
+        "lineups": [
+          "sofascore",
+          "fotmob",
+          "apifootball-com",
+          "goal-api",
+          "sportmonks",
+          "api-football"
+        ],
+        "odds": [
+          "apifootball-com",
+          "the-odds-api"
+        ],
+        "postMatch": [
+          "fotmob-match-details",
+          "thesportsdb",
+          "football-data-org",
+          "goal-api-shadow"
+        ]
+      },
+      "agent": "england-championship-agent"
+    },
+    {
+      "league": "France - Ligue 1",
+      "status": "improve",
+      "matches": 81,
+      "finished": 9,
+      "metrics": {
+        "roster": 0.909,
+        "ratings": 0.045,
+        "form": 0.951,
+        "h2h": 0.815,
+        "confirmedLineups": 0,
+        "timestampedOdds": 0,
+        "reviews": 1,
+        "postMatchStats": 1,
+        "sourceLineage": 1
+      },
+      "gaps": [
+        {
+          "key": "ratings",
+          "actual": 0.045,
+          "target": 0.6
+        },
+        {
+          "key": "h2h",
+          "actual": 0.815,
+          "target": 0.85
+        },
+        {
+          "key": "confirmedLineups",
+          "actual": 0,
+          "target": 0.45
+        },
+        {
+          "key": "timestampedOdds",
+          "actual": 0,
+          "target": 0.45
+        }
+      ],
+      "structural": [],
+      "sources": {
+        "fixtures": [
+          "fotmob",
+          "espn",
+          "football-data-org",
+          "thesportsdb",
+          "goal-api"
+        ],
+        "form": [
+          "canonical-history",
+          "football-data-co-uk",
+          "espn"
+        ],
+        "h2h": [
+          "canonical-history",
+          "football-data-co-uk",
+          "openfootball",
+          "espn",
+          "goal-api",
+          "api-football"
+        ],
+        "lineups": [
+          "sofascore",
+          "fotmob",
+          "goal-api",
+          "sportmonks",
+          "api-football"
+        ],
+        "odds": [
+          "the-odds-api"
+        ],
+        "postMatch": [
+          "fotmob-match-details",
+          "thesportsdb",
+          "football-data-org",
+          "goal-api-shadow"
+        ]
+      },
+      "agent": "france-ligue-1-agent"
+    },
+    {
+      "league": "France - Ligue 2",
+      "status": "improve",
+      "matches": 81,
+      "finished": 9,
+      "metrics": {
+        "roster": 0.84,
+        "ratings": 0.08,
+        "form": 0.63,
+        "h2h": 0.506,
+        "confirmedLineups": 0,
+        "timestampedOdds": 0.062,
+        "reviews": 1,
+        "postMatchStats": 1,
+        "sourceLineage": 1
+      },
+      "gaps": [
+        {
+          "key": "ratings",
+          "actual": 0.08,
+          "target": 0.6
+        },
+        {
+          "key": "form",
+          "actual": 0.63,
+          "target": 0.85
+        },
+        {
+          "key": "h2h",
+          "actual": 0.506,
+          "target": 0.85
+        },
+        {
+          "key": "confirmedLineups",
+          "actual": 0,
+          "target": 0.45
+        },
+        {
+          "key": "timestampedOdds",
+          "actual": 0.062,
+          "target": 0.45
+        }
+      ],
+      "structural": [],
+      "sources": {
+        "fixtures": [
+          "fotmob",
+          "espn",
+          "football-data-org",
+          "thesportsdb",
+          "goal-api"
+        ],
+        "form": [
+          "canonical-history",
+          "football-data-co-uk",
+          "espn"
+        ],
+        "h2h": [
+          "canonical-history",
+          "football-data-co-uk",
+          "openfootball",
+          "espn",
+          "apifootball-com",
+          "goal-api",
+          "api-football"
+        ],
+        "lineups": [
+          "sofascore",
+          "fotmob",
+          "apifootball-com",
+          "goal-api",
+          "sportmonks",
+          "api-football"
+        ],
+        "odds": [
+          "apifootball-com",
+          "the-odds-api"
+        ],
+        "postMatch": [
+          "fotmob-match-details",
+          "thesportsdb",
+          "football-data-org",
+          "goal-api-shadow"
+        ]
+      },
+      "agent": "france-ligue-2-agent"
+    },
+    {
+      "league": "Europe - Champions League",
+      "status": "improve",
+      "matches": 15,
+      "finished": 7,
+      "metrics": {
+        "roster": 0.904,
+        "ratings": 0.25,
+        "form": 0.467,
+        "h2h": 0.533,
+        "confirmedLineups": 0,
+        "timestampedOdds": 0,
+        "reviews": 0,
+        "postMatchStats": 1,
+        "sourceLineage": 1
+      },
+      "gaps": [
+        {
+          "key": "ratings",
+          "actual": 0.25,
+          "target": 0.6
+        },
+        {
+          "key": "form",
+          "actual": 0.467,
+          "target": 0.85
+        },
+        {
+          "key": "h2h",
+          "actual": 0.533,
+          "target": 0.85
+        },
+        {
+          "key": "confirmedLineups",
+          "actual": 0,
+          "target": 0.45
+        },
+        {
+          "key": "timestampedOdds",
+          "actual": 0,
+          "target": 0.45
+        },
+        {
+          "key": "reviews",
+          "actual": 0,
+          "target": 0.95
+        }
+      ],
+      "structural": [],
+      "sources": {
+        "fixtures": [
+          "sky",
+          "fotmob",
+          "espn",
+          "bbc",
+          "goal-api"
+        ],
+        "form": [
+          "canonical-history",
+          "espn",
+          "football-data-co-uk"
+        ],
+        "h2h": [
+          "canonical-history",
+          "espn",
+          "openfootball",
+          "goal-api",
+          "api-football"
+        ],
+        "lineups": [
+          "fotmob",
+          "sofascore",
+          "goal-api",
+          "api-football",
+          "sportmonks"
+        ],
+        "odds": [
+          "the-odds-api"
+        ],
+        "postMatch": [
+          "fotmob-match-details",
+          "thesportsdb",
+          "football-data-org",
+          "goal-api-shadow"
+        ]
+      },
+      "agent": "champions-league-agent"
+    },
+    {
+      "league": "Europe - Europa League",
+      "status": "improve",
+      "matches": 51,
+      "finished": 31,
+      "metrics": {
+        "roster": 0.701,
+        "ratings": 0.179,
+        "form": 0.157,
+        "h2h": 0.373,
+        "confirmedLineups": 0,
+        "timestampedOdds": 0,
+        "reviews": 1,
+        "postMatchStats": 0.677,
+        "sourceLineage": 1
+      },
+      "gaps": [
+        {
+          "key": "roster",
+          "actual": 0.701,
+          "target": 0.8
+        },
+        {
+          "key": "ratings",
+          "actual": 0.179,
+          "target": 0.6
+        },
+        {
+          "key": "form",
+          "actual": 0.157,
+          "target": 0.85
+        },
+        {
+          "key": "h2h",
+          "actual": 0.373,
+          "target": 0.85
+        },
+        {
+          "key": "confirmedLineups",
+          "actual": 0,
+          "target": 0.45
+        },
+        {
+          "key": "timestampedOdds",
+          "actual": 0,
+          "target": 0.45
+        },
+        {
+          "key": "postMatchStats",
+          "actual": 0.677,
+          "target": 0.8
+        }
+      ],
+      "structural": [],
+      "sources": {
+        "fixtures": [
+          "sky",
+          "fotmob",
+          "espn",
+          "bbc",
+          "goal-api"
+        ],
+        "form": [
+          "canonical-history",
+          "espn",
+          "football-data-co-uk"
+        ],
+        "h2h": [
+          "canonical-history",
+          "espn",
+          "openfootball",
+          "goal-api",
+          "api-football"
+        ],
+        "lineups": [
+          "fotmob",
+          "sofascore",
+          "goal-api",
+          "api-football",
+          "sportmonks"
+        ],
+        "odds": [
+          "the-odds-api"
+        ],
+        "postMatch": [
+          "fotmob-match-details",
+          "thesportsdb",
+          "football-data-org",
+          "goal-api-shadow"
+        ]
+      },
+      "agent": "europa-league-agent"
+    },
+    {
+      "league": "Europe - Conference League",
+      "status": "improve",
+      "matches": 136,
+      "finished": 99,
+      "metrics": {
+        "roster": 0.734,
+        "ratings": 0.319,
+        "form": 0.162,
+        "h2h": 0.265,
+        "confirmedLineups": 0,
+        "timestampedOdds": 0,
+        "reviews": 1,
+        "postMatchStats": 0.636,
+        "sourceLineage": 1
+      },
+      "gaps": [
+        {
+          "key": "roster",
+          "actual": 0.734,
+          "target": 0.8
+        },
+        {
+          "key": "ratings",
+          "actual": 0.319,
+          "target": 0.6
+        },
+        {
+          "key": "form",
+          "actual": 0.162,
+          "target": 0.85
+        },
+        {
+          "key": "h2h",
+          "actual": 0.265,
+          "target": 0.85
+        },
+        {
+          "key": "confirmedLineups",
+          "actual": 0,
+          "target": 0.45
+        },
+        {
+          "key": "timestampedOdds",
+          "actual": 0,
+          "target": 0.45
+        },
+        {
+          "key": "postMatchStats",
+          "actual": 0.636,
+          "target": 0.8
+        }
+      ],
+      "structural": [],
+      "sources": {
+        "fixtures": [
+          "sky",
+          "fotmob",
+          "espn",
+          "bbc",
+          "goal-api"
+        ],
+        "form": [
+          "canonical-history",
+          "espn",
+          "football-data-co-uk"
+        ],
+        "h2h": [
+          "canonical-history",
+          "espn",
+          "openfootball",
+          "goal-api",
+          "api-football"
+        ],
+        "lineups": [
+          "fotmob",
+          "sofascore",
+          "goal-api",
+          "api-football",
+          "sportmonks"
+        ],
+        "odds": [
+          "the-odds-api"
+        ],
+        "postMatch": [
+          "fotmob-match-details",
+          "thesportsdb",
+          "football-data-org",
+          "goal-api-shadow"
+        ]
+      },
+      "agent": "conference-league-agent"
+    }
+  ],
+  "structuralBlockers": [],
+  "externalConstraints": {
+    "providerBlocks": [
+      "apiFootball"
+    ],
+    "regularCalibrationRows": 71,
+    "shadowCalibrationReady": true,
+    "livePromotionReady": false
+  },
+  "guarantees": {
+    "historicalMatchesImmutable": true,
+    "noSyntheticH2H": true,
+    "noUntimestampedOddsForRoiClv": true,
+    "noWagerLabelWithoutAllEvidenceGates": true,
+    "providerCoverageGapsAreWarnings": true
+  }
+}

@@ -19,6 +19,10 @@ const BestBetCard: React.FC<BestBetCardProps> = ({ bet }) => {
   const scoreWasExact = isFinished && bet.score === `${bet.predHomeGoals}-${bet.predAwayGoals}`;
   const reasons = Array.isArray(bet.exactScoreReasons) ? bet.exactScoreReasons.slice(0, 2) : [];
   const readiness = bet.wagerReadiness;
+  const missingStars = [
+    ...(bet.lineupSummary?.starPlayerImpact?.home?.missing || []),
+    ...(bet.lineupSummary?.starPlayerImpact?.away?.missing || []),
+  ].slice(0, 2);
   const readinessStyle = readiness?.status === "eligible"
     ? "bg-green-500/15 text-green-300 border-green-400/20"
     : readiness?.status === "watch"
@@ -80,6 +84,12 @@ const BestBetCard: React.FC<BestBetCardProps> = ({ bet }) => {
               Nog nodig: {readiness.blockers.slice(0, 2).join("; ")}
             </div>
           )}
+        </div>
+      )}
+
+      {bet.lineupSummary?.confirmed && missingStars.length > 0 && (
+        <div className="relative mt-2 rounded-lg border border-rose-400/20 bg-rose-500/10 px-2 py-1 text-[8px] font-bold text-rose-200">
+          Sterspeler niet in wedstrijdselectie: {missingStars.map((player) => player.name).join(", ")}
         </div>
       )}
 

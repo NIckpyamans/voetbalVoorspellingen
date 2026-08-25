@@ -85,6 +85,7 @@ import { mergePersistedTeamFormCache } from "./worker/local-team-form-history.js
 import { selectFreshestSquadProfile } from "./worker/squad-cache-policy.js";
 import { summarizeGoalTiming } from "./worker/goal-timing.js";
 import { buildClubStrengthProfile, lookupClubEloProfile, parseClubEloSnapshot } from "./worker/club-strength.js";
+import { attachConfirmedLineupStarImpact } from "./worker/lineup-star-impact.js";
 import { hydrateR2ModelProfiles } from "./worker/r2-model-profiles.js";
 import {
   FOTMOB_STANDINGS_LEAGUES,
@@ -3898,9 +3899,12 @@ function buildLineupImpact(input) {
   const keeperDiff = calcKeeperEdge(input.lineupSummary);
   const homeContinuity = calcLineupContinuity(input.lineupSummary?.home, input.homeInjuries);
   const awayContinuity = calcLineupContinuity(input.lineupSummary?.away, input.awayInjuries);
+  const starPlayerImpact = input.lineupSummary?.starPlayerImpact || null;
+  const homeStarPenalty = Number(starPlayerImpact?.home?.penalty || 0);
+  const awayStarPenalty = Number(starPlayerImpact?.away?.penalty || 0);
 
-  const homeImpact = Number((homeInjuries * 0.12 - Math.max(0, ratingDiff) * 0.08 - Math.max(0, keeperDiff) * 0.04).toFixed(2));
-  const awayImpact = Number((awayInjuries * 0.12 + Math.min(0, ratingDiff) * -0.08 + Math.min(0, keeperDiff) * 0.04 * -1).toFixed(2));
+  const homeImpact = Number((homeInjuries * 0.12 + homeStarPenalty - Math.max(0, ratingDiff) * 0.08 - Math.max(0, keeperDiff) * 0.04).toFixed(2));
+  const awayImpact = Number((awayInjuries * 0.12 + awayStarPenalty + Math.min(0, ratingDiff) * -0.08 + Math.min(0, keeperDiff) * 0.04 * -1).toFixed(2));
 
   let summary = "neutraal";
   if (homeImpact + 0.12 < awayImpact) summary = "thuisvoordeel in opstelling";
@@ -3914,6 +3918,7 @@ function buildLineupImpact(input) {
     keeperDiff,
     homeContinuity,
     awayContinuity,
+    starPlayerImpact,
     summary,
   };
 }
@@ -9232,8 +9237,9 @@ function predict(input) {
     const continuityDiff = Number((homeContinuity - awayContinuity).toFixed(2));
     const status = input.lineupSummary?.confirmed ? "confirmed" : input.lineupSummary?.projected ? "projected" : "partial";
     const weight = status === "confirmed" ? 1 : status === "projected" ? 0.52 : 0.35;
+    const starImpactDiff = status === "confirmed" ? Number(input.lineupSummary?.starPlayerImpact?.differential || 0) : 0;
     const xgShift = clamp(
-      ratingDiff * 0.018 * weight + keeperDiff * 0.014 * weight + continuityDiff * 0.045 * weight,
+      ratingDiff * 0.018 * weight + keeperDiff * 0.014 * weight + continuityDiff * 0.045 * weight + starImpactDiff,
       -0.085,
       0.085
     );
@@ -9247,6 +9253,8 @@ function predict(input) {
       ratingDiff: Number(ratingDiff.toFixed(2)),
       keeperDiff: Number(keeperDiff.toFixed(2)),
       continuityDiff,
+      starImpactDiff: Number(starImpactDiff.toFixed(3)),
+      starPlayerImpact: input.lineupSummary?.starPlayerImpact || null,
       summary:
         Math.abs(xgShift) < 0.015
           ? "opstelling neutraal verwerkt"
@@ -11746,6 +11754,11 @@ async function main() {
           sourceAsOfFallbackH2H = r2H2H.capturedAt || null;
         }
       }
+      lineupSummary = attachConfirmedLineupStarImpact(
+        lineupSummary,
+        homeIntelligence?.squadProfile,
+        awayIntelligence?.squadProfile,
+      );
       const lineupStatus = resolveLineupStatus(lineupSummary);
       const availabilitySummary = buildAvailabilitySummary(
         store.teamInjuries[homeId] || null,

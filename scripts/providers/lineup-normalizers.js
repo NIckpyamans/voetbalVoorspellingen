@@ -55,13 +55,15 @@ export function normalizeFotMob(payload) {
 
 function lineupSide({ formation = null, starters = [], substitutes = [], source }) {
   const players = starters.map((item) => playerRow(item, source)).filter((item) => item.name).slice(0, 11);
+  const substitutePlayers = substitutes.map((item) => playerRow(item, source)).filter((item) => item.name).slice(0, 15);
   const keeper = players.find((item) => /^g|goal/i.test(item.position));
   const ratings = players.map((item) => Number(item.rating || 0)).filter((value) => value > 0);
   return {
     formation,
     starters: players.length,
-    bench: substitutes.length,
+    bench: substitutePlayers.length,
     players,
+    substitutes: substitutePlayers,
     avgRating: ratings.length ? Number((ratings.reduce((sum, value) => sum + value, 0) / ratings.length).toFixed(2)) : null,
     keeperName: keeper?.name || null,
     keeperRating: keeper?.rating || null,

@@ -179,7 +179,10 @@ async function readCriticalCapture(relativeKey) {
 export async function fetchR2LineupSummary(matchId, kickoffAt, now = Date.now()) {
   if (String(process.env.R2_CRITICAL_CAPTURE_ENABLED || "true").toLowerCase() === "false") return null;
   const kickoffMs = validDate(kickoffAt);
-  if (kickoffMs == null || kickoffMs < now - 10 * MINUTE || kickoffMs > now + 180 * MINUTE) return null;
+  // Later worker runs must retain a lineup captured before kickoff. The
+  // selector below enforces that timestamp boundary, so wall-clock age is not
+  // a valid reason to erase confirmed evidence from the published match.
+  if (kickoffMs == null) return null;
   return selectConfirmedLineupCapture(await readCriticalCapture(`critical-captures/lineups/${matchId}.json`), kickoffAt);
 }
 

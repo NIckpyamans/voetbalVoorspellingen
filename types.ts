@@ -879,7 +879,16 @@ export type View = "dashboard" | "history" | "standings" | "modelops" | "setting
   } | null;
   dataCompleteness?: { score?: number; percent?: number; status?: string } | null;
   qualityGate?: { blockedHighConfidence?: boolean; modelReady?: boolean; summary?: string } | null;
-  lineupSummary?: { confirmed?: boolean; projected?: boolean; source?: string | null } | null;
+  lineupSummary?: {
+    confirmed?: boolean;
+    projected?: boolean;
+    source?: string | null;
+    starPlayerImpact?: {
+      home?: { usable?: boolean; missing?: Array<{ name: string; rating?: number | null }>; benched?: Array<{ name: string; rating?: number | null }> };
+      away?: { usable?: boolean; missing?: Array<{ name: string; rating?: number | null }>; benched?: Array<{ name: string; rating?: number | null }> };
+      summary?: string;
+    } | null;
+  } | null;
   wagerReadiness?: {
     status: "eligible" | "watch" | "analysis_only";
     label: string;
