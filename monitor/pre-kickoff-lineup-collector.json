@@ -1,120 +1,45 @@
 {
-  "generatedAt": "2026-08-24T17:48:55.625Z",
-  "checked": 4,
-  "confirmed": 3,
-  "partial": 1,
-  "missing": 0,
-  "r2Stored": 4,
+  "generatedAt": "2026-08-25T14:29:54.543Z",
+  "checked": 1,
+  "confirmed": 0,
+  "partial": 0,
+  "missing": 1,
+  "r2Stored": 0,
   "playerFixtureStatsCaptured": 0,
   "databaseWritable": false,
   "databaseError": "Server error (HTTP status 402): {\"message\":\"Your project has exceeded the data transfer quota. Upgrade your plan to increase limits.\",\"code\":\"\",\"detail\":null,\"hint\":null,\"position\":null,\"internalPosition\":null,\"internalQuery\":null,\"severity\":\"\",\"where\":null,\"table\":null,\"column\":null,\"schema\":null,\"dataType\":null,\"constraint\":null,\"file\":null,\"line\":null,\"routine\":null,\"neon:retryable\":true}",
   "captureWindows": {
     "t75": 1,
-    "t45": 1,
-    "t20": 2,
+    "t45": 0,
+    "t20": 0,
     "outside": 0
   },
   "providers": {
-    "sofascore:schedule_http_403": 4,
-    "fotmob:ok": 4
+    "fotmob:fixture_not_found": 1,
+    "sofascore:schedule_http_403": 1,
+    "goal-api:acceptance_gate_closed": 1,
+    "api-football:account_or_plan_unavailable": 1,
+    "sportmonks:plan_coverage_unavailable": 1
   },
   "matches": [
     {
-      "matchId": "ss-fotmob-5832834",
-      "league": "Netherlands - Eerste Divisie",
-      "agent": "netherlands-eerste-divisie-agent",
-      "kickoff": "2026-08-24T18:00:00.000Z",
-      "minutesBeforeKickoff": 11,
-      "captureWindow": "t20",
-      "homeTeam": "Jong FC Utrecht",
-      "awayTeam": "Heracles",
-      "provider": "fotmob",
-      "status": "ok",
-      "attempts": [
-        {
-          "provider": "sofascore",
-          "status": "schedule_http_403",
-          "lineup": false,
-          "confirmed": false
-        },
-        {
-          "provider": "fotmob",
-          "status": "ok",
-          "lineup": true,
-          "confirmed": true
-        }
-      ],
-      "confirmed": true,
-      "partial": false
-    },
-    {
-      "matchId": "ss-fotmob-5832833",
-      "league": "Netherlands - Eerste Divisie",
-      "agent": "netherlands-eerste-divisie-agent",
-      "kickoff": "2026-08-24T18:00:00.000Z",
-      "minutesBeforeKickoff": 11,
-      "captureWindow": "t20",
-      "homeTeam": "Jong PSV",
-      "awayTeam": "TOP Oss",
-      "provider": "fotmob",
-      "status": "ok",
-      "attempts": [
-        {
-          "provider": "sofascore",
-          "status": "schedule_http_403",
-          "lineup": false,
-          "confirmed": false
-        },
-        {
-          "provider": "fotmob",
-          "status": "ok",
-          "lineup": true,
-          "confirmed": true
-        }
-      ],
-      "confirmed": true,
-      "partial": false
-    },
-    {
-      "matchId": "ss-fotmob-5803233",
-      "league": "France - Ligue 2",
-      "agent": "france-ligue-2-agent",
-      "kickoff": "2026-08-24T18:45:00.000Z",
-      "minutesBeforeKickoff": 56,
-      "captureWindow": "t45",
-      "homeTeam": "Reims",
-      "awayTeam": "Annecy FC",
-      "provider": "fotmob",
-      "status": "ok",
-      "attempts": [
-        {
-          "provider": "sofascore",
-          "status": "schedule_http_403",
-          "lineup": false,
-          "confirmed": false
-        },
-        {
-          "provider": "fotmob",
-          "status": "ok",
-          "lineup": true,
-          "confirmed": true
-        }
-      ],
-      "confirmed": true,
-      "partial": false
-    },
-    {
-      "matchId": "ss-fotmob-5795372",
-      "league": "England - Premier League",
-      "agent": "england-premier-league-agent",
-      "kickoff": "2026-08-24T19:00:00.000Z",
-      "minutesBeforeKickoff": 71,
+      "matchId": "ss-bbc-2026-08-25-sabah-hapoel be er sheva",
+      "league": "Europe - Champions League",
+      "agent": "champions-league-agent",
+      "kickoff": "2026-08-25T15:45:00.000Z",
+      "minutesBeforeKickoff": 75,
       "captureWindow": "t75",
-      "homeTeam": "Fulham",
-      "awayTeam": "Chelsea",
-      "provider": "fotmob",
-      "status": "ok",
+      "homeTeam": "Sabah",
+      "awayTeam": "Hapoel Be'er Sheva",
+      "provider": "sportmonks",
+      "status": "plan_coverage_unavailable",
       "attempts": [
+        {
+          "provider": "fotmob",
+          "status": "fixture_not_found",
+          "lineup": false,
+          "confirmed": false
+        },
         {
           "provider": "sofascore",
           "status": "schedule_http_403",
@@ -122,41 +47,38 @@
           "confirmed": false
         },
         {
-          "provider": "fotmob",
-          "status": "ok",
-          "lineup": true,
+          "provider": "goal-api",
+          "status": "acceptance_gate_closed",
+          "lineup": false,
+          "confirmed": false
+        },
+        {
+          "provider": "api-football",
+          "status": "account_or_plan_unavailable",
+          "fixtureMapped": false,
+          "lineup": false,
+          "confirmed": false
+        },
+        {
+          "provider": "sportmonks",
+          "status": "plan_coverage_unavailable",
+          "lineup": false,
           "confirmed": false
         }
       ],
       "confirmed": false,
-      "partial": true
+      "partial": false
     }
   ],
   "leagueCoverage": [
     {
-      "league": "England - Premier League",
+      "league": "Europe - Champions League",
       "checked": 1,
       "covered": 0,
-      "partial": 1,
-      "missing": 0,
+      "partial": 0,
+      "missing": 1,
       "coverage": 0
-    },
-    {
-      "league": "Netherlands - Eerste Divisie",
-      "checked": 2,
-      "covered": 2,
-      "partial": 0,
-      "missing": 0,
-      "coverage": 1
-    },
-    {
-      "league": "France - Ligue 2",
-      "checked": 1,
-      "covered": 1,
-      "partial": 0,
-      "missing": 0,
-      "coverage": 1
     }
   ],
-  "confirmedCoverage": 0.75
+  "confirmedCoverage": 0
 }
