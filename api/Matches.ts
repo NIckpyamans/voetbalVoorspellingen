@@ -156,6 +156,8 @@ function baseDetailMatch(match: any) {
     awayForm: match.awayForm,
     homeClubElo: match.homeClubElo,
     awayClubElo: match.awayClubElo,
+    homeClubStrength: match.homeClubStrength,
+    awayClubStrength: match.awayClubStrength,
     homePos: match.homePos,
     awayPos: match.awayPos,
     aggregate: match.aggregate,

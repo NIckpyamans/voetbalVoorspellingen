@@ -128,6 +128,8 @@ function compactPrediction(prediction: any) {
     awayRestDays: prediction.awayRestDays,
     homeClubElo: prediction.homeClubElo,
     awayClubElo: prediction.awayClubElo,
+    homeClubStrength: prediction.homeClubStrength,
+    awayClubStrength: prediction.awayClubStrength,
     odds: prediction.odds,
     oddsAtPrediction: prediction.oddsAtPrediction,
     derivedOdds: prediction.derivedOdds,
@@ -234,6 +236,8 @@ function enrichPrediction(prediction: any, matchMap: Record<string, any>, store:
       prediction.homeClubElo != null ? prediction.homeClubElo : match?.homeClubElo ?? null,
     awayClubElo:
       prediction.awayClubElo != null ? prediction.awayClubElo : match?.awayClubElo ?? null,
+    homeClubStrength: prediction.homeClubStrength || match?.homeClubStrength || null,
+    awayClubStrength: prediction.awayClubStrength || match?.awayClubStrength || null,
     modelEdges: {
       ...(match?.modelEdges || {}),
       ...(prediction.modelEdges || {}),

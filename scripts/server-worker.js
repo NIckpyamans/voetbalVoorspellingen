@@ -84,6 +84,7 @@ import { buildTwoLegAggregate, deriveH2HWinnerId, findOrientedPreviousLeg } from
 import { mergePersistedTeamFormCache } from "./worker/local-team-form-history.js";
 import { selectFreshestSquadProfile } from "./worker/squad-cache-policy.js";
 import { summarizeGoalTiming } from "./worker/goal-timing.js";
+import { buildClubStrengthProfile, lookupClubEloProfile, parseClubEloSnapshot } from "./worker/club-strength.js";
 import { hydrateR2ModelProfiles } from "./worker/r2-model-profiles.js";
 import {
   FOTMOB_STANDINGS_LEAGUES,
@@ -8725,33 +8726,11 @@ async function fetchClubEloSnapshot(dateISO) {
   }
 
   if (!text) return null;
-  const lines = text.split(/\r?\n/).filter(Boolean);
-  if (lines.length < 2) return null;
-  const headers = lines[0].split(",");
-  const clubIndex = headers.findIndex((header) => /club/i.test(header));
-  const eloIndex = headers.findIndex((header) => /^elo$/i.test(header));
-  if (clubIndex < 0 || eloIndex < 0) return null;
-
-  const map = {};
-  for (const line of lines.slice(1)) {
-    const parts = line.split(",");
-    const club = parts[clubIndex];
-    const elo = Number(parts[eloIndex]);
-    if (!club || !Number.isFinite(elo)) continue;
-    for (const variant of buildPossibleNames(club)) {
-      map[variant] = elo;
-    }
-  }
-
-  return map;
+  return parseClubEloSnapshot(text, { asOf: dateISO, buildPossibleNames });
 }
 
 function lookupClubElo(snapshot, teamName) {
-  if (!snapshot) return null;
-  for (const variant of buildPossibleNames(teamName)) {
-    if (snapshot[variant] != null) return Number(snapshot[variant]);
-  }
-  return null;
+  return lookupClubEloProfile(snapshot, teamName, buildPossibleNames)?.elo ?? null;
 }
 
 function inferRivalry(homeName, awayName, homeCountry, awayCountry) {
@@ -11558,8 +11537,10 @@ async function main() {
         awayCountry,
       });
 
-      const homeClubElo = lookupClubElo(clubEloSnapshot, homeName);
-      const awayClubElo = lookupClubElo(clubEloSnapshot, awayName);
+      const homeClubEloProfile = lookupClubEloProfile(clubEloSnapshot, homeName, buildPossibleNames);
+      const awayClubEloProfile = lookupClubEloProfile(clubEloSnapshot, awayName, buildPossibleNames);
+      const homeClubElo = homeClubEloProfile?.elo ?? lookupClubElo(clubEloSnapshot, homeName);
+      const awayClubElo = awayClubEloProfile?.elo ?? lookupClubElo(clubEloSnapshot, awayName);
       const homeMarketProfile = lookupMarketTeamProfile(leagueMarketProfile, homeName);
       const awayMarketProfile = lookupMarketTeamProfile(leagueMarketProfile, awayName);
       const homeLearning = store.teamLearning[homeId ? `id:${homeId}` : `name:${normalizeName(homeName)}`] || null;
@@ -11659,6 +11640,16 @@ async function main() {
             : projectedLineup;
         }
       }
+      const homeClubStrength = buildClubStrengthProfile({
+        clubEloProfile: homeClubEloProfile,
+        squadProfile: homeIntelligence.squadProfile,
+        lineupSide: lineupSummary?.home,
+      });
+      const awayClubStrength = buildClubStrengthProfile({
+        clubEloProfile: awayClubEloProfile,
+        squadProfile: awayIntelligence.squadProfile,
+        lineupSide: lineupSummary?.away,
+      });
       const referee = extractReferee(eventDetails);
       const historicalRefereeProfile =
         lookupHistoricalRefereeProfile(leagueMarketProfile, referee?.name, globalRefereeArchive) ||
@@ -11814,6 +11805,8 @@ async function main() {
         h2h,
         homeClubElo,
         awayClubElo,
+        homeClubStrength,
+        awayClubStrength,
         homeTeamProfile,
         awayTeamProfile,
         homeCountry,
@@ -11938,6 +11931,8 @@ async function main() {
         aggregate,
         homeClubElo,
         awayClubElo,
+        homeClubStrength,
+        awayClubStrength,
         homePos,
         awayPos,
         matchImportance,

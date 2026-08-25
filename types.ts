@@ -47,6 +47,25 @@ export interface DatabaseFeatureContext {
   featureSources?: string[];
 }
 
+export interface ClubStrengthProfile {
+  rating?: number | null;
+  label?: string;
+  quality?: "hoog" | "middel" | "laag";
+  clubElo?: number | null;
+  clubEloRank?: number | null;
+  country?: string | null;
+  level?: number | null;
+  squadRating?: number | null;
+  squadPlayers?: number;
+  rosterCoverage?: number | null;
+  lineupRating?: number | null;
+  lineupConfirmed?: boolean;
+  source?: string;
+  sourceAsOf?: string | null;
+  uefaCoefficient?: number | null;
+  uefaCoefficientStatus?: string;
+}
+
 export interface Match {
   // ========================================
   // BASIS WEDSTRIJD INFORMATIE
@@ -91,6 +110,8 @@ export interface Match {
   awayElo?: number;
   homeClubElo?: number;
   awayClubElo?: number;
+  homeClubStrength?: ClubStrengthProfile;
+  awayClubStrength?: ClubStrengthProfile;
   homePos?: number;
   awayPos?: number;
   
@@ -733,6 +754,8 @@ export interface Prediction {
   awayForm?: string;
   homeClubElo?: number;
   awayClubElo?: number;
+  homeClubStrength?: ClubStrengthProfile;
+  awayClubStrength?: ClubStrengthProfile;
   h2h?: any;
   h2hStatus?: string;
   aggregate?: any;

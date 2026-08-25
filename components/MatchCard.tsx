@@ -1340,6 +1340,8 @@ function compactAnalyzePayload(match: any, prediction: any) {
       awayRestDays: match.awayRestDays,
       homeClubElo: match.homeClubElo,
       awayClubElo: match.awayClubElo,
+      homeClubStrength: match.homeClubStrength,
+      awayClubStrength: match.awayClubStrength,
       homeInjuries: match.homeInjuries ? { injuredCount: match.homeInjuries.injuredCount || match.homeInjuries.count || 0 } : null,
       awayInjuries: match.awayInjuries ? { injuredCount: match.awayInjuries.injuredCount || match.awayInjuries.count || 0 } : null,
       homeTeamProfile: compactProfile(match.homeTeamProfile),
@@ -1370,6 +1372,8 @@ function compactAnalyzePayload(match: any, prediction: any) {
       awayRestDays: prediction.awayRestDays,
       homeClubElo: prediction.homeClubElo,
       awayClubElo: prediction.awayClubElo,
+      homeClubStrength: prediction.homeClubStrength,
+      awayClubStrength: prediction.awayClubStrength,
       lineupSummary: prediction.lineupSummary,
       modelEdges: compactEdges(prediction.modelEdges),
       ensembleMeta: prediction.ensembleMeta,
@@ -1564,7 +1568,13 @@ const MatchCard: React.FC<MatchCardProps> = ({ match: initialMatch, prediction: 
           >
             {match.homeTeamName} {match.homePos ? `(#${match.homePos})` : ""}
           </button>
-          <div className="text-[7px] text-slate-500">ClubElo {match.homeClubElo ?? "-"}</div>
+          <div className="text-[7px] text-slate-400">
+            Clubkracht <span className="font-black text-cyan-300">{match.homeClubStrength?.rating != null ? `${match.homeClubStrength.rating}/100` : "-"}</span>
+            {match.homeClubStrength?.clubEloRank ? ` · Elo #${match.homeClubStrength.clubEloRank}` : match.homeClubElo ? ` · Elo ${match.homeClubElo}` : ""}
+          </div>
+          {match.homeClubStrength?.uefaCoefficient != null && (
+            <div className="text-[7px] text-slate-500">UEFA-coeff. {Number(match.homeClubStrength.uefaCoefficient).toFixed(3)}</div>
+          )}
           <FormPills form={match.homeForm} />
           <div className="text-[8px] text-slate-500 mt-0.5">
             PPG {match.homeTeamProfile?.pointsPerGame ?? "-"}
@@ -1603,7 +1613,13 @@ const MatchCard: React.FC<MatchCardProps> = ({ match: initialMatch, prediction: 
           >
             {match.awayTeamName} {match.awayPos ? `(#${match.awayPos})` : ""}
           </button>
-          <div className="text-[7px] text-slate-500">ClubElo {match.awayClubElo ?? "-"}</div>
+          <div className="text-[7px] text-slate-400">
+            Clubkracht <span className="font-black text-cyan-300">{match.awayClubStrength?.rating != null ? `${match.awayClubStrength.rating}/100` : "-"}</span>
+            {match.awayClubStrength?.clubEloRank ? ` · Elo #${match.awayClubStrength.clubEloRank}` : match.awayClubElo ? ` · Elo ${match.awayClubElo}` : ""}
+          </div>
+          {match.awayClubStrength?.uefaCoefficient != null && (
+            <div className="text-[7px] text-slate-500">UEFA-coeff. {Number(match.awayClubStrength.uefaCoefficient).toFixed(3)}</div>
+          )}
           <FormPills form={match.awayForm} />
           <div className="text-[8px] text-slate-500 mt-0.5">
             PPG {match.awayTeamProfile?.pointsPerGame ?? "-"}

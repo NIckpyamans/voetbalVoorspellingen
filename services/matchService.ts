@@ -324,6 +324,8 @@ function buildMatchesUpdateFromPayload(
       ...(rawMatch.modelEdges ? { modelEdges: rawMatch.modelEdges } : {}),
       ...(rawMatch.homeClubElo != null ? { homeClubElo: rawMatch.homeClubElo } : {}),
       ...(rawMatch.awayClubElo != null ? { awayClubElo: rawMatch.awayClubElo } : {}),
+      ...(rawMatch.homeClubStrength ? { homeClubStrength: rawMatch.homeClubStrength } : {}),
+      ...(rawMatch.awayClubStrength ? { awayClubStrength: rawMatch.awayClubStrength } : {}),
       ...(rawMatch.homeTeamProfile ? { homeTeamProfile: rawMatch.homeTeamProfile } : {}),
       ...(rawMatch.awayTeamProfile ? { awayTeamProfile: rawMatch.awayTeamProfile } : {}),
       ...(rawMatch.featureVector ? { featureVector: rawMatch.featureVector } : {}),
@@ -428,6 +430,8 @@ export function mapRawMatch(m: any): Match {
     ...(m.awayElo ? { awayElo: m.awayElo } : {}),
     ...(m.homeClubElo != null ? { homeClubElo: m.homeClubElo } : {}),
     ...(m.awayClubElo != null ? { awayClubElo: m.awayClubElo } : {}),
+    ...(m.homeClubStrength ? { homeClubStrength: m.homeClubStrength } : {}),
+    ...(m.awayClubStrength ? { awayClubStrength: m.awayClubStrength } : {}),
     ...(m.homePos != null ? { homePos: m.homePos } : {}),
     ...(m.awayPos != null ? { awayPos: m.awayPos } : {}),
     
