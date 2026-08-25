@@ -873,7 +873,7 @@ function DataQualitySnapshot({ match, prediction }: { match: any; prediction: an
   const qualityGate = prediction.qualityGate || match.qualityGate || prediction.modelEdges?.qualityGate;
   const sourceReliability = prediction.modelEdges?.sourceReliability || match.sourceReliability;
   const marketCalibration = prediction.modelEdges?.marketCalibration || match.marketCalibration;
-  const h2hPlayed = Math.max(Number(match.h2h?.played || 0), Array.isArray(match.h2h?.results) ? match.h2h.results.length : 0);
+  const h2hPlayed = Math.max(Number(match.h2hPlayed || 0), Number(match.h2h?.played || 0), Array.isArray(match.h2h?.results) ? match.h2h.results.length : 0);
   const lineup = match.lineupSummary || prediction.lineupSummary || {};
   const missing = Array.isArray(dataCompleteness?.missing) ? dataCompleteness.missing : [];
   const reasons = Array.isArray(dataCompleteness?.reasons) ? dataCompleteness.reasons : [];

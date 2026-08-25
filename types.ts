@@ -108,6 +108,7 @@ export interface Match {
   // ========================================
   // HEAD-TO-HEAD & AGGREGATE
   // ========================================
+  h2hPlayed?: number;
   h2h?: {
     played: number;
     homeWins: number;

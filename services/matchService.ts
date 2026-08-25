@@ -118,7 +118,7 @@ function matchQuality(match: any) {
   const statusScore = ["FT", "AET", "PEN"].includes(status) ? 80 : ["LIVE", "HT"].includes(status) ? 70 : status === "RESULT_PENDING" ? 20 : 0;
   const scoreScore = match?.score || match?.homeScore != null || match?.awayScore != null ? 30 : 0;
   const logoScore = (!isGeneratedLogoUrl(match?.homeLogo) ? 4 : 0) + (!isGeneratedLogoUrl(match?.awayLogo) ? 4 : 0);
-  const h2hScore = Number(match?.h2h?.played || 0) * 2;
+  const h2hScore = Math.max(Number(match?.h2hPlayed || 0), Number(match?.h2h?.played || 0)) * 2;
   const recentScore = (match?.homeRecent ? 3 : 0) + (match?.awayRecent ? 3 : 0);
   const positionScore = (match?.homePos != null ? 2 : 0) + (match?.awayPos != null ? 2 : 0);
   const sourceScore = String(match?.id || "").includes("espn") ? 5 : String(match?.id || "").includes("sportsdb") ? 3 : 0;
@@ -143,6 +143,7 @@ function mergeDuplicateMatch(current: Match, incoming: Match): Match {
     minuteValue: preferred.minuteValue ?? fallback.minuteValue,
     homePos: preferred.homePos ?? fallback.homePos,
     awayPos: preferred.awayPos ?? fallback.awayPos,
+    h2hPlayed: Math.max(Number(preferred.h2hPlayed || 0), Number(fallback.h2hPlayed || 0)),
     h2h: preferred.h2h || fallback.h2h,
     homeRecent: preferred.homeRecent || fallback.homeRecent,
     awayRecent: preferred.awayRecent || fallback.awayRecent,
@@ -375,7 +376,7 @@ function normalizeMatchStatus(m: any) {
   return rawStatus || "NS";
 }
 
-function mapRawMatch(m: any): Match {
+export function mapRawMatch(m: any): Match {
   m = applyVerifiedResultBackfill(m);
   const minuteValue = parseMinuteValue(m.minute, m.minuteValue);
   const status = normalizeMatchStatus(m);
@@ -440,6 +441,7 @@ function mapRawMatch(m: any): Match {
     // ========================================
     // HEAD-TO-HEAD & AGGREGATE
     // ========================================
+    ...(m.h2hPlayed != null ? { h2hPlayed: Number(m.h2hPlayed) } : {}),
     ...(m.h2h ? { h2h: m.h2h } : {}),
     ...(m.h2hStatus ? { h2hStatus: m.h2hStatus } : {}),
     ...(m.aggregate ? { aggregate: m.aggregate } : {}),
