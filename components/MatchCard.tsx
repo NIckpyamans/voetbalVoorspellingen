@@ -1379,6 +1379,7 @@ const MatchCard: React.FC<MatchCardProps> = ({ match: initialMatch, prediction: 
   const [aiLoading, setAiLoading] = useState(false);
   const [selectedSquadSide, setSelectedSquadSide] = useState<"home" | "away" | null>(null);
   const triedRef = useRef(false);
+  const loadingDetailTabRef = useRef<MatchDetailTab | null>(null);
   const match = useMemo(
     () => ({ ...initialMatch, ...(detailPayload?.match || {}) }) as Match,
     [initialMatch, detailPayload]
@@ -1397,10 +1398,11 @@ const MatchCard: React.FC<MatchCardProps> = ({ match: initialMatch, prediction: 
   const liveMinute = useLiveMinute(match as any);
 
   useEffect(() => {
-    if (!detailsOpen || loadedDetailTabs.includes(tab) || detailLoading || !initialMatch.id) return;
+    if (!detailsOpen || loadedDetailTabs.includes(tab) || loadingDetailTabRef.current === tab || !initialMatch.id) return;
     const dateKey = detailDateKey(initialMatch);
     if (!dateKey) return;
     let cancelled = false;
+    loadingDetailTabRef.current = tab;
     setDetailLoading(true);
     fetch(`/api/matches?date=${encodeURIComponent(dateKey)}&matchId=${encodeURIComponent(initialMatch.id)}&section=${encodeURIComponent(tab)}`, { cache: "no-store" })
       .then(async (response) => {
@@ -1432,12 +1434,16 @@ const MatchCard: React.FC<MatchCardProps> = ({ match: initialMatch, prediction: 
       })
       .catch(() => {})
       .finally(() => {
-        if (!cancelled) setDetailLoading(false);
+        if (!cancelled) {
+          loadingDetailTabRef.current = null;
+          setDetailLoading(false);
+        }
       });
     return () => {
       cancelled = true;
+      if (loadingDetailTabRef.current === tab) loadingDetailTabRef.current = null;
     };
-  }, [detailsOpen, loadedDetailTabs, tab, detailLoading, initialMatch]);
+  }, [detailsOpen, loadedDetailTabs, tab, initialMatch.id, initialMatch.date, initialMatch.kickoff]);
 
   useEffect(() => {
     if (!detailsOpen || tab !== "analyse" || triedRef.current || !prediction) return;
