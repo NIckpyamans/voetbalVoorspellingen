@@ -82,6 +82,7 @@ import { fetchR2H2HProfile, fetchR2LineupSummary, fetchR2OddsSnapshot } from "./
 import { buildH2HAgentProfile } from "./worker/h2h.js";
 import { buildTwoLegAggregate, deriveH2HWinnerId, findOrientedPreviousLeg } from "./worker/two-leg.js";
 import { mergePersistedTeamFormCache } from "./worker/local-team-form-history.js";
+import { selectFreshestSquadProfile } from "./worker/squad-cache-policy.js";
 import { summarizeGoalTiming } from "./worker/goal-timing.js";
 import { hydrateR2ModelProfiles } from "./worker/r2-model-profiles.js";
 import {
@@ -3290,7 +3291,9 @@ async function updateTeamIntelligence(store, args) {
   // stores a stable name key, which is a safe fallback after the match's team
   // identity has been resolved to an ID.
   const nameKey = buildTeamStoreKey("", teamName);
-  let existingSquad = store.teamSquads[key] || store.teamSquads[nameKey] || null;
+  // The independent roster collector writes name-key snapshots. Provider-id
+  // keys in server_data may be older, so freshness must win over key priority.
+  let existingSquad = selectFreshestSquadProfile(store.teamSquads[key], store.teamSquads[nameKey]);
   if (
     existingSquad?.source === "Wikidata" &&
     Number(existingSquad?.players?.length || existingSquad?.playerCount || 0) > 42
