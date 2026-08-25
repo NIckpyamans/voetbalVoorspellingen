@@ -1,11 +1,11 @@
 # Data Quality Audit
 
-Laatst bijgewerkt: 2026-08-25T07:23:20.601Z
+Laatst bijgewerkt: 2026-08-25T08:38:22.828Z
 Lookback: 45 dagen
 
 ## Scores
-- Wedstrijden: 675
-- Oude wedstrijden: 184
+- Wedstrijden: 676
+- Oude wedstrijden: 185
 - Pending result backfills: 2
 - Ontbrekende oude scores: 0
 - H2H-dekking: 44%
@@ -13,14 +13,14 @@ Lookback: 45 dagen
 - Lekvrije post-matchreviews: 100% (62/62)
 - Bruikbare wedstrijdstatistieken: 74%
 - Bevestigde opstellingen: 0%
-- Historisch teruggevonden basiselftallen: 46%
+- Historisch teruggevonden basiselftallen: 45%
 - Verse getimestampte prematch-odds: 1%
 - Volledige pre-match bewijsset: 0%
 - Doelpunten met tijdlijn: 43%
 - Kaarten met tijdlijn: 46%
 
 ## Per competitie
-- Netherlands - Eredivisie: 5 duels, vorm 100%, H2H 40%, inzetbewijs 0%, lekvrije reviews 0% (0/0), stats 100%; gaten: h2h, confirmed_lineups, timestamped_odds, leak_free_reviews
+- Netherlands - Eredivisie: 6 duels, vorm 83%, H2H 33%, inzetbewijs 0%, lekvrije reviews 0% (0/0), stats 100%; gaten: h2h, confirmed_lineups, timestamped_odds, leak_free_reviews
 - Netherlands - Eerste Divisie: 113 duels, vorm 26%, H2H 13%, inzetbewijs 0%, lekvrije reviews 100% (8/8), stats 100%; gaten: form, h2h, confirmed_lineups, timestamped_odds
 - Germany - Bundesliga: 85 duels, vorm 93%, H2H 54%, inzetbewijs 0%, lekvrije reviews 0% (0/0), stats 100%; gaten: h2h, confirmed_lineups, timestamped_odds, leak_free_reviews
 - Germany - 2. Bundesliga: 12 duels, vorm 67%, H2H 17%, inzetbewijs 0%, lekvrije reviews 0% (0/0), stats 100%; gaten: form, h2h, confirmed_lineups, timestamped_odds, leak_free_reviews
