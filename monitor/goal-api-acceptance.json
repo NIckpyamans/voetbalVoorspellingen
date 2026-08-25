@@ -1,24 +1,24 @@
 {
   "schemaVersion": "goal-api-acceptance-v1",
-  "checkedAt": "2026-08-24T04:13:03.995Z",
+  "checkedAt": "2026-08-25T04:06:49.784Z",
   "configured": true,
   "accepted": false,
   "enoughTime": false,
   "enoughEvidence": false,
   "targetsMet": false,
-  "elapsedDays": 4,
+  "elapsedDays": 5,
   "requiredDays": 14,
   "aggregate": {
     "domestic": {
-      "checked": 591,
-      "mapped": 410,
-      "coverage": 0.694,
+      "checked": 670,
+      "mapped": 470,
+      "coverage": 0.701,
       "target": 0.8
     },
     "uefa": {
-      "checked": 405,
-      "mapped": 342,
-      "coverage": 0.844,
+      "checked": 468,
+      "mapped": 396,
+      "coverage": 0.846,
       "target": 0.8
     },
     "friendly": {
@@ -1316,25 +1316,164 @@
           "errorCode": null
         }
       }
+    },
+    {
+      "measurementVersion": "goal-pagination-v2",
+      "checkedAt": "2026-08-25T04:06:49.784Z",
+      "providerReachable": true,
+      "checked": 142,
+      "mapped": 114,
+      "segments": {
+        "domestic": {
+          "checked": 79,
+          "mapped": 60
+        },
+        "uefa": {
+          "checked": 63,
+          "mapped": 54
+        },
+        "friendly": {
+          "checked": 0,
+          "mapped": 0
+        }
+      },
+      "requestStatuses": [
+        {
+          "date": "2026-08-25",
+          "status": 200,
+          "records": 204,
+          "pages": 3,
+          "truncated": false,
+          "limits": {
+            "remaining": "997",
+            "limit": "1000",
+            "dailyRemaining": null
+          }
+        },
+        {
+          "date": "2026-08-26",
+          "status": 200,
+          "records": 322,
+          "pages": 4,
+          "truncated": false,
+          "limits": {
+            "remaining": "993",
+            "limit": "1000",
+            "dailyRemaining": null
+          }
+        },
+        {
+          "date": "2026-08-27",
+          "status": 200,
+          "records": 134,
+          "pages": 2,
+          "truncated": false,
+          "limits": {
+            "remaining": "991",
+            "limit": "1000",
+            "dailyRemaining": null
+          }
+        },
+        {
+          "date": "2026-08-28",
+          "status": 200,
+          "records": 410,
+          "pages": 5,
+          "truncated": false,
+          "limits": {
+            "remaining": "986",
+            "limit": "1000",
+            "dailyRemaining": null
+          }
+        },
+        {
+          "date": "2026-08-29",
+          "status": 200,
+          "records": 1000,
+          "pages": 10,
+          "truncated": true,
+          "limits": {
+            "remaining": "976",
+            "limit": "1000",
+            "dailyRemaining": null
+          }
+        },
+        {
+          "date": "2026-08-30",
+          "status": 200,
+          "records": 783,
+          "pages": 8,
+          "truncated": false,
+          "limits": {
+            "remaining": "968",
+            "limit": "1000",
+            "dailyRemaining": null
+          }
+        },
+        {
+          "date": "2026-08-31",
+          "status": 200,
+          "records": 238,
+          "pages": 3,
+          "truncated": false,
+          "limits": {
+            "remaining": "965",
+            "limit": "1000",
+            "dailyRemaining": null
+          }
+        }
+      ],
+      "endpointAccess": {
+        "testedFixtureId": "cmsp4mzcou5z8pn067yr0iypp",
+        "fixture": {
+          "tested": true,
+          "valid": true,
+          "status": 200,
+          "records": 1,
+          "available": true,
+          "remaining": "964",
+          "errorCode": null
+        },
+        "lineups": {
+          "tested": true,
+          "valid": true,
+          "status": 200,
+          "records": 1,
+          "available": true,
+          "remaining": "963",
+          "errorCode": null
+        },
+        "statistics": {
+          "tested": true,
+          "valid": true,
+          "status": 200,
+          "records": 1,
+          "available": true,
+          "remaining": "962",
+          "errorCode": null
+        },
+        "odds": {
+          "tested": true,
+          "valid": false,
+          "status": 403,
+          "records": 0,
+          "available": false,
+          "remaining": null,
+          "errorCode": "HTTP 403"
+        },
+        "h2h": {
+          "tested": true,
+          "valid": true,
+          "status": 200,
+          "records": 1,
+          "available": true,
+          "remaining": "961",
+          "errorCode": null
+        }
+      }
     }
   ],
   "missingSamples": [
-    {
-      "date": "2026-08-24",
-      "league": "Netherlands - Eerste Divisie",
-      "home": "Jong FC Utrecht",
-      "away": "Heracles",
-      "segment": "domestic",
-      "status": "not_mapped"
-    },
-    {
-      "date": "2026-08-24",
-      "league": "Netherlands - Eerste Divisie",
-      "home": "Jong PSV",
-      "away": "TOP Oss",
-      "segment": "domestic",
-      "status": "not_mapped"
-    },
     {
       "date": "2026-08-25",
       "league": "Europe - Champions League",
@@ -1417,22 +1556,6 @@
     },
     {
       "date": "2026-08-28",
-      "league": "Germany - 2. Bundesliga",
-      "home": "TSV Eintracht Braunschweig",
-      "away": "Hertha Berlin",
-      "segment": "domestic",
-      "status": "not_mapped"
-    },
-    {
-      "date": "2026-08-28",
-      "league": "Germany - Bundesliga",
-      "home": "Bayern Munich",
-      "away": "VfB Stuttgart",
-      "segment": "domestic",
-      "status": "not_mapped"
-    },
-    {
-      "date": "2026-08-28",
       "league": "Netherlands - Eerste Divisie",
       "home": "Jong Ajax",
       "away": "Helmond Sport",
@@ -1442,7 +1565,7 @@
     {
       "date": "2026-08-28",
       "league": "Netherlands - Eerste Divisie",
-      "home": "Jong AZ",
+      "home": "Jong AZ Alkmaar",
       "away": "MVV Maastricht",
       "segment": "domestic",
       "status": "not_mapped"
@@ -1464,10 +1587,42 @@
       "status": "not_mapped"
     },
     {
-      "date": "2026-08-28",
-      "league": "Netherlands - Eerste Divisie",
-      "home": "Jong AZ Alkmaar",
-      "away": "MVV Maastricht",
+      "date": "2026-08-29",
+      "league": "Germany - Bundesliga",
+      "home": "RB Leipzig",
+      "away": "Borussia Mönchengladbach",
+      "segment": "domestic",
+      "status": "not_mapped"
+    },
+    {
+      "date": "2026-08-29",
+      "league": "Germany - Bundesliga",
+      "home": "Energie Cottbus",
+      "away": "SpVgg Greuther Fürth",
+      "segment": "domestic",
+      "status": "not_mapped"
+    },
+    {
+      "date": "2026-08-29",
+      "league": "Germany - Bundesliga",
+      "home": "1. FC Heidenheim 1846",
+      "away": "Dynamo Dresden",
+      "segment": "domestic",
+      "status": "not_mapped"
+    },
+    {
+      "date": "2026-08-29",
+      "league": "Germany - Bundesliga",
+      "home": "Karlsruher SC",
+      "away": "VfL Wolfsburg",
+      "segment": "domestic",
+      "status": "not_mapped"
+    },
+    {
+      "date": "2026-08-29",
+      "league": "England - Premier League",
+      "home": "Liverpool",
+      "away": "Nottingham Forest",
       "segment": "domestic",
       "status": "not_mapped"
     },
@@ -1489,40 +1644,16 @@
     },
     {
       "date": "2026-08-29",
-      "league": "England - Championship",
-      "home": "Wolverhampton Wanderers",
-      "away": "Stoke City",
-      "segment": "domestic",
-      "status": "not_mapped"
-    },
-    {
-      "date": "2026-08-29",
-      "league": "England - Premier League",
-      "home": "Liverpool",
-      "away": "Nottingham Forest",
-      "segment": "domestic",
-      "status": "not_mapped"
-    },
-    {
-      "date": "2026-08-29",
-      "league": "France - Ligue 2",
-      "home": "Annecy",
-      "away": "Metz",
-      "segment": "domestic",
-      "status": "not_mapped"
-    },
-    {
-      "date": "2026-08-29",
-      "league": "France - Ligue 2",
-      "home": "Red Star FC 93",
-      "away": "Stade de Reims",
+      "league": "Germany - 2. Bundesliga",
+      "home": "Energie Cottbus",
+      "away": "Greuther Fürth",
       "segment": "domestic",
       "status": "not_mapped"
     },
     {
       "date": "2026-08-29",
       "league": "Germany - 2. Bundesliga",
-      "home": "1. FC Heidenheim 1846",
+      "home": "FC Heidenheim",
       "away": "Dynamo Dresden",
       "segment": "domestic",
       "status": "not_mapped"
@@ -1530,32 +1661,40 @@
     {
       "date": "2026-08-29",
       "league": "Germany - 2. Bundesliga",
-      "home": "Energie Cottbus",
-      "away": "SpVgg Greuther Fürth",
-      "segment": "domestic",
-      "status": "not_mapped"
-    },
-    {
-      "date": "2026-08-29",
-      "league": "Germany - 2. Bundesliga",
       "home": "Karlsruher SC",
-      "away": "VfL Wolfsburg",
+      "away": "Wolfsburg",
       "segment": "domestic",
       "status": "not_mapped"
     },
     {
       "date": "2026-08-29",
-      "league": "Germany - Bundesliga",
-      "home": "FC Cologne",
-      "away": "TSG Hoffenheim",
+      "league": "France - Ligue 2",
+      "home": "Annecy FC",
+      "away": "Metz",
       "segment": "domestic",
       "status": "not_mapped"
     },
     {
       "date": "2026-08-29",
-      "league": "Germany - Bundesliga",
-      "home": "RB Leipzig",
-      "away": "Borussia Mönchengladbach",
+      "league": "France - Ligue 2",
+      "home": "Red Star",
+      "away": "Reims",
+      "segment": "domestic",
+      "status": "not_mapped"
+    },
+    {
+      "date": "2026-08-31",
+      "league": "Netherlands - Eerste Divisie",
+      "home": "Jong AZ Alkmaar",
+      "away": "Jong FC Utrecht",
+      "segment": "domestic",
+      "status": "not_mapped"
+    },
+    {
+      "date": "2026-08-31",
+      "league": "Netherlands - Eerste Divisie",
+      "home": "Jong PSV",
+      "away": "Jong Ajax",
       "segment": "domestic",
       "status": "not_mapped"
     }
