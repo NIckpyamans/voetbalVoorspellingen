@@ -187,7 +187,7 @@ for (const competition of competitionCatalog?.competitions || []) {
   for (const name of competition?.teams || []) {
     if (!name) continue;
     const key = teamKey(name);
-    const item = candidates.get(key) || { key, teamName: String(name), leagues: new Set(), providerTeamIds: new Set() };
+    const item = candidates.get(key) || { key, teamName: String(name), leagues: new Set(), providerTeamIds: new Set(), fotmobTeamIds: new Set() };
     if (competition?.league) item.leagues.add(String(competition.league));
     candidates.set(key, item);
   }
@@ -196,12 +196,17 @@ for (let offset = 0; offset <= DAYS_AHEAD; offset += 1) {
   const date = addDays(todayKey(), offset);
   const day = readJson(path.join(ROOT, "data", "days", `${date}.json`), null);
   for (const match of day?.matches || []) {
-    for (const [name, providerId] of [[match?.homeTeamName, match?.homeTeamId], [match?.awayTeamName, match?.awayTeamId]]) {
+    for (const [name, providerId, identity] of [
+      [match?.homeTeamName, match?.homeTeamId, match?.teamIdentity?.home],
+      [match?.awayTeamName, match?.awayTeamId, match?.teamIdentity?.away],
+    ]) {
       if (!name) continue;
       const key = teamKey(name);
-      const item = candidates.get(key) || { key, teamName: String(name), leagues: new Set(), providerTeamIds: new Set() };
+      const item = candidates.get(key) || { key, teamName: String(name), leagues: new Set(), providerTeamIds: new Set(), fotmobTeamIds: new Set() };
       if (match?.league) item.leagues.add(String(match.league));
       if (providerId) item.providerTeamIds.add(String(providerId));
+      if (/^fotmob[-:]/i.test(String(providerId || ""))) item.fotmobTeamIds.add(String(providerId));
+      if (identity?.providerIds?.fotmob) item.fotmobTeamIds.add(`fotmob-${identity.providerIds.fotmob}`);
       candidates.set(key, item);
     }
   }
@@ -241,7 +246,9 @@ const pendingCandidates = [...candidates.values()]
   .filter((candidate) => !TEAM_FILTER.size || TEAM_FILTER.has(normalize(candidate.teamName)))
   .map((candidate) => {
     const existing = cache[candidate.key] || exportedTeams[candidate.key] || null;
-    return { ...candidate, existing, playerCount: Number(existing?.playerCount || existing?.players?.length || 0) };
+    const fotmobTeamIds = new Set(candidate.fotmobTeamIds || []);
+    if (existing?.sourceIds?.fotmob) fotmobTeamIds.add(`fotmob-${existing.sourceIds.fotmob}`);
+    return { ...candidate, fotmobTeamIds, existing, playerCount: Number(existing?.playerCount || existing?.players?.length || 0) };
   })
   .filter((candidate) => {
     if (FORCE_REFRESH) return true;
@@ -274,7 +281,7 @@ for (const candidate of pending) {
   const providerProfiles = [];
   fotmobProfile = await fetchFotMobSquad({
     teamName: candidate.teamName,
-    teamIds: candidate.providerTeamIds || [],
+    teamIds: candidate.fotmobTeamIds || [],
     fetchJson: (url) => fetchJson(url, { ignoreRateLimit: true }),
   });
   if (fotmobProfile) providerProfiles.push({ provider: "FotMob", profile: fotmobProfile });
