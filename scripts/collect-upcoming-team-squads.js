@@ -20,6 +20,7 @@ const FORCE_REFRESH = String(process.env.SQUAD_ENRICHMENT_FORCE_REFRESH || "fals
 const TEAM_FILTER = new Set(String(process.env.SQUAD_ENRICHMENT_TEAM_FILTER || "").split(",").map(normalize).filter(Boolean));
 const CACHE_FILE = path.join(ROOT, "data", "team-squad-cache.json");
 const TEAMS_FILE = path.join(ROOT, "data", "teams.json");
+const COMPETITION_CATALOG_FILE = path.join(ROOT, "config", "competition-catalog.json");
 const REPORT_FILE = path.join(ROOT, "monitor", "upcoming-team-squad-enrichment.json");
 const ESPN_TEAMS_FILE = path.join(ROOT, "config", "friendly-team-sources.json");
 const SPORTS_DB_BASE = "https://www.thesportsdb.com/api/v1/json/123";
@@ -177,7 +178,20 @@ const cachePayload = readJson(CACHE_FILE, { teams: {} });
 const cache = cachePayload?.teams && typeof cachePayload.teams === "object" ? cachePayload.teams : {};
 const exportedTeams = readJson(TEAMS_FILE, {}).teamSquads || {};
 const knownEspnTeams = readJson(ESPN_TEAMS_FILE, { teams: [] }).teams || [];
+const competitionCatalog = readJson(COMPETITION_CATALOG_FILE, { competitions: [] });
 const candidates = new Map();
+
+// Keep every active competition's roster current, including clubs that do not
+// happen to play inside the short upcoming-fixture window.
+for (const competition of competitionCatalog?.competitions || []) {
+  for (const name of competition?.teams || []) {
+    if (!name) continue;
+    const key = teamKey(name);
+    const item = candidates.get(key) || { key, teamName: String(name), leagues: new Set(), providerTeamIds: new Set() };
+    if (competition?.league) item.leagues.add(String(competition.league));
+    candidates.set(key, item);
+  }
+}
 for (let offset = 0; offset <= DAYS_AHEAD; offset += 1) {
   const date = addDays(todayKey(), offset);
   const day = readJson(path.join(ROOT, "data", "days", `${date}.json`), null);
@@ -222,8 +236,8 @@ for (let offset = -1; offset >= -30; offset -= 1) {
 }
 
 const now = Date.now();
-const report = { generatedAt: new Date().toISOString(), daysAhead: DAYS_AHEAD, targetPlayersPerTeam: TARGET_SQUAD_PLAYERS, candidates: candidates.size, checked: 0, enriched: 0, unavailable: 0, skippedFresh: 0, rateLimited: false, retryAfterSeconds: 0, byProvider: { FotMob: 0, "Laatste bevestigde opstelling": 0, "Transfermarkt Datasets": 0, TheSportsDB: 0, ESPN: 0, Wikipedia: 0 }, byCompetition: {}, samples: [] };
-const pending = [...candidates.values()]
+const report = { generatedAt: new Date().toISOString(), daysAhead: DAYS_AHEAD, targetPlayersPerTeam: TARGET_SQUAD_PLAYERS, candidates: candidates.size, checked: 0, enriched: 0, unavailable: 0, skippedFresh: 0, pendingBeforeBatch: 0, pendingAfterBatch: 0, rateLimited: false, retryAfterSeconds: 0, byProvider: { FotMob: 0, "Laatste bevestigde opstelling": 0, "Transfermarkt Datasets": 0, TheSportsDB: 0, ESPN: 0, Wikipedia: 0 }, byCompetition: {}, samples: [] };
+const pendingCandidates = [...candidates.values()]
   .filter((candidate) => !TEAM_FILTER.size || TEAM_FILTER.has(normalize(candidate.teamName)))
   .map((candidate) => {
     const existing = cache[candidate.key] || exportedTeams[candidate.key] || null;
@@ -246,8 +260,10 @@ const pending = [...candidates.values()]
     const leftLeague = [...left.leagues].sort()[0] || "";
     const rightLeague = [...right.leagues].sort()[0] || "";
     return left.playerCount - right.playerCount || leftLeague.localeCompare(rightLeague) || left.teamName.localeCompare(right.teamName);
-  })
-  .slice(0, MAX_TEAMS);
+  });
+const pending = pendingCandidates.slice(0, MAX_TEAMS);
+report.pendingBeforeBatch = pendingCandidates.length;
+report.pendingAfterBatch = Math.max(0, pendingCandidates.length - pending.length);
 
 for (const candidate of pending) {
   report.checked += 1;

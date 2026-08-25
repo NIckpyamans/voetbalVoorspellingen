@@ -177,6 +177,9 @@ function compactPlayer(player: any) {
     status: player.status || player.availability || null,
     loan: Boolean(player.loan),
     source: player.source || null,
+    rating: Number(player.rating || rawPlayer.rating || 0) || null,
+    marketValueEur: Number(player.marketValueEur || rawPlayer.marketValueEur || 0) || null,
+    lastStartedAt: player.lastStartedAt || rawPlayer.lastStartedAt || null,
   };
 }
 

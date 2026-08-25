@@ -152,7 +152,13 @@ const dataNeeds = {
     6,
     (report) => Number(report?.filled || 0) < Number(report?.checked || 0)
   )),
-  squads: needsRefresh(reports.squads, 6, (report) => Number(report?.enriched || 0) < Number(report?.checked || 0)),
+  squads: needsRefresh(
+    reports.squads,
+    6,
+    (report) =>
+      Number(report?.enriched || 0) < Number(report?.checked || 0) ||
+      Number(report?.pendingAfterBatch || 0) > 0
+  ),
   lineups: needsRefresh(reports.lineups, 6, (report) => Number(report?.confirmedLineupCoverage || 0) < 0.45),
   odds: needsRefresh(reports.odds, 6, (report) => Number(report?.coverage || 0) < 0.6),
   sportmonks: sportmonksFixtures.length > 0 && needsRefresh(
