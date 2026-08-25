@@ -105,7 +105,12 @@ jobs:
           git diff --staged --quiet && echo "geen wijzigingen" && exit 0
           git commit -m "update wedstrijden [skip vercel]"
           for attempt in 1 2 3; do
-            git pull --rebase --autostash origin "$BRANCH_NAME"
+            if ! git pull --rebase --autostash -X theirs origin "$BRANCH_NAME"; then
+              git rebase --abort || true
+              echo "Rebase poging $attempt mislukt; schone retry volgt..."
+              sleep $((attempt * 5))
+              continue
+            fi
             if git push origin HEAD:"$BRANCH_NAME"; then
               exit 0
             fi
