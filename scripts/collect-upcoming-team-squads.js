@@ -5,6 +5,7 @@ import path from "path";
 import { fetchEspnSquad } from "./providers/espn-squad-provider.js";
 import { fetchWikipediaSquad } from "./providers/wikipedia-squad-provider.js";
 import { fetchTransfermarktDatasetSquad } from "./providers/transfermarkt-squad-provider.js";
+import { fetchFotMobSquad } from "./providers/fotmob-squad-provider.js";
 
 const ROOT = process.cwd();
 const DAYS_AHEAD = Math.max(1, Number(process.env.SQUAD_ENRICHMENT_DAYS_AHEAD || 8));
@@ -15,6 +16,8 @@ const PARTIAL_REFRESH_TTL_MS = Math.max(60 * 60 * 1000, Number(process.env.SQUAD
 const UNAVAILABLE_TTL_MS = 6 * 60 * 60 * 1000;
 const TARGET_SQUAD_PLAYERS = Math.max(11, Number(process.env.SQUAD_ENRICHMENT_TARGET_PLAYERS || 18));
 const FORCE_UNAVAILABLE = String(process.env.SQUAD_ENRICHMENT_FORCE_UNAVAILABLE || "false").toLowerCase() === "true";
+const FORCE_REFRESH = String(process.env.SQUAD_ENRICHMENT_FORCE_REFRESH || "false").toLowerCase() === "true";
+const TEAM_FILTER = new Set(String(process.env.SQUAD_ENRICHMENT_TEAM_FILTER || "").split(",").map(normalize).filter(Boolean));
 const CACHE_FILE = path.join(ROOT, "data", "team-squad-cache.json");
 const TEAMS_FILE = path.join(ROOT, "data", "teams.json");
 const REPORT_FILE = path.join(ROOT, "monitor", "upcoming-team-squad-enrichment.json");
@@ -42,6 +45,15 @@ function normalize(value) {
 
 function teamKey(name) {
   return `name:${normalize(name)}`;
+}
+
+function normalizePlayerPosition(value) {
+  const position = String(value || "").trim();
+  if (position === "0") return "Goalkeeper";
+  if (position === "1") return "Defender";
+  if (position === "2") return "Midfielder";
+  if (position === "3") return "Forward";
+  return position;
 }
 
 function variants(name) {
@@ -73,16 +85,21 @@ function mergePlayers(existing, incoming) {
   for (const player of [...(existing || []), ...(incoming || [])]) {
     const name = String(player?.name || "").trim();
     if (!name) continue;
+    if (/coach|manager|trainer|staff/i.test(String(player?.position || ""))) continue;
     const key = normalize(name);
     const current = byName.get(key) || {};
     byName.set(key, {
       ...current,
       ...player,
       name,
-      position: player.position || current.position || "",
+      position: normalizePlayerPosition(player.position) || normalizePlayerPosition(current.position) || "",
       nationality: player.nationality || current.nationality || "",
       status: player.status || current.status || "beschikbaar",
       availability: player.availability || current.availability || "beschikbaar",
+      rating: Number(player.rating || 0) || Number(current.rating || 0) || null,
+      marketValueEur: Number(player.marketValueEur || 0) || Number(current.marketValueEur || 0) || null,
+      lastStartedAt: player.lastStartedAt || current.lastStartedAt || null,
+      lastMatchId: player.lastMatchId || current.lastMatchId || null,
       sources: [...new Set([...(current.sources || []), ...(player.sources || []), player.source].filter(Boolean))],
     });
   }
@@ -165,24 +182,55 @@ for (let offset = 0; offset <= DAYS_AHEAD; offset += 1) {
   const date = addDays(todayKey(), offset);
   const day = readJson(path.join(ROOT, "data", "days", `${date}.json`), null);
   for (const match of day?.matches || []) {
-    for (const name of [match?.homeTeamName, match?.awayTeamName]) {
+    for (const [name, providerId] of [[match?.homeTeamName, match?.homeTeamId], [match?.awayTeamName, match?.awayTeamId]]) {
       if (!name) continue;
       const key = teamKey(name);
-      const item = candidates.get(key) || { key, teamName: String(name), leagues: new Set() };
+      const item = candidates.get(key) || { key, teamName: String(name), leagues: new Set(), providerTeamIds: new Set() };
       if (match?.league) item.leagues.add(String(match.league));
+      if (providerId) item.providerTeamIds.add(String(providerId));
       candidates.set(key, item);
     }
   }
 }
 
+const recentLineups = new Map();
+for (let offset = -1; offset >= -30; offset -= 1) {
+  const date = addDays(todayKey(), offset);
+  const day = readJson(path.join(ROOT, "data", "days", `${date}.json`), null);
+  for (const match of day?.matches || []) {
+    const lineup = match?.lineupSummary;
+    if (!lineup?.confirmed) continue;
+    for (const [teamName, side] of [[match?.homeTeamName, lineup.home], [match?.awayTeamName, lineup.away]]) {
+      const key = teamKey(teamName);
+      if (!teamName || recentLineups.has(key) || !Array.isArray(side?.players) || side.players.length < 10) continue;
+      recentLineups.set(key, {
+        matchId: match.id,
+        playedAt: match.kickoff || `${date}T12:00:00Z`,
+        players: side.players.map((player) => ({
+          ...player,
+          id: player.id ? `lineup:${player.id}` : "",
+          source: "Laatste bevestigde opstelling",
+          sources: ["Laatste bevestigde opstelling", player.source].filter(Boolean),
+          lastStartedAt: match.kickoff || `${date}T12:00:00Z`,
+          lastMatchId: match.id,
+          availability: "laatste wedstrijd gestart",
+          status: "laatste wedstrijd gestart",
+        })),
+      });
+    }
+  }
+}
+
 const now = Date.now();
-const report = { generatedAt: new Date().toISOString(), daysAhead: DAYS_AHEAD, targetPlayersPerTeam: TARGET_SQUAD_PLAYERS, candidates: candidates.size, checked: 0, enriched: 0, unavailable: 0, skippedFresh: 0, rateLimited: false, retryAfterSeconds: 0, byProvider: { "Transfermarkt Datasets": 0, TheSportsDB: 0, ESPN: 0, Wikipedia: 0 }, byCompetition: {}, samples: [] };
+const report = { generatedAt: new Date().toISOString(), daysAhead: DAYS_AHEAD, targetPlayersPerTeam: TARGET_SQUAD_PLAYERS, candidates: candidates.size, checked: 0, enriched: 0, unavailable: 0, skippedFresh: 0, rateLimited: false, retryAfterSeconds: 0, byProvider: { FotMob: 0, "Laatste bevestigde opstelling": 0, "Transfermarkt Datasets": 0, TheSportsDB: 0, ESPN: 0, Wikipedia: 0 }, byCompetition: {}, samples: [] };
 const pending = [...candidates.values()]
+  .filter((candidate) => !TEAM_FILTER.size || TEAM_FILTER.has(normalize(candidate.teamName)))
   .map((candidate) => {
     const existing = cache[candidate.key] || exportedTeams[candidate.key] || null;
     return { ...candidate, existing, playerCount: Number(existing?.playerCount || existing?.players?.length || 0) };
   })
   .filter((candidate) => {
+    if (FORCE_REFRESH) return true;
     if (FORCE_UNAVAILABLE && candidate.existing?.unavailable) return true;
     const age = now - Date.parse(candidate.existing?.fetchedAt || candidate.existing?.checkedAt || 0);
     const ttl = candidate.existing?.unavailable
@@ -206,10 +254,26 @@ for (const candidate of pending) {
   let sportsDbProfile = null;
   let espnProfile = null;
   let wikipediaProfile = null;
+  let fotmobProfile = null;
   const providerProfiles = [];
+  fotmobProfile = await fetchFotMobSquad({
+    teamName: candidate.teamName,
+    teamIds: candidate.providerTeamIds || [],
+    fetchJson: (url) => fetchJson(url, { ignoreRateLimit: true }),
+  });
+  if (fotmobProfile) providerProfiles.push({ provider: "FotMob", profile: fotmobProfile });
   const transfermarktProfile = fetchTransfermarktDatasetSquad({ teamName: candidate.teamName, root: ROOT });
   if (transfermarktProfile) providerProfiles.push({ provider: "Transfermarkt Datasets", profile: transfermarktProfile });
-  if (!report.rateLimited) {
+  if (mergePlayers([], providerProfiles.flatMap((item) => item.profile.players)).length < TARGET_SQUAD_PLAYERS) {
+    espnProfile = await fetchEspnSquad({
+      teamName: candidate.teamName,
+      leagues: [...candidate.leagues],
+      knownTeams: knownEspnTeams,
+      fetchJson: (url) => fetchJson(url, { ignoreRateLimit: true }),
+    });
+    if (espnProfile) providerProfiles.push({ provider: "ESPN", profile: espnProfile });
+  }
+  if (!providerProfiles.length && !report.rateLimited) {
     try {
       sportsDbProfile = await fetchSportsDbSquad(candidate.teamName);
       if (sportsDbProfile) providerProfiles.push({ provider: "TheSportsDB", profile: sportsDbProfile });
@@ -222,33 +286,24 @@ for (const candidate of pending) {
       }
     }
   }
-  if (mergePlayers(candidate.existing?.players, providerProfiles.flatMap((item) => item.profile.players)).length < TARGET_SQUAD_PLAYERS) {
-    try {
-      espnProfile = await fetchEspnSquad({
-      teamName: candidate.teamName,
-      leagues: [...candidate.leagues],
-      knownTeams: knownEspnTeams,
-      fetchJson: (url) => fetchJson(url, { ignoreRateLimit: true }),
-      });
-      if (espnProfile) providerProfiles.push({ provider: "ESPN", profile: espnProfile });
-    } catch (error) {
-      if (error?.code === "provider_rate_limited") {
-        report.rateLimited = true;
-        report.retryAfterSeconds = Math.max(report.retryAfterSeconds, Number(error.retryAfterSeconds || 0));
-      } else {
-        throw error;
-      }
-    }
-  }
-  if (mergePlayers(candidate.existing?.players, providerProfiles.flatMap((item) => item.profile.players)).length < TARGET_SQUAD_PLAYERS) {
+  if (mergePlayers([], providerProfiles.flatMap((item) => item.profile.players)).length < TARGET_SQUAD_PLAYERS) {
     wikipediaProfile = await fetchWikipediaSquad({ teamName: candidate.teamName, fetchJson: fetchPublicJson });
     if (wikipediaProfile) providerProfiles.push({ provider: "Wikipedia", profile: wikipediaProfile });
   }
-  const providers = providerProfiles.map((item) => item.provider);
-  const profile = providerProfiles.length
+  const recentLineup = recentLineups.get(candidate.key) || null;
+  const preferredProfile = providerProfiles.find((item) => mergePlayers([], item.profile.players).length >= TARGET_SQUAD_PLAYERS) || null;
+  const basePlayers = preferredProfile
+    ? mergePlayers([], preferredProfile.profile.players)
+    : mergePlayers([], providerProfiles.flatMap((item) => item.profile.players));
+  const playersWithRecentXi = mergePlayers(basePlayers, recentLineup?.players || []);
+  const providers = [...new Set([
+    ...(preferredProfile ? [preferredProfile.provider] : providerProfiles.map((item) => item.provider)),
+    ...(recentLineup ? ["Laatste bevestigde opstelling"] : []),
+  ])];
+  const profile = playersWithRecentXi.length
     ? {
-        providerTeamName: providerProfiles.find((item) => item.profile?.providerTeamName)?.profile.providerTeamName || candidate.teamName,
-        players: mergePlayers([], providerProfiles.flatMap((item) => item.profile.players)),
+        providerTeamName: preferredProfile?.profile?.providerTeamName || providerProfiles.find((item) => item.profile?.providerTeamName)?.profile.providerTeamName || candidate.teamName,
+        players: playersWithRecentXi,
       }
     : null;
   const competition = [...candidate.leagues][0] || "onbekend";
@@ -260,17 +315,20 @@ for (const candidate of pending) {
     cache[candidate.key] = { ...(candidate.existing || {}), teamName: candidate.teamName, fetchedAt: new Date().toISOString(), unavailable: true, source: candidate.existing?.source || "TheSportsDB + ESPN" };
     continue;
   }
-  const players = mergePlayers(candidate.existing?.players, profile.players);
+  // Een succesvolle providercontrole is een actuele momentopname. Oude spelers
+  // worden bewust niet opnieuw samengevoegd, anders blijven transfers eeuwig staan.
+  const players = mergePlayers([], profile.players);
   cache[candidate.key] = {
     ...(candidate.existing || {}),
     key: candidate.key,
     teamName: candidate.teamName,
-    source: [...new Set([candidate.existing?.source, ...providers].filter(Boolean))].join(" + "),
-    sources: [...new Set([...(candidate.existing?.sources || []), ...providers])],
+    source: providers.join(" + "),
+    sources: providers,
     sourceIds: {
       ...(candidate.existing?.sourceIds || {}),
       ...(sportsDbProfile ? { theSportsDb: sportsDbProfile.providerTeamId } : {}),
       ...(espnProfile ? { espn: espnProfile.providerTeamId, espnLeagueCode: espnProfile.leagueCode } : {}),
+      ...(fotmobProfile ? { fotmob: fotmobProfile.providerTeamId } : {}),
       ...(wikipediaProfile ? { wikipediaTitle: wikipediaProfile.pageTitle } : {}),
       ...(transfermarktProfile ? { transfermarkt: transfermarktProfile.providerTeamId } : {}),
     },
@@ -278,9 +336,12 @@ for (const candidate of pending) {
     players,
     fetchedAt: new Date().toISOString(),
     rosterSourceCheckedAt: Date.now(),
-    rosterBackfillVersion: "v5-fill-empty-rosters",
+    rosterBackfillVersion: "v6-current-snapshot-last-xi",
     unavailable: false,
     rosterDataQuality: "identity-and-roster-only",
+    snapshotMode: "replace-current-roster",
+    lastConfirmedLineupAt: recentLineup?.playedAt || null,
+    lastConfirmedLineupMatchId: recentLineup?.matchId || null,
   };
   report.enriched += 1;
   for (const provider of providers) report.byProvider[provider] += 1;

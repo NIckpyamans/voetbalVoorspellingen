@@ -8,6 +8,16 @@ on:
         required: false
         type: boolean
         default: false
+      force_refresh:
+        description: "Vernieuw actuele selecties ook wanneer de cache-TTL nog niet verlopen is"
+        required: false
+        type: boolean
+        default: false
+      teams:
+        description: "Optionele kommagescheiden clublijst voor een gerichte spoedcontrole"
+        required: false
+        type: string
+        default: ""
 
 concurrency:
   group: football-squad-enrichment
@@ -28,6 +38,8 @@ jobs:
       SQUAD_ENRICHMENT_MAX_TEAMS: "24"
       SQUAD_ENRICHMENT_REQUEST_TIMEOUT_MS: "6000"
       SQUAD_ENRICHMENT_FORCE_UNAVAILABLE: ${{ inputs.retry_unavailable || 'false' }}
+      SQUAD_ENRICHMENT_FORCE_REFRESH: ${{ inputs.force_refresh || 'false' }}
+      SQUAD_ENRICHMENT_TEAM_FILTER: ${{ inputs.teams || '' }}
     steps:
       - uses: actions/checkout@v5
         with:

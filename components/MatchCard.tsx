@@ -379,10 +379,14 @@ function TeamSquadPanel({
 
 function playerPositionBucket(player: any) {
   const position = String(player?.position || player?.player?.position || "").toUpperCase();
-  if (position.startsWith("G")) return "GK";
-  if (position.startsWith("D") || position.includes("BACK")) return "DF";
-  if (position.startsWith("M")) return "MF";
-  if (position.startsWith("F") || position.startsWith("A") || position.includes("WING") || position.includes("STRIKER")) return "FW";
+  if (position === "0") return "GK";
+  if (position === "1") return "DF";
+  if (position === "2") return "MF";
+  if (position === "3") return "FW";
+  if (position.startsWith("G") || /(^|,)GK($|,)|KEEPER/.test(position)) return "GK";
+  if (position.startsWith("D") || /(^|,)(CB|LB|RB|LWB|RWB|SW)($|,)|BACK/.test(position)) return "DF";
+  if (position.startsWith("M") || /(^|,)(CM|CDM|CAM|LM|RM|DM|AM)($|,)|MIDFIELD/.test(position)) return "MF";
+  if (position.startsWith("F") || position.startsWith("A") || /(^|,)(ST|CF|LW|RW|SS)($|,)|WING|STRIKER/.test(position)) return "FW";
   return "MF";
 }
 
@@ -396,8 +400,16 @@ function projectedPlayersFromProfile(profile: any) {
       source: player?.source || squad?.source || "squadprofiel",
       availability: String(player?.availability || player?.status || "beschikbaar"),
       loan: Boolean(player?.loan),
+      rating: Number(player?.rating || 0) || null,
+      marketValueEur: Number(player?.marketValueEur || 0) || null,
+      lastStartedAt: player?.lastStartedAt || null,
     }))
-    .filter((player: any) => player.name && !player.loan && !/verhuurd|injur|bless|suspend|geschorst|niet/i.test(player.availability));
+    .filter((player: any) => player.name && !/coach|manager|trainer|staff/i.test(String(player.position || "")) && !player.loan && !/verhuurd|injur|bless|suspend|geschorst|niet/i.test(player.availability));
+  available.sort((left: any, right: any) =>
+    Number(Boolean(right.lastStartedAt)) - Number(Boolean(left.lastStartedAt)) ||
+    Number(right.rating || 0) - Number(left.rating || 0) ||
+    Number(right.marketValueEur || 0) - Number(left.marketValueEur || 0)
+  );
   const byPosition = (position: string) => available.filter((player: any) => player.position === position);
   const picked: any[] = [];
   const take = (position: string, count: number) => {
@@ -429,6 +441,7 @@ function lineupPlayers(lineupSide: any, profile: any) {
       position: playerPositionBucket(player),
       shirtNumber: player?.shirtNumber || player?.jerseyNumber || player?.player?.jerseyNumber || null,
       source: lineupSide?.confirmed ? "bevestigde opstelling" : lineupSide?.projected ? "verwachte opstelling" : "opstelling",
+      rating: Number(player?.rating || player?.player?.rating || 0) || null,
     }))
     .filter((player: any) => player.name);
   return mapped.length ? mapped.slice(0, 11) : projectedPlayersFromProfile(profile);
@@ -464,6 +477,7 @@ function LineupSidePanel({ teamName, lineup, profile }: { teamName: string; line
               </div>
               <span className="shrink-0 rounded-full bg-slate-800 px-1.5 py-0.5 text-[7px] font-black text-cyan-200">
                 {player.shirtNumber ? `#${player.shirtNumber} ` : ""}{player.position}
+                {player.rating ? ` · ${Number(player.rating).toFixed(1)}` : ""}
               </span>
             </div>
           ))}

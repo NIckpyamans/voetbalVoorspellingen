@@ -3563,17 +3563,34 @@ function projectedLineupSideFromProfile(teamProfile, injuries) {
     ...(Array.isArray(injuries?.suspendedPlayers) ? injuries.suspendedPlayers : []),
   ].map((item) => String(item?.name || item || "").toLowerCase()));
   const squadPlayers = Array.isArray(teamProfile?.squad?.players) ? teamProfile.squad.players : [];
+  const projectedPosition = (value) => {
+    const position = String(value || "").toUpperCase();
+    if (position === "0" || /(^|,)GK($|,)|GOALKEEPER|KEEPER/.test(position)) return "G";
+    if (position === "1" || /(^|,)(CB|LB|RB|LWB|RWB|SW)($|,)|DEFENDER|BACK/.test(position)) return "D";
+    if (position === "2" || /(^|,)(CM|CDM|CAM|LM|RM|DM|AM)($|,)|MIDFIELD/.test(position)) return "M";
+    if (position === "3" || /(^|,)(ST|CF|LW|RW|SS)($|,)|FORWARD|ATTACK|WING|STRIKER/.test(position)) return "F";
+    return position || "M";
+  };
   const availablePlayers = squadPlayers
     .filter((player) => {
       const name = String(player?.name || "").trim();
       const status = String(player?.status || player?.availability || "").toLowerCase();
-      return name && !player?.loan && !unavailableNames.has(name.toLowerCase()) && !/injur|bless|suspend|geschorst|verhuurd|niet/.test(status);
+      const position = String(player?.position || "").toLowerCase();
+      return name && !/coach|manager|trainer|staff/.test(position) && !player?.loan && !unavailableNames.has(name.toLowerCase()) && !/injur|bless|suspend|geschorst|verhuurd|niet/.test(status);
     })
     .map((player) => ({
       name: String(player.name || "").trim(),
-      position: String(player.position || "").toUpperCase() || "MF",
+      position: projectedPosition(player.position),
       source: player.source || teamProfile?.squad?.source || "squadprofiel",
+      rating: Number(player.rating || 0) || null,
+      marketValueEur: Number(player.marketValueEur || 0) || null,
+      lastStartedAt: player.lastStartedAt || null,
     }));
+  availablePlayers.sort((left, right) =>
+    Number(Boolean(right.lastStartedAt)) - Number(Boolean(left.lastStartedAt)) ||
+    Number(right.rating || 0) - Number(left.rating || 0) ||
+    Number(right.marketValueEur || 0) - Number(left.marketValueEur || 0)
+  );
   const bucket = (prefixes) => availablePlayers.filter((player) => prefixes.some((prefix) => String(player.position || "").startsWith(prefix)));
   const selected = [];
   const take = (players, count) => {
@@ -3588,20 +3605,25 @@ function projectedLineupSideFromProfile(teamProfile, injuries) {
   take(bucket(["M"]), 3);
   take(bucket(["F", "A"]), 3);
   take(availablePlayers, 11);
-  const avgRating = Number(
+  const observedRatings = selected.map((player) => Number(player.rating || 0)).filter((rating) => rating >= 5 && rating <= 10);
+  const derivedRating = Number(
     clamp(
       6.25 + (squadRating ? (squadRating - 50) / 40 : 0) + (ppg - 1.25) * 0.18 + (consistency - 0.5) * 0.22 - injuryPenalty,
       6.05,
       7.65
     ).toFixed(2)
   );
+  const avgRating = observedRatings.length >= 5
+    ? Number((observedRatings.reduce((sum, rating) => sum + rating, 0) / observedRatings.length).toFixed(2))
+    : derivedRating;
+  const selectedKeeper = selected.find((player) => String(player.position || "").startsWith("G"));
   return {
     formation: "projected",
     starters: 11,
     bench: 7,
     avgRating,
-    keeperName: selected.find((player) => String(player.position || "").startsWith("G"))?.name || null,
-    keeperRating: Number(clamp(avgRating - 0.08, 6.0, 7.55).toFixed(2)),
+    keeperName: selectedKeeper?.name || null,
+    keeperRating: Number(selectedKeeper?.rating || 0) || Number(clamp(avgRating - 0.08, 6.0, 7.55).toFixed(2)),
     confirmed: false,
     projected: true,
     players: selected.slice(0, 11),
