@@ -94,14 +94,14 @@ jobs:
           R2_BUCKET_NAME: ${{ secrets.R2_BUCKET_NAME }}
       - name: Upload evaluation evidence
         if: always()
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: prediction-evaluation-report
           path: monitor/prediction-evaluation-report.json
           if-no-files-found: error
       - name: Upload R2 canary evidence
         if: always()
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: r2-snapshot-canary
           path: monitor/r2-snapshot-canary.json
@@ -109,7 +109,7 @@ jobs:
           retention-days: 30
       - name: Upload recovered training evidence
         if: always()
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: r2-recovered-training
           path: |

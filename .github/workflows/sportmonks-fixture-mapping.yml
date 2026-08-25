@@ -38,7 +38,7 @@ jobs:
         run: npm run map:sportmonks:upcoming
       - name: Upload fixture mapping report
         if: always()
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: sportmonks-fixture-mapping
           path: monitor/sportmonks-fixture-mapping.json
