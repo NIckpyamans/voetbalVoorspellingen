@@ -12,7 +12,10 @@ export function buildStoredMatchDedupeKey(match, options) {
   const home = options.teamKey(match?.homeTeamName || match?.homeTeam || "");
   const away = options.teamKey(match?.awayTeamName || match?.awayTeam || "");
   if (!dateKey || !home || !away) return "";
-  return `${dateKey}|${options.leagueKey(match?.league || "")}|${home}|${away}`;
+  // Provider competition labels are less stable than the fixture itself. The
+  // same clubs cannot play each other twice on one date, so a wrong league
+  // label must not allow a duplicate fixture into the canonical store.
+  return `${dateKey}|${home}|${away}`;
 }
 
 export function mergeStoredDuplicateMatch(current, incoming) {
@@ -59,7 +62,7 @@ export function dedupeStoredPredictions(predictions = [], matches = [], options)
   const seen = new Set();
   const output = [];
   for (const prediction of predictions || []) {
-    const predictionKey = `${String(prediction?.date || "").slice(0, 10)}|${options.leagueKey(prediction?.league || "")}|${options.teamKey(prediction?.homeTeam || prediction?.homeTeamName || "")}|${options.teamKey(prediction?.awayTeam || prediction?.awayTeamName || "")}`;
+    const predictionKey = `${String(prediction?.date || "").slice(0, 10)}|${options.teamKey(prediction?.homeTeam || prediction?.homeTeamName || "")}|${options.teamKey(prediction?.awayTeam || prediction?.awayTeamName || "")}`;
     const canonicalMatchId = byDedupeKey.get(predictionKey) || prediction?.matchId;
     if (canonicalMatchId && !keptMatchIds.has(String(canonicalMatchId))) continue;
     const unique = canonicalMatchId || predictionKey || prediction?.matchId;

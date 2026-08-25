@@ -26,4 +26,14 @@ describe("fixture deduplication", () => {
     expect(predictions).toHaveLength(1);
     expect(predictions[0].matchId).toBe("b");
   });
+
+  it("merges a provider duplicate even when one provider assigns the wrong league", () => {
+    const rows = dedupeStoredMatches([
+      { id: "espn", date: "2026-08-28", league: "Germany - 2. Bundesliga", homeTeamName: "Eintracht Braunschweig", awayTeamName: "Hertha BSC", status: "NS", dataSource: "espn" },
+      { id: "openliga", date: "2026-08-28", league: "Germany - Bundesliga", homeTeamName: "Eintracht Braunschweig", awayTeamName: "Hertha BSC", status: "NS", dataSource: "openligadb" },
+    ], options);
+
+    expect(rows).toHaveLength(1);
+    expect(rows[0].dataSource).toContain("openligadb");
+  });
 });
