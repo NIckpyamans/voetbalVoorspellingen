@@ -66,6 +66,16 @@ describe("local completed fixture form history", () => {
     expect(profile.goalTiming).toMatchObject({ scoredGoals: 1, firstHalfScoringShare: 0 });
   });
 
+  it("deduplicates the same fixture coming from different provider IDs", () => {
+    const profile = mergeLocalTeamForm({
+      providerTeamName: "Anderlecht",
+      source: "provider+local-finished-results+local-finished-results",
+      recentMatches: [{ date: "2026-08-20", eventId: "fotmob-1", venue: "A", opponent: "Kairat Almaty", score: "3-0" }],
+    }, [{ date: "2026-08-20", eventId: "sky-2", venue: "A", opponent: "Kairat Almaty", score: "3-0" }], "Anderlecht");
+    expect(profile.recentMatches).toHaveLength(1);
+    expect(profile.source).toBe("provider+local-finished-results");
+  });
+
   it("lets the separately refreshed cache replace stale worker state", () => {
     expect(mergePersistedTeamFormCache(
       { ajax: { updatedAt: "old", data: { recentMatches: [] } } },

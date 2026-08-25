@@ -3,9 +3,11 @@
 import fs from "fs";
 import path from "path";
 import { fetchTheSportsDbTeamForm } from "./providers/thesportsdb-team-form-provider.js";
+import { fetchFotMobTeamForm } from "./providers/fotmob-team-form-provider.js";
 import { canonicalDedupeTeam } from "../shared/matchNormalization.js";
 import { loadSnapshotLedger } from "../shared/predictionSnapshotLedger.js";
 import { buildLocalTeamFormIndex, dayPayloadsFromSnapshotLedger, mergeLocalTeamForm } from "./worker/local-team-form-history.js";
+import { shouldRefreshTeamFormCache } from "./worker/team-form-cache-policy.js";
 
 const ROOT = process.cwd();
 const DAYS_AHEAD = Math.max(1, Number(process.env.FORM_ENRICHMENT_DAYS_AHEAD || 7));
@@ -64,15 +66,27 @@ for (const [key, value] of Object.entries(cache)) {
     rejectedWrongSport += 1;
   }
 }
-const teamNames = new Set();
+const teamTargets = new Map();
+function fotmobTeamId(value) {
+  const match = String(value || "").match(/(?:^|:)fotmob-(\d+)$/i) || String(value || "").match(/^fotmob-(\d+)$/i);
+  return match?.[1] || null;
+}
+function addTeamTarget(name, id, kickoff) {
+  if (!name) return;
+  const current = teamTargets.get(String(name)) || { name: String(name), fotmobTeamId: null, kickoff: null };
+  current.fotmobTeamId ||= fotmobTeamId(id);
+  if (kickoff && (!current.kickoff || Date.parse(kickoff) < Date.parse(current.kickoff))) current.kickoff = kickoff;
+  teamTargets.set(String(name), current);
+}
 for (let offset = 0; offset <= DAYS_AHEAD; offset += 1) {
   const dateKey = addDays(todayKey(), offset);
   const day = readJson(path.join(ROOT, "data", "days", `${dateKey}.json`), null);
   for (const match of day?.matches || []) {
-    if (match?.homeTeamName) teamNames.add(String(match.homeTeamName));
-    if (match?.awayTeamName) teamNames.add(String(match.awayTeamName));
+    addTeamTarget(match?.homeTeamName, match?.homeTeamId, match?.kickoff);
+    addTeamTarget(match?.awayTeamName, match?.awayTeamId, match?.kickoff);
   }
 }
+const teamNames = new Set([...teamTargets.keys()]);
 
 const now = Date.now();
 const requestState = { count: 0, max: MAX_TEAMS, lastAt: 0, blockedUntil: 0 };
@@ -110,7 +124,20 @@ async function fetchTeamProfile(args) {
   let timer;
   try {
     return await Promise.race([
-      fetchTheSportsDbTeamForm(args),
+      (async () => {
+        const fotmob = await fetchFotMobTeamForm({
+          teamId: args.fotmobTeamId,
+          teamName: args.teamName,
+          fetchImpl: args.fetchImpl,
+          now: args.now,
+        });
+        if (Number(fotmob?.recentMatches?.length || 0) >= TARGET_FORM_MATCHES) return fotmob;
+        const sportsDb = await fetchTheSportsDbTeamForm(args);
+        if (!fotmob) return sportsDb;
+        if (!sportsDb) return fotmob;
+        const merged = mergeLocalTeamForm(fotmob, sportsDb.recentMatches, args.teamName, { now: args.now });
+        return { ...merged, source: "fotmob-team-fixtures+thesportsdb-recent-results" };
+      })(),
       new Promise((resolve) => {
         timer = setTimeout(() => resolve({ timedOut: true }), TEAM_TIMEOUT_MS);
       }),
@@ -131,14 +158,24 @@ report.r2LedgerAvailable = Boolean(snapshotLedgerLoad.sources.r2?.available);
 report.r2LedgerError = snapshotLedgerLoad.sources.r2?.error || null;
 
 const pendingTeams = [...teamNames]
-  .sort()
+  .sort((left, right) => {
+    const leftCount = Number(cache[normalize(left)]?.data?.recentMatches?.length || 0);
+    const rightCount = Number(cache[normalize(right)]?.data?.recentMatches?.length || 0);
+    const leftKickoff = Date.parse(teamTargets.get(left)?.kickoff || "") || Number.MAX_SAFE_INTEGER;
+    const rightKickoff = Date.parse(teamTargets.get(right)?.kickoff || "") || Number.MAX_SAFE_INTEGER;
+    return leftKickoff - rightKickoff || leftCount - rightCount || left.localeCompare(right);
+  })
   .filter((teamName) => {
     const existing = cache[normalize(teamName)];
-    const recentCount = Number(existing?.data?.recentMatches?.length || 0);
-    const cacheTtl = existing?.data
-      ? recentCount >= TARGET_FORM_MATCHES ? SUCCESS_CACHE_TTL_MS : PARTIAL_CACHE_TTL_MS
-      : UNAVAILABLE_CACHE_TTL_MS;
-    if (!existing?.updatedAt || now - Number(existing.updatedAt) >= cacheTtl) return true;
+    if (shouldRefreshTeamFormCache({
+      entry: existing,
+      now,
+      targetMatches: TARGET_FORM_MATCHES,
+      successTtlMs: SUCCESS_CACHE_TTL_MS,
+      partialTtlMs: PARTIAL_CACHE_TTL_MS,
+      unavailableTtlMs: UNAVAILABLE_CACHE_TTL_MS,
+      hasFotmobTarget: Boolean(teamTargets.get(teamName)?.fotmobTeamId),
+    })) return true;
     report.skippedFresh += 1;
     return false;
   })
@@ -153,6 +190,7 @@ for (const teamName of pendingTeams) {
   report.checked += 1;
   const profile = await fetchTeamProfile({
     teamName,
+    fotmobTeamId: teamTargets.get(teamName)?.fotmobTeamId,
     cache,
     nameVariants: variants,
     now,
@@ -165,11 +203,17 @@ for (const teamName of pendingTeams) {
   if (profile?.recentMatches?.length) {
     report.enriched += 1;
     report.samples.push({ team: teamName, matches: profile.recentMatches.length, providerTeam: profile.providerTeamName });
+    cache[key] = {
+      updatedAt: new Date().toISOString(),
+      providerCheckedAt: new Date().toISOString(),
+      data: profile,
+    };
   } else {
     report.unavailable += 1;
     if (profile?.timedOut) report.timedOut += 1;
     cache[key] = {
       updatedAt: new Date().toISOString(),
+      providerCheckedAt: new Date().toISOString(),
       unavailable: true,
       reason: profile?.timedOut ? "team_timeout" : "not_found",
     };
@@ -182,7 +226,7 @@ for (const teamName of teamNames) {
   if (!localMatches.length) continue;
   const current = cache[key] || {};
   const data = mergeLocalTeamForm(current.data || null, localMatches, teamName, { now });
-  cache[key] = { updatedAt: new Date(now).toISOString(), data };
+  cache[key] = { ...current, updatedAt: new Date(now).toISOString(), data };
   report.localHistoryTeams += 1;
   report.localHistoryMatches += localMatches.length;
   report.localFriendlyHistoryMatches += localMatches.filter((match) => match.friendly).length;

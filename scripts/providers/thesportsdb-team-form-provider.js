@@ -114,7 +114,9 @@ export async function fetchTheSportsDbTeamForm({
   const cached = cache?.[key];
   const cachedMatchCount = Number(cached?.data?.recentMatches?.length || 0);
   const cacheTtl = cachedMatchCount >= minRecentMatches ? DEFAULT_TTL_MS : partialTtlMs;
-  if (cached?.data && now - Number(cached.updatedAt || 0) < cacheTtl) return cached.data;
+  const checkedAt = cached?.providerCheckedAt || cached?.updatedAt;
+  const checkedAtMs = typeof checkedAt === "number" ? checkedAt : Date.parse(String(checkedAt || ""));
+  if (cached?.data && Number.isFinite(checkedAtMs) && now - checkedAtMs < cacheTtl) return cached.data;
   if (requestState?.blockedUntil > now || (requestState?.max && requestState.count >= requestState.max)) return null;
   try {
     if (requestState) {
@@ -151,7 +153,7 @@ export async function fetchTheSportsDbTeamForm({
       asOf: new Date(now).toISOString(),
     };
     for (const match of data.recentMatches) match.providerTeamName = data.providerTeamName;
-    if (cache) cache[key] = { updatedAt: now, data };
+    if (cache) cache[key] = { updatedAt: now, providerCheckedAt: now, data };
     return data;
   } catch {
     return null;

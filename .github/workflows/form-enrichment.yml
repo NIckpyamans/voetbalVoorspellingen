@@ -2,6 +2,8 @@ name: Upcoming team form enrichment
 
 on:
   workflow_dispatch:
+  schedule:
+    - cron: "37 */3 * * *"
 
 concurrency:
   group: football-form-enrichment
@@ -17,10 +19,10 @@ jobs:
     env:
       DATA_BRANCH: codex/step3b-layout
       FORM_ENRICHMENT_DAYS_AHEAD: "8"
-      FORM_ENRICHMENT_MAX_TEAMS: "8"
-      FORM_ENRICHMENT_REQUEST_TIMEOUT_MS: "2000"
+      FORM_ENRICHMENT_MAX_TEAMS: "24"
+      FORM_ENRICHMENT_REQUEST_TIMEOUT_MS: "4000"
       FORM_ENRICHMENT_TEAM_TIMEOUT_MS: "7000"
-      FORM_ENRICHMENT_RUN_BUDGET_MS: "90000"
+      FORM_ENRICHMENT_RUN_BUDGET_MS: "180000"
       CLOUDFLARE_R2_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_R2_ACCOUNT_ID }}
       CLOUDFLARE_R2_ACCESS_KEY_ID: ${{ secrets.CLOUDFLARE_R2_ACCESS_KEY_ID }}
       CLOUDFLARE_R2_SECRET_ACCESS_KEY: ${{ secrets.CLOUDFLARE_R2_SECRET_ACCESS_KEY }}

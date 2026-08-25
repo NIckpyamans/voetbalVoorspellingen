@@ -55,7 +55,7 @@ export function buildLocalTeamFormIndex(dayPayloads, options = {}) {
   for (const [key, matches] of index.entries()) {
     const unique = new Map();
     for (const match of matches) {
-      const identity = `${match.eventId || ""}|${match.date || ""}|${canonicalDedupeTeam(match.opponent)}|${match.score}`;
+      const identity = `${match.date || ""}|${canonicalDedupeTeam(match.opponent)}|${match.venue || ""}|${match.score}`;
       if (!unique.has(identity)) unique.set(identity, match);
     }
     index.set(key, [...unique.values()].sort((a, b) => String(a.kickoff || a.date || "").localeCompare(String(b.kickoff || b.date || ""))));
@@ -102,7 +102,7 @@ export function mergeLocalTeamForm(profile, localMatches, teamName, options = {}
   const current = Array.isArray(profile?.recentMatches) ? profile.recentMatches : [];
   const unique = new Map();
   for (const match of [...current, ...(localMatches || [])]) {
-    const identity = `${match?.eventId || ""}|${match?.date || ""}|${canonicalDedupeTeam(match?.opponent)}|${match?.score || ""}`;
+    const identity = `${match?.date || ""}|${canonicalDedupeTeam(match?.opponent)}|${match?.venue || ""}|${match?.score || ""}`;
     if (!unique.has(identity)) unique.set(identity, match);
   }
   const recentMatches = [...unique.values()]
@@ -110,12 +110,14 @@ export function mergeLocalTeamForm(profile, localMatches, teamName, options = {}
     .slice(-limit);
   if (!recentMatches.length) return profile || null;
   const goalTiming = summarizeGoalTiming(recentMatches, profile?.goalTiming?.scored);
+  const sources = new Set(String(profile?.source || "").split("+").filter(Boolean));
+  sources.add("local-finished-results");
   return {
     ...(profile || {}),
     providerTeamName: profile?.providerTeamName || teamName,
     recentMatches,
     goalTiming,
-    source: current.length ? `${profile?.source || "provider"}+local-finished-results` : "local-finished-results",
+    source: [...sources].join("+"),
     asOf: new Date(Number(options.now || Date.now())).toISOString(),
   };
 }

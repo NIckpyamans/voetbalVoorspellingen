@@ -66,7 +66,7 @@ describe("TheSportsDB team form provider", () => {
     const calls = [];
     const cache = {
       ajax: {
-        updatedAt: now - 3 * 60 * 60 * 1000,
+        updatedAt: new Date(now - 3 * 60 * 60 * 1000).toISOString(),
         data: { providerTeamId: "old", recentMatches: [{ eventId: "old" }] },
       },
     };
