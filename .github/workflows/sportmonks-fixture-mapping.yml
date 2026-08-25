@@ -25,7 +25,7 @@ jobs:
       SPORTMONKS_MAPPING_DAYS_AHEAD: ${{ inputs.days_ahead || '8' }}
       SPORTMONKS_MAPPING_LIMIT: "80"
     steps:
-      - uses: actions/checkout@v5
+      - uses: actions/checkout@v7
         with:
           ref: ${{ env.DATA_BRANCH }}
           fetch-depth: 0

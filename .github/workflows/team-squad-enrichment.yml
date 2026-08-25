@@ -41,7 +41,7 @@ jobs:
       SQUAD_ENRICHMENT_FORCE_REFRESH: ${{ inputs.force_refresh || 'false' }}
       SQUAD_ENRICHMENT_TEAM_FILTER: ${{ inputs.teams || '' }}
     steps:
-      - uses: actions/checkout@v5
+      - uses: actions/checkout@v7
         with:
           fetch-depth: 0
           token: ${{ secrets.GITHUB_TOKEN }}

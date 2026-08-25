@@ -27,7 +27,7 @@ jobs:
       API_FOOTBALL_FRIENDLY_TARGET: "0.60"
       API_FOOTBALL_ACCEPTANCE_STRICT: ${{ github.event_name == 'workflow_dispatch' && (inputs.strict || 'false') || 'false' }}
     steps:
-      - uses: actions/checkout@v5
+      - uses: actions/checkout@v7
         with:
           ref: codex/step3b-layout
           fetch-depth: 0
