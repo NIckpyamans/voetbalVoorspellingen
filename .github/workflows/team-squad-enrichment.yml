@@ -1,6 +1,9 @@
 name: Upcoming team squad enrichment
 
 on:
+  schedule:
+    # Voor de ochtendcontrole en opnieuw voor de avondwedstrijden.
+    - cron: "17 5,15 * * *"
   workflow_dispatch:
     inputs:
       retry_unavailable:

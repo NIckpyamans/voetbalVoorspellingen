@@ -1,4 +1,5 @@
 import React, { useEffect, useMemo, useRef, useState } from "react";
+import { sortSquadPlayersByRating } from "../utils/playerRatings";
 import { Match } from "../types";
 import { FavoriteButton } from "./FavoriteTeams";
 import PostMatchReview from "./PostMatchReview";
@@ -291,11 +292,13 @@ function TeamSquadPanel({
   title,
   profile,
   injuries,
+  loading,
   onClose,
 }: {
   title: string;
   profile: any;
   injuries: any;
+  loading?: boolean;
   onClose: () => void;
 }) {
   const squad = profile?.squad || profile;
@@ -315,7 +318,9 @@ function TeamSquadPanel({
   const extraUnavailable = unavailableNames
     .filter((name) => !players.some((player: any) => player.name.toLowerCase() === name.toLowerCase()))
     .map((name) => ({ name, position: "-", nationality: "", availability: "niet beschikbaar", unavailable: true, source: "beschikbaarheidsbron" }));
-  const visiblePlayers = [...players, ...extraUnavailable].slice(0, 60);
+  const teamStrength = Number(profile?.teamStrengthRating ?? squad?.rating ?? 50);
+  const visiblePlayers = sortSquadPlayersByRating([...players, ...extraUnavailable], teamStrength).slice(0, 60);
+  const starPlayer = visiblePlayers.find((player: any) => !player.unavailable && !player.loan) || null;
   const loaned = visiblePlayers.filter((player: any) => player.loan || /loan|verhuur|uitgeleend/i.test(String(player.availability || player.status || ""))).length;
   const unavailable = visiblePlayers.filter((player: any) => player.unavailable).length;
 
@@ -346,7 +351,19 @@ function TeamSquadPanel({
           <div className="text-[12px] font-black text-white">{loaned}</div>
         </div>
       </div>
-      {visiblePlayers.length ? (
+      {starPlayer && (
+        <div className="mb-2 flex items-center justify-between gap-2 rounded-xl border border-amber-400/25 bg-amber-950/20 px-3 py-2">
+          <div className="min-w-0">
+            <div className="text-[7px] font-black uppercase tracking-wide text-amber-300">Sterspeler</div>
+            <div className="truncate text-[10px] font-black text-white">{starPlayer.name}</div>
+            <div className="text-[7px] text-slate-400">{starPlayer.position || "-"} · {starPlayer.ratingSource === "provider" ? "bronrating" : starPlayer.ratingSource}</div>
+          </div>
+          <div className="rounded-lg bg-amber-400/15 px-2 py-1 text-[12px] font-black text-amber-200">{Number(starPlayer.rating).toFixed(1)}</div>
+        </div>
+      )}
+      {loading && !visiblePlayers.length ? (
+        <div className="rounded-xl border border-cyan-400/15 bg-cyan-950/15 p-3 text-[10px] font-bold text-cyan-200">Actuele selectie en spelersratings laden...</div>
+      ) : visiblePlayers.length ? (
         <div className="max-h-56 space-y-1 overflow-y-auto pr-1">
           {visiblePlayers.map((player: any, index: number) => (
             <div key={`${player.name}-${index}`} className="grid grid-cols-[1fr_auto] gap-2 rounded-lg border border-white/5 bg-slate-900/45 px-2 py-1.5">
@@ -354,17 +371,23 @@ function TeamSquadPanel({
                 <div className="truncate text-[9px] font-black text-white">{player.name}</div>
                 <div className="truncate text-[7px] text-slate-500">{player.position || "-"} {player.nationality ? `· ${player.nationality}` : ""}</div>
               </div>
-              <span
-                className={`self-center rounded-full px-2 py-0.5 text-[7px] font-black ${
-                  player.unavailable
-                    ? "bg-red-900/40 text-red-200"
-                    : player.loan
-                      ? "bg-amber-900/40 text-amber-200"
-                      : "bg-emerald-900/35 text-emerald-200"
-                }`}
-              >
-                {player.availability || "beschikbaar"}
-              </span>
+              <div className="flex items-center gap-1 self-center">
+                {starPlayer?.name === player.name && <span className="rounded-full bg-amber-400/15 px-1.5 py-0.5 text-[7px] font-black text-amber-200">ster</span>}
+                <span title={player.ratingSource === "provider" ? "Rating uit spelersbron" : `Afgeleide App-rating: ${player.ratingSource}`} className="rounded-full bg-cyan-500/10 px-1.5 py-0.5 text-[7px] font-black text-cyan-200">
+                  {Number(player.rating).toFixed(1)}{player.ratingSource === "provider" ? "" : "*"}
+                </span>
+                <span
+                  className={`rounded-full px-2 py-0.5 text-[7px] font-black ${
+                    player.unavailable
+                      ? "bg-red-900/40 text-red-200"
+                      : player.loan
+                        ? "bg-amber-900/40 text-amber-200"
+                        : "bg-emerald-900/35 text-emerald-200"
+                  }`}
+                >
+                  {player.availability || "beschikbaar"}
+                </span>
+              </div>
             </div>
           ))}
         </div>
@@ -372,6 +395,9 @@ function TeamSquadPanel({
         <div className="rounded-xl border border-dashed border-white/10 bg-slate-900/30 p-3 text-[10px] text-slate-400">
           Nog geen volledige spelerslijst gevonden. De voorspelling gebruikt voorlopig afgeleide teamsterkte uit vorm, Elo, stand en blessuredata.
         </div>
+      )}
+      {visiblePlayers.length > 0 && (
+        <div className="mt-2 text-[7px] leading-relaxed text-slate-500">* App-rating is een transparante indicatie uit marktwaarde of teamprofiel wanneer de bron geen actuele spelersrating levert.</div>
       )}
     </div>
   );
@@ -1416,13 +1442,14 @@ const MatchCard: React.FC<MatchCardProps> = ({ match: initialMatch, prediction: 
   const liveMinute = useLiveMinute(match as any);
 
   useEffect(() => {
-    if (!detailsOpen || loadedDetailTabs.includes(tab) || loadingDetailTabRef.current === tab || !initialMatch.id) return;
+    const requestedSection: MatchDetailTab = selectedSquadSide ? "opstelling" : tab;
+    if ((!detailsOpen && !selectedSquadSide) || loadedDetailTabs.includes(requestedSection) || loadingDetailTabRef.current === requestedSection || !initialMatch.id) return;
     const dateKey = detailDateKey(initialMatch);
     if (!dateKey) return;
     let cancelled = false;
-    loadingDetailTabRef.current = tab;
+    loadingDetailTabRef.current = requestedSection;
     setDetailLoading(true);
-    fetch(`/api/matches?date=${encodeURIComponent(dateKey)}&matchId=${encodeURIComponent(initialMatch.id)}&section=${encodeURIComponent(tab)}`, { cache: "no-store" })
+    fetch(`/api/matches?date=${encodeURIComponent(dateKey)}&matchId=${encodeURIComponent(initialMatch.id)}&section=${encodeURIComponent(requestedSection)}`, { cache: "no-store" })
       .then(async (response) => {
         const contentType = response.headers.get("content-type") || "";
         if (!response.ok || !contentType.includes("json")) return null;
@@ -1447,7 +1474,7 @@ const MatchCard: React.FC<MatchCardProps> = ({ match: initialMatch, prediction: 
               prediction: nextPrediction,
             };
           });
-          setLoadedDetailTabs((current) => current.includes(tab) ? current : [...current, tab]);
+          setLoadedDetailTabs((current) => current.includes(requestedSection) ? current : [...current, requestedSection]);
         }
       })
       .catch(() => {})
@@ -1459,9 +1486,9 @@ const MatchCard: React.FC<MatchCardProps> = ({ match: initialMatch, prediction: 
       });
     return () => {
       cancelled = true;
-      if (loadingDetailTabRef.current === tab) loadingDetailTabRef.current = null;
+      if (loadingDetailTabRef.current === requestedSection) loadingDetailTabRef.current = null;
     };
-  }, [detailsOpen, loadedDetailTabs, tab, initialMatch.id, initialMatch.date, initialMatch.kickoff]);
+  }, [detailsOpen, selectedSquadSide, loadedDetailTabs, tab, initialMatch.id, initialMatch.date, initialMatch.kickoff]);
 
   useEffect(() => {
     if (!detailsOpen || tab !== "analyse" || triedRef.current || !prediction) return;
@@ -1632,6 +1659,7 @@ const MatchCard: React.FC<MatchCardProps> = ({ match: initialMatch, prediction: 
           title={match.homeTeamName}
           profile={match.homeTeamProfile}
           injuries={match.homeInjuries}
+          loading={detailLoading}
           onClose={() => setSelectedSquadSide(null)}
         />
       )}
@@ -1640,6 +1668,7 @@ const MatchCard: React.FC<MatchCardProps> = ({ match: initialMatch, prediction: 
           title={match.awayTeamName}
           profile={match.awayTeamProfile}
           injuries={match.awayInjuries}
+          loading={detailLoading}
           onClose={() => setSelectedSquadSide(null)}
         />
       )}

@@ -10,6 +10,25 @@ function positionFromMember(member, groupTitle) {
   return "";
 }
 
+function normalizeTeamName(value) {
+  return String(value || "")
+    .toLowerCase()
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .replace(/\b(fc|cf|afc|sc|fk|as|rcd|ac)\b/g, " ")
+    .replace(/[^a-z0-9]+/g, " ")
+    .trim()
+    .replace(/\s+/g, " ");
+}
+
+export function findExactFotMobTeam(payload, teamName) {
+  const target = normalizeTeamName(teamName);
+  const suggestions = (Array.isArray(payload) ? payload : [])
+    .flatMap((group) => Array.isArray(group?.suggestions) ? group.suggestions : [])
+    .filter((item) => item?.type === "team" && item?.id && normalizeTeamName(item?.name) === target);
+  return suggestions[0] || null;
+}
+
 export function parseFotMobSquad(payload) {
   const groups = Array.isArray(payload?.squad?.squad) ? payload.squad.squad : [];
   return groups.flatMap((group) => {
@@ -35,10 +54,14 @@ export function parseFotMobSquad(payload) {
 
 export async function fetchFotMobSquad({ teamName, teamIds = [], fetchJson }) {
   if (typeof fetchJson !== "function") return null;
-  const fotmobId = [...teamIds]
+  let fotmobId = [...teamIds]
     .map((value) => String(value || ""))
     .map((value) => value.match(/(?:fotmob[:-])?(\d+)/i)?.[1] || "")
     .find(Boolean);
+  if (!fotmobId && teamName) {
+    const searchPayload = await fetchJson(`https://www.fotmob.com/api/data/search/suggest?term=${encodeURIComponent(teamName)}`);
+    fotmobId = String(findExactFotMobTeam(searchPayload, teamName)?.id || "");
+  }
   if (!fotmobId) return null;
   const payload = await fetchJson(`https://www.fotmob.com/api/data/teams?id=${encodeURIComponent(fotmobId)}`);
   const players = parseFotMobSquad(payload);

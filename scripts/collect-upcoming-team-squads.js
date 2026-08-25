@@ -187,7 +187,7 @@ for (const competition of competitionCatalog?.competitions || []) {
   for (const name of competition?.teams || []) {
     if (!name) continue;
     const key = teamKey(name);
-    const item = candidates.get(key) || { key, teamName: String(name), leagues: new Set(), providerTeamIds: new Set(), fotmobTeamIds: new Set() };
+    const item = candidates.get(key) || { key, teamName: String(name), leagues: new Set(), providerTeamIds: new Set(), fotmobTeamIds: new Set(), upcoming: false };
     if (competition?.league) item.leagues.add(String(competition.league));
     candidates.set(key, item);
   }
@@ -202,7 +202,8 @@ for (let offset = 0; offset <= DAYS_AHEAD; offset += 1) {
     ]) {
       if (!name) continue;
       const key = teamKey(name);
-      const item = candidates.get(key) || { key, teamName: String(name), leagues: new Set(), providerTeamIds: new Set(), fotmobTeamIds: new Set() };
+      const item = candidates.get(key) || { key, teamName: String(name), leagues: new Set(), providerTeamIds: new Set(), fotmobTeamIds: new Set(), upcoming: false };
+      item.upcoming = true;
       if (match?.league) item.leagues.add(String(match.league));
       if (providerId) item.providerTeamIds.add(String(providerId));
       if (/^fotmob[-:]/i.test(String(providerId || ""))) item.fotmobTeamIds.add(String(providerId));
@@ -266,7 +267,7 @@ const pendingCandidates = [...candidates.values()]
   .sort((left, right) => {
     const leftLeague = [...left.leagues].sort()[0] || "";
     const rightLeague = [...right.leagues].sort()[0] || "";
-    return left.playerCount - right.playerCount || leftLeague.localeCompare(rightLeague) || left.teamName.localeCompare(right.teamName);
+    return Number(Boolean(right.upcoming)) - Number(Boolean(left.upcoming)) || left.playerCount - right.playerCount || leftLeague.localeCompare(rightLeague) || left.teamName.localeCompare(right.teamName);
   });
 const pending = pendingCandidates.slice(0, MAX_TEAMS);
 report.pendingBeforeBatch = pendingCandidates.length;
@@ -371,6 +372,30 @@ for (const candidate of pending) {
   report.byCompetition[competition].enriched += 1;
   report.samples.push({ team: candidate.teamName, competition, players: players.length, provider: providers.join(" + "), providerTeam: profile.providerTeamName });
   await new Promise((resolve) => setTimeout(resolve, 250));
+}
+
+report.coverage = { totalTeams: candidates.size, teamsWithRoster: 0, teamsWithProviderRatings: 0, rosterCoverage: 0, ratingCoverage: 0 };
+report.competitionCoverage = {};
+for (const candidate of candidates.values()) {
+  const profile = cache[candidate.key] || exportedTeams[candidate.key] || null;
+  const players = Array.isArray(profile?.players) ? profile.players : [];
+  const hasRoster = players.length >= 11;
+  const hasProviderRatings = players.some((player) => Number(player?.rating || 0) > 0);
+  report.coverage.teamsWithRoster += Number(hasRoster);
+  report.coverage.teamsWithProviderRatings += Number(hasProviderRatings);
+  for (const competition of candidate.leagues.size ? candidate.leagues : new Set(["onbekend"])) {
+    const row = report.competitionCoverage[competition] || { teams: 0, teamsWithRoster: 0, teamsWithProviderRatings: 0 };
+    row.teams += 1;
+    row.teamsWithRoster += Number(hasRoster);
+    row.teamsWithProviderRatings += Number(hasProviderRatings);
+    report.competitionCoverage[competition] = row;
+  }
+}
+report.coverage.rosterCoverage = report.coverage.totalTeams ? Number((report.coverage.teamsWithRoster / report.coverage.totalTeams).toFixed(3)) : 0;
+report.coverage.ratingCoverage = report.coverage.totalTeams ? Number((report.coverage.teamsWithProviderRatings / report.coverage.totalTeams).toFixed(3)) : 0;
+for (const row of Object.values(report.competitionCoverage)) {
+  row.rosterCoverage = row.teams ? Number((row.teamsWithRoster / row.teams).toFixed(3)) : 0;
+  row.ratingCoverage = row.teams ? Number((row.teamsWithProviderRatings / row.teams).toFixed(3)) : 0;
 }
 
 fs.mkdirSync(path.dirname(CACHE_FILE), { recursive: true });

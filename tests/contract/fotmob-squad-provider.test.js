@@ -1,5 +1,5 @@
 import { describe, expect, it, vi } from "vitest";
-import { fetchFotMobSquad, parseFotMobSquad } from "../../scripts/providers/fotmob-squad-provider.js";
+import { fetchFotMobSquad, findExactFotMobTeam, parseFotMobSquad } from "../../scripts/providers/fotmob-squad-provider.js";
 
 describe("FotMob squad provider", () => {
   const payload = {
@@ -23,5 +23,25 @@ describe("FotMob squad provider", () => {
     const profile = await fetchFotMobSquad({ teamName: "Ajax", teamIds: ["fotmob-8593"], fetchJson });
     expect(profile).toEqual(expect.objectContaining({ providerTeamId: "8593", providerTeamName: "Ajax" }));
     expect(fetchJson).toHaveBeenCalledWith(expect.stringContaining("id=8593"));
+  });
+
+  it("finds an exact team id when the fixture has no FotMob identity yet", async () => {
+    const search = [{ suggestions: [
+      { type: "team", id: "8464", name: "NEC Nijmegen" },
+      { type: "team", id: "9999", name: "NEC Academy" },
+    ] }];
+    expect(findExactFotMobTeam(search, "NEC Nijmegen")?.id).toBe("8464");
+    const fetchJson = vi.fn()
+      .mockResolvedValueOnce(search)
+      .mockResolvedValueOnce(payload);
+    const profile = await fetchFotMobSquad({ teamName: "NEC Nijmegen", fetchJson });
+    expect(profile?.providerTeamId).toBe("8464");
+    expect(fetchJson.mock.calls[0][0]).toContain("search/suggest");
+    expect(fetchJson.mock.calls[1][0]).toContain("id=8464");
+  });
+
+  it("rejects similarly named clubs", () => {
+    const search = [{ suggestions: [{ type: "team", id: "9999", name: "NEC Academy" }] }];
+    expect(findExactFotMobTeam(search, "NEC Nijmegen")).toBeNull();
   });
 });
