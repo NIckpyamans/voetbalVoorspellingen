@@ -1,10 +1,10 @@
 # Data Quality Audit
 
-Laatst bijgewerkt: 2026-08-25T16:27:00.834Z
+Laatst bijgewerkt: 2026-08-25T18:17:14.011Z
 Lookback: 45 dagen
 
 ## Scores
-- Wedstrijden: 668
+- Wedstrijden: 667
 - Oude wedstrijden: 184
 - Pending result backfills: 2
 - Ontbrekende oude scores: 0
@@ -12,7 +12,7 @@ Lookback: 45 dagen
 - Reviews na afloop: 86%
 - Lekvrije post-matchreviews: 100% (62/62)
 - Bruikbare wedstrijdstatistieken: 74%
-- Bevestigde opstellingen: 7%
+- Bevestigde opstellingen: 8%
 - Historisch teruggevonden basiselftallen: 42%
 - Verse getimestampte prematch-odds: 1%
 - Volledige pre-match bewijsset: 1%
@@ -28,7 +28,7 @@ Lookback: 45 dagen
 - England - Championship: 6 duels, vorm 0%, H2H 67%, inzetbewijs 0%, lekvrije reviews 0% (0/0), stats 0%; gaten: form, confirmed_lineups, timestamped_odds, leak_free_reviews, post_match_statistics, referee, goal_timeline, card_timeline
 - France - Ligue 1: 81 duels, vorm 95%, H2H 82%, inzetbewijs 0%, lekvrije reviews 100% (1/1), stats 100%; gaten: confirmed_lineups, timestamped_odds, goal_timeline
 - France - Ligue 2: 81 duels, vorm 63%, H2H 51%, inzetbewijs 6%, lekvrije reviews 100% (6/6), stats 100%; gaten: form, h2h, confirmed_lineups, timestamped_odds
-- Europe - Champions League: 15 duels, vorm 93%, H2H 53%, inzetbewijs 0%, lekvrije reviews 0% (0/0), stats 100%; gaten: h2h, confirmed_lineups, timestamped_odds, leak_free_reviews
+- Europe - Champions League: 14 duels, vorm 100%, H2H 50%, inzetbewijs 0%, lekvrije reviews 0% (0/0), stats 100%; gaten: h2h, confirmed_lineups, timestamped_odds, leak_free_reviews
 - Europe - Europa League: 51 duels, vorm 18%, H2H 37%, inzetbewijs 0%, lekvrije reviews 100% (10/10), stats 68%; gaten: form, h2h, confirmed_lineups, timestamped_odds, post_match_statistics, referee, goal_timeline, card_timeline
 - Europe - Conference League: 136 duels, vorm 17%, H2H 27%, inzetbewijs 0%, lekvrije reviews 100% (35/35), stats 64%; gaten: form, h2h, confirmed_lineups, timestamped_odds, post_match_statistics, referee, goal_timeline, card_timeline
 
