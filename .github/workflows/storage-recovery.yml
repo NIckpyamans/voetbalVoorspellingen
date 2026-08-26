@@ -78,7 +78,7 @@ jobs:
         run: |
           git config user.name github-actions
           git config user.email github-actions@github.com
-          for report in monitor/database-availability.json monitor/r2-snapshot-canary.json monitor/r2-critical-capture-replay.json monitor/roi-clv-coverage.json monitor/phase-reliability-rebuild.json; do
+          for report in data/phase-reliability.json monitor/database-availability.json monitor/r2-snapshot-canary.json monitor/r2-critical-capture-replay.json monitor/roi-clv-coverage.json monitor/phase-reliability-rebuild.json; do
             if [ -f "$report" ]; then git add "$report"; fi
           done
           git diff --staged --quiet && exit 0

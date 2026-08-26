@@ -16,6 +16,7 @@ describe("reliability workflow guards", () => {
     const workflow = read(".github/workflows/storage-recovery.yml");
     expect(workflow).toContain('cron: "23 */6 * * *"');
     expect(workflow).toContain("steps.database.outputs.databaseWritable == 'true'");
+    expect(workflow).toContain("data/phase-reliability.json monitor/database-availability.json");
   });
 
   it("runs bounded squad batches four times daily", () => {
