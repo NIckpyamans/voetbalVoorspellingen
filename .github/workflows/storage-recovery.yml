@@ -58,7 +58,7 @@ jobs:
         if: steps.database.outputs.databaseWritable == 'true'
         run: npm run db:roi-clv:analyze
       - name: Rebuild phase reliability after database recovery
-        if: steps.database.outputs.databaseWritable == 'true'
+        if: steps.database.outputs.databaseWritable == 'true' || github.event_name == 'workflow_dispatch'
         run: npm run db:phase:rebuild
       - name: Upload recovery evidence
         if: always()

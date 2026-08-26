@@ -24,6 +24,15 @@ const COMPETITION_CATALOG_FILE = path.join(ROOT, "config", "competition-catalog.
 const REPORT_FILE = path.join(ROOT, "monitor", "upcoming-team-squad-enrichment.json");
 const ESPN_TEAMS_FILE = path.join(ROOT, "config", "friendly-team-sources.json");
 const SPORTS_DB_BASE = "https://www.thesportsdb.com/api/v1/json/123";
+const SQUAD_TEAM_ALIASES = {
+  "az": ["AZ Alkmaar"],
+  "fc iberia 1999 tiflis": ["Iberia 1999", "FC Iberia 1999", "Saburtalo"],
+  "fc nordsjaelland": ["FC Nordsjælland", "Nordsjælland"],
+  "ks dynamo tirana": ["Dinamo City", "Dinamo Tirana"],
+  "lillestrom": ["Lillestrøm", "Lillestrom SK"],
+  "paok salonika": ["PAOK", "PAOK Thessaloniki"],
+  "sv 07 elversberg": ["SV Elversberg", "Elversberg"],
+};
 
 class ProviderRateLimitError extends Error {
   constructor(retryAfterSeconds = 0, provider = "squad provider") {
@@ -46,6 +55,10 @@ function normalize(value) {
 
 function teamKey(name) {
   return `name:${normalize(name)}`;
+}
+
+function squadQueries(name) {
+  return [...new Set([String(name || "").trim(), ...(SQUAD_TEAM_ALIASES[normalize(name)] || [])].filter(Boolean))];
 }
 
 function normalizePlayerPosition(value) {
@@ -280,26 +293,37 @@ for (const candidate of pending) {
   let wikipediaProfile = null;
   let fotmobProfile = null;
   const providerProfiles = [];
-  fotmobProfile = await fetchFotMobSquad({
-    teamName: candidate.teamName,
-    teamIds: candidate.fotmobTeamIds || [],
-    fetchJson: (url) => fetchJson(url, { ignoreRateLimit: true }),
-  });
-  if (fotmobProfile) providerProfiles.push({ provider: "FotMob", profile: fotmobProfile });
-  const transfermarktProfile = fetchTransfermarktDatasetSquad({ teamName: candidate.teamName, root: ROOT });
-  if (transfermarktProfile) providerProfiles.push({ provider: "Transfermarkt Datasets", profile: transfermarktProfile });
-  if (mergePlayers([], providerProfiles.flatMap((item) => item.profile.players)).length < TARGET_SQUAD_PLAYERS) {
-    espnProfile = await fetchEspnSquad({
-      teamName: candidate.teamName,
-      leagues: [...candidate.leagues],
-      knownTeams: knownEspnTeams,
+  for (const teamName of squadQueries(candidate.teamName)) {
+    fotmobProfile = await fetchFotMobSquad({
+      teamName,
+      teamIds: candidate.fotmobTeamIds || [],
       fetchJson: (url) => fetchJson(url, { ignoreRateLimit: true }),
     });
+    if (fotmobProfile) break;
+  }
+  if (fotmobProfile) providerProfiles.push({ provider: "FotMob", profile: fotmobProfile });
+  const transfermarktProfile = squadQueries(candidate.teamName)
+    .map((teamName) => fetchTransfermarktDatasetSquad({ teamName, root: ROOT }))
+    .find(Boolean) || null;
+  if (transfermarktProfile) providerProfiles.push({ provider: "Transfermarkt Datasets", profile: transfermarktProfile });
+  if (mergePlayers([], providerProfiles.flatMap((item) => item.profile.players)).length < TARGET_SQUAD_PLAYERS) {
+    for (const teamName of squadQueries(candidate.teamName)) {
+      espnProfile = await fetchEspnSquad({
+        teamName,
+        leagues: [...candidate.leagues],
+        knownTeams: knownEspnTeams,
+        fetchJson: (url) => fetchJson(url, { ignoreRateLimit: true }),
+      });
+      if (espnProfile) break;
+    }
     if (espnProfile) providerProfiles.push({ provider: "ESPN", profile: espnProfile });
   }
   if (!providerProfiles.length && !report.rateLimited) {
     try {
-      sportsDbProfile = await fetchSportsDbSquad(candidate.teamName);
+      for (const teamName of squadQueries(candidate.teamName)) {
+        sportsDbProfile = await fetchSportsDbSquad(teamName);
+        if (sportsDbProfile) break;
+      }
       if (sportsDbProfile) providerProfiles.push({ provider: "TheSportsDB", profile: sportsDbProfile });
     } catch (error) {
       if (error?.code === "provider_rate_limited") {
@@ -311,7 +335,10 @@ for (const candidate of pending) {
     }
   }
   if (mergePlayers([], providerProfiles.flatMap((item) => item.profile.players)).length < TARGET_SQUAD_PLAYERS) {
-    wikipediaProfile = await fetchWikipediaSquad({ teamName: candidate.teamName, fetchJson: fetchPublicJson });
+    for (const teamName of squadQueries(candidate.teamName)) {
+      wikipediaProfile = await fetchWikipediaSquad({ teamName, fetchJson: fetchPublicJson });
+      if (wikipediaProfile) break;
+    }
     if (wikipediaProfile) providerProfiles.push({ provider: "Wikipedia", profile: wikipediaProfile });
   }
   const recentLineup = recentLineups.get(candidate.key) || null;
