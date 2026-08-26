@@ -1,24 +1,24 @@
 {
   "schemaVersion": "goal-api-acceptance-v1",
-  "checkedAt": "2026-08-25T04:06:49.784Z",
+  "checkedAt": "2026-08-26T04:08:57.832Z",
   "configured": true,
   "accepted": false,
   "enoughTime": false,
   "enoughEvidence": false,
   "targetsMet": false,
-  "elapsedDays": 5,
+  "elapsedDays": 6,
   "requiredDays": 14,
   "aggregate": {
     "domestic": {
-      "checked": 670,
-      "mapped": 470,
-      "coverage": 0.701,
+      "checked": 744,
+      "mapped": 528,
+      "coverage": 0.71,
       "target": 0.8
     },
     "uefa": {
-      "checked": 468,
-      "mapped": 396,
-      "coverage": 0.846,
+      "checked": 527,
+      "mapped": 447,
+      "coverage": 0.848,
       "target": 0.8
     },
     "friendly": {
@@ -1471,17 +1471,164 @@
           "errorCode": null
         }
       }
+    },
+    {
+      "measurementVersion": "goal-pagination-v2",
+      "checkedAt": "2026-08-26T04:08:57.832Z",
+      "providerReachable": true,
+      "checked": 133,
+      "mapped": 109,
+      "segments": {
+        "domestic": {
+          "checked": 74,
+          "mapped": 58
+        },
+        "uefa": {
+          "checked": 59,
+          "mapped": 51
+        },
+        "friendly": {
+          "checked": 0,
+          "mapped": 0
+        }
+      },
+      "requestStatuses": [
+        {
+          "date": "2026-08-26",
+          "status": 200,
+          "records": 322,
+          "pages": 4,
+          "truncated": false,
+          "limits": {
+            "remaining": "996",
+            "limit": "1000",
+            "dailyRemaining": null
+          }
+        },
+        {
+          "date": "2026-08-27",
+          "status": 200,
+          "records": 137,
+          "pages": 2,
+          "truncated": false,
+          "limits": {
+            "remaining": "994",
+            "limit": "1000",
+            "dailyRemaining": null
+          }
+        },
+        {
+          "date": "2026-08-28",
+          "status": 200,
+          "records": 406,
+          "pages": 5,
+          "truncated": false,
+          "limits": {
+            "remaining": "989",
+            "limit": "1000",
+            "dailyRemaining": null
+          }
+        },
+        {
+          "date": "2026-08-29",
+          "status": 200,
+          "records": 1000,
+          "pages": 10,
+          "truncated": true,
+          "limits": {
+            "remaining": "979",
+            "limit": "1000",
+            "dailyRemaining": null
+          }
+        },
+        {
+          "date": "2026-08-30",
+          "status": 200,
+          "records": 808,
+          "pages": 9,
+          "truncated": false,
+          "limits": {
+            "remaining": "970",
+            "limit": "1000",
+            "dailyRemaining": null
+          }
+        },
+        {
+          "date": "2026-08-31",
+          "status": 200,
+          "records": 243,
+          "pages": 3,
+          "truncated": false,
+          "limits": {
+            "remaining": "967",
+            "limit": "1000",
+            "dailyRemaining": null
+          }
+        },
+        {
+          "date": "2026-09-01",
+          "status": 200,
+          "records": 170,
+          "pages": 2,
+          "truncated": false,
+          "limits": {
+            "remaining": "965",
+            "limit": "1000",
+            "dailyRemaining": null
+          }
+        }
+      ],
+      "endpointAccess": {
+        "testedFixtureId": "cmsvp3p8j98hupg07ih8u0he1",
+        "fixture": {
+          "tested": true,
+          "valid": true,
+          "status": 200,
+          "records": 1,
+          "available": true,
+          "remaining": "964",
+          "errorCode": null
+        },
+        "lineups": {
+          "tested": true,
+          "valid": true,
+          "status": 200,
+          "records": 1,
+          "available": true,
+          "remaining": "963",
+          "errorCode": null
+        },
+        "statistics": {
+          "tested": true,
+          "valid": true,
+          "status": 200,
+          "records": 1,
+          "available": true,
+          "remaining": "962",
+          "errorCode": null
+        },
+        "odds": {
+          "tested": true,
+          "valid": false,
+          "status": 403,
+          "records": 0,
+          "available": false,
+          "remaining": null,
+          "errorCode": "HTTP 403"
+        },
+        "h2h": {
+          "tested": true,
+          "valid": true,
+          "status": 200,
+          "records": 1,
+          "available": true,
+          "remaining": "961",
+          "errorCode": null
+        }
+      }
     }
   ],
   "missingSamples": [
-    {
-      "date": "2026-08-25",
-      "league": "Europe - Champions League",
-      "home": "Sabah FK",
-      "away": "Hapoel Beer Sheva",
-      "segment": "uefa",
-      "status": "not_mapped"
-    },
     {
       "date": "2026-08-26",
       "league": "Europe - Conference League",
@@ -1639,30 +1786,6 @@
       "league": "England - Championship",
       "home": "Middlesbrough",
       "away": "West Bromwich Albion",
-      "segment": "domestic",
-      "status": "not_mapped"
-    },
-    {
-      "date": "2026-08-29",
-      "league": "Germany - 2. Bundesliga",
-      "home": "Energie Cottbus",
-      "away": "Greuther Fürth",
-      "segment": "domestic",
-      "status": "not_mapped"
-    },
-    {
-      "date": "2026-08-29",
-      "league": "Germany - 2. Bundesliga",
-      "home": "FC Heidenheim",
-      "away": "Dynamo Dresden",
-      "segment": "domestic",
-      "status": "not_mapped"
-    },
-    {
-      "date": "2026-08-29",
-      "league": "Germany - 2. Bundesliga",
-      "home": "Karlsruher SC",
-      "away": "Wolfsburg",
       "segment": "domestic",
       "status": "not_mapped"
     },
