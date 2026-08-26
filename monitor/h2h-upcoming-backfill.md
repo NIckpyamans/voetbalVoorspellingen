@@ -1,17 +1,15 @@
 # Upcoming H2H Backfill
 
-Laatst bijgewerkt: 2026-08-26T07:09:54.409Z
+Laatst bijgewerkt: 2026-08-26T09:58:35.878Z
 Gecontroleerd: 32
-Gevuld: 2
-Geen directe H2H: 30
+Gevuld: 0
+Geen directe H2H: 32
 Errors: 0
 
 ## Aanbeveling
 API-Football blijft quota-bewust geblokkeerd totdat de acceptatietest slaagt; ESPN is wel gecontroleerd voor alle kandidaten.
 
 ## Gevuld
-- 2026-08-30: Sunderland - Fulham (2)
-- 2026-08-30: Monaco - Marseille (5)
 
 ## Geen Directe H2H
 - 2026-08-28: Eintracht Braunschweig - Hertha BSC (provider_acceptance_blocked)
