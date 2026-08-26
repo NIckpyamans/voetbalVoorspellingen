@@ -1,18 +1,17 @@
 # Upcoming H2H Backfill
 
-Laatst bijgewerkt: 2026-08-26T16:36:13.617Z
+Laatst bijgewerkt: 2026-08-26T20:03:52.157Z
 Gecontroleerd: 32
-Gevuld: 3
-Geen directe H2H: 29
+Gevuld: 2
+Geen directe H2H: 30
 Errors: 0
 
 ## Aanbeveling
 API-Football blijft quota-bewust geblokkeerd totdat de acceptatietest slaagt; ESPN is wel gecontroleerd voor alle kandidaten.
 
 ## Gevuld
-- 2026-08-30: Paris FC - Nice (2)
-- 2026-08-30: Freiburg - Werder Bremen (5)
-- 2026-08-30: Sunderland - Fulham (2)
+- 2026-08-30: Augsburg - Schalke 04 (2)
+- 2026-08-30: Monaco - Marseille (5)
 
 ## Geen Directe H2H
 - 2026-08-28: VfL Bochum - VfL Osnabrück (provider_acceptance_blocked)
