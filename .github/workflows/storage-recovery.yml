@@ -1,6 +1,9 @@
 name: R2 and Neon recovery
 
 on:
+  schedule:
+    # Detecteer een quota-reset automatisch en speel R2-captures daarna terug.
+    - cron: "23 */6 * * *"
   workflow_dispatch:
 
 concurrency:
@@ -46,15 +49,16 @@ jobs:
         name: Check Neon availability
         run: npm run db:availability -- --emit-github-output
       - name: Replay fixture mappings, lineups, odds and H2H
-        if: steps.database.outputs.available == 'true'
+        if: steps.database.outputs.databaseWritable == 'true'
         run: npm run db:critical-captures:replay
       - name: Reclassify timestamped odds safely
-        if: steps.database.outputs.available == 'true'
+        if: steps.database.outputs.databaseWritable == 'true'
         run: npm run db:odds:leakage
       - name: Evaluate professional ROI and CLV gates
-        if: steps.database.outputs.available == 'true'
+        if: steps.database.outputs.databaseWritable == 'true'
         run: npm run db:roi-clv:analyze
-      - name: Rebuild phase reliability with R2 fallback
+      - name: Rebuild phase reliability after database recovery
+        if: steps.database.outputs.databaseWritable == 'true'
         run: npm run db:phase:rebuild
       - name: Upload recovery evidence
         if: always()
@@ -70,7 +74,7 @@ jobs:
           if-no-files-found: warn
           retention-days: 30
       - name: Persist compact recovery evidence
-        if: always()
+        if: always() && (steps.database.outputs.databaseWritable == 'true' || github.event_name == 'workflow_dispatch')
         run: |
           git config user.name github-actions
           git config user.email github-actions@github.com

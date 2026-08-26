@@ -242,7 +242,7 @@ for (let offset = -1; offset >= -30; offset -= 1) {
 }
 
 const now = Date.now();
-const report = { generatedAt: new Date().toISOString(), daysAhead: DAYS_AHEAD, targetPlayersPerTeam: TARGET_SQUAD_PLAYERS, candidates: candidates.size, checked: 0, enriched: 0, unavailable: 0, skippedFresh: 0, pendingBeforeBatch: 0, pendingAfterBatch: 0, rateLimited: false, retryAfterSeconds: 0, byProvider: { FotMob: 0, "Laatste bevestigde opstelling": 0, "Transfermarkt Datasets": 0, TheSportsDB: 0, ESPN: 0, Wikipedia: 0 }, byCompetition: {}, samples: [] };
+const report = { generatedAt: new Date().toISOString(), daysAhead: DAYS_AHEAD, targetPlayersPerTeam: TARGET_SQUAD_PLAYERS, candidates: candidates.size, checked: 0, enriched: 0, unavailable: 0, skippedFresh: 0, pendingBeforeBatch: 0, pendingAfterBatch: 0, rateLimited: false, retryAfterSeconds: 0, byProvider: { FotMob: 0, "Laatste bevestigde opstelling": 0, "Transfermarkt Datasets": 0, TheSportsDB: 0, ESPN: 0, Wikipedia: 0 }, byCompetition: {}, failureReasons: {}, failures: [], samples: [] };
 const pendingCandidates = [...candidates.values()]
   .filter((candidate) => !TEAM_FILTER.size || TEAM_FILTER.has(normalize(candidate.teamName)))
   .map((candidate) => {
@@ -334,9 +334,14 @@ for (const candidate of pending) {
   report.byCompetition[competition] = report.byCompetition[competition] || { checked: 0, enriched: 0, unavailable: 0 };
   report.byCompetition[competition].checked += 1;
   if (!profile) {
+    const attemptedProviders = ["FotMob", "Transfermarkt Datasets", "ESPN", "TheSportsDB", "Wikipedia"];
+    const reason = report.rateLimited ? "provider_rate_limited" : "no_provider_team_or_roster_match";
     report.unavailable += 1;
     report.byCompetition[competition].unavailable += 1;
-    cache[candidate.key] = { ...(candidate.existing || {}), teamName: candidate.teamName, fetchedAt: new Date().toISOString(), unavailable: true, source: candidate.existing?.source || "TheSportsDB + ESPN" };
+    report.failureReasons[reason] = Number(report.failureReasons[reason] || 0) + 1;
+    report.failures.push({ team: candidate.teamName, competition, reason, attemptedProviders });
+    console.warn(`[squad-enrichment] ${candidate.teamName} (${competition}): ${reason}; bronnen=${attemptedProviders.join(",")}`);
+    cache[candidate.key] = { ...(candidate.existing || {}), teamName: candidate.teamName, fetchedAt: new Date().toISOString(), unavailable: true, lastFailureReason: reason, lastAttemptedProviders: attemptedProviders, source: candidate.existing?.source || "multi-provider fallback" };
     continue;
   }
   // Een succesvolle providercontrole is een actuele momentopname. Oude spelers

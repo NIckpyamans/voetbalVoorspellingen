@@ -1,5 +1,6 @@
 import crypto from "crypto";
 import { buildR2ObjectKey, getR2Config, getR2Object, putR2Object } from "../../shared/cloudflare-r2.js";
+import { mergePhaseReliability } from "./phase-reliability-policy.js";
 
 export const ACTIVE_CALIBRATION_KEY = "model/calibration/active.json";
 export const PHASE_RELIABILITY_KEY = "model/phase-reliability.json";
@@ -96,8 +97,16 @@ export function applyR2ModelProfiles(store, { calibration, phaseReliability }) {
 
   const phaseProfiles = phaseReliability?.phaseReliability;
   if (phaseProfiles && typeof phaseProfiles === "object") {
-    store.phaseReliability = { ...(store.phaseReliability || {}), ...phaseProfiles };
-    applied.phaseProfiles = Object.keys(phaseProfiles).length;
+    const taggedProfiles = Object.fromEntries(
+      Object.entries(phaseProfiles).map(([phase, profile]) => [
+        phase,
+        { ...profile, source: profile?.source || phaseReliability?.source || "cloudflare_r2" },
+      ])
+    );
+    const merged = mergePhaseReliability(store.phaseReliability, taggedProfiles);
+    store.phaseReliability = merged.profiles;
+    applied.phaseProfiles = Object.keys(merged.profiles).length;
+    applied.phaseDecisions = merged.decisions;
   }
   return applied;
 }

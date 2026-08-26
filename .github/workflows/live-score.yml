@@ -79,7 +79,9 @@ jobs:
           # Live refresh owns fixture/day data only. Training and audit reports
           # are committed by their dedicated workflows, preventing rebase
           # conflicts when a score refresh overlaps an evaluation or code push.
-          git add data
+          # Phase reliability and training summaries are owned by evaluation.
+          # A lightweight score refresh must never publish model inputs.
+          git add data ':!data/phase-reliability.json' ':!data/history-summary.json'
           git diff --staged --quiet && echo "geen scorewijzigingen" && exit 0
           git commit -m "live score update [skip vercel]"
           for attempt in 1 2 3; do

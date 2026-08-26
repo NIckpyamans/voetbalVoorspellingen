@@ -2,8 +2,8 @@ name: Upcoming team squad enrichment
 
 on:
   schedule:
-    # Voor de ochtendcontrole en opnieuw voor de avondwedstrijden.
-    - cron: "17 5,15 * * *"
+    # Vier begrensde batches verminderen de achterstand zonder requestpieken.
+    - cron: "17 3,8,13,18 * * *"
   workflow_dispatch:
     inputs:
       retry_unavailable:
@@ -32,13 +32,13 @@ permissions:
 jobs:
   enrich-squads:
     runs-on: ubuntu-latest
-    timeout-minutes: 8
+    timeout-minutes: 12
     env:
       DATA_BRANCH: codex/step3b-layout
       SQUAD_ENRICHMENT_DAYS_AHEAD: "8"
       # Een volledige batch blijft ruim binnen de workflow-timeout en werkt de
       # selectieachterstand ongeveer twee keer zo snel weg.
-      SQUAD_ENRICHMENT_MAX_TEAMS: "24"
+      SQUAD_ENRICHMENT_MAX_TEAMS: "32"
       SQUAD_ENRICHMENT_REQUEST_TIMEOUT_MS: "6000"
       SQUAD_ENRICHMENT_FORCE_UNAVAILABLE: ${{ inputs.retry_unavailable || 'false' }}
       SQUAD_ENRICHMENT_FORCE_REFRESH: ${{ inputs.force_refresh || 'false' }}

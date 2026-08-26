@@ -23,7 +23,7 @@ describe("R2 model profiles", () => {
     const store = { leagueCalibrationProfiles: {}, phaseReliability: {}, backtestSegmentation: { driftAlerts: [] } };
     const result = applyR2ModelProfiles(store, {
       calibration: artifact(),
-      phaseReliability: { phaseReliability: { regular_league: { reliabilityScore: 0.6 } } },
+      phaseReliability: { phaseReliability: { regular_league: { matches: 20, reliabilityScore: 0.6 } } },
     });
     expect(result.calibrationProfiles).toBe(1);
     expect(result.phaseProfiles).toBe(1);

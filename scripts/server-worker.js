@@ -87,6 +87,7 @@ import { summarizeGoalTiming } from "./worker/goal-timing.js";
 import { buildClubStrengthProfile, lookupClubEloProfile, parseClubEloSnapshot } from "./worker/club-strength.js";
 import { attachConfirmedLineupStarImpact } from "./worker/lineup-star-impact.js";
 import { hydrateR2ModelProfiles } from "./worker/r2-model-profiles.js";
+import { mergePhaseReliability } from "./worker/phase-reliability-policy.js";
 import {
   FOTMOB_STANDINGS_LEAGUES,
   fetchFotmobStanding,
@@ -6485,7 +6486,22 @@ function rebuildReviewsAndLearning(store) {
   store.postMatchReviews = reviews;
   store.teamLearning = buildTeamLearningFromReviews(reviews);
   store.leagueReliability = buildLeagueReliabilityFromReviews(reviews);
-  store.phaseReliability = buildPhaseReliabilityFromReviews(reviews);
+  const candidatePhaseReliability = Object.fromEntries(
+    Object.entries(buildPhaseReliabilityFromReviews(reviews)).map(([phase, profile]) => [
+      phase,
+      { ...profile, source: "local_post_match_reviews", generatedAt: new Date().toISOString() },
+    ])
+  );
+  const phaseMerge = mergePhaseReliability(store.phaseReliability, candidatePhaseReliability, {
+    lightweight: LIGHTWEIGHT_REFRESH,
+  });
+  store.phaseReliability = phaseMerge.profiles;
+  store.phaseReliabilityGuard = {
+    checkedAt: new Date().toISOString(),
+    lightweight: LIGHTWEIGHT_REFRESH,
+    phases: Object.keys(store.phaseReliability),
+    decisions: phaseMerge.decisions,
+  };
   store.featureDiagnostics = buildFeatureDiagnosticsFromReviews(reviews);
   store.modelPerformance = buildModelPerformanceFromReviews(reviews);
   store.backtestSummary = buildBacktestSummaryFromReviews(reviews);
