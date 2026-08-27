@@ -88,6 +88,7 @@ import { buildClubStrengthProfile, lookupClubEloProfile, parseClubEloSnapshot } 
 import { attachConfirmedLineupStarImpact } from "./worker/lineup-star-impact.js";
 import { hydrateR2ModelProfiles } from "./worker/r2-model-profiles.js";
 import { mergePhaseReliability } from "./worker/phase-reliability-policy.js";
+import { dedupeRecentTeamMatches, shrinkVenueSplit, stabilizeOverallForm } from "./worker/form-sample-policy.js";
 import {
   FOTMOB_STANDINGS_LEAGUES,
   fetchFotmobStanding,
@@ -2227,6 +2228,7 @@ function writeCompetitionArchiveFiles(store) {
 const TEAM_ALIAS_GROUPS = [
   ["rapid wien", "sk rapid wien"],
   ["heart of midlothian", "hearts"],
+  ["partizan beograd", "partizan belgrade", "fk partizan", "partizan"],
   ["fc cologne", "1 fc koln", "1 fc koeln", "fc koln", "fc koeln", "koln", "koeln", "cologne"],
   ["1 fc heidenheim 1846", "1 fc heidenheim", "fc heidenheim", "heidenheim"],
   ["hamburg sv", "hamburger sv", "hsv"],
@@ -7301,7 +7303,7 @@ function buildEmptyTeamForm(source = "empty") {
 }
 
 function buildTeamFormFromRecentMatches(matches, source = "historical-form") {
-  const sample = (matches || [])
+  const sample = dedupeRecentTeamMatches(matches)
     .filter((item) => item && Number.isFinite(toNumber(item.goalsFor)) && Number.isFinite(toNumber(item.goalsAgainst)))
     .sort((a, b) => String(a?.date || "").localeCompare(String(b?.date || "")))
     .slice(-TEAM_RECENT_MATCH_WINDOW)
@@ -8912,13 +8914,11 @@ function buildContext(matchInput) {
 }
 
 function pickHomeStrength(homeRecent) {
-  const split = homeRecent?.splits?.home || emptySplit();
-  return split.games > 0 ? split : emptySplit();
+  return shrinkVenueSplit(homeRecent, "home");
 }
 
 function pickAwayStrength(awayRecent) {
-  const split = awayRecent?.splits?.away || emptySplit();
-  return split.games > 0 ? split : emptySplit();
+  return shrinkVenueSplit(awayRecent, "away");
 }
 
 function buildHomeAwayEdge(homeRecent, awayRecent) {
@@ -9167,16 +9167,18 @@ function predict(input) {
   const avgLeagueGoals = 1.35;
   const homeSplit = pickHomeStrength(input.homeRecent);
   const awaySplit = pickAwayStrength(input.awayRecent);
+  const homeOverall = stabilizeOverallForm(input.homeRecent);
+  const awayOverall = stabilizeOverallForm(input.awayRecent);
 
   let homeXG =
     avgLeagueGoals *
     1.11 *
-    clamp((input.homeRecent?.avgScored || avgLeagueGoals) / avgLeagueGoals, 0.7, 1.6) *
+    clamp(homeOverall.avgScored / avgLeagueGoals, 0.7, 1.6) *
     clamp((awaySplit.avgConceded || avgLeagueGoals) / avgLeagueGoals, 0.75, 1.5);
 
   let awayXG =
     avgLeagueGoals *
-    clamp((input.awayRecent?.avgScored || avgLeagueGoals) / avgLeagueGoals, 0.7, 1.6) *
+    clamp(awayOverall.avgScored / avgLeagueGoals, 0.7, 1.6) *
     clamp((homeSplit.avgConceded || avgLeagueGoals) / avgLeagueGoals, 0.75, 1.5);
 
   const homeClubElo = Number(input.homeClubElo || 0);

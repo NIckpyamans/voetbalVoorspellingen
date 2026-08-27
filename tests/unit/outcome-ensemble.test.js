@@ -1,11 +1,24 @@
 import { describe, expect, it } from "vitest";
 import {
   buildOutcomeEnsemble,
+  buildSquadStrengthOutcomeModel,
+  buildTwoLegContextModel,
   devigThreeWayOdds,
   summarizeScoreCoverage,
 } from "../../scripts/worker/outcome-ensemble.js";
 
 describe("independent 1X2 outcome ensemble", () => {
+  it("gives the stronger away squad an independent advantage", () => {
+    const result = buildSquadStrengthOutcomeModel({ home_squad_rating: 57.1, away_squad_rating: 60.2 });
+    expect(result.awayProb).toBeGreaterThan(result.homeProb);
+  });
+
+  it("treats a two-goal aggregate lead as a modest strategy signal", () => {
+    const result = buildTwoLegContextModel({ aggregate_active: 1, aggregate_goal_diff: -2 });
+    expect(result.awayProb).toBeGreaterThan(result.homeProb);
+    expect(result.drawProb).toBeGreaterThan(0.3);
+  });
+
   it("removes the bookmaker margin before using market probabilities", () => {
     const result = devigThreeWayOdds(
       { home: 2, draw: 3.5, away: 4, capturedAt: "2026-08-27T17:00:00Z" },

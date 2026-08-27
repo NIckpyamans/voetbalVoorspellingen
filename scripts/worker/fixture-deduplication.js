@@ -3,7 +3,7 @@ export function storedMatchQuality(match) {
   const hasScore = Number.isFinite(Number(match?.homeScore)) && Number.isFinite(Number(match?.awayScore));
   const statusScore = status === "FT" ? 70 : status === "LIVE" || status === "HT" ? 55 : status === "RESULT_PENDING" ? 20 : status === "NS" ? 8 : 0;
   const sourceText = String(match?.dataSource || "");
-  const sourceScore = /espn/i.test(sourceText) ? 9 : /thesportsdb/i.test(sourceText) ? 7 : /openligadb/i.test(sourceText) ? 5 : /football-data/i.test(sourceText) ? 4 : /bbc/i.test(sourceText) ? 2 : 1;
+  const sourceScore = /fotmob/i.test(sourceText) ? 10 : /espn/i.test(sourceText) ? 9 : /thesportsdb/i.test(sourceText) ? 7 : /sky/i.test(sourceText) ? 6 : /openligadb/i.test(sourceText) ? 5 : /football-data/i.test(sourceText) ? 4 : /bbc/i.test(sourceText) ? 2 : 1;
   return statusScore + (hasScore ? 35 : 0) + Number(Boolean(match?.homeLogo)) + Number(Boolean(match?.awayLogo)) + sourceScore + Number(match?.dataCompletenessScore || 0) * 10;
 }
 
@@ -59,16 +59,23 @@ export function dedupeStoredPredictions(predictions = [], matches = [], options)
     const key = buildStoredMatchDedupeKey(match, options);
     if (key && match?.id) byDedupeKey.set(key, String(match.id));
   }
-  const seen = new Set();
-  const output = [];
+  const selected = new Map();
   for (const prediction of predictions || []) {
     const predictionKey = `${String(prediction?.date || "").slice(0, 10)}|${options.teamKey(prediction?.homeTeam || prediction?.homeTeamName || "")}|${options.teamKey(prediction?.awayTeam || prediction?.awayTeamName || "")}`;
     const canonicalMatchId = byDedupeKey.get(predictionKey) || prediction?.matchId;
     if (canonicalMatchId && !keptMatchIds.has(String(canonicalMatchId))) continue;
     const unique = canonicalMatchId || predictionKey || prediction?.matchId;
-    if (seen.has(unique)) continue;
-    seen.add(unique);
-    output.push({ ...prediction, matchId: canonicalMatchId || prediction.matchId });
+    const candidate = { ...prediction, matchId: canonicalMatchId || prediction.matchId };
+    const quality =
+      Number(String(prediction?.matchId || "") === String(canonicalMatchId || "")) * 100 +
+      storedMatchQuality({
+        ...prediction,
+        homeTeamName: prediction?.homeTeamName || prediction?.homeTeam,
+        awayTeamName: prediction?.awayTeamName || prediction?.awayTeam,
+        dataSource: prediction?.dataSource || prediction?.featureSourceMetadata?.fields?.fixture?.source,
+      });
+    const current = selected.get(unique);
+    if (!current || quality > current.quality) selected.set(unique, { quality, prediction: candidate });
   }
-  return output;
+  return [...selected.values()].map((item) => item.prediction);
 }

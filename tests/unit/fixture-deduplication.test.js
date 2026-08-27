@@ -36,4 +36,25 @@ describe("fixture deduplication", () => {
     expect(rows).toHaveLength(1);
     expect(rows[0].dataSource).toContain("openligadb");
   });
+
+  it("prefers FotMob over Sky for the same unresolved fixture", () => {
+    const rows = dedupeStoredMatches([
+      { id: "sky", date: "2026-08-27", homeTeamName: "Partizan", awayTeamName: "Getafe", status: "NS", dataSource: "sky-fixture-fallback", homeForm: "WWWWL" },
+      { id: "fotmob", date: "2026-08-27", homeTeamName: "Partizan", awayTeamName: "Getafe", status: "NS", dataSource: "fotmob-fixture-fallback", homeForm: "WL" },
+    ], options);
+
+    expect(rows).toHaveLength(1);
+    expect(rows[0]).toMatchObject({ id: "fotmob", homeForm: "WL" });
+  });
+
+  it("keeps the prediction generated for the retained canonical fixture", () => {
+    const matches = [{ id: "fotmob", date: "2026-08-27", homeTeamName: "Partizan", awayTeamName: "Getafe" }];
+    const predictions = dedupeStoredPredictions([
+      { matchId: "sky", date: "2026-08-27", homeTeam: "Partizan", awayTeam: "Getafe", homeProb: 0.6, dataSource: "sky-fixture-fallback" },
+      { matchId: "fotmob", date: "2026-08-27", homeTeam: "Partizan", awayTeam: "Getafe", homeProb: 0.32, dataSource: "fotmob-fixture-fallback" },
+    ], matches, options);
+
+    expect(predictions).toHaveLength(1);
+    expect(predictions[0]).toMatchObject({ matchId: "fotmob", homeProb: 0.32 });
+  });
 });

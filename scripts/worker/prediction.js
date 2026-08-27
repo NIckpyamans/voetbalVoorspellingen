@@ -1,4 +1,5 @@
 import { summarizeGoalTiming } from "./goal-timing.js";
+import { stabilizeOverallForm } from "./form-sample-policy.js";
 
 export const PREDICTION_MODULE = {
   name: "prediction",
@@ -189,6 +190,8 @@ export function buildAvailabilitySignal(input = {}, deps) {
 export function buildFeatureVector(input, deps) {
   const homeSplit = deps.pickHomeStrength(input.homeRecent);
   const awaySplit = deps.pickAwayStrength(input.awayRecent);
+  const homeOverall = stabilizeOverallForm(input.homeRecent);
+  const awayOverall = stabilizeOverallForm(input.awayRecent);
   const homeCompareKey = String(input.homeTeamId || deps.normalizeName(input.homeTeamName || ""));
   const awayCompareKey = String(input.awayTeamId || deps.normalizeName(input.awayTeamName || ""));
   const homePpg = deps.toPointsPerGame(input.homeRecent?.wins, input.homeRecent?.draws, input.homeRecent?.gamesPlayed);
@@ -252,10 +255,12 @@ export function buildFeatureVector(input, deps) {
         : 0;
 
   return {
-    home_avg_scored: Number(input.homeRecent?.avgScored || 1.35),
-    away_avg_scored: Number(input.awayRecent?.avgScored || 1.35),
-    home_avg_conceded: Number(input.homeRecent?.avgConceded || 1.35),
-    away_avg_conceded: Number(input.awayRecent?.avgConceded || 1.35),
+    home_avg_scored: homeOverall.avgScored,
+    away_avg_scored: awayOverall.avgScored,
+    home_avg_conceded: homeOverall.avgConceded,
+    away_avg_conceded: awayOverall.avgConceded,
+    home_form_sample_weight: homeOverall.sampleWeight,
+    away_form_sample_weight: awayOverall.sampleWeight,
     home_home_split_scored: Number(homeSplit.avgScored || 1.35),
     home_home_split_conceded: Number(homeSplit.avgConceded || 1.35),
     away_away_split_scored: Number(awaySplit.avgScored || 1.35),
@@ -272,6 +277,10 @@ export function buildFeatureVector(input, deps) {
     home_squad_rating: Number(homeSquadRating.toFixed(1)),
     away_squad_rating: Number(awaySquadRating.toFixed(1)),
     squad_rating_diff: Number(((homeSquadRating - awaySquadRating) / 10).toFixed(2)),
+    aggregate_active: input.aggregate?.active ? 1 : 0,
+    aggregate_goal_diff: input.aggregate?.active
+      ? Number((Number(input.aggregate.homeAggregate || 0) - Number(input.aggregate.awayAggregate || 0)).toFixed(0))
+      : 0,
     home_transfer_impact: Number(homeTransferImpact.toFixed(2)),
     away_transfer_impact: Number(awayTransferImpact.toFixed(2)),
     transfer_impact_diff: Number((homeTransferImpact - awayTransferImpact).toFixed(2)),

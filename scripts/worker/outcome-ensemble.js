@@ -70,6 +70,33 @@ export function buildLineupOutcomeModel(featureVector = {}, confirmed = false) {
   });
 }
 
+export function buildSquadStrengthOutcomeModel(featureVector = {}) {
+  const home = Number(featureVector.home_squad_rating || 0);
+  const away = Number(featureVector.away_squad_rating || 0);
+  if (!(home > 0 && away > 0) || (home === 50 && away === 50)) return null;
+  const edge = clamp((home - away + 1.5) / 8, -1.4, 1.4);
+  const drawProb = clamp(0.27 - Math.abs(edge) * 0.025, 0.22, 0.27);
+  const decisiveHome = 1 / (1 + Math.exp(-edge));
+  return normalizeOutcomeProbabilities({
+    homeProb: decisiveHome * (1 - drawProb),
+    drawProb,
+    awayProb: (1 - decisiveHome) * (1 - drawProb),
+  });
+}
+
+export function buildTwoLegContextModel(featureVector = {}) {
+  if (!Number(featureVector.aggregate_active || 0)) return null;
+  const goalDiff = clamp(Number(featureVector.aggregate_goal_diff || 0), -4, 4);
+  const drawProb = clamp(0.31 + Math.abs(goalDiff) * 0.012, 0.31, 0.35);
+  const leaderEdge = clamp(goalDiff * 0.12, -0.48, 0.48);
+  const decisiveHome = 1 / (1 + Math.exp(-leaderEdge));
+  return normalizeOutcomeProbabilities({
+    homeProb: decisiveHome * (1 - drawProb),
+    drawProb,
+    awayProb: (1 - decisiveHome) * (1 - drawProb),
+  });
+}
+
 function ensembleAgreement(components, probabilities) {
   const active = components.filter((component) => component.active);
   if (active.length < 2) return 0.5;
@@ -97,6 +124,8 @@ export function buildOutcomeEnsemble({
   const market = devigThreeWayOdds(oddsAtPrediction || {}, kickoff);
   const elo = buildEloOutcomeModel(homeElo, awayElo);
   const lineup = buildLineupOutcomeModel(featureVector, lineupConfirmed);
+  const squadStrength = buildSquadStrengthOutcomeModel(featureVector);
+  const twoLegContext = buildTwoLegContextModel(featureVector);
   const definitions = [
     ["dixon_coles_poisson", poisson, 0.34],
     ["feature_score_model", heuristic, 0.22],
@@ -104,6 +133,8 @@ export function buildOutcomeEnsemble({
     ["club_elo", elo, 0.1],
     ["de_vig_market", market, 0.15],
     ["confirmed_lineup", lineup, 0.05],
+    ["squad_strength", squadStrength, 0.12],
+    ["two_leg_context", twoLegContext, 0.05],
     ["gradient_boosting", gradientBoosting, 0.2],
   ];
   const components = definitions.map(([key, value, requestedWeight]) => ({
@@ -132,7 +163,7 @@ export function buildOutcomeEnsemble({
       bookmaker: market.bookmaker,
       capturedAt: market.capturedAt,
     } : null,
-    version: "outcome-ensemble-v1",
+    version: "outcome-ensemble-v2",
   };
 }
 
