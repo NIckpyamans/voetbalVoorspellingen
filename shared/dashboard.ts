@@ -146,11 +146,18 @@ export function buildWagerReadiness(bet: any, leaguePerformance?: LeaguePerforma
   const hasOddsTimestamp = Number.isFinite(oddsCapturedAt);
   const oddsBeforeKickoff = hasKickoffTimestamp && hasOddsTimestamp && oddsCapturedAt < kickoffAt;
   const oddsFreshEnough = oddsBeforeKickoff && kickoffAt - oddsCapturedAt <= 24 * 60 * 60 * 1000;
+  const lateMarketShift = Math.abs(Number(
+    bet?.marketMovement?.probabilityShift ??
+      bet?.modelEdges?.marketCalibration?.lateProbabilityShift ??
+      0
+  ));
   const blockers: string[] = [];
 
   if (finished) blockers.push("wedstrijd is al gespeeld");
   if (friendly) blockers.push("oefenwedstrijd heeft te hoge selectieronzekerheid");
-  if (completeness < 0.7) blockers.push("datadekking lager dan 70%");
+  const agreement = Number(bet?.ensembleMeta?.agreement ?? bet?.modelEdges?.modelAgreement ?? 0);
+  const probabilityFloor = 0.58;
+  if (completeness < 0.85) blockers.push("datadekking lager dan 85%");
   if (blocked) blockers.push("kwaliteitsgate blokkeert hoge zekerheid");
   if (!lineupConfirmed) blockers.push("bevestigde opstelling ontbreekt");
   if (!validPrices) blockers.push("geen complete actuele 1X2-odds");
@@ -158,13 +165,16 @@ export function buildWagerReadiness(bet: any, leaguePerformance?: LeaguePerforma
   else if (!hasOddsTimestamp) blockers.push("odds hebben geen betrouwbare timestamp");
   else if (!oddsBeforeKickoff) blockers.push("odds zijn niet aantoonbaar voor de aftrap vastgelegd");
   else if (!oddsFreshEnough) blockers.push("odds zijn ouder dan 24 uur voor de aftrap");
-  if (!leaguePerformance || leaguePerformance.total < 30) blockers.push("minder dan 30 lekvrije competitie-evaluaties");
+  if (lateMarketShift >= 0.08) blockers.push("late marktbeweging groter dan 8 procentpunt");
+  if (selected.probability < probabilityFloor) blockers.push("gekalibreerde 1X2-kans lager dan 58%");
+  if (agreement < 0.6) blockers.push("modellen onvoldoende eensgezind");
+  if (!leaguePerformance || leaguePerformance.total < 100) blockers.push("minder dan 100 lekvrije competitie-evaluaties");
   else if (leaguePerformance.outcomePct < 55) blockers.push("competitie-hitrate op 1X2 lager dan 55%");
   if (edge == null) blockers.push("value-edge kan niet worden berekend");
   else if (edge < 0.03) blockers.push("model-edge lager dan 3 procentpunt");
 
   const eligible = blockers.length === 0;
-  const watchOnly = !eligible && !finished && !friendly && completeness >= 0.6 && !blocked;
+  const watchOnly = !eligible && !finished && !friendly && completeness >= 0.7 && !blocked;
   return {
     status: eligible ? "eligible" : watchOnly ? "watch" : "analysis_only",
     label: eligible ? "Inzetbaar volgens datagate" : watchOnly ? "Volgen - nog niet inzetten" : "Analyse - geen inzetadvies",

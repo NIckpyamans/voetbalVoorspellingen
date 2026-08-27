@@ -977,12 +977,14 @@ function DataQualitySnapshot({ match, prediction }: { match: any; prediction: an
 
 function ScoreMatrix({ topScores }: { topScores: any[] }) {
   if (!topScores.length) return null;
+  const top3Coverage = topScores.slice(0, 3).reduce((sum, [, probability]) => sum + Number(probability || 0), 0);
+  const top5Coverage = topScores.slice(0, 5).reduce((sum, [, probability]) => sum + Number(probability || 0), 0);
 
   return (
     <div className="mb-2 rounded-xl border border-blue-400/10 bg-slate-950/45 p-2">
       <div className="mb-1.5 flex items-center justify-between gap-2">
         <div className="text-[7px] font-black uppercase text-slate-400">Meest waarschijnlijke exacte scores</div>
-        <div className="text-[7px] font-black uppercase text-blue-300">scorematrix</div>
+        <div className="text-[7px] font-black uppercase text-blue-300">top-3 {Math.round(top3Coverage * 100)}% · top-5 {Math.round(top5Coverage * 100)}%</div>
       </div>
       <div className="flex flex-wrap gap-1">
         {topScores.map(([score, prob]: any, index: number) => (

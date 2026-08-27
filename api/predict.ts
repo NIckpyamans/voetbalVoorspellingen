@@ -99,6 +99,7 @@ function compactPrediction(prediction: any) {
     awayProb: prediction.awayProb,
     confidence: prediction.confidence,
     exactProb: prediction.exactProb,
+    scoreCoverage: prediction.scoreCoverage,
     exactScoreConfidence: prediction.exactScoreConfidence,
     exactScoreReasons: Array.isArray(prediction.exactScoreReasons)
       ? prediction.exactScoreReasons.slice(0, 4)
@@ -164,6 +165,7 @@ function compactPredictionListItem(prediction: any) {
     awayProb: prediction.awayProb,
     confidence: prediction.confidence,
     exactProb: prediction.exactProb,
+    scoreCoverage: prediction.scoreCoverage,
     exactScoreConfidence: prediction.exactScoreConfidence,
     bestBetRank: prediction.bestBetRank,
     topConfidencePick: prediction.topConfidencePick,

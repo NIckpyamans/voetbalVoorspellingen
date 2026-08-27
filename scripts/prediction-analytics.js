@@ -104,7 +104,14 @@ export function calibrateOutcomeProbabilities(probabilities, modelPerformance, o
   const highConfidenceShrink = topProbability >= 0.62 && highBucketError < -0.08
     ? clamp(Math.abs(highBucketError) * 0.12, 0, 0.035)
     : 0;
-  const shrinkage = clamp(globalShrink + highConfidenceShrink, 0, Number(options.maxShrinkage || 0.1));
+  const segment = options.segmentPerformance || null;
+  const segmentMatches = Number(segment?.matches || 0);
+  const segmentHitRate = numeric(segment?.probabilityOutcomeHitRate ?? segment?.outcomeHitRate);
+  const segmentOverconfidence = segmentMatches >= Number(options.minSegmentMatches || 50) && segmentHitRate != null
+    ? Math.max(0, topProbability - segmentHitRate)
+    : 0;
+  const segmentShrink = clamp(segmentOverconfidence * clamp(segmentMatches / 200, 0.25, 1) * 0.35, 0, 0.08);
+  const shrinkage = clamp(globalShrink + highConfidenceShrink + segmentShrink, 0, Number(options.maxShrinkage || 0.16));
   if (shrinkage <= 0.001) {
     return {
       probabilities: {
@@ -134,10 +141,13 @@ export function calibrateOutcomeProbabilities(probabilities, modelPerformance, o
       awayProb: Number((calibrated.awayProb / calibratedTotal).toFixed(4)),
     },
     applied: true,
-    method: "review_based_probability_shrinkage",
+    method: segmentShrink > 0.001 ? "league_phase_empirical_shrinkage" : "review_based_probability_shrinkage",
     reviewMatches,
     averageAbsoluteError,
     shrinkage: Number(shrinkage.toFixed(4)),
+    segmentMatches,
+    segmentHitRate,
+    segmentShrinkage: Number(segmentShrink.toFixed(4)),
     reason: "Backtest-kalibratie toont overconfidence; 1X2-kansen conservatief richting marktneutraal getrokken.",
   };
 }

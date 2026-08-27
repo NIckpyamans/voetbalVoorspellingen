@@ -42,20 +42,21 @@ describe("buildLeaguePerformance", () => {
 });
 
 describe("buildWagerReadiness", () => {
-  const league = { league: "Germany - Bundesliga", total: 40, exact: 8, outcome: 24, exactPct: 20, outcomePct: 60, avgGoalError: 1.6, avgBrierScore: 0.2, calibrationError: 0.01, roiTotal: null, roiSamples: 0 };
+  const league = { league: "Germany - Bundesliga", total: 120, exact: 20, outcome: 72, exactPct: 17, outcomePct: 60, avgGoalError: 1.6, avgBrierScore: 0.2, calibrationError: 0.01, roiTotal: null, roiSamples: 0 };
 
   it("only marks a pick eligible after every evidence gate passes", () => {
     const result = buildWagerReadiness({
       league: league.league,
       status: "NS",
       date: "2026-08-23T15:00:00Z",
-      homeProb: 0.56,
-      drawProb: 0.24,
-      awayProb: 0.2,
+      homeProb: 0.62,
+      drawProb: 0.22,
+      awayProb: 0.16,
       odds: { home: 2.1, draw: 3.4, away: 3.8, capturedAt: "2026-08-23T14:20:00Z" },
-      dataCompleteness: { score: 0.82 },
+      dataCompleteness: { score: 0.9 },
       qualityGate: { blockedHighConfidence: false },
       lineupSummary: { confirmed: true },
+      ensembleMeta: { agreement: 0.75 },
     }, league);
     expect(result.status).toBe("eligible");
     expect(result.recommendedOutcome).toBe("Thuis");

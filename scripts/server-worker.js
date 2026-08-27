@@ -94,6 +94,7 @@ import {
   selectCurrentStandingCandidate,
 } from "./worker/fotmob-standings.js";
 import { applyLeagueCalibration, rebuildLeagueCalibrationProfilesFromReviews } from "./worker/league-calibration.js";
+import { buildOutcomeEnsemble, summarizeScoreCoverage } from "./worker/outcome-ensemble.js";
 import {
   dedupeStoredMatches as dedupeFixtureMatches,
   dedupeStoredPredictions as dedupeFixturePredictions,
@@ -8135,6 +8136,10 @@ function extractReferee(eventDetails) {
 }
 
 function getReliabilityBucket(input) {
+  const explicitPhase = String(input?.phaseBucket || "").trim().toLowerCase();
+  if (["league", "friendly", "qualification", "two-leg-knockout", "cup", "interland"].includes(explicitPhase)) {
+    return explicitPhase;
+  }
   const league = String(input?.league || "").toLowerCase();
   const round = String(input?.roundLabel || "").toLowerCase();
   const summary = String(input?.context?.summary || input?.context?.type || "").toLowerCase();
@@ -9417,14 +9422,33 @@ function predict(input) {
     seed: monteCarloSeed,
     runs: MONTE_CARLO_RUNS,
   });
-  const rawBlended = blendTriple(preSimulationBlend, monteCarlo, MONTE_CARLO_WEIGHT);
-  const probabilityCalibration = calibrateOutcomeProbabilities(rawBlended, input.modelPerformance);
+  const outcomeEnsemble = buildOutcomeEnsemble({
+    poisson: baseModel,
+    heuristic: heuristicModel,
+    monteCarlo,
+    gradientBoosting: input.gradientBoostingProbabilities || null,
+    oddsAtPrediction: input.oddsAtPrediction || null,
+    kickoff: input.kickoff || null,
+    homeElo: input.homeClubElo,
+    awayElo: input.awayClubElo,
+    featureVector,
+    lineupConfirmed: !!input.lineupSummary?.confirmed,
+  });
+  const phasePerformanceKey = getReliabilityBucket(input);
+  const segmentPerformance = (input.modelPerformance?.byLeague || []).find((item) => item.key === input.league) ||
+    (input.modelPerformance?.byPhase || []).find((item) => item.key === phasePerformanceKey) || null;
+  const probabilityCalibration = calibrateOutcomeProbabilities(
+    outcomeEnsemble.probabilities,
+    input.modelPerformance,
+    { segmentPerformance },
+  );
   const blended = probabilityCalibration.probabilities;
   let combinedScoreMatrix = blendScoreMatrices(scoreMatrix, monteCarlo.scoreMatrix, MONTE_CARLO_WEIGHT);
   let bestCombinedScore = Object.entries(combinedScoreMatrix)
     .sort((a, b) => Number(b[1] || 0) - Number(a[1] || 0))[0] || [bestScore, bestProb];
   const scoreCalibration = calibrateScoreMatrixWithReviewBias(combinedScoreMatrix, input, bestCombinedScore[0]);
   combinedScoreMatrix = scoreCalibration.matrix;
+  const scoreCoverage = summarizeScoreCoverage(combinedScoreMatrix);
   bestCombinedScore = Object.entries(combinedScoreMatrix)
     .sort((a, b) => Number(b[1] || 0) - Number(a[1] || 0))[0] || bestCombinedScore;
   bestScore = bestCombinedScore[0];
@@ -9475,7 +9499,7 @@ function predict(input) {
     scoreSelectionReason = `1X2-edge (${Math.round(outcomeEdge * 100)}pp) weegt zwaarder dan exacte score; gekozen score past bij ${dominantOutcome.key === "home" ? "thuiswinst" : dominantOutcome.key === "away" ? "uitwinst" : "gelijkspel"}`;
   }
   const [predHomeGoals, predAwayGoals] = selectedScore.split("-").map(Number);
-  const modelAgreement = calcModelAgreement(baseModel, heuristicModel);
+  const modelAgreement = outcomeEnsemble.agreement;
   const lineupImpact = buildLineupImpact(input);
   const tacticalMismatch = buildTacticalMismatch(input);
   const formShift = buildFormShift(input);
@@ -9638,6 +9662,8 @@ function predict(input) {
     predHomeGoals,
     predAwayGoals,
     exactProb: Number(selectedExactProb.toFixed(4)),
+    topScores: scoreCoverage.topScores,
+    scoreCoverage,
     confidence: Number(finalConfidence.toFixed(3)),
     confidenceRaw: Number(adjustedConfidence.toFixed(3)),
     over15: Number(over15.toFixed(3)),
@@ -9665,6 +9691,7 @@ function predict(input) {
       phaseReliability,
       marketCalibration,
       probabilityCalibration,
+      outcomeEnsemble,
       confidenceCalibration,
       friendlyCalibration,
       refereeProfile,
@@ -9709,11 +9736,10 @@ function predict(input) {
     qualityGate,
     ensembleMeta: {
       active: true,
-      baseModel: "dixon-coles-poisson",
-      blendModel: "heuristic-form-elo+monte-carlo",
-      blendWeightBase: Number((0.78 * (1 - MONTE_CARLO_WEIGHT)).toFixed(3)),
-      blendWeightHeuristic: 0.22,
-      blendWeightMonteCarlo: MONTE_CARLO_WEIGHT,
+      baseModel: "independent-1x2-ensemble",
+      blendModel: outcomeEnsemble.version,
+      components: outcomeEnsemble.components,
+      market: outcomeEnsemble.market,
       trainingReady: true,
       suggestedNextModel: "CatBoost or LightGBM",
       baseProbabilities: {
@@ -11813,12 +11839,36 @@ async function main() {
         availability: availabilitySummary?.coverage > 0 ? availabilitySummary.capturedAt : null,
         referee: refereeProfile?.name ? isoFromTimestamp(store.marketProfilesUpdated?.[leagueInfo.label] || now) : null,
       };
+      const generatedAtIso = isoFromMs(now) || new Date(now).toISOString();
+      let oddsCapture = ODDS_FETCH_ENABLED
+        ? await fetchOddsAtPrediction(
+            {
+              matchId,
+              league: leagueInfo.label,
+              homeTeam: homeName,
+              awayTeam: awayName,
+              kickoff,
+            },
+            {
+              generatedAt: generatedAtIso,
+              cutoffAt: generatedAtIso,
+            }
+          )
+        : { status: "disabled", oddsAtPrediction: null, reason: "ODDS_FETCH_ENABLED=false" };
+      if (!oddsCapture?.oddsAtPrediction) {
+        oddsCapture = (await fetchR2OddsSnapshot(matchId, kickoff)) || oddsCapture;
+      }
+      const oddsAtPrediction = oddsCapture?.oddsAtPrediction || null;
       const prediction = predict({
         homeTeamId: homeId,
         awayTeamId: awayId,
         homeTeamName: homeName,
         awayTeamName: awayName,
         teamIdentity,
+        league: leagueInfo.label,
+        phaseBucket,
+        kickoff,
+        oddsAtPrediction,
         sourceAsOf,
         lineupStatus,
         refereeStatus,
@@ -11862,26 +11912,6 @@ async function main() {
         assertionDegraded: !!store.dataScout?.degraded,
       });
 
-      const generatedAtIso = isoFromMs(now) || new Date(now).toISOString();
-      let oddsCapture = ODDS_FETCH_ENABLED
-        ? await fetchOddsAtPrediction(
-            {
-              matchId,
-              league: leagueInfo.label,
-              homeTeam: homeName,
-              awayTeam: awayName,
-              kickoff,
-            },
-            {
-              generatedAt: generatedAtIso,
-              cutoffAt: generatedAtIso,
-            }
-          )
-        : { status: "disabled", oddsAtPrediction: null, reason: "ODDS_FETCH_ENABLED=false" };
-      if (!oddsCapture?.oddsAtPrediction) {
-        oddsCapture = (await fetchR2OddsSnapshot(matchId, kickoff)) || oddsCapture;
-      }
-      const oddsAtPrediction = oddsCapture?.oddsAtPrediction || null;
       const score =
         event.homeScore?.current != null && event.awayScore?.current != null
           ? `${event.homeScore.current}-${event.awayScore.current}`

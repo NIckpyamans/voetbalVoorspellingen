@@ -33,6 +33,7 @@ const BestBetCard: React.FC<BestBetCardProps> = ({ bet }) => {
       : "bg-red-500/15 text-red-300";
   const reasons = Array.isArray(bet.exactScoreReasons) ? bet.exactScoreReasons.slice(0, 2) : [];
   const readiness = bet.wagerReadiness;
+  const scoreCoverage = bet.scoreCoverage;
   const missingStars = [
     ...(bet.lineupSummary?.starPlayerImpact?.home?.missing || []),
     ...(bet.lineupSummary?.starPlayerImpact?.away?.missing || []),
@@ -57,6 +58,21 @@ const BestBetCard: React.FC<BestBetCardProps> = ({ bet }) => {
           </div>
         </div>
       </div>
+
+      {Array.isArray(scoreCoverage?.topScores) && scoreCoverage.topScores.length > 0 && (
+        <div className="mt-2 rounded-xl border border-blue-400/10 bg-slate-950/35 p-2">
+          <div className="flex flex-wrap gap-1">
+            {scoreCoverage.topScores.slice(0, 3).map((item: any) => (
+              <span key={item.score} className="rounded-md bg-slate-800/80 px-1.5 py-0.5 text-[8px] font-black text-slate-300">
+                {item.score} {Math.round(Number(item.probability || 0) * 100)}%
+              </span>
+            ))}
+          </div>
+          <div className="mt-1 text-[8px] font-bold text-blue-200">
+            Top-3 samen {Math.round(Number(scoreCoverage.top3 || 0) * 100)}% · top-5 {Math.round(Number(scoreCoverage.top5 || 0) * 100)}%
+          </div>
+        </div>
+      )}
 
       <div className="relative text-center mb-3">
         <div className="text-[10px] font-bold text-slate-400 line-clamp-1 mb-1">{bet.homeTeam} v {bet.awayTeam}</div>

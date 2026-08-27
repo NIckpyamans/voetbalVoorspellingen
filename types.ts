@@ -732,6 +732,12 @@ export interface Prediction {
     score: string;
     probability: number;
   }>;
+  scoreCoverage?: {
+    top1: number;
+    top3: number;
+    top5: number;
+    topScores: Array<{ score: string; probability: number }>;
+  };
   
   // Confidence & edges
   confidence?: number;
@@ -863,6 +869,12 @@ export type View = "dashboard" | "history" | "standings" | "modelops" | "setting
   drawProb: number;
   awayProb: number;
   exactProb?: number;
+  scoreCoverage?: {
+    top1: number;
+    top3: number;
+    top5: number;
+    topScores: Array<{ score: string; probability: number }>;
+  };
   exactScoreConfidence?: number;
   confidence?: number;
   bestBetRank?: number | null;
