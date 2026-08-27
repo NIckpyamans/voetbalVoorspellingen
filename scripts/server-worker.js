@@ -11895,6 +11895,7 @@ async function main() {
         homeCountry,
         awayCountry,
         leagueType: leagueInfo.type,
+        aggregate,
         context,
         homeStandingPos: homePos,
         awayStandingPos: awayPos,
