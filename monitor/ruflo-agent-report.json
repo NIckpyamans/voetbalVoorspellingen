@@ -1,6 +1,6 @@
 {
-  "generatedAt": "2026-08-25T22:46:31.752Z",
-  "date": "2026-08-26",
+  "generatedAt": "2026-08-27T03:20:30.141Z",
+  "date": "2026-08-27",
   "name": "Ruflo-style gratis AI monitor",
   "mode": "naast-productie",
   "productionSafe": true,
@@ -81,14 +81,32 @@
       "actions": []
     },
     "control": {
-      "score": 100,
-      "summary": "Ontwikkelcontrole: 0 actieve monitorissues op 2026-08-26; digest 2026-08-16 t/m 2026-08-22.",
-      "latestDay": "2026-08-26",
-      "shouldPropose": false,
-      "actions": []
+      "score": 52,
+      "summary": "Ontwikkelcontrole: 1 actieve monitorissues op 2026-08-27; digest 2026-08-16 t/m 2026-08-22.",
+      "latestDay": "2026-08-27",
+      "shouldPropose": true,
+      "actions": [
+        {
+          "priority": "high",
+          "title": "Workerdata is 476 minuten oud.",
+          "freeSolution": "Laat GitHub Actions schedule + manual dispatch draaien; geen mail nodig, alleen data committen.",
+          "files": [
+            ".github/workflows/worker.yml"
+          ],
+          "status": "monitor"
+        }
+      ]
     }
   },
   "topThemes": [
+    {
+      "title": "Workerdata is 476 minuten oud.",
+      "count": 1,
+      "priority": "high",
+      "agents": [
+        "control"
+      ]
+    },
     {
       "title": "H2H-backfill verder vullen",
       "count": 1,
@@ -99,6 +117,16 @@
     }
   ],
   "recommendedNextActions": [
+    {
+      "priority": "high",
+      "title": "Workerdata is 476 minuten oud.",
+      "freeSolution": "Laat GitHub Actions schedule + manual dispatch draaien; geen mail nodig, alleen data committen.",
+      "files": [
+        ".github/workflows/worker.yml"
+      ],
+      "status": "monitor",
+      "agent": "control"
+    },
     {
       "priority": "medium",
       "title": "H2H-backfill verder vullen",
