@@ -1,28 +1,43 @@
 {
-  "generatedAt": "2026-08-26T20:02:04.150Z",
+  "generatedAt": "2026-08-27T14:08:05.235Z",
   "daysAhead": 8,
   "targetPlayersPerTeam": 18,
-  "candidates": 348,
-  "checked": 22,
-  "enriched": 22,
+  "candidates": 343,
+  "checked": 32,
+  "enriched": 32,
   "unavailable": 0,
-  "skippedFresh": 326,
-  "pendingBeforeBatch": 22,
-  "pendingAfterBatch": 0,
+  "skippedFresh": 187,
+  "pendingBeforeBatch": 156,
+  "pendingAfterBatch": 124,
   "rateLimited": false,
   "retryAfterSeconds": 0,
   "byProvider": {
-    "FotMob": 10,
-    "Laatste bevestigde opstelling": 0,
+    "FotMob": 20,
+    "Laatste bevestigde opstelling": 21,
     "Transfermarkt Datasets": 0,
-    "TheSportsDB": 0,
-    "ESPN": 12,
-    "Wikipedia": 0
+    "TheSportsDB": 6,
+    "ESPN": 0,
+    "Wikipedia": 2
   },
   "byCompetition": {
-    "Netherlands - Eredivisie": {
-      "checked": 3,
-      "enriched": 3,
+    "Europe - Conference League": {
+      "checked": 13,
+      "enriched": 13,
+      "unavailable": 0
+    },
+    "Europe - Europa League": {
+      "checked": 5,
+      "enriched": 5,
+      "unavailable": 0
+    },
+    "England - Premier League": {
+      "checked": 4,
+      "enriched": 4,
+      "unavailable": 0
+    },
+    "France - Ligue 1": {
+      "checked": 1,
+      "enriched": 1,
       "unavailable": 0
     },
     "England - Championship": {
@@ -30,39 +45,14 @@
       "enriched": 4,
       "unavailable": 0
     },
-    "Europe - Europa League": {
-      "checked": 2,
-      "enriched": 2,
-      "unavailable": 0
-    },
-    "Netherlands - Eerste Divisie": {
+    "France - Ligue 2": {
       "checked": 3,
       "enriched": 3,
-      "unavailable": 0
-    },
-    "Europe - Champions League": {
-      "checked": 2,
-      "enriched": 2,
-      "unavailable": 0
-    },
-    "France - Ligue 2": {
-      "checked": 1,
-      "enriched": 1,
       "unavailable": 0
     },
     "Germany - 2. Bundesliga": {
-      "checked": 1,
-      "enriched": 1,
-      "unavailable": 0
-    },
-    "France - Ligue 1": {
-      "checked": 3,
-      "enriched": 3,
-      "unavailable": 0
-    },
-    "Germany - Bundesliga": {
-      "checked": 3,
-      "enriched": 3,
+      "checked": 2,
+      "enriched": 2,
       "unavailable": 0
     }
   },
@@ -70,166 +60,236 @@
   "failures": [],
   "samples": [
     {
-      "team": "Feyenoord Rotterdam",
-      "competition": "Netherlands - Eredivisie",
-      "players": 33,
-      "provider": "ESPN",
-      "providerTeam": "Feyenoord Rotterdam"
+      "team": "FC Copenhagen",
+      "competition": "Europe - Conference League",
+      "players": 9,
+      "provider": "TheSportsDB",
+      "providerTeam": "FC Copenhagen"
     },
     {
-      "team": "Charlton Athletic",
-      "competition": "England - Championship",
-      "players": 32,
-      "provider": "FotMob",
-      "providerTeam": "Charlton Athletic"
-    },
-    {
-      "team": "Bologna",
+      "team": "AGF Aarhus",
       "competition": "Europe - Europa League",
+      "players": 9,
+      "provider": "TheSportsDB",
+      "providerTeam": "AGF Aarhus"
+    },
+    {
+      "team": "Borac",
+      "competition": "Europe - Conference League",
+      "players": 10,
+      "provider": "Laatste bevestigde opstelling",
+      "providerTeam": "Borac"
+    },
+    {
+      "team": "KS Dynamo Tirana",
+      "competition": "Europe - Conference League",
+      "players": 10,
+      "provider": "TheSportsDB",
+      "providerTeam": "Dinamo City"
+    },
+    {
+      "team": "AA Gent",
+      "competition": "Europe - Conference League",
+      "players": 11,
+      "provider": "Laatste bevestigde opstelling",
+      "providerTeam": "AA Gent"
+    },
+    {
+      "team": "Tromso",
+      "competition": "Europe - Conference League",
+      "players": 11,
+      "provider": "Laatste bevestigde opstelling",
+      "providerTeam": "Tromso"
+    },
+    {
+      "team": "Ararat-Armenia",
+      "competition": "Europe - Europa League",
+      "players": 11,
+      "provider": "Laatste bevestigde opstelling",
+      "providerTeam": "Ararat-Armenia"
+    },
+    {
+      "team": "Red Bull Salzburg",
+      "competition": "Europe - Europa League",
+      "players": 16,
+      "provider": "TheSportsDB + Laatste bevestigde opstelling",
+      "providerTeam": "Red Bull Salzburg"
+    },
+    {
+      "team": "Brighton and Hove Albion",
+      "competition": "Europe - Conference League",
+      "players": 17,
+      "provider": "TheSportsDB + Laatste bevestigde opstelling",
+      "providerTeam": "Brighton and Hove Albion"
+    },
+    {
+      "team": "Hibernian",
+      "competition": "Europe - Conference League",
+      "players": 28,
+      "provider": "FotMob + Laatste bevestigde opstelling",
+      "providerTeam": "Hibernian"
+    },
+    {
+      "team": "Borac Banja Luka",
+      "competition": "Europe - Conference League",
+      "players": 20,
+      "provider": "TheSportsDB + Laatste bevestigde opstelling",
+      "providerTeam": "Borac Banja Luka"
+    },
+    {
+      "team": "Fulham",
+      "competition": "England - Premier League",
+      "players": 22,
+      "provider": "FotMob + Laatste bevestigde opstelling",
+      "providerTeam": "Fulham"
+    },
+    {
+      "team": "Everton",
+      "competition": "England - Premier League",
+      "players": 24,
+      "provider": "FotMob + Laatste bevestigde opstelling",
+      "providerTeam": "Everton"
+    },
+    {
+      "team": "Angers",
+      "competition": "France - Ligue 1",
+      "players": 24,
+      "provider": "FotMob + Laatste bevestigde opstelling",
+      "providerTeam": "Angers"
+    },
+    {
+      "team": "West Bromwich Albion",
+      "competition": "England - Championship",
+      "players": 21,
+      "provider": "FotMob",
+      "providerTeam": "West Bromwich Albion"
+    },
+    {
+      "team": "Birmingham City",
+      "competition": "England - Championship",
       "players": 27,
       "provider": "FotMob",
-      "providerTeam": "Bologna"
+      "providerTeam": "Birmingham City"
     },
     {
-      "team": "AZ Alkmaar",
-      "competition": "Netherlands - Eredivisie",
+      "team": "Aston Villa",
+      "competition": "England - Premier League",
+      "players": 26,
+      "provider": "FotMob + Laatste bevestigde opstelling",
+      "providerTeam": "Aston Villa"
+    },
+    {
+      "team": "Ajax",
+      "competition": "Europe - Conference League",
+      "players": 26,
+      "provider": "FotMob + Laatste bevestigde opstelling",
+      "providerTeam": "Ajax"
+    },
+    {
+      "team": "Austria Wien",
+      "competition": "Europe - Conference League",
+      "players": 26,
+      "provider": "FotMob + Laatste bevestigde opstelling",
+      "providerTeam": "Austria Wien"
+    },
+    {
+      "team": "Brann",
+      "competition": "Europe - Conference League",
+      "players": 26,
+      "provider": "FotMob + Laatste bevestigde opstelling",
+      "providerTeam": "Brann"
+    },
+    {
+      "team": "Inter Club D'Escaldes",
+      "competition": "Europe - Conference League",
       "players": 29,
-      "provider": "FotMob",
-      "providerTeam": "AZ Alkmaar"
+      "provider": "Wikipedia + Laatste bevestigde opstelling",
+      "providerTeam": "Inter Club D'Escaldes"
     },
     {
-      "team": "Almere City",
-      "competition": "Netherlands - Eerste Divisie",
-      "players": 34,
-      "provider": "FotMob",
-      "providerTeam": "Almere City FC"
+      "team": "Tromsø",
+      "competition": "Europe - Conference League",
+      "players": 26,
+      "provider": "FotMob + Laatste bevestigde opstelling",
+      "providerTeam": "Tromsø"
     },
     {
-      "team": "Napoli",
-      "competition": "Europe - Champions League",
-      "players": 34,
-      "provider": "FotMob",
-      "providerTeam": "Napoli"
-    },
-    {
-      "team": "Stade de Reims",
+      "team": "Red Star",
       "competition": "France - Ligue 2",
-      "players": 38,
-      "provider": "ESPN",
-      "providerTeam": "Stade de Reims"
+      "players": 26,
+      "provider": "FotMob + Laatste bevestigde opstelling",
+      "providerTeam": "Red Star"
     },
     {
-      "team": "Ajax Amsterdam",
-      "competition": "Netherlands - Eredivisie",
-      "players": 28,
-      "provider": "ESPN",
-      "providerTeam": "Ajax Amsterdam"
+      "team": "Rodez",
+      "competition": "France - Ligue 2",
+      "players": 26,
+      "provider": "FotMob + Laatste bevestigde opstelling",
+      "providerTeam": "Rodez"
     },
     {
-      "team": "AS Roma",
-      "competition": "Europe - Europa League",
-      "players": 28,
-      "provider": "ESPN",
-      "providerTeam": "AS Roma"
-    },
-    {
-      "team": "Jong AZ",
-      "competition": "Netherlands - Eerste Divisie",
-      "players": 38,
-      "provider": "ESPN",
-      "providerTeam": "Jong AZ"
-    },
-    {
-      "team": "Juventus",
-      "competition": "Europe - Champions League",
-      "players": 28,
-      "provider": "FotMob",
-      "providerTeam": "Juventus"
-    },
-    {
-      "team": "St. Pauli",
+      "team": "FC Heidenheim",
       "competition": "Germany - 2. Bundesliga",
       "players": 25,
       "provider": "FotMob",
-      "providerTeam": "St. Pauli"
+      "providerTeam": "FC Heidenheim"
     },
     {
-      "team": "Stoke City",
-      "competition": "England - Championship",
-      "players": 25,
+      "team": "Greuther Fürth",
+      "competition": "Germany - 2. Bundesliga",
+      "players": 26,
       "provider": "FotMob",
-      "providerTeam": "Stoke City"
+      "providerTeam": "Greuther Fürth"
     },
     {
-      "team": "Sheffield United",
+      "team": "Cardiff City",
       "competition": "England - Championship",
       "players": 28,
       "provider": "FotMob",
-      "providerTeam": "Sheffield United"
+      "providerTeam": "Cardiff City"
     },
     {
-      "team": "Le Havre AC",
-      "competition": "France - Ligue 1",
-      "players": 29,
-      "provider": "ESPN",
-      "providerTeam": "Le Havre AC"
-    },
-    {
-      "team": "Norwich City",
+      "team": "Lincoln City",
       "competition": "England - Championship",
+      "players": 26,
+      "provider": "FotMob",
+      "providerTeam": "Lincoln City"
+    },
+    {
+      "team": "Real Betis",
+      "competition": "Europe - Europa League",
       "players": 34,
       "provider": "FotMob",
-      "providerTeam": "Norwich City"
+      "providerTeam": "Real Betis"
     },
     {
-      "team": "Mainz",
-      "competition": "Germany - Bundesliga",
-      "players": 31,
-      "provider": "ESPN",
-      "providerTeam": "Mainz"
+      "team": "Sint-Truidense VV",
+      "competition": "Europe - Europa League",
+      "players": 27,
+      "provider": "Wikipedia",
+      "providerTeam": "Sint-Truidense VV"
     },
     {
-      "team": "AJ Auxerre",
-      "competition": "France - Ligue 1",
-      "players": 37,
-      "provider": "ESPN",
-      "providerTeam": "AJ Auxerre"
+      "team": "Dijon",
+      "competition": "France - Ligue 2",
+      "players": 27,
+      "provider": "FotMob + Laatste bevestigde opstelling",
+      "providerTeam": "Dijon"
     },
     {
-      "team": "Stade Rennais",
-      "competition": "France - Ligue 1",
-      "players": 28,
-      "provider": "ESPN",
-      "providerTeam": "Stade Rennais"
-    },
-    {
-      "team": "FC Augsburg",
-      "competition": "Germany - Bundesliga",
-      "players": 29,
-      "provider": "ESPN",
-      "providerTeam": "FC Augsburg"
-    },
-    {
-      "team": "Hamburg SV",
-      "competition": "Germany - Bundesliga",
-      "players": 31,
-      "provider": "ESPN",
-      "providerTeam": "Hamburg SV"
-    },
-    {
-      "team": "Heracles Almelo",
-      "competition": "Netherlands - Eerste Divisie",
-      "players": 32,
-      "provider": "ESPN",
-      "providerTeam": "Heracles Almelo"
+      "team": "Manchester City",
+      "competition": "England - Premier League",
+      "players": 27,
+      "provider": "FotMob + Laatste bevestigde opstelling",
+      "providerTeam": "Manchester City"
     }
   ],
   "coverage": {
-    "totalTeams": 348,
-    "teamsWithRoster": 343,
-    "teamsWithProviderRatings": 200,
-    "rosterCoverage": 0.986,
-    "ratingCoverage": 0.575
+    "totalTeams": 343,
+    "teamsWithRoster": 339,
+    "teamsWithProviderRatings": 203,
+    "rosterCoverage": 0.988,
+    "ratingCoverage": 0.592
   },
   "competitionCoverage": {
     "Netherlands - Eredivisie": {
@@ -240,25 +300,25 @@
       "ratingCoverage": 0.739
     },
     "Europe - Champions League": {
-      "teams": 44,
-      "teamsWithRoster": 44,
-      "teamsWithProviderRatings": 25,
+      "teams": 36,
+      "teamsWithRoster": 36,
+      "teamsWithProviderRatings": 18,
       "rosterCoverage": 1,
-      "ratingCoverage": 0.568
+      "ratingCoverage": 0.5
     },
     "Europe - Conference League": {
-      "teams": 94,
-      "teamsWithRoster": 90,
-      "teamsWithProviderRatings": 47,
-      "rosterCoverage": 0.957,
-      "ratingCoverage": 0.5
+      "teams": 89,
+      "teamsWithRoster": 86,
+      "teamsWithProviderRatings": 46,
+      "rosterCoverage": 0.966,
+      "ratingCoverage": 0.517
     },
     "Europe - Europa League": {
       "teams": 67,
       "teamsWithRoster": 66,
-      "teamsWithProviderRatings": 32,
+      "teamsWithProviderRatings": 33,
       "rosterCoverage": 0.985,
-      "ratingCoverage": 0.478
+      "ratingCoverage": 0.493
     },
     "Netherlands - Eerste Divisie": {
       "teams": 23,
@@ -268,18 +328,18 @@
       "ratingCoverage": 0.913
     },
     "Germany - Bundesliga": {
-      "teams": 49,
-      "teamsWithRoster": 49,
-      "teamsWithProviderRatings": 17,
+      "teams": 35,
+      "teamsWithRoster": 35,
+      "teamsWithProviderRatings": 3,
       "rosterCoverage": 1,
-      "ratingCoverage": 0.347
+      "ratingCoverage": 0.086
     },
     "Germany - 2. Bundesliga": {
-      "teams": 20,
-      "teamsWithRoster": 20,
-      "teamsWithProviderRatings": 16,
+      "teams": 26,
+      "teamsWithRoster": 26,
+      "teamsWithProviderRatings": 22,
       "rosterCoverage": 1,
-      "ratingCoverage": 0.8
+      "ratingCoverage": 0.846
     },
     "England - Premier League": {
       "teams": 20,
@@ -291,9 +351,9 @@
     "England - Championship": {
       "teams": 24,
       "teamsWithRoster": 24,
-      "teamsWithProviderRatings": 14,
+      "teamsWithProviderRatings": 18,
       "rosterCoverage": 1,
-      "ratingCoverage": 0.583
+      "ratingCoverage": 0.75
     },
     "France - Ligue 1": {
       "teams": 22,
@@ -315,6 +375,13 @@
       "teamsWithProviderRatings": 1,
       "rosterCoverage": 1,
       "ratingCoverage": 0.5
+    },
+    "Italy - Serie A": {
+      "teams": 2,
+      "teamsWithRoster": 2,
+      "teamsWithProviderRatings": 0,
+      "rosterCoverage": 1,
+      "ratingCoverage": 0
     }
   }
 }
