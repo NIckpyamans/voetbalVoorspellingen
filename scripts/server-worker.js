@@ -955,7 +955,7 @@ const HISTORY_KEEP_DAYS_FORWARD = 75;
 const MAX_REVIEWS = 2500;
 const MAX_PREDICTION_SNAPSHOTS = 5000;
 const MAX_SCORE_MATRIX_ENTRIES = 10;
-const MODEL_VERSION = "v23-calibrated-odds-ledger";
+const MODEL_VERSION = "v24-monte-carlo-average";
 const FEATURE_SCHEMA_VERSION = "feature-v2";
 const PREDICTION_SNAPSHOT_SCHEMA_VERSION = "prediction-snapshot-v4";
 const MAX_EVENT_CACHE = 300;
@@ -9694,6 +9694,9 @@ function predict(input) {
         homeProb: monteCarlo.homeProb,
         drawProb: monteCarlo.drawProb,
         awayProb: monteCarlo.awayProb,
+        averageScore: monteCarlo.averageScore,
+        averageHomeGoals: monteCarlo.averageHomeGoals,
+        averageAwayGoals: monteCarlo.averageAwayGoals,
         topScore: monteCarlo.topScore,
         topScoreProb: monteCarlo.topScoreProb,
         simulations: monteCarlo.simulations,
@@ -9701,6 +9704,77 @@ function predict(input) {
       agreement: modelAgreement,
     },
     matchImportance: input.matchImportance || 1,
+  };
+}
+
+function refreshUpcomingMonteCarloAverage(prediction, match, now) {
+  if (!prediction || !match || prediction?.monteCarlo?.averageScore) return prediction;
+  const status = String(match.status || "NS").toUpperCase();
+  const kickoffMs = Date.parse(String(match.kickoff || ""));
+  if (["LIVE", "HT", "FT", "AET", "PEN"].includes(status)) return prediction;
+  if (Number.isFinite(kickoffMs) && Number(now || Date.now()) > kickoffMs) return prediction;
+
+  const homeXG = Number(prediction.homeXG);
+  const awayXG = Number(prediction.awayXG);
+  if (!(Number.isFinite(homeXG) && homeXG > 0 && Number.isFinite(awayXG) && awayXG > 0)) return prediction;
+
+  const monteCarlo = runMonteCarloSimulation({
+    homeXG,
+    awayXG,
+    seed: hashSeed(`${prediction.matchId || match.id}|${homeXG.toFixed(3)}|${awayXG.toFixed(3)}|${MODEL_VERSION}`),
+    runs: MONTE_CARLO_RUNS,
+  });
+  monteCarlo.weight = MONTE_CARLO_WEIGHT;
+  monteCarlo.agreement = prediction?.monteCarlo?.agreement ?? null;
+
+  const outcomes = [
+    ["home", Number(prediction.homeProb || 0)],
+    ["draw", Number(prediction.drawProb || 0)],
+    ["away", Number(prediction.awayProb || 0)],
+  ].sort((left, right) => right[1] - left[1]);
+  const dominantOutcome = outcomes[0]?.[0] || scoreOutcome(monteCarlo.topScore);
+  const averageCompatible = scoreOutcome(monteCarlo.averageScore) === dominantOutcome;
+  const compatibleTopScore = Object.entries(monteCarlo.scoreMatrix || {})
+    .filter(([score]) => scoreOutcome(score) === dominantOutcome)
+    .sort((left, right) => Number(right[1] || 0) - Number(left[1] || 0))[0];
+  const selectedScore = averageCompatible
+    ? monteCarlo.averageScore
+    : compatibleTopScore?.[0] || monteCarlo.topScore;
+  const [predHomeGoals, predAwayGoals] = String(selectedScore || "1-1").split("-").map(Number);
+  const selectionReason = averageCompatible
+    ? `afgerond gemiddelde van ${MONTE_CARLO_RUNS.toLocaleString("nl-NL")} opnieuw gesimuleerde wedstrijden`
+    : `Monte Carlo-gemiddelde botst met 1X2; meest waarschijnlijke simulatiescore voor ${dominantOutcome} gebruikt`;
+
+  return {
+    ...prediction,
+    predHomeGoals,
+    predAwayGoals,
+    exactProb: Number(monteCarlo.scoreMatrix?.[selectedScore] || prediction.exactProb || 0),
+    modelVersion: MODEL_VERSION,
+    monteCarlo: compactMonteCarlo(monteCarlo),
+    modelEdges: {
+      ...(prediction.modelEdges || {}),
+      scoreSelection: {
+        ...(prediction.modelEdges?.scoreSelection || {}),
+        selectedScore,
+        reason: selectionReason,
+        monteCarloAverageMigrated: true,
+      },
+    },
+    ensembleMeta: {
+      ...(prediction.ensembleMeta || {}),
+      monteCarloProbabilities: {
+        homeProb: monteCarlo.homeProb,
+        drawProb: monteCarlo.drawProb,
+        awayProb: monteCarlo.awayProb,
+        averageScore: monteCarlo.averageScore,
+        averageHomeGoals: monteCarlo.averageHomeGoals,
+        averageAwayGoals: monteCarlo.averageAwayGoals,
+        topScore: monteCarlo.topScore,
+        topScoreProb: monteCarlo.topScoreProb,
+        simulations: monteCarlo.simulations,
+      },
+    },
   };
 }
 
@@ -9730,9 +9804,21 @@ function compactStore(store, referenceDateKey, now) {
           })
         )
     );
-    store.predictions[date] = dedupeStoredPredictions(store.predictions?.[date] || [], store.matches[date]).map((prediction) =>
-      compactPredictionEntry(prediction, date !== referenceDateKey && date !== addDaysToDateKey(referenceDateKey, 1))
-    );
+    const matchesById = new Map(store.matches[date].map((match) => [String(match?.id || ""), match]));
+    store.predictions[date] = dedupeStoredPredictions(store.predictions?.[date] || [], store.matches[date]).map((prediction) => {
+      const match = matchesById.get(String(prediction?.matchId || ""));
+      const refreshed = refreshUpcomingMonteCarloAverage(prediction, match, now);
+      if (refreshed !== prediction && match) {
+        match.monteCarlo = refreshed.monteCarlo;
+        match.modelEdges = refreshed.modelEdges || match.modelEdges;
+        const snapshotMeta = registerPredictionSnapshot(store, match, refreshed, now);
+        if (snapshotMeta) Object.assign(refreshed, snapshotMeta);
+      }
+      return compactPredictionEntry(
+        refreshed,
+        date !== referenceDateKey && date !== addDaysToDateKey(referenceDateKey, 1),
+      );
+    });
 
     for (const match of store.matches[date]) {
       if (match?.id) retainedMatchIds.add(match.id);
