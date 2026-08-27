@@ -1,26 +1,31 @@
 # Upcoming H2H Backfill
 
-Laatst bijgewerkt: 2026-08-27T04:03:21.086Z
-Gecontroleerd: 32
-Gevuld: 0
-Geen directe H2H: 32
+Laatst bijgewerkt: 2026-08-27T13:46:00.709Z
+Gecontroleerd: 24
+Gevuld: 5
+Geen directe H2H: 19
 Errors: 0
 
 ## Aanbeveling
 API-Football blijft quota-bewust geblokkeerd totdat de acceptatietest slaagt; ESPN is wel gecontroleerd voor alle kandidaten.
 
 ## Gevuld
+- 2026-08-28: Laval - Grenoble (5)
+- 2026-08-28: Lille - Paris Saint-Germain (5)
+- 2026-08-28: Montpellier - Boulogne (2)
+- 2026-08-28: Nancy - Dunkerque (2)
+- 2026-08-28: Rodez - Pau (5)
 
 ## Geen Directe H2H
 - 2026-08-28: VfL Bochum - VfL Osnabrück (provider_acceptance_blocked)
 - 2026-08-28: Groningen - Fortuna Sittard (provider_acceptance_blocked)
 - 2026-08-28: FC Den Bosch - Vitesse (provider_acceptance_blocked)
-- 2026-08-28: Clermont Foot - Sochaux (provider_acceptance_blocked)
 - 2026-08-28: Eintracht Braunschweig - Hertha BSC (provider_acceptance_blocked)
 - 2026-08-28: FC Volendam - FC Dordrecht (provider_acceptance_blocked)
 - 2026-08-28: Bayern München - VfB Stuttgart (provider_acceptance_blocked)
 - 2026-08-28: Jong Ajax - Helmond Sport (provider_acceptance_blocked)
 - 2026-08-28: Jong AZ Alkmaar - MVV Maastricht (provider_acceptance_blocked)
+- 2026-08-28: Clermont Foot - Sochaux (provider_acceptance_blocked)
 - 2026-08-28: RKC Waalwijk - Jong PSV (provider_acceptance_blocked)
 - 2026-08-28: Roda JC Kerkrade - NAC Breda (provider_acceptance_blocked)
 - 2026-08-28: TOP Oss - Jong FC Utrecht (provider_acceptance_blocked)
@@ -31,4 +36,3 @@ API-Football blijft quota-bewust geblokkeerd totdat de acceptatietest slaagt; ES
 - 2026-08-29: Energie Cottbus - SpVgg Greuther Fürth (provider_acceptance_blocked)
 - 2026-08-29: Tottenham Hotspur - Newcastle United (provider_acceptance_blocked)
 - 2026-08-29: 1. FC Union Berlin - Eintracht Frankfurt (provider_acceptance_blocked)
-- 2026-08-29: RB Leipzig - Borussia Mönchengladbach (provider_acceptance_blocked)
