@@ -1,6 +1,11 @@
 name: Live Score Refresh
 
 on:
+  schedule:
+    # Nachtelijke resultaatcontroles vangen late wedstrijden, verlenging,
+    # strafschoppen en vertraagde GitHub-crons op. De brede datumwindow
+    # herstelt daarbij ook gemiste uitslagen van de vorige speeldagen.
+    - cron: "10 0,2,5,22 * * *"
   workflow_dispatch:
     inputs:
       date_window:

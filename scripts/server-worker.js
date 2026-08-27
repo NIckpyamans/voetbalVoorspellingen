@@ -2224,6 +2224,8 @@ function writeCompetitionArchiveFiles(store) {
 }
 
 const TEAM_ALIAS_GROUPS = [
+  ["rapid wien", "sk rapid wien"],
+  ["heart of midlothian", "hearts"],
   ["fc cologne", "1 fc koln", "1 fc koeln", "fc koln", "fc koeln", "koln", "koeln", "cologne"],
   ["1 fc heidenheim 1846", "1 fc heidenheim", "fc heidenheim", "heidenheim"],
   ["hamburg sv", "hamburger sv", "hsv"],

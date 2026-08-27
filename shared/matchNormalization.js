@@ -1,4 +1,8 @@
 const TEAM_DEDUPE_ALIASES = {
+  "rapid wien": "rapid wien",
+  "sk rapid wien": "rapid wien",
+  hearts: "heart of midlothian",
+  "heart of midlothian": "heart of midlothian",
   freiburg: "freiburg",
   "sc freiburg": "freiburg",
   "sport club freiburg": "freiburg",

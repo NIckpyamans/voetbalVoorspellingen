@@ -12,6 +12,15 @@ describe("reliability workflow guards", () => {
     expect(workflow).toContain(":!data/history-summary.json");
   });
 
+  it("repairs late final scores after midnight", () => {
+    const workflow = read(".github/workflows/live-score.yml");
+    const orchestrator = read("scripts/workflow-orchestrator.js");
+    expect(workflow).toContain('cron: "10 0,2,5,22 * * *"');
+    expect(orchestrator).toContain("for (let offset = -1; offset <= 7; offset += 1)");
+    expect(orchestrator).toContain("resultRefreshWindow.length");
+    expect(orchestrator).toContain("!fixture.finalStatus");
+  });
+
   it("checks Neon recovery periodically and gates replay on writability", () => {
     const workflow = read(".github/workflows/storage-recovery.yml");
     expect(workflow).toContain('cron: "23 */6 * * *"');

@@ -49,7 +49,10 @@ function needsRefresh(report, maxAgeHours, hasGap = () => true) {
 
 function readUpcomingFixtures(reference = now) {
   const fixtures = [];
-  for (let offset = 0; offset <= 7; offset += 1) {
+  // Neem ook gisteren mee. Europese avondwedstrijden kunnen na middernacht
+  // eindigen; zonder deze dag zou een LIVE-tussenstand nooit meer worden
+  // vervangen door de definitieve uitslag.
+  for (let offset = -1; offset <= 7; offset += 1) {
     const date = new Date(reference);
     date.setUTCDate(date.getUTCDate() + offset);
     const dateKey = date.toISOString().slice(0, 10);
@@ -64,9 +67,11 @@ function readUpcomingFixtures(reference = now) {
         const away = String(match?.awayTeamName || "").trim();
         if (!Number.isFinite(kickoffAt) || !home || !away || /\b(tbd|unknown|null)\b/i.test(`${home} ${away}`)) continue;
         const minutesToKickoff = Math.round((kickoffAt - reference.getTime()) / 60000);
-        if (minutesToKickoff < -180 || minutesToKickoff > 7 * 24 * 60) continue;
+        if (minutesToKickoff < -12 * 60 || minutesToKickoff > 7 * 24 * 60) continue;
         const league = String(match.league || "");
         const friendly = /friendl|oefen/i.test(league);
+        const status = String(match.status || match.state || "NS").trim().toUpperCase();
+        const finalStatus = /^(FT|AET|PEN|CANCELLED|CANCELED|POSTPONED|ABANDONED)$/.test(status);
         fixtures.push({
           matchId: String(match.id || match.sofaId || ""),
           kickoff: new Date(kickoffAt).toISOString(),
@@ -75,6 +80,8 @@ function readUpcomingFixtures(reference = now) {
           friendly,
           homeTeam: home,
           awayTeam: away,
+          status,
+          finalStatus,
           hasPreMatchSnapshot: snapshots.some((snapshot) =>
             String(snapshot?.matchId || "") === String(match.id || match.sofaId || "") &&
             Number.isFinite(Date.parse(snapshot?.generatedAt || snapshot?.cutoffAt || "")) &&
@@ -109,6 +116,11 @@ const missingSnapshotWindow = upcomingFixtures.filter((fixture) => {
 });
 const missingRegularSnapshotWindow = missingSnapshotWindow.filter((fixture) => !fixture.friendly);
 const activeMatchWindow = upcomingFixtures.filter((fixture) => fixture.minutesToKickoff >= -180 && fixture.minutesToKickoff <= 180);
+const resultRefreshWindow = upcomingFixtures.filter((fixture) =>
+  fixture.minutesToKickoff >= -12 * 60 &&
+  fixture.minutesToKickoff < 0 &&
+  !fixture.finalStatus
+);
 const primarySlot = minute < 30;
 const reports = {
   h2h: readJson("monitor/h2h-upcoming-backfill.json"),
@@ -199,7 +211,7 @@ function plannedWorkflows() {
   const workflows = [];
   const activeDaytime = hour >= 7 && hour <= 23;
 
-  if (activeDaytime || activeMatchWindow.length) workflows.push("live-score.yml");
+  if (activeDaytime || activeMatchWindow.length || resultRefreshWindow.length) workflows.push("live-score.yml");
   // Capturevensters zijn leidend. Een verouderd algemeen dekkingsrapport mag
   // een eenmalige T-75/T-45/T-20- of closing-capture nooit blokkeren.
   if (lineupWindow.length) workflows.push("pre-kickoff-lineups.yml");
@@ -268,6 +280,7 @@ const plan = {
     missingPreMatchSnapshots: missingSnapshotWindow.length,
     missingRegularPreMatchSnapshots: missingRegularSnapshotWindow.length,
     activeMatchWindow: activeMatchWindow.length,
+    resultRefreshWindow: resultRefreshWindow.length,
     sportmonksEligible: sportmonksFixtures.length,
   },
   dataNeeds,
