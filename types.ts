@@ -13,6 +13,10 @@ export interface MonteCarloSimulation {
   bttsProb?: number | null;
   over25Prob?: number | null;
   under25Prob?: number | null;
+  averageHomeGoals?: number | null;
+  averageAwayGoals?: number | null;
+  averageScore?: string | null;
+  averageScoreProb?: number | null;
   topScore?: string | null;
   topScoreProb?: number | null;
   agreement?: number | null;

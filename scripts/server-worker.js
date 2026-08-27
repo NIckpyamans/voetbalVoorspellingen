@@ -71,9 +71,9 @@ import {
   hashSeed,
   qualityGateForCompleteness,
   scoreDataCompleteness,
-  seededRandom,
   sourceReliabilityScore,
 } from "./worker/prediction.js";
+import { runMonteCarloSimulation, scoreOutcome } from "./worker/monte-carlo.js";
 import { selectUniqueTeamTopPicks } from "./worker/top-picks.js";
 import { mergeTrainingSnapshots } from "./worker/training-snapshot.js";
 import { buildTrainingSnapshot } from "./worker/training-builder.js";
@@ -249,6 +249,10 @@ function compactMonteCarlo(monteCarlo) {
     bttsProb: monteCarlo.bttsProb != null ? Number(monteCarlo.bttsProb) : null,
     over25Prob: monteCarlo.over25Prob != null ? Number(monteCarlo.over25Prob) : null,
     under25Prob: monteCarlo.under25Prob != null ? Number(monteCarlo.under25Prob) : null,
+    averageHomeGoals: monteCarlo.averageHomeGoals != null ? Number(monteCarlo.averageHomeGoals) : null,
+    averageAwayGoals: monteCarlo.averageAwayGoals != null ? Number(monteCarlo.averageAwayGoals) : null,
+    averageScore: monteCarlo.averageScore || null,
+    averageScoreProb: monteCarlo.averageScoreProb != null ? Number(monteCarlo.averageScoreProb) : null,
     topScore: monteCarlo.topScore || null,
     topScoreProb: monteCarlo.topScoreProb != null ? Number(monteCarlo.topScoreProb) : null,
     agreement: monteCarlo.agreement != null ? Number(monteCarlo.agreement) : null,
@@ -1855,20 +1859,6 @@ process.on("uncaughtException", (err) => {
   process.exitCode = 1;
 });
 
-function samplePoisson(lambda, random) {
-  const safeLambda = clamp(Number(lambda || 0), 0.05, 7);
-  const threshold = Math.exp(-safeLambda);
-  let product = 1;
-  let goals = 0;
-
-  do {
-    goals += 1;
-    product *= random();
-  } while (product > threshold && goals < 10);
-
-  return Math.max(0, goals - 1);
-}
-
 function normalizeTriple(model) {
   const homeProb = Math.max(0, Number(model?.homeProb || 0));
   const drawProb = Math.max(0, Number(model?.drawProb || 0));
@@ -1906,60 +1896,6 @@ function blendScoreMatrices(baseMatrix, simulationMatrix, simulationWeight = MON
     if (value > 0.004) combined[key] = Number(value.toFixed(4));
   }
   return combined;
-}
-
-function runMonteCarloSimulation({ homeXG, awayXG, seed, runs = MONTE_CARLO_RUNS }) {
-  const random = seededRandom(seed);
-  const scoreCounts = {};
-  let homeWins = 0;
-  let draws = 0;
-  let awayWins = 0;
-  let btts = 0;
-  let over25 = 0;
-  let over35 = 0;
-
-  for (let i = 0; i < runs; i += 1) {
-    const homeGoals = samplePoisson(homeXG, random);
-    const awayGoals = samplePoisson(awayXG, random);
-    const key = `${homeGoals}-${awayGoals}`;
-    scoreCounts[key] = (scoreCounts[key] || 0) + 1;
-
-    if (homeGoals > awayGoals) homeWins += 1;
-    else if (homeGoals === awayGoals) draws += 1;
-    else awayWins += 1;
-
-    if (homeGoals > 0 && awayGoals > 0) btts += 1;
-    if (homeGoals + awayGoals > 2.5) over25 += 1;
-    if (homeGoals + awayGoals > 3.5) over35 += 1;
-  }
-
-  const scoreMatrix = {};
-  let topScore = "1-1";
-  let topScoreCount = 0;
-  for (const [score, count] of Object.entries(scoreCounts)) {
-    const probability = Number((Number(count || 0) / runs).toFixed(4));
-    if (probability > 0.004) scoreMatrix[score] = probability;
-    if (Number(count || 0) > topScoreCount) {
-      topScore = score;
-      topScoreCount = Number(count || 0);
-    }
-  }
-
-  return {
-    active: true,
-    simulations: runs,
-    seed,
-    homeProb: Number((homeWins / runs).toFixed(4)),
-    drawProb: Number((draws / runs).toFixed(4)),
-    awayProb: Number((awayWins / runs).toFixed(4)),
-    bttsProb: Number((btts / runs).toFixed(4)),
-    over25Prob: Number((over25 / runs).toFixed(4)),
-    over35Prob: Number((over35 / runs).toFixed(4)),
-    under25Prob: Number((1 - over25 / runs).toFixed(4)),
-    topScore,
-    topScoreProb: Number((topScoreCount / runs).toFixed(4)),
-    scoreMatrix,
-  };
 }
 
 function parseMinuteFromDescription(description) {
@@ -9472,10 +9408,14 @@ function predict(input) {
         : "away";
   const dominantOutcome = outcomeEntries[0];
   const outcomeEdge = Number((dominantOutcome.prob - outcomeEntries[1].prob).toFixed(4));
-  let selectedScore = bestScore;
-  let selectedExactProb = bestProb;
-  let scoreSelectionReason =
-    scoreCalibration.applied
+  const averageSimulationScore = monteCarlo.averageScore;
+  const averageSimulationOutcome = scoreOutcome(averageSimulationScore);
+  const averageScoreCompatible = averageSimulationOutcome === dominantOutcome.key;
+  let selectedScore = averageScoreCompatible ? averageSimulationScore : bestScore;
+  let selectedExactProb = Number(combinedScoreMatrix[selectedScore] || (selectedScore === bestScore ? bestProb : 0));
+  let scoreSelectionReason = averageScoreCompatible
+    ? `afgerond gemiddelde van ${MONTE_CARLO_RUNS.toLocaleString("nl-NL")} simulaties (${monteCarlo.averageHomeGoals}-${monteCarlo.averageAwayGoals} goals)`
+    : scoreCalibration.applied
       ? `${scoreCalibration.reason}; scorematrix gekalibreerd`
       : dominantOutcome.key !== bestScoreOutcome
         ? `hoogste exacte scorematrix-kans inclusief Monte Carlo; 1X2 neigt naar ${dominantOutcome.key === "home" ? "thuiswinst" : dominantOutcome.key === "away" ? "uitwinst" : "gelijkspel"}`
@@ -9493,7 +9433,7 @@ function predict(input) {
     Number(input.modelPerformance?.exactHitRate || input.modelPerformance?.scoreHitRate || 0);
   const shouldAlignToOutcome =
     outcomeAlignedScore &&
-    dominantOutcome.key !== bestScoreOutcome &&
+    scoreOutcome(selectedScore) !== dominantOutcome.key &&
     (outcomeEdge >= 0.08 || outcomeReliabilityLift >= 0.04);
   if (shouldAlignToOutcome) {
     selectedScore = outcomeAlignedScore[0];

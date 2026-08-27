@@ -1016,7 +1016,7 @@ function MonteCarloPanel({ monteCarlo }: { monteCarlo: any }) {
       <div className="mb-1.5 flex items-center justify-between gap-2">
         <div>
           <div className="text-[7px] font-black uppercase text-cyan-300">Monte Carlo simulatie</div>
-          <div className="text-[8px] text-slate-400">{simulations} runs, meegewogen in score en 1X2</div>
+          <div className="text-[8px] text-slate-400">{simulations} runs, automatisch opnieuw bij nieuwe data</div>
         </div>
         <div className="rounded-full bg-cyan-400/15 px-2 py-0.5 text-[8px] font-black text-cyan-100">
           {pct(monteCarlo.weight)} gewicht
@@ -1025,9 +1025,12 @@ function MonteCarloPanel({ monteCarlo }: { monteCarlo: any }) {
 
       <div className="grid grid-cols-3 gap-1.5">
         <div className="rounded-lg bg-slate-950/45 px-2 py-1">
-          <div className="text-[7px] uppercase text-slate-500">Topscore</div>
+          <div className="text-[7px] uppercase text-slate-500">Gemiddelde score</div>
           <div className="text-[10px] font-black text-white">
-            {monteCarlo.topScore || "-"} <span className="text-cyan-200">{pct(monteCarlo.topScoreProb)}</span>
+            {monteCarlo.averageScore || monteCarlo.topScore || "-"}
+            {monteCarlo.averageHomeGoals != null && monteCarlo.averageAwayGoals != null ? (
+              <span className="text-cyan-200"> ({Number(monteCarlo.averageHomeGoals).toFixed(2)}-{Number(monteCarlo.averageAwayGoals).toFixed(2)})</span>
+            ) : null}
           </div>
         </div>
         <div className="rounded-lg bg-slate-950/45 px-2 py-1">
