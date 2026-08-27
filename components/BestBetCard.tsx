@@ -1,5 +1,6 @@
 ﻿import React from "react";
 import { BestBet } from "../types";
+import { scoreOutcome } from "../shared/scoreOutcome";
 
 interface BestBetCardProps {
   bet: BestBet & {
@@ -15,8 +16,21 @@ const BestBetCard: React.FC<BestBetCardProps> = ({ bet }) => {
   const exactProbability = Number(bet.exactProb || 0);
   const selectionStrength = Number(bet.exactScoreConfidence || 0);
   const confidence = Number(bet.confidence || 0);
-  const isFinished = String(bet.status || "").toUpperCase() === "FT";
+  const isFinished = ["FT", "AET", "PEN"].includes(String(bet.status || "").toUpperCase());
   const scoreWasExact = isFinished && bet.score === `${bet.predHomeGoals}-${bet.predAwayGoals}`;
+  const predictedOutcome = scoreOutcome(`${bet.predHomeGoals}-${bet.predAwayGoals}`);
+  const actualOutcome = scoreOutcome(bet.score);
+  const outcomeWasCorrect = isFinished && actualOutcome != null && predictedOutcome === actualOutcome;
+  const resultLabel = scoreWasExact
+    ? "exact goed"
+    : outcomeWasCorrect
+      ? "winnaar/gelijk goed"
+      : "winnaar/gelijk fout";
+  const resultStyle = scoreWasExact
+    ? "bg-green-500/15 text-green-300"
+    : outcomeWasCorrect
+      ? "bg-blue-500/15 text-blue-300"
+      : "bg-red-500/15 text-red-300";
   const reasons = Array.isArray(bet.exactScoreReasons) ? bet.exactScoreReasons.slice(0, 2) : [];
   const readiness = bet.wagerReadiness;
   const missingStars = [
@@ -48,8 +62,8 @@ const BestBetCard: React.FC<BestBetCardProps> = ({ bet }) => {
         <div className="text-[10px] font-bold text-slate-400 line-clamp-1 mb-1">{bet.homeTeam} v {bet.awayTeam}</div>
         <div className="text-2xl font-black text-white tracking-tighter">{bet.predHomeGoals}-{bet.predAwayGoals}</div>
         {isFinished && (
-          <div className={`mt-1 inline-flex rounded-full px-2 py-0.5 text-[8px] font-black ${scoreWasExact ? "bg-green-500/15 text-green-300" : "bg-red-500/15 text-red-300"}`}>
-            Uitslag {bet.score || "-"} - {scoreWasExact ? "exact goed" : "niet exact"}
+          <div className={`mt-1 inline-flex rounded-full px-2 py-0.5 text-[8px] font-black ${resultStyle}`}>
+            Uitslag {bet.score || "-"} - {resultLabel}
           </div>
         )}
       </div>

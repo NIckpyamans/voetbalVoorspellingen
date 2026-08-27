@@ -1,6 +1,10 @@
 name: Prediction evaluation
 
 on:
+  schedule:
+    # Dagelijkse backstop nadat Europese avondwedstrijden en de nachtelijke
+    # resultaatreparaties zijn afgerond.
+    - cron: "40 5 * * *"
   workflow_dispatch:
 
 permissions:

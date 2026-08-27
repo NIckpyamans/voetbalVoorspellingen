@@ -21,6 +21,12 @@ describe("reliability workflow guards", () => {
     expect(orchestrator).toContain("!fixture.finalStatus");
   });
 
+  it("evaluates stored predictions every morning", () => {
+    const workflow = read(".github/workflows/prediction-evaluation.yml");
+    expect(workflow).toContain('cron: "40 5 * * *"');
+    expect(workflow).toContain("Evaluate immutable snapshots (Neon with R2 fallback)");
+  });
+
   it("checks Neon recovery periodically and gates replay on writability", () => {
     const workflow = read(".github/workflows/storage-recovery.yml");
     expect(workflow).toContain('cron: "23 */6 * * *"');
