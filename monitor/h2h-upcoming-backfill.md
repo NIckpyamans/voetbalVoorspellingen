@@ -1,9 +1,9 @@
 # Upcoming H2H Backfill
 
-Laatst bijgewerkt: 2026-08-27T15:22:24.245Z
-Gecontroleerd: 24
-Gevuld: 9
-Geen directe H2H: 15
+Laatst bijgewerkt: 2026-08-28T00:26:37.718Z
+Gecontroleerd: 32
+Gevuld: 10
+Geen directe H2H: 22
 Errors: 0
 
 ## Aanbeveling
@@ -15,10 +15,11 @@ API-Football blijft quota-bewust geblokkeerd totdat de acceptatietest slaagt; ES
 - 2026-08-28: Montpellier - Boulogne (2)
 - 2026-08-28: Nancy - Dunkerque (2)
 - 2026-08-28: Rodez - Pau (5)
-- 2026-08-29: Lorient - Troyes (2)
-- 2026-08-29: AFC Bournemouth - Everton (5)
+- 2026-08-29: Strasbourg - Lens (5)
+- 2026-08-29: Red Star - Reims (2)
+- 2026-08-29: Brest - Toulouse (5)
 - 2026-08-29: Annecy FC - Metz (4)
-- 2026-08-29: Lyon - Le Havre (5)
+- 2026-08-29: Lorient - Troyes (2)
 
 ## Geen Directe H2H
 - 2026-08-28: Bochum - VfL Osnabrück (provider_acceptance_blocked)
@@ -33,6 +34,11 @@ API-Football blijft quota-bewust geblokkeerd totdat de acceptatietest slaagt; ES
 - 2026-08-28: RKC Waalwijk - Jong PSV (provider_acceptance_blocked)
 - 2026-08-28: Roda JC Kerkrade - NAC Breda (provider_acceptance_blocked)
 - 2026-08-28: TOP Oss - Jong FC Utrecht (provider_acceptance_blocked)
-- 2026-08-29: RB Leipzig - Borussia Mönchengladbach (provider_acceptance_blocked)
-- 2026-08-29: FC Heidenheim - Dynamo Dresden (provider_acceptance_blocked)
-- 2026-08-29: SV 07 Elversberg - Bayer 04 Leverkusen (provider_acceptance_blocked)
+- 2026-08-29: 1. FSV Mainz 05 - SC Paderborn 07 (provider_acceptance_blocked)
+- 2026-08-29: Karlsruher SC - Wolfsburg (provider_acceptance_blocked)
+- 2026-08-29: Coventry City - Hull City (provider_acceptance_blocked)
+- 2026-08-29: 1. FC Köln - TSG Hoffenheim (provider_acceptance_blocked)
+- 2026-08-29: Energie Cottbus - Greuther Fürth (provider_acceptance_blocked)
+- 2026-08-29: Tottenham Hotspur - Newcastle United (provider_acceptance_blocked)
+- 2026-08-29: Elversberg - Bayer Leverkusen (provider_acceptance_blocked)
+- 2026-08-29: 1. FC Nürnberg - Arminia Bielefeld (provider_acceptance_blocked)
