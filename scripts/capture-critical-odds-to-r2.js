@@ -127,7 +127,15 @@ async function main() {
     }
     const odds = result?.oddsAtPrediction;
     if (!odds || ![odds.home, odds.draw, odds.away].every((value) => Number(value) > 1)) {
-      report.matches.push({ ...match, minutesBeforeKickoff, closingWindow, status: result?.status || "not_found", sportmonksMapping: sportmonks?.status || "unknown" });
+      report.matches.push({
+        ...match,
+        minutesBeforeKickoff,
+        closingWindow,
+        status: result?.status || "not_found",
+        providerCompetitionAvailability: result?.requestMeta?.providerCompetitionAvailability || null,
+        reason: result?.reason || null,
+        sportmonksMapping: sportmonks?.status || "unknown",
+      });
       continue;
     }
     const ledger = mergeOddsCaptureLedger(existingLedger, match, odds);

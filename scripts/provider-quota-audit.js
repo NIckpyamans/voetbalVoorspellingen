@@ -6,6 +6,19 @@ import { getApiFootballComKey, getApiFootballKey, getFootballDataApiKey, getGoal
 import { interpretApiFootballStatus } from "./worker/provider-account-status.js";
 
 const timeoutMs = 12_000;
+const EXPECTED_SEASONAL_ODDS_SPORTS = [
+  "soccer_uefa_champs_league_qualification",
+  "soccer_uefa_europa_league_qualification",
+  "soccer_uefa_europa_conference_league_qualification",
+];
+
+function readPreviousReport() {
+  try {
+    return JSON.parse(fs.readFileSync(path.join(process.cwd(), "monitor", "provider-quota-audit.json"), "utf8"));
+  } catch {
+    return {};
+  }
+}
 
 function quotaHeaders(response) {
   const names = [
@@ -36,21 +49,29 @@ async function requestJson(url, headers = {}) {
   }
 }
 
-async function auditOddsApi() {
+async function auditOddsApi(previous = {}) {
   const key = String(process.env.ODDS_API_KEY || process.env.THE_ODDS_API_KEY || "").trim();
   if (!key) return { configured: false, valid: false, status: "missing" };
   try {
     const { response, payload } = await requestJson(
       `https://api.the-odds-api.com/v4/sports?apiKey=${encodeURIComponent(key)}`
     );
+    const soccerSportKeys = Array.isArray(payload)
+      ? payload.filter((sport) => String(sport?.key || "").startsWith("soccer_")).map((sport) => sport.key)
+      : [];
+    const previousKeys = Array.isArray(previous?.soccerSportKeys) ? previous.soccerSportKeys : [];
+    const missingExpectedSports = EXPECTED_SEASONAL_ODDS_SPORTS.filter((keyName) => !soccerSportKeys.includes(keyName));
     return {
       configured: true,
       valid: response.ok,
       status: response.status,
       activeSports: Array.isArray(payload) ? payload.filter((sport) => sport?.active !== false).length : 0,
-      soccerSportKeys: Array.isArray(payload)
-        ? payload.filter((sport) => String(sport?.key || "").startsWith("soccer_")).map((sport) => sport.key)
-        : [],
+      soccerSportKeys,
+      expectedSeasonalSports: EXPECTED_SEASONAL_ODDS_SPORTS,
+      missingExpectedSports,
+      competitionCoverageStatus: missingExpectedSports.length ? "seasonal_unavailable" : "available",
+      newlyUnavailableSports: previousKeys.filter((keyName) => !soccerSportKeys.includes(keyName)),
+      newlyAvailableSports: soccerSportKeys.filter((keyName) => !previousKeys.includes(keyName)),
       quota: quotaHeaders(response),
       errorCode: response.ok ? null : String(payload?.error_code || payload?.message || "provider_rejected_key").slice(0, 120),
     };
@@ -330,9 +351,10 @@ async function auditSportmonks() {
   }
 }
 
+const previousReport = readPreviousReport();
 const report = {
   checkedAt: new Date().toISOString(),
-  oddsApi: await auditOddsApi(),
+  oddsApi: await auditOddsApi(previousReport?.oddsApi),
   clubOddsProbe: await probeClubOdds(),
   apiFootball: await auditApiFootball(),
   apiFootballCom: await auditApiFootballCom(),

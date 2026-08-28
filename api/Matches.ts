@@ -161,6 +161,7 @@ function baseDetailMatch(match: any) {
     homePos: match.homePos,
     awayPos: match.awayPos,
     aggregate: match.aggregate,
+    oddsProviderStatus: match.oddsProviderStatus || null,
     review: match.review,
   };
 }
@@ -363,6 +364,7 @@ function compactDetailMatch(match: any, section: string) {
       ...base,
       odds: match.odds,
       oddsAtPrediction: match.oddsAtPrediction,
+      oddsProviderStatus: match.oddsProviderStatus || null,
       marketCalibration: match.marketCalibration,
       modelEdges: match.modelEdges
         ? {

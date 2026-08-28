@@ -21,6 +21,7 @@ import { sportmonksEligibleFixtures } from "./worker/sportmonks-coverage-policy.
 import { getCompetitionAgent, getCompetitionProviderOrder } from "./worker/competition-agents.js";
 import { fetchApiFootballComLineup } from "./providers/apifootball-com-provider.js";
 import { fetchGoalApiLineup } from "./providers/goal-api-provider.js";
+import { findBestProviderFixture, providerTeamSimilarity } from "./worker/provider-fixture-matching.js";
 
 const ROOT = process.cwd();
 const LOOKAHEAD_MINUTES = Math.max(30, Number(process.env.LINEUP_LOOKAHEAD_MINUTES || 90));
@@ -51,27 +52,8 @@ function asArray(value) {
   return Array.isArray(value) ? value : [];
 }
 
-function normalizedTeam(value) {
-  return String(value || "")
-    .toLowerCase()
-    .normalize("NFKD")
-    .replace(/[\u0300-\u036f]/g, "")
-    .replace(/\b(fc|afc|cf|sc|ac|club|fk|sv|the)\b/g, " ")
-    .replace(/[^a-z0-9]+/g, " ")
-    .trim()
-    .replace(/\s+/g, " ");
-}
-
 function teamSimilarity(left, right) {
-  const a = normalizedTeam(left);
-  const b = normalizedTeam(right);
-  if (!a || !b) return 0;
-  if (a === b) return 1;
-  if (a.includes(b) || b.includes(a)) return 0.94;
-  const aTokens = new Set(a.split(" "));
-  const bTokens = new Set(b.split(" "));
-  const overlap = [...aTokens].filter((token) => bTokens.has(token)).length;
-  return overlap / Math.max(1, Math.min(aTokens.size, bTokens.size));
+  return providerTeamSimilarity(left, right);
 }
 
 async function fetchJson(url, headers = {}) {
@@ -130,6 +112,18 @@ async function fetchFotMobLineup(match) {
   if (String(process.env.FOTMOB_LINEUP_ENABLED || "true").toLowerCase() === "false") {
     return { status: "disabled" };
   }
+  const storedFotmobId = String(match?.fotmob_fixture_id || "").match(/(\d+)$/)?.[1] || "";
+  const matchFotmobId = String(match?.match_id || "").match(/(?:^|ss-)fotmob-(\d+)$/i)?.[1] || "";
+  const directFixtureId = storedFotmobId || matchFotmobId;
+  if (directFixtureId) {
+    const url = `https://www.fotmob.com/api/data/matchDetails?matchId=${encodeURIComponent(directFixtureId)}`;
+    const result = await fetchJson(url, {
+      "User-Agent": "Mozilla/5.0 (compatible; voetbalvoorspellingen-lineup-resolver/1.0)",
+      Referer: "https://www.fotmob.com/",
+    });
+    const lineup = result.ok ? normalizeFotMob(result.payload) : null;
+    return { ...result, status: lineup ? "ok" : result.ok ? "lineup_not_published" : `http_${result.status}`, lineup, url, fixtureId: directFixtureId };
+  }
   const date = String(match?.kickoff_at || "").slice(0, 10);
   if (!date) return { status: "invalid_date" };
   const compactDate = date.replace(/-/g, "");
@@ -141,28 +135,16 @@ async function fetchFotMobLineup(match) {
   }
   const schedule = await fotmobScheduleCache.get(date);
   if (!schedule?.ok) return { status: `schedule_http_${schedule?.status || "unknown"}` };
-  let best = null;
-  for (const league of asArray(schedule.payload?.leagues)) {
-    for (const event of asArray(league?.matches)) {
-      const score = Math.min(
-        teamSimilarity(match.home_team_name, event?.home?.name),
-        teamSimilarity(match.away_team_name, event?.away?.name)
-      );
-      const eventKickoff = Date.parse(event?.status?.utcTime || "");
-      const kickoffGapHours = Number.isFinite(eventKickoff)
-        ? Math.abs(eventKickoff - Date.parse(match.kickoff_at)) / 3600000
-        : Infinity;
-      if (score < 0.82 || kickoffGapHours > 6 || (best && best.score >= score)) continue;
-      best = { eventId: event?.id, score };
-    }
-  }
-  if (!best?.eventId) return { status: "fixture_not_found" };
-  const url = `https://www.fotmob.com/api/data/matchDetails?matchId=${encodeURIComponent(best.eventId)}`;
+  const candidates = asArray(schedule.payload?.leagues).flatMap((league) => asArray(league?.matches));
+  const best = findBestProviderFixture(match, candidates);
+  if (!best?.fixtureId) return { status: "fixture_not_found" };
+  const url = `https://www.fotmob.com/api/data/matchDetails?matchId=${encodeURIComponent(best.fixtureId)}`;
   const result = await fetchJson(url, {
     "User-Agent": "Mozilla/5.0 (compatible; voetbalvoorspellingen-lineup-resolver/1.0)",
     Referer: "https://www.fotmob.com/",
   });
-  return { ...result, status: result.ok ? "ok" : `http_${result.status}`, lineup: result.ok ? normalizeFotMob(result.payload) : null, url };
+  const lineup = result.ok ? normalizeFotMob(result.payload) : null;
+  return { ...result, status: lineup ? "ok" : result.ok ? "lineup_not_published" : `http_${result.status}`, lineup, url, fixtureId: best.fixtureId };
 }
 
 async function resolveApiFootballFixture(match) {
@@ -242,11 +224,15 @@ function staticMatchesInWindow() {
     const filePath = path.join(ROOT, "data", "days", `${day.toISOString().slice(0, 10)}.json`);
     if (!fs.existsSync(filePath)) continue;
     const payload = JSON.parse(fs.readFileSync(filePath, "utf8"));
-    for (const match of asArray(payload?.matches)) {
+    const dayMatches = asArray(payload?.matches);
+    const fotmobMatches = dayMatches.filter((match) => /(?:^|ss-)fotmob-\d+$/i.test(String(match?.id || "")));
+    for (const match of dayMatches) {
       const kickoff = Date.parse(match?.kickoff || "");
       const minutes = (kickoff - now) / 60000;
       if (!Number.isFinite(kickoff) || minutes < -GRACE_MINUTES || minutes > LOOKAHEAD_MINUTES) continue;
       if (!match?.homeTeamName || !match?.awayTeamName) continue;
+      const directFotmobId = String(match.id || "").match(/(?:^|ss-)fotmob-(\d+)$/i)?.[1] || null;
+      const mappedFotmob = directFotmobId ? null : findBestProviderFixture(match, fotmobMatches);
       rows.push({
         match_id: String(match.id || `ss-${match.sofaId}`),
         canonical_fixture_id: String(match.id || `ss-${match.sofaId}`),
@@ -255,6 +241,7 @@ function staticMatchesInWindow() {
         home_team_name: match.homeTeamName,
         away_team_name: match.awayTeamName,
         api_football_fixture_id: null,
+        fotmob_fixture_id: directFotmobId || mappedFotmob?.fixtureId?.match(/(\d+)$/)?.[1] || null,
       });
     }
   }
@@ -293,7 +280,8 @@ async function main() {
     if (!sql) throw new Error("database_not_configured");
     matches = await sql.query(
     `select m.match_id,m.canonical_fixture_id,m.kickoff_at,m.league,m.home_team_name,m.away_team_name,
-       max(case when fsa.provider='api-football' then fsa.source_match_id end) as api_football_fixture_id
+       max(case when fsa.provider='api-football' then fsa.source_match_id end) as api_football_fixture_id,
+       max(case when fsa.provider='fotmob' then fsa.source_match_id end) as fotmob_fixture_id
      from matches m
      left join fixture_source_aliases fsa on fsa.canonical_match_id=m.match_id
      where m.kickoff_at >= now() - ($1::int * interval '1 minute')

@@ -133,6 +133,7 @@ function compactPrediction(prediction: any) {
     awayClubStrength: prediction.awayClubStrength,
     odds: prediction.odds,
     oddsAtPrediction: prediction.oddsAtPrediction,
+    oddsProviderStatus: prediction.oddsProviderStatus || null,
     derivedOdds: prediction.derivedOdds,
     valueFlags: prediction.valueFlags,
     lineupSummary: prediction.lineupSummary,

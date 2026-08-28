@@ -5,6 +5,7 @@ import path from "path";
 import { pathToFileURL } from "url";
 import { canonicalDedupeTeam } from "../shared/matchNormalization.js";
 import { normalizeFotMob, normalizeSofaScore } from "./providers/lineup-normalizers.js";
+import { findBestProviderFixture } from "./worker/provider-fixture-matching.js";
 
 const ROOT = process.cwd();
 const DAYS_DIR = path.join(ROOT, "data", "days");
@@ -12,6 +13,7 @@ const REPORT_FILE = path.join(ROOT, "monitor", "recent-match-context-backfill.js
 const DAYS_BACK = Math.max(1, Number(process.env.RECENT_CONTEXT_DAYS_BACK || 35));
 const LINEUP_LIMIT = Math.max(0, Number(process.env.RECENT_CONTEXT_LINEUP_LIMIT || 30));
 const FETCH_TIMEOUT_MS = Math.max(1000, Number(process.env.RECENT_CONTEXT_FETCH_TIMEOUT_MS || 7000));
+const fotmobScheduleCache = new Map();
 
 function readJson(filePath, fallback = null) {
   try {
@@ -234,7 +236,18 @@ async function fetchJson(url) {
 
 async function fetchHistoricalLineup(match) {
   const id = String(match?.id || match?.providerEventId || "");
-  const fotmobId = id.match(/(?:^|ss-)fotmob-(\d+)$/i)?.[1];
+  let fotmobId = id.match(/(?:^|ss-)fotmob-(\d+)$/i)?.[1];
+  if (!fotmobId) {
+    const date = String(match?.date || match?._dateKey || match?.kickoff || "").slice(0, 10);
+    if (date) {
+      if (!fotmobScheduleCache.has(date)) {
+        fotmobScheduleCache.set(date, fetchJson(`https://www.fotmob.com/api/data/matches?date=${date.replace(/-/g, "")}`));
+      }
+      const schedule = await fotmobScheduleCache.get(date);
+      const candidates = (schedule?.leagues || []).flatMap((league) => Array.isArray(league?.matches) ? league.matches : []);
+      fotmobId = findBestProviderFixture(match, candidates)?.fixtureId || null;
+    }
+  }
   if (fotmobId) {
     const payload = await fetchJson(`https://www.fotmob.com/api/data/matchDetails?matchId=${encodeURIComponent(fotmobId)}`);
     const lineup = normalizeFotMob(payload);

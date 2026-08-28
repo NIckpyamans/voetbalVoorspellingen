@@ -109,6 +109,12 @@ function unique(values) {
   return [...new Set(values.filter(Boolean))];
 }
 
+export function inactiveOddsSportStatus(sportKey) {
+  return /^soccer_uefa_(?:champs|europa).*league(?:_qualification)?$/i.test(String(sportKey || ""))
+    ? "seasonal_sport_unavailable"
+    : "unsupported_sport";
+}
+
 async function fetchWithTimeout(fetchImpl, url, options = {}, timeoutMs = DEFAULT_FETCH_TIMEOUT_MS) {
   const controller = new AbortController();
   const timeout = setTimeout(() => controller.abort(), timeoutMs);
@@ -449,16 +455,23 @@ export async function fetchOddsAtPrediction(match, options = {}) {
         sportDiscovery = await discoverTheOddsApiSports(fetchImpl, configApiKey);
         if (sportDiscovery.active) {
           const unsupported = sports.filter((sport) => !sportDiscovery.active.has(sport));
-          attempts.push(...unsupported.map((sport) => ({ provider: configProvider, sport, status: "unsupported_sport" })));
+          attempts.push(...unsupported.map((sport) => ({ provider: configProvider, sport, status: inactiveOddsSportStatus(sport) })));
           sports = sports.filter((sport) => sportDiscovery.active.has(sport));
         }
         if (!sports.length) {
+          const seasonal = attempts.some((attempt) => attempt.provider === configProvider && attempt.status === "seasonal_sport_unavailable");
           lastResult = {
-            status: "unsupported_competition",
+            status: seasonal ? "seasonal_unavailable" : "unsupported_competition",
             oddsAtPrediction: null,
             provider: configProvider,
-            reason: "The Odds API biedt momenteel geen actieve sportkey voor deze competitie.",
-            requestMeta: { attempts, sportDiscoveryStatus: sportDiscovery.status },
+            reason: seasonal
+              ? "The Odds API heeft de UEFA-sportkey tijdelijk niet actief. Het model draait daarom aantoonbaar zonder marktgewicht."
+              : "The Odds API biedt momenteel geen actieve sportkey voor deze competitie.",
+            requestMeta: {
+              attempts,
+              sportDiscoveryStatus: sportDiscovery.status,
+              providerCompetitionAvailability: seasonal ? "seasonal_unavailable" : "unsupported",
+            },
           };
           continue;
         }

@@ -920,10 +920,13 @@ function DataQualitySnapshot({ match, prediction }: { match: any; prediction: an
   const percent = dataCompleteness?.percent ?? (dataCompleteness?.score != null ? Math.round(Number(dataCompleteness.score) * 100) : null);
   const confidenceCap = qualityGate?.confidenceCap != null ? `${Math.round(Number(qualityGate.confidenceCap) * 100)}%` : "-";
   const penalty = qualityGate?.penalty != null ? `${Math.round(Number(qualityGate.penalty) * 100)}pp` : "-";
+  const oddsProviderStatus = String(match.oddsProviderStatus || prediction.oddsProviderStatus || "");
   const oddsStatus =
     Number(marketCalibration?.closingCoverage || 0) >= 0.2 || (Array.isArray(marketCalibration?.bookmakerSignals) && marketCalibration.bookmakerSignals.length)
       ? "markt deels gevuld"
-      : "geen actuele odds";
+      : oddsProviderStatus === "seasonal_unavailable"
+        ? "providercompetitie tijdelijk niet actief"
+        : "geen actuele odds";
   const h2hStatus = h2hPlayed >= 3 ? `${h2hPlayed} duels` : h2hPlayed > 0 ? `${h2hPlayed} duel, dun` : "H2H ontbreekt";
   const lineupStatus = lineup.confirmed ? "bevestigd" : lineup.projected ? "voorspeld" : "open";
 
@@ -954,7 +957,7 @@ function DataQualitySnapshot({ match, prediction }: { match: any; prediction: an
         </div>
       </div>
       <div className="grid grid-cols-2 gap-1.5 md:grid-cols-4">
-        <Badge label="Odds" value={oddsStatus} tone={oddsStatus.includes("geen") ? "amber" : "green"} />
+        <Badge label="Odds" value={oddsStatus} tone={oddsStatus === "markt deels gevuld" ? "green" : "amber"} />
         <Badge label="Lineup" value={lineupStatus} tone={lineup.confirmed ? "green" : lineup.projected ? "amber" : "slate"} />
         <Badge label="H2H" value={h2hStatus} tone={h2hPlayed >= 3 ? "green" : "amber"} />
         <Badge label="Bron" value={sourceReliability?.label || "-"} tone={sourceReliability?.score >= 0.54 ? "green" : "amber"} />
