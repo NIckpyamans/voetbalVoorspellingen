@@ -1,18 +1,18 @@
 {
   "schemaVersion": "goal-api-acceptance-v1",
-  "checkedAt": "2026-08-27T14:23:06.229Z",
+  "checkedAt": "2026-08-28T15:31:44.497Z",
   "configured": true,
   "accepted": false,
   "enoughTime": false,
   "enoughEvidence": false,
   "targetsMet": false,
-  "elapsedDays": 7,
+  "elapsedDays": 9,
   "requiredDays": 14,
   "aggregate": {
     "domestic": {
-      "checked": 820,
-      "mapped": 588,
-      "coverage": 0.717,
+      "checked": 897,
+      "mapped": 649,
+      "coverage": 0.724,
       "target": 0.8
     },
     "uefa": {
@@ -1781,65 +1781,164 @@
           "errorCode": null
         }
       }
+    },
+    {
+      "measurementVersion": "goal-pagination-v2",
+      "checkedAt": "2026-08-28T15:31:44.497Z",
+      "providerReachable": true,
+      "checked": 77,
+      "mapped": 61,
+      "segments": {
+        "domestic": {
+          "checked": 77,
+          "mapped": 61
+        },
+        "uefa": {
+          "checked": 0,
+          "mapped": 0
+        },
+        "friendly": {
+          "checked": 0,
+          "mapped": 0
+        }
+      },
+      "requestStatuses": [
+        {
+          "date": "2026-08-28",
+          "status": 200,
+          "records": 440,
+          "pages": 5,
+          "truncated": false,
+          "limits": {
+            "remaining": "994",
+            "limit": "1000",
+            "dailyRemaining": null
+          }
+        },
+        {
+          "date": "2026-08-29",
+          "status": 200,
+          "records": 1000,
+          "pages": 10,
+          "truncated": true,
+          "limits": {
+            "remaining": "984",
+            "limit": "1000",
+            "dailyRemaining": null
+          }
+        },
+        {
+          "date": "2026-08-30",
+          "status": 200,
+          "records": 844,
+          "pages": 9,
+          "truncated": false,
+          "limits": {
+            "remaining": "975",
+            "limit": "1000",
+            "dailyRemaining": null
+          }
+        },
+        {
+          "date": "2026-08-31",
+          "status": 200,
+          "records": 256,
+          "pages": 3,
+          "truncated": false,
+          "limits": {
+            "remaining": "972",
+            "limit": "1000",
+            "dailyRemaining": null
+          }
+        },
+        {
+          "date": "2026-09-01",
+          "status": 200,
+          "records": 188,
+          "pages": 2,
+          "truncated": false,
+          "limits": {
+            "remaining": "970",
+            "limit": "1000",
+            "dailyRemaining": null
+          }
+        },
+        {
+          "date": "2026-09-02",
+          "status": 200,
+          "records": 324,
+          "pages": 4,
+          "truncated": false,
+          "limits": {
+            "remaining": "966",
+            "limit": "1000",
+            "dailyRemaining": null
+          }
+        },
+        {
+          "date": "2026-09-03",
+          "status": 200,
+          "records": 128,
+          "pages": 2,
+          "truncated": false,
+          "limits": {
+            "remaining": "964",
+            "limit": "1000",
+            "dailyRemaining": null
+          }
+        }
+      ],
+      "endpointAccess": {
+        "testedFixtureId": "cmsvp3mkn985tpg07amcg7p9m",
+        "fixture": {
+          "tested": true,
+          "valid": true,
+          "status": 200,
+          "records": 1,
+          "available": true,
+          "remaining": "963",
+          "errorCode": null
+        },
+        "lineups": {
+          "tested": true,
+          "valid": true,
+          "status": 200,
+          "records": 1,
+          "available": true,
+          "remaining": "962",
+          "errorCode": null
+        },
+        "statistics": {
+          "tested": true,
+          "valid": true,
+          "status": 200,
+          "records": 1,
+          "available": true,
+          "remaining": "961",
+          "errorCode": null
+        },
+        "odds": {
+          "tested": true,
+          "valid": false,
+          "status": 403,
+          "records": 0,
+          "available": false,
+          "remaining": null,
+          "errorCode": "HTTP 403"
+        },
+        "h2h": {
+          "tested": true,
+          "valid": true,
+          "status": 200,
+          "records": 1,
+          "available": true,
+          "remaining": "960",
+          "errorCode": null
+        }
+      }
     }
   ],
   "missingSamples": [
-    {
-      "date": "2026-08-27",
-      "league": "Europe - Europa League",
-      "home": "FC Iberia 1999 Tiflis",
-      "away": "Jagiellonia Bialystok",
-      "segment": "uefa",
-      "status": "not_mapped"
-    },
-    {
-      "date": "2026-08-27",
-      "league": "Europe - Europa League",
-      "home": "Lillestrom",
-      "away": "Egnatia",
-      "segment": "uefa",
-      "status": "not_mapped"
-    },
-    {
-      "date": "2026-08-27",
-      "league": "Europe - Conference League",
-      "home": "FC Copenhagen",
-      "away": "FC Inter Turku",
-      "segment": "uefa",
-      "status": "not_mapped"
-    },
-    {
-      "date": "2026-08-27",
-      "league": "Europe - Conference League",
-      "home": "Pafos",
-      "away": "KS Dynamo Tirana",
-      "segment": "uefa",
-      "status": "not_mapped"
-    },
-    {
-      "date": "2026-08-27",
-      "league": "Europe - Conference League",
-      "home": "St Gallen",
-      "away": "FC Nordsjaelland",
-      "segment": "uefa",
-      "status": "not_mapped"
-    },
-    {
-      "date": "2026-08-27",
-      "league": "Europe - Conference League",
-      "home": "Riga FC",
-      "away": "Klaksvik",
-      "segment": "uefa",
-      "status": "not_mapped"
-    },
-    {
-      "date": "2026-08-27",
-      "league": "Europe - Europa League",
-      "home": "Omonia Nicosia",
-      "away": "St.Truiden",
-      "segment": "uefa",
-      "status": "not_mapped"
-    },
     {
       "date": "2026-08-28",
       "league": "France - Ligue 1",
