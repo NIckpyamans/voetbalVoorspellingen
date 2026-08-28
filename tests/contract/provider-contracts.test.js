@@ -110,4 +110,50 @@ describe("odds provider contract", () => {
       if (previous.reserve === undefined) delete process.env.ODDS_API_MIN_REMAINING; else process.env.ODDS_API_MIN_REMAINING = previous.reserve;
     }
   });
+
+  it("preserves seasonal UEFA status when a later provider has no fixture mapping", async () => {
+    const previous = {
+      key: process.env.ODDS_API_KEY,
+      template: process.env.ODDS_API_URL_TEMPLATE,
+      provider: process.env.ODDS_PROVIDER_NAME,
+      sportmonksKey: process.env.SPORTMONKS_API_KEY,
+      sportmonksTemplate: process.env.SPORTMONKS_ODDS_API_URL_TEMPLATE,
+      reserve: process.env.ODDS_API_MIN_REMAINING,
+    };
+    process.env.ODDS_API_KEY = "contract-seasonal-fallback-key";
+    process.env.ODDS_PROVIDER_NAME = "the-odds-api";
+    process.env.ODDS_API_URL_TEMPLATE = "https://api.the-odds-api.com/v4/sports/{sport}/odds/?apiKey={apiKey}";
+    process.env.SPORTMONKS_API_KEY = "contract-sportmonks-key";
+    process.env.SPORTMONKS_ODDS_API_URL_TEMPLATE = "https://api.sportmonks.com/v3/football/odds/pre-match/fixtures/{sportmonksFixtureId}?api_token={apiKey}";
+    process.env.ODDS_API_MIN_REMAINING = "0";
+    const requests = [];
+    try {
+      const result = await fetchOddsAtPrediction({
+        league: "Europe - Champions League Qualification",
+        homeTeam: "Bodo/Glimt",
+        awayTeam: "NEC Nijmegen",
+        kickoff: "2026-08-28T19:00:00.000Z",
+      }, {
+        fetchImpl: async (url) => {
+          requests.push(String(url));
+          return new Response(JSON.stringify([{ key: "soccer_epl", active: true }]), {
+            status: 200,
+            headers: { "content-type": "application/json", "x-requests-remaining": "20" },
+          });
+        },
+      });
+      expect(result.status).toBe("seasonal_unavailable");
+      expect(result.provider).toBe("the-odds-api");
+      expect(result.requestMeta.providerCompetitionAvailability).toBe("seasonal_unavailable");
+      expect(result.requestMeta.attempts.some((attempt) => attempt.status === "fixture_id_missing")).toBe(true);
+      expect(requests).toHaveLength(1);
+    } finally {
+      if (previous.key === undefined) delete process.env.ODDS_API_KEY; else process.env.ODDS_API_KEY = previous.key;
+      if (previous.template === undefined) delete process.env.ODDS_API_URL_TEMPLATE; else process.env.ODDS_API_URL_TEMPLATE = previous.template;
+      if (previous.provider === undefined) delete process.env.ODDS_PROVIDER_NAME; else process.env.ODDS_PROVIDER_NAME = previous.provider;
+      if (previous.sportmonksKey === undefined) delete process.env.SPORTMONKS_API_KEY; else process.env.SPORTMONKS_API_KEY = previous.sportmonksKey;
+      if (previous.sportmonksTemplate === undefined) delete process.env.SPORTMONKS_ODDS_API_URL_TEMPLATE; else process.env.SPORTMONKS_ODDS_API_URL_TEMPLATE = previous.sportmonksTemplate;
+      if (previous.reserve === undefined) delete process.env.ODDS_API_MIN_REMAINING; else process.env.ODDS_API_MIN_REMAINING = previous.reserve;
+    }
+  });
 });

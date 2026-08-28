@@ -432,6 +432,7 @@ export async function fetchOddsAtPrediction(match, options = {}) {
     }
     const attempts = [];
     let lastResult = null;
+    let seasonalUnavailableResult = null;
     const configs = providerConfigs.length ? providerConfigs : [{ template, apiKey, provider, suffix: "" }];
     for (const config of configs) {
       const configTemplate = config.template;
@@ -473,6 +474,7 @@ export async function fetchOddsAtPrediction(match, options = {}) {
               providerCompetitionAvailability: seasonal ? "seasonal_unavailable" : "unsupported",
             },
           };
+          if (seasonal) seasonalUnavailableResult = lastResult;
           continue;
         }
       }
@@ -599,11 +601,12 @@ export async function fetchOddsAtPrediction(match, options = {}) {
       if (["available", "partial"].includes(result.status)) return result;
       }
     }
+    const finalResult = seasonalUnavailableResult || lastResult;
     return {
-      ...(lastResult || { status: "not_found", oddsAtPrediction: null, reason: "Geen sport fallback gaf herkenbare 1X2 odds terug." }),
-      provider: lastResult?.provider || provider,
+      ...(finalResult || { status: "not_found", oddsAtPrediction: null, reason: "Geen sport fallback gaf herkenbare 1X2 odds terug." }),
+      provider: finalResult?.provider || provider,
       requestMeta: {
-        ...(lastResult?.requestMeta || {}),
+        ...(finalResult?.requestMeta || {}),
         attemptedProviders: configs.map((item) => item.provider),
         attempts,
       },
