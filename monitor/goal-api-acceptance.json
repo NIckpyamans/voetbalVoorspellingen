@@ -1,6 +1,6 @@
 {
   "schemaVersion": "goal-api-acceptance-v1",
-  "checkedAt": "2026-08-28T15:31:44.497Z",
+  "checkedAt": "2026-08-29T10:16:08.528Z",
   "configured": true,
   "accepted": false,
   "enoughTime": false,
@@ -10,9 +10,9 @@
   "requiredDays": 14,
   "aggregate": {
     "domestic": {
-      "checked": 897,
-      "mapped": 649,
-      "coverage": 0.724,
+      "checked": 974,
+      "mapped": 713,
+      "coverage": 0.732,
       "target": 0.8
     },
     "uefa": {
@@ -1936,49 +1936,164 @@
           "errorCode": null
         }
       }
+    },
+    {
+      "measurementVersion": "goal-pagination-v2",
+      "checkedAt": "2026-08-29T10:16:08.528Z",
+      "providerReachable": true,
+      "checked": 77,
+      "mapped": 64,
+      "segments": {
+        "domestic": {
+          "checked": 77,
+          "mapped": 64
+        },
+        "uefa": {
+          "checked": 0,
+          "mapped": 0
+        },
+        "friendly": {
+          "checked": 0,
+          "mapped": 0
+        }
+      },
+      "requestStatuses": [
+        {
+          "date": "2026-08-29",
+          "status": 200,
+          "records": 1000,
+          "pages": 10,
+          "truncated": true,
+          "limits": {
+            "remaining": "990",
+            "limit": "1000",
+            "dailyRemaining": null
+          }
+        },
+        {
+          "date": "2026-08-30",
+          "status": 200,
+          "records": 871,
+          "pages": 9,
+          "truncated": false,
+          "limits": {
+            "remaining": "981",
+            "limit": "1000",
+            "dailyRemaining": null
+          }
+        },
+        {
+          "date": "2026-08-31",
+          "status": 200,
+          "records": 261,
+          "pages": 3,
+          "truncated": false,
+          "limits": {
+            "remaining": "978",
+            "limit": "1000",
+            "dailyRemaining": null
+          }
+        },
+        {
+          "date": "2026-09-01",
+          "status": 200,
+          "records": 195,
+          "pages": 2,
+          "truncated": false,
+          "limits": {
+            "remaining": "976",
+            "limit": "1000",
+            "dailyRemaining": null
+          }
+        },
+        {
+          "date": "2026-09-02",
+          "status": 200,
+          "records": 327,
+          "pages": 4,
+          "truncated": false,
+          "limits": {
+            "remaining": "972",
+            "limit": "1000",
+            "dailyRemaining": null
+          }
+        },
+        {
+          "date": "2026-09-03",
+          "status": 200,
+          "records": 131,
+          "pages": 2,
+          "truncated": false,
+          "limits": {
+            "remaining": "970",
+            "limit": "1000",
+            "dailyRemaining": null
+          }
+        },
+        {
+          "date": "2026-09-04",
+          "status": 200,
+          "records": 442,
+          "pages": 5,
+          "truncated": false,
+          "limits": {
+            "remaining": "965",
+            "limit": "1000",
+            "dailyRemaining": null
+          }
+        }
+      ],
+      "endpointAccess": {
+        "testedFixtureId": "cmsvp3jjr97p6pg07kwivcf7c",
+        "fixture": {
+          "tested": true,
+          "valid": true,
+          "status": 200,
+          "records": 1,
+          "available": true,
+          "remaining": "964",
+          "errorCode": null
+        },
+        "lineups": {
+          "tested": true,
+          "valid": true,
+          "status": 200,
+          "records": 1,
+          "available": true,
+          "remaining": "963",
+          "errorCode": null
+        },
+        "statistics": {
+          "tested": true,
+          "valid": true,
+          "status": 200,
+          "records": 1,
+          "available": true,
+          "remaining": "962",
+          "errorCode": null
+        },
+        "odds": {
+          "tested": true,
+          "valid": false,
+          "status": 403,
+          "records": 0,
+          "available": false,
+          "remaining": null,
+          "errorCode": "HTTP 403"
+        },
+        "h2h": {
+          "tested": true,
+          "valid": true,
+          "status": 200,
+          "records": 1,
+          "available": true,
+          "remaining": "961",
+          "errorCode": null
+        }
+      }
     }
   ],
   "missingSamples": [
-    {
-      "date": "2026-08-28",
-      "league": "France - Ligue 1",
-      "home": "Lille",
-      "away": "Paris Saint-Germain",
-      "segment": "domestic",
-      "status": "not_mapped"
-    },
-    {
-      "date": "2026-08-28",
-      "league": "Netherlands - Eerste Divisie",
-      "home": "Jong Ajax",
-      "away": "Helmond Sport",
-      "segment": "domestic",
-      "status": "not_mapped"
-    },
-    {
-      "date": "2026-08-28",
-      "league": "Netherlands - Eerste Divisie",
-      "home": "Jong AZ Alkmaar",
-      "away": "MVV Maastricht",
-      "segment": "domestic",
-      "status": "not_mapped"
-    },
-    {
-      "date": "2026-08-28",
-      "league": "Netherlands - Eerste Divisie",
-      "home": "RKC Waalwijk",
-      "away": "Jong PSV",
-      "segment": "domestic",
-      "status": "not_mapped"
-    },
-    {
-      "date": "2026-08-28",
-      "league": "Netherlands - Eerste Divisie",
-      "home": "TOP Oss",
-      "away": "Jong FC Utrecht",
-      "segment": "domestic",
-      "status": "not_mapped"
-    },
     {
       "date": "2026-08-29",
       "league": "Germany - Bundesliga",
@@ -2063,6 +2178,22 @@
       "date": "2026-08-31",
       "league": "Netherlands - Eerste Divisie",
       "home": "Jong PSV",
+      "away": "Jong Ajax",
+      "segment": "domestic",
+      "status": "not_mapped"
+    },
+    {
+      "date": "2026-09-04",
+      "league": "France - Ligue 1",
+      "home": "Paris Saint-Germain",
+      "away": "Monaco",
+      "segment": "domestic",
+      "status": "not_mapped"
+    },
+    {
+      "date": "2026-09-04",
+      "league": "Netherlands - Eerste Divisie",
+      "home": "Almere City FC",
       "away": "Jong Ajax",
       "segment": "domestic",
       "status": "not_mapped"
