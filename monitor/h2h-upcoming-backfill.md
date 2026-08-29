@@ -1,9 +1,9 @@
 # Upcoming H2H Backfill
 
-Laatst bijgewerkt: 2026-08-29T20:55:59.141Z
+Laatst bijgewerkt: 2026-08-29T23:20:00.788Z
 Gecontroleerd: 32
-Gevuld: 10
-Geen directe H2H: 22
+Gevuld: 7
+Geen directe H2H: 25
 Errors: 0
 
 ## Aanbeveling
@@ -16,10 +16,7 @@ API-Football blijft quota-bewust geblokkeerd totdat de acceptatietest slaagt; ES
 - 2026-08-30: Augsburg - Schalke 04 (2)
 - 2026-08-30: Sunderland - Fulham (2)
 - 2026-08-30: Monaco - Marseille (5)
-- 2026-09-04: Paris Saint-Germain - Monaco (5)
-- 2026-09-04: Grenoble - Annecy FC (5)
-- 2026-09-04: Laval - Red Star (4)
-- 2026-09-04: Pau - Sochaux (2)
+- 2026-09-05: Lincoln City - Southampton (1)
 
 ## Geen Directe H2H
 - 2026-08-30: Utrecht - PSV (provider_acceptance_blocked)
@@ -32,13 +29,13 @@ API-Football blijft quota-bewust geblokkeerd totdat de acceptatietest slaagt; ES
 - 2026-08-30: Manchester United - Ipswich Town (provider_acceptance_blocked)
 - 2026-08-31: Jong AZ Alkmaar - Jong FC Utrecht (provider_acceptance_blocked)
 - 2026-08-31: Jong PSV - Jong Ajax (provider_acceptance_blocked)
-- 2026-09-04: FC Emmen - FC Volendam (provider_acceptance_blocked)
-- 2026-09-04: Dunkerque - Clermont Foot (provider_acceptance_blocked)
+- 2026-09-04: Almere City FC - Jong Ajax (provider_acceptance_blocked)
+- 2026-09-04: Olympique Lyonnais - Auxerre (provider_acceptance_blocked)
 - 2026-09-04: Arminia Bielefeld - St. Pauli (provider_acceptance_blocked)
 - 2026-09-04: Sparta Rotterdam - PEC Zwolle (provider_acceptance_blocked)
+- 2026-09-04: Dunkerque - Clermont Foot (provider_acceptance_blocked)
 - 2026-09-04: VfB Stuttgart - 1. FC Köln (provider_acceptance_blocked)
 - 2026-09-04: Ipswich Town - Liverpool (provider_acceptance_blocked)
-- 2026-09-04: Helmond Sport - VVV-Venlo (provider_acceptance_blocked)
-- 2026-09-04: Olympique Lyonnais - Auxerre (provider_acceptance_blocked)
+- 2026-09-04: FC Emmen - FC Volendam (provider_acceptance_blocked)
 - 2026-09-04: Hannover 96 - Karlsruher SC (provider_acceptance_blocked)
-- 2026-09-04: Heracles - De Graafschap (provider_acceptance_blocked)
+- 2026-09-04: Helmond Sport - VVV-Venlo (provider_acceptance_blocked)
