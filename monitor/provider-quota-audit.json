@@ -1,10 +1,10 @@
 {
-  "checkedAt": "2026-08-29T11:08:26.840Z",
+  "checkedAt": "2026-08-30T09:58:45.986Z",
   "oddsApi": {
     "configured": true,
     "valid": true,
     "status": 200,
-    "activeSports": 84,
+    "activeSports": 80,
     "soccerSportKeys": [
       "soccer_argentina_primera_division",
       "soccer_austria_bundesliga",
@@ -12,7 +12,6 @@
       "soccer_brazil_campeonato",
       "soccer_brazil_serie_b",
       "soccer_chile_campeonato",
-      "soccer_china_superleague",
       "soccer_concacaf_leagues_cup",
       "soccer_conmebol_copa_libertadores",
       "soccer_conmebol_copa_sudamericana",
@@ -49,6 +48,7 @@
       "soccer_sweden_superettan",
       "soccer_switzerland_superleague",
       "soccer_turkey_super_league",
+      "soccer_uefa_champs_league",
       "soccer_uefa_nations_league",
       "soccer_usa_mls"
     ],
@@ -63,8 +63,12 @@
       "soccer_uefa_europa_conference_league_qualification"
     ],
     "competitionCoverageStatus": "seasonal_unavailable",
-    "newlyUnavailableSports": [],
-    "newlyAvailableSports": [],
+    "newlyUnavailableSports": [
+      "soccer_china_superleague"
+    ],
+    "newlyAvailableSports": [
+      "soccer_uefa_champs_league"
+    ],
     "quota": {
       "x-requests-remaining": "20",
       "x-requests-used": "480",
@@ -140,17 +144,17 @@
       "country": "England"
     },
     "testedFixture": {
-      "id": "812124",
-      "home": "Middlesbrough",
-      "away": "West Brom",
-      "date": "2026-08-29"
+      "id": "812135",
+      "home": "Lincoln",
+      "away": "Blackburn",
+      "date": "2026-09-01"
     },
     "endpointAccess": {
       "events": {
         "tested": true,
         "valid": true,
         "status": 200,
-        "records": 55,
+        "records": 45,
         "quota": {},
         "errorCode": null
       },
@@ -166,7 +170,7 @@
         "tested": true,
         "valid": true,
         "status": 200,
-        "records": 1,
+        "records": 12,
         "quota": {},
         "errorCode": null
       },
@@ -188,8 +192,8 @@
     "records": 50,
     "quota": {
       "x-ratelimit-limit": "1000",
-      "x-ratelimit-remaining": "960",
-      "x-ratelimit-reset": "1788048000"
+      "x-ratelimit-remaining": "959",
+      "x-ratelimit-reset": "1788134400"
     },
     "accepted": false,
     "policy": "Veertien dagen meten; nooit automatisch promoveren op basis van alleen een geldige key."
@@ -245,7 +249,7 @@
         "firstName": "Esbjerg vs OB",
         "hasOddsFlag": false,
         "rateLimit": {
-          "resets_in_seconds": 3600,
+          "resets_in_seconds": 3599,
           "remaining": 2999,
           "requested_entity": "Fixture"
         },
@@ -259,8 +263,8 @@
         "valid": true,
         "status": 200,
         "records": 1,
-        "firstId": 19722801,
-        "firstName": "Kilmarnock vs Dundee United",
+        "firstId": 19722805,
+        "firstName": "Aberdeen vs Rangers",
         "hasOddsFlag": true,
         "rateLimit": {
           "resets_in_seconds": 3599,
@@ -277,8 +281,8 @@
         "valid": true,
         "status": 200,
         "records": 1,
-        "firstId": 19722801,
-        "firstName": "Kilmarnock vs Dundee United",
+        "firstId": 19722805,
+        "firstName": "Aberdeen vs Rangers",
         "hasOddsFlag": true,
         "rateLimit": {
           "resets_in_seconds": 3599,
@@ -291,13 +295,13 @@
         },
         "errorCode": null
       },
-      "testedFixtureId": 19722801,
+      "testedFixtureId": 19722805,
       "oddsByFixture": {
         "label": "oddsByFixture",
         "valid": true,
         "status": 200,
         "records": 3,
-        "firstId": 242827006116,
+        "firstId": 242827273377,
         "firstName": null,
         "hasOddsFlag": false,
         "rateLimit": {
@@ -336,7 +340,7 @@
         "valid": true,
         "status": 200,
         "records": 3,
-        "firstId": 242827006116,
+        "firstId": 242827273377,
         "firstName": null,
         "hasOddsFlag": false,
         "rateLimit": {
