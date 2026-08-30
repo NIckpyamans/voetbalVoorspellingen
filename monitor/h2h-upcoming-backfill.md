@@ -1,9 +1,9 @@
 # Upcoming H2H Backfill
 
-Laatst bijgewerkt: 2026-08-30T11:54:44.345Z
-Gecontroleerd: 32
-Gevuld: 10
-Geen directe H2H: 22
+Laatst bijgewerkt: 2026-08-30T12:02:23.243Z
+Gecontroleerd: 24
+Gevuld: 7
+Geen directe H2H: 17
 Errors: 0
 
 ## Aanbeveling
@@ -17,9 +17,6 @@ API-Football blijft quota-bewust geblokkeerd totdat de acceptatietest slaagt; ES
 - 2026-08-30: Monaco - Marseille (5)
 - 2026-08-31: Dijon - Saint-Étienne (2)
 - 2026-08-31: Aston Villa - Arsenal (5)
-- 2026-09-05: Kaiserslautern - Darmstadt (5)
-- 2026-09-05: Metz - Rodez (4)
-- 2026-09-05: Brentford - Sunderland (2)
 
 ## Geen Directe H2H
 - 2026-08-30: Chelsea - Brighton & Hove Albion (provider_acceptance_blocked)
@@ -39,6 +36,3 @@ API-Football blijft quota-bewust geblokkeerd totdat de acceptatietest slaagt; ES
 - 2026-09-04: Hannover 96 - Karlsruher SC (provider_acceptance_blocked)
 - 2026-09-04: FC Emmen - FC Volendam (provider_acceptance_blocked)
 - 2026-09-04: Helmond Sport - VVV-Venlo (provider_acceptance_blocked)
-- 2026-09-04: Heracles - De Graafschap (provider_acceptance_blocked)
-- 2026-09-04: RKC Waalwijk - NAC Breda (provider_acceptance_blocked)
-- 2026-09-04: Vitesse - TOP Oss (provider_acceptance_blocked)
