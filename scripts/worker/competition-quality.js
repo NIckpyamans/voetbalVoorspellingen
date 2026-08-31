@@ -12,9 +12,16 @@ export function buildCompetitionQuality(matches = [], modelPerformance = {}) {
     if (timestamp && (!row.updatedAt || Date.parse(timestamp) > Date.parse(row.updatedAt))) row.updatedAt = timestamp;
     groups.set(league, row);
   }
-  const performance = modelPerformance?.byLeague || modelPerformance?.leagues || {};
+  const rawPerformance = modelPerformance?.byLeague || modelPerformance?.leagues || modelPerformance?.competitions || {};
+  const performance = new Map(
+    Array.isArray(rawPerformance)
+      ? rawPerformance
+        .filter((metric) => metric && (metric.key || metric.league || metric.competition))
+        .map((metric) => [String(metric.key || metric.league || metric.competition), metric])
+      : Object.entries(rawPerformance || {}),
+  );
   return [...groups.values()].map((row) => {
-    const metric = performance[row.league] || {};
+    const metric = performance.get(row.league) || {};
     const pct = (value) => row.matches ? Number((value / row.matches).toFixed(3)) : 0;
     return {
       ...row,
@@ -22,9 +29,9 @@ export function buildCompetitionQuality(matches = [], modelPerformance = {}) {
       performance: {
         evaluations: Number(metric.matches || metric.evaluations || 0),
         outcomeHitRate: metric.outcomeHitRate ?? metric.outcome_hit_rate ?? null,
-        brierScore: metric.brierScore ?? metric.brier_score ?? null,
+        brierScore: metric.avgBrierScore ?? metric.brierScore ?? metric.brier_score ?? null,
         exactHitRate: metric.exactHitRate ?? metric.exact_hit_rate ?? null,
-        roi: metric.roi ?? null,
+        roi: metric.roiTotal ?? metric.roi ?? null,
       },
     };
   }).sort((a, b) => b.matches - a.matches || a.league.localeCompare(b.league));

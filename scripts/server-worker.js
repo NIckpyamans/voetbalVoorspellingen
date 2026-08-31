@@ -10906,7 +10906,10 @@ async function main() {
   // Houd bewust meerdere dagen vooruit vast. Als een geplande worker-run een
   // keer wordt overgeslagen, blijft de kalenderstatus betrouwbaarder.
   const dates = buildRefreshDateWindow(today);
-  const enrichmentBaselineMatches = dates.flatMap((date) => store.matches?.[date] || []).map((match) => structuredClone(match));
+  const enrichmentBaselineMatches = dates.flatMap((date) => dedupeStoredMatches([
+    ...(store.matches?.[date] || []),
+    ...readStaticDayEnrichments(date),
+  ])).map((match) => structuredClone(match));
   const friendliesDiscoveryMode = process.env.FOOTYAI_REFRESH_MODE === "friendlies-discovery";
   console.log(`[worker] datumvenster: ${dates.join(", ")}`);
   if (friendliesDiscoveryMode) console.log("[worker] modus: alleen oefenwedstrijden ontdekken");
