@@ -8,8 +8,14 @@ export function buildCompetitionQuality(matches = [], modelPerformance = {}) {
     row.form += Number(match?.homeRecent?.gamesPlayed || match?.homeRecent?.recentMatches?.length || 0) >= 5 && Number(match?.awayRecent?.gamesPlayed || match?.awayRecent?.recentMatches?.length || 0) >= 5 ? 1 : 0;
     row.lineups += match?.lineupSummary?.confirmed ? 1 : 0;
     const profiles = [match?.homeTeamProfile, match?.awayTeamProfile];
-    const players = (profile) => Array.isArray(profile?.players) ? profile.players : Array.isArray(profile?.squad) ? profile.squad : [];
-    row.squads += profiles.every((profile) => Math.max(Number(profile?.playerCount || profile?.squadSize || 0), players(profile).length) >= 11) ? 1 : 0;
+    const players = (profile) => Array.isArray(profile?.players)
+      ? profile.players
+      : Array.isArray(profile?.squad)
+        ? profile.squad
+        : Array.isArray(profile?.squad?.players)
+          ? profile.squad.players
+          : [];
+    row.squads += profiles.every((profile) => Math.max(Number(profile?.playerCount || profile?.squadSize || profile?.squad?.playerCount || 0), players(profile).length) >= 11) ? 1 : 0;
     row.ratings += profiles.every((profile) => players(profile).some((player) => Number(player?.rating || 0) > 0)) ? 1 : 0;
     row.odds += match?.oddsAtPrediction || match?.odds?.home ? 1 : 0;
     const odds = match?.oddsAtPrediction || match?.odds;

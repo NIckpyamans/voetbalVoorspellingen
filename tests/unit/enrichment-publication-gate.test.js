@@ -45,4 +45,16 @@ describe("enrichment publication gate", () => {
     }));
     expect(evaluateEnrichmentPublication([], rows).next.postMatchStats.covered).toBe(0);
   });
+
+  it("recognizes nested squad players and their identities", () => {
+    const players = Array.from({ length: 11 }, (_, index) => ({ id: `player-${index}`, rating: 70 }));
+    const result = evaluateEnrichmentPublication([], [match("squad", {
+      homeTeamProfile: { squad: { playerCount: 11, fetchedAt: Date.now(), players } },
+      awayTeamProfile: { squad: { playerCount: 11, fetchedAt: Date.now(), players } },
+    })]);
+
+    expect(result.next.squads.covered).toBe(1);
+    expect(result.next.squadFreshness.covered).toBe(1);
+    expect(result.next.playerIdentities.covered).toBe(1);
+  });
 });

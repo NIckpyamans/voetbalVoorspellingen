@@ -11,4 +11,16 @@ describe("targeted repair queue", () => {
     expect(queue[0]).toMatchObject({ matchId: "m1", within24h: true });
     expect(queue[0].missing).toEqual(expect.arrayContaining(["h2h", "form", "lineups", "odds"]));
   });
+
+  it("does not schedule nested squad profiles for repair", () => {
+    const players = Array.from({ length: 11 }, (_, index) => ({ id: `player-${index}` }));
+    const queue = buildTargetedRepairQueue([{
+      id: "m2", league: "League", kickoff: "2026-09-02T20:00:00Z", homeTeamName: "A", awayTeamName: "B",
+      homeTeamProfile: { squad: { playerCount: 11, players } },
+      awayTeamProfile: { squad: { playerCount: 11, players } },
+    }], { now: Date.parse("2026-08-31T08:00:00Z") });
+
+    expect(queue[0].missing).not.toContain("squads");
+    expect(queue[0].missing).not.toContain("playerIdentities");
+  });
 });

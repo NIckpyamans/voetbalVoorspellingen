@@ -20,17 +20,19 @@ function hasPostMatchStats(match) {
 }
 
 function profilePlayers(profile) {
-  return Array.isArray(profile?.players) ? profile.players : Array.isArray(profile?.squad) ? profile.squad : [];
+  if (Array.isArray(profile?.players)) return profile.players;
+  if (Array.isArray(profile?.squad)) return profile.squad;
+  return Array.isArray(profile?.squad?.players) ? profile.squad.players : [];
 }
 
 function hasSquad(match) {
-  return [match?.homeTeamProfile, match?.awayTeamProfile].every((profile) => Math.max(Number(profile?.squadSize || profile?.playerCount || 0), profilePlayers(profile).length) >= 11);
+  return [match?.homeTeamProfile, match?.awayTeamProfile].every((profile) => Math.max(Number(profile?.squadSize || profile?.playerCount || profile?.squad?.playerCount || 0), profilePlayers(profile).length) >= 11);
 }
 
 function hasFreshSquad(match, now = Date.now()) {
   const maxAgeMs = 14 * 24 * 60 * 60 * 1000;
   return hasSquad(match) && [match?.homeTeamProfile, match?.awayTeamProfile].every((profile) => {
-    const checkedAt = Number(profile?.rosterSourceCheckedAt || profile?.fetchedAt || 0) || Date.parse(profile?.fetchedAt || profile?.checkedAt || "");
+    const checkedAt = Number(profile?.rosterSourceCheckedAt || profile?.fetchedAt || profile?.squad?.rosterSourceCheckedAt || profile?.squad?.fetchedAt || 0) || Date.parse(profile?.fetchedAt || profile?.checkedAt || profile?.squad?.fetchedAt || profile?.squad?.checkedAt || "");
     return Number.isFinite(checkedAt) && checkedAt > 0 && now - checkedAt <= maxAgeMs;
   });
 }

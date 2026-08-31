@@ -7,8 +7,14 @@ function missingFields(match) {
   if (!match?.lineupSummary?.confirmed) fields.push("lineups");
   if (!match?.oddsAtPrediction && !match?.odds?.home) fields.push("odds");
   const profiles = [match?.homeTeamProfile, match?.awayTeamProfile];
-  const players = (profile) => Array.isArray(profile?.players) ? profile.players : Array.isArray(profile?.squad) ? profile.squad : [];
-  if (!profiles.every((profile) => Math.max(Number(profile?.playerCount || profile?.squadSize || 0), players(profile).length) >= 11)) fields.push("squads");
+  const players = (profile) => Array.isArray(profile?.players)
+    ? profile.players
+    : Array.isArray(profile?.squad)
+      ? profile.squad
+      : Array.isArray(profile?.squad?.players)
+        ? profile.squad.players
+        : [];
+  if (!profiles.every((profile) => Math.max(Number(profile?.playerCount || profile?.squadSize || profile?.squad?.playerCount || 0), players(profile).length) >= 11)) fields.push("squads");
   if (!profiles.every((profile) => players(profile).length >= 11 && players(profile).filter((player) => player?.id || player?.playerId || player?.providerId || player?.sourceId).length >= Math.min(11, players(profile).length))) fields.push("playerIdentities");
   const odds = match?.oddsAtPrediction || match?.odds;
   const oddsCapturedAt = Date.parse(odds?.capturedAt || odds?.prematchCapturedAt || "");
