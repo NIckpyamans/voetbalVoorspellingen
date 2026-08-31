@@ -12040,7 +12040,11 @@ async function main() {
         },
         sourceAsOf,
         oddsAtPrediction,
-        oddsProviderStatus: oddsCapture?.status || "not_configured",
+        oddsProviderStatus: oddsAtPrediction
+          ? (oddsCapture?.status || "available")
+          : String(leagueInfo.label || "").startsWith("Europe -")
+            ? "model_only_no_timestamped_odds"
+            : (oddsCapture?.status || "not_configured"),
         oddsProviderDiagnostics: oddsCapture,
         marketCalibration: prediction.modelEdges?.marketCalibration || null,
         learningSummary: prediction.modelEdges?.learningEdge || null,
@@ -12100,7 +12104,11 @@ async function main() {
         sourceAsOf,
         odds: oddsAtPrediction,
         oddsAtPrediction,
-        oddsProviderStatus: oddsCapture?.status || "not_configured",
+        oddsProviderStatus: oddsAtPrediction
+          ? (oddsCapture?.status || "available")
+          : String(leagueInfo.label || "").startsWith("Europe -")
+            ? "model_only_no_timestamped_odds"
+            : (oddsCapture?.status || "not_configured"),
         oddsProviderDiagnostics: oddsCapture,
         marketCalibration: prediction.modelEdges?.marketCalibration || null,
         learningSummary: prediction.modelEdges?.learningEdge || null,
@@ -12304,6 +12312,19 @@ async function main() {
   });
   store.targetedRepairSummary = summarizeRepairNeeds(store.targetedRepairQueue);
   store.competitionQuality = buildCompetitionQuality(currentWindowMatches, store.modelPerformance);
+  store.storagePolicy = {
+    schemaVersion: "storage-tier-policy-v1",
+    generatedAt: new Date().toISOString(),
+    immutableHistory: "cloudflare-r2",
+    servingFallback: "git-split-json",
+    relationalHotIndex: "neon-when-writable",
+    neonFailureMode: "skip-relational-write-and-preserve-r2-evidence",
+    replayCommand: "npm run db:critical-captures:replay",
+    retention: {
+      r2: "immutable snapshots, reviews, lineups and timestamped odds",
+      neon: "canonical identities, hot indexes and compact relational projections",
+    },
+  };
   writeJsonFile(path.join(ROOT, "monitor", "targeted-repair-queue.json"), {
     generatedAt: new Date().toISOString(),
     ...store.targetedRepairSummary,

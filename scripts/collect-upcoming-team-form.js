@@ -6,7 +6,7 @@ import { fetchTheSportsDbTeamForm } from "./providers/thesportsdb-team-form-prov
 import { fetchFotMobTeamForm } from "./providers/fotmob-team-form-provider.js";
 import { canonicalDedupeTeam } from "../shared/matchNormalization.js";
 import { loadSnapshotLedger } from "../shared/predictionSnapshotLedger.js";
-import { buildLocalTeamFormIndex, dayPayloadsFromSnapshotLedger, mergeLocalTeamForm } from "./worker/local-team-form-history.js";
+import { buildLocalTeamFormIndex, dayPayloadsFromHistorySummary, dayPayloadsFromSnapshotLedger, mergeLocalTeamForm } from "./worker/local-team-form-history.js";
 import { shouldRefreshTeamFormCache } from "./worker/team-form-cache-policy.js";
 
 const ROOT = process.cwd();
@@ -152,8 +152,10 @@ const historicalDays = fs.readdirSync(path.join(ROOT, "data", "days"))
   .filter(Boolean);
 const snapshotLedgerLoad = await loadSnapshotLedger({ root: ROOT });
 const ledgerDays = dayPayloadsFromSnapshotLedger(snapshotLedgerLoad.ledger);
-const localFormIndex = buildLocalTeamFormIndex([...historicalDays, ...ledgerDays], { now: Date.now() });
+const historyDays = dayPayloadsFromHistorySummary(readJson(path.join(ROOT, "data", "history-summary.json"), {}));
+const localFormIndex = buildLocalTeamFormIndex([...historicalDays, ...ledgerDays, ...historyDays], { now: Date.now() });
 report.immutableLedgerMatches = ledgerDays.reduce((sum, day) => sum + day.matches.length, 0);
+report.immutableHistorySummaryMatches = historyDays.reduce((sum, day) => sum + day.matches.length, 0);
 report.r2LedgerAvailable = Boolean(snapshotLedgerLoad.sources.r2?.available);
 report.r2LedgerError = snapshotLedgerLoad.sources.r2?.error || null;
 

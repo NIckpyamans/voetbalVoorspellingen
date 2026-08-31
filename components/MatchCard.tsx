@@ -924,11 +924,27 @@ function DataQualitySnapshot({ match, prediction }: { match: any; prediction: an
   const oddsStatus =
     Number(marketCalibration?.closingCoverage || 0) >= 0.2 || (Array.isArray(marketCalibration?.bookmakerSignals) && marketCalibration.bookmakerSignals.length)
       ? "markt deels gevuld"
+      : oddsProviderStatus === "model_only_no_timestamped_odds"
+        ? "model-only, geen tijdsodds"
       : oddsProviderStatus === "seasonal_unavailable"
         ? "providercompetitie tijdelijk niet actief"
         : "geen actuele odds";
   const h2hStatus = h2hPlayed >= 3 ? `${h2hPlayed} duels` : h2hPlayed > 0 ? `${h2hPlayed} duel, dun` : "H2H ontbreekt";
   const lineupStatus = lineup.confirmed ? "bevestigd" : lineup.projected ? "voorspeld" : "open";
+  const latestEvidenceAt = [
+    match.lineupCapturedAt,
+    lineup.capturedAt,
+    match.oddsCapturedAt,
+    match.updatedAt,
+    match.sourceAsOf?.fixture,
+    prediction.generatedAt,
+    match.predictionGeneratedAt,
+  ].filter(Boolean).sort((left: any, right: any) => Date.parse(String(right)) - Date.parse(String(left)))[0];
+  const predictionMoment = lineup.confirmed
+    ? `late herberekening ${lineup.captureTiming || lineup.captureWindow || "na lineup"}`
+    : prediction.generatedAt || match.predictionGeneratedAt
+      ? "ochtend/prematch"
+      : "moment onbekend";
 
   if (percent == null && !missing.length && !qualityGate && !sourceReliability) return null;
 
@@ -961,6 +977,10 @@ function DataQualitySnapshot({ match, prediction }: { match: any; prediction: an
         <Badge label="Lineup" value={lineupStatus} tone={lineup.confirmed ? "green" : lineup.projected ? "amber" : "slate"} />
         <Badge label="H2H" value={h2hStatus} tone={h2hPlayed >= 3 ? "green" : "amber"} />
         <Badge label="Bron" value={sourceReliability?.label || "-"} tone={sourceReliability?.score >= 0.54 ? "green" : "amber"} />
+      </div>
+      <div className="mt-2 flex flex-wrap gap-1 text-[8px] text-slate-400">
+        <span className="rounded-full bg-slate-900/70 px-2 py-0.5">Voorspelling: <b className="text-white">{predictionMoment}</b></span>
+        <span className="rounded-full bg-slate-900/70 px-2 py-0.5">Laatste bewijs: <b className="text-white">{latestEvidenceAt ? new Date(latestEvidenceAt).toLocaleString("nl-NL") : "onbekend"}</b></span>
       </div>
       <div className="mt-2 flex flex-wrap gap-1">
         {[...missing.slice(0, 4), ...reasons.slice(0, Math.max(0, 4 - missing.length))].map((item: any) => (

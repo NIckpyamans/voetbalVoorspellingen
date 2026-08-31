@@ -25,13 +25,14 @@ describe("competition quality", () => {
     });
 
     expect(quality).toHaveLength(1);
-    expect(quality[0].coverage).toEqual({ h2h: 1, form: 1, confirmedLineups: 1, odds: 1 });
-    expect(quality[0].performance).toEqual({
+    expect(quality[0].coverage).toMatchObject({ h2h: 1, form: 1, confirmedLineups: 1, odds: 1 });
+    expect(quality[0].performance).toMatchObject({
       evaluations: 42,
       outcomeHitRate: 0.571,
       brierScore: 0.214,
       exactHitRate: 0.119,
       roi: 1.6,
     });
+    expect(quality[0]).toMatchObject({ modelReady: false, modelReadyReason: "minder dan 100 evaluaties" });
   });
 });

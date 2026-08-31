@@ -63,7 +63,7 @@ export function pct(part: number, total: number) {
   return total > 0 ? Math.round((part / total) * 100) : 0;
 }
 
-export function buildLeaguePerformance(items: DashboardHistoryItem[], minSample = 10) {
+export function buildLeaguePerformance(items: DashboardHistoryItem[], minSample = 50) {
   const active = new Set(ACTIVE_COMPETITIONS);
   const trustworthy = items.filter(
     (item) =>

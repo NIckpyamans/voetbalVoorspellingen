@@ -6,6 +6,15 @@ function missingFields(match) {
   if (Number(match?.homeRecent?.gamesPlayed || match?.homeRecent?.recentMatches?.length || 0) < 5 || Number(match?.awayRecent?.gamesPlayed || match?.awayRecent?.recentMatches?.length || 0) < 5) fields.push("form");
   if (!match?.lineupSummary?.confirmed) fields.push("lineups");
   if (!match?.oddsAtPrediction && !match?.odds?.home) fields.push("odds");
+  const profiles = [match?.homeTeamProfile, match?.awayTeamProfile];
+  const players = (profile) => Array.isArray(profile?.players) ? profile.players : Array.isArray(profile?.squad) ? profile.squad : [];
+  if (!profiles.every((profile) => Math.max(Number(profile?.playerCount || profile?.squadSize || 0), players(profile).length) >= 11)) fields.push("squads");
+  if (!profiles.every((profile) => players(profile).length >= 11 && players(profile).filter((player) => player?.id || player?.playerId || player?.providerId || player?.sourceId).length >= Math.min(11, players(profile).length))) fields.push("playerIdentities");
+  const odds = match?.oddsAtPrediction || match?.odds;
+  const oddsCapturedAt = Date.parse(odds?.capturedAt || odds?.prematchCapturedAt || "");
+  if (odds && !(Number.isFinite(oddsCapturedAt) && oddsCapturedAt < Date.parse(match?.kickoff || ""))) fields.push("timestampedOdds");
+  const conflicts = match?.providerDiagnostics?.conflicts || match?.sourceConflicts || [];
+  if (Array.isArray(conflicts) && conflicts.some((conflict) => !conflict?.resolved)) fields.push("providerConflicts");
   const stats = match?.postMatchStats || match?.liveStats;
   const usableStats = stats && !/^missing|unknown$/i.test(String(stats?.source || "")) && Boolean(stats?.events?.length || stats?.referee || [stats?.home?.shots, stats?.away?.shots].some((value) => Number.isFinite(Number(value))));
   if (FINAL.has(String(match?.status || "").toUpperCase()) && !usableStats) fields.push("postMatchStats");
@@ -32,6 +41,8 @@ export function buildTargetedRepairQueue(matches = [], options = {}) {
       homeTeam: match?.homeTeamName,
       awayTeam: match?.awayTeamName,
       missing,
+      providerAttempts: match?.providerDiagnostics?.attempts || null,
+      retryReason: match?.providerDiagnostics?.lastFailure || null,
       within24h,
       priority,
     };

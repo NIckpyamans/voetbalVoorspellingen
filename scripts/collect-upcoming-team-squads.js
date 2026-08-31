@@ -100,6 +100,7 @@ function mergePlayers(existing, incoming) {
     const name = String(player?.name || "").trim();
     if (!name) continue;
     if (/coach|manager|trainer|staff/i.test(String(player?.position || ""))) continue;
+    if (/departed|left club|retired|loaned out|verhuurd|vertrokken|gestopt|inactive/i.test(String(player?.status || player?.availability || ""))) continue;
     const key = normalize(name);
     const current = byName.get(key) || {};
     byName.set(key, {
@@ -117,7 +118,12 @@ function mergePlayers(existing, incoming) {
       sources: [...new Set([...(current.sources || []), ...(player.sources || []), player.source].filter(Boolean))],
     });
   }
-  return [...byName.values()].sort((left, right) => String(left.position).localeCompare(String(right.position)) || left.name.localeCompare(right.name)).slice(0, 60);
+  return [...byName.values()].sort((left, right) =>
+    Number(right.rating || 0) - Number(left.rating || 0) ||
+    Number(right.marketValueEur || 0) - Number(left.marketValueEur || 0) ||
+    String(left.position).localeCompare(String(right.position)) ||
+    left.name.localeCompare(right.name)
+  ).slice(0, 60);
 }
 
 async function fetchJson(url, { ignoreRateLimit = false } = {}) {
@@ -390,6 +396,7 @@ for (const candidate of pending) {
     },
     playerCount: players.length,
     players,
+    starPlayer: players[0] || null,
     fetchedAt: new Date().toISOString(),
     rosterSourceCheckedAt: Date.now(),
     rosterBackfillVersion: "v6-current-snapshot-last-xi",

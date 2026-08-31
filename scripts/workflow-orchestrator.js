@@ -231,6 +231,12 @@ function plannedWorkflows() {
     (primarySlot && prematchOddsWindow.length) ||
     (primarySlot && hour % 3 === 2 && openingOddsWindow.length)
   ) workflows.push("free-prematch-odds.yml");
+  // De orchestrator draait ieder halfuur. Alleen gerichte openstaande velden
+  // worden aangeboden; de onderliggende caches en providerbudgetten bepalen
+  // of daarvoor werkelijk een externe request nodig is.
+  if (Number(urgentRepairFields.form || 0) > 0) workflows.push("form-enrichment.yml");
+  if (Number(urgentRepairFields.h2h || 0) > 0 && !providerQuota.apiFootballH2h.active) workflows.push("h2h-enrichment.yml");
+  if (Number(urgentRepairFields.squads || 0) > 0 || Number(urgentRepairFields.playerIdentities || 0) > 0) workflows.push("team-squad-enrichment.yml");
 
   // Iedere wedstrijd krijgt prospectief minimaal een immutable pre-match
   // snapshot. Dit voorkomt dat later alleen een current-prediction fallback
@@ -239,8 +245,8 @@ function plannedWorkflows() {
 
   if (primarySlot) {
     if (dataNeeds.calendar || hour % 4 === 0) workflows.push("week-ahead-fixtures.yml");
-    if (dataNeeds.form && (hour % 4 === 0 || (Number(urgentRepairFields.form || 0) > 0 && hour % 2 === 0))) workflows.push("form-enrichment.yml");
-    if (dataNeeds.h2h && (hour % 6 === 0 || (Number(urgentRepairFields.h2h || 0) > 0 && hour % 3 === 0))) workflows.push("h2h-enrichment.yml");
+    if (dataNeeds.form && hour % 4 === 0) workflows.push("form-enrichment.yml");
+    if (dataNeeds.h2h && hour % 6 === 0) workflows.push("h2h-enrichment.yml");
     if (dataNeeds.squads && hour % 6 === 2) workflows.push("team-squad-enrichment.yml");
     if (dataNeeds.sportmonks && hour % 6 === 3) workflows.push("sportmonks-fixture-mapping.yml");
     if (hour === 2) workflows.push("dashboard-cache-r2.yml", "friendly-discovery.yml", "post-match-enrichment.yml");

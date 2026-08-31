@@ -89,23 +89,32 @@ const DataIntegrityView: React.FC = () => {
           </span>
         </div>
         <div className="mt-4 overflow-x-auto">
-          <table className="w-full min-w-[780px] text-left text-[9px]">
-            <thead className="text-slate-500"><tr><th className="p-2">Competitie</th><th>H2H</th><th>Vorm</th><th>Lineup</th><th>Odds</th><th>1X2</th><th>Brier</th><th>Exact</th><th>Evaluaties</th></tr></thead>
+          <table className="w-full min-w-[1040px] text-left text-[9px]">
+            <thead className="text-slate-500"><tr><th className="p-2">Competitie</th><th>H2H</th><th>Vorm</th><th>Lineup</th><th>Selectie</th><th>Ratings</th><th>Odds tijd</th><th>1X2</th><th>Brier</th><th>Log-loss</th><th>Exact</th><th>Evaluaties</th><th>Status</th></tr></thead>
             <tbody>
               {(data.competitionQuality || []).map((item: any) => (
                 <tr key={item.league} className="border-t border-white/5 text-slate-300">
                   <td className="p-2 font-black text-white">{item.league}</td>
-                  <td>{pct(item.coverage?.h2h)}</td><td>{pct(item.coverage?.form)}</td><td>{pct(item.coverage?.confirmedLineups)}</td><td>{pct(item.coverage?.odds)}</td>
+                  <td>{pct(item.coverage?.h2h)}</td><td>{pct(item.coverage?.form)}</td><td>{pct(item.coverage?.confirmedLineups)}</td><td>{pct(item.coverage?.squads)}</td><td>{pct(item.coverage?.ratings)}</td><td>{pct(item.coverage?.timestampedOdds)}</td>
                   <td>{item.performance?.outcomeHitRate == null ? "-" : pct(item.performance.outcomeHitRate)}</td>
                   <td>{item.performance?.brierScore == null ? "-" : Number(item.performance.brierScore).toFixed(3)}</td>
+                  <td>{item.performance?.logLoss == null ? "-" : Number(item.performance.logLoss).toFixed(3)}</td>
                   <td>{item.performance?.exactHitRate == null ? "-" : pct(item.performance.exactHitRate)}</td>
                   <td>{number(item.performance?.evaluations)}</td>
+                  <td title={item.modelReadyReason} className={item.modelReady ? "font-black text-emerald-300" : "text-amber-300"}>{item.modelReady ? "modelrijp" : "shadow"}</td>
                 </tr>
               ))}
             </tbody>
           </table>
           {!(data.competitionQuality || []).length && <div className="rounded-2xl border border-white/5 p-4 text-slate-500">De volgende worker-run bouwt dit overzicht op.</div>}
         </div>
+        {data.storagePolicy && (
+          <div className="mt-3 flex flex-wrap gap-2 text-[8px] text-slate-400">
+            <span className="rounded-full bg-slate-950/50 px-2 py-1">Historie: <b className="text-cyan-200">{data.storagePolicy.immutableHistory}</b></span>
+            <span className="rounded-full bg-slate-950/50 px-2 py-1">Fallback: <b className="text-cyan-200">{data.storagePolicy.servingFallback}</b></span>
+            <span className="rounded-full bg-slate-950/50 px-2 py-1">Relationeel: <b className="text-cyan-200">{data.storagePolicy.relationalHotIndex}</b></span>
+          </div>
+        )}
       </section>
 
       <div className="grid gap-5 xl:grid-cols-[1.1fr_0.9fr]">

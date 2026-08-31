@@ -30,4 +30,11 @@ describe("match normalization", () => {
     expect(matches).toHaveLength(1);
     expect(matches[0].score).toBe("2-2");
   });
+
+  it("maps Dutch U21 aliases to Jong teams without merging the first team", () => {
+    expect(canonicalDedupeTeam("FC Utrecht U21")).toBe("jong utrecht");
+    expect(canonicalDedupeTeam("Jong FC Utrecht")).toBe("jong utrecht");
+    expect(canonicalDedupeTeam("Ajax U21")).toBe("jong ajax");
+    expect(canonicalDedupeTeam("Ajax")).toBe("ajax");
+  });
 });

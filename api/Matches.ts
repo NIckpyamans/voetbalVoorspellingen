@@ -162,6 +162,13 @@ function baseDetailMatch(match: any) {
     awayPos: match.awayPos,
     aggregate: match.aggregate,
     oddsProviderStatus: match.oddsProviderStatus || null,
+    dataSource: match.dataSource || null,
+    updatedAt: match.updatedAt || match.liveUpdatedAt || null,
+    sourceAsOf: match.sourceAsOf || null,
+    providerDiagnostics: match.providerDiagnostics || null,
+    predictionGeneratedAt: match.prediction?.generatedAt || match.predictionGeneratedAt || null,
+    lineupCapturedAt: match.lineupSummary?.capturedAt || null,
+    oddsCapturedAt: match.oddsAtPrediction?.capturedAt || match.odds?.capturedAt || null,
     review: match.review,
   };
 }
@@ -172,6 +179,8 @@ function compactPlayer(player: any) {
   const name = String(player.name || rawPlayer.name || "").trim();
   if (!name) return null;
   return {
+    id: player.id || rawPlayer.id || player.playerId || rawPlayer.playerId || null,
+    providerId: player.providerId || player.sourceId || rawPlayer.providerId || rawPlayer.sourceId || null,
     name,
     position: player.position || rawPlayer.position || null,
     shirtNumber: player.shirtNumber || player.jerseyNumber || rawPlayer.jerseyNumber || null,
@@ -484,6 +493,7 @@ export default async function handler(req: any, res: any) {
         enrichmentPublicationGate: meta.enrichmentPublicationGate || null,
         targetedRepairSummary: meta.targetedRepairSummary || null,
         competitionQuality: meta.competitionQuality || [],
+        storagePolicy: meta.storagePolicy || null,
         biweeklyDigest,
         dataContext,
         databaseIntegration,

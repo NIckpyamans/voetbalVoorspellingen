@@ -35,7 +35,7 @@ export function mergeStoredDuplicateMatch(current, incoming) {
   const objectRichness = (value) => value && typeof value === "object"
     ? Object.values(value).filter((item) => item != null && item !== "" && item !== 0 && (!Array.isArray(item) || item.length)).length
     : 0;
-  for (const field of ["postMatchStats", "liveStats", "homeSeasonStats", "awaySeasonStats", "refereeProfile", "aggregate", "sourceAsOf", "providerDiagnostics"]) {
+  for (const field of ["postMatchStats", "liveStats", "homeSeasonStats", "awaySeasonStats", "homeTeamProfile", "awayTeamProfile", "refereeProfile", "aggregate", "sourceAsOf", "providerDiagnostics", "oddsAtPrediction", "odds", "marketCalibration"]) {
     if (objectRichness(fallback?.[field]) > objectRichness(preferred?.[field])) preferred[field] = fallback[field];
   }
   for (const field of ["events", "goalEvents", "cards", "incidents"]) {

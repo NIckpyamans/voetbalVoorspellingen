@@ -2,6 +2,7 @@ import { describe, expect, it } from "vitest";
 import {
   buildLocalTeamFormIndex,
   dayPayloadsFromSnapshotLedger,
+  dayPayloadsFromHistorySummary,
   mergeLocalTeamForm,
   mergePersistedTeamFormCache,
 } from "../../scripts/worker/local-team-form-history.js";
@@ -35,6 +36,13 @@ describe("local completed fixture form history", () => {
     expect(days[0].matches[0]).toMatchObject({ homeTeamName: "Ajax", awayTeamName: "Twente", score: "2-1", status: "FT" });
   });
 
+  it("converts immutable review summaries into finished history", () => {
+    const days = dayPayloadsFromHistorySummary({ postMatchReviews: {
+      r1: { matchId: "m1", date: "2026-08-02", league: "League", homeTeamName: "Ajax", awayTeamName: "Twente", actualScore: "3-1" },
+    } });
+    expect(days[0].matches[0]).toMatchObject({ score: "3-1", status: "FT", homeTeamName: "Ajax" });
+  });
+
   it("does not turn missing final scores into a false 0-0 result", () => {
     const days = dayPayloadsFromSnapshotLedger({
       predictionSnapshots: { p1: { predictionId: "p1", matchId: "m1", date: "2026-08-01", homeTeam: "Ajax", awayTeam: "Twente" } },
@@ -64,6 +72,8 @@ describe("local completed fixture form history", () => {
     expect(profile.recentMatches).toHaveLength(2);
     expect(profile.source).toContain("local-finished-results");
     expect(profile.goalTiming).toMatchObject({ scoredGoals: 1, firstHalfScoringShare: 0 });
+    expect(profile).toMatchObject({ gamesPlayed: 2, weightingPolicy: "competitive=1,friendly=0.35" });
+    expect(profile.last10.weightedGames).toBe(1.35);
   });
 
   it("deduplicates the same fixture coming from different provider IDs", () => {

@@ -81,4 +81,14 @@ describe("fixture deduplication", () => {
     expect(predictions).toHaveLength(1);
     expect(predictions[0]).toMatchObject({ matchId: "fotmob", homeProb: 0.32 });
   });
+
+  it("retains the richer squad and timestamped odds evidence", () => {
+    const players = Array.from({ length: 11 }, (_, index) => ({ id: `p${index}`, name: `Player ${index}` }));
+    const rows = dedupeStoredMatches([
+      { id: "old", date: "2026-09-01", homeTeamName: "Ajax", awayTeamName: "Twente", homeTeamProfile: { players, playerCount: 11 }, oddsAtPrediction: { home: 2, draw: 3, away: 4, capturedAt: "2026-09-01T10:00:00Z" } },
+      { id: "new", date: "2026-09-01", homeTeamName: "Ajax", awayTeamName: "Twente", homeTeamProfile: { players: [] }, oddsAtPrediction: null },
+    ], options);
+    expect(rows[0].homeTeamProfile.playerCount).toBe(11);
+    expect(rows[0].oddsAtPrediction.capturedAt).toBe("2026-09-01T10:00:00Z");
+  });
 });

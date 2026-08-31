@@ -112,6 +112,24 @@ export function normalizeDedupeText(value) {
 
 export function canonicalDedupeTeam(value) {
   const normalized = normalizeDedupeText(value);
+  const dutchYouth = normalized.match(/^(?:jong\s+)?(.+?)(?:\s+u21)$/);
+  if (dutchYouth) {
+    const base = TEAM_DEDUPE_ALIASES[dutchYouth[1]] || dutchYouth[1];
+    const youthBase = {
+      ajax: "ajax",
+      az: "az",
+      "az alkmaar": "az",
+      psv: "psv",
+      utrecht: "utrecht",
+      "fc utrecht": "utrecht",
+    }[base];
+    if (youthBase) return `jong ${youthBase}`;
+  }
+  const dutchJong = normalized.match(/^jong\s+(.+)$/);
+  if (dutchJong) {
+    const base = TEAM_DEDUPE_ALIASES[dutchJong[1]] || dutchJong[1];
+    return `jong ${base.replace(/^fc\s+/, "")}`;
+  }
   return TEAM_DEDUPE_ALIASES[normalized] || normalized;
 }
 

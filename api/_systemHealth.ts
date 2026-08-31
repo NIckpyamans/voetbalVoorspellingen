@@ -264,6 +264,7 @@ export async function buildSystemHealth(mode = "health") {
       modelPerformance: meta?.modelPerformance || null,
       backtestSummary: meta?.backtestSummary || null,
       anomalyReport: meta?.anomalyReport || null,
+      storagePolicy: meta?.storagePolicy || null,
     },
     cache: {
       ttlMs: Number(process.env.DATA_CACHE_TTL_MS || 60_000),
