@@ -1,6 +1,6 @@
 # Upcoming H2H Backfill
 
-Laatst bijgewerkt: 2026-08-31T13:47:47.224Z
+Laatst bijgewerkt: 2026-08-31T14:11:06.876Z
 Gecontroleerd: 32
 Gevuld: 1
 Geen directe H2H: 31
@@ -10,7 +10,7 @@ Errors: 0
 API-Football blijft quota-bewust geblokkeerd totdat de acceptatietest slaagt; ESPN is wel gecontroleerd voor alle kandidaten.
 
 ## Gevuld
-- 2026-09-06: Greuther Fürth - FC Heidenheim (2)
+- 2026-09-06: Troyes - Strasbourg (2)
 
 ## Geen Directe H2H
 - 2026-08-31: Jong AZ Alkmaar - Jong FC Utrecht (provider_acceptance_blocked)
@@ -28,7 +28,7 @@ API-Football blijft quota-bewust geblokkeerd totdat de acceptatietest slaagt; ES
 - 2026-09-04: Heracles - De Graafschap (provider_acceptance_blocked)
 - 2026-09-04: RKC Waalwijk - NAC Breda (provider_acceptance_blocked)
 - 2026-09-04: Vitesse - TOP Oss (provider_acceptance_blocked)
-- 2026-09-05: Wolfsburg - Energie Cottbus (provider_acceptance_blocked)
+- 2026-09-05: Holstein Kiel - 1. FC Nürnberg (provider_acceptance_blocked)
 - 2026-09-05: Newcastle United - AFC Bournemouth (provider_acceptance_blocked)
 - 2026-09-05: Bayer Leverkusen - Union Berlin (provider_acceptance_blocked)
 - 2026-09-05: FC Dordrecht - Jong AZ Alkmaar (provider_acceptance_blocked)
