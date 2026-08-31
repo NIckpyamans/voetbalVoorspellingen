@@ -50,6 +50,7 @@ import {
   fetchFbrefSnapshot as fetchFbrefSnapshotSource,
   fetchOpenfootballProfile as fetchOpenfootballProfileSource,
   resolveEspnTeamLogoByName as resolveEspnTeamLogoByNameSource,
+  selectOpenLigaDbFinalScore,
   fetchText,
   fetchUnderstatSnapshot as fetchUnderstatSnapshotSource,
   fetchWithTimeout,
@@ -2181,6 +2182,8 @@ const TEAM_ALIAS_GROUPS = [
   ["borussia dortmund", "dortmund"],
   ["rb leipzig", "rasenballsport leipzig", "leipzig"],
   ["fc st pauli", "st pauli"],
+  ["sv darmstadt 98", "darmstadt 98", "darmstadt"],
+  ["1 fc magdeburg", "fc magdeburg", "magdeburg"],
   ["sc freiburg", "freiburg", "sport club freiburg"],
   ["werder bremen", "sv werder bremen"],
   ["ajax", "ajax amsterdam", "afc ajax"],
@@ -4861,12 +4864,14 @@ async function fetchOpenLigaDbScheduledEvents(dateISO) {
         if (seen.has(uniqueKey)) continue;
         seen.add(uniqueKey);
 
-        const homeGoals = toNumber(row?.matchResults?.[0]?.pointsTeam1);
-        const awayGoals = toNumber(row?.matchResults?.[0]?.pointsTeam2);
-        const finished = Boolean(row?.matchIsFinished) || (Number.isFinite(homeGoals) && Number.isFinite(awayGoals));
+        const finished = Boolean(row?.matchIsFinished);
+        const finalScore = selectOpenLigaDbFinalScore(row?.matchResults, finished);
+        const homeGoals = finalScore.home;
+        const awayGoals = finalScore.away;
 
         fallbackEvents.push({
           id: `oldb-${row?.matchID || uniqueKey}`,
+          leagueLabel,
           startTimestamp: Math.floor(new Date(kickoffText).getTime() / 1000),
           homeTeam: {
             id: "",

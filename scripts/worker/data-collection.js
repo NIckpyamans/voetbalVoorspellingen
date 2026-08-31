@@ -34,6 +34,21 @@ export async function fetchText(url) {
   }
 }
 
+export function selectOpenLigaDbFinalScore(results, finished = false) {
+  if (!finished || !Array.isArray(results)) return { home: null, away: null };
+  const finalResult = results.find((result) =>
+    /after90minutes|end|final/i.test(`${result?.resultTypeKind || ""} ${result?.resultName || ""}`)
+  ) || [...results].sort((left, right) =>
+    Number(right?.resultOrderID || 0) - Number(left?.resultOrderID || 0)
+  )[0];
+  const home = Number(finalResult?.pointsTeam1);
+  const away = Number(finalResult?.pointsTeam2);
+  return {
+    home: Number.isFinite(home) ? home : null,
+    away: Number.isFinite(away) ? away : null,
+  };
+}
+
 export function createSafeFetch({ sofaBase, sofaFetchCircuit, sportsDbSquadFetchState, logger = console } = {}) {
   return async function safeFetch(url) {
     const isSofaRequest = String(url || "").startsWith(sofaBase || "");
@@ -621,9 +636,10 @@ export function parseFotmobScheduledEvents(payload, dateISO, deps) {
   );
   const events = [];
   for (const league of Array.isArray(payload?.leagues) ? payload.leagues : []) {
-    // Qualifying competitions receive a new FotMob id each season. Name routing
-    // keeps those fixtures visible without weakening the tracked competition filter.
+    // FotMob can expose a season-specific id while primaryId remains the stable
+    // competition id (for example Eredivisie 937276 -> 57 in 2026/27).
     const mappedLeagueLabel = competitionById.get(Number(league?.id)) ||
+      competitionById.get(Number(league?.primaryId)) ||
       competitionByName.get(deps.normalizeName(league?.name)) || null;
     const isFriendly = /club friendl/i.test(String(league?.name || ""));
     if (!mappedLeagueLabel && !isFriendly) continue;

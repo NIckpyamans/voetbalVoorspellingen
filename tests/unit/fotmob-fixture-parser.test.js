@@ -101,4 +101,45 @@ describe("FotMob fixture parser", () => {
       awayScore: { current: 3 },
     });
   });
+
+  it("maps season-specific domestic ids through FotMob primaryId", () => {
+    const domesticPayload = {
+      leagues: [{
+        id: 937276,
+        primaryId: 57,
+        name: "Eredivisie",
+        matches: [
+          {
+            id: 5781726,
+            statusId: 6,
+            status: { utcTime: "2026-08-30T10:15:00.000Z", finished: true },
+            home: { id: 9908, name: "FC Utrecht", score: 1 },
+            away: { id: 8640, name: "PSV Eindhoven", score: 6 },
+          },
+          {
+            id: 5781730,
+            statusId: 6,
+            status: { utcTime: "2026-08-30T14:45:00.000Z", finished: true },
+            home: { id: 6414, name: "Telstar", score: 0 },
+            away: { id: 8593, name: "Ajax", score: 4 },
+          },
+        ],
+      }],
+    };
+    const events = parseFotmobScheduledEvents(domesticPayload, "2026-08-30", {
+      ...deps,
+      toAmsterdamDateKey: () => "2026-08-30",
+    });
+    expect(events).toHaveLength(2);
+    expect(events[1]).toMatchObject({
+      id: "fotmob-5781730",
+      leagueLabel: "Netherlands - Eredivisie",
+      status: { type: "finished" },
+      homeTeam: { name: "Telstar" },
+      awayTeam: { name: "Ajax" },
+      homeScore: { current: 0 },
+      awayScore: { current: 4 },
+      fotmobMeta: { leagueId: 937276 },
+    });
+  });
 });
