@@ -1,22 +1,28 @@
 # Upcoming H2H Backfill
 
-Laatst bijgewerkt: 2026-08-31T15:00:00.740Z
+Laatst bijgewerkt: 2026-08-31T20:14:26.334Z
 Gecontroleerd: 24
-Gevuld: 0
-Geen directe H2H: 24
+Gevuld: 7
+Geen directe H2H: 17
 Errors: 0
 
 ## Aanbeveling
 API-Football blijft quota-bewust geblokkeerd totdat de acceptatietest slaagt; ESPN is wel gecontroleerd voor alle kandidaten.
 
 ## Gevuld
+- 2026-09-01: Preston North End - Bristol City (5)
+- 2026-09-01: Swansea City - Watford (5)
+- 2026-09-01: Birmingham City - Southampton (4)
+- 2026-09-01: Stoke City - Norwich City (5)
+- 2026-09-02: West Bromwich Albion - Charlton Athletic (2)
+- 2026-09-02: Burnley - Middlesbrough (4)
+- 2026-09-05: Stoke City - Charlton Athletic (2)
 
 ## Geen Directe H2H
-- 2026-08-31: Jong AZ Alkmaar - Jong FC Utrecht (provider_acceptance_blocked)
-- 2026-08-31: Jong PSV - Jong Ajax (provider_acceptance_blocked)
+- 2026-09-01: Sheffield United - Bolton Wanderers (provider_acceptance_blocked)
+- 2026-09-04: Sparta Rotterdam - PEC Zwolle (provider_acceptance_blocked)
 - 2026-09-04: Olympique Lyonnais - Auxerre (provider_acceptance_blocked)
 - 2026-09-04: Arminia Bielefeld - St. Pauli (provider_acceptance_blocked)
-- 2026-09-04: Sparta Rotterdam - PEC Zwolle (provider_acceptance_blocked)
 - 2026-09-04: Almere City FC - Jong Ajax (provider_acceptance_blocked)
 - 2026-09-04: Dunkerque - Clermont Foot (provider_acceptance_blocked)
 - 2026-09-04: VfB Stuttgart - 1. FC Köln (provider_acceptance_blocked)
@@ -27,8 +33,6 @@ API-Football blijft quota-bewust geblokkeerd totdat de acceptatietest slaagt; ES
 - 2026-09-04: Heracles - De Graafschap (provider_acceptance_blocked)
 - 2026-09-04: RKC Waalwijk - NAC Breda (provider_acceptance_blocked)
 - 2026-09-04: Vitesse - TOP Oss (provider_acceptance_blocked)
-- 2026-09-05: Hoffenheim - Borussia Dortmund (provider_acceptance_blocked)
-- 2026-09-05: Nottingham Forest - Tottenham Hotspur (provider_acceptance_blocked)
-- 2026-09-05: Holstein Kiel - 1. FC Nürnberg (provider_acceptance_blocked)
-- 2026-09-05: FC Dordrecht - Jong AZ Alkmaar (provider_acceptance_blocked)
-- 2026-09-05: Nice - Le Mans (provider_acceptance_blocked)
+- 2026-09-05: Willem II - Excelsior (provider_acceptance_blocked)
+- 2026-09-05: Newcastle United - AFC Bournemouth (provider_acceptance_blocked)
+- 2026-09-05: Bayer Leverkusen - Union Berlin (provider_acceptance_blocked)
