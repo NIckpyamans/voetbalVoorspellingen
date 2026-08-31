@@ -60,6 +60,33 @@ function fixtureEvidenceKey(match) {
   return String(match?.id || `${String(match?.date || match?.kickoff || "").slice(0, 10)}|${match?.homeTeamName || ""}|${match?.awayTeamName || ""}`);
 }
 
+function fixtureIdentityKey(match) {
+  const clean = (value) => String(value || "").normalize("NFKD").replace(/[\u0300-\u036f]/g, "").toLowerCase().replace(/[^a-z0-9]/g, "");
+  return `${String(match?.date || match?.kickoff || "").slice(0, 10)}|${clean(match?.homeTeamName)}|${clean(match?.awayTeamName)}`;
+}
+
+function profileEvidenceScore(profile) {
+  const players = profilePlayers(profile);
+  const identified = players.filter((player) => player?.id || player?.playerId || player?.providerId || player?.sourceId).length;
+  const rated = players.filter((player) => Number(player?.rating || 0) > 0).length;
+  return players.length * 100 + identified * 10 + rated;
+}
+
+function preserveProfileEvidence(previous, next) {
+  if (!previous) return next;
+  if (!next) return previous;
+  if (profileEvidenceScore(next) >= profileEvidenceScore(previous)) return next;
+  if (previous?.squad && !Array.isArray(previous.squad)) return { ...next, squad: previous.squad };
+  return {
+    ...next,
+    players: previous.players,
+    playerCount: previous.playerCount,
+    squadSize: previous.squadSize,
+    rosterSourceCheckedAt: previous.rosterSourceCheckedAt,
+    fetchedAt: previous.fetchedAt,
+  };
+}
+
 const EVIDENCE_FIELDS = {
   finalScores: hasScore,
   h2h: (match) => Number(match?.h2h?.played || match?.h2h?.results?.length || 0) > 0,
@@ -72,6 +99,40 @@ const EVIDENCE_FIELDS = {
   providerConflicts: hasNoUnresolvedProviderConflict,
   postMatchStats: hasPostMatchStats,
 };
+
+export function preserveEnrichmentEvidence(previousMatches = [], nextMatches = []) {
+  const byId = new Map(rows(previousMatches).filter((match) => match?.id).map((match) => [String(match.id), match]));
+  const byIdentity = new Map(rows(previousMatches).map((match) => [fixtureIdentityKey(match), match]));
+  const recentCount = (value) => Number(value?.gamesPlayed || value?.recentMatches?.length || 0);
+  const h2hCount = (value) => Number(value?.played || value?.results?.length || 0);
+
+  return rows(nextMatches).map((match) => {
+    const previous = byId.get(String(match?.id || "")) || byIdentity.get(fixtureIdentityKey(match));
+    if (!previous) return match;
+    const restored = { ...match };
+    if (h2hCount(previous.h2h) > h2hCount(restored.h2h)) restored.h2h = previous.h2h;
+    if (recentCount(previous.homeRecent) > recentCount(restored.homeRecent)) restored.homeRecent = previous.homeRecent;
+    if (recentCount(previous.awayRecent) > recentCount(restored.awayRecent)) restored.awayRecent = previous.awayRecent;
+    if (previous?.lineupSummary?.confirmed && !restored?.lineupSummary?.confirmed) restored.lineupSummary = previous.lineupSummary;
+    restored.homeTeamProfile = preserveProfileEvidence(previous.homeTeamProfile, restored.homeTeamProfile);
+    restored.awayTeamProfile = preserveProfileEvidence(previous.awayTeamProfile, restored.awayTeamProfile);
+    if (hasTimestampedOdds(previous) && !hasTimestampedOdds(restored)) {
+      restored.oddsAtPrediction = previous.oddsAtPrediction;
+      restored.odds = previous.odds;
+    }
+    if (hasPostMatchStats(previous) && !hasPostMatchStats(restored)) {
+      restored.postMatchStats = previous.postMatchStats;
+      restored.liveStats = previous.liveStats;
+    }
+    if (hasScore(previous) && !hasScore(restored)) {
+      restored.status = previous.status;
+      restored.homeScore = previous.homeScore;
+      restored.awayScore = previous.awayScore;
+      restored.score = previous.score;
+    }
+    return restored;
+  });
+}
 
 export function summarizeEnrichmentCoverage(matches = []) {
   const all = rows(matches);
@@ -109,6 +170,7 @@ export function evaluateEnrichmentPublication(previousMatches, nextMatches, opti
     const nextMatch = nextByKey.get(fixtureEvidenceKey(previousMatch));
     if (!nextMatch) continue;
     for (const [field, predicate] of Object.entries(EVIDENCE_FIELDS)) {
+      if (field === "providerConflicts") continue;
       if (predicate(previousMatch) && !predicate(nextMatch)) evidenceLosses.push({ matchId: fixtureEvidenceKey(previousMatch), field });
     }
   }
@@ -116,7 +178,7 @@ export function evaluateEnrichmentPublication(previousMatches, nextMatches, opti
   if (previous.fixtures >= minimumSample && next.fixtures < previous.fixtures * (1 - maxRelativeDrop)) {
     regressions.push({ field: "fixtures", before: previous.fixtures, after: next.fixtures });
   }
-  for (const field of ["finalScores", "h2h", "form", "lineups", "squads", "squadFreshness", "playerIdentities", "timestampedOdds", "providerConflicts", "postMatchStats"]) {
+  for (const field of ["finalScores", "h2h", "form", "lineups", "squads", "squadFreshness", "playerIdentities", "timestampedOdds", "postMatchStats"]) {
     const before = previous[field];
     const after = next[field];
     if (before.total < minimumSample || before.covered === 0) continue;

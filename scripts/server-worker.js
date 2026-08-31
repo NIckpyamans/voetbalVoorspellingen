@@ -102,7 +102,7 @@ import {
   dedupeStoredPredictions as dedupeFixturePredictions,
 } from "./worker/fixture-deduplication.js";
 import { assertFeaturePublication } from "./worker/feature-publication-gate.js";
-import { assertEnrichmentPublication } from "./worker/enrichment-publication-gate.js";
+import { assertEnrichmentPublication, preserveEnrichmentEvidence } from "./worker/enrichment-publication-gate.js";
 import { buildTargetedRepairQueue, summarizeRepairNeeds } from "./worker/targeted-repair-queue.js";
 import { buildCompetitionQuality } from "./worker/competition-quality.js";
 
@@ -12301,7 +12301,13 @@ async function main() {
   store.aiAdvice = buildAiRecommendations(store, today);
   store.competitionArchiveIndex = buildCompetitionArchiveIndex(store, today);
   store.teamSquadSummary = buildTeamSquadSummary(store);
-  const currentWindowMatches = dates.flatMap((date) => store.matches?.[date] || []);
+  const currentWindowMatches = preserveEnrichmentEvidence(
+    enrichmentBaselineMatches,
+    dates.flatMap((date) => store.matches?.[date] || []),
+  );
+  for (const date of dates) {
+    store.matches[date] = currentWindowMatches.filter((match) => String(match?.date || match?.kickoff || "").slice(0, 10) === date);
+  }
   store.enrichmentPublicationGate = assertEnrichmentPublication(enrichmentBaselineMatches, currentWindowMatches, {
     maxRelativeDrop: 0.15,
     minimumSample: 3,
