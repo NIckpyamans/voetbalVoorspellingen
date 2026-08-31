@@ -1,6 +1,6 @@
 # Upcoming H2H Backfill
 
-Laatst bijgewerkt: 2026-08-31T06:50:23.644Z
+Laatst bijgewerkt: 2026-08-31T07:00:06.508Z
 Gecontroleerd: 24
 Gevuld: 9
 Geen directe H2H: 15
@@ -17,22 +17,22 @@ API-Football blijft quota-bewust geblokkeerd totdat de acceptatietest slaagt; ES
 - 2026-09-04: Paris Saint-Germain - Monaco (5)
 - 2026-09-04: Laval - Red Star (4)
 - 2026-09-04: Pau - Sochaux (2)
-- 2026-09-05: Reims - Guingamp (2)
-- 2026-09-05: Fulham - Crystal Palace (5)
+- 2026-09-05: Lens - Lorient (5)
+- 2026-09-05: Utrecht - Go Ahead Eagles (5)
 
 ## Geen Directe H2H
 - 2026-08-31: Jong AZ Alkmaar - Jong FC Utrecht (provider_acceptance_blocked)
 - 2026-08-31: Jong PSV - Jong Ajax (provider_acceptance_blocked)
+- 2026-09-04: Olympique Lyonnais - Auxerre (provider_acceptance_blocked)
 - 2026-09-04: Arminia Bielefeld - St. Pauli (provider_acceptance_blocked)
 - 2026-09-04: Sparta Rotterdam - PEC Zwolle (provider_acceptance_blocked)
 - 2026-09-04: Almere City FC - Jong Ajax (provider_acceptance_blocked)
+- 2026-09-04: Dunkerque - Clermont Foot (provider_acceptance_blocked)
 - 2026-09-04: VfB Stuttgart - 1. FC Köln (provider_acceptance_blocked)
 - 2026-09-04: Ipswich Town - Liverpool (provider_acceptance_blocked)
 - 2026-09-04: Hannover 96 - Karlsruher SC (provider_acceptance_blocked)
 - 2026-09-04: FC Emmen - FC Volendam (provider_acceptance_blocked)
-- 2026-09-04: Olympique Lyonnais - Auxerre (provider_acceptance_blocked)
 - 2026-09-04: Helmond Sport - VVV-Venlo (provider_acceptance_blocked)
-- 2026-09-04: Dunkerque - Clermont Foot (provider_acceptance_blocked)
 - 2026-09-04: Heracles - De Graafschap (provider_acceptance_blocked)
 - 2026-09-04: RKC Waalwijk - NAC Breda (provider_acceptance_blocked)
 - 2026-09-04: Vitesse - TOP Oss (provider_acceptance_blocked)
