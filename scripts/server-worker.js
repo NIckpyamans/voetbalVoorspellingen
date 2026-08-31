@@ -10312,7 +10312,7 @@ function buildDataScoutReport(store, todayKey) {
   const todaysLive = todayMatches.filter((match) => ["LIVE", "HT"].includes(String(match?.status || "").toUpperCase()));
   const hasH2hProfile = (match) =>
     Number(match?.h2h?.played || 0) > 0 ||
-    Boolean(match?.h2h?.status || match?.h2h?.source || match?.h2hStatus);
+    (Array.isArray(match?.h2h?.results) && match.h2h.results.length > 0);
   const h2hFilled = todayMatches.filter(hasH2hProfile).length;
   const logoFilled = todayMatches.filter((match) => match?.homeLogo && match?.awayLogo).length;
   const outOfDayMatches = todayMatches.filter((match) => String(match?.date || "") !== String(todayKey)).length;
@@ -10419,7 +10419,7 @@ function buildDataScoutReport(store, todayKey) {
 
   return {
     lastScan: new Date().toISOString(),
-    cadence: "worker elke 10 minuten",
+    cadence: "centrale orchestrator bewaakt maximaal 150 minuten sinds de laatste worker-run",
     mode: "gratis databronnen, geen API-key verplicht",
     collected: {
       todayDate: todayKey,
