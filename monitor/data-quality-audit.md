@@ -1,10 +1,10 @@
 # Data Quality Audit
 
-Laatst bijgewerkt: 2026-08-31T11:08:44.932Z
+Laatst bijgewerkt: 2026-08-31T14:32:10.544Z
 Lookback: 45 dagen
 
 ## Scores
-- Wedstrijden: 677
+- Wedstrijden: 676
 - Oude wedstrijden: 303
 - Pending result backfills: 2
 - Ontbrekende oude scores: 0
@@ -23,10 +23,10 @@ Lookback: 45 dagen
 - Netherlands - Eredivisie: 6 duels, vorm 100%, H2H 33%, inzetbewijs 0%, lekvrije reviews 0% (0/0), stats 100%; gaten: h2h, confirmed_lineups, timestamped_odds, leak_free_reviews
 - Netherlands - Eerste Divisie: 113 duels, vorm 32%, H2H 9%, inzetbewijs 0%, lekvrije reviews 100% (20/20), stats 100%; gaten: form, h2h, confirmed_lineups, timestamped_odds
 - Germany - Bundesliga: 78 duels, vorm 92%, H2H 54%, inzetbewijs 0%, lekvrije reviews 100% (15/15), stats 80%; gaten: h2h, confirmed_lineups, timestamped_odds, goal_timeline
-- Germany - 2. Bundesliga: 21 duels, vorm 71%, H2H 19%, inzetbewijs 0%, lekvrije reviews 100% (9/9), stats 100%; gaten: form, h2h, confirmed_lineups, timestamped_odds
+- Germany - 2. Bundesliga: 21 duels, vorm 71%, H2H 24%, inzetbewijs 0%, lekvrije reviews 100% (9/9), stats 100%; gaten: form, h2h, confirmed_lineups, timestamped_odds
 - England - Premier League: 90 duels, vorm 98%, H2H 54%, inzetbewijs 2%, lekvrije reviews 100% (19/19), stats 100%; gaten: h2h, confirmed_lineups, timestamped_odds
-- England - Championship: 8 duels, vorm 38%, H2H 88%, inzetbewijs 0%, lekvrije reviews 0% (0/0), stats 100%; gaten: form, confirmed_lineups, timestamped_odds, leak_free_reviews
-- France - Ligue 1: 82 duels, vorm 89%, H2H 67%, inzetbewijs 1%, lekvrije reviews 100% (18/18), stats 100%; gaten: confirmed_lineups, timestamped_odds
+- England - Championship: 7 duels, vorm 29%, H2H 86%, inzetbewijs 0%, lekvrije reviews 0% (0/0), stats 100%; gaten: form, confirmed_lineups, timestamped_odds, leak_free_reviews
+- France - Ligue 1: 82 duels, vorm 89%, H2H 68%, inzetbewijs 1%, lekvrije reviews 100% (18/18), stats 100%; gaten: confirmed_lineups, timestamped_odds
 - France - Ligue 2: 81 duels, vorm 59%, H2H 49%, inzetbewijs 9%, lekvrije reviews 100% (17/17), stats 100%; gaten: form, h2h, confirmed_lineups, timestamped_odds
 - Europe - Champions League: 14 duels, vorm 43%, H2H 50%, inzetbewijs 0%, lekvrije reviews 100% (7/7), stats 100%; gaten: form, h2h, confirmed_lineups, timestamped_odds
 - Europe - Europa League: 51 duels, vorm 18%, H2H 37%, inzetbewijs 0%, lekvrije reviews 100% (29/29), stats 66%; gaten: form, h2h, confirmed_lineups, timestamped_odds, post_match_statistics, referee, goal_timeline, card_timeline
