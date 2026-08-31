@@ -98,4 +98,12 @@ describe("enrichment publication gate", () => {
     expect(result.allowed).toBe(true);
     expect(result.next.providerConflicts.coverage).toBe(0);
   });
+
+  it("allows a rolling window to replace enriched fixtures with new incomplete fixtures", () => {
+    const previous = [match("old-1"), match("old-2"), match("shared")];
+    const next = [match("shared"), match("new-1", { h2h: { played: 0 } }), match("new-2", { h2h: { played: 0 } })];
+    const result = evaluateEnrichmentPublication(previous, next);
+    expect(result.allowed).toBe(true);
+    expect(result.evidenceLosses).toEqual([]);
+  });
 });

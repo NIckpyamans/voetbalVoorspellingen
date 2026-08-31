@@ -62,7 +62,10 @@ function fixtureEvidenceKey(match) {
 
 function fixtureIdentityKey(match) {
   const clean = (value) => String(value || "").normalize("NFKD").replace(/[\u0300-\u036f]/g, "").toLowerCase().replace(/[^a-z0-9]/g, "");
-  return `${String(match?.date || match?.kickoff || "").slice(0, 10)}|${clean(match?.homeTeamName)}|${clean(match?.awayTeamName)}`;
+  const date = String(match?.date || match?.kickoff || "").slice(0, 10);
+  const home = clean(match?.homeTeamName);
+  const away = clean(match?.awayTeamName);
+  return date && home && away ? `${date}|${home}|${away}` : "";
 }
 
 function profileEvidenceScore(profile) {
@@ -102,7 +105,7 @@ const EVIDENCE_FIELDS = {
 
 export function preserveEnrichmentEvidence(previousMatches = [], nextMatches = []) {
   const byId = new Map(rows(previousMatches).filter((match) => match?.id).map((match) => [String(match.id), match]));
-  const byIdentity = new Map(rows(previousMatches).map((match) => [fixtureIdentityKey(match), match]));
+  const byIdentity = new Map(rows(previousMatches).map((match) => [fixtureIdentityKey(match), match]).filter(([key]) => key));
   const recentCount = (value) => Number(value?.gamesPlayed || value?.recentMatches?.length || 0);
   const h2hCount = (value) => Number(value?.played || value?.results?.length || 0);
 
@@ -165,9 +168,10 @@ export function evaluateEnrichmentPublication(previousMatches, nextMatches, opti
   const minimumSample = Math.max(1, Number(options.minimumSample ?? 3));
   const regressions = [];
   const evidenceLosses = [];
-  const nextByKey = new Map(rows(nextMatches).map((match) => [fixtureEvidenceKey(match), match]));
+  const nextById = new Map(rows(nextMatches).filter((match) => match?.id).map((match) => [String(match.id), match]));
+  const nextByIdentity = new Map(rows(nextMatches).map((match) => [fixtureIdentityKey(match), match]).filter(([key]) => key));
   for (const previousMatch of rows(previousMatches)) {
-    const nextMatch = nextByKey.get(fixtureEvidenceKey(previousMatch));
+    const nextMatch = nextById.get(String(previousMatch?.id || "")) || nextByIdentity.get(fixtureIdentityKey(previousMatch));
     if (!nextMatch) continue;
     for (const [field, predicate] of Object.entries(EVIDENCE_FIELDS)) {
       if (field === "providerConflicts") continue;
@@ -178,15 +182,11 @@ export function evaluateEnrichmentPublication(previousMatches, nextMatches, opti
   if (previous.fixtures >= minimumSample && next.fixtures < previous.fixtures * (1 - maxRelativeDrop)) {
     regressions.push({ field: "fixtures", before: previous.fixtures, after: next.fixtures });
   }
-  for (const field of ["finalScores", "h2h", "form", "lineups", "squads", "squadFreshness", "playerIdentities", "timestampedOdds", "postMatchStats"]) {
-    const before = previous[field];
-    const after = next[field];
-    if (before.total < minimumSample || before.covered === 0) continue;
-    const strict = field === "finalScores";
-    const existingEvidenceLost = after.covered < before.covered;
-    const comparablePopulation = next.fixtures <= previous.fixtures * 1.05;
-    if ((strict && existingEvidenceLost) || (!strict && (existingEvidenceLost || (comparablePopulation && after.coverage < before.coverage - maxRelativeDrop)))) {
-      if (!regressions.some((item) => item.field === field)) regressions.push({ field, before, after });
+  const previousScores = previous.finalScores;
+  const nextScores = next.finalScores;
+  if (previousScores.total >= minimumSample && previousScores.covered > 0 && nextScores.covered < previousScores.covered) {
+    if (!regressions.some((item) => item.field === "finalScores")) {
+      regressions.push({ field: "finalScores", before: previousScores, after: nextScores });
     }
   }
   return {
