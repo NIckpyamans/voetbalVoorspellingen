@@ -1,46 +1,39 @@
 {
-  "generatedAt": "2026-08-31T06:16:19.079Z",
-  "checked": 6,
-  "captured": 2,
-  "openingCaptured": 2,
-  "prematchCaptured": 2,
+  "generatedAt": "2026-08-31T14:06:16.059Z",
+  "checked": 7,
+  "captured": 0,
+  "openingCaptured": 0,
+  "prematchCaptured": 0,
   "closingCaptured": 0,
   "closingPairs": 0,
   "statuses": {
-    "not_found": 4,
-    "available": 2
+    "not_found": 5
   },
   "attemptStatuses": {
-    "the-odds-api:seasonal_sport_unavailable": 8,
-    "the-odds-api:unsupported_sport": 8,
-    "the-odds-api:quota_reserve": 4,
-    "sportmonks:fixture_id_missing": 4
+    "the-odds-api:seasonal_sport_unavailable": 10,
+    "the-odds-api:unsupported_sport": 10,
+    "the-odds-api:quota_reserve": 5,
+    "sportmonks:fixture_id_missing": 5
   },
   "providerStatuses": {
     "the-odds-api": {
-      "seasonal_sport_unavailable": 8,
-      "unsupported_sport": 8,
-      "quota_reserve": 4
+      "seasonal_sport_unavailable": 10,
+      "unsupported_sport": 10,
+      "quota_reserve": 5
     },
     "sportmonks": {
-      "fixture_id_missing": 4
+      "fixture_id_missing": 5
     }
   },
   "providerQuota": {
     "the-odds-api": {
       "remaining": 20
-    },
-    "apifootball-com": {
-      "remaining": null,
-      "used": null,
-      "limit": null,
-      "reset": null
     }
   },
-  "skippedExistingRole": 0,
+  "skippedExistingRole": 2,
   "sportmonksMapped": 0,
   "sportmonksMappingStatuses": {
-    "plan_coverage_unavailable": 6
+    "plan_coverage_unavailable": 7
   },
   "matches": [
     {
@@ -49,7 +42,7 @@
       "league": "Netherlands - Eerste Divisie",
       "homeTeam": "Jong AZ Alkmaar",
       "awayTeam": "Jong FC Utrecht",
-      "minutesBeforeKickoff": 704,
+      "minutesBeforeKickoff": 234,
       "closingWindow": false,
       "status": "not_found",
       "providerCompetitionAvailability": null,
@@ -62,7 +55,7 @@
       "league": "Netherlands - Eerste Divisie",
       "homeTeam": "Jong PSV",
       "awayTeam": "Jong Ajax",
-      "minutesBeforeKickoff": 704,
+      "minutesBeforeKickoff": 234,
       "closingWindow": false,
       "status": "not_found",
       "providerCompetitionAvailability": null,
@@ -75,7 +68,7 @@
       "league": "France - Ligue 2",
       "homeTeam": "Dijon",
       "awayTeam": "Saint-Étienne",
-      "minutesBeforeKickoff": 749,
+      "minutesBeforeKickoff": 279,
       "closingWindow": false,
       "status": "not_found",
       "providerCompetitionAvailability": null,
@@ -88,7 +81,7 @@
       "league": "England - Premier League",
       "homeTeam": "Aston Villa",
       "awayTeam": "Arsenal",
-      "minutesBeforeKickoff": 764,
+      "minutesBeforeKickoff": 294,
       "closingWindow": false,
       "status": "not_found",
       "providerCompetitionAvailability": null,
@@ -101,15 +94,10 @@
       "league": "England - Championship",
       "homeTeam": "Lincoln City",
       "awayTeam": "Blackburn Rovers",
-      "minutesBeforeKickoff": 2129,
+      "minutesBeforeKickoff": 1659,
       "closingWindow": false,
-      "status": "captured",
-      "provider": "apifootball-com",
-      "captureRole": "opening",
-      "sportmonksFixtureId": null,
-      "opening": true,
-      "prematch": true,
-      "closing": false
+      "status": "already_captured",
+      "captureRole": "opening"
     },
     {
       "matchId": "ss-bbc-2026-09-01-portsmouth-derby county",
@@ -117,18 +105,34 @@
       "league": "England - Championship",
       "homeTeam": "Portsmouth",
       "awayTeam": "Derby County",
-      "minutesBeforeKickoff": 2129,
+      "minutesBeforeKickoff": 1659,
       "closingWindow": false,
-      "status": "captured",
-      "provider": "apifootball-com",
-      "captureRole": "opening",
-      "sportmonksFixtureId": null,
-      "opening": true,
-      "prematch": true,
-      "closing": false
+      "status": "already_captured",
+      "captureRole": "opening"
+    },
+    {
+      "matchId": "ss-tsdb-England - Championship-2501285",
+      "kickoff": "2026-09-01T18:45:00.000Z",
+      "league": "England - Championship",
+      "homeTeam": "West Ham United",
+      "awayTeam": "Wolverhampton Wanderers",
+      "minutesBeforeKickoff": 1719,
+      "closingWindow": false,
+      "status": "not_found",
+      "providerCompetitionAvailability": null,
+      "reason": "Sportmonks fixture-id ontbreekt; odds-by-fixture call overgeslagen.",
+      "sportmonksMapping": "plan_coverage_unavailable"
     }
   ],
   "leagueCoverage": [
+    {
+      "league": "England - Championship",
+      "checked": 3,
+      "covered": 0,
+      "partial": 0,
+      "missing": 3,
+      "coverage": 0
+    },
     {
       "league": "Netherlands - Eerste Divisie",
       "checked": 2,
@@ -152,15 +156,7 @@
       "partial": 0,
       "missing": 1,
       "coverage": 0
-    },
-    {
-      "league": "England - Championship",
-      "checked": 2,
-      "covered": 2,
-      "partial": 0,
-      "missing": 0,
-      "coverage": 1
     }
   ],
-  "coverage": 0.333
+  "coverage": 0
 }
