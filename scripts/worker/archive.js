@@ -136,6 +136,7 @@ export function buildSplitMeta(store) {
     teamLearningCount: Object.keys(store.teamLearning || {}).length,
     aiAdvice: store.aiAdvice || [],
     featureDiagnostics: store.featureDiagnostics || null,
+    featurePublicationGate: store.featurePublicationGate || null,
     sourceCoverage: store.sourceCoverage || null,
     fixtureSourceDiagnostics: store.fixtureSourceDiagnostics || {},
     predictionSnapshotCount: Object.keys(store.predictionSnapshots || {}).length,

@@ -4554,6 +4554,16 @@ function matchingStoredEnrichments(existingMatches = [], refreshedMatches = []) 
   return existingMatches.filter((match) => refreshedKeys.has(buildStoredMatchDedupeKey(match, fixtureDeduplicationOptions)));
 }
 
+function readStaticDayEnrichments(date) {
+  try {
+    const filePath = path.join(SPLIT_DATA_DIR, "days", `${date}.json`);
+    const payload = JSON.parse(fs.readFileSync(filePath, "utf8"));
+    return Array.isArray(payload?.matches) ? payload.matches : [];
+  } catch {
+    return [];
+  }
+}
+
 function getSportsDbSeasonLabel(dateISO) {
   const base = new Date(`${dateISO}T12:00:00Z`);
   const year = base.getUTCFullYear();
@@ -12149,7 +12159,10 @@ async function main() {
     // Een bronrefresh mag rijkere H2H/vorm/resultaatvelden van exact dezelfde
     // fixture niet terugzetten naar leeg. Niet meer aangeboden fixtures worden
     // bewust niet behouden.
-    const matchingExistingMatches = matchingStoredEnrichments(store.matches?.[date] || [], dayMatches);
+    const matchingExistingMatches = matchingStoredEnrichments(
+      [...(store.matches?.[date] || []), ...readStaticDayEnrichments(date)],
+      dayMatches,
+    );
     const uniqueDayMatches = dedupeStoredMatches([...retainedMatches, ...matchingExistingMatches, ...dayMatches]);
     const retainedMatchIds = new Set(retainedMatches.map((match) => String(match?.id || "")));
     const retainedPredictions = friendliesDiscoveryMode
