@@ -6,6 +6,7 @@ import { buildProviderCooldown } from "./worker/provider-quota.js";
 import { buildProviderAcceptanceState, buildTrainingAutomationState } from "./worker/orchestration-policy.js";
 import { sportmonksEligibleFixtures } from "./worker/sportmonks-coverage-policy.js";
 import { trainingCalibrationRows } from "./worker/model-calibration-data.js";
+import { buildWorkerFreshnessState } from "./worker/worker-freshness-policy.js";
 
 const emitGithubOutput = process.argv.includes("--emit-github-output");
 const mode = String(process.env.ORCHESTRATOR_MODE || "conservative").toLowerCase();
@@ -122,6 +123,12 @@ const resultRefreshWindow = upcomingFixtures.filter((fixture) =>
   !fixture.finalStatus
 );
 const primarySlot = minute < 30;
+const workerFreshness = buildWorkerFreshnessState(readJson("data/meta.json"), {
+  now,
+  // De healthcheck faalt vanaf 180 minuten. Plan de zware worker een halfuur
+  // eerder, zodat wachttijd in GitHub Actions niet direct verouderde data geeft.
+  dispatchAfterMinutes: 150,
+});
 const reports = {
   h2h: readJson("monitor/h2h-upcoming-backfill.json"),
   form: readJson("monitor/upcoming-team-form-enrichment.json"),
@@ -224,7 +231,7 @@ function plannedWorkflows() {
   // Iedere wedstrijd krijgt prospectief minimaal een immutable pre-match
   // snapshot. Dit voorkomt dat later alleen een current-prediction fallback
   // beschikbaar is voor de evaluatie.
-  if (primarySlot && missingSnapshotWindow.length) workflows.push("worker.yml");
+  if ((primarySlot && missingSnapshotWindow.length) || workerFreshness.refreshDue) workflows.push("worker.yml");
 
   if (primarySlot) {
     if (dataNeeds.calendar || hour % 4 === 0) workflows.push("week-ahead-fixtures.yml");
@@ -285,6 +292,7 @@ const plan = {
   },
   dataNeeds,
   providerQuota,
+  workerFreshness,
   trainingAutomation,
   apiFootballAcceptance,
   reportAgeHours: Object.fromEntries(Object.entries(reports).map(([key, report]) => [key, Number(reportAgeHours(report).toFixed(2))])),

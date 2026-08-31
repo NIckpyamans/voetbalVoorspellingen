@@ -42,4 +42,19 @@ describe("local H2H history", () => {
     });
     expect(profile?.results).toMatchObject([{ homeTeam: "Manchester City FC", awayTeam: "FC Barcelona", homeScore: 1, awayScore: 2 }]);
   });
+
+  it("matches Dutch reserve-team aliases used by different providers", () => {
+    const root = fs.mkdtempSync(path.join(os.tmpdir(), "footyai-h2h-reserves-"));
+    roots.push(root);
+    fs.mkdirSync(path.join(root, "data", "days"), { recursive: true });
+    fs.writeFileSync(path.join(root, "data", "days", "2026-02-02.json"), JSON.stringify({
+      matches: [{ date: "2026-02-02", homeTeamName: "Ajax U21", awayTeamName: "PSV U21", status: "FT", score: "2-2" }],
+    }));
+    const profile = readLocalH2HProfile(root, {
+      kickoff_at: "2026-08-31T18:00:00Z",
+      home_team_name: "Jong PSV",
+      away_team_name: "Jong Ajax",
+    });
+    expect(profile?.results).toMatchObject([{ homeScore: 2, awayScore: 2 }]);
+  });
 });

@@ -61,12 +61,26 @@ function hasOddsStatus(items) {
   return (items || []).some((item) => typeof item?.oddsStatus === "string" || typeof item?.odds_status === "string");
 }
 
-function summarizePredictions(predictions) {
+function summarizePredictions(predictions, referenceDate = new Date()) {
   const list = Array.isArray(predictions) ? predictions : [];
+  const reference = new Date(referenceDate);
+  const today = reference.toISOString().slice(0, 10);
+  const tomorrowDate = new Date(reference);
+  tomorrowDate.setUTCDate(tomorrowDate.getUTCDate() + 1);
+  const tomorrow = tomorrowDate.toISOString().slice(0, 10);
+  // Historische dagbestanden verwijderen de zware vector bewust nadat de
+  // immutable snapshot naar R2 is geschreven. Meet publicatiekwaliteit daarom
+  // alleen in het ongecomprimeerde operationele venster.
+  const publicationWindow = list.filter((item) => [today, tomorrow].includes(String(item?.date || "").slice(0, 10)));
+  const featureRows = publicationWindow.length ? publicationWindow : list;
   const completeness = list.map((item) => Number(item?.dataCompletenessScore ?? item?.dataCompleteness?.score)).filter(Number.isFinite);
   return {
     total: list.length,
-    featureCoverage: list.length ? list.filter((item) => item?.featureVector).length / list.length : 0,
+    featureCoverage: featureRows.length ? featureRows.filter((item) => item?.featureVector).length / featureRows.length : 0,
+    featureCoverageScope: publicationWindow.length ? "today-and-tomorrow-before-static-compaction" : "fallback-all-visible-records",
+    featureCoveragePredictions: featureRows.length,
+    historicalInlineFeatureCoverage: list.length ? list.filter((item) => item?.featureVector).length / list.length : 0,
+    historicalFeatureStorage: "immutable-r2-snapshot-ledger",
     oddsCoverage: list.length ? list.filter(hasUsableOdds).length / list.length : 0,
     historicalMarketOnly: list.length ? list.filter((item) => item?.oddsStatus === "historical_market_profile_only").length / list.length : 0,
     reviewCoverage: list.length ? list.filter((item) => item?.review).length / list.length : 0,
@@ -207,7 +221,7 @@ async function main() {
       oddsIntegrationReadiness: matchesJson.oddsIntegrationReadiness || null,
       fetchErrors
     },
-    predictions: summarizePredictions(predictions),
+    predictions: summarizePredictions(predictions, generatedAt),
     recent: {
       ...recent,
       matchesList: undefined,

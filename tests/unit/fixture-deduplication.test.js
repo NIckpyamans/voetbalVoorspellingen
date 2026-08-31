@@ -7,6 +7,30 @@ const options = {
 };
 
 describe("fixture deduplication", () => {
+  it("preserves richer H2H when a later provider refresh is empty", () => {
+    const rows = dedupeStoredMatches([
+      {
+        id: "old",
+        date: "2026-08-31",
+        homeTeamName: "Aston Villa",
+        awayTeamName: "Arsenal",
+        status: "NS",
+        h2h: { played: 5, results: [{ score: "1-2" }], source: "football-data.co.uk" },
+      },
+      {
+        id: "fresh",
+        date: "2026-08-31",
+        homeTeamName: "Aston Villa",
+        awayTeamName: "Arsenal",
+        status: "NS",
+        h2h: { played: 0, results: [], source: "contract-fallback" },
+      },
+    ], options);
+
+    expect(rows).toHaveLength(1);
+    expect(rows[0].h2h).toMatchObject({ played: 5, source: "football-data.co.uk" });
+  });
+
   it("keeps the completed, scored fixture and merges source metadata", () => {
     const rows = dedupeStoredMatches([
       { id: "a", date: "2026-07-23", league: "UEFA Europa", homeTeamName: "FC Ajax", awayTeamName: "Twente", status: "NS", dataSource: "bbc" },

@@ -1,24 +1,24 @@
 {
-  "generatedAt": "2026-06-19T10:56:28.803Z",
+  "generatedAt": "2026-08-31T06:46:29.583Z",
   "framing": {
     "product": "PandaOS",
     "website": "https://pandaos.ai/",
     "applicability": "PandaOS is vooral nuttig als lokale workflow-orchestrator. Voor deze app passen we hetzelfde principe toe via herbruikbare monitorchecks, projectgeheugen en een centrale prioriteitenlijst."
   },
   "status": {
-    "totalActions": 24,
-    "highPriority": 6,
-    "widgetStatus": "ok",
-    "dataCompleteness": 0.66,
-    "h2hCoverage": 1,
-    "predictionSnapshots": 1184,
-    "latestWorkerRun": 1781863688967
+    "totalActions": 27,
+    "highPriority": 7,
+    "widgetStatus": "degraded",
+    "dataCompleteness": 0.89,
+    "h2hCoverage": 0.25,
+    "predictionSnapshots": 5000,
+    "latestWorkerRun": 1788157328200
   },
   "topActions": [
     {
       "source": "data/meta.aiAdvice",
       "title": "Modelkalibratie",
-      "summary": "Exact-score hitrate staat op 12% over 714 reviews.",
+      "summary": "Exact-score hitrate staat op 9% over 1386 reviews.",
       "action": "Gebruik deze score om ensemble- en closing-gewichten te blijven finetunen.",
       "severity": "high",
       "priority": "high",
@@ -26,17 +26,8 @@
     },
     {
       "source": "data/meta.aiAdvice",
-      "title": "Top faalsignaal",
-      "summary": "open_lineups kwam 326 keer terug in de reviewdata.",
-      "action": "Gebruik dit signaal om de modelweging of brondekking gericht te verbeteren.",
-      "severity": "high",
-      "priority": "high",
-      "score": 100
-    },
-    {
-      "source": "data/meta.aiAdvice",
       "title": "Modelen zitten te vaak uit elkaar",
-      "summary": "Low model agreement kwam 266 keer terug in reviewdata.",
+      "summary": "Low model agreement kwam 386 keer terug in reviewdata.",
       "action": "De eerste penalty is geinstalleerd. Heropen alleen als dit signaal na nieuwe reviews blijft oplopen.",
       "severity": "high",
       "priority": "high",
@@ -47,6 +38,24 @@
       "title": "Bevestigde opstellingen",
       "summary": "0% dekking, doel 45%.",
       "action": "Projected XI is gevuld; vervang vlak voor kickoff door bevestigde opstellingen zodra live bron bereikbaar is.",
+      "severity": "high",
+      "priority": "high",
+      "score": 100
+    },
+    {
+      "source": "sourceCoverage.coverageImprovementPlan",
+      "title": "Historische scheidsprofielen",
+      "summary": "0% dekking, doel 65%.",
+      "action": "Breid referee aliasen en football-data.co.uk archieven per competitiefamilie uit.",
+      "severity": "high",
+      "priority": "high",
+      "score": 100
+    },
+    {
+      "source": "sourceCoverage.coverageImprovementPlan",
+      "title": "Blessures/schorsingen",
+      "summary": "0% dekking, doel 75%.",
+      "action": "Gebruik Sofascore spelersstatus eerst, daarna Transfermarkt/football-data.org squad fallback met veilige team-id mapping.",
       "severity": "high",
       "priority": "high",
       "score": 100
@@ -71,8 +80,26 @@
     },
     {
       "source": "data/meta.aiAdvice",
+      "title": "H2H aanvullen",
+      "summary": "3 wedstrijd(en) missen nog onderlinge historie.",
+      "action": "Voeg waar mogelijk extra competitie-backfill of bronfallback toe in de worker.",
+      "severity": "medium",
+      "priority": "medium",
+      "score": 60
+    },
+    {
+      "source": "data/meta.aiAdvice",
+      "title": "H2H fallback verbreden",
+      "summary": "H2H-dekking staat op 25% voor de actuele speeldag.",
+      "action": "Blijf competitiebackfill combineren met neutrale onderlinge fallback buiten de live bron.",
+      "severity": "medium",
+      "priority": "medium",
+      "score": 60
+    },
+    {
+      "source": "data/meta.aiAdvice",
       "title": "Top 5 zekere tips monitoren",
-      "summary": "Top-5 tips scoren 14% exact en 40% op winnaar/gelijk over 124 reviews.",
+      "summary": "Top-5 tips scoren 12% exact en 45% op winnaar/gelijk over 154 reviews.",
       "action": "Nieuwe selectie wordt bewaakt; pas opnieuw bij voldoende nieuwe reviewdata.",
       "severity": "medium",
       "priority": "medium",
@@ -90,35 +117,8 @@
     {
       "source": "data/meta.aiAdvice",
       "title": "ClubElo interlands strakker scheiden",
-      "summary": "ClubElo/sterktesprong zat 85 keer mis in de reviews.",
+      "summary": "ClubElo/sterktesprong zat 121 keer mis in de reviews.",
       "action": "Splits interland- en clubkracht nog strakker en temper ClubElo bij nationale teams.",
-      "severity": "medium",
-      "priority": "medium",
-      "score": 60
-    },
-    {
-      "source": "widgetIntegration.opportunities",
-      "title": "Vul gratis pre-match odds snapshots voordat ROI/CLV wordt beoordeeld.",
-      "summary": "Vul gratis pre-match odds snapshots voordat ROI/CLV wordt beoordeeld.",
-      "action": "Vul gratis pre-match odds snapshots voordat ROI/CLV wordt beoordeeld.",
-      "severity": "medium",
-      "priority": "medium",
-      "score": 60
-    },
-    {
-      "source": "widgetIntegration.opportunities",
-      "title": "Prioriteer open bronconflicten op impact en providertrust.",
-      "summary": "Prioriteer open bronconflicten op impact en providertrust.",
-      "action": "Prioriteer open bronconflicten op impact en providertrust.",
-      "severity": "medium",
-      "priority": "medium",
-      "score": 60
-    },
-    {
-      "source": "dataQuality.recommendations",
-      "title": "Resultaatbackfill is schoon binnen de auditperiode.",
-      "summary": "Resultaatbackfill is schoon binnen de auditperiode.",
-      "action": "Resultaatbackfill is schoon binnen de auditperiode.",
       "severity": "medium",
       "priority": "medium",
       "score": 60
@@ -128,7 +128,7 @@
     {
       "source": "data/meta.aiAdvice",
       "title": "Modelkalibratie",
-      "summary": "Exact-score hitrate staat op 12% over 714 reviews.",
+      "summary": "Exact-score hitrate staat op 9% over 1386 reviews.",
       "action": "Gebruik deze score om ensemble- en closing-gewichten te blijven finetunen.",
       "severity": "high",
       "priority": "high",
@@ -136,17 +136,8 @@
     },
     {
       "source": "data/meta.aiAdvice",
-      "title": "Top faalsignaal",
-      "summary": "open_lineups kwam 326 keer terug in de reviewdata.",
-      "action": "Gebruik dit signaal om de modelweging of brondekking gericht te verbeteren.",
-      "severity": "high",
-      "priority": "high",
-      "score": 100
-    },
-    {
-      "source": "data/meta.aiAdvice",
       "title": "Modelen zitten te vaak uit elkaar",
-      "summary": "Low model agreement kwam 266 keer terug in reviewdata.",
+      "summary": "Low model agreement kwam 386 keer terug in reviewdata.",
       "action": "De eerste penalty is geinstalleerd. Heropen alleen als dit signaal na nieuwe reviews blijft oplopen.",
       "severity": "high",
       "priority": "high",
@@ -157,6 +148,24 @@
       "title": "Bevestigde opstellingen",
       "summary": "0% dekking, doel 45%.",
       "action": "Projected XI is gevuld; vervang vlak voor kickoff door bevestigde opstellingen zodra live bron bereikbaar is.",
+      "severity": "high",
+      "priority": "high",
+      "score": 100
+    },
+    {
+      "source": "sourceCoverage.coverageImprovementPlan",
+      "title": "Historische scheidsprofielen",
+      "summary": "0% dekking, doel 65%.",
+      "action": "Breid referee aliasen en football-data.co.uk archieven per competitiefamilie uit.",
+      "severity": "high",
+      "priority": "high",
+      "score": 100
+    },
+    {
+      "source": "sourceCoverage.coverageImprovementPlan",
+      "title": "Blessures/schorsingen",
+      "summary": "0% dekking, doel 75%.",
+      "action": "Gebruik Sofascore spelersstatus eerst, daarna Transfermarkt/football-data.org squad fallback met veilige team-id mapping.",
       "severity": "high",
       "priority": "high",
       "score": 100
@@ -181,8 +190,26 @@
     },
     {
       "source": "data/meta.aiAdvice",
+      "title": "H2H aanvullen",
+      "summary": "3 wedstrijd(en) missen nog onderlinge historie.",
+      "action": "Voeg waar mogelijk extra competitie-backfill of bronfallback toe in de worker.",
+      "severity": "medium",
+      "priority": "medium",
+      "score": 60
+    },
+    {
+      "source": "data/meta.aiAdvice",
+      "title": "H2H fallback verbreden",
+      "summary": "H2H-dekking staat op 25% voor de actuele speeldag.",
+      "action": "Blijf competitiebackfill combineren met neutrale onderlinge fallback buiten de live bron.",
+      "severity": "medium",
+      "priority": "medium",
+      "score": 60
+    },
+    {
+      "source": "data/meta.aiAdvice",
       "title": "Top 5 zekere tips monitoren",
-      "summary": "Top-5 tips scoren 14% exact en 40% op winnaar/gelijk over 124 reviews.",
+      "summary": "Top-5 tips scoren 12% exact en 45% op winnaar/gelijk over 154 reviews.",
       "action": "Nieuwe selectie wordt bewaakt; pas opnieuw bij voldoende nieuwe reviewdata.",
       "severity": "medium",
       "priority": "medium",
@@ -200,7 +227,7 @@
     {
       "source": "data/meta.aiAdvice",
       "title": "ClubElo interlands strakker scheiden",
-      "summary": "ClubElo/sterktesprong zat 85 keer mis in de reviews.",
+      "summary": "ClubElo/sterktesprong zat 121 keer mis in de reviews.",
       "action": "Splits interland- en clubkracht nog strakker en temper ClubElo bij nationale teams.",
       "severity": "medium",
       "priority": "medium",
@@ -217,80 +244,98 @@
     },
     {
       "source": "widgetIntegration.opportunities",
-      "title": "Prioriteer open bronconflicten op impact en providertrust.",
-      "summary": "Prioriteer open bronconflicten op impact en providertrust.",
-      "action": "Prioriteer open bronconflicten op impact en providertrust.",
+      "title": "Herstel de mislukte widgetcontracten: Systeemstatus, Neon database, Provider- en integriteitswidget.",
+      "summary": "Herstel de mislukte widgetcontracten: Systeemstatus, Neon database, Provider- en integriteitswidget.",
+      "action": "Herstel de mislukte widgetcontracten: Systeemstatus, Neon database, Provider- en integriteitswidget.",
       "severity": "medium",
       "priority": "medium",
       "score": 60
     },
     {
       "source": "dataQuality.recommendations",
-      "title": "Resultaatbackfill is schoon binnen de auditperiode.",
-      "summary": "Resultaatbackfill is schoon binnen de auditperiode.",
-      "action": "Resultaatbackfill is schoon binnen de auditperiode.",
+      "title": "Vul eerst betrouwbare eindstanden aan voordat learning en ROI/CLV zwaarder worden gewogen.",
+      "summary": "Vul eerst betrouwbare eindstanden aan voordat learning en ROI/CLV zwaarder worden gewogen.",
+      "action": "Vul eerst betrouwbare eindstanden aan voordat learning en ROI/CLV zwaarder worden gewogen.",
       "severity": "medium",
       "priority": "medium",
       "score": 60
     },
     {
       "source": "dataQuality.recommendations",
-      "title": "H2H-dekking is voldoende voor de huidige auditperiode.",
-      "summary": "H2H-dekking is voldoende voor de huidige auditperiode.",
-      "action": "H2H-dekking is voldoende voor de huidige auditperiode.",
+      "title": "Breid H2H via historische competitieprofielen en team-id mappings uit tot minimaal 85% dekking.",
+      "summary": "Breid H2H via historische competitieprofielen en team-id mappings uit tot minimaal 85% dekking.",
+      "action": "Breid H2H via historische competitieprofielen en team-id mappings uit tot minimaal 85% dekking.",
+      "severity": "medium",
+      "priority": "medium",
+      "score": 60
+    },
+    {
+      "source": "dataQuality.recommendations",
+      "title": "Afgeronde wedstrijden zijn aan post-matchreviews gekoppeld.",
+      "summary": "Afgeronde wedstrijden zijn aan post-matchreviews gekoppeld.",
+      "action": "Afgeronde wedstrijden zijn aan post-matchreviews gekoppeld.",
+      "severity": "medium",
+      "priority": "medium",
+      "score": 60
+    },
+    {
+      "source": "dataQuality.recommendations",
+      "title": "Vul post-match statistieken en doelminuten via FotMob, APIfootball.com of GOAL shadow aan; nulvelden tellen niet als echte statistiek.",
+      "summary": "Vul post-match statistieken en doelminuten via FotMob, APIfootball.com of GOAL shadow aan; nulvelden tellen niet als echte statistiek.",
+      "action": "Vul post-match statistieken en doelminuten via FotMob, APIfootball.com of GOAL shadow aan; nulvelden tellen niet als echte statistiek.",
+      "severity": "medium",
+      "priority": "medium",
+      "score": 60
+    },
+    {
+      "source": "dataQuality.recommendations",
+      "title": "Toon geen inzetadvies zolang bevestigde opstellingen, verse getimestampte 1X2-odds en minimaal 70% modeldata niet samen aanwezig zijn.",
+      "summary": "Toon geen inzetadvies zolang bevestigde opstellingen, verse getimestampte 1X2-odds en minimaal 70% modeldata niet samen aanwezig zijn.",
+      "action": "Toon geen inzetadvies zolang bevestigde opstellingen, verse getimestampte 1X2-odds en minimaal 70% modeldata niet samen aanwezig zijn.",
+      "severity": "medium",
+      "priority": "medium",
+      "score": 60
+    },
+    {
+      "source": "dailyFindings.latestIssues",
+      "title": "h2h_empty",
+      "summary": "Alle wedstrijden van vandaag hebben lege H2H-data.",
+      "action": "Alle wedstrijden van vandaag hebben lege H2H-data.",
       "severity": "medium",
       "priority": "medium",
       "score": 60
     },
     {
       "source": "professionalAudit.recommendations",
-      "title": "Maak pre-match voorspellingen immutable",
-      "summary": "Maak pre-match voorspellingen immutable",
-      "action": "Sla prediction_id, generated_at, cutoff_at, model_version, feature_schema_version, input_snapshot_hash en result_status op. Overschrijf deze records nooit bij latere worker-runs.",
-      "severity": "medium",
-      "priority": "medium",
-      "score": 60
+      "title": "Vul opening-, prematch- en closing odds",
+      "summary": "Vul opening-, prematch- en closing odds",
+      "action": "Meet per provider en competitie; gebruik ROI/CLV pas wanneer timestamped oddsparen aantoonbaar compleet zijn.",
+      "severity": 1,
+      "priority": 1,
+      "score": 40
     },
     {
       "source": "professionalAudit.recommendations",
-      "title": "Dwing data-cutoff voor kickoff af",
-      "summary": "Dwing data-cutoff voor kickoff af",
-      "action": "Filter vorm, H2H, standings, odds, blessures en lineups op informatie die beschikbaar was voor generated_at/cutoff_at. Markeer elk veld met source_timestamp en as_of.",
-      "severity": "medium",
-      "priority": "medium",
-      "score": 60
+      "title": "Herstel Neon-quota of verlaag datatransfer",
+      "summary": "Herstel Neon-quota of verlaag datatransfer",
+      "action": "R2 houdt de leerlijn beschikbaar, maar relationele writes en monitors blijven beperkt zolang Neon HTTP 402 geeft.",
+      "severity": 1,
+      "priority": 1,
+      "score": 40
     },
     {
       "source": "professionalAudit.recommendations",
-      "title": "Voeg Brier score, log loss, CLV en ROI toe",
-      "summary": "Voeg Brier score, log loss, CLV en ROI toe",
-      "action": "Bereken per review Brier score en log loss op 1X2. Voeg ROI en closing line value toe zodra odds_at_prediction en closing_odds gevuld zijn.",
-      "severity": "medium",
-      "priority": "medium",
-      "score": 60
-    },
-    {
-      "source": "professionalAudit.recommendations",
-      "title": "Breid Neon-opslag gecontroleerd uit",
-      "summary": "Breid Neon-opslag gecontroleerd uit",
-      "action": "Neon is actief. Migreer resterende JSON-afhankelijke widgets per contract naar Neon en behoud JSON/GitHub alleen als compatibele export- en fallbacklaag.",
-      "severity": "medium",
-      "priority": "medium",
-      "score": 60
-    },
-    {
-      "source": "professionalAudit.recommendations",
-      "title": "Splits de worker in domeinmodules",
-      "summary": "Splits de worker in domeinmodules",
-      "action": "Splits data sources, normalisatie, feature builder, model, evaluation en storage. Dit maakt competities, bronnen en modellen makkelijker uitbreidbaar.",
-      "severity": "medium",
-      "priority": "medium",
-      "score": 60
+      "title": "Koppel recente reviews vaker aan immutable snapshots",
+      "summary": "Koppel recente reviews vaker aan immutable snapshots",
+      "action": "Verhoog de recente snapshot-backed reviewdekking naar minimaal 80%; gebruik actuele prediction fallback niet voor modelpromotie.",
+      "severity": 2,
+      "priority": 2,
+      "score": 40
     },
     {
       "source": "data/meta.aiAdvice",
       "title": "Topkans versus scoremodel",
-      "summary": "Topkans-hit staat op 46% tegenover 42% score-uitkomsthit.",
+      "summary": "Topkans-hit staat op 46% tegenover 43% score-uitkomsthit.",
       "action": "Gebruik dit verschil om te bepalen of het model te agressief op exacte score of juist te voorzichtig op 1X2 zit.",
       "severity": "low",
       "priority": "low",
@@ -319,24 +364,6 @@
       "title": "Provider team-IDs",
       "summary": "100% dekking, doel 90%.",
       "action": "Vul REEP_TEAM_MAP/football-data.org team mapping aan voor wedstrijden die uit naamfallback-bronnen komen.",
-      "severity": "low",
-      "priority": "low",
-      "score": 25
-    },
-    {
-      "source": "sourceCoverage.coverageImprovementPlan",
-      "title": "Historische scheidsprofielen",
-      "summary": "100% dekking, doel 65%.",
-      "action": "Breid referee aliasen en football-data.co.uk archieven per competitiefamilie uit.",
-      "severity": "low",
-      "priority": "low",
-      "score": 25
-    },
-    {
-      "source": "sourceCoverage.coverageImprovementPlan",
-      "title": "Blessures/schorsingen",
-      "summary": "100% dekking, doel 75%.",
-      "action": "Gebruik Sofascore spelersstatus eerst, daarna Transfermarkt/football-data.org squad fallback met veilige team-id mapping.",
       "severity": "low",
       "priority": "low",
       "score": 25

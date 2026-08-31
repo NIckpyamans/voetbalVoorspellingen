@@ -97,9 +97,11 @@ import {
 import { applyLeagueCalibration, rebuildLeagueCalibrationProfilesFromReviews } from "./worker/league-calibration.js";
 import { buildOutcomeEnsemble, summarizeScoreCoverage } from "./worker/outcome-ensemble.js";
 import {
+  buildStoredMatchDedupeKey,
   dedupeStoredMatches as dedupeFixtureMatches,
   dedupeStoredPredictions as dedupeFixturePredictions,
 } from "./worker/fixture-deduplication.js";
+import { assertFeaturePublication } from "./worker/feature-publication-gate.js";
 
 const SOFA = "https://api.sofascore.com/api/v1";
 const THESPORTSDB_BASE = "https://www.thesportsdb.com/api/v1/json";
@@ -2240,6 +2242,10 @@ const TEAM_ALIAS_GROUPS = [
   ["aj auxerre", "auxerre"],
   ["angers sco", "angers"],
   ["stade rennais", "rennes", "stade rennais fc"],
+  ["jong az", "jong az alkmaar", "az alkmaar u21", "az u21"],
+  ["jong utrecht", "jong fc utrecht", "fc utrecht u21", "utrecht u21"],
+  ["jong psv", "psv u21"],
+  ["jong ajax", "ajax u21"],
 ];
 
 // Forza gebruikt numerieke team-id's in publieke squad-URL's. We houden deze lijst klein en veilig:
@@ -4539,6 +4545,13 @@ function dedupeStoredMatches(matches = []) {
 
 function dedupeStoredPredictions(predictions = [], matches = []) {
   return dedupeFixturePredictions(predictions, matches, fixtureDeduplicationOptions);
+}
+
+function matchingStoredEnrichments(existingMatches = [], refreshedMatches = []) {
+  const refreshedKeys = new Set(
+    refreshedMatches.map((match) => buildStoredMatchDedupeKey(match, fixtureDeduplicationOptions)).filter(Boolean),
+  );
+  return existingMatches.filter((match) => refreshedKeys.has(buildStoredMatchDedupeKey(match, fixtureDeduplicationOptions)));
 }
 
 function getSportsDbSeasonLabel(dateISO) {
@@ -12133,7 +12146,11 @@ async function main() {
     const retainedMatches = friendliesDiscoveryMode
       ? (store.matches?.[date] || []).filter((match) => !isFriendlyLeagueLabel(match?.league))
       : [];
-    const uniqueDayMatches = dedupeStoredMatches([...retainedMatches, ...dayMatches]);
+    // Een bronrefresh mag rijkere H2H/vorm/resultaatvelden van exact dezelfde
+    // fixture niet terugzetten naar leeg. Niet meer aangeboden fixtures worden
+    // bewust niet behouden.
+    const matchingExistingMatches = matchingStoredEnrichments(store.matches?.[date] || [], dayMatches);
+    const uniqueDayMatches = dedupeStoredMatches([...retainedMatches, ...matchingExistingMatches, ...dayMatches]);
     const retainedMatchIds = new Set(retainedMatches.map((match) => String(match?.id || "")));
     const retainedPredictions = friendliesDiscoveryMode
       ? (store.predictions?.[date] || []).filter((prediction) => retainedMatchIds.has(String(prediction?.matchId || "")))
@@ -12148,6 +12165,24 @@ async function main() {
       store.predictions[date] = uniqueDayPredictions;
     }
   }
+
+  const preMatchIds = new Set(
+    dates.flatMap((date) => store.matches?.[date] || [])
+      .filter((match) => {
+        const kickoffMs = Date.parse(match?.kickoff || "");
+        return Number.isFinite(kickoffMs) && kickoffMs > now && !["FT", "AET", "PEN"].includes(String(match?.status || "").toUpperCase());
+      })
+      .map((match) => String(match?.id || ""))
+      .filter(Boolean),
+  );
+  const featurePublicationGate = assertFeaturePublication(
+    dates.flatMap((date) => store.predictions?.[date] || [])
+      .filter((prediction) => preMatchIds.has(String(prediction?.matchId || ""))),
+  );
+  console.log(
+    `[worker] feature-publicatiegate: ${(featurePublicationGate.featureCoverage * 100).toFixed(1)}% vectors, ` +
+      `${(featurePublicationGate.metadataCoverage * 100).toFixed(1)}% bronmetadata`,
+  );
 
   const liveJson = await safeFetch(`${SOFA}/sport/football/events/live`);
   for (const live of liveJson?.events || []) {
@@ -12233,6 +12268,7 @@ async function main() {
     backtestSegmentation: store.backtestSegmentation || null,
     fixtureSourceDiagnostics,
   };
+  store.featurePublicationGate = featurePublicationGate;
   store.anomalyReport = buildDataAnomalyReport(store, today);
   store.aiAdvice = buildAiRecommendations(store, today);
   store.competitionArchiveIndex = buildCompetitionArchiveIndex(store, today);

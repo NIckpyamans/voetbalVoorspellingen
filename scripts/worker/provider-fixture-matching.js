@@ -4,6 +4,10 @@ const TEAM_ALIAS_GROUPS = [
   ["paok salonika", "paok thessaloniki", "paok salonica", "paok"],
   ["pafos", "pafos fc"],
   ["sint truidense vv", "sint truidense", "st truiden", "st truidense", "sint truiden"],
+  ["jong az", "jong az alkmaar", "az alkmaar u21", "az u21"],
+  ["jong utrecht", "jong fc utrecht", "fc utrecht u21", "utrecht u21"],
+  ["jong psv", "psv u21"],
+  ["jong ajax", "ajax u21"],
 ];
 
 function basicTeamName(value) {
