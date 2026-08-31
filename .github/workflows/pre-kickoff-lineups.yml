@@ -112,7 +112,7 @@ jobs:
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
-          CONFIRMED=$(node -e "const fs=require('fs');try{const r=JSON.parse(fs.readFileSync('monitor/pre-kickoff-lineup-collector.json','utf8'));process.stdout.write(String(Number(r.confirmed||0)))}catch{process.stdout.write('0')}")
+          CONFIRMED=$(node -e "const fs=require('fs');try{const r=JSON.parse(fs.readFileSync('monitor/pre-kickoff-lineup-collector.json','utf8'));process.stdout.write(String(Number(r.changedConfirmed||0)))}catch{process.stdout.write('0')}")
           if [ "$CONFIRMED" -gt 0 ]; then
             echo "Confirmed lineup gevonden; voorspellingen opnieuw opbouwen."
             gh workflow run worker.yml --ref "$DATA_BRANCH"

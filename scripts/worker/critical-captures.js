@@ -33,6 +33,14 @@ function captureId(provider, capturedAt, role) {
   return `${String(provider || "unknown").toLowerCase()}|${capturedAt}|${role}`;
 }
 
+function lineupFingerprint(lineup) {
+  const names = (side) => [
+    ...(Array.isArray(side?.players) ? side.players : []),
+    ...(Array.isArray(side?.starters) ? side.starters : []),
+  ].map((player) => String(player?.name || player || "").toLowerCase().trim()).filter(Boolean).sort();
+  return JSON.stringify({ confirmed: Boolean(lineup?.confirmed), home: names(lineup?.home), away: names(lineup?.away) });
+}
+
 export function mergeLineupCaptureLedger(current, { match, provider, lineup, capturedAt = new Date().toISOString() }) {
   const minutesBeforeKickoff = minutesUntilKickoff(match?.kickoff_at || match?.kickoff, capturedAt);
   const captureWindow = classifyLineupCaptureWindow(minutesBeforeKickoff);
@@ -58,6 +66,7 @@ export function mergeLineupCaptureLedger(current, { match, provider, lineup, cap
     provider,
     confirmed: Boolean(lineup?.confirmed),
     lineupSummary: lineup,
+    lineupFingerprint: lineupFingerprint(lineup),
   };
   if (!attempts.some((item) => item.id === attempt.id)) attempts.push(attempt);
   attempts.sort((left, right) => Date.parse(left.capturedAt || "") - Date.parse(right.capturedAt || ""));
@@ -74,6 +83,8 @@ export function mergeLineupCaptureLedger(current, { match, provider, lineup, cap
     captureWindow: latest.captureWindow,
     minutesBeforeKickoff: latest.minutesBeforeKickoff,
     lineupSummary: latest.lineupSummary,
+    latestFingerprint: latest.lineupFingerprint || lineupFingerprint(latest.lineupSummary),
+    revisionCount: new Set(attempts.map((item) => item.lineupFingerprint || lineupFingerprint(item.lineupSummary))).size,
     firstConfirmedAt: previous.firstConfirmedAt || firstConfirmed?.capturedAt || null,
     firstConfirmedProvider: previous.firstConfirmedProvider || firstConfirmed?.provider || null,
     attempts: attempts.slice(-12),

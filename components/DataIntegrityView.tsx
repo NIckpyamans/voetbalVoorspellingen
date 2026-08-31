@@ -78,6 +78,36 @@ const DataIntegrityView: React.FC = () => {
         </div>
       </div>
 
+      <section className="glass-card rounded-3xl border border-cyan-500/15 p-5">
+        <div className="flex flex-wrap items-center justify-between gap-2">
+          <div>
+            <h3 className="text-sm font-black uppercase text-cyan-200">Kwaliteit per competitie</h3>
+            <p className="mt-1 text-[9px] text-slate-500">Dekking en lekvrije modelresultaten; blijft via fallback zichtbaar wanneer Neon niet schrijfbaar is.</p>
+          </div>
+          <span className="rounded-full bg-amber-500/10 px-3 py-1 text-[8px] font-black text-amber-200">
+            herstel {number(data.targetedRepairSummary?.urgent)} urgent / {number(data.targetedRepairSummary?.pending)} totaal
+          </span>
+        </div>
+        <div className="mt-4 overflow-x-auto">
+          <table className="w-full min-w-[780px] text-left text-[9px]">
+            <thead className="text-slate-500"><tr><th className="p-2">Competitie</th><th>H2H</th><th>Vorm</th><th>Lineup</th><th>Odds</th><th>1X2</th><th>Brier</th><th>Exact</th><th>Evaluaties</th></tr></thead>
+            <tbody>
+              {(data.competitionQuality || []).map((item: any) => (
+                <tr key={item.league} className="border-t border-white/5 text-slate-300">
+                  <td className="p-2 font-black text-white">{item.league}</td>
+                  <td>{pct(item.coverage?.h2h)}</td><td>{pct(item.coverage?.form)}</td><td>{pct(item.coverage?.confirmedLineups)}</td><td>{pct(item.coverage?.odds)}</td>
+                  <td>{item.performance?.outcomeHitRate == null ? "-" : pct(item.performance.outcomeHitRate)}</td>
+                  <td>{item.performance?.brierScore == null ? "-" : Number(item.performance.brierScore).toFixed(3)}</td>
+                  <td>{item.performance?.exactHitRate == null ? "-" : pct(item.performance.exactHitRate)}</td>
+                  <td>{number(item.performance?.evaluations)}</td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+          {!(data.competitionQuality || []).length && <div className="rounded-2xl border border-white/5 p-4 text-slate-500">De volgende worker-run bouwt dit overzicht op.</div>}
+        </div>
+      </section>
+
       <div className="grid gap-5 xl:grid-cols-[1.1fr_0.9fr]">
         <section className="glass-card rounded-3xl border border-amber-500/15 p-5">
           <h3 className="text-sm font-black uppercase text-amber-200">Quarantaine die aandacht vraagt</h3>

@@ -25,6 +25,13 @@ Deze map is de veilige opsplitsing van `scripts/server-worker.js`.
 - `critical-captures.js`: immutable pre-kickoff lineup, odds and H2H captures.
 - `training-builder.js`: derives training rows from active matches and immutable snapshots.
 - `training-snapshot.js`: preserves the highest-quality row for each prediction ID.
+- `enrichment-publication-gate.js`: blocks publication when existing fixtures, final scores, H2H, form, lineups, squads or post-match evidence regress.
+- `provider-observability.js`: normalizes provider outcomes to found, no coverage, mapping, quota, HTTP, unpublished, acceptance or configuration states.
+- `targeted-repair-queue.js`: prioritizes only incomplete fixtures, with upcoming followed competitions first.
+- `quota-budget.js`: protects provider reserves and caps targeted spend per run.
+- `competition-quality.js`: publishes coverage and leakage-free performance per followed competition.
+
+GOAL API remains shadow-only until its fourteen-day acceptance report is accepted. It may then supply fixtures, H2H, lineups and statistics, never odds. H2H and form first use immutable local/R2 history so provider calls remain fallback work.
 - `h2h.js`: merges H2H sources, provenance and coverage without provider I/O.
 - `model-promotion.js`: shared 50-match calibration and 150-match live-promotion gates.
 - `r2-snapshot-canary.js`: pure R2 write/read/checksum/evaluation canary contract.

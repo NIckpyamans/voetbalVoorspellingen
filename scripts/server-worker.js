@@ -102,6 +102,9 @@ import {
   dedupeStoredPredictions as dedupeFixturePredictions,
 } from "./worker/fixture-deduplication.js";
 import { assertFeaturePublication } from "./worker/feature-publication-gate.js";
+import { assertEnrichmentPublication } from "./worker/enrichment-publication-gate.js";
+import { buildTargetedRepairQueue, summarizeRepairNeeds } from "./worker/targeted-repair-queue.js";
+import { buildCompetitionQuality } from "./worker/competition-quality.js";
 
 const SOFA = "https://api.sofascore.com/api/v1";
 const THESPORTSDB_BASE = "https://www.thesportsdb.com/api/v1/json";
@@ -10903,6 +10906,7 @@ async function main() {
   // Houd bewust meerdere dagen vooruit vast. Als een geplande worker-run een
   // keer wordt overgeslagen, blijft de kalenderstatus betrouwbaarder.
   const dates = buildRefreshDateWindow(today);
+  const enrichmentBaselineMatches = dates.flatMap((date) => store.matches?.[date] || []).map((match) => structuredClone(match));
   const friendliesDiscoveryMode = process.env.FOOTYAI_REFRESH_MODE === "friendlies-discovery";
   console.log(`[worker] datumvenster: ${dates.join(", ")}`);
   if (friendliesDiscoveryMode) console.log("[worker] modus: alleen oefenwedstrijden ontdekken");
@@ -12286,6 +12290,26 @@ async function main() {
   store.aiAdvice = buildAiRecommendations(store, today);
   store.competitionArchiveIndex = buildCompetitionArchiveIndex(store, today);
   store.teamSquadSummary = buildTeamSquadSummary(store);
+  const currentWindowMatches = dates.flatMap((date) => store.matches?.[date] || []);
+  store.enrichmentPublicationGate = assertEnrichmentPublication(enrichmentBaselineMatches, currentWindowMatches, {
+    maxRelativeDrop: 0.15,
+    minimumSample: 3,
+  });
+  store.targetedRepairQueue = buildTargetedRepairQueue(currentWindowMatches, {
+    now,
+    followedCompetitions: ACTIVE_COMPETITIONS,
+  });
+  store.targetedRepairSummary = summarizeRepairNeeds(store.targetedRepairQueue);
+  store.competitionQuality = buildCompetitionQuality(currentWindowMatches, store.modelPerformance);
+  writeJsonFile(path.join(ROOT, "monitor", "targeted-repair-queue.json"), {
+    generatedAt: new Date().toISOString(),
+    ...store.targetedRepairSummary,
+    queue: store.targetedRepairQueue.slice(0, 200),
+  });
+  writeJsonFile(path.join(ROOT, "monitor", "competition-quality.json"), {
+    generatedAt: new Date().toISOString(),
+    competitions: store.competitionQuality,
+  });
   store.lastRun = Date.now();
   store.workerVersion = MODEL_VERSION;
   

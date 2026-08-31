@@ -7,6 +7,7 @@ import { buildProviderAcceptanceState, buildTrainingAutomationState } from "./wo
 import { sportmonksEligibleFixtures } from "./worker/sportmonks-coverage-policy.js";
 import { trainingCalibrationRows } from "./worker/model-calibration-data.js";
 import { buildWorkerFreshnessState } from "./worker/worker-freshness-policy.js";
+import { buildCentralQuotaPlan } from "./worker/quota-budget.js";
 
 const emitGithubOutput = process.argv.includes("--emit-github-output");
 const mode = String(process.env.ORCHESTRATOR_MODE || "conservative").toLowerCase();
@@ -143,7 +144,10 @@ const reports = {
   evaluation: readJson("monitor/prediction-evaluation-report.json"),
   snapshotGrowth: readJson("monitor/snapshot-growth-monitor.json"),
   dataQuality: readJson("monitor/data-quality-audit.json"),
+  repairQueue: readJson("monitor/targeted-repair-queue.json"),
 };
+const centralQuotaPlan = buildCentralQuotaPlan(reports.providerHealth || {});
+const urgentRepairFields = reports.repairQueue?.fields || {};
 const sportmonksFixtures = sportmonksEligibleFixtures(upcomingFixtures, reports.sportmonksCatalog);
 const trainingAutomation = buildTrainingAutomationState({ rows: trainingCalibrationRows(readJson("training/training-snapshot.json")) }, {
   calibrationMin: 50,
@@ -235,11 +239,12 @@ function plannedWorkflows() {
 
   if (primarySlot) {
     if (dataNeeds.calendar || hour % 4 === 0) workflows.push("week-ahead-fixtures.yml");
-    if (dataNeeds.form && hour % 4 === 0) workflows.push("form-enrichment.yml");
-    if (dataNeeds.h2h && hour % 6 === 0) workflows.push("h2h-enrichment.yml");
+    if (dataNeeds.form && (hour % 4 === 0 || (Number(urgentRepairFields.form || 0) > 0 && hour % 2 === 0))) workflows.push("form-enrichment.yml");
+    if (dataNeeds.h2h && (hour % 6 === 0 || (Number(urgentRepairFields.h2h || 0) > 0 && hour % 3 === 0))) workflows.push("h2h-enrichment.yml");
     if (dataNeeds.squads && hour % 6 === 2) workflows.push("team-squad-enrichment.yml");
     if (dataNeeds.sportmonks && hour % 6 === 3) workflows.push("sportmonks-fixture-mapping.yml");
     if (hour === 2) workflows.push("dashboard-cache-r2.yml", "friendly-discovery.yml", "post-match-enrichment.yml");
+    if (Number(urgentRepairFields.postMatchStats || 0) > 0 && resultRefreshWindow.length && hour % 2 === 1) workflows.push("post-match-enrichment.yml");
     if (hour === 3 && dataNeeds.evaluation) workflows.push("prediction-evaluation.yml");
     if (hour === 4 && dataNeeds.learning) workflows.push("learn.yml");
     if (hour === 5) workflows.push("odds-snapshot-scout.yml");
@@ -292,6 +297,12 @@ const plan = {
   },
   dataNeeds,
   providerQuota,
+  centralQuotaPlan,
+  targetedRepair: {
+    pending: Number(reports.repairQueue?.pending || 0),
+    urgent: Number(reports.repairQueue?.urgent || 0),
+    fields: urgentRepairFields,
+  },
   workerFreshness,
   trainingAutomation,
   apiFootballAcceptance,

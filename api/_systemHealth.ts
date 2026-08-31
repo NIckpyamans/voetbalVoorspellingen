@@ -323,8 +323,30 @@ export async function sendSystemHealth(_req: any, res: any, mode = "health") {
       return res.status(rows.length?200:404).json({ok:Boolean(rows.length),control:rows[0]||null});
     }
     if (String(_req?.query?.detail || "") === "integrity") {
+      const remoteQualityMeta = await fetchHealthJson("integrity-meta", () => fetchMetaData({ cacheBust: true, bypassMemoryCache: true }), {});
+      const qualityMeta = remoteQualityMeta.available ? remoteQualityMeta.data : readJsonSafe(path.join("data", "meta.json"), {});
+      const fallbackIntegrity = {
+        ok: true,
+        fallback: true,
+        generatedAt: new Date().toISOString(),
+        summary: {}, quarantine: [], providers: [], conflicts: [], auditCoverage: [], trends: [], partitions: [],
+        modelQualityTrends: [], repairSummary: [], roiClvReadiness: [], fieldTrust: [], qualityAlerts: [], clubMergeAudits: [],
+        calibrationProfiles: [], competitionFieldTrust: [], modelQualityMinimumSample: 20,
+        competitionQuality: qualityMeta?.competitionQuality || [],
+        targetedRepairSummary: qualityMeta?.targetedRepairSummary || null,
+        enrichmentPublicationGate: qualityMeta?.enrichmentPublicationGate || null,
+      };
       const sql = getSql();
-      if (!sql) return res.status(503).json({ ok: false, error: "database_not_configured" });
+      if (!sql) {
+        setCorsHeaders(_req, res);
+        return res.status(200).json(fallbackIntegrity);
+      }
+      try {
+        await sql.query("select 1 as integrity_probe");
+      } catch {
+        setCorsHeaders(_req, res);
+        return res.status(200).json({ ...fallbackIntegrity, databaseUnavailable: true });
+      }
       const [summaryRows, quarantine, providers, conflicts, auditCoverage, trends, partitions, modelQualityTrends, repairSummary, roiClvReadiness, fieldTrust, qualityAlerts, clubMergeAudits, calibrationProfiles, competitionFieldTrust] = await Promise.all([
         sql.query(`select count(1)::int matches,count(1) filter(where identity_status='resolved')::int resolved_matches,
           count(1) filter(where identity_status='quarantined')::int quarantined_matches,
@@ -383,7 +405,7 @@ export async function sendSystemHealth(_req: any, res: any, mode = "health") {
       ]);
       setCorsHeaders(_req, res);
       res.setHeader("Cache-Control", "s-maxage=60, stale-while-revalidate=120");
-      return res.status(200).json({ ok: true, generatedAt: new Date().toISOString(), summary: summaryRows[0] || {}, quarantine, providers, conflicts, auditCoverage, trends, partitions, modelQualityTrends, repairSummary, roiClvReadiness, fieldTrust, qualityAlerts, clubMergeAudits, calibrationProfiles, competitionFieldTrust, modelQualityMinimumSample: 20 });
+      return res.status(200).json({ ok: true, generatedAt: new Date().toISOString(), summary: summaryRows[0] || {}, quarantine, providers, conflicts, auditCoverage, trends, partitions, modelQualityTrends, repairSummary, roiClvReadiness, fieldTrust, qualityAlerts, clubMergeAudits, calibrationProfiles, competitionFieldTrust, modelQualityMinimumSample: 20, competitionQuality: qualityMeta?.competitionQuality || [], targetedRepairSummary: qualityMeta?.targetedRepairSummary || null, enrichmentPublicationGate: qualityMeta?.enrichmentPublicationGate || null });
     }
     const payload = await buildSystemHealth(mode);
     setCorsHeaders(_req, res);

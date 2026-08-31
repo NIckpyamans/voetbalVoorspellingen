@@ -29,6 +29,7 @@ describe("immutable lineup ledger", () => {
     const second = mergeLineupCaptureLedger(first, { match, provider: "provider-b", lineup: confirmed, capturedAt: "2026-07-20T19:40:00.000Z" });
     expect(second.firstConfirmedAt).toBe("2026-07-20T18:45:00.000Z");
     expect(second.attempts).toHaveLength(2);
+    expect(second.revisionCount).toBe(1);
     expect(selectConfirmedLineupCapture(second, match.kickoff_at)?.provider).toBe("provider-b");
   });
 });

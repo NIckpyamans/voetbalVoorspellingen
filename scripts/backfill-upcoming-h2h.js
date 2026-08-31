@@ -19,6 +19,8 @@ import { orderH2HCandidatesByCompetition } from "./worker/h2h-candidate-priority
 import { getCompetitionAgent } from "./worker/competition-agents.js";
 import { readLocalH2HProfile } from "./worker/local-h2h-history.js";
 import { normalizeStaticH2H } from "./worker/h2h-static.js";
+import { loadSnapshotLedger } from "../shared/predictionSnapshotLedger.js";
+import { normalizeProviderAttempt } from "./worker/provider-observability.js";
 
 const ROOT = process.cwd();
 const OUTPUT_JSON = path.join(ROOT, "monitor", "h2h-upcoming-backfill.json");
@@ -305,6 +307,7 @@ async function main() {
   ).slice(0, LIMIT);
 
   const store = {};
+  const snapshotLedgerLoad = await loadSnapshotLedger({ root: ROOT });
   const providerConfigured = Boolean(getApiFootballKey());
   const apiFootballAcceptance = buildProviderAcceptanceState(readJson(API_FOOTBALL_ACCEPTANCE_FILE));
   const apiFootballEnabled = providerConfigured && apiFootballAcceptance.accepted;
@@ -348,13 +351,17 @@ async function main() {
         });
         continue;
       }
-      const localProfile = readLocalH2HProfile(ROOT, match);
+      const providerAttempts = [];
+      const localProfile = readLocalH2HProfile(ROOT, match, 5, { ledger: snapshotLedgerLoad.ledger });
+      providerAttempts.push(normalizeProviderAttempt({ provider: "canonical-history", status: localProfile?.results?.length ? "ok" : "not_found", records: localProfile?.results?.length || 0 }));
       const footballDataProfile = localProfile?.results?.length ? null : await fetchFootballDataCoUkH2HProfile(match);
+      if (!localProfile?.results?.length) providerAttempts.push(normalizeProviderAttempt({ provider: "football-data-co-uk", status: footballDataProfile?.results?.length ? "ok" : "no_coverage", records: footballDataProfile?.results?.length || 0 }));
       const apiFootballComProfile = localProfile?.results?.length || footballDataProfile?.results?.length ? null : await fetchApiFootballComH2HProfile({
         homeName: match.home_team_name,
         awayName: match.away_team_name,
         leagueLabel: match.league,
       });
+      if (!localProfile?.results?.length && !footballDataProfile?.results?.length) providerAttempts.push(normalizeProviderAttempt({ provider: "apifootball-com", status: apiFootballComProfile?.results?.length ? "ok" : "no_coverage", records: apiFootballComProfile?.results?.length || 0 }));
       const goalApiProfile = localProfile?.results?.length || footballDataProfile?.results?.length || apiFootballComProfile?.results?.length
         ? null
         : await fetchGoalApiH2HProfile(match);
@@ -407,12 +414,13 @@ async function main() {
           awayTeam: match.away_team_name,
           played: resolvedProfile.results.length,
           source: resolvedProfile.source,
+          providerAttempts,
         });
       } else {
         const cacheKey = `${String(match.league || "").toLowerCase()}:${String(match.home_team_name || "").toLowerCase()}__${String(match.away_team_name || "").toLowerCase()}`;
         const status = store.apiFootballH2HCache?.[cacheKey]?.status ||
           (!providerConfigured ? "provider_not_configured" : !apiFootballEnabled ? "provider_acceptance_blocked" : "not_found");
-        noDirectHistory.push(buildNoDirectHistoryProfile(match, status));
+        noDirectHistory.push({ ...buildNoDirectHistoryProfile(match, status), providerAttempts });
       }
     } catch (error) {
       errors.push({
@@ -437,6 +445,7 @@ async function main() {
     ])),
     databaseWritable,
     databaseError,
+    r2SnapshotLedgerAvailable: Boolean(snapshotLedgerLoad.sources?.r2?.available),
     r2Stored,
     staticUpdated,
     filled: filled.length,

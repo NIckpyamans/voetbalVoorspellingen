@@ -36,7 +36,35 @@ function orient(item, homeName) {
   };
 }
 
-export function readLocalH2HProfile(root, match, limit = 5) {
+function collectLedgerCandidates(ledger, match, cutoff, candidates) {
+  let added = 0;
+  const snapshots = ledger?.predictionSnapshots || {};
+  for (const [predictionId, evaluation] of Object.entries(ledger?.evaluations || {})) {
+    const snapshot = snapshots[predictionId];
+    if (!snapshot || evaluation?.finalHomeGoals == null || evaluation?.finalAwayGoals == null) continue;
+    const kickoff = snapshot.kickoff || evaluation.kickoff || snapshot.date;
+    if (Date.parse(kickoff || "") >= cutoff) continue;
+    const item = {
+      id: snapshot.matchId || evaluation.matchId,
+      date: String(snapshot.date || kickoff || "").slice(0, 10),
+      league: snapshot.league || null,
+      homeTeamName: snapshot.homeTeam || snapshot.prediction?.homeTeam,
+      awayTeamName: snapshot.awayTeam || snapshot.prediction?.awayTeam,
+      homeScore: Number(evaluation.finalHomeGoals),
+      awayScore: Number(evaluation.finalAwayGoals),
+      score: `${evaluation.finalHomeGoals}-${evaluation.finalAwayGoals}`,
+      status: "FT",
+      dataSource: evaluation.evaluationSource || "immutable-r2-snapshot-ledger",
+    };
+    if (samePair(item, match.home_team_name, match.away_team_name)) {
+      candidates.push(item);
+      added += 1;
+    }
+  }
+  return added;
+}
+
+export function readLocalH2HProfile(root, match, limit = 5, options = {}) {
   const cutoff = Date.parse(match?.kickoff_at || "") || Date.now();
   const candidates = [];
   const daysDir = path.join(root, "data", "days");
@@ -65,6 +93,7 @@ export function readLocalH2HProfile(root, match, limit = 5) {
   } catch {
     // The day cache remains the fallback when the review summary is unavailable.
   }
+  const ledgerCandidates = collectLedgerCandidates(options.ledger, match, cutoff, candidates);
   const unique = new Map();
   for (const item of candidates) {
     const result = orient(item, match.home_team_name);
@@ -72,5 +101,10 @@ export function readLocalH2HProfile(root, match, limit = 5) {
     unique.set(`${result.date}|${normalizeTeamIdentityName(result.homeTeam)}|${normalizeTeamIdentityName(result.awayTeam)}|${result.homeScore}-${result.awayScore}`, result);
   }
   const results = [...unique.values()].sort((a, b) => String(a.date).localeCompare(String(b.date))).slice(-limit);
-  return results.length ? { results, source: "local immutable match history", asOf: new Date().toISOString() } : null;
+  return results.length ? {
+    results,
+    played: results.length,
+    source: ledgerCandidates > 0 ? "local immutable R2 match history" : "local immutable match history",
+    asOf: new Date().toISOString(),
+  } : null;
 }

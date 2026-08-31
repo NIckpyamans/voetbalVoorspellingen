@@ -22,6 +22,7 @@ import { getCompetitionAgent, getCompetitionProviderOrder } from "./worker/compe
 import { fetchApiFootballComLineup } from "./providers/apifootball-com-provider.js";
 import { fetchGoalApiLineup } from "./providers/goal-api-provider.js";
 import { findBestProviderFixture, providerTeamSimilarity } from "./worker/provider-fixture-matching.js";
+import { normalizeProviderAttempt } from "./worker/provider-observability.js";
 
 const ROOT = process.cwd();
 const LOOKAHEAD_MINUTES = Math.max(30, Number(process.env.LINEUP_LOOKAHEAD_MINUTES || 90));
@@ -206,13 +207,19 @@ async function storeR2Lineup(match, provider, lineup) {
     .then((object) => object?.ok ? JSON.parse(object.body.toString("utf8")) : null)
     .catch(() => null);
   const payload = mergeLineupCaptureLedger(current, { match, provider, lineup });
-  return putR2Object({
+  const upload = await putR2Object({
     config,
     key,
     body: `${JSON.stringify(payload)}\n`,
     contentType: "application/json",
     metadata: { provider, match: match.match_id },
   });
+  return {
+    ...upload,
+    changed: payload.latestFingerprint !== current?.latestFingerprint,
+    newlyConfirmed: Boolean(lineup.confirmed && !current?.firstConfirmedAt),
+    revisionCount: payload.revisionCount,
+  };
 }
 
 function staticMatchesInWindow() {
@@ -305,6 +312,7 @@ async function main() {
     generatedAt: new Date().toISOString(),
     checked: matches.length,
     confirmed: 0,
+    changedConfirmed: 0,
     partial: 0,
     missing: 0,
     r2Stored: 0,
@@ -346,13 +354,13 @@ async function main() {
       if (!fetchers[candidateProvider]) continue;
       provider = candidateProvider;
       result = await fetchers[candidateProvider]();
-      attempts.push({
+      attempts.push(normalizeProviderAttempt({
         provider,
         status: result.status,
         ...(provider === "api-football" ? { fixtureMapped: Boolean(apiFootballFixtureId) } : {}),
         lineup: Boolean(result.lineup),
         confirmed: Boolean(result.lineup?.confirmed),
-      });
+      }));
       if (result.lineup) break;
     }
     for (const attempt of attempts) {
@@ -363,6 +371,7 @@ async function main() {
       report.playerFixtureStatsCaptured += Number(result.lineup.playerFixtureStatsCaptured || 0);
       const r2 = await storeR2Lineup(match, provider, result.lineup).catch((error) => ({ ok: false, error: error?.message || String(error) }));
       if (r2.ok) report.r2Stored += 1;
+      if (result.lineup.confirmed && (r2.changed || r2.newlyConfirmed)) report.changedConfirmed += 1;
       if (databaseWritable) {
         await storeLineup(sql, match, provider, result.url, result.lineup);
       }

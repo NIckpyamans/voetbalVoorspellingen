@@ -26,9 +26,21 @@ export function mergeStoredDuplicateMatch(current, incoming) {
   preferred.awayLogo ||= fallback?.awayLogo || "";
   preferred.homeTeamId ||= fallback?.homeTeamId || "";
   preferred.awayTeamId ||= fallback?.awayTeamId || "";
-  preferred.h2h = Number(preferred?.h2h?.played || 0) >= Number(fallback?.h2h?.played || 0) ? preferred.h2h : fallback?.h2h;
-  preferred.homeRecent ||= fallback?.homeRecent || null;
-  preferred.awayRecent ||= fallback?.awayRecent || null;
+  preferred.h2h = Number(preferred?.h2h?.played || preferred?.h2h?.results?.length || 0) >= Number(fallback?.h2h?.played || fallback?.h2h?.results?.length || 0) ? preferred.h2h : fallback?.h2h;
+  const recentCount = (value) => Number(value?.gamesPlayed || value?.recentMatches?.length || 0);
+  preferred.homeRecent = recentCount(preferred.homeRecent) >= recentCount(fallback?.homeRecent) ? preferred.homeRecent : fallback?.homeRecent;
+  preferred.awayRecent = recentCount(preferred.awayRecent) >= recentCount(fallback?.awayRecent) ? preferred.awayRecent : fallback?.awayRecent;
+  const lineupQuality = (value) => value?.confirmed ? 3 : value?.projected ? 2 : value?.home || value?.away ? 1 : 0;
+  preferred.lineupSummary = lineupQuality(preferred.lineupSummary) >= lineupQuality(fallback?.lineupSummary) ? preferred.lineupSummary : fallback?.lineupSummary;
+  const objectRichness = (value) => value && typeof value === "object"
+    ? Object.values(value).filter((item) => item != null && item !== "" && item !== 0 && (!Array.isArray(item) || item.length)).length
+    : 0;
+  for (const field of ["postMatchStats", "liveStats", "homeSeasonStats", "awaySeasonStats", "refereeProfile", "aggregate", "sourceAsOf", "providerDiagnostics"]) {
+    if (objectRichness(fallback?.[field]) > objectRichness(preferred?.[field])) preferred[field] = fallback[field];
+  }
+  for (const field of ["events", "goalEvents", "cards", "incidents"]) {
+    if ((fallback?.[field]?.length || 0) > (preferred?.[field]?.length || 0)) preferred[field] = fallback[field];
+  }
   preferred.dataSource = [...new Set([preferred.dataSource, fallback?.dataSource].filter(Boolean))].join("+");
   const preferredHasScore = Number.isFinite(Number(preferred.homeScore)) && Number.isFinite(Number(preferred.awayScore));
   const fallbackHasScore = Number.isFinite(Number(fallback?.homeScore)) && Number.isFinite(Number(fallback?.awayScore));
