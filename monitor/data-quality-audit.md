@@ -1,6 +1,6 @@
 # Data Quality Audit
 
-Laatst bijgewerkt: 2026-09-01T18:43:12.519Z
+Laatst bijgewerkt: 2026-09-01T21:30:59.568Z
 Lookback: 45 dagen
 
 ## Scores
@@ -10,14 +10,14 @@ Lookback: 45 dagen
 - Ontbrekende oude scores: 0
 - H2H-dekking: 40%
 - Reviews na afloop: 92%
-- Lekvrije post-matchreviews: 100% (163/163)
+- Lekvrije post-matchreviews: 100% (171/171)
 - Bruikbare wedstrijdstatistieken: 80%
 - Bevestigde opstellingen: 12%
-- Historisch teruggevonden basiselftallen: 61%
+- Historisch teruggevonden basiselftallen: 60%
 - Verse getimestampte prematch-odds: 4%
 - Volledige pre-match bewijsset: 3%
-- Doelpunten met tijdlijn: 60%
-- Kaarten met tijdlijn: 62%
+- Doelpunten met tijdlijn: 61%
+- Kaarten met tijdlijn: 63%
 
 ## Per competitie
 - Netherlands - Eredivisie: 19 duels, vorm 84%, H2H 37%, inzetbewijs 0%, lekvrije reviews 0% (0/0), stats 100%; gaten: h2h, confirmed_lineups, timestamped_odds, leak_free_reviews, card_timeline
@@ -25,7 +25,7 @@ Lookback: 45 dagen
 - Germany - Bundesliga: 76 duels, vorm 92%, H2H 53%, inzetbewijs 0%, lekvrije reviews 100% (1/1), stats 77%; gaten: h2h, confirmed_lineups, timestamped_odds, post_match_statistics, goal_timeline, card_timeline
 - Germany - 2. Bundesliga: 21 duels, vorm 71%, H2H 24%, inzetbewijs 0%, lekvrije reviews 100% (2/2), stats 100%; gaten: form, h2h, confirmed_lineups, timestamped_odds
 - England - Premier League: 90 duels, vorm 98%, H2H 56%, inzetbewijs 2%, lekvrije reviews 100% (12/12), stats 100%; gaten: h2h, confirmed_lineups, timestamped_odds
-- England - Championship: 42 duels, vorm 21%, H2H 55%, inzetbewijs 19%, lekvrije reviews 0% (0/0), stats 100%; gaten: form, h2h, confirmed_lineups, timestamped_odds, leak_free_reviews
+- England - Championship: 42 duels, vorm 21%, H2H 55%, inzetbewijs 19%, lekvrije reviews 100% (8/8), stats 100%; gaten: form, h2h, confirmed_lineups, timestamped_odds
 - France - Ligue 1: 82 duels, vorm 89%, H2H 70%, inzetbewijs 1%, lekvrije reviews 100% (10/10), stats 100%; gaten: confirmed_lineups, timestamped_odds
 - France - Ligue 2: 81 duels, vorm 59%, H2H 49%, inzetbewijs 9%, lekvrije reviews 100% (15/15), stats 100%; gaten: form, h2h, confirmed_lineups, timestamped_odds
 - Europe - Champions League: 20 duels, vorm 55%, H2H 35%, inzetbewijs 0%, lekvrije reviews 100% (7/7), stats 100%; gaten: form, h2h, confirmed_lineups, timestamped_odds
@@ -36,7 +36,7 @@ Lookback: 45 dagen
 - Vul eerst betrouwbare eindstanden aan voordat learning en ROI/CLV zwaarder worden gewogen.
 - Breid H2H via historische competitieprofielen en team-id mappings uit tot minimaal 85% dekking.
 - Afgeronde wedstrijden zijn aan post-matchreviews gekoppeld.
-- Vul post-match statistieken en doelminuten via FotMob, APIfootball.com of GOAL shadow aan; nulvelden tellen niet als echte statistiek.
+- Post-match statistiekdekking is voldoende.
 - Toon geen inzetadvies zolang bevestigde opstellingen, verse getimestampte 1X2-odds en minimaal 70% modeldata niet samen aanwezig zijn.
 
 ## Samples
