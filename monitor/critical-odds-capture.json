@@ -1,162 +1,248 @@
 {
-  "generatedAt": "2026-08-31T14:06:16.059Z",
-  "checked": 7,
-  "captured": 0,
-  "openingCaptured": 0,
-  "prematchCaptured": 0,
+  "generatedAt": "2026-09-01T11:45:45.210Z",
+  "checked": 12,
+  "captured": 12,
+  "openingCaptured": 12,
+  "prematchCaptured": 12,
   "closingCaptured": 0,
   "closingPairs": 0,
   "statuses": {
-    "not_found": 5
+    "available": 12
   },
   "attemptStatuses": {
-    "the-odds-api:seasonal_sport_unavailable": 10,
-    "the-odds-api:unsupported_sport": 10,
-    "the-odds-api:quota_reserve": 5,
-    "sportmonks:fixture_id_missing": 5
+    "the-odds-api:seasonal_sport_unavailable": 4,
+    "the-odds-api:unsupported_sport": 8,
+    "the-odds-api:available": 4
   },
   "providerStatuses": {
     "the-odds-api": {
-      "seasonal_sport_unavailable": 10,
-      "unsupported_sport": 10,
-      "quota_reserve": 5
-    },
-    "sportmonks": {
-      "fixture_id_missing": 5
+      "seasonal_sport_unavailable": 4,
+      "unsupported_sport": 8,
+      "available": 4
     }
   },
   "providerQuota": {
+    "apifootball-com": {
+      "remaining": null,
+      "used": null,
+      "limit": null,
+      "reset": null
+    },
     "the-odds-api": {
-      "remaining": 20
+      "remaining": 499,
+      "used": 1,
+      "limit": null,
+      "reset": null
     }
   },
-  "skippedExistingRole": 2,
+  "skippedExistingRole": 0,
   "sportmonksMapped": 0,
   "sportmonksMappingStatuses": {
-    "plan_coverage_unavailable": 7
+    "plan_coverage_unavailable": 12
   },
   "matches": [
     {
-      "matchId": "ss-fotmob-5832845",
-      "kickoff": "2026-08-31T18:00:00.000Z",
-      "league": "Netherlands - Eerste Divisie",
-      "homeTeam": "Jong AZ Alkmaar",
-      "awayTeam": "Jong FC Utrecht",
-      "minutesBeforeKickoff": 234,
-      "closingWindow": false,
-      "status": "not_found",
-      "providerCompetitionAvailability": null,
-      "reason": "Sportmonks fixture-id ontbreekt; odds-by-fixture call overgeslagen.",
-      "sportmonksMapping": "plan_coverage_unavailable"
-    },
-    {
-      "matchId": "ss-fotmob-5832846",
-      "kickoff": "2026-08-31T18:00:00.000Z",
-      "league": "Netherlands - Eerste Divisie",
-      "homeTeam": "Jong PSV",
-      "awayTeam": "Jong Ajax",
-      "minutesBeforeKickoff": 234,
-      "closingWindow": false,
-      "status": "not_found",
-      "providerCompetitionAvailability": null,
-      "reason": "Sportmonks fixture-id ontbreekt; odds-by-fixture call overgeslagen.",
-      "sportmonksMapping": "plan_coverage_unavailable"
-    },
-    {
-      "matchId": "ss-fotmob-5803238",
-      "kickoff": "2026-08-31T18:45:00.000Z",
-      "league": "France - Ligue 2",
-      "homeTeam": "Dijon",
-      "awayTeam": "Saint-Étienne",
-      "minutesBeforeKickoff": 279,
-      "closingWindow": false,
-      "status": "not_found",
-      "providerCompetitionAvailability": null,
-      "reason": "Sportmonks fixture-id ontbreekt; odds-by-fixture call overgeslagen.",
-      "sportmonksMapping": "plan_coverage_unavailable"
-    },
-    {
-      "matchId": "ss-fotmob-5795426",
-      "kickoff": "2026-08-31T19:00:00.000Z",
-      "league": "England - Premier League",
-      "homeTeam": "Aston Villa",
-      "awayTeam": "Arsenal",
-      "minutesBeforeKickoff": 294,
-      "closingWindow": false,
-      "status": "not_found",
-      "providerCompetitionAvailability": null,
-      "reason": "Sportmonks fixture-id ontbreekt; odds-by-fixture call overgeslagen.",
-      "sportmonksMapping": "plan_coverage_unavailable"
-    },
-    {
-      "matchId": "ss-bbc-2026-09-01-lincoln city-blackburn rovers",
-      "kickoff": "2026-09-01T17:45:00.000Z",
+      "matchId": "ss-fotmob-5836791",
+      "kickoff": "2026-09-01T18:45:00.000Z",
       "league": "England - Championship",
       "homeTeam": "Lincoln City",
       "awayTeam": "Blackburn Rovers",
-      "minutesBeforeKickoff": 1659,
+      "minutesBeforeKickoff": 419,
       "closingWindow": false,
-      "status": "already_captured",
-      "captureRole": "opening"
+      "status": "captured",
+      "provider": "apifootball-com",
+      "captureRole": "opening",
+      "sportmonksFixtureId": null,
+      "opening": true,
+      "prematch": true,
+      "closing": false
     },
     {
-      "matchId": "ss-bbc-2026-09-01-portsmouth-derby county",
-      "kickoff": "2026-09-01T17:45:00.000Z",
+      "matchId": "ss-fotmob-5836792",
+      "kickoff": "2026-09-01T18:45:00.000Z",
       "league": "England - Championship",
       "homeTeam": "Portsmouth",
       "awayTeam": "Derby County",
-      "minutesBeforeKickoff": 1659,
+      "minutesBeforeKickoff": 419,
       "closingWindow": false,
-      "status": "already_captured",
-      "captureRole": "opening"
+      "status": "captured",
+      "provider": "apifootball-com",
+      "captureRole": "opening",
+      "sportmonksFixtureId": null,
+      "opening": true,
+      "prematch": true,
+      "closing": false
     },
     {
-      "matchId": "ss-tsdb-England - Championship-2501285",
+      "matchId": "ss-fotmob-5836797",
       "kickoff": "2026-09-01T18:45:00.000Z",
       "league": "England - Championship",
       "homeTeam": "West Ham United",
       "awayTeam": "Wolverhampton Wanderers",
-      "minutesBeforeKickoff": 1719,
+      "minutesBeforeKickoff": 419,
       "closingWindow": false,
-      "status": "not_found",
-      "providerCompetitionAvailability": null,
-      "reason": "Sportmonks fixture-id ontbreekt; odds-by-fixture call overgeslagen.",
-      "sportmonksMapping": "plan_coverage_unavailable"
+      "status": "captured",
+      "provider": "the-odds-api",
+      "captureRole": "opening",
+      "sportmonksFixtureId": null,
+      "opening": true,
+      "prematch": true,
+      "closing": false
+    },
+    {
+      "matchId": "ss-fotmob-5836793",
+      "kickoff": "2026-09-01T18:45:00.000Z",
+      "league": "England - Championship",
+      "homeTeam": "Preston North End",
+      "awayTeam": "Bristol City",
+      "minutesBeforeKickoff": 419,
+      "closingWindow": false,
+      "status": "captured",
+      "provider": "apifootball-com",
+      "captureRole": "opening",
+      "sportmonksFixtureId": null,
+      "opening": true,
+      "prematch": true,
+      "closing": false
+    },
+    {
+      "matchId": "ss-fotmob-5836794",
+      "kickoff": "2026-09-01T18:45:00.000Z",
+      "league": "England - Championship",
+      "homeTeam": "Sheffield United",
+      "awayTeam": "Bolton Wanderers",
+      "minutesBeforeKickoff": 419,
+      "closingWindow": false,
+      "status": "captured",
+      "provider": "the-odds-api",
+      "captureRole": "opening",
+      "sportmonksFixtureId": null,
+      "opening": true,
+      "prematch": true,
+      "closing": false
+    },
+    {
+      "matchId": "ss-fotmob-5836796",
+      "kickoff": "2026-09-01T18:45:00.000Z",
+      "league": "England - Championship",
+      "homeTeam": "Swansea City",
+      "awayTeam": "Watford",
+      "minutesBeforeKickoff": 419,
+      "closingWindow": false,
+      "status": "captured",
+      "provider": "apifootball-com",
+      "captureRole": "opening",
+      "sportmonksFixtureId": null,
+      "opening": true,
+      "prematch": true,
+      "closing": false
+    },
+    {
+      "matchId": "ss-fotmob-5836790",
+      "kickoff": "2026-09-01T19:00:00.000Z",
+      "league": "England - Championship",
+      "homeTeam": "Birmingham City",
+      "awayTeam": "Southampton",
+      "minutesBeforeKickoff": 434,
+      "closingWindow": false,
+      "status": "captured",
+      "provider": "apifootball-com",
+      "captureRole": "opening",
+      "sportmonksFixtureId": null,
+      "opening": true,
+      "prematch": true,
+      "closing": false
+    },
+    {
+      "matchId": "ss-fotmob-5836795",
+      "kickoff": "2026-09-01T19:00:00.000Z",
+      "league": "England - Championship",
+      "homeTeam": "Stoke City",
+      "awayTeam": "Norwich City",
+      "minutesBeforeKickoff": 434,
+      "closingWindow": false,
+      "status": "captured",
+      "provider": "apifootball-com",
+      "captureRole": "opening",
+      "sportmonksFixtureId": null,
+      "opening": true,
+      "prematch": true,
+      "closing": false
+    },
+    {
+      "matchId": "ss-fotmob-5836799",
+      "kickoff": "2026-09-02T18:45:00.000Z",
+      "league": "England - Championship",
+      "homeTeam": "Millwall",
+      "awayTeam": "Wrexham",
+      "minutesBeforeKickoff": 1859,
+      "closingWindow": false,
+      "status": "captured",
+      "provider": "apifootball-com",
+      "captureRole": "opening",
+      "sportmonksFixtureId": null,
+      "opening": true,
+      "prematch": true,
+      "closing": false
+    },
+    {
+      "matchId": "ss-fotmob-5836800",
+      "kickoff": "2026-09-02T18:45:00.000Z",
+      "league": "England - Championship",
+      "homeTeam": "Queens Park Rangers",
+      "awayTeam": "Cardiff City",
+      "minutesBeforeKickoff": 1859,
+      "closingWindow": false,
+      "status": "captured",
+      "provider": "the-odds-api",
+      "captureRole": "opening",
+      "sportmonksFixtureId": null,
+      "opening": true,
+      "prematch": true,
+      "closing": false
+    },
+    {
+      "matchId": "ss-fotmob-5836801",
+      "kickoff": "2026-09-02T18:45:00.000Z",
+      "league": "England - Championship",
+      "homeTeam": "West Bromwich Albion",
+      "awayTeam": "Charlton Athletic",
+      "minutesBeforeKickoff": 1859,
+      "closingWindow": false,
+      "status": "captured",
+      "provider": "apifootball-com",
+      "captureRole": "opening",
+      "sportmonksFixtureId": null,
+      "opening": true,
+      "prematch": true,
+      "closing": false
+    },
+    {
+      "matchId": "ss-fotmob-5836798",
+      "kickoff": "2026-09-02T19:00:00.000Z",
+      "league": "England - Championship",
+      "homeTeam": "Burnley",
+      "awayTeam": "Middlesbrough",
+      "minutesBeforeKickoff": 1874,
+      "closingWindow": false,
+      "status": "captured",
+      "provider": "the-odds-api",
+      "captureRole": "opening",
+      "sportmonksFixtureId": null,
+      "opening": true,
+      "prematch": true,
+      "closing": false
     }
   ],
   "leagueCoverage": [
     {
       "league": "England - Championship",
-      "checked": 3,
-      "covered": 0,
+      "checked": 12,
+      "covered": 12,
       "partial": 0,
-      "missing": 3,
-      "coverage": 0
-    },
-    {
-      "league": "Netherlands - Eerste Divisie",
-      "checked": 2,
-      "covered": 0,
-      "partial": 0,
-      "missing": 2,
-      "coverage": 0
-    },
-    {
-      "league": "England - Premier League",
-      "checked": 1,
-      "covered": 0,
-      "partial": 0,
-      "missing": 1,
-      "coverage": 0
-    },
-    {
-      "league": "France - Ligue 2",
-      "checked": 1,
-      "covered": 0,
-      "partial": 0,
-      "missing": 1,
-      "coverage": 0
+      "missing": 0,
+      "coverage": 1
     }
   ],
-  "coverage": 0
+  "coverage": 1
 }
