@@ -1,16 +1,15 @@
 # Upcoming H2H Backfill
 
-Laatst bijgewerkt: 2026-09-01T08:39:14.898Z
+Laatst bijgewerkt: 2026-09-01T11:46:31.396Z
 Gecontroleerd: 32
-Gevuld: 1
-Geen directe H2H: 31
+Gevuld: 0
+Geen directe H2H: 32
 Errors: 0
 
 ## Aanbeveling
 API-Football blijft quota-bewust geblokkeerd totdat de acceptatietest slaagt; ESPN is wel gecontroleerd voor alle kandidaten.
 
 ## Gevuld
-- 2026-09-06: FC Groningen - FC Twente (5)
 
 ## Geen Directe H2H
 - 2026-09-01: Sheffield United - Bolton Wanderers (provider_acceptance_blocked)
@@ -27,9 +26,9 @@ API-Football blijft quota-bewust geblokkeerd totdat de acceptatietest slaagt; ES
 - 2026-09-04: Heracles - De Graafschap (provider_acceptance_blocked)
 - 2026-09-04: RKC Waalwijk - NAC Breda (provider_acceptance_blocked)
 - 2026-09-04: Vitesse - TOP Oss (provider_acceptance_blocked)
-- 2026-09-05: Hoffenheim - Borussia Dortmund (provider_acceptance_blocked)
-- 2026-09-05: Nottingham Forest - Tottenham Hotspur (provider_acceptance_blocked)
-- 2026-09-05: Dynamo Dresden - Bochum (provider_acceptance_blocked)
+- 2026-09-05: Holstein Kiel - 1. FC Nürnberg (provider_acceptance_blocked)
+- 2026-09-05: Newcastle United - AFC Bournemouth (provider_acceptance_blocked)
+- 2026-09-05: Bayer Leverkusen - Union Berlin (provider_acceptance_blocked)
 - 2026-09-05: Millwall - Bolton Wanderers (provider_acceptance_blocked)
 - 2026-09-05: FC Dordrecht - Jong AZ Alkmaar (provider_acceptance_blocked)
 - 2026-09-05: Nice - Le Mans (provider_acceptance_blocked)
