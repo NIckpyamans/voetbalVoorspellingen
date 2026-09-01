@@ -11,14 +11,14 @@
     }
   },
   "promotionGate": {
-    "uniqueCompletedMatches": 78,
+    "uniqueCompletedMatches": 155,
     "calibrationMin": 50,
     "promotionMin": 150,
     "calibrationGap": 0,
-    "promotionGap": 72,
+    "promotionGap": 0,
     "canCalibrate": true,
-    "canPromote": false,
-    "stage": "experimental_ready"
+    "canPromote": true,
+    "stage": "professional_ready"
   },
   "calibrationSource": "merged_immutable_training_and_r2",
   "database": {
@@ -29,21 +29,57 @@
   },
   "immutableSources": {
     "selected": "merged_immutable_training_and_r2",
-    "mergedRows": 668,
-    "ledgerRows": 666,
+    "mergedRows": 818,
+    "ledgerRows": 816,
     "trainingRows": 531,
     "r2Configured": true,
     "r2Available": true,
     "r2Error": null
   },
-  "calibrationRows": 81,
-  "uniqueCompletedSnapshotMatches": 611,
-  "uniqueCompletedRegularSnapshotMatches": 78,
-  "generatedAt": "2026-08-28T18:49:19.073Z",
-  "groups": 13,
-  "candidates": 0,
+  "calibrationRows": 231,
+  "uniqueCompletedSnapshotMatches": 688,
+  "uniqueCompletedRegularSnapshotMatches": 155,
+  "generatedAt": "2026-09-01T11:46:03.719Z",
+  "groups": 22,
+  "candidates": 1,
   "accepted": 0,
   "liveProfileKeys": [],
-  "topCandidates": [],
+  "topCandidates": [
+    {
+      "calibrationProfileId": "league_bias_germany_bundesliga_v23_calibrated_odds_ledger",
+      "accepted": false,
+      "status": "candidate_no_improvement",
+      "adjustmentType": "league_bias_v1",
+      "modelVersion": "v23-calibrated-odds-ledger",
+      "league": "Germany - Bundesliga",
+      "competitionId": null,
+      "trainRows": 24,
+      "validationRows": 11,
+      "sampleSize": 35,
+      "minimumRows": 20,
+      "minimumValidationRows": 8,
+      "leakageSafe": true,
+      "method": "time_split_league_probability_bias_v1",
+      "scale": 0.25,
+      "homeBias": -0.0013,
+      "drawBias": 0.0009,
+      "confidenceBias": -0.0026,
+      "baselineBrier": 0.211389,
+      "calibratedBrier": 0.211472,
+      "improvement": -0.000084,
+      "baselineOutcomeHitRate": 0.4545,
+      "calibratedOutcomeHitRate": 0.4545,
+      "actualRates": {
+        "home": 0.3333333333333333,
+        "draw": 0.2962962962962963,
+        "away": 0.37037037037037035
+      },
+      "avgPredicted": {
+        "home": 0.4268722644402227,
+        "draw": 0.25338498900109996,
+        "away": 0.31974274655867746
+      }
+    }
+  ],
   "nextAction": "Geen profiel promoveren: geen unieke-wedstrijdenkandidaat haalt de minimale Brier-verbetering. Verzamel meer complete wedstrijden en herhaal de shadowrun."
 }
