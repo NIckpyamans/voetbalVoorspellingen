@@ -1,8 +1,8 @@
 {
-  "generatedAt": "2026-08-28T18:47:08.573Z",
+  "generatedAt": "2026-09-01T11:44:02.613Z",
   "range": {
-    "from": "2026-08-22",
-    "to": "2026-08-28",
+    "from": "2026-08-26",
+    "to": "2026-09-01",
     "days": 7
   },
   "shouldNotify": false,
@@ -10,54 +10,54 @@
   "cadence": "5x per maand",
   "summary": "AI bundel over de laatste 7 dagen: 2 monitorthema's en 5 uitvoerbare verbeteracties.",
   "totals": {
-    "totalRuns": 8,
-    "totalIssues": 3,
+    "totalRuns": 7,
+    "totalIssues": 4,
     "uniqueIssueTypes": 2
   },
   "latestStats": {
-    "today": "2026-08-28",
-    "tomorrow": "2026-08-29",
+    "today": "2026-09-01",
+    "tomorrow": "2026-09-02",
     "dataPresent": true,
-    "lastRun": 1787877860217,
-    "ageMinutes": 324,
+    "lastRun": 1788225414544,
+    "ageMinutes": 3,
     "maxWorkerAgeMinutes": 180,
-    "todayMatches": 19,
-    "tomorrowMatches": 31,
+    "todayMatches": 8,
+    "tomorrowMatches": 4,
     "fixtureCalendar": {
       "status": "has_current_matches",
       "healthy": true,
       "emptyWindowOk": true,
       "severity": "none",
-      "todayCount": 19,
-      "tomorrowCount": 31,
+      "todayCount": 8,
+      "tomorrowCount": 4,
       "windowDays": 7,
       "checkedDates": [
-        "2026-08-28",
-        "2026-08-29",
-        "2026-08-30",
-        "2026-08-31",
         "2026-09-01",
         "2026-09-02",
         "2026-09-03",
-        "2026-09-04"
+        "2026-09-04",
+        "2026-09-05",
+        "2026-09-06",
+        "2026-09-07",
+        "2026-09-08"
       ],
-      "nextMatchDate": "2026-08-28",
-      "nextMatchCount": 19,
+      "nextMatchDate": "2026-09-01",
+      "nextMatchCount": 8,
       "explanation": "Vandaag of morgen staan er wedstrijden in de actuele data."
     },
     "liveMatches": 0,
     "liveWithoutMinute": 0,
-    "h2hFilled": 2,
-    "h2hMissing": 17,
+    "h2hFilled": 7,
+    "h2hMissing": 1,
     "standingsCount": 11,
-    "cupSheetCount": 5,
+    "cupSheetCount": 3,
     "phaseReliabilityCount": 5
   },
   "topFindings": [
     {
       "key": "worker_stale",
       "title": "Workerdata verouderd",
-      "count": 2,
+      "count": 3,
       "highestSeverity": "high",
       "sampleMessage": "Workerdata is 476 minuten oud.",
       "recommendation": "Gebruik het reviewbranch-voorstel als veilige volgende patchronde."
@@ -72,15 +72,15 @@
     }
   ],
   "dataQuality": {
-    "generatedAt": "2026-08-28T18:46:41.935Z",
+    "generatedAt": "2026-09-01T11:43:39.821Z",
     "totals": {
-      "matches": 669,
-      "pastMatches": 242,
+      "matches": 728,
+      "pastMatches": 325,
       "pendingResultBackfills": 2,
       "missingPastScores": 0,
-      "h2hMissing": 393,
-      "h2hCovered": 276,
-      "h2hCoverage": 0.413
+      "h2hMissing": 437,
+      "h2hCovered": 291,
+      "h2hCoverage": 0.4
     },
     "status": {
       "resultBackfill": "needs_backfill",
@@ -95,7 +95,7 @@
     ]
   },
   "widgetAudit": {
-    "generatedAt": "2026-08-28T18:46:56.905Z",
+    "generatedAt": "2026-09-01T11:43:49.751Z",
     "baseUrl": "https://voetbalvoorspellingen-clean.vercel.app",
     "status": "degraded",
     "totals": {
@@ -114,9 +114,9 @@
       {
         "key": "health",
         "label": "Systeemstatus",
-        "passed": false,
+        "passed": true,
         "status": 200,
-        "detail": "HTTP 200"
+        "detail": "status ok"
       },
       {
         "key": "neon",
@@ -137,7 +137,7 @@
         "label": "Dashboard/matches-widget",
         "passed": true,
         "status": 200,
-        "detail": "19 actuele matches, bron github-worker-v4-split"
+        "detail": "8 actuele matches, bron github-worker-v4-split"
       },
       {
         "key": "standings_widget",
@@ -170,9 +170,9 @@
       {
         "key": "snapshot_widget",
         "label": "Prediction-snapshot-widget",
-        "passed": true,
-        "status": 200,
-        "detail": "1 snapshots"
+        "passed": false,
+        "status": 500,
+        "detail": "HTTP 500"
       },
       {
         "key": "knowledge_widget",
@@ -184,11 +184,11 @@
     ],
     "opportunities": [
       "Vul gratis pre-match odds snapshots voordat ROI/CLV wordt beoordeeld.",
-      "Herstel de mislukte widgetcontracten: Systeemstatus, Neon database, Provider- en integriteitswidget."
+      "Herstel de mislukte widgetcontracten: Neon database, Provider- en integriteitswidget, Prediction-snapshot-widget."
     ]
   },
   "predictionEvaluation": {
-    "generatedAt": "2026-08-28T17:43:41.807Z",
+    "generatedAt": "2026-09-01T10:27:05.752Z",
     "status": "completed",
     "outcome": "evaluated",
     "sources": {
@@ -202,29 +202,29 @@
       "r2": {
         "configured": true,
         "available": true,
-        "snapshotsRead": 6789,
-        "evaluated": 2416,
+        "snapshotsRead": 8118,
+        "evaluated": 3406,
         "persisted": true,
         "error": null
       },
       "fallback": {
         "available": true,
         "snapshotsRead": 708,
-        "staticResultsRead": 1348,
+        "staticResultsRead": 1460,
         "evaluated": 0
       }
     },
     "totals": {
       "snapshotsRead": 5000,
-      "uniqueSnapshotMatches": 644,
-      "eligibleResults": 2416,
-      "directResultMatches": 2399,
-      "canonicalResultMatches": 17,
+      "uniqueSnapshotMatches": 432,
+      "eligibleResults": 3406,
+      "directResultMatches": 3307,
+      "canonicalResultMatches": 99,
       "ambiguousResultMatches": 0,
-      "evaluatedThisRun": 2416,
-      "evaluationsStoredInLedger": 3862,
-      "snapshotBackedReviewsStoredInLedger": 532,
-      "reviewsLinkedThisRun": 358
+      "evaluatedThisRun": 3406,
+      "evaluationsStoredInLedger": 5693,
+      "snapshotBackedReviewsStoredInLedger": 609,
+      "reviewsLinkedThisRun": 243
     }
   },
   "snapshotGrowth": {
@@ -340,7 +340,7 @@
     }
   },
   "architectureAudit": {
-    "generatedAt": "2026-08-28T18:47:08.573Z",
+    "generatedAt": "2026-09-01T11:44:02.613Z",
     "summary": "Professionele architectuuranalyse voor schaalbaarheid, datakwaliteit, AI-agentwaarde, databasegroei en modelbetrouwbaarheid.",
     "findings": [
       {
@@ -426,25 +426,25 @@
         "title": "H2H-dekking gericht verhogen",
         "priority": "Hoog",
         "expectedImpact": "Hoog",
-        "metric": 0.413,
+        "metric": 0.4,
         "target": 0.85,
-        "reason": "Actuele H2H-dekking is 41%; doel is minimaal 85% met betrouwbare historie en expliciete missing reasons."
+        "reason": "Actuele H2H-dekking is 40%; doel is minimaal 85% met betrouwbare historie en expliciete missing reasons."
       },
       {
         "key": "confirmed_lineups",
         "title": "Confirmed lineups rond kickoff verzamelen",
         "priority": "Hoog",
         "expectedImpact": "Zeer hoog",
-        "metric": 0.40217391304347827,
+        "metric": 0.3,
         "target": 0.45,
-        "reason": "Confirmed-lineupdekking is 40%; T-75, T-45 en T-20 blijven de actieve capturevensters."
+        "reason": "Confirmed-lineupdekking is 30%; T-75, T-45 en T-20 blijven de actieve capturevensters."
       },
       {
         "key": "timestamped_odds",
         "title": "Opening-, prematch- en closing odds vastleggen",
         "priority": "Hoog",
         "expectedImpact": "Zeer hoog",
-        "metric": 0.07065217391304347,
+        "metric": 0.072,
         "target": 0.6,
         "reason": "Echte oddsdekking is 7%; CLV/ROI blijft geblokkeerd zonder geldige timestamped paren. API-Football accepteert het huidige plan nog niet."
       },
@@ -500,25 +500,25 @@
       "title": "H2H-dekking gericht verhogen",
       "priority": "Hoog",
       "expectedImpact": "Hoog",
-      "metric": 0.413,
+      "metric": 0.4,
       "target": 0.85,
-      "reason": "Actuele H2H-dekking is 41%; doel is minimaal 85% met betrouwbare historie en expliciete missing reasons."
+      "reason": "Actuele H2H-dekking is 40%; doel is minimaal 85% met betrouwbare historie en expliciete missing reasons."
     },
     {
       "key": "confirmed_lineups",
       "title": "Confirmed lineups rond kickoff verzamelen",
       "priority": "Hoog",
       "expectedImpact": "Zeer hoog",
-      "metric": 0.40217391304347827,
+      "metric": 0.3,
       "target": 0.45,
-      "reason": "Confirmed-lineupdekking is 40%; T-75, T-45 en T-20 blijven de actieve capturevensters."
+      "reason": "Confirmed-lineupdekking is 30%; T-75, T-45 en T-20 blijven de actieve capturevensters."
     },
     {
       "key": "timestamped_odds",
       "title": "Opening-, prematch- en closing odds vastleggen",
       "priority": "Hoog",
       "expectedImpact": "Zeer hoog",
-      "metric": 0.07065217391304347,
+      "metric": 0.072,
       "target": 0.6,
       "reason": "Echte oddsdekking is 7%; CLV/ROI blijft geblokkeerd zonder geldige timestamped paren. API-Football accepteert het huidige plan nog niet."
     },
@@ -547,27 +547,27 @@
       "title": "H2H-dekking gericht verhogen",
       "priority": "Hoog",
       "expectedImpact": "Hoog",
-      "metric": 0.413,
+      "metric": 0.4,
       "target": 0.85,
       "workflow": "h2h-enrichment.yml",
-      "reason": "Actuele H2H-dekking is 41%; doel is minimaal 85% met betrouwbare historie en expliciete missing reasons."
+      "reason": "Actuele H2H-dekking is 40%; doel is minimaal 85% met betrouwbare historie en expliciete missing reasons."
     },
     {
       "key": "confirmed_lineups",
       "title": "Confirmed lineups rond kickoff verzamelen",
       "priority": "Hoog",
       "expectedImpact": "Zeer hoog",
-      "metric": 0.40217391304347827,
+      "metric": 0.3,
       "target": 0.45,
       "workflow": "pre-kickoff-lineups.yml",
-      "reason": "Confirmed-lineupdekking is 40%; T-75, T-45 en T-20 blijven de actieve capturevensters."
+      "reason": "Confirmed-lineupdekking is 30%; T-75, T-45 en T-20 blijven de actieve capturevensters."
     },
     {
       "key": "timestamped_odds",
       "title": "Opening-, prematch- en closing odds vastleggen",
       "priority": "Hoog",
       "expectedImpact": "Zeer hoog",
-      "metric": 0.07065217391304347,
+      "metric": 0.072,
       "target": 0.6,
       "workflow": "free-prematch-odds.yml",
       "reason": "Echte oddsdekking is 7%; CLV/ROI blijft geblokkeerd zonder geldige timestamped paren. API-Football accepteert het huidige plan nog niet."
@@ -598,14 +598,7 @@
     "maxActionsPerAudit": 5,
     "note": "Alleen bestaande, idempotente GitHub-workflows worden gestart; externe abonnementen of modelpromoties worden nooit geforceerd."
   },
-  "reviewProposal": {
-    "branchName": "codex/review-20260828",
-    "summary": "AI reviewvoorstel voor 2026-08-28: 1 aandachtspunt(en) met patchadvies, niet automatisch live.",
-    "recommendedFiles": [
-      ".github/workflows/worker.yml",
-      "scripts/server-worker.js"
-    ]
-  },
+  "reviewProposal": null,
   "delivery": {
     "emailConfigured": false,
     "note": "Mailverzending vereist nog aparte mailcredentials of een mailservice. De bundel wordt nu wel automatisch opgebouwd en opgeslagen."

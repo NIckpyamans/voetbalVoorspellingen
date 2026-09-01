@@ -6,16 +6,16 @@
     "owner": "Nick",
     "status": "active"
   },
-  "generatedAt": "2026-08-31T06:43:52.123Z",
+  "generatedAt": "2026-09-01T11:43:49.890Z",
   "baseUrl": "https://voetbalvoorspellingen-clean.vercel.app",
-  "summary": "Professionele audit actief, maar live fetch is beperkt: matches, predict, history, snapshots.",
+  "summary": "Professionele audit actief, maar live fetch is beperkt: snapshots.",
   "live": {
-    "matchesTotal": 0,
-    "predictionsTotal": 228,
-    "reviewCount": 0,
-    "predictionSnapshotCount": 168,
-    "workerVersion": "unknown",
-    "sourceBranch": "unknown",
+    "matchesTotal": 8,
+    "predictionsTotal": 8,
+    "reviewCount": 1042,
+    "predictionSnapshotCount": 274,
+    "workerVersion": "v24-monte-carlo-average",
+    "sourceBranch": "codex/step3b-layout",
     "sourceCoverage": null,
     "featureDiagnostics": null,
     "backtestSummary": null,
@@ -23,48 +23,48 @@
     "dataCompletenessAudit": null,
     "oddsIntegrationReadiness": null,
     "fetchErrors": {
-      "matches": "fetch failed",
-      "predict": "fetch failed",
-      "history": "fetch failed",
-      "snapshots": "fetch failed"
+      "matches": null,
+      "predict": null,
+      "history": null,
+      "snapshots": "This operation was aborted"
     }
   },
   "predictions": {
-    "total": 228,
+    "total": 250,
     "featureCoverage": 1,
     "featureCoverageScope": "today-and-tomorrow-before-static-compaction",
-    "featureCoveragePredictions": 4,
-    "historicalInlineFeatureCoverage": 0.017543859649122806,
+    "featureCoveragePredictions": 8,
+    "historicalInlineFeatureCoverage": 0.032,
     "historicalFeatureStorage": "immutable-r2-snapshot-ledger",
-    "oddsCoverage": 0.05701754385964912,
-    "historicalMarketOnly": 0.017543859649122806,
+    "oddsCoverage": 0.072,
+    "historicalMarketOnly": 0.032,
     "reviewCoverage": 0,
-    "averageCompleteness": 0.8574210526315788
+    "averageCompleteness": 0.8518480000000004
   },
   "recent": {
     "days": 15,
-    "matches": 228,
-    "predictions": 228,
-    "finishedMatches": 224,
-    "finishedWithScore": 224,
+    "matches": 250,
+    "predictions": 250,
+    "finishedMatches": 242,
+    "finishedWithScore": 242,
     "resultCoverage": 1,
-    "reviewedMatches": 224,
+    "reviewedMatches": 242,
     "evaluationCoverage": 1,
-    "snapshotBackedReviews": 80,
-    "snapshotBackedReviewCoverage": 0.35714285714285715,
-    "predictionSnapshots": 168,
-    "uniqueSnapshotMatches": 84,
-    "dataCompleteness": 0.8574210526315788,
+    "snapshotBackedReviews": 178,
+    "snapshotBackedReviewCoverage": 0.7355371900826446,
+    "predictionSnapshots": 274,
+    "uniqueSnapshotMatches": 141,
+    "dataCompleteness": 0.8518480000000004,
     "sourceMetadataCoverage": 1,
-    "actualOddsCoverage": 0.05701754385964912,
-    "confirmedLineupCoverage": 0.29385964912280704,
+    "actualOddsCoverage": 0.072,
+    "confirmedLineupCoverage": 0.3,
     "performance": {
-      "reviews": 224,
-      "outcomeHitRate": 0.4955357142857143,
-      "exactHitRate": 0.08035714285714286,
-      "averageBrier": 0.4856007500000002,
-      "averageLogLoss": 1.0234410312499989,
-      "averageConfidence": 0.46935911602209923
+      "reviews": 242,
+      "outcomeHitRate": 0.5041322314049587,
+      "exactHitRate": 0.08264462809917356,
+      "averageBrier": 0.30508519834710757,
+      "averageLogLoss": 1.0264157479338845,
+      "averageConfidence": 0.4636512820512818
     },
     "segments": {
       "club_friendlies": {
@@ -79,17 +79,17 @@
         "reviews": 121,
         "outcomeHitRate": 0.5206611570247934,
         "exactHitRate": 0.08264462809917356,
-        "averageBrier": 0.4971606115702481,
-        "averageLogLoss": 0.9980681570247932,
-        "averageConfidence": 0.47127551020408165
+        "averageBrier": 0.3352087768595045,
+        "averageLogLoss": 1.0003258925619831,
+        "averageConfidence": 0.4609795918367347
       },
       "domestic_competitions": {
-        "reviews": 103,
-        "outcomeHitRate": 0.46601941747572817,
-        "exactHitRate": 0.07766990291262135,
-        "averageBrier": 0.4720207184466019,
-        "averageLogLoss": 1.0532480000000002,
-        "averageConfidence": 0.46709638554216876
+        "reviews": 121,
+        "outcomeHitRate": 0.48760330578512395,
+        "exactHitRate": 0.08264462809917356,
+        "averageBrier": 0.2749616198347108,
+        "averageLogLoss": 1.052505603305785,
+        "averageConfidence": 0.46635051546391787
       }
     }
   },
