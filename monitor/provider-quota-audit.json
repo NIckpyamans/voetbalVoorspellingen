@@ -1,10 +1,10 @@
 {
-  "checkedAt": "2026-08-31T10:54:50.615Z",
+  "checkedAt": "2026-09-01T09:26:54.501Z",
   "oddsApi": {
     "configured": true,
     "valid": true,
     "status": 200,
-    "activeSports": 78,
+    "activeSports": 83,
     "soccerSportKeys": [
       "soccer_argentina_primera_division",
       "soccer_austria_bundesliga",
@@ -21,12 +21,10 @@
       "soccer_england_league1",
       "soccer_england_league2",
       "soccer_epl",
-      "soccer_finland_veikkausliiga",
       "soccer_france_ligue_one",
       "soccer_france_ligue_two",
       "soccer_germany_bundesliga",
       "soccer_germany_bundesliga2",
-      "soccer_germany_bundesliga_women",
       "soccer_germany_dfb_pokal",
       "soccer_germany_liga3",
       "soccer_greece_super_league",
@@ -35,6 +33,7 @@
       "soccer_italy_serie_b",
       "soccer_japan_j_league",
       "soccer_korea_kleague1",
+      "soccer_league_of_ireland",
       "soccer_mexico_ligamx",
       "soccer_netherlands_eredivisie",
       "soccer_norway_eliteserien",
@@ -50,6 +49,7 @@
       "soccer_switzerland_superleague",
       "soccer_turkey_super_league",
       "soccer_uefa_champs_league",
+      "soccer_uefa_europa_conference_league",
       "soccer_uefa_europa_league",
       "soccer_uefa_nations_league",
       "soccer_usa_mls"
@@ -66,16 +66,16 @@
     ],
     "competitionCoverageStatus": "seasonal_unavailable",
     "newlyUnavailableSports": [
-      "soccer_league_of_ireland"
+      "soccer_finland_veikkausliiga",
+      "soccer_germany_bundesliga_women"
     ],
     "newlyAvailableSports": [
-      "soccer_china_superleague",
-      "soccer_italy_coppa_italia",
-      "soccer_uefa_europa_league"
+      "soccer_league_of_ireland",
+      "soccer_uefa_europa_conference_league"
     ],
     "quota": {
-      "x-requests-remaining": "20",
-      "x-requests-used": "480",
+      "x-requests-remaining": "500",
+      "x-requests-used": "0",
       "x-requests-last": "0"
     },
     "errorCode": null
@@ -158,7 +158,7 @@
         "tested": true,
         "valid": true,
         "status": 200,
-        "records": 45,
+        "records": 47,
         "quota": {},
         "errorCode": null
       },
@@ -196,8 +196,8 @@
     "records": 50,
     "quota": {
       "x-ratelimit-limit": "1000",
-      "x-ratelimit-remaining": "958",
-      "x-ratelimit-reset": "1788220800"
+      "x-ratelimit-remaining": "959",
+      "x-ratelimit-reset": "1788307200"
     },
     "accepted": false,
     "policy": "Veertien dagen meten; nooit automatisch promoveren op basis van alleen een geldige key."
@@ -218,13 +218,13 @@
     "status": 200,
     "records": 1,
     "rateLimit": {
-      "resets_in_seconds": 3600,
-      "remaining": 2999,
+      "resets_in_seconds": 1661,
+      "remaining": 2998,
       "requested_entity": "League"
     },
     "quota": {
       "x-ratelimit-limit": "3000",
-      "x-ratelimit-remaining": "2999"
+      "x-ratelimit-remaining": "2998"
     },
     "endpointAccess": {
       "leagues": {
@@ -235,13 +235,13 @@
         "firstName": "Superliga",
         "hasOddsFlag": false,
         "rateLimit": {
-          "resets_in_seconds": 3600,
-          "remaining": 2999,
+          "resets_in_seconds": 1661,
+          "remaining": 2998,
           "requested_entity": "League"
         },
         "quota": {
           "x-ratelimit-limit": "3000",
-          "x-ratelimit-remaining": "2999"
+          "x-ratelimit-remaining": "2998"
         },
         "errorCode": null
       },
@@ -253,7 +253,7 @@
         "firstName": "Esbjerg vs OB",
         "hasOddsFlag": false,
         "rateLimit": {
-          "resets_in_seconds": 3599,
+          "resets_in_seconds": 3600,
           "remaining": 2999,
           "requested_entity": "Fixture"
         },
@@ -266,12 +266,12 @@
       "fixturesDate": {
         "valid": true,
         "status": 200,
-        "records": 1,
-        "firstId": 19713966,
-        "firstName": "FC København vs Sønderjyske Fodbold",
-        "hasOddsFlag": true,
+        "records": 0,
+        "firstId": null,
+        "firstName": null,
+        "hasOddsFlag": false,
         "rateLimit": {
-          "resets_in_seconds": 3599,
+          "resets_in_seconds": 3600,
           "remaining": 2998,
           "requested_entity": "Fixture"
         },
@@ -285,11 +285,11 @@
         "valid": true,
         "status": 200,
         "records": 1,
-        "firstId": 19713966,
-        "firstName": "FC København vs Sønderjyske Fodbold",
+        "firstId": 19713956,
+        "firstName": "AGF vs FC Midtjylland",
         "hasOddsFlag": true,
         "rateLimit": {
-          "resets_in_seconds": 3598,
+          "resets_in_seconds": 3599,
           "remaining": 2997,
           "requested_entity": "Fixture"
         },
@@ -299,13 +299,13 @@
         },
         "errorCode": null
       },
-      "testedFixtureId": 19713966,
+      "testedFixtureId": 19713956,
       "oddsByFixture": {
         "label": "oddsByFixture",
         "valid": true,
         "status": 200,
         "records": 3,
-        "firstId": 242998040381,
+        "firstId": 243729497230,
         "firstName": null,
         "hasOddsFlag": false,
         "rateLimit": {
@@ -329,7 +329,7 @@
         "firstName": "1",
         "hasOddsFlag": false,
         "rateLimit": {
-          "resets_in_seconds": 3599,
+          "resets_in_seconds": 3600,
           "remaining": 2998,
           "requested_entity": "Odd"
         },
@@ -344,7 +344,7 @@
         "valid": true,
         "status": 200,
         "records": 3,
-        "firstId": 242998040381,
+        "firstId": 243729497230,
         "firstName": null,
         "hasOddsFlag": false,
         "rateLimit": {
