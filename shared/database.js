@@ -655,7 +655,11 @@ export async function syncStoreToDatabase(store, options = {}) {
   const sql = getSql();
   if (!sql) return { skipped: true, reason: "database_url_missing" };
 
-  const appState = await syncAppStateSegmentsToDatabase(store, options);
+  // Fresh-database recovery can rebuild normalized rows from the immutable
+  // store without duplicating the complete payload in app_state_segments.
+  const appState = options.skipAppState
+    ? { skipped: true, reason: "recovery_normalized_only" }
+    : await syncAppStateSegmentsToDatabase(store, options);
   const matchById = indexMatches(store);
   const snapshotIndexes = indexSnapshotsByMatch(store);
   const dateFilter = Array.isArray(options.dateKeys) && options.dateKeys.length ? new Set(options.dateKeys) : null;

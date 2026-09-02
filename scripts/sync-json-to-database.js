@@ -6,6 +6,7 @@ import { loadLocalEnv, syncStoreToDatabase } from "../shared/database.js";
 
 const ROOT = process.cwd();
 const DATA_FILE = path.join(ROOT, "server_data.json");
+const skipAppState = process.argv.includes("--skip-app-state");
 
 loadLocalEnv(ROOT);
 
@@ -15,7 +16,7 @@ if (!fs.existsSync(DATA_FILE)) {
 }
 
 const store = JSON.parse(fs.readFileSync(DATA_FILE, "utf8"));
-const result = await syncStoreToDatabase(store);
+const result = await syncStoreToDatabase(store, { skipAppState });
 
 console.log(JSON.stringify({ generatedAt: new Date().toISOString(), ...result }, null, 2));
 

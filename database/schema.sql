@@ -83,6 +83,22 @@ create table if not exists club_aliases (
   unique (club_id, normalized_alias)
 );
 
+-- Source lineage is referenced by season memberships and most downstream
+-- entities, so it must exist before those tables on a fresh database.
+create table if not exists source_records (
+  source_record_id text primary key,
+  provider text not null,
+  source_url text,
+  entity_type text not null,
+  entity_key text,
+  fetched_at timestamptz not null default now(),
+  source_timestamp timestamptz,
+  content_hash text,
+  trust_score numeric,
+  payload jsonb not null default '{}'::jsonb,
+  created_at timestamptz not null default now()
+);
+
 create table if not exists competition_season_clubs (
   season_id text not null references seasons(season_id),
   competition_id text not null references competitions(competition_id),
@@ -101,20 +117,6 @@ create table if not exists competition_season_clubs (
   created_at timestamptz not null default now(),
   updated_at timestamptz not null default now(),
   primary key (season_id, club_id)
-);
-
-create table if not exists source_records (
-  source_record_id text primary key,
-  provider text not null,
-  source_url text,
-  entity_type text not null,
-  entity_key text,
-  fetched_at timestamptz not null default now(),
-  source_timestamp timestamptz,
-  content_hash text,
-  trust_score numeric,
-  payload jsonb not null default '{}'::jsonb,
-  created_at timestamptz not null default now()
 );
 
 create table if not exists provider_trust_profiles (
