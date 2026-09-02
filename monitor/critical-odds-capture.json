@@ -1,19 +1,38 @@
 {
-  "generatedAt": "2026-09-02T06:28:27.380Z",
-  "checked": 4,
-  "captured": 0,
-  "openingCaptured": 0,
-  "prematchCaptured": 0,
+  "generatedAt": "2026-09-02T15:22:56.941Z",
+  "checked": 5,
+  "captured": 1,
+  "openingCaptured": 1,
+  "prematchCaptured": 1,
   "closingCaptured": 0,
   "closingPairs": 0,
-  "statuses": {},
-  "attemptStatuses": {},
-  "providerStatuses": {},
-  "providerQuota": {},
+  "statuses": {
+    "available": 1
+  },
+  "attemptStatuses": {
+    "the-odds-api:seasonal_sport_unavailable": 1,
+    "the-odds-api:unsupported_sport": 2,
+    "the-odds-api:available": 1
+  },
+  "providerStatuses": {
+    "the-odds-api": {
+      "seasonal_sport_unavailable": 1,
+      "unsupported_sport": 2,
+      "available": 1
+    }
+  },
+  "providerQuota": {
+    "the-odds-api": {
+      "remaining": 495,
+      "used": 5,
+      "limit": null,
+      "reset": null
+    }
+  },
   "skippedExistingRole": 4,
   "sportmonksMapped": 0,
   "sportmonksMappingStatuses": {
-    "plan_coverage_unavailable": 4
+    "plan_coverage_unavailable": 5
   },
   "matches": [
     {
@@ -22,10 +41,10 @@
       "league": "England - Championship",
       "homeTeam": "Millwall",
       "awayTeam": "Wrexham",
-      "minutesBeforeKickoff": 737,
+      "minutesBeforeKickoff": 202,
       "closingWindow": false,
       "status": "already_captured",
-      "captureRole": "opening"
+      "captureRole": "prematch"
     },
     {
       "matchId": "ss-fotmob-5836800",
@@ -33,10 +52,10 @@
       "league": "England - Championship",
       "homeTeam": "Queens Park Rangers",
       "awayTeam": "Cardiff City",
-      "minutesBeforeKickoff": 737,
+      "minutesBeforeKickoff": 202,
       "closingWindow": false,
       "status": "already_captured",
-      "captureRole": "opening"
+      "captureRole": "prematch"
     },
     {
       "matchId": "ss-fotmob-5836801",
@@ -44,10 +63,10 @@
       "league": "England - Championship",
       "homeTeam": "West Bromwich Albion",
       "awayTeam": "Charlton Athletic",
-      "minutesBeforeKickoff": 737,
+      "minutesBeforeKickoff": 202,
       "closingWindow": false,
       "status": "already_captured",
-      "captureRole": "opening"
+      "captureRole": "prematch"
     },
     {
       "matchId": "ss-fotmob-5836798",
@@ -55,10 +74,26 @@
       "league": "England - Championship",
       "homeTeam": "Burnley",
       "awayTeam": "Middlesbrough",
-      "minutesBeforeKickoff": 752,
+      "minutesBeforeKickoff": 217,
       "closingWindow": false,
       "status": "already_captured",
-      "captureRole": "opening"
+      "captureRole": "prematch"
+    },
+    {
+      "matchId": "ss-fotmob-5802926",
+      "kickoff": "2026-09-03T18:45:00.000Z",
+      "league": "France - Ligue 1",
+      "homeTeam": "Toulouse",
+      "awayTeam": "Lille",
+      "minutesBeforeKickoff": 1642,
+      "closingWindow": false,
+      "status": "captured",
+      "provider": "the-odds-api",
+      "captureRole": "opening",
+      "sportmonksFixtureId": null,
+      "opening": true,
+      "prematch": true,
+      "closing": false
     }
   ],
   "leagueCoverage": [
@@ -69,7 +104,15 @@
       "partial": 0,
       "missing": 4,
       "coverage": 0
+    },
+    {
+      "league": "France - Ligue 1",
+      "checked": 1,
+      "covered": 1,
+      "partial": 0,
+      "missing": 0,
+      "coverage": 1
     }
   ],
-  "coverage": 0
+  "coverage": 0.2
 }
