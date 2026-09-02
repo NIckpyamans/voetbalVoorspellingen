@@ -46,7 +46,7 @@ jobs:
         run: node -e "const fs=require('fs');const p=JSON.parse(fs.readFileSync('monitor/api-football-provider-acceptance.json','utf8'));fs.appendFileSync(process.env.GITHUB_OUTPUT,'accepted='+(p.accepted===true)+'\n');"
       - name: Upload acceptance report
         if: always()
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: api-football-provider-acceptance
           path: monitor/api-football-provider-acceptance.json

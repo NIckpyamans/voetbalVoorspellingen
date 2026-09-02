@@ -55,7 +55,7 @@ jobs:
         run: gh workflow run api-football-acceptance.yml --ref codex/step3b-layout
       - name: Upload provider quota evidence
         if: always()
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: provider-quota-audit
           path: monitor/provider-quota-audit.json

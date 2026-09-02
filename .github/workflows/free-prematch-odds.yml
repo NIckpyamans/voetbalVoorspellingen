@@ -101,7 +101,7 @@ jobs:
       - name: Upload odds capture report
         if: always()
         continue-on-error: true
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: critical-odds-capture
           path: monitor/critical-odds-capture.json

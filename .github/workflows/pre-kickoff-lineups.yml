@@ -83,7 +83,7 @@ jobs:
 
       - name: Upload lineup capture report
         if: always()
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: pre-kickoff-lineup-capture
           path: monitor/pre-kickoff-lineup-collector.json
