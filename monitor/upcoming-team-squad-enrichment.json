@@ -1,28 +1,133 @@
 {
-  "generatedAt": "2026-09-02T17:10:49.479Z",
+  "generatedAt": "2026-09-02T18:59:17.795Z",
   "daysAhead": 8,
   "targetPlayersPerTeam": 18,
   "candidates": 274,
-  "checked": 0,
-  "enriched": 0,
-  "unavailable": 0,
-  "skippedFresh": 274,
-  "pendingBeforeBatch": 0,
+  "checked": 10,
+  "enriched": 7,
+  "unavailable": 3,
+  "skippedFresh": 264,
+  "pendingBeforeBatch": 10,
   "pendingAfterBatch": 0,
   "rateLimited": false,
   "retryAfterSeconds": 0,
   "byProvider": {
     "FotMob": 0,
-    "Laatste bevestigde opstelling": 0,
+    "Laatste bevestigde opstelling": 2,
     "Transfermarkt Datasets": 0,
-    "TheSportsDB": 0,
+    "TheSportsDB": 5,
     "ESPN": 0,
     "Wikipedia": 0
   },
-  "byCompetition": {},
-  "failureReasons": {},
-  "failures": [],
-  "samples": [],
+  "byCompetition": {
+    "Europe - Conference League": {
+      "checked": 7,
+      "enriched": 6,
+      "unavailable": 1
+    },
+    "Europe - Europa League": {
+      "checked": 1,
+      "enriched": 1,
+      "unavailable": 0
+    },
+    "Europe - Champions League": {
+      "checked": 2,
+      "enriched": 0,
+      "unavailable": 2
+    }
+  },
+  "failureReasons": {
+    "no_provider_team_or_roster_match": 3
+  },
+  "failures": [
+    {
+      "team": "FK Qarabag",
+      "competition": "Europe - Champions League",
+      "reason": "no_provider_team_or_roster_match",
+      "attemptedProviders": [
+        "FotMob",
+        "Transfermarkt Datasets",
+        "ESPN",
+        "TheSportsDB",
+        "Wikipedia"
+      ]
+    },
+    {
+      "team": "F.C. København",
+      "competition": "Europe - Champions League",
+      "reason": "no_provider_team_or_roster_match",
+      "attemptedProviders": [
+        "FotMob",
+        "Transfermarkt Datasets",
+        "ESPN",
+        "TheSportsDB",
+        "Wikipedia"
+      ]
+    },
+    {
+      "team": "Lausanne Sports",
+      "competition": "Europe - Conference League",
+      "reason": "no_provider_team_or_roster_match",
+      "attemptedProviders": [
+        "FotMob",
+        "Transfermarkt Datasets",
+        "ESPN",
+        "TheSportsDB",
+        "Wikipedia"
+      ]
+    }
+  ],
+  "samples": [
+    {
+      "team": "Shakhtar Donetsk",
+      "competition": "Europe - Conference League",
+      "players": 7,
+      "provider": "TheSportsDB",
+      "providerTeam": "Shakhtar Donetsk"
+    },
+    {
+      "team": "Rapid Vienna",
+      "competition": "Europe - Conference League",
+      "players": 8,
+      "provider": "TheSportsDB",
+      "providerTeam": "Rapid Vienna"
+    },
+    {
+      "team": "Zrinjski Mostar",
+      "competition": "Europe - Conference League",
+      "players": 9,
+      "provider": "TheSportsDB",
+      "providerTeam": "Zrinjski Mostar"
+    },
+    {
+      "team": "Dynamo Kyiv",
+      "competition": "Europe - Conference League",
+      "players": 10,
+      "provider": "TheSportsDB",
+      "providerTeam": "Dynamo Kyiv"
+    },
+    {
+      "team": "PAOK",
+      "competition": "Europe - Europa League",
+      "players": 10,
+      "provider": "TheSportsDB",
+      "providerTeam": "PAOK"
+    },
+    {
+      "team": "Drita Gjilan",
+      "competition": "Europe - Conference League",
+      "players": 11,
+      "provider": "Laatste bevestigde opstelling",
+      "providerTeam": "Drita Gjilan"
+    },
+    {
+      "team": "Jagiellonia Bialystok",
+      "competition": "Europe - Conference League",
+      "players": 11,
+      "provider": "Laatste bevestigde opstelling",
+      "providerTeam": "Jagiellonia Bialystok"
+    }
+  ],
   "coverage": {
     "totalTeams": 274,
     "teamsWithRoster": 269,
