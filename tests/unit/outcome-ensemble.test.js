@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 import {
   buildOutcomeEnsemble,
+  buildMarketConsensus,
   buildSquadStrengthOutcomeModel,
   buildTwoLegContextModel,
   devigThreeWayOdds,
@@ -34,6 +35,23 @@ describe("independent 1X2 outcome ensemble", () => {
       { home: 2, draw: 3.5, away: 4, capturedAt: "2026-08-27T20:00:00Z" },
       "2026-08-27T19:00:00Z",
     )).toBeNull();
+  });
+
+  it("combines timestamped bookmaker offers and reports opening movement", () => {
+    const result = buildMarketConsensus({
+      capturedAt: "2026-08-27T18:00:00Z",
+      openingHome: 2.2,
+      openingDraw: 3.4,
+      openingAway: 3.6,
+      openingCapturedAt: "2026-08-26T18:00:00Z",
+      bookmakers: [
+        { bookmaker: "a", home: 2, draw: 3.5, away: 4 },
+        { bookmaker: "b", home: 2.05, draw: 3.45, away: 3.9 },
+      ],
+    }, "2026-08-27T19:00:00Z");
+    expect(result.bookmakers).toBe(2);
+    expect(result.homeProb + result.drawProb + result.awayProb).toBeCloseTo(1, 3);
+    expect(result.movement.home).toBeGreaterThan(0);
   });
 
   it("combines only available models and keeps unpromoted boosting inactive", () => {

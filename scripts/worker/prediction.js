@@ -253,6 +253,8 @@ export function buildFeatureVector(input, deps) {
       : dbWeather.riskLevel === "medium" || Number(dbWeather.precipitation || 0) >= 1 || Number(dbWeather.windSpeed || 0) >= 25
         ? 1
         : 0;
+  const formPpg = (profile, window) => Number(profile?.[window]?.pointsPerGame ?? profile?.pointsPerGame ?? 0);
+  const formMetric = (profile, window, key) => Number(profile?.[window]?.[key] ?? profile?.[key] ?? 0);
 
   return {
     home_avg_scored: homeOverall.avgScored,
@@ -268,6 +270,24 @@ export function buildFeatureVector(input, deps) {
     home_ppg: homePpg,
     away_ppg: awayPpg,
     ppg_diff: Number((homePpg - awayPpg).toFixed(2)),
+    home_last5_ppg: formPpg(input.homeRecent, "last5"),
+    away_last5_ppg: formPpg(input.awayRecent, "last5"),
+    last5_ppg_diff: Number((formPpg(input.homeRecent, "last5") - formPpg(input.awayRecent, "last5")).toFixed(3)),
+    home_last10_ppg: formPpg(input.homeRecent, "last10"),
+    away_last10_ppg: formPpg(input.awayRecent, "last10"),
+    last10_ppg_diff: Number((formPpg(input.homeRecent, "last10") - formPpg(input.awayRecent, "last10")).toFixed(3)),
+    home_last20_ppg: formPpg(input.homeRecent, "last20"),
+    away_last20_ppg: formPpg(input.awayRecent, "last20"),
+    last20_ppg_diff: Number((formPpg(input.homeRecent, "last20") - formPpg(input.awayRecent, "last20")).toFixed(3)),
+    recency_weighted_ppg_diff: Number((formPpg(input.homeRecent, "recencyWeighted") - formPpg(input.awayRecent, "recencyWeighted")).toFixed(3)),
+    recency_weighted_xg_diff: Number((
+      formMetric(input.homeRecent, "recencyWeighted", "xG") - formMetric(input.homeRecent, "recencyWeighted", "xGA") -
+      formMetric(input.awayRecent, "recencyWeighted", "xG") + formMetric(input.awayRecent, "recencyWeighted", "xGA")
+    ).toFixed(3)),
+    opponent_strength_form_diff: Number((
+      formMetric(input.homeRecent, "recencyWeighted", "opponentStrength") -
+      formMetric(input.awayRecent, "recencyWeighted", "opponentStrength")
+    ).toFixed(3)),
     home_rest_days: Number(input.homeRestDays ?? 0),
     away_rest_days: Number(input.awayRestDays ?? 0),
     rest_diff: Number((Number(input.homeRestDays ?? 0) - Number(input.awayRestDays ?? 0)).toFixed(2)),

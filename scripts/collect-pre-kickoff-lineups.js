@@ -401,6 +401,11 @@ async function main() {
     partial: (row) => row.partial,
   });
   report.confirmedCoverage = report.checked ? Number((report.confirmed / report.checked).toFixed(3)) : 0;
+  report.recalculationRequired = report.changedConfirmed > 0;
+  report.recalculationSlaMinutes = 5;
+  report.recalculationReason = report.recalculationRequired
+    ? "confirmed_lineup_changed"
+    : "no_new_confirmed_lineup_revision";
   fs.mkdirSync(path.dirname(OUTPUT), { recursive: true });
   fs.writeFileSync(OUTPUT, `${JSON.stringify(report, null, 2)}\n`);
   console.log(JSON.stringify(report, null, 2));

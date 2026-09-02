@@ -8,7 +8,11 @@ describe("training snapshot builder", () => {
       predictions: {},
       postMatchReviews: { old: { actualOutcome: "H", actualScore: "2-0" } },
       predictionSnapshots: {
-        old: [{ matchId: "old", predictionId: "pred-old", generatedAt: "2026-07-01T10:00:00.000Z", date: "2026-07-01", league: "Netherlands - Eredivisie" }],
+        old: [{
+          matchId: "old", predictionId: "pred-old", generatedAt: "2026-07-01T10:00:00.000Z",
+          kickoff: "2026-07-02T10:00:00.000Z", inputSnapshotHash: "immutable", features: { ppg_diff: 0.4 },
+          date: "2026-07-02", league: "Netherlands - Eredivisie",
+        }],
       },
     };
     const result = buildTrainingSnapshot(store, { isHiddenEntity: () => false });

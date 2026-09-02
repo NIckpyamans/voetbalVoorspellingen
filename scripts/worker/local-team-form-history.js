@@ -97,8 +97,18 @@ function summarizeMatches(matches) {
   };
 }
 
+function summarizeMatchesWithDecay(matches, halfLifeMatches = 5) {
+  const size = matches.length;
+  const weighted = matches.map((match, index) => ({
+    ...match,
+    weight: Number(match?.weight || 1) * Math.pow(0.5, (size - 1 - index) / Math.max(1, halfLifeMatches)),
+  }));
+  return summarizeMatches(weighted);
+}
+
 export function summarizeLocalTeamForm(recentMatches = []) {
-  const last10 = recentMatches.slice(-10);
+  const last20 = recentMatches.slice(-20);
+  const last10 = last20.slice(-10);
   const home = last10.filter((match) => match.venue === "H");
   const away = last10.filter((match) => match.venue === "A");
   const overall = summarizeMatches(last10);
@@ -114,6 +124,8 @@ export function summarizeLocalTeamForm(recentMatches = []) {
     opponentStrength: overall.opponentStrength,
     last5: summarizeMatches(last10.slice(-5)),
     last10: overall,
+    last20: summarizeMatches(last20),
+    recencyWeighted: summarizeMatchesWithDecay(last20, 5),
     splits: { home: summarizeMatches(home), away: summarizeMatches(away) },
     friendlyMatches: last10.filter((match) => match.friendly).length,
     weightingPolicy: "competitive=1,friendly=0.35",
@@ -180,7 +192,7 @@ export function dayPayloadsFromHistorySummary(history = {}) {
 }
 
 export function mergeLocalTeamForm(profile, localMatches, teamName, options = {}) {
-  const limit = Math.max(1, Number(options.limit || 10));
+  const limit = Math.max(1, Number(options.limit || 20));
   const current = Array.isArray(profile?.recentMatches) ? profile.recentMatches : [];
   const unique = new Map();
   for (const match of [...current, ...(localMatches || [])]) {

@@ -38,6 +38,45 @@ export function devigThreeWayOdds(odds = {}, kickoff = null) {
   };
 }
 
+export function buildMarketConsensus(odds = {}, kickoff = null) {
+  const offers = [
+    ...(Array.isArray(odds?.bookmakers) ? odds.bookmakers : []),
+    ...(Array.isArray(odds?.offers) ? odds.offers : []),
+    ...(Array.isArray(odds?.prematchOffers) ? odds.prematchOffers : []),
+  ];
+  if (!offers.length) offers.push(odds);
+  const valid = offers.map((offer) => devigThreeWayOdds({ ...offer, capturedAt: offer?.capturedAt || odds?.capturedAt }, kickoff)).filter(Boolean);
+  if (!valid.length) return null;
+  const average = (key) => valid.reduce((sum, item) => sum + Number(item[key] || 0), 0) / valid.length;
+  const probabilities = normalizeOutcomeProbabilities({
+    homeProb: average("homeProb"),
+    drawProb: average("drawProb"),
+    awayProb: average("awayProb"),
+  });
+  const disagreement = valid.reduce((sum, item) => sum + ["homeProb", "drawProb", "awayProb"]
+    .reduce((inner, key) => inner + Math.abs(Number(item[key]) - Number(probabilities[key])), 0) / 3, 0) / valid.length;
+  const opening = devigThreeWayOdds({
+    home: odds?.openingHome,
+    draw: odds?.openingDraw,
+    away: odds?.openingAway,
+    capturedAt: odds?.openingCapturedAt,
+  }, kickoff);
+  return {
+    ...probabilities,
+    overround: Number(average("overround").toFixed(4)),
+    bookmaker: valid.length === 1 ? valid[0].bookmaker : `${valid.length}-bookmaker-consensus`,
+    bookmakers: valid.length,
+    capturedAt: odds?.capturedAt || valid.map((item) => item.capturedAt).filter(Boolean).sort().at(-1) || null,
+    disagreement: Number(disagreement.toFixed(4)),
+    movement: opening ? {
+      home: Number((probabilities.homeProb - opening.homeProb).toFixed(4)),
+      draw: Number((probabilities.drawProb - opening.drawProb).toFixed(4)),
+      away: Number((probabilities.awayProb - opening.awayProb).toFixed(4)),
+      openingCapturedAt: opening.capturedAt,
+    } : null,
+  };
+}
+
 export function buildEloOutcomeModel(homeElo, awayElo) {
   const home = Number(homeElo || 0);
   const away = Number(awayElo || 0);
@@ -121,7 +160,7 @@ export function buildOutcomeEnsemble({
   featureVector = {},
   lineupConfirmed = false,
 } = {}) {
-  const market = devigThreeWayOdds(oddsAtPrediction || {}, kickoff);
+  const market = buildMarketConsensus(oddsAtPrediction || {}, kickoff);
   const elo = buildEloOutcomeModel(homeElo, awayElo);
   const lineup = buildLineupOutcomeModel(featureVector, lineupConfirmed);
   const squadStrength = buildSquadStrengthOutcomeModel(featureVector);
@@ -161,7 +200,10 @@ export function buildOutcomeEnsemble({
     market: market ? {
       overround: market.overround,
       bookmaker: market.bookmaker,
+      bookmakers: market.bookmakers,
       capturedAt: market.capturedAt,
+      disagreement: market.disagreement,
+      movement: market.movement,
     } : null,
     version: "outcome-ensemble-v2",
   };

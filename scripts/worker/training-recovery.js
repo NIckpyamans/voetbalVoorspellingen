@@ -1,4 +1,5 @@
 import { isHiddenInternationalOrWorldCupEntity } from "../../shared/competitionVisibility.js";
+import { snapshotTrainingEligibility } from "./snapshot-policy.js";
 
 function outcome(value) {
   const normalized = String(value || "").toUpperCase();
@@ -32,7 +33,8 @@ function evaluationAsReview(snapshot, evaluation) {
 export function snapshotTrainingRow(snapshot, review, evaluation) {
   const recoveredReview = review || evaluationAsReview(snapshot, evaluation);
   const label = outcome(recoveredReview?.actualOutcome);
-  if (!snapshot?.predictionId || !snapshot?.matchId || !label) return null;
+  const eligibility = snapshotTrainingEligibility(snapshot);
+  if (!snapshot?.predictionId || !snapshot?.matchId || !label || !eligibility.eligible) return null;
   if (isHiddenInternationalOrWorldCupEntity(snapshot) || isHiddenInternationalOrWorldCupEntity(recoveredReview)) return null;
   const featureVector = snapshot.featureVector || snapshot.features || snapshot.inputSnapshot?.featureVector || null;
   if (!featureVector) return null;
@@ -49,6 +51,8 @@ export function snapshotTrainingRow(snapshot, review, evaluation) {
     predictionId: snapshot.predictionId,
     generatedAt: snapshot.generatedAt,
     cutoffAt: snapshot.cutoffAt || snapshot.generatedAt,
+    kickoff: snapshot.kickoff || null,
+    snapshotWindow: eligibility.snapshotWindow,
     probabilities: snapshot.probabilities || snapshot.prediction?.probabilities || null,
     modelVersion: snapshot.modelVersion || snapshot.prediction?.modelVersion || recoveredReview.modelVersion || null,
     featureVector,

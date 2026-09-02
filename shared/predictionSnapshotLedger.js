@@ -2,6 +2,7 @@ import fs from "node:fs";
 import path from "node:path";
 import { gunzipSync, gzipSync } from "node:zlib";
 import { buildR2ObjectKey, getR2Config, getR2Object, putR2Object } from "./cloudflare-r2.js";
+import { classifyPredictionSnapshotWindow } from "../scripts/worker/snapshot-policy.js";
 
 export const SNAPSHOT_LEDGER_VERSION = "v1-immutable-r2-ledger";
 export const SNAPSHOT_LEDGER_R2_KEY = "prediction-snapshots/active/ledger.json.gz";
@@ -84,11 +85,12 @@ export function compactSnapshotLedgerForLocalRecovery(value) {
   for (const snapshot of Object.values(source.predictionSnapshots || {})) {
     if (!snapshot?.predictionId || !snapshot?.matchId) continue;
     const modelVersion = snapshot.modelVersion || snapshot.prediction?.modelVersion || "unknown";
-    const key = `${snapshot.matchId}|${modelVersion}`;
+    const snapshotWindow = snapshot.snapshotWindow || classifyPredictionSnapshotWindow(snapshot.kickoff, snapshot.generatedAt || snapshot.cutoffAt);
+    const key = `${snapshot.matchId}|${modelVersion}|${snapshotWindow}`;
     const current = selected.get(key);
     const currentTime = Date.parse(current?.generatedAt || current?.cutoffAt || "") || 0;
     const candidateTime = Date.parse(snapshot.generatedAt || snapshot.cutoffAt || "") || 0;
-    if (!current || candidateTime >= currentTime) selected.set(key, snapshot);
+    if (!current || candidateTime >= currentTime) selected.set(key, { ...snapshot, snapshotWindow });
   }
   const predictionSnapshots = Object.fromEntries(
     [...selected.values()].map((snapshot) => [snapshot.predictionId, snapshot])

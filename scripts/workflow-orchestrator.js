@@ -8,6 +8,7 @@ import { sportmonksEligibleFixtures } from "./worker/sportmonks-coverage-policy.
 import { trainingCalibrationRows } from "./worker/model-calibration-data.js";
 import { buildWorkerFreshnessState } from "./worker/worker-freshness-policy.js";
 import { buildCentralQuotaPlan } from "./worker/quota-budget.js";
+import { classifyPredictionSnapshotWindow, snapshotWindowCoverage } from "./worker/snapshot-policy.js";
 
 const emitGithubOutput = process.argv.includes("--emit-github-output");
 const mode = String(process.env.ORCHESTRATOR_MODE || "conservative").toLowerCase();
@@ -74,6 +75,7 @@ function readUpcomingFixtures(reference = now) {
         const friendly = /friendl|oefen/i.test(league);
         const status = String(match.status || match.state || "NS").trim().toUpperCase();
         const finalStatus = /^(FT|AET|PEN|CANCELLED|CANCELED|POSTPONED|ABANDONED)$/.test(status);
+        const matchSnapshots = snapshots.filter((snapshot) => String(snapshot?.matchId || "") === String(match.id || match.sofaId || ""));
         fixtures.push({
           matchId: String(match.id || match.sofaId || ""),
           kickoff: new Date(kickoffAt).toISOString(),
@@ -89,6 +91,7 @@ function readUpcomingFixtures(reference = now) {
             Number.isFinite(Date.parse(snapshot?.generatedAt || snapshot?.cutoffAt || "")) &&
             Date.parse(snapshot?.generatedAt || snapshot?.cutoffAt || "") < kickoffAt
           ),
+          snapshotWindows: snapshotWindowCoverage(matchSnapshots),
         });
       }
     } catch (error) {
@@ -109,6 +112,10 @@ const lineupWindow = unique(Object.values(lineupWindows).flat().map((fixture) =>
 const closingOddsWindow = upcomingFixtures.filter((fixture) => fixture.minutesToKickoff >= 5 && fixture.minutesToKickoff <= 30);
 const prematchOddsWindow = upcomingFixtures.filter((fixture) => fixture.minutesToKickoff >= 31 && fixture.minutesToKickoff <= 360);
 const openingOddsWindow = upcomingFixtures.filter((fixture) => fixture.minutesToKickoff > 360 && fixture.minutesToKickoff <= 36 * 60);
+const snapshotWindowDue = upcomingFixtures.filter((fixture) => {
+  const window = classifyPredictionSnapshotWindow(fixture.kickoff, now.toISOString());
+  return window !== "outside" && !fixture.snapshotWindows?.[window];
+});
 // Reguliere competitiewedstrijden krijgen maximaal een week vooraf een
 // immutable snapshot. Friendlies blijven bewust in het compacte 36-uursvenster
 // omdat selecties en speeldata daar vaker wijzigen.
@@ -241,7 +248,7 @@ function plannedWorkflows() {
   // Iedere wedstrijd krijgt prospectief minimaal een immutable pre-match
   // snapshot. Dit voorkomt dat later alleen een current-prediction fallback
   // beschikbaar is voor de evaluatie.
-  if ((primarySlot && missingSnapshotWindow.length) || workerFreshness.refreshDue) workflows.push("worker.yml");
+  if (snapshotWindowDue.length || (primarySlot && missingSnapshotWindow.length) || workerFreshness.refreshDue) workflows.push("worker.yml");
 
   if (primarySlot) {
     if (dataNeeds.calendar || hour % 4 === 0) workflows.push("week-ahead-fixtures.yml");
@@ -297,6 +304,11 @@ const plan = {
     openingOddsWindow: openingOddsWindow.length,
     missingPreMatchSnapshots: missingSnapshotWindow.length,
     missingRegularPreMatchSnapshots: missingRegularSnapshotWindow.length,
+    requiredSnapshotWindowsDue: snapshotWindowDue.length,
+    requiredSnapshotWindowMatches: snapshotWindowDue.map((fixture) => ({
+      matchId: fixture.matchId,
+      window: classifyPredictionSnapshotWindow(fixture.kickoff, now.toISOString()),
+    })),
     activeMatchWindow: activeMatchWindow.length,
     resultRefreshWindow: resultRefreshWindow.length,
     sportmonksEligible: sportmonksFixtures.length,

@@ -1,4 +1,3 @@
-import { fetchServerStore } from "./_dataSource.js";
 import { createLogger, getErrorDetails } from "../shared/logger.js";
 import { setCorsHeaders } from "../shared/cors.js";
 import { databaseConfigured, getSql } from "../shared/database.js";
@@ -6,9 +5,13 @@ import { readLocalSnapshotLedger, readR2SnapshotLedger } from "../shared/predict
 
 const logger = createLogger("api.prediction-snapshots");
 
-function compactSnapshot(snapshot: any) {
+const DEFAULT_LIMIT = 25;
+const MAX_LIMIT = 50;
+const MAX_DETAIL_LIMIT = 10;
+
+export function compactSnapshot(snapshot: any, includeDetails = false) {
   if (!snapshot) return null;
-  return {
+  const compact: any = {
     predictionId: snapshot.predictionId,
     matchId: snapshot.matchId,
     generatedAt: snapshot.generatedAt,
@@ -29,14 +32,11 @@ function compactSnapshot(snapshot: any) {
     awayTeamId: snapshot.awayTeamId || null,
     teamIdentity: snapshot.teamIdentity || snapshot.inputSnapshot?.teamIdentity || null,
     inputSnapshotHash: snapshot.inputSnapshotHash,
-    inputSnapshot: snapshot.inputSnapshot || null,
     features: snapshot.features || null,
     probabilities: snapshot.probabilities || null,
     confidence: snapshot.confidence ?? null,
     confidenceRaw: snapshot.confidenceRaw ?? null,
-    calibration: snapshot.calibration || null,
     expectedScore: snapshot.expectedScore || null,
-    explanation: snapshot.explanation || null,
     oddsAtPrediction: snapshot.oddsAtPrediction || null,
     oddsStatus: snapshot.oddsStatus || null,
     oddsMissingReason: snapshot.oddsMissingReason || null,
@@ -51,6 +51,85 @@ function compactSnapshot(snapshot: any) {
     leakageGuard: snapshot.leakageGuard || null,
     dataCompleteness: snapshot.dataCompleteness || null,
     missingData: snapshot.missingData || [],
+  };
+  if (includeDetails) {
+    compact.inputSnapshot = snapshot.inputSnapshot || null;
+    compact.calibration = snapshot.calibration || null;
+    compact.explanation = snapshot.explanation || null;
+  }
+  return compact;
+}
+
+function snapshotTime(snapshot: any) {
+  const value = Date.parse(String(snapshot?.generatedAt || snapshot?.cutoffAt || ""));
+  return Number.isFinite(value) ? value : 0;
+}
+
+export function selectBoundedSnapshots(
+  snapshots: Record<string, any>,
+  options: { predictionId?: string | null; matchId?: string | null; before?: string | null; offset?: number; limit?: number } = {}
+) {
+  const limit = Math.min(Math.max(Number(options.limit || DEFAULT_LIMIT), 1), MAX_LIMIT);
+  const offset = Math.min(Math.max(Number(options.offset || 0), 0), 5000);
+  const beforeMs = options.before ? Date.parse(options.before) : Number.NaN;
+  let candidates: any[];
+  if (options.predictionId) {
+    const snapshot = snapshots?.[options.predictionId];
+    candidates = snapshot ? [snapshot] : [];
+  } else {
+    candidates = Object.values(snapshots || {}).filter((snapshot: any) =>
+      (!options.matchId || String(snapshot?.matchId || "") === options.matchId)
+      && (!Number.isFinite(beforeMs) || snapshotTime(snapshot) < beforeMs)
+    );
+  }
+  candidates.sort((left, right) => snapshotTime(right) - snapshotTime(left));
+  return candidates.slice(offset, offset + limit);
+}
+
+function memoryUsageMb() {
+  const usage = process.memoryUsage();
+  return {
+    rss: Number((usage.rss / 1024 / 1024).toFixed(1)),
+    heapUsed: Number((usage.heapUsed / 1024 / 1024).toFixed(1)),
+  };
+}
+
+function mapDatabaseSnapshot(row: any) {
+  return {
+    predictionId: row.prediction_id,
+    matchId: row.match_id,
+    generatedAt: row.generated_at,
+    cutoffAt: row.cutoff_at,
+    kickoff: row.kickoff_at,
+    status: "pre_match",
+    modelVersion: row.model_version,
+    featureSchemaVersion: row.feature_schema_version,
+    algorithmVersion: row.algorithm_version,
+    date: row.date_key || String(row.kickoff_at || "").slice(0, 10),
+    league: row.league,
+    homeTeam: row.home_team_name || row.payload_home_team || row.input_home_team,
+    awayTeam: row.away_team_name || row.payload_away_team || row.input_away_team,
+    inputSnapshotHash: row.input_snapshot_hash,
+    teamIdentity: row.team_identity,
+    features: row.features,
+    probabilities: row.probabilities,
+    confidence: row.confidence,
+    confidenceRaw: row.confidence_raw,
+    expectedScore: row.expected_score,
+    dataCompleteness: row.data_completeness,
+    featureSourceMetadata: row.feature_source_metadata,
+    leakageGuard: row.leakage_guard,
+    sourceAsOf: row.source_as_of,
+    lineupStatus: row.lineup_status,
+    refereeStatus: row.referee_status,
+    oddsAtPrediction: row.odds_at_prediction,
+    oddsStatus: row.odds_status,
+    oddsMissingReason: row.odds_missing_reason,
+    roiStatus: row.roi_status,
+    clvStatus: row.clv_status,
+    inputSnapshot: row.input_snapshot,
+    calibration: row.calibration,
+    explanation: row.explanation,
   };
 }
 
@@ -110,11 +189,21 @@ export default async function handler(req: any, res: any) {
     const predictionId = typeof req.query?.predictionId === "string" ? req.query.predictionId : null;
     const matchId = typeof req.query?.matchId === "string" ? req.query.matchId : null;
     const summaryOnly = req.query?.summary === "1" || req.query?.summary === "true";
-    const limit = Math.min(Math.max(Number(req.query?.limit || 25), 1), 100);
+    const includeDetails = req.query?.details === "1" || req.query?.details === "true";
+    const maximum = includeDetails ? MAX_DETAIL_LIMIT : MAX_LIMIT;
+    const limit = Math.min(Math.max(Number(req.query?.limit || DEFAULT_LIMIT), 1), maximum);
+    const offset = Math.min(Math.max(Number(req.query?.offset || 0), 0), 5000);
+    const before = typeof req.query?.before === "string" && Number.isFinite(Date.parse(req.query.before))
+      ? new Date(req.query.before).toISOString()
+      : null;
+    const r2Ledger = await readR2SnapshotLedger();
+    const recoveryLedger = r2Ledger.available ? null : readLocalSnapshotLedger();
+    const durableLedger = r2Ledger.available ? r2Ledger : recoveryLedger;
+    const preferDatabase = req.query?.source === "postgres" || !durableLedger?.available;
 
     let databaseSummary: any = null;
     try {
-      if (databaseConfigured()) {
+      if (preferDatabase && databaseConfigured()) {
       const sql = getSql();
       if (sql) {
         if (summaryOnly) {
@@ -135,31 +224,68 @@ export default async function handler(req: any, res: any) {
             latestGeneratedAt: counts?.latest_generated_at || null,
           };
         } else {
-          let rows: any[] = [];
+          const detailColumns = includeDetails
+            ? ", ps.input_snapshot, ps.calibration, ps.explanation"
+            : "";
+          const where: string[] = [];
+          const params: any[] = [];
           if (predictionId) {
-            rows = await sql.query(
-              "select prediction_payload, generated_at from prediction_snapshots where prediction_id = $1 limit 1",
-              [predictionId]
-            );
-          } else if (matchId) {
-            rows = await sql.query(
-              "select prediction_payload, generated_at from prediction_snapshots where match_id = $1 order by generated_at desc limit $2",
-              [matchId, limit]
-            );
-          } else {
-            rows = await sql.query(
-              "select prediction_payload, generated_at from prediction_snapshots order by generated_at desc limit $1",
-              [limit]
-            );
+            params.push(predictionId);
+            where.push(`ps.prediction_id = $${params.length}`);
           }
-          const items = rows.map((row: any) => compactSnapshot(row.prediction_payload)).filter(Boolean);
+          if (matchId) {
+            params.push(matchId);
+            where.push(`ps.match_id = $${params.length}`);
+          }
+          if (before) {
+            params.push(before);
+            where.push(`ps.generated_at < $${params.length}`);
+          }
+          params.push(limit);
+          const limitParameter = `$${params.length}`;
+          params.push(offset);
+          const offsetParameter = `$${params.length}`;
+          const rows = await sql.query(`
+            select ps.prediction_id, ps.match_id, ps.generated_at, ps.cutoff_at,
+              ps.model_version, ps.feature_schema_version, ps.algorithm_version,
+              ps.input_snapshot_hash, ps.features, ps.probabilities, ps.confidence,
+              ps.confidence_raw, ps.expected_score, ps.data_completeness,
+              ps.feature_source_metadata, ps.leakage_guard,
+              ps.input_snapshot->'teamIdentity' as team_identity,
+              ps.input_snapshot->'sourceAsOf' as source_as_of,
+              ps.input_snapshot->>'lineupStatus' as lineup_status,
+              ps.input_snapshot->>'refereeStatus' as referee_status,
+              ps.prediction_payload->>'homeTeam' as payload_home_team,
+              ps.prediction_payload->>'awayTeam' as payload_away_team,
+              ps.prediction_payload#>>'{inputSnapshot,homeTeam}' as input_home_team,
+              ps.prediction_payload#>>'{inputSnapshot,awayTeam}' as input_away_team,
+              ps.prediction_payload->'oddsAtPrediction' as odds_at_prediction,
+              ps.prediction_payload->>'oddsStatus' as odds_status,
+              ps.prediction_payload->>'oddsMissingReason' as odds_missing_reason,
+              ps.prediction_payload->>'roiStatus' as roi_status,
+              ps.prediction_payload->>'clvStatus' as clv_status,
+              m.kickoff_at, m.date_key, m.league, m.home_team_name, m.away_team_name
+              ${detailColumns}
+            from prediction_snapshots ps
+            left join matches m on m.match_id = ps.match_id
+            ${where.length ? `where ${where.join(" and ")}` : ""}
+            order by ps.generated_at desc, ps.prediction_id desc
+            limit ${limitParameter} offset ${offsetParameter}
+          `, params);
+          const items = rows.map((row: any) => compactSnapshot(mapDatabaseSnapshot(row), includeDetails)).filter(Boolean);
           if (items.length) {
+            const memoryMb = memoryUsageMb();
+            logger.info("prediction_snapshots_served", { source: "postgres", count: items.length, limit, memoryMb });
             return res.status(200).json({
               ok: true,
               items,
               total: items.length,
+              limit,
+              offset,
+              nextBefore: items.length === limit ? items.at(-1)?.generatedAt || null : null,
               sourceBranch: "postgres",
               workerVersion: items[0]?.modelVersion || "database",
+              memoryMb,
               durationMs: Date.now() - started,
             });
           }
@@ -173,77 +299,42 @@ export default async function handler(req: any, res: any) {
       });
     }
 
-    const r2Ledger = await readR2SnapshotLedger();
-    const recoveryLedger = readLocalSnapshotLedger();
-    const durableLedger = r2Ledger.available ? r2Ledger : recoveryLedger;
-    let store: any = { predictionSnapshots: {}, predictionSnapshotIndex: {}, postMatchReviews: {} };
-    let branch = "unavailable";
-    try {
-      const fetched = await fetchServerStore();
-      store = fetched.store || store;
-      branch = fetched.branch || branch;
-    } catch (dataSourceError: any) {
-      logger.warning("prediction_snapshots_datasource_fallback", {
-        error: getErrorDetails(dataSourceError),
-        fallback: durableLedger.available
-          ? (r2Ledger.available ? "r2-immutable-ledger" : "bundled-recovery-ledger")
-          : "none",
-      });
-      if (!durableLedger.available) throw dataSourceError;
-    }
-    const durableSnapshots = durableLedger.available ? durableLedger.ledger.predictionSnapshots || {} : {};
-    const snapshots = Object.keys(durableSnapshots).length >= Object.keys(store.predictionSnapshots || {}).length
-      ? durableSnapshots
-      : store.predictionSnapshots || {};
-    const index = snapshots === durableSnapshots ? durableLedger.ledger.predictionSnapshotIndex || {} : store.predictionSnapshotIndex || {};
-    const snapshotBranch = snapshots === durableSnapshots
-      ? (r2Ledger.available ? "r2-immutable-ledger" : "bundled-recovery-ledger")
-      : branch;
+    if (!durableLedger?.available) throw new Error("Geen begrensde snapshotbron beschikbaar");
+    const snapshots = durableLedger.ledger.predictionSnapshots || {};
+    const snapshotBranch = r2Ledger.available ? "r2-immutable-ledger" : "bundled-recovery-ledger";
 
     if (summaryOnly) {
-      const serverSummary = buildSnapshotSummary(
+      const summary = databaseSummary || buildSnapshotSummary(
         snapshots,
-        snapshots === durableSnapshots
-          ? durableLedger.ledger.evaluations || {}
-          : store.predictionEvaluations || {},
-        snapshots === durableSnapshots
-          ? durableLedger.ledger.postMatchReviews || {}
-          : store.postMatchReviews || {}
+        durableLedger.ledger.evaluations || {},
+        durableLedger.ledger.postMatchReviews || {}
       );
-      const summary = databaseSummary && Number(databaseSummary.total || 0) >= Number(serverSummary.total || 0)
-        ? databaseSummary
-        : serverSummary;
+      const memoryMb = memoryUsageMb();
       return res.status(200).json({
         ok: true,
         summary,
-        sourceBranch: databaseSummary ? `postgres+${snapshotBranch}` : snapshotBranch,
-        workerVersion: store.workerVersion || "unknown",
+        sourceBranch: databaseSummary ? "postgres" : snapshotBranch,
+        workerVersion: "snapshot-ledger",
+        memoryMb,
         durationMs: Date.now() - started,
       });
     }
 
-    let items: any[] = [];
-    if (predictionId) {
-      const snapshot = compactSnapshot(snapshots[predictionId]);
-      items = snapshot ? [snapshot] : [];
-    } else if (matchId) {
-      items = (index[matchId] || [])
-        .map((id: string) => compactSnapshot(snapshots[id]))
-        .filter(Boolean);
-    } else {
-      items = Object.values(snapshots)
-        .map((snapshot: any) => compactSnapshot(snapshot))
-        .filter(Boolean)
-        .sort((a: any, b: any) => Date.parse(b.generatedAt || "") - Date.parse(a.generatedAt || ""))
-        .slice(0, limit);
-    }
+    const selected = selectBoundedSnapshots(snapshots, { predictionId, matchId, before, offset, limit });
+    const items = selected.map((snapshot: any) => compactSnapshot(snapshot, includeDetails)).filter(Boolean);
+    const memoryMb = memoryUsageMb();
+    logger.info("prediction_snapshots_served", { source: snapshotBranch, count: items.length, limit, memoryMb });
 
     return res.status(200).json({
       ok: true,
       items,
       total: items.length,
+      limit,
+      offset,
+      nextBefore: items.length === limit ? items.at(-1)?.generatedAt || null : null,
       sourceBranch: snapshotBranch,
-      workerVersion: store.workerVersion || "unknown",
+      workerVersion: items[0]?.modelVersion || "snapshot-ledger",
+      memoryMb,
       durationMs: Date.now() - started,
     });
   } catch (err: any) {

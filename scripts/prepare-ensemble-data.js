@@ -484,7 +484,9 @@ async function main() {
     .filter((row) => !isHiddenInternationalOrWorldCupEntity(row));
   const featureNames = [...(config.primaryFeatures || []), ...DERIVED_REVIEW_FEATURES, ...DB_FEATURES];
 
+  const excludedFallbackRows = rows.filter((row) => !row?.snapshotBacked).length;
   const rawExportRows = rows
+    .filter((row) => row?.snapshotBacked)
     .map((row) => {
       const payload = buildFeaturePayload(row, config.primaryFeatures || []);
       if (!payload || !row.label) return null;
@@ -531,7 +533,8 @@ async function main() {
         totalRows: exportRows.length,
         snapshotBackedRows,
         uniqueSnapshotMatches,
-        fallbackRows: exportRows.filter((row) => !row.snapshotBacked).length,
+        fallbackRows: 0,
+        excludedFallbackRows,
         oddsReadyRows,
         closingLineRows,
         trainingPolicy,
@@ -548,7 +551,7 @@ async function main() {
         modelQualityByDbFeatureSourceCount,
         featureNames,
         leakageNote:
-          "Snapshot-backed rows zijn lekvrijer. Alle snapshots van dezelfde match delen samen maximaal één wedstrijdgewicht, zodat herhaalde snapshots geen labelbias veroorzaken. Fallback rows blijven apart en conservatief gewogen.",
+          "Alleen immutable snapshots uit T-24/T-75/T-45/T-20 worden getraind. Actuele of post-match fallbackvoorspellingen blijven uitsluitend monitoringbewijs.",
         rows: exportRows,
       },
       null,

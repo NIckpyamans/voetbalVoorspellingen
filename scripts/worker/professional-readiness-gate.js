@@ -1,10 +1,10 @@
 const TARGETS = Object.freeze({
   roster: 0.8,
   ratings: 0.6,
-  form: 0.85,
+  form: 0.9,
   h2h: 0.85,
-  confirmedLineups: 0.45,
-  timestampedOdds: 0.45,
+  confirmedLineups: 0.7,
+  timestampedOdds: 0.6,
   reviews: 0.95,
   postMatchStats: 0.8,
   sourceLineage: 0.95,

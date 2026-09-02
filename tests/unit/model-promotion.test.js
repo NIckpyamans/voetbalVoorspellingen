@@ -13,3 +13,28 @@ describe("model promotion gate", () => {
     );
   });
 });
+
+describe("quality-aware model promotion", () => {
+  it("blocks a large sample when walk-forward quality does not improve", () => {
+    const gate = buildModelPromotionGate(180, {
+      requireQualityEvidence: true,
+      validationRows: 45,
+      leakageCoverage: 0.98,
+      brierImprovement: 0.001,
+      logLossImprovement: 0.002,
+    });
+    expect(gate.sampleCanPromote).toBe(true);
+    expect(gate.canPromote).toBe(false);
+    expect(gate.quality.reasons).toContain("insufficient_brier_improvement");
+  });
+
+  it("promotes only with enough leakage-free validation improvement", () => {
+    expect(buildModelPromotionGate(180, {
+      requireQualityEvidence: true,
+      validationRows: 45,
+      leakageCoverage: 0.98,
+      brierImprovement: 0.004,
+      logLossImprovement: 0.003,
+    }).canPromote).toBe(true);
+  });
+});

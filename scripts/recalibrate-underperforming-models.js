@@ -13,7 +13,8 @@ const ROOT = process.cwd();
 const APPLY_LIVE = process.argv.includes("--apply-live");
 const MIN_ROWS = Math.max(10, Number(process.env.MODEL_RECALIBRATION_MIN_ROWS || 20));
 const MIN_VALIDATION_ROWS = Math.max(5, Number(process.env.MODEL_RECALIBRATION_MIN_VALIDATION_ROWS || 8));
-const MIN_BRIER_IMPROVEMENT = Number(process.env.MODEL_RECALIBRATION_MIN_BRIER_IMPROVEMENT || 0.001);
+const MIN_BRIER_IMPROVEMENT = Number(process.env.MODEL_RECALIBRATION_MIN_BRIER_IMPROVEMENT || 0.003);
+const MIN_LOG_LOSS_IMPROVEMENT = Number(process.env.MODEL_RECALIBRATION_MIN_LOG_LOSS_IMPROVEMENT || 0.001);
 const MIN_UNIQUE_COMPLETED_SNAPSHOT_MATCHES = Math.max(10, Number(process.env.MODEL_RECALIBRATION_MIN_UNIQUE_COMPLETED_SNAPSHOTS || 50));
 const MIN_UNIQUE_COMPLETED_SNAPSHOT_MATCHES_FOR_LIVE = Math.max(
   MIN_UNIQUE_COMPLETED_SNAPSHOT_MATCHES,
@@ -50,6 +51,12 @@ function actualVector(outcome) {
 function brier(probabilities, outcome) {
   const y = actualVector(outcome);
   return probabilities.reduce((sum, value, index) => sum + (value - y[index]) ** 2, 0) / 3;
+}
+
+function logLoss(probabilities, outcome) {
+  const index = { H: 0, D: 1, A: 2 }[String(outcome || "")];
+  const probability = Number.isInteger(index) ? clamp(probabilities[index], 1e-9, 1 - 1e-9) : 1e-9;
+  return -Math.log(probability);
 }
 
 function topHit(probabilities, outcome) {
@@ -94,7 +101,9 @@ function buildProfile(trainRows, validationRows, scale) {
     drawBias: clamp((actualRates.draw - avgPredicted.draw) * 0.08, -0.035, 0.035),
   };
   const baselineBrier = average(validationRows.map((row) => brier(normalizeProbabilities(row.probabilities), row.actual_outcome)));
+  const baselineLogLoss = average(validationRows.map((row) => logLoss(normalizeProbabilities(row.probabilities), row.actual_outcome)));
   const calibratedBrier = average(validationRows.map((row) => brier(applyBias(normalizeProbabilities(row.probabilities), rawProfile, scale), row.actual_outcome)));
+  const calibratedLogLoss = average(validationRows.map((row) => logLoss(applyBias(normalizeProbabilities(row.probabilities), rawProfile, scale), row.actual_outcome)));
   const baselineOutcomeHitRate = average(validationRows.map((row) => Number(topHit(normalizeProbabilities(row.probabilities), row.actual_outcome)))) || 0;
   const calibratedOutcomeHitRate = average(validationRows.map((row) => Number(topHit(applyBias(normalizeProbabilities(row.probabilities), rawProfile, scale), row.actual_outcome)))) || 0;
   const confidenceBias = clamp((calibratedOutcomeHitRate - 0.52) * 0.04, -0.025, 0.025);
@@ -106,10 +115,52 @@ function buildProfile(trainRows, validationRows, scale) {
     baselineBrier: Number((baselineBrier ?? 0).toFixed(6)),
     calibratedBrier: Number((calibratedBrier ?? 0).toFixed(6)),
     improvement: Number(((baselineBrier ?? 0) - (calibratedBrier ?? 0)).toFixed(6)),
+    baselineLogLoss: Number((baselineLogLoss ?? 0).toFixed(6)),
+    calibratedLogLoss: Number((calibratedLogLoss ?? 0).toFixed(6)),
+    logLossImprovement: Number(((baselineLogLoss ?? 0) - (calibratedLogLoss ?? 0)).toFixed(6)),
     baselineOutcomeHitRate: Number(baselineOutcomeHitRate.toFixed(4)),
     calibratedOutcomeHitRate: Number(calibratedOutcomeHitRate.toFixed(4)),
     actualRates,
     avgPredicted,
+  };
+}
+
+function buildWalkForwardProfile(rows, scale) {
+  const validationSize = Math.max(MIN_VALIDATION_ROWS, Math.floor(rows.length * 0.15));
+  const initialTrainSize = Math.max(MIN_ROWS - MIN_VALIDATION_ROWS, Math.floor(rows.length * 0.5));
+  const folds = [];
+  for (let trainEnd = initialTrainSize; trainEnd + MIN_VALIDATION_ROWS <= rows.length && folds.length < 4; trainEnd += validationSize) {
+    const validationRows = rows.slice(trainEnd, Math.min(rows.length, trainEnd + validationSize));
+    if (validationRows.length < MIN_VALIDATION_ROWS) continue;
+    folds.push({ trainRows: trainEnd, validationRows: validationRows.length, ...buildProfile(rows.slice(0, trainEnd), validationRows, scale) });
+  }
+  if (!folds.length) return null;
+  const metric = (key) => Number((average(folds.map((fold) => fold[key])) || 0).toFixed(6));
+  const latest = folds.at(-1);
+  return {
+    scale,
+    folds: folds.length,
+    walkForwardValidationRows: folds.reduce((sum, fold) => sum + fold.validationRows, 0),
+    trainRows: latest.trainRows,
+    homeBias: Number(metric("homeBias").toFixed(4)),
+    drawBias: Number(metric("drawBias").toFixed(4)),
+    confidenceBias: Number(metric("confidenceBias").toFixed(4)),
+    baselineBrier: metric("baselineBrier"),
+    calibratedBrier: metric("calibratedBrier"),
+    improvement: metric("improvement"),
+    baselineLogLoss: metric("baselineLogLoss"),
+    calibratedLogLoss: metric("calibratedLogLoss"),
+    logLossImprovement: metric("logLossImprovement"),
+    baselineOutcomeHitRate: metric("baselineOutcomeHitRate"),
+    calibratedOutcomeHitRate: metric("calibratedOutcomeHitRate"),
+    actualRates: latest.actualRates,
+    avgPredicted: latest.avgPredicted,
+    foldMetrics: folds.map((fold) => ({
+      trainRows: fold.trainRows,
+      validationRows: fold.validationRows,
+      brierImprovement: fold.improvement,
+      logLossImprovement: fold.logLossImprovement,
+    })),
   };
 }
 
@@ -187,6 +238,7 @@ async function main() {
       ps.model_version,
       ps.probabilities,
       ps.generated_at,
+      m.kickoff_at,
       m.competition_id,
       m.league,
       mr.actual_outcome
@@ -196,6 +248,13 @@ async function main() {
     join match_results mr on mr.match_id = pe.match_id
     where mr.actual_outcome in ('H','D','A')
       and ps.probabilities is not null
+      and ps.generated_at < m.kickoff_at
+      and (
+        m.kickoff_at - ps.generated_at between interval '18 hours' and interval '30 hours'
+        or m.kickoff_at - ps.generated_at between interval '61 minutes' and interval '90 minutes'
+        or m.kickoff_at - ps.generated_at between interval '31 minutes' and interval '60 minutes'
+        or m.kickoff_at - ps.generated_at between interval '5 minutes' and interval '30 minutes'
+      )
     order by ps.generated_at asc
       `);
       database.available = true;
@@ -206,6 +265,7 @@ async function main() {
   }
   const calibrationSource = database.available && rows.length ? "neon" : immutableSource;
   if (calibrationSource !== "neon") rows = localRows;
+  else rows = mergeCalibrationRows(rows);
   rows = rows.filter(isRegularCompetitionRow);
 
   const groups = new Map();
@@ -223,25 +283,35 @@ async function main() {
   const acceptedByLeague = new Map();
   for (const group of groups.values()) {
     if (group.rows.length < MIN_ROWS) continue;
-    const split = Math.max(MIN_ROWS - MIN_VALIDATION_ROWS, Math.floor(group.rows.length * 0.7));
-    const trainRows = group.rows.slice(0, split);
-    const validationRows = group.rows.slice(split);
-    if (validationRows.length < MIN_VALIDATION_ROWS) continue;
-    const best = [0.25, 0.5, 0.75, 1].map((scale) => buildProfile(trainRows, validationRows, scale)).sort((a, b) => b.improvement - a.improvement)[0];
-    const accepted = best.improvement >= MIN_BRIER_IMPROVEMENT;
+    const best = [0.25, 0.5, 0.75, 1]
+      .map((scale) => buildWalkForwardProfile(group.rows, scale))
+      .filter(Boolean)
+      .sort((a, b) => b.improvement - a.improvement || b.logLossImprovement - a.logLossImprovement)[0];
+    if (!best) continue;
+    const qualityPromotionGate = buildModelPromotionGate(group.rows.length, {
+      requireQualityEvidence: true,
+      validationRows: best.walkForwardValidationRows,
+      leakageCoverage: 1,
+      brierImprovement: best.improvement,
+      logLossImprovement: best.logLossImprovement,
+      minBrierImprovement: MIN_BRIER_IMPROVEMENT,
+      minLogLossImprovement: MIN_LOG_LOSS_IMPROVEMENT,
+    });
+    const accepted = best.improvement >= MIN_BRIER_IMPROVEMENT && best.logLossImprovement >= MIN_LOG_LOSS_IMPROVEMENT;
     const profile = {
       status: accepted ? "accepted_live_candidate" : "candidate_no_improvement",
       adjustmentType: "league_bias_v1",
       modelVersion: group.model,
       league: group.league,
       competitionId: group.competitionId,
-      trainRows: trainRows.length,
-      validationRows: validationRows.length,
+      trainRows: best.trainRows,
+      validationRows: best.walkForwardValidationRows,
       sampleSize: group.rows.length,
       minimumRows: MIN_ROWS,
       minimumValidationRows: MIN_VALIDATION_ROWS,
       leakageSafe: true,
-      method: "time_split_league_probability_bias_v1",
+      method: "expanding_window_walk_forward_league_probability_bias_v2",
+      promotionGate: qualityPromotionGate,
       ...best,
     };
     const calibrationProfileId = `league_bias_${slug(group.league)}_${slug(group.model)}`;
@@ -263,7 +333,7 @@ async function main() {
       [
         calibrationProfileId,
         group.competitionId,
-        validationRows.length,
+        best.walkForwardValidationRows,
         best.calibratedBrier,
         best.scale,
         best.confidenceBias,
@@ -284,7 +354,7 @@ async function main() {
       {
         matches: row.sampleSize,
         windowDays: null,
-        selectedWindow: "time_split_unique_matches",
+        selectedWindow: "expanding_walk_forward_unique_matches",
         stabilityScore: Number(Math.min(0.95, row.validationRows / 60 + Math.max(0, row.improvement) * 20).toFixed(3)),
         confidenceBias: row.confidenceBias,
         drawBias: row.drawBias,
@@ -296,6 +366,10 @@ async function main() {
         baselineBrier: row.baselineBrier,
         calibratedBrier: row.calibratedBrier,
         improvement: row.improvement,
+        baselineLogLoss: row.baselineLogLoss,
+        calibratedLogLoss: row.calibratedLogLoss,
+        logLossImprovement: row.logLossImprovement,
+        walkForwardFolds: row.folds,
       },
     ])
   );
@@ -319,6 +393,7 @@ async function main() {
       minRows: MIN_ROWS,
       minValidationRows: MIN_VALIDATION_ROWS,
       minBrierImprovement: MIN_BRIER_IMPROVEMENT,
+      minLogLossImprovement: MIN_LOG_LOSS_IMPROVEMENT,
     });
   }
   const livePromotionApplied = neonPromotionApplied || r2Promotion.ok;

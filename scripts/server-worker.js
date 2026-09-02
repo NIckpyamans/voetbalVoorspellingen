@@ -106,6 +106,7 @@ import { assertFeaturePublication } from "./worker/feature-publication-gate.js";
 import { assertEnrichmentPublication, preserveEnrichmentEvidence } from "./worker/enrichment-publication-gate.js";
 import { buildTargetedRepairQueue, summarizeRepairNeeds } from "./worker/targeted-repair-queue.js";
 import { buildCompetitionQuality } from "./worker/competition-quality.js";
+import { classifyPredictionSnapshotWindow, minutesBeforeKickoff as snapshotMinutesBeforeKickoff } from "./worker/snapshot-policy.js";
 
 const SOFA = "https://api.sofascore.com/api/v1";
 const THESPORTSDB_BASE = "https://www.thesportsdb.com/api/v1/json";
@@ -604,6 +605,8 @@ function registerPredictionSnapshot(store, match, prediction, generatedAtMs) {
   if (!matchId || !prediction) return null;
 
   const generatedAt = isoFromMs(generatedAtMs) || new Date().toISOString();
+  const snapshotWindow = classifyPredictionSnapshotWindow(match?.kickoff, generatedAt);
+  const snapshotMinutes = snapshotMinutesBeforeKickoff(match?.kickoff, generatedAt);
   const kickoffMs = Date.parse(match?.kickoff || "");
   const status = String(match?.status || "").toUpperCase();
   const isPreMatchStatus = !["LIVE", "HT", "FT", "AET", "PEN"].includes(status);
@@ -636,12 +639,34 @@ function registerPredictionSnapshot(store, match, prediction, generatedAtMs) {
   });
   const predictedOutcome = getPredictedOutcome(prediction);
   const hasRoiOdd = !!oddForOutcome(oddsAtPrediction, predictedOutcome);
+  const lineupEvidence = prediction?.lineupSummary
+    ? {
+        confirmed: Boolean(prediction.lineupSummary.confirmed),
+        projected: Boolean(prediction.lineupSummary.projected),
+        capturedAt: prediction?.sourceAsOf?.lineups || prediction?.lineupSummary?.capturedAt || null,
+        fingerprint: stableDigest(JSON.stringify({
+          confirmed: Boolean(prediction.lineupSummary.confirmed),
+          home: prediction.lineupSummary?.home?.players || prediction.lineupSummary?.home?.starters || [],
+          away: prediction.lineupSummary?.away?.players || prediction.lineupSummary?.away?.starters || [],
+        })),
+      }
+    : null;
+  const previousSnapshot = (store.predictionSnapshotIndex?.[matchId] || [])
+    .map((id) => store.predictionSnapshots?.[id])
+    .filter(Boolean)
+    .sort((left, right) => Date.parse(right.generatedAt || "") - Date.parse(left.generatedAt || ""))[0] || null;
+  const lineupRevisionOf = lineupEvidence?.confirmed && previousSnapshot?.lineupEvidence?.fingerprint !== lineupEvidence.fingerprint
+    ? previousSnapshot?.predictionId || null
+    : null;
   const snapshot = {
     predictionId,
     matchId,
     generatedAt,
     cutoffAt: generatedAt,
     kickoff: match?.kickoff || null,
+    snapshotWindow,
+    minutesBeforeKickoff: snapshotMinutes,
+    trainingWindowEligible: snapshotWindow !== "outside",
     status: "pre_match",
     schemaVersion: PREDICTION_SNAPSHOT_SCHEMA_VERSION,
     featureSchemaVersion: FEATURE_SCHEMA_VERSION,
@@ -686,6 +711,8 @@ function registerPredictionSnapshot(store, match, prediction, generatedAtMs) {
     clvStatus: "closing_odds_missing",
     featureSourceMetadata,
     leakageGuard,
+    lineupEvidence,
+    lineupRevisionOf,
     dataCompleteness: prediction?.dataCompleteness || null,
     missingData: prediction?.dataCompleteness?.missing || [],
     prediction: {
@@ -693,6 +720,8 @@ function registerPredictionSnapshot(store, match, prediction, generatedAtMs) {
       predictionId,
       generatedAt,
       cutoffAt: generatedAt,
+      snapshotWindow,
+      minutesBeforeKickoff: snapshotMinutes,
       modelVersion: MODEL_VERSION,
       featureSchemaVersion: FEATURE_SCHEMA_VERSION,
       inputSnapshotHash,
@@ -725,6 +754,8 @@ function registerPredictionSnapshot(store, match, prediction, generatedAtMs) {
     predictionId,
     generatedAt,
     cutoffAt: generatedAt,
+    snapshotWindow,
+    minutesBeforeKickoff: snapshotMinutes,
     modelVersion: MODEL_VERSION,
     featureSchemaVersion: FEATURE_SCHEMA_VERSION,
     inputSnapshotHash,
@@ -9637,6 +9668,7 @@ function predict(input) {
     exactProb: Number(selectedExactProb.toFixed(4)),
     topScores: scoreCoverage.topScores,
     scoreCoverage,
+    marketMovement: outcomeEnsemble.market?.movement || null,
     confidence: Number(finalConfidence.toFixed(3)),
     confidenceRaw: Number(adjustedConfidence.toFixed(3)),
     over15: Number(over15.toFixed(3)),

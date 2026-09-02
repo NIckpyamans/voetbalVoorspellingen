@@ -1,3 +1,5 @@
+import { snapshotTrainingEligibility } from "./snapshot-policy.js";
+
 const clamp = (value) => Math.max(1e-9, Math.min(1 - 1e-9, Number(value || 0)));
 
 function normalizedProbabilities(value) {
@@ -28,6 +30,8 @@ export function normalizeEvaluationResult(value) {
 }
 
 export function evaluateImmutableSnapshot(snapshot, rawResult, options = {}) {
+  const eligibility = snapshotTrainingEligibility(snapshot);
+  if (!eligibility.eligible) return null;
   const result = normalizeEvaluationResult(rawResult);
   const probabilities = normalizedProbabilities(snapshot?.probabilities || snapshot?.prediction);
   if (!snapshot?.predictionId || !result || !probabilities) return null;
@@ -78,6 +82,8 @@ export function evaluateImmutableSnapshot(snapshot, rawResult, options = {}) {
     generatedAt,
     cutoffAt,
     kickoff,
+    snapshotWindow: eligibility.snapshotWindow,
+    minutesBeforeKickoff: eligibility.minutesBeforeKickoff,
     evaluatedAt: new Date().toISOString(),
   };
 }

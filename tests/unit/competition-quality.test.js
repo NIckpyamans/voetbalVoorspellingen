@@ -33,7 +33,7 @@ describe("competition quality", () => {
       exactHitRate: 0.119,
       roi: 1.6,
     });
-    expect(quality[0]).toMatchObject({ modelReady: false, modelReadyReason: "minder dan 100 evaluaties" });
+    expect(quality[0]).toMatchObject({ modelReady: false, modelReadyReason: "minder dan 150 lekvrije evaluaties" });
   });
 
   it("counts nested squad profiles, ratings and timestamped odds", () => {

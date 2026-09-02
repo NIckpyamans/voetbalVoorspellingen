@@ -11,6 +11,9 @@ describe("shadow calibration data", () => {
       league: "Netherlands - Eredivisie",
       label: "H",
       generatedAt: "2026-07-20T10:00:00.000Z",
+      kickoff: "2026-07-20T11:15:00.000Z",
+      inputSnapshotHash: "immutable",
+      featureVector: { ppg_diff: 0.4 },
       probabilities: { home: 0.5, draw: 0.3, away: 0.2 },
     }, {
       snapshotBacked: false,
@@ -33,10 +36,13 @@ describe("shadow calibration data", () => {
       league: "Europe - Champions League",
       label: "D",
       modelVersion: "v1",
+      kickoff: "2026-08-01T13:15:00.000Z",
+      inputSnapshotHash: "immutable",
+      featureVector: { ppg_diff: 0.2 },
       probabilities: { home: 0.4, draw: 0.3, away: 0.3 },
     };
     const rows = trainingCalibrationRows({ rows: [
-      { ...base, predictionId: "early", generatedAt: "2026-08-01T10:00:00.000Z" },
+      { ...base, predictionId: "early", generatedAt: "2026-07-31T13:15:00.000Z" },
       { ...base, predictionId: "latest", generatedAt: "2026-08-01T12:00:00.000Z" },
     ] });
     expect(rows).toHaveLength(1);
@@ -48,7 +54,8 @@ describe("shadow calibration data", () => {
       predictionSnapshots: {
         p1: {
           predictionId: "p1", matchId: "m1", league: "Netherlands - Eredivisie", modelVersion: "v1",
-          generatedAt: "2026-08-01T10:00:00.000Z", kickoff: "2026-08-01T18:00:00.000Z",
+          generatedAt: "2026-08-01T10:00:00.000Z", kickoff: "2026-08-01T11:15:00.000Z",
+          inputSnapshotHash: "immutable", features: { ppg_diff: 0.4 },
           probabilities: { home: 0.5, draw: 0.3, away: 0.2 },
         },
       },

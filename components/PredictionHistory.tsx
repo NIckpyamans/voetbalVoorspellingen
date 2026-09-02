@@ -182,7 +182,7 @@ const PredictionHistory: React.FC = () => {
     const boot = async () => {
       const localItems = readLocal();
       try {
-        const initialLimit = 750;
+        const initialLimit = 100;
         const [historyResponse, snapshotResponse] = await Promise.all([
           fetch(`/api/history?summary=1&includeItems=1&limit=${initialLimit}&offset=0`),
           fetch("/api/prediction-snapshots?summary=1"),
@@ -212,7 +212,7 @@ const PredictionHistory: React.FC = () => {
     if (loadingMore || (serverTotal > 0 && serverOffset >= serverTotal)) return;
     setLoadingMore(true);
     try {
-      const limit = 750;
+      const limit = 100;
       const response = await fetch(`/api/history?includeItems=1&limit=${limit}&offset=${serverOffset}`);
       const data = await response.json();
       const serverItems = Array.isArray(data.items) ? hydrateHistory(data.items) : [];

@@ -1,4 +1,5 @@
 import { competitionSegment } from "./competition-segmentation.js";
+import { SNAPSHOT_WINDOWS, snapshotTrainingEligibility } from "./snapshot-policy.js";
 
 function probabilities(row) {
   const value = row?.probabilities || row?.ensembleMeta?.baseProbabilities || null;
@@ -12,6 +13,11 @@ function probabilities(row) {
 export function trainingCalibrationRows(training) {
   const candidates = (Array.isArray(training?.rows) ? training.rows : [])
     .filter((row) => row?.snapshotBacked)
+    .filter((row) => snapshotTrainingEligibility({
+      ...row,
+      features: row.featureVector,
+      inputSnapshotHash: row.inputSnapshotHash || row.predictionId,
+    }).eligible)
     .filter((row) => /^(FT|AET|PEN)$/i.test(String(row?.status || "")))
     .map((row) => ({
       prediction_id: row.predictionId,
@@ -23,19 +29,20 @@ export function trainingCalibrationRows(training) {
       league: row.league,
       competition_segment: competitionSegment(row),
       actual_outcome: String(row.label || row.review?.actualOutcome || "").toUpperCase(),
+      snapshot_window: row.snapshotWindow || snapshotTrainingEligibility({ ...row, features: row.featureVector, inputSnapshotHash: row.predictionId }).snapshotWindow,
     }))
     .filter((row) => row.prediction_id && row.match_id && row.league && row.probabilities)
     .filter((row) => ["H", "D", "A"].includes(row.actual_outcome));
 
-  // Multiple immutable snapshots of one fixture are valuable for traceability,
-  // but they are not independent calibration samples. Keep the latest pre-match
-  // observation per fixture/model so a single result cannot dominate both the
-  // training and validation windows.
+  // One fixture is one independent calibration sample. Prefer the latest
+  // required decision window (T-20, T-45, T-75, T-24), not an arbitrary rerun.
   const latestByMatchAndModel = new Map();
   for (const row of candidates) {
     const key = `${row.match_id}::${row.model_version}`;
     const existing = latestByMatchAndModel.get(key);
-    if (!existing || Date.parse(row.generated_at || "") > Date.parse(existing.generated_at || "")) {
+    const candidatePriority = SNAPSHOT_WINDOWS[row.snapshot_window]?.priority || 0;
+    const existingPriority = SNAPSHOT_WINDOWS[existing?.snapshot_window]?.priority || 0;
+    if (!existing || candidatePriority > existingPriority || (candidatePriority === existingPriority && Date.parse(row.generated_at || "") > Date.parse(existing.generated_at || ""))) {
       latestByMatchAndModel.set(key, row);
     }
   }
@@ -56,7 +63,8 @@ export function ledgerCalibrationRows(ledger = {}) {
       if (!rowProbabilities || !["H", "D", "A"].includes(actualOutcome)) return null;
       const generatedAt = snapshot.generatedAt || snapshot.cutoffAt || evaluation.generatedAt || null;
       const kickoff = snapshot.kickoff || evaluation.kickoff || null;
-      if (generatedAt && kickoff && Date.parse(generatedAt) >= Date.parse(kickoff)) return null;
+      const eligibility = snapshotTrainingEligibility(snapshot);
+      if (!eligibility.eligible) return null;
       return {
         prediction_id: snapshot.predictionId || predictionId,
         match_id: snapshot.matchId || evaluation.matchId,
@@ -69,6 +77,7 @@ export function ledgerCalibrationRows(ledger = {}) {
         actual_outcome: actualOutcome,
         status: "FT",
         evaluation_source: evaluation.evaluationSource || "immutable_ledger",
+        snapshot_window: eligibility.snapshotWindow,
       };
     })
     .filter((row) => row?.prediction_id && row?.match_id && row?.league);
@@ -77,7 +86,9 @@ export function ledgerCalibrationRows(ledger = {}) {
   for (const row of candidates) {
     const key = `${row.match_id}::${row.model_version}`;
     const existing = latestByMatchAndModel.get(key);
-    if (!existing || Date.parse(row.generated_at || "") > Date.parse(existing.generated_at || "")) {
+    const candidatePriority = SNAPSHOT_WINDOWS[row.snapshot_window]?.priority || 0;
+    const existingPriority = SNAPSHOT_WINDOWS[existing?.snapshot_window]?.priority || 0;
+    if (!existing || candidatePriority > existingPriority || (candidatePriority === existingPriority && Date.parse(row.generated_at || "") > Date.parse(existing.generated_at || ""))) {
       latestByMatchAndModel.set(key, row);
     }
   }

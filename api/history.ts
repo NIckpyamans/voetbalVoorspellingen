@@ -1,4 +1,4 @@
-import { fetchServerStore } from "./_dataSource.js";
+import { fetchMetaData, fetchRepoJson } from "./_dataSource.js";
 import { createLogger, getErrorDetails } from "../shared/logger.js";
 import { setCorsHeaders } from "../shared/cors.js";
 import { databaseConfigured, getSql, readDatabaseHistoryItems } from "../shared/database.js";
@@ -387,8 +387,8 @@ function buildHistorySummary(items: any[]) {
   };
 }
 
-async function buildOddsDiagnostics(store: any) {
-  if (databaseConfigured()) {
+async function buildOddsDiagnostics(store: any, allowDatabase = false) {
+  if (allowDatabase && databaseConfigured()) {
     const sql = getSql();
     if (sql) {
       try {
@@ -435,30 +435,39 @@ export default async function handler(req: any, res: any) {
   res.setHeader("Cache-Control", "s-maxage=120, stale-while-revalidate=60");
 
   try {
-    const { store, branch } = await fetchServerStore();
+    const [historySource, metaSource] = await Promise.all([
+      fetchRepoJson("data/history-summary.json"),
+      fetchMetaData().catch(() => ({ data: {}, branch: "split-data" })),
+    ]);
+    const store = historySource.data || {};
+    const branch = historySource.branch || "split-history";
+    const meta = metaSource.data || {};
     const serverItems = Object.values(store.postMatchReviews || {})
       .map((review: any) => mapServerReview(review))
       .sort((a: any, b: any) => Number(b.timestamp || 0) - Number(a.timestamp || 0));
-    const requestedLimit = Math.min(Math.max(Number(req.query?.limit || 750), 1), 1500);
-    const offset = Math.max(Number(req.query?.offset || 0), 0);
+    const requestedLimit = Math.min(Math.max(Number(req.query?.limit || 100), 1), 250);
+    const offset = Math.min(Math.max(Number(req.query?.offset || 0), 0), 5000);
+    const databaseFetchLimit = Math.min(requestedLimit + offset, 1500);
+    const useDatabase = req.query?.source === "postgres" || req.query?.fresh === "1" || req.query?.fresh === "true";
     const databaseDiagnostics: any = {
       configured: databaseConfigured(),
+      queried: useDatabase,
       primaryCount: 0,
       fallbackCount: 0,
       primaryError: null,
       fallbackError: null,
     };
     let databaseRawItems: any[] = [];
-    if (databaseDiagnostics.configured) {
+    if (useDatabase && databaseDiagnostics.configured) {
       try {
-        databaseRawItems = (await readDatabaseHistoryItems({ limit: 5000 })) || [];
+        databaseRawItems = (await readDatabaseHistoryItems({ limit: databaseFetchLimit })) || [];
         databaseDiagnostics.primaryCount = databaseRawItems.length;
       } catch (err: any) {
         databaseDiagnostics.primaryError = err?.message || String(err);
       }
       if (databaseRawItems.length === 0) {
         try {
-          databaseRawItems = await readDatabaseHistoryFallback(5000);
+          databaseRawItems = await readDatabaseHistoryFallback(databaseFetchLimit);
           databaseDiagnostics.fallbackCount = databaseRawItems.length;
         } catch (err: any) {
           databaseDiagnostics.fallbackError = err?.message || String(err);
@@ -469,7 +478,7 @@ export default async function handler(req: any, res: any) {
     const items = mergeHistoryItems(databaseItems, serverItems);
     const featureImportanceSummary = buildFeatureImportanceSummary(items);
     const summary = buildHistorySummary(items);
-    const oddsDiagnostics = await buildOddsDiagnostics(store);
+    const oddsDiagnostics = await buildOddsDiagnostics(store, useDatabase);
     (summary as any).oddsDiagnostics = oddsDiagnostics;
     if (typeof oddsDiagnostics.predictionOddsCoveragePct === "number") {
       (summary as any).oddsCoveragePct = oddsDiagnostics.predictionOddsCoveragePct;
@@ -492,7 +501,7 @@ export default async function handler(req: any, res: any) {
         featureImportanceSummary,
         total: items.length,
         sourceBranch: databaseItems.length ? `postgres+${branch}` : branch,
-        workerVersion: store.workerVersion || "unknown",
+        workerVersion: meta.workerVersion || store.workerVersion || "unknown",
         serverReviewCount: serverItems.length,
         databaseReviewCount: databaseItems.length,
         databaseDiagnostics,
@@ -509,7 +518,7 @@ export default async function handler(req: any, res: any) {
       limit,
       offset,
       sourceBranch: databaseItems.length ? `postgres+${branch}` : branch,
-      workerVersion: store.workerVersion || "unknown",
+      workerVersion: meta.workerVersion || store.workerVersion || "unknown",
       serverReviewCount: serverItems.length,
       databaseReviewCount: databaseItems.length,
       databaseDiagnostics,

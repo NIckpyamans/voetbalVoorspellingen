@@ -168,7 +168,7 @@ export function buildWagerReadiness(bet: any, leaguePerformance?: LeaguePerforma
   if (lateMarketShift >= 0.08) blockers.push("late marktbeweging groter dan 8 procentpunt");
   if (selected.probability < probabilityFloor) blockers.push("gekalibreerde 1X2-kans lager dan 58%");
   if (agreement < 0.6) blockers.push("modellen onvoldoende eensgezind");
-  if (!leaguePerformance || leaguePerformance.total < 100) blockers.push("minder dan 100 lekvrije competitie-evaluaties");
+  if (!leaguePerformance || leaguePerformance.total < 150) blockers.push("minder dan 150 lekvrije competitie-evaluaties");
   else if (leaguePerformance.outcomePct < 55) blockers.push("competitie-hitrate op 1X2 lager dan 55%");
   if (edge == null) blockers.push("value-edge kan niet worden berekend");
   else if (edge < 0.03) blockers.push("model-edge lager dan 3 procentpunt");

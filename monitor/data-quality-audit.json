@@ -1,57 +1,64 @@
 {
-  "generatedAt": "2026-09-01T21:30:59.568Z",
+  "generatedAt": "2026-09-02T07:24:14.564Z",
   "lookbackDays": 45,
   "totals": {
-    "matches": 728,
-    "pastMatches": 325,
+    "matches": 738,
+    "pastMatches": 333,
     "pendingResultBackfills": 2,
     "missingPastScores": 0,
-    "h2hMissing": 435,
-    "h2hCovered": 293,
-    "h2hCoverage": 0.402
+    "h2hMissing": 444,
+    "h2hCovered": 294,
+    "h2hCoverage": 0.398,
+    "immutableLedgerSnapshots": 708,
+    "immutableLedgerEvaluations": 413
   },
   "status": {
     "resultBackfill": "needs_backfill",
     "h2h": "needs_backfill"
   },
   "coverage": {
-    "matches": 728,
+    "matches": 738,
     "finished": 331,
     "predictionInputs": {
       "form": {
-        "covered": 398,
-        "total": 728,
-        "pct": 0.547
+        "covered": 403,
+        "total": 738,
+        "pct": 0.546
       },
       "h2h": {
-        "covered": 293,
-        "total": 728,
-        "pct": 0.402
+        "covered": 294,
+        "total": 738,
+        "pct": 0.398
       },
       "lineupConfirmed": {
         "covered": 90,
-        "total": 728,
-        "pct": 0.124
+        "total": 738,
+        "pct": 0.122
       },
       "timestampedOdds": {
         "covered": 26,
-        "total": 728,
-        "pct": 0.036
+        "total": 738,
+        "pct": 0.035
       },
       "modelReadyData": {
-        "covered": 642,
-        "total": 728,
+        "covered": 651,
+        "total": 738,
         "pct": 0.882
       },
       "wagerEvidence": {
         "covered": 18,
-        "total": 728,
-        "pct": 0.025
+        "total": 738,
+        "pct": 0.024
       },
       "sourceLineage": {
-        "covered": 728,
-        "total": 728,
+        "covered": 738,
+        "total": 738,
         "pct": 1
+      },
+      "immutableWindowSnapshot": {
+        "covered": 3,
+        "total": 738,
+        "pct": 0.004
       }
     },
     "postMatch": {
@@ -66,14 +73,14 @@
         "pct": 0.595
       },
       "review": {
-        "covered": 305,
+        "covered": 48,
         "total": 331,
-        "pct": 0.921
+        "pct": 0.145
       },
       "reviewEligible": {
-        "covered": 171,
-        "total": 171,
-        "pct": 1
+        "covered": 2,
+        "total": 3,
+        "pct": 0.667
       },
       "statistics": {
         "covered": 266,
@@ -97,46 +104,62 @@
       }
     }
   },
+  "immutableSnapshotEvaluation": {
+    "evaluated": 15,
+    "eligible": 23,
+    "pct": 0.652,
+    "byWindow": {
+      "t24": 23,
+      "t75": 0,
+      "t45": 0,
+      "t20": 0
+    }
+  },
   "byCompetition": [
     {
       "league": "Netherlands - Eredivisie",
-      "matches": 19,
+      "matches": 20,
       "finished": 9,
       "predictionInputs": {
         "form": {
           "covered": 16,
-          "total": 19,
-          "pct": 0.842
+          "total": 20,
+          "pct": 0.8
         },
         "h2h": {
           "covered": 7,
-          "total": 19,
-          "pct": 0.368
+          "total": 20,
+          "pct": 0.35
         },
         "lineupConfirmed": {
           "covered": 0,
-          "total": 19,
+          "total": 20,
           "pct": 0
         },
         "timestampedOdds": {
           "covered": 0,
-          "total": 19,
+          "total": 20,
           "pct": 0
         },
         "modelReadyData": {
-          "covered": 19,
-          "total": 19,
+          "covered": 20,
+          "total": 20,
           "pct": 1
         },
         "wagerEvidence": {
           "covered": 0,
-          "total": 19,
+          "total": 20,
           "pct": 0
         },
         "sourceLineage": {
-          "covered": 19,
-          "total": 19,
+          "covered": 20,
+          "total": 20,
           "pct": 1
+        },
+        "immutableWindowSnapshot": {
+          "covered": 0,
+          "total": 20,
+          "pct": 0
         }
       },
       "postMatch": {
@@ -151,9 +174,9 @@
           "pct": 1
         },
         "review": {
-          "covered": 9,
+          "covered": 0,
           "total": 9,
-          "pct": 1
+          "pct": 0
         },
         "reviewEligible": {
           "covered": 0,
@@ -182,9 +205,11 @@
         }
       },
       "gaps": [
+        "form",
         "h2h",
         "confirmed_lineups",
         "timestamped_odds",
+        "immutable_snapshot_windows",
         "leak_free_reviews",
         "card_timeline"
       ],
@@ -266,6 +291,11 @@
           "covered": 113,
           "total": 113,
           "pct": 1
+        },
+        "immutableWindowSnapshot": {
+          "covered": 0,
+          "total": 113,
+          "pct": 0
         }
       },
       "postMatch": {
@@ -280,14 +310,14 @@
           "pct": 0.6
         },
         "review": {
-          "covered": 25,
+          "covered": 0,
           "total": 25,
-          "pct": 1
+          "pct": 0
         },
         "reviewEligible": {
-          "covered": 19,
-          "total": 19,
-          "pct": 1
+          "covered": 0,
+          "total": 0,
+          "pct": 0
         },
         "statistics": {
           "covered": 25,
@@ -314,7 +344,9 @@
         "form",
         "h2h",
         "confirmed_lineups",
-        "timestamped_odds"
+        "timestamped_odds",
+        "immutable_snapshot_windows",
+        "leak_free_reviews"
       ],
       "sourcePlan": {
         "fixtures": [
@@ -394,6 +426,11 @@
           "covered": 76,
           "total": 76,
           "pct": 1
+        },
+        "immutableWindowSnapshot": {
+          "covered": 0,
+          "total": 76,
+          "pct": 0
         }
       },
       "postMatch": {
@@ -408,14 +445,14 @@
           "pct": 1
         },
         "review": {
-          "covered": 13,
+          "covered": 0,
           "total": 13,
-          "pct": 1
+          "pct": 0
         },
         "reviewEligible": {
-          "covered": 1,
-          "total": 1,
-          "pct": 1
+          "covered": 0,
+          "total": 0,
+          "pct": 0
         },
         "statistics": {
           "covered": 10,
@@ -442,6 +479,8 @@
         "h2h",
         "confirmed_lineups",
         "timestamped_odds",
+        "immutable_snapshot_windows",
+        "leak_free_reviews",
         "post_match_statistics",
         "goal_timeline",
         "card_timeline"
@@ -524,6 +563,11 @@
           "covered": 21,
           "total": 21,
           "pct": 1
+        },
+        "immutableWindowSnapshot": {
+          "covered": 0,
+          "total": 21,
+          "pct": 0
         }
       },
       "postMatch": {
@@ -538,14 +582,14 @@
           "pct": 1
         },
         "review": {
-          "covered": 12,
+          "covered": 0,
           "total": 12,
-          "pct": 1
+          "pct": 0
         },
         "reviewEligible": {
-          "covered": 2,
-          "total": 2,
-          "pct": 1
+          "covered": 0,
+          "total": 0,
+          "pct": 0
         },
         "statistics": {
           "covered": 12,
@@ -572,7 +616,9 @@
         "form",
         "h2h",
         "confirmed_lineups",
-        "timestamped_odds"
+        "timestamped_odds",
+        "immutable_snapshot_windows",
+        "leak_free_reviews"
       ],
       "sourcePlan": {
         "fixtures": [
@@ -652,6 +698,11 @@
           "covered": 90,
           "total": 90,
           "pct": 1
+        },
+        "immutableWindowSnapshot": {
+          "covered": 0,
+          "total": 90,
+          "pct": 0
         }
       },
       "postMatch": {
@@ -666,14 +717,14 @@
           "pct": 0.25
         },
         "review": {
-          "covered": 20,
+          "covered": 0,
           "total": 20,
-          "pct": 1
+          "pct": 0
         },
         "reviewEligible": {
-          "covered": 12,
-          "total": 12,
-          "pct": 1
+          "covered": 0,
+          "total": 0,
+          "pct": 0
         },
         "statistics": {
           "covered": 20,
@@ -699,7 +750,9 @@
       "gaps": [
         "h2h",
         "confirmed_lineups",
-        "timestamped_odds"
+        "timestamped_odds",
+        "immutable_snapshot_windows",
+        "leak_free_reviews"
       ],
       "sourcePlan": {
         "fixtures": [
@@ -742,43 +795,48 @@
     },
     {
       "league": "England - Championship",
-      "matches": 42,
+      "matches": 45,
       "finished": 20,
       "predictionInputs": {
         "form": {
           "covered": 9,
-          "total": 42,
-          "pct": 0.214
+          "total": 45,
+          "pct": 0.2
         },
         "h2h": {
           "covered": 23,
-          "total": 42,
-          "pct": 0.548
+          "total": 45,
+          "pct": 0.511
         },
         "lineupConfirmed": {
           "covered": 8,
-          "total": 42,
-          "pct": 0.19
+          "total": 45,
+          "pct": 0.178
         },
         "timestampedOdds": {
           "covered": 8,
-          "total": 42,
-          "pct": 0.19
+          "total": 45,
+          "pct": 0.178
         },
         "modelReadyData": {
-          "covered": 42,
-          "total": 42,
+          "covered": 45,
+          "total": 45,
           "pct": 1
         },
         "wagerEvidence": {
           "covered": 8,
-          "total": 42,
-          "pct": 0.19
+          "total": 45,
+          "pct": 0.178
         },
         "sourceLineage": {
-          "covered": 42,
-          "total": 42,
+          "covered": 45,
+          "total": 45,
           "pct": 1
+        },
+        "immutableWindowSnapshot": {
+          "covered": 0,
+          "total": 45,
+          "pct": 0
         }
       },
       "postMatch": {
@@ -793,14 +851,14 @@
           "pct": 0.6
         },
         "review": {
-          "covered": 20,
+          "covered": 0,
           "total": 20,
-          "pct": 1
+          "pct": 0
         },
         "reviewEligible": {
-          "covered": 8,
-          "total": 8,
-          "pct": 1
+          "covered": 0,
+          "total": 0,
+          "pct": 0
         },
         "statistics": {
           "covered": 20,
@@ -827,7 +885,9 @@
         "form",
         "h2h",
         "confirmed_lineups",
-        "timestamped_odds"
+        "timestamped_odds",
+        "immutable_snapshot_windows",
+        "leak_free_reviews"
       ],
       "sourcePlan": {
         "fixtures": [
@@ -882,9 +942,9 @@
           "pct": 0.89
         },
         "h2h": {
-          "covered": 57,
+          "covered": 58,
           "total": 82,
-          "pct": 0.695
+          "pct": 0.707
         },
         "lineupConfirmed": {
           "covered": 5,
@@ -910,6 +970,11 @@
           "covered": 82,
           "total": 82,
           "pct": 1
+        },
+        "immutableWindowSnapshot": {
+          "covered": 0,
+          "total": 82,
+          "pct": 0
         }
       },
       "postMatch": {
@@ -924,14 +989,14 @@
           "pct": 0.556
         },
         "review": {
-          "covered": 18,
+          "covered": 0,
           "total": 18,
-          "pct": 1
+          "pct": 0
         },
         "reviewEligible": {
-          "covered": 10,
-          "total": 10,
-          "pct": 1
+          "covered": 0,
+          "total": 0,
+          "pct": 0
         },
         "statistics": {
           "covered": 18,
@@ -955,8 +1020,12 @@
         }
       },
       "gaps": [
+        "form",
+        "h2h",
         "confirmed_lineups",
-        "timestamped_odds"
+        "timestamped_odds",
+        "immutable_snapshot_windows",
+        "leak_free_reviews"
       ],
       "sourcePlan": {
         "fixtures": [
@@ -1036,6 +1105,11 @@
           "covered": 81,
           "total": 81,
           "pct": 1
+        },
+        "immutableWindowSnapshot": {
+          "covered": 0,
+          "total": 81,
+          "pct": 0
         }
       },
       "postMatch": {
@@ -1050,14 +1124,14 @@
           "pct": 0.389
         },
         "review": {
-          "covered": 18,
+          "covered": 0,
           "total": 18,
-          "pct": 1
+          "pct": 0
         },
         "reviewEligible": {
-          "covered": 15,
-          "total": 15,
-          "pct": 1
+          "covered": 0,
+          "total": 0,
+          "pct": 0
         },
         "statistics": {
           "covered": 18,
@@ -1084,7 +1158,9 @@
         "form",
         "h2h",
         "confirmed_lineups",
-        "timestamped_odds"
+        "timestamped_odds",
+        "immutable_snapshot_windows",
+        "leak_free_reviews"
       ],
       "sourcePlan": {
         "fixtures": [
@@ -1130,43 +1206,48 @@
     },
     {
       "league": "Europe - Champions League",
-      "matches": 20,
+      "matches": 26,
       "finished": 14,
       "predictionInputs": {
         "form": {
-          "covered": 11,
-          "total": 20,
-          "pct": 0.55
+          "covered": 16,
+          "total": 26,
+          "pct": 0.615
         },
         "h2h": {
           "covered": 7,
-          "total": 20,
-          "pct": 0.35
+          "total": 26,
+          "pct": 0.269
         },
         "lineupConfirmed": {
           "covered": 3,
-          "total": 20,
-          "pct": 0.15
+          "total": 26,
+          "pct": 0.115
         },
         "timestampedOdds": {
           "covered": 0,
-          "total": 20,
+          "total": 26,
           "pct": 0
         },
         "modelReadyData": {
-          "covered": 17,
-          "total": 20,
-          "pct": 0.85
+          "covered": 22,
+          "total": 26,
+          "pct": 0.846
         },
         "wagerEvidence": {
           "covered": 0,
-          "total": 20,
+          "total": 26,
           "pct": 0
         },
         "sourceLineage": {
-          "covered": 20,
-          "total": 20,
+          "covered": 26,
+          "total": 26,
           "pct": 1
+        },
+        "immutableWindowSnapshot": {
+          "covered": 0,
+          "total": 26,
+          "pct": 0
         }
       },
       "postMatch": {
@@ -1181,14 +1262,14 @@
           "pct": 0.571
         },
         "review": {
-          "covered": 14,
+          "covered": 0,
           "total": 14,
-          "pct": 1
+          "pct": 0
         },
         "reviewEligible": {
-          "covered": 7,
-          "total": 7,
-          "pct": 1
+          "covered": 0,
+          "total": 0,
+          "pct": 0
         },
         "statistics": {
           "covered": 14,
@@ -1215,7 +1296,9 @@
         "form",
         "h2h",
         "confirmed_lineups",
-        "timestamped_odds"
+        "timestamped_odds",
+        "immutable_snapshot_windows",
+        "leak_free_reviews"
       ],
       "sourcePlan": {
         "fixtures": [
@@ -1294,6 +1377,11 @@
           "covered": 51,
           "total": 51,
           "pct": 1
+        },
+        "immutableWindowSnapshot": {
+          "covered": 0,
+          "total": 51,
+          "pct": 0
         }
       },
       "postMatch": {
@@ -1308,14 +1396,14 @@
           "pct": 0.56
         },
         "review": {
-          "covered": 46,
+          "covered": 8,
           "total": 50,
-          "pct": 0.92
+          "pct": 0.16
         },
         "reviewEligible": {
-          "covered": 29,
-          "total": 29,
-          "pct": 1
+          "covered": 0,
+          "total": 0,
+          "pct": 0
         },
         "statistics": {
           "covered": 33,
@@ -1343,6 +1431,8 @@
         "h2h",
         "confirmed_lineups",
         "timestamped_odds",
+        "immutable_snapshot_windows",
+        "leak_free_reviews",
         "post_match_statistics",
         "referee",
         "goal_timeline",
@@ -1425,6 +1515,11 @@
           "covered": 133,
           "total": 133,
           "pct": 1
+        },
+        "immutableWindowSnapshot": {
+          "covered": 3,
+          "total": 133,
+          "pct": 0.023
         }
       },
       "postMatch": {
@@ -1439,14 +1534,14 @@
           "pct": 0.591
         },
         "review": {
-          "covered": 110,
+          "covered": 40,
           "total": 132,
-          "pct": 0.833
+          "pct": 0.303
         },
         "reviewEligible": {
-          "covered": 68,
-          "total": 68,
-          "pct": 1
+          "covered": 2,
+          "total": 3,
+          "pct": 0.667
         },
         "statistics": {
           "covered": 87,
@@ -1474,6 +1569,8 @@
         "h2h",
         "confirmed_lineups",
         "timestamped_odds",
+        "immutable_snapshot_windows",
+        "leak_free_reviews",
         "post_match_statistics",
         "referee",
         "goal_timeline",
@@ -1567,7 +1664,7 @@
   "recommendations": [
     "Vul eerst betrouwbare eindstanden aan voordat learning en ROI/CLV zwaarder worden gewogen.",
     "Breid H2H via historische competitieprofielen en team-id mappings uit tot minimaal 85% dekking.",
-    "Afgeronde wedstrijden zijn aan post-matchreviews gekoppeld.",
+    "Evalueer minimaal 95% van de 23 geldige immutable snapshots voordat opnieuw wordt gekalibreerd.",
     "Post-match statistiekdekking is voldoende.",
     "Toon geen inzetadvies zolang bevestigde opstellingen, verse getimestampte 1X2-odds en minimaal 70% modeldata niet samen aanwezig zijn."
   ]

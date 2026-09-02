@@ -9,6 +9,8 @@ const snapshot = {
   homeTeam: "Ajax",
   awayTeam: "FC Twente",
   generatedAt: "2026-07-20T10:00:00.000Z",
+  kickoff: "2026-07-20T11:15:00.000Z",
+  inputSnapshotHash: "immutable",
   probabilities: { home: 0.5, draw: 0.3, away: 0.2 },
   featureVector: { ppg_diff: 0.4 },
 };

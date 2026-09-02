@@ -19,11 +19,6 @@ jobs:
           node-version: 22
           cache: npm
       - run: npm ci
-      - name: Maintain Neon storage budget before fixture import
-        run: node scripts/ci-neon-safe.js -- npm run db:neon-storage:maintain
-        env:
-          DATABASE_URL: ${{ secrets.DATABASE_URL }}
-          POSTGRES_URL: ${{ secrets.POSTGRES_URL }}
       - name: Discover Football-Data 2026/2027 fixtures
         run: node scripts/ci-neon-safe.js -- node scripts/import-free-sources.js --source=football-data --league=${{ matrix.league }} --season-folder=2627
         env:
@@ -47,11 +42,6 @@ jobs:
           node-version: 22
           cache: npm
       - run: npm ci
-      - name: Maintain Neon storage budget before fixture import
-        run: node scripts/ci-neon-safe.js -- npm run db:neon-storage:maintain
-        env:
-          DATABASE_URL: ${{ secrets.DATABASE_URL }}
-          POSTGRES_URL: ${{ secrets.POSTGRES_URL }}
       - name: Discover OpenFootball upcoming fixtures
         run: node scripts/ci-neon-safe.js -- node scripts/import-free-sources.js --source=openfootball --league=${{ matrix.league }}
         env:
@@ -71,8 +61,8 @@ jobs:
           node-version: 22
           cache: npm
       - run: npm ci
-      - name: Maintain Neon storage budget before canonical merges
-        run: node scripts/ci-neon-safe.js -- npm run db:neon-storage:maintain
+      - name: Check Neon storage before canonical merges
+        run: node scripts/ci-neon-safe.js -- npm run monitor:neon-storage
         env:
           DATABASE_URL: ${{ secrets.DATABASE_URL }}
           POSTGRES_URL: ${{ secrets.POSTGRES_URL }}

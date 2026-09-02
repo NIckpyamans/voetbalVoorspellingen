@@ -49,11 +49,11 @@ export function buildCompetitionQuality(matches = [], modelPerformance = {}) {
         roi: metric.roiTotal ?? metric.roi ?? null,
         leakageCoverage: metric.metricCoverage?.leakageCutoffKnown ?? null,
       },
-      modelReady: Number(metric.matches || metric.evaluations || 0) >= 100 && Number(metric.metricCoverage?.leakageCutoffKnown || 0) >= 0.8,
-      modelReadyReason: Number(metric.matches || metric.evaluations || 0) < 100
-        ? "minder dan 100 evaluaties"
-        : Number(metric.metricCoverage?.leakageCutoffKnown || 0) < 0.8
-          ? "leakage-cutoffdekking lager dan 80%"
+      modelReady: Number(metric.matches || metric.evaluations || 0) >= 150 && Number(metric.metricCoverage?.leakageCutoffKnown || 0) >= 0.95,
+      modelReadyReason: Number(metric.matches || metric.evaluations || 0) < 150
+        ? "minder dan 150 lekvrije evaluaties"
+        : Number(metric.metricCoverage?.leakageCutoffKnown || 0) < 0.95
+          ? "leakage-cutoffdekking lager dan 95%"
           : "voldoende historische evaluaties",
     };
   }).sort((a, b) => b.matches - a.matches || a.league.localeCompare(b.league));

@@ -5,6 +5,8 @@ import path from "path";
 import { todayAmsterdamKey } from "../shared/date.js";
 import { hasFinalScore, hasUsableH2H } from "../shared/matchNormalization.js";
 import { ACTIVE_COMPETITIONS, isActiveCompetitionEntity } from "../shared/competitionVisibility.js";
+import { readLocalSnapshotLedger } from "../shared/predictionSnapshotLedger.js";
+import { SNAPSHOT_WINDOWS, selectPreferredTrainingSnapshot, snapshotTrainingEligibility } from "./worker/snapshot-policy.js";
 
 const ROOT = process.cwd();
 const OUTPUT_JSON = path.join(ROOT, "monitor", "data-quality-audit.json");
@@ -52,6 +54,25 @@ function collectMatches() {
   const meta = readJsonSafe(path.join("data", "meta.json"), {});
   const dates = Array.isArray(meta.dates) ? meta.dates : [];
   const fromDate = dateMinus(todayAmsterdamKey(), DEFAULT_LOOKBACK_DAYS);
+  const recovery = readLocalSnapshotLedger(ROOT);
+  const recoverySnapshotsByMatch = new Map();
+  const recoverySnapshotsByFixture = new Map();
+  for (const snapshot of Object.values(recovery?.ledger?.predictionSnapshots || {})) {
+    const matchId = String(snapshot?.matchId || "");
+    if (matchId) {
+      if (!recoverySnapshotsByMatch.has(matchId)) recoverySnapshotsByMatch.set(matchId, []);
+      recoverySnapshotsByMatch.get(matchId).push(snapshot);
+    }
+    const fixtureKey = identityKey(
+      snapshot?.kickoff || snapshot?.date,
+      snapshot?.homeTeamName || snapshot?.homeTeam || snapshot?.inputSnapshot?.homeTeam,
+      snapshot?.awayTeamName || snapshot?.awayTeam || snapshot?.inputSnapshot?.awayTeam,
+    );
+    if (!fixtureKey.endsWith("||")) {
+      if (!recoverySnapshotsByFixture.has(fixtureKey)) recoverySnapshotsByFixture.set(fixtureKey, []);
+      recoverySnapshotsByFixture.get(fixtureKey).push(snapshot);
+    }
+  }
   const splitMatches = dates
     .filter((dateKey) => dateKey >= fromDate)
     .flatMap((dateKey) => {
@@ -61,13 +82,20 @@ function collectMatches() {
       const snapshots = Object.values(day.predictionSnapshots || {});
       return (Array.isArray(day.matches) ? day.matches : []).map((match, index) => {
         const kickoff = Date.parse(String(match?.kickoff || match?.date || ""));
-        const prematchSnapshot = snapshots
-          .filter((snapshot) => {
-            if (String(snapshot?.matchId || "") !== String(match?.id || "")) return false;
-            const cutoff = Date.parse(String(snapshot?.cutoffAt || snapshot?.generatedAt || ""));
-            return Number.isFinite(cutoff) && Number.isFinite(kickoff) && cutoff < kickoff;
-          })
-          .sort((left, right) => Date.parse(String(right?.cutoffAt || right?.generatedAt || "")) - Date.parse(String(left?.cutoffAt || left?.generatedAt || "")))[0] || null;
+        const matchId = String(match?.id || "");
+        const fixtureKey = identityKey(
+          match?.kickoff || match?.date,
+          match?.homeTeamName || match?.homeTeam,
+          match?.awayTeamName || match?.awayTeam,
+        );
+        const matchSnapshots = [
+          ...snapshots.filter((snapshot) => String(snapshot?.matchId || "") === matchId),
+          ...(recoverySnapshotsByMatch.get(matchId) || []),
+          ...(recoverySnapshotsByFixture.get(fixtureKey) || []),
+        ].filter((snapshot, snapshotIndex, rows) =>
+          rows.findIndex((candidate) => String(candidate?.predictionId || "") === String(snapshot?.predictionId || "")) === snapshotIndex
+        );
+        const prematchSnapshot = selectPreferredTrainingSnapshot(matchSnapshots);
         return {
           ...match,
           _dateKey: dateKey,
@@ -196,11 +224,48 @@ function hasReview(match, reviewIndex) {
 }
 
 function hasLeakFreePrematchPrediction(match) {
-  const prediction = match?._prematchSnapshot || match?._prediction;
+  const prediction = match?._prematchSnapshot;
   if (!prediction) return false;
   const kickoff = Date.parse(String(match?.kickoff || match?.date || ""));
   const cutoff = Date.parse(String(prediction?.cutoffAt || prediction?.generatedAt || prediction?.createdAt || ""));
-  return Number.isFinite(kickoff) && Number.isFinite(cutoff) && cutoff < kickoff;
+  return Number.isFinite(kickoff) && Number.isFinite(cutoff) && cutoff < kickoff && snapshotTrainingEligibility(prediction).eligible;
+}
+
+function ledgerSnapshotEvaluation(recovery, fromDate, now = Date.now()) {
+  const snapshots = Object.values(recovery?.ledger?.predictionSnapshots || {}).filter((snapshot) => {
+    const kickoff = Date.parse(String(snapshot?.kickoff || ""));
+    const dateKey = String(snapshot?.kickoff || snapshot?.date || "").slice(0, 10);
+    return snapshotTrainingEligibility(snapshot).eligible
+      && dateKey >= fromDate
+      && Number.isFinite(kickoff)
+      && kickoff < now
+      && isActiveCompetitionEntity(snapshot);
+  });
+  const groups = new Map();
+  for (const snapshot of snapshots) {
+    const fixtureKey = identityKey(
+      snapshot?.kickoff || snapshot?.date,
+      snapshot?.homeTeamName || snapshot?.homeTeam || snapshot?.inputSnapshot?.homeTeam,
+      snapshot?.awayTeamName || snapshot?.awayTeam || snapshot?.inputSnapshot?.awayTeam,
+    );
+    const key = fixtureKey.endsWith("||") ? String(snapshot?.matchId || snapshot?.predictionId) : fixtureKey;
+    if (!groups.has(key)) groups.set(key, []);
+    groups.get(key).push(snapshot);
+  }
+  const selected = [...groups.values()].map(selectPreferredTrainingSnapshot).filter(Boolean);
+  const evaluations = recovery?.ledger?.evaluations || {};
+  const evaluated = selected.filter((snapshot) => Boolean(evaluations[snapshot.predictionId]));
+  const byWindow = Object.fromEntries(Object.keys(SNAPSHOT_WINDOWS).map((window) => [window, 0]));
+  for (const snapshot of selected) {
+    const window = snapshotTrainingEligibility(snapshot).snapshotWindow;
+    if (window in byWindow) byWindow[window] += 1;
+  }
+  return {
+    evaluated: evaluated.length,
+    eligible: selected.length,
+    pct: selected.length ? Number((evaluated.length / selected.length).toFixed(3)) : 0,
+    byWindow,
+  };
 }
 
 function coverageRow(matches, reviewIndex) {
@@ -223,6 +288,7 @@ function coverageRow(matches, reviewIndex) {
       modelReadyData: metric(matches, hasModelReadyData),
       wagerEvidence: metric(matches, hasWagerEvidence),
       sourceLineage: metric(matches, hasSourceLineage),
+      immutableWindowSnapshot: metric(matches, hasLeakFreePrematchPrediction),
     },
     postMatch: {
       finalScore: metric(finished, hasFinalScore),
@@ -245,9 +311,15 @@ function coverageRow(matches, reviewIndex) {
 
 function main() {
   const today = todayAmsterdamKey();
+  const fromDate = dateMinus(today, DEFAULT_LOOKBACK_DAYS);
   const matches = collectMatches();
   const history = readJsonSafe(path.join("data", "history-summary.json"), {});
-  const reviews = history?.postMatchReviews || {};
+  const recovery = readLocalSnapshotLedger(ROOT);
+  const immutableSnapshotEvaluation = ledgerSnapshotEvaluation(recovery, fromDate);
+  const reviews = {
+    ...(history?.postMatchReviews || {}),
+    ...(recovery?.ledger?.postMatchReviews || {}),
+  };
   const reviewIndex = buildReviewIndex(reviews);
   const agentConfig = readJsonSafe(path.join("config", "competition-agents.json"), {});
   const pastMatches = matches.filter((match) => isPastMatch(match, today));
@@ -277,10 +349,11 @@ function main() {
       postMatch: ["fotmob-match-details", "thesportsdb", "football-data-org", "goal-api-shadow"],
     };
     const gaps = [
-      coverage.predictionInputs.form.pct < 0.8 ? "form" : null,
-      coverage.predictionInputs.h2h.pct < 0.65 ? "h2h" : null,
-      coverage.predictionInputs.lineupConfirmed.pct < 0.45 ? "confirmed_lineups" : null,
-      coverage.predictionInputs.timestampedOdds.pct < 0.45 ? "timestamped_odds" : null,
+      coverage.predictionInputs.form.pct < 0.9 ? "form" : null,
+      coverage.predictionInputs.h2h.pct < 0.85 ? "h2h" : null,
+      coverage.predictionInputs.lineupConfirmed.pct < 0.7 ? "confirmed_lineups" : null,
+      coverage.predictionInputs.timestampedOdds.pct < 0.6 ? "timestamped_odds" : null,
+      coverage.predictionInputs.immutableWindowSnapshot.pct < 0.95 ? "immutable_snapshot_windows" : null,
       coverage.postMatch.reviewEligible.pct < 0.95 ? "leak_free_reviews" : null,
       coverage.postMatch.statistics.pct < 0.8 ? "post_match_statistics" : null,
       coverage.postMatch.referee.pct < 0.65 ? "referee" : null,
@@ -302,12 +375,15 @@ function main() {
       h2hMissing: h2hMissing.length,
       h2hCovered,
       h2hCoverage,
+      immutableLedgerSnapshots: Object.keys(recovery?.ledger?.predictionSnapshots || {}).length,
+      immutableLedgerEvaluations: Object.keys(recovery?.ledger?.evaluations || {}).length,
     },
     status: {
       resultBackfill: resultBackfillScore,
       h2h: h2hCoverage >= 0.85 ? "healthy" : h2hCoverage >= 0.65 ? "watch" : "needs_backfill",
     },
     coverage,
+    immutableSnapshotEvaluation,
     byCompetition,
     backfillPolicy: {
       canBackfillAfterMatch: ["finalScore", "postMatchReview", "statistics", "goalMinutes", "cards", "referee", "historicalConfirmedLineup"],
@@ -325,8 +401,8 @@ function main() {
       h2hCoverage < 0.85
         ? "Breid H2H via historische competitieprofielen en team-id mappings uit tot minimaal 85% dekking."
         : "H2H-dekking is voldoende voor de huidige auditperiode.",
-      coverage.postMatch.reviewEligible.pct < 0.95
-        ? `Koppel minimaal 95% van de ${coverage.postMatch.reviewEligible.total} lekvrije pre-matchsnapshots aan een post-matchreview voordat opnieuw wordt gekalibreerd.`
+      immutableSnapshotEvaluation.pct < 0.95
+        ? `Evalueer minimaal 95% van de ${immutableSnapshotEvaluation.eligible} geldige immutable snapshots voordat opnieuw wordt gekalibreerd.`
         : "Afgeronde wedstrijden zijn aan post-matchreviews gekoppeld.",
       coverage.postMatch.statistics.pct < 0.8
         ? "Vul post-match statistieken en doelminuten via FotMob, APIfootball.com of GOAL shadow aan; nulvelden tellen niet als echte statistiek."
@@ -351,6 +427,7 @@ function main() {
     `- H2H-dekking: ${Math.round(report.totals.h2hCoverage * 100)}%`,
     `- Reviews na afloop: ${Math.round(report.coverage.postMatch.review.pct * 100)}%`,
     `- Lekvrije post-matchreviews: ${Math.round(report.coverage.postMatch.reviewEligible.pct * 100)}% (${report.coverage.postMatch.reviewEligible.covered}/${report.coverage.postMatch.reviewEligible.total})`,
+    `- Immutable snapshot-evaluaties: ${Math.round(report.immutableSnapshotEvaluation.pct * 100)}% (${report.immutableSnapshotEvaluation.evaluated}/${report.immutableSnapshotEvaluation.eligible})`,
     `- Bruikbare wedstrijdstatistieken: ${Math.round(report.coverage.postMatch.statistics.pct * 100)}%`,
     `- Bevestigde opstellingen: ${Math.round(report.coverage.predictionInputs.lineupConfirmed.pct * 100)}%`,
     `- Historisch teruggevonden basiselftallen: ${Math.round(report.coverage.postMatch.historicalLineup.pct * 100)}%`,

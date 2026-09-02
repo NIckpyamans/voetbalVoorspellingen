@@ -111,6 +111,9 @@ if (APPLY && rows.length) {
       uncompressedBytes: String(Buffer.byteLength(json, "utf8")),
     },
   });
+  if (!upload?.ok) {
+    throw new Error(`R2 snapshot archive failed; Neon rows retained (${upload?.reason || "unknown error"})`);
+  }
   const ids = rows.map((row) => row.prediction_id);
   const [result] = await sql.query(`
     with deleted_source_audit as (

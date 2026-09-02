@@ -28,8 +28,8 @@ jobs:
         run: |
           node scripts/sync-competition-catalog-teams.js
           node scripts/prepare-next-season.js --force
-      - name: Maintain Neon storage budget before catalog sync
-        run: node scripts/ci-neon-safe.js -- npm run db:neon-storage:maintain
+      - name: Check Neon storage before catalog sync
+        run: node scripts/ci-neon-safe.js -- npm run monitor:neon-storage
         env:
           DATABASE_URL: ${{ secrets.DATABASE_URL }}
           POSTGRES_URL: ${{ secrets.POSTGRES_URL }}
