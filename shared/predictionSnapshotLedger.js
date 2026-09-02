@@ -6,6 +6,7 @@ import { classifyPredictionSnapshotWindow } from "../scripts/worker/snapshot-pol
 
 export const SNAPSHOT_LEDGER_VERSION = "v1-immutable-r2-ledger";
 export const SNAPSHOT_LEDGER_R2_KEY = "prediction-snapshots/active/ledger.json.gz";
+export const SNAPSHOT_API_LEDGER_R2_KEY = "prediction-snapshots/active/api-ledger.json.gz";
 export const SNAPSHOT_LEDGER_LOCAL_FILE = path.join("data", "recovery", "prediction-snapshot-ledger.json.gz");
 
 function emptyLedger() {
@@ -24,6 +25,61 @@ function parseLedgerBuffer(buffer) {
   const bytes = Buffer.isBuffer(buffer) ? buffer : Buffer.from(buffer);
   const json = bytes[0] === 0x1f && bytes[1] === 0x8b ? gunzipSync(bytes).toString("utf8") : bytes.toString("utf8");
   return normalizeSnapshotLedger(JSON.parse(json));
+}
+
+function compactSnapshotForApi(snapshot) {
+  if (!snapshot?.predictionId || !snapshot?.matchId) return null;
+  return {
+    predictionId: snapshot.predictionId,
+    matchId: snapshot.matchId,
+    generatedAt: snapshot.generatedAt,
+    cutoffAt: snapshot.cutoffAt,
+    kickoff: snapshot.kickoff,
+    status: snapshot.status,
+    schemaVersion: snapshot.schemaVersion,
+    featureSchemaVersion: snapshot.featureSchemaVersion,
+    modelVersion: snapshot.modelVersion,
+    algorithmVersion: snapshot.algorithmVersion,
+    workerVersion: snapshot.workerVersion,
+    date: snapshot.date,
+    league: snapshot.league,
+    season: snapshot.season,
+    homeTeam: snapshot.homeTeam,
+    awayTeam: snapshot.awayTeam,
+    homeTeamId: snapshot.homeTeamId || null,
+    awayTeamId: snapshot.awayTeamId || null,
+    teamIdentity: snapshot.teamIdentity || snapshot.inputSnapshot?.teamIdentity || null,
+    inputSnapshotHash: snapshot.inputSnapshotHash,
+    features: snapshot.features || null,
+    probabilities: snapshot.probabilities || null,
+    confidence: snapshot.confidence ?? null,
+    confidenceRaw: snapshot.confidenceRaw ?? null,
+    expectedScore: snapshot.expectedScore || null,
+    oddsAtPrediction: snapshot.oddsAtPrediction || null,
+    oddsStatus: snapshot.oddsStatus || null,
+    oddsMissingReason: snapshot.oddsMissingReason || null,
+    oddsProviderStatus: snapshot.oddsProviderStatus || null,
+    oddsProviderDiagnostics: snapshot.oddsProviderDiagnostics || null,
+    roiStatus: snapshot.roiStatus || null,
+    clvStatus: snapshot.clvStatus || null,
+    sourceAsOf: snapshot.sourceAsOf || snapshot.inputSnapshot?.sourceAsOf || null,
+    lineupStatus: snapshot.lineupStatus || snapshot.inputSnapshot?.lineupStatus || null,
+    refereeStatus: snapshot.refereeStatus || snapshot.inputSnapshot?.refereeStatus || null,
+    featureSourceMetadata: snapshot.featureSourceMetadata || snapshot.inputSnapshot?.featureSourceMetadata || null,
+    leakageGuard: snapshot.leakageGuard || null,
+    dataCompleteness: snapshot.dataCompleteness || null,
+    missingData: snapshot.missingData || [],
+  };
+}
+
+export function compactSnapshotLedgerForApi(value) {
+  const compact = compactSnapshotLedgerForLocalRecovery(value);
+  const predictionSnapshots = {};
+  for (const snapshot of Object.values(compact.predictionSnapshots || {})) {
+    const selected = compactSnapshotForApi(snapshot);
+    if (selected) predictionSnapshots[selected.predictionId] = selected;
+  }
+  return normalizeSnapshotLedger({ ...compact, predictionSnapshots });
 }
 
 export function normalizeSnapshotLedger(value) {
@@ -162,6 +218,19 @@ export async function readR2SnapshotLedger(options = {}) {
   }
 }
 
+export async function readR2SnapshotApiLedger(options = {}) {
+  const config = options.config || getR2Config();
+  const key = buildR2ObjectKey(config, options.relativeKey || SNAPSHOT_API_LEDGER_R2_KEY);
+  if (!config.configured) return { configured: false, available: false, source: "r2_api", ledger: emptyLedger(), key };
+  try {
+    const object = await getR2Object({ config, key });
+    if (!object.ok) return { configured: true, available: false, source: "r2_api", ledger: emptyLedger(), key, reason: object.reason };
+    return { configured: true, available: true, source: "r2_api", ledger: parseLedgerBuffer(object.body), key, bytes: object.body.length };
+  } catch (error) {
+    return { configured: true, available: false, source: "r2_api", ledger: emptyLedger(), key, error: error?.message || String(error) };
+  }
+}
+
 export async function loadSnapshotLedger(options = {}) {
   const local = options.includeLocal === false ? null : readLocalSnapshotLedger(options.root);
   const r2 = options.includeR2 === false ? null : await readR2SnapshotLedger(options);
@@ -188,5 +257,21 @@ export async function persistSnapshotLedger(ledger, options = {}) {
       evaluations: String(Object.keys(merged.evaluations).length),
     },
   });
-  return { ...upload, ledger: merged };
+  let apiUpload = { ok: false, skipped: true, reason: "primary_upload_failed" };
+  if (upload.ok) {
+    const apiLedger = compactSnapshotLedgerForApi(merged);
+    const apiBody = gzipSync(Buffer.from(JSON.stringify(apiLedger), "utf8"), { level: 9 });
+    apiUpload = await putR2Object({
+      config,
+      key: buildR2ObjectKey(config, SNAPSHOT_API_LEDGER_R2_KEY),
+      body: apiBody,
+      contentType: "application/json",
+      metadata: {
+        version: SNAPSHOT_LEDGER_VERSION,
+        purpose: "bounded-api-index",
+        snapshots: String(Object.keys(apiLedger.predictionSnapshots).length),
+      },
+    }).catch((error) => ({ ok: false, reason: error?.message || String(error) }));
+  }
+  return { ...upload, apiUpload, ledger: merged };
 }

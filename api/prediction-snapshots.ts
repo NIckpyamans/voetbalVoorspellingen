@@ -1,7 +1,7 @@
 import { createLogger, getErrorDetails } from "../shared/logger.js";
 import { setCorsHeaders } from "../shared/cors.js";
 import { databaseConfigured, getSql } from "../shared/database.js";
-import { readLocalSnapshotLedger, readR2SnapshotLedger } from "../shared/predictionSnapshotLedger.js";
+import { readLocalSnapshotLedger, readR2SnapshotApiLedger } from "../shared/predictionSnapshotLedger.js";
 
 const logger = createLogger("api.prediction-snapshots");
 
@@ -44,9 +44,9 @@ export function compactSnapshot(snapshot: any, includeDetails = false) {
     oddsProviderDiagnostics: snapshot.oddsProviderDiagnostics || null,
     roiStatus: snapshot.roiStatus || null,
     clvStatus: snapshot.clvStatus || null,
-    sourceAsOf: snapshot.inputSnapshot?.sourceAsOf || null,
-    lineupStatus: snapshot.inputSnapshot?.lineupStatus || null,
-    refereeStatus: snapshot.inputSnapshot?.refereeStatus || null,
+    sourceAsOf: snapshot.sourceAsOf || snapshot.inputSnapshot?.sourceAsOf || null,
+    lineupStatus: snapshot.lineupStatus || snapshot.inputSnapshot?.lineupStatus || null,
+    refereeStatus: snapshot.refereeStatus || snapshot.inputSnapshot?.refereeStatus || null,
     featureSourceMetadata: snapshot.featureSourceMetadata || snapshot.inputSnapshot?.featureSourceMetadata || null,
     leakageGuard: snapshot.leakageGuard || null,
     dataCompleteness: snapshot.dataCompleteness || null,
@@ -196,7 +196,10 @@ export default async function handler(req: any, res: any) {
     const before = typeof req.query?.before === "string" && Number.isFinite(Date.parse(req.query.before))
       ? new Date(req.query.before).toISOString()
       : null;
-    const r2Ledger = await readR2SnapshotLedger();
+    // The full immutable ledger is reserved for offline training/evaluation. A
+    // request only reads the compact API index to avoid deserializing years of
+    // feature payloads inside a Vercel function.
+    const r2Ledger = await readR2SnapshotApiLedger();
     const recoveryLedger = r2Ledger.available ? null : readLocalSnapshotLedger();
     const durableLedger = r2Ledger.available ? r2Ledger : recoveryLedger;
     const preferDatabase = req.query?.source === "postgres" || !durableLedger?.available;
@@ -301,7 +304,7 @@ export default async function handler(req: any, res: any) {
 
     if (!durableLedger?.available) throw new Error("Geen begrensde snapshotbron beschikbaar");
     const snapshots = durableLedger.ledger.predictionSnapshots || {};
-    const snapshotBranch = r2Ledger.available ? "r2-immutable-ledger" : "bundled-recovery-ledger";
+    const snapshotBranch = r2Ledger.available ? "r2-bounded-api-ledger" : "bundled-recovery-ledger";
 
     if (summaryOnly) {
       const summary = databaseSummary || buildSnapshotSummary(
