@@ -33,7 +33,7 @@ jobs:
       API_FOOTBALL_COVERAGE_MAX_DATES: "14"
       API_FOOTBALL_ODDS_PROBE_LIMIT: "20"
     steps:
-      - uses: actions/checkout@v5
+      - uses: actions/checkout@v7
         with:
           ref: ${{ env.DATA_BRANCH }}
           fetch-depth: 0
