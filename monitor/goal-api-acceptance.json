@@ -1,24 +1,24 @@
 {
   "schemaVersion": "goal-api-acceptance-v1",
-  "checkedAt": "2026-09-01T08:48:16.598Z",
+  "checkedAt": "2026-09-02T08:01:27.401Z",
   "configured": true,
   "accepted": false,
   "enoughTime": false,
   "enoughEvidence": false,
   "targetsMet": false,
-  "elapsedDays": 12,
+  "elapsedDays": 13,
   "requiredDays": 14,
   "aggregate": {
     "domestic": {
-      "checked": 1208,
-      "mapped": 904,
-      "coverage": 0.748,
+      "checked": 1297,
+      "mapped": 978,
+      "coverage": 0.754,
       "target": 0.8
     },
     "uefa": {
-      "checked": 579,
-      "mapped": 492,
-      "coverage": 0.85,
+      "checked": 585,
+      "mapped": 498,
+      "coverage": 0.851,
       "target": 0.8
     },
     "friendly": {
@@ -2553,6 +2553,161 @@
           "records": 1,
           "available": true,
           "remaining": "960",
+          "errorCode": null
+        }
+      }
+    },
+    {
+      "measurementVersion": "goal-pagination-v2",
+      "checkedAt": "2026-09-02T08:01:27.401Z",
+      "providerReachable": true,
+      "checked": 95,
+      "mapped": 80,
+      "segments": {
+        "domestic": {
+          "checked": 89,
+          "mapped": 74
+        },
+        "uefa": {
+          "checked": 6,
+          "mapped": 6
+        },
+        "friendly": {
+          "checked": 0,
+          "mapped": 0
+        }
+      },
+      "requestStatuses": [
+        {
+          "date": "2026-09-02",
+          "status": 200,
+          "records": 319,
+          "pages": 4,
+          "truncated": false,
+          "limits": {
+            "remaining": "996",
+            "limit": "1000",
+            "dailyRemaining": null
+          }
+        },
+        {
+          "date": "2026-09-03",
+          "status": 200,
+          "records": 156,
+          "pages": 2,
+          "truncated": false,
+          "limits": {
+            "remaining": "994",
+            "limit": "1000",
+            "dailyRemaining": null
+          }
+        },
+        {
+          "date": "2026-09-04",
+          "status": 200,
+          "records": 461,
+          "pages": 5,
+          "truncated": false,
+          "limits": {
+            "remaining": "989",
+            "limit": "1000",
+            "dailyRemaining": null
+          }
+        },
+        {
+          "date": "2026-09-05",
+          "status": 200,
+          "records": 1000,
+          "pages": 10,
+          "truncated": true,
+          "limits": {
+            "remaining": "979",
+            "limit": "1000",
+            "dailyRemaining": null
+          }
+        },
+        {
+          "date": "2026-09-06",
+          "status": 200,
+          "records": 1000,
+          "pages": 10,
+          "truncated": true,
+          "limits": {
+            "remaining": "969",
+            "limit": "1000",
+            "dailyRemaining": null
+          }
+        },
+        {
+          "date": "2026-09-07",
+          "status": 200,
+          "records": 143,
+          "pages": 2,
+          "truncated": false,
+          "limits": {
+            "remaining": "967",
+            "limit": "1000",
+            "dailyRemaining": null
+          }
+        },
+        {
+          "date": "2026-09-08",
+          "status": 200,
+          "records": 200,
+          "pages": 2,
+          "truncated": false,
+          "limits": {
+            "remaining": "965",
+            "limit": "1000",
+            "dailyRemaining": null
+          }
+        }
+      ],
+      "endpointAccess": {
+        "testedFixtureId": "cmt1fig1o79frpd07ruut0axs",
+        "fixture": {
+          "tested": true,
+          "valid": true,
+          "status": 200,
+          "records": 1,
+          "available": true,
+          "remaining": "964",
+          "errorCode": null
+        },
+        "lineups": {
+          "tested": true,
+          "valid": true,
+          "status": 200,
+          "records": 1,
+          "available": true,
+          "remaining": "963",
+          "errorCode": null
+        },
+        "statistics": {
+          "tested": true,
+          "valid": true,
+          "status": 200,
+          "records": 1,
+          "available": true,
+          "remaining": "962",
+          "errorCode": null
+        },
+        "odds": {
+          "tested": true,
+          "valid": false,
+          "status": 403,
+          "records": 0,
+          "available": false,
+          "remaining": null,
+          "errorCode": "HTTP 403"
+        },
+        "h2h": {
+          "tested": true,
+          "valid": true,
+          "status": 200,
+          "records": 1,
+          "available": true,
+          "remaining": "961",
           "errorCode": null
         }
       }
