@@ -1,24 +1,24 @@
 {
   "schemaVersion": "goal-api-acceptance-v1",
-  "checkedAt": "2026-09-02T08:01:27.401Z",
+  "checkedAt": "2026-09-03T08:11:09.160Z",
   "configured": true,
   "accepted": false,
-  "enoughTime": false,
+  "enoughTime": true,
   "enoughEvidence": false,
   "targetsMet": false,
-  "elapsedDays": 13,
+  "elapsedDays": 14,
   "requiredDays": 14,
   "aggregate": {
     "domestic": {
-      "checked": 1297,
-      "mapped": 978,
-      "coverage": 0.754,
+      "checked": 1386,
+      "mapped": 1052,
+      "coverage": 0.759,
       "target": 0.8
     },
     "uefa": {
-      "checked": 585,
-      "mapped": 498,
-      "coverage": 0.851,
+      "checked": 597,
+      "mapped": 509,
+      "coverage": 0.853,
       "target": 0.8
     },
     "friendly": {
@@ -2711,6 +2711,161 @@
           "errorCode": null
         }
       }
+    },
+    {
+      "measurementVersion": "goal-pagination-v2",
+      "checkedAt": "2026-09-03T08:11:09.160Z",
+      "providerReachable": true,
+      "checked": 101,
+      "mapped": 85,
+      "segments": {
+        "domestic": {
+          "checked": 89,
+          "mapped": 74
+        },
+        "uefa": {
+          "checked": 12,
+          "mapped": 11
+        },
+        "friendly": {
+          "checked": 0,
+          "mapped": 0
+        }
+      },
+      "requestStatuses": [
+        {
+          "date": "2026-09-03",
+          "status": 200,
+          "records": 167,
+          "pages": 2,
+          "truncated": false,
+          "limits": {
+            "remaining": "998",
+            "limit": "1000",
+            "dailyRemaining": null
+          }
+        },
+        {
+          "date": "2026-09-04",
+          "status": 200,
+          "records": 467,
+          "pages": 5,
+          "truncated": false,
+          "limits": {
+            "remaining": "993",
+            "limit": "1000",
+            "dailyRemaining": null
+          }
+        },
+        {
+          "date": "2026-09-05",
+          "status": 200,
+          "records": 1000,
+          "pages": 10,
+          "truncated": true,
+          "limits": {
+            "remaining": "983",
+            "limit": "1000",
+            "dailyRemaining": null
+          }
+        },
+        {
+          "date": "2026-09-06",
+          "status": 200,
+          "records": 1000,
+          "pages": 10,
+          "truncated": true,
+          "limits": {
+            "remaining": "973",
+            "limit": "1000",
+            "dailyRemaining": null
+          }
+        },
+        {
+          "date": "2026-09-07",
+          "status": 200,
+          "records": 164,
+          "pages": 2,
+          "truncated": false,
+          "limits": {
+            "remaining": "971",
+            "limit": "1000",
+            "dailyRemaining": null
+          }
+        },
+        {
+          "date": "2026-09-08",
+          "status": 200,
+          "records": 224,
+          "pages": 3,
+          "truncated": false,
+          "limits": {
+            "remaining": "968",
+            "limit": "1000",
+            "dailyRemaining": null
+          }
+        },
+        {
+          "date": "2026-09-09",
+          "status": 200,
+          "records": 332,
+          "pages": 4,
+          "truncated": false,
+          "limits": {
+            "remaining": "964",
+            "limit": "1000",
+            "dailyRemaining": null
+          }
+        }
+      ],
+      "endpointAccess": {
+        "testedFixtureId": "cmsp4llqptyaipn06vg2f15gj",
+        "fixture": {
+          "tested": true,
+          "valid": true,
+          "status": 200,
+          "records": 1,
+          "available": true,
+          "remaining": "963",
+          "errorCode": null
+        },
+        "lineups": {
+          "tested": true,
+          "valid": true,
+          "status": 200,
+          "records": 1,
+          "available": true,
+          "remaining": "962",
+          "errorCode": null
+        },
+        "statistics": {
+          "tested": true,
+          "valid": true,
+          "status": 200,
+          "records": 1,
+          "available": true,
+          "remaining": "961",
+          "errorCode": null
+        },
+        "odds": {
+          "tested": true,
+          "valid": false,
+          "status": 403,
+          "records": 0,
+          "available": false,
+          "remaining": null,
+          "errorCode": "HTTP 403"
+        },
+        "h2h": {
+          "tested": true,
+          "valid": true,
+          "status": 200,
+          "records": 1,
+          "available": true,
+          "remaining": "960",
+          "errorCode": null
+        }
+      }
     }
   ],
   "missingSamples": [
@@ -2832,6 +2987,14 @@
       "home": "Jong PSV",
       "away": "FC Den Bosch",
       "segment": "domestic",
+      "status": "not_mapped"
+    },
+    {
+      "date": "2026-09-09",
+      "league": "Europe - Champions League",
+      "home": "Paris Saint-Germain",
+      "away": "Slovan Bratislava",
+      "segment": "uefa",
       "status": "not_mapped"
     }
   ]
