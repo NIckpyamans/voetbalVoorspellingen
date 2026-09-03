@@ -1,5 +1,5 @@
 {
-  "checkedAt": "2026-09-02T08:49:20.684Z",
+  "checkedAt": "2026-09-03T08:59:20.527Z",
   "oddsApi": {
     "configured": true,
     "valid": true,
@@ -13,7 +13,6 @@
       "soccer_brazil_serie_b",
       "soccer_chile_campeonato",
       "soccer_china_superleague",
-      "soccer_concacaf_leagues_cup",
       "soccer_conmebol_copa_libertadores",
       "soccer_conmebol_copa_sudamericana",
       "soccer_denmark_superliga",
@@ -21,11 +20,12 @@
       "soccer_england_league1",
       "soccer_england_league2",
       "soccer_epl",
+      "soccer_finland_veikkausliiga",
       "soccer_france_ligue_one",
       "soccer_france_ligue_two",
       "soccer_germany_bundesliga",
       "soccer_germany_bundesliga2",
-      "soccer_germany_dfb_pokal",
+      "soccer_germany_bundesliga_women",
       "soccer_germany_liga3",
       "soccer_greece_super_league",
       "soccer_italy_coppa_italia",
@@ -49,7 +49,6 @@
       "soccer_switzerland_superleague",
       "soccer_turkey_super_league",
       "soccer_uefa_champs_league",
-      "soccer_uefa_champs_league_women",
       "soccer_uefa_europa_conference_league",
       "soccer_uefa_europa_league",
       "soccer_uefa_nations_league",
@@ -66,13 +65,18 @@
       "soccer_uefa_europa_conference_league_qualification"
     ],
     "competitionCoverageStatus": "seasonal_unavailable",
-    "newlyUnavailableSports": [],
-    "newlyAvailableSports": [
+    "newlyUnavailableSports": [
+      "soccer_concacaf_leagues_cup",
+      "soccer_germany_dfb_pokal",
       "soccer_uefa_champs_league_women"
     ],
+    "newlyAvailableSports": [
+      "soccer_finland_veikkausliiga",
+      "soccer_germany_bundesliga_women"
+    ],
     "quota": {
-      "x-requests-remaining": "498",
-      "x-requests-used": "2",
+      "x-requests-remaining": "486",
+      "x-requests-used": "14",
       "x-requests-last": "0"
     },
     "errorCode": null
@@ -145,17 +149,17 @@
       "country": "England"
     },
     "testedFixture": {
-      "id": "812143",
-      "home": "QPR",
-      "away": "Cardiff",
-      "date": "2026-09-02"
+      "id": "812147",
+      "home": "Preston",
+      "away": "Blackburn",
+      "date": "2026-09-05"
     },
     "endpointAccess": {
       "events": {
         "tested": true,
         "valid": true,
         "status": 200,
-        "records": 39,
+        "records": 35,
         "quota": {},
         "errorCode": null
       },
@@ -171,7 +175,7 @@
         "tested": true,
         "valid": true,
         "status": 200,
-        "records": 13,
+        "records": 12,
         "quota": {},
         "errorCode": null
       },
@@ -193,8 +197,8 @@
     "records": 50,
     "quota": {
       "x-ratelimit-limit": "1000",
-      "x-ratelimit-remaining": "960",
-      "x-ratelimit-reset": "1788393600"
+      "x-ratelimit-remaining": "959",
+      "x-ratelimit-reset": "1788480000"
     },
     "accepted": false,
     "policy": "Veertien dagen meten; nooit automatisch promoveren op basis van alleen een geldige key."
@@ -250,7 +254,7 @@
         "firstName": "Esbjerg vs OB",
         "hasOddsFlag": false,
         "rateLimit": {
-          "resets_in_seconds": 3599,
+          "resets_in_seconds": 3600,
           "remaining": 179,
           "requested_entity": "Fixture"
         },
@@ -264,8 +268,8 @@
         "valid": true,
         "status": 200,
         "records": 1,
-        "firstId": 19713956,
-        "firstName": "AGF vs FC Midtjylland",
+        "firstId": 19713954,
+        "firstName": "FC København vs Nordsjælland",
         "hasOddsFlag": true,
         "rateLimit": {
           "resets_in_seconds": 3599,
@@ -282,11 +286,11 @@
         "valid": true,
         "status": 200,
         "records": 1,
-        "firstId": 19713956,
-        "firstName": "AGF vs FC Midtjylland",
+        "firstId": 19713954,
+        "firstName": "FC København vs Nordsjælland",
         "hasOddsFlag": true,
         "rateLimit": {
-          "resets_in_seconds": 3598,
+          "resets_in_seconds": 3599,
           "remaining": 177,
           "requested_entity": "Fixture"
         },
@@ -296,13 +300,13 @@
         },
         "errorCode": null
       },
-      "testedFixtureId": 19713956,
+      "testedFixtureId": 19713954,
       "oddsByFixture": {
         "label": "oddsByFixture",
         "valid": true,
         "status": 200,
         "records": 3,
-        "firstId": 243729497230,
+        "firstId": 243729448963,
         "firstName": null,
         "hasOddsFlag": false,
         "rateLimit": {
@@ -341,11 +345,11 @@
         "valid": true,
         "status": 200,
         "records": 3,
-        "firstId": 243729497230,
+        "firstId": 243729448963,
         "firstName": null,
         "hasOddsFlag": false,
         "rateLimit": {
-          "resets_in_seconds": 3599,
+          "resets_in_seconds": 3600,
           "remaining": 177,
           "requested_entity": "Odd"
         },
