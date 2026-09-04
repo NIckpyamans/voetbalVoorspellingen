@@ -1,24 +1,24 @@
 {
   "schemaVersion": "goal-api-acceptance-v1",
-  "checkedAt": "2026-09-03T08:11:09.160Z",
+  "checkedAt": "2026-09-04T08:08:41.773Z",
   "configured": true,
   "accepted": false,
   "enoughTime": true,
   "enoughEvidence": false,
   "targetsMet": false,
-  "elapsedDays": 14,
+  "elapsedDays": 15,
   "requiredDays": 14,
   "aggregate": {
     "domestic": {
-      "checked": 1386,
-      "mapped": 1052,
-      "coverage": 0.759,
+      "checked": 1477,
+      "mapped": 1127,
+      "coverage": 0.763,
       "target": 0.8
     },
     "uefa": {
-      "checked": 597,
-      "mapped": 509,
-      "coverage": 0.853,
+      "checked": 609,
+      "mapped": 520,
+      "coverage": 0.854,
       "target": 0.8
     },
     "friendly": {
@@ -2866,6 +2866,149 @@
           "errorCode": null
         }
       }
+    },
+    {
+      "measurementVersion": "goal-pagination-v2",
+      "checkedAt": "2026-09-04T08:08:41.773Z",
+      "providerReachable": true,
+      "checked": 103,
+      "mapped": 86,
+      "segments": {
+        "domestic": {
+          "checked": 91,
+          "mapped": 75
+        },
+        "uefa": {
+          "checked": 12,
+          "mapped": 11
+        },
+        "friendly": {
+          "checked": 0,
+          "mapped": 0
+        }
+      },
+      "requestStatuses": [
+        {
+          "date": "2026-09-04",
+          "status": 200,
+          "records": 451,
+          "pages": 5,
+          "truncated": false,
+          "limits": {
+            "remaining": "995",
+            "limit": "1000",
+            "dailyRemaining": null
+          }
+        },
+        {
+          "date": "2026-09-05",
+          "status": 200,
+          "records": 1000,
+          "pages": 10,
+          "truncated": true,
+          "limits": {
+            "remaining": "985",
+            "limit": "1000",
+            "dailyRemaining": null
+          }
+        },
+        {
+          "date": "2026-09-06",
+          "status": 200,
+          "records": 1000,
+          "pages": 10,
+          "truncated": true,
+          "limits": {
+            "remaining": "975",
+            "limit": "1000",
+            "dailyRemaining": null
+          }
+        },
+        {
+          "date": "2026-09-07",
+          "status": 200,
+          "records": 165,
+          "pages": 2,
+          "truncated": false,
+          "limits": {
+            "remaining": "973",
+            "limit": "1000",
+            "dailyRemaining": null
+          }
+        },
+        {
+          "date": "2026-09-08",
+          "status": 200,
+          "records": 227,
+          "pages": 3,
+          "truncated": false,
+          "limits": {
+            "remaining": "970",
+            "limit": "1000",
+            "dailyRemaining": null
+          }
+        },
+        {
+          "date": "2026-09-09",
+          "status": 200,
+          "records": 333,
+          "pages": 4,
+          "truncated": false,
+          "limits": {
+            "remaining": "966",
+            "limit": "1000",
+            "dailyRemaining": null
+          }
+        }
+      ],
+      "endpointAccess": {
+        "testedFixtureId": "cmt63hw38f29yt107mcnc270h",
+        "fixture": {
+          "tested": true,
+          "valid": true,
+          "status": 200,
+          "records": 1,
+          "available": true,
+          "remaining": "965",
+          "errorCode": null
+        },
+        "lineups": {
+          "tested": true,
+          "valid": true,
+          "status": 200,
+          "records": 1,
+          "available": true,
+          "remaining": "964",
+          "errorCode": null
+        },
+        "statistics": {
+          "tested": true,
+          "valid": true,
+          "status": 200,
+          "records": 1,
+          "available": true,
+          "remaining": "963",
+          "errorCode": null
+        },
+        "odds": {
+          "tested": true,
+          "valid": false,
+          "status": 403,
+          "records": 0,
+          "available": false,
+          "remaining": null,
+          "errorCode": "HTTP 403"
+        },
+        "h2h": {
+          "tested": true,
+          "valid": true,
+          "status": 200,
+          "records": 1,
+          "available": true,
+          "remaining": "962",
+          "errorCode": null
+        }
+      }
     }
   ],
   "missingSamples": [
@@ -2970,6 +3113,14 @@
       "league": "England - Championship",
       "home": "Stoke City",
       "away": "Charlton Athletic",
+      "segment": "domestic",
+      "status": "not_mapped"
+    },
+    {
+      "date": "2026-09-05",
+      "league": "Germany - Bundesliga",
+      "home": "Borussia Mönchengladbach",
+      "away": "SV 07 Elversberg",
       "segment": "domestic",
       "status": "not_mapped"
     },
