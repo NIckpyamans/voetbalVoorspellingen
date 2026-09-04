@@ -1,5 +1,5 @@
 {
-  "checkedAt": "2026-09-03T08:59:20.527Z",
+  "checkedAt": "2026-09-04T08:55:16.612Z",
   "oddsApi": {
     "configured": true,
     "valid": true,
@@ -17,6 +17,7 @@
       "soccer_conmebol_copa_sudamericana",
       "soccer_denmark_superliga",
       "soccer_efl_champ",
+      "soccer_england_efl_cup",
       "soccer_england_league1",
       "soccer_england_league2",
       "soccer_epl",
@@ -28,7 +29,6 @@
       "soccer_germany_bundesliga_women",
       "soccer_germany_liga3",
       "soccer_greece_super_league",
-      "soccer_italy_coppa_italia",
       "soccer_italy_serie_a",
       "soccer_italy_serie_b",
       "soccer_japan_j_league",
@@ -66,17 +66,14 @@
     ],
     "competitionCoverageStatus": "seasonal_unavailable",
     "newlyUnavailableSports": [
-      "soccer_concacaf_leagues_cup",
-      "soccer_germany_dfb_pokal",
-      "soccer_uefa_champs_league_women"
+      "soccer_italy_coppa_italia"
     ],
     "newlyAvailableSports": [
-      "soccer_finland_veikkausliiga",
-      "soccer_germany_bundesliga_women"
+      "soccer_england_efl_cup"
     ],
     "quota": {
-      "x-requests-remaining": "486",
-      "x-requests-used": "14",
+      "x-requests-remaining": "446",
+      "x-requests-used": "54",
       "x-requests-last": "0"
     },
     "errorCode": null
@@ -108,84 +105,35 @@
     "configured": true,
     "valid": true,
     "status": 200,
-    "competitionsAvailable": 1019,
+    "competitionsAvailable": 2,
     "competitions": [
-      "Germany - 2. Bundesliga",
-      "Australia - A-League Men",
-      "intl - AFC Champions League",
-      "intl - AFC Champions League Elite",
-      "Sweden - Allsvenskan",
-      "Germany - Bundesliga",
-      "Austria - Bundesliga",
-      "intl - CAF Africa Cup of Nations",
-      "intl - CAF Champions League",
-      "intl - CAF Confederation Cup",
-      "England - Championship",
-      "China PR - Chinese Super League",
-      "England - Community Shield",
-      "N/C America - Concacaf Gold Cup",
-      "intl - CONMEBOL Copa America",
-      "intl - CONMEBOL Libertadores",
-      "intl - CONMEBOL Sudamericana",
-      "South America - CONMEBOL World Cup Qualifiers",
-      "Spain - Copa del Rey",
-      "Italy - Coppa Italia",
-      "France - Coupe de France",
-      "Sweden - Damallsvenskan",
-      "Germany - DFB Pokal",
-      "Norway - Eliteserien",
-      "Netherlands - Eredivisie",
-      "England - FA Cup",
-      "India - Indian Super League",
-      "Korea Republic - K League 1",
-      "Netherlands - KNVB Beker",
-      "Netherlands - KNVB Beker"
+      "England - Non League Premier",
+      "Ghana - Premier League"
     ],
-    "freeScopeDetected": 2,
+    "freeScopeDetected": 0,
     "quota": {},
-    "testedLeague": {
-      "id": "153",
-      "name": "Championship",
-      "country": "England"
-    },
-    "testedFixture": {
-      "id": "812147",
-      "home": "Preston",
-      "away": "Blackburn",
-      "date": "2026-09-05"
-    },
+    "testedLeague": null,
+    "testedFixture": null,
     "endpointAccess": {
       "events": {
-        "tested": true,
-        "valid": true,
-        "status": 200,
-        "records": 35,
-        "quota": {},
-        "errorCode": null
+        "tested": false,
+        "valid": false,
+        "status": "skipped"
       },
       "lineups": {
-        "tested": true,
-        "valid": true,
-        "status": 200,
-        "records": 1,
-        "quota": {},
-        "errorCode": null
+        "tested": false,
+        "valid": false,
+        "status": "skipped"
       },
       "odds": {
-        "tested": true,
-        "valid": true,
-        "status": 200,
-        "records": 12,
-        "quota": {},
-        "errorCode": null
+        "tested": false,
+        "valid": false,
+        "status": "skipped"
       },
       "h2h": {
-        "tested": true,
-        "valid": true,
-        "status": 200,
-        "records": 3,
-        "quota": {},
-        "errorCode": null
+        "tested": false,
+        "valid": false,
+        "status": "skipped"
       }
     },
     "policy": "Alleen gebruiken voor Championship en Ligue 2; 180 calls/uur/endpoint volgens providerplan."
@@ -197,8 +145,8 @@
     "records": 50,
     "quota": {
       "x-ratelimit-limit": "1000",
-      "x-ratelimit-remaining": "959",
-      "x-ratelimit-reset": "1788480000"
+      "x-ratelimit-remaining": "961",
+      "x-ratelimit-reset": "1788566400"
     },
     "accepted": false,
     "policy": "Veertien dagen meten; nooit automatisch promoveren op basis van alleen een geldige key."
@@ -268,8 +216,8 @@
         "valid": true,
         "status": 200,
         "records": 1,
-        "firstId": 19713954,
-        "firstName": "FC København vs Nordsjælland",
+        "firstId": 19713952,
+        "firstName": "Viborg FF vs Lyngby Boldklub",
         "hasOddsFlag": true,
         "rateLimit": {
           "resets_in_seconds": 3599,
@@ -286,8 +234,8 @@
         "valid": true,
         "status": 200,
         "records": 1,
-        "firstId": 19713954,
-        "firstName": "FC København vs Nordsjælland",
+        "firstId": 19713952,
+        "firstName": "Viborg FF vs Lyngby Boldklub",
         "hasOddsFlag": true,
         "rateLimit": {
           "resets_in_seconds": 3599,
@@ -300,13 +248,13 @@
         },
         "errorCode": null
       },
-      "testedFixtureId": 19713954,
+      "testedFixtureId": 19713952,
       "oddsByFixture": {
         "label": "oddsByFixture",
         "valid": true,
         "status": 200,
         "records": 3,
-        "firstId": 243729448963,
+        "firstId": 243826438743,
         "firstName": null,
         "hasOddsFlag": false,
         "rateLimit": {
@@ -345,11 +293,11 @@
         "valid": true,
         "status": 200,
         "records": 3,
-        "firstId": 243729448963,
+        "firstId": 243826438743,
         "firstName": null,
         "hasOddsFlag": false,
         "rateLimit": {
-          "resets_in_seconds": 3600,
+          "resets_in_seconds": 3599,
           "remaining": 177,
           "requested_entity": "Odd"
         },
