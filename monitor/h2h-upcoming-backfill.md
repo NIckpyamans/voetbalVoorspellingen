@@ -1,6 +1,6 @@
 # Upcoming H2H Backfill
 
-Laatst bijgewerkt: 2026-09-03T23:18:19.746Z
+Laatst bijgewerkt: 2026-09-04T04:33:54.373Z
 Gecontroleerd: 32
 Gevuld: 0
 Geen directe H2H: 32
@@ -25,9 +25,9 @@ API-Football blijft quota-bewust geblokkeerd totdat de acceptatietest slaagt; ES
 - 2026-09-04: Heracles - De Graafschap (provider_acceptance_blocked)
 - 2026-09-04: RKC Waalwijk - NAC Breda (provider_acceptance_blocked)
 - 2026-09-04: Vitesse - TOP Oss (provider_acceptance_blocked)
+- 2026-09-05: TSG Hoffenheim - Borussia Dortmund (provider_acceptance_blocked)
 - 2026-09-05: Holstein Kiel - 1. FC Nürnberg (provider_acceptance_blocked)
 - 2026-09-05: Newcastle United - AFC Bournemouth (provider_acceptance_blocked)
-- 2026-09-05: Bayer Leverkusen - Union Berlin (provider_acceptance_blocked)
 - 2026-09-05: Millwall - Bolton Wanderers (provider_acceptance_blocked)
 - 2026-09-05: FC Dordrecht - Jong AZ Alkmaar (provider_acceptance_blocked)
 - 2026-09-05: Nice - Le Mans (provider_acceptance_blocked)
