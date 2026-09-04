@@ -1,6 +1,6 @@
 # Upcoming H2H Backfill
 
-Laatst bijgewerkt: 2026-09-04T11:23:01.964Z
+Laatst bijgewerkt: 2026-09-04T16:22:26.864Z
 Gecontroleerd: 32
 Gevuld: 0
 Geen directe H2H: 32
@@ -12,7 +12,6 @@ API-Football blijft quota-bewust geblokkeerd totdat de acceptatietest slaagt; ES
 ## Gevuld
 
 ## Geen Directe H2H
-- 2026-09-04: Olympique Lyonnais - Auxerre (provider_acceptance_blocked)
 - 2026-09-04: Arminia Bielefeld - St. Pauli (provider_acceptance_blocked)
 - 2026-09-04: Sparta Rotterdam - PEC Zwolle (provider_acceptance_blocked)
 - 2026-09-04: Almere City FC - Jong Ajax (provider_acceptance_blocked)
@@ -32,3 +31,4 @@ API-Football blijft quota-bewust geblokkeerd totdat de acceptatietest slaagt; ES
 - 2026-09-05: FC Dordrecht - Jong AZ Alkmaar (provider_acceptance_blocked)
 - 2026-09-05: Nice - Le Mans (provider_acceptance_blocked)
 - 2026-09-05: Willem II - Excelsior (provider_acceptance_blocked)
+- 2026-09-05: Wolfsburg - Energie Cottbus (provider_acceptance_blocked)
