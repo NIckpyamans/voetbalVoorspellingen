@@ -1,6 +1,6 @@
 # Upcoming H2H Backfill
 
-Laatst bijgewerkt: 2026-09-05T20:49:08.132Z
+Laatst bijgewerkt: 2026-09-05T22:56:06.932Z
 Gecontroleerd: 32
 Gevuld: 0
 Geen directe H2H: 32
@@ -12,12 +12,13 @@ API-Football blijft quota-bewust geblokkeerd totdat de acceptatietest slaagt; ES
 ## Gevuld
 
 ## Geen Directe H2H
+- 2026-09-06: Hamburg - Mainz (provider_acceptance_blocked)
 - 2026-09-06: Birmingham City - Wolverhampton Wanderers (provider_acceptance_blocked)
 - 2026-09-06: VfL Osnabrück - Eintracht Braunschweig (provider_acceptance_blocked)
 - 2026-09-06: Telstar - Cambuur (provider_acceptance_blocked)
 - 2026-09-06: Everton - Manchester United (provider_acceptance_blocked)
-- 2026-09-06: Hamburger SV - Mainz 05 (provider_acceptance_blocked)
 - 2026-09-06: MVV Maastricht - Roda JC Kerkrade (provider_acceptance_blocked)
+- 2026-09-06: Hamburger SV - Mainz 05 (provider_acceptance_blocked)
 - 2026-09-06: ADO Den Haag - Fortuna Sittard (provider_acceptance_blocked)
 - 2026-09-06: Hamburger SV - 1. FSV Mainz 05 (provider_acceptance_blocked)
 - 2026-09-07: Jong FC Utrecht - FC Eindhoven (provider_acceptance_blocked)
@@ -31,4 +32,3 @@ API-Football blijft quota-bewust geblokkeerd totdat de acceptatietest slaagt; ES
 - 2026-09-08: Borussia Dortmund - Villarreal (provider_acceptance_blocked)
 - 2026-09-08: Southampton - Swansea City (provider_acceptance_blocked)
 - 2026-09-08: FC Porto - Manchester City (provider_acceptance_blocked)
-- 2026-09-08: Watford - Preston North End (provider_acceptance_blocked)
