@@ -1,16 +1,8 @@
 {
-  "generatedAt": "2026-09-05T15:13:58.645Z",
+  "generatedAt": "2026-09-05T17:22:24.062Z",
   "daysAhead": 8,
   "checked": 32,
   "byCompetition": {
-    "Germany - Bundesliga": {
-      "agent": "germany-bundesliga-agent",
-      "checked": 3
-    },
-    "England - Premier League": {
-      "agent": "england-premier-league-agent",
-      "checked": 2
-    },
     "Germany - 2. Bundesliga": {
       "agent": "germany-2-bundesliga-agent",
       "checked": 2
@@ -21,11 +13,19 @@
     },
     "Netherlands - Eredivisie": {
       "agent": "netherlands-eredivisie-agent",
-      "checked": 5
+      "checked": 4
     },
     "England - Championship": {
       "agent": "england-championship-agent",
-      "checked": 8
+      "checked": 9
+    },
+    "England - Premier League": {
+      "agent": "england-premier-league-agent",
+      "checked": 1
+    },
+    "Germany - Bundesliga": {
+      "agent": "germany-bundesliga-agent",
+      "checked": 2
     },
     "Netherlands - Eerste Divisie": {
       "agent": "netherlands-eerste-divisie-agent",
@@ -37,16 +37,16 @@
     },
     "Europe - Champions League": {
       "agent": "champions-league-agent",
-      "checked": 7
+      "checked": 9
     }
   },
-  "databaseWritable": false,
-  "databaseError": "insert or update on table \"h2h_edges\" violates foreign key constraint \"h2h_edges_home_club_id_fkey\"",
+  "databaseWritable": true,
+  "databaseError": null,
   "r2SnapshotLedgerAvailable": true,
-  "r2Stored": 1,
-  "staticUpdated": 1,
-  "filled": 1,
-  "noDirectHistory": 31,
+  "r2Stored": 0,
+  "staticUpdated": 0,
+  "filled": 0,
+  "noDirectHistory": 32,
   "errors": 0,
   "apiFootballAcceptance": {
     "configured": true,
@@ -70,89 +70,8 @@
     "lastStatusCode": null,
     "lastCheckedAt": null
   },
-  "filledSamples": [
-    {
-      "matchId": "ss-fotmob-5781722",
-      "date": "2026-09-09",
-      "homeTeam": "FC Twente",
-      "awayTeam": "Telstar",
-      "played": 2,
-      "source": "football-data.co.uk historical results",
-      "providerAttempts": [
-        {
-          "provider": "canonical-history",
-          "status": "not_found",
-          "records": 0,
-          "result": "no_coverage"
-        },
-        {
-          "provider": "football-data-co-uk",
-          "status": "ok",
-          "records": 2,
-          "result": "found"
-        }
-      ]
-    }
-  ],
+  "filledSamples": [],
   "noDirectHistorySamples": [
-    {
-      "matchId": "ss-fotmob-5881158",
-      "date": "2026-09-05",
-      "league": "Germany - Bundesliga",
-      "homeTeam": "Schalke 04",
-      "awayTeam": "Bayern München",
-      "status": "provider_acceptance_blocked",
-      "note": "API-Football is overgeslagen totdat de account- en dekkingstest slaagt; ESPN blijft als onafhankelijke bron actief.",
-      "providerAttempts": [
-        {
-          "provider": "canonical-history",
-          "status": "not_found",
-          "records": 0,
-          "result": "no_coverage"
-        },
-        {
-          "provider": "football-data-co-uk",
-          "status": "no_coverage",
-          "records": 0,
-          "result": "no_coverage"
-        },
-        {
-          "provider": "apifootball-com",
-          "status": "no_coverage",
-          "records": 0,
-          "result": "no_coverage"
-        }
-      ]
-    },
-    {
-      "matchId": "ss-fotmob-5795440",
-      "date": "2026-09-05",
-      "league": "England - Premier League",
-      "homeTeam": "Hull City",
-      "awayTeam": "Aston Villa",
-      "status": "provider_acceptance_blocked",
-      "note": "API-Football is overgeslagen totdat de account- en dekkingstest slaagt; ESPN blijft als onafhankelijke bron actief.",
-      "providerAttempts": [
-        {
-          "provider": "canonical-history",
-          "status": "not_found",
-          "records": 0,
-          "result": "no_coverage"
-        },
-        {
-          "provider": "football-data-co-uk",
-          "status": "no_coverage",
-          "records": 0,
-          "result": "no_coverage"
-        },
-        {
-          "provider": "apifootball-com",
-          "status": "no_coverage",
-          "records": 0,
-          "result": "no_coverage"
-        }
-      ]
-    },
     {
       "matchId": "ss-fotmob-5881660",
       "date": "2026-09-05",
@@ -560,40 +479,11 @@
       ]
     },
     {
-      "matchId": "ss-fotmob-5836815",
-      "date": "2026-09-08",
-      "league": "England - Championship",
-      "homeTeam": "Bolton Wanderers",
-      "awayTeam": "West Ham United",
-      "status": "provider_acceptance_blocked",
-      "note": "API-Football is overgeslagen totdat de account- en dekkingstest slaagt; ESPN blijft als onafhankelijke bron actief.",
-      "providerAttempts": [
-        {
-          "provider": "canonical-history",
-          "status": "not_found",
-          "records": 0,
-          "result": "no_coverage"
-        },
-        {
-          "provider": "football-data-co-uk",
-          "status": "no_coverage",
-          "records": 0,
-          "result": "no_coverage"
-        },
-        {
-          "provider": "apifootball-com",
-          "status": "no_coverage",
-          "records": 0,
-          "result": "no_coverage"
-        }
-      ]
-    },
-    {
-      "matchId": "ss-fotmob-6106242",
+      "matchId": "ss-fotmob-6106404",
       "date": "2026-09-08",
       "league": "Europe - Champions League",
-      "homeTeam": "Real Madrid",
-      "awayTeam": "Inter",
+      "homeTeam": "AEK Athens",
+      "awayTeam": "LASK",
       "status": "provider_acceptance_blocked",
       "note": "API-Football is overgeslagen totdat de account- en dekkingstest slaagt; ESPN blijft als onafhankelijke bron actief.",
       "providerAttempts": [
@@ -652,6 +542,93 @@
       "league": "England - Championship",
       "homeTeam": "Blackburn Rovers",
       "awayTeam": "Sheffield United",
+      "status": "provider_acceptance_blocked",
+      "note": "API-Football is overgeslagen totdat de account- en dekkingstest slaagt; ESPN blijft als onafhankelijke bron actief.",
+      "providerAttempts": [
+        {
+          "provider": "canonical-history",
+          "status": "not_found",
+          "records": 0,
+          "result": "no_coverage"
+        },
+        {
+          "provider": "football-data-co-uk",
+          "status": "no_coverage",
+          "records": 0,
+          "result": "no_coverage"
+        },
+        {
+          "provider": "apifootball-com",
+          "status": "no_coverage",
+          "records": 0,
+          "result": "no_coverage"
+        }
+      ]
+    },
+    {
+      "matchId": "ss-fotmob-6106295",
+      "date": "2026-09-08",
+      "league": "Europe - Champions League",
+      "homeTeam": "Club Brugge",
+      "awayTeam": "Aston Villa",
+      "status": "provider_acceptance_blocked",
+      "note": "API-Football is overgeslagen totdat de account- en dekkingstest slaagt; ESPN blijft als onafhankelijke bron actief.",
+      "providerAttempts": [
+        {
+          "provider": "canonical-history",
+          "status": "not_found",
+          "records": 0,
+          "result": "no_coverage"
+        },
+        {
+          "provider": "football-data-co-uk",
+          "status": "no_coverage",
+          "records": 0,
+          "result": "no_coverage"
+        },
+        {
+          "provider": "apifootball-com",
+          "status": "no_coverage",
+          "records": 0,
+          "result": "no_coverage"
+        }
+      ]
+    },
+    {
+      "matchId": "ss-fotmob-5836817",
+      "date": "2026-09-08",
+      "league": "England - Championship",
+      "homeTeam": "Cardiff City",
+      "awayTeam": "Stoke City",
+      "status": "provider_acceptance_blocked",
+      "note": "API-Football is overgeslagen totdat de account- en dekkingstest slaagt; ESPN blijft als onafhankelijke bron actief.",
+      "providerAttempts": [
+        {
+          "provider": "canonical-history",
+          "status": "not_found",
+          "records": 0,
+          "result": "no_coverage"
+        },
+        {
+          "provider": "football-data-co-uk",
+          "status": "no_coverage",
+          "records": 0,
+          "result": "no_coverage"
+        },
+        {
+          "provider": "apifootball-com",
+          "status": "no_coverage",
+          "records": 0,
+          "result": "no_coverage"
+        }
+      ]
+    },
+    {
+      "matchId": "ss-fotmob-6106272",
+      "date": "2026-09-08",
+      "league": "Europe - Champions League",
+      "homeTeam": "Borussia Dortmund",
+      "awayTeam": "Villarreal",
       "status": "provider_acceptance_blocked",
       "note": "API-Football is overgeslagen totdat de account- en dekkingstest slaagt; ESPN blijft als onafhankelijke bron actief.",
       "providerAttempts": [
@@ -2247,7 +2224,7 @@
       "status": "filled"
     },
     "ss-fotmob-5881660": {
-      "checkedAt": "2026-09-05T15:13:58.646Z",
+      "checkedAt": "2026-09-05T17:22:24.063Z",
       "status": "no_direct_history"
     },
     "ss-fotmob-5803253": {
@@ -2275,7 +2252,7 @@
       "status": "no_direct_history"
     },
     "ss-fotmob-5802924": {
-      "checkedAt": "2026-09-05T15:13:58.646Z",
+      "checkedAt": "2026-09-05T17:22:24.063Z",
       "status": "no_direct_history"
     },
     "ss-fotmob-5881160": {
@@ -2307,11 +2284,11 @@
       "status": "filled"
     },
     "ss-fotmob-5881661": {
-      "checkedAt": "2026-09-05T15:13:58.646Z",
+      "checkedAt": "2026-09-05T17:22:24.063Z",
       "status": "no_direct_history"
     },
     "ss-fotmob-5795438": {
-      "checkedAt": "2026-09-05T15:13:58.646Z",
+      "checkedAt": "2026-09-05T17:22:24.063Z",
       "status": "no_direct_history"
     },
     "ss-fotmob-5802927": {
@@ -2355,7 +2332,7 @@
       "status": "filled"
     },
     "ss-fotmob-5781739": {
-      "checkedAt": "2026-09-05T15:13:58.646Z",
+      "checkedAt": "2026-09-05T17:22:24.063Z",
       "status": "no_direct_history"
     },
     "ss-fotmob-5836803": {
@@ -2395,23 +2372,23 @@
       "status": "filled"
     },
     "ss-fotmob-5836802": {
-      "checkedAt": "2026-09-05T15:13:58.646Z",
+      "checkedAt": "2026-09-05T17:22:24.063Z",
       "status": "no_direct_history"
     },
     "ss-fotmob-5781734": {
-      "checkedAt": "2026-09-05T15:13:58.646Z",
+      "checkedAt": "2026-09-05T17:22:24.063Z",
       "status": "no_direct_history"
     },
     "ss-fotmob-5881155": {
-      "checkedAt": "2026-09-05T15:13:58.646Z",
+      "checkedAt": "2026-09-05T17:22:24.063Z",
       "status": "no_direct_history"
     },
     "ss-fotmob-5832854": {
-      "checkedAt": "2026-09-05T15:13:58.646Z",
+      "checkedAt": "2026-09-05T17:22:24.063Z",
       "status": "no_direct_history"
     },
     "ss-fotmob-5781740": {
-      "checkedAt": "2026-09-05T15:13:58.646Z",
+      "checkedAt": "2026-09-05T17:22:24.063Z",
       "status": "no_direct_history"
     },
     "ss-fotmob-5802919": {
@@ -2439,71 +2416,71 @@
       "status": "no_direct_history"
     },
     "ss-fotmob-5832856": {
-      "checkedAt": "2026-09-05T15:13:58.646Z",
+      "checkedAt": "2026-09-05T17:22:24.063Z",
       "status": "no_direct_history"
     },
     "ss-fotmob-5803250": {
-      "checkedAt": "2026-09-05T15:13:58.646Z",
+      "checkedAt": "2026-09-05T17:22:24.063Z",
       "status": "no_direct_history"
     },
     "ss-fotmob-5832855": {
-      "checkedAt": "2026-09-05T15:13:58.646Z",
+      "checkedAt": "2026-09-05T17:22:24.063Z",
       "status": "no_direct_history"
     },
     "ss-fotmob-6106404": {
-      "checkedAt": "2026-09-05T15:13:58.646Z",
+      "checkedAt": "2026-09-05T17:22:24.063Z",
       "status": "no_direct_history"
     },
     "ss-fotmob-5781720": {
-      "checkedAt": "2026-09-05T15:13:58.646Z",
+      "checkedAt": "2026-09-05T17:22:24.063Z",
       "status": "no_direct_history"
     },
     "ss-fotmob-5836814": {
-      "checkedAt": "2026-09-05T15:13:58.646Z",
+      "checkedAt": "2026-09-05T17:22:24.063Z",
       "status": "no_direct_history"
     },
     "ss-fotmob-6106295": {
-      "checkedAt": "2026-09-05T15:13:58.646Z",
+      "checkedAt": "2026-09-05T17:22:24.063Z",
       "status": "no_direct_history"
     },
     "ss-fotmob-5836817": {
-      "checkedAt": "2026-09-05T15:13:58.646Z",
+      "checkedAt": "2026-09-05T17:22:24.063Z",
       "status": "no_direct_history"
     },
     "ss-oldb-83170": {
-      "checkedAt": "2026-09-05T15:13:58.646Z",
+      "checkedAt": "2026-09-05T17:22:24.063Z",
       "status": "no_direct_history"
     },
     "ss-fotmob-5836819": {
-      "checkedAt": "2026-09-05T15:13:58.646Z",
+      "checkedAt": "2026-09-05T17:22:24.063Z",
       "status": "no_direct_history"
     },
     "ss-fotmob-6106272": {
-      "checkedAt": "2026-09-05T15:13:58.646Z",
+      "checkedAt": "2026-09-05T17:22:24.063Z",
       "status": "no_direct_history"
     },
     "ss-fotmob-5836820": {
-      "checkedAt": "2026-09-05T15:13:58.646Z",
+      "checkedAt": "2026-09-05T17:22:24.063Z",
       "status": "no_direct_history"
     },
     "ss-fotmob-6106286": {
-      "checkedAt": "2026-09-05T15:13:58.646Z",
+      "checkedAt": "2026-09-05T17:22:24.063Z",
       "status": "no_direct_history"
     },
     "ss-fotmob-5836825": {
-      "checkedAt": "2026-09-05T15:13:58.646Z",
+      "checkedAt": "2026-09-05T17:22:24.063Z",
       "status": "no_direct_history"
     },
     "ss-fotmob-6106311": {
-      "checkedAt": "2026-09-05T15:13:58.646Z",
+      "checkedAt": "2026-09-05T17:22:24.063Z",
       "status": "no_direct_history"
     },
     "ss-fotmob-5836815": {
-      "checkedAt": "2026-09-05T15:13:58.646Z",
+      "checkedAt": "2026-09-05T17:22:24.063Z",
       "status": "no_direct_history"
     },
     "ss-fotmob-6106242": {
-      "checkedAt": "2026-09-05T15:13:58.646Z",
+      "checkedAt": "2026-09-05T17:22:24.063Z",
       "status": "no_direct_history"
     },
     "ss-fotmob-6106264": {
@@ -2516,6 +2493,26 @@
     },
     "ss-fotmob-5836823": {
       "checkedAt": "2026-09-05T15:13:58.646Z",
+      "status": "no_direct_history"
+    },
+    "ss-fotmob-6106400": {
+      "checkedAt": "2026-09-05T17:22:24.063Z",
+      "status": "no_direct_history"
+    },
+    "ss-fotmob-5836824": {
+      "checkedAt": "2026-09-05T17:22:24.063Z",
+      "status": "no_direct_history"
+    },
+    "ss-fotmob-6106246": {
+      "checkedAt": "2026-09-05T17:22:24.063Z",
+      "status": "no_direct_history"
+    },
+    "ss-fotmob-5836822": {
+      "checkedAt": "2026-09-05T17:22:24.063Z",
+      "status": "no_direct_history"
+    },
+    "ss-fotmob-6106237": {
+      "checkedAt": "2026-09-05T17:22:24.063Z",
       "status": "no_direct_history"
     }
   },

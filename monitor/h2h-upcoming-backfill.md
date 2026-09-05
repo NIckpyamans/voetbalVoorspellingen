@@ -1,20 +1,17 @@
 # Upcoming H2H Backfill
 
-Laatst bijgewerkt: 2026-09-05T15:13:58.645Z
+Laatst bijgewerkt: 2026-09-05T17:22:24.062Z
 Gecontroleerd: 32
-Gevuld: 1
-Geen directe H2H: 31
+Gevuld: 0
+Geen directe H2H: 32
 Errors: 0
 
 ## Aanbeveling
 API-Football blijft quota-bewust geblokkeerd totdat de acceptatietest slaagt; ESPN is wel gecontroleerd voor alle kandidaten.
 
 ## Gevuld
-- 2026-09-09: FC Twente - Telstar (2)
 
 ## Geen Directe H2H
-- 2026-09-05: Schalke 04 - Bayern München (provider_acceptance_blocked)
-- 2026-09-05: Hull City - Aston Villa (provider_acceptance_blocked)
 - 2026-09-05: Dynamo Dresden - Bochum (provider_acceptance_blocked)
 - 2026-09-05: Nice - Le Mans (provider_acceptance_blocked)
 - 2026-09-05: Willem II - Excelsior (provider_acceptance_blocked)
@@ -29,7 +26,9 @@ API-Football blijft quota-bewust geblokkeerd totdat de acceptatietest slaagt; ES
 - 2026-09-07: Jong FC Utrecht - FC Eindhoven (provider_acceptance_blocked)
 - 2026-09-07: Nantes - Nancy (provider_acceptance_blocked)
 - 2026-09-07: Jong PSV - FC Den Bosch (provider_acceptance_blocked)
-- 2026-09-08: Bolton Wanderers - West Ham United (provider_acceptance_blocked)
-- 2026-09-08: Real Madrid - Inter (provider_acceptance_blocked)
+- 2026-09-08: AEK Athens - LASK (provider_acceptance_blocked)
 - 2026-09-08: NEC Nijmegen - Excelsior (provider_acceptance_blocked)
 - 2026-09-08: Blackburn Rovers - Sheffield United (provider_acceptance_blocked)
+- 2026-09-08: Club Brugge - Aston Villa (provider_acceptance_blocked)
+- 2026-09-08: Cardiff City - Stoke City (provider_acceptance_blocked)
+- 2026-09-08: Borussia Dortmund - Villarreal (provider_acceptance_blocked)
