@@ -1,9 +1,9 @@
 # Upcoming H2H Backfill
 
-Laatst bijgewerkt: 2026-09-05T05:56:14.997Z
-Gecontroleerd: 24
+Laatst bijgewerkt: 2026-09-05T10:34:46.162Z
+Gecontroleerd: 32
 Gevuld: 0
-Geen directe H2H: 24
+Geen directe H2H: 32
 Errors: 0
 
 ## Aanbeveling
@@ -31,4 +31,4 @@ API-Football blijft quota-bewust geblokkeerd totdat de acceptatietest slaagt; ES
 - 2026-09-05: Bayer 04 Leverkusen - 1. FC Union Berlin (provider_acceptance_blocked)
 - 2026-09-05: Borussia Mönchengladbach - SV 07 Elversberg (provider_acceptance_blocked)
 - 2026-09-05: Schalke 04 - Bayern München (provider_acceptance_blocked)
-- 2026-09-06: Birmingham City - Wolverhampton Wanderers (provider_acceptance_blocked)
+- 2026-09-06: Hamburger SV - 1. FSV Mainz 05 (provider_acceptance_blocked)
