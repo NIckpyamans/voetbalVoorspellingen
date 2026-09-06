@@ -1,71 +1,305 @@
 {
-  "generatedAt": "2026-09-06T09:29:14.169Z",
+  "generatedAt": "2026-09-06T12:09:15.510Z",
   "daysAhead": 8,
   "targetPlayersPerTeam": 18,
   "candidates": 278,
-  "checked": 4,
-  "enriched": 4,
-  "unavailable": 0,
-  "skippedFresh": 274,
-  "pendingBeforeBatch": 4,
-  "pendingAfterBatch": 0,
+  "checked": 32,
+  "enriched": 29,
+  "unavailable": 3,
+  "skippedFresh": 237,
+  "pendingBeforeBatch": 41,
+  "pendingAfterBatch": 9,
   "rateLimited": false,
   "retryAfterSeconds": 0,
   "byProvider": {
-    "FotMob": 1,
-    "Laatste bevestigde opstelling": 1,
+    "FotMob": 21,
+    "Laatste bevestigde opstelling": 14,
     "Transfermarkt Datasets": 0,
-    "TheSportsDB": 0,
-    "ESPN": 2,
+    "TheSportsDB": 4,
+    "ESPN": 1,
     "Wikipedia": 1
   },
   "byCompetition": {
-    "Europe - Champions League": {
-      "checked": 1,
-      "enriched": 1,
-      "unavailable": 0
-    },
-    "Europe - Europa League": {
+    "England - Championship": {
       "checked": 2,
       "enriched": 2,
       "unavailable": 0
     },
-    "Germany - Bundesliga": {
+    "Europe - Champions League": {
+      "checked": 6,
+      "enriched": 4,
+      "unavailable": 2
+    },
+    "Europe - Europa League": {
+      "checked": 7,
+      "enriched": 7,
+      "unavailable": 0
+    },
+    "Netherlands - Eredivisie": {
+      "checked": 5,
+      "enriched": 5,
+      "unavailable": 0
+    },
+    "Europe - Conference League": {
+      "checked": 10,
+      "enriched": 9,
+      "unavailable": 1
+    },
+    "Germany - 2. Bundesliga": {
+      "checked": 1,
+      "enriched": 1,
+      "unavailable": 0
+    },
+    "France - Ligue 2": {
       "checked": 1,
       "enriched": 1,
       "unavailable": 0
     }
   },
-  "failureReasons": {},
-  "failures": [],
+  "failureReasons": {
+    "no_provider_team_or_roster_match": 3
+  },
+  "failures": [
+    {
+      "team": "FK Qarabag",
+      "competition": "Europe - Champions League",
+      "reason": "no_provider_team_or_roster_match",
+      "attemptedProviders": [
+        "FotMob",
+        "Transfermarkt Datasets",
+        "ESPN",
+        "TheSportsDB",
+        "Wikipedia"
+      ]
+    },
+    {
+      "team": "F.C. København",
+      "competition": "Europe - Champions League",
+      "reason": "no_provider_team_or_roster_match",
+      "attemptedProviders": [
+        "FotMob",
+        "Transfermarkt Datasets",
+        "ESPN",
+        "TheSportsDB",
+        "Wikipedia"
+      ]
+    },
+    {
+      "team": "Lausanne Sports",
+      "competition": "Europe - Conference League",
+      "reason": "no_provider_team_or_roster_match",
+      "attemptedProviders": [
+        "FotMob",
+        "Transfermarkt Datasets",
+        "ESPN",
+        "TheSportsDB",
+        "Wikipedia"
+      ]
+    }
+  ],
   "samples": [
     {
-      "team": "Viking",
-      "competition": "Europe - Champions League",
-      "players": 33,
+      "team": "Norwich City",
+      "competition": "England - Championship",
+      "players": 31,
       "provider": "FotMob + Laatste bevestigde opstelling",
-      "providerTeam": "Viking"
+      "providerTeam": "Norwich City"
     },
     {
-      "team": "SK Sturm Graz",
+      "team": "Sporting CP",
+      "competition": "Europe - Champions League",
+      "players": 31,
+      "provider": "FotMob",
+      "providerTeam": "Sporting CP"
+    },
+    {
+      "team": "Galatasaray",
+      "competition": "Europe - Champions League",
+      "players": 31,
+      "provider": "FotMob",
+      "providerTeam": "Galatasaray"
+    },
+    {
+      "team": "Real Betis",
       "competition": "Europe - Europa League",
       "players": 30,
-      "provider": "ESPN",
-      "providerTeam": "SK Sturm Graz"
+      "provider": "FotMob",
+      "providerTeam": "Real Betis"
     },
     {
-      "team": "FC Cologne",
-      "competition": "Germany - Bundesliga",
-      "players": 31,
-      "provider": "ESPN",
-      "providerTeam": "FC Cologne"
+      "team": "Burnley",
+      "competition": "England - Championship",
+      "players": 32,
+      "provider": "FotMob + Laatste bevestigde opstelling",
+      "providerTeam": "Burnley"
     },
     {
-      "team": "FC Basel",
+      "team": "Fenerbahce",
       "competition": "Europe - Europa League",
-      "players": 34,
+      "players": 31,
+      "provider": "FotMob + Laatste bevestigde opstelling",
+      "providerTeam": "Fenerbahçe"
+    },
+    {
+      "team": "Slavia Prague",
+      "competition": "Europe - Champions League",
+      "players": 32,
+      "provider": "FotMob",
+      "providerTeam": "Slavia Prague"
+    },
+    {
+      "team": "FC Twente",
+      "competition": "Netherlands - Eredivisie",
+      "players": 33,
+      "provider": "FotMob + Laatste bevestigde opstelling",
+      "providerTeam": "FC Twente"
+    },
+    {
+      "team": "ADO Den Haag",
+      "competition": "Netherlands - Eredivisie",
+      "players": 33,
+      "provider": "FotMob + Laatste bevestigde opstelling",
+      "providerTeam": "ADO Den Haag"
+    },
+    {
+      "team": "Telstar",
+      "competition": "Netherlands - Eredivisie",
+      "players": 32,
+      "provider": "FotMob + Laatste bevestigde opstelling",
+      "providerTeam": "Telstar"
+    },
+    {
+      "team": "Fortuna Sittard",
+      "competition": "Netherlands - Eredivisie",
+      "players": 29,
+      "provider": "FotMob + Laatste bevestigde opstelling",
+      "providerTeam": "Fortuna Sittard"
+    },
+    {
+      "team": "Willem II",
+      "competition": "Netherlands - Eredivisie",
+      "players": 41,
+      "provider": "FotMob + Laatste bevestigde opstelling",
+      "providerTeam": "Willem II"
+    },
+    {
+      "team": "Rapid Vienna",
+      "competition": "Europe - Conference League",
+      "players": 8,
+      "provider": "TheSportsDB",
+      "providerTeam": "Rapid Vienna"
+    },
+    {
+      "team": "Zrinjski Mostar",
+      "competition": "Europe - Conference League",
+      "players": 9,
+      "provider": "TheSportsDB",
+      "providerTeam": "Zrinjski Mostar"
+    },
+    {
+      "team": "Dynamo Kyiv",
+      "competition": "Europe - Conference League",
+      "players": 10,
+      "provider": "TheSportsDB",
+      "providerTeam": "Dynamo Kyiv"
+    },
+    {
+      "team": "PAOK",
+      "competition": "Europe - Europa League",
+      "players": 10,
+      "provider": "TheSportsDB",
+      "providerTeam": "PAOK"
+    },
+    {
+      "team": "Drita Gjilan",
+      "competition": "Europe - Conference League",
+      "players": 11,
+      "provider": "Laatste bevestigde opstelling",
+      "providerTeam": "Drita Gjilan"
+    },
+    {
+      "team": "Jagiellonia Bialystok",
+      "competition": "Europe - Conference League",
+      "players": 11,
+      "provider": "Laatste bevestigde opstelling",
+      "providerTeam": "Jagiellonia Bialystok"
+    },
+    {
+      "team": "Kairat Almaty",
+      "competition": "Europe - Champions League",
+      "players": 24,
+      "provider": "FotMob + Laatste bevestigde opstelling",
+      "providerTeam": "Kairat Almaty"
+    },
+    {
+      "team": "FC Noah",
+      "competition": "Europe - Conference League",
+      "players": 26,
       "provider": "Wikipedia",
-      "providerTeam": "FC Basel"
+      "providerTeam": "FC Noah"
+    },
+    {
+      "team": "Sparta Prague",
+      "competition": "Europe - Conference League",
+      "players": 31,
+      "provider": "FotMob",
+      "providerTeam": "Sparta Prague"
+    },
+    {
+      "team": "VfL Wolfsburg",
+      "competition": "Germany - 2. Bundesliga",
+      "players": 31,
+      "provider": "FotMob",
+      "providerTeam": "Wolfsburg"
+    },
+    {
+      "team": "Shamrock Rovers",
+      "competition": "Europe - Conference League",
+      "players": 32,
+      "provider": "FotMob + Laatste bevestigde opstelling",
+      "providerTeam": "Shamrock Rovers"
+    },
+    {
+      "team": "Ludogorets Razgrad",
+      "competition": "Europe - Europa League",
+      "players": 31,
+      "provider": "FotMob",
+      "providerTeam": "Ludogorets Razgrad"
+    },
+    {
+      "team": "Maccabi Tel-Aviv",
+      "competition": "Europe - Europa League",
+      "players": 32,
+      "provider": "FotMob + Laatste bevestigde opstelling",
+      "providerTeam": "Maccabi Tel Aviv"
+    },
+    {
+      "team": "Rangers",
+      "competition": "Europe - Europa League",
+      "players": 32,
+      "provider": "FotMob + Laatste bevestigde opstelling",
+      "providerTeam": "Rangers"
+    },
+    {
+      "team": "AS Nancy Lorraine",
+      "competition": "France - Ligue 2",
+      "players": 32,
+      "provider": "ESPN",
+      "providerTeam": "AS Nancy Lorraine"
+    },
+    {
+      "team": "Sigma Olomouc",
+      "competition": "Europe - Conference League",
+      "players": 33,
+      "provider": "FotMob",
+      "providerTeam": "Sigma Olomouc"
+    },
+    {
+      "team": "Malmö FF",
+      "competition": "Europe - Europa League",
+      "players": 32,
+      "provider": "FotMob",
+      "providerTeam": "Malmö FF"
     }
   ],
   "coverage": {
