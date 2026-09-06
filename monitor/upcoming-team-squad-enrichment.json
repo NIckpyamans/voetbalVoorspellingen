@@ -1,88 +1,72 @@
 {
-  "generatedAt": "2026-09-06T18:40:41.701Z",
+  "generatedAt": "2026-09-06T20:23:43.163Z",
   "daysAhead": 8,
   "targetPlayersPerTeam": 18,
   "candidates": 278,
-  "checked": 32,
-  "enriched": 31,
-  "unavailable": 1,
-  "skippedFresh": 243,
-  "pendingBeforeBatch": 35,
-  "pendingAfterBatch": 3,
+  "checked": 4,
+  "enriched": 1,
+  "unavailable": 3,
+  "skippedFresh": 274,
+  "pendingBeforeBatch": 4,
+  "pendingAfterBatch": 0,
   "rateLimited": false,
   "retryAfterSeconds": 0,
   "byProvider": {
-    "FotMob": 25,
-    "Laatste bevestigde opstelling": 26,
+    "FotMob": 0,
+    "Laatste bevestigde opstelling": 1,
     "Transfermarkt Datasets": 0,
-    "TheSportsDB": 4,
-    "ESPN": 0,
+    "TheSportsDB": 0,
+    "ESPN": 1,
     "Wikipedia": 0
   },
   "byCompetition": {
-    "England - Premier League": {
-      "checked": 1,
-      "enriched": 1,
-      "unavailable": 0
-    },
     "Europe - Champions League": {
-      "checked": 3,
-      "enriched": 2,
+      "checked": 1,
+      "enriched": 0,
       "unavailable": 1
     },
-    "Germany - Bundesliga": {
-      "checked": 3,
-      "enriched": 3,
-      "unavailable": 0
-    },
-    "Germany - 2. Bundesliga": {
-      "checked": 4,
-      "enriched": 4,
-      "unavailable": 0
-    },
-    "France - Ligue 1": {
-      "checked": 1,
-      "enriched": 1,
-      "unavailable": 0
-    },
-    "Netherlands - Eerste Divisie": {
-      "checked": 11,
-      "enriched": 11,
-      "unavailable": 0
-    },
-    "Netherlands - Eredivisie": {
-      "checked": 1,
-      "enriched": 1,
-      "unavailable": 0
-    },
-    "France - Ligue 2": {
-      "checked": 1,
-      "enriched": 1,
-      "unavailable": 0
-    },
-    "England - Championship": {
-      "checked": 1,
-      "enriched": 1,
-      "unavailable": 0
-    },
     "Europe - Conference League": {
-      "checked": 5,
-      "enriched": 5,
-      "unavailable": 0
+      "checked": 2,
+      "enriched": 0,
+      "unavailable": 2
     },
-    "Europe - Europa League": {
+    "Germany - Bundesliga": {
       "checked": 1,
       "enriched": 1,
       "unavailable": 0
     }
   },
   "failureReasons": {
-    "no_provider_team_or_roster_match": 1
+    "no_provider_team_or_roster_match": 3
   },
   "failures": [
     {
-      "team": "FK Qarabag",
+      "team": "F.C. København",
       "competition": "Europe - Champions League",
+      "reason": "no_provider_team_or_roster_match",
+      "attemptedProviders": [
+        "FotMob",
+        "Transfermarkt Datasets",
+        "ESPN",
+        "TheSportsDB",
+        "Wikipedia"
+      ]
+    },
+    {
+      "team": "Lausanne Sports",
+      "competition": "Europe - Conference League",
+      "reason": "no_provider_team_or_roster_match",
+      "attemptedProviders": [
+        "FotMob",
+        "Transfermarkt Datasets",
+        "ESPN",
+        "TheSportsDB",
+        "Wikipedia"
+      ]
+    },
+    {
+      "team": "Breidablik",
+      "competition": "Europe - Conference League",
       "reason": "no_provider_team_or_roster_match",
       "attemptedProviders": [
         "FotMob",
@@ -95,221 +79,11 @@
   ],
   "samples": [
     {
-      "team": "Chelsea",
-      "competition": "England - Premier League",
-      "players": 27,
-      "provider": "FotMob + Laatste bevestigde opstelling",
-      "providerTeam": "Chelsea"
-    },
-    {
-      "team": "Napoli",
-      "competition": "Europe - Champions League",
-      "players": 26,
-      "provider": "FotMob",
-      "providerTeam": "Napoli"
-    },
-    {
-      "team": "Mainz 05",
+      "team": "1. FC Union Berlin",
       "competition": "Germany - Bundesliga",
-      "players": 29,
-      "provider": "FotMob + Laatste bevestigde opstelling",
-      "providerTeam": "Mainz 05"
-    },
-    {
-      "team": "Wolfsburg",
-      "competition": "Germany - 2. Bundesliga",
-      "players": 31,
-      "provider": "FotMob + Laatste bevestigde opstelling",
-      "providerTeam": "Wolfsburg"
-    },
-    {
-      "team": "Energie Cottbus",
-      "competition": "Germany - 2. Bundesliga",
-      "players": 32,
-      "provider": "FotMob + Laatste bevestigde opstelling",
-      "providerTeam": "Energie Cottbus"
-    },
-    {
-      "team": "Strasbourg",
-      "competition": "France - Ligue 1",
-      "players": 32,
-      "provider": "FotMob + Laatste bevestigde opstelling",
-      "providerTeam": "Strasbourg"
-    },
-    {
-      "team": "Holstein Kiel",
-      "competition": "Germany - 2. Bundesliga",
-      "players": 33,
-      "provider": "FotMob + Laatste bevestigde opstelling",
-      "providerTeam": "Holstein Kiel"
-    },
-    {
-      "team": "Paderborn",
-      "competition": "Germany - Bundesliga",
-      "players": 33,
-      "provider": "FotMob + Laatste bevestigde opstelling",
-      "providerTeam": "Paderborn"
-    },
-    {
-      "team": "RKC Waalwijk",
-      "competition": "Netherlands - Eerste Divisie",
-      "players": 33,
-      "provider": "FotMob + Laatste bevestigde opstelling",
-      "providerTeam": "RKC Waalwijk"
-    },
-    {
-      "team": "Excelsior",
-      "competition": "Netherlands - Eredivisie",
-      "players": 26,
-      "provider": "FotMob + Laatste bevestigde opstelling",
-      "providerTeam": "Excelsior"
-    },
-    {
-      "team": "Almere City FC",
-      "competition": "Netherlands - Eerste Divisie",
       "players": 34,
-      "provider": "FotMob + Laatste bevestigde opstelling",
-      "providerTeam": "Almere City FC"
-    },
-    {
-      "team": "NAC Breda",
-      "competition": "Netherlands - Eerste Divisie",
-      "players": 34,
-      "provider": "FotMob + Laatste bevestigde opstelling",
-      "providerTeam": "NAC Breda"
-    },
-    {
-      "team": "Reims",
-      "competition": "France - Ligue 2",
-      "players": 35,
-      "provider": "FotMob + Laatste bevestigde opstelling",
-      "providerTeam": "Reims"
-    },
-    {
-      "team": "De Graafschap",
-      "competition": "Netherlands - Eerste Divisie",
-      "players": 37,
-      "provider": "FotMob + Laatste bevestigde opstelling",
-      "providerTeam": "De Graafschap"
-    },
-    {
-      "team": "FC Eindhoven",
-      "competition": "Netherlands - Eerste Divisie",
-      "players": 35,
-      "provider": "FotMob + Laatste bevestigde opstelling",
-      "providerTeam": "FC Eindhoven"
-    },
-    {
-      "team": "Portsmouth",
-      "competition": "England - Championship",
-      "players": 36,
-      "provider": "FotMob + Laatste bevestigde opstelling",
-      "providerTeam": "Portsmouth"
-    },
-    {
-      "team": "Feyenoord",
-      "competition": "Europe - Champions League",
-      "players": 34,
-      "provider": "FotMob + Laatste bevestigde opstelling",
-      "providerTeam": "Feyenoord"
-    },
-    {
-      "team": "Kaiserslautern",
-      "competition": "Germany - 2. Bundesliga",
-      "players": 36,
-      "provider": "FotMob + Laatste bevestigde opstelling",
-      "providerTeam": "Kaiserslautern"
-    },
-    {
-      "team": "Schalke 04",
-      "competition": "Germany - Bundesliga",
-      "players": 35,
-      "provider": "FotMob + Laatste bevestigde opstelling",
-      "providerTeam": "Schalke 04"
-    },
-    {
-      "team": "FC Emmen",
-      "competition": "Netherlands - Eerste Divisie",
-      "players": 36,
-      "provider": "FotMob + Laatste bevestigde opstelling",
-      "providerTeam": "FC Emmen"
-    },
-    {
-      "team": "Helmond Sport",
-      "competition": "Netherlands - Eerste Divisie",
-      "players": 36,
-      "provider": "FotMob + Laatste bevestigde opstelling",
-      "providerTeam": "Helmond Sport"
-    },
-    {
-      "team": "Heracles",
-      "competition": "Netherlands - Eerste Divisie",
-      "players": 37,
-      "provider": "FotMob + Laatste bevestigde opstelling",
-      "providerTeam": "Heracles"
-    },
-    {
-      "team": "Roda JC Kerkrade",
-      "competition": "Netherlands - Eerste Divisie",
-      "players": 37,
-      "provider": "FotMob + Laatste bevestigde opstelling",
-      "providerTeam": "Roda JC Kerkrade"
-    },
-    {
-      "team": "FC Volendam",
-      "competition": "Netherlands - Eerste Divisie",
-      "players": 38,
-      "provider": "FotMob + Laatste bevestigde opstelling",
-      "providerTeam": "FC Volendam"
-    },
-    {
-      "team": "Vitesse",
-      "competition": "Netherlands - Eerste Divisie",
-      "players": 39,
-      "provider": "FotMob + Laatste bevestigde opstelling",
-      "providerTeam": "Vitesse"
-    },
-    {
-      "team": "Rapid Vienna",
-      "competition": "Europe - Conference League",
-      "players": 8,
-      "provider": "TheSportsDB",
-      "providerTeam": "Rapid Vienna"
-    },
-    {
-      "team": "Zrinjski Mostar",
-      "competition": "Europe - Conference League",
-      "players": 9,
-      "provider": "TheSportsDB",
-      "providerTeam": "Zrinjski Mostar"
-    },
-    {
-      "team": "Dynamo Kyiv",
-      "competition": "Europe - Conference League",
-      "players": 10,
-      "provider": "TheSportsDB",
-      "providerTeam": "Dynamo Kyiv"
-    },
-    {
-      "team": "PAOK",
-      "competition": "Europe - Europa League",
-      "players": 10,
-      "provider": "TheSportsDB",
-      "providerTeam": "PAOK"
-    },
-    {
-      "team": "Drita Gjilan",
-      "competition": "Europe - Conference League",
-      "players": 11,
-      "provider": "Laatste bevestigde opstelling",
-      "providerTeam": "Drita Gjilan"
-    },
-    {
-      "team": "Jagiellonia Bialystok",
-      "competition": "Europe - Conference League",
-      "players": 11,
-      "provider": "Laatste bevestigde opstelling",
-      "providerTeam": "Jagiellonia Bialystok"
+      "provider": "ESPN + Laatste bevestigde opstelling",
+      "providerTeam": "1. FC Union Berlin"
     }
   ],
   "coverage": {
