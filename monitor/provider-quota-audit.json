@@ -1,5 +1,5 @@
 {
-  "checkedAt": "2026-09-05T08:23:51.257Z",
+  "checkedAt": "2026-09-06T08:42:21.557Z",
   "oddsApi": {
     "configured": true,
     "valid": true,
@@ -29,6 +29,7 @@
       "soccer_germany_bundesliga",
       "soccer_germany_bundesliga2",
       "soccer_germany_bundesliga_women",
+      "soccer_germany_dfb_pokal",
       "soccer_germany_liga3",
       "soccer_greece_super_league",
       "soccer_italy_serie_a",
@@ -69,12 +70,11 @@
     "competitionCoverageStatus": "seasonal_unavailable",
     "newlyUnavailableSports": [],
     "newlyAvailableSports": [
-      "soccer_concacaf_leagues_cup",
-      "soccer_fa_cup"
+      "soccer_germany_dfb_pokal"
     ],
     "quota": {
-      "x-requests-remaining": "396",
-      "x-requests-used": "104",
+      "x-requests-remaining": "317",
+      "x-requests-used": "183",
       "x-requests-last": "0"
     },
     "errorCode": null
@@ -141,13 +141,11 @@
   },
   "goalApi": {
     "configured": true,
-    "valid": true,
-    "status": 200,
-    "records": 50,
+    "valid": false,
+    "status": 502,
+    "records": 0,
     "quota": {
-      "x-ratelimit-limit": "1000",
-      "x-ratelimit-remaining": "960",
-      "x-ratelimit-reset": "1788652800"
+      "retry-after": "60"
     },
     "accepted": false,
     "policy": "Veertien dagen meten; nooit automatisch promoveren op basis van alleen een geldige key."
@@ -203,7 +201,7 @@
         "firstName": "Esbjerg vs OB",
         "hasOddsFlag": false,
         "rateLimit": {
-          "resets_in_seconds": 3599,
+          "resets_in_seconds": 3600,
           "remaining": 179,
           "requested_entity": "Fixture"
         },
@@ -217,11 +215,11 @@
         "valid": true,
         "status": 200,
         "records": 1,
-        "firstId": 19722790,
-        "firstName": "Rangers vs Motherwell",
+        "firstId": 19713948,
+        "firstName": "Sønderjyske Fodbold vs Horsens",
         "hasOddsFlag": true,
         "rateLimit": {
-          "resets_in_seconds": 3599,
+          "resets_in_seconds": 3600,
           "remaining": 178,
           "requested_entity": "Fixture"
         },
@@ -235,11 +233,11 @@
         "valid": true,
         "status": 200,
         "records": 1,
-        "firstId": 19722790,
-        "firstName": "Rangers vs Motherwell",
+        "firstId": 19713948,
+        "firstName": "Sønderjyske Fodbold vs Horsens",
         "hasOddsFlag": true,
         "rateLimit": {
-          "resets_in_seconds": 3598,
+          "resets_in_seconds": 3599,
           "remaining": 177,
           "requested_entity": "Fixture"
         },
@@ -249,13 +247,13 @@
         },
         "errorCode": null
       },
-      "testedFixtureId": 19722790,
+      "testedFixtureId": 19713948,
       "oddsByFixture": {
         "label": "oddsByFixture",
         "valid": true,
         "status": 200,
         "records": 3,
-        "firstId": 243729487975,
+        "firstId": 243830408055,
         "firstName": null,
         "hasOddsFlag": false,
         "rateLimit": {
@@ -279,7 +277,7 @@
         "firstName": "1",
         "hasOddsFlag": false,
         "rateLimit": {
-          "resets_in_seconds": 3600,
+          "resets_in_seconds": 3599,
           "remaining": 178,
           "requested_entity": "Odd"
         },
@@ -294,11 +292,11 @@
         "valid": true,
         "status": 200,
         "records": 3,
-        "firstId": 243729487975,
+        "firstId": 243830408055,
         "firstName": null,
         "hasOddsFlag": false,
         "rateLimit": {
-          "resets_in_seconds": 3599,
+          "resets_in_seconds": 3598,
           "remaining": 177,
           "requested_entity": "Odd"
         },
