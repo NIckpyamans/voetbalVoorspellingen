@@ -1,6 +1,6 @@
 # Data Quality Audit
 
-Laatst bijgewerkt: 2026-09-06T16:34:05.238Z
+Laatst bijgewerkt: 2026-09-06T18:53:32.566Z
 Lookback: 45 dagen
 
 ## Scores
@@ -14,7 +14,7 @@ Lookback: 45 dagen
 - Immutable snapshot-evaluaties: 79% (15/19)
 - Bruikbare wedstrijdstatistieken: 88%
 - Bevestigde opstellingen: 13%
-- Historisch teruggevonden basiselftallen: 63%
+- Historisch teruggevonden basiselftallen: 62%
 - Verse getimestampte prematch-odds: 11%
 - Volledige pre-match bewijsset: 3%
 - Doelpunten met tijdlijn: 82%
@@ -23,7 +23,7 @@ Lookback: 45 dagen
 ## Per competitie
 - Netherlands - Eredivisie: 29 duels, vorm 90%, H2H 41%, inzetbewijs 0%, lekvrije reviews 0% (0/0), stats 100%; gaten: form, h2h, confirmed_lineups, timestamped_odds, immutable_snapshot_windows, leak_free_reviews
 - Netherlands - Eerste Divisie: 113 duels, vorm 40%, H2H 9%, inzetbewijs 0%, lekvrije reviews 0% (0/0), stats 100%; gaten: form, h2h, confirmed_lineups, timestamped_odds, immutable_snapshot_windows, leak_free_reviews
-- Germany - Bundesliga: 80 duels, vorm 93%, H2H 50%, inzetbewijs 0%, lekvrije reviews 0% (0/0), stats 80%; gaten: h2h, confirmed_lineups, timestamped_odds, immutable_snapshot_windows, leak_free_reviews, goal_timeline
+- Germany - Bundesliga: 80 duels, vorm 93%, H2H 50%, inzetbewijs 0%, lekvrije reviews 0% (0/0), stats 81%; gaten: h2h, confirmed_lineups, timestamped_odds, immutable_snapshot_windows, leak_free_reviews, goal_timeline
 - Germany - 2. Bundesliga: 30 duels, vorm 77%, H2H 30%, inzetbewijs 0%, lekvrije reviews 0% (0/0), stats 100%; gaten: form, h2h, confirmed_lineups, timestamped_odds, immutable_snapshot_windows, leak_free_reviews
 - England - Premier League: 90 duels, vorm 98%, H2H 56%, inzetbewijs 2%, lekvrije reviews 0% (0/0), stats 100%; gaten: h2h, confirmed_lineups, timestamped_odds, immutable_snapshot_windows, leak_free_reviews
 - England - Championship: 57 duels, vorm 60%, H2H 40%, inzetbewijs 14%, lekvrije reviews 0% (0/0), stats 100%; gaten: form, h2h, confirmed_lineups, timestamped_odds, immutable_snapshot_windows, leak_free_reviews
