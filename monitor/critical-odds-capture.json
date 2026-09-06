@@ -1,24 +1,27 @@
 {
-  "generatedAt": "2026-09-06T16:19:47.271Z",
+  "generatedAt": "2026-09-06T18:40:40.193Z",
   "checked": 4,
-  "captured": 0,
-  "openingCaptured": 0,
-  "prematchCaptured": 0,
-  "closingCaptured": 0,
-  "closingPairs": 0,
+  "captured": 1,
+  "openingCaptured": 1,
+  "prematchCaptured": 1,
+  "closingCaptured": 1,
+  "closingPairs": 1,
   "statuses": {
+    "available": 1,
     "not_found": 3
   },
   "attemptStatuses": {
-    "the-odds-api:seasonal_sport_unavailable": 3,
-    "the-odds-api:unsupported_sport": 6,
+    "the-odds-api:seasonal_sport_unavailable": 4,
+    "the-odds-api:unsupported_sport": 8,
+    "the-odds-api:available": 1,
     "the-odds-api:not_found": 12,
     "sportmonks:fixture_id_missing": 3
   },
   "providerStatuses": {
     "the-odds-api": {
-      "seasonal_sport_unavailable": 3,
-      "unsupported_sport": 6,
+      "seasonal_sport_unavailable": 4,
+      "unsupported_sport": 8,
+      "available": 1,
       "not_found": 12
     },
     "sportmonks": {
@@ -27,10 +30,10 @@
   },
   "providerQuota": {
     "the-odds-api": {
-      "remaining": 280
+      "remaining": 268
     }
   },
-  "skippedExistingRole": 1,
+  "skippedExistingRole": 0,
   "sportmonksMapped": 0,
   "sportmonksMappingStatuses": {
     "plan_coverage_unavailable": 4
@@ -42,10 +45,15 @@
       "league": "France - Ligue 1",
       "homeTeam": "Marseille",
       "awayTeam": "Paris FC",
-      "minutesBeforeKickoff": 145,
+      "minutesBeforeKickoff": 4,
       "closingWindow": false,
-      "status": "already_captured",
-      "captureRole": "prematch"
+      "status": "captured",
+      "provider": "the-odds-api",
+      "captureRole": "closing",
+      "sportmonksFixtureId": null,
+      "opening": true,
+      "prematch": true,
+      "closing": true
     },
     {
       "matchId": "ss-fotmob-5832856",
@@ -53,7 +61,7 @@
       "league": "Netherlands - Eerste Divisie",
       "homeTeam": "Jong FC Utrecht",
       "awayTeam": "FC Eindhoven",
-      "minutesBeforeKickoff": 1540,
+      "minutesBeforeKickoff": 1399,
       "closingWindow": false,
       "status": "not_found",
       "providerCompetitionAvailability": null,
@@ -66,7 +74,7 @@
       "league": "Netherlands - Eerste Divisie",
       "homeTeam": "Jong PSV",
       "awayTeam": "FC Den Bosch",
-      "minutesBeforeKickoff": 1540,
+      "minutesBeforeKickoff": 1399,
       "closingWindow": false,
       "status": "not_found",
       "providerCompetitionAvailability": null,
@@ -79,7 +87,7 @@
       "league": "France - Ligue 2",
       "homeTeam": "Nantes",
       "awayTeam": "Nancy",
-      "minutesBeforeKickoff": 1585,
+      "minutesBeforeKickoff": 1444,
       "closingWindow": false,
       "status": "not_found",
       "providerCompetitionAvailability": null,
@@ -97,7 +105,7 @@
       "coverage": 0
     },
     {
-      "league": "France - Ligue 1",
+      "league": "France - Ligue 2",
       "checked": 1,
       "covered": 0,
       "partial": 0,
@@ -105,13 +113,13 @@
       "coverage": 0
     },
     {
-      "league": "France - Ligue 2",
+      "league": "France - Ligue 1",
       "checked": 1,
-      "covered": 0,
+      "covered": 1,
       "partial": 0,
-      "missing": 1,
-      "coverage": 0
+      "missing": 0,
+      "coverage": 1
     }
   ],
-  "coverage": 0
+  "coverage": 0.25
 }
