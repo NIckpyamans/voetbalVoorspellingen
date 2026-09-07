@@ -1,77 +1,48 @@
 {
-  "generatedAt": "2026-09-07T06:09:52.142Z",
+  "generatedAt": "2026-09-07T07:33:36.290Z",
   "daysAhead": 8,
   "targetPlayersPerTeam": 18,
-  "candidates": 277,
-  "checked": 10,
-  "enriched": 7,
-  "unavailable": 3,
-  "skippedFresh": 267,
-  "pendingBeforeBatch": 10,
+  "candidates": 276,
+  "checked": 7,
+  "enriched": 6,
+  "unavailable": 1,
+  "skippedFresh": 269,
+  "pendingBeforeBatch": 7,
   "pendingAfterBatch": 0,
   "rateLimited": false,
   "retryAfterSeconds": 0,
   "byProvider": {
-    "FotMob": 7,
-    "Laatste bevestigde opstelling": 4,
-    "Transfermarkt Datasets": 0,
-    "TheSportsDB": 0,
+    "FotMob": 0,
+    "Laatste bevestigde opstelling": 2,
+    "Transfermarkt Datasets": 3,
+    "TheSportsDB": 2,
     "ESPN": 0,
     "Wikipedia": 0
   },
   "byCompetition": {
-    "Europe - Champions League": {
-      "checked": 3,
-      "enriched": 2,
-      "unavailable": 1
-    },
-    "Europe - Europa League": {
-      "checked": 3,
-      "enriched": 3,
+    "Europe - Conference League": {
+      "checked": 5,
+      "enriched": 5,
       "unavailable": 0
     },
-    "Germany - 2. Bundesliga": {
+    "Europe - Europa League": {
       "checked": 1,
       "enriched": 1,
       "unavailable": 0
     },
-    "Europe - Conference League": {
-      "checked": 3,
-      "enriched": 1,
-      "unavailable": 2
+    "Europe - Champions League": {
+      "checked": 1,
+      "enriched": 0,
+      "unavailable": 1
     }
   },
   "failureReasons": {
-    "no_provider_team_or_roster_match": 3
+    "no_provider_team_or_roster_match": 1
   },
   "failures": [
     {
-      "team": "F.C. København",
+      "team": "FK Qarabag",
       "competition": "Europe - Champions League",
-      "reason": "no_provider_team_or_roster_match",
-      "attemptedProviders": [
-        "FotMob",
-        "Transfermarkt Datasets",
-        "ESPN",
-        "TheSportsDB",
-        "Wikipedia"
-      ]
-    },
-    {
-      "team": "Lausanne Sports",
-      "competition": "Europe - Conference League",
-      "reason": "no_provider_team_or_roster_match",
-      "attemptedProviders": [
-        "FotMob",
-        "Transfermarkt Datasets",
-        "ESPN",
-        "TheSportsDB",
-        "Wikipedia"
-      ]
-    },
-    {
-      "team": "Breidablik",
-      "competition": "Europe - Conference League",
       "reason": "no_provider_team_or_roster_match",
       "attemptedProviders": [
         "FotMob",
@@ -84,61 +55,54 @@
   ],
   "samples": [
     {
-      "team": "Pafos",
-      "competition": "Europe - Champions League",
-      "players": 30,
-      "provider": "FotMob + Laatste bevestigde opstelling",
-      "providerTeam": "Pafos FC"
-    },
-    {
-      "team": "Union St.-Gilloise",
-      "competition": "Europe - Champions League",
-      "players": 28,
-      "provider": "FotMob",
-      "providerTeam": "Union St.Gilloise"
-    },
-    {
-      "team": "Dinamo Zagreb",
-      "competition": "Europe - Europa League",
-      "players": 30,
-      "provider": "FotMob + Laatste bevestigde opstelling",
-      "providerTeam": "Dinamo Zagreb"
-    },
-    {
-      "team": "SpVgg Greuther Fürth",
-      "competition": "Germany - 2. Bundesliga",
-      "players": 30,
-      "provider": "FotMob",
-      "providerTeam": "Greuther Fürth"
-    },
-    {
-      "team": "Celtic",
-      "competition": "Europe - Europa League",
-      "players": 29,
-      "provider": "FotMob + Laatste bevestigde opstelling",
-      "providerTeam": "Celtic"
-    },
-    {
-      "team": "Viktoria Plzen",
-      "competition": "Europe - Europa League",
-      "players": 30,
-      "provider": "FotMob + Laatste bevestigde opstelling",
-      "providerTeam": "Viktoria Plzeň"
-    },
-    {
-      "team": "Hamrun Spartans",
+      "team": "Rapid Vienna",
       "competition": "Europe - Conference League",
-      "players": 32,
-      "provider": "FotMob",
-      "providerTeam": "Hamrun Spartans"
+      "players": 39,
+      "provider": "Transfermarkt Datasets",
+      "providerTeam": "Rapid Vienna"
+    },
+    {
+      "team": "Zrinjski Mostar",
+      "competition": "Europe - Conference League",
+      "players": 9,
+      "provider": "TheSportsDB",
+      "providerTeam": "Zrinjski Mostar"
+    },
+    {
+      "team": "Dynamo Kyiv",
+      "competition": "Europe - Conference League",
+      "players": 60,
+      "provider": "Transfermarkt Datasets",
+      "providerTeam": "Dynamo Kyiv"
+    },
+    {
+      "team": "PAOK",
+      "competition": "Europe - Europa League",
+      "players": 10,
+      "provider": "TheSportsDB",
+      "providerTeam": "PAOK"
+    },
+    {
+      "team": "Drita Gjilan",
+      "competition": "Europe - Conference League",
+      "players": 11,
+      "provider": "Laatste bevestigde opstelling",
+      "providerTeam": "Drita Gjilan"
+    },
+    {
+      "team": "Jagiellonia Bialystok",
+      "competition": "Europe - Conference League",
+      "players": 51,
+      "provider": "Transfermarkt Datasets + Laatste bevestigde opstelling",
+      "providerTeam": "Jagiellonia Bialystok"
     }
   ],
   "coverage": {
-    "totalTeams": 277,
-    "teamsWithRoster": 273,
-    "teamsWithProviderRatings": 220,
-    "rosterCoverage": 0.986,
-    "ratingCoverage": 0.794
+    "totalTeams": 276,
+    "teamsWithRoster": 274,
+    "teamsWithProviderRatings": 219,
+    "rosterCoverage": 0.993,
+    "ratingCoverage": 0.793
   },
   "competitionCoverage": {
     "Netherlands - Eredivisie": {
@@ -157,9 +121,9 @@
     },
     "Europe - Conference League": {
       "teams": 36,
-      "teamsWithRoster": 33,
+      "teamsWithRoster": 35,
       "teamsWithProviderRatings": 19,
-      "rosterCoverage": 0.917,
+      "rosterCoverage": 0.972,
       "ratingCoverage": 0.528
     },
     "Europe - Europa League": {
@@ -217,13 +181,6 @@
       "teamsWithProviderRatings": 19,
       "rosterCoverage": 1,
       "ratingCoverage": 0.76
-    },
-    "Italy - Serie A": {
-      "teams": 2,
-      "teamsWithRoster": 2,
-      "teamsWithProviderRatings": 2,
-      "rosterCoverage": 1,
-      "ratingCoverage": 1
     }
   }
 }
