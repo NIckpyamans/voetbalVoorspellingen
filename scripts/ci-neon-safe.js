@@ -46,11 +46,14 @@ child.on("close", (code, signal) => {
   const quotaExceeded =
     /HTTP status 402/i.test(output) ||
     /exceeded the data transfer quota/i.test(output) ||
-    /Your project has exceeded the data transfer quota/i.test(output);
+    /Your project has exceeded the data transfer quota/i.test(output) ||
+    /project size limit \(512 MB\) has been exceeded/i.test(output) ||
+    /NeonDbError:[^\n]*could not extend file/i.test(output) ||
+    /code:\s*['\"]53100['\"]/i.test(output);
 
   if (quotaExceeded) {
     console.warn(
-      "[ci-neon-safe] Neon data-transfer quota exceeded. Treating this scheduled data job as a soft skip; upgrade/reset Neon quota or reduce DB traffic for fresh writes."
+      "[ci-neon-safe] Neon quota or project-size limit reached. Treating this scheduled data job as a soft skip; R2/local evidence remains available and the next run can replay writes after recovery."
     );
     process.exit(0);
   }

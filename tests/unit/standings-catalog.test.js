@@ -20,6 +20,11 @@ describe("standings catalog fallback", () => {
   it("matches Rennes to the Stade Rennais catalog name", () => {
     expect(sameTeam("Rennes", "Stade Rennais")).toBe(true);
   });
+  it("matches German provider names to the English catalog aliases", () => {
+    expect(sameTeam("Bayern Munchen", "Bayern Munich")).toBe(true);
+    expect(sameTeam("1. FC Koln", "FC Cologne")).toBe(true);
+    expect(sameTeam("Hamburger SV", "Hamburg SV")).toBe(true);
+  });
   it("keeps every catalog team when the live standing is partial", () => {
     const standings = mergeCatalogStandings({ partial: {
       label: "Netherlands - Eredivisie",

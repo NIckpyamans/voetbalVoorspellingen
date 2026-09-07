@@ -7,6 +7,13 @@ function normalizedTeamName(value) {
     .replace(/[^a-z0-9]+/g, " ")
     .trim();
   const aliases = {
+    "bayern munchen": "bayern",
+    "bayern munich": "bayern",
+    "1 koln": "cologne",
+    "koln": "cologne",
+    "cologne": "cologne",
+    "hamburger": "hamburg",
+    "hamburg": "hamburg",
     "hertha berlin": "hertha",
     "hertha bsc": "hertha",
     "rennes": "rennes",

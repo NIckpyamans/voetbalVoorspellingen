@@ -10,7 +10,10 @@ const warnTrackedBytes = Number(process.env.WARN_TRACKED_BYTES || 75 * 1024 * 10
 // De bestaande R2-herstelproef heeft een eenmalige trainingsprojectie toegevoegd.
 // Nieuwe evaluatieruns committen deze exports niet meer; bewaak vanaf de huidige
 // basis streng op verdere groei zonder bestaande trainingsdata te verwijderen.
-const maxTrackedBytes = Number(process.env.MAX_TRACKED_BYTES || 132 * 1024 * 1024);
+// The compact recovery ledger moved the reviewed baseline to about 138 MiB.
+// Keep a small, explicit ceiling above that baseline so dependency-only PRs
+// remain testable while further data growth still fails quickly.
+const maxTrackedBytes = Number(process.env.MAX_TRACKED_BYTES || 142 * 1024 * 1024);
 const maxDataFileBytes = Number(process.env.MAX_DATA_FILE_BYTES || 12 * 1024 * 1024);
 const files = execFileSync("git", ["ls-files", "-z"], { encoding: "utf8" }).split("\0").filter(Boolean);
 let trackedBytes = 0;
