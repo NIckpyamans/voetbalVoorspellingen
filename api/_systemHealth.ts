@@ -7,6 +7,7 @@ import { createLogger, getErrorDetails } from "../shared/logger.js";
 import { setCorsHeaders } from "../shared/cors.js";
 import { getSql } from "../shared/database.js";
 import { enforceWriteSecurity } from "../shared/writeSecurity.js";
+import { selectFreshestWorkerSource } from "../shared/healthFreshness.js";
 
 const logger = createLogger("api.system-health");
 const ROOT = process.cwd();
@@ -180,16 +181,22 @@ export async function buildSystemHealth(mode = "health") {
   const standingsInfo = getFileInfo(path.join("data", "standings.json"));
   const databaseHealth = await fetchDatabaseHealthSnapshot(today, yesterday, tomorrow);
 
-  const lastRun = Number(databaseHealth?.lastRun || meta?.lastRun || 0);
+  const workerSource = selectFreshestWorkerSource({
+    databaseLastRun: databaseHealth?.lastRun,
+    repositoryLastRun: meta?.lastRun,
+    repositorySource: remoteMeta.available ? "github-worker-data" : "json-cache",
+  });
+  const currentDatabaseHealth = workerSource.databaseCurrent ? databaseHealth : null;
+  const lastRun = workerSource.lastRun;
   const ageMinutes = lastRun ? Math.round((Date.now() - lastRun) / 60_000) : null;
-  const counts = databaseHealth?.counts || {
+  const counts = currentDatabaseHealth?.counts || {
     yesterday: countMatches(remoteYesterday.available ? remoteYesterday.data : readLocalDay(yesterday)),
     today: countMatches(remoteToday.available ? remoteToday.data : readLocalDay(today)),
     tomorrow: countMatches(remoteTomorrow.available ? remoteTomorrow.data : readLocalDay(tomorrow)),
   };
   const lastRunFresh = !!lastRun && ageMinutes != null && ageMinutes <= MAX_FRESH_AGE_MINUTES;
-  const knownDates = databaseHealth?.dates?.length ? databaseHealth.dates : (Array.isArray(meta?.dates) ? meta.dates : [yesterday, today, tomorrow]);
-  const fixtureDays = databaseHealth?.days || Object.fromEntries(
+  const knownDates = currentDatabaseHealth?.dates?.length ? currentDatabaseHealth.dates : (Array.isArray(meta?.dates) ? meta.dates : [yesterday, today, tomorrow]);
+  const fixtureDays = currentDatabaseHealth?.days || Object.fromEntries(
     knownDates.map((dateKey: string) => {
       const remoteDay =
         dateKey === yesterday
@@ -219,7 +226,7 @@ export async function buildSystemHealth(mode = "health") {
     todayOrTomorrowData: counts.today > 0 || counts.tomorrow > 0 || fixtureCalendar.emptyWindowOk,
     fixtureCalendar: fixtureCalendar.healthy,
     standings:
-      Number(databaseHealth?.standingsCount || 0) > 0 ||
+      Number(currentDatabaseHealth?.standingsCount || 0) > 0 ||
       Object.keys(standings?.standings || {}).length > 0 ||
       Object.keys(standings?.cupSheets || {}).length > 0 ||
       Object.keys(standings?.knockoutOverview || {}).length > 0,
@@ -246,13 +253,13 @@ export async function buildSystemHealth(mode = "health") {
       refreshCadence: "live-score elke 2 uur, volledige worker 2x per dag",
       workerVersion: meta?.workerVersion || "unknown",
       sourceBranch: meta?.sourceBranch || remoteMeta.branch || process.env.DATA_BRANCH || process.env.VERCEL_GIT_COMMIT_REF || "unknown",
-      sourceOfTruth: databaseHealth ? "neon" : "json-cache",
+      sourceOfTruth: workerSource.sourceOfTruth,
     },
     data: {
       dates: { yesterday, today, tomorrow },
       matchCounts: counts,
       fixtureCalendar,
-      standingsCount: Number(databaseHealth?.standingsCount || 0) || Object.keys(standings?.standings || {}).length,
+      standingsCount: Number(currentDatabaseHealth?.standingsCount || 0) || Object.keys(standings?.standings || {}).length,
       cupSheetCount: Object.keys(standings?.cupSheets || {}).length,
       reviewCount: Number(databaseHealth?.reviewCount || meta?.reviewCount || 0),
       h2hEdges: Number(databaseHealth?.h2hEdges || 0),
