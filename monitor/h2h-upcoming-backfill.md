@@ -1,6 +1,6 @@
 # Upcoming H2H Backfill
 
-Laatst bijgewerkt: 2026-09-07T06:16:11.820Z
+Laatst bijgewerkt: 2026-09-07T07:22:06.573Z
 Gecontroleerd: 24
 Gevuld: 0
 Geen directe H2H: 24
@@ -28,7 +28,7 @@ API-Football blijft quota-bewust geblokkeerd totdat de acceptatietest slaagt; ES
 - 2026-09-08: Wrexham - Burnley (provider_acceptance_blocked)
 - 2026-09-08: Real Madrid - Inter (provider_acceptance_blocked)
 - 2026-09-08: Bolton Wanderers - West Ham United (provider_acceptance_blocked)
-- 2026-09-09: Barcelona - Feyenoord (provider_acceptance_blocked)
+- 2026-09-09: Napoli - Arsenal (provider_acceptance_blocked)
 - 2026-09-09: Derby County - West Bromwich Albion (provider_acceptance_blocked)
-- 2026-09-09: VfB Stuttgart - Viking (provider_acceptance_blocked)
+- 2026-09-09: Barcelona - Feyenoord (provider_acceptance_blocked)
 - 2026-09-09: Norwich City - Birmingham City (provider_acceptance_blocked)
