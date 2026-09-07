@@ -1,0 +1,48 @@
+name: Deploy production
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: vercel-production
+  cancel-in-progress: false
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    env:
+      VERCEL_ORG_ID: team_77TfTeW6AFxfRZoNALN9k9zL
+      VERCEL_PROJECT_ID: prj_hc35cqK3Dvw4u15tiOVwfJ0jo3Au
+    steps:
+      - uses: actions/checkout@v5
+
+      - uses: actions/setup-node@v5
+        with:
+          node-version: 22
+          cache: npm
+
+      - name: Verify Vercel credentials
+        env:
+          VERCEL_TOKEN: ${{ secrets.VERCEL_TOKEN }}
+        run: |
+          test -n "$VERCEL_TOKEN" || (echo "VERCEL_TOKEN is missing" && exit 1)
+          npx --yes vercel@54.15.0 whoami --token "$VERCEL_TOKEN"
+
+      - name: Pull production settings
+        env:
+          VERCEL_TOKEN: ${{ secrets.VERCEL_TOKEN }}
+        run: npx --yes vercel@54.15.0 pull --yes --environment=production --token "$VERCEL_TOKEN"
+
+      - name: Build production artifact
+        env:
+          VERCEL_TOKEN: ${{ secrets.VERCEL_TOKEN }}
+        run: npx --yes vercel@54.15.0 build --prod --token "$VERCEL_TOKEN"
+
+      - name: Deploy production artifact
+        env:
+          VERCEL_TOKEN: ${{ secrets.VERCEL_TOKEN }}
+        run: npx --yes vercel@54.15.0 deploy --prebuilt --prod --token "$VERCEL_TOKEN"

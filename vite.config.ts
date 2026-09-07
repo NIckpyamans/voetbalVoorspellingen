@@ -2,6 +2,8 @@ import path from 'path';
 import { defineConfig } from 'vite';
 import react from '@vitejs/plugin-react';
 
+const rootDir = import.meta.dirname;
+
 export default defineConfig(() => {
     return {
       server: {
@@ -11,12 +13,12 @@ export default defineConfig(() => {
       plugins: [react()],
       resolve: {
         alias: {
-          '@': path.resolve(__dirname, '.'),
+          '@': path.resolve(rootDir, '.'),
         }
       },
       build: {
         rollupOptions: {
-          input: path.resolve(__dirname, 'index.html'),
+          input: path.resolve(rootDir, 'index.html'),
         }
       }
     };
