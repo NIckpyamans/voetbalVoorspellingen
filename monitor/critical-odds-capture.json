@@ -1,28 +1,28 @@
 {
-  "generatedAt": "2026-09-06T18:40:40.193Z",
-  "checked": 4,
-  "captured": 1,
-  "openingCaptured": 1,
-  "prematchCaptured": 1,
-  "closingCaptured": 1,
-  "closingPairs": 1,
+  "generatedAt": "2026-09-07T06:09:58.946Z",
+  "checked": 7,
+  "captured": 3,
+  "openingCaptured": 3,
+  "prematchCaptured": 3,
+  "closingCaptured": 0,
+  "closingPairs": 0,
   "statuses": {
-    "available": 1,
-    "not_found": 3
+    "not_found": 3,
+    "available": 3
   },
   "attemptStatuses": {
-    "the-odds-api:seasonal_sport_unavailable": 4,
-    "the-odds-api:unsupported_sport": 8,
-    "the-odds-api:available": 1,
+    "the-odds-api:seasonal_sport_unavailable": 10,
+    "the-odds-api:unsupported_sport": 12,
     "the-odds-api:not_found": 12,
-    "sportmonks:fixture_id_missing": 3
+    "sportmonks:fixture_id_missing": 3,
+    "the-odds-api:available": 3
   },
   "providerStatuses": {
     "the-odds-api": {
-      "seasonal_sport_unavailable": 4,
-      "unsupported_sport": 8,
-      "available": 1,
-      "not_found": 12
+      "seasonal_sport_unavailable": 10,
+      "unsupported_sport": 12,
+      "not_found": 12,
+      "available": 3
     },
     "sportmonks": {
       "fixture_id_missing": 3
@@ -30,38 +30,25 @@
   },
   "providerQuota": {
     "the-odds-api": {
-      "remaining": 268
+      "remaining": 253,
+      "used": 247,
+      "limit": null,
+      "reset": null
     }
   },
-  "skippedExistingRole": 0,
+  "skippedExistingRole": 1,
   "sportmonksMapped": 0,
   "sportmonksMappingStatuses": {
-    "plan_coverage_unavailable": 4
+    "plan_coverage_unavailable": 7
   },
   "matches": [
-    {
-      "matchId": "ss-fotmob-5802923",
-      "kickoff": "2026-09-06T18:45:00.000Z",
-      "league": "France - Ligue 1",
-      "homeTeam": "Marseille",
-      "awayTeam": "Paris FC",
-      "minutesBeforeKickoff": 4,
-      "closingWindow": false,
-      "status": "captured",
-      "provider": "the-odds-api",
-      "captureRole": "closing",
-      "sportmonksFixtureId": null,
-      "opening": true,
-      "prematch": true,
-      "closing": true
-    },
     {
       "matchId": "ss-fotmob-5832856",
       "kickoff": "2026-09-07T18:00:00.000Z",
       "league": "Netherlands - Eerste Divisie",
       "homeTeam": "Jong FC Utrecht",
       "awayTeam": "FC Eindhoven",
-      "minutesBeforeKickoff": 1399,
+      "minutesBeforeKickoff": 710,
       "closingWindow": false,
       "status": "not_found",
       "providerCompetitionAvailability": null,
@@ -74,7 +61,7 @@
       "league": "Netherlands - Eerste Divisie",
       "homeTeam": "Jong PSV",
       "awayTeam": "FC Den Bosch",
-      "minutesBeforeKickoff": 1399,
+      "minutesBeforeKickoff": 710,
       "closingWindow": false,
       "status": "not_found",
       "providerCompetitionAvailability": null,
@@ -87,12 +74,71 @@
       "league": "France - Ligue 2",
       "homeTeam": "Nantes",
       "awayTeam": "Nancy",
-      "minutesBeforeKickoff": 1444,
+      "minutesBeforeKickoff": 755,
       "closingWindow": false,
       "status": "not_found",
       "providerCompetitionAvailability": null,
       "reason": "Sportmonks fixture-id ontbreekt; odds-by-fixture call overgeslagen.",
       "sportmonksMapping": "plan_coverage_unavailable"
+    },
+    {
+      "matchId": "ss-fotmob-5781733",
+      "kickoff": "2026-09-08T12:00:00.000Z",
+      "league": "Netherlands - Eredivisie",
+      "homeTeam": "FC Utrecht",
+      "awayTeam": "Go Ahead Eagles",
+      "minutesBeforeKickoff": 1790,
+      "closingWindow": false,
+      "status": "already_captured",
+      "captureRole": "opening"
+    },
+    {
+      "matchId": "ss-fotmob-6106404",
+      "kickoff": "2026-09-08T16:45:00.000Z",
+      "league": "Europe - Champions League",
+      "homeTeam": "AEK Athens",
+      "awayTeam": "LASK",
+      "minutesBeforeKickoff": 2075,
+      "closingWindow": false,
+      "status": "captured",
+      "provider": "the-odds-api",
+      "captureRole": "opening",
+      "sportmonksFixtureId": null,
+      "opening": true,
+      "prematch": true,
+      "closing": false
+    },
+    {
+      "matchId": "ss-fotmob-6106295",
+      "kickoff": "2026-09-08T16:45:00.000Z",
+      "league": "Europe - Champions League",
+      "homeTeam": "Club Brugge",
+      "awayTeam": "Aston Villa",
+      "minutesBeforeKickoff": 2075,
+      "closingWindow": false,
+      "status": "captured",
+      "provider": "the-odds-api",
+      "captureRole": "opening",
+      "sportmonksFixtureId": null,
+      "opening": true,
+      "prematch": true,
+      "closing": false
+    },
+    {
+      "matchId": "ss-fotmob-5781720",
+      "kickoff": "2026-09-08T16:45:00.000Z",
+      "league": "Netherlands - Eredivisie",
+      "homeTeam": "NEC Nijmegen",
+      "awayTeam": "Excelsior",
+      "minutesBeforeKickoff": 2075,
+      "closingWindow": false,
+      "status": "captured",
+      "provider": "the-odds-api",
+      "captureRole": "opening",
+      "sportmonksFixtureId": null,
+      "opening": true,
+      "prematch": true,
+      "closing": false
     }
   ],
   "leagueCoverage": [
@@ -113,13 +159,21 @@
       "coverage": 0
     },
     {
-      "league": "France - Ligue 1",
-      "checked": 1,
+      "league": "Netherlands - Eredivisie",
+      "checked": 2,
       "covered": 1,
+      "partial": 0,
+      "missing": 1,
+      "coverage": 0.5
+    },
+    {
+      "league": "Europe - Champions League",
+      "checked": 2,
+      "covered": 2,
       "partial": 0,
       "missing": 0,
       "coverage": 1
     }
   ],
-  "coverage": 0.25
+  "coverage": 0.429
 }
