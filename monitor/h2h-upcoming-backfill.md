@@ -1,6 +1,6 @@
 # Upcoming H2H Backfill
 
-Laatst bijgewerkt: 2026-09-08T21:10:31.625Z
+Laatst bijgewerkt: 2026-09-08T23:06:33.833Z
 Gecontroleerd: 32
 Gevuld: 0
 Geen directe H2H: 32
@@ -27,8 +27,8 @@ API-Football blijft quota-bewust geblokkeerd totdat de acceptatietest slaagt; ES
 - 2026-09-10: Como - RB Leipzig (provider_acceptance_blocked)
 - 2026-09-10: Manchester United - Sabah FK (provider_acceptance_blocked)
 - 2026-09-10: Slavia Prague - Lens (provider_acceptance_blocked)
-- 2026-09-11: FC Eindhoven - FC Dordrecht (provider_acceptance_blocked)
 - 2026-09-11: Darmstadt - Arminia Bielefeld (provider_acceptance_blocked)
+- 2026-09-11: FC Eindhoven - FC Dordrecht (provider_acceptance_blocked)
 - 2026-09-11: Clermont Foot - Boulogne (provider_acceptance_blocked)
 - 2026-09-11: AZ Alkmaar - Willem II (provider_acceptance_blocked)
 - 2026-09-11: West Ham United - Wrexham (provider_acceptance_blocked)
