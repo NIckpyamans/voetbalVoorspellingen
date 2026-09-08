@@ -1,6 +1,6 @@
 # Data Quality Audit
 
-Laatst bijgewerkt: 2026-09-08T17:46:22.746Z
+Laatst bijgewerkt: 2026-09-08T20:32:49.405Z
 Lookback: 45 dagen
 
 ## Scores
@@ -14,11 +14,11 @@ Lookback: 45 dagen
 - Immutable snapshot-evaluaties: 100% (15/15)
 - Bruikbare wedstrijdstatistieken: 88%
 - Bevestigde opstellingen: 13%
-- Historisch teruggevonden basiselftallen: 73%
+- Historisch teruggevonden basiselftallen: 72%
 - Verse getimestampte prematch-odds: 12%
 - Volledige pre-match bewijsset: 3%
 - Doelpunten met tijdlijn: 82%
-- Kaarten met tijdlijn: 85%
+- Kaarten met tijdlijn: 86%
 
 ## Per competitie
 - Netherlands - Eredivisie: 30 duels, vorm 90%, H2H 50%, inzetbewijs 0%, lekvrije reviews 0% (0/0), stats 100%; gaten: h2h, confirmed_lineups, timestamped_odds, immutable_snapshot_windows, leak_free_reviews

@@ -1,6 +1,6 @@
 # Upcoming H2H Backfill
 
-Laatst bijgewerkt: 2026-09-08T17:40:07.723Z
+Laatst bijgewerkt: 2026-09-08T20:27:45.739Z
 Gecontroleerd: 24
 Gevuld: 0
 Geen directe H2H: 24
@@ -12,16 +12,6 @@ API-Football blijft quota-bewust geblokkeerd totdat de acceptatietest slaagt; ES
 ## Gevuld
 
 ## Geen Directe H2H
-- 2026-09-08: Blackburn Rovers - Sheffield United (provider_acceptance_blocked)
-- 2026-09-08: Borussia Dortmund - Villarreal (provider_acceptance_blocked)
-- 2026-09-08: Cardiff City - Stoke City (provider_acceptance_blocked)
-- 2026-09-08: FC Porto - Manchester City (provider_acceptance_blocked)
-- 2026-09-08: Southampton - Swansea City (provider_acceptance_blocked)
-- 2026-09-08: Lille - Real Betis (provider_acceptance_blocked)
-- 2026-09-08: Watford - Preston North End (provider_acceptance_blocked)
-- 2026-09-08: Real Madrid - Inter (provider_acceptance_blocked)
-- 2026-09-08: Wrexham - Burnley (provider_acceptance_blocked)
-- 2026-09-08: Bolton Wanderers - West Ham United (provider_acceptance_blocked)
 - 2026-09-09: Barcelona - Feyenoord (provider_acceptance_blocked)
 - 2026-09-09: Derby County - West Bromwich Albion (provider_acceptance_blocked)
 - 2026-09-09: VfB Stuttgart - Viking (provider_acceptance_blocked)
@@ -31,4 +21,14 @@ API-Football blijft quota-bewust geblokkeerd totdat de acceptatietest slaagt; ES
 - 2026-09-09: Paris Saint-Germain - Slovan Bratislava (provider_acceptance_blocked)
 - 2026-09-09: Sporting CP - Galatasaray (provider_acceptance_blocked)
 - 2026-09-09: Napoli - Arsenal (provider_acceptance_blocked)
+- 2026-09-10: Slavia Prague - Lens (provider_acceptance_blocked)
 - 2026-09-10: Fenerbahçe - Roma (provider_acceptance_blocked)
+- 2026-09-10: PSV Eindhoven - Shakhtar Donetsk (provider_acceptance_blocked)
+- 2026-09-10: Bayern München - Bodø/Glimt (provider_acceptance_blocked)
+- 2026-09-10: Como - RB Leipzig (provider_acceptance_blocked)
+- 2026-09-10: Manchester United - Sabah FK (provider_acceptance_blocked)
+- 2026-09-11: Jong Ajax - RKC Waalwijk (provider_acceptance_blocked)
+- 2026-09-11: Montpellier - Pau (provider_acceptance_blocked)
+- 2026-09-11: AZ Alkmaar - Willem II (provider_acceptance_blocked)
+- 2026-09-11: Darmstadt - Arminia Bielefeld (provider_acceptance_blocked)
+- 2026-09-11: West Ham United - Wrexham (provider_acceptance_blocked)
