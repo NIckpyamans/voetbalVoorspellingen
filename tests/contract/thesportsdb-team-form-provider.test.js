@@ -1,4 +1,4 @@
-import { describe, expect, it } from "vitest";
+import { describe, expect, it, vi } from "vitest";
 import {
   fetchTheSportsDbTeamForm,
   findTheSportsDbDirectResult,
@@ -6,6 +6,24 @@ import {
 } from "../../scripts/providers/thesportsdb-team-form-provider.js";
 
 describe("TheSportsDB team form provider", () => {
+  it("uses the current clock for throttling, not the batch start time", async () => {
+    vi.useFakeTimers();
+    try {
+      const clock = Date.now();
+      const fetchImpl = vi.fn(async () => ({ ok: true, json: async () => ({ teams: [] }) }));
+      const task = fetchTheSportsDbTeamForm({
+        teamName: "Ajax", cache: {}, fetchImpl,
+        now: clock - 60000,
+        requestState: { count: 0, max: 24, lastAt: clock },
+      });
+      await vi.advanceTimersByTimeAsync(250);
+      expect(fetchImpl).toHaveBeenCalledTimes(1);
+      await task;
+    } finally {
+      vi.clearAllTimers();
+      vi.useRealTimers();
+    }
+  });
   it("accepts only an exact alias and orients completed results to the requested club", async () => {
     const calls = [];
     const fetchImpl = async (url) => {

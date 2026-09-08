@@ -120,7 +120,7 @@ export async function fetchTheSportsDbTeamForm({
   if (requestState?.blockedUntil > now || (requestState?.max && requestState.count >= requestState.max)) return null;
   try {
     if (requestState) {
-      const waitMs = Math.max(0, Number(minDelayMs || 0) - (now - Number(requestState.lastAt || 0)));
+      const waitMs = Math.max(0, Number(minDelayMs || 0) - (Date.now() - Number(requestState.lastAt || 0)));
       if (waitMs) await wait(waitMs);
       requestState.count = Number(requestState.count || 0) + 1;
       requestState.lastAt = Date.now();
