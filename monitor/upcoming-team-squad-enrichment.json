@@ -1,56 +1,56 @@
 {
-  "generatedAt": "2026-09-08T04:40:40.115Z",
+  "generatedAt": "2026-09-08T08:03:03.080Z",
   "daysAhead": 8,
   "targetPlayersPerTeam": 18,
   "candidates": 287,
   "checked": 32,
-  "enriched": 32,
-  "unavailable": 0,
-  "skippedFresh": 245,
-  "pendingBeforeBatch": 42,
-  "pendingAfterBatch": 10,
+  "enriched": 30,
+  "unavailable": 2,
+  "skippedFresh": 252,
+  "pendingBeforeBatch": 35,
+  "pendingAfterBatch": 3,
   "rateLimited": false,
   "retryAfterSeconds": 0,
   "byProvider": {
-    "FotMob": 32,
-    "Laatste bevestigde opstelling": 27,
+    "FotMob": 20,
+    "Laatste bevestigde opstelling": 12,
     "Transfermarkt Datasets": 0,
-    "TheSportsDB": 0,
-    "ESPN": 0,
+    "TheSportsDB": 2,
+    "ESPN": 7,
     "Wikipedia": 0
   },
   "byCompetition": {
-    "Europe - Champions League": {
-      "checked": 1,
-      "enriched": 1,
-      "unavailable": 0
-    },
-    "England - Premier League": {
-      "checked": 5,
-      "enriched": 5,
-      "unavailable": 0
-    },
-    "Germany - Bundesliga": {
-      "checked": 8,
-      "enriched": 8,
-      "unavailable": 0
-    },
-    "England - Championship": {
+    "Germany - 2. Bundesliga": {
       "checked": 3,
       "enriched": 3,
       "unavailable": 0
     },
-    "Germany - 2. Bundesliga": {
+    "Europe - Champions League": {
+      "checked": 7,
+      "enriched": 5,
+      "unavailable": 2
+    },
+    "Europe - Europa League": {
+      "checked": 5,
+      "enriched": 5,
+      "unavailable": 0
+    },
+    "France - Ligue 1": {
+      "checked": 3,
+      "enriched": 3,
+      "unavailable": 0
+    },
+    "Germany - Bundesliga": {
+      "checked": 4,
+      "enriched": 4,
+      "unavailable": 0
+    },
+    "Europe - Conference League": {
       "checked": 7,
       "enriched": 7,
       "unavailable": 0
     },
-    "Netherlands - Eredivisie": {
-      "checked": 2,
-      "enriched": 2,
-      "unavailable": 0
-    },
-    "Europe - Conference League": {
+    "Spain - LaLiga": {
       "checked": 1,
       "enriched": 1,
       "unavailable": 0
@@ -60,238 +60,251 @@
       "enriched": 1,
       "unavailable": 0
     },
-    "Spain - LaLiga": {
-      "checked": 4,
-      "enriched": 4,
+    "Netherlands - Eredivisie": {
+      "checked": 1,
+      "enriched": 1,
       "unavailable": 0
     }
   },
-  "failureReasons": {},
-  "failures": [],
+  "failureReasons": {
+    "no_provider_team_or_roster_match": 2
+  },
+  "failures": [
+    {
+      "team": "FK Qarabag",
+      "competition": "Europe - Champions League",
+      "reason": "no_provider_team_or_roster_match",
+      "attemptedProviders": [
+        "FotMob",
+        "Transfermarkt Datasets",
+        "ESPN",
+        "TheSportsDB",
+        "Wikipedia"
+      ]
+    },
+    {
+      "team": "F.C. København",
+      "competition": "Europe - Champions League",
+      "reason": "no_provider_team_or_roster_match",
+      "attemptedProviders": [
+        "FotMob",
+        "Transfermarkt Datasets",
+        "ESPN",
+        "TheSportsDB",
+        "Wikipedia"
+      ]
+    }
+  ],
   "samples": [
     {
-      "team": "Atlético Madrid",
+      "team": "St. Pauli",
+      "competition": "Germany - 2. Bundesliga",
+      "players": 27,
+      "provider": "FotMob + Laatste bevestigde opstelling",
+      "providerTeam": "St. Pauli"
+    },
+    {
+      "team": "Barcelona",
       "competition": "Europe - Champions League",
-      "players": 26,
+      "players": 28,
       "provider": "FotMob",
-      "providerTeam": "Atlético Madrid"
+      "providerTeam": "Barcelona"
     },
     {
-      "team": "Crystal Palace",
-      "competition": "England - Premier League",
-      "players": 28,
-      "provider": "FotMob + Laatste bevestigde opstelling",
-      "providerTeam": "Crystal Palace"
+      "team": "Athletic Club",
+      "competition": "Europe - Champions League",
+      "players": 29,
+      "provider": "FotMob",
+      "providerTeam": "Athletic Club"
     },
     {
-      "team": "Tottenham Hotspur",
-      "competition": "England - Premier League",
-      "players": 28,
-      "provider": "FotMob + Laatste bevestigde opstelling",
-      "providerTeam": "Tottenham Hotspur"
-    },
-    {
-      "team": "Eintracht Frankfurt",
-      "competition": "Germany - Bundesliga",
-      "players": 28,
-      "provider": "FotMob + Laatste bevestigde opstelling",
-      "providerTeam": "Eintracht Frankfurt"
-    },
-    {
-      "team": "Middlesbrough",
-      "competition": "England - Championship",
-      "players": 28,
-      "provider": "FotMob + Laatste bevestigde opstelling",
-      "providerTeam": "Middlesbrough"
-    },
-    {
-      "team": "Coventry City",
-      "competition": "England - Premier League",
+      "team": "Bayern München",
+      "competition": "Europe - Champions League",
       "players": 29,
       "provider": "FotMob + Laatste bevestigde opstelling",
-      "providerTeam": "Coventry City"
+      "providerTeam": "Bayern München"
     },
     {
-      "team": "Hamburger SV",
-      "competition": "Germany - Bundesliga",
+      "team": "FC Porto",
+      "competition": "Europe - Europa League",
+      "players": 30,
+      "provider": "FotMob",
+      "providerTeam": "FC Porto"
+    },
+    {
+      "team": "Lyon",
+      "competition": "France - Ligue 1",
       "players": 29,
       "provider": "FotMob + Laatste bevestigde opstelling",
-      "providerTeam": "Hamburger SV"
+      "providerTeam": "Lyon"
     },
     {
-      "team": "Wrexham",
-      "competition": "England - Championship",
-      "players": 30,
-      "provider": "FotMob + Laatste bevestigde opstelling",
-      "providerTeam": "Wrexham"
-    },
-    {
-      "team": "Manchester United",
-      "competition": "England - Premier League",
-      "players": 30,
-      "provider": "FotMob + Laatste bevestigde opstelling",
-      "providerTeam": "Manchester United"
-    },
-    {
-      "team": "Bayer Leverkusen",
+      "team": "1. FC Köln",
       "competition": "Germany - Bundesliga",
-      "players": 30,
+      "players": 31,
       "provider": "FotMob + Laatste bevestigde opstelling",
-      "providerTeam": "Bayer Leverkusen"
+      "providerTeam": "1. FC Köln"
     },
     {
-      "team": "RB Leipzig",
+      "team": "Slovan Bratislava",
+      "competition": "Europe - Conference League",
+      "players": 32,
+      "provider": "FotMob + Laatste bevestigde opstelling",
+      "providerTeam": "Slovan Bratislava"
+    },
+    {
+      "team": "Auxerre",
+      "competition": "France - Ligue 1",
+      "players": 34,
+      "provider": "FotMob + Laatste bevestigde opstelling",
+      "providerTeam": "Auxerre"
+    },
+    {
+      "team": "Deportivo A Coruña",
+      "competition": "Spain - LaLiga",
+      "players": 36,
+      "provider": "FotMob",
+      "providerTeam": "Deportivo A Coruña"
+    },
+    {
+      "team": "Zrinjski Mostar",
+      "competition": "Europe - Conference League",
+      "players": 9,
+      "provider": "TheSportsDB",
+      "providerTeam": "Zrinjski Mostar"
+    },
+    {
+      "team": "PAOK",
+      "competition": "Europe - Europa League",
+      "players": 10,
+      "provider": "TheSportsDB",
+      "providerTeam": "PAOK"
+    },
+    {
+      "team": "Drita Gjilan",
+      "competition": "Europe - Conference League",
+      "players": 11,
+      "provider": "Laatste bevestigde opstelling",
+      "providerTeam": "Drita Gjilan"
+    },
+    {
+      "team": "Braga",
+      "competition": "Europe - Europa League",
+      "players": 27,
+      "provider": "FotMob + Laatste bevestigde opstelling",
+      "providerTeam": "Braga"
+    },
+    {
+      "team": "Juventus",
+      "competition": "Europe - Champions League",
+      "players": 28,
+      "provider": "FotMob",
+      "providerTeam": "Juventus"
+    },
+    {
+      "team": "Mainz",
       "competition": "Germany - Bundesliga",
-      "players": 30,
-      "provider": "FotMob + Laatste bevestigde opstelling",
-      "providerTeam": "RB Leipzig"
+      "players": 28,
+      "provider": "ESPN",
+      "providerTeam": "Mainz"
     },
     {
-      "team": "1. FC Nürnberg",
+      "team": "Bologna",
+      "competition": "Europe - Europa League",
+      "players": 30,
+      "provider": "FotMob",
+      "providerTeam": "Bologna"
+    },
+    {
+      "team": "Stade Laval",
+      "competition": "France - Ligue 2",
+      "players": 29,
+      "provider": "ESPN",
+      "providerTeam": "Stade Laval"
+    },
+    {
+      "team": "1. FC Magdeburg",
       "competition": "Germany - 2. Bundesliga",
-      "players": 30,
-      "provider": "FotMob + Laatste bevestigde opstelling",
-      "providerTeam": "1. FC Nürnberg"
+      "players": 29,
+      "provider": "ESPN",
+      "providerTeam": "1. FC Magdeburg"
     },
     {
-      "team": "VfL Osnabruck",
-      "competition": "Germany - 2. Bundesliga",
-      "players": 30,
-      "provider": "FotMob + Laatste bevestigde opstelling",
-      "providerTeam": "VfL Osnabrück"
-    },
-    {
-      "team": "Union Berlin",
+      "team": "TSG Hoffenheim",
       "competition": "Germany - Bundesliga",
-      "players": 30,
-      "provider": "FotMob + Laatste bevestigde opstelling",
-      "providerTeam": "Union Berlin"
+      "players": 29,
+      "provider": "ESPN + Laatste bevestigde opstelling",
+      "providerTeam": "TSG Hoffenheim"
     },
     {
-      "team": "PEC Zwolle",
+      "team": "Benfica",
+      "competition": "Europe - Champions League",
+      "players": 30,
+      "provider": "FotMob + Laatste bevestigde opstelling",
+      "providerTeam": "Benfica"
+    },
+    {
+      "team": "Fiorentina",
+      "competition": "Europe - Conference League",
+      "players": 30,
+      "provider": "FotMob",
+      "providerTeam": "Fiorentina"
+    },
+    {
+      "team": "Rijeka",
+      "competition": "Europe - Conference League",
+      "players": 31,
+      "provider": "FotMob + Laatste bevestigde opstelling",
+      "providerTeam": "Rijeka"
+    },
+    {
+      "team": "FC Midtjylland",
+      "competition": "Europe - Europa League",
+      "players": 29,
+      "provider": "FotMob + Laatste bevestigde opstelling",
+      "providerTeam": "FC Midtjylland"
+    },
+    {
+      "team": "Heerenveen",
       "competition": "Netherlands - Eredivisie",
-      "players": 30,
-      "provider": "FotMob + Laatste bevestigde opstelling",
-      "providerTeam": "PEC Zwolle"
+      "players": 31,
+      "provider": "FotMob",
+      "providerTeam": "SC Heerenveen"
     },
     {
-      "team": "Rayo Vallecano",
+      "team": "AS Monaco",
+      "competition": "France - Ligue 1",
+      "players": 31,
+      "provider": "ESPN",
+      "providerTeam": "AS Monaco"
+    },
+    {
+      "team": "AEK Larnaca",
       "competition": "Europe - Conference League",
       "players": 31,
       "provider": "FotMob",
-      "providerTeam": "Rayo Vallecano"
+      "providerTeam": "AEK Larnaca"
     },
     {
-      "team": "Bochum",
-      "competition": "Germany - 2. Bundesliga",
+      "team": "Shelbourne",
+      "competition": "Europe - Conference League",
       "players": 31,
-      "provider": "FotMob + Laatste bevestigde opstelling",
-      "providerTeam": "Bochum"
-    },
-    {
-      "team": "Eintracht Braunschweig",
-      "competition": "Germany - 2. Bundesliga",
-      "players": 31,
-      "provider": "FotMob + Laatste bevestigde opstelling",
-      "providerTeam": "Eintracht Braunschweig"
-    },
-    {
-      "team": "Magdeburg",
-      "competition": "Germany - 2. Bundesliga",
-      "players": 31,
-      "provider": "FotMob + Laatste bevestigde opstelling",
-      "providerTeam": "Magdeburg"
-    },
-    {
-      "team": "Borussia Mönchengladbach",
-      "competition": "Germany - Bundesliga",
-      "players": 31,
-      "provider": "FotMob + Laatste bevestigde opstelling",
-      "providerTeam": "Borussia Mönchengladbach"
-    },
-    {
-      "team": "Nantes",
-      "competition": "France - Ligue 2",
-      "players": 32,
-      "provider": "FotMob + Laatste bevestigde opstelling",
-      "providerTeam": "Nantes"
-    },
-    {
-      "team": "Arminia Bielefeld",
-      "competition": "Germany - 2. Bundesliga",
-      "players": 32,
-      "provider": "FotMob + Laatste bevestigde opstelling",
-      "providerTeam": "Arminia Bielefeld"
-    },
-    {
-      "team": "Werder Bremen",
-      "competition": "Germany - Bundesliga",
-      "players": 32,
-      "provider": "FotMob + Laatste bevestigde opstelling",
-      "providerTeam": "Werder Bremen"
-    },
-    {
-      "team": "Elche",
-      "competition": "Spain - LaLiga",
-      "players": 32,
       "provider": "FotMob",
-      "providerTeam": "Elche"
+      "providerTeam": "Shelbourne"
     },
     {
-      "team": "Malaga",
-      "competition": "Spain - LaLiga",
-      "players": 32,
-      "provider": "FotMob",
-      "providerTeam": "Málaga"
-    },
-    {
-      "team": "Millwall",
-      "competition": "England - Championship",
-      "players": 33,
-      "provider": "FotMob + Laatste bevestigde opstelling",
-      "providerTeam": "Millwall"
-    },
-    {
-      "team": "Darmstadt",
+      "team": "SV Darmstadt 98",
       "competition": "Germany - 2. Bundesliga",
-      "players": 33,
-      "provider": "FotMob + Laatste bevestigde opstelling",
-      "providerTeam": "Darmstadt"
+      "players": 31,
+      "provider": "ESPN",
+      "providerTeam": "SV Darmstadt 98"
     },
     {
-      "team": "Cambuur",
-      "competition": "Netherlands - Eredivisie",
-      "players": 33,
-      "provider": "FotMob + Laatste bevestigde opstelling",
-      "providerTeam": "Cambuur"
-    },
-    {
-      "team": "Hull City",
-      "competition": "England - Premier League",
-      "players": 34,
-      "provider": "FotMob + Laatste bevestigde opstelling",
-      "providerTeam": "Hull City"
-    },
-    {
-      "team": "Borussia Dortmund",
+      "team": "Hamburg SV",
       "competition": "Germany - Bundesliga",
-      "players": 34,
-      "provider": "FotMob + Laatste bevestigde opstelling",
-      "providerTeam": "Borussia Dortmund"
-    },
-    {
-      "team": "Deportivo Alaves",
-      "competition": "Spain - LaLiga",
-      "players": 33,
-      "provider": "FotMob",
-      "providerTeam": "Deportivo Alavés"
-    },
-    {
-      "team": "Getafe",
-      "competition": "Spain - LaLiga",
-      "players": 35,
-      "provider": "FotMob + Laatste bevestigde opstelling",
-      "providerTeam": "Getafe"
+      "players": 30,
+      "provider": "ESPN",
+      "providerTeam": "Hamburg SV"
     }
   ],
   "coverage": {
