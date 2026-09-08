@@ -8,12 +8,13 @@ import { canonicalDedupeTeam } from "../shared/matchNormalization.js";
 import { loadSnapshotLedger } from "../shared/predictionSnapshotLedger.js";
 import { buildLocalTeamFormIndex, dayPayloadsFromHistorySummary, dayPayloadsFromSnapshotLedger, mergeLocalTeamForm } from "./worker/local-team-form-history.js";
 import { shouldRefreshTeamFormCache } from "./worker/team-form-cache-policy.js";
+import { boundedFormFetch } from "./worker/bounded-form-fetch.js";
 
 const ROOT = process.cwd();
 const DAYS_AHEAD = Math.max(1, Number(process.env.FORM_ENRICHMENT_DAYS_AHEAD || 7));
 const MAX_TEAMS = Math.max(1, Number(process.env.FORM_ENRICHMENT_MAX_TEAMS || 20));
 const REQUEST_TIMEOUT_MS = Math.max(1000, Number(process.env.FORM_ENRICHMENT_REQUEST_TIMEOUT_MS || 3000));
-const TEAM_TIMEOUT_MS = Math.max(1000, Number(process.env.FORM_ENRICHMENT_TEAM_TIMEOUT_MS || 7000));
+const TEAM_TIMEOUT_MS = Math.max(1000, Number(process.env.FORM_ENRICHMENT_TEAM_TIMEOUT_MS || 12000));
 const RUN_BUDGET_MS = Math.max(10000, Number(process.env.FORM_ENRICHMENT_RUN_BUDGET_MS || 90000));
 const SUCCESS_CACHE_TTL_MS = 12 * 60 * 60 * 1000;
 const PARTIAL_CACHE_TTL_MS = 2 * 60 * 60 * 1000;
@@ -108,43 +109,25 @@ const report = {
   localHistoryMatches: 0,
   localFriendlyHistoryMatches: 0,
   samples: [],
+  failures: [],
 };
 
-async function fetchWithTimeout(url, options = {}) {
-  const controller = new AbortController();
-  const timeout = setTimeout(() => controller.abort(), REQUEST_TIMEOUT_MS);
-  try {
-    return await fetch(url, { ...options, signal: controller.signal });
-  } finally {
-    clearTimeout(timeout);
-  }
-}
-
 async function fetchTeamProfile(args) {
-  let timer;
-  try {
-    return await Promise.race([
-      (async () => {
+  return boundedFormFetch(async (fetchImpl, savePartial) => {
         const fotmob = await fetchFotMobTeamForm({
           teamId: args.fotmobTeamId,
           teamName: args.teamName,
-          fetchImpl: args.fetchImpl,
+          fetchImpl,
           now: args.now,
         });
+        savePartial(fotmob);
         if (Number(fotmob?.recentMatches?.length || 0) >= TARGET_FORM_MATCHES) return fotmob;
-        const sportsDb = await fetchTheSportsDbTeamForm(args);
+        const sportsDb = await fetchTheSportsDbTeamForm({ ...args, fetchImpl, cache: {} });
         if (!fotmob) return sportsDb;
         if (!sportsDb) return fotmob;
         const merged = mergeLocalTeamForm(fotmob, sportsDb.recentMatches, args.teamName, { now: args.now });
         return { ...merged, source: "fotmob-team-fixtures+thesportsdb-recent-results" };
-      })(),
-      new Promise((resolve) => {
-        timer = setTimeout(() => resolve({ timedOut: true }), TEAM_TIMEOUT_MS);
-      }),
-    ]);
-  } finally {
-    clearTimeout(timer);
-  }
+  }, { timeoutMs: Math.min(TEAM_TIMEOUT_MS, Math.max(1, RUN_BUDGET_MS - (Date.now() - now) - 1000)), requestTimeoutMs: REQUEST_TIMEOUT_MS });
 }
 const historicalDays = fs.readdirSync(path.join(ROOT, "data", "days"))
   .filter((fileName) => /^\d{4}-\d{2}-\d{2}\.json$/.test(fileName))
@@ -184,11 +167,12 @@ const pendingTeams = [...teamNames]
   .slice(0, MAX_TEAMS);
 
 for (const teamName of pendingTeams) {
-  if (Date.now() - now >= RUN_BUDGET_MS) {
+  if (Date.now() - now >= RUN_BUDGET_MS - 1000) {
     report.budgetExceeded = true;
     break;
   }
   const key = normalize(teamName);
+  const existing = cache[key];
   report.checked += 1;
   const profile = await fetchTeamProfile({
     teamName,
@@ -197,23 +181,27 @@ for (const teamName of pendingTeams) {
     nameVariants: variants,
     now,
     requestState,
-    fetchImpl: fetchWithTimeout,
     maxSearchVariants: 1,
     minRecentMatches: TARGET_FORM_MATCHES,
     partialTtlMs: PARTIAL_CACHE_TTL_MS,
   });
+  const failedRequests = profile.requests.filter((request) => request.status !== "ok");
+  if (profile.timedOut || failedRequests.length || !profile.recentMatches?.length) {
+    report.failures.push({ team: teamName, reason: profile.timedOut ? "team_timeout" : failedRequests[0]?.status || "not_found", requests: profile.requests, retainedMatches: existing?.data?.recentMatches?.length || 0 });
+  }
+  if (profile.timedOut || failedRequests.some((request) => request.status === "timeout")) report.timedOut += 1;
   if (profile?.recentMatches?.length) {
     report.enriched += 1;
     report.samples.push({ team: teamName, matches: profile.recentMatches.length, providerTeam: profile.providerTeamName });
     cache[key] = {
       updatedAt: new Date().toISOString(),
       providerCheckedAt: new Date().toISOString(),
-      data: profile,
+      data: mergeLocalTeamForm(profile, existing?.data?.recentMatches || [], teamName, { now }),
     };
   } else {
     report.unavailable += 1;
-    if (profile?.timedOut) report.timedOut += 1;
     cache[key] = {
+      ...existing,
       updatedAt: new Date().toISOString(),
       providerCheckedAt: new Date().toISOString(),
       unavailable: true,
@@ -234,6 +222,8 @@ for (const teamName of teamNames) {
   report.localFriendlyHistoryMatches += localMatches.filter((match) => match.friendly).length;
 }
 
+report.durationMs = Date.now() - now;
+report.deferredTeams = pendingTeams.length - report.checked;
 fs.mkdirSync(path.dirname(CACHE_FILE), { recursive: true });
 fs.writeFileSync(CACHE_FILE, `${JSON.stringify({ schemaVersion: "team-form-cache-v1", generatedAt: report.generatedAt, teams: cache })}\n`);
 fs.mkdirSync(path.dirname(REPORT_FILE), { recursive: true });
