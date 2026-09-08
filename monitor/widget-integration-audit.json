@@ -1,18 +1,18 @@
 {
-  "generatedAt": "2026-09-01T11:43:49.751Z",
+  "generatedAt": "2026-09-08T11:24:47.986Z",
   "baseUrl": "https://voetbalvoorspellingen-clean.vercel.app",
   "status": "degraded",
   "totals": {
     "checks": 10,
-    "passed": 7,
-    "failed": 3
+    "passed": 9,
+    "failed": 1
   },
   "neon": {
-    "connected": false,
-    "matches": 0,
-    "predictionSnapshots": 0,
+    "connected": true,
+    "matches": 1248,
+    "predictionSnapshots": 4777,
     "h2hEdges": 0,
-    "auditRows": 0
+    "auditRows": 23885
   },
   "checks": [
     {
@@ -25,23 +25,23 @@
     {
       "key": "neon",
       "label": "Neon database",
-      "passed": false,
-      "status": 500,
-      "detail": "HTTP 500"
+      "passed": true,
+      "status": 200,
+      "detail": "1248 matches, 4777 snapshots"
     },
     {
       "key": "provider_widget",
       "label": "Provider- en integriteitswidget",
       "passed": false,
-      "status": 500,
-      "detail": "HTTP 500"
+      "status": 200,
+      "detail": "0 providers, 0 conflicten"
     },
     {
       "key": "matches_widget",
       "label": "Dashboard/matches-widget",
       "passed": true,
       "status": 200,
-      "detail": "8 actuele matches, bron github-worker-v4-split"
+      "detail": "14 actuele matches, bron github-worker-v4-split"
     },
     {
       "key": "standings_widget",
@@ -69,14 +69,14 @@
       "label": "Geschiedenis-widget",
       "passed": true,
       "status": 200,
-      "detail": "478 reviews"
+      "detail": "1511 reviews"
     },
     {
       "key": "snapshot_widget",
       "label": "Prediction-snapshot-widget",
-      "passed": false,
-      "status": 500,
-      "detail": "HTTP 500"
+      "passed": true,
+      "status": 200,
+      "detail": "1 snapshots"
     },
     {
       "key": "knowledge_widget",
@@ -87,7 +87,6 @@
     }
   ],
   "opportunities": [
-    "Vul gratis pre-match odds snapshots voordat ROI/CLV wordt beoordeeld.",
-    "Herstel de mislukte widgetcontracten: Neon database, Provider- en integriteitswidget, Prediction-snapshot-widget."
+    "Herstel de mislukte widgetcontracten: Provider- en integriteitswidget."
   ]
 }
