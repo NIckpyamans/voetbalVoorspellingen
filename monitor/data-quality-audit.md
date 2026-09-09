@@ -1,11 +1,11 @@
 # Data Quality Audit
 
-Laatst bijgewerkt: 2026-09-09T16:56:03.161Z
+Laatst bijgewerkt: 2026-09-09T19:44:25.436Z
 Lookback: 45 dagen
 
 ## Scores
-- Wedstrijden: 716
-- Oude wedstrijden: 354
+- Wedstrijden: 715
+- Oude wedstrijden: 353
 - Pending result backfills: 0
 - Ontbrekende oude scores: 0
 - H2H-dekking: 48%
@@ -14,7 +14,7 @@ Lookback: 45 dagen
 - Immutable snapshot-evaluaties: 100% (15/15)
 - Bruikbare wedstrijdstatistieken: 89%
 - Bevestigde opstellingen: 13%
-- Historisch teruggevonden basiselftallen: 70%
+- Historisch teruggevonden basiselftallen: 69%
 - Verse getimestampte prematch-odds: 12%
 - Volledige pre-match bewijsset: 3%
 - Doelpunten met tijdlijn: 83%
@@ -23,7 +23,7 @@ Lookback: 45 dagen
 ## Per competitie
 - Netherlands - Eredivisie: 30 duels, vorm 90%, H2H 53%, inzetbewijs 0%, lekvrije reviews 0% (0/0), stats 100%; gaten: h2h, confirmed_lineups, timestamped_odds, immutable_snapshot_windows, leak_free_reviews
 - Netherlands - Eerste Divisie: 113 duels, vorm 35%, H2H 12%, inzetbewijs 0%, lekvrije reviews 0% (0/0), stats 100%; gaten: form, h2h, confirmed_lineups, timestamped_odds, immutable_snapshot_windows, leak_free_reviews
-- Germany - Bundesliga: 84 duels, vorm 92%, H2H 60%, inzetbewijs 0%, lekvrije reviews 0% (0/0), stats 81%; gaten: h2h, confirmed_lineups, timestamped_odds, immutable_snapshot_windows, leak_free_reviews, goal_timeline
+- Germany - Bundesliga: 83 duels, vorm 92%, H2H 59%, inzetbewijs 0%, lekvrije reviews 0% (0/0), stats 80%; gaten: h2h, confirmed_lineups, timestamped_odds, immutable_snapshot_windows, leak_free_reviews, goal_timeline
 - Germany - 2. Bundesliga: 30 duels, vorm 73%, H2H 47%, inzetbewijs 0%, lekvrije reviews 0% (0/0), stats 100%; gaten: form, h2h, confirmed_lineups, timestamped_odds, immutable_snapshot_windows, leak_free_reviews
 - England - Premier League: 90 duels, vorm 96%, H2H 61%, inzetbewijs 2%, lekvrije reviews 0% (0/0), stats 100%; gaten: h2h, confirmed_lineups, timestamped_odds, immutable_snapshot_windows, leak_free_reviews
 - England - Championship: 59 duels, vorm 56%, H2H 49%, inzetbewijs 14%, lekvrije reviews 0% (0/0), stats 100%; gaten: form, h2h, confirmed_lineups, timestamped_odds, immutable_snapshot_windows, leak_free_reviews
