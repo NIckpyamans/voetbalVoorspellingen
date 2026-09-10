@@ -15,15 +15,9 @@ describe("Club strength profile", () => {
     });
   });
 
-  it("combines current squad, Elo and a confirmed lineup transparently", () => {
-    const profile = buildClubStrengthProfile({
-      clubEloProfile: { elo: 1712, rank: 12, country: "NED", asOf: "2026-08-25" },
-      squadProfile: { rating: 74, playerCount: 25, coverage: 1 },
-      lineupSide: { avgRating: 7.1, confirmed: true },
-    });
-    expect(profile.rating).toBeGreaterThan(65);
-    expect(profile.quality).toBe("hoog");
-    expect(profile.lineupConfirmed).toBe(true);
-    expect(profile.uefaCoefficient).toBeNull();
+  it("does not mislabel a form-derived squad score as measured club strength", () => {
+    const profile = buildClubStrengthProfile({ squadProfile: { rating: 90, playerCount: 25, coverage: 1 } });
+    expect(profile.rating).toBeNull();
+    expect(profile.quality).toBe("laag");
   });
 });

@@ -16,18 +16,11 @@ export function derivePlayerRating(player: any, squadPlayers: any[], teamStrengt
   }
 
   const marketValue = Number(player?.marketValueEur || player?.player?.marketValueEur || 0);
-  const marketValues = (Array.isArray(squadPlayers) ? squadPlayers : [])
-    .map((item) => Number(item?.marketValueEur || item?.player?.marketValueEur || 0))
-    .filter((value) => value > 0)
-    .sort((left, right) => left - right);
-  if (marketValue > 0 && marketValues.length) {
-    const lower = Math.log1p(marketValues[0]);
-    const upper = Math.log1p(marketValues[marketValues.length - 1]);
-    const percentile = upper > lower ? (Math.log1p(marketValue) - lower) / (upper - lower) : 0.5;
-    return {
-      rating: Number((5.8 + clamp(percentile, 0, 1) * 2.2).toFixed(1)),
-      ratingSource: "marktwaarde-indicatie",
-    };
+  if (Number.isFinite(marketValue) && marketValue > 0) {
+    // Fixed absolute scale, shared with club value evidence. Never rank a
+    // cheap club's most expensive player equally with a global elite player.
+    const valueScore = clamp(50 + 20 * Math.log10(marketValue / 3000000), 1, 99);
+    return { rating: Number((4.5 + valueScore / 20).toFixed(1)), ratingSource: "marktwaarde-indicatie" };
   }
 
   const strength = clamp(Number(teamStrength || 50), 0, 100);

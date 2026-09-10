@@ -1,0 +1,657 @@
+{
+  "generatedAt": "2026-09-10T18:14:23.561Z",
+  "date": "2026-09-10",
+  "method": "Current-input diagnostic replay; not an out-of-sample accuracy backtest",
+  "checked": 4,
+  "rows": [
+    {
+      "id": "ss-fotmob-6106240",
+      "home": "Bayern München",
+      "away": "Bodø/Glimt",
+      "homeRating": {
+        "version": "club-rating-v2",
+        "rating": 82.71,
+        "reliability": 1,
+        "quality": "hoog",
+        "components": [
+          {
+            "key": "squadValue",
+            "rating": 73.56,
+            "weight": 0.45,
+            "source": "FotMob + Laatste bevestigde opstelling",
+            "asOf": "2026-09-10T08:06:31.198Z",
+            "effectiveWeight": 0.45
+          },
+          {
+            "key": "clubElo",
+            "rating": 99,
+            "weight": 0.35,
+            "source": "ClubElo",
+            "asOf": "2026-09-10",
+            "effectiveWeight": 0.35
+          },
+          {
+            "key": "competition",
+            "rating": 73.95,
+            "weight": 0.15,
+            "source": "ClubElo",
+            "asOf": "2026-09-10",
+            "effectiveWeight": 0.15
+          },
+          {
+            "key": "playerPerformance",
+            "rating": 77.25,
+            "weight": 0.05,
+            "source": "FotMob + Laatste bevestigde opstelling",
+            "asOf": "2026-09-10T08:06:31.198Z",
+            "effectiveWeight": 0.05
+          }
+        ],
+        "valueEvidence": {
+          "playerCount": 29,
+          "valuedPlayers": 28,
+          "coverage": 0.97,
+          "totalValueEur": 846176464,
+          "valueRating": 73.56,
+          "ratedPlayers": 17,
+          "performanceAverage": 7.13
+        },
+        "competition": {
+          "rating": 73.95,
+          "medianElo": 1739.5,
+          "teams": 16,
+          "country": "GER",
+          "level": null,
+          "method": "country-top16-median-proxy",
+          "source": "ClubElo",
+          "asOf": "2026-09-10"
+        },
+        "missing": [],
+        "label": "zeer sterk",
+        "source": "ClubElo, selectiewaarde en competitiegecorrigeerde spelersprestaties",
+        "sourceAsOf": "2026-09-10T18:14:23.561Z",
+        "clubElo": 2043,
+        "clubEloRank": 1,
+        "country": "GER",
+        "level": null,
+        "squadRating": 73.56,
+        "squadPlayers": 29,
+        "rosterCoverage": 0.97,
+        "lineupRating": null,
+        "lineupConfirmed": false,
+        "uefaCoefficient": null,
+        "uefaCoefficientStatus": "niet gebruikt"
+      },
+      "awayRating": {
+        "version": "club-rating-v2",
+        "rating": 59.11,
+        "reliability": 1,
+        "quality": "hoog",
+        "components": [
+          {
+            "key": "squadValue",
+            "rating": 47.26,
+            "weight": 0.45,
+            "source": "FotMob + Laatste bevestigde opstelling",
+            "asOf": "2026-09-09T11:59:13.158Z",
+            "effectiveWeight": 0.45
+          },
+          {
+            "key": "clubElo",
+            "rating": 78.9,
+            "weight": 0.35,
+            "source": "ClubElo",
+            "asOf": "2026-09-10",
+            "effectiveWeight": 0.35
+          },
+          {
+            "key": "competition",
+            "rating": 50.3,
+            "weight": 0.15,
+            "source": "ClubElo",
+            "asOf": "2026-09-10",
+            "effectiveWeight": 0.15
+          },
+          {
+            "key": "playerPerformance",
+            "rating": 53.6,
+            "weight": 0.05,
+            "source": "FotMob + Laatste bevestigde opstelling",
+            "asOf": "2026-09-09T11:59:13.158Z",
+            "effectiveWeight": 0.05
+          }
+        ],
+        "valueEvidence": {
+          "playerCount": 28,
+          "valuedPlayers": 22,
+          "coverage": 0.79,
+          "totalValueEur": 40767141,
+          "valueRating": 47.26,
+          "ratedPlayers": 20,
+          "performanceAverage": 7.13
+        },
+        "competition": {
+          "rating": 50.3,
+          "medianElo": 1503,
+          "teams": 16,
+          "country": "NOR",
+          "level": null,
+          "method": "country-top16-median-proxy",
+          "source": "ClubElo",
+          "asOf": "2026-09-10"
+        },
+        "missing": [],
+        "label": "gemiddeld",
+        "source": "ClubElo, selectiewaarde en competitiegecorrigeerde spelersprestaties",
+        "sourceAsOf": "2026-09-10T18:14:23.561Z",
+        "clubElo": 1789,
+        "clubEloRank": 47,
+        "country": "NOR",
+        "level": null,
+        "squadRating": 47.26,
+        "squadPlayers": 28,
+        "rosterCoverage": 0.79,
+        "lineupRating": null,
+        "lineupConfirmed": false,
+        "uefaCoefficient": null,
+        "uefaCoefficientStatus": "niet gebruikt"
+      },
+      "before": {
+        "storedPredictionId": "pred_29e52cbdcd8a112f31",
+        "generatedAt": "2026-09-05T05:56:23.437Z",
+        "homeRating": 64.5,
+        "awayRating": 67.9
+      },
+      "replay": {
+        "score": "3-2",
+        "homeProb": 0.4769,
+        "drawProb": 0.2635,
+        "awayProb": 0.2596,
+        "homeXG": 2.75,
+        "awayXG": 1.67,
+        "signal": {
+          "difference": 23.6,
+          "reliability": 1,
+          "homeMultiplier": 1.4819122777692075,
+          "awayMultiplier": 0.6748037755010352
+        }
+      }
+    },
+    {
+      "id": "ss-fotmob-6106411",
+      "home": "Como",
+      "away": "RB Leipzig",
+      "homeRating": {
+        "version": "club-rating-v2",
+        "rating": 73.51,
+        "reliability": 1,
+        "quality": "hoog",
+        "components": [
+          {
+            "key": "squadValue",
+            "rating": 66.31,
+            "weight": 0.45,
+            "source": "FotMob",
+            "asOf": "2026-09-09T01:17:22.594Z",
+            "effectiveWeight": 0.45
+          },
+          {
+            "key": "clubElo",
+            "rating": 80.7,
+            "weight": 0.35,
+            "source": "ClubElo",
+            "asOf": "2026-09-10",
+            "effectiveWeight": 0.35
+          },
+          {
+            "key": "competition",
+            "rating": 76.55,
+            "weight": 0.15,
+            "source": "ClubElo",
+            "asOf": "2026-09-10",
+            "effectiveWeight": 0.15
+          },
+          {
+            "key": "playerPerformance",
+            "rating": 78.85,
+            "weight": 0.05,
+            "source": "FotMob",
+            "asOf": "2026-09-09T01:17:22.594Z",
+            "effectiveWeight": 0.05
+          }
+        ],
+        "valueEvidence": {
+          "playerCount": 28,
+          "valuedPlayers": 26,
+          "coverage": 0.93,
+          "totalValueEur": 369870594,
+          "valueRating": 66.31,
+          "ratedPlayers": 19,
+          "performanceAverage": 7.03
+        },
+        "competition": {
+          "rating": 76.55,
+          "medianElo": 1765.5,
+          "teams": 16,
+          "country": "ITA",
+          "level": null,
+          "method": "country-top16-median-proxy",
+          "source": "ClubElo",
+          "asOf": "2026-09-10"
+        },
+        "missing": [],
+        "label": "sterk",
+        "source": "ClubElo, selectiewaarde en competitiegecorrigeerde spelersprestaties",
+        "sourceAsOf": "2026-09-10T18:14:23.561Z",
+        "clubElo": 1807,
+        "clubEloRank": 35,
+        "country": "ITA",
+        "level": null,
+        "squadRating": 66.31,
+        "squadPlayers": 28,
+        "rosterCoverage": 0.93,
+        "lineupRating": null,
+        "lineupConfirmed": false,
+        "uefaCoefficient": null,
+        "uefaCoefficientStatus": "niet gebruikt"
+      },
+      "awayRating": {
+        "version": "club-rating-v2",
+        "rating": 73.53,
+        "reliability": 1,
+        "quality": "hoog",
+        "components": [
+          {
+            "key": "squadValue",
+            "rating": 66.2,
+            "weight": 0.45,
+            "source": "FotMob + Laatste bevestigde opstelling",
+            "asOf": "2026-09-10T05:22:12.199Z",
+            "effectiveWeight": 0.45
+          },
+          {
+            "key": "clubElo",
+            "rating": 82.7,
+            "weight": 0.35,
+            "source": "ClubElo",
+            "asOf": "2026-09-10",
+            "effectiveWeight": 0.35
+          },
+          {
+            "key": "competition",
+            "rating": 73.95,
+            "weight": 0.15,
+            "source": "ClubElo",
+            "asOf": "2026-09-10",
+            "effectiveWeight": 0.15
+          },
+          {
+            "key": "playerPerformance",
+            "rating": 74.05,
+            "weight": 0.05,
+            "source": "FotMob + Laatste bevestigde opstelling",
+            "asOf": "2026-09-10T05:22:12.199Z",
+            "effectiveWeight": 0.05
+          }
+        ],
+        "valueEvidence": {
+          "playerCount": 29,
+          "valuedPlayers": 28,
+          "coverage": 0.97,
+          "totalValueEur": 374517209,
+          "valueRating": 66.2,
+          "ratedPlayers": 17,
+          "performanceAverage": 6.81
+        },
+        "competition": {
+          "rating": 73.95,
+          "medianElo": 1739.5,
+          "teams": 16,
+          "country": "GER",
+          "level": null,
+          "method": "country-top16-median-proxy",
+          "source": "ClubElo",
+          "asOf": "2026-09-10"
+        },
+        "missing": [],
+        "label": "sterk",
+        "source": "ClubElo, selectiewaarde en competitiegecorrigeerde spelersprestaties",
+        "sourceAsOf": "2026-09-10T18:14:23.561Z",
+        "clubElo": 1827,
+        "clubEloRank": 28,
+        "country": "GER",
+        "level": null,
+        "squadRating": 66.2,
+        "squadPlayers": 29,
+        "rosterCoverage": 0.97,
+        "lineupRating": null,
+        "lineupConfirmed": false,
+        "uefaCoefficient": null,
+        "uefaCoefficientStatus": "niet gebruikt"
+      },
+      "before": {
+        "storedPredictionId": "pred_7554f76da72d9a39a5",
+        "generatedAt": "2026-09-05T05:56:23.437Z",
+        "homeRating": 58.7,
+        "awayRating": 57.3
+      },
+      "replay": {
+        "score": "3-1",
+        "homeProb": 0.5401,
+        "drawProb": 0.2708,
+        "awayProb": 0.1891,
+        "homeXG": 2.52,
+        "awayXG": 0.77,
+        "signal": {
+          "difference": -0.02,
+          "reliability": 1,
+          "homeMultiplier": 0.99966672221605,
+          "awayMultiplier": 1.000333388895062
+        }
+      }
+    },
+    {
+      "id": "ss-fotmob-6106293",
+      "home": "Manchester United",
+      "away": "Sabah FK",
+      "homeRating": {
+        "version": "club-rating-v2",
+        "rating": 80.66,
+        "reliability": 1,
+        "quality": "hoog",
+        "components": [
+          {
+            "key": "squadValue",
+            "rating": 72.47,
+            "weight": 0.45,
+            "source": "FotMob + Laatste bevestigde opstelling",
+            "asOf": "2026-09-10T05:22:10.888Z",
+            "effectiveWeight": 0.45
+          },
+          {
+            "key": "clubElo",
+            "rating": 88.6,
+            "weight": 0.35,
+            "source": "ClubElo",
+            "asOf": "2026-09-10",
+            "effectiveWeight": 0.35
+          },
+          {
+            "key": "competition",
+            "rating": 85.3,
+            "weight": 0.15,
+            "source": "ClubElo",
+            "asOf": "2026-09-10",
+            "effectiveWeight": 0.15
+          },
+          {
+            "key": "playerPerformance",
+            "rating": 84.8,
+            "weight": 0.05,
+            "source": "FotMob + Laatste bevestigde opstelling",
+            "asOf": "2026-09-10T05:22:10.888Z",
+            "effectiveWeight": 0.05
+          }
+        ],
+        "valueEvidence": {
+          "playerCount": 30,
+          "valuedPlayers": 30,
+          "coverage": 1,
+          "totalValueEur": 793384233,
+          "valueRating": 72.47,
+          "ratedPlayers": 18,
+          "performanceAverage": 6.75
+        },
+        "competition": {
+          "rating": 85.3,
+          "medianElo": 1853,
+          "teams": 16,
+          "country": "ENG",
+          "level": null,
+          "method": "country-top16-median-proxy",
+          "source": "ClubElo",
+          "asOf": "2026-09-10"
+        },
+        "missing": [],
+        "label": "zeer sterk",
+        "source": "ClubElo, selectiewaarde en competitiegecorrigeerde spelersprestaties",
+        "sourceAsOf": "2026-09-10T18:14:23.561Z",
+        "clubElo": 1886,
+        "clubEloRank": 14,
+        "country": "ENG",
+        "level": null,
+        "squadRating": 72.47,
+        "squadPlayers": 30,
+        "rosterCoverage": 1,
+        "lineupRating": null,
+        "lineupConfirmed": false,
+        "uefaCoefficient": null,
+        "uefaCoefficientStatus": "niet gebruikt"
+      },
+      "awayRating": {
+        "version": "club-rating-v2",
+        "rating": 48.62,
+        "reliability": 0.5,
+        "quality": "middel",
+        "components": [
+          {
+            "key": "clubElo",
+            "rating": 56.3,
+            "weight": 0.35,
+            "source": "ClubElo",
+            "asOf": "2026-09-10",
+            "effectiveWeight": 0.7
+          },
+          {
+            "key": "competition",
+            "rating": 30.7,
+            "weight": 0.15,
+            "source": "ClubElo",
+            "asOf": "2026-09-10",
+            "effectiveWeight": 0.3
+          }
+        ],
+        "valueEvidence": {
+          "playerCount": 32,
+          "valuedPlayers": 0,
+          "coverage": 0,
+          "totalValueEur": null,
+          "valueRating": null,
+          "ratedPlayers": 0,
+          "performanceAverage": null
+        },
+        "competition": {
+          "rating": 30.7,
+          "medianElo": 1307,
+          "teams": 13,
+          "country": "AZE",
+          "level": null,
+          "method": "country-top16-median-proxy",
+          "source": "ClubElo",
+          "asOf": "2026-09-10"
+        },
+        "missing": [
+          "voldoende actuele spelerswaarden",
+          "voldoende gemeten spelersprestaties"
+        ],
+        "label": "kwetsbaar",
+        "source": "ClubElo, selectiewaarde en competitiegecorrigeerde spelersprestaties",
+        "sourceAsOf": "2026-09-10T18:14:23.561Z",
+        "clubElo": 1563,
+        "clubEloRank": 452,
+        "country": "AZE",
+        "level": null,
+        "squadRating": null,
+        "squadPlayers": 32,
+        "rosterCoverage": 0,
+        "lineupRating": null,
+        "lineupConfirmed": false,
+        "uefaCoefficient": null,
+        "uefaCoefficientStatus": "niet gebruikt"
+      },
+      "before": {
+        "storedPredictionId": "pred_f91b5254f9acffa5ab",
+        "generatedAt": "2026-09-05T05:56:23.437Z",
+        "homeRating": 60.6,
+        "awayRating": 60
+      },
+      "replay": {
+        "score": "3-2",
+        "homeProb": 0.5384,
+        "drawProb": 0.2568,
+        "awayProb": 0.2048,
+        "homeXG": 2.72,
+        "awayXG": 1.6,
+        "signal": {
+          "difference": 32.04,
+          "reliability": 0.5,
+          "homeMultiplier": 1.4587720514120834,
+          "awayMultiplier": 0.6855080607227191
+        }
+      }
+    },
+    {
+      "id": "ss-fotmob-6106392",
+      "home": "Slavia Prague",
+      "away": "Lens",
+      "homeRating": {
+        "version": "club-rating-v2",
+        "rating": 49.59,
+        "reliability": 0.45,
+        "quality": "middel",
+        "components": [
+          {
+            "key": "squadValue",
+            "rating": 49.59,
+            "weight": 0.45,
+            "source": "FotMob",
+            "asOf": "2026-09-10T12:55:57.611Z",
+            "effectiveWeight": 1
+          }
+        ],
+        "valueEvidence": {
+          "playerCount": 30,
+          "valuedPlayers": 29,
+          "coverage": 0.97,
+          "totalValueEur": 59692742,
+          "valueRating": 49.59,
+          "ratedPlayers": 25,
+          "performanceAverage": 7.08
+        },
+        "competition": null,
+        "missing": [
+          "actuele ClubElo",
+          "competitiesterkte"
+        ],
+        "label": "kwetsbaar",
+        "source": "ClubElo, selectiewaarde en competitiegecorrigeerde spelersprestaties",
+        "sourceAsOf": "2026-09-10T18:14:23.561Z",
+        "clubElo": null,
+        "clubEloRank": null,
+        "country": null,
+        "level": null,
+        "squadRating": 49.59,
+        "squadPlayers": 30,
+        "rosterCoverage": 0.97,
+        "lineupRating": null,
+        "lineupConfirmed": false,
+        "uefaCoefficient": null,
+        "uefaCoefficientStatus": "niet gebruikt"
+      },
+      "awayRating": {
+        "version": "club-rating-v2",
+        "rating": 67.92,
+        "reliability": 1,
+        "quality": "hoog",
+        "components": [
+          {
+            "key": "squadValue",
+            "rating": 55.47,
+            "weight": 0.45,
+            "source": "FotMob + Laatste bevestigde opstelling",
+            "asOf": "2026-09-10T00:18:22.649Z",
+            "effectiveWeight": 0.45
+          },
+          {
+            "key": "clubElo",
+            "rating": 81.5,
+            "weight": 0.35,
+            "source": "ClubElo",
+            "asOf": "2026-09-10",
+            "effectiveWeight": 0.35
+          },
+          {
+            "key": "competition",
+            "rating": 72.3,
+            "weight": 0.15,
+            "source": "ClubElo",
+            "asOf": "2026-09-10",
+            "effectiveWeight": 0.15
+          },
+          {
+            "key": "playerPerformance",
+            "rating": 71.7,
+            "weight": 0.05,
+            "source": "FotMob + Laatste bevestigde opstelling",
+            "asOf": "2026-09-10T00:18:22.649Z",
+            "effectiveWeight": 0.05
+          }
+        ],
+        "valueEvidence": {
+          "playerCount": 30,
+          "valuedPlayers": 27,
+          "coverage": 0.9,
+          "totalValueEur": 110806012,
+          "valueRating": 55.47,
+          "ratedPlayers": 20,
+          "performanceAverage": 6.74
+        },
+        "competition": {
+          "rating": 72.3,
+          "medianElo": 1723,
+          "teams": 16,
+          "country": "FRA",
+          "level": null,
+          "method": "country-top16-median-proxy",
+          "source": "ClubElo",
+          "asOf": "2026-09-10"
+        },
+        "missing": [],
+        "label": "sterk",
+        "source": "ClubElo, selectiewaarde en competitiegecorrigeerde spelersprestaties",
+        "sourceAsOf": "2026-09-10T18:14:23.561Z",
+        "clubElo": 1815,
+        "clubEloRank": 33,
+        "country": "FRA",
+        "level": null,
+        "squadRating": 55.47,
+        "squadPlayers": 30,
+        "rosterCoverage": 0.9,
+        "lineupRating": null,
+        "lineupConfirmed": false,
+        "uefaCoefficient": null,
+        "uefaCoefficientStatus": "niet gebruikt"
+      },
+      "before": {
+        "storedPredictionId": "pred_8409f19fd6e883dc0f",
+        "generatedAt": "2026-09-08T09:14:52.254Z",
+        "homeRating": 64.8,
+        "awayRating": 55.1
+      },
+      "replay": {
+        "score": "2-1",
+        "homeProb": 0.4245,
+        "drawProb": 0.2861,
+        "awayProb": 0.2894,
+        "homeXG": 2.14,
+        "awayXG": 1.36,
+        "signal": {
+          "difference": -18.33,
+          "reliability": 0.45,
+          "homeMultiplier": 0.8146997568346415,
+          "awayMultiplier": 1.227446051887025
+        }
+      }
+    }
+  ]
+}

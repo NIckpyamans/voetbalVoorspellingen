@@ -1624,9 +1624,17 @@ const MatchCard: React.FC<MatchCardProps> = ({ match: initialMatch, prediction: 
             {match.homeTeamName} {match.homePos ? `(#${match.homePos})` : ""}
           </button>
           <div className="text-[7px] text-slate-400">
-            Clubkracht <span className="font-black text-cyan-300">{match.homeClubStrength?.rating != null ? `${match.homeClubStrength.rating}/100` : "-"}</span>
+            <span title={match.homeClubStrength?.components?.map(part => `${part.key}: ${part.rating}/100 (${Math.round(part.effectiveWeight * 100)}%)`).join(" · ")}>Clubrating <span className="font-black text-cyan-300">{match.homeClubStrength?.rating != null ? `${match.homeClubStrength.rating}/100` : "onbekend"}</span></span>
             {match.homeClubStrength?.clubEloRank ? ` · Elo #${match.homeClubStrength.clubEloRank}` : match.homeClubElo ? ` · Elo ${match.homeClubElo}` : ""}
           </div>
+          {match.homeClubStrength?.version === "club-rating-v2" && (
+            <div className="text-[8px] text-slate-400">
+              <div>Brondekking {Math.round((match.homeClubStrength?.reliability || 0) * 100)}%</div>
+              {match.homeClubStrength?.valueEvidence?.totalValueEur != null && <div>Selectiewaarde €{(Number(match.homeClubStrength.valueEvidence.totalValueEur) / 1000000).toFixed(1)} mln · {Math.round((match.homeClubStrength.valueEvidence.coverage || 0) * 100)}% gewaardeerd</div>}
+              {match.homeClubStrength?.competition && <div>{match.homeClubStrength.competition.method === "country-top16-median-proxy" ? "Competitie-indicatie" : "Competitiesterkte"} {match.homeClubStrength.competition.rating}/100</div>}
+              {!!match.homeClubStrength?.missing?.length && <div className="text-amber-300">Ontbreekt: {match.homeClubStrength.missing.join(", ")}</div>}
+            </div>
+          )}
           {match.homeClubStrength?.uefaCoefficient != null && (
             <div className="text-[7px] text-slate-500">UEFA-coeff. {Number(match.homeClubStrength.uefaCoefficient).toFixed(3)}</div>
           )}
@@ -1669,9 +1677,17 @@ const MatchCard: React.FC<MatchCardProps> = ({ match: initialMatch, prediction: 
             {match.awayTeamName} {match.awayPos ? `(#${match.awayPos})` : ""}
           </button>
           <div className="text-[7px] text-slate-400">
-            Clubkracht <span className="font-black text-cyan-300">{match.awayClubStrength?.rating != null ? `${match.awayClubStrength.rating}/100` : "-"}</span>
+            <span title={match.awayClubStrength?.components?.map(part => `${part.key}: ${part.rating}/100 (${Math.round(part.effectiveWeight * 100)}%)`).join(" · ")}>Clubrating <span className="font-black text-cyan-300">{match.awayClubStrength?.rating != null ? `${match.awayClubStrength.rating}/100` : "onbekend"}</span></span>
             {match.awayClubStrength?.clubEloRank ? ` · Elo #${match.awayClubStrength.clubEloRank}` : match.awayClubElo ? ` · Elo ${match.awayClubElo}` : ""}
           </div>
+          {match.awayClubStrength?.version === "club-rating-v2" && (
+            <div className="text-[8px] text-slate-400">
+              <div>Brondekking {Math.round((match.awayClubStrength?.reliability || 0) * 100)}%</div>
+              {match.awayClubStrength?.valueEvidence?.totalValueEur != null && <div>Selectiewaarde €{(Number(match.awayClubStrength.valueEvidence.totalValueEur) / 1000000).toFixed(1)} mln · {Math.round((match.awayClubStrength.valueEvidence.coverage || 0) * 100)}% gewaardeerd</div>}
+              {match.awayClubStrength?.competition && <div>{match.awayClubStrength.competition.method === "country-top16-median-proxy" ? "Competitie-indicatie" : "Competitiesterkte"} {match.awayClubStrength.competition.rating}/100</div>}
+              {!!match.awayClubStrength?.missing?.length && <div className="text-amber-300">Ontbreekt: {match.awayClubStrength.missing.join(", ")}</div>}
+            </div>
+          )}
           {match.awayClubStrength?.uefaCoefficient != null && (
             <div className="text-[7px] text-slate-500">UEFA-coeff. {Number(match.awayClubStrength.uefaCoefficient).toFixed(3)}</div>
           )}

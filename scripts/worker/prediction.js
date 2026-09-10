@@ -1,3 +1,4 @@
+import { clubRatingMatchSignal } from "./club-rating.js";
 import { summarizeGoalTiming } from "./goal-timing.js";
 import { stabilizeOverallForm } from "./form-sample-policy.js";
 
@@ -219,8 +220,9 @@ export function buildFeatureVector(input, deps) {
     String(input.phaseBucket || "").toLowerCase() === "interland" ||
     String(input.leagueType || "").toLowerCase() === "international";
   const clubEloScale = isInternational ? 0.35 : 1;
-  const homeSquadRating = Number(input.homeTeamProfile?.squadRating || input.homeTeamProfile?.teamStrengthRating || 50);
-  const awaySquadRating = Number(input.awayTeamProfile?.squadRating || input.awayTeamProfile?.teamStrengthRating || 50);
+  const clubSignal = isInternational ? null : clubRatingMatchSignal(input.homeClubStrength, input.awayClubStrength);
+  const homeSquadRating = clubSignal ? input.homeClubStrength.rating : 50;
+  const awaySquadRating = clubSignal ? input.awayClubStrength.rating : 50;
   const homeTransferImpact = Number(input.homeTeamProfile?.transferImpact || 0);
   const awayTransferImpact = Number(input.awayTeamProfile?.transferImpact || 0);
   const dbFeatureContext = input.dbFeatureContext || {};
@@ -291,9 +293,11 @@ export function buildFeatureVector(input, deps) {
     home_rest_days: Number(input.homeRestDays ?? 0),
     away_rest_days: Number(input.awayRestDays ?? 0),
     rest_diff: Number((Number(input.homeRestDays ?? 0) - Number(input.awayRestDays ?? 0)).toFixed(2)),
-    club_elo_diff: Number(((Number(input.homeClubElo || 0) - Number(input.awayClubElo || 0)) * clubEloScale).toFixed(0)),
-    raw_club_elo_diff: Number((Number(input.homeClubElo || 0) - Number(input.awayClubElo || 0)).toFixed(0)),
+    club_elo_diff: Number(((!clubSignal && input.homeClubElo > 0 && input.awayClubElo > 0 ? input.homeClubElo - input.awayClubElo : 0) * clubEloScale).toFixed(0)),
+    raw_club_elo_diff: Number((input.homeClubElo > 0 && input.awayClubElo > 0 ? input.homeClubElo - input.awayClubElo : 0).toFixed(0)),
     club_elo_scale: clubEloScale,
+    club_rating_active: clubSignal ? 1 : 0,
+    club_rating_reliability: clubSignal?.reliability || 0,
     home_squad_rating: Number(homeSquadRating.toFixed(1)),
     away_squad_rating: Number(awaySquadRating.toFixed(1)),
     squad_rating_diff: Number(((homeSquadRating - awaySquadRating) / 10).toFixed(2)),

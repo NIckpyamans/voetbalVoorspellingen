@@ -1,3 +1,4 @@
+import { calculateClubRating, competitionStrength } from "./club-rating.js";
 function normalizeName(value) {
   return String(value || "")
     .normalize("NFD")
@@ -87,44 +88,37 @@ export function lookupClubEloProfile(snapshot, teamName, buildPossibleNames = nu
   return null;
 }
 
-export function buildClubStrengthProfile({ clubEloProfile, squadProfile, lineupSide } = {}) {
-  const squadRating = Number(squadProfile?.rating || 0);
-  const elo = Number(clubEloProfile?.elo || 0);
-  const eloRating = elo > 0 ? Math.max(20, Math.min(96, ((elo - 1200) / 8))) : 0;
-  const lineupRating = Number(lineupSide?.avgRating || 0) > 0
-    ? Math.max(20, Math.min(96, ((Number(lineupSide.avgRating) - 5.5) / 2.5) * 100))
-    : 0;
-  const weights = [];
-  if (squadRating > 0) weights.push([squadRating, 0.62]);
-  if (eloRating > 0) weights.push([eloRating, 0.38]);
-  if (lineupRating > 0) weights.push([lineupRating, lineupSide?.confirmed ? 0.22 : 0.08]);
-  const totalWeight = weights.reduce((sum, [, weight]) => sum + weight, 0);
-  const rating = totalWeight
-    ? Number((weights.reduce((sum, [value, weight]) => sum + value * weight, 0) / totalWeight).toFixed(1))
-    : null;
-  const rosterCoverage = Number(squadProfile?.coverage || 0);
-  const quality = lineupSide?.confirmed && rosterCoverage >= 0.75
-    ? "hoog"
-    : (rosterCoverage >= 0.5 || elo > 0)
-      ? "middel"
-      : "laag";
+export function buildClubStrengthProfile({ clubEloProfile, squadProfile, lineupSide, snapshot, asOf } = {}) {
+  const profile = calculateClubRating({ clubEloProfile, squadProfile,
+    leagueProfile: competitionStrength(snapshot, clubEloProfile), asOf });
+  return { ...profile, clubElo: clubEloProfile?.elo ?? null,
+    clubEloRank: clubEloProfile?.rank ?? null, country: clubEloProfile?.country ?? null,
+    level: clubEloProfile?.level ?? null, squadRating: profile.valueEvidence.valueRating,
+    squadPlayers: profile.valueEvidence.playerCount, rosterCoverage: profile.valueEvidence.coverage,
+    lineupRating: null, lineupConfirmed: Boolean(lineupSide?.confirmed),
+    uefaCoefficient: null, uefaCoefficientStatus: "niet gebruikt" };
+}
 
-  return {
-    rating,
-    label: rating == null ? "onbekend" : rating >= 78 ? "zeer sterk" : rating >= 66 ? "sterk" : rating >= 52 ? "gemiddeld" : "kwetsbaar",
-    quality,
-    clubElo: elo || null,
-    clubEloRank: clubEloProfile?.rank ?? null,
-    country: clubEloProfile?.country || null,
-    level: clubEloProfile?.level ?? null,
-    squadRating: squadRating || null,
-    squadPlayers: Number(squadProfile?.playerCount || squadProfile?.players?.length || 0),
-    rosterCoverage: rosterCoverage || null,
-    lineupRating: lineupRating || null,
-    lineupConfirmed: Boolean(lineupSide?.confirmed),
-    source: "eigen clubkracht op basis van ClubElo en actuele selectie",
-    sourceAsOf: clubEloProfile?.asOf || null,
-    uefaCoefficient: null,
-    uefaCoefficientStatus: "niet automatisch overgenomen zonder gelicentieerde bron",
-  };
+// Read literal table data only; never execute scripts from a provider page.
+export function parseClubEloWebsite(html, { buildPossibleNames = null } = {}) {
+  const asOf = String(html).match(/<h1[^>]*>\s*<a href="\/(\d{4}-\d{2}-\d{2})\/(?:Ranking)?"/)?.[1];
+  const start = String(html).indexOf("const eloData =");
+  if (!asOf || start < 0) return null;
+  // HTML entities can contain semicolons, so terminate at the array's closing bracket.
+  const block = String(html).slice(start).split("]];")[0] + "]]";
+  const ratings = {}, profiles = {};
+  const decode = (v) => v.replace(/\\'/g, "'").replace(/&amp;/g, "&").replace(/&#(\d+);/g, (_, n) => String.fromCodePoint(Number(n))).replace(/&quot;/g, '"').replace(/&apos;/g, "'");
+  for (const match of block.matchAll(/\['((?:\\.|[^'\\])*)',\s*'(\d+(?:\.\d+)?)'/g)) {
+    const cell = decode(match[1]);
+    const country = cell.match(/alt="([A-Z]{3})"/)?.[1];
+    const rank = Number(cell.match(/<small>\s*(\d+)\s*<\/small>/)?.[1]);
+    const club = cell.replace(/<small>[\s\S]*?<\/small>/g, "").replace(/<[^>]+>/g, "").trim();
+    const elo = Number(match[2]);
+    if (!club || !country || elo < 300 || elo > 3000) continue;
+    const profile = { club, elo, rank: rank || null, country, level: null, source: "ClubElo", asOf };
+    for (const key of (buildPossibleNames ? buildPossibleNames(club) : [club, normalizeName(club)])) {
+      ratings[key] = elo; profiles[key] = profile;
+    }
+  }
+  return Object.keys(profiles).length ? { ratings, profiles, source: "ClubElo", sourceUrl: "https://clubelo.com/Ranking", asOf } : null;
 }

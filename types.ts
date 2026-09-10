@@ -52,6 +52,12 @@ export interface DatabaseFeatureContext {
 }
 
 export interface ClubStrengthProfile {
+  version?: string;
+  reliability?: number;
+  missing?: string[];
+  components?: { key: string; rating: number; effectiveWeight: number; source?: string; asOf?: string }[];
+  valueEvidence?: { totalValueEur: number | null; coverage: number; valuedPlayers: number; playerCount: number; valueRating: number | null };
+  competition?: { rating: number; method: string; country: string; teams: number } | null;
   rating?: number | null;
   label?: string;
   quality?: "hoog" | "middel" | "laag";

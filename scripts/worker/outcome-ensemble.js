@@ -113,7 +113,8 @@ export function buildSquadStrengthOutcomeModel(featureVector = {}) {
   const home = Number(featureVector.home_squad_rating || 0);
   const away = Number(featureVector.away_squad_rating || 0);
   if (!(home > 0 && away > 0) || (home === 50 && away === 50)) return null;
-  const edge = clamp((home - away + 1.5) / 8, -1.4, 1.4);
+  const reliability = featureVector.club_rating_active ? Math.sqrt(Number(featureVector.club_rating_reliability || 0)) : 1;
+  const edge = clamp((home - away + 1.5) / 12, -2.5, 2.5) * reliability;
   const drawProb = clamp(0.27 - Math.abs(edge) * 0.025, 0.22, 0.27);
   const decisiveHome = 1 / (1 + Math.exp(-edge));
   return normalizeOutcomeProbabilities({
@@ -161,7 +162,7 @@ export function buildOutcomeEnsemble({
   lineupConfirmed = false,
 } = {}) {
   const market = buildMarketConsensus(oddsAtPrediction || {}, kickoff);
-  const elo = buildEloOutcomeModel(homeElo, awayElo);
+  const elo = featureVector.club_rating_active ? null : buildEloOutcomeModel(homeElo, awayElo);
   const lineup = buildLineupOutcomeModel(featureVector, lineupConfirmed);
   const squadStrength = buildSquadStrengthOutcomeModel(featureVector);
   const twoLegContext = buildTwoLegContextModel(featureVector);

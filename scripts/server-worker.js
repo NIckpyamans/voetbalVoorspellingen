@@ -1,6 +1,8 @@
 #!/usr/bin/env node
+import { clubRatingMatchSignal } from "./worker/club-rating.js";
 
 import fs from "fs";
+import { pathToFileURL } from "node:url";
 import path from "path";
 import crypto from "crypto";
 import { spawnSync } from "child_process";
@@ -85,7 +87,7 @@ import { buildTwoLegAggregate, deriveH2HWinnerId, findOrientedPreviousLeg } from
 import { mergePersistedTeamFormCache } from "./worker/local-team-form-history.js";
 import { selectFreshestSquadProfile } from "./worker/squad-cache-policy.js";
 import { summarizeGoalTiming } from "./worker/goal-timing.js";
-import { buildClubStrengthProfile, lookupClubEloProfile, parseClubEloSnapshot } from "./worker/club-strength.js";
+import { buildClubStrengthProfile, lookupClubEloProfile, parseClubEloSnapshot, parseClubEloWebsite } from "./worker/club-strength.js";
 import { attachConfirmedLineupStarImpact } from "./worker/lineup-star-impact.js";
 import { hydrateR2ModelProfiles } from "./worker/r2-model-profiles.js";
 import { mergePhaseReliability } from "./worker/phase-reliability-policy.js";
@@ -992,7 +994,7 @@ const HISTORY_KEEP_DAYS_FORWARD = 75;
 const MAX_REVIEWS = 2500;
 const MAX_PREDICTION_SNAPSHOTS = 5000;
 const MAX_SCORE_MATRIX_ENTRIES = 10;
-const MODEL_VERSION = "v24-monte-carlo-average";
+const MODEL_VERSION = "v25-club-rating";
 const FEATURE_SCHEMA_VERSION = "feature-v2";
 const PREDICTION_SNAPSHOT_SCHEMA_VERSION = "prediction-snapshot-v4";
 const MAX_EVENT_CACHE = 300;
@@ -2456,11 +2458,11 @@ function isEuropeanCountryName(name) {
   return EUROPEAN_COUNTRIES.has(normalizeName(name));
 }
 
-function isSeniorInternationalTournament(tournamentName) {
+export function isSeniorInternationalTournament(tournamentName) {
   const value = normalizeName(tournamentName);
-  if (!value) return false;
-  const blocked = ["u17", "u18", "u19", "u20", "u21", "u23", "women", "femin", "vrouw", "futsal"];
-  return !blocked.some((token) => value.includes(token));
+  if (!value || /\b(?:u17|u18|u19|u20|u21|u23|women|futsal)\b/.test(value)) return false;
+  if (/club|champions league|europa league|conference league/.test(value)) return false;
+  return /world cup|nations league|european championship|(?:^| )euro(?: |$)|copa america|africa cup of nations|african cup of nations|asian cup|gold cup|international friendl|interland/.test(value);
 }
 
 function shouldExcludeEvent(event) {
@@ -2487,7 +2489,7 @@ function getInternationalLeagueInfo(event) {
   return null;
 }
 
-function buildPossibleNames(name) {
+export function buildPossibleNames(name) {
   const normalized = normalizeName(name);
   const variants = new Set([normalized]);
   const canonical = canonicalTeamName(normalized);
@@ -8753,8 +8755,11 @@ async function fetchClubEloSnapshot(dateISO) {
     if (text) break;
   }
 
-  if (!text) return null;
-  return parseClubEloSnapshot(text, { asOf: dateISO, buildPossibleNames });
+  const csv = text ? parseClubEloSnapshot(text, { asOf: dateISO, buildPossibleNames }) : null;
+  if (csv && Object.keys(csv.profiles).length >= 100) return csv;
+  const html = await safeFetchText("https://clubelo.com/Ranking");
+  const website = html ? parseClubEloWebsite(html, { buildPossibleNames }) : null;
+  return website && website.asOf === dateISO && new Set(Object.values(website.profiles).map(p => p.club)).size >= 300 ? website : null;
 }
 
 function lookupClubElo(snapshot, teamName) {
@@ -9161,7 +9166,7 @@ async function fetchNationalTeamH2HProfile(store, homeName, awayName, homeId, aw
   return data;
 }
 
-function predict(input) {
+export function predict(input) {
   const avgLeagueGoals = 1.35;
   const homeSplit = pickHomeStrength(input.homeRecent);
   const awaySplit = pickAwayStrength(input.awayRecent);
@@ -9181,17 +9186,19 @@ function predict(input) {
 
   const homeClubElo = Number(input.homeClubElo || 0);
   const awayClubElo = Number(input.awayClubElo || 0);
-  if (homeClubElo > 0 && awayClubElo > 0) {
+  const clubSignal = isSeniorInternationalTournament(input.league) || input.leagueType === "international" ? null : clubRatingMatchSignal(input.homeClubStrength, input.awayClubStrength);
+  if (!clubSignal && homeClubElo > 0 && awayClubElo > 0) {
     const eloDiff = homeClubElo - awayClubElo;
     homeXG *= clamp(1 + eloDiff / 1600, 0.9, 1.14);
     awayXG *= clamp(1 - eloDiff / 1600, 0.9, 1.14);
   }
 
-  const homeSquadRating = Number(input.homeTeamProfile?.teamStrengthRating || input.homeTeamProfile?.squadRating || 50);
-  const awaySquadRating = Number(input.awayTeamProfile?.teamStrengthRating || input.awayTeamProfile?.squadRating || 50);
-  const squadRatingDiff = homeSquadRating - awaySquadRating;
-  homeXG *= clamp(1 + squadRatingDiff / 900, 0.94, 1.08);
-  awayXG *= clamp(1 - squadRatingDiff / 900, 0.94, 1.08);
+  // The composite replaces the former form-derived squad adjustment and Elo
+  // adjustment, rather than counting the same strength signal three times.
+  if (clubSignal) {
+    homeXG *= clubSignal.homeMultiplier;
+    awayXG *= clubSignal.awayMultiplier;
+  }
 
   const transferImpactDiff =
     Number(input.homeTeamProfile?.transferImpact || 0) - Number(input.awayTeamProfile?.transferImpact || 0);
@@ -9390,6 +9397,7 @@ function predict(input) {
 
   const homeAwayEdge = buildHomeAwayEdge(input.homeRecent, input.awayRecent);
   const featureVector = buildFeatureVector(input, {
+    clamp,
     pickHomeStrength,
     pickAwayStrength,
     normalizeName,
@@ -9715,6 +9723,7 @@ function predict(input) {
         league: input.league || "unknown",
         profile: leagueCalibrated.profile,
       },
+      clubRating: clubSignal,
       clubEloDiff: homeClubElo > 0 && awayClubElo > 0 ? Math.round(homeClubElo - awayClubElo) : null,
       stakes: input.context?.summary || null,
       matchImportance: input.matchImportance || 1,
@@ -9910,8 +9919,11 @@ function compactStore(store, referenceDateKey, now) {
   pruneEmbeddedUpdatedMap(store, "sportsDbTeamFormCache", 12 * 60 * 60 * 1000, now, MAX_THESPORTSDB_TEAM_FORM_CACHE);
 
   if (store.clubEloUpdated && now - Number(store.clubEloUpdated || 0) > CLUB_ELO_TTL * 2) {
-    store.clubEloCache = null;
-    store.clubEloUpdated = null;
+    // Keep up to 14 days for a failed refresh; rating validity is checked separately.
+    if (now - Number(store.clubEloUpdated) > 14 * 86400000) {
+      store.clubEloCache = null;
+      store.clubEloUpdated = null;
+    }
   }
 }
 
@@ -11029,12 +11041,23 @@ async function main() {
 
   let clubEloSnapshot = store.clubEloCache;
   if (!clubEloSnapshot || !store.clubEloUpdated || now - store.clubEloUpdated > CLUB_ELO_TTL) {
-    clubEloSnapshot = await fetchClubEloSnapshot(today);
+    const refreshedElo = await fetchClubEloSnapshot(today);
+    if (refreshedElo) clubEloSnapshot = refreshedElo;
+    else {
+      // Preserve the original source date: failed refreshes never rejuvenate data.
+      let persistedElo = null;
+      try { persistedElo = JSON.parse(fs.readFileSync(path.join(SPLIT_DATA_DIR, "club-elo-snapshot.json"), "utf8")); } catch {}
+      clubEloSnapshot = clubEloSnapshot || persistedElo;
+    }
     if (clubEloSnapshot) {
       store.clubEloCache = clubEloSnapshot;
-      store.clubEloUpdated = now;
+      store.clubEloUpdated = Date.parse(clubEloSnapshot.asOf || "") || now;
+      fs.writeFileSync(path.join(SPLIT_DATA_DIR, "club-elo-snapshot.json"), JSON.stringify(clubEloSnapshot));
     }
   }
+
+  const eloAgeDays = (now - Date.parse(clubEloSnapshot?.asOf || "")) / 86400000;
+  if (!Number.isFinite(eloAgeDays) || eloAgeDays < 0 || eloAgeDays > 14) clubEloSnapshot = null;
 
   const allEvents = {};
   const fixtureSourceDiagnostics = {};
@@ -11767,6 +11790,29 @@ async function main() {
         squadProfile: awayIntelligence.squadProfile,
         transferProfile: awayIntelligence.transferProfile,
       });
+      const homeClubStrength = buildClubStrengthProfile({
+        snapshot: clubEloSnapshot,
+        asOf: new Date(now).toISOString(),
+        clubEloProfile: homeClubEloProfile,
+        squadProfile: homeIntelligence.squadProfile,
+        lineupSide: lineupSummary?.home,
+      });
+      const awayClubStrength = buildClubStrengthProfile({
+        snapshot: clubEloSnapshot,
+        asOf: new Date(now).toISOString(),
+        clubEloProfile: awayClubEloProfile,
+        squadProfile: awayIntelligence.squadProfile,
+        lineupSide: lineupSummary?.away,
+      });
+      for (const [teamProfile, strength] of [[homeTeamProfile, homeClubStrength], [awayTeamProfile, awayClubStrength]]) {
+        teamProfile.squadRating = strength.rating;
+        teamProfile.teamStrengthRating = strength.rating;
+        if (teamProfile.squad) {
+          teamProfile.squad.rating = strength.rating;
+          teamProfile.squad.ratingLabel = strength.label;
+          teamProfile.squad.ratingVersion = strength.version;
+        }
+      }
       if (!lineupSummary?.confirmed) {
         const projectedLineup = buildProjectedLineupSummary(
           homeTeamProfile,
@@ -11787,16 +11833,6 @@ async function main() {
             : projectedLineup;
         }
       }
-      const homeClubStrength = buildClubStrengthProfile({
-        clubEloProfile: homeClubEloProfile,
-        squadProfile: homeIntelligence.squadProfile,
-        lineupSide: lineupSummary?.home,
-      });
-      const awayClubStrength = buildClubStrengthProfile({
-        clubEloProfile: awayClubEloProfile,
-        squadProfile: awayIntelligence.squadProfile,
-        lineupSide: lineupSummary?.away,
-      });
       const referee = extractReferee(eventDetails);
       const historicalRefereeProfile =
         lookupHistoricalRefereeProfile(leagueMarketProfile, referee?.name, globalRefereeArchive) ||
@@ -12452,4 +12488,4 @@ async function main() {
   console.log("[worker] klaar");
 }
 
-main();
+if (process.argv[1] && import.meta.url === pathToFileURL(path.resolve(process.argv[1])).href) main();
