@@ -11790,18 +11790,19 @@ async function main() {
         squadProfile: awayIntelligence.squadProfile,
         transferProfile: awayIntelligence.transferProfile,
       });
+      const strengthAsOf = new Date().toISOString();
       const homeClubStrength = buildClubStrengthProfile({
-        leagueProfile: domesticCompetitionStrength(clubEloSnapshot, store.standings, homeId, homeName, buildPossibleNames, new Date(now).toISOString()),
+        leagueProfile: domesticCompetitionStrength(clubEloSnapshot, store.standings, homeId, homeName, buildPossibleNames, strengthAsOf),
         snapshot: clubEloSnapshot,
-        asOf: new Date(now).toISOString(),
+        asOf: strengthAsOf,
         clubEloProfile: homeClubEloProfile,
         squadProfile: homeIntelligence.squadProfile,
         lineupSide: lineupSummary?.home,
       });
       const awayClubStrength = buildClubStrengthProfile({
-        leagueProfile: domesticCompetitionStrength(clubEloSnapshot, store.standings, awayId, awayName, buildPossibleNames, new Date(now).toISOString()),
+        leagueProfile: domesticCompetitionStrength(clubEloSnapshot, store.standings, awayId, awayName, buildPossibleNames, strengthAsOf),
         snapshot: clubEloSnapshot,
-        asOf: new Date(now).toISOString(),
+        asOf: strengthAsOf,
         clubEloProfile: awayClubEloProfile,
         squadProfile: awayIntelligence.squadProfile,
         lineupSide: lineupSummary?.away,
