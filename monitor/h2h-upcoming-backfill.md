@@ -1,17 +1,16 @@
 # Upcoming H2H Backfill
 
-Laatst bijgewerkt: 2026-09-10T11:19:30.668Z
-Gecontroleerd: 32
-Gevuld: 2
-Geen directe H2H: 30
+Laatst bijgewerkt: 2026-09-10T14:35:11.774Z
+Gecontroleerd: 24
+Gevuld: 1
+Geen directe H2H: 23
 Errors: 0
 
 ## Aanbeveling
 API-Football blijft quota-bewust geblokkeerd totdat de acceptatietest slaagt; ESPN is wel gecontroleerd voor alle kandidaten.
 
 ## Gevuld
-- 2026-09-11: AZ Alkmaar - Willem II (2)
-- 2026-09-11: Montpellier - Pau (2)
+- 2026-09-12: Hoffenheim - VfB Stuttgart (5)
 
 ## Geen Directe H2H
 - 2026-09-10: Fenerbahçe - Roma (provider_acceptance_blocked)
@@ -32,5 +31,5 @@ API-Football blijft quota-bewust geblokkeerd totdat de acceptatietest slaagt; ES
 - 2026-09-11: MVV Maastricht - Almere City FC (provider_acceptance_blocked)
 - 2026-09-11: NAC Breda - Jong FC Utrecht (provider_acceptance_blocked)
 - 2026-09-11: VVV-Venlo - TOP Oss (provider_acceptance_blocked)
-- 2026-09-12: Blackburn Rovers - Millwall (provider_acceptance_blocked)
-- 2026-09-12: Borussia Dortmund - Paderborn (provider_acceptance_blocked)
+- 2026-09-12: Preston North End - Lincoln City (provider_acceptance_blocked)
+- 2026-09-12: Cambuur - NEC Nijmegen (provider_acceptance_blocked)
