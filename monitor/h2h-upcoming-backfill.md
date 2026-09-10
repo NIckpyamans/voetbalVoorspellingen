@@ -1,9 +1,9 @@
 # Upcoming H2H Backfill
 
-Laatst bijgewerkt: 2026-09-10T18:26:03.573Z
-Gecontroleerd: 24
+Laatst bijgewerkt: 2026-09-10T20:52:56.868Z
+Gecontroleerd: 32
 Gevuld: 0
-Geen directe H2H: 24
+Geen directe H2H: 32
 Errors: 0
 
 ## Aanbeveling
@@ -12,10 +12,6 @@ API-Football blijft quota-bewust geblokkeerd totdat de acceptatietest slaagt; ES
 ## Gevuld
 
 ## Geen Directe H2H
-- 2026-09-10: Bayern München - Bodø/Glimt (provider_acceptance_blocked)
-- 2026-09-10: Como - RB Leipzig (provider_acceptance_blocked)
-- 2026-09-10: Manchester United - Sabah FK (provider_acceptance_blocked)
-- 2026-09-10: Slavia Prague - Lens (provider_acceptance_blocked)
 - 2026-09-11: Darmstadt - Arminia Bielefeld (provider_acceptance_blocked)
 - 2026-09-11: FC Eindhoven - FC Dordrecht (provider_acceptance_blocked)
 - 2026-09-11: Clermont Foot - Boulogne (provider_acceptance_blocked)
@@ -28,7 +24,11 @@ API-Football blijft quota-bewust geblokkeerd totdat de acceptatietest slaagt; ES
 - 2026-09-11: MVV Maastricht - Almere City FC (provider_acceptance_blocked)
 - 2026-09-11: NAC Breda - Jong FC Utrecht (provider_acceptance_blocked)
 - 2026-09-11: VVV-Venlo - TOP Oss (provider_acceptance_blocked)
-- 2026-09-12: Watford - Stoke City (provider_acceptance_blocked)
-- 2026-09-12: Mainz 05 - Eintracht Frankfurt (provider_acceptance_blocked)
-- 2026-09-12: Crystal Palace - Ipswich Town (provider_acceptance_blocked)
-- 2026-09-12: Fortuna Sittard - Ajax (provider_acceptance_blocked)
+- 2026-09-12: Charlton Athletic - Portsmouth (provider_acceptance_blocked)
+- 2026-09-12: Cambuur - NEC Nijmegen (provider_acceptance_blocked)
+- 2026-09-12: Borussia Dortmund - Paderborn (provider_acceptance_blocked)
+- 2026-09-12: Chelsea - Hull City (provider_acceptance_blocked)
+- 2026-09-12: Dunkerque - Saint-Étienne (provider_acceptance_blocked)
+- 2026-09-12: Roda JC Kerkrade - Vitesse (provider_acceptance_blocked)
+- 2026-09-12: Middlesbrough - Norwich City (provider_acceptance_blocked)
+- 2026-09-12: FC Twente - ADO Den Haag (provider_acceptance_blocked)
