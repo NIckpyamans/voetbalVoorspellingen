@@ -1,5 +1,5 @@
 {
-  "checkedAt": "2026-09-09T09:00:25.085Z",
+  "checkedAt": "2026-09-10T08:59:24.888Z",
   "oddsApi": {
     "configured": true,
     "valid": true,
@@ -21,12 +21,12 @@
       "soccer_england_league1",
       "soccer_england_league2",
       "soccer_epl",
-      "soccer_fa_cup",
       "soccer_finland_veikkausliiga",
       "soccer_france_ligue_one",
       "soccer_france_ligue_two",
       "soccer_germany_bundesliga",
       "soccer_germany_bundesliga2",
+      "soccer_germany_bundesliga_women",
       "soccer_germany_dfb_pokal",
       "soccer_germany_liga3",
       "soccer_greece_super_league",
@@ -66,11 +66,15 @@
       "soccer_uefa_europa_conference_league_qualification"
     ],
     "competitionCoverageStatus": "seasonal_unavailable",
-    "newlyUnavailableSports": [],
-    "newlyAvailableSports": [],
+    "newlyUnavailableSports": [
+      "soccer_fa_cup"
+    ],
+    "newlyAvailableSports": [
+      "soccer_germany_bundesliga_women"
+    ],
     "quota": {
-      "x-requests-remaining": "199",
-      "x-requests-used": "301",
+      "x-requests-remaining": "168",
+      "x-requests-used": "332",
       "x-requests-last": "0"
     },
     "errorCode": null
@@ -143,7 +147,7 @@
     "quota": {
       "x-ratelimit-limit": "1000",
       "x-ratelimit-remaining": "960",
-      "x-ratelimit-reset": "1788998400"
+      "x-ratelimit-reset": "1789084800"
     },
     "accepted": false,
     "policy": "Veertien dagen meten; nooit automatisch promoveren op basis van alleen een geldige key."
@@ -212,12 +216,12 @@
       "fixturesDate": {
         "valid": true,
         "status": 200,
-        "records": 1,
-        "firstId": 19722807,
-        "firstName": "Rangers vs St. Mirren",
-        "hasOddsFlag": true,
+        "records": 0,
+        "firstId": null,
+        "firstName": null,
+        "hasOddsFlag": false,
         "rateLimit": {
-          "resets_in_seconds": 3599,
+          "resets_in_seconds": 3600,
           "remaining": 178,
           "requested_entity": "Fixture"
         },
@@ -231,8 +235,8 @@
         "valid": true,
         "status": 200,
         "records": 1,
-        "firstId": 19722807,
-        "firstName": "Rangers vs St. Mirren",
+        "firstId": 19713940,
+        "firstName": "FC København vs Horsens",
         "hasOddsFlag": true,
         "rateLimit": {
           "resets_in_seconds": 3599,
@@ -245,13 +249,13 @@
         },
         "errorCode": null
       },
-      "testedFixtureId": 19722807,
+      "testedFixtureId": 19713940,
       "oddsByFixture": {
         "label": "oddsByFixture",
         "valid": true,
         "status": 200,
         "records": 3,
-        "firstId": 241257902041,
+        "firstId": 244583162195,
         "firstName": null,
         "hasOddsFlag": false,
         "rateLimit": {
@@ -290,11 +294,11 @@
         "valid": true,
         "status": 200,
         "records": 3,
-        "firstId": 241257902041,
+        "firstId": 244583162195,
         "firstName": null,
         "hasOddsFlag": false,
         "rateLimit": {
-          "resets_in_seconds": 3600,
+          "resets_in_seconds": 3599,
           "remaining": 177,
           "requested_entity": "Odd"
         },
