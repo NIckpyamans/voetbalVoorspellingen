@@ -26,6 +26,7 @@ const ESPN_TEAMS_FILE = path.join(ROOT, "config", "friendly-team-sources.json");
 const SPORTS_DB_BASE = "https://www.thesportsdb.com/api/v1/json/123";
 const SQUAD_TEAM_ALIASES = {
   "az": ["AZ Alkmaar"],
+  "fc bayern munchen": ["Bayern München", "Bayern Munich"],
   "fc iberia 1999 tiflis": ["Iberia 1999", "FC Iberia 1999", "Saburtalo"],
   "fc nordsjaelland": ["FC Nordsjælland", "Nordsjælland"],
   "ks dynamo tirana": ["Dinamo City", "Dinamo Tirana"],
