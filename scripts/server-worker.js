@@ -87,7 +87,7 @@ import { buildTwoLegAggregate, deriveH2HWinnerId, findOrientedPreviousLeg } from
 import { mergePersistedTeamFormCache } from "./worker/local-team-form-history.js";
 import { selectFreshestSquadProfile } from "./worker/squad-cache-policy.js";
 import { summarizeGoalTiming } from "./worker/goal-timing.js";
-import { buildClubStrengthProfile, lookupClubEloProfile, parseClubEloSnapshot, parseClubEloWebsite } from "./worker/club-strength.js";
+import { buildClubStrengthProfile, lookupClubEloProfile, parseClubEloSnapshot, parseClubEloWebsite, domesticCompetitionStrength } from "./worker/club-strength.js";
 import { attachConfirmedLineupStarImpact } from "./worker/lineup-star-impact.js";
 import { hydrateR2ModelProfiles } from "./worker/r2-model-profiles.js";
 import { mergePhaseReliability } from "./worker/phase-reliability-policy.js";
@@ -11791,6 +11791,7 @@ async function main() {
         transferProfile: awayIntelligence.transferProfile,
       });
       const homeClubStrength = buildClubStrengthProfile({
+        leagueProfile: domesticCompetitionStrength(clubEloSnapshot, store.standings, homeId, homeName, buildPossibleNames, new Date(now).toISOString()),
         snapshot: clubEloSnapshot,
         asOf: new Date(now).toISOString(),
         clubEloProfile: homeClubEloProfile,
@@ -11798,6 +11799,7 @@ async function main() {
         lineupSide: lineupSummary?.home,
       });
       const awayClubStrength = buildClubStrengthProfile({
+        leagueProfile: domesticCompetitionStrength(clubEloSnapshot, store.standings, awayId, awayName, buildPossibleNames, new Date(now).toISOString()),
         snapshot: clubEloSnapshot,
         asOf: new Date(now).toISOString(),
         clubEloProfile: awayClubEloProfile,

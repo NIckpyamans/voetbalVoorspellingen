@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-09-10T18:14:23.561Z",
+  "generatedAt": "2026-09-10T18:20:33.665Z",
   "date": "2026-09-10",
   "method": "Current-input diagnostic replay; not an out-of-sample accuracy backtest",
   "checked": 4,
@@ -10,7 +10,7 @@
       "away": "Bodø/Glimt",
       "homeRating": {
         "version": "club-rating-v2",
-        "rating": 82.71,
+        "rating": 82.62,
         "reliability": 1,
         "quality": "hoog",
         "components": [
@@ -32,15 +32,15 @@
           },
           {
             "key": "competition",
-            "rating": 73.95,
+            "rating": 73.5,
             "weight": 0.15,
-            "source": "ClubElo",
+            "source": "ClubElo + fotmob + competition-catalog",
             "asOf": "2026-09-10",
             "effectiveWeight": 0.15
           },
           {
             "key": "playerPerformance",
-            "rating": 77.25,
+            "rating": 76.8,
             "weight": 0.05,
             "source": "FotMob + Laatste bevestigde opstelling",
             "asOf": "2026-09-10T08:06:31.198Z",
@@ -57,19 +57,20 @@
           "performanceAverage": 7.13
         },
         "competition": {
-          "rating": 73.95,
-          "medianElo": 1739.5,
-          "teams": 16,
+          "rating": 73.5,
+          "medianElo": 1735,
+          "teams": 14,
+          "league": "Germany - Bundesliga",
           "country": "GER",
           "level": null,
-          "method": "country-top16-median-proxy",
-          "source": "ClubElo",
+          "method": "domestic-membership-median",
+          "source": "ClubElo + fotmob + competition-catalog",
           "asOf": "2026-09-10"
         },
         "missing": [],
         "label": "zeer sterk",
         "source": "ClubElo, selectiewaarde en competitiegecorrigeerde spelersprestaties",
-        "sourceAsOf": "2026-09-10T18:14:23.561Z",
+        "sourceAsOf": "2026-09-10T18:20:33.665Z",
         "clubElo": 2043,
         "clubEloRank": 1,
         "country": "GER",
@@ -143,7 +144,7 @@
         "missing": [],
         "label": "gemiddeld",
         "source": "ClubElo, selectiewaarde en competitiegecorrigeerde spelersprestaties",
-        "sourceAsOf": "2026-09-10T18:14:23.561Z",
+        "sourceAsOf": "2026-09-10T18:20:33.665Z",
         "clubElo": 1789,
         "clubEloRank": 47,
         "country": "NOR",
@@ -164,16 +165,16 @@
       },
       "replay": {
         "score": "3-2",
-        "homeProb": 0.4769,
-        "drawProb": 0.2635,
-        "awayProb": 0.2596,
+        "homeProb": 0.4759,
+        "drawProb": 0.2646,
+        "awayProb": 0.2595,
         "homeXG": 2.75,
         "awayXG": 1.67,
         "signal": {
-          "difference": 23.6,
+          "difference": 23.51,
           "reliability": 1,
-          "homeMultiplier": 1.4819122777692075,
-          "awayMultiplier": 0.6748037755010352
+          "homeMultiplier": 1.4796910756706034,
+          "awayMultiplier": 0.6758167406982535
         }
       }
     },
@@ -242,7 +243,7 @@
         "missing": [],
         "label": "sterk",
         "source": "ClubElo, selectiewaarde en competitiegecorrigeerde spelersprestaties",
-        "sourceAsOf": "2026-09-10T18:14:23.561Z",
+        "sourceAsOf": "2026-09-10T18:20:33.665Z",
         "clubElo": 1807,
         "clubEloRank": 35,
         "country": "ITA",
@@ -257,7 +258,7 @@
       },
       "awayRating": {
         "version": "club-rating-v2",
-        "rating": 73.53,
+        "rating": 73.44,
         "reliability": 1,
         "quality": "hoog",
         "components": [
@@ -279,15 +280,15 @@
           },
           {
             "key": "competition",
-            "rating": 73.95,
+            "rating": 73.5,
             "weight": 0.15,
-            "source": "ClubElo",
+            "source": "ClubElo + fotmob + competition-catalog",
             "asOf": "2026-09-10",
             "effectiveWeight": 0.15
           },
           {
             "key": "playerPerformance",
-            "rating": 74.05,
+            "rating": 73.6,
             "weight": 0.05,
             "source": "FotMob + Laatste bevestigde opstelling",
             "asOf": "2026-09-10T05:22:12.199Z",
@@ -304,19 +305,20 @@
           "performanceAverage": 6.81
         },
         "competition": {
-          "rating": 73.95,
-          "medianElo": 1739.5,
-          "teams": 16,
+          "rating": 73.5,
+          "medianElo": 1735,
+          "teams": 14,
+          "league": "Germany - Bundesliga",
           "country": "GER",
           "level": null,
-          "method": "country-top16-median-proxy",
-          "source": "ClubElo",
+          "method": "domestic-membership-median",
+          "source": "ClubElo + fotmob + competition-catalog",
           "asOf": "2026-09-10"
         },
         "missing": [],
         "label": "sterk",
         "source": "ClubElo, selectiewaarde en competitiegecorrigeerde spelersprestaties",
-        "sourceAsOf": "2026-09-10T18:14:23.561Z",
+        "sourceAsOf": "2026-09-10T18:20:33.665Z",
         "clubElo": 1827,
         "clubEloRank": 28,
         "country": "GER",
@@ -337,16 +339,16 @@
       },
       "replay": {
         "score": "3-1",
-        "homeProb": 0.5401,
-        "drawProb": 0.2708,
-        "awayProb": 0.1891,
-        "homeXG": 2.52,
+        "homeProb": 0.5411,
+        "drawProb": 0.2707,
+        "awayProb": 0.1882,
+        "homeXG": 2.53,
         "awayXG": 0.77,
         "signal": {
-          "difference": -0.02,
+          "difference": 0.07,
           "reliability": 1,
-          "homeMultiplier": 0.99966672221605,
-          "awayMultiplier": 1.000333388895062
+          "homeMultiplier": 1.00116734748696,
+          "awayMultiplier": 0.9988340136243055
         }
       }
     },
@@ -356,7 +358,7 @@
       "away": "Sabah FK",
       "homeRating": {
         "version": "club-rating-v2",
-        "rating": 80.66,
+        "rating": 80.33,
         "reliability": 1,
         "quality": "hoog",
         "components": [
@@ -378,15 +380,15 @@
           },
           {
             "key": "competition",
-            "rating": 85.3,
+            "rating": 83.65,
             "weight": 0.15,
-            "source": "ClubElo",
+            "source": "ClubElo + fotmob + competition-catalog",
             "asOf": "2026-09-10",
             "effectiveWeight": 0.15
           },
           {
             "key": "playerPerformance",
-            "rating": 84.8,
+            "rating": 83.15,
             "weight": 0.05,
             "source": "FotMob + Laatste bevestigde opstelling",
             "asOf": "2026-09-10T05:22:10.888Z",
@@ -403,19 +405,20 @@
           "performanceAverage": 6.75
         },
         "competition": {
-          "rating": 85.3,
-          "medianElo": 1853,
-          "teams": 16,
+          "rating": 83.65,
+          "medianElo": 1836.5,
+          "teams": 18,
+          "league": "England - Premier League",
           "country": "ENG",
           "level": null,
-          "method": "country-top16-median-proxy",
-          "source": "ClubElo",
+          "method": "domestic-membership-median",
+          "source": "ClubElo + fotmob + competition-catalog",
           "asOf": "2026-09-10"
         },
         "missing": [],
         "label": "zeer sterk",
         "source": "ClubElo, selectiewaarde en competitiegecorrigeerde spelersprestaties",
-        "sourceAsOf": "2026-09-10T18:14:23.561Z",
+        "sourceAsOf": "2026-09-10T18:20:33.665Z",
         "clubElo": 1886,
         "clubEloRank": 14,
         "country": "ENG",
@@ -476,7 +479,7 @@
         ],
         "label": "kwetsbaar",
         "source": "ClubElo, selectiewaarde en competitiegecorrigeerde spelersprestaties",
-        "sourceAsOf": "2026-09-10T18:14:23.561Z",
+        "sourceAsOf": "2026-09-10T18:20:33.665Z",
         "clubElo": 1563,
         "clubEloRank": 452,
         "country": "AZE",
@@ -497,16 +500,16 @@
       },
       "replay": {
         "score": "3-2",
-        "homeProb": 0.5384,
-        "drawProb": 0.2568,
-        "awayProb": 0.2048,
-        "homeXG": 2.72,
-        "awayXG": 1.6,
+        "homeProb": 0.5375,
+        "drawProb": 0.2565,
+        "awayProb": 0.206,
+        "homeXG": 2.71,
+        "awayXG": 1.61,
         "signal": {
-          "difference": 32.04,
+          "difference": 31.71,
           "reliability": 0.5,
-          "homeMultiplier": 1.4587720514120834,
-          "awayMultiplier": 0.6855080607227191
+          "homeMultiplier": 1.453109777234519,
+          "awayMultiplier": 0.688179252295134
         }
       }
     },
@@ -545,7 +548,7 @@
         ],
         "label": "kwetsbaar",
         "source": "ClubElo, selectiewaarde en competitiegecorrigeerde spelersprestaties",
-        "sourceAsOf": "2026-09-10T18:14:23.561Z",
+        "sourceAsOf": "2026-09-10T18:20:33.665Z",
         "clubElo": null,
         "clubEloRank": null,
         "country": null,
@@ -560,7 +563,7 @@
       },
       "awayRating": {
         "version": "club-rating-v2",
-        "rating": 67.92,
+        "rating": 67.41,
         "reliability": 1,
         "quality": "hoog",
         "components": [
@@ -582,15 +585,15 @@
           },
           {
             "key": "competition",
-            "rating": 72.3,
+            "rating": 69.75,
             "weight": 0.15,
-            "source": "ClubElo",
+            "source": "ClubElo + fotmob + competition-catalog",
             "asOf": "2026-09-10",
             "effectiveWeight": 0.15
           },
           {
             "key": "playerPerformance",
-            "rating": 71.7,
+            "rating": 69.15,
             "weight": 0.05,
             "source": "FotMob + Laatste bevestigde opstelling",
             "asOf": "2026-09-10T00:18:22.649Z",
@@ -607,19 +610,20 @@
           "performanceAverage": 6.74
         },
         "competition": {
-          "rating": 72.3,
-          "medianElo": 1723,
-          "teams": 16,
+          "rating": 69.75,
+          "medianElo": 1697.5,
+          "teams": 18,
+          "league": "France - Ligue 1",
           "country": "FRA",
           "level": null,
-          "method": "country-top16-median-proxy",
-          "source": "ClubElo",
+          "method": "domestic-membership-median",
+          "source": "ClubElo + fotmob + competition-catalog",
           "asOf": "2026-09-10"
         },
         "missing": [],
         "label": "sterk",
         "source": "ClubElo, selectiewaarde en competitiegecorrigeerde spelersprestaties",
-        "sourceAsOf": "2026-09-10T18:14:23.561Z",
+        "sourceAsOf": "2026-09-10T18:20:33.665Z",
         "clubElo": 1815,
         "clubEloRank": 33,
         "country": "FRA",
@@ -640,16 +644,16 @@
       },
       "replay": {
         "score": "2-1",
-        "homeProb": 0.4245,
-        "drawProb": 0.2861,
-        "awayProb": 0.2894,
-        "homeXG": 2.14,
+        "homeProb": 0.4279,
+        "drawProb": 0.2853,
+        "awayProb": 0.2868,
+        "homeXG": 2.15,
         "awayXG": 1.36,
         "signal": {
-          "difference": -18.33,
+          "difference": -17.82,
           "reliability": 0.45,
-          "homeMultiplier": 0.8146997568346415,
-          "awayMultiplier": 1.227446051887025
+          "homeMultiplier": 0.8193584223014423,
+          "awayMultiplier": 1.2204671030184389
         }
       }
     }

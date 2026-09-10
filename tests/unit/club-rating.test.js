@@ -1,7 +1,7 @@
 import { isSeniorInternationalTournament, predict } from "../../scripts/server-worker.js";
 import { describe, it, expect } from "vitest";
 import { calculateClubRating, squadValueEvidence, competitionStrength, clubRatingMatchSignal } from "../../scripts/worker/club-rating.js";
-import { parseClubEloWebsite } from "../../scripts/worker/club-strength.js";
+import { parseClubEloWebsite, domesticCompetitionStrength } from "../../scripts/worker/club-strength.js";
 import { buildOutcomeEnsemble } from "../../scripts/worker/outcome-ensemble.js";
 const asOf = "2026-09-10T12:00:00Z";
 const squad = (value, rating = 7) => ({ fetchedAt: asOf, source: "fixture", players: Array.from({length:24},(_,i)=>({id:`p${i}`,name:`Player ${i}`,marketValueEur:value,rating})) });
@@ -78,5 +78,15 @@ describe("club prediction integration", () => {
     expect(stronger.homeXG).toBeGreaterThan(equal.homeXG);
     expect(stronger.homeProb).toBeGreaterThan(equal.homeProb);
     expect(stronger.awayXG).toBeLessThan(equal.awayXG);
+  });
+});
+
+describe("domestic competition membership",()=>{
+  it("uses the actual division rather than stronger clubs elsewhere in the country",()=>{
+    const profiles=Object.fromEntries(Array.from({length:12},(_,i)=>[`club ${i}`,{club:`club ${i}`,elo:i<6?1900:1400,country:"ENG"}]));
+    const table={label:"England - Championship",updated:Date.parse(asOf),rows:Array.from({length:6},(_,i)=>({team:`club ${i+6}`,teamId:`id${i+6}`}))};
+    const p=domesticCompetitionStrength({profiles,asOf},{table},"id6","club 6",null,asOf);
+    expect(p).toMatchObject({rating:40,teams:6,method:"domestic-membership-median"});
+    expect(domesticCompetitionStrength({profiles,asOf},{table:{...table,label:"Europe - Champions League"}},"id6","club 6",null,asOf)).toBeNull();
   });
 });
