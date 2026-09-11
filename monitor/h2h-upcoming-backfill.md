@@ -1,16 +1,15 @@
 # Upcoming H2H Backfill
 
-Laatst bijgewerkt: 2026-09-11T23:17:57.249Z
+Laatst bijgewerkt: 2026-09-11T23:35:10.362Z
 Gecontroleerd: 32
-Gevuld: 1
-Geen directe H2H: 31
+Gevuld: 0
+Geen directe H2H: 32
 Errors: 0
 
 ## Aanbeveling
 API-Football blijft quota-bewust geblokkeerd totdat de acceptatietest slaagt; ESPN is wel gecontroleerd voor alle kandidaten.
 
 ## Gevuld
-- 2026-09-15: Middlesbrough - Millwall (5)
 
 ## Geen Directe H2H
 - 2026-09-12: Bolton Wanderers - Cardiff City (provider_acceptance_blocked)
