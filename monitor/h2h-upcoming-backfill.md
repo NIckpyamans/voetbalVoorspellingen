@@ -1,6 +1,6 @@
 # Upcoming H2H Backfill
 
-Laatst bijgewerkt: 2026-09-11T11:33:36.595Z
+Laatst bijgewerkt: 2026-09-11T15:22:40.917Z
 Gecontroleerd: 24
 Gevuld: 0
 Geen directe H2H: 24
@@ -24,11 +24,11 @@ API-Football blijft quota-bewust geblokkeerd totdat de acceptatietest slaagt; ES
 - 2026-09-11: MVV Maastricht - Almere City FC (provider_acceptance_blocked)
 - 2026-09-11: NAC Breda - Jong FC Utrecht (provider_acceptance_blocked)
 - 2026-09-11: VVV-Venlo - TOP Oss (provider_acceptance_blocked)
-- 2026-09-12: Bolton Wanderers - Cardiff City (provider_acceptance_blocked)
+- 2026-09-12: 1. FSV Mainz 05 - Eintracht Frankfurt (provider_acceptance_blocked)
+- 2026-09-12: Blackburn Rovers - Millwall (provider_acceptance_blocked)
+- 2026-09-12: Cambuur - NEC Nijmegen (provider_acceptance_blocked)
 - 2026-09-12: Sochaux - Nantes (provider_acceptance_blocked)
-- 2026-09-12: Borussia Dortmund - Paderborn (provider_acceptance_blocked)
 - 2026-09-12: Chelsea - Hull City (provider_acceptance_blocked)
 - 2026-09-12: Roda JC Kerkrade - Vitesse (provider_acceptance_blocked)
-- 2026-09-12: FC Twente - ADO Den Haag (provider_acceptance_blocked)
-- 2026-09-12: Derby County - Birmingham City (provider_acceptance_blocked)
-- 2026-09-12: Dunkerque - Saint-Étienne (provider_acceptance_blocked)
+- 2026-09-12: Borussia Dortmund - Paderborn (provider_acceptance_blocked)
+- 2026-09-12: Charlton Athletic - Portsmouth (provider_acceptance_blocked)
