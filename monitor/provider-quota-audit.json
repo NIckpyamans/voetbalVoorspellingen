@@ -1,10 +1,36 @@
 {
-  "checkedAt": "2026-09-10T08:59:24.888Z",
+  "checkedAt": "2026-09-11T06:10:46.871Z",
   "oddsApi": {
     "configured": true,
     "valid": true,
     "status": 200,
-    "activeSports": 87,
+    "catalogIncludesInactive": true,
+    "inactiveSoccerSportKeys": [
+      "soccer_africa_cup_of_nations",
+      "soccer_australia_aleague",
+      "soccer_concacaf_gold_cup",
+      "soccer_concacaf_leagues_cup",
+      "soccer_conmebol_copa_america",
+      "soccer_fa_cup",
+      "soccer_fifa_club_world_cup",
+      "soccer_fifa_world_cup",
+      "soccer_fifa_world_cup_qualifiers_europe",
+      "soccer_fifa_world_cup_qualifiers_south_america",
+      "soccer_fifa_world_cup_winner",
+      "soccer_fifa_world_cup_womens",
+      "soccer_france_coupe_de_france",
+      "soccer_italy_coppa_italia",
+      "soccer_spain_copa_del_rey",
+      "soccer_uefa_champs_league_qualification",
+      "soccer_uefa_champs_league_women",
+      "soccer_uefa_euro_qualification",
+      "soccer_uefa_european_championship"
+    ],
+    "faCup": {
+      "key": "soccer_fa_cup",
+      "status": "expected_inactive"
+    },
+    "activeSports": 86,
     "soccerSportKeys": [
       "soccer_argentina_primera_division",
       "soccer_austria_bundesliga",
@@ -66,15 +92,12 @@
       "soccer_uefa_europa_conference_league_qualification"
     ],
     "competitionCoverageStatus": "seasonal_unavailable",
-    "newlyUnavailableSports": [
-      "soccer_fa_cup"
-    ],
-    "newlyAvailableSports": [
-      "soccer_germany_bundesliga_women"
-    ],
+    "newlyInactiveSports": [],
+    "newlyUnavailableSports": [],
+    "newlyAvailableSports": [],
     "quota": {
-      "x-requests-remaining": "168",
-      "x-requests-used": "332",
+      "x-requests-remaining": "122",
+      "x-requests-used": "378",
       "x-requests-last": "0"
     },
     "errorCode": null
@@ -146,8 +169,8 @@
     "records": 50,
     "quota": {
       "x-ratelimit-limit": "1000",
-      "x-ratelimit-remaining": "960",
-      "x-ratelimit-reset": "1789084800"
+      "x-ratelimit-remaining": "999",
+      "x-ratelimit-reset": "1789171200"
     },
     "accepted": false,
     "policy": "Veertien dagen meten; nooit automatisch promoveren op basis van alleen een geldige key."
@@ -203,31 +226,31 @@
         "firstName": "Esbjerg vs OB",
         "hasOddsFlag": false,
         "rateLimit": {
-          "resets_in_seconds": 3600,
-          "remaining": 179,
+          "resets_in_seconds": 3195,
+          "remaining": 177,
           "requested_entity": "Fixture"
         },
         "quota": {
           "x-ratelimit-limit": "180",
-          "x-ratelimit-remaining": "179"
+          "x-ratelimit-remaining": "177"
         },
         "errorCode": null
       },
       "fixturesDate": {
         "valid": true,
         "status": 200,
-        "records": 0,
-        "firstId": null,
-        "firstName": null,
-        "hasOddsFlag": false,
+        "records": 1,
+        "firstId": 19713940,
+        "firstName": "FC København vs Horsens",
+        "hasOddsFlag": true,
         "rateLimit": {
-          "resets_in_seconds": 3600,
-          "remaining": 178,
+          "resets_in_seconds": 3194,
+          "remaining": 176,
           "requested_entity": "Fixture"
         },
         "quota": {
           "x-ratelimit-limit": "180",
-          "x-ratelimit-remaining": "178"
+          "x-ratelimit-remaining": "176"
         },
         "errorCode": null
       },
@@ -239,13 +262,13 @@
         "firstName": "FC København vs Horsens",
         "hasOddsFlag": true,
         "rateLimit": {
-          "resets_in_seconds": 3599,
-          "remaining": 177,
+          "resets_in_seconds": 3194,
+          "remaining": 175,
           "requested_entity": "Fixture"
         },
         "quota": {
           "x-ratelimit-limit": "180",
-          "x-ratelimit-remaining": "177"
+          "x-ratelimit-remaining": "175"
         },
         "errorCode": null
       },
@@ -279,7 +302,7 @@
         "firstName": "1",
         "hasOddsFlag": false,
         "rateLimit": {
-          "resets_in_seconds": 3600,
+          "resets_in_seconds": 3599,
           "remaining": 178,
           "requested_entity": "Odd"
         },
