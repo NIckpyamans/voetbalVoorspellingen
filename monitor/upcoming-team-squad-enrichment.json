@@ -1,83 +1,77 @@
 {
-  "generatedAt": "2026-09-11T06:04:07.512Z",
+  "generatedAt": "2026-09-11T08:01:32.052Z",
   "daysAhead": 8,
   "targetPlayersPerTeam": 18,
   "candidates": 294,
-  "checked": 32,
-  "enriched": 31,
-  "unavailable": 1,
-  "skippedFresh": 260,
-  "pendingBeforeBatch": 34,
-  "pendingAfterBatch": 2,
+  "checked": 10,
+  "enriched": 7,
+  "unavailable": 3,
+  "skippedFresh": 284,
+  "pendingBeforeBatch": 10,
+  "pendingAfterBatch": 0,
   "rateLimited": false,
   "retryAfterSeconds": 0,
   "byProvider": {
-    "FotMob": 14,
-    "Laatste bevestigde opstelling": 13,
+    "FotMob": 7,
+    "Laatste bevestigde opstelling": 4,
     "Transfermarkt Datasets": 0,
-    "TheSportsDB": 5,
-    "ESPN": 8,
-    "Wikipedia": 2
+    "TheSportsDB": 0,
+    "ESPN": 0,
+    "Wikipedia": 0
   },
   "byCompetition": {
-    "Europe - Europa League": {
-      "checked": 5,
-      "enriched": 5,
-      "unavailable": 0
-    },
-    "Italy - Serie A": {
-      "checked": 1,
-      "enriched": 1,
-      "unavailable": 0
-    },
-    "England - Championship": {
-      "checked": 6,
-      "enriched": 6,
-      "unavailable": 0
-    },
-    "Netherlands - Eredivisie": {
-      "checked": 4,
-      "enriched": 4,
-      "unavailable": 0
-    },
-    "Europe - Conference League": {
-      "checked": 8,
-      "enriched": 8,
-      "unavailable": 0
-    },
-    "Germany - Bundesliga": {
-      "checked": 1,
-      "enriched": 1,
-      "unavailable": 0
-    },
     "Europe - Champions League": {
-      "checked": 1,
-      "enriched": 0,
+      "checked": 3,
+      "enriched": 2,
       "unavailable": 1
     },
-    "Germany - 2. Bundesliga": {
+    "Europe - Europa League": {
       "checked": 3,
       "enriched": 3,
       "unavailable": 0
     },
-    "France - Ligue 2": {
-      "checked": 2,
-      "enriched": 2,
-      "unavailable": 0
-    },
-    "France - Ligue 1": {
+    "Germany - 2. Bundesliga": {
       "checked": 1,
       "enriched": 1,
       "unavailable": 0
+    },
+    "Europe - Conference League": {
+      "checked": 3,
+      "enriched": 1,
+      "unavailable": 2
     }
   },
   "failureReasons": {
-    "no_provider_team_or_roster_match": 1
+    "no_provider_team_or_roster_match": 3
   },
   "failures": [
     {
-      "team": "FK Qarabag",
+      "team": "F.C. København",
       "competition": "Europe - Champions League",
+      "reason": "no_provider_team_or_roster_match",
+      "attemptedProviders": [
+        "FotMob",
+        "Transfermarkt Datasets",
+        "ESPN",
+        "TheSportsDB",
+        "Wikipedia"
+      ]
+    },
+    {
+      "team": "Lausanne Sports",
+      "competition": "Europe - Conference League",
+      "reason": "no_provider_team_or_roster_match",
+      "attemptedProviders": [
+        "FotMob",
+        "Transfermarkt Datasets",
+        "ESPN",
+        "TheSportsDB",
+        "Wikipedia"
+      ]
+    },
+    {
+      "team": "Breidablik",
+      "competition": "Europe - Conference League",
       "reason": "no_provider_team_or_roster_match",
       "attemptedProviders": [
         "FotMob",
@@ -90,221 +84,53 @@
   ],
   "samples": [
     {
-      "team": "Red Bull Salzburg",
-      "competition": "Europe - Europa League",
-      "players": 14,
-      "provider": "TheSportsDB + Laatste bevestigde opstelling",
-      "providerTeam": "Red Bull Salzburg"
-    },
-    {
-      "team": "Roma",
-      "competition": "Italy - Serie A",
-      "players": 25,
-      "provider": "FotMob",
-      "providerTeam": "Roma"
-    },
-    {
-      "team": "Bolton Wanderers",
-      "competition": "England - Championship",
-      "players": 26,
-      "provider": "FotMob + Laatste bevestigde opstelling",
-      "providerTeam": "Bolton Wanderers"
-    },
-    {
-      "team": "Birmingham City",
-      "competition": "England - Championship",
-      "players": 26,
-      "provider": "FotMob + Laatste bevestigde opstelling",
-      "providerTeam": "Birmingham City"
-    },
-    {
-      "team": "PSV Eindhoven",
-      "competition": "Netherlands - Eredivisie",
-      "players": 27,
-      "provider": "FotMob + Laatste bevestigde opstelling",
-      "providerTeam": "PSV Eindhoven"
-    },
-    {
-      "team": "Celta Vigo",
-      "competition": "Europe - Europa League",
-      "players": 27,
-      "provider": "FotMob",
-      "providerTeam": "Celta Vigo"
-    },
-    {
-      "team": "Sheffield United",
-      "competition": "England - Championship",
-      "players": 27,
-      "provider": "FotMob + Laatste bevestigde opstelling",
-      "providerTeam": "Sheffield United"
-    },
-    {
-      "team": "West Ham United",
-      "competition": "England - Championship",
+      "team": "Union St.-Gilloise",
+      "competition": "Europe - Champions League",
       "players": 28,
-      "provider": "FotMob + Laatste bevestigde opstelling",
-      "providerTeam": "West Ham United"
+      "provider": "FotMob",
+      "providerTeam": "Union St.Gilloise"
     },
     {
-      "team": "FC Groningen",
-      "competition": "Netherlands - Eredivisie",
-      "players": 28,
-      "provider": "FotMob + Laatste bevestigde opstelling",
-      "providerTeam": "FC Groningen"
-    },
-    {
-      "team": "Stoke City",
-      "competition": "England - Championship",
+      "team": "Celtic",
+      "competition": "Europe - Europa League",
       "players": 29,
       "provider": "FotMob + Laatste bevestigde opstelling",
-      "providerTeam": "Stoke City"
+      "providerTeam": "Celtic"
     },
     {
-      "team": "FC Utrecht",
-      "competition": "Netherlands - Eredivisie",
+      "team": "Viktoria Plzen",
+      "competition": "Europe - Europa League",
       "players": 29,
       "provider": "FotMob + Laatste bevestigde opstelling",
-      "providerTeam": "FC Utrecht"
+      "providerTeam": "Viktoria Plzeň"
     },
     {
-      "team": "Watford",
-      "competition": "England - Championship",
-      "players": 30,
-      "provider": "FotMob + Laatste bevestigde opstelling",
-      "providerTeam": "Watford"
-    },
-    {
-      "team": "Rapid Vienna",
-      "competition": "Europe - Conference League",
-      "players": 8,
-      "provider": "TheSportsDB",
-      "providerTeam": "Rapid Vienna"
-    },
-    {
-      "team": "Zrinjski Mostar",
-      "competition": "Europe - Conference League",
-      "players": 9,
-      "provider": "TheSportsDB",
-      "providerTeam": "Zrinjski Mostar"
-    },
-    {
-      "team": "Dynamo Kyiv",
-      "competition": "Europe - Conference League",
-      "players": 10,
-      "provider": "TheSportsDB",
-      "providerTeam": "Dynamo Kyiv"
-    },
-    {
-      "team": "PAOK",
+      "team": "Dinamo Zagreb",
       "competition": "Europe - Europa League",
-      "players": 10,
-      "provider": "TheSportsDB",
-      "providerTeam": "PAOK"
-    },
-    {
-      "team": "Drita Gjilan",
-      "competition": "Europe - Conference League",
-      "players": 11,
-      "provider": "Laatste bevestigde opstelling",
-      "providerTeam": "Drita Gjilan"
-    },
-    {
-      "team": "Jagiellonia Bialystok",
-      "competition": "Europe - Conference League",
-      "players": 11,
-      "provider": "Laatste bevestigde opstelling",
-      "providerTeam": "Jagiellonia Bialystok"
-    },
-    {
-      "team": "Bayern Munich",
-      "competition": "Germany - Bundesliga",
-      "players": 25,
-      "provider": "ESPN",
-      "providerTeam": "Bayern Munich"
-    },
-    {
-      "team": "KF Shkëndija",
-      "competition": "Europe - Conference League",
-      "players": 26,
-      "provider": "Wikipedia",
-      "providerTeam": "KF Shkëndija"
-    },
-    {
-      "team": "AS Roma",
-      "competition": "Europe - Europa League",
-      "players": 26,
-      "provider": "ESPN",
-      "providerTeam": "AS Roma"
-    },
-    {
-      "team": "1. FC Heidenheim 1846",
-      "competition": "Germany - 2. Bundesliga",
-      "players": 26,
-      "provider": "FotMob",
-      "providerTeam": "FC Heidenheim"
-    },
-    {
-      "team": "BK Häcken",
-      "competition": "Europe - Conference League",
-      "players": 27,
-      "provider": "Wikipedia",
-      "providerTeam": "BK Häcken"
-    },
-    {
-      "team": "Rodez Aveyron",
-      "competition": "France - Ligue 2",
-      "players": 26,
-      "provider": "ESPN",
-      "providerTeam": "Rodez Aveyron"
-    },
-    {
-      "team": "Hertha Berlin",
-      "competition": "Germany - 2. Bundesliga",
-      "players": 27,
-      "provider": "ESPN",
-      "providerTeam": "Hertha Berlin"
-    },
-    {
-      "team": "TSV Eintracht Braunschweig",
-      "competition": "Germany - 2. Bundesliga",
-      "players": 27,
-      "provider": "ESPN",
-      "providerTeam": "TSV Eintracht Braunschweig"
-    },
-    {
-      "team": "FCSB",
-      "competition": "Europe - Europa League",
-      "players": 28,
-      "provider": "FotMob",
-      "providerTeam": "FCSB"
-    },
-    {
-      "team": "Stade Rennais",
-      "competition": "France - Ligue 1",
-      "players": 28,
-      "provider": "ESPN",
-      "providerTeam": "Stade Rennais"
-    },
-    {
-      "team": "Dijon FCO",
-      "competition": "France - Ligue 2",
-      "players": 28,
-      "provider": "ESPN",
-      "providerTeam": "Dijon FCO"
-    },
-    {
-      "team": "Ajax Amsterdam",
-      "competition": "Netherlands - Eredivisie",
-      "players": 29,
-      "provider": "ESPN",
-      "providerTeam": "Ajax Amsterdam"
-    },
-    {
-      "team": "AEK Athens",
-      "competition": "Europe - Conference League",
       "players": 31,
       "provider": "FotMob + Laatste bevestigde opstelling",
-      "providerTeam": "AEK Athens"
+      "providerTeam": "Dinamo Zagreb"
+    },
+    {
+      "team": "Pafos",
+      "competition": "Europe - Champions League",
+      "players": 32,
+      "provider": "FotMob + Laatste bevestigde opstelling",
+      "providerTeam": "Pafos FC"
+    },
+    {
+      "team": "SpVgg Greuther Fürth",
+      "competition": "Germany - 2. Bundesliga",
+      "players": 30,
+      "provider": "FotMob",
+      "providerTeam": "Greuther Fürth"
+    },
+    {
+      "team": "Hamrun Spartans",
+      "competition": "Europe - Conference League",
+      "players": 32,
+      "provider": "FotMob",
+      "providerTeam": "Hamrun Spartans"
     }
   ],
   "coverage": {
