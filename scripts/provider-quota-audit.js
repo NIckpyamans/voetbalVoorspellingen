@@ -54,23 +54,31 @@ async function auditOddsApi(previous = {}) {
   if (!key) return { configured: false, valid: false, status: "missing" };
   try {
     const { response, payload } = await requestJson(
-      `https://api.the-odds-api.com/v4/sports?apiKey=${encodeURIComponent(key)}`
+      `https://api.the-odds-api.com/v4/sports?all=true&apiKey=${encodeURIComponent(key)}`
     );
     const soccerSportKeys = Array.isArray(payload)
-      ? payload.filter((sport) => String(sport?.key || "").startsWith("soccer_")).map((sport) => sport.key)
+      ? payload.filter((sport) => sport?.active !== false && String(sport?.key || "").startsWith("soccer_")).map((sport) => sport.key)
       : [];
+    const inactiveSoccerSportKeys = Array.isArray(payload)
+      ? payload.filter((sport) => sport?.active === false && String(sport?.key || "").startsWith("soccer_")).map((sport) => sport.key)
+      : [];
+    const catalogValid = response.ok && Array.isArray(payload);
     const previousKeys = Array.isArray(previous?.soccerSportKeys) ? previous.soccerSportKeys : [];
     const missingExpectedSports = EXPECTED_SEASONAL_ODDS_SPORTS.filter((keyName) => !soccerSportKeys.includes(keyName));
     return {
       configured: true,
-      valid: response.ok,
+      valid: catalogValid,
       status: response.status,
+      catalogIncludesInactive: true,
+      inactiveSoccerSportKeys,
+      faCup: { key: "soccer_fa_cup", status: !catalogValid ? "unknown" : soccerSportKeys.includes("soccer_fa_cup") ? "active" : inactiveSoccerSportKeys.includes("soccer_fa_cup") ? "expected_inactive" : "not_in_catalog" },
       activeSports: Array.isArray(payload) ? payload.filter((sport) => sport?.active !== false).length : 0,
       soccerSportKeys,
       expectedSeasonalSports: EXPECTED_SEASONAL_ODDS_SPORTS,
       missingExpectedSports,
       competitionCoverageStatus: missingExpectedSports.length ? "seasonal_unavailable" : "available",
-      newlyUnavailableSports: previousKeys.filter((keyName) => !soccerSportKeys.includes(keyName)),
+      newlyInactiveSports: catalogValid ? previousKeys.filter((keyName) => inactiveSoccerSportKeys.includes(keyName)) : [],
+      newlyUnavailableSports: catalogValid ? previousKeys.filter((keyName) => !soccerSportKeys.includes(keyName) && !inactiveSoccerSportKeys.includes(keyName)) : [],
       newlyAvailableSports: soccerSportKeys.filter((keyName) => !previousKeys.includes(keyName)),
       quota: quotaHeaders(response),
       errorCode: response.ok ? null : String(payload?.error_code || payload?.message || "provider_rejected_key").slice(0, 120),

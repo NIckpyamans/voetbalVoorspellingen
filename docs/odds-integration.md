@@ -68,3 +68,21 @@ De provider mag closing odds direct in dezelfde response meesturen met een van d
 - `home_close`, `draw_close`, `away_close`
 
 Pre-match odds blijven alleen geldig als `capturedAt <= cutoffAt <= kickoff`. Closing odds worden opgeslagen voor evaluatie/CLV, maar worden niet als pre-match modelinput behandeld.
+
+
+### FA Cup availability
+
+`England - FA Cup` maps to `soccer_fa_cup`. Discovery and the provider audit
+request `/v4/sports/?all=true`, so a supported competition with `active: false`
+is recorded as expected seasonal inactivity, rather than a removed key.
+The audit exposes `inactiveSoccerSportKeys`, `newlyInactiveSports` and `faCup.status`;
+`newlyUnavailableSports` only contains keys absent from a successful full catalogue.
+A failed catalogue request must not imply that a competition has disappeared.
+
+Inactive competitions do not trigger paid odds requests. Other configured providers
+can still supply odds; without an available snapshot the ensemble excludes the market
+component and renormalizes the remaining model weights. No synthetic odds are added.
+An inactive provider key describes provider availability, not proof that the actual
+competition has no fixtures (qualifying rounds can already be underway).
+
+Source: https://the-odds-api.com/liveapi/guides/v4/#get-sports

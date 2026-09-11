@@ -25,7 +25,7 @@ async function discoverTheOddsApiSports(fetchImpl, apiKey) {
   if (!apiKey) return { active: null, quota: null, status: "not_configured" };
   const cached = activeSportsCache.get(apiKey);
   if (cached && Date.now() - cached.cachedAt <= RESPONSE_CACHE_TTL_MS) return cached;
-  const url = `https://api.the-odds-api.com/v4/sports/?apiKey=${encodeURIComponent(apiKey)}`;
+  const url = `https://api.the-odds-api.com/v4/sports/?all=true&apiKey=${encodeURIComponent(apiKey)}`;
   try {
     const response = await fetchWithTimeout(fetchImpl, url, { headers: { Accept: "application/json" } });
     const quota = {
@@ -36,7 +36,9 @@ async function discoverTheOddsApiSports(fetchImpl, apiKey) {
     if (Number.isFinite(Number(quota.remaining))) oddsApiRemaining = Number(quota.remaining);
     if (!response.ok) return { active: null, quota, status: `http_${response.status}`, cachedAt: Date.now() };
     const payload = await response.json();
+    if (!Array.isArray(payload)) return { active: null, quota, status: "invalid_catalog", cachedAt: Date.now() };
     const value = {
+      inactive: new Set(asArray(payload).filter((sport) => sport?.active === false).map((sport) => String(sport?.key || ""))),
       active: new Set(asArray(payload).filter((sport) => sport?.active !== false).map((sport) => String(sport?.key || "")).filter(Boolean)),
       quota,
       status: "ok",
@@ -109,7 +111,8 @@ function unique(values) {
   return [...new Set(values.filter(Boolean))];
 }
 
-export function inactiveOddsSportStatus(sportKey) {
+export function inactiveOddsSportStatus(sportKey, inactive = new Set()) {
+  if (inactive.has(sportKey)) return "seasonal_sport_unavailable";
   return /^soccer_uefa_(?:champs|europa).*league(?:_qualification)?$/i.test(String(sportKey || ""))
     ? "seasonal_sport_unavailable"
     : "unsupported_sport";
@@ -136,6 +139,7 @@ function inferOddsApiSportKeys(match = {}) {
     [/champions league.*qual|qual.*champions league|ucl.*qual/, "soccer_uefa_champs_league_qualification"],
     [/europa league.*qual|qual.*europa league/, "soccer_uefa_europa_league_qualification"],
     [/conference league.*qual|qual.*conference league/, "soccer_uefa_europa_conference_league_qualification"],
+    [/^(?:england )?(?:the )?(?:emirates )?fa cup$/, "soccer_fa_cup"],
     [/premier league/, "soccer_epl"],
     [/championship/, "soccer_efl_champ"],
     [/laliga|la liga/, "soccer_spain_la_liga"],
@@ -456,7 +460,7 @@ export async function fetchOddsAtPrediction(match, options = {}) {
         sportDiscovery = await discoverTheOddsApiSports(fetchImpl, configApiKey);
         if (sportDiscovery.active) {
           const unsupported = sports.filter((sport) => !sportDiscovery.active.has(sport));
-          attempts.push(...unsupported.map((sport) => ({ provider: configProvider, sport, status: inactiveOddsSportStatus(sport) })));
+          attempts.push(...unsupported.map((sport) => ({ provider: configProvider, sport, status: inactiveOddsSportStatus(sport, sportDiscovery.inactive) })));
           sports = sports.filter((sport) => sportDiscovery.active.has(sport));
         }
         if (!sports.length) {
@@ -466,7 +470,7 @@ export async function fetchOddsAtPrediction(match, options = {}) {
             oddsAtPrediction: null,
             provider: configProvider,
             reason: seasonal
-              ? "The Odds API heeft de UEFA-sportkey tijdelijk niet actief. Het model draait daarom aantoonbaar zonder marktgewicht."
+              ? "The Odds API heeft de sportkey tijdelijk niet actief. Het model draait daarom aantoonbaar zonder marktgewicht."
               : "The Odds API biedt momenteel geen actieve sportkey voor deze competitie.",
             requestMeta: {
               attempts,

@@ -67,6 +67,20 @@ describe("independent 1X2 outcome ensemble", () => {
     expect(result.probabilities.homeProb + result.probabilities.drawProb + result.probabilities.awayProb).toBeCloseTo(1, 3);
   });
 
+  it("uses zero market weight and finite normalized probabilities without FA Cup odds", () => {
+    const result = buildOutcomeEnsemble({
+      poisson: { homeProb: 0.6, drawProb: 0.25, awayProb: 0.15 },
+      heuristic: { homeProb: 0.5, drawProb: 0.3, awayProb: 0.2 },
+      oddsAtPrediction: null,
+    });
+    expect(result.market).toBeNull();
+    const market = result.components.find((c) => c.key === "de_vig_market");
+    expect(market.active).toBe(false);
+    expect(market.weight || 0).toBe(0);
+    expect(Object.values(result.probabilities).every(Number.isFinite)).toBe(true);
+    expect(Object.values(result.probabilities).reduce((a, b) => a + b, 0)).toBeCloseTo(1, 3);
+  });
+
   it("reports honest top-3 and top-5 score coverage", () => {
     const coverage = summarizeScoreCoverage({ "1-0": 0.14, "1-1": 0.13, "2-0": 0.12, "2-1": 0.1, "0-0": 0.08 });
     expect(coverage.top1).toBe(0.14);
