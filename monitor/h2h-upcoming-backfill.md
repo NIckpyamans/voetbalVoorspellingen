@@ -1,16 +1,15 @@
 # Upcoming H2H Backfill
 
-Laatst bijgewerkt: 2026-09-11T20:59:57.767Z
-Gecontroleerd: 32
-Gevuld: 1
-Geen directe H2H: 31
+Laatst bijgewerkt: 2026-09-11T21:28:56.045Z
+Gecontroleerd: 24
+Gevuld: 0
+Geen directe H2H: 24
 Errors: 0
 
 ## Aanbeveling
 API-Football blijft quota-bewust geblokkeerd totdat de acceptatietest slaagt; ESPN is wel gecontroleerd voor alle kandidaten.
 
 ## Gevuld
-- 2026-09-15: Ajax - Willem II (2)
 
 ## Geen Directe H2H
 - 2026-09-12: Bolton Wanderers - Cardiff City (provider_acceptance_blocked)
