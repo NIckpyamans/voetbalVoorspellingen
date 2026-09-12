@@ -1,28 +1,28 @@
 {
-  "generatedAt": "2026-09-11T21:22:06.849Z",
+  "generatedAt": "2026-09-12T11:18:21.063Z",
   "checked": 40,
-  "captured": 2,
-  "openingCaptured": 2,
-  "prematchCaptured": 2,
-  "closingCaptured": 0,
-  "closingPairs": 0,
+  "captured": 3,
+  "openingCaptured": 3,
+  "prematchCaptured": 3,
+  "closingCaptured": 3,
+  "closingPairs": 3,
   "statuses": {
-    "not_found": 8,
-    "available": 2
+    "available": 3,
+    "not_found": 8
   },
   "attemptStatuses": {
-    "the-odds-api:seasonal_sport_unavailable": 10,
-    "the-odds-api:unsupported_sport": 20,
-    "the-odds-api:not_found": 32,
-    "sportmonks:fixture_id_missing": 8,
-    "the-odds-api:available": 2
+    "the-odds-api:seasonal_sport_unavailable": 11,
+    "the-odds-api:unsupported_sport": 22,
+    "the-odds-api:available": 3,
+    "the-odds-api:quota_reserve": 8,
+    "sportmonks:fixture_id_missing": 8
   },
   "providerStatuses": {
     "the-odds-api": {
-      "seasonal_sport_unavailable": 10,
-      "unsupported_sport": 20,
-      "not_found": 32,
-      "available": 2
+      "seasonal_sport_unavailable": 11,
+      "unsupported_sport": 22,
+      "available": 3,
+      "quota_reserve": 8
     },
     "sportmonks": {
       "fixture_id_missing": 8
@@ -30,67 +30,30 @@
   },
   "providerQuota": {
     "the-odds-api": {
-      "remaining": 66,
-      "used": 434,
-      "limit": null,
-      "reset": null
+      "remaining": 59
     }
   },
-  "skippedExistingRole": 30,
+  "skippedExistingRole": 29,
   "sportmonksMapped": 0,
   "sportmonksMappingStatuses": {
     "plan_coverage_unavailable": 40
   },
   "matches": [
     {
-      "matchId": "ss-fotmob-5881663",
-      "kickoff": "2026-09-12T11:00:00.000Z",
-      "league": "Germany - 2. Bundesliga",
-      "homeTeam": "Bochum",
-      "awayTeam": "Greuther Fürth",
-      "minutesBeforeKickoff": 818,
-      "closingWindow": false,
-      "status": "not_found",
-      "providerCompetitionAvailability": null,
-      "reason": "Sportmonks fixture-id ontbreekt; odds-by-fixture call overgeslagen.",
-      "sportmonksMapping": "plan_coverage_unavailable"
-    },
-    {
-      "matchId": "ss-fotmob-5881664",
-      "kickoff": "2026-09-12T11:00:00.000Z",
-      "league": "Germany - 2. Bundesliga",
-      "homeTeam": "Eintracht Braunschweig",
-      "awayTeam": "Dynamo Dresden",
-      "minutesBeforeKickoff": 818,
-      "closingWindow": false,
-      "status": "not_found",
-      "providerCompetitionAvailability": null,
-      "reason": "Sportmonks fixture-id ontbreekt; odds-by-fixture call overgeslagen.",
-      "sportmonksMapping": "plan_coverage_unavailable"
-    },
-    {
-      "matchId": "ss-fotmob-5881668",
-      "kickoff": "2026-09-12T11:00:00.000Z",
-      "league": "Germany - 2. Bundesliga",
-      "homeTeam": "Magdeburg",
-      "awayTeam": "Kaiserslautern",
-      "minutesBeforeKickoff": 818,
-      "closingWindow": false,
-      "status": "not_found",
-      "providerCompetitionAvailability": null,
-      "reason": "Sportmonks fixture-id ontbreekt; odds-by-fixture call overgeslagen.",
-      "sportmonksMapping": "plan_coverage_unavailable"
-    },
-    {
       "matchId": "ss-fotmob-5836827",
       "kickoff": "2026-09-12T11:30:00.000Z",
       "league": "England - Championship",
       "homeTeam": "Bolton Wanderers",
       "awayTeam": "Cardiff City",
-      "minutesBeforeKickoff": 848,
-      "closingWindow": false,
-      "status": "already_captured",
-      "captureRole": "opening"
+      "minutesBeforeKickoff": 12,
+      "closingWindow": true,
+      "status": "captured",
+      "provider": "the-odds-api",
+      "captureRole": "closing",
+      "sportmonksFixtureId": null,
+      "opening": true,
+      "prematch": true,
+      "closing": true
     },
     {
       "matchId": "ss-fotmob-5836829",
@@ -98,10 +61,15 @@
       "league": "England - Championship",
       "homeTeam": "Derby County",
       "awayTeam": "Birmingham City",
-      "minutesBeforeKickoff": 848,
-      "closingWindow": false,
-      "status": "already_captured",
-      "captureRole": "opening"
+      "minutesBeforeKickoff": 12,
+      "closingWindow": true,
+      "status": "captured",
+      "provider": "the-odds-api",
+      "captureRole": "closing",
+      "sportmonksFixtureId": null,
+      "opening": true,
+      "prematch": true,
+      "closing": true
     },
     {
       "matchId": "ss-fotmob-5836836",
@@ -109,10 +77,15 @@
       "league": "England - Championship",
       "homeTeam": "West Bromwich Albion",
       "awayTeam": "Queens Park Rangers",
-      "minutesBeforeKickoff": 848,
-      "closingWindow": false,
-      "status": "already_captured",
-      "captureRole": "opening"
+      "minutesBeforeKickoff": 12,
+      "closingWindow": true,
+      "status": "captured",
+      "provider": "the-odds-api",
+      "captureRole": "closing",
+      "sportmonksFixtureId": null,
+      "opening": true,
+      "prematch": true,
+      "closing": true
     },
     {
       "matchId": "ss-fotmob-5803257",
@@ -120,7 +93,7 @@
       "league": "France - Ligue 2",
       "homeTeam": "Guingamp",
       "awayTeam": "Annecy FC",
-      "minutesBeforeKickoff": 878,
+      "minutesBeforeKickoff": 42,
       "closingWindow": false,
       "status": "not_found",
       "providerCompetitionAvailability": null,
@@ -133,7 +106,7 @@
       "league": "France - Ligue 2",
       "homeTeam": "Sochaux",
       "awayTeam": "Nantes",
-      "minutesBeforeKickoff": 878,
+      "minutesBeforeKickoff": 42,
       "closingWindow": false,
       "status": "not_found",
       "providerCompetitionAvailability": null,
@@ -146,10 +119,10 @@
       "league": "Germany - Bundesliga",
       "homeTeam": "Augsburg",
       "awayTeam": "Bayer Leverkusen",
-      "minutesBeforeKickoff": 968,
+      "minutesBeforeKickoff": 132,
       "closingWindow": false,
       "status": "already_captured",
-      "captureRole": "opening"
+      "captureRole": "prematch"
     },
     {
       "matchId": "ss-fotmob-5881162",
@@ -157,10 +130,10 @@
       "league": "Germany - Bundesliga",
       "homeTeam": "Borussia Dortmund",
       "awayTeam": "Paderborn",
-      "minutesBeforeKickoff": 968,
+      "minutesBeforeKickoff": 132,
       "closingWindow": false,
       "status": "already_captured",
-      "captureRole": "opening"
+      "captureRole": "prematch"
     },
     {
       "matchId": "ss-fotmob-5881165",
@@ -168,10 +141,10 @@
       "league": "Germany - Bundesliga",
       "homeTeam": "Freiburg",
       "awayTeam": "Borussia Mönchengladbach",
-      "minutesBeforeKickoff": 968,
+      "minutesBeforeKickoff": 132,
       "closingWindow": false,
       "status": "already_captured",
-      "captureRole": "opening"
+      "captureRole": "prematch"
     },
     {
       "matchId": "ss-fotmob-5881166",
@@ -179,10 +152,10 @@
       "league": "Germany - Bundesliga",
       "homeTeam": "Hoffenheim",
       "awayTeam": "VfB Stuttgart",
-      "minutesBeforeKickoff": 968,
+      "minutesBeforeKickoff": 132,
       "closingWindow": false,
       "status": "already_captured",
-      "captureRole": "opening"
+      "captureRole": "prematch"
     },
     {
       "matchId": "ss-fotmob-5881167",
@@ -190,10 +163,10 @@
       "league": "Germany - Bundesliga",
       "homeTeam": "Mainz 05",
       "awayTeam": "Eintracht Frankfurt",
-      "minutesBeforeKickoff": 968,
+      "minutesBeforeKickoff": 132,
       "closingWindow": false,
       "status": "already_captured",
-      "captureRole": "opening"
+      "captureRole": "prematch"
     },
     {
       "matchId": "ss-oldb-83176",
@@ -201,10 +174,10 @@
       "league": "Germany - Bundesliga",
       "homeTeam": "TSG Hoffenheim",
       "awayTeam": "VfB Stuttgart",
-      "minutesBeforeKickoff": 968,
+      "minutesBeforeKickoff": 132,
       "closingWindow": false,
       "status": "already_captured",
-      "captureRole": "opening"
+      "captureRole": "prematch"
     },
     {
       "matchId": "ss-oldb-83179",
@@ -212,10 +185,10 @@
       "league": "Germany - Bundesliga",
       "homeTeam": "1. FSV Mainz 05",
       "awayTeam": "Eintracht Frankfurt",
-      "minutesBeforeKickoff": 968,
+      "minutesBeforeKickoff": 132,
       "closingWindow": false,
       "status": "already_captured",
-      "captureRole": "opening"
+      "captureRole": "prematch"
     },
     {
       "matchId": "ss-fotmob-5795445",
@@ -223,10 +196,10 @@
       "league": "England - Premier League",
       "homeTeam": "AFC Bournemouth",
       "awayTeam": "Brentford",
-      "minutesBeforeKickoff": 998,
+      "minutesBeforeKickoff": 162,
       "closingWindow": false,
       "status": "already_captured",
-      "captureRole": "opening"
+      "captureRole": "prematch"
     },
     {
       "matchId": "ss-fotmob-5795446",
@@ -234,10 +207,10 @@
       "league": "England - Premier League",
       "homeTeam": "Aston Villa",
       "awayTeam": "Nottingham Forest",
-      "minutesBeforeKickoff": 998,
+      "minutesBeforeKickoff": 162,
       "closingWindow": false,
       "status": "already_captured",
-      "captureRole": "opening"
+      "captureRole": "prematch"
     },
     {
       "matchId": "ss-fotmob-5795447",
@@ -245,10 +218,10 @@
       "league": "England - Premier League",
       "homeTeam": "Chelsea",
       "awayTeam": "Hull City",
-      "minutesBeforeKickoff": 998,
+      "minutesBeforeKickoff": 162,
       "closingWindow": false,
       "status": "already_captured",
-      "captureRole": "opening"
+      "captureRole": "prematch"
     },
     {
       "matchId": "ss-fotmob-5795449",
@@ -256,10 +229,10 @@
       "league": "England - Premier League",
       "homeTeam": "Crystal Palace",
       "awayTeam": "Ipswich Town",
-      "minutesBeforeKickoff": 998,
+      "minutesBeforeKickoff": 162,
       "closingWindow": false,
       "status": "already_captured",
-      "captureRole": "opening"
+      "captureRole": "prematch"
     },
     {
       "matchId": "ss-fotmob-5795451",
@@ -267,10 +240,10 @@
       "league": "England - Premier League",
       "homeTeam": "Liverpool",
       "awayTeam": "Fulham",
-      "minutesBeforeKickoff": 998,
+      "minutesBeforeKickoff": 162,
       "closingWindow": false,
       "status": "already_captured",
-      "captureRole": "opening"
+      "captureRole": "prematch"
     },
     {
       "matchId": "ss-fotmob-5836826",
@@ -278,10 +251,10 @@
       "league": "England - Championship",
       "homeTeam": "Blackburn Rovers",
       "awayTeam": "Millwall",
-      "minutesBeforeKickoff": 998,
+      "minutesBeforeKickoff": 162,
       "closingWindow": false,
       "status": "already_captured",
-      "captureRole": "opening"
+      "captureRole": "prematch"
     },
     {
       "matchId": "ss-fotmob-5836828",
@@ -289,10 +262,10 @@
       "league": "England - Championship",
       "homeTeam": "Charlton Athletic",
       "awayTeam": "Portsmouth",
-      "minutesBeforeKickoff": 998,
+      "minutesBeforeKickoff": 162,
       "closingWindow": false,
       "status": "already_captured",
-      "captureRole": "opening"
+      "captureRole": "prematch"
     },
     {
       "matchId": "ss-fotmob-5836830",
@@ -300,10 +273,10 @@
       "league": "England - Championship",
       "homeTeam": "Middlesbrough",
       "awayTeam": "Norwich City",
-      "minutesBeforeKickoff": 998,
+      "minutesBeforeKickoff": 162,
       "closingWindow": false,
       "status": "already_captured",
-      "captureRole": "opening"
+      "captureRole": "prematch"
     },
     {
       "matchId": "ss-fotmob-5836831",
@@ -311,10 +284,10 @@
       "league": "England - Championship",
       "homeTeam": "Preston North End",
       "awayTeam": "Lincoln City",
-      "minutesBeforeKickoff": 998,
+      "minutesBeforeKickoff": 162,
       "closingWindow": false,
       "status": "already_captured",
-      "captureRole": "opening"
+      "captureRole": "prematch"
     },
     {
       "matchId": "ss-fotmob-5836833",
@@ -322,10 +295,10 @@
       "league": "England - Championship",
       "homeTeam": "Southampton",
       "awayTeam": "Bristol City",
-      "minutesBeforeKickoff": 998,
+      "minutesBeforeKickoff": 162,
       "closingWindow": false,
       "status": "already_captured",
-      "captureRole": "opening"
+      "captureRole": "prematch"
     },
     {
       "matchId": "ss-fotmob-5836834",
@@ -333,10 +306,10 @@
       "league": "England - Championship",
       "homeTeam": "Swansea City",
       "awayTeam": "Burnley",
-      "minutesBeforeKickoff": 998,
+      "minutesBeforeKickoff": 162,
       "closingWindow": false,
       "status": "already_captured",
-      "captureRole": "opening"
+      "captureRole": "prematch"
     },
     {
       "matchId": "ss-fotmob-5836835",
@@ -344,10 +317,10 @@
       "league": "England - Championship",
       "homeTeam": "Watford",
       "awayTeam": "Stoke City",
-      "minutesBeforeKickoff": 998,
+      "minutesBeforeKickoff": 162,
       "closingWindow": false,
       "status": "already_captured",
-      "captureRole": "opening"
+      "captureRole": "prematch"
     },
     {
       "matchId": "ss-fotmob-5832865",
@@ -355,7 +328,7 @@
       "league": "Netherlands - Eerste Divisie",
       "homeTeam": "Roda JC Kerkrade",
       "awayTeam": "Vitesse",
-      "minutesBeforeKickoff": 1028,
+      "minutesBeforeKickoff": 192,
       "closingWindow": false,
       "status": "not_found",
       "providerCompetitionAvailability": null,
@@ -368,10 +341,10 @@
       "league": "Netherlands - Eredivisie",
       "homeTeam": "FC Twente",
       "awayTeam": "ADO Den Haag",
-      "minutesBeforeKickoff": 1028,
+      "minutesBeforeKickoff": 192,
       "closingWindow": false,
       "status": "already_captured",
-      "captureRole": "opening"
+      "captureRole": "prematch"
     },
     {
       "matchId": "ss-fotmob-5802936",
@@ -379,10 +352,10 @@
       "league": "France - Ligue 1",
       "homeTeam": "Strasbourg",
       "awayTeam": "Monaco",
-      "minutesBeforeKickoff": 1073,
+      "minutesBeforeKickoff": 237,
       "closingWindow": false,
       "status": "already_captured",
-      "captureRole": "opening"
+      "captureRole": "prematch"
     },
     {
       "matchId": "ss-fotmob-5881164",
@@ -390,10 +363,10 @@
       "league": "Germany - Bundesliga",
       "homeTeam": "1. FC Köln",
       "awayTeam": "Werder Bremen",
-      "minutesBeforeKickoff": 1148,
+      "minutesBeforeKickoff": 312,
       "closingWindow": false,
       "status": "already_captured",
-      "captureRole": "opening"
+      "captureRole": "prematch"
     },
     {
       "matchId": "ss-fotmob-5795454",
@@ -401,10 +374,10 @@
       "league": "England - Premier League",
       "homeTeam": "Tottenham Hotspur",
       "awayTeam": "Everton",
-      "minutesBeforeKickoff": 1148,
+      "minutesBeforeKickoff": 312,
       "closingWindow": false,
       "status": "already_captured",
-      "captureRole": "opening"
+      "captureRole": "prematch"
     },
     {
       "matchId": "ss-fotmob-5781748",
@@ -412,10 +385,10 @@
       "league": "Netherlands - Eredivisie",
       "homeTeam": "Go Ahead Eagles",
       "awayTeam": "FC Groningen",
-      "minutesBeforeKickoff": 1163,
+      "minutesBeforeKickoff": 327,
       "closingWindow": false,
       "status": "already_captured",
-      "captureRole": "opening"
+      "captureRole": "prematch"
     },
     {
       "matchId": "ss-fotmob-5803256",
@@ -423,7 +396,7 @@
       "league": "France - Ligue 2",
       "homeTeam": "Dunkerque",
       "awayTeam": "Saint-Étienne",
-      "minutesBeforeKickoff": 1238,
+      "minutesBeforeKickoff": 402,
       "closingWindow": false,
       "status": "not_found",
       "providerCompetitionAvailability": null,
@@ -436,7 +409,7 @@
       "league": "Netherlands - Eredivisie",
       "homeTeam": "Fortuna Sittard",
       "awayTeam": "Ajax",
-      "minutesBeforeKickoff": 1238,
+      "minutesBeforeKickoff": 401,
       "closingWindow": false,
       "status": "already_captured",
       "captureRole": "opening"
@@ -447,7 +420,7 @@
       "league": "Germany - 2. Bundesliga",
       "homeTeam": "St. Pauli",
       "awayTeam": "Wolfsburg",
-      "minutesBeforeKickoff": 1268,
+      "minutesBeforeKickoff": 431,
       "closingWindow": false,
       "status": "not_found",
       "providerCompetitionAvailability": null,
@@ -460,7 +433,7 @@
       "league": "France - Ligue 1",
       "homeTeam": "Auxerre",
       "awayTeam": "Nice",
-      "minutesBeforeKickoff": 1283,
+      "minutesBeforeKickoff": 446,
       "closingWindow": false,
       "status": "already_captured",
       "captureRole": "opening"
@@ -471,7 +444,7 @@
       "league": "France - Ligue 1",
       "homeTeam": "Le Havre",
       "awayTeam": "Angers",
-      "minutesBeforeKickoff": 1283,
+      "minutesBeforeKickoff": 446,
       "closingWindow": false,
       "status": "already_captured",
       "captureRole": "opening"
@@ -482,15 +455,10 @@
       "league": "France - Ligue 1",
       "homeTeam": "Lorient",
       "awayTeam": "Toulouse",
-      "minutesBeforeKickoff": 1283,
+      "minutesBeforeKickoff": 446,
       "closingWindow": false,
-      "status": "captured",
-      "provider": "the-odds-api",
-      "captureRole": "opening",
-      "sportmonksFixtureId": null,
-      "opening": true,
-      "prematch": true,
-      "closing": false
+      "status": "already_captured",
+      "captureRole": "opening"
     },
     {
       "matchId": "ss-fotmob-5802934",
@@ -498,26 +466,52 @@
       "league": "France - Ligue 1",
       "homeTeam": "Paris FC",
       "awayTeam": "Lyon",
-      "minutesBeforeKickoff": 1283,
+      "minutesBeforeKickoff": 446,
       "closingWindow": false,
-      "status": "captured",
-      "provider": "the-odds-api",
-      "captureRole": "opening",
-      "sportmonksFixtureId": null,
-      "opening": true,
-      "prematch": true,
-      "closing": false
+      "status": "already_captured",
+      "captureRole": "opening"
+    },
+    {
+      "matchId": "ss-fotmob-5795453",
+      "kickoff": "2026-09-12T19:00:00.000Z",
+      "league": "England - Premier League",
+      "homeTeam": "Sunderland",
+      "awayTeam": "Arsenal",
+      "minutesBeforeKickoff": 461,
+      "closingWindow": false,
+      "status": "not_found",
+      "providerCompetitionAvailability": null,
+      "reason": "Sportmonks fixture-id ontbreekt; odds-by-fixture call overgeslagen.",
+      "sportmonksMapping": "plan_coverage_unavailable"
+    },
+    {
+      "matchId": "ss-fotmob-5781741",
+      "kickoff": "2026-09-12T19:00:00.000Z",
+      "league": "Netherlands - Eredivisie",
+      "homeTeam": "Cambuur",
+      "awayTeam": "NEC Nijmegen",
+      "minutesBeforeKickoff": 461,
+      "closingWindow": false,
+      "status": "not_found",
+      "providerCompetitionAvailability": null,
+      "reason": "Sportmonks fixture-id ontbreekt; odds-by-fixture call overgeslagen.",
+      "sportmonksMapping": "plan_coverage_unavailable"
+    },
+    {
+      "matchId": "ss-fotmob-5781745",
+      "kickoff": "2026-09-13T10:15:00.000Z",
+      "league": "Netherlands - Eredivisie",
+      "homeTeam": "Excelsior",
+      "awayTeam": "FC Utrecht",
+      "minutesBeforeKickoff": 1376,
+      "closingWindow": false,
+      "status": "not_found",
+      "providerCompetitionAvailability": null,
+      "reason": "Sportmonks fixture-id ontbreekt; odds-by-fixture call overgeslagen.",
+      "sportmonksMapping": "plan_coverage_unavailable"
     }
   ],
   "leagueCoverage": [
-    {
-      "league": "England - Championship",
-      "checked": 10,
-      "covered": 0,
-      "partial": 0,
-      "missing": 10,
-      "coverage": 0
-    },
     {
       "league": "Germany - Bundesliga",
       "checked": 8,
@@ -528,18 +522,26 @@
     },
     {
       "league": "England - Premier League",
-      "checked": 6,
+      "checked": 7,
       "covered": 0,
       "partial": 0,
-      "missing": 6,
+      "missing": 7,
       "coverage": 0
     },
     {
-      "league": "Germany - 2. Bundesliga",
-      "checked": 4,
+      "league": "France - Ligue 1",
+      "checked": 5,
       "covered": 0,
       "partial": 0,
-      "missing": 4,
+      "missing": 5,
+      "coverage": 0
+    },
+    {
+      "league": "Netherlands - Eredivisie",
+      "checked": 5,
+      "covered": 0,
+      "partial": 0,
+      "missing": 5,
       "coverage": 0
     },
     {
@@ -551,11 +553,11 @@
       "coverage": 0
     },
     {
-      "league": "Netherlands - Eredivisie",
-      "checked": 3,
+      "league": "Germany - 2. Bundesliga",
+      "checked": 1,
       "covered": 0,
       "partial": 0,
-      "missing": 3,
+      "missing": 1,
       "coverage": 0
     },
     {
@@ -567,13 +569,13 @@
       "coverage": 0
     },
     {
-      "league": "France - Ligue 1",
-      "checked": 5,
-      "covered": 2,
+      "league": "England - Championship",
+      "checked": 10,
+      "covered": 3,
       "partial": 0,
-      "missing": 3,
-      "coverage": 0.4
+      "missing": 7,
+      "coverage": 0.3
     }
   ],
-  "coverage": 0.05
+  "coverage": 0.075
 }
