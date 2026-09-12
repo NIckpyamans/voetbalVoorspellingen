@@ -1,6 +1,6 @@
 # Upcoming H2H Backfill
 
-Laatst bijgewerkt: 2026-09-12T10:46:34.213Z
+Laatst bijgewerkt: 2026-09-12T15:32:35.512Z
 Gecontroleerd: 32
 Gevuld: 0
 Geen directe H2H: 32
@@ -12,23 +12,23 @@ API-Football blijft quota-bewust geblokkeerd totdat de acceptatietest slaagt; ES
 ## Gevuld
 
 ## Geen Directe H2H
-- 2026-09-12: Bolton Wanderers - Cardiff City (provider_acceptance_blocked)
-- 2026-09-12: Sochaux - Nantes (provider_acceptance_blocked)
-- 2026-09-12: Borussia Dortmund - Paderborn (provider_acceptance_blocked)
-- 2026-09-12: Chelsea - Hull City (provider_acceptance_blocked)
-- 2026-09-12: Roda JC Kerkrade - Vitesse (provider_acceptance_blocked)
-- 2026-09-12: FC Twente - ADO Den Haag (provider_acceptance_blocked)
-- 2026-09-12: Derby County - Birmingham City (provider_acceptance_blocked)
 - 2026-09-12: Dunkerque - Saint-Étienne (provider_acceptance_blocked)
-- 2026-09-12: Mainz 05 - Eintracht Frankfurt (provider_acceptance_blocked)
-- 2026-09-12: Crystal Palace - Ipswich Town (provider_acceptance_blocked)
 - 2026-09-12: Fortuna Sittard - Ajax (provider_acceptance_blocked)
-- 2026-09-12: West Bromwich Albion - Queens Park Rangers (provider_acceptance_blocked)
-- 2026-09-12: 1. FSV Mainz 05 - Eintracht Frankfurt (provider_acceptance_blocked)
 - 2026-09-12: Cambuur - NEC Nijmegen (provider_acceptance_blocked)
-- 2026-09-12: Blackburn Rovers - Millwall (provider_acceptance_blocked)
-- 2026-09-12: Charlton Athletic - Portsmouth (provider_acceptance_blocked)
-- 2026-09-12: Middlesbrough - Norwich City (provider_acceptance_blocked)
-- 2026-09-12: Preston North End - Lincoln City (provider_acceptance_blocked)
-- 2026-09-12: Swansea City - Burnley (provider_acceptance_blocked)
-- 2026-09-12: Watford - Stoke City (provider_acceptance_blocked)
+- 2026-09-13: Sheffield United - Wolverhampton Wanderers (provider_acceptance_blocked)
+- 2026-09-13: Karlsruher SC - Energie Cottbus (provider_acceptance_blocked)
+- 2026-09-13: Coventry City - Brighton & Hove Albion (provider_acceptance_blocked)
+- 2026-09-13: FC Volendam - FC Den Bosch (provider_acceptance_blocked)
+- 2026-09-13: Le Mans - Lens (provider_acceptance_blocked)
+- 2026-09-13: Elversberg - Bayern München (provider_acceptance_blocked)
+- 2026-09-13: VfL Osnabrück - Hertha BSC (provider_acceptance_blocked)
+- 2026-09-13: SV 07 Elversberg - FC Bayern München (provider_acceptance_blocked)
+- 2026-09-14: Jong FC Utrecht - Jong Ajax (provider_acceptance_blocked)
+- 2026-09-14: Jong PSV - Jong AZ Alkmaar (provider_acceptance_blocked)
+- 2026-09-15: Bristol City - Lincoln City (provider_acceptance_blocked)
+- 2026-09-16: Bayer Leverkusen - NK Celje (provider_acceptance_blocked)
+- 2026-09-16: Hapoel Beer Sheva - Dinamo Zagreb (provider_acceptance_blocked)
+- 2026-09-16: Olympiacos - Jagiellonia Białystok (provider_acceptance_blocked)
+- 2026-09-16: Sturm Graz - Rennes (provider_acceptance_blocked)
+- 2026-09-16: Sunderland - AZ Alkmaar (provider_acceptance_blocked)
+- 2026-09-16: Ararat Armenia - Sparta Prague (provider_acceptance_blocked)
