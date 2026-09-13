@@ -1,23 +1,17 @@
 # Upcoming H2H Backfill
 
-Laatst bijgewerkt: 2026-09-13T11:52:48.516Z
+Laatst bijgewerkt: 2026-09-13T16:17:26.745Z
 Gecontroleerd: 32
-Gevuld: 1
-Geen directe H2H: 31
+Gevuld: 0
+Geen directe H2H: 32
 Errors: 0
 
 ## Aanbeveling
 API-Football blijft quota-bewust geblokkeerd totdat de acceptatietest slaagt; ESPN is wel gecontroleerd voor alle kandidaten.
 
 ## Gevuld
-- 2026-09-18: Bristol City - Watford (5)
 
 ## Geen Directe H2H
-- 2026-09-13: Coventry City - Brighton & Hove Albion (provider_acceptance_blocked)
-- 2026-09-13: FC Volendam - FC Den Bosch (provider_acceptance_blocked)
-- 2026-09-13: Le Mans - Lens (provider_acceptance_blocked)
-- 2026-09-13: Elversberg - Bayern München (provider_acceptance_blocked)
-- 2026-09-13: SV 07 Elversberg - FC Bayern München (provider_acceptance_blocked)
 - 2026-09-14: Jong FC Utrecht - Jong Ajax (provider_acceptance_blocked)
 - 2026-09-14: Jong PSV - Jong AZ Alkmaar (provider_acceptance_blocked)
 - 2026-09-15: Bristol City - Lincoln City (provider_acceptance_blocked)
@@ -33,3 +27,8 @@ API-Football blijft quota-bewust geblokkeerd totdat de acceptatietest slaagt; ES
 - 2026-09-17: Levski Sofia - Red Bull Salzburg (provider_acceptance_blocked)
 - 2026-09-17: OFI Crete - Hoffenheim (provider_acceptance_blocked)
 - 2026-09-17: Levski Sofia - Salzburg (provider_acceptance_blocked)
+- 2026-09-17: Beşiktaş - Marseille (provider_acceptance_blocked)
+- 2026-09-17: Celtic - Ferencváros (provider_acceptance_blocked)
+- 2026-09-17: Crystal Palace - Lech Poznań (provider_acceptance_blocked)
+- 2026-09-17: Juventus - NEC Nijmegen (provider_acceptance_blocked)
+- 2026-09-17: Lillestrøm - Torreense (provider_acceptance_blocked)
