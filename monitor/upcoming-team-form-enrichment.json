@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-09-13T05:20:23.175Z",
+  "generatedAt": "2026-09-13T12:16:02.516Z",
   "daysAhead": 8,
   "targetMatchesPerTeam": 10,
   "candidates": 204,
@@ -7,7 +7,7 @@
   "enriched": 22,
   "unavailable": 2,
   "timedOut": 0,
-  "skippedFresh": 114,
+  "skippedFresh": 84,
   "runBudgetMs": 180000,
   "teamTimeoutMs": 12000,
   "budgetExceeded": false,
@@ -16,6 +16,21 @@
   "localHistoryMatches": 1634,
   "localFriendlyHistoryMatches": 314,
   "samples": [
+    {
+      "team": "Excelsior",
+      "matches": 8,
+      "providerTeam": "Excelsior"
+    },
+    {
+      "team": "FC Utrecht",
+      "matches": 8,
+      "providerTeam": "FC Utrecht"
+    },
+    {
+      "team": "Sheffield United",
+      "matches": 10,
+      "providerTeam": "Sheffield United"
+    },
     {
       "team": "VfL Osnabrück",
       "matches": 5,
@@ -32,9 +47,44 @@
       "providerTeam": "Hertha BSC"
     },
     {
+      "team": "FC Heidenheim",
+      "matches": 8,
+      "providerTeam": "FC Heidenheim"
+    },
+    {
+      "team": "Telstar",
+      "matches": 7,
+      "providerTeam": "Telstar"
+    },
+    {
+      "team": "SC Heerenveen",
+      "matches": 8,
+      "providerTeam": "SC Heerenveen"
+    },
+    {
       "team": "Troyes",
       "matches": 5,
       "providerTeam": "Troyes"
+    },
+    {
+      "team": "Coventry City",
+      "matches": 8,
+      "providerTeam": "Coventry City"
+    },
+    {
+      "team": "Lille",
+      "matches": 8,
+      "providerTeam": "Lille"
+    },
+    {
+      "team": "Hamburger SV",
+      "matches": 7,
+      "providerTeam": "Hamburger SV"
+    },
+    {
+      "team": "RB Leipzig",
+      "matches": 8,
+      "providerTeam": "RB Leipzig"
     },
     {
       "team": "FC Den Bosch",
@@ -47,94 +97,44 @@
       "providerTeam": "PEC Zwolle"
     },
     {
+      "team": "Feyenoord",
+      "matches": 10,
+      "providerTeam": "Feyenoord"
+    },
+    {
       "team": "Le Mans",
       "matches": 6,
       "providerTeam": "Le Mans"
     },
     {
+      "team": "Lens",
+      "matches": 8,
+      "providerTeam": "Lens"
+    },
+    {
       "team": "Elversberg",
-      "matches": 6,
+      "matches": 5,
       "providerTeam": "Elversberg"
     },
     {
-      "team": "Jong PSV",
-      "matches": 7,
-      "providerTeam": "Jong PSV"
-    },
-    {
-      "team": "Jong Ajax",
-      "matches": 7,
-      "providerTeam": "Jong Ajax"
-    },
-    {
-      "team": "Jong AZ Alkmaar",
-      "matches": 7,
-      "providerTeam": "Jong AZ Alkmaar"
-    },
-    {
-      "team": "Jong FC Utrecht",
-      "matches": 7,
-      "providerTeam": "Jong FC Utrecht"
-    },
-    {
-      "team": "Red Star",
-      "matches": 7,
-      "providerTeam": "Red Star"
-    },
-    {
-      "team": "Willem II",
-      "matches": 7,
-      "providerTeam": "Willem II"
-    },
-    {
-      "team": "Middlesbrough",
+      "team": "Bayern München",
       "matches": 10,
-      "providerTeam": "Middlesbrough"
+      "providerTeam": "Bayern München"
     },
     {
-      "team": "Bristol City",
-      "matches": 10,
-      "providerTeam": "Bristol City"
-    },
-    {
-      "team": "Red Bull Salzburg",
-      "matches": 1,
-      "providerTeam": "Red Bull Salzburg"
-    },
-    {
-      "team": "OFI Crete",
-      "matches": 9,
-      "providerTeam": "OFI Crete"
-    },
-    {
-      "team": "Hoffenheim",
-      "matches": 9,
-      "providerTeam": "Hoffenheim"
-    },
-    {
-      "team": "Torreense",
-      "matches": 7,
-      "providerTeam": "Torreense"
-    },
-    {
-      "team": "Darmstadt",
-      "matches": 7,
-      "providerTeam": "Darmstadt"
-    },
-    {
-      "team": "Magdeburg",
-      "matches": 7,
-      "providerTeam": "Magdeburg"
+      "team": "Manchester City",
+      "matches": 8,
+      "providerTeam": "Manchester City"
     }
   ],
   "failures": [
     {
       "team": "FC Bayern München",
-      "reason": "not_found",
+      "reason": "http_429",
       "requests": [
         {
           "provider": "www.thesportsdb.com",
-          "status": "ok"
+          "status": "http_429"
         }
       ],
       "retainedMatches": 7
@@ -142,34 +142,14 @@
     {
       "team": "SV 07 Elversberg",
       "reason": "not_found",
-      "requests": [
-        {
-          "provider": "www.thesportsdb.com",
-          "status": "ok"
-        }
-      ],
+      "requests": [],
       "retainedMatches": 7
-    },
-    {
-      "team": "Hoffenheim",
-      "reason": "http_429",
-      "requests": [
-        {
-          "provider": "www.fotmob.com",
-          "status": "ok"
-        },
-        {
-          "provider": "www.thesportsdb.com",
-          "status": "http_429"
-        }
-      ],
-      "retainedMatches": 11
     }
   ],
   "immutableLedgerMatches": 5899,
-  "immutableHistorySummaryMatches": 1536,
+  "immutableHistorySummaryMatches": 1603,
   "r2LedgerAvailable": true,
   "r2LedgerError": null,
-  "durationMs": 33731,
+  "durationMs": 25082,
   "deferredTeams": 0
 }
