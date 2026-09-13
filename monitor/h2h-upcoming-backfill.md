@@ -1,6 +1,6 @@
 # Upcoming H2H Backfill
 
-Laatst bijgewerkt: 2026-09-13T06:54:20.414Z
+Laatst bijgewerkt: 2026-09-13T11:52:48.516Z
 Gecontroleerd: 32
 Gevuld: 1
 Geen directe H2H: 31
@@ -10,16 +10,13 @@ Errors: 0
 API-Football blijft quota-bewust geblokkeerd totdat de acceptatietest slaagt; ESPN is wel gecontroleerd voor alle kandidaten.
 
 ## Gevuld
-- 2026-09-18: Monaco - Lens (5)
+- 2026-09-18: Bristol City - Watford (5)
 
 ## Geen Directe H2H
-- 2026-09-13: Sheffield United - Wolverhampton Wanderers (provider_acceptance_blocked)
-- 2026-09-13: Karlsruher SC - Energie Cottbus (provider_acceptance_blocked)
 - 2026-09-13: Coventry City - Brighton & Hove Albion (provider_acceptance_blocked)
 - 2026-09-13: FC Volendam - FC Den Bosch (provider_acceptance_blocked)
 - 2026-09-13: Le Mans - Lens (provider_acceptance_blocked)
 - 2026-09-13: Elversberg - Bayern München (provider_acceptance_blocked)
-- 2026-09-13: VfL Osnabrück - Hertha BSC (provider_acceptance_blocked)
 - 2026-09-13: SV 07 Elversberg - FC Bayern München (provider_acceptance_blocked)
 - 2026-09-14: Jong FC Utrecht - Jong Ajax (provider_acceptance_blocked)
 - 2026-09-14: Jong PSV - Jong AZ Alkmaar (provider_acceptance_blocked)
@@ -33,3 +30,6 @@ API-Football blijft quota-bewust geblokkeerd totdat de acceptatietest slaagt; ES
 - 2026-09-16: Olympiacos - Jagiellonia Białystok (provider_acceptance_blocked)
 - 2026-09-16: Sturm Graz - Rennes (provider_acceptance_blocked)
 - 2026-09-16: Sunderland - AZ Alkmaar (provider_acceptance_blocked)
+- 2026-09-17: Levski Sofia - Red Bull Salzburg (provider_acceptance_blocked)
+- 2026-09-17: OFI Crete - Hoffenheim (provider_acceptance_blocked)
+- 2026-09-17: Levski Sofia - Salzburg (provider_acceptance_blocked)
