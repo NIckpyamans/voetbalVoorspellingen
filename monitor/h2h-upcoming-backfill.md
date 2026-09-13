@@ -1,16 +1,15 @@
 # Upcoming H2H Backfill
 
-Laatst bijgewerkt: 2026-09-12T23:05:18.012Z
+Laatst bijgewerkt: 2026-09-13T04:46:54.335Z
 Gecontroleerd: 32
-Gevuld: 1
-Geen directe H2H: 31
+Gevuld: 0
+Geen directe H2H: 32
 Errors: 0
 
 ## Aanbeveling
 API-Football blijft quota-bewust geblokkeerd totdat de acceptatietest slaagt; ESPN is wel gecontroleerd voor alle kandidaten.
 
 ## Gevuld
-- 2026-09-18: Pau - Dunkerque (5)
 
 ## Geen Directe H2H
 - 2026-09-13: Sheffield United - Wolverhampton Wanderers (provider_acceptance_blocked)
