@@ -1,10 +1,10 @@
 # Upcoming H2H Backfill
 
-Laatst bijgewerkt: 2026-09-14T04:55:25.408Z
+Laatst bijgewerkt: 2026-09-14T12:44:52.399Z
 Gecontroleerd: 32
 Gevuld: 0
-Geen directe H2H: 31
-Errors: 1
+Geen directe H2H: 32
+Errors: 0
 
 ## Aanbeveling
 API-Football blijft quota-bewust geblokkeerd totdat de acceptatietest slaagt; ESPN is wel gecontroleerd voor alle kandidaten.
