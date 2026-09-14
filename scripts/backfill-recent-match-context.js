@@ -200,25 +200,52 @@ export function buildHistoricalForm(match, history, teamName, limit = 10) {
   return rows.length ? summarizeFormRows(rows, teamName) : null;
 }
 
-function rebuildExistingFormBeforeTarget(existing, target, teamName) {
-  const rows = (Array.isArray(existing?.recentMatches) ? existing.recentMatches : [])
-    .filter((row) => !formContainsTarget([row], target, teamName))
-    .map((row) => {
+function priorRowTime(row, target) {
+  const date = String(row?.date || "").slice(0, 10);
+  const targetDate = String(target?.date || target?._dateKey || target?.kickoff || "").slice(0, 10);
+  // Date-only evidence on match day cannot establish that it predates kickoff.
+  if (!date || date >= targetDate) return 0;
+  return Date.parse(`${date}T12:00:00.000Z`) || 0;
+}
+
+export function mergeHistoricalContext(target, history = []) {
+  const result = { ...target };
+  const existingH2H = (target.h2h?.results || []).filter((row) => priorRowTime(row, target) && !containsTargetFixture([row], target));
+  const h2hHistory = existingH2H.map((row) => ({
+    ...row, id: row.eventId, homeTeamName: row.home || row.homeTeamName,
+    awayTeamName: row.away || row.awayTeamName, status: "FT",
+    _kickoffMs: priorRowTime(row, target), dataSource: row.source,
+  }));
+  const h2h = buildHistoricalH2H(target, [...h2hHistory, ...history]);
+  const unsafeH2H = (target.h2h?.results || []).length !== existingH2H.length;
+  if (unsafeH2H || Number(h2h?.played || 0) > Number(target.h2h?.played || 0)) {
+    if (h2h) result.h2h = h2h;
+    else delete result.h2h;
+    result.h2hStatus = h2h?.status || "not_available";
+  }
+  for (const side of ["home", "away"]) {
+    const field = `${side}Recent`;
+    const team = target[`${side}TeamName`];
+    const existing = target[field];
+    const originalRows = existing?.recentMatches || [];
+    const safeRows = originalRows.filter((row) => priorRowTime(row, target) && !formContainsTarget([row], target, team));
+    const converted = safeRows.map((row) => {
       const home = row.venue === "H";
       return {
-        id: row.eventId || null,
-        date: row.date,
-        _dateKey: row.date,
-        _kickoffMs: Date.parse(`${row.date}T12:00:00.000Z`) || 0,
-        kickoff: `${row.date}T12:00:00.000Z`,
-        homeTeamName: home ? teamName : row.opponent,
-        awayTeamName: home ? row.opponent : teamName,
+        id: row.eventId, date: row.date, _kickoffMs: priorRowTime(row, target),
+        homeTeamName: home ? team : row.opponent, awayTeamName: home ? row.opponent : team,
         score: home ? `${row.goalsFor}-${row.goalsAgainst}` : `${row.goalsAgainst}-${row.goalsFor}`,
-        status: "FT",
-        dataSource: row.source,
+        status: "FT", dataSource: row.source, league: row.league,
       };
     });
-  return rows.length ? summarizeFormRows(rows, teamName) : null;
+    const recent = buildHistoricalForm(target, [...converted, ...history], team);
+    if (safeRows.length !== originalRows.length || Number(recent?.gamesPlayed || 0) > Number(existing?.gamesPlayed || 0)) {
+      if (recent) result[field] = recent;
+      else delete result[field];
+      result[`${side}Form`] = recent?.form || "";
+    }
+  }
+  return result;
 }
 
 async function fetchJson(url) {
@@ -290,35 +317,13 @@ async function main() {
 
   for (const target of targets) {
     const current = { ...target.match, _dateKey: target._dateKey, _kickoffMs: target._kickoffMs };
-    const h2h = buildHistoricalH2H(current, history);
-    const h2hContainsTarget = containsTargetFixture(target.match?.h2h?.results, current);
-    if (h2hContainsTarget || (h2h && Number(h2h.played) > Number(target.match?.h2h?.played || 0))) {
-      if (h2h) {
-        target.match.h2h = h2h;
-        target.match.h2hStatus = h2h.status;
-      } else {
-        delete target.match.h2h;
-        target.match.h2hStatus = "not_available";
-      }
-      h2hFilled += 1;
-      changedFiles.add(target.day.filePath);
-    }
-    let homeRecent = buildHistoricalForm(current, history, current.homeTeamName);
-    let awayRecent = buildHistoricalForm(current, history, current.awayTeamName);
-    const currentFormGames = Math.min(Number(target.match?.homeRecent?.gamesPlayed || 0), Number(target.match?.awayRecent?.gamesPlayed || 0));
-    const newFormGames = Math.min(Number(homeRecent?.gamesPlayed || 0), Number(awayRecent?.gamesPlayed || 0));
-    const existingFormContainsTarget = formContainsTarget(target.match?.homeRecent?.recentMatches, current, current.homeTeamName)
-      || formContainsTarget(target.match?.awayRecent?.recentMatches, current, current.awayTeamName);
-    if (existingFormContainsTarget) {
-      homeRecent ||= rebuildExistingFormBeforeTarget(target.match?.homeRecent, current, current.homeTeamName);
-      awayRecent ||= rebuildExistingFormBeforeTarget(target.match?.awayRecent, current, current.awayTeamName);
-    }
-    if (homeRecent && awayRecent && (existingFormContainsTarget || newFormGames > currentFormGames)) {
-      target.match.homeRecent = homeRecent;
-      target.match.awayRecent = awayRecent;
-      target.match.homeForm = homeRecent.form;
-      target.match.awayForm = awayRecent.form;
-      formFilled += 1;
+    const merged = mergeHistoricalContext(current, history);
+    for (const field of ["h2h", "h2hStatus", "homeRecent", "awayRecent", "homeForm", "awayForm"]) {
+      if (JSON.stringify(target.match[field]) === JSON.stringify(merged[field])) continue;
+      if (merged[field] === undefined) delete target.match[field];
+      else target.match[field] = merged[field];
+      if (field === "h2h") h2hFilled += 1;
+      if (field === "homeRecent" || field === "awayRecent") formFilled += 1;
       changedFiles.add(target.day.filePath);
     }
     if (!target.match?.lineupSummary?.confirmed && lineupAttempts < LINEUP_LIMIT) {

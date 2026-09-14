@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { buildHistoricalForm, buildHistoricalH2H } from "../../scripts/backfill-recent-match-context.js";
+import { buildHistoricalForm, buildHistoricalH2H, mergeHistoricalContext } from "../../scripts/backfill-recent-match-context.js";
 
 const row = (date, home, away, score) => ({
   id: `${date}-${home}-${away}`,
@@ -55,4 +55,28 @@ describe("recent match context backfill", () => {
     const h2h = buildHistoricalH2H(target, [...history, target]);
     expect(h2h.results).not.toContainEqual(compactTarget);
   });
+  it("preserves valid provider history when removing the target with a sparse local archive", () => {
+    const homeRecent = buildHistoricalForm({ ...target, date: "2026-09-01", kickoff: "2026-09-01T15:00:00Z" }, [...history, target], "Brighton");
+    const h2h = { played: 3, results: [...buildHistoricalH2H(target, history).results, { eventId: target.id, date: target.date, home: "Brighton", away: "Aston Villa", score: "4-0" }] };
+    const input = { ...target, homeRecent, h2h, postMatchStats: { source: "test" }, predictionId: "immutable" };
+    const result = mergeHistoricalContext(input, [history[6], target]);
+    expect(result.homeRecent.gamesPlayed).toBe(7);
+    expect(result.h2h.played).toBe(2);
+    expect(result.predictionId).toBe("immutable");
+    expect(result.postMatchStats).toEqual(input.postMatchStats);
+    expect(input.h2h.played).toBe(3);
+    expect(mergeHistoricalContext(result, [history[6], target])).toEqual(result);
+  });
+
+  it("removes future form and H2H even when the target itself is absent", () => {
+    const future = row("2026-09-01", "Brighton", "Aston Villa", "5-0");
+    const result = mergeHistoricalContext({ ...target,
+      homeRecent: { gamesPlayed: 1, recentMatches: [{ date: future.date, opponent: "Aston Villa", venue: "H", goalsFor: 5, goalsAgainst: 0 }] },
+      h2h: { played: 1, results: [{ date: future.date, home: "Brighton", away: "Aston Villa", score: "5-0" }] },
+    }, []);
+    expect(result.homeRecent).toBeUndefined();
+    expect(result.h2h).toBeUndefined();
+    expect(result.homeForm).toBe("");
+  });
+
 });
