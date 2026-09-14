@@ -1,6 +1,6 @@
 # Upcoming H2H Backfill
 
-Laatst bijgewerkt: 2026-09-14T12:44:52.399Z
+Laatst bijgewerkt: 2026-09-14T19:53:07.509Z
 Gecontroleerd: 32
 Gevuld: 0
 Geen directe H2H: 32
@@ -12,8 +12,6 @@ API-Football blijft quota-bewust geblokkeerd totdat de acceptatietest slaagt; ES
 ## Gevuld
 
 ## Geen Directe H2H
-- 2026-09-14: Jong FC Utrecht - Jong Ajax (provider_acceptance_blocked)
-- 2026-09-14: Jong PSV - Jong AZ Alkmaar (provider_acceptance_blocked)
 - 2026-09-15: Bristol City - Lincoln City (provider_acceptance_blocked)
 - 2026-09-16: Ararat Armenia - Sparta Prague (provider_acceptance_blocked)
 - 2026-09-16: Omonia Nicosia - Celta Vigo (provider_acceptance_blocked)
@@ -32,3 +30,5 @@ API-Football blijft quota-bewust geblokkeerd totdat de acceptatietest slaagt; ES
 - 2026-09-17: Crystal Palace - Lech Poznań (provider_acceptance_blocked)
 - 2026-09-17: Juventus - NEC Nijmegen (provider_acceptance_blocked)
 - 2026-09-17: Lillestrøm - Torreense (provider_acceptance_blocked)
+- 2026-09-17: Real Sociedad - AFC Bournemouth (provider_acceptance_blocked)
+- 2026-09-17: Viktoria Plzeň - Union St.Gilloise (provider_acceptance_blocked)
