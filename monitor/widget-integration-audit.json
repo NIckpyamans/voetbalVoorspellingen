@@ -1,11 +1,11 @@
 {
-  "generatedAt": "2026-09-08T11:24:47.986Z",
+  "generatedAt": "2026-09-15T11:50:00.457Z",
   "baseUrl": "https://voetbalvoorspellingen-clean.vercel.app",
   "status": "degraded",
   "totals": {
     "checks": 10,
-    "passed": 9,
-    "failed": 1
+    "passed": 8,
+    "failed": 2
   },
   "neon": {
     "connected": true,
@@ -18,9 +18,9 @@
     {
       "key": "health",
       "label": "Systeemstatus",
-      "passed": true,
+      "passed": false,
       "status": 200,
-      "detail": "status ok"
+      "detail": "HTTP 200"
     },
     {
       "key": "neon",
@@ -41,7 +41,7 @@
       "label": "Dashboard/matches-widget",
       "passed": true,
       "status": 200,
-      "detail": "14 actuele matches, bron github-worker-v4-split"
+      "detail": "3 actuele matches, bron github-worker-v4-split"
     },
     {
       "key": "standings_widget",
@@ -69,7 +69,7 @@
       "label": "Geschiedenis-widget",
       "passed": true,
       "status": 200,
-      "detail": "1511 reviews"
+      "detail": "1624 reviews"
     },
     {
       "key": "snapshot_widget",
@@ -87,6 +87,6 @@
     }
   ],
   "opportunities": [
-    "Herstel de mislukte widgetcontracten: Provider- en integriteitswidget."
+    "Herstel de mislukte widgetcontracten: Systeemstatus, Provider- en integriteitswidget."
   ]
 }
