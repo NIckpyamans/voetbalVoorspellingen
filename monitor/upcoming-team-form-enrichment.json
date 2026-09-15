@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-09-15T17:15:59.015Z",
+  "generatedAt": "2026-09-15T21:44:08.290Z",
   "daysAhead": 8,
   "targetMatchesPerTeam": 10,
   "candidates": 187,
@@ -7,49 +7,19 @@
   "enriched": 24,
   "unavailable": 0,
   "timedOut": 0,
-  "skippedFresh": 81,
+  "skippedFresh": 96,
   "runBudgetMs": 180000,
   "teamTimeoutMs": 12000,
   "budgetExceeded": false,
   "rejectedWrongSport": 0,
   "localHistoryTeams": 184,
-  "localHistoryMatches": 1526,
+  "localHistoryMatches": 1528,
   "localFriendlyHistoryMatches": 297,
   "samples": [
     {
       "team": "Willem II",
-      "matches": 7,
+      "matches": 8,
       "providerTeam": "Willem II"
-    },
-    {
-      "team": "Bristol City",
-      "matches": 10,
-      "providerTeam": "Bristol City"
-    },
-    {
-      "team": "Middlesbrough",
-      "matches": 10,
-      "providerTeam": "Middlesbrough"
-    },
-    {
-      "team": "Jagiellonia Białystok",
-      "matches": 10,
-      "providerTeam": "Jagiellonia Białystok"
-    },
-    {
-      "team": "Hapoel Beer Sheva",
-      "matches": 10,
-      "providerTeam": "Hapoel Beer Sheva"
-    },
-    {
-      "team": "Lyon",
-      "matches": 10,
-      "providerTeam": "Lyon"
-    },
-    {
-      "team": "NK Celje",
-      "matches": 10,
-      "providerTeam": "NK Celje"
     },
     {
       "team": "Red Bull Salzburg",
@@ -57,59 +27,14 @@
       "providerTeam": "Red Bull Salzburg"
     },
     {
-      "team": "Levski Sofia",
-      "matches": 10,
-      "providerTeam": "Levski Sofia"
-    },
-    {
       "team": "OFI Crete",
       "matches": 9,
       "providerTeam": "OFI Crete"
     },
     {
-      "team": "Salzburg",
-      "matches": 10,
-      "providerTeam": "Salzburg"
-    },
-    {
-      "team": "Hoffenheim",
-      "matches": 9,
-      "providerTeam": "Hoffenheim"
-    },
-    {
       "team": "Torreense",
       "matches": 7,
       "providerTeam": "Torreense"
-    },
-    {
-      "team": "Celtic",
-      "matches": 10,
-      "providerTeam": "Celtic"
-    },
-    {
-      "team": "Viktoria Plzeň",
-      "matches": 10,
-      "providerTeam": "Viktoria Plzeň"
-    },
-    {
-      "team": "Beşiktaş",
-      "matches": 10,
-      "providerTeam": "Beşiktaş"
-    },
-    {
-      "team": "Ferencváros",
-      "matches": 10,
-      "providerTeam": "Ferencváros"
-    },
-    {
-      "team": "Lech Poznań",
-      "matches": 10,
-      "providerTeam": "Lech Poznań"
-    },
-    {
-      "team": "Lillestrøm",
-      "matches": 10,
-      "providerTeam": "Lillestrøm"
     },
     {
       "team": "Darmstadt",
@@ -135,13 +60,108 @@
       "team": "Reims",
       "matches": 6,
       "providerTeam": "Reims"
+    },
+    {
+      "team": "Rodez",
+      "matches": 6,
+      "providerTeam": "Rodez"
+    },
+    {
+      "team": "Clermont Foot",
+      "matches": 6,
+      "providerTeam": "Clermont Foot"
+    },
+    {
+      "team": "Dunkerque",
+      "matches": 6,
+      "providerTeam": "Dunkerque"
+    },
+    {
+      "team": "Helmond Sport",
+      "matches": 6,
+      "providerTeam": "Helmond Sport"
+    },
+    {
+      "team": "Montpellier",
+      "matches": 6,
+      "providerTeam": "Montpellier"
+    },
+    {
+      "team": "Roda JC Kerkrade",
+      "matches": 6,
+      "providerTeam": "Roda JC Kerkrade"
+    },
+    {
+      "team": "Sochaux",
+      "matches": 7,
+      "providerTeam": "Sochaux"
+    },
+    {
+      "team": "TOP Oss",
+      "matches": 6,
+      "providerTeam": "TOP Oss"
+    },
+    {
+      "team": "VVV-Venlo",
+      "matches": 6,
+      "providerTeam": "VVV-Venlo"
+    },
+    {
+      "team": "Annecy FC",
+      "matches": 6,
+      "providerTeam": "Annecy FC"
+    },
+    {
+      "team": "FC Den Bosch",
+      "matches": 6,
+      "providerTeam": "FC Den Bosch"
+    },
+    {
+      "team": "FC Emmen",
+      "matches": 7,
+      "providerTeam": "FC Emmen"
+    },
+    {
+      "team": "Heracles",
+      "matches": 6,
+      "providerTeam": "Heracles"
+    },
+    {
+      "team": "MVV Maastricht",
+      "matches": 6,
+      "providerTeam": "MVV Maastricht"
+    },
+    {
+      "team": "Jong Ajax",
+      "matches": 8,
+      "providerTeam": "Jong Ajax"
     }
   ],
-  "failures": [],
+  "failures": [
+    {
+      "team": "TOP Oss",
+      "reason": "http_429",
+      "requests": [
+        {
+          "provider": "www.fotmob.com",
+          "status": "ok"
+        },
+        {
+          "provider": "www.thesportsdb.com",
+          "status": "ok"
+        },
+        {
+          "provider": "www.thesportsdb.com",
+          "status": "http_429"
+        }
+      ],
+      "retainedMatches": 7
+    }
+  ],
   "immutableLedgerMatches": 5899,
   "immutableHistorySummaryMatches": 1624,
   "r2LedgerAvailable": true,
   "r2LedgerError": null,
-  "durationMs": 36102,
+  "durationMs": 30377,
   "deferredTeams": 0
 }
