@@ -1,277 +1,305 @@
 {
-  "generatedAt": "2026-09-16T01:29:04.637Z",
+  "generatedAt": "2026-09-16T06:49:55.373Z",
   "daysAhead": 8,
   "targetPlayersPerTeam": 18,
   "candidates": 312,
   "checked": 32,
-  "enriched": 32,
-  "unavailable": 0,
-  "skippedFresh": 270,
-  "pendingBeforeBatch": 42,
-  "pendingAfterBatch": 10,
+  "enriched": 31,
+  "unavailable": 1,
+  "skippedFresh": 276,
+  "pendingBeforeBatch": 36,
+  "pendingAfterBatch": 4,
   "rateLimited": false,
   "retryAfterSeconds": 0,
   "byProvider": {
-    "FotMob": 30,
-    "Laatste bevestigde opstelling": 3,
+    "FotMob": 25,
+    "Laatste bevestigde opstelling": 27,
     "Transfermarkt Datasets": 0,
-    "TheSportsDB": 2,
-    "ESPN": 0,
+    "TheSportsDB": 3,
+    "ESPN": 1,
     "Wikipedia": 0
   },
   "byCompetition": {
+    "France - Ligue 1": {
+      "checked": 6,
+      "enriched": 6,
+      "unavailable": 0
+    },
+    "England - Premier League": {
+      "checked": 7,
+      "enriched": 7,
+      "unavailable": 0
+    },
+    "Germany - Bundesliga": {
+      "checked": 3,
+      "enriched": 3,
+      "unavailable": 0
+    },
+    "France - Ligue 2": {
+      "checked": 4,
+      "enriched": 4,
+      "unavailable": 0
+    },
     "Europe - Europa League": {
-      "checked": 1,
-      "enriched": 1,
+      "checked": 2,
+      "enriched": 2,
       "unavailable": 0
     },
-    "Spain - LaLiga": {
-      "checked": 11,
-      "enriched": 11,
-      "unavailable": 0
-    },
-    "Portugal - Liga Portugal": {
-      "checked": 14,
-      "enriched": 14,
-      "unavailable": 0
-    },
-    "Italy - Serie A": {
+    "Europe - Conference League": {
       "checked": 5,
       "enriched": 5,
       "unavailable": 0
     },
-    "Europe - Conference League": {
+    "Europe - Champions League": {
       "checked": 1,
-      "enriched": 1,
+      "enriched": 0,
+      "unavailable": 1
+    },
+    "England - Championship": {
+      "checked": 2,
+      "enriched": 2,
+      "unavailable": 0
+    },
+    "Netherlands - Eredivisie": {
+      "checked": 2,
+      "enriched": 2,
       "unavailable": 0
     }
   },
-  "failureReasons": {},
-  "failures": [],
+  "failureReasons": {
+    "no_provider_team_or_roster_match": 1
+  },
+  "failures": [
+    {
+      "team": "FK Qarabag",
+      "competition": "Europe - Champions League",
+      "reason": "no_provider_team_or_roster_match",
+      "attemptedProviders": [
+        "FotMob",
+        "Transfermarkt Datasets",
+        "ESPN",
+        "TheSportsDB",
+        "Wikipedia"
+      ]
+    }
+  ],
   "samples": [
     {
-      "team": "Red Bull Salzburg",
-      "competition": "Europe - Europa League",
-      "players": 14,
-      "provider": "TheSportsDB + Laatste bevestigde opstelling",
-      "providerTeam": "Red Bull Salzburg"
+      "team": "Marseille",
+      "competition": "France - Ligue 1",
+      "players": 22,
+      "provider": "FotMob + Laatste bevestigde opstelling",
+      "providerTeam": "Marseille"
     },
     {
-      "team": "Osasuna",
-      "competition": "Spain - LaLiga",
+      "team": "Leeds United",
+      "competition": "England - Premier League",
+      "players": 24,
+      "provider": "FotMob + Laatste bevestigde opstelling",
+      "providerTeam": "Leeds United"
+    },
+    {
+      "team": "VfB Stuttgart",
+      "competition": "Germany - Bundesliga",
       "players": 25,
-      "provider": "FotMob",
-      "providerTeam": "Osasuna"
+      "provider": "FotMob + Laatste bevestigde opstelling",
+      "providerTeam": "VfB Stuttgart"
     },
     {
-      "team": "Vitoria de Guimaraes",
-      "competition": "Portugal - Liga Portugal",
+      "team": "Paris FC",
+      "competition": "France - Ligue 1",
+      "players": 25,
+      "provider": "FotMob + Laatste bevestigde opstelling",
+      "providerTeam": "Paris FC"
+    },
+    {
+      "team": "Toulouse",
+      "competition": "France - Ligue 1",
+      "players": 25,
+      "provider": "FotMob + Laatste bevestigde opstelling",
+      "providerTeam": "Toulouse"
+    },
+    {
+      "team": "Newcastle United",
+      "competition": "England - Premier League",
       "players": 26,
-      "provider": "FotMob",
-      "providerTeam": "Vitória de Guimarães"
+      "provider": "FotMob + Laatste bevestigde opstelling",
+      "providerTeam": "Newcastle United"
     },
     {
-      "team": "Espanyol",
-      "competition": "Spain - LaLiga",
+      "team": "Pau",
+      "competition": "France - Ligue 2",
+      "players": 25,
+      "provider": "FotMob + Laatste bevestigde opstelling",
+      "providerTeam": "Pau"
+    },
+    {
+      "team": "Sochaux",
+      "competition": "France - Ligue 2",
       "players": 26,
-      "provider": "FotMob",
-      "providerTeam": "Espanyol"
+      "provider": "FotMob + Laatste bevestigde opstelling",
+      "providerTeam": "Sochaux"
     },
     {
-      "team": "Sevilla",
-      "competition": "Spain - LaLiga",
+      "team": "Rennes",
+      "competition": "Europe - Europa League",
+      "players": 27,
+      "provider": "FotMob + Laatste bevestigde opstelling",
+      "providerTeam": "Rennes"
+    },
+    {
+      "team": "Saint-Étienne",
+      "competition": "France - Ligue 2",
       "players": 26,
-      "provider": "FotMob",
-      "providerTeam": "Sevilla"
+      "provider": "FotMob + Laatste bevestigde opstelling",
+      "providerTeam": "Saint-Étienne"
     },
     {
-      "team": "Famalicao",
-      "competition": "Portugal - Liga Portugal",
+      "team": "Freiburg",
+      "competition": "Germany - Bundesliga",
+      "players": 27,
+      "provider": "FotMob + Laatste bevestigde opstelling",
+      "providerTeam": "Freiburg"
+    },
+    {
+      "team": "Brentford",
+      "competition": "England - Premier League",
       "players": 28,
-      "provider": "FotMob",
-      "providerTeam": "Famalicão"
+      "provider": "FotMob + Laatste bevestigde opstelling",
+      "providerTeam": "Brentford"
     },
     {
-      "team": "Levante",
-      "competition": "Spain - LaLiga",
+      "team": "Liverpool",
+      "competition": "England - Premier League",
       "players": 28,
-      "provider": "FotMob",
-      "providerTeam": "Levante"
+      "provider": "FotMob + Laatste bevestigde opstelling",
+      "providerTeam": "Liverpool"
     },
     {
-      "team": "Racing Santander",
-      "competition": "Spain - LaLiga",
+      "team": "Nice",
+      "competition": "France - Ligue 1",
       "players": 28,
-      "provider": "FotMob",
-      "providerTeam": "Racing Santander"
+      "provider": "FotMob + Laatste bevestigde opstelling",
+      "providerTeam": "Nice"
     },
     {
-      "team": "Como",
-      "competition": "Italy - Serie A",
+      "team": "Le Havre",
+      "competition": "France - Ligue 1",
+      "players": 28,
+      "provider": "FotMob + Laatste bevestigde opstelling",
+      "providerTeam": "Le Havre"
+    },
+    {
+      "team": "Metz",
+      "competition": "France - Ligue 2",
+      "players": 28,
+      "provider": "FotMob + Laatste bevestigde opstelling",
+      "providerTeam": "Metz"
+    },
+    {
+      "team": "Elversberg",
+      "competition": "Germany - Bundesliga",
+      "players": 27,
+      "provider": "FotMob + Laatste bevestigde opstelling",
+      "providerTeam": "Elversberg"
+    },
+    {
+      "team": "Ipswich Town",
+      "competition": "England - Premier League",
       "players": 29,
       "provider": "FotMob + Laatste bevestigde opstelling",
-      "providerTeam": "Como"
+      "providerTeam": "Ipswich Town"
     },
     {
-      "team": "Parma",
-      "competition": "Italy - Serie A",
+      "team": "Sunderland",
+      "competition": "England - Premier League",
       "players": 29,
-      "provider": "FotMob",
-      "providerTeam": "Parma"
-    },
-    {
-      "team": "Casa Pia AC",
-      "competition": "Portugal - Liga Portugal",
-      "players": 30,
-      "provider": "FotMob",
-      "providerTeam": "Casa Pia AC"
-    },
-    {
-      "team": "Valencia",
-      "competition": "Spain - LaLiga",
-      "players": 30,
-      "provider": "FotMob",
-      "providerTeam": "Valencia"
-    },
-    {
-      "team": "Frosinone",
-      "competition": "Italy - Serie A",
-      "players": 31,
-      "provider": "FotMob",
-      "providerTeam": "Frosinone"
-    },
-    {
-      "team": "Genoa",
-      "competition": "Italy - Serie A",
-      "players": 32,
-      "provider": "FotMob",
-      "providerTeam": "Genoa"
-    },
-    {
-      "team": "Academico Viseu",
-      "competition": "Portugal - Liga Portugal",
-      "players": 31,
-      "provider": "FotMob",
-      "providerTeam": "Académico Viseu"
-    },
-    {
-      "team": "Malaga",
-      "competition": "Spain - LaLiga",
-      "players": 31,
-      "provider": "FotMob",
-      "providerTeam": "Málaga"
-    },
-    {
-      "team": "Arouca",
-      "competition": "Portugal - Liga Portugal",
-      "players": 32,
-      "provider": "FotMob",
-      "providerTeam": "Arouca"
-    },
-    {
-      "team": "Gil Vicente",
-      "competition": "Portugal - Liga Portugal",
-      "players": 32,
-      "provider": "FotMob",
-      "providerTeam": "Gil Vicente"
-    },
-    {
-      "team": "Deportivo Alaves",
-      "competition": "Spain - LaLiga",
-      "players": 32,
-      "provider": "FotMob",
-      "providerTeam": "Deportivo Alavés"
-    },
-    {
-      "team": "Elche",
-      "competition": "Spain - LaLiga",
-      "players": 32,
-      "provider": "FotMob",
-      "providerTeam": "Elche"
-    },
-    {
-      "team": "Estoril",
-      "competition": "Portugal - Liga Portugal",
-      "players": 33,
-      "provider": "FotMob",
-      "providerTeam": "Estoril"
-    },
-    {
-      "team": "Moreirense",
-      "competition": "Portugal - Liga Portugal",
-      "players": 33,
-      "provider": "FotMob",
-      "providerTeam": "Moreirense"
-    },
-    {
-      "team": "Lecce",
-      "competition": "Italy - Serie A",
-      "players": 35,
-      "provider": "FotMob",
-      "providerTeam": "Lecce"
-    },
-    {
-      "team": "Maritimo",
-      "competition": "Portugal - Liga Portugal",
-      "players": 35,
-      "provider": "FotMob",
-      "providerTeam": "Marítimo"
-    },
-    {
-      "team": "Getafe",
-      "competition": "Spain - LaLiga",
-      "players": 35,
       "provider": "FotMob + Laatste bevestigde opstelling",
-      "providerTeam": "Getafe"
+      "providerTeam": "Sunderland"
     },
     {
-      "team": "Deportivo A Coruña",
-      "competition": "Spain - LaLiga",
-      "players": 36,
-      "provider": "FotMob",
-      "providerTeam": "Deportivo A Coruña"
+      "team": "Brighton & Hove Albion",
+      "competition": "England - Premier League",
+      "players": 29,
+      "provider": "FotMob + Laatste bevestigde opstelling",
+      "providerTeam": "Brighton & Hove Albion"
     },
     {
-      "team": "Estrela da Amadora",
-      "competition": "Portugal - Liga Portugal",
-      "players": 37,
-      "provider": "FotMob",
-      "providerTeam": "Estrela da Amadora"
+      "team": "Lens",
+      "competition": "France - Ligue 1",
+      "players": 29,
+      "provider": "FotMob + Laatste bevestigde opstelling",
+      "providerTeam": "Lens"
     },
     {
-      "team": "Santa Clara",
-      "competition": "Portugal - Liga Portugal",
-      "players": 37,
-      "provider": "FotMob",
-      "providerTeam": "Santa Clara"
-    },
-    {
-      "team": "Alverca",
-      "competition": "Portugal - Liga Portugal",
-      "players": 38,
-      "provider": "FotMob",
-      "providerTeam": "Alverca"
-    },
-    {
-      "team": "Nacional",
-      "competition": "Portugal - Liga Portugal",
-      "players": 38,
-      "provider": "FotMob",
-      "providerTeam": "Nacional"
-    },
-    {
-      "team": "Rio Ave",
-      "competition": "Portugal - Liga Portugal",
-      "players": 42,
-      "provider": "FotMob",
-      "providerTeam": "Rio Ave"
-    },
-    {
-      "team": "Rapid Vienna",
+      "team": "Zrinjski Mostar",
       "competition": "Europe - Conference League",
-      "players": 8,
+      "players": 9,
       "provider": "TheSportsDB",
-      "providerTeam": "Rapid Vienna"
+      "providerTeam": "Zrinjski Mostar"
+    },
+    {
+      "team": "Dynamo Kyiv",
+      "competition": "Europe - Conference League",
+      "players": 10,
+      "provider": "TheSportsDB",
+      "providerTeam": "Dynamo Kyiv"
+    },
+    {
+      "team": "PAOK",
+      "competition": "Europe - Europa League",
+      "players": 10,
+      "provider": "TheSportsDB",
+      "providerTeam": "PAOK"
+    },
+    {
+      "team": "Drita Gjilan",
+      "competition": "Europe - Conference League",
+      "players": 11,
+      "provider": "Laatste bevestigde opstelling",
+      "providerTeam": "Drita Gjilan"
+    },
+    {
+      "team": "Jagiellonia Bialystok",
+      "competition": "Europe - Conference League",
+      "players": 11,
+      "provider": "Laatste bevestigde opstelling",
+      "providerTeam": "Jagiellonia Bialystok"
+    },
+    {
+      "team": "Blackburn Rovers",
+      "competition": "England - Championship",
+      "players": 28,
+      "provider": "FotMob + Laatste bevestigde opstelling",
+      "providerTeam": "Blackburn Rovers"
+    },
+    {
+      "team": "Queens Park Rangers",
+      "competition": "England - Championship",
+      "players": 28,
+      "provider": "FotMob + Laatste bevestigde opstelling",
+      "providerTeam": "Queens Park Rangers"
+    },
+    {
+      "team": "Sparta Rotterdam",
+      "competition": "Netherlands - Eredivisie",
+      "players": 27,
+      "provider": "FotMob + Laatste bevestigde opstelling",
+      "providerTeam": "Sparta Rotterdam"
+    },
+    {
+      "team": "Go Ahead Eagles",
+      "competition": "Netherlands - Eredivisie",
+      "players": 29,
+      "provider": "FotMob + Laatste bevestigde opstelling",
+      "providerTeam": "Go Ahead Eagles"
+    },
+    {
+      "team": "CSU Craiova",
+      "competition": "Europe - Conference League",
+      "players": 30,
+      "provider": "ESPN",
+      "providerTeam": "CSU Craiova"
     }
   ],
   "coverage": {
