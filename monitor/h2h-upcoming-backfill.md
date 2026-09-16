@@ -1,10 +1,10 @@
 # Upcoming H2H Backfill
 
-Laatst bijgewerkt: 2026-09-16T21:19:00.969Z
+Laatst bijgewerkt: 2026-09-16T23:41:44.966Z
 Gecontroleerd: 32
 Gevuld: 0
-Geen directe H2H: 32
-Errors: 0
+Geen directe H2H: 21
+Errors: 11
 
 ## Aanbeveling
 API-Football blijft quota-bewust geblokkeerd totdat de acceptatietest slaagt; ESPN is wel gecontroleerd voor alle kandidaten.
@@ -22,13 +22,13 @@ API-Football blijft quota-bewust geblokkeerd totdat de acceptatietest slaagt; ES
 - 2026-09-17: Lillestrøm - Torreense (provider_acceptance_blocked)
 - 2026-09-17: Real Sociedad - AFC Bournemouth (provider_acceptance_blocked)
 - 2026-09-17: Viktoria Plzeň - Union St.Gilloise (provider_acceptance_blocked)
-- 2026-09-18: Wolfsburg - Darmstadt (provider_acceptance_blocked)
 - 2026-09-18: FC Den Bosch - Helmond Sport (provider_acceptance_blocked)
-- 2026-09-18: Grenoble - Clermont Foot (provider_acceptance_blocked)
-- 2026-09-18: FC Groningen - PEC Zwolle (provider_acceptance_blocked)
 - 2026-09-18: FC Eindhoven - FC Emmen (provider_acceptance_blocked)
 - 2026-09-18: Jong Ajax - Roda JC Kerkrade (provider_acceptance_blocked)
 - 2026-09-18: Jong AZ Alkmaar - FC Volendam (provider_acceptance_blocked)
 - 2026-09-18: Jong FC Utrecht - VVV-Venlo (provider_acceptance_blocked)
 - 2026-09-18: RKC Waalwijk - MVV Maastricht (provider_acceptance_blocked)
 - 2026-09-18: TOP Oss - FC Dordrecht (provider_acceptance_blocked)
+- 2026-09-19: Vitesse - Jong PSV (provider_acceptance_blocked)
+- 2026-09-20: Deportivo A Coruña - Real Betis (provider_acceptance_blocked)
+- 2026-09-20: Sporting CP - Arouca (provider_acceptance_blocked)
