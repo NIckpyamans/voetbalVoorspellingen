@@ -1,6 +1,6 @@
 # Upcoming H2H Backfill
 
-Laatst bijgewerkt: 2026-09-16T11:31:33.706Z
+Laatst bijgewerkt: 2026-09-16T16:55:15.108Z
 Gecontroleerd: 32
 Gevuld: 0
 Geen directe H2H: 32
@@ -12,8 +12,6 @@ API-Football blijft quota-bewust geblokkeerd totdat de acceptatietest slaagt; ES
 ## Gevuld
 
 ## Geen Directe H2H
-- 2026-09-16: Ararat Armenia - Sparta Prague (provider_acceptance_blocked)
-- 2026-09-16: Omonia Nicosia - Celta Vigo (provider_acceptance_blocked)
 - 2026-09-16: Milan - Benfica (provider_acceptance_blocked)
 - 2026-09-16: Anderlecht - Lyon (provider_acceptance_blocked)
 - 2026-09-16: Bayer Leverkusen - NK Celje (provider_acceptance_blocked)
@@ -32,3 +30,5 @@ API-Football blijft quota-bewust geblokkeerd totdat de acceptatietest slaagt; ES
 - 2026-09-17: Real Sociedad - AFC Bournemouth (provider_acceptance_blocked)
 - 2026-09-17: Viktoria Plzeň - Union St.Gilloise (provider_acceptance_blocked)
 - 2026-09-18: Wolfsburg - Darmstadt (provider_acceptance_blocked)
+- 2026-09-18: FC Den Bosch - Helmond Sport (provider_acceptance_blocked)
+- 2026-09-18: Grenoble - Clermont Foot (provider_acceptance_blocked)
