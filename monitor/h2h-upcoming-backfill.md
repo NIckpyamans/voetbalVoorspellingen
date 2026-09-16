@@ -1,6 +1,6 @@
 # Upcoming H2H Backfill
 
-Laatst bijgewerkt: 2026-09-16T16:55:15.108Z
+Laatst bijgewerkt: 2026-09-16T21:19:00.969Z
 Gecontroleerd: 32
 Gevuld: 0
 Geen directe H2H: 32
@@ -12,13 +12,6 @@ API-Football blijft quota-bewust geblokkeerd totdat de acceptatietest slaagt; ES
 ## Gevuld
 
 ## Geen Directe H2H
-- 2026-09-16: Milan - Benfica (provider_acceptance_blocked)
-- 2026-09-16: Anderlecht - Lyon (provider_acceptance_blocked)
-- 2026-09-16: Bayer Leverkusen - NK Celje (provider_acceptance_blocked)
-- 2026-09-16: Hapoel Beer Sheva - Dinamo Zagreb (provider_acceptance_blocked)
-- 2026-09-16: Olympiacos - Jagiellonia Białystok (provider_acceptance_blocked)
-- 2026-09-16: Sturm Graz - Rennes (provider_acceptance_blocked)
-- 2026-09-16: Sunderland - AZ Alkmaar (provider_acceptance_blocked)
 - 2026-09-17: Levski Sofia - Red Bull Salzburg (provider_acceptance_blocked)
 - 2026-09-17: OFI Crete - Hoffenheim (provider_acceptance_blocked)
 - 2026-09-17: Levski Sofia - Salzburg (provider_acceptance_blocked)
@@ -32,3 +25,10 @@ API-Football blijft quota-bewust geblokkeerd totdat de acceptatietest slaagt; ES
 - 2026-09-18: Wolfsburg - Darmstadt (provider_acceptance_blocked)
 - 2026-09-18: FC Den Bosch - Helmond Sport (provider_acceptance_blocked)
 - 2026-09-18: Grenoble - Clermont Foot (provider_acceptance_blocked)
+- 2026-09-18: FC Groningen - PEC Zwolle (provider_acceptance_blocked)
+- 2026-09-18: FC Eindhoven - FC Emmen (provider_acceptance_blocked)
+- 2026-09-18: Jong Ajax - Roda JC Kerkrade (provider_acceptance_blocked)
+- 2026-09-18: Jong AZ Alkmaar - FC Volendam (provider_acceptance_blocked)
+- 2026-09-18: Jong FC Utrecht - VVV-Venlo (provider_acceptance_blocked)
+- 2026-09-18: RKC Waalwijk - MVV Maastricht (provider_acceptance_blocked)
+- 2026-09-18: TOP Oss - FC Dordrecht (provider_acceptance_blocked)
