@@ -1,5 +1,5 @@
 {
-  "checkedAt": "2026-09-15T09:28:54.447Z",
+  "checkedAt": "2026-09-16T09:20:28.151Z",
   "oddsApi": {
     "configured": true,
     "valid": true,
@@ -20,7 +20,7 @@
       "soccer_fifa_world_cup_winner",
       "soccer_fifa_world_cup_womens",
       "soccer_france_coupe_de_france",
-      "soccer_germany_bundesliga_women",
+      "soccer_italy_coppa_italia",
       "soccer_saudi_arabia_pro_league",
       "soccer_spain_copa_del_rey",
       "soccer_uefa_champs_league_qualification",
@@ -32,7 +32,7 @@
       "key": "soccer_fa_cup",
       "status": "expected_inactive"
     },
-    "activeSports": 84,
+    "activeSports": 85,
     "soccerSportKeys": [
       "soccer_argentina_primera_division",
       "soccer_austria_bundesliga",
@@ -53,10 +53,10 @@
       "soccer_france_ligue_two",
       "soccer_germany_bundesliga",
       "soccer_germany_bundesliga2",
+      "soccer_germany_bundesliga_women",
       "soccer_germany_dfb_pokal",
       "soccer_germany_liga3",
       "soccer_greece_super_league",
-      "soccer_italy_coppa_italia",
       "soccer_italy_serie_a",
       "soccer_italy_serie_b",
       "soccer_japan_j_league",
@@ -93,11 +93,12 @@
     ],
     "competitionCoverageStatus": "seasonal_unavailable",
     "newlyInactiveSports": [
-      "soccer_chile_campeonato",
-      "soccer_germany_bundesliga_women"
+      "soccer_italy_coppa_italia"
     ],
     "newlyUnavailableSports": [],
-    "newlyAvailableSports": [],
+    "newlyAvailableSports": [
+      "soccer_germany_bundesliga_women"
+    ],
     "quota": {
       "x-requests-remaining": "52",
       "x-requests-used": "448",
@@ -172,8 +173,8 @@
     "records": 50,
     "quota": {
       "x-ratelimit-limit": "1000",
-      "x-ratelimit-remaining": "961",
-      "x-ratelimit-reset": "1789516800"
+      "x-ratelimit-remaining": "964",
+      "x-ratelimit-reset": "1789603200"
     },
     "accepted": false,
     "policy": "Veertien dagen meten; nooit automatisch promoveren op basis van alleen een geldige key."
@@ -194,13 +195,13 @@
     "status": 200,
     "records": 1,
     "rateLimit": {
-      "resets_in_seconds": 1762,
-      "remaining": 178,
+      "resets_in_seconds": 3600,
+      "remaining": 179,
       "requested_entity": "League"
     },
     "quota": {
       "x-ratelimit-limit": "180",
-      "x-ratelimit-remaining": "178"
+      "x-ratelimit-remaining": "179"
     },
     "endpointAccess": {
       "leagues": {
@@ -211,13 +212,13 @@
         "firstName": "Superliga",
         "hasOddsFlag": false,
         "rateLimit": {
-          "resets_in_seconds": 1762,
-          "remaining": 178,
+          "resets_in_seconds": 3600,
+          "remaining": 179,
           "requested_entity": "League"
         },
         "quota": {
           "x-ratelimit-limit": "180",
-          "x-ratelimit-remaining": "178"
+          "x-ratelimit-remaining": "179"
         },
         "errorCode": null
       },
@@ -242,12 +243,12 @@
       "fixturesDate": {
         "valid": true,
         "status": 200,
-        "records": 1,
-        "firstId": 19722808,
-        "firstName": "Motherwell vs Aberdeen",
-        "hasOddsFlag": true,
+        "records": 0,
+        "firstId": null,
+        "firstName": null,
+        "hasOddsFlag": false,
         "rateLimit": {
-          "resets_in_seconds": 3600,
+          "resets_in_seconds": 3599,
           "remaining": 178,
           "requested_entity": "Fixture"
         },
@@ -261,8 +262,8 @@
         "valid": true,
         "status": 200,
         "records": 1,
-        "firstId": 19722808,
-        "firstName": "Motherwell vs Aberdeen",
+        "firstId": 19713923,
+        "firstName": "Lyngby Boldklub vs Silkeborg IF",
         "hasOddsFlag": true,
         "rateLimit": {
           "resets_in_seconds": 3599,
@@ -275,13 +276,13 @@
         },
         "errorCode": null
       },
-      "testedFixtureId": 19722808,
+      "testedFixtureId": 19713923,
       "oddsByFixture": {
         "label": "oddsByFixture",
         "valid": true,
         "status": 200,
         "records": 3,
-        "firstId": 241257985341,
+        "firstId": 245362545033,
         "firstName": null,
         "hasOddsFlag": false,
         "rateLimit": {
@@ -305,7 +306,7 @@
         "firstName": "1",
         "hasOddsFlag": false,
         "rateLimit": {
-          "resets_in_seconds": 3599,
+          "resets_in_seconds": 3600,
           "remaining": 178,
           "requested_entity": "Odd"
         },
@@ -320,7 +321,7 @@
         "valid": true,
         "status": 200,
         "records": 3,
-        "firstId": 241257985341,
+        "firstId": 245362545033,
         "firstName": null,
         "hasOddsFlag": false,
         "rateLimit": {
