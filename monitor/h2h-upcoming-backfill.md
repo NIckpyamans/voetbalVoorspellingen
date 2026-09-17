@@ -1,6 +1,6 @@
 # Upcoming H2H Backfill
 
-Laatst bijgewerkt: 2026-09-17T11:40:38.667Z
+Laatst bijgewerkt: 2026-09-17T17:00:19.414Z
 Gecontroleerd: 32
 Gevuld: 0
 Geen directe H2H: 20
@@ -12,9 +12,6 @@ API-Football blijft quota-bewust geblokkeerd totdat de acceptatietest slaagt; ES
 ## Gevuld
 
 ## Geen Directe H2H
-- 2026-09-17: Levski Sofia - Red Bull Salzburg (provider_acceptance_blocked)
-- 2026-09-17: OFI Crete - Hoffenheim (provider_acceptance_blocked)
-- 2026-09-17: Levski Sofia - Salzburg (provider_acceptance_blocked)
 - 2026-09-17: Beşiktaş - Marseille (provider_acceptance_blocked)
 - 2026-09-17: Celtic - Ferencváros (provider_acceptance_blocked)
 - 2026-09-17: Crystal Palace - Lech Poznań (provider_acceptance_blocked)
@@ -30,5 +27,8 @@ API-Football blijft quota-bewust geblokkeerd totdat de acceptatietest slaagt; ES
 - 2026-09-18: RKC Waalwijk - MVV Maastricht (provider_acceptance_blocked)
 - 2026-09-18: TOP Oss - FC Dordrecht (provider_acceptance_blocked)
 - 2026-09-19: Vitesse - Jong PSV (provider_acceptance_blocked)
-- 2026-09-20: Deportivo A Coruña - Real Betis (provider_acceptance_blocked)
-- 2026-09-20: Sporting CP - Arouca (provider_acceptance_blocked)
+- 2026-09-20: Getafe - Malaga (provider_acceptance_blocked)
+- 2026-09-20: Vitoria de Guimaraes - Moreirense (provider_acceptance_blocked)
+- 2026-09-20: De Graafschap - NAC Breda (provider_acceptance_blocked)
+- 2026-09-20: Celta Vigo - Racing Santander (provider_acceptance_blocked)
+- 2026-09-20: Estrela da Amadora - Academico Viseu (provider_acceptance_blocked)
