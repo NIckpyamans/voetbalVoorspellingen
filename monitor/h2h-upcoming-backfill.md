@@ -1,10 +1,10 @@
 # Upcoming H2H Backfill
 
-Laatst bijgewerkt: 2026-09-16T23:41:44.966Z
+Laatst bijgewerkt: 2026-09-17T01:48:29.490Z
 Gecontroleerd: 32
 Gevuld: 0
-Geen directe H2H: 21
-Errors: 11
+Geen directe H2H: 20
+Errors: 12
 
 ## Aanbeveling
 API-Football blijft quota-bewust geblokkeerd totdat de acceptatietest slaagt; ESPN is wel gecontroleerd voor alle kandidaten.
@@ -30,5 +30,5 @@ API-Football blijft quota-bewust geblokkeerd totdat de acceptatietest slaagt; ES
 - 2026-09-18: RKC Waalwijk - MVV Maastricht (provider_acceptance_blocked)
 - 2026-09-18: TOP Oss - FC Dordrecht (provider_acceptance_blocked)
 - 2026-09-19: Vitesse - Jong PSV (provider_acceptance_blocked)
-- 2026-09-20: Deportivo A Coruña - Real Betis (provider_acceptance_blocked)
-- 2026-09-20: Sporting CP - Arouca (provider_acceptance_blocked)
+- 2026-09-20: Getafe - Malaga (provider_acceptance_blocked)
+- 2026-09-20: Vitoria de Guimaraes - Moreirense (provider_acceptance_blocked)
