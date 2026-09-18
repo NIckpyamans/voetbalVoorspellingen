@@ -1,9 +1,9 @@
 # Upcoming H2H Backfill
 
-Laatst bijgewerkt: 2026-09-17T21:24:24.818Z
-Gecontroleerd: 28
+Laatst bijgewerkt: 2026-09-18T04:43:40.687Z
+Gecontroleerd: 32
 Gevuld: 0
-Geen directe H2H: 28
+Geen directe H2H: 32
 Errors: 0
 
 ## Aanbeveling
@@ -31,4 +31,4 @@ API-Football blijft quota-bewust geblokkeerd totdat de acceptatietest slaagt; ES
 - 2026-09-19: Metz - Saint-Etienne (provider_acceptance_blocked)
 - 2026-09-19: Newcastle United - Hull City (provider_acceptance_blocked)
 - 2026-09-19: Nottingham Forest - Coventry City (provider_acceptance_blocked)
-- 2026-09-20: Deportivo A Coruña - Real Betis (provider_acceptance_blocked)
+- 2026-09-20: Celta Vigo - Racing Santander (provider_acceptance_blocked)
