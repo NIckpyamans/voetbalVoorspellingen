@@ -1,41 +1,41 @@
 {
-  "generatedAt": "2026-09-17T00:34:23.443Z",
-  "date": "2026-09-17",
+  "generatedAt": "2026-09-18T00:21:35.346Z",
+  "date": "2026-09-18",
   "proposalOnly": true,
   "shouldPropose": true,
-  "branchName": "codex/review-20260917",
-  "summary": "AI reviewvoorstel voor 2026-09-17: 1 aandachtspunt(en) met patchadvies, niet automatisch live.",
+  "branchName": "codex/review-20260918",
+  "summary": "AI reviewvoorstel voor 2026-09-18: 1 aandachtspunt(en) met patchadvies, niet automatisch live.",
   "latestStats": {
-    "today": "2026-09-17",
-    "tomorrow": "2026-09-18",
+    "today": "2026-09-18",
+    "tomorrow": "2026-09-19",
     "dataPresent": true,
-    "lastRun": 1789604680846,
-    "ageMinutes": 10,
+    "lastRun": 1789676676490,
+    "ageMinutes": 237,
     "maxWorkerAgeMinutes": 180,
-    "todayMatches": 10,
-    "tomorrowMatches": 22,
+    "todayMatches": 22,
+    "tomorrowMatches": 28,
     "fixtureCalendar": {
       "status": "has_current_matches",
       "healthy": true,
       "emptyWindowOk": true,
       "severity": "none",
-      "todayCount": 10,
-      "tomorrowCount": 22,
+      "todayCount": 22,
+      "tomorrowCount": 28,
       "windowDays": 7,
       "checkedDates": [
-        "2026-09-17",
         "2026-09-18",
         "2026-09-19",
-        "2026-09-20"
+        "2026-09-20",
+        "2026-09-25"
       ],
-      "nextMatchDate": "2026-09-17",
-      "nextMatchCount": 10,
+      "nextMatchDate": "2026-09-18",
+      "nextMatchCount": 22,
       "explanation": "Vandaag of morgen staan er wedstrijden in de actuele data."
     },
     "liveMatches": 0,
     "liveWithoutMinute": 0,
-    "h2hFilled": 0,
-    "h2hMissing": 10,
+    "h2hFilled": 11,
+    "h2hMissing": 11,
     "standingsCount": 11,
     "cupSheetCount": 4,
     "phaseReliabilityCount": 5
@@ -43,20 +43,20 @@
   "findings": [
     {
       "priority": 1,
-      "key": "h2h_empty",
-      "severity": "medium",
-      "message": "Alle wedstrijden van vandaag hebben lege H2H-data.",
-      "whyItMatters": "Onderlinge duels worden niet sterk genoeg gevuld.",
+      "key": "worker_stale",
+      "severity": "high",
+      "message": "Workerdata is 237 minuten oud.",
+      "whyItMatters": "Workerdata is te oud en verdient een workflow- of broncheck.",
       "recommendedFiles": [
-        "scripts/server-worker.js",
-        "components/MatchCard.tsx"
+        ".github/workflows/worker.yml",
+        "scripts/server-worker.js"
       ],
       "details": {}
     }
   ],
   "recommendedFiles": [
-    "scripts/server-worker.js",
-    "components/MatchCard.tsx"
+    ".github/workflows/worker.yml",
+    "scripts/server-worker.js"
   ],
   "nextStep": "Gebruik deze proposal om gericht een reviewbranch te maken en alleen na controle te mergen."
 }
