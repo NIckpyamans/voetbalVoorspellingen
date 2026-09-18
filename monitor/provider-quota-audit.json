@@ -1,5 +1,5 @@
 {
-  "checkedAt": "2026-09-17T09:29:28.205Z",
+  "checkedAt": "2026-09-18T09:03:11.563Z",
   "oddsApi": {
     "configured": true,
     "valid": true,
@@ -12,7 +12,6 @@
       "soccer_concacaf_gold_cup",
       "soccer_concacaf_leagues_cup",
       "soccer_conmebol_copa_america",
-      "soccer_fa_cup",
       "soccer_fifa_club_world_cup",
       "soccer_fifa_world_cup",
       "soccer_fifa_world_cup_qualifiers_europe",
@@ -21,18 +20,20 @@
       "soccer_fifa_world_cup_womens",
       "soccer_france_coupe_de_france",
       "soccer_italy_coppa_italia",
+      "soccer_russia_premier_league",
       "soccer_saudi_arabia_pro_league",
       "soccer_spain_copa_del_rey",
       "soccer_uefa_champs_league_qualification",
       "soccer_uefa_champs_league_women",
       "soccer_uefa_euro_qualification",
+      "soccer_uefa_europa_league",
       "soccer_uefa_european_championship"
     ],
     "faCup": {
       "key": "soccer_fa_cup",
-      "status": "expected_inactive"
+      "status": "active"
     },
-    "activeSports": 85,
+    "activeSports": 84,
     "soccerSportKeys": [
       "soccer_argentina_primera_division",
       "soccer_austria_bundesliga",
@@ -48,6 +49,7 @@
       "soccer_england_league1",
       "soccer_england_league2",
       "soccer_epl",
+      "soccer_fa_cup",
       "soccer_finland_veikkausliiga",
       "soccer_france_ligue_one",
       "soccer_france_ligue_two",
@@ -67,7 +69,6 @@
       "soccer_norway_eliteserien",
       "soccer_poland_ekstraklasa",
       "soccer_portugal_primeira_liga",
-      "soccer_russia_premier_league",
       "soccer_spain_la_liga",
       "soccer_spain_segunda_division",
       "soccer_spl",
@@ -77,7 +78,6 @@
       "soccer_turkey_super_league",
       "soccer_uefa_champs_league",
       "soccer_uefa_europa_conference_league",
-      "soccer_uefa_europa_league",
       "soccer_uefa_nations_league",
       "soccer_usa_mls"
     ],
@@ -92,9 +92,14 @@
       "soccer_uefa_europa_conference_league_qualification"
     ],
     "competitionCoverageStatus": "seasonal_unavailable",
-    "newlyInactiveSports": [],
+    "newlyInactiveSports": [
+      "soccer_russia_premier_league",
+      "soccer_uefa_europa_league"
+    ],
     "newlyUnavailableSports": [],
-    "newlyAvailableSports": [],
+    "newlyAvailableSports": [
+      "soccer_fa_cup"
+    ],
     "quota": {
       "x-requests-remaining": "52",
       "x-requests-used": "448",
@@ -169,8 +174,8 @@
     "records": 50,
     "quota": {
       "x-ratelimit-limit": "1000",
-      "x-ratelimit-remaining": "968",
-      "x-ratelimit-reset": "1789689600"
+      "x-ratelimit-remaining": "970",
+      "x-ratelimit-reset": "1789776000"
     },
     "accepted": false,
     "policy": "Veertien dagen meten; nooit automatisch promoveren op basis van alleen een geldige key."
@@ -239,10 +244,10 @@
       "fixturesDate": {
         "valid": true,
         "status": 200,
-        "records": 0,
-        "firstId": null,
-        "firstName": null,
-        "hasOddsFlag": false,
+        "records": 1,
+        "firstId": 19713923,
+        "firstName": "Lyngby Boldklub vs Silkeborg IF",
+        "hasOddsFlag": true,
         "rateLimit": {
           "resets_in_seconds": 3600,
           "remaining": 178,
@@ -262,7 +267,7 @@
         "firstName": "Lyngby Boldklub vs Silkeborg IF",
         "hasOddsFlag": true,
         "rateLimit": {
-          "resets_in_seconds": 3600,
+          "resets_in_seconds": 3599,
           "remaining": 177,
           "requested_entity": "Fixture"
         },
@@ -302,7 +307,7 @@
         "firstName": "1",
         "hasOddsFlag": false,
         "rateLimit": {
-          "resets_in_seconds": 3600,
+          "resets_in_seconds": 3599,
           "remaining": 178,
           "requested_entity": "Odd"
         },
