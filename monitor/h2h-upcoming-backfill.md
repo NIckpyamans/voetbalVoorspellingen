@@ -1,9 +1,9 @@
 # Upcoming H2H Backfill
 
-Laatst bijgewerkt: 2026-09-18T16:25:29.258Z
-Gecontroleerd: 32
+Laatst bijgewerkt: 2026-09-18T20:55:25.806Z
+Gecontroleerd: 21
 Gevuld: 0
-Geen directe H2H: 32
+Geen directe H2H: 21
 Errors: 0
 
 ## Aanbeveling
@@ -12,17 +12,6 @@ API-Football blijft quota-bewust geblokkeerd totdat de acceptatietest slaagt; ES
 ## Gevuld
 
 ## Geen Directe H2H
-- 2026-09-18: Wolfsburg - Darmstadt (provider_acceptance_blocked)
-- 2026-09-18: FC Den Bosch - Helmond Sport (provider_acceptance_blocked)
-- 2026-09-18: Grenoble - Clermont Foot (provider_acceptance_blocked)
-- 2026-09-18: FC Groningen - PEC Zwolle (provider_acceptance_blocked)
-- 2026-09-18: FC Bayern München - 1. FC Union Berlin (provider_acceptance_blocked)
-- 2026-09-18: FC Eindhoven - FC Emmen (provider_acceptance_blocked)
-- 2026-09-18: Jong Ajax - Roda JC Kerkrade (provider_acceptance_blocked)
-- 2026-09-18: Jong AZ Alkmaar - FC Volendam (provider_acceptance_blocked)
-- 2026-09-18: Jong FC Utrecht - VVV-Venlo (provider_acceptance_blocked)
-- 2026-09-18: RKC Waalwijk - MVV Maastricht (provider_acceptance_blocked)
-- 2026-09-18: TOP Oss - FC Dordrecht (provider_acceptance_blocked)
 - 2026-09-19: Boulogne - Nantes (provider_acceptance_blocked)
 - 2026-09-19: Borussia Mönchengladbach - Mainz 05 (provider_acceptance_blocked)
 - 2026-09-19: Everton - Ipswich Town (provider_acceptance_blocked)
@@ -32,3 +21,14 @@ API-Football blijft quota-bewust geblokkeerd totdat de acceptatietest slaagt; ES
 - 2026-09-19: Newcastle United - Hull City (provider_acceptance_blocked)
 - 2026-09-19: Nottingham Forest - Coventry City (provider_acceptance_blocked)
 - 2026-09-20: Celta Vigo - Racing Santander (provider_acceptance_blocked)
+- 2026-09-20: De Graafschap - NAC Breda (provider_acceptance_blocked)
+- 2026-09-20: Estrela da Amadora - Academico Viseu (provider_acceptance_blocked)
+- 2026-09-20: Paderborn - Hoffenheim (provider_acceptance_blocked)
+- 2026-09-20: Deportivo A Coruña - Real Betis (provider_acceptance_blocked)
+- 2026-09-20: Sporting CP - Arouca (provider_acceptance_blocked)
+- 2026-09-20: Getafe - Malaga (provider_acceptance_blocked)
+- 2026-09-20: Vitoria de Guimaraes - Moreirense (provider_acceptance_blocked)
+- 2026-09-25: FC Dordrecht - Almere City FC (provider_acceptance_blocked)
+- 2026-09-26: FC Emmen - TOP Oss (provider_acceptance_blocked)
+- 2026-09-26: FC Volendam - VVV-Venlo (provider_acceptance_blocked)
+- 2026-09-26: NAC Breda - FC Eindhoven (provider_acceptance_blocked)
