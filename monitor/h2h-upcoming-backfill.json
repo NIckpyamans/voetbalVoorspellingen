@@ -1,40 +1,36 @@
 {
-  "generatedAt": "2026-09-19T15:54:04.280Z",
+  "generatedAt": "2026-09-19T20:39:48.202Z",
   "daysAhead": 8,
-  "checked": 16,
+  "checked": 15,
   "byCompetition": {
-    "England - Premier League": {
-      "agent": "england-premier-league-agent",
-      "checked": 1
+    "Netherlands - Eredivisie": {
+      "agent": "netherlands-eredivisie-agent",
+      "checked": 2
     },
-    "France - Ligue 2": {
-      "agent": "france-ligue-2-agent",
-      "checked": 1
+    "England - Championship": {
+      "agent": "england-championship-agent",
+      "checked": 2
     },
-    "Spain - LaLiga": {
-      "agent": "default-agent",
-      "checked": 3
+    "Germany - 2. Bundesliga": {
+      "agent": "germany-2-bundesliga-agent",
+      "checked": 2
+    },
+    "Germany - Bundesliga": {
+      "agent": "germany-bundesliga-agent",
+      "checked": 2
     },
     "Netherlands - Eerste Divisie": {
       "agent": "netherlands-eerste-divisie-agent",
       "checked": 7
-    },
-    "Portugal - Liga Portugal": {
-      "agent": "default-agent",
-      "checked": 3
-    },
-    "Germany - Bundesliga": {
-      "agent": "germany-bundesliga-agent",
-      "checked": 1
     }
   },
-  "databaseWritable": true,
-  "databaseError": null,
+  "databaseWritable": false,
+  "databaseError": "could not extend file because project size limit (512 MB) has been exceeded",
   "r2SnapshotLedgerAvailable": true,
-  "r2Stored": 0,
-  "staticUpdated": 0,
-  "filled": 0,
-  "noDirectHistory": 16,
+  "r2Stored": 2,
+  "staticUpdated": 2,
+  "filled": 2,
+  "noDirectHistory": 13,
   "errors": 0,
   "apiFootballAcceptance": {
     "configured": true,
@@ -58,72 +54,117 @@
     "lastStatusCode": null,
     "lastCheckedAt": null
   },
-  "filledSamples": [],
+  "filledSamples": [
+    {
+      "matchId": "ss-fotmob-5781750",
+      "date": "2026-09-20",
+      "homeTeam": "Feyenoord",
+      "awayTeam": "FC Utrecht",
+      "played": 5,
+      "source": "football-data.co.uk historical results",
+      "providerAttempts": [
+        {
+          "provider": "canonical-history",
+          "status": "not_found",
+          "records": 0,
+          "result": "no_coverage"
+        },
+        {
+          "provider": "football-data-co-uk",
+          "status": "ok",
+          "records": 5,
+          "result": "found"
+        }
+      ]
+    },
+    {
+      "matchId": "ss-fotmob-5781752",
+      "date": "2026-09-20",
+      "homeTeam": "AZ Alkmaar",
+      "awayTeam": "Telstar",
+      "played": 2,
+      "source": "football-data.co.uk historical results",
+      "providerAttempts": [
+        {
+          "provider": "canonical-history",
+          "status": "not_found",
+          "records": 0,
+          "result": "no_coverage"
+        },
+        {
+          "provider": "football-data-co-uk",
+          "status": "ok",
+          "records": 2,
+          "result": "found"
+        }
+      ]
+    }
+  ],
   "noDirectHistorySamples": [
     {
-      "matchId": "ss-fotmob-5795463",
-      "date": "2026-09-19",
-      "league": "England - Premier League",
-      "homeTeam": "Nottingham Forest",
-      "awayTeam": "Coventry City",
-      "status": "provider_acceptance_blocked",
-      "note": "API-Football is overgeslagen totdat de account- en dekkingstest slaagt; ESPN blijft als onafhankelijke bron actief.",
-      "providerAttempts": [
-        {
-          "provider": "canonical-history",
-          "status": "not_found",
-          "records": 0,
-          "result": "no_coverage"
-        },
-        {
-          "provider": "football-data-co-uk",
-          "status": "no_coverage",
-          "records": 0,
-          "result": "no_coverage"
-        },
-        {
-          "provider": "apifootball-com",
-          "status": "no_coverage",
-          "records": 0,
-          "result": "no_coverage"
-        }
-      ]
-    },
-    {
-      "matchId": "ss-fotmob-5803268",
-      "date": "2026-09-19",
-      "league": "France - Ligue 2",
-      "homeTeam": "Metz",
-      "awayTeam": "Saint-Etienne",
-      "status": "provider_acceptance_blocked",
-      "note": "API-Football is overgeslagen totdat de account- en dekkingstest slaagt; ESPN blijft als onafhankelijke bron actief.",
-      "providerAttempts": [
-        {
-          "provider": "canonical-history",
-          "status": "not_found",
-          "records": 0,
-          "result": "no_coverage"
-        },
-        {
-          "provider": "football-data-co-uk",
-          "status": "no_coverage",
-          "records": 0,
-          "result": "no_coverage"
-        },
-        {
-          "provider": "apifootball-com",
-          "status": "no_coverage",
-          "records": 0,
-          "result": "no_coverage"
-        }
-      ]
-    },
-    {
-      "matchId": "ss-fotmob-5868073",
+      "matchId": "ss-fotmob-5836848",
       "date": "2026-09-20",
-      "league": "Spain - LaLiga",
-      "homeTeam": "Celta Vigo",
-      "awayTeam": "Racing Santander",
+      "league": "England - Championship",
+      "homeTeam": "Wolverhampton Wanderers",
+      "awayTeam": "West Bromwich Albion",
+      "status": "provider_acceptance_blocked",
+      "note": "API-Football is overgeslagen totdat de account- en dekkingstest slaagt; ESPN blijft als onafhankelijke bron actief.",
+      "providerAttempts": [
+        {
+          "provider": "canonical-history",
+          "status": "not_found",
+          "records": 0,
+          "result": "no_coverage"
+        },
+        {
+          "provider": "football-data-co-uk",
+          "status": "no_coverage",
+          "records": 0,
+          "result": "no_coverage"
+        },
+        {
+          "provider": "apifootball-com",
+          "status": "no_coverage",
+          "records": 0,
+          "result": "no_coverage"
+        }
+      ]
+    },
+    {
+      "matchId": "ss-fotmob-5881672",
+      "date": "2026-09-20",
+      "league": "Germany - 2. Bundesliga",
+      "homeTeam": "Arminia Bielefeld",
+      "awayTeam": "FC Heidenheim",
+      "status": "provider_acceptance_blocked",
+      "note": "API-Football is overgeslagen totdat de account- en dekkingstest slaagt; ESPN blijft als onafhankelijke bron actief.",
+      "providerAttempts": [
+        {
+          "provider": "canonical-history",
+          "status": "not_found",
+          "records": 0,
+          "result": "no_coverage"
+        },
+        {
+          "provider": "football-data-co-uk",
+          "status": "no_coverage",
+          "records": 0,
+          "result": "no_coverage"
+        },
+        {
+          "provider": "apifootball-com",
+          "status": "no_coverage",
+          "records": 0,
+          "result": "no_coverage"
+        }
+      ]
+    },
+    {
+      "matchId": "ss-oldb-83191",
+      "date": "2026-09-20",
+      "league": "Germany - Bundesliga",
+      "homeTeam": "SC Paderborn 07",
+      "awayTeam": "TSG Hoffenheim",
       "status": "provider_acceptance_blocked",
       "note": "API-Football is overgeslagen totdat de account- en dekkingstest slaagt; ESPN blijft als onafhankelijke bron actief.",
       "providerAttempts": [
@@ -177,11 +218,40 @@
       ]
     },
     {
-      "matchId": "ss-fotmob-5887637",
+      "matchId": "ss-fotmob-5836844",
       "date": "2026-09-20",
-      "league": "Portugal - Liga Portugal",
-      "homeTeam": "Estrela da Amadora",
-      "awayTeam": "Academico Viseu",
+      "league": "England - Championship",
+      "homeTeam": "Norwich City",
+      "awayTeam": "Bolton Wanderers",
+      "status": "provider_acceptance_blocked",
+      "note": "API-Football is overgeslagen totdat de account- en dekkingstest slaagt; ESPN blijft als onafhankelijke bron actief.",
+      "providerAttempts": [
+        {
+          "provider": "canonical-history",
+          "status": "not_found",
+          "records": 0,
+          "result": "no_coverage"
+        },
+        {
+          "provider": "football-data-co-uk",
+          "status": "no_coverage",
+          "records": 0,
+          "result": "no_coverage"
+        },
+        {
+          "provider": "apifootball-com",
+          "status": "no_coverage",
+          "records": 0,
+          "result": "no_coverage"
+        }
+      ]
+    },
+    {
+      "matchId": "ss-fotmob-5881673",
+      "date": "2026-09-20",
+      "league": "Germany - 2. Bundesliga",
+      "homeTeam": "Energie Cottbus",
+      "awayTeam": "St. Pauli",
       "status": "provider_acceptance_blocked",
       "note": "API-Football is overgeslagen totdat de account- en dekkingstest slaagt; ESPN blijft als onafhankelijke bron actief.",
       "providerAttempts": [
@@ -211,122 +281,6 @@
       "league": "Germany - Bundesliga",
       "homeTeam": "Paderborn",
       "awayTeam": "Hoffenheim",
-      "status": "provider_acceptance_blocked",
-      "note": "API-Football is overgeslagen totdat de account- en dekkingstest slaagt; ESPN blijft als onafhankelijke bron actief.",
-      "providerAttempts": [
-        {
-          "provider": "canonical-history",
-          "status": "not_found",
-          "records": 0,
-          "result": "no_coverage"
-        },
-        {
-          "provider": "football-data-co-uk",
-          "status": "no_coverage",
-          "records": 0,
-          "result": "no_coverage"
-        },
-        {
-          "provider": "apifootball-com",
-          "status": "no_coverage",
-          "records": 0,
-          "result": "no_coverage"
-        }
-      ]
-    },
-    {
-      "matchId": "ss-fotmob-5868074",
-      "date": "2026-09-20",
-      "league": "Spain - LaLiga",
-      "homeTeam": "Deportivo A Coruña",
-      "awayTeam": "Real Betis",
-      "status": "provider_acceptance_blocked",
-      "note": "API-Football is overgeslagen totdat de account- en dekkingstest slaagt; ESPN blijft als onafhankelijke bron actief.",
-      "providerAttempts": [
-        {
-          "provider": "canonical-history",
-          "status": "not_found",
-          "records": 0,
-          "result": "no_coverage"
-        },
-        {
-          "provider": "football-data-co-uk",
-          "status": "no_coverage",
-          "records": 0,
-          "result": "no_coverage"
-        },
-        {
-          "provider": "apifootball-com",
-          "status": "no_coverage",
-          "records": 0,
-          "result": "no_coverage"
-        }
-      ]
-    },
-    {
-      "matchId": "ss-fotmob-5887643",
-      "date": "2026-09-20",
-      "league": "Portugal - Liga Portugal",
-      "homeTeam": "Sporting CP",
-      "awayTeam": "Arouca",
-      "status": "provider_acceptance_blocked",
-      "note": "API-Football is overgeslagen totdat de account- en dekkingstest slaagt; ESPN blijft als onafhankelijke bron actief.",
-      "providerAttempts": [
-        {
-          "provider": "canonical-history",
-          "status": "not_found",
-          "records": 0,
-          "result": "no_coverage"
-        },
-        {
-          "provider": "football-data-co-uk",
-          "status": "no_coverage",
-          "records": 0,
-          "result": "no_coverage"
-        },
-        {
-          "provider": "apifootball-com",
-          "status": "no_coverage",
-          "records": 0,
-          "result": "no_coverage"
-        }
-      ]
-    },
-    {
-      "matchId": "ss-fotmob-5868076",
-      "date": "2026-09-20",
-      "league": "Spain - LaLiga",
-      "homeTeam": "Getafe",
-      "awayTeam": "Malaga",
-      "status": "provider_acceptance_blocked",
-      "note": "API-Football is overgeslagen totdat de account- en dekkingstest slaagt; ESPN blijft als onafhankelijke bron actief.",
-      "providerAttempts": [
-        {
-          "provider": "canonical-history",
-          "status": "not_found",
-          "records": 0,
-          "result": "no_coverage"
-        },
-        {
-          "provider": "football-data-co-uk",
-          "status": "no_coverage",
-          "records": 0,
-          "result": "no_coverage"
-        },
-        {
-          "provider": "apifootball-com",
-          "status": "no_coverage",
-          "records": 0,
-          "result": "no_coverage"
-        }
-      ]
-    },
-    {
-      "matchId": "ss-fotmob-5887644",
-      "date": "2026-09-20",
-      "league": "Portugal - Liga Portugal",
-      "homeTeam": "Vitoria de Guimaraes",
-      "awayTeam": "Moreirense",
       "status": "provider_acceptance_blocked",
       "note": "API-Football is overgeslagen totdat de account- en dekkingstest slaagt; ESPN blijft als onafhankelijke bron actief.",
       "providerAttempts": [
@@ -531,14 +485,6 @@
       "checkedAt": "2026-08-21T04:25:29.261Z",
       "status": "no_direct_history"
     },
-    "ss-fotmob-5832825": {
-      "checkedAt": "2026-08-20T16:15:16.625Z",
-      "status": "no_direct_history"
-    },
-    "ss-fotmob-5832826": {
-      "checkedAt": "2026-08-20T16:15:16.625Z",
-      "status": "no_direct_history"
-    },
     "ss-fotmob-5832827": {
       "checkedAt": "2026-08-20T22:11:34.369Z",
       "status": "no_direct_history"
@@ -549,14 +495,6 @@
     },
     "ss-fotmob-5832829": {
       "checkedAt": "2026-08-20T22:11:34.369Z",
-      "status": "no_direct_history"
-    },
-    "ss-fotmob-5803227": {
-      "checkedAt": "2026-08-20T16:15:16.625Z",
-      "status": "filled"
-    },
-    "ss-fotmob-5803228": {
-      "checkedAt": "2026-08-20T16:15:16.625Z",
       "status": "no_direct_history"
     },
     "ss-fotmob-5803229": {
@@ -570,14 +508,6 @@
     "ss-fotmob-5803234": {
       "checkedAt": "2026-08-20T22:11:34.369Z",
       "status": "filled"
-    },
-    "ss-fotmob-5802905": {
-      "checkedAt": "2026-08-20T16:15:16.625Z",
-      "status": "no_direct_history"
-    },
-    "ss-fotmob-5795363": {
-      "checkedAt": "2026-08-20T16:15:16.625Z",
-      "status": "no_direct_history"
     },
     "ss-bbc-2026-08-22-lincoln city-portsmouth": {
       "checkedAt": "2026-08-22T07:04:52.092Z",
@@ -906,30 +836,6 @@
     "ss-fotmob-5987807": {
       "checkedAt": "2026-08-24T14:27:57.762Z",
       "status": "filled"
-    },
-    "ss-fotmob-5988053": {
-      "checkedAt": "2026-08-20T16:15:16.625Z",
-      "status": "no_direct_history"
-    },
-    "ss-fotmob-5987966": {
-      "checkedAt": "2026-08-20T16:15:16.625Z",
-      "status": "no_direct_history"
-    },
-    "ss-fotmob-5988051": {
-      "checkedAt": "2026-08-20T16:15:16.625Z",
-      "status": "no_direct_history"
-    },
-    "ss-fotmob-5987957": {
-      "checkedAt": "2026-08-20T16:15:16.625Z",
-      "status": "no_direct_history"
-    },
-    "ss-fotmob-5988070": {
-      "checkedAt": "2026-08-20T16:15:16.625Z",
-      "status": "no_direct_history"
-    },
-    "ss-fotmob-5987965": {
-      "checkedAt": "2026-08-20T16:15:16.625Z",
-      "status": "no_direct_history"
     },
     "ss-fotmob-5988083": {
       "checkedAt": "2026-08-20T22:11:34.369Z",
@@ -2484,7 +2390,7 @@
       "status": "no_direct_history"
     },
     "ss-fotmob-5832878": {
-      "checkedAt": "2026-09-19T15:54:04.282Z",
+      "checkedAt": "2026-09-19T20:39:48.203Z",
       "status": "no_direct_history"
     },
     "ss-fotmob-5887637": {
@@ -2492,7 +2398,7 @@
       "status": "no_direct_history"
     },
     "ss-fotmob-5881175": {
-      "checkedAt": "2026-09-19T15:54:04.282Z",
+      "checkedAt": "2026-09-19T20:39:48.203Z",
       "status": "no_direct_history"
     },
     "ss-oldb-83183": {
@@ -2516,27 +2422,55 @@
       "status": "no_direct_history"
     },
     "ss-fotmob-5832879": {
-      "checkedAt": "2026-09-19T15:54:04.282Z",
+      "checkedAt": "2026-09-19T20:39:48.203Z",
       "status": "no_direct_history"
     },
     "ss-fotmob-5832881": {
-      "checkedAt": "2026-09-19T15:54:04.282Z",
+      "checkedAt": "2026-09-19T20:39:48.203Z",
       "status": "no_direct_history"
     },
     "ss-fotmob-5832882": {
-      "checkedAt": "2026-09-19T15:54:04.282Z",
+      "checkedAt": "2026-09-19T20:39:48.203Z",
       "status": "no_direct_history"
     },
     "ss-fotmob-5832884": {
-      "checkedAt": "2026-09-19T15:54:04.282Z",
+      "checkedAt": "2026-09-19T20:39:48.203Z",
       "status": "no_direct_history"
     },
     "ss-fotmob-5832885": {
-      "checkedAt": "2026-09-19T15:54:04.282Z",
+      "checkedAt": "2026-09-19T20:39:48.203Z",
       "status": "no_direct_history"
     },
     "ss-fotmob-5832886": {
-      "checkedAt": "2026-09-19T15:54:04.282Z",
+      "checkedAt": "2026-09-19T20:39:48.203Z",
+      "status": "no_direct_history"
+    },
+    "ss-fotmob-5781750": {
+      "checkedAt": "2026-09-19T20:39:48.203Z",
+      "status": "filled"
+    },
+    "ss-fotmob-5836848": {
+      "checkedAt": "2026-09-19T20:39:48.203Z",
+      "status": "no_direct_history"
+    },
+    "ss-fotmob-5881672": {
+      "checkedAt": "2026-09-19T20:39:48.203Z",
+      "status": "no_direct_history"
+    },
+    "ss-oldb-83191": {
+      "checkedAt": "2026-09-19T20:39:48.203Z",
+      "status": "no_direct_history"
+    },
+    "ss-fotmob-5781752": {
+      "checkedAt": "2026-09-19T20:39:48.203Z",
+      "status": "filled"
+    },
+    "ss-fotmob-5836844": {
+      "checkedAt": "2026-09-19T20:39:48.203Z",
+      "status": "no_direct_history"
+    },
+    "ss-fotmob-5881673": {
+      "checkedAt": "2026-09-19T20:39:48.203Z",
       "status": "no_direct_history"
     }
   },
