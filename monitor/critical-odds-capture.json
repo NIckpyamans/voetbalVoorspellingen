@@ -1,33 +1,36 @@
 {
-  "generatedAt": "2026-09-20T05:28:11.682Z",
+  "generatedAt": "2026-09-20T10:08:53.360Z",
   "checked": 22,
-  "captured": 0,
-  "openingCaptured": 0,
-  "prematchCaptured": 0,
-  "closingCaptured": 0,
-  "closingPairs": 0,
+  "captured": 1,
+  "openingCaptured": 1,
+  "prematchCaptured": 1,
+  "closingCaptured": 1,
+  "closingPairs": 1,
   "statuses": {
-    "not_found": 20
+    "available": 1,
+    "not_found": 19
   },
   "attemptStatuses": {
     "the-odds-api:seasonal_sport_unavailable": 20,
     "the-odds-api:unsupported_sport": 40,
-    "the-odds-api:quota_reserve": 20,
-    "sportmonks:fixture_id_missing": 20
+    "the-odds-api:available": 1,
+    "the-odds-api:quota_reserve": 19,
+    "sportmonks:fixture_id_missing": 19
   },
   "providerStatuses": {
     "the-odds-api": {
       "seasonal_sport_unavailable": 20,
       "unsupported_sport": 40,
-      "quota_reserve": 20
+      "available": 1,
+      "quota_reserve": 19
     },
     "sportmonks": {
-      "fixture_id_missing": 20
+      "fixture_id_missing": 19
     }
   },
   "providerQuota": {
     "the-odds-api": {
-      "remaining": 44
+      "remaining": 43
     }
   },
   "skippedExistingRole": 2,
@@ -42,12 +45,15 @@
       "league": "Netherlands - Eredivisie",
       "homeTeam": "Feyenoord",
       "awayTeam": "FC Utrecht",
-      "minutesBeforeKickoff": 287,
-      "closingWindow": false,
-      "status": "not_found",
-      "providerCompetitionAvailability": null,
-      "reason": "Sportmonks fixture-id ontbreekt; odds-by-fixture call overgeslagen.",
-      "sportmonksMapping": "plan_coverage_unavailable"
+      "minutesBeforeKickoff": 6,
+      "closingWindow": true,
+      "status": "captured",
+      "provider": "the-odds-api",
+      "captureRole": "closing",
+      "sportmonksFixtureId": null,
+      "opening": true,
+      "prematch": true,
+      "closing": true
     },
     {
       "matchId": "ss-fotmob-5836848",
@@ -55,7 +61,7 @@
       "league": "England - Championship",
       "homeTeam": "Wolverhampton Wanderers",
       "awayTeam": "West Bromwich Albion",
-      "minutesBeforeKickoff": 332,
+      "minutesBeforeKickoff": 51,
       "closingWindow": false,
       "status": "not_found",
       "providerCompetitionAvailability": null,
@@ -68,7 +74,7 @@
       "league": "Germany - 2. Bundesliga",
       "homeTeam": "Hannover 96",
       "awayTeam": "Bochum",
-      "minutesBeforeKickoff": 362,
+      "minutesBeforeKickoff": 81,
       "closingWindow": false,
       "status": "not_found",
       "providerCompetitionAvailability": null,
@@ -81,7 +87,7 @@
       "league": "Germany - 2. Bundesliga",
       "homeTeam": "Arminia Bielefeld",
       "awayTeam": "FC Heidenheim",
-      "minutesBeforeKickoff": 362,
+      "minutesBeforeKickoff": 81,
       "closingWindow": false,
       "status": "not_found",
       "providerCompetitionAvailability": null,
@@ -94,7 +100,7 @@
       "league": "Germany - 2. Bundesliga",
       "homeTeam": "Energie Cottbus",
       "awayTeam": "St. Pauli",
-      "minutesBeforeKickoff": 362,
+      "minutesBeforeKickoff": 81,
       "closingWindow": false,
       "status": "not_found",
       "providerCompetitionAvailability": null,
@@ -107,7 +113,7 @@
       "league": "England - Championship",
       "homeTeam": "Norwich City",
       "awayTeam": "Bolton Wanderers",
-      "minutesBeforeKickoff": 422,
+      "minutesBeforeKickoff": 141,
       "closingWindow": false,
       "status": "not_found",
       "providerCompetitionAvailability": null,
@@ -120,7 +126,7 @@
       "league": "Netherlands - Eredivisie",
       "homeTeam": "AZ Alkmaar",
       "awayTeam": "Telstar",
-      "minutesBeforeKickoff": 422,
+      "minutesBeforeKickoff": 141,
       "closingWindow": false,
       "status": "not_found",
       "providerCompetitionAvailability": null,
@@ -133,7 +139,7 @@
       "league": "Netherlands - Eredivisie",
       "homeTeam": "FC Twente",
       "awayTeam": "PSV Eindhoven",
-      "minutesBeforeKickoff": 422,
+      "minutesBeforeKickoff": 141,
       "closingWindow": false,
       "status": "not_found",
       "providerCompetitionAvailability": null,
@@ -146,7 +152,7 @@
       "league": "England - Premier League",
       "homeTeam": "AFC Bournemouth",
       "awayTeam": "Liverpool",
-      "minutesBeforeKickoff": 452,
+      "minutesBeforeKickoff": 171,
       "closingWindow": false,
       "status": "not_found",
       "providerCompetitionAvailability": null,
@@ -159,7 +165,7 @@
       "league": "England - Premier League",
       "homeTeam": "Leeds United",
       "awayTeam": "Crystal Palace",
-      "minutesBeforeKickoff": 452,
+      "minutesBeforeKickoff": 171,
       "closingWindow": false,
       "status": "not_found",
       "providerCompetitionAvailability": null,
@@ -172,10 +178,10 @@
       "league": "France - Ligue 1",
       "homeTeam": "Auxerre",
       "awayTeam": "Brest",
-      "minutesBeforeKickoff": 452,
+      "minutesBeforeKickoff": 171,
       "closingWindow": false,
       "status": "already_captured",
-      "captureRole": "opening"
+      "captureRole": "prematch"
     },
     {
       "matchId": "ss-fotmob-5795461",
@@ -183,7 +189,7 @@
       "league": "England - Premier League",
       "homeTeam": "Manchester City",
       "awayTeam": "Sunderland",
-      "minutesBeforeKickoff": 452,
+      "minutesBeforeKickoff": 171,
       "closingWindow": false,
       "status": "not_found",
       "providerCompetitionAvailability": null,
@@ -196,7 +202,7 @@
       "league": "Germany - Bundesliga",
       "homeTeam": "Bayer Leverkusen",
       "awayTeam": "RB Leipzig",
-      "minutesBeforeKickoff": 482,
+      "minutesBeforeKickoff": 201,
       "closingWindow": false,
       "status": "not_found",
       "providerCompetitionAvailability": null,
@@ -209,7 +215,7 @@
       "league": "Netherlands - Eerste Divisie",
       "homeTeam": "De Graafschap",
       "awayTeam": "NAC Breda",
-      "minutesBeforeKickoff": 557,
+      "minutesBeforeKickoff": 276,
       "closingWindow": false,
       "status": "not_found",
       "providerCompetitionAvailability": null,
@@ -222,7 +228,7 @@
       "league": "Netherlands - Eredivisie",
       "homeTeam": "NEC Nijmegen",
       "awayTeam": "Go Ahead Eagles",
-      "minutesBeforeKickoff": 557,
+      "minutesBeforeKickoff": 276,
       "closingWindow": false,
       "status": "not_found",
       "providerCompetitionAvailability": null,
@@ -235,10 +241,10 @@
       "league": "France - Ligue 1",
       "homeTeam": "Nice",
       "awayTeam": "Lille",
-      "minutesBeforeKickoff": 587,
+      "minutesBeforeKickoff": 306,
       "closingWindow": false,
       "status": "already_captured",
-      "captureRole": "opening"
+      "captureRole": "prematch"
     },
     {
       "matchId": "ss-fotmob-5881176",
@@ -246,7 +252,7 @@
       "league": "Germany - Bundesliga",
       "homeTeam": "Schalke 04",
       "awayTeam": "Elversberg",
-      "minutesBeforeKickoff": 602,
+      "minutesBeforeKickoff": 321,
       "closingWindow": false,
       "status": "not_found",
       "providerCompetitionAvailability": null,
@@ -259,7 +265,7 @@
       "league": "England - Premier League",
       "homeTeam": "Fulham",
       "awayTeam": "Manchester United",
-      "minutesBeforeKickoff": 602,
+      "minutesBeforeKickoff": 321,
       "closingWindow": false,
       "status": "not_found",
       "providerCompetitionAvailability": null,
@@ -272,7 +278,7 @@
       "league": "Germany - Bundesliga",
       "homeTeam": "FC Schalke 04",
       "awayTeam": "SV 07 Elversberg",
-      "minutesBeforeKickoff": 602,
+      "minutesBeforeKickoff": 321,
       "closingWindow": false,
       "status": "not_found",
       "providerCompetitionAvailability": null,
@@ -285,7 +291,7 @@
       "league": "Germany - Bundesliga",
       "homeTeam": "Paderborn",
       "awayTeam": "Hoffenheim",
-      "minutesBeforeKickoff": 722,
+      "minutesBeforeKickoff": 441,
       "closingWindow": false,
       "status": "not_found",
       "providerCompetitionAvailability": null,
@@ -298,7 +304,7 @@
       "league": "Germany - Bundesliga",
       "homeTeam": "SC Paderborn 07",
       "awayTeam": "TSG Hoffenheim",
-      "minutesBeforeKickoff": 722,
+      "minutesBeforeKickoff": 441,
       "closingWindow": false,
       "status": "not_found",
       "providerCompetitionAvailability": null,
@@ -311,7 +317,7 @@
       "league": "France - Ligue 1",
       "homeTeam": "Marseille",
       "awayTeam": "Paris Saint-Germain",
-      "minutesBeforeKickoff": 797,
+      "minutesBeforeKickoff": 516,
       "closingWindow": false,
       "status": "not_found",
       "providerCompetitionAvailability": null,
@@ -330,14 +336,6 @@
     },
     {
       "league": "England - Premier League",
-      "checked": 4,
-      "covered": 0,
-      "partial": 0,
-      "missing": 4,
-      "coverage": 0
-    },
-    {
-      "league": "Netherlands - Eredivisie",
       "checked": 4,
       "covered": 0,
       "partial": 0,
@@ -375,7 +373,15 @@
       "partial": 0,
       "missing": 1,
       "coverage": 0
+    },
+    {
+      "league": "Netherlands - Eredivisie",
+      "checked": 4,
+      "covered": 1,
+      "partial": 0,
+      "missing": 3,
+      "coverage": 0.25
     }
   ],
-  "coverage": 0
+  "coverage": 0.045
 }
