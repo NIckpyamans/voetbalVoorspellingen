@@ -15,7 +15,25 @@ on:
         default: false
 
 jobs:
+  preflight:
+    if: ${{ !inputs.finalize_only }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v5
+      - uses: actions/setup-node@v5
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+      - name: Stop before imports when Neon has no headroom
+        run: node scripts/manage-neon-storage.js
+        env:
+          DATABASE_URL: ${{ secrets.DATABASE_URL }}
+          POSTGRES_URL: ${{ secrets.POSTGRES_URL }}
+
   import-block:
+    needs: preflight
     if: ${{ !inputs.finalize_only }}
     runs-on: ubuntu-latest
     timeout-minutes: 180

@@ -18,18 +18,23 @@ const maxDataFileBytes = Number(process.env.MAX_DATA_FILE_BYTES || 12 * 1024 * 1
 const files = execFileSync("git", ["ls-files", "-z"], { encoding: "utf8" }).split("\0").filter(Boolean);
 let trackedBytes = 0;
 const oversizedDataFiles = [];
+const directoryBytes = new Map();
+const largestFiles = [];
 
 for (const file of files) {
   if (!fs.existsSync(file)) continue;
   const bytes = fs.statSync(file).size;
   trackedBytes += bytes;
+  const directory = file.includes("/") ? file.split("/")[0] : "root";
+  directoryBytes.set(directory, (directoryBytes.get(directory) || 0) + bytes);
+  largestFiles.push({ file, bytes });
   if ((file.startsWith("data/") || file.startsWith("training/")) && bytes > maxDataFileBytes) {
     oversizedDataFiles.push({ file, bytes });
   }
 }
 
 const warning = trackedBytes > warnTrackedBytes;
-console.log(JSON.stringify({ trackedFiles: files.length, trackedBytes, warnTrackedBytes, maxTrackedBytes, warning, oversizedDataFiles }, null, 2));
+console.log(JSON.stringify({ trackedFiles: files.length, trackedBytes, warnTrackedBytes, maxTrackedBytes, warning, oversizedDataFiles, directoryBytes: Object.fromEntries([...directoryBytes].sort((a, b) => b[1] - a[1])), largestFiles: largestFiles.sort((a, b) => b.bytes - a.bytes).slice(0, 10) }, null, 2));
 if (warning) console.warn("[repository-size] waarschuwing: repository boven streefbudget; migreer volgende statische exports naar R2.");
 if (trackedBytes > maxTrackedBytes || oversizedDataFiles.length > 0) {
   console.error("[repository-size] budget overschreden; bewaar volledige datasets in Neon/storage.");
