@@ -78,6 +78,10 @@ function profileEvidenceScore(profile) {
 function preserveProfileEvidence(previous, next) {
   if (!previous) return next;
   if (!next) return previous;
+  // Player count alone must not replace a fresh roster with an expired cache.
+  const fresh = (profile) => hasFreshSquad({ homeTeamProfile: profile, awayTeamProfile: profile });
+  if (fresh(previous) && !fresh(next)) return previous;
+  if (fresh(next) && !fresh(previous)) return next;
   if (profileEvidenceScore(next) >= profileEvidenceScore(previous)) return next;
   if (previous?.squad && !Array.isArray(previous.squad)) return { ...next, squad: previous.squad };
   return {

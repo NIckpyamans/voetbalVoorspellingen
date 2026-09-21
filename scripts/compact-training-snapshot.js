@@ -8,7 +8,7 @@ const file = path.join(process.cwd(), "training", "training-snapshot.json");
 const beforeBytes = fs.statSync(file).size;
 const snapshot = JSON.parse(fs.readFileSync(file, "utf8"));
 const compacted = mergeTrainingSnapshots({ rows: [] }, snapshot);
-fs.writeFileSync(file, `${JSON.stringify(compacted, null, 2)}\n`);
+fs.writeFileSync(file, `${JSON.stringify(compacted)}\n`);
 const afterBytes = fs.statSync(file).size;
 
 console.log(JSON.stringify({

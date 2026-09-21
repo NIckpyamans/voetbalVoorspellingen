@@ -4,9 +4,19 @@ on:
   schedule:
     - cron: "41 1 * * 0"
   workflow_dispatch:
+    inputs:
+      finalize_only:
+        description: "Only finalize previously successful imports"
+        type: boolean
+        default: false
+      reclaim_cache:
+        description: "Archive and verify stale derived cache in R2 before finalization"
+        type: boolean
+        default: false
 
 jobs:
   import-block:
+    if: ${{ !inputs.finalize_only }}
     runs-on: ubuntu-latest
     timeout-minutes: 180
     strategy:
@@ -30,9 +40,18 @@ jobs:
           STATSBOMB_COMPETITION_LIMIT: 4
           STATSBOMB_EVENT_LIMIT: 1000
 
+      - name: Preserve import result even on failure
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: statsbomb-import-${{ matrix.offset }}
+          path: monitor/free-source-import.json
+          retention-days: 14
+
   finalize:
     needs: import-block
-    if: always()
+    timeout-minutes: 20
+    if: ${{ always() && (needs.import-block.result == 'success' || inputs.finalize_only) }}
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v5
@@ -41,6 +60,22 @@ jobs:
           node-version: 22
           cache: npm
       - run: npm ci
+      - name: Archive stale derived cache with verified R2 copy
+        if: inputs.reclaim_cache
+        run: node scripts/archive-stale-app-cache.js
+        env:
+          DATABASE_URL: ${{ secrets.DATABASE_URL }}
+          CLOUDFLARE_R2_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_R2_ACCOUNT_ID }}
+          CLOUDFLARE_R2_ACCESS_KEY_ID: ${{ secrets.CLOUDFLARE_R2_ACCESS_KEY_ID }}
+          CLOUDFLARE_R2_SECRET_ACCESS_KEY: ${{ secrets.CLOUDFLARE_R2_SECRET_ACCESS_KEY }}
+          CLOUDFLARE_R2_BUCKET: ${{ secrets.CLOUDFLARE_R2_BUCKET }}
+          CLOUDFLARE_R2_ENDPOINT: ${{ secrets.CLOUDFLARE_R2_ENDPOINT }}
+          CLOUDFLARE_R2_PREFIX: ${{ secrets.CLOUDFLARE_R2_PREFIX }}
+      - name: Check database headroom before any merge
+        run: node scripts/manage-neon-storage.js
+        env:
+          DATABASE_URL: ${{ secrets.DATABASE_URL }}
+          POSTGRES_URL: ${{ secrets.POSTGRES_URL }}
       - run: node scripts/merge-source-clubs.js
         env:
           DATABASE_URL: ${{ secrets.DATABASE_URL }}

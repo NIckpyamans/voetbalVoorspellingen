@@ -106,4 +106,15 @@ describe("enrichment publication gate", () => {
     expect(result.allowed).toBe(true);
     expect(result.evidenceLosses).toEqual([]);
   });
+  it("keeps a fresh roster when a richer but expired cache arrives", () => {
+    const profile = (days, count) => ({ squad: { fetchedAt: Date.now() - days * 86400000, players: Array.from({ length: count }, (_, i) => ({ id: String(i) })) } });
+    const previous = match("fresh", { homeTeamProfile: profile(1, 18), awayTeamProfile: profile(1, 18) });
+    const incoming = match("fresh", { homeTeamProfile: profile(30, 25), awayTeamProfile: profile(30, 25) });
+    const [restored] = preserveEnrichmentEvidence([previous], [incoming]);
+    expect(restored.homeTeamProfile).toEqual(previous.homeTeamProfile);
+    expect(evaluateEnrichmentPublication([previous], [restored]).allowed).toBe(true);
+    const [reverse] = preserveEnrichmentEvidence([incoming], [previous]);
+    expect(reverse.homeTeamProfile).toEqual(previous.homeTeamProfile);
+  });
+
 });

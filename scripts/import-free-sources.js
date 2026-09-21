@@ -1205,6 +1205,10 @@ async function main() {
   fs.mkdirSync(path.dirname(MANIFEST_PATH), { recursive: true });
   fs.writeFileSync(MANIFEST_PATH, `${JSON.stringify(result, null, 2)}\n`);
   console.log(JSON.stringify(result, null, 2));
+  if ([result.statsBomb, result.statsBombEvents].some((part) => part?.errors?.length)) {
+    console.error("StatsBomb import incomplete; see the import manifest. Finalization must not report success.");
+    process.exitCode = 1;
+  }
 }
 
 main().catch((error) => {

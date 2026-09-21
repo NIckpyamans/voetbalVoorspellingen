@@ -47,7 +47,7 @@ async function main() {
     source: "immutable-r2-ledger-recovery",
   });
   fs.mkdirSync(path.dirname(TRAINING_FILE), { recursive: true });
-  fs.writeFileSync(TRAINING_FILE, `${JSON.stringify(training, null, 2)}\n`);
+  fs.writeFileSync(TRAINING_FILE, `${JSON.stringify(training)}\n`);
 
   console.log(JSON.stringify({
     ledgerPath,
