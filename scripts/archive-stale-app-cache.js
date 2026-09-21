@@ -10,7 +10,7 @@ if (!sql || !config.configured) throw new Error('Database and R2 must both be co
 let archived = 0;
 // Only derived cache, never canonical matches, source records or prediction snapshots.
 for (let batch = 0; batch < 1000; batch++) {
-  const [row] = await sql.query(`select *, md5(payload::text) as payload_hash
+  const [row] = await sql.query(`select *, updated_at::text as exact_updated_at, md5(payload::text) as payload_hash
     from app_state_segments
     where segment_group in ('root','matches','predictions','predictionSnapshots')
       and updated_at < now() - interval '2 days'
@@ -27,7 +27,8 @@ for (let batch = 0; batch < 1000; batch++) {
   const deleted = await sql.query(`delete from app_state_segments
     where segment_group=$1 and segment_key=$2 and updated_at=$3::timestamptz
       and md5(payload::text)=$4 returning segment_key`,
-    [row.segment_group, row.segment_key, row.updated_at, row.payload_hash]);
+    [row.segment_group, row.segment_key, row.exact_updated_at, row.payload_hash]);
+  if (!deleted.length) throw new Error("Cache changed during archival; verified copy retained, rerun with fresh input");
   archived += deleted.length;
   console.log(JSON.stringify({ archivedKey: key, bytes: raw.length, removedCacheRows: deleted.length }));
 }
