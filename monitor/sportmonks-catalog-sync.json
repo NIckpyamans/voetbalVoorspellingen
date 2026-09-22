@@ -1,6 +1,6 @@
 {
   "ok": true,
-  "generatedAt": "2026-09-01T08:54:44.928Z",
+  "generatedAt": "2026-09-22T08:49:36.534Z",
   "apiLimits": {
     "maxLeagues": 250,
     "maxSeasonTeamFetches": 60,
@@ -8,8 +8,8 @@
   },
   "persistence": {
     "databaseConfigured": true,
-    "databaseWritable": false,
-    "databaseError": "Server error (HTTP status 402): {\"message\":\"Your project has exceeded the data transfer quota. Upgrade your plan to increase limits.\",\"code\":\"\",\"detail\":null,\"hint\":null,\"position\":null,\"internalPosition\":null,\"internalQuery\":null,\"severity\":\"\",\"where\":null,\"table\":null,\"column\":null,\"schema\":null,\"dataType\":null,\"constraint\":null,\"file\":null,\"line\":null,\"routine\":null,\"neon:retryable\":true}",
+    "databaseWritable": true,
+    "databaseError": null,
     "localCache": "data/sportmonks-catalog-cache.json",
     "localCacheBytes": 41513,
     "r2": {
@@ -18,7 +18,7 @@
       "bucket": "voetbalvoorspellingen-cold-storage",
       "key": "voetbalvoorspellingen/raw/catalog/sportmonks/catalog.json",
       "bytes": 41513,
-      "etag": "\"15d8fc267508f7bf7bf2f93b0441518d\"",
+      "etag": "\"b0e58274a6aee4c2f149d8dd72cd6a29\"",
       "endpoint": "https://1e7e119c26075bf248bb33ff40b522cb.r2.cloudflarestorage.com"
     }
   },
@@ -189,16 +189,16 @@
     {
       "status": 200,
       "quota": {
-        "limit": "3000",
-        "remaining": "2999",
+        "limit": "180",
+        "remaining": "179",
         "retryAfter": null
       },
       "rateLimit": {
         "resets_in_seconds": 3600,
-        "remaining": 2999,
+        "remaining": 179,
         "requested_entity": "League"
       }
     }
   ],
-  "durationMs": 5793
+  "durationMs": 17007
 }
