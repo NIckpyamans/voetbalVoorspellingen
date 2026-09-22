@@ -6,16 +6,16 @@
     "owner": "Nick",
     "status": "active"
   },
-  "generatedAt": "2026-09-15T11:50:00.594Z",
+  "generatedAt": "2026-09-22T11:44:55.105Z",
   "baseUrl": "https://voetbalvoorspellingen-clean.vercel.app",
   "summary": "Professionele audit actief. Kritieke opslagvelden lijken aanwezig; blijf kalibratie en bronkwaliteit bewaken.",
   "live": {
-    "matchesTotal": 3,
-    "predictionsTotal": 3,
-    "reviewCount": 1624,
+    "matchesTotal": 0,
+    "predictionsTotal": 211,
+    "reviewCount": 1101,
     "predictionSnapshotCount": 25,
     "workerVersion": "v25-club-rating",
-    "sourceBranch": "codex/step3b-layout",
+    "sourceBranch": "postgres-app-state",
     "sourceCoverage": null,
     "featureDiagnostics": null,
     "backtestSummary": null,
@@ -30,41 +30,41 @@
     }
   },
   "predictions": {
-    "total": 207,
-    "featureCoverage": 1,
-    "featureCoverageScope": "today-and-tomorrow-before-static-compaction",
-    "featureCoveragePredictions": 3,
-    "historicalInlineFeatureCoverage": 0.014492753623188406,
+    "total": 211,
+    "featureCoverage": 0,
+    "featureCoverageScope": "fallback-all-visible-records",
+    "featureCoveragePredictions": 211,
+    "historicalInlineFeatureCoverage": 0,
     "historicalFeatureStorage": "immutable-r2-snapshot-ledger",
-    "oddsCoverage": 0.48792270531400966,
-    "historicalMarketOnly": 0.014492753623188406,
+    "oddsCoverage": 0.2985781990521327,
+    "historicalMarketOnly": 0,
     "reviewCoverage": 0,
-    "averageCompleteness": 0.9661932367149748
+    "averageCompleteness": 0.9596777251184824
   },
   "recent": {
-    "days": 15,
-    "matches": 207,
-    "predictions": 207,
-    "finishedMatches": 204,
-    "finishedWithScore": 204,
+    "days": 13,
+    "matches": 211,
+    "predictions": 211,
+    "finishedMatches": 211,
+    "finishedWithScore": 211,
     "resultCoverage": 1,
-    "reviewedMatches": 204,
+    "reviewedMatches": 211,
     "evaluationCoverage": 1,
-    "snapshotBackedReviews": 140,
-    "snapshotBackedReviewCoverage": 0.6862745098039216,
-    "predictionSnapshots": 182,
-    "uniqueSnapshotMatches": 102,
-    "dataCompleteness": 0.9661932367149748,
+    "snapshotBackedReviews": 71,
+    "snapshotBackedReviewCoverage": 0.33649289099526064,
+    "predictionSnapshots": 79,
+    "uniqueSnapshotMatches": 49,
+    "dataCompleteness": 0.9596777251184824,
     "sourceMetadataCoverage": 1,
-    "actualOddsCoverage": 0.48792270531400966,
-    "confirmedLineupCoverage": 0.03864734299516908,
+    "actualOddsCoverage": 0.2985781990521327,
+    "confirmedLineupCoverage": 0,
     "performance": {
-      "reviews": 204,
-      "outcomeHitRate": 0.4215686274509804,
-      "exactHitRate": 0.08333333333333333,
-      "averageBrier": 0.5618448088235296,
-      "averageLogLoss": 1.042787421568628,
-      "averageConfidence": 0.45591935483870977
+      "reviews": 211,
+      "outcomeHitRate": 0.4928909952606635,
+      "exactHitRate": 0.0995260663507109,
+      "averageBrier": 0.5809694407582937,
+      "averageLogLoss": 0.9898779573459717,
+      "averageConfidence": 0.44340284360189564
     },
     "segments": {
       "club_friendlies": {
@@ -76,20 +76,20 @@
         "averageConfidence": null
       },
       "european_knockout": {
-        "reviews": 18,
-        "outcomeHitRate": 0.4444444444444444,
+        "reviews": 36,
+        "outcomeHitRate": 0.5277777777777778,
         "exactHitRate": 0.1111111111111111,
-        "averageBrier": 0.6503055555555555,
-        "averageLogLoss": 1.0865833333333332,
-        "averageConfidence": 0.4288333333333333
+        "averageBrier": 0.5869583333333332,
+        "averageLogLoss": 0.9931499999999998,
+        "averageConfidence": 0.4308888888888889
       },
       "domestic_competitions": {
-        "reviews": 186,
-        "outcomeHitRate": 0.41935483870967744,
-        "exactHitRate": 0.08064516129032258,
-        "averageBrier": 0.5532840913978496,
-        "averageLogLoss": 1.038549107526882,
-        "averageConfidence": 0.45882142857142844
+        "reviews": 175,
+        "outcomeHitRate": 0.4857142857142857,
+        "exactHitRate": 0.09714285714285714,
+        "averageBrier": 0.5797374399999999,
+        "averageLogLoss": 0.9892048514285713,
+        "averageConfidence": 0.44597714285714307
       }
     }
   },
@@ -108,7 +108,7 @@
     },
     {
       "field": "featureVector",
-      "present": true,
+      "present": false,
       "importance": "hoog",
       "advice": "Aanwezig waar predictions gevuld zijn; maak hem immutable per prediction_id."
     },

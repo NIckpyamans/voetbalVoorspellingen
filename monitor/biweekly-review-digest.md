@@ -1,16 +1,18 @@
 # FootyAI verbeteraudit
 
-Periode: 2026-09-09 t/m 2026-09-15
+Periode: 2026-09-16 t/m 2026-09-22
 
-AI bundel over de laatste 7 dagen: 1 monitorthema's en 5 uitvoerbare verbeteracties.
+AI bundel over de laatste 7 dagen: 2 monitorthema's en 5 uitvoerbare verbeteracties.
 
 - Runs: 7
-- Bevindingen: 1
-- Thema's: 1
+- Bevindingen: 4
+- Thema's: 2
 
 ## Hoofdpunten
-- H2H niet gevuld (1x, severity: medium)
+- H2H niet gevuld (2x, severity: medium)
   - Trek H2H verder uit historische competitiebestanden en bewaak fallbackdekking in de worker.
+- Workerdata verouderd (2x, severity: high)
+  - Gebruik het reviewbranch-voorstel als veilige volgende patchronde.
 
 ## Architectuuranalyse
 Professionele architectuuranalyse voor schaalbaarheid, datakwaliteit, AI-agentwaarde, databasegroei en modelbetrouwbaarheid.
@@ -44,7 +46,7 @@ Professionele architectuuranalyse voor schaalbaarheid, datakwaliteit, AI-agentwa
 ## Datakwaliteit
 - Pending result backfills: 0
 - Ontbrekende oude scores: 0
-- H2H-dekking: 43%
+- H2H-dekking: 46%
 - Resultaatbackfill is schoon binnen de auditperiode.
 - Breid H2H via historische competitieprofielen en team-id mappings uit tot minimaal 85% dekking.
 - Afgeronde wedstrijden zijn aan post-matchreviews gekoppeld.
@@ -54,15 +56,15 @@ Professionele architectuuranalyse voor schaalbaarheid, datakwaliteit, AI-agentwa
 ## Widgetintegraties
 - Status: degraded
 - Neon: verbonden
-- Checks: 8/10 geslaagd
-- Herstel de mislukte widgetcontracten: Systeemstatus, Provider- en integriteitswidget.
+- Checks: 9/10 geslaagd
+- Herstel de mislukte widgetcontracten: Provider- en integriteitswidget.
 
 ## Snapshot-evaluatie
 - Status: completed (evaluated)
 - Neon: fallback actief
-- R2: 9302 gelezen, 447 geëvalueerd
+- R2: 9332 gelezen, 451 geëvalueerd
 - Lokale fallback: 708 gelezen, 0 geëvalueerd
-- Werkelijk geëvalueerd: 447
+- Werkelijk geëvalueerd: 451
 
 ## Snapshotgroei
 - Snapshotrecords: 308
@@ -77,9 +79,9 @@ Professionele architectuuranalyse voor schaalbaarheid, datakwaliteit, AI-agentwa
 - Herbruikbare data context bewaken: docs/data-context/analysis-context.json (context-active)
 
 ## Volgende aanbevelingen
-1. H2H-dekking gericht verhogen (Hoog, impact: Hoog) - Actuele H2H-dekking is 43%; doel is minimaal 85% met betrouwbare historie en expliciete missing reasons.
-2. Confirmed lineups rond kickoff verzamelen (Hoog, impact: Zeer hoog) - Confirmed-lineupdekking is 4%; T-75, T-45 en T-20 blijven de actieve capturevensters.
-3. Opening-, prematch- en closing odds vastleggen (Hoog, impact: Zeer hoog) - Echte oddsdekking is 49%; CLV/ROI blijft geblokkeerd zonder geldige timestamped paren. API-Football accepteert het huidige plan nog niet.
+1. H2H-dekking gericht verhogen (Hoog, impact: Hoog) - Actuele H2H-dekking is 46%; doel is minimaal 85% met betrouwbare historie en expliciete missing reasons.
+2. Confirmed lineups rond kickoff verzamelen (Hoog, impact: Zeer hoog) - Confirmed-lineupdekking is 0%; T-75, T-45 en T-20 blijven de actieve capturevensters.
+3. Opening-, prematch- en closing odds vastleggen (Hoog, impact: Zeer hoog) - Echte oddsdekking is 30%; CLV/ROI blijft geblokkeerd zonder geldige timestamped paren. API-Football accepteert het huidige plan nog niet.
 4. R2/Neon-herstelketen controleren (Hoog, impact: Hoog) - Neon is geconfigureerd maar blokkeert met HTTP 402/quota; R2 blijft actief en replay moet automatisch hervatten na herstel.
 5. League/phase-kalibratie in shadow mode beoordelen (Middel, impact: Hoog) - 71 unieke reguliere wedstrijden; gate gehaald. Promoveer alleen profielen met voldoende Brier-verbetering.
 

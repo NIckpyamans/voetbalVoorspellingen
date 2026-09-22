@@ -1,33 +1,33 @@
 {
-  "generatedAt": "2026-09-15T11:50:00.457Z",
+  "generatedAt": "2026-09-22T11:44:54.987Z",
   "baseUrl": "https://voetbalvoorspellingen-clean.vercel.app",
   "status": "degraded",
   "totals": {
     "checks": 10,
-    "passed": 8,
-    "failed": 2
+    "passed": 9,
+    "failed": 1
   },
   "neon": {
     "connected": true,
-    "matches": 1248,
-    "predictionSnapshots": 4777,
+    "matches": 1319,
+    "predictionSnapshots": 4839,
     "h2hEdges": 0,
-    "auditRows": 23885
+    "auditRows": 24195
   },
   "checks": [
     {
       "key": "health",
       "label": "Systeemstatus",
-      "passed": false,
+      "passed": true,
       "status": 200,
-      "detail": "HTTP 200"
+      "detail": "status ok"
     },
     {
       "key": "neon",
       "label": "Neon database",
       "passed": true,
       "status": 200,
-      "detail": "1248 matches, 4777 snapshots"
+      "detail": "1319 matches, 4839 snapshots"
     },
     {
       "key": "provider_widget",
@@ -41,7 +41,7 @@
       "label": "Dashboard/matches-widget",
       "passed": true,
       "status": 200,
-      "detail": "3 actuele matches, bron github-worker-v4-split"
+      "detail": "0 actuele matches, bron no-matches-yet"
     },
     {
       "key": "standings_widget",
@@ -55,21 +55,21 @@
       "label": "Bekerschema-widget",
       "passed": true,
       "status": 200,
-      "detail": "4 actief; leeg is geldig buiten bekerrondes"
+      "detail": "3 actief; leeg is geldig buiten bekerrondes"
     },
     {
       "key": "season_widget",
       "label": "Neon seizoen-widget",
       "passed": true,
       "status": 200,
-      "detail": "0 seizoenovergangen"
+      "detail": "10 seizoenovergangen"
     },
     {
       "key": "history_widget",
       "label": "Geschiedenis-widget",
       "passed": true,
       "status": 200,
-      "detail": "1624 reviews"
+      "detail": "1726 reviews"
     },
     {
       "key": "snapshot_widget",
@@ -87,6 +87,6 @@
     }
   ],
   "opportunities": [
-    "Herstel de mislukte widgetcontracten: Systeemstatus, Provider- en integriteitswidget."
+    "Herstel de mislukte widgetcontracten: Provider- en integriteitswidget."
   ]
 }
