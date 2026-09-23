@@ -1,6 +1,6 @@
 # Data Quality Audit
 
-Laatst bijgewerkt: 2026-09-22T19:07:14.281Z
+Laatst bijgewerkt: 2026-09-23T05:22:21.779Z
 Lookback: 45 dagen
 
 ## Scores
@@ -11,7 +11,7 @@ Lookback: 45 dagen
 - H2H-dekking: 46%
 - Reviews na afloop: 100%
 - Lekvrije post-matchreviews: 0% (0/0)
-- Immutable snapshot-evaluaties: 100% (1/1)
+- Immutable snapshot-evaluaties: 0% (0/0)
 - Bruikbare wedstrijdstatistieken: 92%
 - Bevestigde opstellingen: 12%
 - Historisch teruggevonden basiselftallen: 84%
@@ -36,7 +36,7 @@ Lookback: 45 dagen
 ## Aanbevelingen
 - Resultaatbackfill is schoon binnen de auditperiode.
 - Breid H2H via historische competitieprofielen en team-id mappings uit tot minimaal 85% dekking.
-- Afgeronde wedstrijden zijn aan post-matchreviews gekoppeld.
+- Evalueer minimaal 95% van de 0 geldige immutable snapshots voordat opnieuw wordt gekalibreerd.
 - Post-match statistiekdekking is voldoende.
 - Toon geen inzetadvies zolang bevestigde opstellingen, verse getimestampte 1X2-odds en minimaal 70% modeldata niet samen aanwezig zijn.
 
