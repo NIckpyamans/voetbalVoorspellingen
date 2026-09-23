@@ -1,5 +1,5 @@
 {
-  "checkedAt": "2026-09-22T09:20:41.710Z",
+  "checkedAt": "2026-09-23T09:21:12.251Z",
   "oddsApi": {
     "configured": true,
     "valid": true,
@@ -7,11 +7,11 @@
     "catalogIncludesInactive": true,
     "inactiveSoccerSportKeys": [
       "soccer_africa_cup_of_nations",
-      "soccer_australia_aleague",
       "soccer_china_superleague",
       "soccer_concacaf_gold_cup",
       "soccer_concacaf_leagues_cup",
       "soccer_conmebol_copa_america",
+      "soccer_fa_cup",
       "soccer_fifa_club_world_cup",
       "soccer_fifa_world_cup",
       "soccer_fifa_world_cup_qualifiers_europe",
@@ -19,7 +19,6 @@
       "soccer_fifa_world_cup_winner",
       "soccer_fifa_world_cup_womens",
       "soccer_france_coupe_de_france",
-      "soccer_france_ligue_two",
       "soccer_germany_bundesliga_women",
       "soccer_italy_coppa_italia",
       "soccer_japan_j_league",
@@ -27,18 +26,18 @@
       "soccer_russia_premier_league",
       "soccer_saudi_arabia_pro_league",
       "soccer_spain_copa_del_rey",
-      "soccer_sweden_superettan",
       "soccer_uefa_champs_league_qualification",
       "soccer_uefa_euro_qualification",
       "soccer_uefa_european_championship"
     ],
     "faCup": {
       "key": "soccer_fa_cup",
-      "status": "active"
+      "status": "expected_inactive"
     },
-    "activeSports": 77,
+    "activeSports": 81,
     "soccerSportKeys": [
       "soccer_argentina_primera_division",
+      "soccer_australia_aleague",
       "soccer_austria_bundesliga",
       "soccer_belgium_first_div",
       "soccer_brazil_campeonato",
@@ -52,9 +51,9 @@
       "soccer_england_league1",
       "soccer_england_league2",
       "soccer_epl",
-      "soccer_fa_cup",
       "soccer_finland_veikkausliiga",
       "soccer_france_ligue_one",
+      "soccer_france_ligue_two",
       "soccer_germany_bundesliga",
       "soccer_germany_bundesliga2",
       "soccer_germany_dfb_pokal",
@@ -72,6 +71,7 @@
       "soccer_spain_segunda_division",
       "soccer_spl",
       "soccer_sweden_allsvenskan",
+      "soccer_sweden_superettan",
       "soccer_switzerland_superleague",
       "soccer_turkey_super_league",
       "soccer_uefa_champs_league",
@@ -93,20 +93,13 @@
     ],
     "competitionCoverageStatus": "seasonal_unavailable",
     "newlyInactiveSports": [
-      "soccer_germany_bundesliga_women"
+      "soccer_fa_cup"
     ],
     "newlyUnavailableSports": [],
     "newlyAvailableSports": [
-      "soccer_belgium_first_div",
-      "soccer_fa_cup",
-      "soccer_finland_veikkausliiga",
-      "soccer_germany_bundesliga2",
-      "soccer_italy_serie_b",
-      "soccer_norway_eliteserien",
-      "soccer_portugal_primeira_liga",
-      "soccer_sweden_allsvenskan",
-      "soccer_switzerland_superleague",
-      "soccer_turkey_super_league"
+      "soccer_australia_aleague",
+      "soccer_france_ligue_two",
+      "soccer_sweden_superettan"
     ],
     "quota": {
       "x-requests-remaining": "38",
@@ -183,7 +176,7 @@
     "quota": {
       "x-ratelimit-limit": "1000",
       "x-ratelimit-remaining": "973",
-      "x-ratelimit-reset": "1790121600"
+      "x-ratelimit-reset": "1790208000"
     },
     "accepted": false,
     "policy": "Veertien dagen meten; nooit automatisch promoveren op basis van alleen een geldige key."
@@ -204,13 +197,13 @@
     "status": 200,
     "records": 1,
     "rateLimit": {
-      "resets_in_seconds": 1717,
-      "remaining": 178,
+      "resets_in_seconds": 3600,
+      "remaining": 179,
       "requested_entity": "League"
     },
     "quota": {
       "x-ratelimit-limit": "180",
-      "x-ratelimit-remaining": "178"
+      "x-ratelimit-remaining": "179"
     },
     "endpointAccess": {
       "leagues": {
@@ -221,13 +214,13 @@
         "firstName": "Superliga",
         "hasOddsFlag": false,
         "rateLimit": {
-          "resets_in_seconds": 1717,
-          "remaining": 178,
+          "resets_in_seconds": 3600,
+          "remaining": 179,
           "requested_entity": "League"
         },
         "quota": {
           "x-ratelimit-limit": "180",
-          "x-ratelimit-remaining": "178"
+          "x-ratelimit-remaining": "179"
         },
         "errorCode": null
       },
@@ -315,7 +308,7 @@
         "firstName": "1",
         "hasOddsFlag": false,
         "rateLimit": {
-          "resets_in_seconds": 3599,
+          "resets_in_seconds": 3600,
           "remaining": 178,
           "requested_entity": "Odd"
         },
@@ -334,7 +327,7 @@
         "firstName": null,
         "hasOddsFlag": false,
         "rateLimit": {
-          "resets_in_seconds": 3598,
+          "resets_in_seconds": 3599,
           "remaining": 177,
           "requested_entity": "Odd"
         },
