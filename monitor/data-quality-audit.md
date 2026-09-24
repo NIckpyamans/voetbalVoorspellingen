@@ -1,6 +1,6 @@
 # Data Quality Audit
 
-Laatst bijgewerkt: 2026-09-24T17:33:44.365Z
+Laatst bijgewerkt: 2026-09-24T20:40:21.789Z
 Lookback: 45 dagen
 
 ## Scores
