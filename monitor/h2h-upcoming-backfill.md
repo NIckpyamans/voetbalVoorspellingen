@@ -1,9 +1,9 @@
 # Upcoming H2H Backfill
 
-Laatst bijgewerkt: 2026-09-23T22:20:38.757Z
-Gecontroleerd: 6
+Laatst bijgewerkt: 2026-09-24T00:55:52.139Z
+Gecontroleerd: 7
 Gevuld: 0
-Geen directe H2H: 6
+Geen directe H2H: 7
 Errors: 0
 
 ## Aanbeveling
@@ -18,3 +18,4 @@ API-Football blijft quota-bewust geblokkeerd totdat de acceptatietest slaagt; ES
 - 2026-09-26: NAC Breda - FC Eindhoven (provider_acceptance_blocked)
 - 2026-09-26: Roda JC Kerkrade - RKC Waalwijk (provider_acceptance_blocked)
 - 2026-09-27: De Graafschap - FC Den Bosch (provider_acceptance_blocked)
+- 2026-10-02: Helmond Sport - Heracles (provider_acceptance_blocked)
