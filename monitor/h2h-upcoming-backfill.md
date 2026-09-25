@@ -1,9 +1,9 @@
 # Upcoming H2H Backfill
 
-Laatst bijgewerkt: 2026-09-24T23:34:39.394Z
-Gecontroleerd: 13
+Laatst bijgewerkt: 2026-09-25T01:57:52.376Z
+Gecontroleerd: 11
 Gevuld: 0
-Geen directe H2H: 13
+Geen directe H2H: 11
 Errors: 0
 
 ## Aanbeveling
@@ -23,5 +23,3 @@ API-Football blijft quota-bewust geblokkeerd totdat de acceptatietest slaagt; ES
 - 2026-10-03: Vitesse - NAC Breda (provider_acceptance_blocked)
 - 2026-10-03: FC Den Bosch - FC Dordrecht (provider_acceptance_blocked)
 - 2026-10-03: FC Eindhoven - De Graafschap (provider_acceptance_blocked)
-- 2026-10-04: VVV-Venlo - Roda JC Kerkrade (provider_acceptance_blocked)
-- 2026-10-04: Hamburger SV - FC København (provider_acceptance_blocked)
