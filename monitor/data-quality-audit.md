@@ -1,6 +1,6 @@
 # Data Quality Audit
 
-Laatst bijgewerkt: 2026-09-25T08:18:48.650Z
+Laatst bijgewerkt: 2026-09-25T13:57:54.133Z
 Lookback: 45 dagen
 
 ## Scores
@@ -28,7 +28,7 @@ Lookback: 45 dagen
 - England - Premier League: 90 duels, vorm 96%, H2H 56%, inzetbewijs 2%, lekvrije reviews 0% (0/0), stats 100%; gaten: h2h, confirmed_lineups, timestamped_odds, immutable_snapshot_windows, leak_free_reviews
 - England - Championship: 71 duels, vorm 66%, H2H 32%, inzetbewijs 11%, lekvrije reviews 0% (0/0), stats 100%; gaten: form, h2h, confirmed_lineups, timestamped_odds, immutable_snapshot_windows, leak_free_reviews
 - France - Ligue 1: 81 duels, vorm 86%, H2H 70%, inzetbewijs 1%, lekvrije reviews 0% (0/0), stats 100%; gaten: form, h2h, confirmed_lineups, timestamped_odds, immutable_snapshot_windows, leak_free_reviews
-- France - Ligue 2: 81 duels, vorm 62%, H2H 52%, inzetbewijs 9%, lekvrije reviews 0% (0/0), stats 100%; gaten: form, h2h, confirmed_lineups, timestamped_odds, immutable_snapshot_windows, leak_free_reviews
+- France - Ligue 2: 81 duels, vorm 62%, H2H 53%, inzetbewijs 9%, lekvrije reviews 0% (0/0), stats 100%; gaten: form, h2h, confirmed_lineups, timestamped_odds, immutable_snapshot_windows, leak_free_reviews
 - Europe - Champions League: 32 duels, vorm 75%, H2H 22%, inzetbewijs 0%, lekvrije reviews 0% (0/0), stats 100%; gaten: form, h2h, confirmed_lineups, timestamped_odds, immutable_snapshot_windows, leak_free_reviews
 - Europe - Europa League: 56 duels, vorm 43%, H2H 34%, inzetbewijs 0%, lekvrije reviews 0% (0/0), stats 75%; gaten: form, h2h, confirmed_lineups, timestamped_odds, immutable_snapshot_windows, leak_free_reviews, post_match_statistics, goal_timeline, card_timeline
 - Europe - Conference League: 69 duels, vorm 32%, H2H 49%, inzetbewijs 0%, lekvrije reviews 0% (0/0), stats 70%; gaten: form, h2h, confirmed_lineups, timestamped_odds, immutable_snapshot_windows, leak_free_reviews, post_match_statistics, goal_timeline, card_timeline
