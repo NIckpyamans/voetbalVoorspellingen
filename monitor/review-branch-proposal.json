@@ -1,31 +1,32 @@
 {
-  "generatedAt": "2026-09-24T00:32:58.147Z",
-  "date": "2026-09-24",
+  "generatedAt": "2026-09-25T00:35:18.422Z",
+  "date": "2026-09-25",
   "proposalOnly": true,
-  "shouldPropose": false,
-  "branchName": "codex/review-20260924",
-  "summary": "Geen reviewbranch nodig op 2026-09-24.",
+  "shouldPropose": true,
+  "branchName": "codex/review-20260925",
+  "summary": "AI reviewvoorstel voor 2026-09-25: 1 aandachtspunt(en) met patchadvies, niet automatisch live.",
   "latestStats": {
-    "today": "2026-09-24",
-    "tomorrow": "2026-09-25",
+    "today": "2026-09-25",
+    "tomorrow": "2026-09-26",
     "dataPresent": true,
-    "lastRun": 1790209640433,
-    "ageMinutes": 6,
+    "lastRun": 1790296279216,
+    "ageMinutes": 4,
     "maxWorkerAgeMinutes": 180,
-    "todayMatches": 0,
-    "tomorrowMatches": 1,
+    "todayMatches": 1,
+    "tomorrowMatches": 6,
     "fixtureCalendar": {
       "status": "has_current_matches",
       "healthy": true,
       "emptyWindowOk": true,
       "severity": "none",
-      "todayCount": 0,
-      "tomorrowCount": 1,
+      "todayCount": 1,
+      "tomorrowCount": 6,
       "windowDays": 7,
       "checkedDates": [
         "2026-09-25",
         "2026-09-26",
-        "2026-09-27"
+        "2026-09-27",
+        "2026-10-02"
       ],
       "nextMatchDate": "2026-09-25",
       "nextMatchCount": 1,
@@ -34,12 +35,28 @@
     "liveMatches": 0,
     "liveWithoutMinute": 0,
     "h2hFilled": 0,
-    "h2hMissing": 0,
+    "h2hMissing": 1,
     "standingsCount": 11,
-    "cupSheetCount": 6,
+    "cupSheetCount": 1,
     "phaseReliabilityCount": 5
   },
-  "findings": [],
-  "recommendedFiles": [],
-  "nextStep": "Geen actie nodig; monitor blijft op de achtergrond doorlopen."
+  "findings": [
+    {
+      "priority": 1,
+      "key": "h2h_empty",
+      "severity": "medium",
+      "message": "Alle wedstrijden van vandaag hebben lege H2H-data.",
+      "whyItMatters": "Onderlinge duels worden niet sterk genoeg gevuld.",
+      "recommendedFiles": [
+        "scripts/server-worker.js",
+        "components/MatchCard.tsx"
+      ],
+      "details": {}
+    }
+  ],
+  "recommendedFiles": [
+    "scripts/server-worker.js",
+    "components/MatchCard.tsx"
+  ],
+  "nextStep": "Gebruik deze proposal om gericht een reviewbranch te maken en alleen na controle te mergen."
 }
