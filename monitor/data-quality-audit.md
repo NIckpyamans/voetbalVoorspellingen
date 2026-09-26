@@ -1,6 +1,6 @@
 # Data Quality Audit
 
-Laatst bijgewerkt: 2026-09-26T14:54:00.125Z
+Laatst bijgewerkt: 2026-09-26T21:21:08.561Z
 Lookback: 45 dagen
 
 ## Scores
@@ -12,9 +12,9 @@ Lookback: 45 dagen
 - Reviews na afloop: 100%
 - Lekvrije post-matchreviews: 0% (0/0)
 - Immutable snapshot-evaluaties: 0% (0/0)
-- Bruikbare wedstrijdstatistieken: 92%
+- Bruikbare wedstrijdstatistieken: 93%
 - Bevestigde opstellingen: 12%
-- Historisch teruggevonden basiselftallen: 84%
+- Historisch teruggevonden basiselftallen: 83%
 - Verse getimestampte prematch-odds: 14%
 - Volledige pre-match bewijsset: 2%
 - Doelpunten met tijdlijn: 86%
