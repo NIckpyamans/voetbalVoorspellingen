@@ -1,9 +1,9 @@
 # Upcoming H2H Backfill
 
-Laatst bijgewerkt: 2026-09-27T12:01:22.028Z
-Gecontroleerd: 8
+Laatst bijgewerkt: 2026-09-27T16:58:28.654Z
+Gecontroleerd: 7
 Gevuld: 0
-Geen directe H2H: 8
+Geen directe H2H: 7
 Errors: 0
 
 ## Aanbeveling
@@ -12,7 +12,6 @@ API-Football blijft quota-bewust geblokkeerd totdat de acceptatietest slaagt; ES
 ## Gevuld
 
 ## Geen Directe H2H
-- 2026-09-27: De Graafschap - FC Den Bosch (provider_acceptance_blocked)
 - 2026-10-02: Helmond Sport - Heracles (provider_acceptance_blocked)
 - 2026-10-03: TOP Oss - MVV Maastricht (provider_acceptance_blocked)
 - 2026-10-03: Vitesse - NAC Breda (provider_acceptance_blocked)
