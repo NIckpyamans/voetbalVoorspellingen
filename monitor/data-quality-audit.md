@@ -1,11 +1,11 @@
 # Data Quality Audit
 
-Laatst bijgewerkt: 2026-09-26T21:21:08.561Z
+Laatst bijgewerkt: 2026-09-27T08:37:22.477Z
 Lookback: 45 dagen
 
 ## Scores
 - Wedstrijden: 754
-- Oude wedstrijden: 551
+- Oude wedstrijden: 557
 - Pending result backfills: 0
 - Ontbrekende oude scores: 0
 - H2H-dekking: 42%
@@ -14,7 +14,7 @@ Lookback: 45 dagen
 - Immutable snapshot-evaluaties: 0% (0/0)
 - Bruikbare wedstrijdstatistieken: 93%
 - Bevestigde opstellingen: 12%
-- Historisch teruggevonden basiselftallen: 83%
+- Historisch teruggevonden basiselftallen: 84%
 - Verse getimestampte prematch-odds: 14%
 - Volledige pre-match bewijsset: 2%
 - Doelpunten met tijdlijn: 86%
@@ -22,7 +22,7 @@ Lookback: 45 dagen
 
 ## Per competitie
 - Netherlands - Eredivisie: 39 duels, vorm 92%, H2H 49%, inzetbewijs 0%, lekvrije reviews 0% (0/0), stats 100%; gaten: h2h, confirmed_lineups, timestamped_odds, immutable_snapshot_windows, leak_free_reviews
-- Netherlands - Eerste Divisie: 113 duels, vorm 48%, H2H 10%, inzetbewijs 0%, lekvrije reviews 0% (0/0), stats 100%; gaten: form, h2h, confirmed_lineups, timestamped_odds, immutable_snapshot_windows, leak_free_reviews
+- Netherlands - Eerste Divisie: 113 duels, vorm 48%, H2H 9%, inzetbewijs 0%, lekvrije reviews 0% (0/0), stats 100%; gaten: form, h2h, confirmed_lineups, timestamped_odds, immutable_snapshot_windows, leak_free_reviews
 - Germany - Bundesliga: 83 duels, vorm 92%, H2H 49%, inzetbewijs 0%, lekvrije reviews 0% (0/0), stats 85%; gaten: h2h, confirmed_lineups, timestamped_odds, immutable_snapshot_windows, leak_free_reviews, goal_timeline
 - Germany - 2. Bundesliga: 39 duels, vorm 82%, H2H 33%, inzetbewijs 0%, lekvrije reviews 0% (0/0), stats 100%; gaten: form, h2h, confirmed_lineups, timestamped_odds, immutable_snapshot_windows, leak_free_reviews
 - England - Premier League: 90 duels, vorm 96%, H2H 56%, inzetbewijs 2%, lekvrije reviews 0% (0/0), stats 100%; gaten: h2h, confirmed_lineups, timestamped_odds, immutable_snapshot_windows, leak_free_reviews
