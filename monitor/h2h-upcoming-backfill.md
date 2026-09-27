@@ -1,9 +1,9 @@
 # Upcoming H2H Backfill
 
-Laatst bijgewerkt: 2026-09-27T21:20:51.582Z
-Gecontroleerd: 7
+Laatst bijgewerkt: 2026-09-27T21:44:32.677Z
+Gecontroleerd: 24
 Gevuld: 0
-Geen directe H2H: 7
+Geen directe H2H: 24
 Errors: 0
 
 ## Aanbeveling
@@ -19,3 +19,16 @@ API-Football blijft quota-bewust geblokkeerd totdat de acceptatietest slaagt; ES
 - 2026-10-03: FC Eindhoven - De Graafschap (provider_acceptance_blocked)
 - 2026-10-04: VVV-Venlo - Roda JC Kerkrade (provider_acceptance_blocked)
 - 2026-10-04: Hamburger SV - FC København (provider_acceptance_blocked)
+- 2026-10-09: Almere City FC - FC Eindhoven (provider_acceptance_blocked)
+- 2026-10-09: Clermont Foot - Red Star (provider_acceptance_blocked)
+- 2026-10-09: De Graafschap - Jong FC Utrecht (provider_acceptance_blocked)
+- 2026-10-09: Saint-Etienne - Rodez (provider_acceptance_blocked)
+- 2026-10-09: FC Dordrecht - FC Emmen (provider_acceptance_blocked)
+- 2026-10-09: Sochaux - Boulogne (provider_acceptance_blocked)
+- 2026-10-09: Heracles - RKC Waalwijk (provider_acceptance_blocked)
+- 2026-10-09: Jong Ajax - VVV-Venlo (provider_acceptance_blocked)
+- 2026-10-09: Jong AZ Alkmaar - FC Den Bosch (provider_acceptance_blocked)
+- 2026-10-09: NAC Breda - MVV Maastricht (provider_acceptance_blocked)
+- 2026-10-09: Roda JC Kerkrade - Jong PSV (provider_acceptance_blocked)
+- 2026-10-09: TOP Oss - Helmond Sport (provider_acceptance_blocked)
+- 2026-10-10: Union Berlin - Elversberg (provider_acceptance_blocked)
