@@ -6,16 +6,16 @@
     "owner": "Nick",
     "status": "active"
   },
-  "generatedAt": "2026-09-22T11:44:55.105Z",
+  "generatedAt": "2026-09-28T14:02:34.652Z",
   "baseUrl": "https://voetbalvoorspellingen-clean.vercel.app",
   "summary": "Professionele audit actief. Kritieke opslagvelden lijken aanwezig; blijf kalibratie en bronkwaliteit bewaken.",
   "live": {
     "matchesTotal": 0,
-    "predictionsTotal": 211,
-    "reviewCount": 1101,
+    "predictionsTotal": 114,
+    "reviewCount": 1734,
     "predictionSnapshotCount": 25,
-    "workerVersion": "v25-club-rating",
-    "sourceBranch": "postgres-app-state",
+    "workerVersion": "v18-score-data-scout",
+    "sourceBranch": "main",
     "sourceCoverage": null,
     "featureDiagnostics": null,
     "backtestSummary": null,
@@ -30,41 +30,41 @@
     }
   },
   "predictions": {
-    "total": 211,
+    "total": 114,
     "featureCoverage": 0,
     "featureCoverageScope": "fallback-all-visible-records",
-    "featureCoveragePredictions": 211,
+    "featureCoveragePredictions": 114,
     "historicalInlineFeatureCoverage": 0,
     "historicalFeatureStorage": "immutable-r2-snapshot-ledger",
-    "oddsCoverage": 0.2985781990521327,
+    "oddsCoverage": 0.07894736842105263,
     "historicalMarketOnly": 0,
     "reviewCoverage": 0,
-    "averageCompleteness": 0.9596777251184824
+    "averageCompleteness": 0.9545789473684204
   },
   "recent": {
-    "days": 13,
-    "matches": 211,
-    "predictions": 211,
-    "finishedMatches": 211,
-    "finishedWithScore": 211,
+    "days": 10,
+    "matches": 114,
+    "predictions": 114,
+    "finishedMatches": 114,
+    "finishedWithScore": 114,
     "resultCoverage": 1,
-    "reviewedMatches": 211,
+    "reviewedMatches": 114,
     "evaluationCoverage": 1,
-    "snapshotBackedReviews": 71,
-    "snapshotBackedReviewCoverage": 0.33649289099526064,
-    "predictionSnapshots": 79,
-    "uniqueSnapshotMatches": 49,
-    "dataCompleteness": 0.9596777251184824,
+    "snapshotBackedReviews": 30,
+    "snapshotBackedReviewCoverage": 0.2631578947368421,
+    "predictionSnapshots": 30,
+    "uniqueSnapshotMatches": 30,
+    "dataCompleteness": 0.9545789473684204,
     "sourceMetadataCoverage": 1,
-    "actualOddsCoverage": 0.2985781990521327,
+    "actualOddsCoverage": 0.07894736842105263,
     "confirmedLineupCoverage": 0,
     "performance": {
-      "reviews": 211,
-      "outcomeHitRate": 0.4928909952606635,
-      "exactHitRate": 0.0995260663507109,
-      "averageBrier": 0.5809694407582937,
-      "averageLogLoss": 0.9898779573459717,
-      "averageConfidence": 0.44340284360189564
+      "reviews": 114,
+      "outcomeHitRate": 0.5263157894736842,
+      "exactHitRate": 0.08771929824561403,
+      "averageBrier": 0.5655443157894736,
+      "averageLogLoss": 0.9751135877192979,
+      "averageConfidence": 0.4398245614035089
     },
     "segments": {
       "club_friendlies": {
@@ -76,20 +76,20 @@
         "averageConfidence": null
       },
       "european_knockout": {
-        "reviews": 36,
-        "outcomeHitRate": 0.5277777777777778,
-        "exactHitRate": 0.1111111111111111,
-        "averageBrier": 0.5869583333333332,
-        "averageLogLoss": 0.9931499999999998,
-        "averageConfidence": 0.4308888888888889
+        "reviews": 18,
+        "outcomeHitRate": 0.6111111111111112,
+        "exactHitRate": 0.05555555555555555,
+        "averageBrier": 0.5280166666666667,
+        "averageLogLoss": 0.9059500000000001,
+        "averageConfidence": 0.43555555555555553
       },
       "domestic_competitions": {
-        "reviews": 175,
-        "outcomeHitRate": 0.4857142857142857,
-        "exactHitRate": 0.09714285714285714,
-        "averageBrier": 0.5797374399999999,
-        "averageLogLoss": 0.9892048514285713,
-        "averageConfidence": 0.44597714285714307
+        "reviews": 96,
+        "outcomeHitRate": 0.5104166666666666,
+        "exactHitRate": 0.09375,
+        "averageBrier": 0.5725807500000001,
+        "averageLogLoss": 0.9880817604166666,
+        "averageConfidence": 0.44062500000000004
       }
     }
   },
@@ -158,7 +158,7 @@
   "completed": [
     "Recente eindstanden en evaluaties zijn vrijwel volledig opgeslagen.",
     "Professionele snapshotgate gehaald met 523 unieke geëvalueerde wedstrijden.",
-    "Shadowkalibratie gecontroleerd op 1 unieke wedstrijdsamples; geen profiel voldeed aan de promotiedrempel."
+    "Shadowkalibratie gecontroleerd op 151 unieke wedstrijdsamples; geen profiel voldeed aan de promotiedrempel."
   ],
   "recommendations": [
     {

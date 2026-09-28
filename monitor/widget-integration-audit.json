@@ -1,33 +1,33 @@
 {
-  "generatedAt": "2026-09-22T11:44:54.987Z",
+  "generatedAt": "2026-09-28T14:02:34.514Z",
   "baseUrl": "https://voetbalvoorspellingen-clean.vercel.app",
   "status": "degraded",
   "totals": {
     "checks": 10,
-    "passed": 9,
-    "failed": 1
+    "passed": 7,
+    "failed": 3
   },
   "neon": {
-    "connected": true,
-    "matches": 1319,
-    "predictionSnapshots": 4839,
+    "connected": false,
+    "matches": 0,
+    "predictionSnapshots": 0,
     "h2hEdges": 0,
-    "auditRows": 24195
+    "auditRows": 0
   },
   "checks": [
     {
       "key": "health",
       "label": "Systeemstatus",
-      "passed": true,
+      "passed": false,
       "status": 200,
-      "detail": "status ok"
+      "detail": "HTTP 200"
     },
     {
       "key": "neon",
       "label": "Neon database",
-      "passed": true,
+      "passed": false,
       "status": 200,
-      "detail": "1319 matches, 4839 snapshots"
+      "detail": "0 matches, 0 snapshots"
     },
     {
       "key": "provider_widget",
@@ -55,21 +55,21 @@
       "label": "Bekerschema-widget",
       "passed": true,
       "status": 200,
-      "detail": "3 actief; leeg is geldig buiten bekerrondes"
+      "detail": "1 actief; leeg is geldig buiten bekerrondes"
     },
     {
       "key": "season_widget",
       "label": "Neon seizoen-widget",
       "passed": true,
       "status": 200,
-      "detail": "10 seizoenovergangen"
+      "detail": "0 seizoenovergangen"
     },
     {
       "key": "history_widget",
       "label": "Geschiedenis-widget",
       "passed": true,
       "status": 200,
-      "detail": "1726 reviews"
+      "detail": "1734 reviews"
     },
     {
       "key": "snapshot_widget",
@@ -87,6 +87,7 @@
     }
   ],
   "opportunities": [
-    "Herstel de mislukte widgetcontracten: Provider- en integriteitswidget."
+    "Vul gratis pre-match odds snapshots voordat ROI/CLV wordt beoordeeld.",
+    "Herstel de mislukte widgetcontracten: Systeemstatus, Neon database, Provider- en integriteitswidget."
   ]
 }
