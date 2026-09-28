@@ -14,6 +14,13 @@ dist-ssr
 server_data.json
 *.local
 
+# Runtime-data: Neon is de source of truth, R2 archiveert de historie.
+# Deze bestanden horen niet meer in git (repo-groei 725MB oorzaak).
+data/days/
+data/recovery/
+training/
+monitor/*.json
+
 # Editor directories and files
 .vscode/*
 !.vscode/extensions.json

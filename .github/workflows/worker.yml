@@ -87,6 +87,11 @@ jobs:
           H2H_BACKFILL_DAYS_AHEAD: "14"
           H2H_BACKFILL_LIMIT: "24"
 
+      - name: Link unresolved matches to clubs by name and rebuild H2H edges
+        # provider_team_ids-plan: naam-gebaseerde club-koppeling zodat h2h_edges
+        # (en daarmee de H2H-features in de voorspelling) weer vuren.
+        run: node scripts/ci-neon-safe.js -- npm run db:club-ids:backfill:apply
+
       - name: Assemble cached enrichments and predictions
         # Providerverrijking draait in losse jobs. Deze stap combineert hun
         # caches met het weekvenster en publiceert de voorspellingen.
@@ -96,26 +101,11 @@ jobs:
       - name: Audit active competitions and post-match completeness
         run: npm run monitor:competition-data-coverage
 
-      - name: Commit and push data
+      - name: Persist runtime data to Neon/R2 only
+        # Runtime-data (data/, monitor/) blijft bewust UIT git: Neon is de source of
+        # truth en R2 archiveert de historie. Dit stopt de onbeperkte repo-groei
+        # (was: elke run een commit met dag-JSON's tot 5+ MB).
         run: |
-          BRANCH_NAME="${DATA_BRANCH:-${{ github.ref_name }}}"
-          git config user.name github-actions
-          git config user.email github-actions@github.com
-          git add data monitor
-          git diff --staged --quiet && echo "geen wijzigingen" && exit 0
-          git commit -m "update wedstrijden [skip vercel]"
-          for attempt in 1 2 3; do
-            if ! git pull --rebase --autostash -X theirs origin "$BRANCH_NAME"; then
-              git rebase --abort || true
-              echo "Rebase poging $attempt mislukt; schone retry volgt..."
-              sleep $((attempt * 5))
-              continue
-            fi
-            if git push origin HEAD:"$BRANCH_NAME"; then
-              exit 0
-            fi
-            echo "Push poging $attempt mislukt; remote is waarschijnlijk net bijgewerkt. Opnieuw proberen..."
-            sleep $((attempt * 5))
-          done
-          echo "Push mislukt na 3 pogingen"
+          echo "Worker-data is gepersisteerd via Neon/R2 (zie syncAppStateSegmentsToDatabase)."
+          echo "Git-commits van runtime-data zijn uitgeschakeld; git blijft voor code."
           exit 1

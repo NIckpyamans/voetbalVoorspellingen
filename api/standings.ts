@@ -244,7 +244,9 @@ async function readDatabaseCoverageByCompetition() {
 export default async function handler(req: any, res: any) {
   const started = Date.now();
   setCorsHeaders(req, res);
-  res.setHeader("Cache-Control", "no-store, max-age=0");
+  // Standen veranderen alleen na gespeelde wedstrijden; de worker publiceert 2x/dag.
+  // CDN-cache met korte TTL verlaagt serverless-invocations en Neon-query's aanzienlijk.
+  res.setHeader("Cache-Control", "s-maxage=300, stale-while-revalidate=3600");
 
   try {
     let store: any;

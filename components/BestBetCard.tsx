@@ -54,7 +54,11 @@ const BestBetCard: React.FC<BestBetCardProps> = ({ bet }) => {
             <span className="rounded-full bg-yellow-500 text-slate-950 px-2 py-0.5 text-[9px] font-black">#{bet.bestBetRank}</span>
           )}
           <div className="w-6 h-6 rounded-full bg-yellow-500/10 flex items-center justify-center">
-            <i className="fas fa-bullseye text-yellow-400 text-[8px]" />
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round" className="h-3 w-3 text-yellow-400" aria-hidden="true">
+              <path d="M12 22a10 10 0 100-20 10 10 0 000 20z" />
+              <path d="M12 18a6 6 0 100-12 6 6 0 000 12z" />
+              <path d="M12 14a2 2 0 100-4 2 2 0 000 4z" />
+            </svg>
           </div>
         </div>
       </div>

@@ -12,6 +12,7 @@ interface MatchCardProps {
   match: Match;
   prediction?: any;
   onFavoriteChange?: () => void;
+  onAddToCoupon?: () => void;
 }
 
 type MatchDetailTab = "analyse" | "opstelling" | "h2h" | "vorm" | "markten";
@@ -1441,7 +1442,7 @@ function detailDateKey(match: Match) {
   return /^\d{4}-\d{2}-\d{2}$/.test(direct) ? direct : "";
 }
 
-const MatchCard: React.FC<MatchCardProps> = ({ match: initialMatch, prediction: initialPrediction, onFavoriteChange }) => {
+const MatchCard: React.FC<MatchCardProps> = ({ match: initialMatch, prediction: initialPrediction, onFavoriteChange, onAddToCoupon }) => {
   const [tab, setTab] = useState<MatchDetailTab>("analyse");
   const [detailsOpen, setDetailsOpen] = useState(false);
   const [detailPayload, setDetailPayload] = useState<{ match?: any; prediction?: any } | null>(null);
@@ -1609,6 +1610,17 @@ const MatchCard: React.FC<MatchCardProps> = ({ match: initialMatch, prediction: 
           )}
           <FavoriteButton teamId={match.homeTeamId || ""} teamName={match.homeTeamName} onChange={onFavoriteChange} />
           <FavoriteButton teamId={match.awayTeamId || ""} teamName={match.awayTeamName} onChange={onFavoriteChange} />
+          {onAddToCoupon && (
+            <button
+              type="button"
+              onClick={onAddToCoupon}
+              aria-label="Voeg sterkste tip toe aan coupon"
+              title="Voeg sterkste tip toe aan coupon"
+              className="rounded-full border border-cyan-400/30 bg-cyan-500/10 px-2 py-0.5 text-[8px] font-black uppercase tracking-wide text-cyan-200 transition hover:bg-cyan-500/25"
+            >
+              + Coupon
+            </button>
+          )}
         </div>
       </div>
 

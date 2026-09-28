@@ -98,6 +98,11 @@ import {
   selectCurrentStandingCandidate,
 } from "./worker/fotmob-standings.js";
 import { applyLeagueCalibration, rebuildLeagueCalibrationProfilesFromReviews } from "./worker/league-calibration.js";
+import { applyPlattProfile } from "./worker/probability-calibration.js";
+import { buildWeightedTeamLearning } from "./worker/weighted-learning.js";
+import { updateLearnedElo, lookupLearnedElo } from "./worker/learned-elo.js";
+import { predictWithMlEnsemble } from "./worker/ml-ensemble.js";
+import { canonicalDedupeTeam } from "../shared/matchNormalization.js";
 import { buildOutcomeEnsemble, summarizeScoreCoverage } from "./worker/outcome-ensemble.js";
 import {
   buildStoredMatchDedupeKey,
@@ -6490,6 +6495,8 @@ function rebuildReviewsAndLearning(store) {
 
   store.postMatchReviews = reviews;
   store.teamLearning = buildTeamLearningFromReviews(reviews);
+  store.weightedTeamLearning = buildWeightedTeamLearning(reviews);
+  store.learnedElo = updateLearnedElo(reviews, store.learnedElo);
   store.leagueReliability = buildLeagueReliabilityFromReviews(reviews);
   const candidatePhaseReliability = Object.fromEntries(
     Object.entries(buildPhaseReliabilityFromReviews(reviews)).map(([phase, profile]) => [
@@ -9409,6 +9416,7 @@ export function predict(input) {
     isSeniorInternationalTournament,
   });
   const heuristicModel = buildHeuristicEnsemble(featureVector);
+  const mlPrediction = predictWithMlEnsemble(featureVector, input.mlEnsembleModel);
   const baseModel = { homeProb, drawProb, awayProb };
   const preSimulationBlend = blendProbabilities(
     baseModel,
@@ -9434,7 +9442,7 @@ export function predict(input) {
     poisson: baseModel,
     heuristic: heuristicModel,
     monteCarlo,
-    gradientBoosting: input.gradientBoostingProbabilities || null,
+    gradientBoosting: input.gradientBoostingProbabilities || mlPrediction,
     oddsAtPrediction: input.oddsAtPrediction || null,
     kickoff: input.kickoff || null,
     homeElo: input.homeClubElo,
@@ -9636,10 +9644,13 @@ export function predict(input) {
   const neutral = { homeProb: 0.3333, drawProb: 0.3334, awayProb: 0.3333 };
   const reliabilityWeighted = blendProbabilities(blended, neutral, sourceReliability.blendWeight);
   const leagueCalibrated = applyLeagueCalibration(reliabilityWeighted, input.league, input.leagueCalibrationProfile || null);
+  const probabilityCalibrationProfile = input.probabilityCalibrationProfiles?.[input.league] || null;
+  const plattCalibrated = applyPlattProfile(leagueCalibrated, probabilityCalibrationProfile);
+  const plattApplied = Boolean(plattCalibrated);
   const finalProbabilities = {
-    homeProb: leagueCalibrated.homeProb,
-    drawProb: leagueCalibrated.drawProb,
-    awayProb: leagueCalibrated.awayProb,
+    homeProb: plattApplied ? plattCalibrated.homeProb : leagueCalibrated.homeProb,
+    drawProb: plattApplied ? plattCalibrated.drawProb : leagueCalibrated.drawProb,
+    awayProb: plattApplied ? plattCalibrated.awayProb : leagueCalibrated.awayProb,
   };
   const finalConfidence = clamp(
     finalConfidenceRaw + Number(leagueCalibrated.profile?.confidenceBias || 0),
@@ -9719,6 +9730,14 @@ export function predict(input) {
       dataCompleteness,
       qualityGate,
       sourceReliability,
+      probabilityPlattCalibration: {
+        applied: plattApplied,
+        league: input.league || "unknown",
+        version: probabilityCalibrationProfile?.version || null,
+        slope: probabilityCalibrationProfile?.slope ?? null,
+        intercept: probabilityCalibrationProfile?.intercept ?? null,
+        validationBrierImprovement: probabilityCalibrationProfile?.brierImprovement ?? null,
+      },
       leagueCalibration: {
         league: input.league || "unknown",
         profile: leagueCalibrated.profile,
@@ -11709,8 +11728,10 @@ async function main() {
 
       const homeClubEloProfile = lookupClubEloProfile(clubEloSnapshot, homeName, buildPossibleNames);
       const awayClubEloProfile = lookupClubEloProfile(clubEloSnapshot, awayName, buildPossibleNames);
-      const homeClubElo = homeClubEloProfile?.elo ?? lookupClubElo(clubEloSnapshot, homeName);
-      const awayClubElo = awayClubEloProfile?.elo ?? lookupClubElo(clubEloSnapshot, awayName);
+      const learnedHomeElo = lookupLearnedElo(store.learnedElo, homeName);
+      const learnedAwayElo = lookupLearnedElo(store.learnedElo, awayName);
+      const homeClubElo = homeClubEloProfile?.elo ?? lookupClubElo(clubEloSnapshot, homeName) ?? learnedHomeElo?.elo ?? 0;
+      const awayClubElo = awayClubEloProfile?.elo ?? lookupClubElo(clubEloSnapshot, awayName) ?? learnedAwayElo?.elo ?? 0;
       const homeMarketProfile = lookupMarketTeamProfile(leagueMarketProfile, homeName);
       const awayMarketProfile = lookupMarketTeamProfile(leagueMarketProfile, awayName);
       const homeLearning = store.teamLearning[homeId ? `id:${homeId}` : `name:${normalizeName(homeName)}`] || null;
@@ -12037,12 +12058,18 @@ async function main() {
         awayMarketProfile,
         homeLearning,
         awayLearning,
+        homeWeightedLearning: store.weightedTeamLearning?.[`name:${canonicalDedupeTeam(homeName)}`] || null,
+        awayWeightedLearning: store.weightedTeamLearning?.[`name:${canonicalDedupeTeam(awayName)}`] || null,
+        homeLearnedElo: learnedHomeElo,
+        awayLearnedElo: learnedAwayElo,
         leagueReliability,
         phaseReliability,
         marketCalibration,
         dbFeatureContext,
         refereeProfile,
         modelPerformance: store.modelPerformance,
+        probabilityCalibrationProfiles: store.probabilityCalibrationProfiles || null,
+        mlEnsembleModel: store.mlEnsembleModel || null,
         leagueCalibrationProfile: store.leagueCalibrationProfiles?.[leagueInfo.label] || null,
         assertionDegraded: !!store.dataScout?.degraded,
       });

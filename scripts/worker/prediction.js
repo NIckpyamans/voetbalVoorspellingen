@@ -295,6 +295,16 @@ export function buildFeatureVector(input, deps) {
     rest_diff: Number((Number(input.homeRestDays ?? 0) - Number(input.awayRestDays ?? 0)).toFixed(2)),
     club_elo_diff: Number(((!clubSignal && input.homeClubElo > 0 && input.awayClubElo > 0 ? input.homeClubElo - input.awayClubElo : 0) * clubEloScale).toFixed(0)),
     raw_club_elo_diff: Number((input.homeClubElo > 0 && input.awayClubElo > 0 ? input.homeClubElo - input.awayClubElo : 0).toFixed(0)),
+    learned_elo_diff: Number((Number(input.homeLearnedElo?.elo || 0) > 0 && Number(input.awayLearnedElo?.elo || 0) > 0
+      ? (Number(input.homeLearnedElo.elo) - Number(input.awayLearnedElo.elo)) * Math.min(Number(input.homeLearnedElo.freshness || 0), Number(input.awayLearnedElo.freshness || 0))
+      : 0).toFixed(0)),
+    weighted_form_diff: Number((
+      Number(input.homeWeightedLearning?.formSignal || 0) - Number(input.awayWeightedLearning?.formSignal || 0)
+    ).toFixed(3)),
+    weighted_matches_min: Number(Math.min(
+      Number(input.homeWeightedLearning?.weightedMatches || 0),
+      Number(input.awayWeightedLearning?.weightedMatches || 0)
+    ).toFixed(2)),
     club_elo_scale: clubEloScale,
     club_rating_active: clubSignal ? 1 : 0,
     club_rating_reliability: clubSignal?.reliability || 0,

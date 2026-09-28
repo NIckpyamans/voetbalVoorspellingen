@@ -278,7 +278,13 @@ function latestPredictionPerMatch(predictions: any[]) {
 export default async function handler(req: any, res: any) {
   const started = Date.now();
   setCorsHeaders(req, res);
-  res.setHeader("Cache-Control", "no-store");
+  // Compacte dag-responses zijn stabiel binnen een uur: CDN-cache vangt herhaalde
+  // requests op (minder serverless-invocations en Neon-query's). Full/debug en live
+  // datums blijven no-store.
+  const cacheDate = (req.query?.date as string) || todayAmsterdamKey();
+  const cacheView = String(req.query?.view || req.query?.mode || "compact").toLowerCase();
+  const cacheable = cacheView !== "full" && cacheView !== "debug" && !req.query?.matchId && cacheDate !== todayAmsterdamKey();
+  res.setHeader("Cache-Control", cacheable ? "s-maxage=3600, stale-while-revalidate=86400" : "no-store");
 
   try {
     const date = (req.query?.date as string) || todayAmsterdamKey();
