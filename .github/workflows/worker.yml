@@ -92,6 +92,19 @@ jobs:
         # (en daarmee de H2H-features in de voorspelling) weer vuren.
         run: node scripts/ci-neon-safe.js -- npm run db:club-ids:backfill:apply
 
+      - name: Build R2 dashboard day cache
+        # Bouw de gzip dag-caches in R2 zodat de API-leesroute (meest transfer-
+        # intensieve pad) uit R2 kan dienen i.p.v. Neon — beschermt het gratis
+        # Neon-transferquotum. Werkt alleen met R2-secrets; skip is veilig.
+        run: node scripts/ci-neon-safe.js -- npm run db:dashboard-cache:r2
+        env:
+          CLOUDFLARE_R2_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_R2_ACCOUNT_ID }}
+          CLOUDFLARE_R2_ACCESS_KEY_ID: ${{ secrets.CLOUDFLARE_R2_ACCESS_KEY_ID }}
+          CLOUDFLARE_R2_SECRET_ACCESS_KEY: ${{ secrets.CLOUDFLARE_R2_SECRET_ACCESS_KEY }}
+          CLOUDFLARE_R2_BUCKET: ${{ secrets.CLOUDFLARE_R2_BUCKET }}
+          CLOUDFLARE_R2_ENDPOINT: ${{ secrets.CLOUDFLARE_R2_ENDPOINT }}
+          CLOUDFLARE_R2_PREFIX: ${{ secrets.CLOUDFLARE_R2_PREFIX }}
+
       - name: Assemble cached enrichments and predictions
         # Providerverrijking draait in losse jobs. Deze stap combineert hun
         # caches met het weekvenster en publiceert de voorspellingen.
