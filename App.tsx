@@ -3,6 +3,7 @@ import Header from "./components/Header";
 import BestBetCard from "./components/BestBetCard";
 import CompactMatchRow from "./components/CompactMatchRow";
 import DateNavigation from "./components/DateNavigation"; // NIEUW IMPORT
+import CouponBuilder, { type CouponPick } from "./components/CouponBuilder";
 import { getFavorites } from "./components/FavoriteTeams";
 import { Match } from "./types";
 import { velocityEngine } from "./services/velocityEngine";
@@ -240,7 +241,46 @@ const App: React.FC = () => {
   const [expandedMatchId, setExpandedMatchId] = useState<string | null>(null);
   const [visibleMatchLimit, setVisibleMatchLimit] = useState(MATCH_RENDER_BATCH);
   const [favRefresh, setFavRefresh] = useState(0);
+  const [couponPicks, setCouponPicks] = useState<CouponPick[]>(() => {
+    try {
+      return JSON.parse(localStorage.getItem("footyai_coupon") || "[]");
+    } catch {
+      return [];
+    }
+  });
   const learnedRef = useRef<Set<string>>(new Set());
+
+  useEffect(() => {
+    try {
+      localStorage.setItem("footyai_coupon", JSON.stringify(couponPicks));
+    } catch {
+      /* opslag vol of geblokkeerd: coupon blijft in-memory */
+    }
+  }, [couponPicks]);
+
+  const addToCoupon = useCallback((match: Match, prediction: any) => {
+    if (!match?.id || !prediction) return;
+    const homeProb = Number(prediction.homeProb || 0);
+    const drawProb = Number(prediction.drawProb || 0);
+    const awayProb = Number(prediction.awayProb || 0);
+    const strongest = homeProb >= drawProb && homeProb >= awayProb ? "1" : awayProb >= drawProb ? "2" : "X";
+    const probability = Math.max(homeProb, drawProb, awayProb);
+    setCouponPicks((current) => {
+      const withoutMatch = current.filter((pick) => pick.matchId !== match.id);
+      return [
+        ...withoutMatch,
+        {
+          matchId: String(match.id),
+          league: String(match.league || ""),
+          homeTeamName: String(match.homeTeamName || ""),
+          awayTeamName: String(match.awayTeamName || ""),
+          pick: strongest as CouponPick["pick"],
+          probability,
+          kickoff: match.kickoff || null,
+        },
+      ].slice(-12);
+    });
+  }, []);
 
   const refreshStandings = useCallback(() => {
     return fetch(`/api/standings?t=${Date.now()}`, { cache: "no-store" })
@@ -941,6 +981,14 @@ const App: React.FC = () => {
                   </div>
                 </div>
 
+                <div className="mt-2">
+                  <CouponBuilder
+                    picks={couponPicks}
+                    onRemove={(matchId) => setCouponPicks((current) => current.filter((pick) => pick.matchId !== matchId))}
+                    onClear={() => setCouponPicks([])}
+                  />
+                </div>
+
                 {bestBets.length > 0 ? (
                   <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-2">
                     {bestBets.map((bet: any) => (
@@ -960,7 +1008,7 @@ const App: React.FC = () => {
                   <span className="text-slate-600">|</span>
                   <span>Rest exact <strong className="text-white">{dashboardInsights.otherExactPct}%</strong></span>
                   <span className={`ml-auto rounded-full px-2 py-0.5 text-[9px] font-black ${dashboardInsights.topSelectionIsBetter ? "bg-green-500/10 text-green-300" : "bg-amber-500/10 text-amber-300"}`}>
-                    {dashboardInsights.topSelectionIsBetter ? "AI kiest beter" : "bijsturen nodig"} · foutmarge {dashboardInsights.topFiveAvgError}
+                    {dashboardInsights.topSelectionIsBetter || !Number(dashboardInsights.topFiveAvgError) ? "AI kiest beter" : "bijsturen nodig"} · foutmarge {Number(dashboardInsights.topFiveAvgError) > 0 ? dashboardInsights.topFiveAvgError : "—"}
                   </span>
                 </div>
                 {dashboardInsights.leaguePerformance.best && (
@@ -1026,6 +1074,7 @@ const App: React.FC = () => {
                             match={enriched}
                             prediction={predictions[match.id]}
                             onFavoriteChange={() => setFavRefresh((value) => value + 1)}
+                            onAddToCoupon={predictions[match.id] ? () => addToCoupon(enriched, predictions[match.id]) : undefined}
                           />
                         </Suspense>
                       )}
