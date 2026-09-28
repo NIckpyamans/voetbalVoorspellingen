@@ -19,7 +19,14 @@ server_data.json
 data/days/
 data/recovery/
 training/
+# Runtime-rapporten blijven uit git, behalve de compacte kalibratie-bewijzen
+# die de nightly workflow bewust commit voor reproduceerbaarheid.
 monitor/*.json
+!monitor/model-recalibration-report.json
+!monitor/calibration-sample-health.json
+!monitor/shadow-prediction-evaluation.json
+!monitor/probability-calibration-report.json
+!monitor/ml-ensemble-report.json
 
 # Editor directories and files
 .vscode/*
