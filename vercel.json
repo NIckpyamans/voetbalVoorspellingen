@@ -30,10 +30,9 @@
         { "key": "X-Content-Type-Options", "value": "nosniff" }
       ]
     },
-    {
-      "source": "/((?!assets/|.*\\.(?:js|mjs|css|map|json|webmanifest|png|jpg|jpeg|svg|ico|txt|xml|woff2?|ttf)$).*)",
-      "headers": [
-        { "key": "Cache-Control", "value": "no-store, max-age=0, must-revalidate" },
+    {"source": "/((?!api/|assets/|.*\\.(?:js|mjs|css|map|json|webmanifest|png|jpg|jpeg|svg|ico|txt|xml|woff2?|ttf)$).*)",
+"headers": [
+{ "key": "Cache-Control", "value": "no-store, max-age=0, must-revalidate" },
         { "key": "Pragma", "value": "no-cache" },
         { "key": "Expires", "value": "0" },
         { "key": "X-Content-Type-Options", "value": "nosniff" },
