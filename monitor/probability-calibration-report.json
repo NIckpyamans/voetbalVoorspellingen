@@ -1,0 +1,306 @@
+{
+  "ok": true,
+  "generatedAt": "2026-09-28T10:58:35.893Z",
+  "applyLive": false,
+  "version": "prob-calibration-v1",
+  "databaseAvailable": false,
+  "sourceRows": 856,
+  "regularRows": 271,
+  "calibrationRows": 271,
+  "leaguesEvaluated": 11,
+  "acceptedLeagues": [],
+  "promotion": {
+    "applied": false,
+    "reason": "shadow_only"
+  },
+  "minRowsPerLeague": 40,
+  "results": [
+    {
+      "league": "Belgium - Pro League",
+      "rows": 2,
+      "eligible": false,
+      "reason": "insufficient_rows",
+      "minRows": 20
+    },
+    {
+      "league": "England - Championship",
+      "rows": 30,
+      "eligible": true,
+      "accepted": false,
+      "profile": {
+        "kind": "platt",
+        "slope": 0.2,
+        "intercept": 0.4353,
+        "rows": 21,
+        "version": "prob-calibration-v1",
+        "trainRows": 21,
+        "validationRows": 9
+      },
+      "baseline": {
+        "brier": 0.31741,
+        "logLoss": 1.05614,
+        "rows": 30
+      },
+      "calibrated": {
+        "brier": null,
+        "logLoss": 13.81551,
+        "rows": 30
+      },
+      "validationBaseline": {
+        "brier": 0.28641,
+        "logLoss": 0.96615,
+        "rows": 9
+      },
+      "validationCalibrated": {
+        "brier": null,
+        "logLoss": 13.81551,
+        "rows": 9
+      },
+      "brierImprovement": null,
+      "logLossImprovement": -12.84936
+    },
+    {
+      "league": "England - Premier League",
+      "rows": 34,
+      "eligible": true,
+      "accepted": false,
+      "profile": {
+        "kind": "platt",
+        "slope": 0.2,
+        "intercept": 0.5721,
+        "rows": 23,
+        "version": "prob-calibration-v1",
+        "trainRows": 23,
+        "validationRows": 11
+      },
+      "baseline": {
+        "brier": 0.32244,
+        "logLoss": 1.0679,
+        "rows": 34
+      },
+      "calibrated": {
+        "brier": null,
+        "logLoss": 13.81551,
+        "rows": 34
+      },
+      "validationBaseline": {
+        "brier": 0.31804,
+        "logLoss": 1.05354,
+        "rows": 11
+      },
+      "validationCalibrated": {
+        "brier": null,
+        "logLoss": 13.81551,
+        "rows": 11
+      },
+      "brierImprovement": null,
+      "logLossImprovement": -12.76197
+    },
+    {
+      "league": "France - Ligue 1",
+      "rows": 38,
+      "eligible": true,
+      "accepted": false,
+      "profile": {
+        "kind": "platt",
+        "slope": 0.2,
+        "intercept": 0.5568,
+        "rows": 26,
+        "version": "prob-calibration-v1",
+        "trainRows": 26,
+        "validationRows": 12
+      },
+      "baseline": {
+        "brier": 0.36204,
+        "logLoss": 1.18409,
+        "rows": 38
+      },
+      "calibrated": {
+        "brier": null,
+        "logLoss": 13.81551,
+        "rows": 38
+      },
+      "validationBaseline": {
+        "brier": 0.33653,
+        "logLoss": 1.11664,
+        "rows": 12
+      },
+      "validationCalibrated": {
+        "brier": null,
+        "logLoss": 13.81551,
+        "rows": 12
+      },
+      "brierImprovement": null,
+      "logLossImprovement": -12.69887
+    },
+    {
+      "league": "France - Ligue 2",
+      "rows": 32,
+      "eligible": true,
+      "accepted": false,
+      "profile": {
+        "kind": "platt",
+        "slope": 0.2,
+        "intercept": 0.4767,
+        "rows": 22,
+        "version": "prob-calibration-v1",
+        "trainRows": 22,
+        "validationRows": 10
+      },
+      "baseline": {
+        "brier": 0.36217,
+        "logLoss": 1.17678,
+        "rows": 32
+      },
+      "calibrated": {
+        "brier": null,
+        "logLoss": 13.81551,
+        "rows": 32
+      },
+      "validationBaseline": {
+        "brier": 0.31473,
+        "logLoss": 1.02632,
+        "rows": 10
+      },
+      "validationCalibrated": {
+        "brier": null,
+        "logLoss": 13.81551,
+        "rows": 10
+      },
+      "brierImprovement": null,
+      "logLossImprovement": -12.78919
+    },
+    {
+      "league": "Germany - 2. Bundesliga",
+      "rows": 23,
+      "eligible": true,
+      "accepted": false,
+      "profile": {
+        "kind": "platt",
+        "slope": 0.2,
+        "intercept": 0.4244,
+        "rows": 20,
+        "version": "prob-calibration-v1",
+        "trainRows": 20,
+        "validationRows": 3
+      },
+      "baseline": {
+        "brier": 0.32986,
+        "logLoss": 1.09133,
+        "rows": 23
+      },
+      "calibrated": {
+        "brier": null,
+        "logLoss": 13.81551,
+        "rows": 23
+      },
+      "validationBaseline": {
+        "brier": 0.33615,
+        "logLoss": 1.10874,
+        "rows": 3
+      },
+      "validationCalibrated": {
+        "brier": null,
+        "logLoss": 13.81551,
+        "rows": 3
+      },
+      "brierImprovement": null,
+      "logLossImprovement": -12.70677
+    },
+    {
+      "league": "Germany - Bundesliga",
+      "rows": 55,
+      "eligible": true,
+      "accepted": false,
+      "profile": {
+        "kind": "platt",
+        "slope": 0.3285,
+        "intercept": 0.5246,
+        "rows": 38,
+        "version": "prob-calibration-v1",
+        "trainRows": 38,
+        "validationRows": 17
+      },
+      "baseline": {
+        "brier": 0.32254,
+        "logLoss": 1.07503,
+        "rows": 55
+      },
+      "calibrated": {
+        "brier": null,
+        "logLoss": 13.81551,
+        "rows": 55
+      },
+      "validationBaseline": {
+        "brier": 0.31092,
+        "logLoss": 1.04551,
+        "rows": 17
+      },
+      "validationCalibrated": {
+        "brier": null,
+        "logLoss": 13.81551,
+        "rows": 17
+      },
+      "brierImprovement": null,
+      "logLossImprovement": -12.77
+    },
+    {
+      "league": "Netherlands - Eerste Divisie",
+      "rows": 40,
+      "eligible": true,
+      "accepted": false,
+      "profile": {
+        "kind": "platt",
+        "slope": 0.2,
+        "intercept": 0.5287,
+        "rows": 28,
+        "version": "prob-calibration-v1",
+        "trainRows": 28,
+        "validationRows": 12
+      },
+      "baseline": {
+        "brier": 0.28701,
+        "logLoss": 0.96856,
+        "rows": 40
+      },
+      "calibrated": {
+        "brier": null,
+        "logLoss": 13.81551,
+        "rows": 40
+      },
+      "validationBaseline": {
+        "brier": 0.30254,
+        "logLoss": 1.02371,
+        "rows": 12
+      },
+      "validationCalibrated": {
+        "brier": null,
+        "logLoss": 13.81551,
+        "rows": 12
+      },
+      "brierImprovement": null,
+      "logLossImprovement": -12.7918
+    },
+    {
+      "league": "Netherlands - Eredivisie",
+      "rows": 12,
+      "eligible": false,
+      "reason": "insufficient_rows",
+      "minRows": 20
+    },
+    {
+      "league": "Portugal - Liga Portugal",
+      "rows": 1,
+      "eligible": false,
+      "reason": "insufficient_rows",
+      "minRows": 20
+    },
+    {
+      "league": "Spain - LaLiga",
+      "rows": 4,
+      "eligible": false,
+      "reason": "insufficient_rows",
+      "minRows": 20
+    }
+  ]
+}

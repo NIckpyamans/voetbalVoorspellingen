@@ -33,12 +33,12 @@
     },
     "stage": "experimental_ready"
   },
-  "calibrationSource": "neon",
+  "calibrationSource": "merged_immutable_training_and_r2",
   "database": {
     "configured": true,
-    "available": true,
-    "error": null,
-    "rows": 19
+    "available": false,
+    "error": "Server error (HTTP status 402): {\"message\":\"Your account or project has exceeded the quota. Upgrade your plan to increase limits.\",\"code\":\"\",\"detail\":null,\"hint\":null,\"position\":null,\"internalPosition\":null,\"internalQuery\":null,\"severity\":\"\",\"where\":null,\"table\":null,\"column\":null,\"schema\":null,\"dataType\":null,\"constraint\":null,\"file\":null,\"line\":null,\"routine\":null,\"neon:retryable\":true}",
+    "rows": 0
   },
   "immutableSources": {
     "selected": "merged_immutable_training_and_r2",
@@ -49,14 +49,90 @@
     "r2Available": true,
     "r2Error": null
   },
-  "calibrationRows": 17,
+  "calibrationRows": 151,
   "uniqueCompletedSnapshotMatches": 324,
   "uniqueCompletedRegularSnapshotMatches": 130,
-  "generatedAt": "2026-09-22T11:46:31.501Z",
-  "groups": 4,
-  "candidates": 0,
+  "generatedAt": "2026-09-28T10:58:34.923Z",
+  "groups": 20,
+  "candidates": 1,
   "accepted": 0,
   "liveProfileKeys": [],
-  "topCandidates": [],
+  "topCandidates": [
+    {
+      "calibrationProfileId": "league_bias_germany_bundesliga_v24_monte_carlo_average",
+      "accepted": false,
+      "status": "candidate_no_improvement",
+      "adjustmentType": "league_bias_v1",
+      "modelVersion": "v24-monte-carlo-average",
+      "league": "Germany - Bundesliga",
+      "competitionId": null,
+      "trainRows": 12,
+      "validationRows": 8,
+      "sampleSize": 20,
+      "minimumRows": 20,
+      "minimumValidationRows": 8,
+      "leakageSafe": true,
+      "method": "expanding_window_walk_forward_league_probability_bias_v2",
+      "promotionGate": {
+        "uniqueCompletedMatches": 20,
+        "calibrationMin": 50,
+        "promotionMin": 150,
+        "calibrationGap": 30,
+        "promotionGap": 130,
+        "canCalibrate": false,
+        "canPromote": false,
+        "sampleCanPromote": false,
+        "qualityEvidenceProvided": true,
+        "quality": {
+          "validationRows": 8,
+          "validationMin": 30,
+          "leakageCoverage": 1,
+          "minLeakageCoverage": 0.95,
+          "brierImprovement": -0.000012,
+          "minBrierImprovement": 0.001,
+          "logLossImprovement": -0.000024,
+          "minLogLossImprovement": 0.001,
+          "reasons": [
+            "insufficient_walk_forward_validation_rows",
+            "insufficient_brier_improvement",
+            "insufficient_log_loss_improvement"
+          ]
+        },
+        "stage": "collecting"
+      },
+      "scale": 0.25,
+      "folds": 1,
+      "walkForwardValidationRows": 8,
+      "homeBias": -0.0001,
+      "drawBias": 0.0003,
+      "confidenceBias": -0.0008,
+      "baselineBrier": 0.175679,
+      "calibratedBrier": 0.175691,
+      "improvement": -0.000012,
+      "baselineLogLoss": 0.893272,
+      "calibratedLogLoss": 0.893296,
+      "logLossImprovement": -0.000024,
+      "baselineOutcomeHitRate": 0.5,
+      "calibratedOutcomeHitRate": 0.5,
+      "actualRates": {
+        "home": 0.4,
+        "draw": 0.26666666666666666,
+        "away": 0.3333333333333333
+      },
+      "avgPredicted": {
+        "home": 0.4102822732184895,
+        "draw": 0.2539441670021083,
+        "away": 0.33577355977940226
+      },
+      "foldMetrics": [
+        {
+          "trainRows": 12,
+          "validationRows": 8,
+          "brierImprovement": -0.000012,
+          "logLossImprovement": -0.000024
+        }
+      ]
+    }
+  ],
   "nextAction": "Geen profiel promoveren: geen unieke-wedstrijdenkandidaat haalt de minimale Brier-verbetering. Verzamel meer complete wedstrijden en herhaal de shadowrun."
 }
