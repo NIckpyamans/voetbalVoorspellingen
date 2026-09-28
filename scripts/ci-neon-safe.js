@@ -47,6 +47,9 @@ child.on("close", (code, signal) => {
     /HTTP status 402/i.test(output) ||
     /exceeded the data transfer quota/i.test(output) ||
     /Your project has exceeded the data transfer quota/i.test(output) ||
+    // psql-formaat (db:schema:apply draait via psql i.p.v. de Neon HTTP-driver):
+    /Your account or project has exceeded the quota/i.test(output) ||
+    /exceeded the quota/i.test(output) ||
     /project size limit \(512 MB\) has been exceeded/i.test(output) ||
     /NeonDbError:[^\n]*could not extend file/i.test(output) ||
     /code:\s*['\"]53100['\"]/i.test(output);
