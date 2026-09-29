@@ -5,6 +5,7 @@ import path from "path";
 import { getSql, loadLocalEnv, readDatabaseFeatureContext } from "../shared/database.js";
 import { isHiddenInternationalOrWorldCupEntity } from "../shared/competitionVisibility.js";
 import { buildModelPromotionGate } from "./worker/model-promotion.js";
+import { isCountableOddsRow } from "./worker/odds-role-integrity.js";
 
 const ROOT = process.cwd();
 const SNAPSHOT_FILE = path.join(ROOT, "training", "training-snapshot.json");
@@ -348,6 +349,23 @@ async function enrichRowsWithDatabaseContext(rows) {
   return output;
 }
 
+// De leerlijn telt alleen odds-records met een expliciete opening-, prematch-
+// of closing-rol én een geldige capture-timestamp; overige rijen (in_play,
+// unknown, closing_proxy of ontbrekende timestamps) wegen niet mee.
+function dbOddsAtPrediction(row) {
+  const hasOdds = Number(row.odds_home) > 1 || Number(row.odds_draw) > 1 || Number(row.odds_away) > 1;
+  if (!hasOdds) return null;
+  if (!isCountableOddsRow({ oddsRole: row.odds_role, capturedAt: row.odds_captured_at })) return null;
+  return {
+    home: Number(row.odds_home) || null,
+    draw: Number(row.odds_draw) || null,
+    away: Number(row.odds_away) || null,
+    capturedAt: row.odds_captured_at || null,
+    role: row.odds_role || null,
+    availableBeforeKickoff: row.available_before_kickoff === true,
+  };
+}
+
 function normalizeDbPayloadRow(row) {
   const payload = row?.prediction_payload && typeof row.prediction_payload === "object" ? row.prediction_payload : {};
   const generatedAt = row.generated_at || payload.generatedAt || payload.cutoffAt || null;
@@ -372,17 +390,7 @@ function normalizeDbPayloadRow(row) {
     expectedScore: row.expected_score || payload.expectedScore || null,
     predHomeGoals: row.expected_score?.home ?? payload.predHomeGoals ?? payload.expectedScore?.home,
     predAwayGoals: row.expected_score?.away ?? payload.predAwayGoals ?? payload.expectedScore?.away,
-    oddsAtPrediction:
-      Number(row.odds_home) > 1 || Number(row.odds_draw) > 1 || Number(row.odds_away) > 1
-        ? {
-            home: Number(row.odds_home) || null,
-            draw: Number(row.odds_draw) || null,
-            away: Number(row.odds_away) || null,
-            capturedAt: row.odds_captured_at || null,
-            role: row.odds_role || null,
-            availableBeforeKickoff: row.available_before_kickoff === true,
-          }
-        : payload.oddsAtPrediction || payload.odds || null,
+    oddsAtPrediction: dbOddsAtPrediction(row) || payload.oddsAtPrediction || payload.odds || null,
     review: {
       ...payload,
       probabilities: row.probabilities || payload.probabilities || null,
@@ -393,17 +401,7 @@ function normalizeDbPayloadRow(row) {
       confidence: row.confidence ?? payload.confidence,
       exactScoreConfidence: row.exact_score_confidence ?? payload.exactScoreConfidence,
       oddsStatus: row.odds_status || payload.oddsStatus,
-      oddsAtPrediction:
-        Number(row.odds_home) > 1 || Number(row.odds_draw) > 1 || Number(row.odds_away) > 1
-          ? {
-              home: Number(row.odds_home) || null,
-              draw: Number(row.odds_draw) || null,
-              away: Number(row.odds_away) || null,
-              capturedAt: row.odds_captured_at || null,
-              role: row.odds_role || null,
-              availableBeforeKickoff: row.available_before_kickoff === true,
-            }
-          : payload.oddsAtPrediction || payload.odds || null,
+      oddsAtPrediction: dbOddsAtPrediction(row) || payload.oddsAtPrediction || payload.odds || null,
     },
     evaluationSource: row.evaluation_source || "scheduled-database-evaluator",
   };
@@ -443,6 +441,8 @@ async function readDatabaseSnapshotTrainingRows() {
         select home, draw, away, captured_at, odds_role, available_before_kickoff
         from odds_snapshots
         where prediction_id = ps.prediction_id
+          and odds_role in ('opening', 'prematch', 'closing')
+          and captured_at is not null
         order by captured_at desc nulls last
         limit 1
       ) os on true

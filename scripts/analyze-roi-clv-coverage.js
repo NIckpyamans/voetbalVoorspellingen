@@ -12,9 +12,11 @@ const output = path.join(process.cwd(), "monitor", "roi-clv-coverage.json");
 const [report] = await sql.query(`
   with timestamped_odds as (
     select match_id,captured_at,closing_captured_at,available_before_kickoff from historical_odds_snapshots
+    where odds_role in ('opening','prematch','closing') and captured_at is not null
     union all
     select ps.match_id,os.captured_at,os.closing_captured_at,os.available_before_kickoff
     from odds_snapshots os join prediction_snapshots ps on ps.prediction_id=os.prediction_id
+    where os.odds_role in ('opening','prematch','closing') and os.captured_at is not null
   )
   select count(distinct match_id)::int evaluation_matches,
     count(distinct match_id) filter(where roi is not null)::int roi_evaluation_matches,

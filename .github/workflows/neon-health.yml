@@ -1,0 +1,59 @@
+name: Neon health watchdog
+
+on:
+  schedule:
+    # Halfuurlijkse lichte probe houdt Neon aantoonbaar "altijd reageerbaar"
+    # en detecteert quota-reset/storingen binnen 30 minuten.
+    - cron: "*/30 * * * *"
+  workflow_dispatch:
+
+permissions:
+  actions: write
+  contents: write
+
+concurrency:
+  group: neon-health-watchdog
+  cancel-in-progress: false
+
+jobs:
+  watchdog:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    env:
+      DATA_BRANCH: codex/step3b-layout
+      GH_TOKEN: ${{ github.token }}
+    steps:
+      - uses: actions/checkout@v5
+        with:
+          ref: ${{ env.DATA_BRANCH }}
+          token: ${{ secrets.GITHUB_TOKEN }}
+      - uses: actions/setup-node@v5
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+      - name: Probe Neon and record health state
+        id: health
+        run: node scripts/neon-health-watchdog.js --emit-github-output
+        env:
+          DATABASE_URL: ${{ secrets.DATABASE_URL }}
+          POSTGRES_URL: ${{ secrets.POSTGRES_URL }}
+      - name: Commit health evidence
+        run: |
+          git config user.name github-actions
+          git config user.email github-actions@github.com
+          if [ -f monitor/neon-health.json ]; then git add monitor/neon-health.json; fi
+          git diff --staged --quiet && exit 0
+          git commit -m "update neon health evidence [skip vercel]"
+          for attempt in 1 2 3; do
+            git pull --rebase --autostash origin "$DATA_BRANCH"
+            if git push origin HEAD:"$DATA_BRANCH"; then exit 0; fi
+            sleep $((attempt * 5))
+          done
+          exit 1
+      - name: Dispatch recovery maintenance after quota reset
+        if: steps.health.outputs.quotaRecovered == 'true'
+        run: |
+          echo "Neon quota hersteld; onderhoudswerkflows worden hervat."
+          gh workflow run data-integrity-maintenance.yml --ref "$DATA_BRANCH"
+          gh workflow run nightly-model-maintenance.yml --ref "$DATA_BRANCH" -f apply_live=false

@@ -6,6 +6,7 @@ import { fetchEspnSquad } from "./providers/espn-squad-provider.js";
 import { fetchWikipediaSquad } from "./providers/wikipedia-squad-provider.js";
 import { fetchTransfermarktDatasetSquad } from "./providers/transfermarkt-squad-provider.js";
 import { fetchFotMobSquad } from "./providers/fotmob-squad-provider.js";
+import { squadQueryVariants, providerTeamMatches } from "./worker/squad-team-matching.js";
 
 const ROOT = process.cwd();
 const DAYS_AHEAD = Math.max(1, Number(process.env.SQUAD_ENRICHMENT_DAYS_AHEAD || 8));
@@ -23,17 +24,8 @@ const TEAMS_FILE = path.join(ROOT, "data", "teams.json");
 const COMPETITION_CATALOG_FILE = path.join(ROOT, "config", "competition-catalog.json");
 const REPORT_FILE = path.join(ROOT, "monitor", "upcoming-team-squad-enrichment.json");
 const ESPN_TEAMS_FILE = path.join(ROOT, "config", "friendly-team-sources.json");
+const UNRESOLVED_ALIAS_FILE = path.join(ROOT, "monitor", "unresolved-team-alias-candidates.json");
 const SPORTS_DB_BASE = "https://www.thesportsdb.com/api/v1/json/123";
-const SQUAD_TEAM_ALIASES = {
-  "az": ["AZ Alkmaar"],
-  "fc bayern munchen": ["Bayern München", "Bayern Munich"],
-  "fc iberia 1999 tiflis": ["Iberia 1999", "FC Iberia 1999", "Saburtalo"],
-  "fc nordsjaelland": ["FC Nordsjælland", "Nordsjælland"],
-  "ks dynamo tirana": ["Dinamo City", "Dinamo Tirana"],
-  "lillestrom": ["Lillestrøm", "Lillestrom SK"],
-  "paok salonika": ["PAOK", "PAOK Thessaloniki"],
-  "sv 07 elversberg": ["SV Elversberg", "Elversberg"],
-};
 
 class ProviderRateLimitError extends Error {
   constructor(retryAfterSeconds = 0, provider = "squad provider") {
@@ -59,7 +51,7 @@ function teamKey(name) {
 }
 
 function squadQueries(name) {
-  return [...new Set([String(name || "").trim(), ...(SQUAD_TEAM_ALIASES[normalize(name)] || [])].filter(Boolean))];
+  return squadQueryVariants(name);
 }
 
 function normalizePlayerPosition(value) {
@@ -169,7 +161,7 @@ async function fetchSportsDbSquad(teamName) {
   let team = null;
   for (const query of variants(teamName)) {
     const payload = await fetchJson(`${SPORTS_DB_BASE}/searchteams.php?t=${encodeURIComponent(query)}`);
-    team = (payload?.teams || []).find((item) => normalize(item?.strTeam) === normalize(teamName));
+    team = (payload?.teams || []).find((item) => providerTeamMatches(item?.strTeam, teamName) || providerTeamMatches(item?.strTeam, query));
     if (team?.idTeam) break;
   }
   if (!team?.idTeam) return null;
@@ -442,4 +434,15 @@ fs.mkdirSync(path.dirname(CACHE_FILE), { recursive: true });
 fs.writeFileSync(CACHE_FILE, `${JSON.stringify({ schemaVersion: "team-squad-cache-v1", generatedAt: report.generatedAt, teams: cache })}\n`);
 fs.mkdirSync(path.dirname(REPORT_FILE), { recursive: true });
 fs.writeFileSync(REPORT_FILE, `${JSON.stringify(report, null, 2)}\n`);
+// Preventie: teams die geen enkele provider herkent komen in een
+// alias-kandidatenbestand zodat provideraliassen kunnen worden aangevuld
+// zonder dat selectie-data stilletjes verloren gaat.
+if (report.failures.length) {
+  fs.mkdirSync(path.dirname(UNRESOLVED_ALIAS_FILE), { recursive: true });
+  fs.writeFileSync(UNRESOLVED_ALIAS_FILE, `${JSON.stringify({
+    generatedAt: report.generatedAt,
+    failures: report.failures,
+    action: "Voeg provideraliassen toe in scripts/worker/squad-team-matching.js (SQUAD_TEAM_ALIASES) en draai de enrichment opnieuw.",
+  }, null, 2)}\n`);
+}
 console.log(JSON.stringify(report, null, 2));

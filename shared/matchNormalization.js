@@ -29,6 +29,13 @@ const TEAM_DEDUPE_ALIASES = {
   "paris saint-germain": "paris saint germain",
   "fc barcelona": "barcelona",
   barcelona: "barcelona",
+  // Albanese/Azerbeidzjaanse clubnamen met sterke schrijfvariatie.
+  drita: "drita",
+  "drita gjilan": "drita",
+  qarabag: "qarabag",
+  "qarabag agdam": "qarabag",
+  "karabakh agdam": "qarabag",
+  karabakh: "qarabag",
 };
 
 const VERIFIED_RESULT_BACKFILL = [
@@ -105,7 +112,7 @@ export function normalizeDedupeText(value) {
     .toLowerCase()
     .replace(/&/g, " and ")
     .replace(/[^a-z0-9]+/g, " ")
-    .replace(/\b(afc|fc|cf|sc|cd|ac|as|rc|sv|vfl|vfb|bk|fk|ik|if|club de|club)\b/g, " ")
+    .replace(/\b(afc|fc|cf|sc|cd|ac|as|rc|sv|vfl|vfb|bk|fk|kf|ik|if|club de|club)\b/g, " ")
     .replace(/\s+/g, " ")
     .trim();
 }
