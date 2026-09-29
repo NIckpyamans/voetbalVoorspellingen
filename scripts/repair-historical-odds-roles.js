@@ -75,6 +75,7 @@ async function main() {
     report.scanned = rows.length;
     report.countableRoleShareBefore = countableShare(rows);
 
+    const planned = [];
     for (const row of rows) {
       const updates = planOddsRoleRepair(row);
       if (!updates) continue;
@@ -85,16 +86,36 @@ async function main() {
       if (report.samples.length < 20) {
         report.samples.push({ rowId: row.row_id, table: row.table_name, provider: row.provider, matchId: row.match_id, updates });
       }
-      if (!APPLY) continue;
-      try {
-        const assignments = Object.keys(updates).map((field, index) => `${field} = $${index + 2}`);
-        await sql.query(
-          `update ${row.table_name} set ${assignments.join(", ")} where ${row.table_name === "historical_odds_snapshots" ? "historical_odds_snapshot_id" : "odds_snapshot_id"} = $1`,
-          [row.row_id, ...Object.values(updates)]
-        );
-        report.repaired += 1;
-      } catch (error) {
-        report.errors.push({ rowId: row.row_id, table: row.table_name, error: error?.message || String(error) });
+      planned.push({ table: row.table_name, rowId: row.row_id, updates });
+    }
+
+    if (APPLY) {
+      // Batch-writes: per tabel in chunks via jsonb_to_recordset, zodat de
+      // maandelijkse Neon-datatransfer niet per rij een aparte round-trip kost.
+      const batchSize = 500;
+      for (const tableName of ["historical_odds_snapshots", "odds_snapshots"]) {
+        const idColumn = tableName === "historical_odds_snapshots" ? "historical_odds_snapshot_id" : "odds_snapshot_id";
+        const tableRows = planned.filter((item) => item.table === tableName);
+        for (let offset = 0; offset < tableRows.length; offset += batchSize) {
+          const batch = tableRows.slice(offset, offset + batchSize);
+          const payload = JSON.stringify(batch.map((item) => ({ id: item.rowId, updates: item.updates })));
+          try {
+            const result = await sql.query(
+              `update ${tableName} t
+               set odds_role = coalesce(v.updates->>'odds_role', t.odds_role),
+                   closing_captured_at = case when v.updates ? 'closing_captured_at' then (v.updates->>'closing_captured_at')::timestamptz else t.closing_captured_at end,
+                   available_before_kickoff = coalesce((v.updates->>'available_before_kickoff')::boolean, t.available_before_kickoff),
+                   minutes_before_kickoff = case when v.updates ? 'minutes_before_kickoff' then (v.updates->>'minutes_before_kickoff')::int else t.minutes_before_kickoff end
+               from jsonb_to_recordset($1::jsonb) as v(id text, updates jsonb)
+               where t.${idColumn} = v.id
+               returning t.${idColumn}`,
+              [payload]
+            );
+            report.repaired += result.length;
+          } catch (error) {
+            report.errors.push({ table: tableName, batch: batch.length, error: error?.message || String(error) });
+          }
+        }
       }
     }
 

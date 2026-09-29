@@ -1,6 +1,7 @@
 import { clubRatingMatchSignal } from "./club-rating.js";
 import { summarizeGoalTiming } from "./goal-timing.js";
 import { stabilizeOverallForm } from "./form-sample-policy.js";
+import { overroundOf } from "./market-strength.js";
 
 export const PREDICTION_MODULE = {
   name: "prediction",
@@ -305,6 +306,16 @@ export function buildFeatureVector(input, deps) {
       Number(input.homeWeightedLearning?.weightedMatches || 0),
       Number(input.awayWeightedLearning?.weightedMatches || 0)
     ).toFixed(2)),
+    // Marktsterkte: overround (bookmakersmarge) van de beschikbare odds en van
+    // de sluitingslijn per competitie/wedstrijd, als correctiesignaal voor de
+    // oddsweging zodra timestamped paren beschikbaar zijn.
+    market_overround: Number(overroundOf(dbAvgHomeOdds, dbHistoricalOdds.avgDraw, dbAvgAwayOdds).toFixed(3)),
+    closing_overround: Number(overroundOf(
+      dbHistoricalOdds.avgClosingHome,
+      dbHistoricalOdds.avgClosingDraw,
+      dbHistoricalOdds.avgClosingAway,
+    ).toFixed(3)),
+    odds_context_samples: Math.min(dbOddsSamples, 20),
     club_elo_scale: clubEloScale,
     club_rating_active: clubSignal ? 1 : 0,
     club_rating_reliability: clubSignal?.reliability || 0,

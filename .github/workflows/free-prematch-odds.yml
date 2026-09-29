@@ -35,6 +35,12 @@ jobs:
         env:
           DATABASE_URL: ${{ secrets.DATABASE_URL }}
           POSTGRES_URL: ${{ secrets.POSTGRES_URL }}
+      - name: Refresh Sportmonks fixture mapping before capture
+        run: npm run map:sportmonks:upcoming
+        continue-on-error: true
+        env:
+          SPORTMONKS_API_KEY: ${{ secrets.SPORTMONKS_API_KEY }}
+          SPORTMONKS_ODDS_API_URL_TEMPLATE: ${{ secrets.SPORTMONKS_ODDS_API_URL_TEMPLATE }}
       - name: Capture critical odds to R2
         run: npm run db:odds:critical:r2
         env:

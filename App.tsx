@@ -31,6 +31,24 @@ type FilterMode = "alle" | "favorieten" | "live" | "gepland" | "gespeeld" | "bro
 
 const MATCH_RENDER_BATCH = 80;
 
+// Vaste accentklassen per competitie (Tailwind kan dynamische klassen niet
+// genereren); de toewijzing is stabiel op positie in allLeagues.
+const LEAGUE_ACCENTS = [
+  { bar: "bg-cyan-400", text: "text-cyan-300" },
+  { bar: "bg-emerald-400", text: "text-emerald-300" },
+  { bar: "bg-amber-400", text: "text-amber-300" },
+  { bar: "bg-violet-400", text: "text-violet-300" },
+  { bar: "bg-rose-400", text: "text-rose-300" },
+  { bar: "bg-sky-400", text: "text-sky-300" },
+  { bar: "bg-lime-400", text: "text-lime-300" },
+  { bar: "bg-fuchsia-400", text: "text-fuchsia-300" },
+];
+
+function leagueAccent(league: string, allLeagues: string[]) {
+  const index = Math.max(0, allLeagues.indexOf(league));
+  return LEAGUE_ACCENTS[index % LEAGUE_ACCENTS.length];
+}
+
 const PredictionHistory = lazy(() => import("./components/PredictionHistory"));
 const MatchCard = lazy(() => import("./components/MatchCard"));
 const StandingsView = lazy(() => import("./components/StandingsView"));
@@ -495,6 +513,36 @@ const App: React.FC = () => {
     });
   }, [dayMatches]);
 
+  // Basislayout: alle wedstrijden staan gegroepeerd per competitie, met een
+  // eigen accentkleur per competitie zodat de groepen direct te onderscheiden
+  // zijn. Alle bestaande wedstrijdinfo blijft behouden in de rijen zelf.
+  const leagueGroups = useMemo(() => {
+    const groups: { league: string; matches: Match[] }[] = [];
+    const byLeague = new Map<string, Match[]>();
+    for (const match of sortedMatches) {
+      const league = (match.league || "Overig") as string;
+      let bucket = byLeague.get(league);
+      if (!bucket) {
+        bucket = [];
+        byLeague.set(league, bucket);
+        groups.push({ league, matches: bucket });
+      }
+      bucket.push(match);
+    }
+    return groups;
+  }, [sortedMatches]);
+
+  const visibleLeagueGroups = useMemo(() => {
+    let budget = visibleMatchLimit;
+    return leagueGroups
+      .map((group) => {
+        const slice = group.matches.slice(0, budget);
+        budget -= slice.length;
+        return { ...group, matches: slice };
+      })
+      .filter((group) => group.matches.length > 0);
+  }, [leagueGroups, visibleMatchLimit]);
+
   const leagueSummaries = useMemo(() => {
     const byLeague = new Map<string, {
       total: number;
@@ -584,7 +632,6 @@ const App: React.FC = () => {
     return byLeague;
   }, [allLeagues, dayMatches]);
 
-  const selectedLeagueSummary = selectedLeague === "alle" ? null : leagueSummaries.get(selectedLeague) || null;
 
   const favoriteMatches = useMemo(() => {
     return dayMatches.filter((match) => {
@@ -808,36 +855,6 @@ const App: React.FC = () => {
 
             
 
-            <div className="hidden">
-              {[
-                { key: "favorieten", label: "Favorieten", count: favoriteCount, color: "yellow", icon: "★" },
-                { key: "live", label: "Live", count: liveCount, color: "red", icon: "●" },
-                { key: "gepland", label: "Gepland", count: plannedCount, color: "blue", icon: "" },
-                { key: "gespeeld", label: "Gespeeld", count: finishedCount, color: "slate", icon: "" },
-                { key: "brondekking", label: "Brondekking", count: sourceCoverageCount, color: "emerald", icon: "" },
-                { key: "odds", label: "Heeft odds", count: oddsCoverageCount, color: "emerald", icon: "" },
-                { key: "xg", label: "Heeft xG", count: xgCoverageCount, color: "cyan", icon: "" },
-                { key: "weer", label: "Heeft weer", count: weatherCoverageCount, color: "sky", icon: "" },
-                { key: "mistdata", label: "Mist brondata", count: missingCoverageCount, color: "amber", icon: "" },
-              ].map(({ key, label, count, color, icon }) => (
-                <button
-                  key={key}
-                  onClick={() => setActiveFilter(activeFilter === key ? "alle" : (key as FilterMode))}
-                  className={`glass-card p-3 rounded-2xl border text-left transition ${
-                    activeFilter === key
-                      ? `border-${color}-500/60 bg-${color}-900/20`
-                      : `border-${color}-500/20 hover:border-${color}-500/30`
-                  }`}
-                >
-                  <div className={`text-[9px] font-black text-${color}-400 uppercase flex items-center gap-1`}>
-                    {icon && <span className={key === "live" ? "animate-pulse" : ""}>{icon}</span>}
-                    {label}
-                  </div>
-                  <div className="text-xl font-black">{count}</div>
-                </button>
-              ))}
-            </div>
-
             <div className="mb-3 rounded-2xl border border-white/10 bg-slate-950/45 p-3">
               <div className="mb-2 flex flex-wrap items-center justify-between gap-2">
                 <div>
@@ -920,40 +937,6 @@ const App: React.FC = () => {
               })}
             </div>
 
-            {selectedLeagueSummary && (
-              <div className="mb-4 rounded-2xl border border-cyan-500/15 bg-slate-950/45 p-3">
-                <div className="mb-2 flex flex-wrap items-center justify-between gap-2">
-                  <div>
-                    <div className="text-[9px] font-black uppercase text-cyan-300">Competitiebronstatus</div>
-                    <h3 className="text-sm font-black text-white">{selectedLeague}</h3>
-                  </div>
-                  <button
-                    type="button"
-                    onClick={() => setActiveFilter(selectedLeagueSummary.missing > 0 ? "mistdata" : "alle")}
-                    className="rounded-full bg-cyan-500/15 px-3 py-1 text-[10px] font-black text-cyan-200 hover:bg-cyan-500/25"
-                  >
-                    {selectedLeagueSummary.missing > 0 ? `${selectedLeagueSummary.missing} mist data` : "Bronnen ok"}
-                  </button>
-                </div>
-                <div className="grid grid-cols-2 md:grid-cols-5 gap-2">
-                  {[
-                    { label: "Wedstrijden", value: selectedLeagueSummary.total },
-                    { label: "Brondekking", value: `${selectedLeagueSummary.coverage}%` },
-                    { label: "Odds", value: `${selectedLeagueSummary.odds}/${selectedLeagueSummary.total}` },
-                    { label: "xG/Stats", value: `${selectedLeagueSummary.xg}/${selectedLeagueSummary.total}` },
-                    { label: "Weer", value: `${selectedLeagueSummary.weather}/${selectedLeagueSummary.total}` },
-                  ].map((item) => (
-                    <div key={item.label} className="rounded-xl border border-white/5 bg-slate-900/55 p-2">
-                      <div className="text-[8px] font-black uppercase text-slate-500">{item.label}</div>
-                      <div className="text-sm font-black text-white">{item.value}</div>
-                    </div>
-                  ))}
-                </div>
-                <div className="mt-2 text-[10px] text-slate-400">
-                  Bronnen: {selectedLeagueSummary.providers.length ? selectedLeagueSummary.providers.join(", ") : "nog geen providerlabel beschikbaar"}
-                </div>
-              </div>
-            )}
 
             <div className="mb-4">
               <section className="glass-card rounded-2xl border border-yellow-500/20 p-3 bg-yellow-500/5">
@@ -1056,38 +1039,73 @@ const App: React.FC = () => {
                 </div>
               </div>
             ) : (
-              <div className="space-y-3">
-                {visibleSortedMatches.map((match) => {
-                  const enriched = enrichMatch(match);
-                  const expanded = expandedMatchId === match.id;
+              <div className="space-y-4">
+                {visibleLeagueGroups.map((group) => {
+                  const summary = leagueSummaries.get(group.league);
+                  const accent = leagueAccent(group.league, allLeagues);
                   return (
-                    <div key={match.id} className="space-y-2">
-                      <CompactMatchRow
-                        match={enriched}
-                        prediction={predictions[match.id]}
-                        expanded={expanded}
-                        onToggle={() => setExpandedMatchId(expanded ? null : match.id)}
-                      />
-                      {expanded && (
-                        <Suspense fallback={<div className="glass-card rounded-2xl border border-white/5 p-4 text-sm font-bold text-slate-400">Wedstrijddetails laden...</div>}>
-                          <MatchCard
-                            match={enriched}
-                            prediction={predictions[match.id]}
-                            onFavoriteChange={() => setFavRefresh((value) => value + 1)}
-                            onAddToCoupon={predictions[match.id] ? () => addToCoupon(enriched, predictions[match.id]) : undefined}
-                          />
-                        </Suspense>
-                      )}
-                    </div>
+                    <section key={group.league} className="overflow-hidden rounded-2xl border border-white/10 bg-slate-950/40">
+                      <header className={`flex flex-wrap items-center gap-x-3 gap-y-1 border-l-4 ${accent.bar} bg-slate-900/60 px-3 py-2`}>
+                        <h3 className="text-[11px] font-black uppercase tracking-wide text-white">{group.league}</h3>
+                        <div className="flex flex-wrap items-center gap-1 text-[9px] font-bold text-slate-400">
+                          <span>{group.matches.length} wedstrijden</span>
+                          {!!summary?.live && <span className="rounded-full bg-red-500/15 px-1.5 py-0.5 text-red-300">live {summary.live}</span>}
+                          {!!summary?.planned && <span className="rounded-full bg-blue-500/15 px-1.5 py-0.5 text-blue-300">gepland {summary.planned}</span>}
+                          {!!summary?.finished && <span className="rounded-full bg-slate-500/15 px-1.5 py-0.5 text-slate-300">gespeeld {summary.finished}</span>}
+                          <button
+                            type="button"
+                            onClick={() => {
+                              setSelectedLeague(group.league);
+                              setActiveFilter((summary?.missing || 0) > 0 ? "mistdata" : "alle");
+                            }}
+                            className={`rounded-full border px-1.5 py-0.5 ${(summary?.missing || 0) > 0 ? "border-amber-400/40 text-amber-300" : "border-emerald-400/30 text-emerald-300"}`}
+                          >
+                            bron {summary?.coverage || 0}%{(summary?.missing || 0) > 0 ? ` · ${summary.missing} mist data` : " · ok"}
+                          </button>
+                          <span className="rounded-full bg-slate-500/10 px-1.5 py-0.5">odds {summary?.odds || 0}/{summary?.total || 0}</span>
+                          <span className="rounded-full bg-slate-500/10 px-1.5 py-0.5">xG {summary?.xg || 0}/{summary?.total || 0}</span>
+                          <span className="rounded-full bg-slate-500/10 px-1.5 py-0.5">weer {summary?.weather || 0}/{summary?.total || 0}</span>
+                        </div>
+                        {!!summary?.providers?.length && (
+                          <div className="w-full text-[8px] text-slate-500">Bronnen: {summary.providers.join(", ")}</div>
+                        )}
+                      </header>
+                      <div className="space-y-2 p-2">
+                        {group.matches.map((match) => {
+                          const enriched = enrichMatch(match);
+                          const expanded = expandedMatchId === match.id;
+                          return (
+                            <div key={match.id} className="space-y-2">
+                              <CompactMatchRow
+                                match={enriched}
+                                prediction={predictions[match.id]}
+                                expanded={expanded}
+                                onToggle={() => setExpandedMatchId(expanded ? null : match.id)}
+                              />
+                              {expanded && (
+                                <Suspense fallback={<div className="glass-card rounded-2xl border border-white/5 p-4 text-sm font-bold text-slate-400">Wedstrijddetails laden...</div>}>
+                                  <MatchCard
+                                    match={enriched}
+                                    prediction={predictions[match.id]}
+                                    onFavoriteChange={() => setFavRefresh((value) => value + 1)}
+                                    onAddToCoupon={predictions[match.id] ? () => addToCoupon(enriched, predictions[match.id]) : undefined}
+                                  />
+                                </Suspense>
+                              )}
+                            </div>
+                          );
+                        })}
+                      </div>
+                    </section>
                   );
                 })}
-                {visibleSortedMatches.length < sortedMatches.length && (
+                {visibleMatchLimit < sortedMatches.length && (
                   <button
                     type="button"
                     onClick={() => setVisibleMatchLimit((value) => value + MATCH_RENDER_BATCH)}
                     className="w-full rounded-2xl border border-cyan-400/20 bg-cyan-500/10 px-4 py-3 text-sm font-black text-cyan-100 hover:bg-cyan-500/15"
                   >
-                    Toon meer wedstrijden ({visibleSortedMatches.length}/{sortedMatches.length})
+                    Toon meer wedstrijden ({Math.min(visibleMatchLimit, sortedMatches.length)}/{sortedMatches.length})
                   </button>
                 )}
                 {false && (

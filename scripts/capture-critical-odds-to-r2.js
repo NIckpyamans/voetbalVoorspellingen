@@ -9,6 +9,8 @@ import { findSportmonksFixture } from "./sportmonks-fixture-resolver.js";
 import { sportmonksEligibleFixtures } from "./worker/sportmonks-coverage-policy.js";
 import { classifyOddsCaptureRole, mergeOddsCaptureLedger } from "./worker/critical-captures.js";
 import { summarizeLeagueCoverage } from "./worker/coverage-summary.js";
+import { prioritizeCaptureCandidates, summarizeCaptureWindows, applyCaptureBudget } from "./worker/capture-window-policy.js";
+import { buildCentralQuotaPlan } from "./worker/quota-budget.js";
 
 const ROOT = process.cwd();
 const HOURS_AHEAD = Math.max(3, Number(process.env.CRITICAL_ODDS_HOURS_AHEAD || 36));
@@ -58,10 +60,22 @@ async function main() {
   loadLocalEnv(ROOT);
   const config = getR2Config();
   if (!config.configured) throw new Error("Cloudflare R2 secrets ontbreken voor critical odds capture.");
-  const matches = upcomingMatches();
+  // Plan captures expliciet rond T-20/T-45/T-75 en respecteer het per-provider
+  // quota-budget: zonder budget blijven alleen closing-captures over.
+  const nowMs = Date.now();
+  const candidates = prioritizeCaptureCandidates(upcomingMatches(), nowMs);
+  const quotaPlan = buildCentralQuotaPlan(readJson(path.join(ROOT, "monitor", "provider-quota-audit.json"), {}) || {});
+  const budgeted = applyCaptureBudget(candidates, quotaPlan, nowMs);
+  const matches = budgeted.selected.slice(0, LIMIT);
   const report = {
     generatedAt: new Date().toISOString(),
     checked: matches.length,
+    captureWindows: summarizeCaptureWindows(candidates, nowMs),
+    quotaBudget: {
+      spendable: budgeted.spendable,
+      skippedByBudget: budgeted.skippedByBudget.length,
+      providers: Object.fromEntries(Object.entries(quotaPlan.providers || {}).map(([key, value]) => [key, { spendable: value?.spendable ?? 0, policy: value?.policy ?? "unknown" }])),
+    },
     captured: 0,
     openingCaptured: 0,
     prematchCaptured: 0,

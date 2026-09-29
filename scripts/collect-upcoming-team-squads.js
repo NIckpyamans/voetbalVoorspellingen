@@ -6,7 +6,8 @@ import { fetchEspnSquad } from "./providers/espn-squad-provider.js";
 import { fetchWikipediaSquad } from "./providers/wikipedia-squad-provider.js";
 import { fetchTransfermarktDatasetSquad } from "./providers/transfermarkt-squad-provider.js";
 import { fetchFotMobSquad } from "./providers/fotmob-squad-provider.js";
-import { squadQueryVariants, providerTeamMatches } from "./worker/squad-team-matching.js";
+import { squadQueryVariants, providerTeamMatches, suggestAliasCandidates, canonicalizeSquadCache } from "./worker/squad-team-matching.js";
+import { canonicalDedupeTeam } from "../shared/matchNormalization.js";
 
 const ROOT = process.cwd();
 const DAYS_AHEAD = Math.max(1, Number(process.env.SQUAD_ENRICHMENT_DAYS_AHEAD || 8));
@@ -157,10 +158,13 @@ async function fetchPublicJson(url) {
   }
 }
 
-async function fetchSportsDbSquad(teamName) {
+async function fetchSportsDbSquad(teamName, searchCandidates = []) {
   let team = null;
   for (const query of variants(teamName)) {
     const payload = await fetchJson(`${SPORTS_DB_BASE}/searchteams.php?t=${encodeURIComponent(query)}`);
+    for (const item of payload?.teams || []) {
+      if (item?.strTeam) searchCandidates.push(String(item.strTeam));
+    }
     team = (payload?.teams || []).find((item) => providerTeamMatches(item?.strTeam, teamName) || providerTeamMatches(item?.strTeam, query));
     if (team?.idTeam) break;
   }
@@ -292,6 +296,7 @@ for (const candidate of pending) {
   let wikipediaProfile = null;
   let fotmobProfile = null;
   const providerProfiles = [];
+  const searchCandidates = [];
   for (const teamName of squadQueries(candidate.teamName)) {
     fotmobProfile = await fetchFotMobSquad({
       teamName,
@@ -320,7 +325,7 @@ for (const candidate of pending) {
   if (!providerProfiles.length && !report.rateLimited) {
     try {
       for (const teamName of squadQueries(candidate.teamName)) {
-        sportsDbProfile = await fetchSportsDbSquad(teamName);
+        sportsDbProfile = await fetchSportsDbSquad(teamName, searchCandidates);
         if (sportsDbProfile) break;
       }
       if (sportsDbProfile) providerProfiles.push({ provider: "TheSportsDB", profile: sportsDbProfile });
@@ -365,7 +370,13 @@ for (const candidate of pending) {
     report.unavailable += 1;
     report.byCompetition[competition].unavailable += 1;
     report.failureReasons[reason] = Number(report.failureReasons[reason] || 0) + 1;
-    report.failures.push({ team: candidate.teamName, competition, reason, attemptedProviders });
+    report.failures.push({
+      team: candidate.teamName,
+      competition,
+      reason,
+      attemptedProviders,
+      aliasSuggestions: suggestAliasCandidates([...new Set(searchCandidates)], candidate.teamName),
+    });
     console.warn(`[squad-enrichment] ${candidate.teamName} (${competition}): ${reason}; bronnen=${attemptedProviders.join(",")}`);
     cache[candidate.key] = { ...(candidate.existing || {}), teamName: candidate.teamName, fetchedAt: new Date().toISOString(), unavailable: true, lastFailureReason: reason, lastAttemptedProviders: attemptedProviders, source: candidate.existing?.source || "multi-provider fallback" };
     continue;
@@ -429,6 +440,11 @@ for (const row of Object.values(report.competitionCoverage)) {
   row.rosterCoverage = row.teams ? Number((row.teamsWithRoster / row.teams).toFixed(3)) : 0;
   row.ratingCoverage = row.teams ? Number((row.teamsWithProviderRatings / row.teams).toFixed(3)) : 0;
 }
+
+// Canonicaliseer dubbele teamnamen (bijv. "drita" en "drita gjilan") tot één
+// identiteit; alle sleutels blijven werken en sourceIds worden samengevoegd.
+const canonicalized = canonicalizeSquadCache(cache, { canonicalOf: canonicalDedupeTeam });
+report.cacheCanonicalization = { mergedGroups: canonicalized.mergedGroups, mergedKeys: canonicalized.mergedKeys };
 
 fs.mkdirSync(path.dirname(CACHE_FILE), { recursive: true });
 fs.writeFileSync(CACHE_FILE, `${JSON.stringify({ schemaVersion: "team-squad-cache-v1", generatedAt: report.generatedAt, teams: cache })}\n`);

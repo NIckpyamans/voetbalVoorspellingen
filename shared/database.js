@@ -713,10 +713,16 @@ export async function readDatabaseDay(dateKey, options = {}) {
             'samples', count(*),
             'avgHome', avg(hos.home),
             'avgDraw', avg(hos.draw),
-            'avgAway', avg(hos.away)
+            'avgAway', avg(hos.away),
+            'closingSamples', count(*) filter (where hos.closing_home > 1),
+            'avgClosingHome', avg(hos.closing_home) filter (where hos.closing_home > 1),
+            'avgClosingDraw', avg(hos.closing_draw) filter (where hos.closing_draw > 1),
+            'avgClosingAway', avg(hos.closing_away) filter (where hos.closing_away > 1)
           )
           from historical_odds_snapshots hos
           where hos.match_id = m.match_id
+            and hos.odds_role in ('opening', 'prematch', 'closing')
+            and hos.captured_at is not null
         ) as historical_odds_payload
       from matches m
       left join match_stats ms on ms.match_id = m.match_id
@@ -1076,10 +1082,16 @@ export async function readDatabaseFeatureContext({
                 'samples', count(*),
                 'avgHome', avg(home),
                 'avgDraw', avg(draw),
-                'avgAway', avg(away)
+                'avgAway', avg(away),
+                'closingSamples', count(*) filter (where closing_home > 1),
+                'avgClosingHome', avg(closing_home) filter (where closing_home > 1),
+                'avgClosingDraw', avg(closing_draw) filter (where closing_draw > 1),
+                'avgClosingAway', avg(closing_away) filter (where closing_away > 1)
               )
               from historical_odds_snapshots
               where match_id = $1
+                and odds_role in ('opening', 'prematch', 'closing')
+                and captured_at is not null
             ) as historical_odds_payload
             ,(
               select sr.payload

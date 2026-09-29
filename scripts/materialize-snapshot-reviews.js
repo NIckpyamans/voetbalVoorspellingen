@@ -3,7 +3,7 @@
 import fs from "node:fs";
 import path from "node:path";
 import { loadSnapshotLedger } from "../shared/predictionSnapshotLedger.js";
-import { materializeSnapshotBackedReviews } from "./worker/snapshot-review-materialization.js";
+import { materializeSnapshotBackedReviews, rebindFallbackReviewsToSnapshots } from "./worker/snapshot-review-materialization.js";
 
 const ROOT = process.cwd();
 const DAYS_DIR = path.join(ROOT, "data", "days");
@@ -18,8 +18,11 @@ function writeJson(filePath, value) {
 async function main() {
   const loaded = await loadSnapshotLedger({ root: ROOT });
   const ledgerReviews = loaded.ledger?.postMatchReviews || {};
+  const ledgerSnapshots = loaded.ledger?.predictionSnapshots || {};
   let linked = 0;
   let unchanged = 0;
+  let rebound = 0;
+  let kept = 0;
   let reviewed = 0;
   let snapshotBacked = 0;
   const changedDays = [];
@@ -31,11 +34,16 @@ async function main() {
       const result = materializeSnapshotBackedReviews(current, ledgerReviews);
       linked += result.linked;
       unchanged += result.unchanged;
-      const reviews = Object.values(result.day.reviews || {});
+      // Fallback-reviews alsnog aan immutable pre-kickoff snapshots binden;
+      // de reviewmetrics worden daarbij vanuit de snapshot-kansen herberekend.
+      const rebind = rebindFallbackReviewsToSnapshots(result.day, ledgerSnapshots);
+      rebound += rebind.rebound;
+      kept += rebind.kept;
+      const reviews = Object.values(rebind.day.reviews || {});
       reviewed += reviews.length;
       snapshotBacked += reviews.filter((review) => review?.evaluationSource === "prediction_snapshot").length;
-      if (result.linked > 0) {
-        writeJson(filePath, result.day);
+      if (result.linked > 0 || rebind.rebound > 0) {
+        writeJson(filePath, rebind.day);
         changedDays.push(fileName.slice(0, 10));
       }
     }
@@ -57,6 +65,9 @@ async function main() {
     },
     linkedThisRun: linked,
     alreadyLinked: unchanged,
+    reboundFromFallback: rebound,
+    fallbackWithoutSnapshot: kept,
+    ledgerSnapshots: Object.keys(ledgerSnapshots).length,
     changedDays,
     dayReviews: reviewed,
     snapshotBackedDayReviews: snapshotBacked,
