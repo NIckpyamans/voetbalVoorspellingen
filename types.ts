@@ -124,7 +124,7 @@ export interface Match {
   awayClubStrength?: ClubStrengthProfile;
   homePos?: number;
   awayPos?: number;
-  
+
   // ========================================
   // WEDSTRIJD CONTEXT & BELANG
   // ========================================

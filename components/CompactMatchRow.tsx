@@ -1,7 +1,9 @@
-import React from "react";
+import React, { useMemo, useState } from "react";
 import { Match } from "../types";
-import { isMatchFinished, isMatchLive } from "../shared/matchStatus.js";
+import { getLiveMinuteLabel } from "../shared/minute.js";
+import { getMatchStatusKind } from "../shared/matchStatus.js";
 import { isGeneratedLogoUrl } from "../shared/clubLogos.js";
+import { useLiveClock } from "./useLiveClock";
 
 interface CompactMatchRowProps {
   match: Match;
@@ -30,7 +32,7 @@ function sourcePct(match: Match) {
   return value <= 1 ? Math.round(value * 100) : Math.round(value);
 }
 
-function RowLogo({ logo, name }: { logo?: string; name: string }) {
+function RowLogo({ logo, name, rank }: { logo?: string; name: string; rank?: number | null }) {
   const [attempt, setAttempt] = React.useState(0);
   const directLogo = logo && !isGeneratedLogoUrl(logo) ? logo : null;
   const nameLogo = name ? `/api/logo?name=${encodeURIComponent(name)}` : null;
@@ -39,20 +41,32 @@ function RowLogo({ logo, name }: { logo?: string; name: string }) {
   )}`;
   const sources = [directLogo, nameLogo, fallback].filter(Boolean) as string[];
   return (
-    <img
-      src={sources[Math.min(attempt, sources.length - 1)]}
-      alt=""
-      referrerPolicy="no-referrer"
-      crossOrigin="anonymous"
-      className="h-5 w-5 shrink-0 rounded-full bg-slate-900/60 object-contain p-0.5"
-      onError={() => setAttempt((value) => Math.min(value + 1, sources.length - 1))}
-    />
+    <div className="flex items-start gap-1.5">
+      <img
+        src={sources[Math.min(attempt, sources.length - 1)]}
+        alt=""
+        referrerPolicy="no-referrer"
+        crossOrigin="anonymous"
+        className="h-5 w-5 shrink-0 rounded-full bg-slate-900/60 object-contain p-0.5"
+        onError={() => setAttempt((value) => Math.min(value + 1, sources.length - 1))}
+      />
+      {rank != null && rank > 0 ? (
+        <span
+          title={`Ranglijstnummer ${rank}`}
+          className="shrink-0 rounded-full bg-slate-800/70 text-[9px] font-black text-slate-300 px-1 py-0.5 leading-none border border-slate-700/30"
+        >
+          #{rank}
+        </span>
+      ) : null}
+    </div>
   );
 }
 
 const CompactMatchRow: React.FC<CompactMatchRowProps> = ({ match, prediction, expanded, onToggle }) => {
-  const live = isMatchLive(match);
-  const finished = isMatchFinished(match);
+  const kind = getMatchStatusKind(match);
+  const live = kind === "live" || kind === "halftime";
+  const finished = kind === "finished" || kind === "pending";
+  const liveMinute = useLiveClock(live, match);
   const predictedScore = prediction ? `${prediction.predHomeGoals ?? 0}-${prediction.predAwayGoals ?? 0}` : "-";
   const confidence = Number(prediction?.confidence || Math.max(prediction?.homeProb || 0, prediction?.drawProb || 0, prediction?.awayProb || 0));
   const exactProbability = Number(prediction?.exactProb || 0);
@@ -60,6 +74,15 @@ const CompactMatchRow: React.FC<CompactMatchRowProps> = ({ match, prediction, ex
   const hasOdds = Boolean((match as any).hasOdds || prediction?.odds || prediction?.oddsAtPrediction || match.dbFeatureContext?.historicalOdds?.samples);
   const h2hPlayed = Number((match as any).h2hPlayed || match.h2h?.played || prediction?.h2h?.played || 0);
   const coverage = sourcePct(match);
+
+  const timingLabel = useMemo(() => {
+    if (live) {
+      if (kind === "halftime") return "HT";
+      return liveMinute || "LIVE";
+    }
+    if (finished) return kind === "pending" ? "Uitslag volgt" : "FT";
+    return formatKickoff(match);
+  }, [live, finished, kind, liveMinute, match]);
 
   return (
     <button
@@ -73,8 +96,8 @@ const CompactMatchRow: React.FC<CompactMatchRowProps> = ({ match, prediction, ex
     >
       <div className="grid grid-cols-[54px_minmax(0,1fr)_74px_92px] items-center gap-3 md:grid-cols-[66px_minmax(0,1fr)_90px_110px_110px]">
         <div className="text-center">
-          <div className={`text-xs font-black ${live ? "text-red-300" : finished ? "text-slate-300" : "text-blue-200"}`}>
-            {live ? match.minute || "LIVE" : finished ? "FT" : formatKickoff(match)}
+          <div className={`text-xs font-black ${live ? "text-red-300 live-clock" : finished ? "text-slate-300" : "text-blue-200"}`}>
+            {timingLabel}
           </div>
           <div className="mt-1 text-[8px] font-black uppercase text-slate-500">{match.status || "NS"}</div>
         </div>
@@ -83,13 +106,13 @@ const CompactMatchRow: React.FC<CompactMatchRowProps> = ({ match, prediction, ex
           <div className="mb-1 truncate text-[10px] font-black uppercase tracking-wide text-slate-500">{match.league}</div>
           <div className="grid grid-cols-[minmax(0,1fr)_28px_minmax(0,1fr)] items-center gap-2">
             <div className="flex min-w-0 items-center justify-end gap-2">
-              <RowLogo logo={match.homeLogo} name={match.homeTeamName} />
+              <RowLogo logo={match.homeLogo} name={match.homeTeamName} rank={(match as any).homePos} />
               <span className="truncate text-sm font-black text-white">{match.homeTeamName}</span>
             </div>
             <div className="text-center text-[10px] font-black text-slate-500">vs</div>
             <div className="flex min-w-0 items-center gap-2">
               <span className="truncate text-sm font-black text-white">{match.awayTeamName}</span>
-              <RowLogo logo={match.awayLogo} name={match.awayTeamName} />
+              <RowLogo logo={match.awayLogo} name={match.awayTeamName} rank={(match as any).awayPos} />
             </div>
           </div>
         </div>

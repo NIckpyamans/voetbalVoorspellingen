@@ -4,6 +4,7 @@ import { Match } from "../types";
 import { FavoriteButton } from "./FavoriteTeams";
 import PostMatchReview from "./PostMatchReview";
 import { getLiveMinuteLabel } from "../shared/minute.js";
+import { useLiveClock } from "./useLiveClock";
 import { cleanSignalText } from "../shared/matchText.js";
 import { countryFlagEmoji, countryFlagSources } from "../shared/countryFlags";
 import { isGeneratedLogoUrl } from "../shared/clubLogos.js";
@@ -18,17 +19,22 @@ interface MatchCardProps {
 type MatchDetailTab = "analyse" | "opstelling" | "h2h" | "vorm" | "markten";
 
 function useLiveMinute(match: any) {
-  const [now, setNow] = useState(() => Date.now());
   const status = String(match?.status || "").toUpperCase();
   const isSettled = ["FT", "AET", "PEN", "RESULT_PENDING"].includes(status) || status.includes("FINISH");
+  const active = !isSettled && (status === "LIVE" || status === "HT" || Boolean(match?.minuteValue));
+  return useLiveClock(active, match, 30000);
+}
 
-  useEffect(() => {
-    if (isSettled || (status !== "LIVE" && status !== "HT" && !match?.minuteValue)) return;
-    const timer = window.setInterval(() => setNow(Date.now()), 30000);
-    return () => window.clearInterval(timer);
-  }, [isSettled, status, match?.minuteValue, match?.liveUpdatedAt]);
-
-  return useMemo(() => (isSettled ? null : getLiveMinuteLabel(match, now)), [isSettled, match, now]);
+function RankBadge({ pos }: { pos: number | null | undefined }) {
+  if (pos == null || !(pos > 0)) return null;
+  return (
+    <span
+      title={`Ranglijstnummer ${pos}`}
+      className="ml-1 inline-flex shrink-0 items-center rounded-full border border-slate-600/40 bg-slate-800/80 px-1.5 py-0.5 align-middle text-[8px] font-black leading-none text-slate-200"
+    >
+      #{pos}
+    </span>
+  );
 }
 
 function fmt(probability: number) {
@@ -1633,7 +1639,8 @@ const MatchCard: React.FC<MatchCardProps> = ({ match: initialMatch, prediction: 
             className={`mx-auto block text-[10px] font-black underline-offset-2 hover:underline ${loser === match.homeTeamName ? "text-slate-500 line-through" : "text-white"}`}
             aria-label={`Toon selectie van ${match.homeTeamName}`}
           >
-            {match.homeTeamName} {match.homePos ? `(#${match.homePos})` : ""}
+            {match.homeTeamName}
+            {match.homePos ? <RankBadge pos={match.homePos} /> : null}
           </button>
           <div className="text-[7px] text-slate-400">
             <span title={match.homeClubStrength?.components?.map(part => `${part.key}: ${part.rating}/100 (${Math.round(part.effectiveWeight * 100)}%)`).join(" · ")}>Clubrating <span className="font-black text-cyan-300">{match.homeClubStrength?.rating != null ? `${match.homeClubStrength.rating}/100` : "onbekend"}</span></span>
@@ -1686,7 +1693,8 @@ const MatchCard: React.FC<MatchCardProps> = ({ match: initialMatch, prediction: 
             className={`mx-auto block text-[10px] font-black underline-offset-2 hover:underline ${loser === match.awayTeamName ? "text-slate-500 line-through" : "text-white"}`}
             aria-label={`Toon selectie van ${match.awayTeamName}`}
           >
-            {match.awayTeamName} {match.awayPos ? `(#${match.awayPos})` : ""}
+            {match.awayTeamName}
+            {match.awayPos ? <RankBadge pos={match.awayPos} /> : null}
           </button>
           <div className="text-[7px] text-slate-400">
             <span title={match.awayClubStrength?.components?.map(part => `${part.key}: ${part.rating}/100 (${Math.round(part.effectiveWeight * 100)}%)`).join(" · ")}>Clubrating <span className="font-black text-cyan-300">{match.awayClubStrength?.rating != null ? `${match.awayClubStrength.rating}/100` : "onbekend"}</span></span>
@@ -1740,7 +1748,7 @@ const MatchCard: React.FC<MatchCardProps> = ({ match: initialMatch, prediction: 
         </div>
         <div className="rounded-lg border border-violet-500/15 bg-violet-950/20 px-2 py-1.5 text-center">
           <div className="text-[7px] uppercase font-black text-violet-300/80">Wedstrijdtijd</div>
-          <div className="text-[11px] font-black text-white">{timingLabel}</div>
+          <div className={`text-[11px] font-black text-white ${isLive ? "live-clock" : ""}`}>{timingLabel}</div>
         </div>
         <div className="rounded-lg border border-emerald-500/15 bg-emerald-950/20 px-2 py-1.5 text-center">
           <div className="text-[7px] uppercase font-black text-emerald-300/80">{modelScopeLabel}</div>

@@ -38,3 +38,21 @@
     scrollbar-width: none;
   }
 }
+
+/* Live wedstrijdklok: pulserende stip voor de timing (per-seconde ticking) */
+.live-clock::before {
+  content: "";
+  display: inline-block;
+  width: 6px;
+  height: 6px;
+  margin-right: 4px;
+  border-radius: 9999px;
+  background: #ef4444;
+  vertical-align: middle;
+  animation: live-clock-pulse 1s ease-in-out infinite;
+}
+
+@keyframes live-clock-pulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.35; }
+}
