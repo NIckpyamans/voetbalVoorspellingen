@@ -1,18 +1,18 @@
 # Data Quality Audit
 
-Laatst bijgewerkt: 2026-09-29T09:04:37.262Z
+Laatst bijgewerkt: 2026-09-30T09:02:46.203Z
 Lookback: 45 dagen
 
 ## Scores
-- Wedstrijden: 754
-- Oude wedstrijden: 558
+- Wedstrijden: 751
+- Oude wedstrijden: 555
 - Pending result backfills: 0
 - Ontbrekende oude scores: 0
 - H2H-dekking: 42%
 - Reviews na afloop: 100%
 - Lekvrije post-matchreviews: 0% (0/0)
 - Immutable snapshot-evaluaties: 0% (0/0)
-- Bruikbare wedstrijdstatistieken: 93%
+- Bruikbare wedstrijdstatistieken: 92%
 - Bevestigde opstellingen: 12%
 - Historisch teruggevonden basiselftallen: 84%
 - Verse getimestampte prematch-odds: 14%
@@ -24,7 +24,7 @@ Lookback: 45 dagen
 - Netherlands - Eredivisie: 39 duels, vorm 92%, H2H 49%, inzetbewijs 0%, lekvrije reviews 0% (0/0), stats 100%; gaten: h2h, confirmed_lineups, timestamped_odds, immutable_snapshot_windows, leak_free_reviews
 - Netherlands - Eerste Divisie: 113 duels, vorm 49%, H2H 9%, inzetbewijs 0%, lekvrije reviews 0% (0/0), stats 100%; gaten: form, h2h, confirmed_lineups, timestamped_odds, immutable_snapshot_windows, leak_free_reviews
 - Germany - Bundesliga: 83 duels, vorm 92%, H2H 49%, inzetbewijs 0%, lekvrije reviews 0% (0/0), stats 85%; gaten: h2h, confirmed_lineups, timestamped_odds, immutable_snapshot_windows, leak_free_reviews, goal_timeline
-- Germany - 2. Bundesliga: 39 duels, vorm 82%, H2H 33%, inzetbewijs 0%, lekvrije reviews 0% (0/0), stats 100%; gaten: form, h2h, confirmed_lineups, timestamped_odds, immutable_snapshot_windows, leak_free_reviews
+- Germany - 2. Bundesliga: 36 duels, vorm 86%, H2H 36%, inzetbewijs 0%, lekvrije reviews 0% (0/0), stats 100%; gaten: form, h2h, confirmed_lineups, timestamped_odds, immutable_snapshot_windows, leak_free_reviews
 - England - Premier League: 90 duels, vorm 96%, H2H 56%, inzetbewijs 2%, lekvrije reviews 0% (0/0), stats 100%; gaten: h2h, confirmed_lineups, timestamped_odds, immutable_snapshot_windows, leak_free_reviews
 - England - Championship: 71 duels, vorm 66%, H2H 32%, inzetbewijs 11%, lekvrije reviews 0% (0/0), stats 100%; gaten: form, h2h, confirmed_lineups, timestamped_odds, immutable_snapshot_windows, leak_free_reviews
 - France - Ligue 1: 81 duels, vorm 86%, H2H 70%, inzetbewijs 1%, lekvrije reviews 0% (0/0), stats 100%; gaten: form, h2h, confirmed_lineups, timestamped_odds, immutable_snapshot_windows, leak_free_reviews
@@ -41,9 +41,6 @@ Lookback: 45 dagen
 - Toon geen inzetadvies zolang bevestigde opstellingen, verse getimestampte 1X2-odds en minimaal 70% modeldata niet samen aanwezig zijn.
 
 ## Samples
-- H2H mist: 2026-08-16: Arminia Bielefeld - Energie Cottbus
-- H2H mist: 2026-08-16: Dynamo Dresden - Darmstadt
-- H2H mist: 2026-08-16: Hannover 96 - Wolfsburg
 - H2H mist: 2026-08-17: De Graafschap - Jong AZ Alkmaar
 - H2H mist: 2026-08-17: Jong Ajax - FC Emmen
 - H2H mist: 2026-08-17: Jong FC Utrecht - Vitesse
@@ -51,3 +48,6 @@ Lookback: 45 dagen
 - H2H mist: 2026-08-18: Fenerbahçe - Lyon
 - H2H mist: 2026-08-18: Levski Sofia - AEK Athens
 - H2H mist: 2026-08-19: Celtic - LASK
+- H2H mist: 2026-08-19: Hapoel Beer Sheva - Sabah FK
+- H2H mist: 2026-08-19: NEC Nijmegen - Bodø/Glimt
+- H2H mist: 2026-08-19: Slovan Bratislava - NK Celje
