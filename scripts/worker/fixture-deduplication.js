@@ -38,9 +38,10 @@ export function mergeStoredDuplicateMatch(current, incoming) {
   for (const field of ["postMatchStats", "liveStats", "homeSeasonStats", "awaySeasonStats", "homeTeamProfile", "awayTeamProfile", "refereeProfile", "aggregate", "sourceAsOf", "providerDiagnostics", "oddsAtPrediction", "odds", "marketCalibration"]) {
     if (objectRichness(fallback?.[field]) > objectRichness(preferred?.[field])) preferred[field] = fallback[field];
   }
-  for (const field of ["events", "goalEvents", "cards", "incidents"]) {
+  for (const field of ["events", "goalEvents", "goalMinuteEvents", "cards", "incidents"]) {
     if ((fallback?.[field]?.length || 0) > (preferred?.[field]?.length || 0)) preferred[field] = fallback[field];
   }
+  preferred.goalMinuteEventsUpdatedAt = Math.max(Number(preferred.goalMinuteEventsUpdatedAt || 0), Number(fallback?.goalMinuteEventsUpdatedAt || 0)) || undefined;
   preferred.dataSource = [...new Set([preferred.dataSource, fallback?.dataSource].filter(Boolean))].join("+");
   const preferredHasScore = Number.isFinite(Number(preferred.homeScore)) && Number.isFinite(Number(preferred.awayScore));
   const fallbackHasScore = Number.isFinite(Number(fallback?.homeScore)) && Number.isFinite(Number(fallback?.awayScore));

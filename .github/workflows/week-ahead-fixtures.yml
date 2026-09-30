@@ -2,6 +2,8 @@ name: Week ahead fixture calendar
 
 on:
   workflow_dispatch:
+  schedule:
+    - cron: "23 5 * * *"
 
 concurrency:
   group: football-data-refresh
@@ -14,15 +16,39 @@ env:
   TZ: Europe/Amsterdam
   FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: "true"
   DATA_BRANCH: codex/step3b-layout
-  FOOTYAI_DATE_WINDOW: today,+1,+2,+3,+4,+5,+6,+7
+  FOOTYAI_DATE_WINDOW: today,+1,+2,+3,+4,+5,+6,+7,+8,+9,+10,+11,+12,+13,+14,+15,+16,+17,+18,+19,+20,+21
+  H2H_BACKFILL_DAYS_AHEAD: "21"
+  H2H_BACKFILL_LIMIT: "32"
   FOOTYAI_LIGHTWEIGHT_REFRESH: "true"
   API_FOOTBALL_H2H_ENABLED: "false"
+  API_FOOTBALL_MAX_FETCHES_PER_RUN: "8"
   ODDS_FETCH_ENABLED: "false"
+  FOOTBALL_DATA_TOKEN: ${{ secrets.FOOTBALL_DATA_TOKEN }}
+  API_KEY_FOOTBALL_DATA: ${{ secrets.API_KEY_FOOTBALL_DATA }}
+  FOOTBALL_DATA_TEAM_MAP: ${{ secrets.FOOTBALL_DATA_TEAM_MAP }}
+  API_KEY_API_FOOTBALL: ${{ secrets.API_KEY_API_FOOTBALL }}
+  APIFOOTBALL_API_KEY: ${{ secrets.APIFOOTBALL_API_KEY }}
+  GOAL_API_KEY: ${{ secrets.GOAL_API_KEY }}
+  API_GOAL: ${{ secrets.API_GOAL }}
+  DATABASE_URL: ${{ secrets.DATABASE_URL }}
+  POSTGRES_URL: ${{ secrets.POSTGRES_URL }}
+  SUPABASE_DB_URL: ${{ secrets.SUPABASE_DB_URL }}
+  CLOUDFLARE_R2_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_R2_ACCOUNT_ID }}
+  CLOUDFLARE_R2_ACCESS_KEY_ID: ${{ secrets.CLOUDFLARE_R2_ACCESS_KEY_ID }}
+  CLOUDFLARE_R2_SECRET_ACCESS_KEY: ${{ secrets.CLOUDFLARE_R2_SECRET_ACCESS_KEY }}
+  CLOUDFLARE_R2_BUCKET: ${{ secrets.CLOUDFLARE_R2_BUCKET }}
+  CLOUDFLARE_R2_ENDPOINT: ${{ secrets.CLOUDFLARE_R2_ENDPOINT }}
+  CLOUDFLARE_R2_PREFIX: ${{ secrets.CLOUDFLARE_R2_PREFIX }}
+  FORM_ENRICHMENT_DAYS_AHEAD: "21"
+  FORM_ENRICHMENT_MAX_TEAMS: "24"
+  FORM_ENRICHMENT_RUN_BUDGET_MS: "180000"
+  SQUAD_ENRICHMENT_DAYS_AHEAD: "21"
+  SQUAD_ENRICHMENT_MAX_TEAMS: "24"
 
 jobs:
   refresh-calendar:
     runs-on: ubuntu-latest
-    timeout-minutes: 12
+    timeout-minutes: 35
     steps:
       - uses: actions/checkout@v5
         with:
@@ -34,19 +60,41 @@ jobs:
           node-version: 22
           cache: npm
       - run: npm ci
-      - name: Discover today and the next seven days
+      - name: Discover fixtures today and the next 21 days
         timeout-minutes: 9
         run: node scripts/server-worker.js
-      - name: Commit calendar changes
+      - name: Collect bounded upcoming team-form context
+        timeout-minutes: 5
+        run: npm run enrich:form:upcoming
+        continue-on-error: true
+      - name: Backfill upcoming H2H context
+        timeout-minutes: 12
+        run: node scripts/ci-neon-safe.js -- npm run db:h2h:backfill-upcoming
+        continue-on-error: true
+      - name: Collect bounded upcoming squad context
+        timeout-minutes: 12
+        run: npm run enrich:squads:upcoming
+        continue-on-error: true
+      - name: Publish enriched calendar and predictions to Neon/R2
+        timeout-minutes: 9
+        run: node scripts/ci-neon-safe.js -- node scripts/server-worker.js
+      - name: Commit enriched team caches
         run: |
           git config user.name github-actions
           git config user.email github-actions@github.com
-          git add data monitor
-          git diff --staged --quiet && echo "geen kalenderwijzigingen" && exit 0
-          git commit -m "refresh week vooruit kalender [skip vercel]"
+          git add data/team-form-cache.json data/team-squad-cache.json monitor/upcoming-team-form-enrichment.json monitor/upcoming-team-squad-enrichment.json
+          git diff --staged --quiet && echo "geen enrichmentcachewijzigingen" && exit 0
+          git commit -m "refresh upcoming team context [skip vercel]"
           for attempt in 1 2 3; do
             git pull --rebase --autostash origin "$DATA_BRANCH"
             if git push origin HEAD:"$DATA_BRANCH"; then exit 0; fi
             sleep $((attempt * 5))
           done
           exit 1
+      - name: Build R2 dashboard day cache
+        run: node scripts/ci-neon-safe.js -- npm run db:dashboard-cache:r2
+        continue-on-error: true
+      - name: Report calendar refresh
+        run: |
+          echo "Fixturekalender bijgewerkt via de bestaande Neon/R2-dataflow voor vandaag en de volgende 21 dagen."
+          git status --short data monitor || true

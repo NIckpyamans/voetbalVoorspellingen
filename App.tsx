@@ -25,6 +25,7 @@ import {
   shortLeague,
 } from "./shared/dashboard.js";
 import { filterVisibleMatches, filterVisiblePredictionMap } from "./shared/competitionVisibility.js";
+import { buildStandingsLookup, findStandingPosition } from "./shared/standingsLookup.js";
 
 type View = "dashboard" | "knowledge" | "history" | "standings" | "modelops" | "integrity" | "providers" | "settings";
 type FilterMode = "alle" | "favorieten" | "live" | "gepland" | "gespeeld" | "brondekking" | "odds" | "xg" | "weer" | "mistdata";
@@ -426,23 +427,23 @@ const App: React.FC = () => {
     };
   }, [selectedDate]);
 
-  const standingsMap = useMemo(() => {
-    const map: Record<string, number> = {};
-    for (const table of Object.values(standings) as any[]) {
-      for (const row of table.rows || []) {
-        if (row.teamId) map[row.teamId] = row.pos;
-      }
-    }
-    return map;
-  }, [standings]);
+  const standingsLookup = useMemo(() => buildStandingsLookup(standings), [standings]);
 
   const enrichMatch = useCallback(
     (match: Match) => ({
       ...match,
-      homePos: standingsMap[(match as any).homeTeamId] || (match as any).homePos || null,
-      awayPos: standingsMap[(match as any).awayTeamId] || (match as any).awayPos || null,
+      homePos: findStandingPosition(standingsLookup, {
+        teamId: match.homeTeamId,
+        teamName: match.homeTeamName,
+        league: match.league,
+      }) ?? match.homePos ?? null,
+      awayPos: findStandingPosition(standingsLookup, {
+        teamId: match.awayTeamId,
+        teamName: match.awayTeamName,
+        league: match.league,
+      }) ?? match.awayPos ?? null,
     }),
-    [standingsMap]
+    [standingsLookup]
   );
 
   const favoriteTeams = useMemo(() => getFavorites(), [favRefresh]);

@@ -15,7 +15,8 @@ describe("reliability workflow guards", () => {
   it("repairs late final scores after midnight", () => {
     const workflow = read(".github/workflows/live-score.yml");
     const orchestrator = read("scripts/workflow-orchestrator.js");
-    expect(workflow).toContain('cron: "10 0,2,5,22 * * *"');
+    expect(workflow).toContain('cron: "10 * * * *"');
+    expect(workflow).toContain("per uur");
     expect(orchestrator).toContain("for (let offset = -1; offset <= 7; offset += 1)");
     expect(orchestrator).toContain("resultRefreshWindow.length");
     expect(orchestrator).toContain("!fixture.finalStatus");

@@ -87,6 +87,7 @@ import { buildTwoLegAggregate, deriveH2HWinnerId, findOrientedPreviousLeg } from
 import { mergePersistedTeamFormCache } from "./worker/local-team-form-history.js";
 import { selectFreshestSquadProfile } from "./worker/squad-cache-policy.js";
 import { summarizeGoalTiming } from "./worker/goal-timing.js";
+import { buildLiveGoalEventsFromMatch } from "./worker/live-goal-events.js";
 import { buildClubStrengthProfile, lookupClubEloProfile, parseClubEloSnapshot, parseClubEloWebsite, domesticCompetitionStrength } from "./worker/club-strength.js";
 import { attachConfirmedLineupStarImpact } from "./worker/lineup-star-impact.js";
 import { hydrateR2ModelProfiles } from "./worker/r2-model-profiles.js";
@@ -973,6 +974,7 @@ const STANDINGS_TTL = 60 * 60 * 1000;
 const H2H_TTL = 3 * 24 * 60 * 60 * 1000;
 const WEATHER_TTL = 6 * 60 * 60 * 1000;
 const EVENT_TTL = 12 * 60 * 60 * 1000;
+const LIVE_EVENT_DETAILS_TTL = 5 * 60 * 1000;
 const CLUB_ELO_TTL = 12 * 60 * 60 * 1000;
 const MARKET_TTL = 24 * 60 * 60 * 1000;
 const SNAPSHOT_TTL = 3 * 24 * 60 * 60 * 1000;
@@ -12321,15 +12323,13 @@ async function main() {
     const match = (store.matches[today] || []).find((item) => item.id === matchId);
     if (!match) continue;
 
-    let liveDetails = null;
-    if (!live.time?.current) {
-      liveDetails = store.eventCache?.[live.id] || null;
-      if (!liveDetails || now - Number(store.eventCacheUpdated?.[live.id] || 0) > EVENT_TTL) {
-        liveDetails = await fetchEventDetails(live.id);
-        if (liveDetails) {
-          store.eventCache[live.id] = liveDetails;
-          store.eventCacheUpdated[live.id] = now;
-        }
+    let liveDetails = store.eventCache?.[live.id] || null;
+    if ((live.status?.type === "inprogress" || live.status?.type === "halftime") &&
+      (!liveDetails || now - Number(store.eventCacheUpdated?.[live.id] || 0) > LIVE_EVENT_DETAILS_TTL)) {
+      liveDetails = await fetchEventDetails(live.id);
+      if (liveDetails) {
+        store.eventCache[live.id] = liveDetails;
+        store.eventCacheUpdated[live.id] = now;
       }
     }
 
@@ -12347,6 +12347,18 @@ async function main() {
     match.period = minuteState.period || match.period || null;
     match.liveUpdatedAt = match.status === "LIVE" || match.status === "HT" ? Date.now() : match.liveUpdatedAt;
     match.liveStats = await fetchLiveStats(live.id);
+    if (match.status === "LIVE" || match.status === "HT") {
+      const liveGoalEvents = buildLiveGoalEventsFromMatch({
+        live,
+        eventDetails: liveDetails || store.eventCache?.[live.id] || null,
+        homeTeamName: match.homeTeamName,
+        awayTeamName: match.awayTeamName,
+      });
+      if (liveGoalEvents) {
+        match.goalMinuteEvents = liveGoalEvents;
+        match.goalMinuteEventsUpdatedAt = Date.now();
+      }
+    }
 
     if (match.aggregate?.active) {
       const [homeGoals, awayGoals] = String(match.score || "0-0").split("-").map(Number);

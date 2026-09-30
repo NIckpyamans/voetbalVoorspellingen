@@ -8,6 +8,7 @@ import { useLiveClock } from "./useLiveClock";
 import { cleanSignalText } from "../shared/matchText.js";
 import { countryFlagEmoji, countryFlagSources } from "../shared/countryFlags";
 import { isGeneratedLogoUrl } from "../shared/clubLogos.js";
+import LiveGoalEvents from "./LiveGoalEvents";
 
 interface MatchCardProps {
   match: Match;
@@ -1673,6 +1674,7 @@ const MatchCard: React.FC<MatchCardProps> = ({ match: initialMatch, prediction: 
           <div className="mt-1 bg-blue-600 px-2 py-0.5 rounded-full text-[10px] font-black text-white">
             Voorspelling {prediction.predHomeGoals}-{prediction.predAwayGoals}
           </div>
+          {isLive && <div className="mt-1"><LiveGoalEvents match={match} /></div>}
           {aggregate?.active && (
             <div className="mt-1 space-y-1">
               <div className="text-[8px] text-amber-300 bg-amber-900/20 border border-amber-500/15 rounded-full px-2 py-0.5">

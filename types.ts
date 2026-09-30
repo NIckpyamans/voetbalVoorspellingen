@@ -76,6 +76,15 @@ export interface ClubStrengthProfile {
   uefaCoefficientStatus?: string;
 }
 
+export interface LiveGoalEvent {
+  id: string;
+  minute: string | null;
+  side: "home" | "away";
+  teamName?: string;
+  playerName?: string | null;
+  kind: "goal" | "penalty" | "own_goal";
+}
+
 export interface Match {
   // ========================================
   // BASIS WEDSTRIJD INFORMATIE
@@ -107,6 +116,8 @@ export interface Match {
   period?: string;
   extraTime?: number;
   liveUpdatedAt?: number;
+  goalMinuteEvents?: LiveGoalEvent[];
+  goalMinuteEventsUpdatedAt?: number;
   freeSourceCoverage?: FreeSourceCoverage;
   sourceCoverage?: FreeSourceCoverage;
   dbFeatureContext?: DatabaseFeatureContext;

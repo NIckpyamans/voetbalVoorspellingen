@@ -240,6 +240,10 @@ export function mergeDuplicateServedMatches(matches) {
       homeScore: preferred.homeScore ?? fallback.homeScore,
       awayScore: preferred.awayScore ?? fallback.awayScore,
       h2h: preferred.h2h || fallback.h2h,
+      goalMinuteEvents: (preferred.goalMinuteEvents?.length || 0) >= (fallback.goalMinuteEvents?.length || 0)
+        ? preferred.goalMinuteEvents
+        : fallback.goalMinuteEvents,
+      goalMinuteEventsUpdatedAt: Math.max(Number(preferred.goalMinuteEventsUpdatedAt || 0), Number(fallback.goalMinuteEventsUpdatedAt || 0)) || undefined,
       homeRecent: preferred.homeRecent || fallback.homeRecent,
       awayRecent: preferred.awayRecent || fallback.awayRecent,
     });

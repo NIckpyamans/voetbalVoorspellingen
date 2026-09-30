@@ -420,6 +420,8 @@ export function mapRawMatch(m: any): Match {
     ...(m.period != null ? { period: m.period } : {}),
     ...(m.extraTime != null ? { extraTime: m.extraTime } : {}),
     ...(m.liveUpdatedAt != null ? { liveUpdatedAt: m.liveUpdatedAt } : {}),
+    ...(Array.isArray(m.goalMinuteEvents) ? { goalMinuteEvents: m.goalMinuteEvents } : {}),
+    ...(m.goalMinuteEventsUpdatedAt != null ? { goalMinuteEventsUpdatedAt: m.goalMinuteEventsUpdatedAt } : {}),
     
     // ========================================
     // VORM & RANKINGS

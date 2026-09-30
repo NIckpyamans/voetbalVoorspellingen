@@ -144,6 +144,9 @@ function baseDetailMatch(match: any) {
     homeScore: match.homeScore,
     awayScore: match.awayScore,
     minute: match.minute,
+    goalMinuteEvents: match.goalMinuteEvents || [],
+    goalMinuteEventsUpdatedAt: match.goalMinuteEventsUpdatedAt || null,
+    liveStats: match.liveStats || null,
     league: match.league,
     roundLabel: match.roundLabel,
     homeTeamId: match.homeTeamId,
@@ -446,7 +449,8 @@ async function readSplitDay(dateKey: string) {
 
 export default async function handler(req: any, res: any) {
   const started = Date.now();
-  const { date, live, days } = req.query;
+  const { date, live, days, range } = req.query;
+  const calendarRangeRequest = range === "calendar";
   const detailMatchId = String(req.query?.matchId || req.query?.id || "");
   const detailRequest = Boolean(detailMatchId);
   const view = String(req.query?.view || req.query?.mode || "compact").toLowerCase();
@@ -457,12 +461,16 @@ export default async function handler(req: any, res: any) {
   const includeDiagnostics = !detailRequest && (full || req.query?.diagnostics === "true");
   const today = todayAmsterdamKey();
   const targetDate = typeof date === "string" && date ? date : today;
-  const isLiveSensitiveRequest = targetDate === today || live === "true";
+  const isLiveSensitiveRequest = !calendarRangeRequest && (targetDate === today || live === "true");
 
   setCorsHeaders(req, res);
   res.setHeader(
     "Cache-Control",
-    isLiveSensitiveRequest ? "no-store" : "s-maxage=120, stale-while-revalidate=60"
+    calendarRangeRequest
+      ? "s-maxage=60, stale-while-revalidate=120"
+      : isLiveSensitiveRequest
+        ? "no-store"
+        : "s-maxage=120, stale-while-revalidate=60"
   );
 
   try {
@@ -503,28 +511,37 @@ export default async function handler(req: any, res: any) {
 
     if (days && typeof days === "string") {
       const numDays = parseInt(days, 10);
-      if (!isNaN(numDays) && numDays > 0 && numDays <= 7) {
+      const maxDays = calendarRangeRequest ? 21 : 7;
+      if (!isNaN(numDays) && numDays > 0 && numDays <= maxDays) {
         const multiDayMatches: any[] = [];
         let sourceBranch = "split-data";
+        const offsets = calendarRangeRequest
+          ? Array.from({ length: numDays }, (_, index) => index)
+          : Array.from({ length: numDays }, (_, index) => index - Math.floor(numDays / 2));
 
         try {
-          for (let i = -Math.floor(numDays / 2); i <= Math.floor(numDays / 2); i++) {
-            const dateStr = addDaysToDateKey(targetDate, i);
+          const daysData = await Promise.all(offsets.map(async (offset) => {
+            const dateStr = addDaysToDateKey(targetDate, offset);
             const dbDay = databaseConfigured() ? await readDatabaseDay(dateStr).catch(() => null) : null;
             if (dbDay?.matches?.length) {
-              sourceBranch = "postgres";
-              multiDayMatches.push(...dbDay.matches.map((match: any) => attachReviewAndNormalize(match, {})));
-            } else {
-              const day = await readSplitDay(dateStr);
-              sourceBranch = day.branch || sourceBranch;
-              multiDayMatches.push(...day.matches.map((match: any) => attachReviewAndNormalize(match, day.reviews)));
+              return { matches: dbDay.matches.map((match: any) => attachReviewAndNormalize(match, {})), branch: "postgres" };
             }
+            const day = await readSplitDay(dateStr);
+            return {
+              matches: day.matches.map((match: any) => attachReviewAndNormalize(match, day.reviews)),
+              branch: day.branch || "split-data",
+            };
+          }));
+          for (const day of daysData) {
+            if (day.branch === "postgres") sourceBranch = "postgres";
+            else if (sourceBranch !== "postgres" && day.branch) sourceBranch = day.branch;
+            multiDayMatches.push(...day.matches);
           }
         } catch {
           const { store, branch } = await fetchServerStore();
           sourceBranch = branch;
-          for (let i = -Math.floor(numDays / 2); i <= Math.floor(numDays / 2); i++) {
-            const dateStr = addDaysToDateKey(targetDate, i);
+          for (const offset of offsets) {
+            const dateStr = addDaysToDateKey(targetDate, offset);
             const dayMatches = (store.matches?.[dateStr] || []).map((match: any) => attachReviewAndNormalize(match, store));
             multiDayMatches.push(...dayMatches);
           }
@@ -542,7 +559,9 @@ export default async function handler(req: any, res: any) {
           total: responseMatches.length,
           rawTotal: uniqueMultiDayMatches.length,
           date: targetDate,
-          dateRange: `${numDays} dagen`,
+          dateRange: calendarRangeRequest
+            ? `${targetDate} t/m ${addDaysToDateKey(targetDate, numDays - 1)}`
+            : `${numDays} dagen`,
           lastRun: meta.lastRun || null,
           workerVersion: meta.workerVersion || "unknown",
           reviewCount: meta.reviewCount || 0,

@@ -58,6 +58,19 @@ export function compactDashboardMatch(match) {
     homeLogo: compactLogo(match.homeLogo),
     awayLogo: compactLogo(match.awayLogo),
     score: match.score,
+    goalMinuteEvents: Array.isArray(match.goalMinuteEvents)
+      ? match.goalMinuteEvents.slice(-12).map((event) => ({
+          id: event.id,
+          minute: event.minute ?? null,
+          side: event.side,
+          teamName: event.teamName || null,
+          playerName: event.playerName || null,
+          kind: event.kind || "goal",
+        }))
+      : [],
+    goalMinuteEventsUpdatedAt: match.goalMinuteEventsUpdatedAt ?? null,
+    homePos: match.homePos ?? null,
+    awayPos: match.awayPos ?? null,
     favorite: match.favorite,
     prediction: match.prediction
       ? {
