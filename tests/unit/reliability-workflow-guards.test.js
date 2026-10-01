@@ -35,6 +35,13 @@ describe("reliability workflow guards", () => {
     expect(workflow).toContain("data/phase-reliability.json monitor/database-availability.json");
   });
 
+  it("lets a successfully persisted worker run finish successfully", () => {
+    const workflow = read(".github/workflows/worker.yml");
+    const persistenceStep = workflow.split("- name: Persist runtime data to Neon/R2 only")[1];
+    expect(persistenceStep).toContain("Worker-data is gepersisteerd via Neon/R2");
+    expect(persistenceStep).not.toMatch(/\bexit\s+1\b/);
+  });
+
   it("runs bounded squad batches four times daily", () => {
     const workflow = read(".github/workflows/team-squad-enrichment.yml");
     expect(workflow).toContain('cron: "17 3,8,13,18 * * *"');

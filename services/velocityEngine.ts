@@ -10,11 +10,13 @@ function hasLiveMatch(matches: Match[] | undefined): boolean {
   });
 }
 
-class VelocityEngine {
+export class VelocityEngine {
   private interval: number | null = null;
+  private activeIntervalMs: number | null = null;
   private subscribers: ((data: MatchesUpdate) => void)[] = [];
   private currentDate: string | null = null;
-  private running = false;
+  private runningDates = new Set<string>();
+  private pulseGeneration = 0;
   private lastPayload: MatchesUpdate | null = null;
 
   subscribe(cb: (data: MatchesUpdate) => void) {
@@ -25,21 +27,30 @@ class VelocityEngine {
   }
 
   async startPulse(date: string) {
-    if (this.interval) {
+    const generation = ++this.pulseGeneration;
+    if (this.interval !== null) {
       clearInterval(this.interval);
       this.interval = null;
     }
+    if (this.quickCheckTimer !== null) {
+      clearInterval(this.quickCheckTimer);
+      this.quickCheckTimer = null;
+    }
+    this.activeIntervalMs = null;
 
     this.currentDate = date;
     await this.fetch(date);
+    if (generation !== this.pulseGeneration) return;
 
     const isToday = date === todayAmsterdamKey();
     const baseIntervalMs = isToday ? 30_000 : 300_000;
 
     const scheduleNext = (ms: number) => {
-      if (this.interval) {
+      if (this.activeIntervalMs === ms && this.interval !== null) return;
+      if (this.interval !== null) {
         clearInterval(this.interval);
       }
+      this.activeIntervalMs = ms;
       this.interval = window.setInterval(async () => {
         if (this.currentDate === date) {
           await this.fetch(date);
@@ -63,26 +74,29 @@ class VelocityEngine {
   private quickCheckTimer: number | null = null;
 
   private async fetch(date: string) {
-    if (this.running) return;
-    this.running = true;
+    if (this.runningDates.has(date)) return;
+    this.runningDates.add(date);
 
     try {
       const data = await fetchMatchesAndPredictions(date);
+      if (this.currentDate !== date) return;
       this.lastPayload = data;
       this.subscribers.forEach((s) => s(data));
     } catch (err) {
       console.error("[VelocityEngine]", err);
     } finally {
-      this.running = false;
+      this.runningDates.delete(date);
     }
   }
 
   stopPulse() {
-    if (this.interval) {
+    this.pulseGeneration += 1;
+    if (this.interval !== null) {
       clearInterval(this.interval);
       this.interval = null;
     }
-    if (this.quickCheckTimer) {
+    this.activeIntervalMs = null;
+    if (this.quickCheckTimer !== null) {
       clearInterval(this.quickCheckTimer);
       this.quickCheckTimer = null;
     }

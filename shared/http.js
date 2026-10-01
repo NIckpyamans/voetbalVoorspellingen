@@ -22,16 +22,28 @@ export async function fetchWithRetry(url, options = {}, retryOptions = {}) {
   let lastError = null;
 
   for (let attempt = 0; attempt <= retries; attempt += 1) {
+    if (options.signal?.aborted) {
+      throw options.signal.reason || new Error("Request aborted");
+    }
+
     const controller = new AbortController();
+    const callerSignal = options.signal;
+    const forwardCallerAbort = () => controller.abort(callerSignal?.reason);
+    if (callerSignal?.aborted) controller.abort(callerSignal.reason);
+    else callerSignal?.addEventListener("abort", forwardCallerAbort, { once: true });
     const timeout = setTimeout(() => controller.abort(), timeoutMs);
+    const cleanup = () => {
+      clearTimeout(timeout);
+      callerSignal?.removeEventListener("abort", forwardCallerAbort);
+    };
     const started = Date.now();
 
     try {
       const response = await fetch(url, {
         ...options,
-        signal: options.signal || controller.signal,
+        signal: controller.signal,
       });
-      clearTimeout(timeout);
+      cleanup();
 
       const durationMs = Date.now() - started;
       if (!retryOnStatuses.has(response.status) || attempt === retries) {
@@ -53,7 +65,8 @@ export async function fetchWithRetry(url, options = {}, retryOptions = {}) {
         url: String(url).replace(/\?.*$/, ""),
       });
     } catch (error) {
-      clearTimeout(timeout);
+      cleanup();
+      if (callerSignal?.aborted) throw error;
       lastError = error;
       if (attempt === retries) {
         logger.error(`${event}.failed`, {
