@@ -1,11 +1,11 @@
 # Data Quality Audit
 
-Laatst bijgewerkt: 2026-09-30T09:02:46.203Z
+Laatst bijgewerkt: 2026-10-01T09:28:49.727Z
 Lookback: 45 dagen
 
 ## Scores
-- Wedstrijden: 751
-- Oude wedstrijden: 555
+- Wedstrijden: 748
+- Oude wedstrijden: 552
 - Pending result backfills: 0
 - Ontbrekende oude scores: 0
 - H2H-dekking: 42%
@@ -22,7 +22,7 @@ Lookback: 45 dagen
 
 ## Per competitie
 - Netherlands - Eredivisie: 39 duels, vorm 92%, H2H 49%, inzetbewijs 0%, lekvrije reviews 0% (0/0), stats 100%; gaten: h2h, confirmed_lineups, timestamped_odds, immutable_snapshot_windows, leak_free_reviews
-- Netherlands - Eerste Divisie: 113 duels, vorm 49%, H2H 9%, inzetbewijs 0%, lekvrije reviews 0% (0/0), stats 100%; gaten: form, h2h, confirmed_lineups, timestamped_odds, immutable_snapshot_windows, leak_free_reviews
+- Netherlands - Eerste Divisie: 110 duels, vorm 50%, H2H 9%, inzetbewijs 0%, lekvrije reviews 0% (0/0), stats 100%; gaten: form, h2h, confirmed_lineups, timestamped_odds, immutable_snapshot_windows, leak_free_reviews
 - Germany - Bundesliga: 83 duels, vorm 92%, H2H 49%, inzetbewijs 0%, lekvrije reviews 0% (0/0), stats 85%; gaten: h2h, confirmed_lineups, timestamped_odds, immutable_snapshot_windows, leak_free_reviews, goal_timeline
 - Germany - 2. Bundesliga: 36 duels, vorm 86%, H2H 36%, inzetbewijs 0%, lekvrije reviews 0% (0/0), stats 100%; gaten: form, h2h, confirmed_lineups, timestamped_odds, immutable_snapshot_windows, leak_free_reviews
 - England - Premier League: 90 duels, vorm 96%, H2H 56%, inzetbewijs 2%, lekvrije reviews 0% (0/0), stats 100%; gaten: h2h, confirmed_lineups, timestamped_odds, immutable_snapshot_windows, leak_free_reviews
@@ -41,9 +41,6 @@ Lookback: 45 dagen
 - Toon geen inzetadvies zolang bevestigde opstellingen, verse getimestampte 1X2-odds en minimaal 70% modeldata niet samen aanwezig zijn.
 
 ## Samples
-- H2H mist: 2026-08-17: De Graafschap - Jong AZ Alkmaar
-- H2H mist: 2026-08-17: Jong Ajax - FC Emmen
-- H2H mist: 2026-08-17: Jong FC Utrecht - Vitesse
 - H2H mist: 2026-08-18: Dinamo Zagreb - Viking
 - H2H mist: 2026-08-18: Fenerbahçe - Lyon
 - H2H mist: 2026-08-18: Levski Sofia - AEK Athens
@@ -51,3 +48,6 @@ Lookback: 45 dagen
 - H2H mist: 2026-08-19: Hapoel Beer Sheva - Sabah FK
 - H2H mist: 2026-08-19: NEC Nijmegen - Bodø/Glimt
 - H2H mist: 2026-08-19: Slovan Bratislava - NK Celje
+- H2H mist: 2026-08-20: Kairat Almaty - Anderlecht
+- H2H mist: 2026-08-20: Jagiellonia Bialystok - FC Iberia 1999 Tiflis
+- H2H mist: 2026-08-20: Mjällby AIF - Red Bull Salzburg
