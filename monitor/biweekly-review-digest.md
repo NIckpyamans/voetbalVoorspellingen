@@ -1,16 +1,18 @@
 # FootyAI verbeteraudit
 
-Periode: 2026-09-22 t/m 2026-09-28
+Periode: 2026-09-25 t/m 2026-10-01
 
-AI bundel over de laatste 7 dagen: 1 monitorthema's en 5 uitvoerbare verbeteracties.
+AI bundel over de laatste 7 dagen: 2 monitorthema's en 5 uitvoerbare verbeteracties.
 
 - Runs: 7
-- Bevindingen: 2
-- Thema's: 1
+- Bevindingen: 3
+- Thema's: 2
 
 ## Hoofdpunten
 - H2H niet gevuld (2x, severity: medium)
   - Trek H2H verder uit historische competitiebestanden en bewaak fallbackdekking in de worker.
+- Workerdata verouderd (1x, severity: high)
+  - Gebruik het reviewbranch-voorstel als veilige volgende patchronde.
 
 ## Architectuuranalyse
 Professionele architectuuranalyse voor schaalbaarheid, datakwaliteit, AI-agentwaarde, databasegroei en modelbetrouwbaarheid.
@@ -80,7 +82,7 @@ Professionele architectuuranalyse voor schaalbaarheid, datakwaliteit, AI-agentwa
 ## Volgende aanbevelingen
 1. H2H-dekking gericht verhogen (Hoog, impact: Hoog) - Actuele H2H-dekking is 42%; doel is minimaal 85% met betrouwbare historie en expliciete missing reasons.
 2. Confirmed lineups rond kickoff verzamelen (Hoog, impact: Zeer hoog) - Confirmed-lineupdekking is 0%; T-75, T-45 en T-20 blijven de actieve capturevensters.
-3. Opening-, prematch- en closing odds vastleggen (Hoog, impact: Zeer hoog) - Echte oddsdekking is 8%; CLV/ROI blijft geblokkeerd zonder geldige timestamped paren. API-Football accepteert het huidige plan nog niet.
+3. Opening-, prematch- en closing odds vastleggen (Hoog, impact: Zeer hoog) - Echte oddsdekking is 9%; CLV/ROI blijft geblokkeerd zonder geldige timestamped paren. API-Football accepteert het huidige plan nog niet.
 4. R2/Neon-herstelketen controleren (Hoog, impact: Hoog) - Neon is geconfigureerd maar blokkeert met HTTP 402/quota; R2 blijft actief en replay moet automatisch hervatten na herstel.
 5. League/phase-kalibratie in shadow mode beoordelen (Middel, impact: Hoog) - 71 unieke reguliere wedstrijden; gate gehaald. Promoveer alleen profielen met voldoende Brier-verbetering.
 
@@ -92,7 +94,8 @@ Professionele architectuuranalyse voor schaalbaarheid, datakwaliteit, AI-agentwa
 5. League/phase-kalibratie in shadow mode beoordelen: nightly-model-maintenance.yml
 
 ## Reviewbranch voorstel
-- Geen voorstel nodig.
+- codex/review-20261001
+- AI reviewvoorstel voor 2026-10-01: 1 aandachtspunt(en) met patchadvies, niet automatisch live.
 
 ## Mailstatus
 - Mailverzending vereist nog aparte mailcredentials of een mailservice. De bundel wordt nu wel automatisch opgebouwd en opgeslagen.

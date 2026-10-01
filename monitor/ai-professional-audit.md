@@ -1,6 +1,6 @@
 # FootyAI professionele AI-audit
 
-Gegenereerd: 2026-09-28T14:02:34.652Z
+Gegenereerd: 2026-10-01T13:23:00.019Z
 Bron: https://voetbalvoorspellingen-clean.vercel.app
 
 ## Samenvatting
@@ -8,32 +8,32 @@ Professionele audit actief. Kritieke opslagvelden lijken aanwezig; blijf kalibra
 
 ## Live status
 - Wedstrijden vandaag: 0
-- Voorspellingen vandaag: 114
+- Voorspellingen vandaag: 98
 - Reviews: 1734
 - Prediction snapshots: 25
 - Worker: v18-score-data-scout
 - Feature coverage: 0%
-- Echte odds coverage: 8%
+- Echte odds coverage: 9%
 - Alleen historisch marktprofiel: 0%
-- Gemiddelde datacompleetheid: 95%
+- Gemiddelde datacompleetheid: 96%
 - Datacompleetheid-audit: onbekend
 - Odds readiness: onbekend
 
 ## Recente keten (14 dagen)
-- Afgeronde wedstrijden met eindstand: 114/114 (100%)
-- Geëvalueerde wedstrijden: 114/114 (100%)
-- Snapshot-backed reviews: 30 (26%)
-- Uitkomsthit: 53%
+- Afgeronde wedstrijden met eindstand: 98/98 (100%)
+- Geëvalueerde wedstrijden: 98/98 (100%)
+- Snapshot-backed reviews: 30 (31%)
+- Uitkomsthit: 54%
 - Exacte-scorehit: 9%
-- Gemiddelde Brier score: 0.566
-- Gemiddelde log loss: 0.975
-- Echte odds: 8%
+- Gemiddelde Brier score: 0.561
+- Gemiddelde log loss: 0.972
+- Echte odds: 9%
 - Confirmed lineups: 0%
 
 ## Segmenten
 - club_friendlies: 0 reviews, uitkomst onbekend, exact onbekend, Brier onbekend
-- european_knockout: 18 reviews, uitkomst 61%, exact 6%, Brier 0.528
-- domestic_competitions: 96 reviews, uitkomst 51%, exact 9%, Brier 0.573
+- european_knockout: 9 reviews, uitkomst 78%, exact 0%, Brier 0.482
+- domestic_competitions: 89 reviews, uitkomst 52%, exact 10%, Brier 0.569
 
 ## Opslag-audit
 - prediction_id: aanwezig; gate voldaan

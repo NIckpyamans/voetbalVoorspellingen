@@ -1,6 +1,6 @@
 # Widget Integration Audit
 
-Gegenereerd: 2026-09-28T14:02:34.514Z
+Gegenereerd: 2026-10-01T13:22:59.935Z
 Status: degraded
 
 ## Neon
