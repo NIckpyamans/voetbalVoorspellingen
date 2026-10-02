@@ -47,6 +47,21 @@ export function h2hProvenanceRank(profile) {
   return played * 1e9 + Number(explicitAvailability) * 1e6 - Number(legacyStub) * 1e5 + dayBucket;
 }
 
+// De platte velden zijn een spiegel van het h2h-profiel en worden daarom
+// altijd uit het winnende profiel afgeleid. Anders blijft een oude,
+// achterhaalde contract-fallback-status hangen naast echte ontmoetingen.
+function deriveH2HProvenanceFields(profile) {
+  const played = Number(profile?.played || profile?.results?.length || 0);
+  return {
+    h2hStatus: profile?.status || null,
+    h2hSource: profile?.source || profile?.provider || null,
+    h2hAsOf: profile?.asOf || profile?.sourceTimestamp || null,
+    h2hPlayed: played,
+    h2hCompetitionPlayed: Number(profile?.sameCompetitionPlayed || 0),
+    h2hAvailability: played > 0 ? "beschikbaar" : profile?.availabilityStatus || "nog niet gecontroleerd",
+  };
+}
+
 export function mergeStoredDuplicateMatch(current, incoming) {
   const incomingPreferred = storedMatchQuality(incoming) > storedMatchQuality(current);
   const preferred = incomingPreferred ? { ...incoming } : { ...current };
@@ -56,13 +71,13 @@ export function mergeStoredDuplicateMatch(current, incoming) {
   preferred.homeTeamId ||= fallback?.homeTeamId || "";
   preferred.awayTeamId ||= fallback?.awayTeamId || "";
   const h2hWinner = h2hProvenanceRank(fallback?.h2h) > h2hProvenanceRank(preferred?.h2h) ? fallback : preferred;
-  const h2hLoser = h2hWinner === preferred ? fallback : preferred;
-  preferred.h2h = h2hWinner?.h2h || h2hLoser?.h2h;
-  for (const field of H2H_PROVENANCE_FIELDS) {
-    const winnerValue = h2hWinner?.[field];
-    const loserValue = h2hLoser?.[field];
-    const value = winnerValue !== undefined && winnerValue !== null && winnerValue !== "" ? winnerValue : loserValue;
-    if (value !== undefined) preferred[field] = value;
+  preferred.h2h = h2hWinner?.h2h || preferred.h2h || fallback?.h2h || null;
+  if (preferred.h2h) {
+    const derived = deriveH2HProvenanceFields(preferred.h2h);
+    for (const field of H2H_PROVENANCE_FIELDS) {
+      const own = h2hWinner?.[field];
+      preferred[field] = derived[field] ?? (own !== undefined && own !== null && own !== "" ? own : undefined);
+    }
   }
   const recentCount = (value) => Number(value?.gamesPlayed || value?.recentMatches?.length || 0);
   preferred.homeRecent = recentCount(preferred.homeRecent) >= recentCount(fallback?.homeRecent) ? preferred.homeRecent : fallback?.homeRecent;

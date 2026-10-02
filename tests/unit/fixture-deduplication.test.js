@@ -132,6 +132,57 @@ describe("fixture deduplication", () => {
     });
   });
 
+  it("rebuilds the flat provenance fields from the winning profile", () => {
+    const rows = dedupeStoredMatches([
+      {
+        id: "stored",
+        date: "2026-10-10",
+        homeTeamName: "Watford",
+        awayTeamName: "Burnley",
+        h2h: {
+          played: 4,
+          results: [{ score: "1-0" }],
+          status: "football-data.co.uk historical results",
+          source: "football-data.co.uk historical results",
+          asOf: "2026-10-02T11:41:17.596Z",
+        },
+        h2hStatus: "h2h-agent-empty",
+        h2hAvailability: "nog niet gecontroleerd",
+        h2hSource: "contract-fallback",
+        h2hAsOf: null,
+        h2hPlayed: 0,
+      },
+      {
+        id: "fresh",
+        date: "2026-10-10",
+        homeTeamName: "Watford",
+        awayTeamName: "Burnley",
+        h2h: {
+          played: 0,
+          results: [],
+          status: "provider_acceptance_blocked",
+          availabilityStatus: "provider_acceptance_blocked",
+          source: "api-football",
+          asOf: "2026-10-02T12:00:00.000Z",
+        },
+        h2hStatus: "provider_acceptance_blocked",
+        h2hAvailability: "provider_acceptance_blocked",
+        h2hPlayed: 0,
+      },
+    ], options);
+
+    expect(rows[0].h2h?.status).toBe("football-data.co.uk historical results");
+    expect(rows[0]).toMatchObject({
+      h2hStatus: "football-data.co.uk historical results",
+      h2hAvailability: "beschikbaar",
+      h2hSource: "football-data.co.uk historical results",
+      h2hAsOf: "2026-10-02T11:41:17.596Z",
+      h2hPlayed: 4,
+    });
+    expect(rows[0].h2hStatus).not.toBe("h2h-agent-empty");
+    expect(rows[0].h2hAvailability).not.toBe("nog niet gecontroleerd");
+  });
+
   it("keeps the newest verdict when neither side found meetings", () => {
     const rows = dedupeStoredMatches([
       {
