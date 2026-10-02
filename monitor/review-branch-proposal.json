@@ -1,31 +1,32 @@
 {
-  "generatedAt": "2026-10-01T01:19:22.194Z",
-  "date": "2026-10-01",
+  "generatedAt": "2026-10-02T01:43:02.453Z",
+  "date": "2026-10-02",
   "proposalOnly": true,
   "shouldPropose": true,
-  "branchName": "codex/review-20261001",
-  "summary": "AI reviewvoorstel voor 2026-10-01: 1 aandachtspunt(en) met patchadvies, niet automatisch live.",
+  "branchName": "codex/review-20261002",
+  "summary": "AI reviewvoorstel voor 2026-10-02: 1 aandachtspunt(en) met patchadvies, niet automatisch live.",
   "latestStats": {
-    "today": "2026-10-01",
-    "tomorrow": "2026-10-02",
+    "today": "2026-10-02",
+    "tomorrow": "2026-10-03",
     "dataPresent": true,
-    "lastRun": 1790803588218,
-    "ageMinutes": 233,
+    "lastRun": 1790905167191,
+    "ageMinutes": 4,
     "maxWorkerAgeMinutes": 180,
-    "todayMatches": 0,
-    "tomorrowMatches": 1,
+    "todayMatches": 1,
+    "tomorrowMatches": 6,
     "fixtureCalendar": {
       "status": "has_current_matches",
       "healthy": true,
       "emptyWindowOk": true,
       "severity": "none",
-      "todayCount": 0,
-      "tomorrowCount": 1,
+      "todayCount": 1,
+      "tomorrowCount": 6,
       "windowDays": 7,
       "checkedDates": [
         "2026-10-02",
         "2026-10-03",
-        "2026-10-04"
+        "2026-10-04",
+        "2026-10-09"
       ],
       "nextMatchDate": "2026-10-02",
       "nextMatchCount": 1,
@@ -34,28 +35,28 @@
     "liveMatches": 0,
     "liveWithoutMinute": 0,
     "h2hFilled": 0,
-    "h2hMissing": 0,
+    "h2hMissing": 1,
     "standingsCount": 11,
-    "cupSheetCount": 6,
+    "cupSheetCount": 1,
     "phaseReliabilityCount": 5
   },
   "findings": [
     {
       "priority": 1,
-      "key": "worker_stale",
-      "severity": "high",
-      "message": "Workerdata is 233 minuten oud.",
-      "whyItMatters": "Workerdata is te oud en verdient een workflow- of broncheck.",
+      "key": "h2h_empty",
+      "severity": "medium",
+      "message": "Alle wedstrijden van vandaag hebben lege H2H-data.",
+      "whyItMatters": "Onderlinge duels worden niet sterk genoeg gevuld.",
       "recommendedFiles": [
-        ".github/workflows/worker.yml",
-        "scripts/server-worker.js"
+        "scripts/server-worker.js",
+        "components/MatchCard.tsx"
       ],
       "details": {}
     }
   ],
   "recommendedFiles": [
-    ".github/workflows/worker.yml",
-    "scripts/server-worker.js"
+    "scripts/server-worker.js",
+    "components/MatchCard.tsx"
   ],
   "nextStep": "Gebruik deze proposal om gericht een reviewbranch te maken en alleen na controle te mergen."
 }
