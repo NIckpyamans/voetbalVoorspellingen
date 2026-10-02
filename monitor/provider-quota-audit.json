@@ -1,5 +1,5 @@
 {
-  "checkedAt": "2026-10-01T11:00:18.137Z",
+  "checkedAt": "2026-10-02T10:33:00.657Z",
   "oddsApi": {
     "configured": true,
     "valid": true,
@@ -21,10 +21,10 @@
       "soccer_france_coupe_de_france",
       "soccer_italy_coppa_italia",
       "soccer_japan_j_league",
-      "soccer_korea_kleague1",
       "soccer_saudi_arabia_pro_league",
       "soccer_spain_copa_del_rey",
       "soccer_uefa_champs_league_qualification",
+      "soccer_uefa_champs_league_women",
       "soccer_uefa_euro_qualification",
       "soccer_uefa_european_championship"
     ],
@@ -32,7 +32,7 @@
       "key": "soccer_fa_cup",
       "status": "expected_inactive"
     },
-    "activeSports": 83,
+    "activeSports": 86,
     "soccerSportKeys": [
       "soccer_argentina_primera_division",
       "soccer_australia_aleague",
@@ -60,6 +60,7 @@
       "soccer_greece_super_league",
       "soccer_italy_serie_a",
       "soccer_italy_serie_b",
+      "soccer_korea_kleague1",
       "soccer_league_of_ireland",
       "soccer_mexico_ligamx",
       "soccer_netherlands_eredivisie",
@@ -75,7 +76,6 @@
       "soccer_switzerland_superleague",
       "soccer_turkey_super_league",
       "soccer_uefa_champs_league",
-      "soccer_uefa_champs_league_women",
       "soccer_uefa_europa_conference_league",
       "soccer_uefa_europa_league",
       "soccer_uefa_nations_league",
@@ -92,12 +92,16 @@
       "soccer_uefa_europa_conference_league_qualification"
     ],
     "competitionCoverageStatus": "seasonal_unavailable",
-    "newlyInactiveSports": [],
+    "newlyInactiveSports": [
+      "soccer_uefa_champs_league_women"
+    ],
     "newlyUnavailableSports": [],
-    "newlyAvailableSports": [],
+    "newlyAvailableSports": [
+      "soccer_korea_kleague1"
+    ],
     "quota": {
-      "x-requests-remaining": "492",
-      "x-requests-used": "8",
+      "x-requests-remaining": "480",
+      "x-requests-used": "20",
       "x-requests-last": "0"
     },
     "errorCode": null
@@ -169,8 +173,8 @@
     "records": 50,
     "quota": {
       "x-ratelimit-limit": "1000",
-      "x-ratelimit-remaining": "974",
-      "x-ratelimit-reset": "1790899200"
+      "x-ratelimit-remaining": "973",
+      "x-ratelimit-reset": "1790985600"
     },
     "accepted": false,
     "policy": "Veertien dagen meten; nooit automatisch promoveren op basis van alleen een geldige key."
@@ -257,10 +261,10 @@
       "upcomingMarket": {
         "valid": true,
         "status": 200,
-        "records": 0,
-        "firstId": null,
-        "firstName": null,
-        "hasOddsFlag": false,
+        "records": 1,
+        "firstId": 19713905,
+        "firstName": "Nordsjælland vs Odense BK",
+        "hasOddsFlag": true,
         "rateLimit": {
           "resets_in_seconds": 3599,
           "remaining": 177,
@@ -272,13 +276,13 @@
         },
         "errorCode": null
       },
-      "testedFixtureId": 216268,
+      "testedFixtureId": 19713905,
       "oddsByFixture": {
         "label": "oddsByFixture",
         "valid": true,
         "status": 200,
-        "records": 0,
-        "firstId": null,
+        "records": 3,
+        "firstId": 246035030822,
         "firstName": null,
         "hasOddsFlag": false,
         "rateLimit": {
@@ -316,8 +320,8 @@
         "label": "oddsByFixtureMarket",
         "valid": true,
         "status": 200,
-        "records": 0,
-        "firstId": null,
+        "records": 3,
+        "firstId": 246035030822,
         "firstName": null,
         "hasOddsFlag": false,
         "rateLimit": {
