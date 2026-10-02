@@ -18,7 +18,7 @@ env:
   DATA_BRANCH: codex/step3b-layout
   FOOTYAI_DATE_WINDOW: today,+1,+2,+3,+4,+5,+6,+7,+8,+9,+10,+11,+12,+13,+14,+15,+16,+17,+18,+19,+20,+21
   H2H_BACKFILL_DAYS_AHEAD: "21"
-  H2H_BACKFILL_LIMIT: "32"
+  H2H_BACKFILL_LIMIT: "50"
   FOOTYAI_LIGHTWEIGHT_REFRESH: "true"
   API_FOOTBALL_H2H_ENABLED: "false"
   API_FOOTBALL_MAX_FETCHES_PER_RUN: "8"
@@ -48,7 +48,7 @@ env:
 jobs:
   refresh-calendar:
     runs-on: ubuntu-latest
-    timeout-minutes: 35
+    timeout-minutes: 70
     steps:
       - uses: actions/checkout@v5
         with:
@@ -61,7 +61,7 @@ jobs:
           cache: npm
       - run: npm ci
       - name: Discover fixtures today and the next 21 days
-        timeout-minutes: 9
+        timeout-minutes: 20
         run: node scripts/server-worker.js
       - name: Collect bounded upcoming team-form context
         timeout-minutes: 5
@@ -76,13 +76,21 @@ jobs:
         run: npm run enrich:squads:upcoming
         continue-on-error: true
       - name: Publish enriched calendar and predictions to Neon/R2
-        timeout-minutes: 9
+        timeout-minutes: 25
         run: node scripts/ci-neon-safe.js -- node scripts/server-worker.js
       - name: Commit enriched team caches
+        # Ook bij een time-out in een vorige stap: de dagen die de worker al
+        # heeft afgerond moeten alsnog gepubliceerd worden.
+        if: always()
+        continue-on-error: true
         run: |
           git config user.name github-actions
           git config user.email github-actions@github.com
-          git add data/team-form-cache.json data/team-squad-cache.json monitor/upcoming-team-form-enrichment.json monitor/upcoming-team-squad-enrichment.json
+          git add data/team-form-cache.json data/team-squad-cache.json
+          # data/days staat bewust in .gitignore; de dagbestanden zijn de
+          # statische fallback van de app en moeten dus geforceerd toegevoegd
+          # worden zodat de statische fallback werkt.
+          git add -f data/days data/meta.json 2>/dev/null || true
           git diff --staged --quiet && echo "geen enrichmentcachewijzigingen" && exit 0
           git commit -m "refresh upcoming team context [skip vercel]"
           for attempt in 1 2 3; do
@@ -91,6 +99,16 @@ jobs:
             sleep $((attempt * 5))
           done
           exit 1
+      - name: Upload team enrichment reports
+        if: always()
+        uses: actions/upload-artifact@v5
+        with:
+          name: team-enrichment-${{ github.run_id }}
+          path: |
+            monitor/upcoming-team-form-enrichment.json
+            monitor/upcoming-team-squad-enrichment.json
+          if-no-files-found: warn
+          retention-days: 30
       - name: Build R2 dashboard day cache
         run: node scripts/ci-neon-safe.js -- npm run db:dashboard-cache:r2
         continue-on-error: true
