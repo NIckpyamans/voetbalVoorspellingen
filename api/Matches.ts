@@ -168,6 +168,11 @@ function baseDetailMatch(match: any) {
     dataSource: match.dataSource || null,
     updatedAt: match.updatedAt || match.liveUpdatedAt || null,
     sourceAsOf: match.sourceAsOf || null,
+    h2hStatus: match.h2h?.status || match.h2hStatus || null,
+    h2hAvailability: match.h2hAvailability || null,
+    h2hSource: match.h2h?.source || match.h2hSource || null,
+    h2hAsOf: match.h2h?.asOf || match.h2h?.sourceTimestamp || match.h2hAsOf || match.sourceAsOf?.h2h || null,
+    h2hCompetitionPlayed: match.h2h?.sameCompetitionPlayed ?? match.h2hCompetitionPlayed ?? 0,
     providerDiagnostics: match.providerDiagnostics || null,
     predictionGeneratedAt: match.prediction?.generatedAt || match.predictionGeneratedAt || null,
     lineupCapturedAt: match.lineupSummary?.capturedAt || null,
@@ -349,7 +354,7 @@ function compactLearningSummary(summary: any) {
 function compactDetailMatch(match: any, section: string) {
   const base = baseDetailMatch(match);
   if (section === "h2h") {
-    return { ...base, h2h: match.h2h, h2hStatus: match.h2hStatus };
+    return { ...base, h2h: match.h2h, h2hStatus: match.h2h?.status || match.h2hStatus };
   }
   if (section === "opstelling") {
     return {

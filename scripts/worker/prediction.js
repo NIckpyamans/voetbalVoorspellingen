@@ -117,25 +117,57 @@ export function buildPoissonScoreModel(homeXG, awayXG, options = {}) {
 
 export function buildH2HReliability(h2h = {}, options = {}) {
   const results = Array.isArray(h2h?.results) ? h2h.results : [];
-  const played = Math.max(Number(h2h?.played || 0), results.length);
+  const cutoff = options.kickoff || options.generatedAt || null;
+  const cutoffMs = Date.parse(cutoff || "");
+  const cutoffDate = String(cutoff || "").slice(0, 10);
+  const hasCutoff = Number.isFinite(cutoffMs) || Number.isFinite(Date.parse(options.generatedAt || ""));
+  const eligibleResults = results.filter((result) => {
+    const rawDate = result?.kickoff || result?.startTime || result?.date || "";
+    if (!rawDate) return !hasCutoff;
+    const dateText = String(rawDate);
+    const resultMs = Date.parse(dateText);
+    if (/^\d{4}-\d{2}-\d{2}$/.test(dateText) && cutoffDate) return dateText < cutoffDate;
+    if (!Number.isFinite(resultMs)) return false;
+    if (Number.isFinite(cutoffMs)) return resultMs < cutoffMs;
+    const generatedMs = Date.parse(options.generatedAt || "");
+    return !Number.isFinite(generatedMs) || resultMs < generatedMs;
+  });
+  const played = results.length ? eligibleResults.length : hasCutoff ? 0 : Number(h2h?.played || 0);
   if (!played) {
     return {
       score: 0,
       sampleSize: 0,
+      sameCompetitionPlayed: 0,
+      ageDays: null,
+      eligibleResults: [],
+      excludedResults: results.length,
       label: "empty",
-      reason: "geen H2H-duels",
+      reason: results.length ? "geen pre-kickoff H2H-duels" : "geen H2H-duels",
     };
   }
 
-  const nowMs = Date.parse(options.generatedAt || options.kickoff || new Date().toISOString());
-  const dated = results
-    .map((result) => Date.parse(result?.date || result?.kickoff || result?.startTime || ""))
+  const nowMs = Number.isFinite(cutoffMs) ? cutoffMs : Date.parse(options.generatedAt || new Date().toISOString());
+  const dated = eligibleResults
+    .map((result) => Date.parse(result?.kickoff || result?.startTime || result?.date || ""))
     .filter((value) => Number.isFinite(value));
   const newestMs = dated.length ? Math.max(...dated) : null;
   const ageDays = newestMs && Number.isFinite(nowMs) ? Math.max(0, (nowMs - newestMs) / 86400000) : null;
   const sampleScore = played >= 8 ? 1 : played >= 5 ? 0.82 : played >= 3 ? 0.58 : played >= 2 ? 0.34 : 0.18;
   const recencyScore = ageDays == null ? 0.55 : ageDays <= 365 ? 1 : ageDays <= 730 ? 0.78 : ageDays <= 1460 ? 0.48 : 0.24;
-  const sameCompetitionPlayed = Number(h2h?.sameCompetitionPlayed || 0);
+  const declaredSameCompetitionPlayed = Number(h2h?.sameCompetitionPlayed || 0);
+  const explicitlyTaggedResults = eligibleResults.filter((result) => result.competitionId != null || result.tournamentId != null || result.competition_id != null || result.league);
+  const sameCompetitionPlayed = explicitlyTaggedResults.length
+    ? explicitlyTaggedResults.filter((result) => {
+        if (options.competitionId != null) return String(result.competitionId || result.tournamentId || result.competition_id || "") === String(options.competitionId);
+        const currentLeague = String(options.league || "").trim().toLowerCase();
+        const resultLeague = String(result.league || "").trim().toLowerCase();
+        if (!currentLeague || !resultLeague) return false;
+        if (currentLeague === resultLeague) return true;
+        return resultLeague.endsWith(` - ${currentLeague}`) || currentLeague.endsWith(` - ${resultLeague}`);
+      }).length
+    : results.length
+      ? Math.min(eligibleResults.length, declaredSameCompetitionPlayed)
+      : Math.min(played, declaredSameCompetitionPlayed);
   const competitionScore = sameCompetitionPlayed >= 3 ? 1 : sameCompetitionPlayed >= 1 ? 0.72 : 0.42;
   const status = String(h2h?.status || "").toLowerCase();
   const sourceScore = status === "loaded" ? 1 : status === "all-competitions" ? 0.7 : status === "cache" ? 0.65 : 0.5;
@@ -149,6 +181,8 @@ export function buildH2HReliability(h2h = {}, options = {}) {
     sampleSize: played,
     sameCompetitionPlayed,
     ageDays: ageDays == null ? null : Math.round(ageDays),
+    eligibleResults,
+    excludedResults: Math.max(0, results.length - eligibleResults.length),
     label: score >= 0.75 ? "strong" : score >= 0.52 ? "usable" : score >= 0.3 ? "thin" : "weak",
     reason:
       played < 3
@@ -196,6 +230,8 @@ export function buildFeatureVector(input, deps) {
   const awayOverall = stabilizeOverallForm(input.awayRecent);
   const homeCompareKey = String(input.homeTeamId || deps.normalizeName(input.homeTeamName || ""));
   const awayCompareKey = String(input.awayTeamId || deps.normalizeName(input.awayTeamName || ""));
+  const h2hHomeCompareKey = String(input.h2h?.homeTeamId || input.homeTeamId || deps.normalizeName(input.homeTeamName || ""));
+  const h2hAwayCompareKey = String(input.h2h?.awayTeamId || input.awayTeamId || deps.normalizeName(input.awayTeamName || ""));
   const homePpg = deps.toPointsPerGame(input.homeRecent?.wins, input.homeRecent?.draws, input.homeRecent?.gamesPlayed);
   const awayPpg = deps.toPointsPerGame(input.awayRecent?.wins, input.awayRecent?.draws, input.awayRecent?.gamesPlayed);
   const lineupRatingDiff = Number(
@@ -212,7 +248,11 @@ export function buildFeatureVector(input, deps) {
   const leagueReliability = input.leagueReliability || {};
   const phaseReliability = input.phaseReliability || {};
   const refereeProfile = input.refereeProfile || {};
-  const h2hSignal = buildH2HReliability(input.h2h, { kickoff: input.kickoff, generatedAt: input.generatedAt });
+  const h2hSignal = buildH2HReliability(input.h2h, { kickoff: input.kickoff, generatedAt: input.generatedAt, competitionId: input.competitionId, league: input.league });
+  const h2hResults = h2hSignal.eligibleResults || [];
+  const h2hHomeWins = h2hResults.filter((result) => String(result?.winnerId || "") === h2hHomeCompareKey).length;
+  const h2hAwayWins = h2hResults.filter((result) => String(result?.winnerId || "") === h2hAwayCompareKey).length;
+  const modelH2H = { ...input.h2h, played: h2hSignal.sampleSize, homeWins: h2hHomeWins, awayWins: h2hAwayWins, results: h2hResults };
   const h2hSampleSize = h2hSignal.sampleSize;
   const h2hReliability = h2hSignal.score;
   const availabilitySignal = buildAvailabilitySignal(input, deps);
@@ -342,20 +382,20 @@ export function buildFeatureVector(input, deps) {
     h2h_sample_size: h2hSampleSize,
     h2h_reliability: h2hReliability,
     h2h_balance:
-      input.h2h?.played >= 1
-        ? Number(((Number(input.h2h.homeWins || 0) - Number(input.h2h.awayWins || 0)) / Math.max(Number(input.h2h.played || 1), 1)).toFixed(2))
+      h2hSampleSize >= 1
+        ? Number(((h2hHomeWins - h2hAwayWins) / h2hSampleSize).toFixed(2))
         : 0,
-    h2h_recent_5_balance: deps.calculateRecentH2HBalance(input.h2h, homeCompareKey, awayCompareKey),
+    h2h_recent_5_balance: deps.calculateRecentH2HBalance(modelH2H, h2hHomeCompareKey, h2hAwayCompareKey),
     recent_h2h_balance:
-      input.h2h?.results?.length >= 1
+      h2hResults.length >= 1
         ? Number(
             (() => {
-              const recent5 = (input.h2h.results || []).slice(-5);
+              const recent5 = h2hResults.slice(-5);
               let homeWins = 0;
               let awayWins = 0;
               recent5.forEach((result) => {
-                if (String(result.winnerId || "") === homeCompareKey) homeWins += 1;
-                else if (String(result.winnerId || "") === awayCompareKey) awayWins += 1;
+                if (String(result.winnerId || "") === h2hHomeCompareKey) homeWins += 1;
+                else if (String(result.winnerId || "") === h2hAwayCompareKey) awayWins += 1;
               });
               return ((homeWins - awayWins) / Math.max(recent5.length, 1)).toFixed(2);
             })()

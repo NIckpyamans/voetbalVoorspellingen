@@ -14,6 +14,7 @@ export function normalizeTeamIdentityName(value) {
 
 function providerIdsForTeam(team = {}) {
   return {
+    canonicalClubId: team?.canonicalClubId ? String(team.canonicalClubId) : null,
     espn: team?.espnTeamId ? String(team.espnTeamId) : null,
     espnLeagueCode: team?.espnLeagueCode ? String(team.espnLeagueCode) : null,
     sofascore: team?.sofascoreTeamId ? String(team.sofascoreTeamId) : null,
@@ -35,7 +36,8 @@ export function loadTeamProviderIndex(root = process.cwd(), logger = console) {
     for (const team of payload?.teams || []) {
       if (team?.active === false) continue;
       const ids = providerIdsForTeam(team);
-      for (const alias of [team?.name, ...(team?.aliases || [])].map(normalizeTeamIdentityName).filter(Boolean)) {
+      const aliases = [team?.name, ...(team?.aliases || [])].map(normalizeTeamIdentityName).filter(Boolean);
+      for (const alias of aliases) {
         providerIndex.set(alias, ids);
       }
     }

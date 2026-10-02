@@ -50,9 +50,11 @@ async function fetchSchedule(leagueCode, teamId, season, fetchImpl) {
   const url = `https://site.api.espn.com/apis/site/v2/sports/soccer/${encodeURIComponent(leagueCode)}/teams/${encodeURIComponent(teamId)}/schedule?season=${season}`;
   try {
     const response = await fetchImpl(url, { headers: { Accept: "application/json" } });
-    return response.ok ? response.json() : null;
-  } catch {
-    return null;
+    return response.ok
+      ? { status: "ok", payload: await response.json() }
+      : { status: `http_${response.status}`, payload: null };
+  } catch (error) {
+    return { status: "request_failed", payload: null, error: error?.name || error?.message || "request_failed" };
   }
 }
 
@@ -65,17 +67,20 @@ export async function fetchEspnH2HProfile({ store, homeName, awayName, homeProvi
   const key = `${homeEspnId}:${awayEspnId}:${leagueCode}`;
   const cached = store.espnH2HCache[key];
   const updatedMs = Date.parse(cached?.updatedAt || "");
-  if (cached?.data && Number.isFinite(updatedMs) && Date.now() - updatedMs < CACHE_TTL_MS) return cached.data;
+  if (cached && Number.isFinite(updatedMs) && Date.now() - updatedMs < CACHE_TTL_MS) return cached.data || null;
 
   const fetchImpl = options.fetchImpl || globalThis.fetch;
   if (typeof fetchImpl !== "function") return null;
   const seasonsBack = Math.max(1, Math.min(8, Number(options.seasonsBack || process.env.ESPN_H2H_SEASONS_BACK || DEFAULT_SEASONS_BACK)));
   const season = new Date(kickoff || Date.now()).getUTCFullYear();
   const events = [];
+  const requestStatuses = [];
   for (let year = season; year > season - seasonsBack; year -= 1) {
-    const payload = await fetchSchedule(leagueCode, homeEspnId, year, fetchImpl);
-    events.push(...(Array.isArray(payload?.events) ? payload.events : []));
+    const response = await fetchSchedule(leagueCode, homeEspnId, year, fetchImpl);
+    requestStatuses.push(response.status);
+    events.push(...(Array.isArray(response.payload?.events) ? response.payload.events : []));
   }
+  const requestFailed = requestStatuses.some((status) => status !== "ok");
   const results = normalizeEspnH2HEvents(events, { homeName, awayName, homeEspnId, awayEspnId, cutoffAt: kickoff });
   const homeWins = results.filter((row) => row.winnerId === homeEspnId).length;
   const awayWins = results.filter((row) => row.winnerId === awayEspnId).length;
@@ -91,6 +96,11 @@ export async function fetchEspnH2HProfile({ store, homeName, awayName, homeProvi
     asOf: new Date().toISOString(),
     sourceTimestamp: new Date().toISOString(),
   } : null;
-  store.espnH2HCache[key] = { updatedAt: new Date().toISOString(), status: data ? "available" : "not_found", data };
+  store.espnH2HCache[key] = {
+    updatedAt: new Date().toISOString(),
+    status: data ? "available" : requestFailed ? "provider_unreachable" : "not_found",
+    requestStatuses,
+    data,
+  };
   return data;
 }

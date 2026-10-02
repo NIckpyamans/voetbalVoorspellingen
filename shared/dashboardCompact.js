@@ -35,6 +35,32 @@ function h2hPlayed(match) {
   );
 }
 
+export function h2hAvailabilityLabel(match) {
+  if (h2hPlayed(match) > 0) return "beschikbaar";
+  const status = String(match?.h2h?.status || match?.h2hStatus || match?.h2hAvailability || "").toLowerCase();
+  if (/provider_unreachable|source_unreachable|request_failed|provider_exception|fetch_unavailable|http_error|provider_error/.test(status)) return "bron niet bereikbaar";
+  if (/mapping_missing|team_mapping_missing|mapping_failed/.test(status)) return "team-ID ontbreekt";
+  if (/not_configured|acceptance_blocked|acceptance_gate_closed|gate_closed/.test(status)) return "bron uitgeschakeld";
+  if (/no_direct_history|not_found|no_coverage|h2h-agent-empty|geen.*ontmoeting/.test(status)) return "geen ontmoetingen gevonden";
+  return "nog niet gecontroleerd";
+}
+
+export function h2hMetadata(match) {
+  return {
+    status: h2hAvailabilityLabel(match),
+    sampleSize: h2hPlayed(match),
+    sameCompetitionSampleSize: Number(match?.h2h?.sameCompetitionPlayed ?? match?.h2hCompetitionPlayed ?? 0),
+    source: match?.h2h?.source || match?.h2h?.provider || match?.h2hSource || null,
+    updatedAt: match?.h2h?.updatedAt || match?.h2h?.retrievedAt || match?.h2hAsOf || match?.h2h?.asOf || match?.sourceAsOf?.h2h || null,
+  };
+}
+
+export function h2hSummaryWithSource(match) {
+  const { status, sampleSize, sameCompetitionSampleSize, source, updatedAt } = h2hMetadata(match);
+  const updated = updatedAt ? new Date(updatedAt).toLocaleString("nl-NL") : "onbekend";
+  return `${sampleSize} geldige ontmoetingen · ${status} · ${sameCompetitionSampleSize} in dezelfde competitie · bron ${source || "onbekend"} · bijgewerkt ${updated}`;
+}
+
 function compactLogo(value) {
   const logo = String(value || "");
   return logo.startsWith("data:") ? "" : logo;
@@ -42,6 +68,7 @@ function compactLogo(value) {
 
 export function compactDashboardMatch(match) {
   if (!match || typeof match !== "object") return match;
+  const h2h = h2hMetadata(match);
   return {
     id: match.id,
     date: match.date,
@@ -71,6 +98,11 @@ export function compactDashboardMatch(match) {
     goalMinuteEventsUpdatedAt: match.goalMinuteEventsUpdatedAt ?? null,
     homePos: match.homePos ?? null,
     awayPos: match.awayPos ?? null,
+    standingProvisional: Boolean(match.standingProvisional),
+    homeStandingProvisional: Boolean(match.homeStandingProvisional),
+    awayStandingProvisional: Boolean(match.awayStandingProvisional),
+    standingCompetition: match.standingCompetition || null,
+    standingsSourceLabel: match.standingsSourceLabel || null,
     favorite: match.favorite,
     prediction: match.prediction
       ? {
@@ -96,8 +128,13 @@ export function compactDashboardMatch(match) {
       Number(match.dbFeatureContext?.matchStats?.awayShots || 0) > 0
     ),
     hasWeather: Boolean(coverageHas(match, "weather") || match.weather?.conditions || match.weather?.temperature != null),
-    h2hPlayed: h2hPlayed(match),
-    h2hStatus: match.h2hStatus,
+    h2hPlayed: h2h.sampleSize,
+    h2hStatus: match.h2h?.status || match.h2hStatus || "unchecked",
+    h2hAvailability: match.h2hAvailability || h2h.status,
+    h2hSource: h2h.source,
+    h2hAsOf: h2h.updatedAt,
+    h2hCompetitionPlayed: h2h.sameCompetitionSampleSize,
+    h2hSameCompetitionPlayed: h2h.sameCompetitionSampleSize,
     lineupStatus: match.lineupStatus,
     lineupConfirmed: Boolean(match.lineupSummary?.confirmed),
     lineupProjected: Boolean(match.lineupSummary?.projected),
@@ -146,6 +183,9 @@ export function compactDashboardPrediction(prediction) {
         }
       : null,
     h2hStatus: prediction.h2hStatus,
+    h2hSource: prediction.h2hSource || prediction.h2h?.source || null,
+    h2hAsOf: prediction.h2hAsOf || prediction.h2h?.asOf || prediction.h2h?.sourceTimestamp || null,
+    h2hCompetitionPlayed: prediction.h2hCompetitionPlayed ?? prediction.h2h?.sameCompetitionPlayed ?? 0,
     lineupSummary: prediction.lineupSummary
       ? {
           confirmed: Boolean(prediction.lineupSummary.confirmed),

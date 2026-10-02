@@ -29,6 +29,17 @@ describe("match normalization", () => {
 
     expect(matches).toHaveLength(1);
     expect(matches[0].score).toBe("2-2");
+  });  it("uses canonical team IDs from the stable alias map before merging pair keys", () => {
+    expect(canonicalDedupeTeam("NEC Nijmegen")).toBe("nec nijmegen");
+    expect(canonicalDedupeTeam("Ajax")).toBe("ajax");
+  });
+
+  it("keeps Europa-, Conference- and Cup-phases of the same club pair as separate fixtures", () => {
+    const sameClubsDifferentPhase = [
+      { id: "el", date: "2026-10-15", league: "Europe - Europa League", homeTeamName: "AZ Alkmaar", awayTeamName: "Hapoel Beer Sheva" },
+      { id: "ecl", date: "2026-10-15", league: "Europe - Conference League", homeTeamName: "AZ Alkmaar", awayTeamName: "Hapoel Beer Sheva" },
+    ];
+    expect(mergeDuplicateServedMatches(sameClubsDifferentPhase)).toHaveLength(2);
   });
 
   it("maps Dutch U21 aliases to Jong teams without merging the first team", () => {
