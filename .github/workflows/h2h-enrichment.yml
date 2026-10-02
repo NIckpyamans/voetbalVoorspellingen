@@ -15,7 +15,7 @@ permissions:
 jobs:
   enrich-h2h:
     runs-on: ubuntu-latest
-    timeout-minutes: 12
+    timeout-minutes: 20
     env:
       DATA_BRANCH: codex/step3b-layout
       API_KEY_API_FOOTBALL: ${{ secrets.API_KEY_API_FOOTBALL }}
@@ -24,8 +24,9 @@ jobs:
       API_GOAL: ${{ secrets.API_GOAL }}
       API_FOOTBALL_BASE_URL: ${{ vars.API_FOOTBALL_BASE_URL }}
       API_FOOTBALL_MAX_FETCHES_PER_RUN: "16"
-      H2H_BACKFILL_DAYS_AHEAD: "8"
-      H2H_BACKFILL_LIMIT: "32"
+      H2H_BACKFILL_DAYS_AHEAD: "21"
+      H2H_BACKFILL_LIMIT: "50"
+      H2H_BACKFILL_STALE_DAYS: "1"
       DATABASE_URL: ${{ secrets.DATABASE_URL }}
       POSTGRES_URL: ${{ secrets.POSTGRES_URL }}
       CLOUDFLARE_R2_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_R2_ACCOUNT_ID }}
@@ -47,19 +48,26 @@ jobs:
       - run: npm ci
       - name: Capture upcoming H2H independently
         run: node scripts/ci-neon-safe.js -- npm run db:h2h:backfill-upcoming
-      - name: Commit H2H report
+      - name: Commit compact H2H coverage and retry state
         run: |
           git config user.name github-actions
           git config user.email github-actions@github.com
-          for report in monitor/h2h-upcoming-backfill.json monitor/h2h-upcoming-backfill.md; do
-            if [ -f "$report" ]; then git add "$report"; fi
-          done
-          git add data/days/*.json
-          git diff --staged --quiet && exit 0
-          git commit -m "update upcoming H2H enrichment [skip vercel]"
+          git add monitor/h2h-upcoming-backfill.json monitor/h2h-upcoming-backfill.md
+          git diff --staged --quiet && echo "geen H2H-rapportwijzigingen" && exit 0
+          git commit -m "update upcoming H2H coverage [skip vercel]"
           for attempt in 1 2 3; do
             git pull --rebase --autostash origin "$DATA_BRANCH"
             if git push origin HEAD:"$DATA_BRANCH"; then exit 0; fi
             sleep $((attempt * 5))
           done
           exit 1
+      - name: Upload H2H coverage report
+        if: always()
+        uses: actions/upload-artifact@v5
+        with:
+          name: h2h-upcoming-${{ github.run_id }}
+          path: |
+            monitor/h2h-upcoming-backfill.json
+            monitor/h2h-upcoming-backfill.md
+          if-no-files-found: error
+          retention-days: 30
