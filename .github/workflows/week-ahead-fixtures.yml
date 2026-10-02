@@ -60,8 +60,23 @@ jobs:
           node-version: 22
           cache: npm
       - run: npm ci
-      - name: Discover fixtures today and the next 21 days
-        timeout-minutes: 20
+      - name: Discover fixtures today and the next 7 days
+        timeout-minutes: 14
+        continue-on-error: true
+        env:
+          FOOTYAI_DATE_WINDOW: 0..7
+        run: node scripts/server-worker.js
+      - name: Discover fixtures day 8 through 14
+        timeout-minutes: 14
+        continue-on-error: true
+        env:
+          FOOTYAI_DATE_WINDOW: 8..14
+        run: node scripts/server-worker.js
+      - name: Discover fixtures day 15 through 21
+        timeout-minutes: 14
+        continue-on-error: true
+        env:
+          FOOTYAI_DATE_WINDOW: 15..21
         run: node scripts/server-worker.js
       - name: Collect bounded upcoming team-form context
         timeout-minutes: 5
@@ -115,4 +130,5 @@ jobs:
       - name: Report calendar refresh
         run: |
           echo "Fixturekalender bijgewerkt via de bestaande Neon/R2-dataflow voor vandaag en de volgende 21 dagen."
+          echo "Ontdekking loopt in drie blokken van 7 tot 8 dagen; een time-out in een blok kost alleen dat blok."
           git status --short data monitor || true
