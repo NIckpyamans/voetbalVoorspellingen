@@ -180,7 +180,12 @@ export function writeSplitDataFiles(store, options = {}) {
     preserveExistingDayFiles ? [...new Set([...existingDateKeys, ...populatedDateKeys])] : populatedDateKeys,
     options.retention
   );
-  if (!preserveExistingDayFiles) pruneStaticDayFiles(daysDir, retainedDateKeys);
+  // Ook bij een lichte refresh moet het retentievenster gelden. De bestaande
+  // dagbestanden zitten dan in de unie, dus binnen het venster wordt niets
+  // verwijderd of herschreven; alleen bestanden buiten het venster gaan eruit.
+  // Anders groeit data/days onbeperkt door en loopt het repo-groottebudget
+  // eronder.
+  const prunedDayFiles = pruneStaticDayFiles(daysDir, retainedDateKeys);
 
   for (const dateKey of retainedDateKeys) {
     if (preserveExistingDayFiles && !Object.prototype.hasOwnProperty.call(store.matches || {}, dateKey)) continue;
@@ -241,4 +246,6 @@ export function writeSplitDataFiles(store, options = {}) {
   if (typeof options.writeCompetitionArchiveFiles === "function") {
     options.writeCompetitionArchiveFiles(store);
   }
+
+  return { retainedDateKeys, prunedDayFiles };
 }

@@ -18,6 +18,35 @@ export function buildStoredMatchDedupeKey(match, options) {
   return `${dateKey}|${home}|${away}`;
 }
 
+// De platte provenancevelden die de UI/API naast het h2h-profiel publiceren.
+const H2H_PROVENANCE_FIELDS = ["h2hStatus", "h2hSource", "h2hAsOf", "h2hAvailability", "h2hPlayed", "h2hCompetitionPlayed"];
+const H2H_AVAILABILITY_STATUSES = new Set([
+  "available",
+  "provider_unreachable",
+  "provider_acceptance_blocked",
+  "team_mapping_missing",
+  "no_direct_history",
+  "not_checked",
+]);
+
+// Hoe bruikbaar is een H2H-profiel? Ontmoetingen wegen het zwaarst, maar een
+// verse poging met een expliciete beschikbaarheidsstatus (bron geblokkeerd of
+// onbereikbaar) moet een oude contract-fallback-stub kunnen overnemen: anders
+// blijft de UI "geen ontmoetingen" zeggen terwijl de bron nooit is geraadpleegd.
+export function h2hProvenanceRank(profile) {
+  if (!profile || typeof profile !== "object") return -Infinity;
+  const played = Number(profile.played || profile.results?.length || 0);
+  const explicitAvailability = H2H_AVAILABILITY_STATUSES.has(String(profile.availabilityStatus || ""));
+  const status = String(profile.status || "");
+  const legacyStub = !status || /^(h2h-agent-empty|contract-fallback|empty|none|no-data)$/i.test(status);
+  // Dagbuckets (~20k) blijven onder de stub-straf en onder de voldoende-punten,
+  // zodat de rang alleen binnen dezelfde speelniveau-/statusklasse op recency
+  // hoeft te beslissen.
+  const asOfMs = Date.parse(profile.asOf || profile.sourceTimestamp || "") || 0;
+  const dayBucket = asOfMs > 0 ? Math.floor(asOfMs / 86400000) : 0;
+  return played * 1e9 + Number(explicitAvailability) * 1e6 - Number(legacyStub) * 1e5 + dayBucket;
+}
+
 export function mergeStoredDuplicateMatch(current, incoming) {
   const incomingPreferred = storedMatchQuality(incoming) > storedMatchQuality(current);
   const preferred = incomingPreferred ? { ...incoming } : { ...current };
@@ -26,7 +55,15 @@ export function mergeStoredDuplicateMatch(current, incoming) {
   preferred.awayLogo ||= fallback?.awayLogo || "";
   preferred.homeTeamId ||= fallback?.homeTeamId || "";
   preferred.awayTeamId ||= fallback?.awayTeamId || "";
-  preferred.h2h = Number(preferred?.h2h?.played || preferred?.h2h?.results?.length || 0) >= Number(fallback?.h2h?.played || fallback?.h2h?.results?.length || 0) ? preferred.h2h : fallback?.h2h;
+  const h2hWinner = h2hProvenanceRank(fallback?.h2h) > h2hProvenanceRank(preferred?.h2h) ? fallback : preferred;
+  const h2hLoser = h2hWinner === preferred ? fallback : preferred;
+  preferred.h2h = h2hWinner?.h2h || h2hLoser?.h2h;
+  for (const field of H2H_PROVENANCE_FIELDS) {
+    const winnerValue = h2hWinner?.[field];
+    const loserValue = h2hLoser?.[field];
+    const value = winnerValue !== undefined && winnerValue !== null && winnerValue !== "" ? winnerValue : loserValue;
+    if (value !== undefined) preferred[field] = value;
+  }
   const recentCount = (value) => Number(value?.gamesPlayed || value?.recentMatches?.length || 0);
   preferred.homeRecent = recentCount(preferred.homeRecent) >= recentCount(fallback?.homeRecent) ? preferred.homeRecent : fallback?.homeRecent;
   preferred.awayRecent = recentCount(preferred.awayRecent) >= recentCount(fallback?.awayRecent) ? preferred.awayRecent : fallback?.awayRecent;

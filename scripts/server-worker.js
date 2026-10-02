@@ -12621,11 +12621,17 @@ async function main() {
     `[worker] training behouden: ${trainingSnapshot.rows.length} rows, ` +
       `${trainingSnapshot.preservation.snapshotBackedRows} snapshot-backed`
   );
-  writeSplitDataFiles(store, {
+  const staticExport = writeSplitDataFiles(store, {
     splitDataDir: SPLIT_DATA_DIR,
     preserveExistingDayFiles: LIGHTWEIGHT_REFRESH,
     writeCompetitionArchiveFiles: LIGHTWEIGHT_REFRESH ? null : writeCompetitionArchiveFiles,
   });
+  if (staticExport?.prunedDayFiles) {
+    console.log(
+      `[worker] retentie: ${staticExport.prunedDayFiles} dagbestanden buiten het venster verwijderd, ` +
+        `${staticExport.retainedDateKeys.length} dagbestanden behouden`,
+    );
+  }
   fs.writeFileSync(DATA_FILE, JSON.stringify(store));
   try {
     const dbSync = await syncStoreToDatabase(store, { dateKeys: dates });

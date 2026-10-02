@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { dedupeStoredMatches, dedupeStoredPredictions } from "../../scripts/worker/fixture-deduplication.js";
+import { dedupeStoredMatches, dedupeStoredPredictions, h2hProvenanceRank } from "../../scripts/worker/fixture-deduplication.js";
 
 const options = {
   teamKey: (value) => String(value).toLowerCase().replace(/\bfc\b/g, "").replace(/[^a-z0-9]+/g, " ").trim(),
@@ -80,6 +80,115 @@ describe("fixture deduplication", () => {
 
     expect(predictions).toHaveLength(1);
     expect(predictions[0]).toMatchObject({ matchId: "fotmob", homeProb: 0.32 });
+  });
+
+  it("lets a fresh provider verdict replace a stale contract-fallback stub", () => {
+    const rows = dedupeStoredMatches([
+      {
+        id: "stored",
+        date: "2026-10-03",
+        homeTeamName: "Ajax",
+        awayTeamName: "Twente",
+        status: "NS",
+        dataSource: "espn+fotmob",
+        h2h: { played: 0, results: [], status: "h2h-agent-empty", source: "contract-fallback" },
+        h2hStatus: "h2h-agent-empty",
+      },
+      {
+        id: "fresh",
+        date: "2026-10-03",
+        homeTeamName: "Ajax",
+        awayTeamName: "Twente",
+        status: "NS",
+        dataSource: "espn+fotmob",
+        h2h: {
+          played: 0,
+          results: [],
+          status: "provider_acceptance_blocked",
+          availabilityStatus: "provider_acceptance_blocked",
+          source: "api-football, espn-team-schedule",
+          asOf: "2026-10-02T11:55:42.000Z",
+        },
+        h2hStatus: "provider_acceptance_blocked",
+        h2hSource: "api-football, espn-team-schedule",
+        h2hAsOf: "2026-10-02T11:55:42.000Z",
+        h2hAvailability: "provider_acceptance_blocked",
+        h2hPlayed: 0,
+        h2hCompetitionPlayed: 0,
+      },
+    ], options);
+
+    expect(rows).toHaveLength(1);
+    expect(rows[0].h2h).toMatchObject({
+      status: "provider_acceptance_blocked",
+      availabilityStatus: "provider_acceptance_blocked",
+      source: "api-football, espn-team-schedule",
+    });
+    expect(rows[0]).toMatchObject({
+      h2hStatus: "provider_acceptance_blocked",
+      h2hSource: "api-football, espn-team-schedule",
+      h2hAsOf: "2026-10-02T11:55:42.000Z",
+      h2hAvailability: "provider_acceptance_blocked",
+    });
+  });
+
+  it("keeps the newest verdict when neither side found meetings", () => {
+    const rows = dedupeStoredMatches([
+      {
+        id: "stored",
+        date: "2026-10-03",
+        homeTeamName: "Ajax",
+        awayTeamName: "Twente",
+        h2h: { played: 0, status: "no_direct_history", availabilityStatus: "no_direct_history", asOf: "2026-10-01T09:00:00.000Z" },
+        h2hStatus: "no_direct_history",
+      },
+      {
+        id: "fresh",
+        date: "2026-10-03",
+        homeTeamName: "Ajax",
+        awayTeamName: "Twente",
+        h2h: { played: 0, status: "provider_unreachable", availabilityStatus: "provider_unreachable", asOf: "2026-10-02T09:00:00.000Z" },
+        h2hStatus: "provider_unreachable",
+      },
+    ], options);
+
+    expect(rows[0].h2h?.status).toBe("provider_unreachable");
+    expect(rows[0].h2hStatus).toBe("provider_unreachable");
+  });
+
+  it("never lets an empty fresh verdict downgrade a stored head-to-head", () => {
+    const rows = dedupeStoredMatches([
+      {
+        id: "stored",
+        date: "2026-10-03",
+        homeTeamName: "Ajax",
+        awayTeamName: "Twente",
+        h2h: { played: 3, results: [{ score: "1-2" }], status: "previous-leg", availabilityStatus: "available", asOf: "2026-10-01T09:00:00.000Z" },
+        h2hStatus: "previous-leg",
+        h2hPlayed: 3,
+      },
+      {
+        id: "fresh",
+        date: "2026-10-03",
+        homeTeamName: "Ajax",
+        awayTeamName: "Twente",
+        h2h: { played: 0, results: [], status: "provider_unreachable", availabilityStatus: "provider_unreachable", asOf: "2026-10-02T09:00:00.000Z" },
+        h2hStatus: "provider_unreachable",
+        h2hPlayed: 0,
+      },
+    ], options);
+
+    expect(rows[0].h2h).toMatchObject({ played: 3, status: "previous-leg" });
+    expect(rows[0].h2hStatus).toBe("previous-leg");
+    expect(rows[0].h2hPlayed).toBe(3);
+  });
+
+  it("ranks explicit availability verdicts above legacy stubs", () => {
+    const legacy = { played: 0, status: "h2h-agent-empty", source: "contract-fallback" };
+    const blocked = { played: 0, status: "provider_acceptance_blocked", availabilityStatus: "provider_acceptance_blocked", asOf: "2026-10-02T09:00:00.000Z" };
+    expect(h2hProvenanceRank(blocked)).toBeGreaterThan(h2hProvenanceRank(legacy));
+    expect(h2hProvenanceRank({ played: 1, status: "previous-leg", availabilityStatus: "available" })).toBeGreaterThan(h2hProvenanceRank(blocked));
+    expect(h2hProvenanceRank(null)).toBeLessThan(h2hProvenanceRank(legacy));
   });
 
   it("retains the richer squad and timestamped odds evidence", () => {
