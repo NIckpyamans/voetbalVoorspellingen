@@ -1,36 +1,36 @@
 # Upcoming H2H Backfill
 
-Laatst bijgewerkt: 2026-10-05T09:54:05.797Z
+Laatst bijgewerkt: 2026-10-05T14:36:04.348Z
 Gecontroleerd: 50
 Gevuld: 0
 Geen directe H2H: 50
 Errors: 0
 
-Openstaand na deze batch: 283
+Openstaand na deze batch: 234
 
 ## Aanbeveling
-Er staan nog 283 fixtures in de wachtrij; volgende batch prioriteert ontbrekende H2H en vroegste aftrap.
+Er staan nog 234 fixtures in de wachtrij; volgende batch prioriteert ontbrekende H2H en vroegste aftrap.
 
 ## Gevuld
 
 ## Geen Directe H2H
-- 2026-10-09: 1. FC Heidenheim 1846 - Kaiserslautern (no_direct_history)
-- 2026-10-09: Lens - Olympique Lyonnais (no_direct_history)
-- 2026-10-09: De Graafschap - Jong FC Utrecht (no_direct_history)
-- 2026-10-09: AS Nancy Lorraine - Guingamp (no_direct_history)
-- 2026-10-09: West Ham United - Queens Park Rangers (no_direct_history)
-- 2026-10-09: FC Dordrecht - FC Emmen (no_direct_history)
-- 2026-10-09: Pau - Stade Laval (no_direct_history)
-- 2026-10-09: Jong Ajax - VVV-Venlo (no_direct_history)
-- 2026-10-09: Sochaux - Boulogne (no_direct_history)
-- 2026-10-09: Jong AZ - FC Den Bosch (no_direct_history)
-- 2026-10-09: NAC Breda - MVV Maastricht (no_direct_history)
-- 2026-10-09: Roda JC Kerkrade - Jong PSV (no_direct_history)
-- 2026-10-09: TOP Oss - Helmond Sport (no_direct_history)
-- 2026-10-09: Almere City FC - FC Eindhoven (no_direct_history)
-- 2026-10-09: Heracles - RKC Waalwijk (no_direct_history)
-- 2026-10-10: 1. FC Magdeburg - Hannover 96 (no_direct_history)
-- 2026-10-10: Charlton Athletic - Bristol City (no_direct_history)
-- 2026-10-10: Clermont Foot - Red Star FC 93 (no_direct_history)
-- 2026-10-10: 1. FC Union Berlin - SV Elversberg (no_direct_history)
-- 2026-10-10: Ipswich Town - Fulham (no_direct_history)
+- 2026-10-11: Telstar - ADO Den Haag (no_direct_history)
+- 2026-10-12: Dijon FCO - Metz (no_direct_history)
+- 2026-10-12: Coventry City - Newcastle United (no_direct_history)
+- 2026-10-13: Lens - Sporting CP (no_direct_history)
+- 2026-10-13: Bristol City - Blackburn Rovers (no_direct_history)
+- 2026-10-13: Sabah FK - Slavia Prague (no_direct_history)
+- 2026-10-13: Burnley - Charlton Athletic (no_direct_history)
+- 2026-10-13: Arsenal - Lille (no_direct_history)
+- 2026-10-13: Cardiff City - Watford (no_direct_history)
+- 2026-10-13: Galatasaray - Barcelona (no_direct_history)
+- 2026-10-13: Millwall - Swansea City (no_direct_history)
+- 2026-10-13: Internazionale - Club Brugge (no_direct_history)
+- 2026-10-13: Wolverhampton Wanderers - Bolton Wanderers (no_direct_history)
+- 2026-10-13: RB Leipzig - PSV Eindhoven (no_direct_history)
+- 2026-10-13: Wrexham - West Bromwich Albion (no_direct_history)
+- 2026-10-13: Viking FK - Bayern Munich (no_direct_history)
+- 2026-10-13: Birmingham City - Preston North End (no_direct_history)
+- 2026-10-13: Villarreal - Napoli (no_direct_history)
+- 2026-10-13: Stoke City - Middlesbrough (no_direct_history)
+- 2026-10-14: Feyenoord Rotterdam - Como (no_direct_history)
