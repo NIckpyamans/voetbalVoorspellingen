@@ -1,13 +1,13 @@
 {
-  "generatedAt": "2026-10-05T15:14:37.928Z",
+  "generatedAt": "2026-10-05T18:33:51.793Z",
   "daysAhead": 8,
   "targetMatchesPerTeam": 10,
   "candidates": 182,
   "checked": 24,
-  "enriched": 13,
-  "unavailable": 11,
+  "enriched": 15,
+  "unavailable": 9,
   "timedOut": 0,
-  "skippedFresh": 71,
+  "skippedFresh": 70,
   "runBudgetMs": 180000,
   "teamTimeoutMs": 12000,
   "budgetExceeded": false,
@@ -52,34 +52,44 @@
       "providerTeam": "Sochaux"
     },
     {
-      "team": "Almere City FC",
+      "team": "Annecy FC",
+      "matches": 8,
+      "providerTeam": "Annecy FC"
+    },
+    {
+      "team": "Boulogne",
       "matches": 9,
-      "providerTeam": "Almere City FC"
+      "providerTeam": "Boulogne"
     },
     {
-      "team": "De Graafschap",
+      "team": "Helmond Sport",
       "matches": 1,
-      "providerTeam": "De Graafschap"
+      "providerTeam": "Helmond Sport"
     },
     {
-      "team": "NAC Breda",
+      "team": "Jong PSV",
       "matches": 1,
-      "providerTeam": "NAC Breda"
+      "providerTeam": "Jong PSV"
     },
     {
-      "team": "Werder Bremen",
-      "matches": 1,
-      "providerTeam": "Werder Bremen"
+      "team": "Nancy",
+      "matches": 8,
+      "providerTeam": "Nancy"
     },
     {
-      "team": "Lyon",
-      "matches": 1,
-      "providerTeam": "Lyon"
+      "team": "Pau",
+      "matches": 8,
+      "providerTeam": "Pau"
     },
     {
-      "team": "Queens Park Rangers",
-      "matches": 1,
-      "providerTeam": "Queens Park Rangers"
+      "team": "Heracles",
+      "matches": 9,
+      "providerTeam": "Heracles"
+    },
+    {
+      "team": "Guingamp",
+      "matches": 9,
+      "providerTeam": "Guingamp"
     }
   ],
   "failures": [
@@ -128,15 +138,31 @@
       "retainedMatches": 0
     },
     {
-      "team": "West Ham United",
+      "team": "Heerenveen",
       "reason": "http_429",
       "requests": [
+        {
+          "provider": "www.thesportsdb.com",
+          "status": "ok"
+        },
         {
           "provider": "www.thesportsdb.com",
           "status": "http_429"
         }
       ],
-      "retainedMatches": 20
+      "retainedMatches": 11
+    },
+    {
+      "team": "Jong Ajax",
+      "reason": "not_found",
+      "requests": [],
+      "retainedMatches": 11
+    },
+    {
+      "team": "Jong FC Utrecht",
+      "reason": "not_found",
+      "requests": [],
+      "retainedMatches": 11
     },
     {
       "team": "1. FC Magdeburg",
@@ -149,36 +175,12 @@
       "reason": "not_found",
       "requests": [],
       "retainedMatches": 6
-    },
-    {
-      "team": "VfL Osnabruck",
-      "reason": "not_found",
-      "requests": [],
-      "retainedMatches": 8
-    },
-    {
-      "team": "Energie Cottbus",
-      "reason": "not_found",
-      "requests": [],
-      "retainedMatches": 10
-    },
-    {
-      "team": "Swansea City",
-      "reason": "not_found",
-      "requests": [],
-      "retainedMatches": 14
-    },
-    {
-      "team": "Birmingham City",
-      "reason": "not_found",
-      "requests": [],
-      "retainedMatches": 18
     }
   ],
   "immutableLedgerMatches": 5903,
   "immutableHistorySummaryMatches": 1742,
   "r2LedgerAvailable": true,
   "r2LedgerError": null,
-  "durationMs": 20665,
+  "durationMs": 21011,
   "deferredTeams": 0
 }
