@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { buildStandingsLookup, findStandingPosition } from "../../shared/standingsLookup.js";
+import { buildStandingsLookup, findStandingEntry, findStandingPosition } from "../../shared/standingsLookup.js";
 
 const lookup = buildStandingsLookup({
   "label:Netherlands - Eerste Divisie": {
@@ -13,6 +13,11 @@ const lookup = buildStandingsLookup({
   "label:Europe - Europa League": {
     label: "Europe - Europa League",
     rows: [{ team: "TOP Oss", teamId: "catalog:uefa:top-oss", pos: 31 }],
+  },
+  "label:Europe - Conference League": {
+    label: "Europe - Conference League",
+    preliminary: true,
+    rows: [{ team: "Ajax", teamId: "fotmob-8593", pos: 2 }],
   },
 });
 
@@ -31,6 +36,19 @@ describe("standings lookup for dashboard fixture rows", () => {
       teamName: "MVV",
       league: "Netherlands - Eerste Divisie",
     })).toBe(3);
+  });
+
+  it("returns provisional status only from the exact competition table", () => {
+    expect(findStandingEntry(lookup, {
+      teamId: "fotmob-8593",
+      teamName: "Ajax",
+      league: "Europe - Conference League",
+    })).toEqual({ position: 2, preliminary: true });
+    expect(findStandingEntry(lookup, {
+      teamId: "fotmob-8593",
+      teamName: "Ajax",
+      league: "Netherlands - Eerste Divisie",
+    })).toBeNull();
   });
 
   it("does not leak a same-named rank from another competition", () => {

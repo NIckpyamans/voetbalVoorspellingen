@@ -1,3 +1,5 @@
+import { mergeMatchH2HProvenance, normalizeMatchH2H } from "./h2hProvenance.js";
+
 const TEAM_DEDUPE_ALIASES = {
   "rapid wien": "rapid wien",
   "sk rapid wien": "rapid wien",
@@ -8,6 +10,14 @@ const TEAM_DEDUPE_ALIASES = {
   "sport club freiburg": "freiburg",
   "aston villa": "aston villa",
   "aston villa fc": "aston villa",
+  "nec": "nec nijmegen",
+  "ne c": "nec nijmegen",
+  "nec nijmegen": "nec nijmegen",
+  "n e c nijmegen": "nec nijmegen",
+  "n e c": "nec nijmegen",
+  "nijmegen": "nec nijmegen",
+  "nijmegen eendracht combinatie": "nec nijmegen",
+  "eendracht combinatie": "nec nijmegen",
   "man city": "manchester city",
   "manchester city": "manchester city",
   "manchester city fc": "manchester city",
@@ -218,7 +228,8 @@ export function servedMatchQuality(match) {
 
 export function mergeDuplicateServedMatches(matches) {
   const seen = new Map();
-  for (const match of matches || []) {
+  for (const rawMatch of matches || []) {
+    const match = normalizeMatchH2H(rawMatch);
     const key = buildMatchDedupeKey(match);
     if (!key) {
       seen.set(match?.id || `${seen.size}`, match);
@@ -231,7 +242,7 @@ export function mergeDuplicateServedMatches(matches) {
     }
     const preferred = servedMatchQuality(match) > servedMatchQuality(current) ? match : current;
     const fallback = preferred === match ? current : match;
-    seen.set(key, {
+    const merged = mergeMatchH2HProvenance({
       ...fallback,
       ...preferred,
       homeLogo: preferred.homeLogo || fallback.homeLogo,
@@ -239,14 +250,14 @@ export function mergeDuplicateServedMatches(matches) {
       score: preferred.score || fallback.score,
       homeScore: preferred.homeScore ?? fallback.homeScore,
       awayScore: preferred.awayScore ?? fallback.awayScore,
-      h2h: preferred.h2h || fallback.h2h,
       goalMinuteEvents: (preferred.goalMinuteEvents?.length || 0) >= (fallback.goalMinuteEvents?.length || 0)
         ? preferred.goalMinuteEvents
         : fallback.goalMinuteEvents,
       goalMinuteEventsUpdatedAt: Math.max(Number(preferred.goalMinuteEventsUpdatedAt || 0), Number(fallback.goalMinuteEventsUpdatedAt || 0)) || undefined,
       homeRecent: preferred.homeRecent || fallback.homeRecent,
       awayRecent: preferred.awayRecent || fallback.awayRecent,
-    });
+    }, fallback);
+    seen.set(key, merged);
   }
   return [...seen.values()];
 }

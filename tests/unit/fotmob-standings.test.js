@@ -37,6 +37,19 @@ describe("FotMob standings adapter", () => {
     expect(normalizeFotmobStanding(response, "Netherlands - Eerste Divisie", 111)).toBeNull();
   });
 
+  it("maps UEFA league-phase standings and labels Conference League order as provisional", () => {
+    const europeanPayload = {
+      details: { id: 10216 },
+      table: [{ data: { table: { all: [
+        { idx: 2, id: 8593, name: "Ajax", played: 0, wins: 0, draws: 0, losses: 0, scoresStr: "0-0", pts: 0 },
+        { idx: 1, id: 5, name: "AGF", played: 0, wins: 0, draws: 0, losses: 0, scoresStr: "0-0", pts: 0 },
+      ] } } }],
+    };
+    const standing = normalizeFotmobStanding(europeanPayload, "Europe - Conference League", 10216, "2026/2027");
+    expect(standing).toMatchObject({ source: "fotmob", preliminary: true });
+    expect(standing.rows[0]).toMatchObject({ team: "Ajax", pos: 2, p: 0 });
+  });
+
   it("uses the mapped league id and season", async () => {
     const fetchJson = vi.fn().mockResolvedValue(response);
     await fetchFotmobStanding("Netherlands - Eredivisie", "2026-08-17", fetchJson);

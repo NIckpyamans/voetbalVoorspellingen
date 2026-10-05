@@ -9,6 +9,8 @@ import { cleanSignalText } from "../shared/matchText.js";
 import { countryFlagEmoji, countryFlagSources } from "../shared/countryFlags";
 import { isGeneratedLogoUrl } from "../shared/clubLogos.js";
 import LiveGoalEvents from "./LiveGoalEvents";
+import { standingLabel } from "../shared/standingsLabel.js";
+import { h2hMetadata } from "../shared/dashboardCompact.js";
 
 interface MatchCardProps {
   match: Match;
@@ -26,14 +28,16 @@ function useLiveMinute(match: any) {
   return useLiveClock(active, match, 30000);
 }
 
-function RankBadge({ pos }: { pos: number | null | undefined }) {
+function RankBadge({ pos, league, preliminary = false }: { pos: number | null | undefined; league: string; preliminary?: boolean }) {
   if (pos == null || !(pos > 0)) return null;
+  const rankContext = league.startsWith("Europe -") ? league.replace("Europe - ", "") : league.split(" - ").at(-1) || league;
+  const label = standingLabel(league);
   return (
     <span
-      title={`Ranglijstnummer ${pos}`}
-      className="ml-1 inline-flex shrink-0 items-center rounded-full border border-slate-600/40 bg-slate-800/80 px-1.5 py-0.5 align-middle text-[8px] font-black leading-none text-slate-200"
+      title={`${preliminary ? "Voorlopige lotingsvolgorde" : "Ranglijstpositie"} ${rankContext}: ${pos}`}
+      className={`ml-1 inline-flex shrink-0 items-center rounded-full border px-1.5 py-0.5 align-middle text-[8px] font-black leading-none ${preliminary ? "border-violet-300/50 bg-violet-300 text-slate-950" : "border-slate-600/40 bg-slate-800/80 text-slate-200"}`}
     >
-      #{pos}
+      {preliminary ? "~" : ""}{label} #{pos}
     </span>
   );
 }
@@ -609,6 +613,20 @@ function getH2HSourceLabel(status?: string) {
   return "geen recente onderlinge brondata";
 }
 
+function formatH2HUpdatedAt(value?: string | null) {
+  if (!value) return "onbekend";
+  const date = new Date(value);
+  return Number.isNaN(date.getTime()) ? "onbekend" : date.toLocaleString("nl-NL");
+}
+
+function h2hStatusExplanation(status: string) {
+  if (/provider_unreachable|source_unreachable|request_failed|provider_exception|http_error|provider_error|quota/.test(status)) return "Bron of provider was onbereikbaar; dit is geen bewijs dat historie ontbreekt.";
+  if (/provider_not_configured|not_configured|acceptance_blocked|gate_closed/.test(status)) return "Provider staat niet actief; historie is dus nog niet volledig gecontroleerd.";
+  if (/mapping_missing|team_mapping_missing|mapping_failed/.test(status)) return "De fixture kon niet betrouwbaar aan provider-team-ID's worden gekoppeld.";
+  if (/no_direct_history|not_found|h2h-agent-empty/.test(status)) return "Beschikbare bronnen zijn gecontroleerd, maar leverden geen directe onderlinge wedstrijd op.";
+  return "H2H-status onbekend; controleer de volgende backfill-run.";
+}
+
 function ExpandableInsights({ match, prediction }: { match: any; prediction: any }) {
   const [open, setOpen] = useState(false);
   const ensemble = prediction.ensembleMeta || match.ensembleMeta;
@@ -921,7 +939,8 @@ function DataQualitySnapshot({ match, prediction }: { match: any; prediction: an
   const qualityGate = prediction.qualityGate || match.qualityGate || prediction.modelEdges?.qualityGate;
   const sourceReliability = prediction.modelEdges?.sourceReliability || match.sourceReliability;
   const marketCalibration = prediction.modelEdges?.marketCalibration || match.marketCalibration;
-  const h2hPlayed = Math.max(Number(match.h2hPlayed || 0), Number(match.h2h?.played || 0), Array.isArray(match.h2h?.results) ? match.h2h.results.length : 0);
+  const h2hInfo = h2hMetadata({ ...match, h2h: match.h2h || prediction.h2h, h2hStatus: match.h2hStatus || prediction.h2hStatus });
+  const h2hPlayed = h2hInfo.sampleSize;
   const lineup = match.lineupSummary || prediction.lineupSummary || {};
   const missing = Array.isArray(dataCompleteness?.missing) ? dataCompleteness.missing : [];
   const reasons = Array.isArray(dataCompleteness?.reasons) ? dataCompleteness.reasons : [];
@@ -937,7 +956,7 @@ function DataQualitySnapshot({ match, prediction }: { match: any; prediction: an
       : oddsProviderStatus === "seasonal_unavailable"
         ? "providercompetitie tijdelijk niet actief"
         : "geen actuele odds";
-  const h2hStatus = h2hPlayed >= 3 ? `${h2hPlayed} duels` : h2hPlayed > 0 ? `${h2hPlayed} duel, dun` : "H2H ontbreekt";
+  const h2hStatus = h2hPlayed >= 3 ? `${h2hPlayed} duels` : h2hPlayed > 0 ? `${h2hPlayed} duel, dun` : h2hInfo.status;
   const lineupStatus = lineup.confirmed ? "bevestigd" : lineup.projected ? "voorspeld" : "open";
   const latestEvidenceAt = [
     match.lineupCapturedAt,
@@ -983,7 +1002,7 @@ function DataQualitySnapshot({ match, prediction }: { match: any; prediction: an
       <div className="grid grid-cols-2 gap-1.5 md:grid-cols-4">
         <Badge label="Odds" value={oddsStatus} tone={oddsStatus === "markt deels gevuld" ? "green" : "amber"} />
         <Badge label="Lineup" value={lineupStatus} tone={lineup.confirmed ? "green" : lineup.projected ? "amber" : "slate"} />
-        <Badge label="H2H" value={h2hStatus} tone={h2hPlayed >= 3 ? "green" : "amber"} />
+        <Badge label="H2H" value={`${h2hStatus} · ${h2hInfo.source || "bron onbekend"}`} tone={h2hPlayed >= 3 ? "green" : "amber"} />
         <Badge label="Bron" value={sourceReliability?.label || "-"} tone={sourceReliability?.score >= 0.54 ? "green" : "amber"} />
       </div>
       <div className="mt-2 flex flex-wrap gap-1 text-[8px] text-slate-400">
@@ -1560,6 +1579,7 @@ const MatchCard: React.FC<MatchCardProps> = ({ match: initialMatch, prediction: 
   const displayedScore = displayedMatchScore(match, isFinished);
   const weather = match.weather || prediction.weather;
   const h2h = match.h2h || prediction.h2h;
+  const h2hInfo = h2hMetadata({ ...match, h2h, h2hStatus: match.h2hStatus || prediction.h2hStatus, h2hSource: match.h2hSource || prediction.h2hSource, h2hAsOf: match.h2hAsOf || prediction.h2hAsOf, h2hCompetitionPlayed: match.h2hCompetitionPlayed ?? prediction.h2hCompetitionPlayed });
   const aggregate = match.aggregate || prediction.aggregate;
   const loser = aggregateLoser(match, aggregate);
   const importantMatch = showImportance(match);
@@ -1641,7 +1661,7 @@ const MatchCard: React.FC<MatchCardProps> = ({ match: initialMatch, prediction: 
             aria-label={`Toon selectie van ${match.homeTeamName}`}
           >
             {match.homeTeamName}
-            {match.homePos ? <RankBadge pos={match.homePos} /> : null}
+            {match.homePos ? <RankBadge pos={match.homePos} league={match.league} preliminary={Boolean((match as any).homeStandingProvisional || (match as any).standingProvisional)} /> : null}
           </button>
           <div className="text-[7px] text-slate-400">
             <span title={match.homeClubStrength?.components?.map(part => `${part.key}: ${part.rating}/100 (${Math.round(part.effectiveWeight * 100)}%)`).join(" · ")}>Clubrating <span className="font-black text-cyan-300">{match.homeClubStrength?.rating != null ? `${match.homeClubStrength.rating}/100` : "onbekend"}</span></span>
@@ -1696,7 +1716,7 @@ const MatchCard: React.FC<MatchCardProps> = ({ match: initialMatch, prediction: 
             aria-label={`Toon selectie van ${match.awayTeamName}`}
           >
             {match.awayTeamName}
-            {match.awayPos ? <RankBadge pos={match.awayPos} /> : null}
+            {match.awayPos ? <RankBadge pos={match.awayPos} league={match.league} preliminary={Boolean((match as any).awayStandingProvisional || (match as any).standingProvisional)} /> : null}
           </button>
           <div className="text-[7px] text-slate-400">
             <span title={match.awayClubStrength?.components?.map(part => `${part.key}: ${part.rating}/100 (${Math.round(part.effectiveWeight * 100)}%)`).join(" · ")}>Clubrating <span className="font-black text-cyan-300">{match.awayClubStrength?.rating != null ? `${match.awayClubStrength.rating}/100` : "onbekend"}</span></span>
@@ -1879,8 +1899,9 @@ const MatchCard: React.FC<MatchCardProps> = ({ match: initialMatch, prediction: 
             <div className="rounded-lg p-2 bg-slate-900/60">
               <div className="text-[7px] font-black uppercase text-slate-400 mb-1">Laatste 5 onderling</div>
               <div className="text-[8px] text-slate-500 mb-1">
-                {h2h?.targetPlayed ? `${h2h?.played || 0}/${h2h.targetPlayed} gevonden - ` : ""}
-                {getH2HSourceLabel(h2h?.status)}
+                {h2hInfo.sampleSize} geldige duels · {h2hInfo.sameCompetitionSampleSize} in deze competitie · {getH2HSourceLabel(h2h?.status)}
+                <br />Bron: {h2hInfo.source || "onbekend"} · bijgewerkt: {formatH2HUpdatedAt(h2hInfo.updatedAt)}
+                {h2hInfo.sampleSize === 0 && <><br />Status: {h2hInfo.status} · {h2hStatusExplanation(String(match.h2h?.status || match.h2hStatus || ""))}</>}
               </div>
               <div className="flex gap-1">
                 {buildRecentH2HForm(h2h, match.homeTeamId, match.awayTeamId).length ? (
@@ -1929,7 +1950,7 @@ const MatchCard: React.FC<MatchCardProps> = ({ match: initialMatch, prediction: 
               ))}
             </div>
           ) : (
-            <div className="text-center py-4 text-slate-500 text-[10px]">H2H nog niet beschikbaar</div>
+            <div className="text-center py-4 text-slate-500 text-[10px]">{h2hInfo.status === "geen ontmoetingen gevonden" ? "Geen directe onderlinge historie gevonden" : h2hInfo.status === "bron niet bereikbaar" ? "H2H-bron momenteel niet bereikbaar" : h2hInfo.status === "bron uitgeschakeld" ? "H2H-bron nog niet geactiveerd" : "H2H nog niet gecontroleerd"}</div>
           )}
         </div>
       )}

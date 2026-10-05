@@ -102,6 +102,94 @@ describe("FotMob fixture parser", () => {
     });
   });
 
+  it("maps scheduled fixtures for all three European club competitions", () => {
+    const events = parseFotmobScheduledEvents({
+      leagues: [
+        { id: 943230, primaryId: 42, name: "Champions League", season: { name: "2026/2027" }, matches: [{ id: 100, tournamentStage: "3", status: { utcTime: "2026-10-20T16:45:00.000Z" }, home: { id: 1, name: "Fenerbahçe" }, away: { id: 2, name: "Slavia Prague" } }] },
+        { id: 943229, primaryId: 73, name: "Europa League", season: { name: "2026/2027" }, matches: [{ id: 101, tournamentStage: "3", status: { utcTime: "2026-10-20T16:45:00.000Z" }, home: { id: 3, name: "Celtic" }, away: { id: 4, name: "Roma" } }] },
+        { id: 943231, primaryId: 10216, name: "Conference League", season: { name: "2026/2027" }, matches: [{ id: 102, tournamentStage: "3", status: { utcTime: "2026-10-20T16:45:00.000Z" }, home: { id: 5, name: "Ajax" }, away: { id: 6, name: "AGF" } }] },
+      ],
+    }, "2026-10-20", {
+      ...deps,
+      fotmobStandingLeagues: {
+        ...deps.fotmobStandingLeagues,
+        "Europe - Champions League": { id: 42 },
+        "Europe - Europa League": { id: 73 },
+        "Europe - Conference League": { id: 10216 },
+      },
+      toAmsterdamDateKey: (value) => new Date(value).toISOString().slice(0, 10),
+    });
+    expect(events.map((event) => event.leagueLabel)).toEqual([
+      "Europe - Champions League",
+      "Europe - Europa League",
+      "Europe - Conference League",
+    ]);
+    expect(events[0]).toMatchObject({
+      id: "fotmob-100",
+      uniqueTournament: { id: 42 },
+      homeTeam: { name: "Fenerbahçe" },
+      awayTeam: { name: "Slavia Prague" },
+    });
+    expect(events[1].leagueLabel).toBe("Europe - Europa League");
+    expect(events[2]).toMatchObject({ leagueLabel: "Europe - Conference League", standingsProvisional: true });
+  });
+
+  it("keeps UEFA fixtures dated October 13-15 in the Amsterdam calendar window", () => {
+    const leagues = [
+      {
+        id: 943230,
+        primaryId: 42,
+        name: "Champions League",
+        matches: [
+          { id: 6106414, status: { utcTime: "2026-10-13T16:45:00.000Z" }, home: { id: 8588, name: "Lens" }, away: { id: 9768, name: "Sporting CP" } },
+          { id: 6106309, status: { utcTime: "2026-10-14T16:45:00.000Z" }, home: { id: 10235, name: "Feyenoord" }, away: { id: 10171, name: "Como" } },
+        ],
+      },
+      {
+        id: 943229,
+        primaryId: 73,
+        name: "Europa League",
+        matches: [
+          { id: 6112265, status: { utcTime: "2026-10-15T16:45:00.000Z" }, home: { id: 10229, name: "AZ Alkmaar" }, away: { id: 9754, name: "Hapoel Beer Sheva" } },
+        ],
+      },
+      {
+        id: 943231,
+        primaryId: 10216,
+        name: "Conference League",
+        matches: [
+          { id: 6112413, status: { utcTime: "2026-10-15T16:45:00.000Z" }, home: { id: 9991, name: "Gent" }, away: { id: 8071, name: "AGF" } },
+        ],
+      },
+    ];
+    const competitionDeps = {
+      ...deps,
+      fotmobStandingLeagues: {
+        ...deps.fotmobStandingLeagues,
+        "Europe - Champions League": { id: 42 },
+        "Europe - Europa League": { id: 73 },
+        "Europe - Conference League": { id: 10216 },
+      },
+      toAmsterdamDateKey: (value) => new Date(value).toISOString().slice(0, 10),
+    };
+    const expected = [
+      ["2026-10-13", "Europe - Champions League", "Lens", "Sporting CP"],
+      ["2026-10-14", "Europe - Champions League", "Feyenoord", "Como"],
+      ["2026-10-15", "Europe - Europa League", "AZ Alkmaar", "Hapoel Beer Sheva"],
+      ["2026-10-15", "Europe - Conference League", "Gent", "AGF"],
+    ];
+
+    for (const [date, leagueLabel, home, away] of expected) {
+      const events = parseFotmobScheduledEvents({ leagues }, date, competitionDeps);
+      expect(events).toContainEqual(expect.objectContaining({
+        leagueLabel,
+        homeTeam: expect.objectContaining({ name: home }),
+        awayTeam: expect.objectContaining({ name: away }),
+        status: { type: "notstarted", description: "NS" },
+      }));
+    }
+  });
+
   it("maps season-specific domestic ids through FotMob primaryId", () => {
     const domesticPayload = {
       leagues: [{

@@ -34,6 +34,8 @@ let skipped = null;
 if (APPLY) {
   if (r2Configured && !allowUnarchivedCompaction) {
     skipped = "r2_configured_archive_script_handles_compaction";
+  } else if (!r2Configured && !allowUnarchivedCompaction) {
+    skipped = "r2_not_configured_unarchived_compaction_disabled";
   } else {
     const [result] = await sql.query(`
       with updated as (

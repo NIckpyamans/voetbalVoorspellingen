@@ -94,13 +94,14 @@ export function updateLearnedElo(reviews = {}, previous = {}, { now = Date.now()
 }
 
 // Lookup met fallback: geleerde rating, of null zodat de bestaande pipeline doorloopt.
-export function lookupLearnedElo(learnedElo, teamName) {
+export function lookupLearnedElo(learnedElo, teamName, { now = Date.now() } = {}) {
   const key = canonicalDedupeTeam(teamName);
   if (!key) return null;
   const rating = Number(learnedElo?.ratings?.[key]);
   if (!Number.isFinite(rating) || rating <= 0) return null;
   const meta = learnedElo?.meta?.[key] || {};
-  const ageDays = meta.lastKickoff ? Math.max(0, (Date.now() - Date.parse(meta.lastKickoff)) / 86400000) : 999;
+  const lastKickoff = Date.parse(meta.lastKickoff || "");
+  const ageDays = Number.isFinite(lastKickoff) ? Math.max(0, (now - lastKickoff) / 86400000) : 999;
   // Verouderde ratings zakken in betrouwbaarheid; na 60 dagen zonder wedstrijd minimaal.
   const freshness = clamp(1 - ageDays / 90, 0.25, 1);
   return {

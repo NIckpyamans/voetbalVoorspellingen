@@ -56,7 +56,7 @@ child.on("close", (code, signal) => {
 
   if (quotaExceeded) {
     console.warn(
-      "[ci-neon-safe] Neon quota or project-size limit reached. Treating this scheduled data job as a soft skip; R2/local evidence remains available and the next run can replay writes after recovery."
+      "[ci-neon-safe] Neon quota or project-size limit reached. Treating this data job as a soft skip; R2/local evidence remains available and the next run can replay writes after recovery."
     );
     process.exit(0);
   }

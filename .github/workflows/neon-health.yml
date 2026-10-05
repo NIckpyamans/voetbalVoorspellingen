@@ -38,11 +38,28 @@ jobs:
         env:
           DATABASE_URL: ${{ secrets.DATABASE_URL }}
           POSTGRES_URL: ${{ secrets.POSTGRES_URL }}
-      - name: Commit health evidence
+      - name: Upload health evidence
+        if: always()
+        uses: actions/upload-artifact@v5
+        with:
+          name: neon-health-${{ github.run_id }}
+          path: monitor/neon-health.json
+          if-no-files-found: error
+          retention-days: 30
+      - name: Upload database availability evidence
+        if: always()
+        uses: actions/upload-artifact@v5
+        with:
+          name: database-availability-${{ github.run_id }}
+          path: monitor/database-availability.json
+          if-no-files-found: warn
+          retention-days: 30
+      - name: Commit health transition for the next recovery probe
+        if: steps.health.outputs.previousState != steps.health.outputs.state
         run: |
           git config user.name github-actions
           git config user.email github-actions@github.com
-          if [ -f monitor/neon-health.json ]; then git add monitor/neon-health.json; fi
+          git add -f monitor/neon-health.json
           git diff --staged --quiet && exit 0
           git commit -m "update neon health evidence [skip vercel]"
           for attempt in 1 2 3; do
@@ -50,6 +67,11 @@ jobs:
             if git push origin HEAD:"$DATA_BRANCH"; then exit 0; fi
             sleep $((attempt * 5))
           done
+          exit 1
+      - name: Alert once when Neon quota is exceeded
+        if: steps.health.outputs.state == 'quota_exceeded' && steps.health.outputs.previousState != 'quota_exceeded'
+        run: |
+          echo "Neon meldt HTTP 402 quota_exceeded. Health-evidence staat als artifact; herstel de quota in het Neon-accountdashboard."
           exit 1
       - name: Dispatch recovery maintenance after quota reset
         if: steps.health.outputs.quotaRecovered == 'true'

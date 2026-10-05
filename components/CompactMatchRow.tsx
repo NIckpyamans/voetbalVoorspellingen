@@ -5,6 +5,8 @@ import { getMatchStatusKind } from "../shared/matchStatus.js";
 import { isGeneratedLogoUrl } from "../shared/clubLogos.js";
 import { useLiveClock } from "./useLiveClock";
 import LiveGoalEvents from "./LiveGoalEvents";
+import { standingLabel } from "../shared/standingsLabel.js";
+import { h2hMetadata } from "../shared/dashboardCompact.js";
 
 interface CompactMatchRowProps {
   match: Match;
@@ -33,13 +35,14 @@ function sourcePct(match: Match) {
   return value <= 1 ? Math.round(value * 100) : Math.round(value);
 }
 
-function RankBadge({ pos }: { pos: number }) {
+function RankBadge({ pos, league, preliminary = false }: { pos: number; league: string; preliminary?: boolean }) {
+  const label = standingLabel(league);
   return (
     <span
-      title={`Ranglijstnummer ${pos}`}
-      className="shrink-0 rounded-full border border-amber-300/40 bg-amber-400 px-1.5 py-0.5 text-[9px] font-black leading-none text-slate-950 shadow-sm"
+      title={`${preliminary ? "Voorlopige provider-volgorde" : "Actuele competitiepositie"}: ${label} #${pos}`}
+      className={`shrink-0 rounded-full border px-1.5 py-0.5 text-[9px] font-black leading-none shadow-sm ${preliminary ? "border-violet-300/50 bg-violet-300 text-slate-950" : "border-amber-300/40 bg-amber-400 text-slate-950"}`}
     >
-      #{pos}
+      {preliminary ? "~" : ""}{label} #{pos}
     </span>
   );
 }
@@ -76,8 +79,11 @@ const CompactMatchRow: React.FC<CompactMatchRowProps> = ({ match, prediction, ex
   const exactProbability = Number(prediction?.exactProb || 0);
   const lineupConfirmed = Boolean((match as any).lineupConfirmed || match.lineupSummary?.confirmed || prediction?.lineupSummary?.confirmed);
   const hasOdds = Boolean((match as any).hasOdds || prediction?.odds || prediction?.oddsAtPrediction || match.dbFeatureContext?.historicalOdds?.samples);
-  const h2hPlayed = Number((match as any).h2hPlayed || match.h2h?.played || prediction?.h2h?.played || 0);
+  const h2hInfo = h2hMetadata({ ...match, h2h: match.h2h || prediction?.h2h, h2hStatus: match.h2hStatus || prediction?.h2hStatus });
+  const h2hPlayed = h2hInfo.sampleSize;
   const coverage = sourcePct(match);
+  const homeRankProvisional = Boolean((match as any).homeStandingProvisional || (match as any).standingProvisional);
+  const awayRankProvisional = Boolean((match as any).awayStandingProvisional || (match as any).standingProvisional);
 
   const timingLabel = useMemo(() => {
     if (live) {
@@ -112,13 +118,13 @@ const CompactMatchRow: React.FC<CompactMatchRowProps> = ({ match, prediction, ex
             <div className="flex min-w-0 items-center justify-end gap-2">
               <RowLogo logo={match.homeLogo} name={match.homeTeamName} />
               <span className="truncate text-sm font-black text-white">{match.homeTeamName}</span>
-              {match.homePos != null && match.homePos > 0 && <RankBadge pos={match.homePos} />}
+              {match.homePos != null && match.homePos > 0 && <RankBadge pos={match.homePos} league={match.league} preliminary={homeRankProvisional} />}
             </div>
             <div className="text-center text-[10px] font-black text-slate-500">vs</div>
             <div className="flex min-w-0 items-center gap-2">
               <RowLogo logo={match.awayLogo} name={match.awayTeamName} />
               <span className="truncate text-sm font-black text-white">{match.awayTeamName}</span>
-              {match.awayPos != null && match.awayPos > 0 && <RankBadge pos={match.awayPos} />}
+              {match.awayPos != null && match.awayPos > 0 && <RankBadge pos={match.awayPos} league={match.league} preliminary={awayRankProvisional} />}
             </div>
           </div>
           {live && <div className="mt-1"><LiveGoalEvents match={match} /></div>}
@@ -143,8 +149,11 @@ const CompactMatchRow: React.FC<CompactMatchRowProps> = ({ match, prediction, ex
           <span className={`rounded-full px-2 py-0.5 text-[8px] font-black ${hasOdds ? "bg-emerald-500/15 text-emerald-300" : "bg-slate-700/70 text-slate-300"}`}>
             {hasOdds ? "odds" : "geen odds"}
           </span>
-          <span className="rounded-full bg-slate-800 px-2 py-0.5 text-[8px] font-black text-slate-300">
-            H2H {h2hPlayed} · bron {coverage}%
+          <span
+            title={`Status: ${h2hInfo.status}; geldig: ${h2hPlayed}; zelfde competitie: ${h2hInfo.sameCompetitionSampleSize}; bron: ${h2hInfo.source || "onbekend"}; bijgewerkt: ${h2hInfo.updatedAt || "onbekend"}`}
+            className="rounded-full bg-slate-800 px-2 py-0.5 text-[8px] font-black text-slate-300"
+          >
+            H2H {h2hPlayed} · {h2hInfo.status}
           </span>
         </div>
       </div>

@@ -5,6 +5,7 @@ import { setCorsHeaders } from "../shared/cors.js";
 import { databaseConfigured, readDatabaseDay } from "../shared/database.js";
 import { filterVisibleMatches, filterVisiblePredictions } from "../shared/competitionVisibility.js";
 import { readDashboardDayCache } from "../shared/dashboardR2Cache.js";
+import { synchronizeMatchPredictionH2H } from "../shared/h2hProvenance.js";
 
 const logger = createLogger("api.predict");
 
@@ -123,6 +124,11 @@ function compactPrediction(prediction: any) {
     weather: prediction.weather,
     h2h: prediction.h2h,
     h2hStatus: prediction.h2hStatus,
+    h2hSource: prediction.h2hSource || prediction.h2h?.source || null,
+    h2hAsOf: prediction.h2hAsOf || prediction.h2h?.asOf || prediction.h2h?.sourceTimestamp || null,
+    h2hAvailability: prediction.h2hAvailability || prediction.h2h?.availabilityStatus || null,
+    h2hPlayed: Number(prediction.h2hPlayed ?? prediction.h2h?.played ?? prediction.h2h?.results?.length ?? 0),
+    h2hCompetitionPlayed: Number(prediction.h2hCompetitionPlayed ?? prediction.h2h?.sameCompetitionPlayed ?? 0),
     aggregate: prediction.aggregate,
     context: prediction.context ? { summary: prediction.context.summary } : null,
     homeRestDays: prediction.homeRestDays,
@@ -189,6 +195,11 @@ function compactPredictionListItem(prediction: any) {
         }
       : null,
     h2hStatus: prediction.h2hStatus,
+    h2hSource: prediction.h2hSource || prediction.h2h?.source || null,
+    h2hAsOf: prediction.h2hAsOf || prediction.h2h?.asOf || prediction.h2h?.sourceTimestamp || null,
+    h2hAvailability: prediction.h2hAvailability || prediction.h2h?.availabilityStatus || null,
+    h2hPlayed: Number(prediction.h2hPlayed ?? prediction.h2h?.played ?? prediction.h2h?.results?.length ?? 0),
+    h2hCompetitionPlayed: Number(prediction.h2hCompetitionPlayed ?? prediction.h2h?.sameCompetitionPlayed ?? 0),
     lineupSummary: prediction.lineupSummary
       ? {
           confirmed: Boolean(prediction.lineupSummary.confirmed),
@@ -219,6 +230,7 @@ function compactPredictionListItem(prediction: any) {
 
 function enrichPrediction(prediction: any, matchMap: Record<string, any>, store: any, full = false) {
   const match = matchMap[prediction.matchId] || null;
+  const synchronizedH2H = synchronizeMatchPredictionH2H(match, prediction);
   const dbFeatureContext = prediction.dbFeatureContext || match?.dbFeatureContext || null;
   const enriched = {
     ...prediction,
@@ -227,8 +239,9 @@ function enrichPrediction(prediction: any, matchMap: Record<string, any>, store:
     odds: prediction.odds || null,
     weather: prediction.weather || match?.weather || null,
     lineupSummary: prediction.lineupSummary || match?.lineupSummary || null,
-    h2h: prediction.h2h || match?.h2h || null,
-    h2hStatus: prediction.h2hStatus || match?.h2hStatus || "empty",
+    ...synchronizedH2H,
+    h2h: synchronizedH2H?.h2h || null,
+    h2hStatus: synchronizedH2H?.h2h?.status || synchronizedH2H?.h2hStatus || "empty",
     aggregate: prediction.aggregate || match?.aggregate || null,
     context: prediction.context || match?.context || null,
     homeRestDays:

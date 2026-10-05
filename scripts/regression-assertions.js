@@ -14,6 +14,12 @@ import {
   isActiveCompetitionEntity,
   isHiddenInternationalOrWorldCupEntity,
 } from "../shared/competitionVisibility.js";
+import {
+  findH2HProvenanceMismatches,
+  h2hHasProvenance,
+  synchronizeMatchPredictionH2H,
+} from "../shared/h2hProvenance.js";
+import { todayAmsterdamKey } from "../shared/date.js";
 
 const root = process.cwd();
 const file = path.join(root, "server_data.json");
@@ -25,6 +31,37 @@ function readJsonSafe(filePath, fallback) {
   } catch {
     return fallback;
   }
+}
+
+function collectStaticH2HMismatches() {
+  const daysDir = path.join(root, "data", "days");
+  if (!fs.existsSync(daysDir)) return [];
+  const mismatches = [];
+  const unrepairedMismatches = [];
+  const today = todayAmsterdamKey();
+
+  for (const entry of fs.readdirSync(daysDir).filter((name) => /^\d{4}-\d{2}-\d{2}\.json$/.test(name))) {
+    const date = entry.slice(0, -5);
+    // Predictions from a completed match intentionally preserve their original
+    // input snapshot; upcoming fixtures should always track current provenance.
+    if (date < today) continue;
+    const day = readJsonSafe(path.join(daysDir, entry), {});
+    const matchesById = new Map((Array.isArray(day.matches) ? day.matches : []).map((match) => [String(match?.id || ""), match]));
+    for (const prediction of Array.isArray(day.predictions) ? day.predictions : []) {
+      const matchId = String(prediction?.matchId || "");
+      const match = matchesById.get(matchId);
+      if (!match || !h2hHasProvenance(match)) continue;
+      const matchDate = Date.parse(match.kickoff || match.date || `${date}T00:00:00Z`);
+      if (Number.isFinite(matchDate) && matchDate < Date.now()) continue;
+      const fields = findH2HProvenanceMismatches(match, prediction);
+      if (!fields.length) continue;
+      mismatches.push({ date, matchId, fields });
+      const synchronized = synchronizeMatchPredictionH2H(match, prediction);
+      const remainingFields = findH2HProvenanceMismatches(match, synchronized);
+      if (remainingFields.length) unrepairedMismatches.push({ date, matchId, fields: remainingFields });
+    }
+  }
+  return { mismatches, unrepairedMismatches };
 }
 
 function readStore() {
@@ -287,9 +324,17 @@ async function runContractAssertions() {
   return failures;
 }
 
+const staticH2HCheck = collectStaticH2HMismatches();
 const contractFailures = await runContractAssertions();
 
 console.log(`[regression-assertions] assertions: ${assertions.length}, failed: ${failedAny.length}, failedHigh: ${failedHigh.length}, degraded: ${degraded}`);
+console.log(`[regression-assertions] static H2H mismatches repaired at serve boundary: ${staticH2HCheck.mismatches.length}; unrepaired: ${staticH2HCheck.unrepairedMismatches.length}`);
+for (const mismatch of staticH2HCheck.unrepairedMismatches.slice(0, 20)) {
+  console.log(`[regression-assertions] H2H mismatch ${mismatch.date}/${mismatch.matchId}: ${mismatch.fields.join(", ")}`);
+}
+if (staticH2HCheck.unrepairedMismatches.length > 20) {
+  console.log(`[regression-assertions] ... ${staticH2HCheck.unrepairedMismatches.length - 20} additional unrepaired H2H mismatches`);
+}
 for (const row of failedAny) {
   console.log(`[regression-assertions] FAIL ${row.key}: ${row.detail}`);
 }
@@ -297,7 +342,7 @@ for (const failure of contractFailures) {
   console.log(`[regression-assertions] CONTRACT FAIL: ${failure}`);
 }
 
-if (degraded || failedHigh.length > 0 || contractFailures.length > 0) {
+if (degraded || failedHigh.length > 0 || contractFailures.length > 0 || staticH2HCheck.unrepairedMismatches.length > 0) {
   console.error("[regression-assertions] high-severity regressie of degraded mode actief");
   process.exit(1);
 }

@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { classifyProviderResult, PROVIDER_RESULT } from "../../scripts/worker/provider-observability.js";
+import { classifyProviderResult, normalizeProviderAttempt, PROVIDER_RESULT } from "../../scripts/worker/provider-observability.js";
 
 describe("provider result taxonomy", () => {
   it.each([
@@ -10,4 +10,13 @@ describe("provider result taxonomy", () => {
     [{ status: "acceptance_gate_closed" }, PROVIDER_RESULT.ACCEPTANCE_BLOCKED],
     [{ status: "not_published_yet" }, PROVIDER_RESULT.NOT_PUBLISHED],
   ])("classifies %o", (input, expected) => expect(classifyProviderResult(input)).toBe(expected));
+
+  it("normalizes latency and provider quota details", () => {
+    expect(normalizeProviderAttempt({ provider: "api-football", status: "http_429", durationMs: "240", quota: { remaining: "0", limit: "100", reset: "2026-10-05T13:00:00Z" } })).toMatchObject({
+      result: PROVIDER_RESULT.QUOTA,
+      durationMs: 240,
+      quota: { remaining: 0, limit: 100, resetAt: "2026-10-05T13:00:00Z" },
+    });
+    expect(classifyProviderResult({ status: "provider_unreachable" })).toBe(PROVIDER_RESULT.HTTP_ERROR);
+  });
 });

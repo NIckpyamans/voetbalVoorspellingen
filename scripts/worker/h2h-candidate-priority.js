@@ -1,8 +1,17 @@
+function hasH2H(match) {
+  return Number(match?.h2h?.played || match?.h2h?.results?.length || match?.played || 0) > 0;
+}
+
 export function orderH2HCandidatesByLastAttempt(candidates, attemptLedger = {}) {
   return [...(candidates || [])].sort((left, right) => {
+    const leftHasH2H = hasH2H(left) ? 1 : 0;
+    const rightHasH2H = hasH2H(right) ? 1 : 0;
+    if (leftHasH2H !== rightHasH2H) return leftHasH2H - rightHasH2H;
+    const leftKickoff = String(left?.kickoff_at || left?.date_key || "9999-12-31");
+    const rightKickoff = String(right?.kickoff_at || right?.date_key || "9999-12-31");
     const leftCheckedAt = Date.parse(attemptLedger[left?.match_id]?.checkedAt || "") || 0;
     const rightCheckedAt = Date.parse(attemptLedger[right?.match_id]?.checkedAt || "") || 0;
-    return leftCheckedAt - rightCheckedAt || String(left?.kickoff_at || "").localeCompare(String(right?.kickoff_at || ""));
+    return leftKickoff.localeCompare(rightKickoff) || leftCheckedAt - rightCheckedAt;
   });
 }
 

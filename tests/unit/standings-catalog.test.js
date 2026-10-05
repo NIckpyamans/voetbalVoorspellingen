@@ -138,6 +138,43 @@ describe("standings catalog fallback", () => {
     expect(rows.reduce((sum, row) => sum + row.p, 0)).toBe(0);
   });
 
+  it("accepts actual provisional provider order for UEFA league phase without inventing results", () => {
+    const uefaCatalog = {
+      season: "2026-2027",
+      competitions: [{
+        league: "Europe - Conference League",
+        slug: "europe-conference-league",
+        type: "cup",
+        expectedTeams: 3,
+        format: "league_phase_8_matches_then_knockout",
+        membershipStatus: "provisional_qualification_baseline",
+        teams: ["Ajax", "AGF", "Roma"],
+      }],
+    };
+    const standings = mergeCatalogStandings({ "label:Europe - Conference League": {
+      label: "Europe - Conference League",
+      season: "2026/2027",
+      source: "fotmob",
+      preliminary: true,
+      rows: [
+        { pos: 2, team: "Ajax", teamId: "fotmob-1", p: 0, w: 0, d: 0, l: 0, gf: 0, ga: 0, pts: 0 },
+        { pos: 1, team: "AGF", teamId: "fotmob-2", p: 0, w: 0, d: 0, l: 0, gf: 0, ga: 0, pts: 0 },
+        { pos: 3, team: "Roma", teamId: "fotmob-3", p: 0, w: 0, d: 0, l: 0, gf: 0, ga: 0, pts: 0 },
+      ],
+    } }, uefaCatalog, [{
+      date: "2026-10-01",
+      league: "Europe - Conference League",
+      status: "FT",
+      homeTeamName: "Ajax",
+      awayTeamName: "AGF",
+      score: "4-0",
+    }]);
+    const table = standings["label:Europe - Conference League"];
+    expect(table.preliminary).toBe(true);
+    expect(table.rows.map((row) => row.pos)).toEqual([1, 2, 3]);
+    expect(table.rows.find((row) => row.team === "Ajax")).toMatchObject({ pos: 2, p: 0, pts: 0 });
+  });
+
   it("does not count UEFA qualifiers in a provisional league-phase table", () => {
     const uefaCatalog = {
       season: "2026-2027",

@@ -15,6 +15,9 @@ export const FOTMOB_STANDINGS_LEAGUES = Object.freeze({
   "Portugal - Liga Portugal 2": { id: 185, countryCode: "POR" },
   "Spain - LaLiga": { id: 87, countryCode: "ESP" },
   "Spain - LaLiga2": { id: 140, countryCode: "ESP" },
+  "Europe - Champions League": { id: 42, countryCode: "INT", preliminary: false },
+  "Europe - Europa League": { id: 73, countryCode: "INT", preliminary: false },
+  "Europe - Conference League": { id: 10216, countryCode: "INT", preliminary: true },
 });
 
 export function fotmobSeasonFromDate(dateISO) {
@@ -38,7 +41,7 @@ export function normalizeFotmobStanding(payload, label, expectedLeagueId, season
   const rows = rawRows.map((row, index) => {
     const score = scoreParts(row?.scoresStr);
     return {
-      pos: Number(row?.idx || index + 1),
+      pos: Number(row?.idx || row?.position || index + 1),
       team: String(row?.name || row?.shortName || "").trim(),
       teamId: row?.id ? `fotmob-${row.id}` : "",
       p: Number(row?.played || 0),
@@ -51,15 +54,19 @@ export function normalizeFotmobStanding(payload, label, expectedLeagueId, season
     };
   }).filter((row) => row.team);
   if (rows.length < 2 || rows.some((row) => !Number.isFinite(row.p) || !Number.isFinite(row.pts))) return null;
+  const isProvisionalLeaguePhase = Boolean(FOTMOB_STANDINGS_LEAGUES[label]?.preliminary) &&
+    rows.every((row) => row.p === 0 && row.pts === 0);
 
   const resultKeys = (payload?.fixtures?.allMatches || [])
     .filter((match) => match?.status?.finished && match?.home?.name && match?.away?.name)
     .map((match) => `${String(match.status.utcTime || "").slice(0, 10)}|${match.home.name}|${match.away.name}`)
     .filter((key) => key[0] !== "|");
 
+  const competition = FOTMOB_STANDINGS_LEAGUES[label];
   return {
     label,
     season,
+    preliminary: isProvisionalLeaguePhase,
     rows,
     updated: Date.now(),
     source: "fotmob",

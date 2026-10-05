@@ -19,6 +19,8 @@ export function buildH2HAgentProfile(input, deps) {
     apiFootballProfile,
     espnProfile,
     extraProfiles = [],
+    providerAttempts = [],
+    asOf,
     homeName,
     awayName,
     homeId,
@@ -68,7 +70,29 @@ export function buildH2HAgentProfile(input, deps) {
   }
 
   if (!results.length) {
-    return { played: 0, homeWins: 0, draws: 0, awayWins: 0, results: [], status: "h2h-agent-empty" };
+    const failedAttempts = Array.isArray(providerAttempts) ? providerAttempts : [];
+    const statuses = failedAttempts.map((attempt) => String(attempt?.status || "").toLowerCase());
+    const status = statuses.some((value) => /request_failed|provider_unreachable|provider_error|provider_exception|fetch_unavailable|http_\d+/.test(value))
+      ? "provider_unreachable"
+      : statuses.some((value) => /acceptance|not_configured|gate_closed|disabled/.test(value))
+        ? "provider_acceptance_blocked"
+        : statuses.some((value) => /mapping/.test(value))
+          ? "team_mapping_missing"
+          : statuses.length > 0 && statuses.every((value) => /available|ok|no_coverage|not_found|no_direct_history/.test(value))
+            ? "no_direct_history"
+            : "not_checked";
+    return {
+      played: 0,
+      homeWins: 0,
+      draws: 0,
+      awayWins: 0,
+      sameCompetitionPlayed: 0,
+      results: [],
+      status,
+      availabilityStatus: status,
+      source: failedAttempts.map((attempt) => attempt?.provider).filter(Boolean).join(", ") || "h2h-agent",
+      asOf: input.asOf || new Date().toISOString(),
+    };
   }
 
   const uniqueSources = [...new Set(sources.filter(Boolean))];
@@ -84,6 +108,8 @@ export function buildH2HAgentProfile(input, deps) {
 
   return {
     ...profile,
+    asOf: input.asOf || profile.asOf || new Date().toISOString(),
+    availabilityStatus: "available",
     targetPlayed: 5,
     coverage: Math.min(1, Number(profile.played || 0) / 5),
     agent: {

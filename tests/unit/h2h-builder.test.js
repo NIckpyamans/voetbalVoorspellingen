@@ -36,14 +36,66 @@ describe("H2H source merger", () => {
     expect(profile.coverage).toBe(0.6);
   });
 
-  it("returns an explicit empty contract without inventing history", () => {
-    expect(buildH2HAgentProfile({ homeName: "A", awayName: "B" }, deps)).toEqual({
+  it("keeps an unchecked empty profile distinct from missing historical coverage", () => {
+    const profile = buildH2HAgentProfile({ homeName: "A", awayName: "B" }, deps);
+    expect(profile).toMatchObject({
       played: 0,
-      homeWins: 0,
-      draws: 0,
-      awayWins: 0,
       results: [],
-      status: "h2h-agent-empty",
+      status: "not_checked",
+      availabilityStatus: "not_checked",
+      source: "h2h-agent",
     });
+    expect(profile.asOf).toBeTruthy();
+  });
+
+  it("classifies reachable providers with no matching history separately", () => {
+    const profile = buildH2HAgentProfile({
+      homeName: "A",
+      awayName: "B",
+      providerAttempts: [{ provider: "espn-team-schedule", status: "not_found" }],
+    }, deps);
+    expect(profile).toMatchObject({ status: "no_direct_history", availabilityStatus: "no_direct_history" });
+  });
+
+  it("surfaces provider outages instead of labelling them as no history", () => {
+    const profile = buildH2HAgentProfile({
+      homeName: "A",
+      awayName: "B",
+      providerAttempts: [{ provider: "espn-team-schedule", status: "provider_unreachable" }],
+    }, deps);
+    expect(profile).toMatchObject({ status: "provider_unreachable", availabilityStatus: "provider_unreachable" });
+  });
+
+  it("surfaces acceptance gates instead of labelling them as no history", () => {
+    const profile = buildH2HAgentProfile({
+      homeName: "A",
+      awayName: "B",
+      providerAttempts: [{ provider: "api-football", status: "acceptance_gate_closed" }],
+    }, deps);
+    expect(profile).toMatchObject({ status: "provider_acceptance_blocked", availabilityStatus: "provider_acceptance_blocked" });
+  });
+
+  it("does not hide an outage behind another provider's empty coverage", () => {
+    const profile = buildH2HAgentProfile({
+      homeName: "A",
+      awayName: "B",
+      providerAttempts: [
+        { provider: "api-football", status: "acceptance_gate_closed" },
+        { provider: "espn-team-schedule", status: "provider_unreachable" },
+      ],
+    }, deps);
+    expect(profile.status).toBe("provider_unreachable");
+  });
+
+  it("preserves explicit available H2H provenance", () => {
+    const profile = buildH2HAgentProfile({
+      baseH2H: { status: "live-h2h", results: [{ id: "a", winnerId: "home" }] },
+      asOf: "2026-10-02T09:00:00Z",
+      homeName: "Home",
+      awayName: "Away",
+      homeId: "home",
+      awayId: "away",
+    }, deps);
+    expect(profile).toMatchObject({ availabilityStatus: "available", played: 1, asOf: "2026-10-02T09:00:00Z" });
   });
 });

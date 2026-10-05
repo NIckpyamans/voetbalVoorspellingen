@@ -108,6 +108,9 @@ if (APPLY && candidates.length) {
       retentionDays: String(RETENTION_DAYS),
     },
   });
+  if (!upload?.ok) {
+    throw new Error(`R2 source-record archive failed; Neon payloads retained (${upload?.reason || "unknown error"})`);
+  }
   const ids = candidates.map((row) => row.source_record_id);
   const [result] = await sql.query(
     `

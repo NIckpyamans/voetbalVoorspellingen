@@ -8608,12 +8608,20 @@ function mergeTeamFormWithReviews(currentForm, reviews, teamName, cutoffDate) {
   return buildTeamFormFromRecentMatches([...byKey.values()], "historical+immutable-reviewed-results");
 }
 
-async function fetchH2H(eventId, currentHomeId, currentAwayId, tournamentId, seasonId) {
+async function fetchH2H(eventId, currentHomeId, currentAwayId, tournamentId, seasonId, targetKickoff = null) {
   const json = await safeFetch(`${SOFA}/event/${eventId}/h2h`);
+  if (!json) {
+    return { played: 0, homeWins: 0, draws: 0, awayWins: 0, results: [], status: "provider_unreachable", source: "sofascore-h2h" };
+  }
   const raw = json?.events || [];
+  const targetKickoffMs = Date.parse(targetKickoff || "");
+  const beforeTargetKickoff = (event) => {
+    const timestamp = Number(event?.startTimestamp || 0) * 1000;
+    return !Number.isFinite(targetKickoffMs) || !timestamp || timestamp < targetKickoffMs;
+  };
 
   const finishedAll = raw
-    .filter((event) => event.status?.type === "finished")
+    .filter((event) => event.status?.type === "finished" && beforeTargetKickoff(event))
     .sort((a, b) => Number(a.startTimestamp || 0) - Number(b.startTimestamp || 0));
 
   const finishedSameCompetition = finishedAll
@@ -8640,7 +8648,7 @@ async function fetchH2H(eventId, currentHomeId, currentAwayId, tournamentId, sea
     .slice(-8);
 
   if (!finished.length) {
-    return { played: 0, homeWins: 0, draws: 0, awayWins: 0, results: [], status: "empty" };
+    return { played: 0, homeWins: 0, draws: 0, awayWins: 0, results: [], status: "no_direct_history", source: "sofascore-h2h" };
   }
 
   let homeWins = 0;
@@ -8694,7 +8702,8 @@ async function fetchH2H(eventId, currentHomeId, currentAwayId, tournamentId, sea
         ? finishedSameCompetition.length
           ? "loaded"
           : "all-competitions"
-        : "empty",
+        : "no_direct_history",
+    source: "sofascore-h2h",
   };
 }
 
@@ -10944,6 +10953,42 @@ function buildBacktestSegmentation(store) {
   };
 }
 
+// Een kalenderrefresh over meerdere weken kan door een run- of step-timeout
+// afgebroken worden. Daarom schrijven we elke voltooide dag meteen weg, zodat
+// een afgebroken run zijn werk niet volledig verliest. Bestaande
+// predictionSnapshots en reviews blijven behouden; die worden pas door de
+// afsluitende export verrijkt.
+function writeDayCheckpoint(date, store) {
+  try {
+    const filePath = path.join(SPLIT_DATA_DIR, "days", `${date}.json`);
+    let existing = {};
+    try {
+      existing = JSON.parse(fs.readFileSync(filePath, "utf8")) || {};
+    } catch {
+      existing = {};
+    }
+    const matches = store.matches?.[date] || [];
+    const predictions = store.predictions?.[date] || [];
+    if (!matches.length && !predictions.length) return null;
+    writeJsonFile(filePath, {
+      ...existing,
+      date,
+      matches,
+      predictions,
+      checkpoint: {
+        writtenAt: new Date().toISOString(),
+        matches: matches.length,
+        predictions: predictions.length,
+        workerVersion: store.workerVersion || MODEL_VERSION,
+      },
+    });
+    return { date, matches: matches.length, predictions: predictions.length };
+  } catch (error) {
+    console.warn(`[worker] dag-checkpoint mislukt voor ${date}: ${error?.message || error}`);
+    return null;
+  }
+}
+
 async function main() {
   let store = defaultStore();
   if (fs.existsSync(DATA_FILE)) {
@@ -11087,6 +11132,12 @@ async function main() {
   const followedFotmobLeagues = Object.fromEntries(
     Object.entries(FOTMOB_STANDINGS_LEAGUES).filter(([label]) => trackedCompetitionLabels.includes(label))
   );
+  const followedFotmobFixtureCompetitions = {
+    ...followedFotmobLeagues,
+    ...Object.fromEntries(
+      Object.entries(FOTMOB_STANDINGS_LEAGUES).filter(([label]) => label.startsWith("Europe -"))
+    ),
+  };
   const teamTournamentMap = new Map();
   const tournamentsMap = new Map();
   const requiredTeamIds = new Set();
@@ -11165,7 +11216,7 @@ async function main() {
     });
     const fotmobEvents = await fetchFotmobScheduledEventsSource(date, {
       trackedTeamNames: trackedCompetitionTeamNames,
-      fotmobStandingLeagues: followedFotmobLeagues,
+      fotmobStandingLeagues: followedFotmobFixtureCompetitions,
       fotmobCompetitionToLabel: FOTMOB_COMPETITION_TO_LABEL,
       normalizeName,
       isWomenContext,
@@ -11453,7 +11504,7 @@ async function main() {
 
   const standingsByTournament = {};
   for (const [key, info] of (LIGHTWEIGHT_REFRESH ? [] : tournamentsMap.entries())) {
-    if (!isStandingLeagueLabel(info.label)) continue;
+    if (!isStandingLeagueLabel(info.label) && !FOTMOB_STANDINGS_LEAGUES[info.label]) continue;
     const cached = store.standings[key];
     const cachedIsOverlay = String(cached?.source || "").includes("live-match-overlay");
     if (cached?.rows?.length && standingHasValidTotals(cached) && !cachedIsOverlay && now - Number(cached.updated || 0) <= STANDINGS_TTL) {
@@ -11472,7 +11523,7 @@ async function main() {
 
   const standingLabels = LIGHTWEIGHT_REFRESH
     ? Object.keys(followedFotmobLeagues)
-    : allActiveLeagueLabels.filter(isStandingLeagueLabel);
+    : [...new Set([...allActiveLeagueLabels.filter(isStandingLeagueLabel), ...Object.keys(followedFotmobLeagues)])];
   for (const leagueLabel of standingLabels) {
     const labelKey = `label:${leagueLabel}`;
     const cached = store.standings[labelKey];
@@ -11513,11 +11564,23 @@ async function main() {
       const labelStandingKey = `label:${leagueInfo.label}`;
       const standing = standingsByTournament[standingsKey] || store.standings[standingsKey] || standingsByTournament[labelStandingKey] || store.standings[labelStandingKey] || null;
       const standingMeta = standing?.meta || null;
-      const homeStandingRow = findStandingRow(standing, homeId, homeName);
-      const awayStandingRow = findStandingRow(standing, awayId, awayName);
+      const isEuropeanCompetition = String(leagueInfo.label || "").startsWith("Europe -");
+      const standingIsApplicable = Boolean(standing?.rows?.length) && (!isEuropeanCompetition || standing?.source === "sofascore" || standing?.source === "fotmob");
+      const effectiveStanding = standingIsApplicable ? standing : null;
+      const eventHasProvisionalEuropeanOrder = Boolean(
+        event?.standingsProvisional && isEuropeanCompetition && effectiveStanding?.preliminary &&
+        Number(standing?.rows?.find((row) => sameTeam(row?.team, event.homeTeam?.name))?.p || 0) === 0 &&
+        Number(standing?.rows?.find((row) => sameTeam(row?.team, event.homeTeam?.name))?.pts || 0) === 0
+      );
+      const homeStandingRow = eventHasProvisionalEuropeanOrder
+        ? effectiveStanding?.rows?.find((row) => sameTeam(row?.team, homeName)) || null
+        : findStandingRow(effectiveStanding, homeId, homeName);
+      const awayStandingRow = eventHasProvisionalEuropeanOrder
+        ? effectiveStanding?.rows?.find((row) => sameTeam(row?.team, awayName)) || null
+        : findStandingRow(effectiveStanding, awayId, awayName);
       let homePos = homeStandingRow?.pos ?? null;
       let awayPos = awayStandingRow?.pos ?? null;
-      let standingsSourceLabel = standing?.source || standingMeta?.source || null;
+      let standingsSourceLabel = effectiveStanding?.source || standingMeta?.source || null;
       if ((homePos == null || awayPos == null) && isSeniorInternationalTournament(leagueInfo.label)) {
         homePos = homePos ?? lookupWorldCupSeedPosition(homeName);
         awayPos = awayPos ?? lookupWorldCupSeedPosition(awayName);
@@ -11543,7 +11606,7 @@ async function main() {
       const h2hKey = `${event.id}_${homeId}_${awayId}`;
       let h2h = isFallbackEvent ? null : store.h2hCache?.[h2hKey]?.data || null;
       if (!LIGHTWEIGHT_REFRESH && !isFallbackEvent && (!h2h || now - Number(store.h2hCache?.[h2hKey]?.updated || 0) > H2H_TTL)) {
-        h2h = await fetchH2H(event.id, homeId, awayId, tournamentId, seasonId);
+        h2h = await fetchH2H(event.id, homeId, awayId, tournamentId, seasonId, kickoff);
         store.h2hCache[h2hKey] = { updated: now, data: h2h };
         await sleep(60);
       }
@@ -11645,24 +11708,59 @@ async function main() {
         buildPossibleNames
       );
       const h2hFallbackLegs = [fallbackPreviousLeg, aggregatePreviousLeg, sportsDbDirectFixture].filter(Boolean);
+      const homeProviderIds = getKnownProviderIds(homeName);
+      const awayProviderIds = getKnownProviderIds(awayName);
       const apiFootballProfile = LIGHTWEIGHT_REFRESH ? null : await fetchApiFootballH2HProfile({
         store,
         homeName,
         awayName,
         homeId,
         awayId,
-        homeProviderIds: getKnownProviderIds(homeName),
-        awayProviderIds: getKnownProviderIds(awayName),
+        homeProviderIds,
+        awayProviderIds,
         leagueLabel: leagueInfo.label,
       });
       const espnProfile = LIGHTWEIGHT_REFRESH || apiFootballProfile?.results?.length ? null : await fetchEspnH2HProfile({
         store,
         homeName,
         awayName,
-        homeProviderIds: getKnownProviderIds(homeName),
-        awayProviderIds: getKnownProviderIds(awayName),
+        homeProviderIds,
+        awayProviderIds,
         kickoff,
       });
+      // Elke H2H-bron levert een status, zodat "geen ontmoetingen gevonden"
+      // niet wordt verward met een geblokkeerde of onbereikbare provider.
+      const h2hProviderAttempts = [];
+      const apiFootballPairKey = `${normalizeName(leagueInfo.label)}:${normalizeName(homeName)}__${normalizeName(awayName)}`;
+      const apiFootballCachedAttempt = store.apiFootballH2HCache?.[apiFootballPairKey];
+      const espnCacheKey = `${homeProviderIds.espn}:${awayProviderIds.espn}:${homeProviderIds.espnLeagueCode || awayProviderIds.espnLeagueCode}`;
+      const espnCachedAttempt = store.espnH2HCache?.[espnCacheKey];
+      if (h2h?.results?.length) {
+        h2hProviderAttempts.push({ provider: "sofascore-h2h", status: "available", records: h2h.results.length });
+      } else if (!isFallbackEvent && !LIGHTWEIGHT_REFRESH) {
+        h2hProviderAttempts.push({ provider: "sofascore-h2h", status: h2h?.status || "not_checked" });
+      }
+      const apiFootballEnabled = String(process.env.API_FOOTBALL_H2H_ENABLED || "true").toLowerCase() !== "false";
+      if (LIGHTWEIGHT_REFRESH || !apiFootballEnabled) {
+        h2hProviderAttempts.push({ provider: "api-football", status: "acceptance_gate_closed" });
+      } else if (!getApiFootballKey()) {
+        h2hProviderAttempts.push({ provider: "api-football", status: "not_configured" });
+      } else if (apiFootballProfile?.results?.length) {
+        h2hProviderAttempts.push({ provider: "api-football", status: "available", records: apiFootballProfile.results.length });
+      } else {
+        h2hProviderAttempts.push({
+          provider: "api-football",
+          status: apiFootballCachedAttempt?.status || "not_checked",
+          statusCode: apiFootballCachedAttempt?.statusCode,
+        });
+      }
+      if (espnProfile?.results?.length) {
+        h2hProviderAttempts.push({ provider: "espn-team-schedule", status: "available", records: espnProfile.results.length });
+      } else if (homeProviderIds.espn && awayProviderIds.espn && (homeProviderIds.espnLeagueCode || awayProviderIds.espnLeagueCode)) {
+        h2hProviderAttempts.push({ provider: "espn-team-schedule", status: espnCachedAttempt?.status || "not_checked" });
+      } else {
+        h2hProviderAttempts.push({ provider: "espn-team-schedule", status: "team_mapping_missing" });
+      }
       h2h = buildH2HAgentProfile({
         baseH2H: h2h,
         fallbackLegs: h2hFallbackLegs,
@@ -11676,6 +11774,7 @@ async function main() {
         awayName,
         homeId,
         awayId,
+        providerAttempts: h2hProviderAttempts,
       }, {
         mergeH2HResultLists,
         lookupCuratedH2HBackfill,
@@ -12133,6 +12232,11 @@ async function main() {
         homeTeamProfile,
         awayTeamProfile,
         h2h,
+        h2hPlayed: Number(h2h?.played || h2h?.results?.length || 0),
+        h2hSource: h2h?.source || h2h?.provider || null,
+        h2hAsOf: h2h?.asOf || h2h?.sourceTimestamp || null,
+        h2hCompetitionPlayed: Number(h2h?.sameCompetitionPlayed || 0),
+        h2hAvailability: Number(h2h?.played || 0) > 0 ? "beschikbaar" : h2h?.availabilityStatus || "nog niet gecontroleerd",
         dbFeatureContext,
         h2hStatus: h2h?.status || "empty",
         formDataQuality: {
@@ -12164,6 +12268,11 @@ async function main() {
         awayClubStrength,
         homePos,
         awayPos,
+        standingProvisional: Boolean((effectiveStanding?.preliminary && isEuropeanCompetition) || eventHasProvisionalEuropeanOrder),
+        homeStandingProvisional: Boolean(isEuropeanCompetition && ((effectiveStanding?.preliminary && homePos != null) || (eventHasProvisionalEuropeanOrder && homePos != null))),
+        awayStandingProvisional: Boolean(isEuropeanCompetition && ((effectiveStanding?.preliminary && awayPos != null) || (eventHasProvisionalEuropeanOrder && awayPos != null))),
+        standingCompetition: homePos != null || awayPos != null ? leagueInfo.label : null,
+        standingsSourceLabel,
         matchImportance,
         roundLabel,
         context,
@@ -12197,6 +12306,10 @@ async function main() {
         homeTeamProfile,
         awayTeamProfile,
         h2h,
+        h2hPlayed: Number(h2h?.played || h2h?.results?.length || 0),
+        h2hSource: h2h?.source || h2h?.provider || null,
+        h2hAsOf: h2h?.asOf || h2h?.sourceTimestamp || null,
+        h2hCompetitionPlayed: Number(h2h?.sameCompetitionPlayed || 0),
         h2hStatus: h2h?.status || "empty",
         formDataQuality: {
           homeGames: Number(homeRecent?.gamesPlayed || 0),
@@ -12296,6 +12409,13 @@ async function main() {
     } else {
       store.matches[date] = uniqueDayMatches;
       store.predictions[date] = uniqueDayPredictions;
+    }
+    const dayCheckpoint = writeDayCheckpoint(date, store);
+    if (dayCheckpoint) {
+      console.log(
+        `[worker] dag-checkpoint ${dayCheckpoint.date}: ${dayCheckpoint.matches} wedstrijden, ` +
+          `${dayCheckpoint.predictions} voorspellingen weggeschreven`,
+      );
     }
   }
 
@@ -12501,11 +12621,17 @@ async function main() {
     `[worker] training behouden: ${trainingSnapshot.rows.length} rows, ` +
       `${trainingSnapshot.preservation.snapshotBackedRows} snapshot-backed`
   );
-  writeSplitDataFiles(store, {
+  const staticExport = writeSplitDataFiles(store, {
     splitDataDir: SPLIT_DATA_DIR,
     preserveExistingDayFiles: LIGHTWEIGHT_REFRESH,
     writeCompetitionArchiveFiles: LIGHTWEIGHT_REFRESH ? null : writeCompetitionArchiveFiles,
   });
+  if (staticExport?.prunedDayFiles) {
+    console.log(
+      `[worker] retentie: ${staticExport.prunedDayFiles} dagbestanden buiten het venster verwijderd, ` +
+        `${staticExport.retainedDateKeys.length} dagbestanden behouden`,
+    );
+  }
   fs.writeFileSync(DATA_FILE, JSON.stringify(store));
   try {
     const dbSync = await syncStoreToDatabase(store, { dateKeys: dates });

@@ -27,7 +27,7 @@ function writeGithubOutput(state) {
   if (!process.argv.includes("--emit-github-output") || !process.env.GITHUB_OUTPUT) return;
   fs.appendFileSync(
     process.env.GITHUB_OUTPUT,
-    `available=${state.available}\nstate=${state.state}\nrecovered=${state.recovered}\nquotaRecovered=${state.quotaRecovered}\nconsecutiveFailures=${state.consecutiveFailures}\n`
+    `available=${state.available}\nstate=${state.state}\npreviousState=${state.previousState || "unknown"}\nrecovered=${state.recovered}\nquotaRecovered=${state.quotaRecovered}\nconsecutiveFailures=${state.consecutiveFailures}\n`
   );
 }
 

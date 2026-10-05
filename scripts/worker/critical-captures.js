@@ -204,7 +204,9 @@ export async function fetchR2OddsSnapshot(matchId, kickoffAt) {
 
 export async function fetchR2H2HProfile(matchId, kickoffAt) {
   if (String(process.env.R2_CRITICAL_CAPTURE_ENABLED || "true").toLowerCase() === "false") return null;
-  const payload = await readCriticalCapture(`critical-captures/h2h/${matchId}.json`);
+  const latest = await readCriticalCapture(`critical-captures/h2h/${matchId}/latest.json`);
+  const legacy = latest ? null : await readCriticalCapture(`critical-captures/h2h/${matchId}.json`);
+  const payload = latest || legacy;
   const capturedMs = validDate(payload?.capturedAt);
   const kickoffMs = validDate(kickoffAt);
   if (!payload?.h2h?.results?.length || capturedMs == null || kickoffMs == null || capturedMs >= kickoffMs) return null;

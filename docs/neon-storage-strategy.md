@@ -5,15 +5,17 @@ Doel: Neon onder de gratis 512 MB projectlimiet houden zonder voorspellingen, fi
 ## Huidige policy
 
 - Neon is de hot database voor genormaliseerde data: wedstrijden, voorspellingen, evaluaties, H2H, oddsstatus, teamstats en bronlineage.
-- Ruwe `source_records.payload` is tijdelijk debugmateriaal. Na 7 dagen wordt alleen de raw payload gecompact naar `{}`; provider, URL, entity key, content hash, trust score en timestamps blijven bestaan.
-- Prediction snapshots worden per wedstrijd beperkt. De nieuwste snapshots, geevalueerde snapshots, snapshots met odds en top exact/confidence picks blijven bewaard.
-- `db:neon-storage:maintain` draait de volledige onderhoudsketen: cache cleanup, snapshot compaction, source payload compaction en een nameting.
+- Ruwe `source_records.payload` is tijdelijk debugmateriaal. Na **3 dagen** wordt alleen de raw payload gecompact naar `{}`; provider, URL, entity key, content hash, trust score en timestamps blijven bestaan. Payloads worden pas na bevestigde R2-upload gecompacteerd.
+- Prediction snapshots worden per wedstrijd beperkt. De nieuwste snapshots, geëvalueerde snapshots, snapshots met odds en top exact/confidence picks blijven bewaard.
+- R2 snapshots staan per UTC-maand in content-addressed `prediction-snapshots/year=YYYY/month=MM/` objecten. Een klein manifest verwijst naar maandshards; oudere maanden worden nooit vervangen door een nieuwe maand. Hashchecks en upload-voor-manifest volgorde beschermen tegen incomplete writes.
+- De actieve R2-ledger migreert bestaande `active/ledger.json.gz`-data bij de eerste succesvolle schrijfbeurt naar deze maandshards. De migration vereist dat de bestaande ledger compleet leesbaar is; bestaande historie wordt niet verwijderd.
+- `db:neon-storage:maintain` voert eerst de storage-analyse uit, archiveert daarna snapshots/payloads en stopt bij de eerste mislukte stap vóór verdere compaction.
 
 ## Drempels
 
 - Onder 80%: normaal bewaren.
 - Vanaf 80%: pressure mode, korte cache-retentie en strengere backup-retentie.
-- Vanaf 95%: maintenance mag falen zodat GitHub Actions direct waarschuwt.
+- Vanaf 95%: niet-destructieve R2-archivering loopt eerst; na archiefbevestiging mag maintenance compacte data opschonen. Zonder werkende Neon-verbinding kan cleanup niet op afstand worden geforceerd.
 
 ## Volgende schaalstap
 
@@ -35,7 +37,7 @@ Neon bewaart dan alleen:
 
 ## Cloudflare R2 configuratie
 
-De code ondersteunt Cloudflare R2 via de S3-compatible API. Als de secrets ontbreken, blijft de maintenance veilig werken zonder R2 en worden oude payloads direct in Neon gecompact. Als de secrets aanwezig zijn, worden oude `source_records.payload` records eerst als `json.gz` naar R2 geschreven en daarna in Neon leeg gemaakt.
+De code ondersteunt Cloudflare R2 via de S3-compatible API. Als R2 niet geconfigureerd is, stopt de cold-storageketen veilig zonder oude payloads/snapshots te compacteren. Als R2 wel beschikbaar is, worden oude `source_records.payload` records eerst als `json.gz` naar een uniek archief geschreven; pas na bevestigde upload wordt Neon gecompact.
 
 R2 wordt nu gebruikt voor:
 

@@ -8,6 +8,7 @@ import { normalizeMinute, parseMinuteValue } from "../shared/minute.js";
 import { todayAmsterdamKey } from "../shared/date.js";
 import { filterVisibleMatches, filterVisiblePredictionMap } from "../shared/competitionVisibility.js";
 import { isGeneratedLogoUrl } from "../shared/clubLogos.js";
+import { mergeMatchH2HProvenance, normalizeMatchH2H, synchronizeMatchPredictionH2H } from "../shared/h2hProvenance.js";
 
 const CACHE_VERSION = "v11_source_coverage_and_form";
 const LIVE_CACHE_AGE_MS = 30_000;
@@ -20,6 +21,14 @@ const TEAM_DEDUPE_ALIASES: Record<string, string> = {
   "sport club freiburg": "freiburg",
   "aston villa": "aston villa",
   "aston villa fc": "aston villa",
+  "nec": "nec nijmegen",
+  "ne c": "nec nijmegen",
+  "nec nijmegen": "nec nijmegen",
+  "n e c nijmegen": "nec nijmegen",
+  "n e c": "nec nijmegen",
+  "nijmegen": "nec nijmegen",
+  "nijmegen eendracht combinatie": "nec nijmegen",
+  "eendracht combinatie": "nec nijmegen",
   "man city": "manchester city",
   "manchester city": "manchester city",
   "manchester city fc": "manchester city",
@@ -130,7 +139,7 @@ function mergeDuplicateMatch(current: Match, incoming: Match): Match {
   const preferred = incomingPreferred ? { ...incoming } : { ...current };
   const fallback = incomingPreferred ? current : incoming;
 
-  return {
+  return mergeMatchH2HProvenance({
     ...fallback,
     ...preferred,
     id: preferred.id || fallback.id,
@@ -145,6 +154,11 @@ function mergeDuplicateMatch(current: Match, incoming: Match): Match {
     awayPos: preferred.awayPos ?? fallback.awayPos,
     h2hPlayed: Math.max(Number(preferred.h2hPlayed || 0), Number(fallback.h2hPlayed || 0)),
     h2h: preferred.h2h || fallback.h2h,
+    h2hStatus: preferred.h2hStatus || fallback.h2hStatus,
+    h2hAvailability: preferred.h2hAvailability || fallback.h2hAvailability,
+    h2hSource: preferred.h2hSource || fallback.h2hSource,
+    h2hAsOf: preferred.h2hAsOf || fallback.h2hAsOf,
+    h2hCompetitionPlayed: preferred.h2hCompetitionPlayed ?? fallback.h2hCompetitionPlayed,
     homeRecent: preferred.homeRecent || fallback.homeRecent,
     awayRecent: preferred.awayRecent || fallback.awayRecent,
     homeSeasonStats: preferred.homeSeasonStats || fallback.homeSeasonStats,
@@ -152,14 +166,15 @@ function mergeDuplicateMatch(current: Match, incoming: Match): Match {
     sourceCoverage: preferred.sourceCoverage || fallback.sourceCoverage,
     freeSourceCoverage: preferred.freeSourceCoverage || fallback.freeSourceCoverage,
     coverage: preferred.coverage || fallback.coverage,
-  };
+  }, fallback) as Match;
 }
 
 function dedupeMatchesForDay(matches: Match[]) {
   const seen = new Map<string, Match>();
   const idRedirects = new Map<string, string>();
 
-  for (const match of matches || []) {
+  for (const rawMatch of matches || []) {
+    const match = normalizeMatchH2H(rawMatch) as Match;
     const key = buildClientMatchDedupeKey(match);
     if (!key) {
       seen.set(match.id || `${seen.size}`, match);
@@ -182,7 +197,6 @@ function dedupeMatchesForDay(matches: Match[]) {
 }
 
 function dedupePredictionMap(predictions: Record<string, Prediction>, idRedirects: Map<string, string>) {
-  if (!idRedirects.size) return predictions;
   const output: Record<string, Prediction> = { ...predictions };
   for (const [fromId, toId] of idRedirects) {
     if (!fromId || !toId || fromId === toId || !output[fromId]) continue;
@@ -190,6 +204,19 @@ function dedupePredictionMap(predictions: Record<string, Prediction>, idRedirect
     delete output[fromId];
   }
   return output;
+}
+
+function synchronizePredictionMapH2H(predictions: Record<string, Prediction>, matches: Match[]) {
+  const matchesById = new Map(matches.map((match) => [String(match.id || ""), match]));
+  for (const [matchId, prediction] of Object.entries(predictions)) {
+    const match = matchesById.get(String(matchId));
+    if (match) predictions[matchId] = synchronizeMatchPredictionH2H(match, prediction) as Prediction;
+  }
+  return predictions;
+}
+
+export function resolveMatchPredictionH2H(match: Match, prediction: Prediction) {
+  return synchronizeMatchPredictionH2H(match, prediction) as Prediction;
 }
 
 // ============================================================================
@@ -223,14 +250,18 @@ function readCache(dateISO: string) {
     if (!raw) return null;
 
     const parsed = JSON.parse(raw);
-    const { matches } = dedupeMatchesForDay(parsed.matches || []);
+    const { matches, idRedirects } = dedupeMatchesForDay(parsed.matches || []);
     if (dateISO === todayAmsterdamKey() && matches.length === 0) return null;
     const maxAge = getMaxCacheAge(dateISO, matches);
     if (!parsed?.ts || Date.now() - parsed.ts > maxAge) return null;
+    const predictions = synchronizePredictionMapH2H(
+      dedupePredictionMap(parsed.predictions || {}, idRedirects),
+      matches,
+    );
 
     return {
       matches,
-      predictions: parsed.predictions || {},
+      predictions,
       lastRun: parsed.lastRun || null,
     };
   } catch {
@@ -345,6 +376,7 @@ function buildMatchesUpdateFromPayload(
   }
 
   predictionMap = dedupePredictionMap(predictionMap, idRedirects);
+  predictionMap = synchronizePredictionMapH2H(predictionMap, matches);
   return {
     matches,
     predictions: predictionMap,
@@ -450,6 +482,10 @@ export function mapRawMatch(m: any): Match {
     ...(m.h2hPlayed != null ? { h2hPlayed: Number(m.h2hPlayed) } : {}),
     ...(m.h2h ? { h2h: m.h2h } : {}),
     ...(m.h2hStatus ? { h2hStatus: m.h2hStatus } : {}),
+    ...(m.h2hAvailability ? { h2hAvailability: m.h2hAvailability } : {}),
+    ...(m.h2hSource ? { h2hSource: m.h2hSource } : {}),
+    ...(m.h2hAsOf ? { h2hAsOf: m.h2hAsOf } : {}),
+    ...(m.h2hCompetitionPlayed != null ? { h2hCompetitionPlayed: Number(m.h2hCompetitionPlayed) } : {}),
     ...(m.aggregate ? { aggregate: m.aggregate } : {}),
     
     // ========================================

@@ -1,3 +1,13 @@
+import {
+  H2H_PROVENANCE_FIELDS,
+  h2hProvenanceRank,
+  mergeMatchH2HProvenance,
+  normalizeMatchH2H,
+  synchronizeMatchPredictionH2H,
+} from "../../shared/h2hProvenance.js";
+
+export { h2hProvenanceRank };
+
 export function storedMatchQuality(match) {
   const status = String(match?.status || "").toUpperCase();
   const hasScore = Number.isFinite(Number(match?.homeScore)) && Number.isFinite(Number(match?.awayScore));
@@ -19,6 +29,8 @@ export function buildStoredMatchDedupeKey(match, options) {
 }
 
 export function mergeStoredDuplicateMatch(current, incoming) {
+  current = normalizeMatchH2H(current);
+  incoming = normalizeMatchH2H(incoming);
   const incomingPreferred = storedMatchQuality(incoming) > storedMatchQuality(current);
   const preferred = incomingPreferred ? { ...incoming } : { ...current };
   const fallback = incomingPreferred ? current : incoming;
@@ -26,7 +38,17 @@ export function mergeStoredDuplicateMatch(current, incoming) {
   preferred.awayLogo ||= fallback?.awayLogo || "";
   preferred.homeTeamId ||= fallback?.homeTeamId || "";
   preferred.awayTeamId ||= fallback?.awayTeamId || "";
-  preferred.h2h = Number(preferred?.h2h?.played || preferred?.h2h?.results?.length || 0) >= Number(fallback?.h2h?.played || fallback?.h2h?.results?.length || 0) ? preferred.h2h : fallback?.h2h;
+  const h2hWinner = h2hProvenanceRank(fallback?.h2h) > h2hProvenanceRank(preferred?.h2h) ? fallback : preferred;
+  preferred.h2h = h2hWinner?.h2h || preferred.h2h || fallback?.h2h || null;
+  const mergedH2H = mergeMatchH2HProvenance(
+    { ...preferred, h2h: preferred.h2h || h2hWinner?.h2h },
+    fallback,
+  );
+  preferred.h2h = mergedH2H?.h2h || preferred.h2h;
+  for (const field of H2H_PROVENANCE_FIELDS) {
+    if (mergedH2H?.[field] !== undefined) preferred[field] = mergedH2H[field];
+    else delete preferred[field];
+  }
   const recentCount = (value) => Number(value?.gamesPlayed || value?.recentMatches?.length || 0);
   preferred.homeRecent = recentCount(preferred.homeRecent) >= recentCount(fallback?.homeRecent) ? preferred.homeRecent : fallback?.homeRecent;
   preferred.awayRecent = recentCount(preferred.awayRecent) >= recentCount(fallback?.awayRecent) ? preferred.awayRecent : fallback?.awayRecent;
@@ -60,25 +82,31 @@ export function dedupeStoredMatches(matches = [], options) {
     const key = buildStoredMatchDedupeKey(match, options);
     if (!key) continue;
     const current = seen.get(key);
-    seen.set(key, current ? mergeStoredDuplicateMatch(current, match) : match);
+    seen.set(key, current ? mergeStoredDuplicateMatch(current, match) : normalizeMatchH2H(match));
   }
   return [...seen.values()];
 }
 
 export function dedupeStoredPredictions(predictions = [], matches = [], options) {
+  matches = matches.map((match) => normalizeMatchH2H(match));
   const keptMatchIds = new Set(matches.map((match) => String(match?.id || "")).filter(Boolean));
-  const byDedupeKey = new Map();
+  const matchesById = new Map(matches.map((match) => [String(match?.id || ""), match]).filter(([id]) => id));
+  const matchesByDedupeKey = new Map();
   for (const match of matches) {
     const key = buildStoredMatchDedupeKey(match, options);
-    if (key && match?.id) byDedupeKey.set(key, String(match.id));
+    if (key) matchesByDedupeKey.set(key, match);
   }
   const selected = new Map();
   for (const prediction of predictions || []) {
     const predictionKey = `${String(prediction?.date || "").slice(0, 10)}|${options.teamKey(prediction?.homeTeam || prediction?.homeTeamName || "")}|${options.teamKey(prediction?.awayTeam || prediction?.awayTeamName || "")}`;
-    const canonicalMatchId = byDedupeKey.get(predictionKey) || prediction?.matchId;
+    const canonicalMatch = matchesByDedupeKey.get(predictionKey) || matchesById.get(String(prediction?.matchId || ""));
+    const canonicalMatchId = canonicalMatch?.id || prediction?.matchId;
     if (canonicalMatchId && !keptMatchIds.has(String(canonicalMatchId))) continue;
     const unique = canonicalMatchId || predictionKey || prediction?.matchId;
-    const candidate = { ...prediction, matchId: canonicalMatchId || prediction.matchId };
+    const candidate = synchronizeMatchPredictionH2H(
+      canonicalMatch,
+      { ...prediction, matchId: canonicalMatchId || prediction.matchId },
+    );
     const quality =
       Number(String(prediction?.matchId || "") === String(canonicalMatchId || "")) * 100 +
       storedMatchQuality({

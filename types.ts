@@ -151,6 +151,10 @@ export interface Match {
   // HEAD-TO-HEAD & AGGREGATE
   // ========================================
   h2hPlayed?: number;
+  h2hAvailability?: string;
+  h2hSource?: string | null;
+  h2hAsOf?: string | null;
+  h2hCompetitionPlayed?: number;
   h2h?: {
     played: number;
     homeWins: number;
@@ -158,6 +162,11 @@ export interface Match {
     awayWins: number;
     avgGoals?: number;
     status?: string;
+    source?: string;
+    provider?: string;
+    asOf?: string;
+    sourceTimestamp?: string;
+    sameCompetitionPlayed?: number;
     weightedRecentBalance?: number;
     targetPlayed?: number;
     coverage?: number;
@@ -179,8 +188,13 @@ export interface Match {
       home: string;
       away: string;
       score: string;
+      homeScore?: number;
+      awayScore?: number;
       winnerId?: string;
+      source?: string;
+      league?: string;
       tournamentId?: string | number;
+      competitionId?: string | number;
       seasonId?: string | number;
     }>;
   };

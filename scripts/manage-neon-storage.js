@@ -7,6 +7,8 @@ const LIMIT_BYTES = Number(process.env.NEON_STORAGE_LIMIT_BYTES || process.env.D
 const WARNING_RATIO = Number(process.env.NEON_STORAGE_WARNING_RATIO || 0.8);
 const CRITICAL_RATIO = Number(process.env.NEON_STORAGE_CRITICAL_RATIO || 0.95);
 const APPLY = process.argv.includes("--apply");
+const FAIL_ON_CRITICAL = process.env.NEON_STORAGE_FAIL_ON_CRITICAL !== "false";
+const ARCHIVES_VERIFIED = process.env.NEON_STORAGE_ARCHIVES_VERIFIED === "true";
 
 function formatLimit(bytes) {
   if (bytes >= 1024 * 1024 * 1024) return `${Number((bytes / 1024 / 1024 / 1024).toFixed(2))} GB`;
@@ -61,6 +63,17 @@ async function measure() {
 
 const before = await measure();
 const cleanup = [];
+if (APPLY && before.database.status === "critical" && (!ARCHIVES_VERIFIED || !getR2Config().configured)) {
+  console.error(JSON.stringify({
+    generatedAt: new Date().toISOString(),
+    mode: "apply",
+    status: "blocked_at_critical_storage_pressure",
+    reason: "Archive canonical snapshot/payload rows to R2 before applying any cleanup. This tool has no backup for the records it deletes.",
+    before,
+    cleanup: [],
+  }, null, 2));
+  process.exit(1);
+}
 if (APPLY) {
   // These rows are derived caches or monitoring history. Canonical football and model data is retained.
   const pressureBeforeCleanup = before.database.bytes >= LIMIT_BYTES * WARNING_RATIO;
@@ -206,4 +219,4 @@ const report = {
 };
 
 console.log(JSON.stringify(report, null, 2));
-if (after.database.status === "critical") process.exit(1);
+if (after.database.status === "critical" && FAIL_ON_CRITICAL) process.exit(1);

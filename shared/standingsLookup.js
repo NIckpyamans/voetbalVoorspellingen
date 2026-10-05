@@ -61,7 +61,7 @@ export function buildStandingsLookup(standings = {}) {
         byId.set(String(row.teamId), positions);
       }
     }
-    byLeague.set(league, { rows, byId: idMap });
+    byLeague.set(league, { rows, byId: idMap, preliminary: Boolean(table?.preliminary) });
     const normalizedLeague = normalizeLeague(league);
     if (normalizedLeague) leagueAliases.set(normalizedLeague, league);
   }
@@ -84,4 +84,17 @@ export function findStandingPosition(lookup, { teamId, teamName, league } = {}) 
   // unique position; otherwise do not display a misleading cup/league rank.
   const idPositions = teamId ? lookup?.byId?.get(String(teamId)) : null;
   return idPositions?.size === 1 ? [...idPositions][0] : null;
+}
+
+export function findStandingEntry(lookup, { teamId, teamName, league } = {}) {
+  const leagueKey = String(league || "");
+  const matchedLeague = lookup?.byLeague?.has(leagueKey)
+    ? leagueKey
+    : lookup?.leagueAliases?.get(normalizeLeague(leagueKey));
+  const table = matchedLeague ? lookup.byLeague.get(matchedLeague) : null;
+  if (!table) return null;
+  const byId = teamId ? table.byId?.get(String(teamId)) : null;
+  if (byId) return { position: byId, preliminary: Boolean(table.preliminary) };
+  const nameMatch = table.rows?.find((row) => teamsMatch(row?.team || row?.teamName, teamName));
+  return nameMatch ? { position: Number(nameMatch.pos) || null, preliminary: Boolean(table.preliminary) } : null;
 }

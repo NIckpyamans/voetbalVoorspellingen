@@ -52,9 +52,12 @@ async function main() {
     const output = `${result.stdout || ""}${result.stderr || ""}`.trim().slice(-1500);
     const stepReport = { name: step.name, exitCode: result.status ?? -1, outputTail: output };
     report.steps.push(stepReport);
-    if (result.status !== 0) {
+    if (result.error || result.status !== 0) {
       report.ok = false;
       report.status = report.status || `step_failed:${step.name}`;
+      report.steps.at(-1).spawnError = result.error?.message || null;
+      console.log(`[neon-cold-storage] ${step.name}: mislukt; verdere onderhoudsstappen worden gestopt zodat er niets ongearchiveerd wordt verwijderd.`);
+      break;
     }
     console.log(`[neon-cold-storage] ${step.name}: exit=${result.status}`);
   }

@@ -90,6 +90,4 @@ jobs:
         # Learning-data hoort in Neon (source of truth) en R2 (immutable ledger),
         # niet in git. Dit stopt de repo-groei door dagelijkse trainings-JSON's.
         run: |
-          echo "Learning-data is gepersisteerd via Neon/R2."
-          echo "Git-commits van runtime-data zijn uitgeschakeld; git blijft voor code."
-          exit 1
+          echo "Learning-data hoort in Neon/R2; er wordt geen runtime-data naar git gecommit."

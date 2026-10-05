@@ -1,5 +1,6 @@
 import fs from "fs";
 import path from "path";
+import { normalizeMatchH2H, synchronizeMatchPredictionH2H } from "../../shared/h2hProvenance.js";
 
 export function writeJsonFile(filePath, data) {
   fs.mkdirSync(path.dirname(filePath), { recursive: true });
@@ -180,15 +181,27 @@ export function writeSplitDataFiles(store, options = {}) {
     preserveExistingDayFiles ? [...new Set([...existingDateKeys, ...populatedDateKeys])] : populatedDateKeys,
     options.retention
   );
-  if (!preserveExistingDayFiles) pruneStaticDayFiles(daysDir, retainedDateKeys);
+  // Ook bij een lichte refresh moet het retentievenster gelden. De bestaande
+  // dagbestanden zitten dan in de unie, dus binnen het venster wordt niets
+  // verwijderd of herschreven; alleen bestanden buiten het venster gaan eruit.
+  // Anders groeit data/days onbeperkt door en loopt het repo-groottebudget
+  // eronder.
+  const prunedDayFiles = pruneStaticDayFiles(daysDir, retainedDateKeys);
 
   for (const dateKey of retainedDateKeys) {
     if (preserveExistingDayFiles && !Object.prototype.hasOwnProperty.call(store.matches || {}, dateKey)) continue;
-    const matches = store.matches?.[dateKey] || [];
+    const matches = (store.matches?.[dateKey] || []).map(normalizeMatchH2H);
+    const matchesById = new Map(matches.map((match) => [String(match?.id || ""), match]));
+    const predictions = (store.predictions?.[dateKey] || []).map((prediction) =>
+      synchronizeMatchPredictionH2H(
+        matchesById.get(String(prediction?.matchId || "")),
+        prediction,
+      ),
+    );
     writeJsonFile(path.join(daysDir, `${dateKey}.json`), {
       date: dateKey,
       matches,
-      predictions: store.predictions?.[dateKey] || [],
+      predictions,
       predictionSnapshots: pickPredictionSnapshotsForMatches(store, matches),
       reviews: pickReviewsForMatches(store, matches),
       lastRun: store.lastRun || null,
@@ -241,4 +254,6 @@ export function writeSplitDataFiles(store, options = {}) {
   if (typeof options.writeCompetitionArchiveFiles === "function") {
     options.writeCompetitionArchiveFiles(store);
   }
+
+  return { retainedDateKeys, prunedDayFiles };
 }

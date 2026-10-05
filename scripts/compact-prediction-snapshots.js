@@ -3,6 +3,7 @@
 import { getSql, loadLocalEnv } from "../shared/database.js";
 
 const APPLY = process.argv.includes("--apply");
+const ARCHIVES_VERIFIED = process.env.NEON_STORAGE_ARCHIVES_VERIFIED === "true";
 const KEEP_PER_MATCH = Number(process.env.SNAPSHOT_KEEP_PER_MATCH || 2);
 const RECENT_DAYS = Number(process.env.SNAPSHOT_COMPACTION_RECENT_DAYS || 3);
 
@@ -45,6 +46,10 @@ const candidates = await sql.query(`
 
 let deleted = 0;
 let vacuum = [];
+if (APPLY && !ARCHIVES_VERIFIED) {
+  console.error("Snapshot compaction vereist NEON_STORAGE_ARCHIVES_VERIFIED=true nadat archiefuploads naar R2 zijn bevestigd.");
+  process.exit(2);
+}
 if (APPLY) {
   const [result] = await sql.query(`
     with ranked as (

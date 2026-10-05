@@ -180,12 +180,18 @@ export function mergeCatalogStandings(existingStandings = {}, catalog = {}, comp
       .map(([, standing]) => standing)
       .filter((standing) => standingBelongsToSeason(standing, catalog?.season))
       .sort((left, right) => standingStrength(right) - standingStrength(left));
-    const acceptsStanding = competition.type !== "cup" || competition.membershipStatus === "provider_confirmed";
+    const hasVerifiedProviderCupTable = (standing) =>
+      competition.type === "cup" &&
+      label.startsWith("Europe -") &&
+      Array.isArray(standing?.rows) && standing.rows.length >= 2 &&
+      ["fotmob", "sofascore", "espn"].some((source) => String(standing?.source || "").toLowerCase().includes(source));
+    const acceptsStanding = competition.type !== "cup" || competition.membershipStatus === "provider_confirmed" ||
+      hasVerifiedProviderCupTable(canonicalBase) || candidates.some(hasVerifiedProviderCupTable);
     const base = !acceptsStanding
       ? null
-      : standingBelongsToSeason(canonicalBase, catalog?.season)
+      : standingBelongsToSeason(canonicalBase, catalog?.season) && (competition.type !== "cup" || competition.membershipStatus === "provider_confirmed" || hasVerifiedProviderCupTable(canonicalBase))
         ? canonicalBase
-        : candidates[0] || null;
+        : candidates.find((standing) => competition.type !== "cup" || competition.membershipStatus === "provider_confirmed" || hasVerifiedProviderCupTable(standing)) || null;
     const baseRows = Array.isArray(base?.rows) ? base.rows : [];
     const consumed = new Set();
     const rows = competition.teams.map((team, index) => {
@@ -225,7 +231,11 @@ export function mergeCatalogStandings(existingStandings = {}, catalog = {}, comp
       ...(base || {}),
       label,
       season: catalog?.season || base?.season || null,
-      rows: sortRows(rows),
+      preliminary: Boolean(base?.preliminary),
+      rows: competition.type === "cup" && hasVerifiedProviderCupTable(base)
+        ? rows.map((row) => ({ ...row, pos: Number(baseRows.find((candidate) => sameTeam(candidate?.team, row.team))?.pos || row.pos) }))
+          .sort((left, right) => Number(left.pos || 0) - Number(right.pos || 0))
+        : sortRows(rows),
       updated: Math.max(Number(base?.updated || 0), updated),
       source: composeSource(base?.source, hasBaseResults, appliedResults.applied),
       sources: [...new Map(
@@ -242,9 +252,13 @@ export function mergeCatalogStandings(existingStandings = {}, catalog = {}, comp
           `${rows.length}/${competition.expectedTeams || rows.length} teams uit de competitiecatalogus; uitslagen worden erbovenop verwerkt.`,
           competition.membershipStatus === "provider_confirmed"
             ? "Niet-herkende clubs worden geweigerd om vervuiling tussen competities te voorkomen."
-            : competition.type === "cup"
-              ? "Voorlopige UEFA-deelnemers: kwalificatieduels tellen niet mee in de league-phase-stand."
-              : "Voorlopige deelnemers kunnen worden aangevuld vanuit betrouwbare uitslagen.",
+            : competition.type === "cup" && base?.preliminary
+              ? "Voorlopige provider-volgorde, geen actuele gespeelde stand; kwalificatieduels tellen niet mee."
+              : competition.type === "cup" && hasVerifiedProviderCupTable(base)
+                ? "Actuele Europese league-phase-stand uit een wedstrijdprovider."
+                : competition.type === "cup"
+                  ? "Voorlopige UEFA-deelnemers: kwalificatieduels tellen niet mee in de league-phase-stand."
+                : "Voorlopige deelnemers kunnen worden aangevuld vanuit betrouwbare uitslagen.",
         ])],
       },
     };

@@ -31,7 +31,10 @@ for (const offset of DAYS) {
   const date = addDaysToDateKey(today, offset);
   const day = await readDatabaseDay(date).catch(() => null);
   const matches = (day?.matches || []).map(compactDashboardMatch);
-  const predictions = latestPredictionPerMatch(day?.predictions || []).map(compactDashboardPrediction);
+  const matchesById = new Map((day?.matches || []).map((match) => [String(match?.id || ""), match]));
+  const predictions = latestPredictionPerMatch(day?.predictions || []).map((prediction) =>
+    compactDashboardPrediction(prediction, matchesById.get(String(prediction?.matchId || "")) || null),
+  );
   const payload = {
     ok: true,
     source: "postgres-r2-dashboard-cache",

@@ -1,6 +1,7 @@
 import React, { useEffect, useMemo, useState } from "react";
 import { Match } from "../types";
 import { addDaysToDateKey, todayAmsterdamKey } from "../shared/date.js";
+import { advanceRollingCalendarStart, countFixturesByDate, rollingCalendarEnd } from "../shared/calendarMatches.js";
 
 interface DateNavigationProps {
   selectedDate: string;
@@ -30,16 +31,23 @@ function formatDateLabel(dateISO: string, today: string) {
   });
 }
 
-function matchDate(match: Match) {
-  return String(match.date || match.kickoff || "").slice(0, 10);
-}
-
 const DateNavigation: React.FC<DateNavigationProps> = ({ selectedDate, onDateChange }) => {
-  const today = todayAmsterdamKey();
+  const [today, setToday] = useState(todayAmsterdamKey);
   const [visibleMonth, setVisibleMonth] = useState(() => monthStart(selectedDate));
-  const [rangeStart, setRangeStart] = useState(() => (selectedDate < today ? today : selectedDate));
+  const [rangeStart, setRangeStart] = useState(() => advanceRollingCalendarStart(null, todayAmsterdamKey()));
+  const [followsToday, setFollowsToday] = useState(true);
   const [plannerMatches, setPlannerMatches] = useState<Match[]>([]);
   const [plannerLoading, setPlannerLoading] = useState(false);
+
+  useEffect(() => {
+    const refreshToday = () => {
+      const nextToday = todayAmsterdamKey();
+      setToday(nextToday);
+      setRangeStart((current) => advanceRollingCalendarStart(current, nextToday, followsToday));
+    };
+    const timer = window.setInterval(refreshToday, 60_000);
+    return () => window.clearInterval(timer);
+  }, [followsToday]);
 
   useEffect(() => {
     const controller = new AbortController();
@@ -63,15 +71,11 @@ const DateNavigation: React.FC<DateNavigationProps> = ({ selectedDate, onDateCha
     return () => controller.abort();
   }, [rangeStart]);
 
-  const rangeEnd = addDaysToDateKey(rangeStart, PLANNER_DAYS - 1);
-  const matchCounts = useMemo(() => {
-    const counts = new Map<string, number>();
-    for (const match of plannerMatches) {
-      const date = matchDate(match);
-      if (date) counts.set(date, (counts.get(date) || 0) + 1);
-    }
-    return counts;
-  }, [plannerMatches]);
+  const rangeEnd = rollingCalendarEnd(rangeStart, PLANNER_DAYS);
+  const matchCounts = useMemo(
+    () => countFixturesByDate(plannerMatches, rangeStart, rangeEnd),
+    [plannerMatches, rangeStart, rangeEnd]
+  );
 
   const monthCells = useMemo(() => {
     const [year, month] = visibleMonth.slice(0, 7).split("-").map(Number);
@@ -83,38 +87,23 @@ const DateNavigation: React.FC<DateNavigationProps> = ({ selectedDate, onDateCha
     ];
   }, [visibleMonth]);
 
-  const groupedUpcomingMatches = useMemo(() => {
-    const grouped = new Map<string, Match[]>();
-    for (const match of plannerMatches
-      .filter((item) => {
-        const date = matchDate(item);
-        return date >= rangeStart && date <= rangeEnd && !["FT", "AET", "PEN", "RESULT_PENDING", "CANCELLED", "POSTPONED"].includes(String(item.status || "").toUpperCase());
-      })
-      .sort((a, b) => String(a.kickoff || a.date).localeCompare(String(b.kickoff || b.date)))) {
-      for (const teamName of [match.homeTeamName, match.awayTeamName]) {
-        const fixtures = grouped.get(teamName) || [];
-        fixtures.push(match);
-        grouped.set(teamName, fixtures);
-      }
-    }
-    return [...grouped.entries()].sort(([left], [right]) => left.localeCompare(right));
-  }, [plannerMatches, rangeStart, rangeEnd]);
-
-  const upcomingMatches = useMemo(
-    () => new Set(groupedUpcomingMatches.flatMap(([, fixtures]) => fixtures.map((match) => match.id))).size,
-    [groupedUpcomingMatches]
-  );
-
   const selectDate = (date: string) => {
     onDateChange(date);
     setVisibleMonth(monthStart(date));
-    if (date < rangeStart || date > rangeEnd) setRangeStart(date < today ? today : date);
+    if (date === today) {
+      setFollowsToday(true);
+      setRangeStart(today);
+    } else if (date < rangeStart || date > rangeEnd) {
+      setFollowsToday(false);
+      setRangeStart(advanceRollingCalendarStart(date, today, false));
+    }
   };
 
   const changeMonth = (offset: number) => {
     const nextMonth = shiftMonth(visibleMonth, offset);
     setVisibleMonth(nextMonth);
-    setRangeStart(nextMonth < today ? today : nextMonth);
+    setFollowsToday(false);
+    setRangeStart(advanceRollingCalendarStart(nextMonth, today, false));
   };
 
   const monthLabel = new Date(`${visibleMonth.slice(0, 7)}-01T12:00:00Z`).toLocaleDateString("nl-NL", {
@@ -123,8 +112,8 @@ const DateNavigation: React.FC<DateNavigationProps> = ({ selectedDate, onDateCha
   });
 
   return (
-    <section className="glass-card mb-4 rounded-2xl border border-white/5 p-3 sm:p-4" aria-label="Wedstrijdkalender">
-      <div className="mb-3 flex items-center justify-between gap-2">
+    <section className="glass-card mb-3 rounded-xl border border-white/5 p-2.5 sm:p-3" aria-label="Wedstrijdkalender">
+      <div className="mb-2 flex items-center justify-between gap-2">
         <div>
           <h2 className="text-sm font-black uppercase tracking-wide text-white">Wedstrijdkalender</h2>
           <p className="text-[10px] text-slate-400">Wedstrijden per dag · bekend programma 3 weken vooruit</p>
@@ -149,52 +138,38 @@ const DateNavigation: React.FC<DateNavigationProps> = ({ selectedDate, onDateCha
             <button
               key={date}
               type="button"
-              onClick={() => selectDate(date)}
-              aria-label={`${new Date(`${date}T12:00:00Z`).toLocaleDateString("nl-NL", { weekday: "long", day: "numeric", month: "long" })}${count ? `, ${count} wedstrijden` : ""}`}
+              onClick={() => inPlanner && selectDate(date)}
+              aria-label={`${new Date(`${date}T12:00:00Z`).toLocaleDateString("nl-NL", { weekday: "long", day: "numeric", month: "long" })}${inPlanner ? `, ${count} wedstrijden` : ""}`}
               aria-pressed={selected}
-              className={`relative flex min-h-10 flex-col items-center justify-center rounded-lg border text-xs transition sm:min-h-11 ${
+              aria-disabled={!inPlanner}
+              className={`relative flex min-h-8 flex-col items-center justify-center rounded-md border text-[11px] transition sm:min-h-9 ${
+                !inPlanner ? "border-white/[0.03] bg-slate-950/10 text-slate-600" :
                 selected ? "border-cyan-300 bg-cyan-400 text-slate-950" :
                 isCurrentDay ? "border-blue-400/50 bg-blue-500/15 text-blue-100" :
                 "border-white/5 bg-slate-950/25 text-slate-200 hover:border-white/20 hover:bg-white/5"
               }`}
             >
               <span className="font-bold">{Number(date.slice(-2))}</span>
-              {count > 0 && <span className={`text-[8px] font-black ${selected ? "text-slate-900" : "text-amber-300"}`}>{count} wed.</span>}
-              {inPlanner && !count && <span className={`mt-0.5 h-1 w-1 rounded-full ${selected ? "bg-slate-900/50" : "bg-cyan-400/50"}`} />}
+              {inPlanner && <span className={`text-[8px] font-black ${selected ? "text-slate-900" : count ? "text-amber-300" : "text-slate-500"}`}>{count ? `${count} wed.` : "·"}</span>}
             </button>
           );
         })}
       </div>
 
-      <div className="mt-3 flex flex-wrap items-center justify-between gap-2 border-t border-white/5 pt-3">
+      <div className="mt-2 flex flex-wrap items-center justify-between gap-2 border-t border-white/5 pt-2">
         <div className="text-center sm:text-left">
-          <div className="text-base font-black capitalize text-white">{formatDateLabel(selectedDate, today)}</div>
+          <div className="text-sm font-black capitalize text-white">{formatDateLabel(selectedDate, today)}</div>
           <div className="text-[10px] text-slate-400">{new Date(`${selectedDate}T12:00:00Z`).toLocaleDateString("nl-NL", { day: "numeric", month: "long", year: "numeric" })}</div>
         </div>
         <div className="flex items-center gap-2">
-          <button type="button" onClick={() => selectDate(addDaysToDateKey(selectedDate, -1))} aria-label="Vorige dag" className="rounded-lg bg-slate-800/70 px-3 py-2 text-sm font-bold text-slate-200 hover:bg-slate-700">← Vorige dag</button>
-          <button type="button" onClick={() => selectDate(addDaysToDateKey(selectedDate, 1))} aria-label="Volgende dag" className="rounded-lg bg-slate-800/70 px-3 py-2 text-sm font-bold text-slate-200 hover:bg-slate-700">Volgende dag →</button>
+          <button type="button" onClick={() => selectDate(addDaysToDateKey(selectedDate, -1))} aria-label="Vorige dag" className="rounded-lg bg-slate-800/70 px-2.5 py-1.5 text-xs font-bold text-slate-200 hover:bg-slate-700">← Vorige dag</button>
+          <button type="button" onClick={() => selectDate(addDaysToDateKey(selectedDate, 1))} aria-label="Volgende dag" className="rounded-lg bg-slate-800/70 px-2.5 py-1.5 text-xs font-bold text-slate-200 hover:bg-slate-700">Volgende dag →</button>
         </div>
       </div>
 
-      <details className="mt-3 rounded-xl border border-white/5 bg-slate-950/30">
-        <summary className="cursor-pointer px-3 py-2 text-[11px] font-black text-cyan-200">
-          Komende 3 weken per club {plannerLoading ? "· laden…" : `· ${upcomingMatches.length} bekende wedstrijden`}
-        </summary>
-        <div className="max-h-52 space-y-1 overflow-y-auto px-2 pb-2">
-          {upcomingMatches > 0 ? groupedUpcomingMatches.map(([teamName, fixtures]) => (
-            <div key={teamName} className="rounded-lg px-2 py-1.5 hover:bg-white/5">
-              <div className="mb-1 text-[10px] font-black text-white">{teamName}</div>
-              {fixtures.map((match) => (
-                <button key={`${teamName}-${match.id}`} type="button" onClick={() => selectDate(matchDate(match))} className="grid w-full grid-cols-[72px_minmax(0,1fr)] gap-2 py-1 text-left">
-                  <span className="text-[9px] font-bold text-slate-400">{new Date(`${matchDate(match)}T12:00:00Z`).toLocaleDateString("nl-NL", { weekday: "short", day: "numeric", month: "short" })}</span>
-                  <span className="truncate text-[10px] font-bold text-cyan-100">{match.homeTeamName} <span className="text-slate-500">vs</span> {match.awayTeamName}</span>
-                </button>
-              ))}
-            </div>
-          )) : <p className="px-2 py-2 text-[10px] text-slate-500">{plannerLoading ? "Wedstrijden laden…" : "Nog geen fixtures bekend in dit venster. De kalender wordt dagelijks bijgewerkt."}</p>}
-        </div>
-      </details>
+      <p className="mt-1 text-right text-[9px] text-slate-500" aria-live="polite">
+        {plannerLoading ? "Programma bijwerken…" : `21 dagen · ${rangeStart} t/m ${rangeEnd}`}
+      </p>
     </section>
   );
 };

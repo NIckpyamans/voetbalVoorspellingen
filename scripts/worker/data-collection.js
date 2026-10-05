@@ -638,13 +638,35 @@ export function parseFotmobScheduledEvents(payload, dateISO, deps) {
   for (const league of Array.isArray(payload?.leagues) ? payload.leagues : []) {
     // FotMob can expose a season-specific id while primaryId remains the stable
     // competition id (for example Eredivisie 937276 -> 57 in 2026/27).
+    const providerCompetition = Object.entries(deps.fotmobStandingLeagues || {})
+      .find(([, value]) => Number(value?.id) === Number(league?.primaryId))?.[0] || null;
     const mappedLeagueLabel = competitionById.get(Number(league?.id)) ||
       competitionById.get(Number(league?.primaryId)) ||
+      providerCompetition ||
       competitionByName.get(deps.normalizeName(league?.name)) || null;
     const isFriendly = /club friendl/i.test(String(league?.name || ""));
-    if (!mappedLeagueLabel && !isFriendly) continue;
-    const leagueLabel = mappedLeagueLabel || "World - Club Friendlies";
-    const countryName = mappedLeagueLabel ? mappedLeagueLabel.split(" - ")[0] : "World";
+    const isWomenCompetition = /\bwomen(?:'s)?\b/i.test(String(league?.name || ""));
+    const normalizedCompetitionName = deps.normalizeName(league?.name);
+    const isMenUefaClubCompetition = !isWomenCompetition && (
+      /^(?:uefa )?champions league(?: group stage)?$/i.test(normalizedCompetitionName) ||
+      /^(?:uefa )?europa league(?: group stage)?$/i.test(normalizedCompetitionName) ||
+      /^(?:uefa )?conference league(?: group stage)?$/i.test(normalizedCompetitionName)
+    );
+    const fotmobLeagueSeason = String(league?.season?.name || league?.season || "");
+    const fotmobSeasonId = league?.season?.id || (/^\d{4}\/\d{4}$/.test(fotmobLeagueSeason) ? fotmobLeagueSeason : null);
+    const isLeaguePhaseCompetition = /^(?:42|73|10216)$/.test(String(league?.primaryId || "")) &&
+      !/women|u-?\d{2}|qualification|qualifying/i.test(String(league?.name || ""));
+    if (!mappedLeagueLabel && !isFriendly && !isMenUefaClubCompetition) continue;
+    const leagueLabel = mappedLeagueLabel || (isMenUefaClubCompetition
+      ? /champions league/i.test(String(league?.name || "")) ? "Europe - Champions League"
+        : /conference league/i.test(String(league?.name || "")) ? "Europe - Conference League"
+          : "Europe - Europa League"
+      : "World - Club Friendlies");
+    const countryName = isMenUefaClubCompetition || String(leagueLabel).startsWith("Europe -")
+      ? "Europe"
+      : mappedLeagueLabel
+        ? mappedLeagueLabel.split(" - ")[0]
+        : "World";
     for (const match of Array.isArray(league?.matches) ? league.matches : []) {
       const homeName = String(match?.home?.longName || match?.home?.name || "").trim();
       const awayName = String(match?.away?.longName || match?.away?.name || "").trim();
@@ -681,14 +703,16 @@ export function parseFotmobScheduledEvents(payload, dateISO, deps) {
           country: { name: countryName },
           logoUrl: match?.away?.id ? `https://images.fotmob.com/image_resources/logo/teamlogo/${match.away.id}.png` : "",
         },
-        uniqueTournament: { id: league?.id || null, name: league?.name || leagueLabel.split(" - ").slice(1).join(" - ") },
+        uniqueTournament: { id: league?.primaryId || league?.id || null, name: league?.name || leagueLabel.split(" - ").slice(1).join(" - ") },
         tournament: {
           id: league?.id || null,
           name: league?.name || leagueLabel.split(" - ").slice(1).join(" - "),
           category: { name: countryName },
-          uniqueTournament: { id: league?.id || null },
+          uniqueTournament: { id: league?.primaryId || league?.id || null },
         },
-        season: { id: null },
+        season: { id: match?.season?.id || fotmobSeasonId || null },
+        standingsProvisional: isLeaguePhaseCompetition && Number(league?.primaryId) === 10216,
+        standingsCompetition: isLeaguePhaseCompetition ? leagueLabel : null,
         status: { type: statusType, description: cancelled ? "Cancelled" : finished ? "FT" : live ? "LIVE" : "NS" },
         time: liveLabel ? { current: Number.parseInt(liveLabel, 10) || 0, extra: 0 } : {},
         homeScore: publishScore ? { current: homeGoals } : {},

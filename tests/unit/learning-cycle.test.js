@@ -64,9 +64,10 @@ describe("learned elo", () => {
 
   it("lookup geeft freshness en null bij onbekende teams", () => {
     const state = updateLearnedElo({ m: review("Ajax", "PSV", "1-1", 3) }, {}, { now: NOW });
-    const home = lookupLearnedElo(state, "Ajax");
+    const home = lookupLearnedElo(state, "Ajax", { now: NOW });
     expect(home.elo).toBeGreaterThan(0);
     expect(home.freshness).toBeGreaterThan(0.9);
+    expect(home.freshness).toBeLessThanOrEqual(1);
     expect(lookupLearnedElo(state, "Onbekend FC")).toBeNull();
   });
 });
