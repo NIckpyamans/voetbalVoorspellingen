@@ -1,4 +1,4 @@
-import { describe, expect, it } from "vitest";
+import { describe, expect, it, vi } from "vitest";
 import { buildWeightedTeamLearning } from "../../scripts/worker/weighted-learning.js";
 import { updateLearnedElo, lookupLearnedElo, LEARNED_ELO_VERSION } from "../../scripts/worker/learned-elo.js";
 
@@ -63,10 +63,17 @@ describe("learned elo", () => {
   });
 
   it("lookup geeft freshness en null bij onbekende teams", () => {
-    const state = updateLearnedElo({ m: review("Ajax", "PSV", "1-1", 3) }, {}, { now: NOW });
-    const home = lookupLearnedElo(state, "Ajax");
-    expect(home.elo).toBeGreaterThan(0);
-    expect(home.freshness).toBeGreaterThan(0.9);
-    expect(lookupLearnedElo(state, "Onbekend FC")).toBeNull();
+    vi.useFakeTimers();
+    vi.setSystemTime(NOW);
+
+    try {
+      const state = updateLearnedElo({ m: review("Ajax", "PSV", "1-1", 3) }, {}, { now: NOW });
+      const home = lookupLearnedElo(state, "Ajax");
+      expect(home.elo).toBeGreaterThan(0);
+      expect(home.freshness).toBeGreaterThan(0.9);
+      expect(lookupLearnedElo(state, "Onbekend FC")).toBeNull();
+    } finally {
+      vi.useRealTimers();
+    }
   });
 });
