@@ -1,7 +1,10 @@
 {
-  "generatedAt": "2026-10-01T06:12:28.549Z",
+  "generatedAt": "2026-10-01T16:29:52.262Z",
   "configured": true,
-  "available": true,
-  "databaseWritable": true,
-  "reason": "available"
+  "available": false,
+  "databaseWritable": false,
+  "reason": "quota_exceeded",
+  "error": "Server error (HTTP status 402): {\"message\":\"Your account or project has exceeded the quota. Upgrade your plan to increase limits.\",\"code\":\"\",\"detail\":null,\"hint\":null,\"position\":null,\"internalPosition\":null,\"internalQuery\":null,\"severity\":\"\",\"where\":null,\"table\":null,\"column\":null,\"schema\":null,\"dataType\":null,\"constraint\":null,\"file\":null,\"line\":null,\"routine\":null,\"neon:retryable\":true}",
+  "fallback": "cloudflare_r2",
+  "recoveryWorkflow": "R2 and Neon recovery"
 }
