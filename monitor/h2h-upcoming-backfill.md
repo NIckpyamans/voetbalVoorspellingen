@@ -1,45 +1,36 @@
 # Upcoming H2H Backfill
 
-Laatst bijgewerkt: 2026-10-06T00:24:09.857Z
+Laatst bijgewerkt: 2026-10-06T06:18:59.555Z
 Gecontroleerd: 50
-Gevuld: 9
-Geen directe H2H: 41
+Gevuld: 0
+Geen directe H2H: 50
 Errors: 0
 
-Openstaand na deze batch: 134
+Openstaand na deze batch: 84
 
 ## Aanbeveling
-Er staan nog 134 fixtures in de wachtrij; volgende batch prioriteert ontbrekende H2H en vroegste aftrap.
+Er staan nog 84 fixtures in de wachtrij; volgende batch prioriteert ontbrekende H2H en vroegste aftrap.
 
 ## Gevuld
-- 2026-10-17: Metz - Sochaux (2)
-- 2026-10-17: Schalke 04 - Mainz (2)
-- 2026-10-17: Sparta Rotterdam - Willem II (2)
-- 2026-10-17: Bristol City - Sheffield United (5)
-- 2026-10-18: Angers - Marseille (5)
-- 2026-10-18: SC Cambuur - AZ Alkmaar (2)
-- 2026-10-18: FC Twente - FC Utrecht (5)
-- 2026-10-18: Lorient - AS Monaco (5)
-- 2026-10-18: Lyon - Nice (5)
 
 ## Geen Directe H2H
-- 2026-10-17: SpVgg Greuther Fürth - TSV Eintracht Braunschweig (no_direct_history)
-- 2026-10-17: Middlesbrough - Cardiff City (no_direct_history)
-- 2026-10-17: 1. FC Union Berlin - Borussia Dortmund (no_direct_history)
-- 2026-10-17: Fulham - Hull City (no_direct_history)
-- 2026-10-17: ADO Den Haag - PSV Eindhoven (no_direct_history)
-- 2026-10-17: FC Emmen - Almere City FC (no_direct_history)
-- 2026-10-17: VfL Wolfsburg - 1. FC Heidenheim 1846 (no_direct_history)
-- 2026-10-17: Millwall - Lincoln City (no_direct_history)
-- 2026-10-17: Nantes - Dunkerque (no_direct_history)
-- 2026-10-17: Manchester City - Ipswich Town (no_direct_history)
-- 2026-10-17: Telstar - Feyenoord Rotterdam (no_direct_history)
-- 2026-10-17: Greuther Fürth - Eintracht Braunschweig (no_direct_history)
-- 2026-10-17: Watford - Charlton Athletic (no_direct_history)
-- 2026-10-17: Red Star FC 93 - Saint-Étienne (no_direct_history)
-- 2026-10-17: Elversberg - Augsburg (no_direct_history)
-- 2026-10-17: Hannover 96 - St. Pauli (no_direct_history)
-- 2026-10-17: Birmingham City - Queens Park Rangers (no_direct_history)
-- 2026-10-17: Red Star - Saint-Étienne (no_direct_history)
-- 2026-10-17: Werder Bremen - Paderborn (no_direct_history)
-- 2026-10-17: Derby County - Stoke City (no_direct_history)
+- 2026-10-20: Sabah FK - Borussia Dortmund (no_direct_history)
+- 2026-10-20: AS Roma - Slovan Bratislava (no_direct_history)
+- 2026-10-20: FC Porto - PSV Eindhoven (no_direct_history)
+- 2026-10-20: Liverpool - Villarreal (no_direct_history)
+- 2026-10-20: Manchester City - AEK Athens (no_direct_history)
+- 2026-10-20: Napoli - Bodo/Glimt (no_direct_history)
+- 2026-10-20: Paris Saint-Germain - Barcelona (no_direct_history)
+- 2026-10-20: VfB Stuttgart - Atlético Madrid (no_direct_history)
+- 2026-10-20: Napoli - Bodø/Glimt (no_direct_history)
+- 2026-10-21: Como - Manchester United (no_direct_history)
+- 2026-10-21: Lille - Galatasaray (no_direct_history)
+- 2026-10-21: Aston Villa - Viking FK (no_direct_history)
+- 2026-10-21: Bayern Munich - Arsenal (no_direct_history)
+- 2026-10-21: Club Brugge - Lens (no_direct_history)
+- 2026-10-21: Internazionale - Shakhtar Donetsk (no_direct_history)
+- 2026-10-21: Real Betis - Feyenoord Rotterdam (no_direct_history)
+- 2026-10-21: Real Madrid - RB Leipzig (no_direct_history)
+- 2026-10-21: Sporting CP - LASK Linz (no_direct_history)
+- 2026-10-21: Sporting CP - LASK (no_direct_history)
+- 2026-10-22: Kairat - Panathinaikos (no_direct_history)
