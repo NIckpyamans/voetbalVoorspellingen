@@ -81,6 +81,34 @@ describe("independent 1X2 outcome ensemble", () => {
     expect(Object.values(result.probabilities).reduce((a, b) => a + b, 0)).toBeCloseTo(1, 3);
   });
 
+  it("houdt de herbalanceerde ensemblegewichten vast", () => {
+    const result = buildOutcomeEnsemble({
+      poisson: { homeProb: 0.45, drawProb: 0.3, awayProb: 0.25 },
+      heuristic: { homeProb: 0.45, drawProb: 0.3, awayProb: 0.25 },
+      monteCarlo: { homeProb: 0.45, drawProb: 0.3, awayProb: 0.25 },
+      homeElo: 1700,
+      awayElo: 1500,
+      oddsAtPrediction: { home: 2, draw: 3.4, away: 4, capturedAt: "2026-08-27T17:00:00Z" },
+      kickoff: "2026-08-27T19:00:00Z",
+      featureVector: { home_squad_rating: 60, away_squad_rating: 55 },
+    });
+    const requested = Object.fromEntries(result.components.map((item) => [item.key, item.requestedWeight]));
+    expect(requested).toEqual({
+      dixon_coles_poisson: 0.37,
+      feature_score_model: 0.22,
+      monte_carlo: 0.14,
+      club_elo: 0.05,
+      de_vig_market: 0.16,
+      confirmed_lineup: 0.05,
+      squad_strength: 0.12,
+      two_leg_context: 0.05,
+      gradient_boosting: 0.2,
+    });
+    // De club-rating/Elo-heuristiek weegt lichter dan het doelpuntenmodel.
+    expect(requested.club_elo).toBeLessThan(requested.dixon_coles_poisson);
+    expect(result.version).toBe("outcome-ensemble-v3");
+  });
+
   it("reports honest top-3 and top-5 score coverage", () => {
     const coverage = summarizeScoreCoverage({ "1-0": 0.14, "1-1": 0.13, "2-0": 0.12, "2-1": 0.1, "0-0": 0.08 });
     expect(coverage.top1).toBe(0.14);

@@ -5,15 +5,28 @@
 import { competitionSegment } from "./competition-segmentation.js";
 import { canonicalDedupeTeam } from "../../shared/matchNormalization.js";
 
-const HALF_LIFE_DAYS = 120;
+// Recency en competitieniveau zijn de twee assen waarop historische duels
+// betrouwbaar zijn: recente competitiewedstrijden zeggen het meest, oude
+// oefenduels bijna niets. De halfwaardetijd is verkort van 120 naar 90 dagen
+// zodat de vorm van deze maanden zwaarder telt dan die van vorig seizoen.
+const HALF_LIFE_DAYS = 90;
 const clamp = (value, min, max) => Math.max(min, Math.min(max, Number(value || 0)));
+
+const SEGMENT_WEIGHTS = {
+  regular_league: 1,
+  knockout_cup: 0.65,
+  friendly: 0.08,
+  unknown: 0.45,
+};
+
+export const WEIGHTED_LEARNING_POLICY = Object.freeze({
+  halfLifeDays: HALF_LIFE_DAYS,
+  segmentWeights: { ...SEGMENT_WEIGHTS },
+});
 
 function segmentWeight(league) {
   const segment = competitionSegment({ league });
-  if (segment === "regular_league") return 1;
-  if (segment === "knockout_cup") return 0.7;
-  if (segment === "friendly") return 0.1;
-  return 0.5;
+  return SEGMENT_WEIGHTS[segment] ?? SEGMENT_WEIGHTS.unknown;
 }
 
 function recencyWeight(kickoffOrDate, now) {

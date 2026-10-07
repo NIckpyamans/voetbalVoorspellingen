@@ -9,39 +9,15 @@ import { todayAmsterdamKey } from "../shared/date.js";
 import { filterVisibleMatches, filterVisiblePredictionMap } from "../shared/competitionVisibility.js";
 import { isGeneratedLogoUrl } from "../shared/clubLogos.js";
 import { mergeMatchH2HProvenance, normalizeMatchH2H, synchronizeMatchPredictionH2H } from "../shared/h2hProvenance.js";
+// Één bron van waarheid voor teamidentiteit. De client had een eigen kopie met
+// een afwijkende aliaslijst, waardoor dezelfde wedstrijd hier alsnog twee keer
+// kon blijven staan terwijl de API hem al had samengevoegd.
+import { canonicalDedupeTeam, normalizeDedupeText } from "../shared/matchNormalization.js";
 
 const CACHE_VERSION = "v11_source_coverage_and_form";
 const LIVE_CACHE_AGE_MS = 30_000;
 const TODAY_CACHE_AGE_MS = 90_000;
 const OTHER_CACHE_AGE_MS = 30 * 60_000;
-
-const TEAM_DEDUPE_ALIASES: Record<string, string> = {
-  "freiburg": "freiburg",
-  "sc freiburg": "freiburg",
-  "sport club freiburg": "freiburg",
-  "aston villa": "aston villa",
-  "aston villa fc": "aston villa",
-  "nec": "nec nijmegen",
-  "ne c": "nec nijmegen",
-  "nec nijmegen": "nec nijmegen",
-  "n e c nijmegen": "nec nijmegen",
-  "n e c": "nec nijmegen",
-  "nijmegen": "nec nijmegen",
-  "nijmegen eendracht combinatie": "nec nijmegen",
-  "eendracht combinatie": "nec nijmegen",
-  "man city": "manchester city",
-  "manchester city": "manchester city",
-  "manchester city fc": "manchester city",
-  "psg": "paris saint germain",
-  "paris sg": "paris saint germain",
-  "paris saint germain": "paris saint germain",
-  "paris saint-germain": "paris saint germain",
-  "fc barcelona": "barcelona",
-  "barca": "barcelona",
-  "barcelona": "barcelona",
-  "athletic bilbao": "athletic club",
-  "athletic club": "athletic club",
-};
 
 const VERIFIED_RESULT_BACKFILL = [
   {
@@ -54,26 +30,9 @@ const VERIFIED_RESULT_BACKFILL = [
   },
 ];
 
-function normalizeDedupeText(value: unknown) {
-  return String(value || "")
-    .normalize("NFD")
-    .replace(/[\u0300-\u036f]/g, "")
-    .toLowerCase()
-    .replace(/&/g, " and ")
-    .replace(/[^a-z0-9]+/g, " ")
-    .replace(/\b(afc|fc|cf|sc|cd|ac|as|rc|sv|vfl|vfb|bk|fk|ik|if|club de|club)\b/g, " ")
-    .replace(/\s+/g, " ")
-    .trim();
-}
-
-function canonicalDedupeTeam(value: unknown) {
-  const normalized = normalizeDedupeText(value);
-  if (!normalized) return "";
-  return TEAM_DEDUPE_ALIASES[normalized] || normalized;
-}
-
 function pairKey(home: unknown, away: unknown) {
-  return [canonicalDedupeTeam(home), canonicalDedupeTeam(away)].sort().join("__");
+  const canonical = (value: unknown) => String(canonicalDedupeTeam(value) || "");
+  return [canonical(home), canonical(away)].sort().join("__");
 }
 
 function lookupVerifiedResultBackfill(match: any) {
@@ -102,7 +61,7 @@ function applyVerifiedResultBackfill(match: any) {
 }
 
 function canonicalDedupeLeague(value: unknown) {
-  return normalizeDedupeText(value).replace(/\b(uefa|europe)\b/g, " ").replace(/\s+/g, " ").trim();
+  return normalizeDedupeText(value, { keepNumbers: true }).replace(/\b(uefa|europe)\b/g, " ").replace(/\s+/g, " ").trim();
 }
 
 function matchDateKey(match: any) {

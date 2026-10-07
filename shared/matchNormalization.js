@@ -10,6 +10,35 @@ const TEAM_DEDUPE_ALIASES = {
   "sport club freiburg": "freiburg",
   "aston villa": "aston villa",
   "aston villa fc": "aston villa",
+  // Officiele lange naam versus de korte naam die een andere provider gebruikt.
+  // Providers leveren dezelfde club afwisselend als "AS Nancy Lorraine"/"Nancy",
+  // "Stade Laval"/"Laval", "Olympique Lyonnais"/"Lyon", enz. Zonder deze
+  // aliassen blijft hetzelfde duel twee keer in de opslag staan met elk een
+  // eigen voorspelling.
+  "nancy lorraine": "nancy",
+  nancy: "nancy",
+  "rodez aveyron": "rodez",
+  "lask linz": "lask",
+  "kairat almaty": "kairat",
+  "egnatia rrogozhine": "egnatia",
+  "kups kuopio": "kups",
+  "hapoel beer sheva": "hapoel beer",
+  lyonnais: "lyon",
+  rennais: "rennes",
+  brestois: "brest",
+  "rb salzburg": "salzburg",
+  "red bull salzburg": "salzburg",
+  "rb leipzig": "leipzig",
+  // Engelse/afgekorte schrijfwijze van dezelfde club (provider-vertaling).
+  hamburger: "hamburg",
+  "csu craiova": "universitatea craiova",
+  "red star belgrade": "crvena zvezda",
+  "sint truidense": "sint truiden",
+  sttruiden: "sint truiden",
+  "st truiden": "sint truiden",
+  "union stgilloise": "union st gilloise",
+  "union saint gilloise": "union st gilloise",
+  "union st gilloise": "union st gilloise",
   "nec": "nec nijmegen",
   "ne c": "nec nijmegen",
   "nec nijmegen": "nec nijmegen",
@@ -115,14 +144,44 @@ const VERIFIED_RESULT_BACKFILL = [
   },
 ];
 
-export function normalizeDedupeText(value) {
-  return String(value || "")
+// Providerlabels die niets zeggen over de clubidentiteit. Providers zetten ze
+// willekeurig wel of niet in de naam ("SV 07 Elversberg" vs "Elversberg",
+// "1. FC Union Berlin" vs "Union Berlin", "TSV Eintracht Braunschweig" vs
+// "Eintracht Braunschweig"). Ze moeten dus weg voordat we dedupliceren, anders
+// telt hetzelfde duel als twee losse wedstrijden met twee voorspellingen.
+const CLUB_NOISE_TOKENS = "afc|fc|cf|sc|cd|ac|as|rc|sv|vfl|vfb|bk|fk|kf|ik|if|fsv|tsv|tsg|spvgg|sk|nk|fco|aif|cp|club|de";
+const CLUB_DESCRIPTOR_TOKENS = "stade|olympique";
+
+// Letters met een eigen teken dat NFD niet opdeelt ("Bodø/Glimt" vs "Bodo/Glimt",
+// "Jagiellonia Białystok" vs "Jagiellonia Bialystok"). Zonder deze vouw blijven
+// dat twee clubs en dus twee wedstrijden.
+const LATIN_FOLD = {
+  "\u00f8": "o", "\u0142": "l", "\u0111": "d", "\u00f0": "d", "\u00fe": "th",
+  "\u00e6": "ae", "\u0153": "oe", "\u00df": "ss", "\u0131": "i", "\u0127": "h", "\u014b": "n",
+};
+
+function foldLatin(value) {
+  return String(value || "").replace(/[\u00d8\u0141\u0110\u00d0\u00de\u00c6\u0152\u1e9e\u0130\u0126\u014a\u00f8\u0142\u0111\u00f0\u00fe\u00e6\u0153\u00df\u0131\u0127\u014b]/g, (char) => LATIN_FOLD[char] || char.toLowerCase());
+}
+
+export function normalizeDedupeText(value, options = {}) {
+  const keepNumbers = options.keepNumbers === true;
+  return foldLatin(value)
     .normalize("NFD")
     .replace(/[\u0300-\u036f]/g, "")
     .toLowerCase()
     .replace(/&/g, " and ")
+    // "F.C." hoort hetzelfde te zijn als "FC", en "d'Escaldes" als "d Escaldes".
+    .replace(/\./g, "")
+    .replace(/['\u2019]/g, "")
     .replace(/[^a-z0-9]+/g, " ")
-    .replace(/\b(afc|fc|cf|sc|cd|ac|as|rc|sv|vfl|vfb|bk|fk|kf|ik|if|club de|club)\b/g, " ")
+    // Losse rugnummers/seizoenstekens ("1", "05", "07", "93", "1846") zijn
+    // geen clubidentiteit. Reserve-elftallen met een B blijven wel intact.
+    // Competitienamen houden hun cijfers: "Ligue 1" en "Ligue 2" zijn niet
+    // hetzelfde toernooi.
+    .replace(/\b\d+\b/g, (token) => (keepNumbers ? token : " "))
+    .replace(new RegExp(`\\b(${CLUB_NOISE_TOKENS})\\b`, "g"), " ")
+    .replace(new RegExp(`\\b(${CLUB_DESCRIPTOR_TOKENS})\\b`, "g"), " ")
     .replace(/\s+/g, " ")
     .trim();
 }
@@ -156,7 +215,7 @@ export function buildTeamPairKey(home, away) {
 
 export function buildMatchDedupeKey(match) {
   const dateKey = String(match?.date || match?.kickoff || "").slice(0, 10);
-  const league = normalizeDedupeText(match?.league).replace(/\b(uefa|europe)\b/g, " ").replace(/\s+/g, " ").trim();
+  const league = normalizeDedupeText(match?.league, { keepNumbers: true }).replace(/\b(uefa|europe)\b/g, " ").replace(/\s+/g, " ").trim();
   const home = canonicalDedupeTeam(match?.homeTeamName || match?.homeTeam);
   const away = canonicalDedupeTeam(match?.awayTeamName || match?.awayTeam);
   if (!dateKey || !home || !away) return "";

@@ -5,6 +5,7 @@ import {
   dayPayloadsFromHistorySummary,
   mergeLocalTeamForm,
   mergePersistedTeamFormCache,
+  summarizeLocalTeamForm,
 } from "../../scripts/worker/local-team-form-history.js";
 
 describe("local completed fixture form history", () => {
@@ -72,8 +73,34 @@ describe("local completed fixture form history", () => {
     expect(profile.recentMatches).toHaveLength(2);
     expect(profile.source).toContain("local-finished-results");
     expect(profile.goalTiming).toMatchObject({ scoredGoals: 1, firstHalfScoringShare: 0 });
-    expect(profile).toMatchObject({ gamesPlayed: 2, weightingPolicy: "competitive=1,friendly=0.35" });
-    expect(profile.last10.weightedGames).toBe(1.35);
+    expect(profile).toMatchObject({ gamesPlayed: 2, weightingPolicy: "recency-gewogen kopstatistieken (halfwaardetijd 3 duels); competitie=1, beker=0.7, oefen=0.15" });
+    expect(profile.last10.weightedGames).toBe(1.15);
+  });
+
+  it("geeft oefenduels en bekerduels minder gewicht dan competitieduels", () => {
+    const index = buildLocalTeamFormIndex([{ matches: [
+      { ...completedFriendly, id: "league", league: "Netherlands - Eredivisie", date: "2026-07-24" },
+      { ...completedFriendly, id: "cup", league: "Netherlands - KNVB Beker", date: "2026-07-25" },
+      { ...completedFriendly, id: "friendly", league: "World - Club Friendlies", date: "2026-07-26" },
+    ] }], { now: Date.parse("2026-07-27T00:00:00.000Z") });
+    const [league, cup, friendly] = index.get("tottenham hotspur");
+    expect(league.weight).toBe(1);
+    expect(cup.weight).toBe(0.7);
+    expect(friendly.weight).toBe(0.15);
+  });
+
+  it("weegt de meest recente vorm zwaarder dan oudere duels", () => {
+    const matches = [
+      { date: "2026-01-01", venue: "H", opponent: "A", score: "0-3", goalsFor: 0, goalsAgainst: 3, weight: 1, result: "L", friendly: false },
+      { date: "2026-01-08", venue: "H", opponent: "B", score: "0-3", goalsFor: 0, goalsAgainst: 3, weight: 1, result: "L", friendly: false },
+      { date: "2026-01-15", venue: "H", opponent: "C", score: "3-0", goalsFor: 3, goalsAgainst: 0, weight: 1, result: "W", friendly: false },
+      { date: "2026-01-22", venue: "H", opponent: "D", score: "3-0", goalsFor: 3, goalsAgainst: 0, weight: 1, result: "W", friendly: false },
+      { date: "2026-01-29", venue: "H", opponent: "E", score: "3-0", goalsFor: 3, goalsAgainst: 0, weight: 1, result: "W", friendly: false },
+    ];
+    const profile = summarizeLocalTeamForm(matches);
+    // Vlak gemiddelde over deze vijf duels is 1.8 goals voor; recency-weging op
+    // een halfwaardetijd van 3 duels hoort hoger uit te komen.
+    expect(profile.avgScored).toBeGreaterThan(1.8);
   });
 
   it("deduplicates the same fixture coming from different provider IDs", () => {

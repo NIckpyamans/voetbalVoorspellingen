@@ -11,6 +11,20 @@ function scoreFor(match) {
     : null;
 }
 
+// Relevantie van een afgerond duel voor de vorm van vandaag. Oefenduels zijn
+// nauwelijks voorspellend (de reviewdiagnose laat voor friendlies geen enkele
+// betrouwbare treffer zien) en tellen daarom bijna niet mee; beker- en
+// kwalificatieduels zijn door rotatie en tweeluiken ruiziger dan competitieduels.
+const FRIENDLY_WEIGHT = 0.15;
+const CUP_WEIGHT = 0.7;
+
+function competitionWeight(league) {
+  const text = String(league || "");
+  if (/friendl|oefen/i.test(text)) return FRIENDLY_WEIGHT;
+  if (/cup|pokal|coupe|beker|knockout|play-?off|qualif/i.test(text)) return CUP_WEIGHT;
+  return 1;
+}
+
 function isCompletedBefore(match, now) {
   if (!["FT", "AET", "PEN"].includes(String(match?.status || "").toUpperCase())) return false;
   const kickoff = Date.parse(match?.kickoff || match?.date || "");
@@ -34,7 +48,7 @@ function addTeamResult(index, teamName, opponent, match, goalsFor, goalsAgainst,
     result: goalsFor > goalsAgainst ? "W" : goalsFor === goalsAgainst ? "D" : "L",
     source: `local-finished-results:${match?.dataSource || match?.source || "worker"}`,
     friendly: /friendl|oefen/i.test(String(match?.league || "")),
-    weight: /friendl|oefen/i.test(String(match?.league || "")) ? 0.35 : 1,
+    weight: competitionWeight(match?.league),
     opponentStrength: Number(match?.[venue === "H" ? "awayClubStrength" : "homeClubStrength"] || match?.[venue === "H" ? "awayClubElo" : "homeClubElo"] || 0) || null,
     xGFor: Number(match?.postMatchStats?.[venue === "H" ? "home" : "away"]?.xG ?? match?.liveStats?.[venue === "H" ? "home" : "away"]?.xG),
     xGAgainst: Number(match?.postMatchStats?.[venue === "H" ? "away" : "home"]?.xG ?? match?.liveStats?.[venue === "H" ? "away" : "home"]?.xG),
@@ -106,12 +120,18 @@ function summarizeMatchesWithDecay(matches, halfLifeMatches = 5) {
   return summarizeMatches(weighted);
 }
 
+// De kop-statistieken (punten, doelpunten, xG) zijn recency-gewogen met een
+// halfwaardetijd van 3 duels: de vorm van de laatste weken weegt zwaarder dan
+// die van twee maanden geleden. De expliciete last5/last10/last20-vensters
+// blijven vlak, zodat die features vergelijkbaar en uitlegbaar blijven.
+const HEADLINE_RECENCY_HALF_LIFE = 3;
+
 export function summarizeLocalTeamForm(recentMatches = []) {
   const last20 = recentMatches.slice(-20);
   const last10 = last20.slice(-10);
   const home = last10.filter((match) => match.venue === "H");
   const away = last10.filter((match) => match.venue === "A");
-  const overall = summarizeMatches(last10);
+  const overall = summarizeMatchesWithDecay(last10, HEADLINE_RECENCY_HALF_LIFE);
   return {
     gamesPlayed: last10.length,
     pointsPerGame: overall.pointsPerGame,
@@ -123,12 +143,12 @@ export function summarizeLocalTeamForm(recentMatches = []) {
     shotsAgainst: overall.shotsAgainst,
     opponentStrength: overall.opponentStrength,
     last5: summarizeMatches(last10.slice(-5)),
-    last10: overall,
+    last10: summarizeMatches(last10),
     last20: summarizeMatches(last20),
     recencyWeighted: summarizeMatchesWithDecay(last20, 5),
     splits: { home: summarizeMatches(home), away: summarizeMatches(away) },
     friendlyMatches: last10.filter((match) => match.friendly).length,
-    weightingPolicy: "competitive=1,friendly=0.35",
+    weightingPolicy: `recency-gewogen kopstatistieken (halfwaardetijd ${HEADLINE_RECENCY_HALF_LIFE} duels); competitie=1, beker=${CUP_WEIGHT}, oefen=${FRIENDLY_WEIGHT}`,
   };
 }
 

@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 import { dedupeStoredMatches, dedupeStoredPredictions, h2hProvenanceRank } from "../../scripts/worker/fixture-deduplication.js";
 import { synchronizeMatchPredictionH2H } from "../../shared/h2hProvenance.js";
+import { canonicalDedupeTeam } from "../../shared/matchNormalization.js";
 
 const options = {
   teamKey: (value) => String(value).toLowerCase().replace(/\bfc\b/g, "").replace(/[^a-z0-9]+/g, " ").trim(),
@@ -417,6 +418,22 @@ describe("fixture deduplication", () => {
     expect(h2hProvenanceRank(blocked)).toBeGreaterThan(h2hProvenanceRank(legacy));
     expect(h2hProvenanceRank({ played: 1, status: "previous-leg", availabilityStatus: "available" })).toBeGreaterThan(h2hProvenanceRank(blocked));
     expect(h2hProvenanceRank(null)).toBeLessThan(h2hProvenanceRank(legacy));
+  });
+
+  // De worker gebruikt sinds de dedupe-fix `canonicalDedupeTeam` uit
+  // shared/matchNormalization.js als teamKey. Deze test borgt dat de opslag
+  // provider-varianten van dezelfde club als één fixture wegzet.
+  it("voegt provider-varianten van de clubnaam samen met de gedeelde teamKey", () => {
+    const workerOptions = { teamKey: canonicalDedupeTeam, leagueKey: (value) => String(value || "").toLowerCase() };
+    const rows = dedupeStoredMatches([
+      { id: "fotmob", date: "2026-10-09", league: "France - Ligue 2", homeTeamName: "Nancy", awayTeamName: "Guingamp", status: "NS", dataSource: "fotmob" },
+      { id: "espn", date: "2026-10-09", league: "France - Ligue 2", homeTeamName: "AS Nancy Lorraine", awayTeamName: "Guingamp", status: "NS", dataSource: "espn" },
+      { id: "braunschweig-a", date: "2026-10-09", league: "Germany - 2. Bundesliga", homeTeamName: "TSV Eintracht Braunschweig", awayTeamName: "Holstein Kiel", status: "NS", dataSource: "espn" },
+      { id: "braunschweig-b", date: "2026-10-09", league: "Germany - 2. Bundesliga", homeTeamName: "Eintracht Braunschweig", awayTeamName: "Holstein Kiel", status: "NS", dataSource: "fotmob" },
+    ], workerOptions);
+
+    expect(rows).toHaveLength(2);
+    expect(rows.map((row) => row.date)).toEqual(["2026-10-09", "2026-10-09"]);
   });
 
   it("retains the richer squad and timestamped odds evidence", () => {

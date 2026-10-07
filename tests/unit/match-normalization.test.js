@@ -97,4 +97,59 @@ describe("match normalization", () => {
     expect(canonicalDedupeTeam("Ajax U21")).toBe("jong ajax");
     expect(canonicalDedupeTeam("Ajax")).toBe("ajax");
   });
+
+  // Regressie: 9 oktober stond dezelfde wedstrijd twee keer op het dashboard met
+  // elk een eigen voorspelling, omdat providers de club anders schrijven.
+  it.each([
+    ["Nancy", "AS Nancy Lorraine"],
+    ["Laval", "Stade Laval"],
+    ["Lyon", "Olympique Lyonnais"],
+    ["Eintracht Braunschweig", "TSV Eintracht Braunschweig"],
+    ["Mainz", "Mainz 05"],
+    ["Mainz 05", "1. FSV Mainz 05"],
+    ["Union Berlin", "1. FC Union Berlin"],
+    ["Elversberg", "SV 07 Elversberg"],
+    ["Red Star", "Red Star FC 93"],
+    ["Reims", "Stade de Reims"],
+    ["Dijon", "Dijon FCO"],
+    ["LASK", "LASK Linz"],
+    ["Kairat", "Kairat Almaty"],
+    ["KuPS", "KuPS Kuopio"],
+    ["Mjällby", "Mjällby AIF"],
+    ["FC København", "F.C. København"],
+    ["Brann", "SK Brann"],
+    ["Celje", "NK Celje"],
+    ["Salzburg", "RB Salzburg"],
+    ["Hoffenheim", "TSG Hoffenheim"],
+    ["Greuther Fürth", "SpVgg Greuther Fürth"],
+    ["Inter D'Escaldes", "Inter Club d'Escaldes"],
+    ["Hapoel Be'er", "Hapoel Beer Sheva"],
+    ["Bodo/Glimt", "Bodø/Glimt"],
+    ["Jagiellonia Bialystok", "Jagiellonia Białystok"],
+    ["Hamburg SV", "Hamburger SV"],
+    ["CSU Craiova", "Universitatea Craiova"],
+    ["Red Star Belgrade", "FK Crvena Zvezda"],
+    ["St.Truiden", "Sint-Truidense"],
+    ["Union St.Gilloise", "Union St.-Gilloise"],
+  ])("geeft %s en %s dezelfde clubidentiteit", (left, right) => {
+    expect(canonicalDedupeTeam(left)).toBe(canonicalDedupeTeam(right));
+  });
+
+  it("laat dezelfde wedstrijd uit twee bronnen als één serveerbare fixture", () => {
+    const matches = mergeDuplicateServedMatches([
+      { id: "fotmob", date: "2026-10-09", league: "France - Ligue 2", homeTeamName: "Nancy", awayTeamName: "Guingamp", status: "NS" },
+      { id: "espn", date: "2026-10-09", league: "France - Ligue 2", homeTeamName: "AS Nancy Lorraine", awayTeamName: "Guingamp", status: "NS" },
+      { id: "fotmob-lens", date: "2026-10-09", league: "France - Ligue 1", homeTeamName: "Lens", awayTeamName: "Lyon", status: "NS" },
+      { id: "bbc-lens", date: "2026-10-09", league: "France - Ligue 1", homeTeamName: "Lens", awayTeamName: "Olympique Lyonnais", status: "NS" },
+    ]);
+
+    expect(matches).toHaveLength(2);
+  });
+
+  it("voegt geen echte verschillende clubs of reserveteams samen", () => {
+    expect(canonicalDedupeTeam("Villarreal B")).not.toBe(canonicalDedupeTeam("Villarreal"));
+    expect(canonicalDedupeTeam("Sporting CP")).not.toBe(canonicalDedupeTeam("Sporting Gijon"));
+    expect(canonicalDedupeTeam("Manchester City")).not.toBe(canonicalDedupeTeam("Manchester United"));
+    expect(canonicalDedupeTeam("De Graafschap")).not.toBe(canonicalDedupeTeam("PSV"));
+  });
 });

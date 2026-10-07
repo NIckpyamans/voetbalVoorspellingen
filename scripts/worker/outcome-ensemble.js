@@ -149,6 +149,30 @@ function ensembleAgreement(components, probabilities) {
   return Number(clamp(1 - difference * 3.5, 0, 1).toFixed(3));
 }
 
+// Ensemblegewichten, herbalanceerd op de geregistreerde reviewdiagnose
+// (data/meta.json -> featureDiagnostics.topFailureSignals):
+// - clubelo_misread (141x): de club-rating/Elo-component is een expliciete
+//   heuristiek en geen backtest (docs/club-strength-source-policy.md), dus die
+//   krijgt minder gewicht.
+// - het Dixon-Coles/Poisson-doelpuntenmodel is het meest stabiele onderdeel en
+//   krijgt dat gewicht erbij.
+// - markt_misread (274x) gaat over het markt-overperformance-feature in de
+//   heuristiek, niet over de gede-vigde consensus; die consensus blijft het
+//   sterkste signaal zodra er pre-kickoff odds zijn.
+// Wordt de markt of het boosting-model niet geleverd, dan hernormaliseren de
+// overige gewichten automatisch.
+const OUTCOME_ENSEMBLE_WEIGHTS = {
+  dixon_coles_poisson: 0.37,
+  feature_score_model: 0.22,
+  monte_carlo: 0.14,
+  club_elo: 0.05,
+  de_vig_market: 0.16,
+  confirmed_lineup: 0.05,
+  squad_strength: 0.12,
+  two_leg_context: 0.05,
+  gradient_boosting: 0.2,
+};
+
 export function buildOutcomeEnsemble({
   poisson,
   heuristic,
@@ -167,15 +191,15 @@ export function buildOutcomeEnsemble({
   const squadStrength = buildSquadStrengthOutcomeModel(featureVector);
   const twoLegContext = buildTwoLegContextModel(featureVector);
   const definitions = [
-    ["dixon_coles_poisson", poisson, 0.34],
-    ["feature_score_model", heuristic, 0.22],
-    ["monte_carlo", monteCarlo, 0.14],
-    ["club_elo", elo, 0.1],
-    ["de_vig_market", market, 0.15],
-    ["confirmed_lineup", lineup, 0.05],
-    ["squad_strength", squadStrength, 0.12],
-    ["two_leg_context", twoLegContext, 0.05],
-    ["gradient_boosting", gradientBoosting, 0.2],
+    ["dixon_coles_poisson", poisson, OUTCOME_ENSEMBLE_WEIGHTS.dixon_coles_poisson],
+    ["feature_score_model", heuristic, OUTCOME_ENSEMBLE_WEIGHTS.feature_score_model],
+    ["monte_carlo", monteCarlo, OUTCOME_ENSEMBLE_WEIGHTS.monte_carlo],
+    ["club_elo", elo, OUTCOME_ENSEMBLE_WEIGHTS.club_elo],
+    ["de_vig_market", market, OUTCOME_ENSEMBLE_WEIGHTS.de_vig_market],
+    ["confirmed_lineup", lineup, OUTCOME_ENSEMBLE_WEIGHTS.confirmed_lineup],
+    ["squad_strength", squadStrength, OUTCOME_ENSEMBLE_WEIGHTS.squad_strength],
+    ["two_leg_context", twoLegContext, OUTCOME_ENSEMBLE_WEIGHTS.two_leg_context],
+    ["gradient_boosting", gradientBoosting, OUTCOME_ENSEMBLE_WEIGHTS.gradient_boosting],
   ];
   const components = definitions.map(([key, value, requestedWeight]) => ({
     key,
@@ -206,7 +230,7 @@ export function buildOutcomeEnsemble({
       disagreement: market.disagreement,
       movement: market.movement,
     } : null,
-    version: "outcome-ensemble-v2",
+    version: "outcome-ensemble-v3",
   };
 }
 

@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { buildWeightedTeamLearning } from "../../scripts/worker/weighted-learning.js";
+import { buildWeightedTeamLearning, WEIGHTED_LEARNING_POLICY } from "../../scripts/worker/weighted-learning.js";
 import { updateLearnedElo, lookupLearnedElo, LEARNED_ELO_VERSION } from "../../scripts/worker/learned-elo.js";
 
 const NOW = Date.parse("2026-09-28T12:00:00Z");
@@ -33,6 +33,23 @@ describe("weighted team learning", () => {
   it("geeft geen weight aan rows zonder uitslag", () => {
     const learning = buildWeightedTeamLearning({ pending: review("Ajax", "Feyenoord", null, 1) }, NOW);
     expect(Object.keys(learning).length).toBe(0);
+  });
+
+  it("houdt de recency- en competitiegewichten vast", () => {
+    expect(WEIGHTED_LEARNING_POLICY).toMatchObject({
+      halfLifeDays: 90,
+      segmentWeights: { regular_league: 1, knockout_cup: 0.65, friendly: 0.08 },
+    });
+  });
+
+  it("laat een oud duel meer dan twee keer zo licht wegen als een recent duel", () => {
+    const learning = buildWeightedTeamLearning({
+      recent: review("Ajax", "PSV", "2-1", 0),
+      old: review("Ajax", "PSV", "2-1", 180),
+    }, NOW);
+    // Twee duels: het recente telt ~1.0 en het 180 dagen oude ~0.25 mee.
+    expect(learning["name:ajax"].weightedMatches).toBeGreaterThan(1.15);
+    expect(learning["name:ajax"].weightedMatches).toBeLessThan(1.35);
   });
 });
 

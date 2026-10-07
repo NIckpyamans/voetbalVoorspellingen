@@ -3763,6 +3763,19 @@ function calculateRecentH2HBalance(h2h, currentHomeId, currentAwayId) {
   return totalWeight > 0 ? Number((weightedScore / totalWeight).toFixed(2)) : 0;
 }
 
+// Weegbeleid van de feature-heuristiek, bijgesteld op de geregistreerde
+// faalsignalen in store.featureDiagnostics (zie data/meta.json):
+// - clubelo_misread (141x): een grote Elo-edge zat vaak fout -> edge aftoppen.
+// - market_misread (274x): markt-overperformance zat vaak fout -> lager wegen.
+// - rest_gap (156x): rustverschil zat vaak fout -> lager wegen.
+// - h2h_signal (273x): H2H met >=3 duels zat vaak fout -> alleen toepassen als
+//   de H2H-betrouwbaarheid echt bruikbaar is (>= 0.5) en er >= 3 duels zijn.
+const CLUB_ELO_EDGE_CLAMP = 120;
+const MARKET_OVERPERFORMANCE_WEIGHT = 0.06;
+const REST_DIFF_WEIGHT = 0.05;
+const H2H_MIN_RELIABILITY = 0.5;
+const H2H_MIN_SAMPLE = 3;
+
 function buildHeuristicEnsemble(featureVector) {
   let homeScore = 0;
   let drawScore = 0;
@@ -3770,14 +3783,17 @@ function buildHeuristicEnsemble(featureVector) {
 
   homeScore += featureVector.ppg_diff * 0.22;
   awayScore -= featureVector.ppg_diff * 0.22;
-  homeScore += featureVector.club_elo_diff / 180 * 0.18;
-  awayScore -= featureVector.club_elo_diff / 180 * 0.18;
+  // De Elo-edge is een heuristiek (geen backtest): temper hem en top extreme
+  // verschillen af zodat één verouderd ClubElo-cijfer niet de wedstrijd kantelt.
+  const clubEloEdge = clamp(Number(featureVector.club_elo_diff || 0), -CLUB_ELO_EDGE_CLAMP, CLUB_ELO_EDGE_CLAMP);
+  homeScore += clubEloEdge / 180 * 0.15;
+  awayScore -= clubEloEdge / 180 * 0.15;
   homeScore += Number(featureVector.squad_rating_diff || 0) * 0.045;
   awayScore -= Number(featureVector.squad_rating_diff || 0) * 0.045;
   homeScore += Number(featureVector.transfer_impact_diff || 0) * 0.055;
   awayScore -= Number(featureVector.transfer_impact_diff || 0) * 0.055;
-  homeScore += featureVector.rest_diff * 0.08;
-  awayScore -= featureVector.rest_diff * 0.08;
+  homeScore += featureVector.rest_diff * REST_DIFF_WEIGHT;
+  awayScore -= featureVector.rest_diff * REST_DIFF_WEIGHT;
   homeScore += (featureVector.home_home_split_scored - featureVector.away_away_split_conceded) * 0.16;
   awayScore += (featureVector.away_away_split_scored - featureVector.home_home_split_conceded) * 0.16;
   homeScore += featureVector.set_piece_diff * 0.04;
@@ -3802,8 +3818,8 @@ function buildHeuristicEnsemble(featureVector) {
   awayScore += (featureVector.away_lineup_continuity - featureVector.home_lineup_continuity) * 0.16;
   homeScore += featureVector.away_travel_penalty * 0.18;
   awayScore -= featureVector.away_travel_penalty * 0.18;
-  homeScore += featureVector.market_overperformance_diff * 0.1 * Math.max(featureVector.market_strength, 0.35);
-  awayScore -= featureVector.market_overperformance_diff * 0.1 * Math.max(featureVector.market_strength, 0.35);
+  homeScore += featureVector.market_overperformance_diff * MARKET_OVERPERFORMANCE_WEIGHT * Math.max(featureVector.market_strength, 0.35);
+  awayScore -= featureVector.market_overperformance_diff * MARKET_OVERPERFORMANCE_WEIGHT * Math.max(featureVector.market_strength, 0.35);
   homeScore += (featureVector.league_reliability - 0.5) * 0.08;
   awayScore += (featureVector.league_reliability - 0.5) * 0.08;
   drawScore += Math.max(0, 0.12 - featureVector.referee_penalty_rate * 0.08);
@@ -3827,13 +3843,17 @@ function buildHeuristicEnsemble(featureVector) {
     homeScore += clamp(homeLateEdge * 0.04 * timingReliability, -0.025, 0.025);
     awayScore += clamp(awayLateEdge * 0.04 * timingReliability, -0.025, 0.025);
   }
-  // H2H algemeen patroon (lichte weging)
-  const h2hWeight = Number(featureVector.h2h_reliability || 0);
-  homeScore += featureVector.h2h_balance * 0.05 * h2hWeight;
-  awayScore -= featureVector.h2h_balance * 0.05 * h2hWeight;
-  // Recente onderlinge vorm weegt alleen stevig als er minimaal 3 betrouwbare duels zijn.
-  homeScore += featureVector.h2h_recent_5_balance * 0.12 * h2hWeight;
-  awayScore -= featureVector.h2h_recent_5_balance * 0.12 * h2hWeight;
+  // H2H-signaal. De reviewdiagnose laat zien dat H2H-duels vaak een verkeerde
+  // richting gaven (h2h_signal 273x), dus gebruiken we het pas als de
+  // betrouwbaarheid bruikbaar is en er genoeg recente duels zijn.
+  const h2hReliability = Number(featureVector.h2h_reliability || 0);
+  const h2hSample = Number(featureVector.h2h_sample_size || 0);
+  const h2hWeight = h2hReliability >= H2H_MIN_RELIABILITY ? h2hReliability : 0;
+  homeScore += featureVector.h2h_balance * 0.04 * h2hWeight;
+  awayScore -= featureVector.h2h_balance * 0.04 * h2hWeight;
+  const h2hRecentWeight = h2hWeight && h2hSample >= H2H_MIN_SAMPLE ? h2hWeight : 0;
+  homeScore += featureVector.h2h_recent_5_balance * 0.09 * h2hRecentWeight;
+  awayScore -= featureVector.h2h_recent_5_balance * 0.09 * h2hRecentWeight;
   // Leermodel per team
   homeScore += featureVector.learning_outcome_bias_diff * 0.16;
   awayScore -= featureVector.learning_outcome_bias_diff * 0.16;
@@ -3842,8 +3862,8 @@ function buildHeuristicEnsemble(featureVector) {
   // Historische marktprofilering uit gratis oddsdata
   homeScore += (featureVector.home_market_implied_ppg - featureVector.away_market_implied_ppg) * 0.12;
   awayScore += (featureVector.away_market_implied_ppg - featureVector.home_market_implied_ppg) * 0.12;
-  homeScore += featureVector.market_overperformance_diff * 0.10;
-  awayScore -= featureVector.market_overperformance_diff * 0.10;
+  homeScore += featureVector.market_overperformance_diff * MARKET_OVERPERFORMANCE_WEIGHT;
+  awayScore -= featureVector.market_overperformance_diff * MARKET_OVERPERFORMANCE_WEIGHT;
   homeScore += (featureVector.phase_reliability - 0.5) * 0.08;
   awayScore += (featureVector.phase_reliability - 0.5) * 0.08;
   homeScore -= Math.max(0, featureVector.phase_avg_goal_error - 1.5) * 0.03;
@@ -4497,13 +4517,11 @@ function canonicalMatchTeamKey(name) {
   if (!key) return "";
   const aliasBeforeCleanup = teamAliasLookup.get(key);
   if (aliasBeforeCleanup) key = aliasBeforeCleanup;
-  key = key
-    .replace(/\b(afc|fc|cf|sc|cd|ac|as|rc|sv|vfl|vfb|bk|fk|ik|if|club de|club|sport club)\b/g, " ")
-    .replace(/\b1\s+fc\b/g, " ")
-    .replace(/\b&\b/g, " and ")
-    .replace(/[^a-z0-9]+/g, " ")
-    .replace(/\s+/g, " ")
-    .trim();
+  // Gebruik dezelfde identiteitsregel als de API en het dashboard. De worker had
+  // hier een eigen kopie die bv. "AS Nancy Lorraine" niet aan "Nancy" koppelde,
+  // waardoor hetzelfde duel twee keer in de opslag kwam met twee voorspellingen.
+  key = String(canonicalDedupeTeam(key) || "");
+  if (!key) return "";
   const aliasAfterCleanup = teamAliasLookup.get(key);
   if (aliasAfterCleanup) return aliasAfterCleanup;
   if (raw && raw !== key) {
