@@ -1,4 +1,4 @@
-name: API-Football Pro Acceptance
+name: API-Football fixture coverage acceptance
 
 on:
   workflow_dispatch:
@@ -37,22 +37,23 @@ jobs:
           cache: npm
       - run: npm ci
       - id: acceptance
-        name: Verify UEFA qualifier and friendly coverage
+        name: Verify UEFA qualifier and friendly fixture coverage
         continue-on-error: true
         run: npm run provider:api-football:acceptance
       - id: state
-        name: Read acceptance state
+        name: Read fixture-coverage acceptance state
         if: always()
-        run: node -e "const fs=require('fs');const p=JSON.parse(fs.readFileSync('monitor/api-football-provider-acceptance.json','utf8'));fs.appendFileSync(process.env.GITHUB_OUTPUT,'accepted='+(p.accepted===true)+'\n');"
-      - name: Upload acceptance report
+        run: |
+          node -e 'const fs=require("fs");const p=JSON.parse(fs.readFileSync("monitor/api-football-provider-acceptance.json","utf8"));fs.appendFileSync(process.env.GITHUB_OUTPUT, ["accepted="+(p.accepted===true), "fixture_coverage_accepted="+(p.accepted===true)].join(String.fromCharCode(10))+String.fromCharCode(10));'
+      - name: Upload fixture-coverage report
         if: always()
         uses: actions/upload-artifact@v4
         with:
-          name: api-football-provider-acceptance
+          name: api-football-fixture-coverage-acceptance
           path: monitor/api-football-provider-acceptance.json
           if-no-files-found: ignore
           retention-days: 30
-      - name: Persist provider health report
+      - name: Persist fixture-coverage report
         if: always()
         run: |
           test -f monitor/api-football-provider-acceptance.json || exit 0
@@ -61,15 +62,15 @@ jobs:
           git add monitor/api-football-provider-acceptance.json
           test ! -f data/api-football-fixture-cache.json || git add data/api-football-fixture-cache.json
           git diff --cached --quiet && exit 0
-          git commit -m "update api-football acceptance [skip vercel]"
+          git commit -m "update api-football fixture coverage acceptance [skip vercel]"
           for attempt in 1 2 3; do
             git pull --rebase --autostash origin codex/step3b-layout
             if git push origin HEAD:codex/step3b-layout; then exit 0; fi
             sleep $((attempt * 5))
           done
           exit 1
-      - name: Dispatch accepted provider recovery chain
-        if: steps.state.outputs.accepted == 'true'
+      - name: Dispatch accepted fixture recovery chain
+        if: steps.state.outputs.fixture_coverage_accepted == 'true'
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
@@ -77,6 +78,6 @@ jobs:
           gh workflow run pre-kickoff-lineups.yml --ref codex/step3b-layout
           gh workflow run free-prematch-odds.yml --ref codex/step3b-layout
           gh workflow run storage-recovery.yml --ref codex/step3b-layout
-      - name: Enforce requested strict gate
+      - name: Enforce requested strict fixture gate
         if: github.event_name == 'workflow_dispatch' && inputs.strict == 'true' && steps.acceptance.outcome == 'failure'
         run: exit 1

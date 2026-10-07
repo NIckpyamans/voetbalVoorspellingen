@@ -19,10 +19,15 @@ import {
   createEvaluationResultIndex,
   resolveEvaluationResult,
 } from "./worker/evaluation-result-matching.js";
+import { summarizeUniqueFixtureEvaluations, assessAuditFreshness } from "./worker/audit-freshness.js";
+import { buildMatchDedupeKey } from "../shared/matchNormalization.js";
 
 const ROOT = process.cwd();
 const REPORT_FILE = path.join(ROOT, "monitor", "prediction-evaluation-report.json");
-const limit = Math.max(1, Number(process.env.PREDICTION_EVALUATION_LIMIT || 5000));
+const MAX_EVALUATION_LIMIT = 500;
+const EVALUATION_PAGE_SIZE = 100;
+const requestedLimit = Number(process.env.PREDICTION_EVALUATION_LIMIT || 500);
+const limit = Number.isFinite(requestedLimit) ? Math.min(MAX_EVALUATION_LIMIT, Math.max(1, Math.trunc(requestedLimit))) : MAX_EVALUATION_LIMIT;
 
 function readStaticResults() {
   const results = createEvaluationResultIndex();
@@ -50,44 +55,88 @@ function readStaticResults() {
 }
 
 async function evaluateNeon(sql) {
-  const status = { configured: !!sql, available: false, candidates: 0, evaluated: 0, error: null };
+  const status = {
+    configured: !!sql,
+    available: false,
+    candidates: 0,
+    evaluated: 0,
+    pages: 0,
+    queryBudget: { maxRows: limit, pageSize: EVALUATION_PAGE_SIZE, selectedColumns: 15, strategy: "narrow_projection_keyset_pages_unprocessed_only" },
+    error: null,
+  };
   if (!sql) return status;
   try {
-    const rows = await sql.query(`
-      select ps.prediction_id, ps.match_id, ps.generated_at, ps.cutoff_at, ps.probabilities, ps.expected_score,
-        ps.prediction_payload, m.kickoff_at, mr.final_home_goals, mr.final_away_goals, mr.actual_outcome
-      from prediction_snapshots ps
-      join matches m on m.match_id=ps.match_id
-      join match_results mr on mr.match_id=ps.match_id
-      where ps.generated_at <= coalesce(m.kickoff_at, ps.generated_at)
-      order by ps.generated_at limit $1
-    `, [limit]);
-    status.available = true;
-    status.candidates = rows.length;
-    for (const row of rows) {
-      const evaluation = evaluateImmutableSnapshot({
-        predictionId: row.prediction_id,
-        matchId: row.match_id,
-        generatedAt: row.generated_at,
-        cutoffAt: row.cutoff_at,
-        kickoff: row.kickoff_at,
-        probabilities: row.probabilities,
-        expectedScore: row.expected_score,
-        prediction: row.prediction_payload,
-        oddsAtPrediction: row.prediction_payload?.oddsAtPrediction || null,
-      }, row, { evaluationSource: "scheduled-database-evaluator" });
-      if (!evaluation) continue;
-      await sql.query(`
-        insert into prediction_evaluations
-          (prediction_id,match_id,exact_hit,outcome_hit,probability_outcome_hit,brier_score,log_loss,roi,roi_status,clv,clv_status,evaluation_source,evaluated_at)
-        values ($1,$2,$3,$4,$4,$5,$6,$7,$8,$9,$10,$11,now())
-        on conflict (prediction_id) do update set
-          match_id=excluded.match_id,exact_hit=excluded.exact_hit,outcome_hit=excluded.outcome_hit,
-          probability_outcome_hit=excluded.probability_outcome_hit,brier_score=excluded.brier_score,log_loss=excluded.log_loss,
-          roi=excluded.roi,roi_status=excluded.roi_status,clv=excluded.clv,clv_status=excluded.clv_status,
-          evaluation_source=excluded.evaluation_source,evaluated_at=now()
-      `, [evaluation.predictionId,evaluation.matchId,evaluation.exactHit,evaluation.outcomeHit,evaluation.brierScore,evaluation.logLoss,evaluation.roi,evaluation.roiStatus,evaluation.clv,evaluation.clvStatus,evaluation.evaluationSource]);
-      status.evaluated += 1;
+    let cursorGeneratedAt = null;
+    let cursorPredictionId = null;
+    while (status.candidates < limit) {
+      const pageLimit = Math.min(EVALUATION_PAGE_SIZE, limit - status.candidates);
+      const rows = await sql.query(`
+        select ps.prediction_id, ps.match_id, ps.generated_at, ps.cutoff_at, ps.probabilities, ps.expected_score,
+          (ps.features <> '{}'::jsonb) as has_features, ps.input_snapshot_hash,
+          ps.prediction_payload->'oddsAtPrediction' as odds_at_prediction,
+          ps.prediction_payload->>'predHomeGoals' as payload_pred_home_goals,
+          ps.prediction_payload->>'predAwayGoals' as payload_pred_away_goals,
+          m.kickoff_at, mr.final_home_goals, mr.final_away_goals, mr.actual_outcome
+        from prediction_snapshots ps
+        join matches m on m.match_id=ps.match_id
+        join match_results mr on mr.match_id=ps.match_id
+        left join prediction_evaluations pe on pe.prediction_id=ps.prediction_id
+        where m.kickoff_at is not null
+          and mr.actual_outcome in ('H','D','A')
+          and pe.prediction_id is null
+          and ps.input_snapshot_hash is not null
+          and ps.features <> '{}'::jsonb
+          and ps.probabilities ?& array['home','draw','away']
+          and ps.cutoff_at < m.kickoff_at
+          and ps.generated_at <= m.kickoff_at
+          and (
+            floor(extract(epoch from (m.kickoff_at-ps.generated_at))/60) between 1080 and 1800
+            or floor(extract(epoch from (m.kickoff_at-ps.generated_at))/60) between 61 and 90
+            or floor(extract(epoch from (m.kickoff_at-ps.generated_at))/60) between 31 and 60
+            or floor(extract(epoch from (m.kickoff_at-ps.generated_at))/60) between 5 and 30
+          )
+          and ($1::timestamptz is null or (ps.generated_at,ps.prediction_id)>($1::timestamptz,$2::text))
+        order by ps.generated_at,ps.prediction_id
+        limit $3
+      `, [cursorGeneratedAt, cursorPredictionId, pageLimit]);
+      status.available = true;
+      status.pages += 1;
+      status.candidates += rows.length;
+      if (!rows.length) break;
+      const last = rows[rows.length - 1];
+      cursorGeneratedAt = last.generated_at;
+      cursorPredictionId = last.prediction_id;
+      for (const row of rows) {
+        const evaluation = evaluateImmutableSnapshot({
+          predictionId: row.prediction_id,
+          matchId: row.match_id,
+          generatedAt: row.generated_at,
+          cutoffAt: row.cutoff_at,
+          kickoff: row.kickoff_at,
+          probabilities: row.probabilities,
+          expectedScore: row.expected_score,
+          features: row.has_features ? {} : null,
+          inputSnapshotHash: row.input_snapshot_hash,
+          prediction: {
+            predHomeGoals: row.payload_pred_home_goals,
+            predAwayGoals: row.payload_pred_away_goals,
+          },
+          oddsAtPrediction: row.odds_at_prediction || null,
+        }, row, { evaluationSource: "scheduled-database-evaluator" });
+        if (!evaluation) continue;
+        await sql.query(`
+          insert into prediction_evaluations
+            (prediction_id,match_id,exact_hit,outcome_hit,probability_outcome_hit,brier_score,log_loss,roi,roi_status,clv,clv_status,evaluation_source,evaluated_at)
+          values ($1,$2,$3,$4,$4,$5,$6,$7,$8,$9,$10,$11,now())
+          on conflict (prediction_id) do update set
+            match_id=excluded.match_id,exact_hit=excluded.exact_hit,outcome_hit=excluded.outcome_hit,
+            probability_outcome_hit=excluded.probability_outcome_hit,brier_score=excluded.brier_score,log_loss=excluded.log_loss,
+            roi=excluded.roi,roi_status=excluded.roi_status,clv=excluded.clv,clv_status=excluded.clv_status,
+            evaluation_source=excluded.evaluation_source,evaluated_at=now()
+        `, [evaluation.predictionId,evaluation.matchId,evaluation.exactHit,evaluation.outcomeHit,evaluation.brierScore,evaluation.logLoss,evaluation.roi,evaluation.roiStatus,evaluation.clv,evaluation.clvStatus,evaluation.evaluationSource]);
+        status.evaluated += 1;
+      }
+      if (rows.length < pageLimit) break;
     }
   } catch (error) {
     status.error = error?.message || String(error);
@@ -114,7 +163,8 @@ async function main() {
   let ambiguousResultMatches = 0;
   const linkedReviewMatches = new Set();
   const r2PredictionIds = new Set(Object.keys(loaded.sources.r2?.ledger?.predictionSnapshots || {}));
-  const snapshots = Object.values(ledger.predictionSnapshots || {})
+  const allSnapshots = Object.values(ledger.predictionSnapshots || {});
+  const snapshots = allSnapshots
     .sort((a, b) => Date.parse(a?.generatedAt || "") - Date.parse(b?.generatedAt || ""))
     .slice(-limit);
   for (const snapshot of snapshots) {
@@ -156,11 +206,23 @@ async function main() {
     }));
   }
 
+  const generatedAt = new Date().toISOString();
+  const uniqueEvaluationAccounting = summarizeUniqueFixtureEvaluations(
+    allSnapshots,
+    Object.values(ledger.evaluations || {}).map((evaluation) => ({ predictionId: evaluation.predictionId })),
+  );
+  const uniqueSnapshotFixtures = new Set(allSnapshots.map((snapshot) => buildMatchDedupeKey({
+    kickoff: snapshot.kickoff || snapshot.date,
+    league: snapshot.league,
+    homeTeam: snapshot.homeTeam || snapshot.homeTeamName || snapshot.inputSnapshot?.homeTeam,
+    awayTeam: snapshot.awayTeam || snapshot.awayTeamName || snapshot.inputSnapshot?.awayTeam,
+  })).filter(Boolean)).size;
   const report = {
-    generatedAt: new Date().toISOString(),
+    generatedAt,
+    freshness: assessAuditFreshness({ generatedAt }),
     status: neon.available || snapshots.length ? "completed" : "failed_no_snapshot_source",
     sources: {
-      neon,
+      neon: { ...neon, queryBudget: { ...neon.queryBudget, limitApplied: limit } },
       r2: {
         configured: !!loaded.sources.r2?.configured,
         available: !!loaded.sources.r2?.available,
@@ -178,7 +240,16 @@ async function main() {
     },
     totals: {
       snapshotsRead: snapshots.length,
-      uniqueSnapshotMatches: new Set(snapshots.map((snapshot) => snapshot?.matchId).filter(Boolean)).size,
+      evaluationLimit: limit,
+      uniqueSnapshotFixturesRead: new Set(snapshots.map((snapshot) => buildMatchDedupeKey({
+        kickoff: snapshot.kickoff || snapshot.date,
+        league: snapshot.league,
+        homeTeam: snapshot.homeTeam || snapshot.homeTeamName || snapshot.inputSnapshot?.homeTeam,
+        awayTeam: snapshot.awayTeam || snapshot.awayTeamName || snapshot.inputSnapshot?.awayTeam,
+      })).filter(Boolean)).size,
+      uniqueSnapshotFixturesInLedger: uniqueSnapshotFixtures,
+      repeatedSnapshotRowsInLedger: Math.max(0, allSnapshots.length - uniqueSnapshotFixtures),
+      uniqueFixtureEvaluationAccounting: uniqueEvaluationAccounting,
       eligibleResults: eligible,
       directResultMatches,
       canonicalResultMatches,

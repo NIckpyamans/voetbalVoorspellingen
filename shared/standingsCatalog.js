@@ -1,8 +1,18 @@
+import { isCompleteBalancedTable } from "./standingsIntegrity.js";
+
 function normalizedTeamName(value) {
   const normalized = String(value || "")
     .normalize("NFKD")
     .replace(/[\u0300-\u036f]/g, "")
     .toLowerCase()
+    .replace(/[ø]/g, "o")
+    .replace(/[ł]/g, "l")
+    .replace(/[æ]/g, "ae")
+    .replace(/[œ]/g, "oe")
+    .replace(/[đð]/g, "d")
+    .replace(/[þ]/g, "th")
+    .replace(/[ı]/g, "i")
+    .replace(/ß/g, "ss")
     .replace(/\b(fc|afc|sc|cf|ac|sv|fk|kv|kvc|kaa|rc|rkc)\b/g, " ")
     .replace(/[^a-z0-9]+/g, " ")
     .trim();
@@ -18,6 +28,8 @@ function normalizedTeamName(value) {
     "hertha bsc": "hertha",
     "rennes": "rennes",
     "stade rennais": "rennes",
+    "inter": "internazionale",
+    "hapoel be er": "hapoel beer sheva",
   };
   return aliases[normalized] || normalized;
 }
@@ -183,8 +195,8 @@ export function mergeCatalogStandings(existingStandings = {}, catalog = {}, comp
     const hasVerifiedProviderCupTable = (standing) =>
       competition.type === "cup" &&
       label.startsWith("Europe -") &&
-      Array.isArray(standing?.rows) && standing.rows.length >= 2 &&
-      ["fotmob", "sofascore", "espn"].some((source) => String(standing?.source || "").toLowerCase().includes(source));
+      ["fotmob", "sofascore", "espn"].some((source) => String(standing?.source || "").toLowerCase().includes(source)) &&
+      isCompleteBalancedTable(standing?.rows, competition.teams, sameTeam);
     const acceptsStanding = competition.type !== "cup" || competition.membershipStatus === "provider_confirmed" ||
       hasVerifiedProviderCupTable(canonicalBase) || candidates.some(hasVerifiedProviderCupTable);
     const base = !acceptsStanding
@@ -192,6 +204,7 @@ export function mergeCatalogStandings(existingStandings = {}, catalog = {}, comp
       : standingBelongsToSeason(canonicalBase, catalog?.season) && (competition.type !== "cup" || competition.membershipStatus === "provider_confirmed" || hasVerifiedProviderCupTable(canonicalBase))
         ? canonicalBase
         : candidates.find((standing) => competition.type !== "cup" || competition.membershipStatus === "provider_confirmed" || hasVerifiedProviderCupTable(standing)) || null;
+    const acceptedProviderCupTable = hasVerifiedProviderCupTable(base);
     const baseRows = Array.isArray(base?.rows) ? base.rows : [];
     const consumed = new Set();
     const rows = competition.teams.map((team, index) => {
@@ -232,12 +245,14 @@ export function mergeCatalogStandings(existingStandings = {}, catalog = {}, comp
       label,
       season: catalog?.season || base?.season || null,
       preliminary: Boolean(base?.preliminary),
-      rows: competition.type === "cup" && hasVerifiedProviderCupTable(base)
+      rows: acceptedProviderCupTable
         ? rows.map((row) => ({ ...row, pos: Number(baseRows.find((candidate) => sameTeam(candidate?.team, row.team))?.pos || row.pos) }))
           .sort((left, right) => Number(left.pos || 0) - Number(right.pos || 0))
         : sortRows(rows),
       updated: Math.max(Number(base?.updated || 0), updated),
-      source: composeSource(base?.source, hasBaseResults, appliedResults.applied),
+      source: acceptedProviderCupTable || competition.type !== "cup"
+        ? composeSource(base?.source, hasBaseResults, appliedResults.applied)
+        : "competition-catalog-zero + competition-catalog",
       sources: [...new Map(
         [...(Array.isArray(base?.sources) ? base.sources : []), catalogSource, ...resultSource]
           .map((source) => [`${source?.source || "unknown"}:${source?.rows || 0}:${source?.results || 0}`, source])

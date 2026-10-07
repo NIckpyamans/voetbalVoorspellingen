@@ -17,7 +17,7 @@ describe("training snapshot builder", () => {
     };
     const result = buildTrainingSnapshot(store, { isHiddenEntity: () => false });
     expect(result.rows).toHaveLength(1);
-    expect(result.rows[0]).toMatchObject({ matchId: "old", label: "H", snapshotBacked: true });
+    expect(result.rows[0]).toMatchObject({ matchId: "old", label: "H", snapshotBacked: true, inputSnapshotHash: "immutable" });
   });
 
   it("does not create training rows for hidden entities", () => {

@@ -3,6 +3,8 @@
 import fs from "node:fs";
 import path from "node:path";
 import { gzipSync } from "node:zlib";
+import crypto from "node:crypto";
+import { randomUUID } from "node:crypto";
 import {
   SNAPSHOT_LEDGER_LOCAL_FILE,
   SNAPSHOT_LEDGER_VERSION,
@@ -10,7 +12,21 @@ import {
   mergeSnapshotLedgers,
 } from "../shared/predictionSnapshotLedger.js";
 import { mergeTrainingSnapshots } from "./worker/training-snapshot.js";
-import { recoverTrainingRows } from "./worker/training-recovery.js";
+import { buildLocalRecoveryLedger, recoverTrainingRows, serializeBoundedRecoveryLedger } from "./worker/training-recovery.js";
+
+const MAX_LOCAL_RECOVERY_BYTES = Number(process.env.MAX_LOCAL_RECOVERY_BYTES || 64 * 1024 * 1024);
+
+function writeAtomic(filePath, contents) {
+  fs.mkdirSync(path.dirname(filePath), { recursive: true });
+  const temporaryPath = `${filePath}.${process.pid}.${randomUUID()}.tmp`;
+  try {
+    fs.writeFileSync(temporaryPath, contents, { flag: "wx" });
+    fs.renameSync(temporaryPath, filePath);
+  } catch (error) {
+    try { fs.rmSync(temporaryPath, { force: true }); } catch {}
+    throw error;
+  }
+}
 
 const ROOT = process.cwd();
 const SERVER_DATA_FILE = path.join(ROOT, "server_data.json");
@@ -35,8 +51,10 @@ async function main() {
   });
 
   const ledgerPath = path.resolve(ROOT, SNAPSHOT_LEDGER_LOCAL_FILE);
-  fs.mkdirSync(path.dirname(ledgerPath), { recursive: true });
-  fs.writeFileSync(ledgerPath, gzipSync(Buffer.from(JSON.stringify(ledger), "utf8"), { level: 9 }));
+  const compactLedger = buildLocalRecoveryLedger(ledger);
+  const serializedLedger = serializeBoundedRecoveryLedger(compactLedger, { maxBytes: MAX_LOCAL_RECOVERY_BYTES });
+  const ledgerChecksum = crypto.createHash("sha256").update(serializedLedger).digest("hex");
+  const compressedLedger = gzipSync(Buffer.from(serializedLedger, "utf8"), { level: 9 });
 
   const previousTraining = readJson(TRAINING_FILE, { rows: [] });
   const recoveredRows = recoverTrainingRows(ledger);
@@ -46,18 +64,29 @@ async function main() {
     rows: recoveredRows,
     source: "immutable-r2-ledger-recovery",
   });
-  fs.mkdirSync(path.dirname(TRAINING_FILE), { recursive: true });
-  fs.writeFileSync(TRAINING_FILE, `${JSON.stringify(training)}\n`);
+  const serializedTraining = serializeBoundedRecoveryLedger(training, {
+    maxBytes: MAX_LOCAL_RECOVERY_BYTES,
+    label: "Recovered training snapshot",
+  });
+  const trainingChecksum = crypto.createHash("sha256").update(serializedTraining).digest("hex");
+  writeAtomic(ledgerPath, compressedLedger);
+  writeAtomic(TRAINING_FILE, `${serializedTraining}\n`);
 
   console.log(JSON.stringify({
     ledgerPath,
     snapshots: Object.keys(ledger.predictionSnapshots).length,
+    localRecoverySnapshots: Object.keys(compactLedger.predictionSnapshots).length,
+    localRecoveryLedgerBytes: Buffer.byteLength(serializedLedger),
+    localRecoveryLedgerSha256: ledgerChecksum,
+    compressedLocalRecoveryLedgerBytes: compressedLedger.length,
     reviews: Object.keys(ledger.postMatchReviews).length,
     recoveredRows: recoveredRows.length,
     recoveredFromReviews: recoveredRows.filter((row) => row.recoverySource === "post_match_review").length,
     recoveredFromEvaluations: recoveredRows.filter((row) => row.recoverySource === "immutable_evaluation").length,
     trainingRows: training.rows.length,
     snapshotBackedRows: training.rows.filter((row) => row.snapshotBacked).length,
+    outputBytes: Buffer.byteLength(serializedTraining),
+    trainingChecksumSha256: trainingChecksum,
     sources: {
       r2Available: !!loadedLedger.sources.r2?.available,
       r2Snapshots: Object.keys(loadedLedger.sources.r2?.ledger?.predictionSnapshots || {}).length,

@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { buildProviderAcceptanceState, buildTrainingAutomationState } from "../../scripts/worker/orchestration-policy.js";
+import { buildApiFootballH2HPolicy } from "../../scripts/worker/api-football-h2h-policy.js";
 
 describe("orchestration policy", () => {
   it("enforces the 50/150 training gates", () => {
@@ -33,6 +34,20 @@ describe("orchestration policy", () => {
       uniqueRegularCompleted: 2,
       regularCalibrationGap: 48,
     });
+  });
+
+  it("keeps API-Football H2H independent of unrelated fixture acceptance and caps pair budgets", () => {
+    expect(buildApiFootballH2HPolicy({ configured: true, enabledSetting: "true", maxPairsPerRun: 50 })).toMatchObject({
+      enabled: true,
+      pairLimit: 5,
+      gate: "h2h_enabled_independent_of_fixture_acceptance",
+    });
+    expect(buildApiFootballH2HPolicy({ configured: true, enabledSetting: "false", maxPairsPerRun: 3 })).toMatchObject({
+      enabled: false,
+      pairLimit: 3,
+      gate: "disabled_by_operator",
+    });
+    expect(buildApiFootballH2HPolicy({ configured: false })).toMatchObject({ enabled: false, gate: "provider_not_configured" });
   });
 
   it("keeps a suspended provider on a bounded retry cadence", () => {

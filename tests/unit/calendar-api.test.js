@@ -1,9 +1,31 @@
-import { afterEach, describe, expect, it, vi } from "vitest";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import handler from "../../api/Matches.ts";
 import { addDaysToDateKey } from "../../shared/date.js";
 
+const { fetchDayDataMock, fetchServerStoreMock } = vi.hoisted(() => ({
+  fetchDayDataMock: vi.fn(),
+  fetchServerStoreMock: vi.fn(),
+}));
+
 vi.mock("../../api/_dataSource.js", () => ({
-  fetchDayData: vi.fn(async (date) => ({
+  fetchDayData: fetchDayDataMock,
+  fetchMetaData: vi.fn(async () => ({ data: {} })),
+  fetchRepoJson: vi.fn(async () => ({ data: {} })),
+  fetchServerStore: fetchServerStoreMock,
+}));
+
+vi.mock("../../shared/database.js", () => ({
+  buildMatchSourceCoverage: vi.fn(() => ({})),
+  databaseConfigured: vi.fn(() => false),
+  readDatabaseCounts: vi.fn(async () => null),
+  readDatabaseDay: vi.fn(async () => null),
+}));
+
+vi.mock("../../shared/dashboardR2Cache.js", () => ({ readDashboardDayCache: vi.fn(async () => null) }));
+
+afterEach(() => vi.clearAllMocks());
+beforeEach(() => {
+  fetchDayDataMock.mockImplementation(async (date) => ({
     data: {
       matches: date === "2026-10-03" ? [{
         id: "fixture-rank-goal",
@@ -24,22 +46,9 @@ vi.mock("../../api/_dataSource.js", () => ({
       reviews: {},
     },
     branch: "fixture-test",
-  })),
-  fetchMetaData: vi.fn(async () => ({ data: {} })),
-  fetchRepoJson: vi.fn(async () => ({ data: {} })),
-  fetchServerStore: vi.fn(async () => ({ store: { matches: {} }, branch: "fixture-test" })),
-}));
-
-vi.mock("../../shared/database.js", () => ({
-  buildMatchSourceCoverage: vi.fn(() => ({})),
-  databaseConfigured: vi.fn(() => false),
-  readDatabaseCounts: vi.fn(async () => null),
-  readDatabaseDay: vi.fn(async () => null),
-}));
-
-vi.mock("../../shared/dashboardR2Cache.js", () => ({ readDashboardDayCache: vi.fn(async () => null) }));
-
-afterEach(() => vi.clearAllMocks());
+  }));
+  fetchServerStoreMock.mockResolvedValue({ store: { matches: {} }, branch: "fixture-test" });
+});
 
 function responseStub() {
   const result = { headers: {}, statusCode: 200, body: null };
@@ -66,6 +75,68 @@ describe("matches calendar range API", () => {
       goalMinuteEvents: [{ minute: "33", side: "home", kind: "goal" }],
     });
     expect(res.result.headers["Cache-Control"]).toContain("s-maxage=60");
+  });
+
+  it("keeps successful split days and labels dates still unavailable after fallback", async () => {
+    const healthyDate = "2026-10-03";
+    fetchDayDataMock.mockImplementation(async (date) => {
+      if (date === "2026-10-04") throw new Error("missing split day");
+      return {
+        data: { matches: [{
+          id: `fresh-${date}`,
+          date,
+          kickoff: `${date}T15:00:00.000Z`,
+          league: "Netherlands - Eredivisie",
+          homeTeamName: "Ajax",
+          awayTeamName: "PSV Eindhoven",
+        }] },
+        branch: "codex/step3b-layout",
+      };
+    });
+    fetchServerStoreMock.mockResolvedValue({
+      store: { matches: {
+        [healthyDate]: [{ id: "stale-duplicate", date: healthyDate, league: "Netherlands - Eredivisie", homeTeamName: "Feyenoord", awayTeamName: "Ajax" }],
+        "2026-10-04": [{ id: "fallback-fixture", date: "2026-10-04", league: "Netherlands - Eredivisie", homeTeamName: "FC Utrecht", awayTeamName: "FC Twente" }],
+        "2026-10-01": [{ id: "stale-outside-range", date: "2026-10-01", league: "Netherlands - Eredivisie", homeTeamName: "AZ", awayTeamName: "PSV" }],
+      } },
+      branch: "main",
+    });
+
+    const req = { query: { date: healthyDate, days: "3", range: "calendar" }, method: "GET", headers: {} };
+    const res = responseStub();
+    await handler(req, res);
+
+    expect(res.result.statusCode).toBe(200);
+    expect(res.result.body.matches.map((match) => match.id)).toEqual(["fresh-2026-10-03", "fallback-fixture", "fresh-2026-10-05"]);
+    expect(res.result.body.sourceBranch).toBe("mixed:codex/step3b-layout,main");
+    expect(res.result.body.unavailableDates).toBeUndefined();
+    expect(res.result.body.matches.map((match) => match.id)).not.toContain("stale-duplicate");
+    expect(res.result.body.matches.map((match) => match.id)).not.toContain("stale-outside-range");
+  });
+
+  it("reports missing dates instead of replacing a partial calendar with stale whole-store data", async () => {
+    const healthyDate = "2026-10-03";
+    fetchDayDataMock.mockImplementation(async (date) => {
+      if (date === "2026-10-04") throw new Error("missing split day");
+      return { data: { matches: [{
+        id: `fresh-${date}`,
+        date,
+        kickoff: `${date}T15:00:00.000Z`,
+        league: "Netherlands - Eredivisie",
+        homeTeamName: "Ajax",
+        awayTeamName: "PSV Eindhoven",
+      }] }, branch: "codex/step3b-layout" };
+    });
+    fetchServerStoreMock.mockResolvedValue({ store: { matches: { [healthyDate]: [{ id: "stale-duplicate" }] } }, branch: "main" });
+
+    const req = { query: { date: healthyDate, days: "3", range: "calendar" }, method: "GET", headers: {} };
+    const res = responseStub();
+    await handler(req, res);
+
+    expect(res.result.statusCode).toBe(200);
+    expect(res.result.body.matches.map((match) => match.id)).toEqual(["fresh-2026-10-03", "fresh-2026-10-05"]);
+    expect(res.result.body.sourceBranch).toBe("codex/step3b-layout");
+    expect(res.result.body.unavailableDates).toEqual(["2026-10-04"]);
   });
 
   it("keeps normal multi-day calls centered and capped at seven days", async () => {

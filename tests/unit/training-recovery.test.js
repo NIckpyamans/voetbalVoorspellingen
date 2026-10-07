@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { recoverTrainingRows, snapshotTrainingRow } from "../../scripts/worker/training-recovery.js";
+import { buildLocalRecoveryLedger, recoverTrainingRows, serializeBoundedRecoveryLedger, snapshotTrainingRow } from "../../scripts/worker/training-recovery.js";
 
 const snapshot = {
   predictionId: "prediction-1",
@@ -41,5 +41,53 @@ describe("immutable training recovery", () => {
       postMatchReviews: {},
       evaluations: { "prediction-1": { actualOutcome: "D", finalHomeGoals: 1, finalAwayGoals: 1 } },
     })).toHaveLength(1);
+  });
+
+  it("projects a bounded local ledger retaining each required training window and only needed evaluation fields", () => {
+    const preferred = { ...snapshot, predictionId: "preferred", snapshotWindow: "t20", dbFeatureContext: { noisyRawPayload: "x".repeat(100_000) } };
+    const older = { ...snapshot, predictionId: "older", snapshotWindow: "t75", generatedAt: "2026-07-20T09:45:00.000Z", cutoffAt: "2026-07-20T09:45:00.000Z" };
+    const projected = buildLocalRecoveryLedger({
+      predictionSnapshots: { preferred, older },
+      postMatchReviews: { "match-1": { matchId: "match-1", actualOutcome: "H", oversizedPayload: "x".repeat(100_000) } },
+      evaluations: {
+        preferred: { actualOutcome: "H", finalHomeGoals: 2, finalAwayGoals: 1, rawPayload: "x".repeat(100_000) },
+        older: { actualOutcome: "A" },
+      },
+    });
+    expect(Object.keys(projected.predictionSnapshots).sort()).toEqual(["older", "preferred"]);
+    expect(projected.evaluations).toEqual({
+      preferred: { actualOutcome: "H", finalHomeGoals: 2, finalAwayGoals: 1 },
+      older: { actualOutcome: "A" },
+    });
+    expect(projected.postMatchReviews["match-1"]).not.toHaveProperty("oversizedPayload");
+    expect(recoverTrainingRows(projected)).toHaveLength(1);
+    expect(serializeBoundedRecoveryLedger(projected, { maxBytes: 10_000 })).toBe(JSON.stringify(projected));
+  });
+
+  it("rejects an oversized or circular recovery projection before serialization", () => {
+    expect(() => serializeBoundedRecoveryLedger({ payload: "x".repeat(1000) }, { maxBytes: 100 }))
+      .toThrow(/exceeds 100 byte limit/);
+    const circular = {};
+    circular.self = circular;
+    expect(() => serializeBoundedRecoveryLedger(circular, { maxBytes: 1000 })).toThrow(/circular reference/);
+  });
+
+  it("selects only one preferred immutable snapshot per match and model during recovery", () => {
+    const second = {
+      ...snapshot,
+      predictionId: "prediction-2",
+      generatedAt: "2026-07-20T10:30:00.000Z",
+      cutoffAt: "2026-07-20T10:30:00.000Z",
+    };
+    const rows = recoverTrainingRows({
+      predictionSnapshots: { "prediction-1": snapshot, "prediction-2": second },
+      postMatchReviews: {},
+      evaluations: {
+        "prediction-1": { actualOutcome: "H", finalHomeGoals: 2, finalAwayGoals: 1 },
+        "prediction-2": { actualOutcome: "D", finalHomeGoals: 1, finalAwayGoals: 1 },
+      },
+    });
+    expect(rows).toHaveLength(1);
+    expect(rows[0].predictionId).toBe("prediction-2");
   });
 });

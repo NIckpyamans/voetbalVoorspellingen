@@ -176,6 +176,7 @@ function baseDetailMatch(match: any) {
     providerDiagnostics: match.providerDiagnostics || null,
     predictionGeneratedAt: match.prediction?.generatedAt || match.predictionGeneratedAt || null,
     lineupCapturedAt: match.lineupSummary?.capturedAt || null,
+    lineupFirstConfirmedAt: match.lineupSummary?.firstConfirmedAt || null,
     oddsCapturedAt: match.oddsAtPrediction?.capturedAt || match.odds?.capturedAt || null,
     review: match.review,
   };
@@ -237,6 +238,7 @@ function compactLineupSummary(lineup: any) {
     preMatchUsable: lineup.preMatchUsable !== false,
     captureTiming: lineup.captureTiming || null,
     capturedAt: lineup.capturedAt || null,
+    firstConfirmedAt: lineup.firstConfirmedAt || null,
     retrievedAt: lineup.retrievedAt || null,
     homeContinuity: lineup.homeContinuity ?? null,
     awayContinuity: lineup.awayContinuity ?? null,
@@ -452,6 +454,28 @@ async function readSplitDay(dateKey: string) {
   };
 }
 
+async function mapWithConcurrency<T, R>(items: T[], concurrency: number, mapper: (item: T, index: number) => Promise<R>): Promise<R[]> {
+  const results = new Array<R>(items.length);
+  let nextIndex = 0;
+  const workers = Array.from({ length: Math.min(items.length, Math.max(1, concurrency)) }, async () => {
+    while (true) {
+      const index = nextIndex++;
+      if (index >= items.length) return;
+      results[index] = await mapper(items[index], index);
+    }
+  });
+  await Promise.all(workers);
+  return results;
+}
+
+function calendarSourceBranch(branches: string[]) {
+  const uniqueBranches = [...new Set(branches.filter(Boolean))];
+  if (uniqueBranches.length === 0) return "unresolved";
+  if (uniqueBranches.length === 1) return uniqueBranches[0];
+  if (uniqueBranches.every((branch) => branch === "postgres")) return "postgres";
+  return `mixed:${uniqueBranches.join(",")}`;
+}
+
 export default async function handler(req: any, res: any) {
   const started = Date.now();
   const { date, live, days, range } = req.query;
@@ -524,33 +548,49 @@ export default async function handler(req: any, res: any) {
           ? Array.from({ length: numDays }, (_, index) => index)
           : Array.from({ length: numDays }, (_, index) => index - Math.floor(numDays / 2));
 
-        try {
-          const daysData = await Promise.all(offsets.map(async (offset) => {
-            const dateStr = addDaysToDateKey(targetDate, offset);
+        const daysData = await mapWithConcurrency(offsets, 4, async (offset) => {
+          const dateStr = addDaysToDateKey(targetDate, offset);
+          try {
             const dbDay = databaseConfigured() ? await readDatabaseDay(dateStr).catch(() => null) : null;
             if (dbDay?.matches?.length) {
-              return { matches: dbDay.matches.map((match: any) => attachReviewAndNormalize(match, {})), branch: "postgres" };
+              return { date: dateStr, matches: dbDay.matches.map((match: any) => attachReviewAndNormalize(match, {})), branch: "postgres", error: null };
             }
             const day = await readSplitDay(dateStr);
             return {
+              date: dateStr,
               matches: day.matches.map((match: any) => attachReviewAndNormalize(match, day.reviews)),
               branch: day.branch || "split-data",
+              error: null,
             };
-          }));
-          for (const day of daysData) {
-            if (day.branch === "postgres") sourceBranch = "postgres";
-            else if (sourceBranch !== "postgres" && day.branch) sourceBranch = day.branch;
-            multiDayMatches.push(...day.matches);
+          } catch (error: any) {
+            return { date: dateStr, matches: [], branch: null, error: error?.message || String(error) };
           }
-        } catch {
-          const { store, branch } = await fetchServerStore();
-          sourceBranch = branch;
-          for (const offset of offsets) {
-            const dateStr = addDaysToDateKey(targetDate, offset);
-            const dayMatches = (store.matches?.[dateStr] || []).map((match: any) => attachReviewAndNormalize(match, store));
-            multiDayMatches.push(...dayMatches);
+        });
+
+        const unavailableDays = daysData.filter((day) => day.error);
+        if (unavailableDays.length) {
+          try {
+            const { store, branch } = await fetchServerStore();
+            for (const day of unavailableDays) {
+              day.matches = (store.matches?.[day.date] || []).map((match: any) => attachReviewAndNormalize(match, store));
+              if (day.matches.length) {
+                day.branch = branch;
+                day.error = null;
+              }
+            }
+          } catch {
+            // Keep successfully fetched dates. Report unrecovered dates below rather than
+            // replacing the entire requested calendar with a potentially stale store.
           }
         }
+
+        const remainingUnavailableDays = daysData.filter((day) => day.error);
+        if (remainingUnavailableDays.length === daysData.length) {
+          throw new Error(`Geen van de ${daysData.length} kalenderdagen kon worden opgehaald: ${remainingUnavailableDays.map((day) => day.date).join(", ")}`);
+        }
+        const sourceBranches = daysData.map((day) => day.branch).filter(Boolean) as string[];
+        sourceBranch = calendarSourceBranch(sourceBranches);
+        for (const day of daysData) multiDayMatches.push(...day.matches);
 
         const uniqueMultiDayMatches = filterVisibleMatches(mergeDuplicateServedMatches(multiDayMatches));
         const responseMatches = full ? uniqueMultiDayMatches : uniqueMultiDayMatches.map(compactDashboardMatch);
@@ -574,6 +614,10 @@ export default async function handler(req: any, res: any) {
           aiAdvice: meta.aiAdvice || [],
           ...diagnosticsPayload,
           sourceBranch,
+          ...(remainingUnavailableDays.length ? {
+            unavailableDates: remainingUnavailableDays.map((day) => day.date),
+            unavailableDateCount: remainingUnavailableDays.length,
+          } : {}),
           source: responseSource,
           dataLineage: buildResponseLineage({ sourceBranch, matchCount: responseMatches.length, meta, source: responseSource }),
           durationMs: Date.now() - started,

@@ -1,10 +1,14 @@
 import { describe, expect, it, vi } from "vitest";
+import fs from "node:fs";
 import {
+  FOTMOB_STANDINGS_LEAGUES,
   fetchFotmobStanding,
   fotmobSeasonFromDate,
   normalizeFotmobStanding,
   selectCurrentStandingCandidate,
 } from "../../scripts/worker/fotmob-standings.js";
+import { mergeCatalogStandings, sameTeam } from "../../shared/standingsCatalog.js";
+import { isCompleteBalancedTable } from "../../shared/standingsIntegrity.js";
 
 const response = {
   details: { id: 57 },
@@ -48,6 +52,48 @@ describe("FotMob standings adapter", () => {
     const standing = normalizeFotmobStanding(europeanPayload, "Europe - Conference League", 10216, "2026/2027");
     expect(standing).toMatchObject({ source: "fotmob", preliminary: true });
     expect(standing.rows[0]).toMatchObject({ team: "Ajax", pos: 2, p: 0 });
+  });
+
+  it("normalizes and merges complete UEFA provider tables with alias spellings", () => {
+    const catalog = JSON.parse(fs.readFileSync(new URL("../../config/competition-catalog.json", import.meta.url), "utf8"));
+    const providerAliases = {
+      "Bodo/Glimt": "Bodø/Glimt",
+      Internazionale: "Inter",
+      "Hapoel Be'er": "Hapoel Beer Sheva",
+      "Jagiellonia Bialystok": "Jagiellonia Białystok",
+      Lillestrom: "Lillestrøm",
+    };
+    const standings = {};
+    for (const label of ["Europe - Champions League", "Europe - Europa League"]) {
+      const competition = FOTMOB_STANDINGS_LEAGUES[label];
+      const definition = catalog.competitions.find((item) => item.league === label);
+      const rows = definition.teams.map((team, index) => ({
+        idx: index + 1,
+        id: index + 1,
+        name: providerAliases[team] || team,
+        played: 1,
+        wins: index % 2 === 0 ? 1 : 0,
+        draws: 0,
+        losses: index % 2 === 0 ? 0 : 1,
+        scoresStr: index % 2 === 0 ? "2-0" : "0-2",
+        pts: index % 2 === 0 ? 3 : 0,
+      }));
+      const standing = normalizeFotmobStanding({
+        details: { id: competition.id },
+        table: [{ data: { table: { all: rows } } }],
+      }, label, competition.id, "2026/2027");
+      expect(isCompleteBalancedTable(standing.rows, definition.teams, sameTeam)).toBe(true);
+      standings[`label:${label}`] = standing;
+    }
+    const merged = mergeCatalogStandings(standings, catalog);
+    for (const label of ["Europe - Champions League", "Europe - Europa League"]) {
+      const table = merged[`label:${label}`];
+      expect(table.rows).toHaveLength(36);
+      expect(table.rows.reduce((sum, row) => sum + row.p, 0)).toBe(36);
+      expect(table.rows.reduce((sum, row) => sum + row.gf, 0)).toBe(table.rows.reduce((sum, row) => sum + row.ga, 0));
+      expect(table.rows.every((row) => row.p === 1)).toBe(true);
+      expect(table.source).toContain("fotmob");
+    }
   });
 
   it("uses the mapped league id and season", async () => {

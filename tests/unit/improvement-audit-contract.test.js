@@ -47,4 +47,23 @@ describe("improvement audit automation contract", () => {
       expect(persistBlock).not.toContain("monitor/ci-neon-soft-skips.json");
     }
   });
+
+  it("keeps the H2H probe read-only and quota-bounded", () => {
+    const workflow = readWorkflow("api-football-h2h-probe.yml");
+    const job = workflow.jobs["probe-h2h"];
+    expect(workflow.on.workflow_dispatch.inputs.pairs.default).toBe("3");
+    expect(workflow.permissions.contents).toBe("read");
+    expect(job.env.DATABASE_URL).toBeUndefined();
+    expect(job.env.CLOUDFLARE_R2_ACCOUNT_ID).toBeUndefined();
+    expect(job.env.API_FOOTBALL_H2H_PROBE_PAIRS).toBe("${{ inputs.pairs || '3' }}");
+    expect(job.steps.some((step) => step.name === "Read-only H2H provider probe (no persistence)")).toBe(true);
+  });
+
+  it("labels the old API-Football acceptance workflow as fixture coverage only", () => {
+    const workflow = readWorkflow("api-football-acceptance.yml");
+    expect(workflow.name).toContain("fixture coverage");
+    const text = fs.readFileSync(path.join(ROOT, ".github", "workflows", "api-football-acceptance.yml"), "utf8");
+    expect(text).toContain("fixture_coverage_accepted");
+    expect(text).not.toContain("H2H enrichment");
+  });
 });

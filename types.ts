@@ -945,6 +945,16 @@ export type View = "dashboard" | "history" | "standings" | "modelops" | "setting
     marketOdds: number | null;
     edge: number | null;
     blockers: string[];
+    evidenceCoverage: {
+      complete: boolean;
+      score: number;
+      lineupConfirmedPrematch: boolean;
+      oddsCompleteFreshPrematch: boolean;
+      h2hAvailable: boolean;
+      lineupCapturedAt: string | null;
+      oddsCapturedAt: string | null;
+      missing: string[];
+    };
   };
 }
 

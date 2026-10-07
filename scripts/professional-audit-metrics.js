@@ -1,5 +1,7 @@
 import fs from "fs";
 import path from "path";
+import { buildMatchDedupeKey } from "../shared/matchNormalization.js";
+import { summarizeUniqueFixtureEvaluations } from "./worker/audit-freshness.js";
 
 export function values(value) {
   if (Array.isArray(value)) return value;
@@ -52,6 +54,16 @@ export function summarizeRecentDays(dayDocuments) {
   const finished = matches.filter(isFinished);
   const reviewedIds = new Set(reviews.map((review) => String(review.matchId || "")).filter(Boolean));
   const snapshotBackedReviews = reviews.filter((review) => review.evaluationSource === "prediction_snapshot");
+  const snapshotRows = snapshots.length;
+  const reviewRows = reviews.length;
+  const uniqueFixtureKeys = new Set(matches.map((match) => buildMatchDedupeKey(match)).filter(Boolean));
+  const uniqueSnapshotKeys = new Set(snapshots.map((snapshot) => buildMatchDedupeKey({
+    date: snapshot.kickoff || snapshot.date,
+    league: snapshot.league,
+    homeTeam: snapshot.homeTeam || snapshot.homeTeamName || snapshot.inputSnapshot?.homeTeam,
+    awayTeam: snapshot.awayTeam || snapshot.awayTeamName || snapshot.inputSnapshot?.awayTeam,
+  })).filter(Boolean));
+  const snapshotUnique = summarizeUniqueFixtureEvaluations(snapshots, reviews.filter((review) => review.evaluationSource === "prediction_snapshot"));
   const segments = {};
 
   for (const segment of ["club_friendlies", "european_knockout", "domestic_competitions"]) {
@@ -61,6 +73,8 @@ export function summarizeRecentDays(dayDocuments) {
   return {
     days: dayDocuments.length,
     matches: matches.length,
+    uniqueFixtures: uniqueFixtureKeys.size,
+    duplicateMatchRows: Math.max(0, matches.length - uniqueFixtureKeys.size),
     predictions: predictions.length,
     finishedMatches: finished.length,
     finishedWithScore: finished.filter(hasScore).length,
@@ -69,8 +83,16 @@ export function summarizeRecentDays(dayDocuments) {
     evaluationCoverage: finished.length ? reviewedIds.size / finished.length : null,
     snapshotBackedReviews: snapshotBackedReviews.length,
     snapshotBackedReviewCoverage: reviews.length ? snapshotBackedReviews.length / reviews.length : null,
-    predictionSnapshots: snapshots.length,
-    uniqueSnapshotMatches: new Set(snapshots.map((snapshot) => String(snapshot.matchId || "")).filter(Boolean)).size,
+    reviewRows,
+    uniqueReviewedFixtures: new Set(reviews.map((review) => buildMatchDedupeKey({
+      date: review.kickoff || review.date,
+      league: review.league,
+      homeTeam: review.homeTeamName || review.homeTeam,
+      awayTeam: review.awayTeamName || review.awayTeam,
+    })).filter(Boolean)).size,
+    predictionSnapshots: snapshotRows,
+    uniqueSnapshotMatches: snapshotUnique.eligibleFixtures || uniqueSnapshotKeys.size,
+    snapshotEvaluations: snapshotUnique,
     dataCompleteness: average(predictions.map((prediction) => prediction.dataCompletenessScore ?? prediction.dataCompleteness?.score)),
     sourceMetadataCoverage: predictions.length
       ? predictions.filter((prediction) => prediction.featureSourceMetadata || prediction.sourceAsOf || prediction.sourceTimestampCoverage != null).length / predictions.length
@@ -78,14 +100,25 @@ export function summarizeRecentDays(dayDocuments) {
     actualOddsCoverage: predictions.length
       ? predictions.filter((prediction) => {
           const odds = prediction.oddsAtPrediction || prediction.odds_at_prediction;
-          return odds && ["home", "draw", "away"].some((key) => Number(odds[key]) > 1.01);
+          return prediction.oddsStatus !== "historical_market_profile_only" && odds && ["home", "draw", "away"].every((key) => Number(odds[key]) > 1.01) && Boolean(odds.capturedAt);
         }).length / predictions.length
       : null,
     confirmedLineupCoverage: predictions.length
-      ? predictions.filter((prediction) => prediction.lineupStatus === "confirmed" || prediction.lineupSummary?.confirmed).length / predictions.length
+      ? predictions.filter((prediction) => {
+          const lineup = prediction.lineupSummary;
+          const kickoff = Date.parse(String(prediction.kickoff || prediction.date || ""));
+          const captured = Date.parse(String(lineup?.firstConfirmedAt || lineup?.capturedAt || ""));
+          return Boolean(lineup?.confirmed && !lineup.projected && Number.isFinite(kickoff) && Number.isFinite(captured) && captured < kickoff);
+        }).length / predictions.length
       : null,
     performance: summarizeReviews(reviews),
     segments,
+    sourceFreshness: {
+      generatedAt: new Date().toISOString(),
+      latestMatchDate: matches.map((match) => String(match.kickoff || match.date || "").slice(0, 10)).filter(Boolean).sort().at(-1) || null,
+      latestPredictionAt: predictions.map((item) => item.generatedAt || item.timestamp).filter(Boolean).sort().at(-1) || null,
+      latestSnapshotAt: snapshots.map((item) => item.generatedAt || item.createdAt).filter(Boolean).sort().at(-1) || null,
+    },
     matchesList: matches,
     predictionsList: predictions,
     reviewsList: reviews,

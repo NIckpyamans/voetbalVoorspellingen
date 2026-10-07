@@ -94,7 +94,7 @@ const BestBetCard: React.FC<BestBetCardProps> = ({ bet }) => {
           <span className="block text-xs font-black text-yellow-300">{Math.round(exactProbability * 100)}%</span>
         </div>
         <div>
-          <span className="text-[7px] text-slate-500 font-bold uppercase">Vertrouwen</span>
+          <span className="text-[7px] text-slate-500 font-bold uppercase" title="Samengesteld modelvertrouwen; geen gekalibreerde winstkans of garantie">Modelvertrouwen</span>
           <span className="block text-xs font-black text-blue-400">{Math.round(confidence * 100)}%</span>
         </div>
         <div>
@@ -110,8 +110,11 @@ const BestBetCard: React.FC<BestBetCardProps> = ({ bet }) => {
           </div>
           <div className="flex items-center justify-between text-[8px] font-bold text-slate-400">
             <span>1X2: <strong className="text-white">{readiness.recommendedOutcome}</strong></span>
-            <span>model <strong className="text-blue-300">{Math.round(readiness.modelProbability * 100)}%</strong></span>
+            <span>1X2-modelkans <strong className="text-blue-300">{Math.round(readiness.modelProbability * 100)}%</strong></span>
             <span>odd <strong className="text-yellow-200">{readiness.marketOdds?.toFixed(2) || "-"}</strong></span>
+          </div>
+          <div className="text-[8px] font-bold text-slate-400" title={`Pre-match compleetheid ${Math.round(readiness.evidenceCoverage.score * 100)}% op drie verplichte signalen; H2H is contextueel.`}>
+            Bewijs {Math.round(readiness.evidenceCoverage.score * 100)}% · opstelling {readiness.evidenceCoverage.lineupConfirmedPrematch ? "✓" : "mist"} · odds {readiness.evidenceCoverage.oddsCompleteFreshPrematch ? "✓" : "mist"} · H2H {readiness.evidenceCoverage.h2hAvailable ? "aanwezig" : "mist"}
           </div>
           {readiness.blockers.length > 0 && (
             <div className="text-[8px] leading-snug text-slate-500 line-clamp-2" title={readiness.blockers.join("; ")}>

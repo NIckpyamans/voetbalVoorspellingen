@@ -25,7 +25,9 @@ import {
   shortLeague,
 } from "./shared/dashboard.js";
 import { filterVisibleMatches, filterVisiblePredictionMap } from "./shared/competitionVisibility.js";
+import { buildMatchDedupeKey } from "./shared/matchNormalization.js";
 import { buildStandingsLookup, findStandingPosition } from "./shared/standingsLookup.js";
+import { getMatchEvidenceCoverage } from "./shared/dashboardCoverage";
 
 type View = "dashboard" | "knowledge" | "history" | "standings" | "modelops" | "integrity" | "providers" | "settings";
 type FilterMode = "alle" | "favorieten" | "live" | "gepland" | "gespeeld" | "brondekking" | "odds" | "xg" | "weer" | "mistdata";
@@ -71,78 +73,8 @@ function isFinished(match: Match) {
   return isMatchFinished(match);
 }
 
-const DASHBOARD_TEAM_ALIASES: Record<string, string> = {
-  "sc freiburg": "freiburg",
-  "sport club freiburg": "freiburg",
-  freiburg: "freiburg",
-  "aston villa fc": "aston villa",
-  "aston villa": "aston villa",
-  "man city": "manchester city",
-  "manchester city fc": "manchester city",
-  "manchester city": "manchester city",
-  psg: "paris saint-germain",
-  "paris saint germain": "paris saint-germain",
-  "paris saint-germain": "paris saint-germain",
-  barca: "barcelona",
-  "fc barcelona": "barcelona",
-  barcelona: "barcelona",
-  "athletic bilbao": "athletic club",
-  "athletic club": "athletic club",
-  "crystal palace fc": "crystal palace",
-  "crystal palace": "crystal palace",
-};
-
-function normalizeDashboardDedupeText(value: unknown) {
-  return String(value || "")
-    .toLowerCase()
-    .normalize("NFD")
-    .replace(/[\u0300-\u036f]/g, "")
-    .replace(/&/g, " and ")
-    .replace(/\b(fc|cf|sc|afc|club|voetbalclub)\b/g, " ")
-    .replace(/[^a-z0-9]+/g, " ")
-    .trim()
-    .replace(/\s+/g, " ");
-}
-
-function canonicalDashboardTeam(value: unknown) {
-  const normalized = normalizeDashboardDedupeText(value);
-  return DASHBOARD_TEAM_ALIASES[normalized] || normalized;
-}
-
-function canonicalDashboardLeague(value: unknown) {
-  const normalized = normalizeDashboardDedupeText(value)
-    .replace(/\buefa\b/g, " ")
-    .replace(/\s+/g, " ")
-    .trim();
-
-  const aliases: Record<string, string> = {
-    "europe europa league": "europe europa league",
-    "europa league": "europe europa league",
-    "europe champions league": "europe champions league",
-    "champions league": "europe champions league",
-    "europe conference league": "europe conference league",
-    "conference league": "europe conference league",
-  };
-
-  return aliases[normalized] || normalized;
-}
-
-function dashboardDateKey(value: unknown) {
-  const raw = String(value || "");
-  const direct = raw.slice(0, 10);
-  if (/^\d{4}-\d{2}-\d{2}$/.test(direct)) return direct;
-  const parsed = new Date(raw);
-  if (!Number.isNaN(parsed.getTime())) return parsed.toISOString().slice(0, 10);
-  return "";
-}
-
-function buildDashboardMatchKey(match: Pick<Match, "date" | "kickoff" | "league" | "homeTeamName" | "awayTeamName">) {
-  return [
-    dashboardDateKey(match.kickoff || match.date),
-    canonicalDashboardLeague(match.league),
-    canonicalDashboardTeam(match.homeTeamName),
-    canonicalDashboardTeam(match.awayTeamName),
-  ].join("|");
+function buildDashboardMatchKey(match: Pick<Match, "date" | "kickoff" | "league" | "homeTeamName" | "awayTeamName"> & { id?: string }) {
+  return buildMatchDedupeKey(match) || (match.id ? `id:${match.id}` : "");
 }
 
 function dashboardMatchQuality(match: Match) {
@@ -197,7 +129,7 @@ function hasWeatherData(match: Match) {
 function dedupeDashboardMatches(items: Match[]) {
   const byFixture = new Map<string, Match>();
   for (const match of items) {
-    const key = buildDashboardMatchKey(match);
+    const key = buildDashboardMatchKey(match) || `unidentified:${byFixture.size}`;
     const current = byFixture.get(key);
     if (!current || dashboardMatchQuality(match) > dashboardMatchQuality(current)) {
       byFixture.set(key, match);
@@ -206,13 +138,13 @@ function dedupeDashboardMatches(items: Match[]) {
   return Array.from(byFixture.values());
 }
 
-function buildDashboardBetKey(bet: { date?: string; league?: string; homeTeam?: string; awayTeam?: string }) {
-  return [
-    dashboardDateKey(bet.date),
-    canonicalDashboardLeague(bet.league),
-    canonicalDashboardTeam(bet.homeTeam),
-    canonicalDashboardTeam(bet.awayTeam),
-  ].join("|");
+function buildDashboardBetKey(bet: { date?: string; league?: string; homeTeam?: string; awayTeam?: string; matchId?: string }) {
+  return buildMatchDedupeKey({
+    date: bet.date,
+    league: bet.league,
+    homeTeam: bet.homeTeam,
+    awayTeam: bet.awayTeam,
+  }) || (bet.matchId ? `id:${bet.matchId}` : "");
 }
 
 function dashboardBetQuality(bet: any) {
@@ -224,7 +156,7 @@ function dashboardBetQuality(bet: any) {
 function dedupeDashboardBets<T extends { date?: string; league?: string; homeTeam?: string; awayTeam?: string }>(items: T[]) {
   const byFixture = new Map<string, T>();
   for (const bet of items) {
-    const key = buildDashboardBetKey(bet);
+    const key = buildDashboardBetKey(bet) || `unidentified:${byFixture.size}`;
     const current = byFixture.get(key);
     if (!current || dashboardBetQuality(bet) > dashboardBetQuality(current)) {
       byFixture.set(key, bet);
@@ -555,6 +487,12 @@ const App: React.FC = () => {
       odds: number;
       xg: number;
       weather: number;
+      h2h: number;
+      lineups: number;
+      wagerEvidence: number;
+      completeEvidence: number;
+      evidenceMatches: number;
+      evidenceMissing: Record<string, number>;
       missing: number;
       providerSet: Set<string>;
       providers: string[];
@@ -572,6 +510,12 @@ const App: React.FC = () => {
         odds: 0,
         xg: 0,
         weather: 0,
+        h2h: 0,
+        lineups: 0,
+        wagerEvidence: 0,
+        completeEvidence: 0,
+        evidenceMatches: 0,
+        evidenceMissing: {},
         missing: 0,
         providerSet: new Set<string>(),
         providers: [],
@@ -580,6 +524,9 @@ const App: React.FC = () => {
       const hasOdds = hasOddsData(match);
       const hasXg = hasXgData(match);
       const hasWeather = hasWeatherData(match);
+      const prediction = predictions[match.id];
+      const evidence = getMatchEvidenceCoverage(match, prediction);
+      const evidenceRelevant = !isFinished(match);
       const live = isLive(match);
       const finished = isFinished(match);
       const coverage = (match as any).freeSourceCoverage || (match as any).sourceCoverage || {};
@@ -598,7 +545,15 @@ const App: React.FC = () => {
       current.odds += hasOdds ? 1 : 0;
       current.xg += hasXg ? 1 : 0;
       current.weather += hasWeather ? 1 : 0;
-      current.missing += coveragePercent < 60 || !hasOdds || !hasXg || !hasWeather ? 1 : 0;
+      current.h2h += evidence.h2hAvailable ? 1 : 0;
+      current.lineups += evidence.lineupConfirmedPrematch ? 1 : 0;
+      if (evidenceRelevant) {
+        current.evidenceMatches += 1;
+        current.wagerEvidence += evidence.complete ? 1 : 0;
+        current.completeEvidence += evidence.complete ? 1 : 0;
+        for (const missing of evidence.missing) current.evidenceMissing[missing] = (current.evidenceMissing[missing] || 0) + 1;
+      }
+      current.missing += coveragePercent < 60 || !hasOdds || !hasXg || !hasWeather || (evidenceRelevant && !evidence.complete) ? 1 : 0;
 
       byLeague.set(league, current);
     }
@@ -624,6 +579,12 @@ const App: React.FC = () => {
         odds: 0,
         xg: 0,
         weather: 0,
+        h2h: 0,
+        lineups: 0,
+        wagerEvidence: 0,
+        completeEvidence: 0,
+        evidenceMatches: 0,
+        evidenceMissing: {},
         missing: 0,
         providerSet: providerNames,
         providers: Array.from(providerNames).slice(0, 5),
@@ -631,7 +592,7 @@ const App: React.FC = () => {
     }
 
     return byLeague;
-  }, [allLeagues, dayMatches]);
+  }, [allLeagues, dayMatches, predictions]);
 
 
   const favoriteMatches = useMemo(() => {
@@ -696,11 +657,22 @@ const App: React.FC = () => {
           exactScoreConfidence,
           bestBetRank: rank,
           exactScoreReasons: (pred as any).exactScoreReasons || (match as any).exactScoreReasons || [],
-          odds: (pred as any).odds || (match as any).odds || null,
+          oddsAtPrediction: (pred as any).oddsAtPrediction || null,
+          oddsStatus: (pred as any).oddsStatus || null,
+          odds: (pred as any).odds || (match as any).oddsAtPrediction || (match as any).odds || null,
+          predictionCapturedAt: (pred as any).generatedAt || (match as any).predictionGeneratedAt || null,
           dataCompleteness: (pred as any).dataCompleteness || (match as any).dataCompleteness || null,
           dataCompletenessScore: (pred as any).dataCompletenessScore || (match as any).dataCompletenessScore || 0,
           qualityGate: (pred as any).qualityGate || (match as any).qualityGate || null,
-          lineupSummary: (pred as any).lineupSummary || (match as any).lineupSummary || null,
+          lineupSummary: {
+            ...((match as any).lineupSummary || {}),
+            ...((pred as any).lineupSummary || {}),
+            ...((pred as any).lineupSummary?.firstConfirmedAt || (match as any).lineupFirstConfirmedAt || (match as any).lineupSummary?.firstConfirmedAt
+              ? { firstConfirmedAt: (pred as any).lineupSummary?.firstConfirmedAt || (match as any).lineupFirstConfirmedAt || (match as any).lineupSummary?.firstConfirmedAt }
+              : {}),
+          },
+          h2h: pred.h2h || (match as any).h2h || (Number(pred.h2hPlayed || 0) > 0 ? { played: pred.h2hPlayed } : null),
+          h2hPlayed: Number(pred.h2hPlayed || (match as any).h2h?.played || 0),
           status: match.status,
           score: match.score,
         };
@@ -1066,6 +1038,14 @@ const App: React.FC = () => {
                           <span className="rounded-full bg-slate-500/10 px-1.5 py-0.5">odds {summary?.odds || 0}/{summary?.total || 0}</span>
                           <span className="rounded-full bg-slate-500/10 px-1.5 py-0.5">xG {summary?.xg || 0}/{summary?.total || 0}</span>
                           <span className="rounded-full bg-slate-500/10 px-1.5 py-0.5">weer {summary?.weather || 0}/{summary?.total || 0}</span>
+                          <span className="rounded-full bg-slate-500/10 px-1.5 py-0.5">H2H {summary?.h2h || 0}/{summary?.total || 0}</span>
+                          <span className="rounded-full bg-slate-500/10 px-1.5 py-0.5">bevestigde opstellingen {summary?.lineups || 0}/{summary?.total || 0}</span>
+                          <span className={`rounded-full px-1.5 py-0.5 ${(summary?.completeEvidence || 0) > 0 ? "bg-emerald-500/10 text-emerald-300" : "bg-amber-500/10 text-amber-300"}`}>inzetbewijs {summary?.completeEvidence || 0}/{summary?.total || 0}</span>
+                          {summary?.evidenceMatches === 0 ? (
+                            <span className="w-full text-[8px] text-slate-500">Geen pre-match bewijssteekproef voor deze selectie.</span>
+                          ) : summary?.evidenceMissing && Object.keys(summary.evidenceMissing).length > 0 ? (
+                            <span className="w-full text-[8px] text-amber-200">Bewijsgaten: {Object.entries(summary.evidenceMissing).map(([reason, count]) => `${reason} ${count}/${summary.evidenceMatches}`).join(" · ")}</span>
+                          ) : null}
                         </div>
                         {!!summary?.providers?.length && (
                           <div className="w-full text-[8px] text-slate-500">Bronnen: {summary.providers.join(", ")}</div>
@@ -1089,6 +1069,7 @@ const App: React.FC = () => {
                                     match={enriched}
                                     prediction={predictions[match.id]}
                                     onFavoriteChange={() => setFavRefresh((value) => value + 1)}
+                                    wagerReadiness={bestBets.find((bet: any) => bet.matchId === match.id)?.wagerReadiness}
                                     onAddToCoupon={predictions[match.id] ? () => addToCoupon(enriched, predictions[match.id]) : undefined}
                                   />
                                 </Suspense>

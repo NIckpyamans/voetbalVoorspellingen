@@ -3,6 +3,7 @@ import { buildR2ObjectKey, getR2Config, getR2Object, putR2Object } from "../../s
 import { evaluateImmutableSnapshot } from "./snapshot-evaluation.js";
 
 const CANARY_KEY = "health/snapshot-evaluation-canary.json";
+const CANARY_HISTORY_PREFIX = "health/snapshot-evaluation-canary-runs";
 
 function digest(value) {
   return crypto.createHash("sha256").update(value).digest("hex");
@@ -48,7 +49,8 @@ export async function runSnapshotCanary(options = {}) {
   const payload = buildSnapshotCanary(options.now || new Date());
   const body = Buffer.from(`${JSON.stringify(payload)}\n`, "utf8");
   const checksum = digest(body);
-  const key = buildR2ObjectKey(config, options.relativeKey || CANARY_KEY);
+  const relativeKey = options.relativeKey || (options.uniqueRun === false ? CANARY_KEY : `${CANARY_HISTORY_PREFIX}/${Date.now()}-${crypto.randomBytes(4).toString("hex")}.json`);
+  const key = buildR2ObjectKey(config, relativeKey);
   const upload = await (options.putObject || putR2Object)({
     config,
     key,

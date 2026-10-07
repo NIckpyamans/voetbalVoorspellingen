@@ -54,6 +54,13 @@ export function normalizeFotmobStanding(payload, label, expectedLeagueId, season
     };
   }).filter((row) => row.team);
   if (rows.length < 2 || rows.some((row) => !Number.isFinite(row.p) || !Number.isFinite(row.pts))) return null;
+  if (rows.some((row) => row.p !== row.w + row.d + row.l || [row.p, row.w, row.d, row.l, row.gf, row.ga, row.pts].some((value) => !Number.isFinite(value) || value < 0))) return null;
+  if (String(label || "").startsWith("Europe -")) {
+    const totalPlayed = rows.reduce((sum, row) => sum + row.p, 0);
+    const totalGoalsFor = rows.reduce((sum, row) => sum + row.gf, 0);
+    const totalGoalsAgainst = rows.reduce((sum, row) => sum + row.ga, 0);
+    if (totalPlayed % 2 !== 0 || totalGoalsFor !== totalGoalsAgainst) return null;
+  }
   const isProvisionalLeaguePhase = Boolean(FOTMOB_STANDINGS_LEAGUES[label]?.preliminary) &&
     rows.every((row) => row.p === 0 && row.pts === 0);
 

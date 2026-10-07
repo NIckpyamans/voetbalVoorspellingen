@@ -2,6 +2,8 @@ import type { Match } from "../types";
 import { todayAmsterdamKey, toAmsterdamDateKey } from "./date.js";
 import { shortLeagueName } from "./matchText.js";
 import { ACTIVE_COMPETITIONS } from "./competitionVisibility.js";
+import { getMatchEvidenceCoverage, parseEvidenceTimestamp } from "./dashboardCoverage.js";
+import { buildMatchDedupeKey } from "./matchNormalization.js";
 
 export type DashboardHistoryItem = {
   matchId: string;
@@ -11,6 +13,8 @@ export type DashboardHistoryItem = {
   winnerCorrect?: boolean;
   errorMargin?: number;
   timestamp?: number;
+  date?: string | null;
+  kickoff?: string | null;
   homeTeam?: string | null;
   awayTeam?: string | null;
   league?: string | null;
@@ -32,6 +36,7 @@ export type DashboardHistoryItem = {
 export type LeaguePerformanceRow = {
   league: string;
   total: number;
+  trustworthyUniqueFixtures: number;
   exact: number;
   outcome: number;
   exactPct: number;
@@ -41,6 +46,7 @@ export type LeaguePerformanceRow = {
   calibrationError: number | null;
   roiTotal: number | null;
   roiSamples: number;
+  evaluationMethod: "immutable_snapshots" | "all_evaluated_reviews";
 };
 
 export type WagerReadiness = {
@@ -52,6 +58,7 @@ export type WagerReadiness = {
   marketOdds: number | null;
   edge: number | null;
   blockers: string[];
+  evidenceCoverage: ReturnType<typeof getMatchEvidenceCoverage>;
 };
 
 export const LEAGUE_ORDER = [...ACTIVE_COMPETITIONS];
@@ -65,66 +72,83 @@ export function pct(part: number, total: number) {
 
 export function buildLeaguePerformance(items: DashboardHistoryItem[], minSample = 50) {
   const active = new Set(ACTIVE_COMPETITIONS);
-  const trustworthy = items.filter(
-    (item) =>
-      active.has(String(item.league || "")) &&
-      item.evaluationSource === "prediction_snapshot" &&
-      !item.leakageRisk
-  );
-  const sourceItems = trustworthy.length >= minSample ? trustworthy : items.filter((item) => active.has(String(item.league || "")));
-  const method = trustworthy.length >= minSample ? "immutable_snapshots" : "all_evaluated_reviews";
-  const buckets = new Map<string, { total: number; exact: number; outcome: number; goalError: number; brier: number[]; confidence: number[]; roi: number[] }>();
+  const dedupeFixtures = (rows: DashboardHistoryItem[]) => {
+    const fixtures = new Map<string, DashboardHistoryItem>();
+    for (const item of rows) {
+      const league = String(item.league || "").trim();
+      if (!active.has(league)) continue;
+      const fixtureKey = (item.homeTeam && item.awayTeam
+        ? buildMatchDedupeKey({
+            date: item.kickoff || item.date,
+            league,
+            homeTeam: item.homeTeam,
+            awayTeam: item.awayTeam,
+          })
+        : "") || (item.matchId ? `${league}|id:${item.matchId}` : "");
+      if (!fixtureKey) continue;
+      const current = fixtures.get(fixtureKey);
+      const itemTime = parseEvidenceTimestamp(item.timestamp) ?? 0;
+      const currentTime = parseEvidenceTimestamp(current?.timestamp) ?? -1;
+      if (!current || itemTime >= currentTime) fixtures.set(fixtureKey, item);
+    }
+    return [...fixtures.values()];
+  };
 
-  for (const item of sourceItems) {
+  const allReviews = dedupeFixtures(items.filter((item) => !item.leakageRisk));
+  const trustworthy = dedupeFixtures(items.filter((item) => item.evaluationSource === "prediction_snapshot" && !item.leakageRisk));
+  const immutableByLeague = new Map<string, DashboardHistoryItem[]>();
+  for (const item of trustworthy) {
     const league = String(item.league || "").trim();
-    if (!league) continue;
-    const bucket = buckets.get(league) || { total: 0, exact: 0, outcome: 0, goalError: 0, brier: [], confidence: [], roi: [] };
-    bucket.total += 1;
-    bucket.exact += item.wasCorrect ? 1 : 0;
-    bucket.outcome += item.winnerCorrect ? 1 : 0;
-    bucket.goalError += Number(item.errorMargin || 0);
-    if (Number.isFinite(Number(item.brierScore))) bucket.brier.push(Number(item.brierScore));
-    if (Number.isFinite(Number(item.confidence))) bucket.confidence.push(Number(item.confidence));
-    if (Number.isFinite(Number(item.roi))) bucket.roi.push(Number(item.roi));
-    buckets.set(league, bucket);
+    immutableByLeague.set(league, [...(immutableByLeague.get(league) || []), item]);
+  }
+  const reviewByLeague = new Map<string, DashboardHistoryItem[]>();
+  for (const item of allReviews) {
+    const league = String(item.league || "").trim();
+    reviewByLeague.set(league, [...(reviewByLeague.get(league) || []), item]);
   }
 
-  const rows: LeaguePerformanceRow[] = [...buckets.entries()]
-    .map(([league, bucket]) => ({
+  const leagueNames = new Set([...reviewByLeague.keys(), ...immutableByLeague.keys()]);
+  const rows: LeaguePerformanceRow[] = [];
+  for (const league of leagueNames) {
+    const immutable = immutableByLeague.get(league) || [];
+    const selected = immutable.length >= minSample ? immutable : reviewByLeague.get(league) || [];
+    const evaluationMethod: LeaguePerformanceRow["evaluationMethod"] = immutable.length >= minSample ? "immutable_snapshots" : "all_evaluated_reviews";
+    const total = selected.length;
+    if (total < minSample) continue;
+    const exact = selected.filter((item) => item.wasCorrect).length;
+    const outcome = selected.filter((item) => item.winnerCorrect).length;
+    const brier = selected.map((item) => Number(item.brierScore)).filter(Number.isFinite);
+    const confidence = selected.map((item) => Number(item.confidence)).filter(Number.isFinite);
+    const roi = selected.map((item) => Number(item.roi)).filter(Number.isFinite);
+    rows.push({
       league,
-      total: bucket.total,
-      exact: bucket.exact,
-      outcome: bucket.outcome,
-      exactPct: pct(bucket.exact, bucket.total),
-      outcomePct: pct(bucket.outcome, bucket.total),
-      avgGoalError: Number((bucket.goalError / Math.max(bucket.total, 1)).toFixed(2)),
-      avgBrierScore: bucket.brier.length ? Number((bucket.brier.reduce((sum, value) => sum + value, 0) / bucket.brier.length).toFixed(4)) : null,
-      calibrationError: bucket.confidence.length
-        ? Number((bucket.outcome / bucket.total - bucket.confidence.reduce((sum, value) => sum + value, 0) / bucket.confidence.length).toFixed(3))
-        : null,
-      roiTotal: bucket.roi.length ? Number(bucket.roi.reduce((sum, value) => sum + value, 0).toFixed(3)) : null,
-      roiSamples: bucket.roi.length,
-    }))
-    .filter((row) => row.total >= minSample)
-    .sort(
-      (a, b) =>
-        b.outcomePct - a.outcomePct ||
-        b.exactPct - a.exactPct ||
-        a.avgGoalError - b.avgGoalError ||
-        b.total - a.total
-    );
-
-  return { best: rows[0] || null, rows, method, minSample };
+      total,
+      trustworthyUniqueFixtures: immutable.length,
+      exact,
+      outcome,
+      exactPct: pct(exact, total),
+      outcomePct: pct(outcome, total),
+      avgGoalError: Number((selected.reduce((sum, item) => sum + Number(item.errorMargin || 0), 0) / total).toFixed(2)),
+      avgBrierScore: brier.length ? Number((brier.reduce((sum, value) => sum + value, 0) / brier.length).toFixed(4)) : null,
+      calibrationError: confidence.length ? Number((outcome / total - confidence.reduce((sum, value) => sum + value, 0) / confidence.length).toFixed(3)) : null,
+      roiTotal: roi.length ? Number(roi.reduce((sum, value) => sum + value, 0).toFixed(3)) : null,
+      roiSamples: roi.length,
+      evaluationMethod,
+    });
+  }
+  rows.sort((a, b) => b.outcomePct - a.outcomePct || b.exactPct - a.exactPct || a.avgGoalError - b.avgGoalError || b.total - a.total);
+  const method: LeaguePerformanceRow["evaluationMethod"] = rows.some((row) => row.evaluationMethod === "immutable_snapshots") ? "immutable_snapshots" : "all_evaluated_reviews";
+  return { best: rows[0] || null, rows, method, minSample, trustworthyUniqueFixtures: trustworthy.length };
 }
 
-export function buildWagerReadiness(bet: any, leaguePerformance?: LeaguePerformanceRow | null): WagerReadiness {
+export function buildWagerReadiness(bet: any, leaguePerformance?: LeaguePerformanceRow | null, { now = Date.now() }: { now?: number } = {}): WagerReadiness {
   const outcomes = [
     { key: "home", label: "Thuis" as const, probability: Number(bet?.homeProb || 0) },
     { key: "draw", label: "Gelijk" as const, probability: Number(bet?.drawProb || 0) },
     { key: "away", label: "Uit" as const, probability: Number(bet?.awayProb || 0) },
   ];
   const selected = outcomes.sort((a, b) => b.probability - a.probability)[0];
-  const odds = bet?.odds || null;
+  const odds = bet?.oddsAtPrediction || null;
   const prices = {
     home: Number(odds?.home ?? odds?.homeWin ?? 0),
     draw: Number(odds?.draw ?? 0),
@@ -135,17 +159,27 @@ export function buildWagerReadiness(bet: any, leaguePerformance?: LeaguePerforma
   const selectedOdd = validPrices ? prices[selected.key] : null;
   const marketProbability = selectedOdd && inverseTotal > 0 ? (1 / selectedOdd) / inverseTotal : null;
   const edge = marketProbability == null ? null : selected.probability - marketProbability;
-  const completeness = Number(bet?.dataCompleteness?.score ?? bet?.dataCompletenessScore ?? 0);
-  const lineupConfirmed = Boolean(bet?.lineupSummary?.confirmed);
+  const rawCompleteness = Number(bet?.dataCompleteness?.score ?? bet?.dataCompletenessScore ?? 0);
+  const completeness = Number.isFinite(rawCompleteness) ? Math.max(0, Math.min(1, rawCompleteness > 1 ? rawCompleteness / 100 : rawCompleteness)) : 0;
+  const oddsCapturedAt = parseEvidenceTimestamp(odds?.capturedAt);
+  const kickoffAt = parseEvidenceTimestamp(bet?.date || bet?.kickoff);
+  const hasKickoffTimestamp = kickoffAt != null && String(bet?.date || bet?.kickoff || "").includes("T");
+  const hasOddsTimestamp = oddsCapturedAt != null;
+  const oddsCaptureNotFuture = oddsCapturedAt != null && oddsCapturedAt <= now;
+  const oddsBeforeKickoff = hasKickoffTimestamp && hasOddsTimestamp && oddsCaptureNotFuture && oddsCapturedAt < kickoffAt;
+  const oddsFreshEnough = oddsBeforeKickoff && kickoffAt - oddsCapturedAt <= 24 * 60 * 60 * 1000;
+  const evidence = getMatchEvidenceCoverage({
+    kickoff: bet?.date || bet?.kickoff,
+    h2h: bet?.h2h || (Number(bet?.h2hPlayed || 0) > 0 ? { played: bet.h2hPlayed } : null),
+    lineupSummary: bet?.lineupSummary,
+    oddsAtPrediction: odds,
+    oddsStatus: bet?.oddsStatus,
+    dataCompletenessScore: completeness,
+    h2hPlayed: bet?.h2hPlayed,
+  }, bet, { now });
   const blocked = Boolean(bet?.qualityGate?.blockedHighConfidence);
   const friendly = /friendl|oefen/i.test(String(bet?.league || ""));
-  const finished = String(bet?.status || "").toUpperCase() === "FT";
-  const kickoffAt = Date.parse(String(bet?.date || bet?.kickoff || ""));
-  const oddsCapturedAt = Date.parse(String(odds?.capturedAt || odds?.lastUpdated || ""));
-  const hasKickoffTimestamp = Number.isFinite(kickoffAt) && String(bet?.date || bet?.kickoff || "").includes("T");
-  const hasOddsTimestamp = Number.isFinite(oddsCapturedAt);
-  const oddsBeforeKickoff = hasKickoffTimestamp && hasOddsTimestamp && oddsCapturedAt < kickoffAt;
-  const oddsFreshEnough = oddsBeforeKickoff && kickoffAt - oddsCapturedAt <= 24 * 60 * 60 * 1000;
+  const finished = ["FT", "AET", "PEN"].includes(String(bet?.status || "").toUpperCase());
   const lateMarketShift = Math.abs(Number(
     bet?.marketMovement?.probabilityShift ??
       bet?.modelEdges?.marketCalibration?.lateProbabilityShift ??
@@ -157,21 +191,29 @@ export function buildWagerReadiness(bet: any, leaguePerformance?: LeaguePerforma
   if (friendly) blockers.push("oefenwedstrijd heeft te hoge selectieronzekerheid");
   const agreement = Number(bet?.ensembleMeta?.agreement ?? bet?.modelEdges?.modelAgreement ?? 0);
   const probabilityFloor = 0.58;
-  if (completeness < 0.85) blockers.push("datadekking lager dan 85%");
+  if (completeness < 0.7) blockers.push("datacompleetheid lager dan de minimale 70%");
   if (blocked) blockers.push("kwaliteitsgate blokkeert hoge zekerheid");
-  if (!lineupConfirmed) blockers.push("bevestigde opstelling ontbreekt");
+  if (!evidence.lineupConfirmedPrematch) blockers.push("bevestigde opstelling ontbreekt, is afgeleid of mist een prematch-timestamp");
+  if (bet?.oddsStatus === "historical_market_profile_only") blockers.push("alleen historisch marktprofiel beschikbaar, geen bookmakerodds");
   if (!validPrices) blockers.push("geen complete actuele 1X2-odds");
   else if (!hasKickoffTimestamp) blockers.push("betrouwbare aftraptijd ontbreekt");
   else if (!hasOddsTimestamp) blockers.push("odds hebben geen betrouwbare timestamp");
+  else if (!oddsCaptureNotFuture) blockers.push("odds-timestamp ligt in de toekomst");
   else if (!oddsBeforeKickoff) blockers.push("odds zijn niet aantoonbaar voor de aftrap vastgelegd");
   else if (!oddsFreshEnough) blockers.push("odds zijn ouder dan 24 uur voor de aftrap");
   if (lateMarketShift >= 0.08) blockers.push("late marktbeweging groter dan 8 procentpunt");
   if (selected.probability < probabilityFloor) blockers.push("gekalibreerde 1X2-kans lager dan 58%");
   if (agreement < 0.6) blockers.push("modellen onvoldoende eensgezind");
-  if (!leaguePerformance || leaguePerformance.total < 150) blockers.push("minder dan 150 lekvrije competitie-evaluaties");
+  if (!leaguePerformance || leaguePerformance.trustworthyUniqueFixtures < 150 || leaguePerformance.evaluationMethod !== "immutable_snapshots") blockers.push("minder dan 150 lekvrije unieke snapshot-evaluaties in deze competitie");
   else if (leaguePerformance.outcomePct < 55) blockers.push("competitie-hitrate op 1X2 lager dan 55%");
   if (edge == null) blockers.push("value-edge kan niet worden berekend");
   else if (edge < 0.03) blockers.push("model-edge lager dan 3 procentpunt");
+  const predictionCapturedAt = parseEvidenceTimestamp(bet?.predictionCapturedAt);
+  if (predictionCapturedAt == null || predictionCapturedAt > now || now - predictionCapturedAt > 6 * 60 * 60 * 1000) blockers.push("voorspelling ontbreekt, ligt in de toekomst of is ouder dan 6 uur");
+  if (kickoffAt != null && kickoffAt <= now) blockers.push("aftrap is voorbij");
+  const lineupCapturedAt = parseEvidenceTimestamp(bet?.lineupSummary?.firstConfirmedAt);
+  if (lineupCapturedAt != null && lineupCapturedAt > now) blockers.push("opstellingsbevestigingstimestamp ligt in de toekomst");
+  else if (lineupCapturedAt != null && now - lineupCapturedAt > 6 * 60 * 60 * 1000) blockers.push("opstellingsbevestiging ouder dan 6 uur");
 
   const eligible = blockers.length === 0;
   const watchOnly = !eligible && !finished && !friendly && completeness >= 0.7 && !blocked;
@@ -184,6 +226,7 @@ export function buildWagerReadiness(bet: any, leaguePerformance?: LeaguePerforma
     marketOdds: selectedOdd,
     edge: edge == null ? null : Number(edge.toFixed(4)),
     blockers,
+    evidenceCoverage: evidence,
   };
 }
 

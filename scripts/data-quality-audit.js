@@ -7,6 +7,8 @@ import { hasFinalScore, hasUsableH2H } from "../shared/matchNormalization.js";
 import { ACTIVE_COMPETITIONS, isActiveCompetitionEntity } from "../shared/competitionVisibility.js";
 import { readLocalSnapshotLedger } from "../shared/predictionSnapshotLedger.js";
 import { SNAPSHOT_WINDOWS, selectPreferredTrainingSnapshot, snapshotTrainingEligibility } from "./worker/snapshot-policy.js";
+import { buildMatchDedupeKey } from "../shared/matchNormalization.js";
+import { assessAuditFreshness, parseAuditTimestamp } from "./worker/audit-freshness.js";
 
 const ROOT = process.cwd();
 const OUTPUT_JSON = path.join(ROOT, "monitor", "data-quality-audit.json");
@@ -63,12 +65,13 @@ function collectMatches() {
       if (!recoverySnapshotsByMatch.has(matchId)) recoverySnapshotsByMatch.set(matchId, []);
       recoverySnapshotsByMatch.get(matchId).push(snapshot);
     }
-    const fixtureKey = identityKey(
-      snapshot?.kickoff || snapshot?.date,
-      snapshot?.homeTeamName || snapshot?.homeTeam || snapshot?.inputSnapshot?.homeTeam,
-      snapshot?.awayTeamName || snapshot?.awayTeam || snapshot?.inputSnapshot?.awayTeam,
-    );
-    if (!fixtureKey.endsWith("||")) {
+    const fixtureKey = buildMatchDedupeKey({
+      kickoff: snapshot?.kickoff || snapshot?.date,
+      league: snapshot?.league,
+      homeTeam: snapshot?.homeTeamName || snapshot?.homeTeam || snapshot?.inputSnapshot?.homeTeam,
+      awayTeam: snapshot?.awayTeamName || snapshot?.awayTeam || snapshot?.inputSnapshot?.awayTeam,
+    });
+    if (fixtureKey) {
       if (!recoverySnapshotsByFixture.has(fixtureKey)) recoverySnapshotsByFixture.set(fixtureKey, []);
       recoverySnapshotsByFixture.get(fixtureKey).push(snapshot);
     }
@@ -87,6 +90,7 @@ function collectMatches() {
           match?.kickoff || match?.date,
           match?.homeTeamName || match?.homeTeam,
           match?.awayTeamName || match?.awayTeam,
+          match?.league,
         );
         const matchSnapshots = [
           ...snapshots.filter((snapshot) => String(snapshot?.matchId || "") === matchId),
@@ -120,10 +124,14 @@ function hasRecentForm(match) {
 }
 
 function hasConfirmedLineup(match) {
-  const predictionLineup = match?._prediction?.lineupSummary;
-  const matchLineup = match?.lineupSummary;
-  const safeMatchLineup = matchLineup?.confirmed && !matchLineup?.historicalBackfill && matchLineup?.preMatchUsable !== false;
-  return Boolean(predictionLineup?.confirmed || safeMatchLineup || match?.lineupStatus === "confirmed");
+  const lineup = match?._prediction?.lineupSummary || match?.lineupSummary;
+  const kickoff = parseAuditTimestamp(match?.kickoff || match?.date);
+  const capturedAt = parseAuditTimestamp(
+    match?._prediction?.lineupSummary?.firstConfirmedAt || match?.lineupFirstConfirmedAt ||
+    match?.lineupSummary?.firstConfirmedAt || match?._prediction?.lineupSummary?.capturedAt ||
+    match?.lineupSummary?.capturedAt
+  );
+  return Boolean(lineup?.confirmed && !lineup?.projected && !lineup?.historicalBackfill && lineup?.preMatchUsable !== false && kickoff != null && capturedAt != null && capturedAt < kickoff);
 }
 
 function hasHistoricalConfirmedLineup(match) {
@@ -131,18 +139,8 @@ function hasHistoricalConfirmedLineup(match) {
   return Boolean(lineup?.confirmed && lineup?.historicalBackfill && lineup?.captureTiming === "post_match");
 }
 
-function normalizeTeam(value) {
-  return String(value || "")
-    .normalize("NFKD")
-    .replace(/[\u0300-\u036f]/g, "")
-    .toLowerCase()
-    .replace(/\b(fc|afc|cf|sc|sv|fk|nk|ac|club)\b/g, " ")
-    .replace(/[^a-z0-9]+/g, " ")
-    .trim();
-}
-
-function identityKey(date, home, away) {
-  return `${String(date || "").slice(0, 10)}|${normalizeTeam(home)}|${normalizeTeam(away)}`;
+function identityKey(date, home, away, league = "") {
+  return buildMatchDedupeKey({ date, homeTeam: home, awayTeam: away, league });
 }
 
 function buildReviewIndex(reviews) {
@@ -150,19 +148,20 @@ function buildReviewIndex(reviews) {
   for (const [matchId, review] of Object.entries(reviews || {})) {
     if (matchId) index.add(`id:${matchId}`);
     if (review?.matchId) index.add(`id:${review.matchId}`);
-    const key = identityKey(review?.date, review?.homeTeamName || review?.homeTeam, review?.awayTeamName || review?.awayTeam);
-    if (!key.endsWith("||")) index.add(`fixture:${key}`);
+    const key = identityKey(review?.date, review?.homeTeamName || review?.homeTeam, review?.awayTeamName || review?.awayTeam, review?.league);
+    if (key) index.add(`fixture:${key}`);
   }
   return index;
 }
 
 function hasTimestampedPrematchOdds(match) {
-  const odds = match?._prediction?.odds || match?.oddsAtPrediction || match?.odds;
+  const odds = match?._prediction?.oddsAtPrediction || match?.oddsAtPrediction;
+  if (match?._prediction?.oddsStatus === "historical_market_profile_only" || match?.oddsStatus === "historical_market_profile_only") return false;
   const prices = [odds?.home ?? odds?.homeWin, odds?.draw, odds?.away ?? odds?.awayWin].map(Number);
   if (!prices.every((value) => Number.isFinite(value) && value > 1.01)) return false;
-  const kickoff = Date.parse(String(match?.kickoff || match?.date || ""));
-  const capturedAt = Date.parse(String(odds?.capturedAt || odds?.lastUpdated || ""));
-  return Number.isFinite(kickoff) && Number.isFinite(capturedAt) && capturedAt < kickoff && kickoff - capturedAt <= 24 * 60 * 60 * 1000;
+  const kickoff = parseAuditTimestamp(match?.kickoff || match?.date);
+  const capturedAt = parseAuditTimestamp(odds?.capturedAt);
+  return kickoff != null && capturedAt != null && capturedAt < kickoff && kickoff - capturedAt <= 24 * 60 * 60 * 1000;
 }
 
 function hasModelReadyData(match) {
@@ -219,7 +218,7 @@ function hasSourceLineage(match) {
 function hasReview(match, reviewIndex) {
   const matchId = match?.id || match?.match_id;
   if (matchId && reviewIndex.has(`id:${matchId}`)) return true;
-  const key = identityKey(match?._dateKey || match?.date || match?.kickoff, match?.homeTeamName || match?.homeTeam, match?.awayTeamName || match?.awayTeam);
+  const key = identityKey(match?._dateKey || match?.date || match?.kickoff, match?.homeTeamName || match?.homeTeam, match?.awayTeamName || match?.awayTeam, match?.league);
   return reviewIndex.has(`fixture:${key}`);
 }
 
@@ -243,12 +242,13 @@ function ledgerSnapshotEvaluation(recovery, fromDate, now = Date.now()) {
   });
   const groups = new Map();
   for (const snapshot of snapshots) {
-    const fixtureKey = identityKey(
-      snapshot?.kickoff || snapshot?.date,
-      snapshot?.homeTeamName || snapshot?.homeTeam || snapshot?.inputSnapshot?.homeTeam,
-      snapshot?.awayTeamName || snapshot?.awayTeam || snapshot?.inputSnapshot?.awayTeam,
-    );
-    const key = fixtureKey.endsWith("||") ? String(snapshot?.matchId || snapshot?.predictionId) : fixtureKey;
+    const fixtureKey = buildMatchDedupeKey({
+      kickoff: snapshot?.kickoff || snapshot?.date,
+      league: snapshot?.league,
+      homeTeam: snapshot?.homeTeamName || snapshot?.homeTeam || snapshot?.inputSnapshot?.homeTeam,
+      awayTeam: snapshot?.awayTeamName || snapshot?.awayTeam || snapshot?.inputSnapshot?.awayTeam,
+    });
+    const key = fixtureKey || String(snapshot?.matchId || snapshot?.predictionId);
     if (!groups.has(key)) groups.set(key, []);
     groups.get(key).push(snapshot);
   }
@@ -364,8 +364,57 @@ function main() {
   });
   const coverage = coverageRow(matches, reviewIndex);
 
+  const generatedAt = new Date().toISOString();
+  const dayFiles = (Array.isArray(readJsonSafe(path.join("data", "meta.json"), {}).dates) ? readJsonSafe(path.join("data", "meta.json"), {}).dates : [])
+    .filter((dateKey) => dateKey >= fromDate && dateKey <= today)
+    .map((dateKey) => path.join(ROOT, "data", "days", `${dateKey}.json`))
+    .filter((filePath) => fs.existsSync(filePath));
+  const latestDayMtime = dayFiles.map((filePath) => fs.statSync(filePath).mtimeMs).filter(Number.isFinite).sort((a, b) => b - a)[0] || null;
+  const dayDocumentTimestamps = dayFiles.map((filePath) => {
+    const day = readJsonSafe(filePath, {});
+    return parseAuditTimestamp(day.generatedAt || day.updatedAt || day.lastRun);
+  }).filter((timestamp) => timestamp != null);
+  const latestDayDocumentTimestamp = dayDocumentTimestamps.length ? Math.max(...dayDocumentTimestamps) : null;
+  const snapshotTimestamps = Object.values(recovery?.ledger?.predictionSnapshots || {})
+    .map((snapshot) => parseAuditTimestamp(snapshot.generatedAt || snapshot.createdAt))
+    .filter((timestamp) => timestamp != null);
+  const sourceStamps = {
+    dayFilesLatestModifiedAt: latestDayMtime,
+    dayDocumentsGeneratedAt: latestDayDocumentTimestamp,
+    latestFixtureDate: matches.map((match) => match._dateKey).filter(Boolean).sort().at(-1) || null,
+    snapshotLatest: snapshotTimestamps.length ? Math.max(...snapshotTimestamps) : null,
+    snapshotLedgerUpdatedAt: parseAuditTimestamp(recovery?.updatedAt || recovery?.ledger?.updatedAt),
+  };
+  const snapshotRows = Object.keys(recovery?.ledger?.predictionSnapshots || {}).length;
+  const snapshotIdentities = Object.values(recovery?.ledger?.predictionSnapshots || {}).map((snapshot) => {
+    const fixtureKey = buildMatchDedupeKey({
+      kickoff: snapshot?.kickoff || snapshot?.date,
+      league: snapshot?.league,
+      homeTeam: snapshot?.homeTeamName || snapshot?.homeTeam || snapshot?.inputSnapshot?.homeTeam,
+      awayTeam: snapshot?.awayTeamName || snapshot?.awayTeam || snapshot?.inputSnapshot?.awayTeam,
+    });
+    return fixtureKey || (snapshot?.matchId ? `id:${snapshot.matchId}` : snapshot?.predictionId ? `prediction:${snapshot.predictionId}` : null);
+  }).filter(Boolean);
+  const uniqueSnapshotFixtures = new Set(snapshotIdentities).size;
   const report = {
-    generatedAt: new Date().toISOString(),
+    generatedAt,
+    freshness: assessAuditFreshness({ generatedAt }),
+    sourceFreshness: Object.fromEntries(Object.entries(sourceStamps).map(([key, value]) => [key, {
+      timestamp: value == null ? null : new Date(value).toISOString(),
+      ...assessAuditFreshness({ generatedAt: value }),
+    }])),
+    uniqueFixtureAccounting: {
+      matchRows: matches.length,
+      uniqueFixtures: new Set(matches.map((match) => buildMatchDedupeKey({
+        kickoff: match.kickoff || match.date || match._dateKey,
+        league: match.league,
+        homeTeam: match.homeTeamName || match.homeTeam,
+        awayTeam: match.awayTeamName || match.awayTeam,
+      })).filter(Boolean)).size,
+      snapshotRows,
+      uniqueSnapshotFixtures,
+      duplicateSnapshotRows: Math.max(0, snapshotRows - uniqueSnapshotFixtures),
+    },
     lookbackDays: DEFAULT_LOOKBACK_DAYS,
     totals: {
       matches: matches.length,
@@ -427,7 +476,10 @@ function main() {
     `- H2H-dekking: ${Math.round(report.totals.h2hCoverage * 100)}%`,
     `- Reviews na afloop: ${Math.round(report.coverage.postMatch.review.pct * 100)}%`,
     `- Lekvrije post-matchreviews: ${Math.round(report.coverage.postMatch.reviewEligible.pct * 100)}% (${report.coverage.postMatch.reviewEligible.covered}/${report.coverage.postMatch.reviewEligible.total})`,
-    `- Immutable snapshot-evaluaties: ${Math.round(report.immutableSnapshotEvaluation.pct * 100)}% (${report.immutableSnapshotEvaluation.evaluated}/${report.immutableSnapshotEvaluation.eligible})`,
+    `- Immutable snapshot-evaluaties: ${Math.round(report.immutableSnapshotEvaluation.pct * 100)}% (${report.immutableSnapshotEvaluation.evaluated}/${report.immutableSnapshotEvaluation.eligible} unieke fixtures)`,
+    `- Snapshotrijen / unieke fixtures: ${report.uniqueFixtureAccounting.snapshotRows}/${report.uniqueFixtureAccounting.uniqueSnapshotFixtures} (${report.uniqueFixtureAccounting.duplicateSnapshotRows} herhaalde rijen)`,
+    `- Dagbestandwedstrijden / unieke fixtures: ${report.uniqueFixtureAccounting.matchRows}/${report.uniqueFixtureAccounting.uniqueFixtures}`,
+    `- Auditstatus freshness: ${report.freshness.status}`,
     `- Bruikbare wedstrijdstatistieken: ${Math.round(report.coverage.postMatch.statistics.pct * 100)}%`,
     `- Bevestigde opstellingen: ${Math.round(report.coverage.predictionInputs.lineupConfirmed.pct * 100)}%`,
     `- Historisch teruggevonden basiselftallen: ${Math.round(report.coverage.postMatch.historicalLineup.pct * 100)}%`,

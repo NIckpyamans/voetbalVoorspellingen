@@ -1,4 +1,5 @@
 function rowKey(row) {
+  if (row?.snapshotBacked && row?.predictionId) return `prediction:${row.predictionId}`;
   if (row?.matchId) {
     const modelVersion = row?.modelVersion || row?.review?.modelVersion || "unknown";
     return `match:${row.matchId}:${modelVersion}`;

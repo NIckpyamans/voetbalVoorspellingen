@@ -17,6 +17,7 @@ interface MatchCardProps {
   prediction?: any;
   onFavoriteChange?: () => void;
   onAddToCoupon?: () => void;
+  wagerReadiness?: { status: "eligible" | "watch" | "analysis_only"; blockers: string[] };
 }
 
 type MatchDetailTab = "analyse" | "opstelling" | "h2h" | "vorm" | "markten";
@@ -1468,7 +1469,7 @@ function detailDateKey(match: Match) {
   return /^\d{4}-\d{2}-\d{2}$/.test(direct) ? direct : "";
 }
 
-const MatchCard: React.FC<MatchCardProps> = ({ match: initialMatch, prediction: initialPrediction, onFavoriteChange, onAddToCoupon }) => {
+const MatchCard: React.FC<MatchCardProps> = ({ match: initialMatch, prediction: initialPrediction, onFavoriteChange, onAddToCoupon, wagerReadiness }) => {
   const [tab, setTab] = useState<MatchDetailTab>("analyse");
   const [detailsOpen, setDetailsOpen] = useState(false);
   const [detailPayload, setDetailPayload] = useState<{ match?: any; prediction?: any } | null>(null);
@@ -1640,10 +1641,11 @@ const MatchCard: React.FC<MatchCardProps> = ({ match: initialMatch, prediction: 
           {onAddToCoupon && (
             <button
               type="button"
-              onClick={onAddToCoupon}
-              aria-label="Voeg sterkste tip toe aan coupon"
-              title="Voeg sterkste tip toe aan coupon"
-              className="rounded-full border border-cyan-400/30 bg-cyan-500/10 px-2 py-0.5 text-[8px] font-black uppercase tracking-wide text-cyan-200 transition hover:bg-cyan-500/25"
+              disabled={wagerReadiness?.status !== "eligible"}
+              title={wagerReadiness?.status === "eligible" ? "Voeg inzetbare voorspelling toe" : "Coupon geblokkeerd: " + (wagerReadiness?.blockers?.slice(0, 3).join("; ") || "alle prematch-datagates moeten eerst slagen")}
+              onClick={wagerReadiness?.status === "eligible" ? onAddToCoupon : undefined}
+              aria-label={wagerReadiness?.status === "eligible" ? "Voeg inzetbare voorspelling toe aan coupon" : "Coupon geblokkeerd: onvoldoende actueel wedstrijdbewijs"}
+              className={`rounded-full border px-2 py-0.5 text-[8px] font-black uppercase tracking-wide transition ${wagerReadiness?.status === "eligible" ? "border-cyan-400/30 bg-cyan-500/10 text-cyan-200 hover:bg-cyan-500/25" : "cursor-not-allowed border-slate-700 bg-slate-800/70 text-slate-500"}`}
             >
               + Coupon
             </button>

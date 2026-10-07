@@ -23,7 +23,7 @@ describe("R2 snapshot evaluation canary", () => {
     });
     expect(result.ok).toBe(true);
     expect(result.stage).toBe("complete");
-    expect(result.key).toBe("test/health/snapshot-evaluation-canary.json");
+    expect(result.key).toMatch(/^test\/health\/snapshot-evaluation-canary-runs\/.+\.json$/);
   });
 
   it("fails closed when R2 is not configured", async () => {

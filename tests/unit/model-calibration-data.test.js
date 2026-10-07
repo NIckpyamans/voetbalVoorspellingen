@@ -12,6 +12,7 @@ describe("shadow calibration data", () => {
       label: "H",
       generatedAt: "2026-07-20T10:00:00.000Z",
       kickoff: "2026-07-20T11:15:00.000Z",
+      predictionId: "prediction",
       inputSnapshotHash: "immutable",
       featureVector: { ppg_diff: 0.4 },
       probabilities: { home: 0.5, draw: 0.3, away: 0.2 },

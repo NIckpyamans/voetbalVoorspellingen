@@ -8,16 +8,28 @@ import { getSql, loadLocalEnv } from "../shared/database.js";
 import { readApiFootballFixtureCache } from "./worker/api-football-fixture-cache.js";
 
 const ROOT = process.cwd();
-const DAYS_BACK = Math.max(0, Number(process.env.R2_REPLAY_DAYS_BACK || 1));
-const DAYS_AHEAD = Math.max(1, Number(process.env.R2_REPLAY_DAYS_AHEAD || 14));
+const DAYS_BACK = Math.min(7, Math.max(0, Number(process.env.R2_REPLAY_DAYS_BACK || 1)));
+const DAYS_AHEAD = Math.min(14, Math.max(1, Number(process.env.R2_REPLAY_DAYS_AHEAD || 14)));
+const MAX_FIXTURES = Math.min(250, Math.max(1, Number(process.env.R2_REPLAY_MAX_FIXTURES || 100)));
 const OUTPUT = path.join(ROOT, "monitor", "r2-critical-capture-replay.json");
 
 function digest(value, size = 32) {
   return crypto.createHash("sha256").update(String(value || "")).digest("hex").slice(0, size);
 }
 
+export function selectReplayFixtureIds(dayDocuments, { maxFixtures = MAX_FIXTURES } = {}) {
+  const fixtures = new Map();
+  for (const day of dayDocuments || []) {
+    for (const match of Array.isArray(day?.matches) ? day.matches : []) {
+      const matchId = String(match.id || (match.sofaId ? `ss-${match.sofaId}` : ""));
+      if (matchId && !fixtures.has(matchId)) fixtures.set(matchId, { matchId, kickoff: match.kickoff || null });
+    }
+  }
+  return [...fixtures.values()].sort((a, b) => String(a.kickoff || "").localeCompare(String(b.kickoff || ""))).slice(0, Math.min(250, Math.max(1, Number(maxFixtures) || MAX_FIXTURES)));
+}
+
 function fixtureIds() {
-  const rows = new Map();
+  const dayDocuments = [];
   const now = new Date();
   for (let offset = -DAYS_BACK; offset <= DAYS_AHEAD; offset += 1) {
     const date = new Date(now);
@@ -25,17 +37,12 @@ function fixtureIds() {
     const file = path.join(ROOT, "data", "days", `${date.toISOString().slice(0, 10)}.json`);
     if (!fs.existsSync(file)) continue;
     try {
-      const payload = JSON.parse(fs.readFileSync(file, "utf8"));
-      for (const match of Array.isArray(payload?.matches) ? payload.matches : []) {
-        const matchId = String(match.id || (match.sofaId ? `ss-${match.sofaId}` : ""));
-        if (!matchId) continue;
-        rows.set(matchId, { matchId, kickoff: match.kickoff || null });
-      }
+      dayDocuments.push(JSON.parse(fs.readFileSync(file, "utf8")));
     } catch (error) {
       console.warn(`[r2-replay] kon ${file} niet lezen: ${error?.message || error}`);
     }
   }
-  return [...rows.values()];
+  return selectReplayFixtureIds(dayDocuments);
 }
 
 async function readCapture(config, type, matchId) {
@@ -181,6 +188,9 @@ async function main() {
   const apiFootballCache = readApiFootballFixtureCache(ROOT);
   const report = {
     generatedAt: new Date().toISOString(),
+    selectionBudget: { daysBack: DAYS_BACK, daysAhead: DAYS_AHEAD, maxFixtures: MAX_FIXTURES },
+    selectedFixtureIds: fixtures.map((fixture) => fixture.matchId),
+    queriedR2Objects: 0,
     fixtures: fixtures.length,
     lineups: 0,
     odds: 0,
@@ -207,6 +217,7 @@ async function main() {
       continue;
     }
     report.fixtureMappings += await replayFixtureMapping(sql, databaseMatch, apiFootballCache.fixtures?.[fixture.matchId]);
+    report.queriedR2Objects += 3;
     const [lineup, odds, h2h] = await Promise.all([
       readCapture(config, "lineups", fixture.matchId),
       readCapture(config, "odds", fixture.matchId),

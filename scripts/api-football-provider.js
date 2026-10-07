@@ -51,6 +51,10 @@ function normalizeName(value) {
     .trim();
 }
 
+export function getApiFootballH2HCacheKey({ homeName, awayName, leagueLabel }) {
+  return `${normalizeName(leagueLabel)}:${normalizeName(homeName)}__${normalizeName(awayName)}`;
+}
+
 function isoDate(value) {
   const date = new Date(value || "");
   return Number.isNaN(date.getTime()) ? null : date.toISOString().slice(0, 10);
@@ -297,7 +301,7 @@ export async function fetchApiFootballH2HProfile({ store, homeName, awayName, ho
   if (!store || !homeName || !awayName) return null;
   if (!store.apiFootballH2HCache) store.apiFootballH2HCache = {};
 
-  const pairKey = `${normalizeName(leagueLabel)}:${normalizeName(homeName)}__${normalizeName(awayName)}`;
+  const pairKey = getApiFootballH2HCacheKey({ homeName, awayName, leagueLabel });
   const cached = store.apiFootballH2HCache[pairKey];
   if (cached?.data && isFresh(cached, H2H_CACHE_TTL_MS)) return cached.data;
 

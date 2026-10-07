@@ -8,6 +8,7 @@ import {
   summarizeRecentDays,
   values,
 } from "./professional-audit-metrics.js";
+import { assessAuditFreshness, parseAuditTimestamp } from "./worker/audit-freshness.js";
 
 const ROOT = process.cwd();
 const BASE_URL = (process.env.FOOTYAI_BASE_URL || "https://voetbalvoorspellingen-clean.vercel.app").replace(/\/$/, "");
@@ -51,10 +52,10 @@ function getOddsObject(item) {
 function hasUsableOdds(item) {
   const odds = getOddsObject(item);
   if (!odds || typeof odds !== "object") return false;
-  return ["home", "draw", "away"].some((field) => {
-    const value = Number(odds[field]);
+  return ["home", "draw", "away"].every((field) => {
+    const value = Number(odds[field] ?? (field === "home" ? odds.homeWin : field === "away" ? odds.awayWin : undefined));
     return Number.isFinite(value) && value > 1.01;
-  });
+  }) && parseAuditTimestamp(odds.capturedAt) != null && item?.oddsStatus !== "historical_market_profile_only";
 }
 
 function hasOddsStatus(items) {
@@ -123,8 +124,12 @@ function buildMarkdown(report) {
     `- Wedstrijden vandaag: ${report.live.matchesTotal}`,
     `- Voorspellingen vandaag: ${report.live.predictionsTotal}`,
     `- Reviews: ${report.live.reviewCount}`,
-    `- Prediction snapshots: ${report.live.predictionSnapshotCount}`,
+    `- Prediction snapshotrijen: ${report.live.predictionSnapshotCount}`,
+    `- Unieke snapshotwedstrijden: ${report.recent.uniqueSnapshotMatches}`,
+    `- Snapshot-evaluatie: ${report.recent.snapshotEvaluations.evaluatedFixtures}/${report.recent.snapshotEvaluations.eligibleFixtures} unieke fixtures; ${report.recent.snapshotEvaluations.eligibleSnapshots} rijen`,
+    `- Dagbestanden: ${report.recent.uniqueFixtures}/${report.recent.matches} unieke fixtures; ${report.recent.duplicateMatchRows} dubbele rijen`,
     `- Worker: ${report.live.workerVersion || "onbekend"}`,
+    `- Auditversheid: ${report.freshness.status}`,
     `- Feature coverage: ${pct(report.predictions.featureCoverage)}`,
     `- Echte odds coverage: ${pct(report.predictions.oddsCoverage)}`,
     `- Alleen historisch marktprofiel: ${pct(report.predictions.historicalMarketOnly)}`,
@@ -178,6 +183,7 @@ async function main() {
   const snapshotItems = recent.snapshotsList.length ? recent.snapshotsList : values(snapshotsJson.items);
   const snapshotGrowth = readJson("monitor/snapshot-growth-monitor.json");
   const lineupMonitor = readJson("monitor/lineup-availability-monitor.json");
+  const dataQualityReport = readJson("monitor/data-quality-audit.json");
   const recalibrationReport = readJson("monitor/model-recalibration-report.json");
   const databaseAvailable = snapshotGrowth?.database?.available !== false;
   const appRecommendations = buildAppRecommendations({ recent, snapshotGrowth, lineupMonitor, recalibrationReport, databaseAvailable });
@@ -200,6 +206,16 @@ async function main() {
       status: "active"
     },
     generatedAt,
+    freshness: assessAuditFreshness({ generatedAt }),
+    sourceFreshness: {
+      dayDocuments: recent.sourceFreshness,
+      priorDataQualityAudit: assessAuditFreshness(dataQualityReport),
+      endpoints: Object.fromEntries(Object.entries({ matchesJson, predictJson, historyJson, snapshotsJson }).map(([key, value]) => [key, {
+        available: !value.error,
+        sourceTimestamp: value.generatedAt || value.timestamp || value.lastUpdated || null,
+        sourceAgeMs: (() => { const time = Date.parse(String(value.generatedAt || value.timestamp || value.lastUpdated || "")); return Number.isFinite(time) ? Date.now() - time : null; })(),
+      }])),
+    },
     baseUrl: BASE_URL,
     summary: hasFetchErrors
       ? `Professionele audit actief, maar live fetch is beperkt: ${Object.entries(fetchErrors).filter(([, value]) => value).map(([key]) => key).join(", ")}.`
@@ -224,6 +240,13 @@ async function main() {
     predictions: summarizePredictions(predictions, generatedAt),
     recent: {
       ...recent,
+      uniqueFixtureAccounting: {
+        matchRows: recent.matches,
+        uniqueFixtures: recent.uniqueFixtures,
+        duplicateRows: recent.duplicateMatchRows,
+        snapshotRows: recent.predictionSnapshots,
+        uniqueSnapshotFixtures: recent.uniqueSnapshotMatches,
+      },
       matchesList: undefined,
       predictionsList: undefined,
       reviewsList: undefined,

@@ -1,0 +1,42 @@
+name: API-Football H2H read-only probe
+
+on:
+  workflow_dispatch:
+    inputs:
+      pairs:
+        description: "Maximum upcoming matches to probe (hard cap 5)"
+        required: false
+        default: "3"
+
+permissions:
+  contents: read
+
+jobs:
+  probe-h2h:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    env:
+      API_KEY_API_FOOTBALL: ${{ secrets.API_KEY_API_FOOTBALL }}
+      API_FOOTBALL_KEY: ${{ secrets.API_FOOTBALL_KEY }}
+      APISPORTS_KEY: ${{ secrets.APISPORTS_KEY }}
+      API_FOOTBALL_BASE_URL: ${{ vars.API_FOOTBALL_BASE_URL }}
+      API_FOOTBALL_H2H_PROBE_PAIRS: ${{ inputs.pairs || '3' }}
+    steps:
+      - uses: actions/checkout@v5
+        with:
+          ref: codex/step3b-layout
+      - uses: actions/setup-node@v5
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+      - name: Read-only H2H provider probe (no persistence)
+        run: npm run provider:api-football:h2h-probe
+      - name: Upload probe report
+        if: always()
+        uses: actions/upload-artifact@v5
+        with:
+          name: api-football-h2h-probe-${{ github.run_id }}
+          path: monitor/api-football-h2h-probe.json
+          if-no-files-found: error
+          retention-days: 30

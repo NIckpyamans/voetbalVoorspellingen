@@ -16,7 +16,7 @@ export function trainingCalibrationRows(training) {
     .filter((row) => snapshotTrainingEligibility({
       ...row,
       features: row.featureVector,
-      inputSnapshotHash: row.inputSnapshotHash || row.predictionId,
+      inputSnapshotHash: row.inputSnapshotHash || row.immutableHash,
     }).eligible)
     .filter((row) => /^(FT|AET|PEN)$/i.test(String(row?.status || "")))
     .map((row) => ({
@@ -29,7 +29,7 @@ export function trainingCalibrationRows(training) {
       league: row.league,
       competition_segment: competitionSegment(row),
       actual_outcome: String(row.label || row.review?.actualOutcome || "").toUpperCase(),
-      snapshot_window: row.snapshotWindow || snapshotTrainingEligibility({ ...row, features: row.featureVector, inputSnapshotHash: row.predictionId }).snapshotWindow,
+      snapshot_window: row.snapshotWindow || snapshotTrainingEligibility({ ...row, features: row.featureVector, inputSnapshotHash: row.inputSnapshotHash || row.immutableHash }).snapshotWindow,
     }))
     .filter((row) => row.prediction_id && row.match_id && row.league && row.probabilities)
     .filter((row) => ["H", "D", "A"].includes(row.actual_outcome));

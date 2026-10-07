@@ -154,6 +154,7 @@ async function main() {
     errors,
     targets: { uefaQualification, clubFriendly },
     accepted: uefaQualification.passed && clubFriendly.passed,
+    gateScope: "fixture_coverage_only; does_not_control_h2h",
     matches: rows.map(({ id, date, league, homeTeam, awayTeam, category: matchCategory, fixtureId, confidence }) => ({ id, date, league, homeTeam, awayTeam, category: matchCategory, fixtureId: fixtureId || null, confidence: confidence || 0 })),
   };
   const fixtureCache = mergeApiFootballFixtureMappings(readApiFootballFixtureCache(ROOT), rows);

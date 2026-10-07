@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { mergeCatalogStandings, sameTeam } from "../../shared/standingsCatalog.js";
+import { validateStandingIntegrity } from "../../shared/standingsIntegrity.js";
 
 const catalog = {
   season: "2026-2027",
@@ -14,6 +15,52 @@ const catalog = {
 };
 
 describe("standings catalog fallback", () => {
+  it("allows played UEFA tables when participant membership remains provisional", () => {
+    const result = validateStandingIntegrity("Europe - Champions League", {
+      type: "cup",
+      membershipStatus: "provisional_qualification_baseline",
+      expectedTeams: 2,
+    }, {
+      season: "2026-2027",
+      preliminary: false,
+      rows: [
+        { p: 1, w: 1, d: 0, l: 0, gf: 2, ga: 1, pts: 3 },
+        { p: 1, w: 0, d: 0, l: 1, gf: 1, ga: 2, pts: 0 },
+      ],
+    }, "2026-2027");
+    expect(result.errors).toEqual([]);
+    expect(result.totalPlayed).toBe(2);
+  });
+
+  it("still rejects played tables explicitly marked as preliminary and retains goal checks", () => {
+    const preliminary = validateStandingIntegrity("Europe - Conference League", {
+      type: "cup",
+      membershipStatus: "provisional_qualification_baseline",
+      expectedTeams: 2,
+    }, {
+      season: "2026-2027",
+      preliminary: true,
+      rows: [
+        { p: 1, w: 1, d: 0, l: 0, gf: 2, ga: 0, pts: 3 },
+        { p: 1, w: 0, d: 0, l: 1, gf: 0, ga: 1, pts: 0 },
+      ],
+    }, "2026-2027");
+    expect(preliminary.errors).toContain("Europe - Conference League: voorlopige UEFA league-phase bevat 1 gespeelde wedstrijden");
+
+    const inconsistent = validateStandingIntegrity("Europe - Europa League", {
+      type: "cup",
+      expectedTeams: 2,
+    }, {
+      season: "2026-2027",
+      preliminary: false,
+      rows: [
+        { p: 1, w: 1, d: 0, l: 0, gf: 3, ga: 0, pts: 3 },
+        { p: 1, w: 0, d: 0, l: 1, gf: 0, ga: 1, pts: 0 },
+      ],
+    }, "2026-2027");
+    expect(inconsistent.errors).toContain("Europe - Europa League: DV 3 verschilt van DT 1");
+  });
+
   it("matches provider and catalog aliases for Hertha", () => {
     expect(sameTeam("Hertha BSC", "Hertha Berlin")).toBe(true);
   });
@@ -24,6 +71,42 @@ describe("standings catalog fallback", () => {
     expect(sameTeam("Bayern Munchen", "Bayern Munich")).toBe(true);
     expect(sameTeam("1. FC Koln", "FC Cologne")).toBe(true);
     expect(sameTeam("Hamburger SV", "Hamburg SV")).toBe(true);
+  });
+  it("matches FotMob spelling variants for 2026 UEFA participants", () => {
+    expect(sameTeam("Bodo/Glimt", "Bodø/Glimt")).toBe(true);
+    expect(sameTeam("Internazionale", "Inter")).toBe(true);
+    expect(sameTeam("Hapoel Be'er", "Hapoel Beer Sheva")).toBe(true);
+    expect(sameTeam("Jagiellonia Bialystok", "Jagiellonia Białystok")).toBe(true);
+    expect(sameTeam("Lillestrom", "Lillestrøm")).toBe(true);
+    expect(sameTeam("Bodo/Glimt", "Borussia Dortmund")).toBe(false);
+  });
+  it("keeps UEFA provider statistics when team names use verified variants", () => {
+    const europeanCatalog = {
+      season: "2026-2027",
+      competitions: [{
+        league: "Europe - Europa League",
+        slug: "europe-europa-league",
+        type: "cup",
+        expectedTeams: 3,
+        format: "league_phase_8_matches_then_knockout",
+        membershipStatus: "provisional_qualification_baseline",
+        teams: ["Hapoel Be'er", "Jagiellonia Bialystok", "Lillestrom"],
+      }],
+    };
+    const standings = mergeCatalogStandings({ "label:Europe - Europa League": {
+      label: "Europe - Europa League",
+      season: "2026/2027",
+      source: "fotmob",
+      rows: [
+        { pos: 1, team: "Hapoel Beer Sheva", p: 2, w: 1, d: 1, l: 0, gf: 3, ga: 2, pts: 4 },
+        { pos: 2, team: "Jagiellonia Białystok", p: 2, w: 1, d: 0, l: 1, gf: 2, ga: 2, pts: 3 },
+        { pos: 3, team: "Lillestrøm", p: 2, w: 0, d: 1, l: 1, gf: 1, ga: 2, pts: 1 },
+      ],
+    } }, europeanCatalog);
+    const table = standings["label:Europe - Europa League"];
+    expect(table.rows.map((row) => row.p)).toEqual([2, 2, 2]);
+    expect(table.rows.reduce((sum, row) => sum + row.gf, 0)).toBe(6);
+    expect(table.rows.reduce((sum, row) => sum + row.ga, 0)).toBe(6);
   });
   it("keeps every catalog team when the live standing is partial", () => {
     const standings = mergeCatalogStandings({ partial: {
@@ -223,6 +306,35 @@ describe("standings catalog fallback", () => {
     const rows = standings["label:Netherlands - Eredivisie"].rows;
     expect(rows.find((row) => row.team === "PSV")).toMatchObject({ p: 2, pts: 6, gf: 5 });
     expect(standings["label:Netherlands - Eredivisie"].source).toContain("fotmob");
+  });
+
+  it("rejects incomplete UEFA provider tables instead of trusting their partial zeroed rows", () => {
+    const uefaCatalog = {
+      season: "2026-2027",
+      competitions: [{
+        league: "Europe - Champions League",
+        slug: "europe-champions-league",
+        type: "cup",
+        expectedTeams: 3,
+        format: "league_phase_8_matches_then_knockout",
+        membershipStatus: "provisional_qualification_baseline",
+        teams: ["Ajax", "PSV", "Roma"],
+      }],
+    };
+    const standings = mergeCatalogStandings({ "label:Europe - Champions League": {
+      label: "Europe - Champions League",
+      season: "2026/2027",
+      source: "fotmob",
+      preliminary: false,
+      rows: [
+        { pos: 1, team: "Ajax", p: 1, w: 1, d: 0, l: 0, gf: 2, ga: 1, pts: 3 },
+        { pos: 2, team: "PSV", p: 1, w: 0, d: 0, l: 1, gf: 1, ga: 2, pts: 0 },
+        { pos: 3, team: "Wrong Club", p: 0, w: 0, d: 0, l: 0, gf: 0, ga: 0, pts: 0 },
+      ],
+    } }, uefaCatalog);
+    const table = standings["label:Europe - Champions League"];
+    expect(table.rows.every((row) => row.p === 0)).toBe(true);
+    expect(table.source).toBe("competition-catalog-zero + competition-catalog");
   });
 
   it("clears a stale UEFA league-phase table while membership is provisional", () => {
