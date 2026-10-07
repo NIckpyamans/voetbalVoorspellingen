@@ -1,36 +1,47 @@
 # Upcoming H2H Backfill
 
-Laatst bijgewerkt: 2026-10-07T02:45:18.192Z
+Laatst bijgewerkt: 2026-10-07T05:59:52.544Z
 Gecontroleerd: 50
-Gevuld: 0
-Geen directe H2H: 50
+Gevuld: 11
+Geen directe H2H: 39
 Errors: 0
 
-Openstaand na deze batch: 73
+Openstaand na deze batch: 23
 
 ## Aanbeveling
-Er staan nog 73 fixtures in de wachtrij; volgende batch prioriteert ontbrekende H2H en vroegste aftrap.
+Er staan nog 23 fixtures in de wachtrij; volgende batch prioriteert ontbrekende H2H en vroegste aftrap.
 
 ## Gevuld
+- 2026-10-23: Go Ahead Eagles - Telstar (2)
+- 2026-10-23: Brest - Nice (5)
+- 2026-10-23: Pau - Grenoble (5)
+- 2026-10-24: Arsenal - Everton (5)
+- 2026-10-24: Toulouse - Troyes (2)
+- 2026-10-24: Portsmouth - Millwall (4)
+- 2026-10-24: Mainz - Werder Bremen (5)
+- 2026-10-24: Lens - Paris FC (2)
+- 2026-10-24: Dijon - Rodez (2)
+- 2026-10-24: Montpellier - Red Star (2)
+- 2026-10-24: Augsburg - Union Berlin (5)
 
 ## Geen Directe H2H
-- 2026-10-17: SpVgg Greuther Fürth - TSV Eintracht Braunschweig (no_direct_history)
-- 2026-10-17: Middlesbrough - Cardiff City (no_direct_history)
-- 2026-10-17: Nantes - Dunkerque (no_direct_history)
-- 2026-10-17: Elversberg - Augsburg (no_direct_history)
-- 2026-10-17: Fulham - Hull City (no_direct_history)
-- 2026-10-17: FC Emmen - Almere City FC (no_direct_history)
-- 2026-10-17: ADO Den Haag - PSV Eindhoven (no_direct_history)
-- 2026-10-17: VfL Wolfsburg - 1. FC Heidenheim 1846 (no_direct_history)
-- 2026-10-17: Millwall - Lincoln City (no_direct_history)
-- 2026-10-17: Red Star FC 93 - Saint-Étienne (no_direct_history)
-- 2026-10-17: Werder Bremen - Paderborn (no_direct_history)
-- 2026-10-17: Manchester City - Ipswich Town (no_direct_history)
-- 2026-10-17: Telstar - Feyenoord Rotterdam (no_direct_history)
-- 2026-10-17: Greuther Fürth - Eintracht Braunschweig (no_direct_history)
-- 2026-10-17: Watford - Charlton Athletic (no_direct_history)
-- 2026-10-17: Red Star - Saint-Étienne (no_direct_history)
-- 2026-10-17: 1. FC Union Berlin - Borussia Dortmund (no_direct_history)
-- 2026-10-17: Hannover 96 - St. Pauli (no_direct_history)
-- 2026-10-17: Birmingham City - Queens Park Rangers (no_direct_history)
-- 2026-10-17: Derby County - Stoke City (no_direct_history)
+- 2026-10-22: Lincoln Red Imps - FC Twente (no_direct_history)
+- 2026-10-22: Hoffenheim - Lyon (no_direct_history)
+- 2026-10-22: Borac Banja Luka - KuPS (no_direct_history)
+- 2026-10-22: Jagiellonia Białystok - Anderlecht (no_direct_history)
+- 2026-10-22: FC Midtjylland - St.Truiden (no_direct_history)
+- 2026-10-22: Lillestrøm - Real Sociedad (no_direct_history)
+- 2026-10-22: NK Celje - Salzburg (no_direct_history)
+- 2026-10-23: SV Darmstadt 98 - St. Pauli (no_direct_history)
+- 2026-10-23: Almere City - Roda JC Kerkrade (no_direct_history)
+- 2026-10-23: Clermont Foot - Guingamp (no_direct_history)
+- 2026-10-23: VfB Stuttgart - Borussia Mönchengladbach (no_direct_history)
+- 2026-10-23: Ipswich Town - Nottingham Forest (no_direct_history)
+- 2026-10-23: Bolton Wanderers - Middlesbrough (no_direct_history)
+- 2026-10-23: VfL Bochum - VfL Wolfsburg (no_direct_history)
+- 2026-10-23: De Graafschap - RKC Waalwijk (no_direct_history)
+- 2026-10-23: FC Den Bosch - MVV Maastricht (no_direct_history)
+- 2026-10-23: AS Nancy Lorraine - Stade Laval (no_direct_history)
+- 2026-10-23: FC Eindhoven - Jong PSV (no_direct_history)
+- 2026-10-23: FC Volendam - Jong FC Utrecht (no_direct_history)
+- 2026-10-23: Jong AZ - Helmond Sport (no_direct_history)
