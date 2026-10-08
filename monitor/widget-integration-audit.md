@@ -1,6 +1,6 @@
 # Widget Integration Audit
 
-Gegenereerd: 2026-10-01T13:22:59.935Z
+Gegenereerd: 2026-10-08T13:36:58.956Z
 Status: degraded
 
 ## Neon
@@ -11,17 +11,17 @@ Status: degraded
 - Source audit rows: 0
 
 ## Widgets
-- FOUT Systeemstatus: HTTP 200
+- OK Systeemstatus: status ok
 - FOUT Neon database: 0 matches, 0 snapshots
 - FOUT Provider- en integriteitswidget: 0 providers, 0 conflicten
 - OK Dashboard/matches-widget: 0 actuele matches, bron no-matches-yet
 - OK Standen-widget: 11 standen
 - OK Bekerschema-widget: 1 actief; leeg is geldig buiten bekerrondes
 - OK Neon seizoen-widget: 0 seizoenovergangen
-- OK Geschiedenis-widget: 1734 reviews
+- OK Geschiedenis-widget: 1742 reviews
 - OK Prediction-snapshot-widget: 1 snapshots
 - OK Vraag FootyAI-widget: 30 brongebonden resultaten
 
 ## Kansen
 - Vul gratis pre-match odds snapshots voordat ROI/CLV wordt beoordeeld.
-- Herstel de mislukte widgetcontracten: Systeemstatus, Neon database, Provider- en integriteitswidget.
+- Herstel de mislukte widgetcontracten: Neon database, Provider- en integriteitswidget.

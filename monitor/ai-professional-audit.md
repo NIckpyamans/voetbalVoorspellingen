@@ -1,6 +1,6 @@
 # FootyAI professionele AI-audit
 
-Gegenereerd: 2026-10-01T13:23:00.019Z
+Gegenereerd: 2026-10-08T13:36:59.098Z
 Bron: https://voetbalvoorspellingen-clean.vercel.app
 
 ## Samenvatting
@@ -8,42 +8,46 @@ Professionele audit actief. Kritieke opslagvelden lijken aanwezig; blijf kalibra
 
 ## Live status
 - Wedstrijden vandaag: 0
-- Voorspellingen vandaag: 98
-- Reviews: 1734
-- Prediction snapshots: 25
+- Voorspellingen vandaag: 16
+- Reviews: 1742
+- Prediction snapshotrijen: 25
+- Unieke snapshotwedstrijden: 8
+- Snapshot-evaluatie: 8/8 unieke fixtures; 8 rijen
+- Dagbestanden: 16/16 unieke fixtures; 0 dubbele rijen
 - Worker: v18-score-data-scout
+- Auditversheid: fresh
 - Feature coverage: 0%
-- Echte odds coverage: 9%
+- Echte odds coverage: 0%
 - Alleen historisch marktprofiel: 0%
-- Gemiddelde datacompleetheid: 96%
+- Gemiddelde datacompleetheid: 97%
 - Datacompleetheid-audit: onbekend
 - Odds readiness: onbekend
 
 ## Recente keten (14 dagen)
-- Afgeronde wedstrijden met eindstand: 98/98 (100%)
-- Geëvalueerde wedstrijden: 98/98 (100%)
-- Snapshot-backed reviews: 30 (31%)
-- Uitkomsthit: 54%
-- Exacte-scorehit: 9%
-- Gemiddelde Brier score: 0.561
-- Gemiddelde log loss: 0.972
-- Echte odds: 9%
+- Afgeronde wedstrijden met eindstand: 16/16 (100%)
+- Geëvalueerde wedstrijden: 16/16 (100%)
+- Snapshot-backed reviews: 8 (50%)
+- Uitkomsthit: 56%
+- Exacte-scorehit: 6%
+- Gemiddelde Brier score: 0.632
+- Gemiddelde log loss: 1.053
+- Echte odds: 0%
 - Confirmed lineups: 0%
 
 ## Segmenten
 - club_friendlies: 0 reviews, uitkomst onbekend, exact onbekend, Brier onbekend
-- european_knockout: 9 reviews, uitkomst 78%, exact 0%, Brier 0.482
-- domestic_competitions: 89 reviews, uitkomst 52%, exact 10%, Brier 0.569
+- european_knockout: 0 reviews, uitkomst onbekend, exact onbekend, Brier onbekend
+- domestic_competitions: 16 reviews, uitkomst 56%, exact 6%, Brier 0.632
 
 ## Opslag-audit
 - prediction_id: aanwezig; gate voldaan
 - generated_at / cutoff_at: aanwezig; gate voldaan
 - featureVector: mist (hoog) - Aanwezig waar predictions gevuld zijn; maak hem immutable per prediction_id.
 - model_version: aanwezig; gate voldaan
-- odds_at_prediction: aanwezig; gate voldaan
+- odds_at_prediction: mist (hoog) - Sla echte bookmaker, markt, odds en timestamp op; historische marktprofielen tellen niet als ROI-basis.
 - odds_status / missing_reason: aanwezig; gate voldaan
 - Brier/log loss: aanwezig; gate voldaan
-- ROI/CLV met echte odds: aanwezig; gate voldaan
+- ROI/CLV met echte odds: mist (hoog) - Bereken ROI/CLV pas wanneer odds_at_prediction en closing_odds echt gevuld zijn.
 - leakage_guard: aanwezig; gate voldaan
 - feature_source_metadata: aanwezig; gate voldaan
 

@@ -6,13 +6,57 @@
     "owner": "Nick",
     "status": "active"
   },
-  "generatedAt": "2026-10-01T13:23:00.019Z",
+  "generatedAt": "2026-10-08T13:36:59.098Z",
+  "freshness": {
+    "generatedAt": "2026-10-08T13:36:59.098Z",
+    "ageMs": 2731,
+    "maxAgeMs": 86400000,
+    "fresh": true,
+    "status": "fresh"
+  },
+  "sourceFreshness": {
+    "dayDocuments": {
+      "generatedAt": "2026-10-08T13:37:01.828Z",
+      "latestMatchDate": "2026-10-04",
+      "latestPredictionAt": "2026-10-08T09:27:10.805Z",
+      "latestSnapshotAt": "2026-09-20T10:13:24.858Z"
+    },
+    "priorDataQualityAudit": {
+      "generatedAt": "2026-10-08T13:36:55.248Z",
+      "ageMs": 6581,
+      "maxAgeMs": 86400000,
+      "fresh": true,
+      "status": "fresh"
+    },
+    "endpoints": {
+      "matchesJson": {
+        "available": true,
+        "sourceTimestamp": null,
+        "sourceAgeMs": null
+      },
+      "predictJson": {
+        "available": true,
+        "sourceTimestamp": null,
+        "sourceAgeMs": null
+      },
+      "historyJson": {
+        "available": true,
+        "sourceTimestamp": null,
+        "sourceAgeMs": null
+      },
+      "snapshotsJson": {
+        "available": true,
+        "sourceTimestamp": null,
+        "sourceAgeMs": null
+      }
+    }
+  },
   "baseUrl": "https://voetbalvoorspellingen-clean.vercel.app",
   "summary": "Professionele audit actief. Kritieke opslagvelden lijken aanwezig; blijf kalibratie en bronkwaliteit bewaken.",
   "live": {
     "matchesTotal": 0,
-    "predictionsTotal": 98,
-    "reviewCount": 1734,
+    "predictionsTotal": 16,
+    "reviewCount": 1742,
     "predictionSnapshotCount": 25,
     "workerVersion": "v18-score-data-scout",
     "sourceBranch": "main",
@@ -30,41 +74,54 @@
     }
   },
   "predictions": {
-    "total": 98,
+    "total": 16,
     "featureCoverage": 0,
     "featureCoverageScope": "fallback-all-visible-records",
-    "featureCoveragePredictions": 98,
+    "featureCoveragePredictions": 16,
     "historicalInlineFeatureCoverage": 0,
     "historicalFeatureStorage": "immutable-r2-snapshot-ledger",
-    "oddsCoverage": 0.09183673469387756,
+    "oddsCoverage": 0,
     "historicalMarketOnly": 0,
     "reviewCoverage": 0,
-    "averageCompleteness": 0.9593469387755096
+    "averageCompleteness": 0.9711249999999996
   },
   "recent": {
-    "days": 7,
-    "matches": 98,
-    "predictions": 98,
-    "finishedMatches": 98,
-    "finishedWithScore": 98,
+    "days": 6,
+    "matches": 16,
+    "uniqueFixtures": 16,
+    "duplicateMatchRows": 0,
+    "predictions": 16,
+    "finishedMatches": 16,
+    "finishedWithScore": 16,
     "resultCoverage": 1,
-    "reviewedMatches": 98,
+    "reviewedMatches": 16,
     "evaluationCoverage": 1,
-    "snapshotBackedReviews": 30,
-    "snapshotBackedReviewCoverage": 0.30612244897959184,
-    "predictionSnapshots": 30,
-    "uniqueSnapshotMatches": 30,
-    "dataCompleteness": 0.9593469387755096,
+    "snapshotBackedReviews": 8,
+    "snapshotBackedReviewCoverage": 0.5,
+    "reviewRows": 16,
+    "uniqueReviewedFixtures": 16,
+    "predictionSnapshots": 8,
+    "uniqueSnapshotMatches": 8,
+    "snapshotEvaluations": {
+      "eligibleSnapshots": 8,
+      "eligibleFixtures": 8,
+      "evaluatedSnapshots": 8,
+      "evaluatedFixtures": 8,
+      "coverage": 1,
+      "repeatedSnapshotRows": 0,
+      "evaluatedFixturesMissing": 0
+    },
+    "dataCompleteness": 0.9711249999999996,
     "sourceMetadataCoverage": 1,
-    "actualOddsCoverage": 0.09183673469387756,
+    "actualOddsCoverage": 0,
     "confirmedLineupCoverage": 0,
     "performance": {
-      "reviews": 98,
-      "outcomeHitRate": 0.5408163265306123,
-      "exactHitRate": 0.09183673469387756,
-      "averageBrier": 0.5614035918367348,
-      "averageLogLoss": 0.9719270306122445,
-      "averageConfidence": 0.438295918367347
+      "reviews": 16,
+      "outcomeHitRate": 0.5625,
+      "exactHitRate": 0.0625,
+      "averageBrier": 0.6321874999999999,
+      "averageLogLoss": 1.0530937499999997,
+      "averageConfidence": 0.439375
     },
     "segments": {
       "club_friendlies": {
@@ -76,21 +133,34 @@
         "averageConfidence": null
       },
       "european_knockout": {
-        "reviews": 9,
-        "outcomeHitRate": 0.7777777777777778,
-        "exactHitRate": 0,
-        "averageBrier": 0.4816333333333333,
-        "averageLogLoss": 0.8411888888888889,
-        "averageConfidence": 0.41955555555555557
+        "reviews": 0,
+        "outcomeHitRate": null,
+        "exactHitRate": null,
+        "averageBrier": null,
+        "averageLogLoss": null,
+        "averageConfidence": null
       },
       "domestic_competitions": {
-        "reviews": 89,
-        "outcomeHitRate": 0.5168539325842697,
-        "exactHitRate": 0.10112359550561797,
-        "averageBrier": 0.5694702471910114,
-        "averageLogLoss": 0.9851477415730338,
-        "averageConfidence": 0.4401910112359552
+        "reviews": 16,
+        "outcomeHitRate": 0.5625,
+        "exactHitRate": 0.0625,
+        "averageBrier": 0.6321874999999999,
+        "averageLogLoss": 1.0530937499999997,
+        "averageConfidence": 0.439375
       }
+    },
+    "sourceFreshness": {
+      "generatedAt": "2026-10-08T13:37:01.828Z",
+      "latestMatchDate": "2026-10-04",
+      "latestPredictionAt": "2026-10-08T09:27:10.805Z",
+      "latestSnapshotAt": "2026-09-20T10:13:24.858Z"
+    },
+    "uniqueFixtureAccounting": {
+      "matchRows": 16,
+      "uniqueFixtures": 16,
+      "duplicateRows": 0,
+      "snapshotRows": 8,
+      "uniqueSnapshotFixtures": 8
     }
   },
   "storageAudit": [
@@ -120,7 +190,7 @@
     },
     {
       "field": "odds_at_prediction",
-      "present": true,
+      "present": false,
       "importance": "hoog",
       "advice": "Sla echte bookmaker, markt, odds en timestamp op; historische marktprofielen tellen niet als ROI-basis."
     },
@@ -138,7 +208,7 @@
     },
     {
       "field": "ROI/CLV met echte odds",
-      "present": true,
+      "present": false,
       "importance": "hoog",
       "advice": "Bereken ROI/CLV pas wanneer odds_at_prediction en closing_odds echt gevuld zijn."
     },
