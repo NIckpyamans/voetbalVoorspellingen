@@ -1,36 +1,36 @@
 # Upcoming H2H Backfill
 
-Laatst bijgewerkt: 2026-10-08T02:00:03.876Z
+Laatst bijgewerkt: 2026-10-08T10:35:36.386Z
 Gecontroleerd: 50
 Gevuld: 0
 Geen directe H2H: 50
 Errors: 0
 
-Openstaand na deze batch: 76
+Openstaand na deze batch: 198
 
 ## Aanbeveling
-API-Football H2H is onafhankelijk van fixture-acceptatie ingeschakeld; 3/3 beperkte paarpogingen gedaan. Er staan nog 76 fixtures in de wachtrij.
+API-Football H2H is onafhankelijk van fixture-acceptatie ingeschakeld; 3/3 beperkte paarpogingen gedaan. Er staan nog 198 fixtures in de wachtrij.
 
 ## Gevuld
 
 ## Geen Directe H2H
-- 2026-10-13: Stoke City - Middlesbrough (no_direct_history)
-- 2026-10-14: Feyenoord Rotterdam - Como (no_direct_history)
-- 2026-10-14: Norwich City - Southampton (no_direct_history)
-- 2026-10-14: LASK - Liverpool (rate_limited_locally)
-- 2026-10-14: Queens Park Rangers - Derby County (rate_limited_locally)
-- 2026-10-14: AS Roma - Real Madrid (rate_limited_locally)
-- 2026-10-14: Lincoln City - West Ham United (rate_limited_locally)
-- 2026-10-14: Aston Villa - Fenerbahce (rate_limited_locally)
-- 2026-10-14: Bodo/Glimt - Borussia Dortmund (rate_limited_locally)
-- 2026-10-14: Manchester City - Paris Saint-Germain (rate_limited_locally)
-- 2026-10-14: Real Betis - FC Porto (rate_limited_locally)
-- 2026-10-14: Shakhtar Donetsk - AEK Athens (rate_limited_locally)
-- 2026-10-14: Slovan Bratislava - VfB Stuttgart (rate_limited_locally)
-- 2026-10-14: Bodø/Glimt - Borussia Dortmund (rate_limited_locally)
-- 2026-10-15: AZ Alkmaar - Hapoel Be'er Sheva (rate_limited_locally)
-- 2026-10-15: CSKA Sofia - AS Monaco (rate_limited_locally)
-- 2026-10-15: AZ Alkmaar - Hapoel Be'er (rate_limited_locally)
-- 2026-10-15: Egnatia - FC Midtjylland (rate_limited_locally)
-- 2026-10-15: Lech Poznan - Bayer Leverkusen (rate_limited_locally)
-- 2026-10-15: Hajduk Split - Ajax Amsterdam (rate_limited_locally)
+- 2026-10-09: Jong Ajax - VVV-Venlo (no_direct_history)
+- 2026-10-09: Jong AZ - FC Den Bosch (no_direct_history)
+- 2026-10-09: NAC Breda - MVV Maastricht (no_direct_history)
+- 2026-10-09: Roda JC Kerkrade - Jong PSV (rate_limited_locally)
+- 2026-10-09: TOP Oss - Helmond Sport (rate_limited_locally)
+- 2026-10-10: SV Darmstadt 98 - Energie Cottbus (rate_limited_locally)
+- 2026-10-10: Charlton Athletic - Bristol City (rate_limited_locally)
+- 2026-10-10: Clermont Foot - Red Star (rate_limited_locally)
+- 2026-10-10: Paderborn - VfB Stuttgart (rate_limited_locally)
+- 2026-10-10: Ipswich Town - Fulham (rate_limited_locally)
+- 2026-10-10: Paris Saint-Germain - Le Mans (rate_limited_locally)
+- 2026-10-10: Fortuna Sittard - FC Twente (rate_limited_locally)
+- 2026-10-10: VfL Osnabruck - Dynamo Dresden (rate_limited_locally)
+- 2026-10-10: Swansea City - Norwich City (rate_limited_locally)
+- 2026-10-10: Saint-Étienne - Rodez (rate_limited_locally)
+- 2026-10-10: Union Berlin - Elversberg (rate_limited_locally)
+- 2026-10-10: Ajax Amsterdam - NEC Nijmegen (rate_limited_locally)
+- 2026-10-10: 1. FC Nürnberg - VfL Wolfsburg (rate_limited_locally)
+- 2026-10-10: West Bromwich Albion - Birmingham City (rate_limited_locally)
+- 2026-10-10: Blackburn Rovers - Cardiff City (rate_limited_locally)
