@@ -1,36 +1,36 @@
 # Upcoming H2H Backfill
 
-Laatst bijgewerkt: 2026-10-09T01:32:03.944Z
+Laatst bijgewerkt: 2026-10-09T10:33:28.954Z
 Gecontroleerd: 50
 Gevuld: 0
 Geen directe H2H: 50
 Errors: 0
 
-Openstaand na deze batch: 97
+Openstaand na deze batch: 133
 
 ## Aanbeveling
-API-Football H2H is onafhankelijk van fixture-acceptatie ingeschakeld; 3/3 beperkte paarpogingen gedaan. Er staan nog 97 fixtures in de wachtrij.
+API-Football H2H is onafhankelijk van fixture-acceptatie ingeschakeld; 3/3 beperkte paarpogingen gedaan. Er staan nog 133 fixtures in de wachtrij.
 
 ## Gevuld
 
 ## Geen Directe H2H
-- 2026-10-16: FC Eindhoven - Vitesse (no_direct_history)
-- 2026-10-16: Reims - Dijon (no_direct_history)
-- 2026-10-16: Eintracht Frankfurt - FC Cologne (no_direct_history)
-- 2026-10-16: Le Mans - Toulouse (rate_limited_locally)
-- 2026-10-16: Helmond Sport - NAC Breda (rate_limited_locally)
-- 2026-10-16: VVV-Venlo - Jong AZ (rate_limited_locally)
-- 2026-10-17: Greuther Fürth - Eintracht Braunschweig (rate_limited_locally)
-- 2026-10-17: Middlesbrough - Cardiff City (rate_limited_locally)
-- 2026-10-17: Nantes - Dunkerque (rate_limited_locally)
-- 2026-10-17: Elversberg - Augsburg (rate_limited_locally)
-- 2026-10-17: Fulham - Hull City (rate_limited_locally)
-- 2026-10-17: FC Emmen - Almere City FC (rate_limited_locally)
-- 2026-10-17: ADO Den Haag - PSV Eindhoven (rate_limited_locally)
-- 2026-10-17: VfL Wolfsburg - 1. FC Heidenheim 1846 (rate_limited_locally)
-- 2026-10-17: Millwall - Lincoln City (rate_limited_locally)
-- 2026-10-17: Red Star - Saint-Étienne (rate_limited_locally)
-- 2026-10-17: Werder Bremen - Paderborn (rate_limited_locally)
-- 2026-10-17: Manchester City - Ipswich Town (rate_limited_locally)
-- 2026-10-17: Telstar - Feyenoord Rotterdam (rate_limited_locally)
-- 2026-10-17: Watford - Charlton Athletic (rate_limited_locally)
+- 2026-10-09: Roda JC Kerkrade - Jong PSV (no_direct_history)
+- 2026-10-09: TOP Oss - Helmond Sport (no_direct_history)
+- 2026-10-10: SV Darmstadt 98 - Energie Cottbus (no_direct_history)
+- 2026-10-10: Charlton Athletic - Bristol City (rate_limited_locally)
+- 2026-10-10: Clermont Foot - Red Star (rate_limited_locally)
+- 2026-10-10: Paderborn - VfB Stuttgart (rate_limited_locally)
+- 2026-10-10: Ipswich Town - Fulham (rate_limited_locally)
+- 2026-10-10: Paris Saint-Germain - Le Mans (rate_limited_locally)
+- 2026-10-10: Fortuna Sittard - FC Twente (rate_limited_locally)
+- 2026-10-10: VfL Osnabruck - Dynamo Dresden (rate_limited_locally)
+- 2026-10-10: Swansea City - Norwich City (rate_limited_locally)
+- 2026-10-10: Saint-Étienne - Rodez (rate_limited_locally)
+- 2026-10-10: Union Berlin - Elversberg (rate_limited_locally)
+- 2026-10-10: Ajax Amsterdam - NEC Nijmegen (rate_limited_locally)
+- 2026-10-10: 1. FC Nürnberg - VfL Wolfsburg (rate_limited_locally)
+- 2026-10-10: West Bromwich Albion - Birmingham City (rate_limited_locally)
+- 2026-10-10: Blackburn Rovers - Cardiff City (rate_limited_locally)
+- 2026-10-10: Bolton Wanderers - Stoke City (rate_limited_locally)
+- 2026-10-10: Derby County - Wrexham (rate_limited_locally)
+- 2026-10-10: Middlesbrough - Wolverhampton Wanderers (rate_limited_locally)
