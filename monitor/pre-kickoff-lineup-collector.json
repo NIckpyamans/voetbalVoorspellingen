@@ -1,23 +1,203 @@
 {
-  "generatedAt": "2026-10-08T13:39:44.489Z",
-  "checked": 0,
+  "generatedAt": "2026-10-09T15:21:27.977Z",
+  "checked": 2,
   "confirmed": 0,
   "changedConfirmed": 0,
   "partial": 0,
-  "missing": 0,
+  "missing": 2,
   "r2Stored": 0,
   "playerFixtureStatsCaptured": 0,
   "databaseWritable": false,
   "databaseError": "Server error (HTTP status 402): {\"message\":\"Your account or project has exceeded the quota. Upgrade your plan to increase limits.\",\"code\":\"\",\"detail\":null,\"hint\":null,\"position\":null,\"internalPosition\":null,\"internalQuery\":null,\"severity\":\"\",\"where\":null,\"table\":null,\"column\":null,\"schema\":null,\"dataType\":null,\"constraint\":null,\"file\":null,\"line\":null,\"routine\":null,\"neon:retryable\":true}",
   "captureWindows": {
-    "t75": 0,
+    "t75": 2,
     "t45": 0,
     "t20": 0,
     "outside": 0
   },
-  "providers": {},
-  "matches": [],
-  "leagueCoverage": [],
+  "providers": {
+    "sofascore:schedule_http_403": 2,
+    "fotmob:lineup_not_published": 2,
+    "goal-api:acceptance_gate_closed": 2,
+    "sportmonks:plan_coverage_unavailable": 2,
+    "api-football:account_or_plan_unavailable": 2
+  },
+  "matches": [
+    {
+      "matchId": "ss-espn-ger.2-401885100",
+      "league": "Germany - 2. Bundesliga",
+      "agent": "germany-2-bundesliga-agent",
+      "kickoff": "2026-10-09T16:30:00.000Z",
+      "minutesBeforeKickoff": 68,
+      "captureWindow": "t75",
+      "homeTeam": "1. FC Heidenheim 1846",
+      "awayTeam": "Kaiserslautern",
+      "provider": "api-football",
+      "status": "account_or_plan_unavailable",
+      "attempts": [
+        {
+          "provider": "sofascore",
+          "status": "schedule_http_403",
+          "lineup": false,
+          "confirmed": false,
+          "durationMs": null,
+          "quota": {
+            "remaining": null,
+            "limit": null,
+            "resetAt": null
+          },
+          "result": "http_error"
+        },
+        {
+          "provider": "fotmob",
+          "status": "lineup_not_published",
+          "lineup": false,
+          "confirmed": false,
+          "durationMs": null,
+          "quota": {
+            "remaining": null,
+            "limit": null,
+            "resetAt": null
+          },
+          "result": "not_published_yet"
+        },
+        {
+          "provider": "goal-api",
+          "status": "acceptance_gate_closed",
+          "lineup": false,
+          "confirmed": false,
+          "durationMs": null,
+          "quota": {
+            "remaining": null,
+            "limit": null,
+            "resetAt": null
+          },
+          "result": "acceptance_blocked"
+        },
+        {
+          "provider": "sportmonks",
+          "status": "plan_coverage_unavailable",
+          "lineup": false,
+          "confirmed": false,
+          "durationMs": null,
+          "quota": {
+            "remaining": null,
+            "limit": null,
+            "resetAt": null
+          },
+          "result": "no_coverage"
+        },
+        {
+          "provider": "api-football",
+          "status": "account_or_plan_unavailable",
+          "fixtureMapped": false,
+          "lineup": false,
+          "confirmed": false,
+          "durationMs": null,
+          "quota": {
+            "remaining": null,
+            "limit": null,
+            "resetAt": null
+          },
+          "result": "acceptance_blocked"
+        }
+      ],
+      "confirmed": false,
+      "partial": false
+    },
+    {
+      "matchId": "ss-fotmob-5881682",
+      "league": "Germany - 2. Bundesliga",
+      "agent": "germany-2-bundesliga-agent",
+      "kickoff": "2026-10-09T16:30:00.000Z",
+      "minutesBeforeKickoff": 68,
+      "captureWindow": "t75",
+      "homeTeam": "Eintracht Braunschweig",
+      "awayTeam": "Holstein Kiel",
+      "provider": "api-football",
+      "status": "account_or_plan_unavailable",
+      "attempts": [
+        {
+          "provider": "sofascore",
+          "status": "schedule_http_403",
+          "lineup": false,
+          "confirmed": false,
+          "durationMs": null,
+          "quota": {
+            "remaining": null,
+            "limit": null,
+            "resetAt": null
+          },
+          "result": "http_error"
+        },
+        {
+          "provider": "fotmob",
+          "status": "lineup_not_published",
+          "lineup": false,
+          "confirmed": false,
+          "durationMs": null,
+          "quota": {
+            "remaining": null,
+            "limit": null,
+            "resetAt": null
+          },
+          "result": "not_published_yet"
+        },
+        {
+          "provider": "goal-api",
+          "status": "acceptance_gate_closed",
+          "lineup": false,
+          "confirmed": false,
+          "durationMs": null,
+          "quota": {
+            "remaining": null,
+            "limit": null,
+            "resetAt": null
+          },
+          "result": "acceptance_blocked"
+        },
+        {
+          "provider": "sportmonks",
+          "status": "plan_coverage_unavailable",
+          "lineup": false,
+          "confirmed": false,
+          "durationMs": null,
+          "quota": {
+            "remaining": null,
+            "limit": null,
+            "resetAt": null
+          },
+          "result": "no_coverage"
+        },
+        {
+          "provider": "api-football",
+          "status": "account_or_plan_unavailable",
+          "fixtureMapped": false,
+          "lineup": false,
+          "confirmed": false,
+          "durationMs": null,
+          "quota": {
+            "remaining": null,
+            "limit": null,
+            "resetAt": null
+          },
+          "result": "acceptance_blocked"
+        }
+      ],
+      "confirmed": false,
+      "partial": false
+    }
+  ],
+  "leagueCoverage": [
+    {
+      "league": "Germany - 2. Bundesliga",
+      "checked": 2,
+      "covered": 0,
+      "partial": 0,
+      "missing": 2,
+      "coverage": 0
+    }
+  ],
   "confirmedCoverage": 0,
   "recalculationRequired": false,
   "recalculationSlaMinutes": 5,
