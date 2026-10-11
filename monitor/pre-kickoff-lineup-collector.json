@@ -1,118 +1,38 @@
 {
-  "generatedAt": "2026-10-10T17:54:28.638Z",
+  "generatedAt": "2026-10-11T14:10:00.821Z",
   "checked": 4,
-  "confirmed": 3,
-  "changedConfirmed": 3,
-  "partial": 1,
-  "missing": 0,
-  "r2Stored": 4,
+  "confirmed": 1,
+  "changedConfirmed": 1,
+  "partial": 2,
+  "missing": 1,
+  "r2Stored": 3,
   "playerFixtureStatsCaptured": 0,
   "databaseWritable": false,
   "databaseError": "Server error (HTTP status 402): {\"message\":\"Your account or project has exceeded the quota. Upgrade your plan to increase limits.\",\"code\":\"\",\"detail\":null,\"hint\":null,\"position\":null,\"internalPosition\":null,\"internalQuery\":null,\"severity\":\"\",\"where\":null,\"table\":null,\"column\":null,\"schema\":null,\"dataType\":null,\"constraint\":null,\"file\":null,\"line\":null,\"routine\":null,\"neon:retryable\":true}",
   "captureWindows": {
-    "t75": 1,
+    "t75": 3,
     "t45": 1,
-    "t20": 2,
+    "t20": 0,
     "outside": 0
   },
   "providers": {
     "sofascore:schedule_http_403": 4,
-    "fotmob:ok": 4
+    "fotmob:ok": 3,
+    "fotmob:fixture_not_found": 1,
+    "goal-api:acceptance_gate_closed": 1,
+    "sportmonks:plan_coverage_unavailable": 1,
+    "api-football:account_or_plan_unavailable": 1
   },
   "matches": [
     {
-      "matchId": "ss-fotmob-5803280",
-      "league": "France - Ligue 2",
-      "agent": "france-ligue-2-agent",
-      "kickoff": "2026-10-10T18:00:00.000Z",
-      "minutesBeforeKickoff": 5,
-      "captureWindow": "t20",
-      "homeTeam": "Saint-Étienne",
-      "awayTeam": "Rodez",
-      "provider": "fotmob",
-      "status": "ok",
-      "attempts": [
-        {
-          "provider": "sofascore",
-          "status": "schedule_http_403",
-          "lineup": false,
-          "confirmed": false,
-          "durationMs": null,
-          "quota": {
-            "remaining": null,
-            "limit": null,
-            "resetAt": null
-          },
-          "result": "http_error"
-        },
-        {
-          "provider": "fotmob",
-          "status": "ok",
-          "lineup": true,
-          "confirmed": true,
-          "durationMs": null,
-          "quota": {
-            "remaining": null,
-            "limit": null,
-            "resetAt": null
-          },
-          "result": "found"
-        }
-      ],
-      "confirmed": true,
-      "partial": false
-    },
-    {
-      "matchId": "ss-espn-ned.1-401875588",
+      "matchId": "ss-espn-ned.1-401875584",
       "league": "Netherlands - Eredivisie",
       "agent": "netherlands-eredivisie-agent",
-      "kickoff": "2026-10-10T18:00:00.000Z",
-      "minutesBeforeKickoff": 5,
-      "captureWindow": "t20",
-      "homeTeam": "Fortuna Sittard",
-      "awayTeam": "FC Twente",
-      "provider": "fotmob",
-      "status": "ok",
-      "attempts": [
-        {
-          "provider": "sofascore",
-          "status": "schedule_http_403",
-          "lineup": false,
-          "confirmed": false,
-          "durationMs": null,
-          "quota": {
-            "remaining": null,
-            "limit": null,
-            "resetAt": null
-          },
-          "result": "http_error"
-        },
-        {
-          "provider": "fotmob",
-          "status": "ok",
-          "lineup": true,
-          "confirmed": true,
-          "durationMs": null,
-          "quota": {
-            "remaining": null,
-            "limit": null,
-            "resetAt": null
-          },
-          "result": "found"
-        }
-      ],
-      "confirmed": true,
-      "partial": false
-    },
-    {
-      "matchId": "ss-espn-ger.2-401885097",
-      "league": "Germany - 2. Bundesliga",
-      "agent": "germany-2-bundesliga-agent",
-      "kickoff": "2026-10-10T18:30:00.000Z",
-      "minutesBeforeKickoff": 35,
+      "kickoff": "2026-10-11T14:45:00.000Z",
+      "minutesBeforeKickoff": 34,
       "captureWindow": "t45",
-      "homeTeam": "1. FC Nürnberg",
-      "awayTeam": "VfL Wolfsburg",
+      "homeTeam": "Excelsior",
+      "awayTeam": "FC Groningen",
       "provider": "fotmob",
       "status": "ok",
       "attempts": [
@@ -147,14 +67,138 @@
       "partial": false
     },
     {
-      "matchId": "ss-espn-ned.1-401875589",
-      "league": "Netherlands - Eredivisie",
-      "agent": "netherlands-eredivisie-agent",
-      "kickoff": "2026-10-10T19:00:00.000Z",
-      "minutesBeforeKickoff": 65,
+      "matchId": "ss-espn-fra.1-401876441",
+      "league": "France - Ligue 1",
+      "agent": "france-ligue-1-agent",
+      "kickoff": "2026-10-11T15:15:00.000Z",
+      "minutesBeforeKickoff": 64,
       "captureWindow": "t75",
-      "homeTeam": "Ajax Amsterdam",
-      "awayTeam": "NEC Nijmegen",
+      "homeTeam": "Stade Rennais",
+      "awayTeam": "AJ Auxerre",
+      "provider": "api-football",
+      "status": "account_or_plan_unavailable",
+      "attempts": [
+        {
+          "provider": "sofascore",
+          "status": "schedule_http_403",
+          "lineup": false,
+          "confirmed": false,
+          "durationMs": null,
+          "quota": {
+            "remaining": null,
+            "limit": null,
+            "resetAt": null
+          },
+          "result": "http_error"
+        },
+        {
+          "provider": "fotmob",
+          "status": "fixture_not_found",
+          "lineup": false,
+          "confirmed": false,
+          "durationMs": null,
+          "quota": {
+            "remaining": null,
+            "limit": null,
+            "resetAt": null
+          },
+          "result": "no_coverage"
+        },
+        {
+          "provider": "goal-api",
+          "status": "acceptance_gate_closed",
+          "lineup": false,
+          "confirmed": false,
+          "durationMs": null,
+          "quota": {
+            "remaining": null,
+            "limit": null,
+            "resetAt": null
+          },
+          "result": "acceptance_blocked"
+        },
+        {
+          "provider": "sportmonks",
+          "status": "plan_coverage_unavailable",
+          "lineup": false,
+          "confirmed": false,
+          "durationMs": null,
+          "quota": {
+            "remaining": null,
+            "limit": null,
+            "resetAt": null
+          },
+          "result": "no_coverage"
+        },
+        {
+          "provider": "api-football",
+          "status": "account_or_plan_unavailable",
+          "fixtureMapped": false,
+          "lineup": false,
+          "confirmed": false,
+          "durationMs": null,
+          "quota": {
+            "remaining": null,
+            "limit": null,
+            "resetAt": null
+          },
+          "result": "acceptance_blocked"
+        }
+      ],
+      "confirmed": false,
+      "partial": false
+    },
+    {
+      "matchId": "ss-fotmob-5795472",
+      "league": "England - Premier League",
+      "agent": "england-premier-league-agent",
+      "kickoff": "2026-10-11T15:30:00.000Z",
+      "minutesBeforeKickoff": 79,
+      "captureWindow": "t75",
+      "homeTeam": "Liverpool",
+      "awayTeam": "Manchester City",
+      "provider": "fotmob",
+      "status": "ok",
+      "attempts": [
+        {
+          "provider": "sofascore",
+          "status": "schedule_http_403",
+          "lineup": false,
+          "confirmed": false,
+          "durationMs": null,
+          "quota": {
+            "remaining": null,
+            "limit": null,
+            "resetAt": null
+          },
+          "result": "http_error"
+        },
+        {
+          "provider": "fotmob",
+          "status": "ok",
+          "lineup": true,
+          "confirmed": false,
+          "durationMs": null,
+          "quota": {
+            "remaining": null,
+            "limit": null,
+            "resetAt": null
+          },
+          "result": "found"
+        }
+      ],
+      "confirmed": false,
+      "partial": true
+    },
+    {
+      "matchId": "ss-espn-ger.1-401884778",
+      "league": "Germany - Bundesliga",
+      "agent": "germany-bundesliga-agent",
+      "kickoff": "2026-10-11T15:30:00.000Z",
+      "minutesBeforeKickoff": 79,
+      "captureWindow": "t75",
+      "homeTeam": "SC Freiburg",
+      "awayTeam": "Schalke 04",
       "provider": "fotmob",
       "status": "ok",
       "attempts": [
@@ -191,23 +235,31 @@
   ],
   "leagueCoverage": [
     {
-      "league": "Netherlands - Eredivisie",
-      "checked": 2,
-      "covered": 1,
+      "league": "England - Premier League",
+      "checked": 1,
+      "covered": 0,
       "partial": 1,
       "missing": 0,
-      "coverage": 0.5
+      "coverage": 0
     },
     {
-      "league": "France - Ligue 2",
+      "league": "France - Ligue 1",
       "checked": 1,
-      "covered": 1,
+      "covered": 0,
       "partial": 0,
-      "missing": 0,
-      "coverage": 1
+      "missing": 1,
+      "coverage": 0
     },
     {
-      "league": "Germany - 2. Bundesliga",
+      "league": "Germany - Bundesliga",
+      "checked": 1,
+      "covered": 0,
+      "partial": 1,
+      "missing": 0,
+      "coverage": 0
+    },
+    {
+      "league": "Netherlands - Eredivisie",
       "checked": 1,
       "covered": 1,
       "partial": 0,
@@ -215,7 +267,7 @@
       "coverage": 1
     }
   ],
-  "confirmedCoverage": 0.75,
+  "confirmedCoverage": 0.25,
   "recalculationRequired": true,
   "recalculationSlaMinutes": 5,
   "recalculationReason": "confirmed_lineup_changed"
