@@ -1,36 +1,36 @@
 # Upcoming H2H Backfill
 
-Laatst bijgewerkt: 2026-10-11T12:48:58.031Z
+Laatst bijgewerkt: 2026-10-11T19:35:36.734Z
 Gecontroleerd: 50
 Gevuld: 0
 Geen directe H2H: 50
 Errors: 0
 
-Openstaand na deze batch: 116
+Openstaand na deze batch: 95
 
 ## Aanbeveling
-API-Football H2H is onafhankelijk van fixture-acceptatie ingeschakeld; 3/3 beperkte paarpogingen gedaan. Er staan nog 116 fixtures in de wachtrij.
+API-Football H2H is onafhankelijk van fixture-acceptatie ingeschakeld; 3/3 beperkte paarpogingen gedaan. Er staan nog 95 fixtures in de wachtrij.
 
 ## Gevuld
 
 ## Geen Directe H2H
-- 2026-10-15: NEC Nijmegen - Levski Sofia (no_direct_history)
-- 2026-10-15: FC København - Braga (no_direct_history)
-- 2026-10-15: Stade Rennais - OFI Crete (no_direct_history)
-- 2026-10-15: Hoffenheim - Beşiktaş (rate_limited_locally)
-- 2026-10-15: Jagiellonia Białystok - Ararat Armenia (rate_limited_locally)
-- 2026-10-16: Energie Cottbus - 1. FC Nürnberg (rate_limited_locally)
-- 2026-10-16: FC Den Bosch - TOP Oss (rate_limited_locally)
-- 2026-10-16: Laval - Clermont Foot (rate_limited_locally)
-- 2026-10-16: Le Mans - Toulouse (rate_limited_locally)
-- 2026-10-16: Holstein Kiel - Hertha Berlin (rate_limited_locally)
-- 2026-10-16: Helmond Sport - NAC Breda (rate_limited_locally)
-- 2026-10-16: VVV-Venlo - Jong AZ (rate_limited_locally)
-- 2026-10-17: Greuther Fürth - Eintracht Braunschweig (rate_limited_locally)
-- 2026-10-17: Middlesbrough - Cardiff City (rate_limited_locally)
-- 2026-10-17: Nantes - Dunkerque (rate_limited_locally)
-- 2026-10-17: Elversberg - Augsburg (rate_limited_locally)
-- 2026-10-17: Fulham - Hull City (rate_limited_locally)
-- 2026-10-17: FC Emmen - Almere City FC (rate_limited_locally)
-- 2026-10-17: ADO Den Haag - PSV Eindhoven (rate_limited_locally)
-- 2026-10-17: VfL Wolfsburg - 1. FC Heidenheim 1846 (rate_limited_locally)
+- 2026-10-13: Stoke City - Middlesbrough (no_direct_history)
+- 2026-10-14: Feyenoord Rotterdam - Como (no_direct_history)
+- 2026-10-14: Norwich City - Southampton (no_direct_history)
+- 2026-10-14: Aston Villa - Fenerbahce (rate_limited_locally)
+- 2026-10-14: Lincoln City - West Ham United (rate_limited_locally)
+- 2026-10-14: Bodo/Glimt - Borussia Dortmund (rate_limited_locally)
+- 2026-10-17: Millwall - Lincoln City (rate_limited_locally)
+- 2026-10-17: Werder Bremen - Paderborn (rate_limited_locally)
+- 2026-10-17: Manchester City - Ipswich Town (rate_limited_locally)
+- 2026-10-17: Red Star - Saint-Étienne (rate_limited_locally)
+- 2026-10-17: Telstar - Feyenoord Rotterdam (rate_limited_locally)
+- 2026-10-17: Watford - Charlton Athletic (rate_limited_locally)
+- 2026-10-20: Liverpool - Villarreal (rate_limited_locally)
+- 2026-10-20: Manchester City - AEK Athens (rate_limited_locally)
+- 2026-10-20: Napoli - Bodo/Glimt (rate_limited_locally)
+- 2026-10-22: Trabzonspor - Heart of Midlothian (rate_limited_locally)
+- 2026-10-22: Union St.Gilloise - Hapoel Beer Sheva (rate_limited_locally)
+- 2026-10-22: FK Crvena Zvezda - FC København (rate_limited_locally)
+- 2026-10-22: Lillestrøm - Real Sociedad (rate_limited_locally)
+- 2026-10-22: AS Monaco - SC Freiburg (rate_limited_locally)
