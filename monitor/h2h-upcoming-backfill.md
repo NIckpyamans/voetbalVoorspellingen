@@ -1,36 +1,36 @@
 # Upcoming H2H Backfill
 
-Laatst bijgewerkt: 2026-10-11T19:35:36.734Z
+Laatst bijgewerkt: 2026-10-12T00:35:17.031Z
 Gecontroleerd: 50
 Gevuld: 0
 Geen directe H2H: 50
 Errors: 0
 
-Openstaand na deze batch: 95
+Openstaand na deze batch: 117
 
 ## Aanbeveling
-API-Football H2H is onafhankelijk van fixture-acceptatie ingeschakeld; 3/3 beperkte paarpogingen gedaan. Er staan nog 95 fixtures in de wachtrij.
+API-Football H2H is onafhankelijk van fixture-acceptatie ingeschakeld; 3/3 beperkte paarpogingen gedaan. Er staan nog 117 fixtures in de wachtrij.
 
 ## Gevuld
 
 ## Geen Directe H2H
-- 2026-10-13: Stoke City - Middlesbrough (no_direct_history)
-- 2026-10-14: Feyenoord Rotterdam - Como (no_direct_history)
-- 2026-10-14: Norwich City - Southampton (no_direct_history)
-- 2026-10-14: Aston Villa - Fenerbahce (rate_limited_locally)
-- 2026-10-14: Lincoln City - West Ham United (rate_limited_locally)
-- 2026-10-14: Bodo/Glimt - Borussia Dortmund (rate_limited_locally)
-- 2026-10-17: Millwall - Lincoln City (rate_limited_locally)
-- 2026-10-17: Werder Bremen - Paderborn (rate_limited_locally)
-- 2026-10-17: Manchester City - Ipswich Town (rate_limited_locally)
-- 2026-10-17: Red Star - Saint-Étienne (rate_limited_locally)
-- 2026-10-17: Telstar - Feyenoord Rotterdam (rate_limited_locally)
-- 2026-10-17: Watford - Charlton Athletic (rate_limited_locally)
-- 2026-10-20: Liverpool - Villarreal (rate_limited_locally)
-- 2026-10-20: Manchester City - AEK Athens (rate_limited_locally)
-- 2026-10-20: Napoli - Bodo/Glimt (rate_limited_locally)
-- 2026-10-22: Trabzonspor - Heart of Midlothian (rate_limited_locally)
-- 2026-10-22: Union St.Gilloise - Hapoel Beer Sheva (rate_limited_locally)
-- 2026-10-22: FK Crvena Zvezda - FC København (rate_limited_locally)
-- 2026-10-22: Lillestrøm - Real Sociedad (rate_limited_locally)
-- 2026-10-22: AS Monaco - SC Freiburg (rate_limited_locally)
+- 2026-10-13: Sabah FK - Slavia Prague (no_direct_history)
+- 2026-10-13: Bristol City - Blackburn Rovers (no_direct_history)
+- 2026-10-13: Arsenal - Lille (no_direct_history)
+- 2026-10-13: Burnley - Charlton Athletic (rate_limited_locally)
+- 2026-10-13: Galatasaray - Barcelona (rate_limited_locally)
+- 2026-10-13: Cardiff City - Watford (rate_limited_locally)
+- 2026-10-13: Internazionale - Club Brugge (rate_limited_locally)
+- 2026-10-13: Millwall - Swansea City (rate_limited_locally)
+- 2026-10-13: RB Leipzig - PSV Eindhoven (rate_limited_locally)
+- 2026-10-13: Wolverhampton Wanderers - Bolton Wanderers (rate_limited_locally)
+- 2026-10-13: Viking FK - Bayern Munich (rate_limited_locally)
+- 2026-10-13: Wrexham - West Bromwich Albion (rate_limited_locally)
+- 2026-10-13: Villarreal - Napoli (rate_limited_locally)
+- 2026-10-13: Birmingham City - Preston North End (rate_limited_locally)
+- 2026-10-14: LASK - Liverpool (rate_limited_locally)
+- 2026-10-14: Queens Park Rangers - Derby County (rate_limited_locally)
+- 2026-10-14: AS Roma - Real Madrid (rate_limited_locally)
+- 2026-10-14: Manchester City - Paris Saint-Germain (rate_limited_locally)
+- 2026-10-14: Real Betis - FC Porto (rate_limited_locally)
+- 2026-10-14: Shakhtar Donetsk - AEK Athens (rate_limited_locally)
