@@ -1,5 +1,5 @@
 {
-  "checkedAt": "2026-10-11T10:51:52.053Z",
+  "checkedAt": "2026-10-12T12:04:08.103Z",
   "oddsApi": {
     "configured": true,
     "valid": true,
@@ -7,6 +7,7 @@
     "catalogIncludesInactive": true,
     "inactiveSoccerSportKeys": [
       "soccer_africa_cup_of_nations",
+      "soccer_belgium_first_div",
       "soccer_concacaf_gold_cup",
       "soccer_concacaf_leagues_cup",
       "soccer_conmebol_copa_america",
@@ -20,7 +21,9 @@
       "soccer_france_coupe_de_france",
       "soccer_germany_bundesliga_women",
       "soccer_italy_coppa_italia",
+      "soccer_russia_premier_league",
       "soccer_spain_copa_del_rey",
+      "soccer_switzerland_superleague",
       "soccer_uefa_champs_league_qualification",
       "soccer_uefa_champs_league_women",
       "soccer_uefa_euro_qualification",
@@ -30,12 +33,11 @@
       "key": "soccer_fa_cup",
       "status": "expected_inactive"
     },
-    "activeSports": 81,
+    "activeSports": 78,
     "soccerSportKeys": [
       "soccer_argentina_primera_division",
       "soccer_australia_aleague",
       "soccer_austria_bundesliga",
-      "soccer_belgium_first_div",
       "soccer_brazil_campeonato",
       "soccer_brazil_serie_b",
       "soccer_chile_campeonato",
@@ -66,14 +68,12 @@
       "soccer_norway_eliteserien",
       "soccer_poland_ekstraklasa",
       "soccer_portugal_primeira_liga",
-      "soccer_russia_premier_league",
       "soccer_saudi_arabia_pro_league",
       "soccer_spain_la_liga",
       "soccer_spain_segunda_division",
       "soccer_spl",
       "soccer_sweden_allsvenskan",
       "soccer_sweden_superettan",
-      "soccer_switzerland_superleague",
       "soccer_turkey_super_league",
       "soccer_uefa_champs_league",
       "soccer_uefa_europa_conference_league",
@@ -92,12 +92,16 @@
       "soccer_uefa_europa_conference_league_qualification"
     ],
     "competitionCoverageStatus": "seasonal_unavailable",
-    "newlyInactiveSports": [],
+    "newlyInactiveSports": [
+      "soccer_belgium_first_div",
+      "soccer_russia_premier_league",
+      "soccer_switzerland_superleague"
+    ],
     "newlyUnavailableSports": [],
     "newlyAvailableSports": [],
     "quota": {
-      "x-requests-remaining": "416",
-      "x-requests-used": "84",
+      "x-requests-remaining": "411",
+      "x-requests-used": "89",
       "x-requests-last": "0"
     },
     "errorCode": null
@@ -170,7 +174,7 @@
     "quota": {
       "x-ratelimit-limit": "1000",
       "x-ratelimit-remaining": "960",
-      "x-ratelimit-reset": "1791763200"
+      "x-ratelimit-reset": "1791849600"
     },
     "accepted": false,
     "policy": "Veertien dagen meten; nooit automatisch promoveren op basis van alleen een geldige key."
@@ -240,11 +244,11 @@
         "valid": true,
         "status": 200,
         "records": 1,
-        "firstId": 19722777,
-        "firstName": "Motherwell vs Celtic",
+        "firstId": 19713909,
+        "firstName": "AGF vs Sønderjyske Fodbold",
         "hasOddsFlag": true,
         "rateLimit": {
-          "resets_in_seconds": 3599,
+          "resets_in_seconds": 3600,
           "remaining": 178,
           "requested_entity": "Fixture"
         },
@@ -258,8 +262,8 @@
         "valid": true,
         "status": 200,
         "records": 1,
-        "firstId": 19722777,
-        "firstName": "Motherwell vs Celtic",
+        "firstId": 19713909,
+        "firstName": "AGF vs Sønderjyske Fodbold",
         "hasOddsFlag": true,
         "rateLimit": {
           "resets_in_seconds": 3599,
@@ -272,17 +276,17 @@
         },
         "errorCode": null
       },
-      "testedFixtureId": 19722777,
+      "testedFixtureId": 19713909,
       "oddsByFixture": {
         "label": "oddsByFixture",
         "valid": true,
         "status": 200,
         "records": 3,
-        "firstId": 245974294469,
+        "firstId": 246049527700,
         "firstName": null,
         "hasOddsFlag": false,
         "rateLimit": {
-          "resets_in_seconds": 3600,
+          "resets_in_seconds": 3599,
           "remaining": 179,
           "requested_entity": "Odd"
         },
@@ -302,7 +306,7 @@
         "firstName": "1",
         "hasOddsFlag": false,
         "rateLimit": {
-          "resets_in_seconds": 3600,
+          "resets_in_seconds": 3599,
           "remaining": 178,
           "requested_entity": "Odd"
         },
@@ -317,7 +321,7 @@
         "valid": true,
         "status": 200,
         "records": 3,
-        "firstId": 245974294469,
+        "firstId": 246049527700,
         "firstName": null,
         "hasOddsFlag": false,
         "rateLimit": {
