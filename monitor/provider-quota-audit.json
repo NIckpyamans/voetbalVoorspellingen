@@ -1,5 +1,5 @@
 {
-  "checkedAt": "2026-10-12T12:04:08.103Z",
+  "checkedAt": "2026-10-13T11:52:03.266Z",
   "oddsApi": {
     "configured": true,
     "valid": true,
@@ -23,7 +23,6 @@
       "soccer_italy_coppa_italia",
       "soccer_russia_premier_league",
       "soccer_spain_copa_del_rey",
-      "soccer_switzerland_superleague",
       "soccer_uefa_champs_league_qualification",
       "soccer_uefa_champs_league_women",
       "soccer_uefa_euro_qualification",
@@ -33,7 +32,7 @@
       "key": "soccer_fa_cup",
       "status": "expected_inactive"
     },
-    "activeSports": 78,
+    "activeSports": 81,
     "soccerSportKeys": [
       "soccer_argentina_primera_division",
       "soccer_australia_aleague",
@@ -74,6 +73,7 @@
       "soccer_spl",
       "soccer_sweden_allsvenskan",
       "soccer_sweden_superettan",
+      "soccer_switzerland_superleague",
       "soccer_turkey_super_league",
       "soccer_uefa_champs_league",
       "soccer_uefa_europa_conference_league",
@@ -92,16 +92,14 @@
       "soccer_uefa_europa_conference_league_qualification"
     ],
     "competitionCoverageStatus": "seasonal_unavailable",
-    "newlyInactiveSports": [
-      "soccer_belgium_first_div",
-      "soccer_russia_premier_league",
+    "newlyInactiveSports": [],
+    "newlyUnavailableSports": [],
+    "newlyAvailableSports": [
       "soccer_switzerland_superleague"
     ],
-    "newlyUnavailableSports": [],
-    "newlyAvailableSports": [],
     "quota": {
-      "x-requests-remaining": "411",
-      "x-requests-used": "89",
+      "x-requests-remaining": "407",
+      "x-requests-used": "93",
       "x-requests-last": "0"
     },
     "errorCode": null
@@ -173,8 +171,8 @@
     "records": 50,
     "quota": {
       "x-ratelimit-limit": "1000",
-      "x-ratelimit-remaining": "960",
-      "x-ratelimit-reset": "1791849600"
+      "x-ratelimit-remaining": "961",
+      "x-ratelimit-reset": "1791936000"
     },
     "accepted": false,
     "policy": "Veertien dagen meten; nooit automatisch promoveren op basis van alleen een geldige key."
@@ -195,13 +193,13 @@
     "status": 200,
     "records": 1,
     "rateLimit": {
-      "resets_in_seconds": 3600,
-      "remaining": 179,
+      "resets_in_seconds": 673,
+      "remaining": 178,
       "requested_entity": "League"
     },
     "quota": {
       "x-ratelimit-limit": "180",
-      "x-ratelimit-remaining": "179"
+      "x-ratelimit-remaining": "178"
     },
     "endpointAccess": {
       "leagues": {
@@ -212,13 +210,13 @@
         "firstName": "Superliga",
         "hasOddsFlag": false,
         "rateLimit": {
-          "resets_in_seconds": 3600,
-          "remaining": 179,
+          "resets_in_seconds": 673,
+          "remaining": 178,
           "requested_entity": "League"
         },
         "quota": {
           "x-ratelimit-limit": "180",
-          "x-ratelimit-remaining": "179"
+          "x-ratelimit-remaining": "178"
         },
         "errorCode": null
       },
@@ -243,10 +241,10 @@
       "fixturesDate": {
         "valid": true,
         "status": 200,
-        "records": 1,
-        "firstId": 19713909,
-        "firstName": "AGF vs Sønderjyske Fodbold",
-        "hasOddsFlag": true,
+        "records": 0,
+        "firstId": null,
+        "firstName": null,
+        "hasOddsFlag": false,
         "rateLimit": {
           "resets_in_seconds": 3600,
           "remaining": 178,
@@ -262,8 +260,8 @@
         "valid": true,
         "status": 200,
         "records": 1,
-        "firstId": 19713909,
-        "firstName": "AGF vs Sønderjyske Fodbold",
+        "firstId": 19713894,
+        "firstName": "Horsens vs Randers FC",
         "hasOddsFlag": true,
         "rateLimit": {
           "resets_in_seconds": 3599,
@@ -276,17 +274,17 @@
         },
         "errorCode": null
       },
-      "testedFixtureId": 19713909,
+      "testedFixtureId": 19713894,
       "oddsByFixture": {
         "label": "oddsByFixture",
         "valid": true,
         "status": 200,
         "records": 3,
-        "firstId": 246049527700,
+        "firstId": 247971586815,
         "firstName": null,
         "hasOddsFlag": false,
         "rateLimit": {
-          "resets_in_seconds": 3599,
+          "resets_in_seconds": 3600,
           "remaining": 179,
           "requested_entity": "Odd"
         },
@@ -306,7 +304,7 @@
         "firstName": "1",
         "hasOddsFlag": false,
         "rateLimit": {
-          "resets_in_seconds": 3599,
+          "resets_in_seconds": 3600,
           "remaining": 178,
           "requested_entity": "Odd"
         },
@@ -321,7 +319,7 @@
         "valid": true,
         "status": 200,
         "records": 3,
-        "firstId": 246049527700,
+        "firstId": 247971586815,
         "firstName": null,
         "hasOddsFlag": false,
         "rateLimit": {
