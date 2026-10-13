@@ -1,12 +1,12 @@
 {
-  "generatedAt": "2026-10-13T09:29:11.370Z",
-  "checked": 31,
+  "generatedAt": "2026-10-13T17:10:36.801Z",
+  "checked": 29,
   "captureWindows": {
     "t20": 0,
     "t45": 0,
     "t75": 0,
-    "prematch": 0,
-    "opening": 31,
+    "prematch": 15,
+    "opening": 14,
     "outside": 0
   },
   "quotaBudget": {
@@ -31,91 +31,52 @@
       }
     }
   },
-  "captured": 27,
-  "openingCaptured": 27,
-  "prematchCaptured": 27,
+  "captured": 0,
+  "openingCaptured": 0,
+  "prematchCaptured": 0,
   "closingCaptured": 0,
   "closingPairs": 0,
   "statuses": {
-    "not_found": 4,
-    "available": 27
+    "not_found": 2
   },
   "attemptStatuses": {
-    "the-odds-api:seasonal_sport_unavailable": 69,
-    "the-odds-api:unsupported_sport": 62,
-    "the-odds-api:not_found": 12,
-    "sportmonks:fixture_id_missing": 4,
-    "the-odds-api:available": 27
+    "the-odds-api:seasonal_sport_unavailable": 6,
+    "the-odds-api:unsupported_sport": 4,
+    "the-odds-api:not_found": 6,
+    "sportmonks:fixture_id_missing": 2
   },
   "providerStatuses": {
     "the-odds-api": {
-      "seasonal_sport_unavailable": 69,
-      "unsupported_sport": 62,
-      "not_found": 12,
-      "available": 27
+      "seasonal_sport_unavailable": 6,
+      "unsupported_sport": 4,
+      "not_found": 6
     },
     "sportmonks": {
-      "fixture_id_missing": 4
+      "fixture_id_missing": 2
     }
   },
   "providerQuota": {
     "the-odds-api": {
-      "remaining": 410,
-      "used": 90,
-      "limit": null,
-      "reset": null
+      "remaining": 404
     }
   },
-  "skippedExistingRole": 0,
+  "skippedExistingRole": 27,
   "sportmonksMapped": 0,
   "sportmonksMappingStatuses": {
-    "plan_coverage_unavailable": 31
+    "plan_coverage_unavailable": 29
   },
   "matches": [
-    {
-      "matchId": "ss-espn-uefa.champions-401915418",
-      "kickoff": "2026-10-13T16:45:00.000Z",
-      "league": "Europe - Champions League",
-      "homeTeam": "Lens",
-      "awayTeam": "Sporting CP",
-      "minutesBeforeKickoff": 436,
-      "captureWindow": "opening",
-      "closingWindow": false,
-      "status": "not_found",
-      "providerCompetitionAvailability": null,
-      "reason": "Sportmonks fixture-id ontbreekt; odds-by-fixture call overgeslagen.",
-      "sportmonksMapping": "plan_coverage_unavailable"
-    },
-    {
-      "matchId": "ss-espn-uefa.champions-401915436",
-      "kickoff": "2026-10-13T16:45:00.000Z",
-      "league": "Europe - Champions League",
-      "homeTeam": "Sabah FK",
-      "awayTeam": "Slavia Prague",
-      "minutesBeforeKickoff": 436,
-      "captureWindow": "opening",
-      "closingWindow": false,
-      "status": "not_found",
-      "providerCompetitionAvailability": null,
-      "reason": "Sportmonks fixture-id ontbreekt; odds-by-fixture call overgeslagen.",
-      "sportmonksMapping": "plan_coverage_unavailable"
-    },
     {
       "matchId": "ss-espn-eng.2-401880231",
       "kickoff": "2026-10-13T18:45:00.000Z",
       "league": "England - Championship",
       "homeTeam": "Bristol City",
       "awayTeam": "Blackburn Rovers",
-      "minutesBeforeKickoff": 556,
-      "captureWindow": "opening",
+      "minutesBeforeKickoff": 94,
+      "captureWindow": "prematch",
       "closingWindow": false,
-      "status": "captured",
-      "provider": "the-odds-api",
-      "captureRole": "opening",
-      "sportmonksFixtureId": null,
-      "opening": true,
-      "prematch": true,
-      "closing": false
+      "status": "already_captured",
+      "captureRole": "prematch"
     },
     {
       "matchId": "ss-espn-eng.2-401880230",
@@ -123,16 +84,11 @@
       "league": "England - Championship",
       "homeTeam": "Burnley",
       "awayTeam": "Charlton Athletic",
-      "minutesBeforeKickoff": 556,
-      "captureWindow": "opening",
+      "minutesBeforeKickoff": 94,
+      "captureWindow": "prematch",
       "closingWindow": false,
-      "status": "captured",
-      "provider": "the-odds-api",
-      "captureRole": "opening",
-      "sportmonksFixtureId": null,
-      "opening": true,
-      "prematch": true,
-      "closing": false
+      "status": "already_captured",
+      "captureRole": "prematch"
     },
     {
       "matchId": "ss-espn-eng.2-401880229",
@@ -140,16 +96,11 @@
       "league": "England - Championship",
       "homeTeam": "Cardiff City",
       "awayTeam": "Watford",
-      "minutesBeforeKickoff": 556,
-      "captureWindow": "opening",
+      "minutesBeforeKickoff": 94,
+      "captureWindow": "prematch",
       "closingWindow": false,
-      "status": "captured",
-      "provider": "the-odds-api",
-      "captureRole": "opening",
-      "sportmonksFixtureId": null,
-      "opening": true,
-      "prematch": true,
-      "closing": false
+      "status": "already_captured",
+      "captureRole": "prematch"
     },
     {
       "matchId": "ss-espn-eng.2-401880228",
@@ -157,16 +108,11 @@
       "league": "England - Championship",
       "homeTeam": "Millwall",
       "awayTeam": "Swansea City",
-      "minutesBeforeKickoff": 556,
-      "captureWindow": "opening",
+      "minutesBeforeKickoff": 94,
+      "captureWindow": "prematch",
       "closingWindow": false,
-      "status": "captured",
-      "provider": "the-odds-api",
-      "captureRole": "opening",
-      "sportmonksFixtureId": null,
-      "opening": true,
-      "prematch": true,
-      "closing": false
+      "status": "already_captured",
+      "captureRole": "prematch"
     },
     {
       "matchId": "ss-espn-eng.2-401880226",
@@ -174,16 +120,11 @@
       "league": "England - Championship",
       "homeTeam": "Wolverhampton Wanderers",
       "awayTeam": "Bolton Wanderers",
-      "minutesBeforeKickoff": 556,
-      "captureWindow": "opening",
+      "minutesBeforeKickoff": 94,
+      "captureWindow": "prematch",
       "closingWindow": false,
-      "status": "captured",
-      "provider": "the-odds-api",
-      "captureRole": "opening",
-      "sportmonksFixtureId": null,
-      "opening": true,
-      "prematch": true,
-      "closing": false
+      "status": "already_captured",
+      "captureRole": "prematch"
     },
     {
       "matchId": "ss-espn-eng.2-401880225",
@@ -191,16 +132,11 @@
       "league": "England - Championship",
       "homeTeam": "Wrexham",
       "awayTeam": "West Bromwich Albion",
-      "minutesBeforeKickoff": 556,
-      "captureWindow": "opening",
+      "minutesBeforeKickoff": 94,
+      "captureWindow": "prematch",
       "closingWindow": false,
-      "status": "captured",
-      "provider": "the-odds-api",
-      "captureRole": "opening",
-      "sportmonksFixtureId": null,
-      "opening": true,
-      "prematch": true,
-      "closing": false
+      "status": "already_captured",
+      "captureRole": "prematch"
     },
     {
       "matchId": "ss-espn-eng.2-401880232",
@@ -208,16 +144,11 @@
       "league": "England - Championship",
       "homeTeam": "Birmingham City",
       "awayTeam": "Preston North End",
-      "minutesBeforeKickoff": 571,
-      "captureWindow": "opening",
+      "minutesBeforeKickoff": 109,
+      "captureWindow": "prematch",
       "closingWindow": false,
-      "status": "captured",
-      "provider": "the-odds-api",
-      "captureRole": "opening",
-      "sportmonksFixtureId": null,
-      "opening": true,
-      "prematch": true,
-      "closing": false
+      "status": "already_captured",
+      "captureRole": "prematch"
     },
     {
       "matchId": "ss-espn-eng.2-401880227",
@@ -225,16 +156,11 @@
       "league": "England - Championship",
       "homeTeam": "Stoke City",
       "awayTeam": "Middlesbrough",
-      "minutesBeforeKickoff": 571,
-      "captureWindow": "opening",
+      "minutesBeforeKickoff": 109,
+      "captureWindow": "prematch",
       "closingWindow": false,
-      "status": "captured",
-      "provider": "the-odds-api",
-      "captureRole": "opening",
-      "sportmonksFixtureId": null,
-      "opening": true,
-      "prematch": true,
-      "closing": false
+      "status": "already_captured",
+      "captureRole": "prematch"
     },
     {
       "matchId": "ss-espn-uefa.champions-401915417",
@@ -242,16 +168,11 @@
       "league": "Europe - Champions League",
       "homeTeam": "Arsenal",
       "awayTeam": "Lille",
-      "minutesBeforeKickoff": 571,
-      "captureWindow": "opening",
+      "minutesBeforeKickoff": 109,
+      "captureWindow": "prematch",
       "closingWindow": false,
-      "status": "captured",
-      "provider": "the-odds-api",
-      "captureRole": "opening",
-      "sportmonksFixtureId": null,
-      "opening": true,
-      "prematch": true,
-      "closing": false
+      "status": "already_captured",
+      "captureRole": "prematch"
     },
     {
       "matchId": "ss-espn-uefa.champions-401915412",
@@ -259,16 +180,11 @@
       "league": "Europe - Champions League",
       "homeTeam": "Atlético Madrid",
       "awayTeam": "Manchester United",
-      "minutesBeforeKickoff": 571,
-      "captureWindow": "opening",
+      "minutesBeforeKickoff": 109,
+      "captureWindow": "prematch",
       "closingWindow": false,
-      "status": "captured",
-      "provider": "the-odds-api",
-      "captureRole": "opening",
-      "sportmonksFixtureId": null,
-      "opening": true,
-      "prematch": true,
-      "closing": false
+      "status": "already_captured",
+      "captureRole": "prematch"
     },
     {
       "matchId": "ss-espn-uefa.champions-401915435",
@@ -276,16 +192,11 @@
       "league": "Europe - Champions League",
       "homeTeam": "Galatasaray",
       "awayTeam": "Barcelona",
-      "minutesBeforeKickoff": 571,
-      "captureWindow": "opening",
+      "minutesBeforeKickoff": 109,
+      "captureWindow": "prematch",
       "closingWindow": false,
-      "status": "captured",
-      "provider": "the-odds-api",
-      "captureRole": "opening",
-      "sportmonksFixtureId": null,
-      "opening": true,
-      "prematch": true,
-      "closing": false
+      "status": "already_captured",
+      "captureRole": "prematch"
     },
     {
       "matchId": "ss-espn-uefa.champions-401915413",
@@ -293,8 +204,8 @@
       "league": "Europe - Champions League",
       "homeTeam": "Internazionale",
       "awayTeam": "Club Brugge",
-      "minutesBeforeKickoff": 571,
-      "captureWindow": "opening",
+      "minutesBeforeKickoff": 109,
+      "captureWindow": "prematch",
       "closingWindow": false,
       "status": "not_found",
       "providerCompetitionAvailability": null,
@@ -307,16 +218,11 @@
       "league": "Europe - Champions League",
       "homeTeam": "RB Leipzig",
       "awayTeam": "PSV Eindhoven",
-      "minutesBeforeKickoff": 571,
-      "captureWindow": "opening",
+      "minutesBeforeKickoff": 109,
+      "captureWindow": "prematch",
       "closingWindow": false,
-      "status": "captured",
-      "provider": "the-odds-api",
-      "captureRole": "opening",
-      "sportmonksFixtureId": null,
-      "opening": true,
-      "prematch": true,
-      "closing": false
+      "status": "already_captured",
+      "captureRole": "prematch"
     },
     {
       "matchId": "ss-espn-uefa.champions-401915411",
@@ -324,16 +230,11 @@
       "league": "Europe - Champions League",
       "homeTeam": "Viking FK",
       "awayTeam": "Bayern Munich",
-      "minutesBeforeKickoff": 571,
-      "captureWindow": "opening",
+      "minutesBeforeKickoff": 109,
+      "captureWindow": "prematch",
       "closingWindow": false,
-      "status": "captured",
-      "provider": "the-odds-api",
-      "captureRole": "opening",
-      "sportmonksFixtureId": null,
-      "opening": true,
-      "prematch": true,
-      "closing": false
+      "status": "already_captured",
+      "captureRole": "prematch"
     },
     {
       "matchId": "ss-espn-uefa.champions-401915410",
@@ -341,16 +242,11 @@
       "league": "Europe - Champions League",
       "homeTeam": "Villarreal",
       "awayTeam": "Napoli",
-      "minutesBeforeKickoff": 571,
-      "captureWindow": "opening",
+      "minutesBeforeKickoff": 109,
+      "captureWindow": "prematch",
       "closingWindow": false,
-      "status": "captured",
-      "provider": "the-odds-api",
-      "captureRole": "opening",
-      "sportmonksFixtureId": null,
-      "opening": true,
-      "prematch": true,
-      "closing": false
+      "status": "already_captured",
+      "captureRole": "prematch"
     },
     {
       "matchId": "ss-espn-uefa.champions-401915416",
@@ -358,16 +254,11 @@
       "league": "Europe - Champions League",
       "homeTeam": "Feyenoord Rotterdam",
       "awayTeam": "Como",
-      "minutesBeforeKickoff": 1876,
+      "minutesBeforeKickoff": 1414,
       "captureWindow": "opening",
       "closingWindow": false,
-      "status": "captured",
-      "provider": "the-odds-api",
-      "captureRole": "opening",
-      "sportmonksFixtureId": null,
-      "opening": true,
-      "prematch": true,
-      "closing": false
+      "status": "already_captured",
+      "captureRole": "opening"
     },
     {
       "matchId": "ss-fotmob-6106405",
@@ -375,16 +266,11 @@
       "league": "Europe - Champions League",
       "homeTeam": "LASK",
       "awayTeam": "Liverpool",
-      "minutesBeforeKickoff": 1876,
+      "minutesBeforeKickoff": 1414,
       "captureWindow": "opening",
       "closingWindow": false,
-      "status": "captured",
-      "provider": "the-odds-api",
-      "captureRole": "opening",
-      "sportmonksFixtureId": null,
-      "opening": true,
-      "prematch": true,
-      "closing": false
+      "status": "already_captured",
+      "captureRole": "opening"
     },
     {
       "matchId": "ss-espn-eng.2-401880223",
@@ -392,16 +278,11 @@
       "league": "England - Championship",
       "homeTeam": "Norwich City",
       "awayTeam": "Southampton",
-      "minutesBeforeKickoff": 1996,
+      "minutesBeforeKickoff": 1534,
       "captureWindow": "opening",
       "closingWindow": false,
-      "status": "captured",
-      "provider": "the-odds-api",
-      "captureRole": "opening",
-      "sportmonksFixtureId": null,
-      "opening": true,
-      "prematch": true,
-      "closing": false
+      "status": "already_captured",
+      "captureRole": "opening"
     },
     {
       "matchId": "ss-espn-eng.2-401880222",
@@ -409,16 +290,11 @@
       "league": "England - Championship",
       "homeTeam": "Portsmouth",
       "awayTeam": "Sheffield United",
-      "minutesBeforeKickoff": 1996,
+      "minutesBeforeKickoff": 1534,
       "captureWindow": "opening",
       "closingWindow": false,
-      "status": "captured",
-      "provider": "the-odds-api",
-      "captureRole": "opening",
-      "sportmonksFixtureId": null,
-      "opening": true,
-      "prematch": true,
-      "closing": false
+      "status": "already_captured",
+      "captureRole": "opening"
     },
     {
       "matchId": "ss-espn-eng.2-401880221",
@@ -426,16 +302,11 @@
       "league": "England - Championship",
       "homeTeam": "Queens Park Rangers",
       "awayTeam": "Derby County",
-      "minutesBeforeKickoff": 1995,
+      "minutesBeforeKickoff": 1534,
       "captureWindow": "opening",
       "closingWindow": false,
-      "status": "captured",
-      "provider": "the-odds-api",
-      "captureRole": "opening",
-      "sportmonksFixtureId": null,
-      "opening": true,
-      "prematch": true,
-      "closing": false
+      "status": "already_captured",
+      "captureRole": "opening"
     },
     {
       "matchId": "ss-espn-eng.2-401880224",
@@ -443,16 +314,11 @@
       "league": "England - Championship",
       "homeTeam": "Lincoln City",
       "awayTeam": "West Ham United",
-      "minutesBeforeKickoff": 2010,
+      "minutesBeforeKickoff": 1549,
       "captureWindow": "opening",
       "closingWindow": false,
-      "status": "captured",
-      "provider": "the-odds-api",
-      "captureRole": "opening",
-      "sportmonksFixtureId": null,
-      "opening": true,
-      "prematch": true,
-      "closing": false
+      "status": "already_captured",
+      "captureRole": "opening"
     },
     {
       "matchId": "ss-espn-uefa.champions-401915414",
@@ -460,16 +326,11 @@
       "league": "Europe - Champions League",
       "homeTeam": "AS Roma",
       "awayTeam": "Real Madrid",
-      "minutesBeforeKickoff": 2010,
+      "minutesBeforeKickoff": 1549,
       "captureWindow": "opening",
       "closingWindow": false,
-      "status": "captured",
-      "provider": "the-odds-api",
-      "captureRole": "opening",
-      "sportmonksFixtureId": null,
-      "opening": true,
-      "prematch": true,
-      "closing": false
+      "status": "already_captured",
+      "captureRole": "opening"
     },
     {
       "matchId": "ss-espn-uefa.champions-401915409",
@@ -477,16 +338,11 @@
       "league": "Europe - Champions League",
       "homeTeam": "Aston Villa",
       "awayTeam": "Fenerbahce",
-      "minutesBeforeKickoff": 2010,
+      "minutesBeforeKickoff": 1549,
       "captureWindow": "opening",
       "closingWindow": false,
-      "status": "captured",
-      "provider": "the-odds-api",
-      "captureRole": "opening",
-      "sportmonksFixtureId": null,
-      "opening": true,
-      "prematch": true,
-      "closing": false
+      "status": "already_captured",
+      "captureRole": "opening"
     },
     {
       "matchId": "ss-espn-uefa.champions-401915393",
@@ -494,7 +350,7 @@
       "league": "Europe - Champions League",
       "homeTeam": "Bodo/Glimt",
       "awayTeam": "Borussia Dortmund",
-      "minutesBeforeKickoff": 2010,
+      "minutesBeforeKickoff": 1549,
       "captureWindow": "opening",
       "closingWindow": false,
       "status": "not_found",
@@ -508,16 +364,11 @@
       "league": "Europe - Champions League",
       "homeTeam": "Manchester City",
       "awayTeam": "Paris Saint-Germain",
-      "minutesBeforeKickoff": 2010,
+      "minutesBeforeKickoff": 1549,
       "captureWindow": "opening",
       "closingWindow": false,
-      "status": "captured",
-      "provider": "the-odds-api",
-      "captureRole": "opening",
-      "sportmonksFixtureId": null,
-      "opening": true,
-      "prematch": true,
-      "closing": false
+      "status": "already_captured",
+      "captureRole": "opening"
     },
     {
       "matchId": "ss-espn-uefa.champions-401915408",
@@ -525,16 +376,11 @@
       "league": "Europe - Champions League",
       "homeTeam": "Real Betis",
       "awayTeam": "FC Porto",
-      "minutesBeforeKickoff": 2010,
+      "minutesBeforeKickoff": 1549,
       "captureWindow": "opening",
       "closingWindow": false,
-      "status": "captured",
-      "provider": "the-odds-api",
-      "captureRole": "opening",
-      "sportmonksFixtureId": null,
-      "opening": true,
-      "prematch": true,
-      "closing": false
+      "status": "already_captured",
+      "captureRole": "opening"
     },
     {
       "matchId": "ss-espn-uefa.champions-401915406",
@@ -542,16 +388,11 @@
       "league": "Europe - Champions League",
       "homeTeam": "Shakhtar Donetsk",
       "awayTeam": "AEK Athens",
-      "minutesBeforeKickoff": 2010,
+      "minutesBeforeKickoff": 1549,
       "captureWindow": "opening",
       "closingWindow": false,
-      "status": "captured",
-      "provider": "the-odds-api",
-      "captureRole": "opening",
-      "sportmonksFixtureId": null,
-      "opening": true,
-      "prematch": true,
-      "closing": false
+      "status": "already_captured",
+      "captureRole": "opening"
     },
     {
       "matchId": "ss-espn-uefa.champions-401915405",
@@ -559,16 +400,11 @@
       "league": "Europe - Champions League",
       "homeTeam": "Slovan Bratislava",
       "awayTeam": "VfB Stuttgart",
-      "minutesBeforeKickoff": 2010,
+      "minutesBeforeKickoff": 1549,
       "captureWindow": "opening",
       "closingWindow": false,
-      "status": "captured",
-      "provider": "the-odds-api",
-      "captureRole": "opening",
-      "sportmonksFixtureId": null,
-      "opening": true,
-      "prematch": true,
-      "closing": false
+      "status": "already_captured",
+      "captureRole": "opening"
     },
     {
       "matchId": "ss-fotmob-6106315",
@@ -576,35 +412,30 @@
       "league": "Europe - Champions League",
       "homeTeam": "Bodø/Glimt",
       "awayTeam": "Borussia Dortmund",
-      "minutesBeforeKickoff": 2010,
+      "minutesBeforeKickoff": 1549,
       "captureWindow": "opening",
       "closingWindow": false,
-      "status": "captured",
-      "provider": "the-odds-api",
-      "captureRole": "opening",
-      "sportmonksFixtureId": null,
-      "opening": true,
-      "prematch": true,
-      "closing": false
+      "status": "already_captured",
+      "captureRole": "opening"
     }
   ],
   "leagueCoverage": [
     {
       "league": "Europe - Champions League",
-      "checked": 19,
-      "covered": 15,
+      "checked": 17,
+      "covered": 0,
       "partial": 0,
-      "missing": 4,
-      "coverage": 0.789
+      "missing": 17,
+      "coverage": 0
     },
     {
       "league": "England - Championship",
       "checked": 12,
-      "covered": 12,
+      "covered": 0,
       "partial": 0,
-      "missing": 0,
-      "coverage": 1
+      "missing": 12,
+      "coverage": 0
     }
   ],
-  "coverage": 0.871
+  "coverage": 0
 }
