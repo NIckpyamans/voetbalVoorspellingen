@@ -14,6 +14,29 @@ export function normalizeOutcomeProbabilities(probabilities = {}) {
   };
 }
 
+// Power-methode: zoek exponent k met sum(q_i^k) = 1. In tegenstelling tot de
+// proportionele methode haalt die de marge vooral bij de favorieten weg, zodat
+// outsiders niet overgewaardeerd worden (favoriet-outsider-bias). Zonder
+// marge (sum <= 1) valt het terug op proportioneel normaliseren.
+export function powerDevig(impliedProbabilities = []) {
+  const values = impliedProbabilities.map(Number);
+  const total = values.reduce((sum, value) => sum + value, 0);
+  if (!values.every((value) => Number.isFinite(value) && value > 0)) return null;
+  if (total <= 1) return values.map((value) => value / total);
+  let low = 1;
+  let high = 10;
+  for (let step = 0; step < 80; step += 1) {
+    const middle = (low + high) / 2;
+    const mass = values.reduce((sum, value) => sum + Math.pow(value, middle), 0);
+    if (mass > 1) low = middle;
+    else high = middle;
+  }
+  const exponent = (low + high) / 2;
+  const raw = values.map((value) => Math.pow(value, exponent));
+  const rawTotal = raw.reduce((sum, value) => sum + value, 0);
+  return raw.map((value) => value / rawTotal);
+}
+
 export function devigThreeWayOdds(odds = {}, kickoff = null) {
   const home = Number(odds.home ?? odds.homeWin ?? 0);
   const draw = Number(odds.draw ?? 0);
@@ -26,12 +49,9 @@ export function devigThreeWayOdds(odds = {}, kickoff = null) {
 
   const overround = 1 / home + 1 / draw + 1 / away;
   if (!Number.isFinite(overround) || overround <= 0) return null;
+  const [homeProb, drawProb, awayProb] = powerDevig([1 / home, 1 / draw, 1 / away]);
   return {
-    ...normalizeOutcomeProbabilities({
-      homeProb: (1 / home) / overround,
-      drawProb: (1 / draw) / overround,
-      awayProb: (1 / away) / overround,
-    }),
+    ...normalizeOutcomeProbabilities({ homeProb, drawProb, awayProb }),
     overround: Number(overround.toFixed(4)),
     bookmaker: odds.bookmaker || null,
     capturedAt: odds.capturedAt || odds.lastUpdated || null,
@@ -77,11 +97,15 @@ export function buildMarketConsensus(odds = {}, kickoff = null) {
   };
 }
 
-export function buildEloOutcomeModel(homeElo, awayElo) {
+export function buildEloOutcomeModel(homeElo, awayElo, options = {}) {
   const home = Number(homeElo || 0);
   const away = Number(awayElo || 0);
   if (!(home > 0 && away > 0)) return null;
-  const difference = clamp(home - away + 65, -650, 650);
+  // club_elo_scale tempert interland-duels waarin ClubElo slechts een proxy is
+  // (clubelo_misread 141x): pas hier dezelfde tempering toe als in de
+  // feature-heuristiek zodat component en heuristiek elkaar niet tegenspreken.
+  const scale = clamp(Number(options.scale ?? 1), 0.1, 1);
+  const difference = clamp((home - away) * scale + 65, -650, 650);
   const drawProb = clamp(0.29 - Math.abs(difference) / 4200, 0.15, 0.29);
   const decisiveHome = 1 / (1 + Math.pow(10, -difference / 400));
   return normalizeOutcomeProbabilities({
@@ -101,7 +125,9 @@ export function buildLineupOutcomeModel(featureVector = {}, confirmed = false) {
     -1.2,
     1.2,
   );
-  const drawScore = 0.18 - Math.abs(edge) * 0.06;
+  // Basislijn: bij gelijke ploegen (edge 0) moet gelijkspel rond 27% liggen.
+  // De oude waarde (0.18) gaf ~37%, dus het model overschatte gelijkspel.
+  const drawScore = -0.3 - Math.abs(edge) * 0.06;
   return normalizeOutcomeProbabilities({
     homeProb: Math.exp(edge),
     drawProb: Math.exp(drawScore),
@@ -186,7 +212,7 @@ export function buildOutcomeEnsemble({
   lineupConfirmed = false,
 } = {}) {
   const market = buildMarketConsensus(oddsAtPrediction || {}, kickoff);
-  const elo = featureVector.club_rating_active ? null : buildEloOutcomeModel(homeElo, awayElo);
+  const elo = featureVector.club_rating_active ? null : buildEloOutcomeModel(homeElo, awayElo, { scale: featureVector.club_elo_scale });
   const lineup = buildLineupOutcomeModel(featureVector, lineupConfirmed);
   const squadStrength = buildSquadStrengthOutcomeModel(featureVector);
   const twoLegContext = buildTwoLegContextModel(featureVector);
@@ -217,10 +243,25 @@ export function buildOutcomeEnsemble({
       combined[key] += Number(component.probabilities[key]) * component.weight;
     }
   }
-  const probabilities = normalizeOutcomeProbabilities(combined);
+  let probabilities = normalizeOutcomeProbabilities(combined);
+  const agreement = ensembleAgreement(components, probabilities);
+  // Lage model-agreement is het grootste geregistreerde faalsignaal (390x in
+  // data/meta.json). Trek de kansen in dat geval naar de gede-vigde
+  // marktconsensus: zodra er pre-kickoff odds zijn is dat de sterkste
+  // afzonderlijke bron en dempt dit een uitschieter in het ensemble.
+  let marketShrink = 0;
+  if (market && agreement < 0.55) {
+    marketShrink = Number(Math.min(0.25, (0.55 - agreement) * 0.8).toFixed(3));
+    probabilities = normalizeOutcomeProbabilities({
+      homeProb: probabilities.homeProb * (1 - marketShrink) + market.homeProb * marketShrink,
+      drawProb: probabilities.drawProb * (1 - marketShrink) + market.drawProb * marketShrink,
+      awayProb: probabilities.awayProb * (1 - marketShrink) + market.awayProb * marketShrink,
+    });
+  }
   return {
     probabilities,
-    agreement: ensembleAgreement(components, probabilities),
+    agreement,
+    marketShrink,
     components,
     market: market ? {
       overround: market.overround,

@@ -37,6 +37,7 @@ import { mergeCatalogStandings, sameTeam } from "../shared/standingsCatalog.js";
 import { loadLocalEnv, readDatabaseFeatureContext, syncStoreToDatabase } from "../shared/database.js";
 import {
   hydrateStoreFromSnapshotLedger,
+  ledgerDeltaSince,
   ledgerFromStore,
   loadSnapshotLedger,
   persistSnapshotLedger,
@@ -70,6 +71,7 @@ import {
   buildFeatureImportance,
   buildFeatureVector,
   buildPoissonScoreModel,
+  buildRestEdge,
   buildRiskProfile,
   hashSeed,
   qualityGateForCompleteness,
@@ -3767,7 +3769,8 @@ function calculateRecentH2HBalance(h2h, currentHomeId, currentAwayId) {
 // faalsignalen in store.featureDiagnostics (zie data/meta.json):
 // - clubelo_misread (141x): een grote Elo-edge zat vaak fout -> edge aftoppen.
 // - market_misread (274x): markt-overperformance zat vaak fout -> lager wegen.
-// - rest_gap (156x): rustverschil zat vaak fout -> lager wegen.
+// - rest_gap (156x): rustverschil zat vaak fout -> lager wegen én vormen als
+//   afnemende meeropbrengst via buildRestEdge (ruisdrempel, aftopping, congestie).
 // - h2h_signal (273x): H2H met >=3 duels zat vaak fout -> alleen toepassen als
 //   de H2H-betrouwbaarheid echt bruikbaar is (>= 0.5) en er >= 3 duels zijn.
 const CLUB_ELO_EDGE_CLAMP = 120;
@@ -3792,8 +3795,9 @@ function buildHeuristicEnsemble(featureVector) {
   awayScore -= Number(featureVector.squad_rating_diff || 0) * 0.045;
   homeScore += Number(featureVector.transfer_impact_diff || 0) * 0.055;
   awayScore -= Number(featureVector.transfer_impact_diff || 0) * 0.055;
-  homeScore += featureVector.rest_diff * REST_DIFF_WEIGHT;
-  awayScore -= featureVector.rest_diff * REST_DIFF_WEIGHT;
+  const restEdge = buildRestEdge(featureVector.home_rest_days, featureVector.away_rest_days);
+  homeScore += restEdge * REST_DIFF_WEIGHT;
+  awayScore -= restEdge * REST_DIFF_WEIGHT;
   homeScore += (featureVector.home_home_split_scored - featureVector.away_away_split_conceded) * 0.16;
   awayScore += (featureVector.away_away_split_scored - featureVector.home_home_split_conceded) * 0.16;
   homeScore += featureVector.set_piece_diff * 0.04;
@@ -12603,15 +12607,20 @@ async function main() {
   console.log(`[worker] Morgen: ${(store.matches?.[tomorrow] || []).length} wedstrijden`);
   
   try {
-    const persistedLedger = await persistSnapshotLedger(ledgerFromStore(store));
+    // Alleen wat deze run nieuw of gewijzigd heeft gaat terug naar R2; alleen de
+    // maandshards die die delta raakt worden gelezen en herschreven.
+    const pendingLedger = ledgerDeltaSince(snapshotLedgerLoad.ledger, ledgerFromStore(store));
+    const persistedLedger = await persistSnapshotLedger(pendingLedger, { touchedOnly: true });
     store.snapshotLedger = {
       ...(store.snapshotLedger || {}),
       persistedAt: new Date().toISOString(),
       r2Persisted: !!persistedLedger.ok,
       r2PersistReason: persistedLedger.reason || null,
-      snapshots: Object.keys(persistedLedger.ledger?.predictionSnapshots || store.predictionSnapshots || {}).length,
-      reviews: Object.keys(persistedLedger.ledger?.postMatchReviews || store.postMatchReviews || {}).length,
-      evaluations: Object.keys(persistedLedger.ledger?.evaluations || store.predictionEvaluations || {}).length,
+      newSnapshots: Object.keys(pendingLedger.predictionSnapshots).length,
+      touchedMonths: persistedLedger.touchedMonths ?? null,
+      snapshots: Object.keys(store.predictionSnapshots || {}).length,
+      reviews: Object.keys(store.postMatchReviews || {}).length,
+      evaluations: Object.keys(store.predictionEvaluations || {}).length,
     };
   } catch (error) {
     store.snapshotLedger = { ...(store.snapshotLedger || {}), r2Persisted: false, r2PersistError: error?.message || String(error) };

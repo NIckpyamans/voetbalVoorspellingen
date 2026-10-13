@@ -22,11 +22,40 @@ function emptyLedger() {
   };
 }
 
-function parseLedgerBuffer(buffer) {
-  if (!buffer?.length) return emptyLedger();
+// Een ledger-bestand groeit mee met elke run. Zonder limiet kan één JSON.parse
+// de Node-heap vullen; dat crasht de hele run i.p.v. een duidelijke fout te geven.
+export const SNAPSHOT_LEDGER_DEFAULT_MAX_JSON_BYTES = 96 * 1024 * 1024;
+
+export class SnapshotLedgerTooLargeError extends Error {
+  constructor(label, limit) {
+    super(`Snapshot ledger ${label} is groter dan ${limit} bytes; weigert het volledig in geheugen te parsen`);
+    this.name = "SnapshotLedgerTooLargeError";
+    this.code = "ledger_too_large";
+  }
+}
+
+export function snapshotLedgerMaxJsonBytes(env = process.env) {
+  const configured = Number(env.SNAPSHOT_LEDGER_MAX_JSON_BYTES);
+  return Number.isFinite(configured) && configured > 0 ? Math.floor(configured) : SNAPSHOT_LEDGER_DEFAULT_MAX_JSON_BYTES;
+}
+
+// Decodeert een (eventueel gzip-) ledgerbuffer naar tekst. De grootte wordt vóór
+// JSON.parse gecontroleerd: gunzip stopt zodra de outputlimiet wordt overschreden.
+export function decodeLedgerJson(buffer, label = "ledger", maxBytes = snapshotLedgerMaxJsonBytes()) {
   const bytes = Buffer.isBuffer(buffer) ? buffer : Buffer.from(buffer);
-  const json = bytes[0] === 0x1f && bytes[1] === 0x8b ? gunzipSync(bytes).toString("utf8") : bytes.toString("utf8");
-  return normalizeSnapshotLedger(JSON.parse(json));
+  if (bytes.length > maxBytes) throw new SnapshotLedgerTooLargeError(label, maxBytes);
+  if (!(bytes[0] === 0x1f && bytes[1] === 0x8b)) return bytes.toString("utf8");
+  try {
+    return gunzipSync(bytes, { maxOutputLength: maxBytes }).toString("utf8");
+  } catch (error) {
+    if (error?.code === "ERR_BUFFER_TOO_LARGE") throw new SnapshotLedgerTooLargeError(label, maxBytes);
+    throw error;
+  }
+}
+
+function parseLedgerBuffer(buffer, label = "ledger") {
+  if (!buffer?.length) return emptyLedger();
+  return normalizeSnapshotLedger(JSON.parse(decodeLedgerJson(buffer, label)));
 }
 
 function compactSnapshotForApi(snapshot) {
@@ -238,6 +267,43 @@ function checksum(value) {
   return crypto.createHash("sha256").update(value).digest("hex");
 }
 
+// Laadt maandshards één voor één: de ruwe bytes, de uitgepakte tekst en de geparste
+// JSON van één maand zijn zo nooit tegelijk in geheugen voor alle maanden.
+async function loadMonthShards({ config, entries, api = false, getObject = getR2Object }) {
+  const shards = [];
+  for (const entry of entries) {
+    const month = entry?.month;
+    if (!/^\d{4}-\d{2}$/.test(String(month || ""))) throw new Error(`Invalid month in R2 index: ${month}`);
+    const hash = api ? entry.apiSha256 : entry.sha256;
+    const relativeKey = api ? entry.apiKey : entry.key;
+    if (!/^[a-f0-9]{64}$/.test(String(hash || "")) || relativeKey !== monthLedgerObjectKey(month, hash, api)) {
+      throw new Error(`Invalid R2 monthly ledger reference for ${month}`);
+    }
+    const object = await getObject({ config, key: buildR2ObjectKey(config, relativeKey) });
+    if (!object.ok) throw new Error(`R2 monthly ledger missing (${month}): ${object.reason || "unknown error"}`);
+    const bytes = Buffer.isBuffer(object.body) ? object.body : Buffer.from(object.body);
+    const json = decodeLedgerJson(bytes, `maand ${month}`);
+    if (checksum(json) !== hash) throw new Error(`R2 monthly ledger checksum mismatch (${month})`);
+    shards.push(normalizeSnapshotLedger(JSON.parse(json)));
+  }
+  return shards;
+}
+
+// Leest alleen de maandshards die een incrementele schrijfactie raakt. Ongewijzigde
+// maanden worden via de manifest-verwijzing doorgegeven zonder ze te downloaden.
+async function readTouchedR2Ledger({ config, ledger, getObject = getR2Object }) {
+  const indexObject = await getObject({ config, key: buildR2ObjectKey(config, SNAPSHOT_LEDGER_MONTH_INDEX_R2_KEY) });
+  if (!indexObject.ok) return readR2SnapshotLedger({ config, getObject });
+  const manifest = JSON.parse(indexObject.body.toString("utf8"));
+  if (manifest.version !== "v2-monthly-ledger" || !Array.isArray(manifest.months)) {
+    throw new Error("R2 month index has an unsupported format");
+  }
+  const touched = new Set(partitionSnapshotLedgerByMonth(ledger).keys());
+  const entries = manifest.months.filter((entry) => touched.has(entry?.month));
+  const shards = await loadMonthShards({ config, entries, getObject });
+  return { available: true, configured: true, source: "r2", ledger: mergeSnapshotLedgers(...shards), manifest, months: manifest.months.length, touchedMonths: entries.length };
+}
+
 async function readPartitionedR2Ledger({ config, legacyKey, api = false, getObject = getR2Object }) {
   const indexKey = buildR2ObjectKey(config, SNAPSHOT_LEDGER_MONTH_INDEX_R2_KEY);
   const indexObject = await getObject({ config, key: indexKey });
@@ -253,22 +319,7 @@ async function readPartitionedR2Ledger({ config, legacyKey, api = false, getObje
   if (manifest.version !== "v2-monthly-ledger" || !Array.isArray(manifest.months)) {
     throw new Error("R2 month index has an unsupported format");
   }
-  const objects = await Promise.all(manifest.months.map(async (entry) => {
-    const month = entry?.month;
-    if (!/^\d{4}-\d{2}$/.test(String(month || ""))) throw new Error(`Invalid month in R2 index: ${month}`);
-    const hash = api ? entry.apiSha256 : entry.sha256;
-    const relativeKey = api ? entry.apiKey : entry.key;
-    if (!/^[a-f0-9]{64}$/.test(String(hash || "")) || relativeKey !== monthLedgerObjectKey(month, hash, api)) {
-      throw new Error(`Invalid R2 monthly ledger reference for ${month}`);
-    }
-    const key = buildR2ObjectKey(config, relativeKey);
-    const object = await getObject({ config, key });
-    if (!object.ok) throw new Error(`R2 monthly ledger missing (${month}): ${object.reason || "unknown error"}`);
-    const bytes = Buffer.isBuffer(object.body) ? object.body : Buffer.from(object.body);
-    const json = bytes[0] === 0x1f && bytes[1] === 0x8b ? gunzipSync(bytes).toString("utf8") : bytes.toString("utf8");
-    if (checksum(json) !== hash) throw new Error(`R2 monthly ledger checksum mismatch (${month})`);
-    return normalizeSnapshotLedger(JSON.parse(json));
-  }));
+  const objects = await loadMonthShards({ config, entries: manifest.months, api, getObject });
   return {
     available: true,
     ledger: mergeSnapshotLedgers(...objects),
@@ -299,6 +350,22 @@ export function hydrateStoreFromSnapshotLedger(store, ledger) {
     reviews: Object.keys(merged.postMatchReviews).length,
     evaluations: Object.keys(merged.evaluations).length,
   };
+}
+
+// Alleen de records die na het laden nieuw of gewijzigd zijn. Een run schrijft zo
+// alleen zijn eigen delta terug in plaats van de hele geschiedenis opnieuw te verwerken.
+export function ledgerDeltaSince(baseline, current) {
+  const base = normalizeSnapshotLedger(baseline);
+  const next = normalizeSnapshotLedger(current);
+  const changed = (known, incoming) => Object.fromEntries(
+    Object.entries(incoming || {}).filter(([id, value]) => value && known[id] !== value)
+  );
+  return normalizeSnapshotLedger({
+    generatedAt: next.generatedAt,
+    predictionSnapshots: changed(base.predictionSnapshots, next.predictionSnapshots),
+    postMatchReviews: changed(base.postMatchReviews, next.postMatchReviews),
+    evaluations: changed(base.evaluations, next.evaluations),
+  });
 }
 
 export function readLocalSnapshotLedger(root = process.cwd()) {
@@ -353,6 +420,41 @@ export async function readR2SnapshotApiLedger(options = {}) {
   }
 }
 
+// Goedkope groeimeting: leest alleen het maandmanifest en de lokale bestandsgrootte,
+// nooit de ledger zelf. Zo kan de monitor de groei zien zonder dezelfde heap-piek te veroorzaken.
+export async function readSnapshotLedgerStorageSummary({ root = process.cwd(), config = getR2Config(), getObject = getR2Object, env = process.env } = {}) {
+  const limitBytes = snapshotLedgerMaxJsonBytes(env);
+  const localPath = path.resolve(root, SNAPSHOT_LEDGER_LOCAL_FILE);
+  const localRecoveryBytes = fs.existsSync(localPath) ? fs.statSync(localPath).size : 0;
+  const summary = {
+    limitBytes,
+    localRecoveryBytes,
+    localRecoveryUtilization: Number((localRecoveryBytes / limitBytes).toFixed(3)),
+    r2: { configured: !!config.configured, months: 0, totalSnapshotsIndexed: 0, largestMonth: null, error: null },
+  };
+  if (config.configured) {
+    try {
+      const index = await getObject({ config, key: buildR2ObjectKey(config, SNAPSHOT_LEDGER_MONTH_INDEX_R2_KEY) });
+      if (!index.ok) {
+        summary.r2.error = index.reason || "index_unavailable";
+      } else {
+        const manifest = JSON.parse(index.body.toString("utf8"));
+        const months = Array.isArray(manifest.months) ? manifest.months : [];
+        summary.r2.months = months.length;
+        summary.r2.totalSnapshotsIndexed = months.reduce((sum, entry) => sum + Number(entry?.snapshots || 0), 0);
+        const largest = months.reduce((best, entry) => (Number(entry?.snapshots || 0) > Number(best?.snapshots || 0) ? entry : best), null);
+        summary.r2.largestMonth = largest ? { month: largest.month, snapshots: Number(largest.snapshots || 0) } : null;
+      }
+    } catch (error) {
+      summary.r2.error = error?.message || String(error);
+    }
+  }
+  summary.warnings = [];
+  if (summary.localRecoveryUtilization >= 0.5) summary.warnings.push("lokale recovery-ledger gebruikt 50% of meer van de parse-limiet");
+  if (summary.r2.error) summary.warnings.push(`R2-manifest niet gelezen: ${summary.r2.error}`);
+  return summary;
+}
+
 export async function loadSnapshotLedger(options = {}) {
   const local = options.includeLocal === false ? null : readLocalSnapshotLedger(options.root);
   const r2 = options.includeR2 === false ? null : await readR2SnapshotLedger(options);
@@ -365,9 +467,13 @@ export async function persistSnapshotLedger(ledger, options = {}) {
   if (!config.configured) return { ok: false, skipped: true, reason: "r2_not_configured" };
   const putObject = options.putObject || putR2Object;
   const getObject = options.getObject || getR2Object;
+  // touchedOnly: alleen de maanden die deze (incrementele) batch raakt worden gelezen.
+  // Zonder die optie blijft het volledige samenvoegpad gelden.
   const current = options.mergeRemote === false
     ? { available: false, ledger: emptyLedger(), manifest: null }
-    : await readR2SnapshotLedger({ config, getObject });
+    : options.touchedOnly
+      ? await readTouchedR2Ledger({ config, ledger, getObject })
+      : await readR2SnapshotLedger({ config, getObject });
   if (current?.error) throw new Error(`Cannot safely update monthly R2 ledger: ${current.error}`);
   if (options.mergeRemote !== false && current?.reason === "not_found" && current?.configured && !options.allowInitialize) {
     throw new Error("Cannot safely update monthly R2 ledger: both month index and legacy ledger are missing");
@@ -454,6 +560,7 @@ export async function persistSnapshotLedger(ledger, options = {}) {
     skipped: false,
     key: buildR2ObjectKey(config, SNAPSHOT_LEDGER_MONTH_INDEX_R2_KEY),
     months: nextEntries.length,
+    touchedMonths: monthsToWrite.size,
     primaryUploads,
     apiUploads,
     bytes: primaryBytes,

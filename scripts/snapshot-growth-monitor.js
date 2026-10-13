@@ -4,7 +4,7 @@ import fs from "fs";
 import path from "path";
 import { getSql, loadLocalEnv } from "../shared/database.js";
 import { isHiddenInternationalOrWorldCupEntity } from "../shared/competitionVisibility.js";
-import { loadSnapshotLedger } from "../shared/predictionSnapshotLedger.js";
+import { loadSnapshotLedger, readSnapshotLedgerStorageSummary } from "../shared/predictionSnapshotLedger.js";
 import { buildModelPromotionGate } from "./worker/model-promotion.js";
 import { ledgerCalibrationRows, mergeCalibrationRows, trainingCalibrationRows } from "./worker/model-calibration-data.js";
 import { uniqueRegularMatchCount } from "./worker/competition-segmentation.js";
@@ -79,6 +79,8 @@ if (sql) {
   }
 }
 
+// Groei van de ledger zichtbaar maken vóórdat de parse-limiet bereikt wordt.
+const ledgerStorage = await readSnapshotLedgerStorageSummary({ root: ROOT });
 const loadedLedger = await loadSnapshotLedger({ root: ROOT });
 const ledgerSnapshots = Object.values(loadedLedger.ledger.predictionSnapshots || {}).filter(
   (snapshot) => !isHiddenInternationalOrWorldCupEntity(snapshot)
@@ -142,6 +144,7 @@ const report = {
     maturity: training?.trainingPolicy?.maturity || "unknown",
   },
   database,
+  ledgerStorage,
   snapshotSources: {
     r2: {
       configured: !!loadedLedger.sources.r2?.configured,

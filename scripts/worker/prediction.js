@@ -48,7 +48,10 @@ export function seededRandom(seed) {
 }
 
 export function buildPoissonScoreModel(homeXG, awayXG, options = {}) {
-  const maxGoals = Number(options.maxGoals ?? 6);
+  // 10 in plaats van 6: bij hoge xG viel te veel kansmassa buiten de matrix en
+  // werd die proportioneel over de rest verdeeld. Bij xG 4,5 vs 4,0 dekt 6 nog
+  // 74%, 8 94% en 10 99%.
+  const maxGoals = Number(options.maxGoals ?? 10);
   const minMatrixProbability = Number(options.minMatrixProbability ?? 0.01);
   let homeProb = 0;
   let drawProb = 0;
@@ -95,24 +98,69 @@ export function buildPoissonScoreModel(homeXG, awayXG, options = {}) {
       if (totalGoals > 2.5) over25 += probability;
       if (totalGoals > 3.5) over35 += probability;
       if (homeGoals > 0 && awayGoals > 0) btts += probability;
-      if (probability > minMatrixProbability) scoreMatrix[`${homeGoals}-${awayGoals}`] = Number(probability.toFixed(4));
+      if (probability > minMatrixProbability) scoreMatrix[`${homeGoals}-${awayGoals}`] = probability;
     }
   }
 
+  // Dixon-Coles tau en de afkapping op maxGoals zorgen ervoor dat de ruwe
+  // matrix niet exact tot 1 optelt. Normaliseer alle uitvoer (1x2, O/U, BTTS,
+  // beste scores en matrixcellen) op dezelfde breuk zodat exacte scorekansen
+  // en marktkansen onderling consistent blijven.
   const totalProb = homeProb + drawProb + awayProb || 1;
+  for (const key of Object.keys(scoreMatrix)) {
+    scoreMatrix[key] = Number((scoreMatrix[key] / totalProb).toFixed(4));
+  }
+  for (const key of Object.keys(bestByOutcome)) {
+    bestByOutcome[key] = {
+      ...bestByOutcome[key],
+      probability: bestByOutcome[key].probability / totalProb,
+    };
+  }
   return {
     homeProb: homeProb / totalProb,
     drawProb: drawProb / totalProb,
     awayProb: awayProb / totalProb,
-    over15,
-    over25,
-    over35,
-    btts,
+    over15: over15 / totalProb,
+    over25: over25 / totalProb,
+    over35: over35 / totalProb,
+    btts: btts / totalProb,
     bestScore,
-    bestProb,
+    bestProb: bestProb / totalProb,
     bestByOutcome,
     scoreMatrix,
+    // Ruwe kansmassa binnen de matrix vóór normalisatie; 1 minus dit is het afgekapte deel.
+    modelCoverage: Number(totalProb.toFixed(4)),
   };
+}
+
+// Rustverschil als afnemende meeropbrengst (faalsignaal rest_gap 156x):
+// - verschillen kleiner dan twee dagen zijn meetruis en tellen niet mee;
+// - de edge loopt op tot drie "rustdagen" en topt daar af;
+// - bij congestie (beide ploegen kort ervoor in actie) dempt de edge, want
+//   vermoeidheid raakt beide kanten;
+// - een uitzonderlijk lange aanlopen (>= 10 dagen, bijv. winterstop) is
+//   ritmeverlies en geen fitheidsvoordeel, dus de edge blijft dan klein.
+export function buildRestEdge(homeRestDays, awayRestDays) {
+  const home = Number(homeRestDays);
+  const away = Number(awayRestDays);
+  if (!Number.isFinite(home) || !Number.isFinite(away) || home <= 0 || away <= 0) return 0;
+  const diff = home - away;
+  const magnitude = Math.abs(diff);
+  if (magnitude < 2) return 0;
+  let edge = Math.sign(diff) * Math.min(magnitude - 1, 3);
+  if (Math.min(home, away) <= 3) edge *= 0.5;
+  if (Math.max(home, away) >= 10) edge = Math.sign(edge) * Math.min(Math.abs(edge), 1);
+  return Number(edge.toFixed(2));
+}
+
+function competitionTypeBucket(text) {
+  const value = String(text || "").toLowerCase();
+  if (!value) return "unknown";
+  if (/friendly|oefen/.test(value)) return "friendly";
+  if (/champions league|europa league|conference league|nations league|world cup|uefa|fifa|qualif|interland|confed/.test(value)) return "international";
+  if (/cup|beker|pokal|copa|coppa|coupe/.test(value)) return "cup";
+  if (/league|liga|ligue|divisie|division|bundes|serie|championship|premier|allsvenskan|eliteserien|ekstraklasa/.test(value)) return "league";
+  return "unknown";
 }
 
 export function buildH2HReliability(h2h = {}, options = {}) {
@@ -153,7 +201,9 @@ export function buildH2HReliability(h2h = {}, options = {}) {
   const newestMs = dated.length ? Math.max(...dated) : null;
   const ageDays = newestMs && Number.isFinite(nowMs) ? Math.max(0, (nowMs - newestMs) / 86400000) : null;
   const sampleScore = played >= 8 ? 1 : played >= 5 ? 0.82 : played >= 3 ? 0.58 : played >= 2 ? 0.34 : 0.18;
-  const recencyScore = ageDays == null ? 0.55 : ageDays <= 365 ? 1 : ageDays <= 730 ? 0.78 : ageDays <= 1460 ? 0.48 : 0.24;
+  // Continue recency-decay (halfwaardetijd twee jaar) in plaats van stappen:
+  // H2H verliest geleidelijk waarde naarmate de duels ouder worden.
+  const recencyScore = ageDays == null ? 0.55 : Math.max(0.18, Math.pow(0.5, ageDays / 730));
   const declaredSameCompetitionPlayed = Number(h2h?.sameCompetitionPlayed || 0);
   const explicitlyTaggedResults = eligibleResults.filter((result) => result.competitionId != null || result.tournamentId != null || result.competition_id != null || result.league);
   const sameCompetitionPlayed = explicitlyTaggedResults.length
@@ -171,15 +221,31 @@ export function buildH2HReliability(h2h = {}, options = {}) {
   const competitionScore = sameCompetitionPlayed >= 3 ? 1 : sameCompetitionPlayed >= 1 ? 0.72 : 0.42;
   const status = String(h2h?.status || "").toLowerCase();
   const sourceScore = status === "loaded" ? 1 : status === "all-competitions" ? 0.7 : status === "cache" ? 0.65 : 0.5;
+  // Competitietype-vergelijkbaarheid (ai-advies "H2H-signaal herwegen": alleen
+  // zwaar wegen als recent, gevuld én competitietype-vergelijkbaar): oefenduels
+  // en bekertoernooien zeggen minder over een competitieduel, dus een deels uit
+  // ander type opgebouwde H2H wordt gerelateerd gedempt.
+  const currentType = competitionTypeBucket(options.competitionType || options.league || options.competitionId);
+  const typedResults = eligibleResults
+    .map((result) => competitionTypeBucket(result.competitionType || result.type || result.league || result.competitionId || result.tournamentId))
+    .filter((bucket) => bucket !== "unknown");
+  const crossTypePlayed = currentType === "unknown" || typedResults.length < 2
+    ? 0
+    : typedResults.filter((bucket) => bucket !== currentType).length;
+  const crossTypeShare = typedResults.length ? crossTypePlayed / typedResults.length : 0;
+  const typeFactor = 1 - 0.45 * crossTypeShare;
   const rawScore = sampleScore * 0.45 + recencyScore * 0.25 + competitionScore * 0.2 + sourceScore * 0.1;
   const sampleCap = played < 2 ? 0.24 : played < 3 ? 0.42 : played < 5 ? 0.68 : 1;
   const competitionCap = sameCompetitionPlayed > 0 ? 1 : 0.72;
-  const score = Math.min(rawScore, sampleCap, competitionCap);
+  const score = Math.min(rawScore, sampleCap, competitionCap) * typeFactor;
 
   return {
     score: Number(Math.max(0, Math.min(1, score)).toFixed(3)),
     sampleSize: played,
     sameCompetitionPlayed,
+    sameTypePlayed: typedResults.length - crossTypePlayed,
+    crossTypeShare: Number(crossTypeShare.toFixed(2)),
+    competitionType: currentType,
     ageDays: ageDays == null ? null : Math.round(ageDays),
     eligibleResults,
     excludedResults: Math.max(0, results.length - eligibleResults.length),
@@ -191,7 +257,9 @@ export function buildH2HReliability(h2h = {}, options = {}) {
           ? "alleen cross-competition H2H"
           : ageDays != null && ageDays > 1460
             ? "H2H is verouderd"
-            : "H2H bruikbaar",
+            : crossTypeShare >= 0.5
+              ? "H2H deels uit ander competitietype"
+              : "H2H bruikbaar",
   };
 }
 
