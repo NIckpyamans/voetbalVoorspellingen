@@ -6316,11 +6316,20 @@ function buildPostMatchReview(match, prediction) {
 
   const predHomeGoals = Number(prediction.predHomeGoals || 0);
   const predAwayGoals = Number(prediction.predAwayGoals || 0);
-  const predictedOutcome = outcomeFromGoals(predHomeGoals, predAwayGoals);
+  // Het 1X2-label volgt de kansen (zelfde bron als probabilityOutcome). Het
+  // afleiden uit afgeronde verwachte doelpunten gaf 1,5 procentpunt minder
+  // trefzekerheid (43,0% vs 44,5% argmax op 1015 reviews).
   const probabilityOutcome = getPredictedOutcome(prediction);
+  const predictedOutcome = probabilityOutcome;
   const actualOutcome = outcomeFromGoals(actualHomeGoals, actualAwayGoals);
   const totalGoalError = Math.abs(predHomeGoals - actualHomeGoals) + Math.abs(predAwayGoals - actualAwayGoals);
-  const predictedTotalGoals = predHomeGoals + predAwayGoals;
+  // Totaal op de continue verwachte doelpunten (xG). Afgeronde uitslagen onderschatten
+  // het totaal systematisch (~0,5 goal), dus die zijn alleen de terugval.
+  const xgHome = Number(prediction.homeXG);
+  const xgAway = Number(prediction.awayXG);
+  const predictedTotalGoals = Number.isFinite(xgHome) && Number.isFinite(xgAway)
+    ? xgHome + xgAway
+    : predHomeGoals + predAwayGoals;
   const actualTotalGoals = actualHomeGoals + actualAwayGoals;
   const predictedBtts =
     prediction?.btts != null ? Number(prediction.btts) >= 0.5 : predHomeGoals > 0 && predAwayGoals > 0;
@@ -6328,9 +6337,7 @@ function buildPostMatchReview(match, prediction) {
   const predictedOver25 =
     prediction?.over25 != null ? Number(prediction.over25) >= 0.5 : predictedTotalGoals >= 3;
   const actualOver25 = actualTotalGoals >= 3;
-  const totalGoalBias = Number(
-    ((actualHomeGoals + actualAwayGoals) - (predHomeGoals + predAwayGoals)).toFixed(2)
-  );
+  const totalGoalBias = Number((actualTotalGoals - predictedTotalGoals).toFixed(2));
   const oddsDiagnostics = normalizeOddsAtPrediction(prediction);
   const brierScore = calculateBrierScore(prediction, actualOutcome);
   const logLoss = calculateLogLoss(prediction, actualOutcome);

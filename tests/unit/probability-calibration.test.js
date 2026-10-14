@@ -77,4 +77,13 @@ describe("probability calibration module", () => {
     expect(metrics.brier).toBeLessThan(1);
     expect(metrics.logLoss).toBeGreaterThan(0);
   });
+
+  it("buildCalibrationProfile levert eindige gekalibreerde metrics (geen NaN/null)", () => {
+    const profile = buildCalibrationProfile(buildCalibrationRows(overconfidentRows(60)));
+    expect(profile.eligible).toBe(true);
+    expect(Number.isFinite(profile.calibrated.brier)).toBe(true);
+    expect(Number.isFinite(profile.calibrated.logLoss)).toBe(true);
+    expect(Number.isFinite(profile.validationCalibrated.brier)).toBe(true);
+    expect(profile.calibrated.logLoss).toBeLessThan(5);
+  });
 });

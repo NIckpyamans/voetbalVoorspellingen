@@ -43,7 +43,7 @@ export function evaluateImmutableSnapshot(snapshot, rawResult, options = {}) {
   const values = [["H", probabilities.home], ["D", probabilities.draw], ["A", probabilities.away]];
   const predictedOutcome = values.sort((a, b) => b[1] - a[1])[0][0];
   const vector = { H: [1, 0, 0], D: [0, 1, 0], A: [0, 0, 1] }[result.actualOutcome];
-  const brierScore = ((probabilities.home-vector[0])**2 + (probabilities.draw-vector[1])**2 + (probabilities.away-vector[2])**2) / 3;
+  const brierScore = ((probabilities.home-vector[0])**2 + (probabilities.draw-vector[1])**2 + (probabilities.away-vector[2])**2);
   const actualProbability = result.actualOutcome === "H" ? probabilities.home : result.actualOutcome === "D" ? probabilities.draw : probabilities.away;
   const expected = snapshot.expectedScore || {};
   const scoreParts = String(typeof expected === "string" ? expected : "").match(/^(\d+)\s*-\s*(\d+)$/);

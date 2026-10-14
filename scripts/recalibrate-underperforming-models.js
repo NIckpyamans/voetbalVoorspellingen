@@ -13,7 +13,8 @@ const ROOT = process.cwd();
 const APPLY_LIVE = process.argv.includes("--apply-live");
 const MIN_ROWS = Math.max(10, Number(process.env.MODEL_RECALIBRATION_MIN_ROWS || 20));
 const MIN_VALIDATION_ROWS = Math.max(5, Number(process.env.MODEL_RECALIBRATION_MIN_VALIDATION_ROWS || 8));
-const MIN_BRIER_IMPROVEMENT = Number(process.env.MODEL_RECALIBRATION_MIN_BRIER_IMPROVEMENT || 0.003);
+// Brier op de standaardschaal (0-2, som over de drie uitkomsten).
+const MIN_BRIER_IMPROVEMENT = Number(process.env.MODEL_RECALIBRATION_MIN_BRIER_IMPROVEMENT || 0.009);
 const MIN_LOG_LOSS_IMPROVEMENT = Number(process.env.MODEL_RECALIBRATION_MIN_LOG_LOSS_IMPROVEMENT || 0.001);
 const MIN_UNIQUE_COMPLETED_SNAPSHOT_MATCHES = Math.max(10, Number(process.env.MODEL_RECALIBRATION_MIN_UNIQUE_COMPLETED_SNAPSHOTS || 50));
 const MIN_UNIQUE_COMPLETED_SNAPSHOT_MATCHES_FOR_LIVE = Math.max(
@@ -50,7 +51,7 @@ function actualVector(outcome) {
 
 function brier(probabilities, outcome) {
   const y = actualVector(outcome);
-  return probabilities.reduce((sum, value, index) => sum + (value - y[index]) ** 2, 0) / 3;
+  return probabilities.reduce((sum, value, index) => sum + (value - y[index]) ** 2, 0);
 }
 
 function logLoss(probabilities, outcome) {

@@ -119,8 +119,9 @@ export function rebindReviewToSnapshot(review, snapshot) {
   const expectedScore = snapshot.expectedScore || snapshot.prediction?.expectedScore || {};
   const predHomeGoals = Number(expectedScore.home ?? review.predictedScore?.split("-")[0] ?? 0);
   const predAwayGoals = Number(expectedScore.away ?? review.predictedScore?.split("-")[1] ?? 0);
-  const predictedOutcome = outcomeFromGoals(predHomeGoals, predAwayGoals);
+  // 1X2-label volgt de kansen (argmax), niet de afgeronde verwachte doelpunten.
   const probabilityOutcome = mostLikelyOutcome(probabilities);
+  const predictedOutcome = probabilityOutcome;
   const actualOutcome = String(review.actualOutcome || outcomeFromGoals(...String(review.actualScore || "0-0").split("-").map(Number)) || "");
   const [actualHomeGoals, actualAwayGoals] = String(review.actualScore || "0-0").split("-").map(Number);
   const predictedTotalGoals = predHomeGoals + predAwayGoals;

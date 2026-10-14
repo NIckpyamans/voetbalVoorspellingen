@@ -55,7 +55,7 @@ for (const profile of profiles) {
     const current = normalize(["home", "draw", "away"].map((key) => row.probabilities?.[key]));
     const normalizedShadow = applyProfile(current, profile);
     const actual = { H: 0, D: 1, A: 2 }[row.actual_outcome];
-    const brier = (probabilities) => probabilities.reduce((sum, value, index) => sum + (value - (index === actual ? 1 : 0)) ** 2, 0) / 3;
+    const brier = (probabilities) => probabilities.reduce((sum, value, index) => sum + (value - (index === actual ? 1 : 0)) ** 2, 0);
     const hit = (probabilities) => probabilities.indexOf(Math.max(...probabilities)) === actual;
     await sql.query(`insert into shadow_prediction_evaluations(shadow_evaluation_id,calibration_profile_id,prediction_id,match_id,competition_id,current_brier,shadow_brier,current_outcome_hit,shadow_outcome_hit,shadow_probabilities,evaluated_at)
       values($1,$2,$3,$4,$5,$6,$7,$8,$9,$10::jsonb,now()) on conflict(calibration_profile_id,prediction_id) do update set current_brier=excluded.current_brier,shadow_brier=excluded.shadow_brier,current_outcome_hit=excluded.current_outcome_hit,shadow_outcome_hit=excluded.shadow_outcome_hit,shadow_probabilities=excluded.shadow_probabilities,evaluated_at=now()`,

@@ -67,11 +67,12 @@ export function buildCalibrationRows(rows = []) {
     .filter(Boolean);
 }
 
-// Compacte 1X2-Brier: som van (p - y)^2 over de drie uitkomsten / 2.
+// 1X2-Brier op de standaardschaal (0-2): som van (p - y)^2 over de drie uitkomsten.
+// Dezelfde schaal als calculateBrierScore in server-worker en de reviews.
 function brier1x2(probabilities, outcome) {
   const target = { H: [1, 0, 0], D: [0, 1, 0], A: [0, 0, 1] }[outcome];
   const values = [probabilities.home, probabilities.draw, probabilities.away];
-  return values.reduce((sum, value, index) => sum + (value - target[index]) ** 2, 0) / 2;
+  return values.reduce((sum, value, index) => sum + (value - target[index]) ** 2, 0);
 }
 
 function logLoss1x2(probabilities, outcome) {
@@ -190,13 +191,19 @@ export function buildCalibrationProfile(rows = []) {
   if (!fitted) {
     return { eligible: false, reason: "platt_fit_failed", rows: rows.length, baseline };
   }
-  const applyProfile = (probabilities) => applyPlattProfile(probabilities, fitted);
+  // applyPlattProfile geeft homeProb/drawProb/awayProb terug; de metrics lezen
+  // home/draw/away. Zonder deze vertaling werd elke gekalibreerde Brier NaN,
+  // waardoor Platt nooit werd geaccepteerd.
+  const applyProfile = (probabilities) => {
+    const calibrated = applyPlattProfile(probabilities, fitted);
+    return calibrated && { home: calibrated.homeProb, draw: calibrated.drawProb, away: calibrated.awayProb };
+  };
   const calibrated = calibrationMetrics(rows, applyProfile);
   const validationCalibrated = calibrationMetrics(validationRows, applyProfile);
   const validationBaseline = calibrationMetrics(validationRows);
   const brierImprovement = Number(((validationBaseline.brier ?? 1) - (validationCalibrated.brier ?? 1)).toFixed(5));
   const logLossImprovement = Number(((validationBaseline.logLoss ?? 5) - (validationCalibrated.logLoss ?? 5)).toFixed(5));
-  const accepted = validationRows.length >= 8 && brierImprovement > 0.001 && logLossImprovement > 0;
+  const accepted = validationRows.length >= 8 && brierImprovement > 0.002 && logLossImprovement > 0;
   return {
     eligible: true,
     accepted,
