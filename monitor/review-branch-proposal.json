@@ -1,50 +1,66 @@
 {
-  "generatedAt": "2026-10-13T03:04:18.517Z",
-  "date": "2026-10-13",
+  "generatedAt": "2026-10-14T01:15:17.059Z",
+  "date": "2026-10-14",
   "proposalOnly": true,
-  "shouldPropose": false,
-  "branchName": "codex/review-20261013",
-  "summary": "Geen reviewbranch nodig op 2026-10-13.",
+  "shouldPropose": true,
+  "branchName": "codex/review-20261014",
+  "summary": "AI reviewvoorstel voor 2026-10-14: 1 aandachtspunt(en) met patchadvies, niet automatisch live.",
   "latestStats": {
-    "today": "2026-10-13",
-    "tomorrow": "2026-10-14",
+    "today": "2026-10-14",
+    "tomorrow": "2026-10-15",
     "dataPresent": true,
-    "lastRun": 1791851860396,
-    "ageMinutes": 147,
+    "lastRun": 1791928515621,
+    "ageMinutes": 200,
     "maxWorkerAgeMinutes": 180,
-    "todayMatches": 17,
-    "tomorrowMatches": 14,
+    "todayMatches": 14,
+    "tomorrowMatches": 41,
     "fixtureCalendar": {
       "status": "has_current_matches",
       "healthy": true,
       "emptyWindowOk": true,
       "severity": "none",
-      "todayCount": 17,
-      "tomorrowCount": 14,
+      "todayCount": 14,
+      "tomorrowCount": 41,
       "windowDays": 7,
       "checkedDates": [
-        "2026-10-13",
         "2026-10-14",
         "2026-10-15",
         "2026-10-16",
         "2026-10-17",
         "2026-10-18",
         "2026-10-19",
-        "2026-10-20"
+        "2026-10-20",
+        "2026-10-21"
       ],
-      "nextMatchDate": "2026-10-13",
-      "nextMatchCount": 17,
+      "nextMatchDate": "2026-10-14",
+      "nextMatchCount": 14,
       "explanation": "Vandaag of morgen staan er wedstrijden in de actuele data."
     },
     "liveMatches": 0,
     "liveWithoutMinute": 0,
     "h2hFilled": 1,
-    "h2hMissing": 16,
+    "h2hMissing": 13,
     "standingsCount": 11,
     "cupSheetCount": 3,
     "phaseReliabilityCount": 5
   },
-  "findings": [],
-  "recommendedFiles": [],
-  "nextStep": "Geen actie nodig; monitor blijft op de achtergrond doorlopen."
+  "findings": [
+    {
+      "priority": 1,
+      "key": "worker_stale",
+      "severity": "high",
+      "message": "Workerdata is 200 minuten oud.",
+      "whyItMatters": "Workerdata is te oud en verdient een workflow- of broncheck.",
+      "recommendedFiles": [
+        ".github/workflows/worker.yml",
+        "scripts/server-worker.js"
+      ],
+      "details": {}
+    }
+  ],
+  "recommendedFiles": [
+    ".github/workflows/worker.yml",
+    "scripts/server-worker.js"
+  ],
+  "nextStep": "Gebruik deze proposal om gericht een reviewbranch te maken en alleen na controle te mergen."
 }
