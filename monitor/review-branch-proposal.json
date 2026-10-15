@@ -1,66 +1,66 @@
 {
-  "generatedAt": "2026-10-14T01:15:17.059Z",
-  "date": "2026-10-14",
+  "generatedAt": "2026-10-15T00:33:37.462Z",
+  "date": "2026-10-15",
   "proposalOnly": true,
   "shouldPropose": true,
-  "branchName": "codex/review-20261014",
-  "summary": "AI reviewvoorstel voor 2026-10-14: 1 aandachtspunt(en) met patchadvies, niet automatisch live.",
+  "branchName": "codex/review-20261015",
+  "summary": "AI reviewvoorstel voor 2026-10-15: 1 aandachtspunt(en) met patchadvies, niet automatisch live.",
   "latestStats": {
-    "today": "2026-10-14",
-    "tomorrow": "2026-10-15",
+    "today": "2026-10-15",
+    "tomorrow": "2026-10-16",
     "dataPresent": true,
-    "lastRun": 1791928515621,
-    "ageMinutes": 200,
+    "lastRun": 1792022213927,
+    "ageMinutes": 37,
     "maxWorkerAgeMinutes": 180,
-    "todayMatches": 14,
-    "tomorrowMatches": 41,
+    "todayMatches": 41,
+    "tomorrowMatches": 15,
     "fixtureCalendar": {
       "status": "has_current_matches",
       "healthy": true,
       "emptyWindowOk": true,
       "severity": "none",
-      "todayCount": 14,
-      "tomorrowCount": 41,
+      "todayCount": 41,
+      "tomorrowCount": 15,
       "windowDays": 7,
       "checkedDates": [
-        "2026-10-14",
         "2026-10-15",
         "2026-10-16",
         "2026-10-17",
         "2026-10-18",
         "2026-10-19",
         "2026-10-20",
-        "2026-10-21"
+        "2026-10-21",
+        "2026-10-22"
       ],
-      "nextMatchDate": "2026-10-14",
-      "nextMatchCount": 14,
+      "nextMatchDate": "2026-10-15",
+      "nextMatchCount": 41,
       "explanation": "Vandaag of morgen staan er wedstrijden in de actuele data."
     },
     "liveMatches": 0,
     "liveWithoutMinute": 0,
-    "h2hFilled": 1,
-    "h2hMissing": 13,
+    "h2hFilled": 0,
+    "h2hMissing": 41,
     "standingsCount": 11,
-    "cupSheetCount": 3,
+    "cupSheetCount": 6,
     "phaseReliabilityCount": 5
   },
   "findings": [
     {
       "priority": 1,
-      "key": "worker_stale",
-      "severity": "high",
-      "message": "Workerdata is 200 minuten oud.",
-      "whyItMatters": "Workerdata is te oud en verdient een workflow- of broncheck.",
+      "key": "h2h_empty",
+      "severity": "medium",
+      "message": "Alle wedstrijden van vandaag hebben lege H2H-data.",
+      "whyItMatters": "Onderlinge duels worden niet sterk genoeg gevuld.",
       "recommendedFiles": [
-        ".github/workflows/worker.yml",
-        "scripts/server-worker.js"
+        "scripts/server-worker.js",
+        "components/MatchCard.tsx"
       ],
       "details": {}
     }
   ],
   "recommendedFiles": [
-    ".github/workflows/worker.yml",
-    "scripts/server-worker.js"
+    "scripts/server-worker.js",
+    "components/MatchCard.tsx"
   ],
   "nextStep": "Gebruik deze proposal om gericht een reviewbranch te maken en alleen na controle te mergen."
 }
