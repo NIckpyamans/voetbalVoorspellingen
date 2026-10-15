@@ -6,24 +6,24 @@
     "owner": "Nick",
     "status": "active"
   },
-  "generatedAt": "2026-10-08T13:36:59.098Z",
+  "generatedAt": "2026-10-15T11:35:46.837Z",
   "freshness": {
-    "generatedAt": "2026-10-08T13:36:59.098Z",
-    "ageMs": 2731,
+    "generatedAt": "2026-10-15T11:35:46.837Z",
+    "ageMs": 1979,
     "maxAgeMs": 86400000,
     "fresh": true,
     "status": "fresh"
   },
   "sourceFreshness": {
     "dayDocuments": {
-      "generatedAt": "2026-10-08T13:37:01.828Z",
-      "latestMatchDate": "2026-10-04",
-      "latestPredictionAt": "2026-10-08T09:27:10.805Z",
-      "latestSnapshotAt": "2026-09-20T10:13:24.858Z"
+      "generatedAt": "2026-10-15T11:35:48.815Z",
+      "latestMatchDate": "2026-10-15",
+      "latestPredictionAt": "2026-10-15T10:17:54.098Z",
+      "latestSnapshotAt": "2026-10-15T10:17:54.098Z"
     },
     "priorDataQualityAudit": {
-      "generatedAt": "2026-10-08T13:36:55.248Z",
-      "ageMs": 6581,
+      "generatedAt": "2026-10-15T11:35:42.995Z",
+      "ageMs": 5821,
       "maxAgeMs": 86400000,
       "fresh": true,
       "status": "fresh"
@@ -54,12 +54,12 @@
   "baseUrl": "https://voetbalvoorspellingen-clean.vercel.app",
   "summary": "Professionele audit actief. Kritieke opslagvelden lijken aanwezig; blijf kalibratie en bronkwaliteit bewaken.",
   "live": {
-    "matchesTotal": 0,
-    "predictionsTotal": 16,
-    "reviewCount": 1742,
+    "matchesTotal": 41,
+    "predictionsTotal": 41,
+    "reviewCount": 1042,
     "predictionSnapshotCount": 25,
-    "workerVersion": "v18-score-data-scout",
-    "sourceBranch": "main",
+    "workerVersion": "v25-club-rating",
+    "sourceBranch": "codex/step3b-layout",
     "sourceCoverage": null,
     "featureDiagnostics": null,
     "backtestSummary": null,
@@ -74,54 +74,54 @@
     }
   },
   "predictions": {
-    "total": 16,
-    "featureCoverage": 0,
-    "featureCoverageScope": "fallback-all-visible-records",
-    "featureCoveragePredictions": 16,
-    "historicalInlineFeatureCoverage": 0,
+    "total": 157,
+    "featureCoverage": 1,
+    "featureCoverageScope": "today-and-tomorrow-before-static-compaction",
+    "featureCoveragePredictions": 41,
+    "historicalInlineFeatureCoverage": 0.2611464968152866,
     "historicalFeatureStorage": "immutable-r2-snapshot-ledger",
-    "oddsCoverage": 0,
-    "historicalMarketOnly": 0,
+    "oddsCoverage": 0.267515923566879,
+    "historicalMarketOnly": 0.1592356687898089,
     "reviewCoverage": 0,
-    "averageCompleteness": 0.9711249999999996
+    "averageCompleteness": 0.9306751592356672
   },
   "recent": {
-    "days": 6,
-    "matches": 16,
-    "uniqueFixtures": 16,
-    "duplicateMatchRows": 0,
-    "predictions": 16,
-    "finishedMatches": 16,
-    "finishedWithScore": 16,
+    "days": 10,
+    "matches": 157,
+    "uniqueFixtures": 151,
+    "duplicateMatchRows": 6,
+    "predictions": 157,
+    "finishedMatches": 116,
+    "finishedWithScore": 116,
     "resultCoverage": 1,
-    "reviewedMatches": 16,
+    "reviewedMatches": 116,
     "evaluationCoverage": 1,
-    "snapshotBackedReviews": 8,
-    "snapshotBackedReviewCoverage": 0.5,
-    "reviewRows": 16,
-    "uniqueReviewedFixtures": 16,
-    "predictionSnapshots": 8,
-    "uniqueSnapshotMatches": 8,
+    "snapshotBackedReviews": 0,
+    "snapshotBackedReviewCoverage": 0,
+    "reviewRows": 116,
+    "uniqueReviewedFixtures": 115,
+    "predictionSnapshots": 64,
+    "uniqueSnapshotMatches": 32,
     "snapshotEvaluations": {
-      "eligibleSnapshots": 8,
-      "eligibleFixtures": 8,
-      "evaluatedSnapshots": 8,
-      "evaluatedFixtures": 8,
-      "coverage": 1,
-      "repeatedSnapshotRows": 0,
-      "evaluatedFixturesMissing": 0
+      "eligibleSnapshots": 64,
+      "eligibleFixtures": 32,
+      "evaluatedSnapshots": 0,
+      "evaluatedFixtures": 0,
+      "coverage": 0,
+      "repeatedSnapshotRows": 32,
+      "evaluatedFixturesMissing": 32
     },
-    "dataCompleteness": 0.9711249999999996,
+    "dataCompleteness": 0.9306751592356672,
     "sourceMetadataCoverage": 1,
-    "actualOddsCoverage": 0,
+    "actualOddsCoverage": 0.267515923566879,
     "confirmedLineupCoverage": 0,
     "performance": {
-      "reviews": 16,
-      "outcomeHitRate": 0.5625,
-      "exactHitRate": 0.0625,
-      "averageBrier": 0.6321874999999999,
-      "averageLogLoss": 1.0530937499999997,
-      "averageConfidence": 0.439375
+      "reviews": 116,
+      "outcomeHitRate": 0.5862068965517241,
+      "exactHitRate": 0.06896551724137931,
+      "averageBrier": 0.557668103448276,
+      "averageLogLoss": 0.9431327586206898,
+      "averageConfidence": 0.4490775862068966
     },
     "segments": {
       "club_friendlies": {
@@ -133,34 +133,34 @@
         "averageConfidence": null
       },
       "european_knockout": {
-        "reviews": 0,
-        "outcomeHitRate": null,
-        "exactHitRate": null,
-        "averageBrier": null,
-        "averageLogLoss": null,
-        "averageConfidence": null
+        "reviews": 19,
+        "outcomeHitRate": 0.5263157894736842,
+        "exactHitRate": 0,
+        "averageBrier": 0.5804684210526316,
+        "averageLogLoss": 0.9793947368421052,
+        "averageConfidence": 0.39957894736842103
       },
       "domestic_competitions": {
-        "reviews": 16,
-        "outcomeHitRate": 0.5625,
-        "exactHitRate": 0.0625,
-        "averageBrier": 0.6321874999999999,
-        "averageLogLoss": 1.0530937499999997,
-        "averageConfidence": 0.439375
+        "reviews": 97,
+        "outcomeHitRate": 0.5979381443298969,
+        "exactHitRate": 0.08247422680412371,
+        "averageBrier": 0.5532020618556702,
+        "averageLogLoss": 0.9360298969072167,
+        "averageConfidence": 0.45877319587628856
       }
     },
     "sourceFreshness": {
-      "generatedAt": "2026-10-08T13:37:01.828Z",
-      "latestMatchDate": "2026-10-04",
-      "latestPredictionAt": "2026-10-08T09:27:10.805Z",
-      "latestSnapshotAt": "2026-09-20T10:13:24.858Z"
+      "generatedAt": "2026-10-15T11:35:48.815Z",
+      "latestMatchDate": "2026-10-15",
+      "latestPredictionAt": "2026-10-15T10:17:54.098Z",
+      "latestSnapshotAt": "2026-10-15T10:17:54.098Z"
     },
     "uniqueFixtureAccounting": {
-      "matchRows": 16,
-      "uniqueFixtures": 16,
-      "duplicateRows": 0,
-      "snapshotRows": 8,
-      "uniqueSnapshotFixtures": 8
+      "matchRows": 157,
+      "uniqueFixtures": 151,
+      "duplicateRows": 6,
+      "snapshotRows": 64,
+      "uniqueSnapshotFixtures": 32
     }
   },
   "storageAudit": [
@@ -178,7 +178,7 @@
     },
     {
       "field": "featureVector",
-      "present": false,
+      "present": true,
       "importance": "hoog",
       "advice": "Aanwezig waar predictions gevuld zijn; maak hem immutable per prediction_id."
     },
@@ -190,7 +190,7 @@
     },
     {
       "field": "odds_at_prediction",
-      "present": false,
+      "present": true,
       "importance": "hoog",
       "advice": "Sla echte bookmaker, markt, odds en timestamp op; historische marktprofielen tellen niet als ROI-basis."
     },
@@ -208,7 +208,7 @@
     },
     {
       "field": "ROI/CLV met echte odds",
-      "present": false,
+      "present": true,
       "importance": "hoog",
       "advice": "Bereken ROI/CLV pas wanneer odds_at_prediction en closing_odds echt gevuld zijn."
     },

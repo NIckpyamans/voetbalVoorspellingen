@@ -1,53 +1,53 @@
 # FootyAI professionele AI-audit
 
-Gegenereerd: 2026-10-08T13:36:59.098Z
+Gegenereerd: 2026-10-15T11:35:46.837Z
 Bron: https://voetbalvoorspellingen-clean.vercel.app
 
 ## Samenvatting
 Professionele audit actief. Kritieke opslagvelden lijken aanwezig; blijf kalibratie en bronkwaliteit bewaken.
 
 ## Live status
-- Wedstrijden vandaag: 0
-- Voorspellingen vandaag: 16
-- Reviews: 1742
+- Wedstrijden vandaag: 41
+- Voorspellingen vandaag: 41
+- Reviews: 1042
 - Prediction snapshotrijen: 25
-- Unieke snapshotwedstrijden: 8
-- Snapshot-evaluatie: 8/8 unieke fixtures; 8 rijen
-- Dagbestanden: 16/16 unieke fixtures; 0 dubbele rijen
-- Worker: v18-score-data-scout
+- Unieke snapshotwedstrijden: 32
+- Snapshot-evaluatie: 0/32 unieke fixtures; 64 rijen
+- Dagbestanden: 151/157 unieke fixtures; 6 dubbele rijen
+- Worker: v25-club-rating
 - Auditversheid: fresh
-- Feature coverage: 0%
-- Echte odds coverage: 0%
-- Alleen historisch marktprofiel: 0%
-- Gemiddelde datacompleetheid: 97%
+- Feature coverage: 100%
+- Echte odds coverage: 27%
+- Alleen historisch marktprofiel: 16%
+- Gemiddelde datacompleetheid: 93%
 - Datacompleetheid-audit: onbekend
 - Odds readiness: onbekend
 
 ## Recente keten (14 dagen)
-- Afgeronde wedstrijden met eindstand: 16/16 (100%)
-- Geëvalueerde wedstrijden: 16/16 (100%)
-- Snapshot-backed reviews: 8 (50%)
-- Uitkomsthit: 56%
-- Exacte-scorehit: 6%
-- Gemiddelde Brier score: 0.632
-- Gemiddelde log loss: 1.053
-- Echte odds: 0%
+- Afgeronde wedstrijden met eindstand: 116/116 (100%)
+- Geëvalueerde wedstrijden: 116/116 (100%)
+- Snapshot-backed reviews: 0 (0%)
+- Uitkomsthit: 59%
+- Exacte-scorehit: 7%
+- Gemiddelde Brier score: 0.558
+- Gemiddelde log loss: 0.943
+- Echte odds: 27%
 - Confirmed lineups: 0%
 
 ## Segmenten
 - club_friendlies: 0 reviews, uitkomst onbekend, exact onbekend, Brier onbekend
-- european_knockout: 0 reviews, uitkomst onbekend, exact onbekend, Brier onbekend
-- domestic_competitions: 16 reviews, uitkomst 56%, exact 6%, Brier 0.632
+- european_knockout: 19 reviews, uitkomst 53%, exact 0%, Brier 0.580
+- domestic_competitions: 97 reviews, uitkomst 60%, exact 8%, Brier 0.553
 
 ## Opslag-audit
 - prediction_id: aanwezig; gate voldaan
 - generated_at / cutoff_at: aanwezig; gate voldaan
-- featureVector: mist (hoog) - Aanwezig waar predictions gevuld zijn; maak hem immutable per prediction_id.
+- featureVector: aanwezig; gate voldaan
 - model_version: aanwezig; gate voldaan
-- odds_at_prediction: mist (hoog) - Sla echte bookmaker, markt, odds en timestamp op; historische marktprofielen tellen niet als ROI-basis.
+- odds_at_prediction: aanwezig; gate voldaan
 - odds_status / missing_reason: aanwezig; gate voldaan
 - Brier/log loss: aanwezig; gate voldaan
-- ROI/CLV met echte odds: mist (hoog) - Bereken ROI/CLV pas wanneer odds_at_prediction en closing_odds echt gevuld zijn.
+- ROI/CLV met echte odds: aanwezig; gate voldaan
 - leakage_guard: aanwezig; gate voldaan
 - feature_source_metadata: aanwezig; gate voldaan
 
