@@ -20,7 +20,12 @@ async function main() {
     throw new Error("R2 is niet geconfigureerd (CLOUDFLARE_R2_* ontbreekt); ledger niet opgehaald.");
   }
 
-  const { ledger } = await loadSnapshotLedger({ includeLocal: false, config });
+  const { ledger, sources } = await loadSnapshotLedger({ includeLocal: false, config });
+  const r2 = sources.r2 || {};
+  if (!r2.available) {
+    throw new Error(`R2-ledger niet beschikbaar (key ${r2.key}, reden ${r2.reason || "onbekend"}): ${r2.error || "geen fouttekst"}`);
+  }
+  console.log(`R2-bron: ${r2.legacy ? "legacy-bestand" : `maandshards (${r2.months} maanden)`}, key ${r2.key}`);
 
   const snapshots = Object.keys(ledger.predictionSnapshots || {}).length;
   const reviews = Object.keys(ledger.postMatchReviews || {}).length;
