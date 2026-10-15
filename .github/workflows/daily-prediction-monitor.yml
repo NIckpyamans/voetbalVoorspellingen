@@ -1,0 +1,67 @@
+name: Daily prediction monitor
+
+on:
+  schedule:
+    # Ruim na de nachtelijke evaluatie (05:40 UTC), zodat gisteren volledig is verwerkt.
+    - cron: "30 6 * * *"
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: football-data-refresh
+  cancel-in-progress: false
+
+env:
+  DATA_BRANCH: codex/step3b-layout
+
+jobs:
+  monitor:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v5
+        with:
+          fetch-depth: 0
+          token: ${{ secrets.GITHUB_TOKEN }}
+          ref: ${{ env.DATA_BRANCH }}
+      - uses: actions/setup-node@v5
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+      - name: Haal volledige prediction-ledger uit R2
+        run: node scripts/fetch-prediction-ledger.js
+        env:
+          CLOUDFLARE_R2_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_R2_ACCOUNT_ID }}
+          CLOUDFLARE_R2_ACCESS_KEY_ID: ${{ secrets.CLOUDFLARE_R2_ACCESS_KEY_ID }}
+          CLOUDFLARE_R2_SECRET_ACCESS_KEY: ${{ secrets.CLOUDFLARE_R2_SECRET_ACCESS_KEY }}
+          CLOUDFLARE_R2_BUCKET: ${{ secrets.CLOUDFLARE_R2_BUCKET }}
+          CLOUDFLARE_R2_ENDPOINT: ${{ secrets.CLOUDFLARE_R2_ENDPOINT }}
+          CLOUDFLARE_R2_PREFIX: ${{ secrets.CLOUDFLARE_R2_PREFIX }}
+      - name: Draai voorspellingsmonitor (gisteren)
+        run: node scripts/daily-prediction-monitor.js
+      - name: Upload monitor-rapport
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: daily-prediction-monitor
+          path: data/monitor/
+          if-no-files-found: warn
+          retention-days: 30
+      - name: Commit monitor-rapport
+        if: success()
+        run: |
+          git config user.name github-actions
+          git config user.email github-actions@github.com
+          git add data/monitor
+          if git diff --cached --quiet; then
+            echo "Geen nieuw monitor-rapport om te committen."
+            exit 0
+          fi
+          git commit -m "Daily prediction monitor report"
+          git pull --rebase origin "$DATA_BRANCH"
+          git push origin "HEAD:$DATA_BRANCH"
+        env:
+          DATA_BRANCH: ${{ env.DATA_BRANCH }}
