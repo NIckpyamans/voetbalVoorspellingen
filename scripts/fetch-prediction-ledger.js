@@ -27,16 +27,30 @@ async function main() {
   }
   console.log(`R2-bron: ${r2.legacy ? "legacy-bestand" : `maandshards (${r2.months} maanden)`}, key ${r2.key}`);
 
-  const snapshots = Object.keys(ledger.predictionSnapshots || {}).length;
-  const reviews = Object.keys(ledger.postMatchReviews || {}).length;
-  if (snapshots === 0) {
+  const totalSnapshots = Object.keys(ledger.predictionSnapshots || {}).length;
+  if (totalSnapshots === 0) {
     throw new Error("R2-ledger is leeg (0 snapshots); weigeren om verder te gaan.");
   }
 
+  // De volledige ledger als één JSON-string overschrijdt de V8-stringlimiet. De monitor
+  // heeft alleen de recente reviews nodig, plus de snapshots die daarbij horen.
+  const days = Number(process.env.MONITOR_WINDOW_DAYS || 30);
+  const cutoff = new Date(Date.now() - days * 86400000).toISOString().slice(0, 10);
+  const postMatchReviews = Object.fromEntries(
+    Object.entries(ledger.postMatchReviews || {}).filter(([, review]) => String(review?.date || "") >= cutoff)
+  );
+  const wantedIds = new Set(Object.values(postMatchReviews).map((review) => review?.predictionId).filter(Boolean));
+  const predictionSnapshots = Object.fromEntries(
+    Object.entries(ledger.predictionSnapshots || {}).filter(([id]) => wantedIds.has(id))
+  );
+  const reviews = Object.keys(postMatchReviews).length;
+
   fs.mkdirSync(path.dirname(outFile), { recursive: true });
-  const payload = zlib.gzipSync(Buffer.from(JSON.stringify(ledger), "utf8"));
+  const payload = zlib.gzipSync(
+    Buffer.from(JSON.stringify({ generatedAt: new Date().toISOString(), window: { days, cutoff }, predictionSnapshots, postMatchReviews }), "utf8")
+  );
   fs.writeFileSync(outFile, payload);
-  console.log(`Ledger opgehaald: ${snapshots} snapshots, ${reviews} reviews -> data/recovery/ledger-latest.json.gz (${payload.length} bytes)`);
+  console.log(`Ledger opgehaald: ${totalSnapshots} snapshots totaal; venster ${cutoff}+ bewaard: ${Object.keys(predictionSnapshots).length} snapshots, ${reviews} reviews -> data/recovery/ledger-latest.json.gz (${payload.length} bytes)`);
 }
 
 main().catch((error) => {
