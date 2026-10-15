@@ -1,36 +1,36 @@
 # Upcoming H2H Backfill
 
-Laatst bijgewerkt: 2026-10-14T21:41:33.704Z
+Laatst bijgewerkt: 2026-10-15T01:54:46.352Z
 Gecontroleerd: 50
 Gevuld: 0
 Geen directe H2H: 50
 Errors: 0
 
-Openstaand na deze batch: 34
+Openstaand na deze batch: 53
 
 ## Aanbeveling
-API-Football H2H is onafhankelijk van fixture-acceptatie ingeschakeld; 3/3 beperkte paarpogingen gedaan. Er staan nog 34 fixtures in de wachtrij.
+API-Football H2H is onafhankelijk van fixture-acceptatie ingeschakeld; 3/3 beperkte paarpogingen gedaan. Er staan nog 53 fixtures in de wachtrij.
 
 ## Gevuld
 
 ## Geen Directe H2H
-- 2026-10-22: Borac Banja Luka - KuPS (no_direct_history)
-- 2026-10-22: Celtic - Celta Vigo (no_direct_history)
-- 2026-10-22: Braga - KAA Gent (no_direct_history)
-- 2026-10-22: Lillestrom - Real Sociedad (rate_limited_locally)
-- 2026-10-22: FC Thun - Hajduk Split (rate_limited_locally)
-- 2026-10-22: NK Celje - Salzburg (rate_limited_locally)
-- 2026-10-22: Lincoln Red Imps - FC Twente (rate_limited_locally)
-- 2026-10-22: Olympiacos - Sparta Prague (rate_limited_locally)
-- 2026-10-22: Omonia Nicosia - Benfica (rate_limited_locally)
-- 2026-10-22: Hoffenheim - Lyon (rate_limited_locally)
-- 2026-10-22: Viktoria Plzen - Levski Sofia (rate_limited_locally)
-- 2026-10-22: Jagiellonia Białystok - Anderlecht (rate_limited_locally)
-- 2026-10-22: Lillestrøm - Real Sociedad (rate_limited_locally)
-- 2026-10-23: VfL Bochum - VfL Wolfsburg (rate_limited_locally)
-- 2026-10-23: Almere City - Roda JC Kerkrade (rate_limited_locally)
-- 2026-10-23: Clermont Foot - Guingamp (rate_limited_locally)
-- 2026-10-23: VfB Stuttgart - Borussia Mönchengladbach (rate_limited_locally)
-- 2026-10-23: Ipswich Town - Nottingham Forest (rate_limited_locally)
-- 2026-10-23: Bolton Wanderers - Middlesbrough (rate_limited_locally)
-- 2026-10-23: De Graafschap - RKC Waalwijk (rate_limited_locally)
+- 2026-10-15: NEC Nijmegen - Levski Sofia (no_direct_history)
+- 2026-10-15: FC København - Braga (no_direct_history)
+- 2026-10-15: Stade Rennais - OFI Crete (no_direct_history)
+- 2026-10-15: Hoffenheim - Beşiktaş (rate_limited_locally)
+- 2026-10-15: Jagiellonia Białystok - Ararat Armenia (rate_limited_locally)
+- 2026-10-16: Energie Cottbus - 1. FC Nürnberg (rate_limited_locally)
+- 2026-10-16: FC Den Bosch - TOP Oss (rate_limited_locally)
+- 2026-10-16: Laval - Clermont Foot (rate_limited_locally)
+- 2026-10-16: Le Mans - Toulouse (rate_limited_locally)
+- 2026-10-16: Holstein Kiel - Hertha Berlin (rate_limited_locally)
+- 2026-10-16: Helmond Sport - NAC Breda (rate_limited_locally)
+- 2026-10-16: VVV-Venlo - Jong AZ (rate_limited_locally)
+- 2026-10-17: Greuther Fürth - Eintracht Braunschweig (rate_limited_locally)
+- 2026-10-17: Middlesbrough - Cardiff City (rate_limited_locally)
+- 2026-10-17: Nantes - Dunkerque (rate_limited_locally)
+- 2026-10-17: Elversberg - Augsburg (rate_limited_locally)
+- 2026-10-17: Fulham - Hull City (rate_limited_locally)
+- 2026-10-17: FC Emmen - Almere City FC (rate_limited_locally)
+- 2026-10-17: ADO Den Haag - PSV Eindhoven (rate_limited_locally)
+- 2026-10-17: VfL Wolfsburg - 1. FC Heidenheim 1846 (rate_limited_locally)
