@@ -1,49 +1,49 @@
 {
-  "generatedAt": "2026-10-16T21:08:05.662Z",
+  "generatedAt": "2026-10-16T23:39:23.571Z",
   "daysAhead": 21,
   "checked": 50,
-  "candidateTotal": 121,
-  "remaining": 71,
+  "candidateTotal": 101,
+  "remaining": 51,
   "byCompetition": {
-    "England - Championship": {
-      "agent": "england-championship-agent",
-      "checked": 9
+    "Europe - Conference League": {
+      "agent": "conference-league-agent",
+      "checked": 5
     },
-    "Netherlands - Eerste Divisie": {
-      "agent": "netherlands-eerste-divisie-agent",
-      "checked": 6
-    },
-    "Netherlands - Eredivisie": {
-      "agent": "netherlands-eredivisie-agent",
-      "checked": 2
+    "Europe - Europa League": {
+      "agent": "europa-league-agent",
+      "checked": 5
     },
     "Germany - 2. Bundesliga": {
       "agent": "germany-2-bundesliga-agent",
       "checked": 2
     },
+    "England - Championship": {
+      "agent": "england-championship-agent",
+      "checked": 10
+    },
     "Germany - Bundesliga": {
       "agent": "germany-bundesliga-agent",
-      "checked": 1
-    },
-    "France - Ligue 1": {
-      "agent": "france-ligue-1-agent",
-      "checked": 1
+      "checked": 2
     },
     "England - Premier League": {
       "agent": "england-premier-league-agent",
       "checked": 2
     },
+    "Netherlands - Eerste Divisie": {
+      "agent": "netherlands-eerste-divisie-agent",
+      "checked": 5
+    },
+    "Netherlands - Eredivisie": {
+      "agent": "netherlands-eredivisie-agent",
+      "checked": 4
+    },
+    "France - Ligue 2": {
+      "agent": "france-ligue-2-agent",
+      "checked": 3
+    },
     "Europe - Champions League": {
       "agent": "champions-league-agent",
-      "checked": 10
-    },
-    "Europe - Conference League": {
-      "agent": "conference-league-agent",
-      "checked": 9
-    },
-    "Europe - Europa League": {
-      "agent": "europa-league-agent",
-      "checked": 8
+      "checked": 12
     }
   },
   "databaseWritable": false,
@@ -87,7 +87,7 @@
     "providerResultCount": 0,
     "lastStatus": "provider_error",
     "lastStatusCode": null,
-    "lastCheckedAt": "2026-10-16T21:07:14.954Z"
+    "lastCheckedAt": "2026-10-16T23:38:05.700Z"
   },
   "providerMetrics": {
     "canonical-history": {
@@ -108,28 +108,13 @@
     "football-data-co-uk": {
       "attempts": 50,
       "found": 0,
-      "noCoverage": 17,
+      "noCoverage": 23,
       "mappingFailed": 0,
       "quota": 0,
       "errors": 0,
-      "acceptanceBlocked": 33,
+      "acceptanceBlocked": 27,
       "latencyMsTotal": 0,
       "latencySamples": 50,
-      "quotaRemaining": 0,
-      "quotaLimit": 0,
-      "successRate": 0,
-      "averageLatencyMs": 0
-    },
-    "apifootball-com": {
-      "attempts": 9,
-      "found": 0,
-      "noCoverage": 9,
-      "mappingFailed": 0,
-      "quota": 0,
-      "errors": 0,
-      "acceptanceBlocked": 0,
-      "latencyMsTotal": 0,
-      "latencySamples": 9,
       "quotaRemaining": 0,
       "quotaLimit": 0,
       "successRate": 0,
@@ -168,8 +153,8 @@
     "espn-team-schedule": {
       "attempts": 50,
       "found": 0,
-      "noCoverage": 27,
-      "mappingFailed": 23,
+      "noCoverage": 35,
+      "mappingFailed": 15,
       "quota": 0,
       "errors": 0,
       "acceptanceBlocked": 0,
@@ -179,854 +164,36 @@
       "quotaLimit": 0,
       "successRate": 0,
       "averageLatencyMs": 0
+    },
+    "apifootball-com": {
+      "attempts": 13,
+      "found": 0,
+      "noCoverage": 13,
+      "mappingFailed": 0,
+      "quota": 0,
+      "errors": 0,
+      "acceptanceBlocked": 0,
+      "latencyMsTotal": 0,
+      "latencySamples": 13,
+      "quotaRemaining": 0,
+      "quotaLimit": 0,
+      "successRate": 0,
+      "averageLatencyMs": 0
     }
   },
   "filledSamples": [],
   "noDirectHistorySamples": [
     {
-      "matchId": "ss-espn-eng.2-401880220",
-      "date": "2026-10-17",
-      "league": "England - Championship",
-      "homeTeam": "Birmingham City",
-      "awayTeam": "Queens Park Rangers",
-      "status": "no_direct_history",
-      "availabilityStatus": "no_direct_history",
-      "source": "canonical-history, football-data-co-uk, apifootball-com, goal-api, api-football, espn-team-schedule",
-      "asOf": "2026-10-16T21:07:08.691Z",
-      "note": "Geen betrouwbare directe H2H gevonden bij de providers die met succes konden worden bevraagd.",
-      "providerAttempts": [
-        {
-          "provider": "canonical-history",
-          "status": "not_found",
-          "records": 0,
-          "durationMs": null,
-          "quota": {
-            "remaining": null,
-            "limit": null,
-            "resetAt": null
-          },
-          "result": "no_coverage"
-        },
-        {
-          "provider": "football-data-co-uk",
-          "status": "no_coverage",
-          "records": 0,
-          "durationMs": null,
-          "quota": {
-            "remaining": null,
-            "limit": null,
-            "resetAt": null
-          },
-          "result": "no_coverage"
-        },
-        {
-          "provider": "apifootball-com",
-          "status": "no_coverage",
-          "records": 0,
-          "durationMs": null,
-          "quota": {
-            "remaining": null,
-            "limit": null,
-            "resetAt": null
-          },
-          "result": "no_coverage"
-        },
-        {
-          "provider": "goal-api",
-          "status": "acceptance_gate_closed",
-          "records": 0,
-          "durationMs": null,
-          "quota": {
-            "remaining": null,
-            "limit": null,
-            "resetAt": null
-          },
-          "result": "acceptance_blocked"
-        },
-        {
-          "provider": "api-football",
-          "status": "team_mapping_missing",
-          "records": 0,
-          "durationMs": null,
-          "quota": {
-            "remaining": null,
-            "limit": null,
-            "resetAt": null
-          },
-          "result": "mapping_failed"
-        },
-        {
-          "provider": "espn-team-schedule",
-          "status": "not_found",
-          "records": 0,
-          "durationMs": null,
-          "quota": {
-            "remaining": null,
-            "limit": null,
-            "resetAt": null
-          },
-          "result": "no_coverage"
-        }
-      ],
-      "staticStatusUpdated": true
-    },
-    {
-      "matchId": "ss-espn-eng.2-401880217",
-      "date": "2026-10-17",
-      "league": "England - Championship",
-      "homeTeam": "Derby County",
-      "awayTeam": "Stoke City",
-      "status": "no_direct_history",
-      "availabilityStatus": "no_direct_history",
-      "source": "canonical-history, football-data-co-uk, apifootball-com, goal-api, api-football, espn-team-schedule",
-      "asOf": "2026-10-16T21:07:11.976Z",
-      "note": "Geen betrouwbare directe H2H gevonden bij de providers die met succes konden worden bevraagd.",
-      "providerAttempts": [
-        {
-          "provider": "canonical-history",
-          "status": "not_found",
-          "records": 0,
-          "durationMs": null,
-          "quota": {
-            "remaining": null,
-            "limit": null,
-            "resetAt": null
-          },
-          "result": "no_coverage"
-        },
-        {
-          "provider": "football-data-co-uk",
-          "status": "no_coverage",
-          "records": 0,
-          "durationMs": null,
-          "quota": {
-            "remaining": null,
-            "limit": null,
-            "resetAt": null
-          },
-          "result": "no_coverage"
-        },
-        {
-          "provider": "apifootball-com",
-          "status": "no_coverage",
-          "records": 0,
-          "durationMs": null,
-          "quota": {
-            "remaining": null,
-            "limit": null,
-            "resetAt": null
-          },
-          "result": "no_coverage"
-        },
-        {
-          "provider": "goal-api",
-          "status": "acceptance_gate_closed",
-          "records": 0,
-          "durationMs": null,
-          "quota": {
-            "remaining": null,
-            "limit": null,
-            "resetAt": null
-          },
-          "result": "acceptance_blocked"
-        },
-        {
-          "provider": "api-football",
-          "status": "team_mapping_missing",
-          "records": 0,
-          "durationMs": null,
-          "quota": {
-            "remaining": null,
-            "limit": null,
-            "resetAt": null
-          },
-          "result": "mapping_failed"
-        },
-        {
-          "provider": "espn-team-schedule",
-          "status": "not_found",
-          "records": 0,
-          "durationMs": null,
-          "quota": {
-            "remaining": null,
-            "limit": null,
-            "resetAt": null
-          },
-          "result": "no_coverage"
-        }
-      ],
-      "staticStatusUpdated": true
-    },
-    {
-      "matchId": "ss-espn-eng.2-401880214",
-      "date": "2026-10-17",
-      "league": "England - Championship",
-      "homeTeam": "Norwich City",
-      "awayTeam": "Portsmouth",
-      "status": "no_direct_history",
-      "availabilityStatus": "no_direct_history",
-      "source": "canonical-history, football-data-co-uk, apifootball-com, goal-api, api-football, espn-team-schedule",
-      "asOf": "2026-10-16T21:07:15.349Z",
-      "note": "Geen betrouwbare directe H2H gevonden bij de providers die met succes konden worden bevraagd.",
-      "providerAttempts": [
-        {
-          "provider": "canonical-history",
-          "status": "not_found",
-          "records": 0,
-          "durationMs": null,
-          "quota": {
-            "remaining": null,
-            "limit": null,
-            "resetAt": null
-          },
-          "result": "no_coverage"
-        },
-        {
-          "provider": "football-data-co-uk",
-          "status": "no_coverage",
-          "records": 0,
-          "durationMs": null,
-          "quota": {
-            "remaining": null,
-            "limit": null,
-            "resetAt": null
-          },
-          "result": "no_coverage"
-        },
-        {
-          "provider": "apifootball-com",
-          "status": "no_coverage",
-          "records": 0,
-          "durationMs": null,
-          "quota": {
-            "remaining": null,
-            "limit": null,
-            "resetAt": null
-          },
-          "result": "no_coverage"
-        },
-        {
-          "provider": "goal-api",
-          "status": "acceptance_gate_closed",
-          "records": 0,
-          "durationMs": null,
-          "quota": {
-            "remaining": null,
-            "limit": null,
-            "resetAt": null
-          },
-          "result": "acceptance_blocked"
-        },
-        {
-          "provider": "api-football",
-          "status": "team_mapping_missing",
-          "records": 0,
-          "durationMs": null,
-          "quota": {
-            "remaining": null,
-            "limit": null,
-            "resetAt": null
-          },
-          "result": "mapping_failed"
-        },
-        {
-          "provider": "espn-team-schedule",
-          "status": "not_found",
-          "records": 0,
-          "durationMs": null,
-          "quota": {
-            "remaining": null,
-            "limit": null,
-            "resetAt": null
-          },
-          "result": "no_coverage"
-        }
-      ],
-      "staticStatusUpdated": true
-    },
-    {
-      "matchId": "ss-espn-eng.2-401880213",
-      "date": "2026-10-17",
-      "league": "England - Championship",
-      "homeTeam": "Southampton",
-      "awayTeam": "Bolton Wanderers",
-      "status": "rate_limited_locally",
-      "availabilityStatus": "rate_limited_locally",
-      "source": "canonical-history, football-data-co-uk, apifootball-com, goal-api, api-football, espn-team-schedule",
-      "asOf": "2026-10-16T21:07:18.447Z",
-      "note": "Providerquota voor deze run is bereikt; volgende geplande run probeert opnieuw.",
-      "providerAttempts": [
-        {
-          "provider": "canonical-history",
-          "status": "not_found",
-          "records": 0,
-          "durationMs": null,
-          "quota": {
-            "remaining": null,
-            "limit": null,
-            "resetAt": null
-          },
-          "result": "no_coverage"
-        },
-        {
-          "provider": "football-data-co-uk",
-          "status": "no_coverage",
-          "records": 0,
-          "durationMs": null,
-          "quota": {
-            "remaining": null,
-            "limit": null,
-            "resetAt": null
-          },
-          "result": "no_coverage"
-        },
-        {
-          "provider": "apifootball-com",
-          "status": "no_coverage",
-          "records": 0,
-          "durationMs": null,
-          "quota": {
-            "remaining": null,
-            "limit": null,
-            "resetAt": null
-          },
-          "result": "no_coverage"
-        },
-        {
-          "provider": "goal-api",
-          "status": "acceptance_gate_closed",
-          "records": 0,
-          "durationMs": null,
-          "quota": {
-            "remaining": null,
-            "limit": null,
-            "resetAt": null
-          },
-          "result": "acceptance_blocked"
-        },
-        {
-          "provider": "api-football",
-          "status": "rate_limited_locally",
-          "records": 0,
-          "durationMs": null,
-          "quota": {
-            "remaining": null,
-            "limit": null,
-            "resetAt": null
-          },
-          "result": "quota"
-        },
-        {
-          "provider": "espn-team-schedule",
-          "status": "not_found",
-          "records": 0,
-          "durationMs": null,
-          "quota": {
-            "remaining": null,
-            "limit": null,
-            "resetAt": null
-          },
-          "result": "no_coverage"
-        }
-      ],
-      "staticStatusUpdated": true
-    },
-    {
-      "matchId": "ss-espn-eng.2-401880212",
-      "date": "2026-10-17",
-      "league": "England - Championship",
-      "homeTeam": "Swansea City",
-      "awayTeam": "West Ham United",
-      "status": "rate_limited_locally",
-      "availabilityStatus": "rate_limited_locally",
-      "source": "canonical-history, football-data-co-uk, apifootball-com, goal-api, api-football, espn-team-schedule",
-      "asOf": "2026-10-16T21:07:21.346Z",
-      "note": "Providerquota voor deze run is bereikt; volgende geplande run probeert opnieuw.",
-      "providerAttempts": [
-        {
-          "provider": "canonical-history",
-          "status": "not_found",
-          "records": 0,
-          "durationMs": null,
-          "quota": {
-            "remaining": null,
-            "limit": null,
-            "resetAt": null
-          },
-          "result": "no_coverage"
-        },
-        {
-          "provider": "football-data-co-uk",
-          "status": "no_coverage",
-          "records": 0,
-          "durationMs": null,
-          "quota": {
-            "remaining": null,
-            "limit": null,
-            "resetAt": null
-          },
-          "result": "no_coverage"
-        },
-        {
-          "provider": "apifootball-com",
-          "status": "no_coverage",
-          "records": 0,
-          "durationMs": null,
-          "quota": {
-            "remaining": null,
-            "limit": null,
-            "resetAt": null
-          },
-          "result": "no_coverage"
-        },
-        {
-          "provider": "goal-api",
-          "status": "acceptance_gate_closed",
-          "records": 0,
-          "durationMs": null,
-          "quota": {
-            "remaining": null,
-            "limit": null,
-            "resetAt": null
-          },
-          "result": "acceptance_blocked"
-        },
-        {
-          "provider": "api-football",
-          "status": "rate_limited_locally",
-          "records": 0,
-          "durationMs": null,
-          "quota": {
-            "remaining": null,
-            "limit": null,
-            "resetAt": null
-          },
-          "result": "quota"
-        },
-        {
-          "provider": "espn-team-schedule",
-          "status": "not_found",
-          "records": 0,
-          "durationMs": null,
-          "quota": {
-            "remaining": null,
-            "limit": null,
-            "resetAt": null
-          },
-          "result": "no_coverage"
-        }
-      ],
-      "staticStatusUpdated": true
-    },
-    {
-      "matchId": "ss-espn-eng.2-401880210",
-      "date": "2026-10-17",
-      "league": "England - Championship",
-      "homeTeam": "West Bromwich Albion",
-      "awayTeam": "Blackburn Rovers",
-      "status": "rate_limited_locally",
-      "availabilityStatus": "rate_limited_locally",
-      "source": "canonical-history, football-data-co-uk, apifootball-com, goal-api, api-football, espn-team-schedule",
-      "asOf": "2026-10-16T21:07:24.339Z",
-      "note": "Providerquota voor deze run is bereikt; volgende geplande run probeert opnieuw.",
-      "providerAttempts": [
-        {
-          "provider": "canonical-history",
-          "status": "not_found",
-          "records": 0,
-          "durationMs": null,
-          "quota": {
-            "remaining": null,
-            "limit": null,
-            "resetAt": null
-          },
-          "result": "no_coverage"
-        },
-        {
-          "provider": "football-data-co-uk",
-          "status": "no_coverage",
-          "records": 0,
-          "durationMs": null,
-          "quota": {
-            "remaining": null,
-            "limit": null,
-            "resetAt": null
-          },
-          "result": "no_coverage"
-        },
-        {
-          "provider": "apifootball-com",
-          "status": "no_coverage",
-          "records": 0,
-          "durationMs": null,
-          "quota": {
-            "remaining": null,
-            "limit": null,
-            "resetAt": null
-          },
-          "result": "no_coverage"
-        },
-        {
-          "provider": "goal-api",
-          "status": "acceptance_gate_closed",
-          "records": 0,
-          "durationMs": null,
-          "quota": {
-            "remaining": null,
-            "limit": null,
-            "resetAt": null
-          },
-          "result": "acceptance_blocked"
-        },
-        {
-          "provider": "api-football",
-          "status": "rate_limited_locally",
-          "records": 0,
-          "durationMs": null,
-          "quota": {
-            "remaining": null,
-            "limit": null,
-            "resetAt": null
-          },
-          "result": "quota"
-        },
-        {
-          "provider": "espn-team-schedule",
-          "status": "not_found",
-          "records": 0,
-          "durationMs": null,
-          "quota": {
-            "remaining": null,
-            "limit": null,
-            "resetAt": null
-          },
-          "result": "no_coverage"
-        }
-      ],
-      "staticStatusUpdated": true
-    },
-    {
-      "matchId": "ss-espn-eng.2-401880209",
-      "date": "2026-10-17",
-      "league": "England - Championship",
-      "homeTeam": "Wrexham",
-      "awayTeam": "Preston North End",
-      "status": "rate_limited_locally",
-      "availabilityStatus": "rate_limited_locally",
-      "source": "canonical-history, football-data-co-uk, apifootball-com, goal-api, api-football, espn-team-schedule",
-      "asOf": "2026-10-16T21:07:27.238Z",
-      "note": "Providerquota voor deze run is bereikt; volgende geplande run probeert opnieuw.",
-      "providerAttempts": [
-        {
-          "provider": "canonical-history",
-          "status": "not_found",
-          "records": 0,
-          "durationMs": null,
-          "quota": {
-            "remaining": null,
-            "limit": null,
-            "resetAt": null
-          },
-          "result": "no_coverage"
-        },
-        {
-          "provider": "football-data-co-uk",
-          "status": "no_coverage",
-          "records": 0,
-          "durationMs": null,
-          "quota": {
-            "remaining": null,
-            "limit": null,
-            "resetAt": null
-          },
-          "result": "no_coverage"
-        },
-        {
-          "provider": "apifootball-com",
-          "status": "no_coverage",
-          "records": 0,
-          "durationMs": null,
-          "quota": {
-            "remaining": null,
-            "limit": null,
-            "resetAt": null
-          },
-          "result": "no_coverage"
-        },
-        {
-          "provider": "goal-api",
-          "status": "acceptance_gate_closed",
-          "records": 0,
-          "durationMs": null,
-          "quota": {
-            "remaining": null,
-            "limit": null,
-            "resetAt": null
-          },
-          "result": "acceptance_blocked"
-        },
-        {
-          "provider": "api-football",
-          "status": "rate_limited_locally",
-          "records": 0,
-          "durationMs": null,
-          "quota": {
-            "remaining": null,
-            "limit": null,
-            "resetAt": null
-          },
-          "result": "quota"
-        },
-        {
-          "provider": "espn-team-schedule",
-          "status": "not_found",
-          "records": 0,
-          "durationMs": null,
-          "quota": {
-            "remaining": null,
-            "limit": null,
-            "resetAt": null
-          },
-          "result": "no_coverage"
-        }
-      ],
-      "staticStatusUpdated": true
-    },
-    {
-      "matchId": "ss-fotmob-5832910",
-      "date": "2026-10-18",
-      "league": "Netherlands - Eerste Divisie",
-      "homeTeam": "RKC Waalwijk",
-      "awayTeam": "FC Volendam",
-      "status": "rate_limited_locally",
-      "availabilityStatus": "rate_limited_locally",
-      "source": "canonical-history, football-data-co-uk, goal-api, api-football, espn-team-schedule",
-      "asOf": "2026-10-16T21:07:27.863Z",
-      "note": "Providerquota voor deze run is bereikt; volgende geplande run probeert opnieuw.",
-      "providerAttempts": [
-        {
-          "provider": "canonical-history",
-          "status": "not_found",
-          "records": 0,
-          "durationMs": null,
-          "quota": {
-            "remaining": null,
-            "limit": null,
-            "resetAt": null
-          },
-          "result": "no_coverage"
-        },
-        {
-          "provider": "football-data-co-uk",
-          "status": "not_configured",
-          "reason": "league_unsupported",
-          "durationMs": null,
-          "quota": {
-            "remaining": null,
-            "limit": null,
-            "resetAt": null
-          },
-          "result": "not_configured"
-        },
-        {
-          "provider": "goal-api",
-          "status": "acceptance_gate_closed",
-          "records": 0,
-          "durationMs": null,
-          "quota": {
-            "remaining": null,
-            "limit": null,
-            "resetAt": null
-          },
-          "result": "acceptance_blocked"
-        },
-        {
-          "provider": "api-football",
-          "status": "rate_limited_locally",
-          "records": 0,
-          "durationMs": null,
-          "quota": {
-            "remaining": null,
-            "limit": null,
-            "resetAt": null
-          },
-          "result": "quota"
-        },
-        {
-          "provider": "espn-team-schedule",
-          "status": "not_found",
-          "records": 0,
-          "durationMs": null,
-          "quota": {
-            "remaining": null,
-            "limit": null,
-            "resetAt": null
-          },
-          "result": "no_coverage"
-        }
-      ],
-      "staticStatusUpdated": true
-    },
-    {
-      "matchId": "ss-espn-ned.1-401875578",
-      "date": "2026-10-18",
-      "league": "Netherlands - Eredivisie",
-      "homeTeam": "PEC Zwolle",
-      "awayTeam": "Go Ahead Eagles",
-      "status": "rate_limited_locally",
-      "availabilityStatus": "rate_limited_locally",
-      "source": "canonical-history, football-data-co-uk, goal-api, api-football, espn-team-schedule",
-      "asOf": "2026-10-16T21:07:31.555Z",
-      "note": "Providerquota voor deze run is bereikt; volgende geplande run probeert opnieuw.",
-      "providerAttempts": [
-        {
-          "provider": "canonical-history",
-          "status": "not_found",
-          "records": 0,
-          "durationMs": null,
-          "quota": {
-            "remaining": null,
-            "limit": null,
-            "resetAt": null
-          },
-          "result": "no_coverage"
-        },
-        {
-          "provider": "football-data-co-uk",
-          "status": "no_coverage",
-          "records": 0,
-          "durationMs": null,
-          "quota": {
-            "remaining": null,
-            "limit": null,
-            "resetAt": null
-          },
-          "result": "no_coverage"
-        },
-        {
-          "provider": "goal-api",
-          "status": "acceptance_gate_closed",
-          "records": 0,
-          "durationMs": null,
-          "quota": {
-            "remaining": null,
-            "limit": null,
-            "resetAt": null
-          },
-          "result": "acceptance_blocked"
-        },
-        {
-          "provider": "api-football",
-          "status": "rate_limited_locally",
-          "records": 0,
-          "durationMs": null,
-          "quota": {
-            "remaining": null,
-            "limit": null,
-            "resetAt": null
-          },
-          "result": "quota"
-        },
-        {
-          "provider": "espn-team-schedule",
-          "status": "not_found",
-          "records": 0,
-          "durationMs": null,
-          "quota": {
-            "remaining": null,
-            "limit": null,
-            "resetAt": null
-          },
-          "result": "no_coverage"
-        }
-      ],
-      "staticStatusUpdated": true
-    },
-    {
-      "matchId": "ss-espn-ger.2-401885086",
-      "date": "2026-10-18",
-      "league": "Germany - 2. Bundesliga",
-      "homeTeam": "Arminia Bielefeld",
-      "awayTeam": "VfL Osnabruck",
-      "status": "rate_limited_locally",
-      "availabilityStatus": "rate_limited_locally",
-      "source": "canonical-history, football-data-co-uk, goal-api, api-football, espn-team-schedule",
-      "asOf": "2026-10-16T21:07:33.677Z",
-      "note": "Providerquota voor deze run is bereikt; volgende geplande run probeert opnieuw.",
-      "providerAttempts": [
-        {
-          "provider": "canonical-history",
-          "status": "not_found",
-          "records": 0,
-          "durationMs": null,
-          "quota": {
-            "remaining": null,
-            "limit": null,
-            "resetAt": null
-          },
-          "result": "no_coverage"
-        },
-        {
-          "provider": "football-data-co-uk",
-          "status": "no_coverage",
-          "records": 0,
-          "durationMs": null,
-          "quota": {
-            "remaining": null,
-            "limit": null,
-            "resetAt": null
-          },
-          "result": "no_coverage"
-        },
-        {
-          "provider": "goal-api",
-          "status": "acceptance_gate_closed",
-          "records": 0,
-          "durationMs": null,
-          "quota": {
-            "remaining": null,
-            "limit": null,
-            "resetAt": null
-          },
-          "result": "acceptance_blocked"
-        },
-        {
-          "provider": "api-football",
-          "status": "rate_limited_locally",
-          "records": 0,
-          "durationMs": null,
-          "quota": {
-            "remaining": null,
-            "limit": null,
-            "resetAt": null
-          },
-          "result": "quota"
-        },
-        {
-          "provider": "espn-team-schedule",
-          "status": "team_mapping_missing",
-          "durationMs": null,
-          "quota": {
-            "remaining": null,
-            "limit": null,
-            "resetAt": null
-          },
-          "result": "mapping_failed"
-        }
-      ],
-      "staticStatusUpdated": true
-    },
-    {
-      "matchId": "ss-espn-ger.1-401884771",
-      "date": "2026-10-18",
-      "league": "Germany - Bundesliga",
-      "homeTeam": "Bayer Leverkusen",
+      "matchId": "ss-espn-uefa.europa.conf-401915836",
+      "date": "2026-10-22",
+      "league": "Europe - Conference League",
+      "homeTeam": "AS Monaco",
       "awayTeam": "SC Freiburg",
-      "status": "rate_limited_locally",
-      "availabilityStatus": "rate_limited_locally",
+      "status": "no_direct_history",
+      "availabilityStatus": "no_direct_history",
       "source": "canonical-history, football-data-co-uk, goal-api, api-football, espn-team-schedule",
-      "asOf": "2026-10-16T21:07:36.146Z",
-      "note": "Providerquota voor deze run is bereikt; volgende geplande run probeert opnieuw.",
+      "asOf": "2026-10-16T23:38:04.574Z",
+      "note": "Geen betrouwbare directe H2H gevonden bij de providers die met succes konden worden bevraagd.",
       "providerAttempts": [
         {
           "provider": "canonical-history",
@@ -1042,15 +209,15 @@
         },
         {
           "provider": "football-data-co-uk",
-          "status": "no_coverage",
-          "records": 0,
+          "status": "not_configured",
+          "reason": "league_unsupported",
           "durationMs": null,
           "quota": {
             "remaining": null,
             "limit": null,
             "resetAt": null
           },
-          "result": "no_coverage"
+          "result": "not_configured"
         },
         {
           "provider": "goal-api",
@@ -1066,7 +233,7 @@
         },
         {
           "provider": "api-football",
-          "status": "rate_limited_locally",
+          "status": "team_mapping_missing",
           "records": 0,
           "durationMs": null,
           "quota": {
@@ -1074,7 +241,7 @@
             "limit": null,
             "resetAt": null
           },
-          "result": "quota"
+          "result": "mapping_failed"
         },
         {
           "provider": "espn-team-schedule",
@@ -1092,16 +259,16 @@
       "staticStatusUpdated": true
     },
     {
-      "matchId": "ss-espn-fra.1-401876438",
-      "date": "2026-10-18",
-      "league": "France - Ligue 1",
-      "homeTeam": "Le Havre AC",
-      "awayTeam": "AJ Auxerre",
-      "status": "rate_limited_locally",
-      "availabilityStatus": "rate_limited_locally",
+      "matchId": "ss-espn-uefa.europa-401915553",
+      "date": "2026-10-22",
+      "league": "Europe - Europa League",
+      "homeTeam": "Besiktas",
+      "awayTeam": "Crystal Palace",
+      "status": "no_direct_history",
+      "availabilityStatus": "no_direct_history",
       "source": "canonical-history, football-data-co-uk, goal-api, api-football, espn-team-schedule",
-      "asOf": "2026-10-16T21:07:38.555Z",
-      "note": "Providerquota voor deze run is bereikt; volgende geplande run probeert opnieuw.",
+      "asOf": "2026-10-16T23:38:05.149Z",
+      "note": "Geen betrouwbare directe H2H gevonden bij de providers die met succes konden worden bevraagd.",
       "providerAttempts": [
         {
           "provider": "canonical-history",
@@ -1117,15 +284,15 @@
         },
         {
           "provider": "football-data-co-uk",
-          "status": "no_coverage",
-          "records": 0,
+          "status": "not_configured",
+          "reason": "league_unsupported",
           "durationMs": null,
           "quota": {
             "remaining": null,
             "limit": null,
             "resetAt": null
           },
-          "result": "no_coverage"
+          "result": "not_configured"
         },
         {
           "provider": "goal-api",
@@ -1141,7 +308,7 @@
         },
         {
           "provider": "api-football",
-          "status": "rate_limited_locally",
+          "status": "team_mapping_missing",
           "records": 0,
           "durationMs": null,
           "quota": {
@@ -1149,10 +316,36 @@
             "limit": null,
             "resetAt": null
           },
-          "result": "quota"
+          "result": "mapping_failed"
         },
         {
           "provider": "espn-team-schedule",
+          "status": "team_mapping_missing",
+          "durationMs": null,
+          "quota": {
+            "remaining": null,
+            "limit": null,
+            "resetAt": null
+          },
+          "result": "mapping_failed"
+        }
+      ],
+      "staticStatusUpdated": true
+    },
+    {
+      "matchId": "ss-fotmob-6112406",
+      "date": "2026-10-22",
+      "league": "Europe - Conference League",
+      "homeTeam": "FC Midtjylland",
+      "awayTeam": "St.Truiden",
+      "status": "no_direct_history",
+      "availabilityStatus": "no_direct_history",
+      "source": "canonical-history, football-data-co-uk, goal-api, api-football, espn-team-schedule",
+      "asOf": "2026-10-16T23:38:05.700Z",
+      "note": "Geen betrouwbare directe H2H gevonden bij de providers die met succes konden worden bevraagd.",
+      "providerAttempts": [
+        {
+          "provider": "canonical-history",
           "status": "not_found",
           "records": 0,
           "durationMs": null,
@@ -1162,20 +355,67 @@
             "resetAt": null
           },
           "result": "no_coverage"
+        },
+        {
+          "provider": "football-data-co-uk",
+          "status": "not_configured",
+          "reason": "league_unsupported",
+          "durationMs": null,
+          "quota": {
+            "remaining": null,
+            "limit": null,
+            "resetAt": null
+          },
+          "result": "not_configured"
+        },
+        {
+          "provider": "goal-api",
+          "status": "acceptance_gate_closed",
+          "records": 0,
+          "durationMs": null,
+          "quota": {
+            "remaining": null,
+            "limit": null,
+            "resetAt": null
+          },
+          "result": "acceptance_blocked"
+        },
+        {
+          "provider": "api-football",
+          "status": "team_mapping_missing",
+          "records": 0,
+          "durationMs": null,
+          "quota": {
+            "remaining": null,
+            "limit": null,
+            "resetAt": null
+          },
+          "result": "mapping_failed"
+        },
+        {
+          "provider": "espn-team-schedule",
+          "status": "team_mapping_missing",
+          "durationMs": null,
+          "quota": {
+            "remaining": null,
+            "limit": null,
+            "resetAt": null
+          },
+          "result": "mapping_failed"
         }
       ],
       "staticStatusUpdated": true
     },
     {
-      "matchId": "ss-espn-ned.2-401875888",
-      "date": "2026-10-18",
-      "league": "Netherlands - Eerste Divisie",
-      "homeTeam": "MVV Maastricht",
-      "awayTeam": "Heracles Almelo",
+      "matchId": "ss-espn-uefa.europa-401915542",
+      "date": "2026-10-22",
+      "league": "Europe - Europa League",
+      "homeTeam": "Jagiellonia Bialystok",
+      "awayTeam": "Anderlecht",
       "status": "rate_limited_locally",
       "availabilityStatus": "rate_limited_locally",
       "source": "canonical-history, football-data-co-uk, goal-api, api-football, espn-team-schedule",
-      "asOf": "2026-10-16T21:07:39.174Z",
+      "asOf": "2026-10-16T23:38:05.943Z",
       "note": "Providerquota voor deze run is bereikt; volgende geplande run probeert opnieuw.",
       "providerAttempts": [
         {
@@ -1228,104 +468,28 @@
         },
         {
           "provider": "espn-team-schedule",
-          "status": "not_found",
-          "records": 0,
+          "status": "team_mapping_missing",
           "durationMs": null,
           "quota": {
             "remaining": null,
             "limit": null,
             "resetAt": null
           },
-          "result": "no_coverage"
+          "result": "mapping_failed"
         }
       ],
       "staticStatusUpdated": true
     },
     {
-      "matchId": "ss-espn-ned.1-401875581",
-      "date": "2026-10-18",
-      "league": "Netherlands - Eredivisie",
-      "homeTeam": "NEC Nijmegen",
-      "awayTeam": "Fortuna Sittard",
-      "status": "rate_limited_locally",
-      "availabilityStatus": "rate_limited_locally",
-      "source": "canonical-history, football-data-co-uk, goal-api, api-football, espn-team-schedule",
-      "asOf": "2026-10-16T21:07:39.913Z",
-      "note": "Providerquota voor deze run is bereikt; volgende geplande run probeert opnieuw.",
-      "providerAttempts": [
-        {
-          "provider": "canonical-history",
-          "status": "not_found",
-          "records": 0,
-          "durationMs": null,
-          "quota": {
-            "remaining": null,
-            "limit": null,
-            "resetAt": null
-          },
-          "result": "no_coverage"
-        },
-        {
-          "provider": "football-data-co-uk",
-          "status": "no_coverage",
-          "records": 0,
-          "durationMs": null,
-          "quota": {
-            "remaining": null,
-            "limit": null,
-            "resetAt": null
-          },
-          "result": "no_coverage"
-        },
-        {
-          "provider": "goal-api",
-          "status": "acceptance_gate_closed",
-          "records": 0,
-          "durationMs": null,
-          "quota": {
-            "remaining": null,
-            "limit": null,
-            "resetAt": null
-          },
-          "result": "acceptance_blocked"
-        },
-        {
-          "provider": "api-football",
-          "status": "rate_limited_locally",
-          "records": 0,
-          "durationMs": null,
-          "quota": {
-            "remaining": null,
-            "limit": null,
-            "resetAt": null
-          },
-          "result": "quota"
-        },
-        {
-          "provider": "espn-team-schedule",
-          "status": "not_found",
-          "records": 0,
-          "durationMs": null,
-          "quota": {
-            "remaining": null,
-            "limit": null,
-            "resetAt": null
-          },
-          "result": "no_coverage"
-        }
-      ],
-      "staticStatusUpdated": true
-    },
-    {
-      "matchId": "ss-espn-ger.2-401885088",
-      "date": "2026-10-18",
+      "matchId": "ss-espn-ger.2-401885077",
+      "date": "2026-10-24",
       "league": "Germany - 2. Bundesliga",
-      "homeTeam": "Dynamo Dresden",
-      "awayTeam": "1. FC Magdeburg",
+      "homeTeam": "1. FC Magdeburg",
+      "awayTeam": "Karlsruher SC",
       "status": "rate_limited_locally",
       "availabilityStatus": "rate_limited_locally",
       "source": "canonical-history, football-data-co-uk, goal-api, api-football, espn-team-schedule",
-      "asOf": "2026-10-16T21:07:40.253Z",
+      "asOf": "2026-10-16T23:38:09.227Z",
       "note": "Providerquota voor deze run is bereikt; volgende geplande run probeert opnieuw.",
       "providerAttempts": [
         {
@@ -1391,15 +555,15 @@
       "staticStatusUpdated": true
     },
     {
-      "matchId": "ss-espn-ned.2-401875887",
-      "date": "2026-10-19",
-      "league": "Netherlands - Eerste Divisie",
-      "homeTeam": "Jong Ajax",
-      "awayTeam": "De Graafschap",
+      "matchId": "ss-espn-eng.2-401880200",
+      "date": "2026-10-24",
+      "league": "England - Championship",
+      "homeTeam": "Sheffield United",
+      "awayTeam": "Derby County",
       "status": "rate_limited_locally",
       "availabilityStatus": "rate_limited_locally",
-      "source": "canonical-history, football-data-co-uk, goal-api, api-football, espn-team-schedule",
-      "asOf": "2026-10-16T21:07:40.886Z",
+      "source": "canonical-history, football-data-co-uk, apifootball-com, goal-api, api-football, espn-team-schedule",
+      "asOf": "2026-10-16T23:38:14.134Z",
       "note": "Providerquota voor deze run is bereikt; volgende geplande run probeert opnieuw.",
       "providerAttempts": [
         {
@@ -1416,15 +580,27 @@
         },
         {
           "provider": "football-data-co-uk",
-          "status": "not_configured",
-          "reason": "league_unsupported",
+          "status": "no_coverage",
+          "records": 0,
           "durationMs": null,
           "quota": {
             "remaining": null,
             "limit": null,
             "resetAt": null
           },
-          "result": "not_configured"
+          "result": "no_coverage"
+        },
+        {
+          "provider": "apifootball-com",
+          "status": "no_coverage",
+          "records": 0,
+          "durationMs": null,
+          "quota": {
+            "remaining": null,
+            "limit": null,
+            "resetAt": null
+          },
+          "result": "no_coverage"
         },
         {
           "provider": "goal-api",
@@ -1466,15 +642,90 @@
       "staticStatusUpdated": true
     },
     {
-      "matchId": "ss-fotmob-5795484",
-      "date": "2026-10-19",
+      "matchId": "ss-espn-ger.1-401884762",
+      "date": "2026-10-24",
+      "league": "Germany - Bundesliga",
+      "homeTeam": "RB Leipzig",
+      "awayTeam": "SV Elversberg",
+      "status": "rate_limited_locally",
+      "availabilityStatus": "rate_limited_locally",
+      "source": "canonical-history, football-data-co-uk, goal-api, api-football, espn-team-schedule",
+      "asOf": "2026-10-16T23:38:16.172Z",
+      "note": "Providerquota voor deze run is bereikt; volgende geplande run probeert opnieuw.",
+      "providerAttempts": [
+        {
+          "provider": "canonical-history",
+          "status": "not_found",
+          "records": 0,
+          "durationMs": null,
+          "quota": {
+            "remaining": null,
+            "limit": null,
+            "resetAt": null
+          },
+          "result": "no_coverage"
+        },
+        {
+          "provider": "football-data-co-uk",
+          "status": "no_coverage",
+          "records": 0,
+          "durationMs": null,
+          "quota": {
+            "remaining": null,
+            "limit": null,
+            "resetAt": null
+          },
+          "result": "no_coverage"
+        },
+        {
+          "provider": "goal-api",
+          "status": "acceptance_gate_closed",
+          "records": 0,
+          "durationMs": null,
+          "quota": {
+            "remaining": null,
+            "limit": null,
+            "resetAt": null
+          },
+          "result": "acceptance_blocked"
+        },
+        {
+          "provider": "api-football",
+          "status": "rate_limited_locally",
+          "records": 0,
+          "durationMs": null,
+          "quota": {
+            "remaining": null,
+            "limit": null,
+            "resetAt": null
+          },
+          "result": "quota"
+        },
+        {
+          "provider": "espn-team-schedule",
+          "status": "not_found",
+          "records": 0,
+          "durationMs": null,
+          "quota": {
+            "remaining": null,
+            "limit": null,
+            "resetAt": null
+          },
+          "result": "no_coverage"
+        }
+      ],
+      "staticStatusUpdated": true
+    },
+    {
+      "matchId": "ss-espn-eng.1-401879255",
+      "date": "2026-10-24",
       "league": "England - Premier League",
-      "homeTeam": "Tottenham Hotspur",
-      "awayTeam": "Coventry City",
+      "homeTeam": "Coventry City",
+      "awayTeam": "Fulham",
       "status": "rate_limited_locally",
       "availabilityStatus": "rate_limited_locally",
       "source": "canonical-history, football-data-co-uk, goal-api, api-football, espn-team-schedule",
-      "asOf": "2026-10-16T21:07:43.287Z",
+      "asOf": "2026-10-16T23:38:18.216Z",
       "note": "Providerquota voor deze run is bereikt; volgende geplande run probeert opnieuw.",
       "providerAttempts": [
         {
@@ -1541,15 +792,15 @@
       "staticStatusUpdated": true
     },
     {
-      "matchId": "ss-espn-ned.2-401875886",
-      "date": "2026-10-19",
+      "matchId": "ss-espn-ned.2-401875875",
+      "date": "2026-10-24",
       "league": "Netherlands - Eerste Divisie",
-      "homeTeam": "Jong FC Utrecht",
-      "awayTeam": "Roda JC Kerkrade",
+      "homeTeam": "FC Dordrecht",
+      "awayTeam": "VVV-Venlo",
       "status": "rate_limited_locally",
       "availabilityStatus": "rate_limited_locally",
       "source": "canonical-history, football-data-co-uk, goal-api, api-football, espn-team-schedule",
-      "asOf": "2026-10-16T21:07:43.962Z",
+      "asOf": "2026-10-16T23:38:19.090Z",
       "note": "Providerquota voor deze run is bereikt; volgende geplande run probeert opnieuw.",
       "providerAttempts": [
         {
@@ -1616,15 +867,15 @@
       "staticStatusUpdated": true
     },
     {
-      "matchId": "ss-espn-ned.2-401875885",
-      "date": "2026-10-19",
-      "league": "Netherlands - Eerste Divisie",
-      "homeTeam": "Jong PSV",
-      "awayTeam": "FC Dordrecht",
+      "matchId": "ss-espn-ned.1-401875573",
+      "date": "2026-10-24",
+      "league": "Netherlands - Eredivisie",
+      "homeTeam": "FC Utrecht",
+      "awayTeam": "PEC Zwolle",
       "status": "rate_limited_locally",
       "availabilityStatus": "rate_limited_locally",
       "source": "canonical-history, football-data-co-uk, goal-api, api-football, espn-team-schedule",
-      "asOf": "2026-10-16T21:07:44.496Z",
+      "asOf": "2026-10-16T23:38:21.409Z",
       "note": "Providerquota voor deze run is bereikt; volgende geplande run probeert opnieuw.",
       "providerAttempts": [
         {
@@ -1641,15 +892,15 @@
         },
         {
           "provider": "football-data-co-uk",
-          "status": "not_configured",
-          "reason": "league_unsupported",
+          "status": "no_coverage",
+          "records": 0,
           "durationMs": null,
           "quota": {
             "remaining": null,
             "limit": null,
             "resetAt": null
           },
-          "result": "not_configured"
+          "result": "no_coverage"
         },
         {
           "provider": "goal-api",
@@ -1691,15 +942,15 @@
       "staticStatusUpdated": true
     },
     {
-      "matchId": "ss-espn-uefa.champions-401915403",
-      "date": "2026-10-20",
-      "league": "Europe - Champions League",
-      "homeTeam": "Fenerbahce",
-      "awayTeam": "Slavia Prague",
+      "matchId": "ss-espn-fra.2-401876711",
+      "date": "2026-10-24",
+      "league": "France - Ligue 2",
+      "homeTeam": "Saint-Étienne",
+      "awayTeam": "Nantes",
       "status": "rate_limited_locally",
       "availabilityStatus": "rate_limited_locally",
-      "source": "canonical-history, football-data-co-uk, goal-api, api-football, espn-team-schedule",
-      "asOf": "2026-10-16T21:07:44.761Z",
+      "source": "canonical-history, football-data-co-uk, apifootball-com, goal-api, api-football, espn-team-schedule",
+      "asOf": "2026-10-16T23:38:26.635Z",
       "note": "Providerquota voor deze run is bereikt; volgende geplande run probeert opnieuw.",
       "providerAttempts": [
         {
@@ -1716,15 +967,27 @@
         },
         {
           "provider": "football-data-co-uk",
-          "status": "not_configured",
-          "reason": "league_unsupported",
+          "status": "no_coverage",
+          "records": 0,
           "durationMs": null,
           "quota": {
             "remaining": null,
             "limit": null,
             "resetAt": null
           },
-          "result": "not_configured"
+          "result": "no_coverage"
+        },
+        {
+          "provider": "apifootball-com",
+          "status": "no_coverage",
+          "records": 0,
+          "durationMs": null,
+          "quota": {
+            "remaining": null,
+            "limit": null,
+            "resetAt": null
+          },
+          "result": "no_coverage"
         },
         {
           "provider": "goal-api",
@@ -1752,14 +1015,762 @@
         },
         {
           "provider": "espn-team-schedule",
-          "status": "team_mapping_missing",
+          "status": "not_found",
+          "records": 0,
           "durationMs": null,
           "quota": {
             "remaining": null,
             "limit": null,
             "resetAt": null
           },
-          "result": "mapping_failed"
+          "result": "no_coverage"
+        }
+      ],
+      "staticStatusUpdated": true
+    },
+    {
+      "matchId": "ss-espn-eng.2-401880208",
+      "date": "2026-10-24",
+      "league": "England - Championship",
+      "homeTeam": "Blackburn Rovers",
+      "awayTeam": "Wrexham",
+      "status": "rate_limited_locally",
+      "availabilityStatus": "rate_limited_locally",
+      "source": "canonical-history, football-data-co-uk, apifootball-com, goal-api, api-football, espn-team-schedule",
+      "asOf": "2026-10-16T23:38:29.645Z",
+      "note": "Providerquota voor deze run is bereikt; volgende geplande run probeert opnieuw.",
+      "providerAttempts": [
+        {
+          "provider": "canonical-history",
+          "status": "not_found",
+          "records": 0,
+          "durationMs": null,
+          "quota": {
+            "remaining": null,
+            "limit": null,
+            "resetAt": null
+          },
+          "result": "no_coverage"
+        },
+        {
+          "provider": "football-data-co-uk",
+          "status": "no_coverage",
+          "records": 0,
+          "durationMs": null,
+          "quota": {
+            "remaining": null,
+            "limit": null,
+            "resetAt": null
+          },
+          "result": "no_coverage"
+        },
+        {
+          "provider": "apifootball-com",
+          "status": "no_coverage",
+          "records": 0,
+          "durationMs": null,
+          "quota": {
+            "remaining": null,
+            "limit": null,
+            "resetAt": null
+          },
+          "result": "no_coverage"
+        },
+        {
+          "provider": "goal-api",
+          "status": "acceptance_gate_closed",
+          "records": 0,
+          "durationMs": null,
+          "quota": {
+            "remaining": null,
+            "limit": null,
+            "resetAt": null
+          },
+          "result": "acceptance_blocked"
+        },
+        {
+          "provider": "api-football",
+          "status": "rate_limited_locally",
+          "records": 0,
+          "durationMs": null,
+          "quota": {
+            "remaining": null,
+            "limit": null,
+            "resetAt": null
+          },
+          "result": "quota"
+        },
+        {
+          "provider": "espn-team-schedule",
+          "status": "not_found",
+          "records": 0,
+          "durationMs": null,
+          "quota": {
+            "remaining": null,
+            "limit": null,
+            "resetAt": null
+          },
+          "result": "no_coverage"
+        }
+      ],
+      "staticStatusUpdated": true
+    },
+    {
+      "matchId": "ss-espn-ger.1-401884755",
+      "date": "2026-10-24",
+      "league": "Germany - Bundesliga",
+      "homeTeam": "SC Paderborn 07",
+      "awayTeam": "Hamburg SV",
+      "status": "rate_limited_locally",
+      "availabilityStatus": "rate_limited_locally",
+      "source": "canonical-history, football-data-co-uk, goal-api, api-football, espn-team-schedule",
+      "asOf": "2026-10-16T23:38:30.214Z",
+      "note": "Providerquota voor deze run is bereikt; volgende geplande run probeert opnieuw.",
+      "providerAttempts": [
+        {
+          "provider": "canonical-history",
+          "status": "not_found",
+          "records": 0,
+          "durationMs": null,
+          "quota": {
+            "remaining": null,
+            "limit": null,
+            "resetAt": null
+          },
+          "result": "no_coverage"
+        },
+        {
+          "provider": "football-data-co-uk",
+          "status": "no_coverage",
+          "records": 0,
+          "durationMs": null,
+          "quota": {
+            "remaining": null,
+            "limit": null,
+            "resetAt": null
+          },
+          "result": "no_coverage"
+        },
+        {
+          "provider": "goal-api",
+          "status": "acceptance_gate_closed",
+          "records": 0,
+          "durationMs": null,
+          "quota": {
+            "remaining": null,
+            "limit": null,
+            "resetAt": null
+          },
+          "result": "acceptance_blocked"
+        },
+        {
+          "provider": "api-football",
+          "status": "rate_limited_locally",
+          "records": 0,
+          "durationMs": null,
+          "quota": {
+            "remaining": null,
+            "limit": null,
+            "resetAt": null
+          },
+          "result": "quota"
+        },
+        {
+          "provider": "espn-team-schedule",
+          "status": "not_found",
+          "records": 0,
+          "durationMs": null,
+          "quota": {
+            "remaining": null,
+            "limit": null,
+            "resetAt": null
+          },
+          "result": "no_coverage"
+        }
+      ],
+      "staticStatusUpdated": true
+    },
+    {
+      "matchId": "ss-espn-ned.1-401875572",
+      "date": "2026-10-24",
+      "league": "Netherlands - Eredivisie",
+      "homeTeam": "Willem II",
+      "awayTeam": "SC Cambuur",
+      "status": "rate_limited_locally",
+      "availabilityStatus": "rate_limited_locally",
+      "source": "canonical-history, football-data-co-uk, goal-api, api-football, espn-team-schedule",
+      "asOf": "2026-10-16T23:38:30.953Z",
+      "note": "Providerquota voor deze run is bereikt; volgende geplande run probeert opnieuw.",
+      "providerAttempts": [
+        {
+          "provider": "canonical-history",
+          "status": "not_found",
+          "records": 0,
+          "durationMs": null,
+          "quota": {
+            "remaining": null,
+            "limit": null,
+            "resetAt": null
+          },
+          "result": "no_coverage"
+        },
+        {
+          "provider": "football-data-co-uk",
+          "status": "no_coverage",
+          "records": 0,
+          "durationMs": null,
+          "quota": {
+            "remaining": null,
+            "limit": null,
+            "resetAt": null
+          },
+          "result": "no_coverage"
+        },
+        {
+          "provider": "goal-api",
+          "status": "acceptance_gate_closed",
+          "records": 0,
+          "durationMs": null,
+          "quota": {
+            "remaining": null,
+            "limit": null,
+            "resetAt": null
+          },
+          "result": "acceptance_blocked"
+        },
+        {
+          "provider": "api-football",
+          "status": "rate_limited_locally",
+          "records": 0,
+          "durationMs": null,
+          "quota": {
+            "remaining": null,
+            "limit": null,
+            "resetAt": null
+          },
+          "result": "quota"
+        },
+        {
+          "provider": "espn-team-schedule",
+          "status": "not_found",
+          "records": 0,
+          "durationMs": null,
+          "quota": {
+            "remaining": null,
+            "limit": null,
+            "resetAt": null
+          },
+          "result": "no_coverage"
+        }
+      ],
+      "staticStatusUpdated": true
+    },
+    {
+      "matchId": "ss-espn-eng.2-401880206",
+      "date": "2026-10-24",
+      "league": "England - Championship",
+      "homeTeam": "Cardiff City",
+      "awayTeam": "Birmingham City",
+      "status": "rate_limited_locally",
+      "availabilityStatus": "rate_limited_locally",
+      "source": "canonical-history, football-data-co-uk, apifootball-com, goal-api, api-football, espn-team-schedule",
+      "asOf": "2026-10-16T23:38:33.869Z",
+      "note": "Providerquota voor deze run is bereikt; volgende geplande run probeert opnieuw.",
+      "providerAttempts": [
+        {
+          "provider": "canonical-history",
+          "status": "not_found",
+          "records": 0,
+          "durationMs": null,
+          "quota": {
+            "remaining": null,
+            "limit": null,
+            "resetAt": null
+          },
+          "result": "no_coverage"
+        },
+        {
+          "provider": "football-data-co-uk",
+          "status": "no_coverage",
+          "records": 0,
+          "durationMs": null,
+          "quota": {
+            "remaining": null,
+            "limit": null,
+            "resetAt": null
+          },
+          "result": "no_coverage"
+        },
+        {
+          "provider": "apifootball-com",
+          "status": "no_coverage",
+          "records": 0,
+          "durationMs": null,
+          "quota": {
+            "remaining": null,
+            "limit": null,
+            "resetAt": null
+          },
+          "result": "no_coverage"
+        },
+        {
+          "provider": "goal-api",
+          "status": "acceptance_gate_closed",
+          "records": 0,
+          "durationMs": null,
+          "quota": {
+            "remaining": null,
+            "limit": null,
+            "resetAt": null
+          },
+          "result": "acceptance_blocked"
+        },
+        {
+          "provider": "api-football",
+          "status": "rate_limited_locally",
+          "records": 0,
+          "durationMs": null,
+          "quota": {
+            "remaining": null,
+            "limit": null,
+            "resetAt": null
+          },
+          "result": "quota"
+        },
+        {
+          "provider": "espn-team-schedule",
+          "status": "not_found",
+          "records": 0,
+          "durationMs": null,
+          "quota": {
+            "remaining": null,
+            "limit": null,
+            "resetAt": null
+          },
+          "result": "no_coverage"
+        }
+      ],
+      "staticStatusUpdated": true
+    },
+    {
+      "matchId": "ss-espn-ned.1-401875571",
+      "date": "2026-10-24",
+      "league": "Netherlands - Eredivisie",
+      "homeTeam": "ADO Den Haag",
+      "awayTeam": "Heerenveen",
+      "status": "rate_limited_locally",
+      "availabilityStatus": "rate_limited_locally",
+      "source": "canonical-history, football-data-co-uk, goal-api, api-football, espn-team-schedule",
+      "asOf": "2026-10-16T23:38:34.523Z",
+      "note": "Providerquota voor deze run is bereikt; volgende geplande run probeert opnieuw.",
+      "providerAttempts": [
+        {
+          "provider": "canonical-history",
+          "status": "not_found",
+          "records": 0,
+          "durationMs": null,
+          "quota": {
+            "remaining": null,
+            "limit": null,
+            "resetAt": null
+          },
+          "result": "no_coverage"
+        },
+        {
+          "provider": "football-data-co-uk",
+          "status": "no_coverage",
+          "records": 0,
+          "durationMs": null,
+          "quota": {
+            "remaining": null,
+            "limit": null,
+            "resetAt": null
+          },
+          "result": "no_coverage"
+        },
+        {
+          "provider": "goal-api",
+          "status": "acceptance_gate_closed",
+          "records": 0,
+          "durationMs": null,
+          "quota": {
+            "remaining": null,
+            "limit": null,
+            "resetAt": null
+          },
+          "result": "acceptance_blocked"
+        },
+        {
+          "provider": "api-football",
+          "status": "rate_limited_locally",
+          "records": 0,
+          "durationMs": null,
+          "quota": {
+            "remaining": null,
+            "limit": null,
+            "resetAt": null
+          },
+          "result": "quota"
+        },
+        {
+          "provider": "espn-team-schedule",
+          "status": "not_found",
+          "records": 0,
+          "durationMs": null,
+          "quota": {
+            "remaining": null,
+            "limit": null,
+            "resetAt": null
+          },
+          "result": "no_coverage"
+        }
+      ],
+      "staticStatusUpdated": true
+    },
+    {
+      "matchId": "ss-espn-eng.2-401880204",
+      "date": "2026-10-24",
+      "league": "England - Championship",
+      "homeTeam": "Lincoln City",
+      "awayTeam": "Burnley",
+      "status": "rate_limited_locally",
+      "availabilityStatus": "rate_limited_locally",
+      "source": "canonical-history, football-data-co-uk, apifootball-com, goal-api, api-football, espn-team-schedule",
+      "asOf": "2026-10-16T23:38:37.428Z",
+      "note": "Providerquota voor deze run is bereikt; volgende geplande run probeert opnieuw.",
+      "providerAttempts": [
+        {
+          "provider": "canonical-history",
+          "status": "not_found",
+          "records": 0,
+          "durationMs": null,
+          "quota": {
+            "remaining": null,
+            "limit": null,
+            "resetAt": null
+          },
+          "result": "no_coverage"
+        },
+        {
+          "provider": "football-data-co-uk",
+          "status": "no_coverage",
+          "records": 0,
+          "durationMs": null,
+          "quota": {
+            "remaining": null,
+            "limit": null,
+            "resetAt": null
+          },
+          "result": "no_coverage"
+        },
+        {
+          "provider": "apifootball-com",
+          "status": "no_coverage",
+          "records": 0,
+          "durationMs": null,
+          "quota": {
+            "remaining": null,
+            "limit": null,
+            "resetAt": null
+          },
+          "result": "no_coverage"
+        },
+        {
+          "provider": "goal-api",
+          "status": "acceptance_gate_closed",
+          "records": 0,
+          "durationMs": null,
+          "quota": {
+            "remaining": null,
+            "limit": null,
+            "resetAt": null
+          },
+          "result": "acceptance_blocked"
+        },
+        {
+          "provider": "api-football",
+          "status": "rate_limited_locally",
+          "records": 0,
+          "durationMs": null,
+          "quota": {
+            "remaining": null,
+            "limit": null,
+            "resetAt": null
+          },
+          "result": "quota"
+        },
+        {
+          "provider": "espn-team-schedule",
+          "status": "not_found",
+          "records": 0,
+          "durationMs": null,
+          "quota": {
+            "remaining": null,
+            "limit": null,
+            "resetAt": null
+          },
+          "result": "no_coverage"
+        }
+      ],
+      "staticStatusUpdated": true
+    },
+    {
+      "matchId": "ss-espn-eng.2-401880202",
+      "date": "2026-10-24",
+      "league": "England - Championship",
+      "homeTeam": "Preston North End",
+      "awayTeam": "West Bromwich Albion",
+      "status": "rate_limited_locally",
+      "availabilityStatus": "rate_limited_locally",
+      "source": "canonical-history, football-data-co-uk, apifootball-com, goal-api, api-football, espn-team-schedule",
+      "asOf": "2026-10-16T23:38:40.423Z",
+      "note": "Providerquota voor deze run is bereikt; volgende geplande run probeert opnieuw.",
+      "providerAttempts": [
+        {
+          "provider": "canonical-history",
+          "status": "not_found",
+          "records": 0,
+          "durationMs": null,
+          "quota": {
+            "remaining": null,
+            "limit": null,
+            "resetAt": null
+          },
+          "result": "no_coverage"
+        },
+        {
+          "provider": "football-data-co-uk",
+          "status": "no_coverage",
+          "records": 0,
+          "durationMs": null,
+          "quota": {
+            "remaining": null,
+            "limit": null,
+            "resetAt": null
+          },
+          "result": "no_coverage"
+        },
+        {
+          "provider": "apifootball-com",
+          "status": "no_coverage",
+          "records": 0,
+          "durationMs": null,
+          "quota": {
+            "remaining": null,
+            "limit": null,
+            "resetAt": null
+          },
+          "result": "no_coverage"
+        },
+        {
+          "provider": "goal-api",
+          "status": "acceptance_gate_closed",
+          "records": 0,
+          "durationMs": null,
+          "quota": {
+            "remaining": null,
+            "limit": null,
+            "resetAt": null
+          },
+          "result": "acceptance_blocked"
+        },
+        {
+          "provider": "api-football",
+          "status": "rate_limited_locally",
+          "records": 0,
+          "durationMs": null,
+          "quota": {
+            "remaining": null,
+            "limit": null,
+            "resetAt": null
+          },
+          "result": "quota"
+        },
+        {
+          "provider": "espn-team-schedule",
+          "status": "not_found",
+          "records": 0,
+          "durationMs": null,
+          "quota": {
+            "remaining": null,
+            "limit": null,
+            "resetAt": null
+          },
+          "result": "no_coverage"
+        }
+      ],
+      "staticStatusUpdated": true
+    },
+    {
+      "matchId": "ss-espn-eng.2-401880201",
+      "date": "2026-10-24",
+      "league": "England - Championship",
+      "homeTeam": "Queens Park Rangers",
+      "awayTeam": "Swansea City",
+      "status": "rate_limited_locally",
+      "availabilityStatus": "rate_limited_locally",
+      "source": "canonical-history, football-data-co-uk, apifootball-com, goal-api, api-football, espn-team-schedule",
+      "asOf": "2026-10-16T23:38:43.497Z",
+      "note": "Providerquota voor deze run is bereikt; volgende geplande run probeert opnieuw.",
+      "providerAttempts": [
+        {
+          "provider": "canonical-history",
+          "status": "not_found",
+          "records": 0,
+          "durationMs": null,
+          "quota": {
+            "remaining": null,
+            "limit": null,
+            "resetAt": null
+          },
+          "result": "no_coverage"
+        },
+        {
+          "provider": "football-data-co-uk",
+          "status": "no_coverage",
+          "records": 0,
+          "durationMs": null,
+          "quota": {
+            "remaining": null,
+            "limit": null,
+            "resetAt": null
+          },
+          "result": "no_coverage"
+        },
+        {
+          "provider": "apifootball-com",
+          "status": "no_coverage",
+          "records": 0,
+          "durationMs": null,
+          "quota": {
+            "remaining": null,
+            "limit": null,
+            "resetAt": null
+          },
+          "result": "no_coverage"
+        },
+        {
+          "provider": "goal-api",
+          "status": "acceptance_gate_closed",
+          "records": 0,
+          "durationMs": null,
+          "quota": {
+            "remaining": null,
+            "limit": null,
+            "resetAt": null
+          },
+          "result": "acceptance_blocked"
+        },
+        {
+          "provider": "api-football",
+          "status": "rate_limited_locally",
+          "records": 0,
+          "durationMs": null,
+          "quota": {
+            "remaining": null,
+            "limit": null,
+            "resetAt": null
+          },
+          "result": "quota"
+        },
+        {
+          "provider": "espn-team-schedule",
+          "status": "not_found",
+          "records": 0,
+          "durationMs": null,
+          "quota": {
+            "remaining": null,
+            "limit": null,
+            "resetAt": null
+          },
+          "result": "no_coverage"
+        }
+      ],
+      "staticStatusUpdated": true
+    },
+    {
+      "matchId": "ss-espn-eng.2-401880199",
+      "date": "2026-10-24",
+      "league": "England - Championship",
+      "homeTeam": "Stoke City",
+      "awayTeam": "Bristol City",
+      "status": "rate_limited_locally",
+      "availabilityStatus": "rate_limited_locally",
+      "source": "canonical-history, football-data-co-uk, apifootball-com, goal-api, api-football, espn-team-schedule",
+      "asOf": "2026-10-16T23:38:46.573Z",
+      "note": "Providerquota voor deze run is bereikt; volgende geplande run probeert opnieuw.",
+      "providerAttempts": [
+        {
+          "provider": "canonical-history",
+          "status": "not_found",
+          "records": 0,
+          "durationMs": null,
+          "quota": {
+            "remaining": null,
+            "limit": null,
+            "resetAt": null
+          },
+          "result": "no_coverage"
+        },
+        {
+          "provider": "football-data-co-uk",
+          "status": "no_coverage",
+          "records": 0,
+          "durationMs": null,
+          "quota": {
+            "remaining": null,
+            "limit": null,
+            "resetAt": null
+          },
+          "result": "no_coverage"
+        },
+        {
+          "provider": "apifootball-com",
+          "status": "no_coverage",
+          "records": 0,
+          "durationMs": null,
+          "quota": {
+            "remaining": null,
+            "limit": null,
+            "resetAt": null
+          },
+          "result": "no_coverage"
+        },
+        {
+          "provider": "goal-api",
+          "status": "acceptance_gate_closed",
+          "records": 0,
+          "durationMs": null,
+          "quota": {
+            "remaining": null,
+            "limit": null,
+            "resetAt": null
+          },
+          "result": "acceptance_blocked"
+        },
+        {
+          "provider": "api-football",
+          "status": "rate_limited_locally",
+          "records": 0,
+          "durationMs": null,
+          "quota": {
+            "remaining": null,
+            "limit": null,
+            "resetAt": null
+          },
+          "result": "quota"
+        },
+        {
+          "provider": "espn-team-schedule",
+          "status": "not_found",
+          "records": 0,
+          "durationMs": null,
+          "quota": {
+            "remaining": null,
+            "limit": null,
+            "resetAt": null
+          },
+          "result": "no_coverage"
         }
       ],
       "staticStatusUpdated": true
@@ -4270,8 +4281,8 @@
       "backoffHours": 24
     },
     "ss-espn-uefa.europa-401915553": {
-      "attempts": 8,
-      "checkedAt": "2026-10-15T21:24:03.534Z",
+      "attempts": 9,
+      "checkedAt": "2026-10-16T23:39:23.573Z",
       "status": "no_direct_history",
       "result": "no_coverage",
       "error": null,
@@ -4306,12 +4317,12 @@
       "backoffHours": 24
     },
     "ss-espn-uefa.europa-401915542": {
-      "attempts": 8,
-      "checkedAt": "2026-10-15T21:24:03.534Z",
+      "attempts": 9,
+      "checkedAt": "2026-10-16T23:39:23.573Z",
       "status": "rate_limited_locally",
       "result": "quota",
       "error": null,
-      "nextRetryAt": "2026-10-16T21:24:03.534Z",
+      "nextRetryAt": "2026-10-17T23:39:23.573Z",
       "backoffHours": 24
     },
     "ss-fotmob-6112536": {
@@ -4360,8 +4371,8 @@
       "backoffHours": 0
     },
     "ss-espn-uefa.europa.conf-401915836": {
-      "attempts": 8,
-      "checkedAt": "2026-10-15T21:24:03.534Z",
+      "attempts": 9,
+      "checkedAt": "2026-10-16T23:39:23.573Z",
       "status": "no_direct_history",
       "result": "no_coverage",
       "error": null,
@@ -4477,8 +4488,8 @@
       "backoffHours": 24
     },
     "ss-fotmob-6112406": {
-      "attempts": 8,
-      "checkedAt": "2026-10-15T21:24:03.534Z",
+      "attempts": 9,
+      "checkedAt": "2026-10-16T23:39:23.573Z",
       "status": "no_direct_history",
       "result": "no_coverage",
       "error": null,
@@ -4693,21 +4704,21 @@
       "backoffHours": 0
     },
     "ss-espn-ned.2-401875875": {
-      "attempts": 7,
-      "checkedAt": "2026-10-15T21:24:03.534Z",
+      "attempts": 8,
+      "checkedAt": "2026-10-16T23:39:23.573Z",
       "status": "rate_limited_locally",
       "result": "quota",
       "error": null,
-      "nextRetryAt": "2026-10-16T21:24:03.534Z",
+      "nextRetryAt": "2026-10-17T23:39:23.573Z",
       "backoffHours": 24
     },
     "ss-espn-ned.1-401875573": {
-      "attempts": 7,
-      "checkedAt": "2026-10-15T21:24:03.534Z",
+      "attempts": 8,
+      "checkedAt": "2026-10-16T23:39:23.573Z",
       "status": "rate_limited_locally",
       "result": "quota",
       "error": null,
-      "nextRetryAt": "2026-10-16T21:24:03.534Z",
+      "nextRetryAt": "2026-10-17T23:39:23.573Z",
       "backoffHours": 24
     },
     "ss-espn-fra.1-401876423": {
@@ -4720,12 +4731,12 @@
       "backoffHours": 0
     },
     "ss-espn-ger.2-401885077": {
-      "attempts": 7,
-      "checkedAt": "2026-10-15T21:24:03.534Z",
+      "attempts": 8,
+      "checkedAt": "2026-10-16T23:39:23.573Z",
       "status": "rate_limited_locally",
       "result": "quota",
       "error": null,
-      "nextRetryAt": "2026-10-16T21:24:03.534Z",
+      "nextRetryAt": "2026-10-17T23:39:23.573Z",
       "backoffHours": 24
     },
     "ss-espn-eng.2-401880203": {
@@ -4756,21 +4767,21 @@
       "backoffHours": 0
     },
     "ss-espn-eng.1-401879255": {
-      "attempts": 7,
-      "checkedAt": "2026-10-15T21:24:03.534Z",
+      "attempts": 8,
+      "checkedAt": "2026-10-16T23:39:23.573Z",
       "status": "rate_limited_locally",
       "result": "quota",
       "error": null,
-      "nextRetryAt": "2026-10-16T21:24:03.534Z",
+      "nextRetryAt": "2026-10-17T23:39:23.573Z",
       "backoffHours": 24
     },
     "ss-espn-ned.1-401875572": {
-      "attempts": 7,
-      "checkedAt": "2026-10-15T21:24:03.534Z",
+      "attempts": 8,
+      "checkedAt": "2026-10-16T23:39:23.573Z",
       "status": "rate_limited_locally",
       "result": "quota",
       "error": null,
-      "nextRetryAt": "2026-10-16T21:24:03.534Z",
+      "nextRetryAt": "2026-10-17T23:39:23.573Z",
       "backoffHours": 24
     },
     "ss-espn-fra.1-401876427": {
@@ -4792,12 +4803,12 @@
       "backoffHours": 0
     },
     "ss-espn-eng.2-401880200": {
-      "attempts": 7,
-      "checkedAt": "2026-10-15T21:24:03.534Z",
+      "attempts": 8,
+      "checkedAt": "2026-10-16T23:39:23.573Z",
       "status": "rate_limited_locally",
       "result": "quota",
       "error": null,
-      "nextRetryAt": "2026-10-16T21:24:03.534Z",
+      "nextRetryAt": "2026-10-17T23:39:23.573Z",
       "backoffHours": 24
     },
     "ss-fotmob-5803292": {
@@ -4810,30 +4821,30 @@
       "backoffHours": 0
     },
     "ss-espn-ger.1-401884762": {
-      "attempts": 7,
-      "checkedAt": "2026-10-15T21:24:03.534Z",
+      "attempts": 8,
+      "checkedAt": "2026-10-16T23:39:23.573Z",
       "status": "rate_limited_locally",
       "result": "quota",
       "error": null,
-      "nextRetryAt": "2026-10-16T21:24:03.534Z",
+      "nextRetryAt": "2026-10-17T23:39:23.573Z",
       "backoffHours": 24
     },
     "ss-espn-ned.1-401875571": {
-      "attempts": 7,
-      "checkedAt": "2026-10-15T21:24:03.534Z",
+      "attempts": 8,
+      "checkedAt": "2026-10-16T23:39:23.573Z",
       "status": "rate_limited_locally",
       "result": "quota",
       "error": null,
-      "nextRetryAt": "2026-10-16T21:24:03.534Z",
+      "nextRetryAt": "2026-10-17T23:39:23.573Z",
       "backoffHours": 24
     },
     "ss-espn-eng.2-401880208": {
-      "attempts": 7,
-      "checkedAt": "2026-10-15T21:24:03.534Z",
+      "attempts": 8,
+      "checkedAt": "2026-10-16T23:39:23.573Z",
       "status": "rate_limited_locally",
       "result": "quota",
       "error": null,
-      "nextRetryAt": "2026-10-16T21:24:03.534Z",
+      "nextRetryAt": "2026-10-17T23:39:23.573Z",
       "backoffHours": 24
     },
     "ss-fotmob-5803294": {
@@ -4846,30 +4857,30 @@
       "backoffHours": 0
     },
     "ss-espn-ger.1-401884755": {
-      "attempts": 7,
-      "checkedAt": "2026-10-15T21:24:03.534Z",
+      "attempts": 8,
+      "checkedAt": "2026-10-16T23:39:23.573Z",
       "status": "rate_limited_locally",
       "result": "quota",
       "error": null,
-      "nextRetryAt": "2026-10-16T21:24:03.534Z",
+      "nextRetryAt": "2026-10-17T23:39:23.573Z",
       "backoffHours": 24
     },
     "ss-espn-eng.2-401880206": {
-      "attempts": 7,
-      "checkedAt": "2026-10-15T21:24:03.534Z",
-      "status": "provider_unreachable",
-      "result": "quota",
-      "error": null,
-      "nextRetryAt": "2026-10-16T21:24:03.534Z",
-      "backoffHours": 24
-    },
-    "ss-espn-fra.2-401876711": {
-      "attempts": 7,
-      "checkedAt": "2026-10-15T21:24:03.534Z",
+      "attempts": 8,
+      "checkedAt": "2026-10-16T23:39:23.573Z",
       "status": "rate_limited_locally",
       "result": "quota",
       "error": null,
-      "nextRetryAt": "2026-10-16T21:24:03.534Z",
+      "nextRetryAt": "2026-10-17T23:39:23.573Z",
+      "backoffHours": 24
+    },
+    "ss-espn-fra.2-401876711": {
+      "attempts": 8,
+      "checkedAt": "2026-10-16T23:39:23.573Z",
+      "status": "rate_limited_locally",
+      "result": "quota",
+      "error": null,
+      "nextRetryAt": "2026-10-17T23:39:23.573Z",
       "backoffHours": 24
     },
     "ss-fotmob-5881197": {
@@ -4882,57 +4893,57 @@
       "backoffHours": 0
     },
     "ss-espn-eng.2-401880204": {
-      "attempts": 7,
-      "checkedAt": "2026-10-15T21:24:03.534Z",
+      "attempts": 8,
+      "checkedAt": "2026-10-16T23:39:23.573Z",
       "status": "rate_limited_locally",
       "result": "quota",
       "error": null,
-      "nextRetryAt": "2026-10-16T21:24:03.534Z",
+      "nextRetryAt": "2026-10-17T23:39:23.573Z",
       "backoffHours": 24
     },
     "ss-espn-eng.2-401880202": {
-      "attempts": 7,
-      "checkedAt": "2026-10-15T21:24:03.534Z",
+      "attempts": 8,
+      "checkedAt": "2026-10-16T23:39:23.573Z",
       "status": "rate_limited_locally",
       "result": "quota",
       "error": null,
-      "nextRetryAt": "2026-10-16T21:24:03.534Z",
+      "nextRetryAt": "2026-10-17T23:39:23.573Z",
       "backoffHours": 24
     },
     "ss-espn-eng.2-401880201": {
-      "attempts": 7,
-      "checkedAt": "2026-10-15T21:24:03.534Z",
+      "attempts": 8,
+      "checkedAt": "2026-10-16T23:39:23.573Z",
       "status": "rate_limited_locally",
       "result": "quota",
       "error": null,
-      "nextRetryAt": "2026-10-16T21:24:03.534Z",
+      "nextRetryAt": "2026-10-17T23:39:23.573Z",
       "backoffHours": 24
     },
     "ss-espn-eng.2-401880199": {
-      "attempts": 7,
-      "checkedAt": "2026-10-15T21:24:03.534Z",
+      "attempts": 8,
+      "checkedAt": "2026-10-16T23:39:23.573Z",
       "status": "rate_limited_locally",
       "result": "quota",
       "error": null,
-      "nextRetryAt": "2026-10-16T21:24:03.534Z",
+      "nextRetryAt": "2026-10-17T23:39:23.573Z",
       "backoffHours": 24
     },
     "ss-espn-eng.2-401880197": {
-      "attempts": 7,
-      "checkedAt": "2026-10-15T21:24:03.534Z",
+      "attempts": 8,
+      "checkedAt": "2026-10-16T23:39:23.573Z",
       "status": "rate_limited_locally",
       "result": "quota",
       "error": null,
-      "nextRetryAt": "2026-10-16T21:24:03.534Z",
+      "nextRetryAt": "2026-10-17T23:39:23.573Z",
       "backoffHours": 24
     },
     "ss-espn-ned.1-401875570": {
-      "attempts": 7,
-      "checkedAt": "2026-10-15T21:24:03.534Z",
+      "attempts": 8,
+      "checkedAt": "2026-10-16T23:39:23.573Z",
       "status": "rate_limited_locally",
       "result": "quota",
       "error": null,
-      "nextRetryAt": "2026-10-16T21:24:03.534Z",
+      "nextRetryAt": "2026-10-17T23:39:23.573Z",
       "backoffHours": 24
     },
     "ss-fotmob-5881700": {
@@ -5026,21 +5037,21 @@
       "backoffHours": 0
     },
     "ss-espn-ger.2-401885068": {
-      "attempts": 6,
-      "checkedAt": "2026-10-15T21:24:03.534Z",
+      "attempts": 7,
+      "checkedAt": "2026-10-16T23:39:23.573Z",
       "status": "rate_limited_locally",
       "result": "quota",
       "error": null,
-      "nextRetryAt": "2026-10-16T21:24:03.534Z",
+      "nextRetryAt": "2026-10-17T23:39:23.573Z",
       "backoffHours": 24
     },
     "ss-espn-fra.2-401876704": {
-      "attempts": 6,
-      "checkedAt": "2026-10-15T21:24:03.534Z",
+      "attempts": 7,
+      "checkedAt": "2026-10-16T23:39:23.573Z",
       "status": "rate_limited_locally",
       "result": "quota",
       "error": null,
-      "nextRetryAt": "2026-10-16T21:24:03.534Z",
+      "nextRetryAt": "2026-10-17T23:39:23.573Z",
       "backoffHours": 24
     },
     "ss-espn-ned.2-401875873": {
@@ -5080,12 +5091,12 @@
       "backoffHours": 0
     },
     "ss-espn-ned.2-401875872": {
-      "attempts": 6,
-      "checkedAt": "2026-10-15T21:24:03.534Z",
+      "attempts": 7,
+      "checkedAt": "2026-10-16T23:39:23.573Z",
       "status": "rate_limited_locally",
       "result": "quota",
       "error": null,
-      "nextRetryAt": "2026-10-16T21:24:03.534Z",
+      "nextRetryAt": "2026-10-17T23:39:23.573Z",
       "backoffHours": 24
     },
     "ss-espn-fra.2-401876706": {
@@ -5098,21 +5109,21 @@
       "backoffHours": 0
     },
     "ss-espn-ned.2-401875870": {
-      "attempts": 6,
-      "checkedAt": "2026-10-15T21:24:03.534Z",
+      "attempts": 7,
+      "checkedAt": "2026-10-16T23:39:23.573Z",
       "status": "rate_limited_locally",
       "result": "quota",
       "error": null,
-      "nextRetryAt": "2026-10-16T21:24:03.534Z",
+      "nextRetryAt": "2026-10-17T23:39:23.573Z",
       "backoffHours": 24
     },
     "ss-espn-ned.2-401875869": {
-      "attempts": 6,
-      "checkedAt": "2026-10-15T21:24:03.534Z",
+      "attempts": 7,
+      "checkedAt": "2026-10-16T23:39:23.573Z",
       "status": "rate_limited_locally",
       "result": "quota",
       "error": null,
-      "nextRetryAt": "2026-10-16T21:24:03.534Z",
+      "nextRetryAt": "2026-10-17T23:39:23.573Z",
       "backoffHours": 24
     },
     "ss-espn-ger.2-401885071": {
@@ -5134,21 +5145,21 @@
       "backoffHours": 24
     },
     "ss-espn-eng.1-401879248": {
-      "attempts": 6,
-      "checkedAt": "2026-10-15T21:24:03.534Z",
+      "attempts": 7,
+      "checkedAt": "2026-10-16T23:39:23.573Z",
       "status": "rate_limited_locally",
       "result": "quota",
       "error": null,
-      "nextRetryAt": "2026-10-16T21:24:03.534Z",
+      "nextRetryAt": "2026-10-17T23:39:23.573Z",
       "backoffHours": 24
     },
     "ss-espn-fra.2-401876702": {
-      "attempts": 6,
-      "checkedAt": "2026-10-15T21:24:03.534Z",
+      "attempts": 7,
+      "checkedAt": "2026-10-16T23:39:23.573Z",
       "status": "rate_limited_locally",
       "result": "quota",
       "error": null,
-      "nextRetryAt": "2026-10-16T21:24:03.534Z",
+      "nextRetryAt": "2026-10-17T23:39:23.573Z",
       "backoffHours": 24
     },
     "ss-espn-ger.1-401884749": {
@@ -5161,12 +5172,12 @@
       "backoffHours": 24
     },
     "ss-espn-ned.2-401875868": {
-      "attempts": 6,
-      "checkedAt": "2026-10-15T21:24:03.534Z",
+      "attempts": 7,
+      "checkedAt": "2026-10-16T23:39:23.573Z",
       "status": "rate_limited_locally",
       "result": "quota",
       "error": null,
-      "nextRetryAt": "2026-10-16T21:24:03.534Z",
+      "nextRetryAt": "2026-10-17T23:39:23.573Z",
       "backoffHours": 24
     },
     "ss-espn-ned.1-401875565": {
@@ -5710,131 +5721,185 @@
       "backoffHours": 8
     },
     "ss-espn-uefa.champions-401915308": {
-      "attempts": 3,
-      "checkedAt": "2026-10-16T11:22:31.162Z",
+      "attempts": 4,
+      "checkedAt": "2026-10-16T23:39:23.573Z",
       "status": "rate_limited_locally",
       "result": "quota",
       "error": null,
-      "nextRetryAt": "2026-10-16T15:22:31.162Z",
-      "backoffHours": 4
+      "nextRetryAt": "2026-10-17T07:39:23.573Z",
+      "backoffHours": 8
     },
     "ss-espn-uefa.champions-401915309": {
-      "attempts": 3,
-      "checkedAt": "2026-10-16T11:22:31.162Z",
+      "attempts": 4,
+      "checkedAt": "2026-10-16T23:39:23.573Z",
       "status": "rate_limited_locally",
       "result": "quota",
       "error": null,
-      "nextRetryAt": "2026-10-16T15:22:31.162Z",
-      "backoffHours": 4
+      "nextRetryAt": "2026-10-17T07:39:23.573Z",
+      "backoffHours": 8
     },
     "ss-fotmob-6106316": {
-      "attempts": 3,
-      "checkedAt": "2026-10-16T11:22:31.162Z",
+      "attempts": 4,
+      "checkedAt": "2026-10-16T23:39:23.573Z",
       "status": "rate_limited_locally",
       "result": "quota",
       "error": null,
-      "nextRetryAt": "2026-10-16T15:22:31.162Z",
-      "backoffHours": 4
+      "nextRetryAt": "2026-10-17T07:39:23.573Z",
+      "backoffHours": 8
     },
     "ss-espn-uefa.champions-401915383": {
-      "attempts": 3,
-      "checkedAt": "2026-10-16T11:22:31.162Z",
+      "attempts": 4,
+      "checkedAt": "2026-10-16T23:39:23.573Z",
       "status": "rate_limited_locally",
       "result": "quota",
       "error": null,
-      "nextRetryAt": "2026-10-16T15:22:31.162Z",
-      "backoffHours": 4
+      "nextRetryAt": "2026-10-17T07:39:23.573Z",
+      "backoffHours": 8
     },
     "ss-espn-eng.2-401880175": {
-      "attempts": 3,
-      "checkedAt": "2026-10-16T11:22:31.162Z",
+      "attempts": 4,
+      "checkedAt": "2026-10-16T23:39:23.573Z",
       "status": "rate_limited_locally",
       "result": "quota",
       "error": null,
-      "nextRetryAt": "2026-10-16T15:22:31.162Z",
-      "backoffHours": 4
+      "nextRetryAt": "2026-10-17T07:39:23.573Z",
+      "backoffHours": 8
     },
     "ss-espn-uefa.champions-401915382": {
-      "attempts": 3,
-      "checkedAt": "2026-10-16T11:22:31.162Z",
+      "attempts": 4,
+      "checkedAt": "2026-10-16T23:39:23.573Z",
       "status": "rate_limited_locally",
       "result": "quota",
       "error": null,
-      "nextRetryAt": "2026-10-16T15:22:31.162Z",
-      "backoffHours": 4
+      "nextRetryAt": "2026-10-17T07:39:23.573Z",
+      "backoffHours": 8
     },
     "ss-espn-eng.2-401880176": {
-      "attempts": 3,
-      "checkedAt": "2026-10-16T11:22:31.162Z",
+      "attempts": 4,
+      "checkedAt": "2026-10-16T23:39:23.573Z",
       "status": "rate_limited_locally",
       "result": "quota",
       "error": null,
-      "nextRetryAt": "2026-10-16T15:22:31.162Z",
-      "backoffHours": 4
+      "nextRetryAt": "2026-10-17T07:39:23.573Z",
+      "backoffHours": 8
     },
     "ss-espn-uefa.champions-401915304": {
-      "attempts": 2,
-      "checkedAt": "2026-10-16T11:22:31.162Z",
+      "attempts": 3,
+      "checkedAt": "2026-10-16T23:39:23.573Z",
       "status": "rate_limited_locally",
       "result": "quota",
       "error": null,
-      "nextRetryAt": "2026-10-16T13:22:31.162Z",
-      "backoffHours": 2
+      "nextRetryAt": "2026-10-17T03:39:23.573Z",
+      "backoffHours": 4
     },
     "ss-espn-uefa.champions-401915301": {
-      "attempts": 2,
-      "checkedAt": "2026-10-16T11:22:31.162Z",
+      "attempts": 3,
+      "checkedAt": "2026-10-16T23:39:23.573Z",
       "status": "rate_limited_locally",
       "result": "quota",
       "error": null,
-      "nextRetryAt": "2026-10-16T13:22:31.162Z",
-      "backoffHours": 2
+      "nextRetryAt": "2026-10-17T03:39:23.573Z",
+      "backoffHours": 4
     },
     "ss-espn-uefa.champions-401915305": {
-      "attempts": 2,
-      "checkedAt": "2026-10-16T11:22:31.162Z",
+      "attempts": 3,
+      "checkedAt": "2026-10-16T23:39:23.573Z",
       "status": "rate_limited_locally",
       "result": "quota",
       "error": null,
-      "nextRetryAt": "2026-10-16T13:22:31.162Z",
-      "backoffHours": 2
+      "nextRetryAt": "2026-10-17T03:39:23.573Z",
+      "backoffHours": 4
     },
     "ss-espn-uefa.champions-401915303": {
-      "attempts": 2,
-      "checkedAt": "2026-10-16T11:22:31.162Z",
+      "attempts": 3,
+      "checkedAt": "2026-10-16T23:39:23.573Z",
       "status": "rate_limited_locally",
       "result": "quota",
       "error": null,
-      "nextRetryAt": "2026-10-16T13:22:31.162Z",
-      "backoffHours": 2
+      "nextRetryAt": "2026-10-17T03:39:23.573Z",
+      "backoffHours": 4
     },
     "ss-espn-uefa.champions-401915306": {
-      "attempts": 2,
-      "checkedAt": "2026-10-16T11:22:31.162Z",
+      "attempts": 3,
+      "checkedAt": "2026-10-16T23:39:23.573Z",
       "status": "rate_limited_locally",
       "result": "quota",
       "error": null,
-      "nextRetryAt": "2026-10-16T13:22:31.162Z",
-      "backoffHours": 2
+      "nextRetryAt": "2026-10-17T03:39:23.573Z",
+      "backoffHours": 4
     },
     "ss-espn-uefa.champions-401915381": {
-      "attempts": 1,
-      "checkedAt": "2026-10-16T11:22:31.162Z",
+      "attempts": 2,
+      "checkedAt": "2026-10-16T23:39:23.573Z",
       "status": "rate_limited_locally",
       "result": "quota",
       "error": null,
-      "nextRetryAt": "2026-10-16T12:22:31.162Z",
-      "backoffHours": 1
+      "nextRetryAt": "2026-10-17T01:39:23.573Z",
+      "backoffHours": 2
     },
     "ss-espn-uefa.champions-401915302": {
-      "attempts": 1,
-      "checkedAt": "2026-10-16T11:22:31.162Z",
+      "attempts": 2,
+      "checkedAt": "2026-10-16T23:39:23.573Z",
       "status": "rate_limited_locally",
       "result": "quota",
       "error": null,
-      "nextRetryAt": "2026-10-16T12:22:31.162Z",
+      "nextRetryAt": "2026-10-17T01:39:23.573Z",
+      "backoffHours": 2
+    },
+    "ss-espn-uefa.europa.conf-401915831": {
+      "attempts": 1,
+      "checkedAt": "2026-10-16T23:39:23.573Z",
+      "status": "rate_limited_locally",
+      "result": "quota",
+      "error": null,
+      "nextRetryAt": "2026-10-17T00:39:23.573Z",
+      "backoffHours": 1
+    },
+    "ss-espn-uefa.europa-401915534": {
+      "attempts": 1,
+      "checkedAt": "2026-10-16T23:39:23.573Z",
+      "status": "rate_limited_locally",
+      "result": "quota",
+      "error": null,
+      "nextRetryAt": "2026-10-17T00:39:23.573Z",
+      "backoffHours": 1
+    },
+    "ss-espn-uefa.europa.conf-401915830": {
+      "attempts": 1,
+      "checkedAt": "2026-10-16T23:39:23.573Z",
+      "status": "rate_limited_locally",
+      "result": "quota",
+      "error": null,
+      "nextRetryAt": "2026-10-17T00:39:23.573Z",
+      "backoffHours": 1
+    },
+    "ss-espn-uefa.europa-401915538": {
+      "attempts": 1,
+      "checkedAt": "2026-10-16T23:39:23.573Z",
+      "status": "rate_limited_locally",
+      "result": "quota",
+      "error": null,
+      "nextRetryAt": "2026-10-17T00:39:23.573Z",
+      "backoffHours": 1
+    },
+    "ss-espn-uefa.europa.conf-401915829": {
+      "attempts": 1,
+      "checkedAt": "2026-10-16T23:39:23.573Z",
+      "status": "rate_limited_locally",
+      "result": "quota",
+      "error": null,
+      "nextRetryAt": "2026-10-17T00:39:23.573Z",
+      "backoffHours": 1
+    },
+    "ss-espn-uefa.europa-401915526": {
+      "attempts": 1,
+      "checkedAt": "2026-10-16T23:39:23.573Z",
+      "status": "rate_limited_locally",
+      "result": "quota",
+      "error": null,
+      "nextRetryAt": "2026-10-17T00:39:23.573Z",
       "backoffHours": 1
     }
   },
-  "recommendation": "API-Football H2H is onafhankelijk van fixture-acceptatie ingeschakeld; 3/3 beperkte paarpogingen gedaan. Er staan nog 71 fixtures in de wachtrij."
+  "recommendation": "API-Football H2H is onafhankelijk van fixture-acceptatie ingeschakeld; 3/3 beperkte paarpogingen gedaan. Er staan nog 51 fixtures in de wachtrij."
 }
