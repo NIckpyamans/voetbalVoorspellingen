@@ -1,5 +1,5 @@
 {
-  "checkedAt": "2026-10-15T09:12:09.908Z",
+  "checkedAt": "2026-10-16T09:04:36.999Z",
   "oddsApi": {
     "configured": true,
     "valid": true,
@@ -11,7 +11,6 @@
       "soccer_concacaf_gold_cup",
       "soccer_concacaf_leagues_cup",
       "soccer_conmebol_copa_america",
-      "soccer_fa_cup",
       "soccer_fifa_club_world_cup",
       "soccer_fifa_world_cup",
       "soccer_fifa_world_cup_qualifiers_europe",
@@ -20,7 +19,6 @@
       "soccer_fifa_world_cup_womens",
       "soccer_france_coupe_de_france",
       "soccer_italy_coppa_italia",
-      "soccer_russia_premier_league",
       "soccer_spain_copa_del_rey",
       "soccer_uefa_champs_league_qualification",
       "soccer_uefa_champs_league_women",
@@ -29,9 +27,9 @@
     ],
     "faCup": {
       "key": "soccer_fa_cup",
-      "status": "expected_inactive"
+      "status": "active"
     },
-    "activeSports": 83,
+    "activeSports": 86,
     "soccerSportKeys": [
       "soccer_argentina_primera_division",
       "soccer_australia_aleague",
@@ -48,6 +46,7 @@
       "soccer_england_league1",
       "soccer_england_league2",
       "soccer_epl",
+      "soccer_fa_cup",
       "soccer_finland_veikkausliiga",
       "soccer_france_ligue_one",
       "soccer_france_ligue_two",
@@ -67,6 +66,7 @@
       "soccer_norway_eliteserien",
       "soccer_poland_ekstraklasa",
       "soccer_portugal_primeira_liga",
+      "soccer_russia_premier_league",
       "soccer_saudi_arabia_pro_league",
       "soccer_spain_la_liga",
       "soccer_spain_segunda_division",
@@ -95,11 +95,12 @@
     "newlyInactiveSports": [],
     "newlyUnavailableSports": [],
     "newlyAvailableSports": [
-      "soccer_germany_bundesliga_women"
+      "soccer_fa_cup",
+      "soccer_russia_premier_league"
     ],
     "quota": {
-      "x-requests-remaining": "395",
-      "x-requests-used": "105",
+      "x-requests-remaining": "385",
+      "x-requests-used": "115",
       "x-requests-last": "0"
     },
     "errorCode": null
@@ -172,7 +173,7 @@
     "quota": {
       "x-ratelimit-limit": "1000",
       "x-ratelimit-remaining": "961",
-      "x-ratelimit-reset": "1792108800"
+      "x-ratelimit-reset": "1792195200"
     },
     "accepted": false,
     "policy": "Veertien dagen meten; nooit automatisch promoveren op basis van alleen een geldige key."
@@ -241,10 +242,10 @@
       "fixturesDate": {
         "valid": true,
         "status": 200,
-        "records": 0,
-        "firstId": null,
-        "firstName": null,
-        "hasOddsFlag": false,
+        "records": 1,
+        "firstId": 19713894,
+        "firstName": "Horsens vs Randers FC",
+        "hasOddsFlag": true,
         "rateLimit": {
           "resets_in_seconds": 3599,
           "remaining": 178,
@@ -323,7 +324,7 @@
         "firstName": null,
         "hasOddsFlag": false,
         "rateLimit": {
-          "resets_in_seconds": 3599,
+          "resets_in_seconds": 3598,
           "remaining": 177,
           "requested_entity": "Odd"
         },
