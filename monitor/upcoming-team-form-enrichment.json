@@ -1,13 +1,13 @@
 {
-  "generatedAt": "2026-10-16T16:55:45.390Z",
+  "generatedAt": "2026-10-16T21:40:02.789Z",
   "daysAhead": 8,
   "targetMatchesPerTeam": 10,
   "candidates": 250,
   "checked": 24,
-  "enriched": 6,
-  "unavailable": 18,
+  "enriched": 15,
+  "unavailable": 9,
   "timedOut": 0,
-  "skippedFresh": 138,
+  "skippedFresh": 132,
   "runBudgetMs": 180000,
   "teamTimeoutMs": 12000,
   "budgetExceeded": false,
@@ -17,92 +17,96 @@
   "localFriendlyHistoryMatches": 305,
   "samples": [
     {
+      "team": "Energie Cottbus",
+      "matches": 1,
+      "providerTeam": "Energie Cottbus"
+    },
+    {
+      "team": "Jong AZ",
+      "matches": 1,
+      "providerTeam": "Jong AZ"
+    },
+    {
       "team": "Clermont Foot",
-      "matches": 8,
+      "matches": 9,
       "providerTeam": "Clermont Foot"
     },
     {
       "team": "Dijon",
-      "matches": 8,
+      "matches": 9,
       "providerTeam": "Dijon"
     },
     {
       "team": "Grenoble",
-      "matches": 8,
+      "matches": 9,
       "providerTeam": "Grenoble"
     },
     {
       "team": "Laval",
-      "matches": 8,
+      "matches": 9,
       "providerTeam": "Laval"
     },
     {
       "team": "Reims",
-      "matches": 8,
+      "matches": 9,
       "providerTeam": "Reims"
     },
     {
-      "team": "Troyes",
-      "matches": 8,
-      "providerTeam": "Troyes"
+      "team": "Annecy FC",
+      "matches": 9,
+      "providerTeam": "Annecy FC"
+    },
+    {
+      "team": "Boulogne",
+      "matches": 10,
+      "providerTeam": "Boulogne"
+    },
+    {
+      "team": "Nancy",
+      "matches": 10,
+      "providerTeam": "Nancy"
+    },
+    {
+      "team": "Pau",
+      "matches": 10,
+      "providerTeam": "Pau"
+    },
+    {
+      "team": "Vitesse",
+      "matches": 10,
+      "providerTeam": "Vitesse"
+    },
+    {
+      "team": "Guingamp",
+      "matches": 10,
+      "providerTeam": "Guingamp"
+    },
+    {
+      "team": "FC Eindhoven",
+      "matches": 10,
+      "providerTeam": "FC Eindhoven"
+    },
+    {
+      "team": "NAC Breda",
+      "matches": 10,
+      "providerTeam": "NAC Breda"
     }
   ],
   "failures": [
     {
       "team": "Hertha Berlin",
-      "reason": "http_403",
+      "reason": "not_found",
       "requests": [
         {
           "provider": "www.thesportsdb.com",
-          "status": "http_403"
+          "status": "ok"
         }
       ],
       "retainedMatches": 3
-    },
-    {
-      "team": "Jong AZ",
-      "reason": "http_403",
-      "requests": [
-        {
-          "provider": "www.thesportsdb.com",
-          "status": "http_403"
-        }
-      ],
-      "retainedMatches": 2
-    },
-    {
-      "team": "Clermont Foot",
-      "reason": "http_403",
-      "requests": [
-        {
-          "provider": "www.fotmob.com",
-          "status": "ok"
-        },
-        {
-          "provider": "www.thesportsdb.com",
-          "status": "http_403"
-        }
-      ],
-      "retainedMatches": 9
-    },
-    {
-      "team": "Dijon",
-      "reason": "http_403",
-      "requests": [
-        {
-          "provider": "www.fotmob.com",
-          "status": "ok"
-        },
-        {
-          "provider": "www.thesportsdb.com",
-          "status": "http_403"
-        }
-      ],
-      "retainedMatches": 9
     },
     {
       "team": "Grenoble",
-      "reason": "http_403",
+      "reason": "http_429",
       "requests": [
         {
           "provider": "www.fotmob.com",
@@ -110,237 +114,68 @@
         },
         {
           "provider": "www.thesportsdb.com",
-          "status": "http_403"
+          "status": "ok"
+        },
+        {
+          "provider": "www.thesportsdb.com",
+          "status": "http_429"
         }
       ],
       "retainedMatches": 9
     },
     {
-      "team": "Laval",
-      "reason": "http_403",
-      "requests": [
-        {
-          "provider": "www.fotmob.com",
-          "status": "ok"
-        },
-        {
-          "provider": "www.thesportsdb.com",
-          "status": "http_403"
-        }
-      ],
-      "retainedMatches": 9
+      "team": "Helmond Sport",
+      "reason": "not_found",
+      "requests": [],
+      "retainedMatches": 11
     },
     {
-      "team": "Reims",
-      "reason": "http_403",
-      "requests": [
-        {
-          "provider": "www.fotmob.com",
-          "status": "ok"
-        },
-        {
-          "provider": "www.thesportsdb.com",
-          "status": "http_403"
-        }
-      ],
-      "retainedMatches": 9
+      "team": "TOP Oss",
+      "reason": "not_found",
+      "requests": [],
+      "retainedMatches": 11
+    },
+    {
+      "team": "VVV-Venlo",
+      "reason": "not_found",
+      "requests": [],
+      "retainedMatches": 11
+    },
+    {
+      "team": "FC Den Bosch",
+      "reason": "not_found",
+      "requests": [],
+      "retainedMatches": 12
+    },
+    {
+      "team": "Heerenveen",
+      "reason": "not_found",
+      "requests": [],
+      "retainedMatches": 12
+    },
+    {
+      "team": "Excelsior",
+      "reason": "not_found",
+      "requests": [],
+      "retainedMatches": 14
     },
     {
       "team": "FC Cologne",
-      "reason": "http_403",
-      "requests": [
-        {
-          "provider": "www.thesportsdb.com",
-          "status": "http_403"
-        }
-      ],
+      "reason": "not_found",
+      "requests": [],
       "retainedMatches": 3
     },
     {
-      "team": "Troyes",
-      "reason": "http_403",
-      "requests": [
-        {
-          "provider": "www.fotmob.com",
-          "status": "ok"
-        },
-        {
-          "provider": "www.thesportsdb.com",
-          "status": "http_403"
-        }
-      ],
-      "retainedMatches": 9
-    },
-    {
-      "team": "Feyenoord Rotterdam",
-      "reason": "http_403",
-      "requests": [
-        {
-          "provider": "www.thesportsdb.com",
-          "status": "http_403"
-        }
-      ],
-      "retainedMatches": 6
-    },
-    {
-      "team": "Go Ahead Eagles",
-      "reason": "http_403",
-      "requests": [
-        {
-          "provider": "www.thesportsdb.com",
-          "status": "http_403"
-        }
-      ],
-      "retainedMatches": 16
-    },
-    {
-      "team": "VfL Osnabruck",
-      "reason": "http_403",
-      "requests": [
-        {
-          "provider": "www.thesportsdb.com",
-          "status": "http_403"
-        }
-      ],
-      "retainedMatches": 9
-    },
-    {
-      "team": "Arminia Bielefeld",
-      "reason": "http_403",
-      "requests": [
-        {
-          "provider": "www.thesportsdb.com",
-          "status": "http_403"
-        }
-      ],
-      "retainedMatches": 13
-    },
-    {
-      "team": "1. FC Magdeburg",
-      "reason": "http_403",
-      "requests": [
-        {
-          "provider": "www.thesportsdb.com",
-          "status": "http_403"
-        }
-      ],
-      "retainedMatches": 14
-    },
-    {
-      "team": "SV Darmstadt 98",
-      "reason": "http_403",
-      "requests": [
-        {
-          "provider": "www.thesportsdb.com",
-          "status": "http_403"
-        }
-      ],
-      "retainedMatches": 14
-    },
-    {
-      "team": "Karlsruher SC",
-      "reason": "http_403",
-      "requests": [
-        {
-          "provider": "www.thesportsdb.com",
-          "status": "http_403"
-        }
-      ],
-      "retainedMatches": 17
-    },
-    {
-      "team": "SC Cambuur",
-      "reason": "http_403",
-      "requests": [
-        {
-          "provider": "www.thesportsdb.com",
-          "status": "http_403"
-        }
-      ],
+      "team": "Le Mans",
+      "reason": "not_found",
+      "requests": [],
       "retainedMatches": 10
-    },
-    {
-      "team": "Heracles Almelo",
-      "reason": "http_403",
-      "requests": [
-        {
-          "provider": "www.thesportsdb.com",
-          "status": "http_403"
-        }
-      ],
-      "retainedMatches": 6
-    },
-    {
-      "team": "Ajax Amsterdam",
-      "reason": "http_403",
-      "requests": [
-        {
-          "provider": "www.thesportsdb.com",
-          "status": "http_403"
-        }
-      ],
-      "retainedMatches": 8
-    },
-    {
-      "team": "MVV Maastricht",
-      "reason": "http_403",
-      "requests": [
-        {
-          "provider": "www.thesportsdb.com",
-          "status": "http_403"
-        }
-      ],
-      "retainedMatches": 12
-    },
-    {
-      "team": "AJ Auxerre",
-      "reason": "http_403",
-      "requests": [
-        {
-          "provider": "www.thesportsdb.com",
-          "status": "http_403"
-        }
-      ],
-      "retainedMatches": 3
-    },
-    {
-      "team": "Lorient",
-      "reason": "http_403",
-      "requests": [
-        {
-          "provider": "www.thesportsdb.com",
-          "status": "http_403"
-        }
-      ],
-      "retainedMatches": 12
-    },
-    {
-      "team": "TSG Hoffenheim",
-      "reason": "http_403",
-      "requests": [
-        {
-          "provider": "www.thesportsdb.com",
-          "status": "http_403"
-        }
-      ],
-      "retainedMatches": 13
-    },
-    {
-      "team": "Fortuna Sittard",
-      "reason": "http_403",
-      "requests": [
-        {
-          "provider": "www.thesportsdb.com",
-          "status": "http_403"
-        }
-      ],
-      "retainedMatches": 15
     }
   ],
   "immutableLedgerMatches": 413,
   "immutableHistorySummaryMatches": 1850,
   "r2LedgerAvailable": false,
   "r2LedgerError": "Snapshot ledger maand 2026-08 is groter dan 100663296 bytes; weigert het volledig in geheugen te parsen",
-  "durationMs": 13728,
+  "durationMs": 21694,
   "deferredTeams": 0
 }
