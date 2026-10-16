@@ -142,3 +142,14 @@ Onderstaande inventaris is uit de huidige YAML gegenereerd. Geen schedule beteke
 | team-squad-enrichment.yml | 17 3,8,13,18 * * * | 12 |
 | week-ahead-fixtures.yml | 23 5 * * * | 70 |
 | worker.yml | geen | 15 |
+
+## Productieverificatie en vervolgcorrectie
+
+- Commit `ad1fff472`: Regression Assertions [38862208852](https://github.com/NIckpyamans/voetbalVoorspellingen/actions/runs/38862208852) geslaagd; watchdog [38862229035](https://github.com/NIckpyamans/voetbalVoorspellingen/actions/runs/38862229035) met beide jobs geslaagd.
+- Weekaudit [38862232638](https://github.com/NIckpyamans/voetbalVoorspellingen/actions/runs/38862232638) geslaagd: venster 10–16 oktober, zeven waarnemingen, drie meldingen/twee thema's. Verouderde evaluatie-, snapshotgroei- en acceptatierapporten expliciet gemarkeerd. Handmatig zonder extra herstel-dispatch uitgevoerd; maandagplanning staat aan. De eerste toekomstige geplande maandagrun kan op vrijdag nog niet worden bewezen.
+- Evaluatie [38862396829](https://github.com/NIckpyamans/voetbalVoorspellingen/actions/runs/38862396829) geslaagd: 16.805 R2-snapshots gelezen, elf evaluaties verwerkt. Neon bleef HTTP 402 geven; relationele vervolgstappen konden soft-skippen. R2-herstel is dus bewezen, Neon-herstel niet.
+- Vercel Git-build bleek een preview (`target=null`), geen productie. Daarom bestaande productie-workflow [38904028692](https://github.com/NIckpyamans/voetbalVoorspellingen/actions/runs/38904028692) expliciet uitgevoerd en geslaagd. Nieuw paneel vervolgens in de browser op het productiedomein gezien, inclusief actuele tijd, elf workflows en foutmeldingen. Productie toont daarmee de echte achterstand.
+- Eerste handmatige worker [38862236104](https://github.com/NIckpyamans/voetbalVoorspellingen/actions/runs/38862236104) liep nog op tijd uit. Latere automatische worker [38879823583](https://github.com/NIckpyamans/voetbalVoorspellingen/actions/runs/38879823583) bereikte alle negen dagen maar stopte terecht op de odds-publicatiegate. Die gate is niet uitgezet.
+- Vervolg: identieke seizoen-/competitiefeeds één keer per run ophalen, maximaal drie parallelle aanvragen, resterende ongebegrensde SportsDB/OpenLiga-aanvragen begrensd. Ook dezelfde post-match-dagfeed niet meer per wedstrijd opnieuw ophalen bij HTTP 429. Nieuwe run begint met lege cache en kan herstel opnieuw proberen.
+- Publicatiegate bewaart nu ook bij blokkade een compact artifact met wedstrijd-ID en relevante odds-/kickofftijdstippen. Daardoor is een blokkade diagnoseerbaar zonder dat onbetrouwbare data wordt doorgedrukt.
+- Tests vóór eerste push: 123 bestanden / 532 tests geslaagd; later toegevoegde cachetest aanvullend geslaagd. TypeScript, build, zeven regressieasserties en archiefbehoud geslaagd. Verdere cache-/gatecorrectie: vijftien gerichte tests geslaagd.

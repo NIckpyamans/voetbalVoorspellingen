@@ -44,6 +44,8 @@ import {
 } from "../shared/predictionSnapshotLedger.js";
 import {
   createSafeFetch,
+  createRunFetchCache,
+  mapWithConcurrency,
   fetchBbcScheduledEvents as fetchBbcScheduledEventsSource,
   fetchFotmobScheduledEvents as fetchFotmobScheduledEventsSource,
   fetchSkySportsScheduledEvents as fetchSkySportsScheduledEventsSource,
@@ -4386,14 +4388,19 @@ function buildFootballDataKickoffIso(dateKey, timeValue) {
   ).toISOString();
 }
 
+const fetchFixtureCsv = createRunFetchCache(fetchText);
+const fetchFixtureJson = createRunFetchCache(fetchExternalJson);
+
 async function fetchFallbackScheduledEventsFromMarket(dateISO) {
   const seasonFolder = getSeasonFolder(dateISO);
   const fallbackEvents = [];
   const seen = new Set();
 
+  await mapWithConcurrency(LEAGUES.filter((item) => MARKET_LEAGUE_CODES[item.label]), 3, (league) =>
+    fetchFixtureCsv(`https://www.football-data.co.uk/mmz4281/${seasonFolder}/${MARKET_LEAGUE_CODES[league.label]}.csv`));
   for (const leagueInfo of LEAGUES.filter((item) => MARKET_LEAGUE_CODES[item.label])) {
     const marketCode = MARKET_LEAGUE_CODES[leagueInfo.label];
-    const csvText = await fetchText(`https://www.football-data.co.uk/mmz4281/${seasonFolder}/${marketCode}.csv`);
+    const csvText = await fetchFixtureCsv(`https://www.football-data.co.uk/mmz4281/${seasonFolder}/${marketCode}.csv`);
     if (!csvText) continue;
 
     for (const row of parseCsv(csvText)) {
@@ -4853,15 +4860,8 @@ async function fetchSportsDbScheduledEvents(dateISO, options = {}) {
   };
 
   try {
-    const response = await fetch(`https://www.thesportsdb.com/api/v1/json/123/eventsday.php?d=${dateISO}&s=Soccer`, {
-      headers: {
-        Accept: "application/json",
-        "User-Agent":
-          "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 Chrome/123.0 Safari/537.36",
-      },
-    });
-    if (response.ok) {
-      const json = await response.json();
+    const json = await fetchFixtureJson(`https://www.thesportsdb.com/api/v1/json/123/eventsday.php?d=${dateISO}&s=Soccer`);
+    if (json) {
       for (const event of Array.isArray(json?.events) ? json.events : []) {
         const leagueLabel = SPORTSDB_NAME_TO_LABEL[String(event?.strLeague || "")];
         if (leagueLabel) appendEvent(event, leagueLabel);
@@ -4871,18 +4871,13 @@ async function fetchSportsDbScheduledEvents(dateISO, options = {}) {
     console.warn(`[worker] TheSportsDB eventsday fallback mislukt voor ${dateISO}: ${error?.message || error}`);
   }
 
-  for (const [leagueLabel, leagueId] of onlyFriendlies ? [] : Object.entries(SPORTSDB_LEAGUE_IDS)) {
+  const sportsDbLeagues = onlyFriendlies ? [] : Object.entries(SPORTSDB_LEAGUE_IDS);
+  await mapWithConcurrency(sportsDbLeagues.flatMap(([, leagueId]) => ['eventsnextleague', 'eventspastleague'].map(endpoint =>
+    `https://www.thesportsdb.com/api/v1/json/123/${endpoint}.php?id=${leagueId}`)), 3, fetchFixtureJson);
+  for (const [leagueLabel, leagueId] of sportsDbLeagues) {
     for (const endpoint of ["eventsnextleague", "eventspastleague"]) {
       try {
-        const response = await fetch(`https://www.thesportsdb.com/api/v1/json/123/${endpoint}.php?id=${leagueId}`, {
-          headers: {
-            Accept: "application/json",
-            "User-Agent":
-              "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 Chrome/123.0 Safari/537.36",
-          },
-        });
-        if (!response.ok) continue;
-        const json = await response.json();
+        const json = await fetchFixtureJson(`https://www.thesportsdb.com/api/v1/json/123/${endpoint}.php?id=${leagueId}`);
         for (const event of Array.isArray(json?.events) ? json.events : []) {
           if (String(event?.dateEvent || "") !== dateISO) continue;
           appendEvent(event, leagueLabel);
@@ -4902,16 +4897,7 @@ async function fetchOpenLigaDbScheduledEvents(dateISO) {
 
   for (const [leagueKey, leagueLabel] of Object.entries(OPENLIGADB_LEAGUES)) {
     try {
-      const response = await fetch(`https://api.openligadb.de/getmatchdata/${leagueKey}`, {
-        headers: {
-          Accept: "application/json",
-          "User-Agent":
-            "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 Chrome/123.0 Safari/537.36",
-        },
-      });
-      if (!response.ok) continue;
-
-      const rows = await response.json();
+      const rows = await fetchFixtureJson(`https://api.openligadb.de/getmatchdata/${leagueKey}`);
       for (const row of Array.isArray(rows) ? rows : []) {
         const kickoffText = row?.matchDateTime || row?.matchDateTimeUTC || null;
         if (!kickoffText) continue;
@@ -7873,12 +7859,13 @@ function extractPostMatchStatsFromSofa(eventDetails, homeId, awayId) {
   return stats;
 }
 
+const fetchPostMatchDayFeed = createRunFetchCache(safeFetch);
 async function fetchPostMatchStatsFromTheSportsDb(match) {
   const apiKey = String(process.env.THESPORTSDB_API_KEY || "3").trim();
   if (!apiKey) return null;
   const date = String(match?.date || "").trim();
   if (!date) return null;
-  const dayFeed = await safeFetch(`${THESPORTSDB_BASE}/${apiKey}/eventsday.php?d=${encodeURIComponent(date)}&s=Soccer`);
+  const dayFeed = await fetchPostMatchDayFeed(`${THESPORTSDB_BASE}/${apiKey}/eventsday.php?d=${encodeURIComponent(date)}&s=Soccer`);
   const events = dayFeed?.events || [];
   const homeName = normalizeName(match?.homeTeamName || "");
   const awayName = normalizeName(match?.awayTeamName || "");
@@ -11174,6 +11161,7 @@ async function main() {
   const scoreboardCache = new Map();
 
   for (const date of dates) {
+    const collectionStartedAt = Date.now();
     const json = await safeFetch(`${SOFA}/sport/football/scheduled-events/${date}`);
     
     // Handle different possible API response structures
@@ -11334,6 +11322,8 @@ async function main() {
       events = combinedFallbacks.map((event) => applyCuratedResultBackfill(event, date));
     }
     fixtureSourceDiagnostics[date].combined = events.length;
+    fixtureSourceDiagnostics[date].durationMs = Date.now() - collectionStartedAt;
+    console.log(`[worker] ${date}: fixture collection ${fixtureSourceDiagnostics[date].durationMs}ms`);
     
     if (events.length > 0) {
       console.log(`[worker] ${date}: ${events.length} events na filtering (${apiEvents.length} totaal)`);
@@ -12578,6 +12568,7 @@ async function main() {
   store.enrichmentPublicationGate = assertEnrichmentPublication(enrichmentBaselineMatches, currentWindowMatches, {
     maxRelativeDrop: 0.15,
     minimumSample: 3,
+    onEvaluated: (report) => writeJsonFile(path.join(ROOT, 'monitor', 'enrichment-publication-gate.json'), report),
   });
   store.targetedRepairQueue = buildTargetedRepairQueue(currentWindowMatches, {
     now,

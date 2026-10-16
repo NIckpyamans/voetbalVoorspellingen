@@ -11,6 +11,17 @@ export async function mapWithConcurrency(items, limit, visit) {
   return output;
 }
 
+// One attempt per URL per worker invocation, including unavailable responses.
+// The next invocation starts fresh; failed public providers cannot multiply
+// their timeout by every date in the window.
+export function createRunFetchCache(loader) {
+  const entries = new Map();
+  return (url) => {
+    if (!entries.has(url)) entries.set(url, Promise.resolve().then(() => loader(url)));
+    return entries.get(url);
+  };
+}
+
 export const DATA_COLLECTION_MODULE = {
   name: "data-collection",
   owns: ["public API fetches", "source diagnostics", "rate limits", "fallback source ordering"],

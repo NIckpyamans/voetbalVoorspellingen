@@ -114,6 +114,15 @@ jobs:
       - name: Audit active competitions and post-match completeness
         run: npm run monitor:competition-data-coverage
 
+      - name: Preserve publication gate evidence
+        if: always()
+        uses: actions/upload-artifact@v5
+        with:
+          name: worker-publication-${{ github.run_id }}
+          path: monitor/enrichment-publication-gate.json
+          if-no-files-found: warn
+          retention-days: 7
+
       - name: Persist runtime data to Neon/R2 only
         # Runtime-data (data/, monitor/) blijft bewust UIT git: Neon is de source of
         # truth en R2 archiveert de historie. Dit stopt de onbeperkte repo-groei

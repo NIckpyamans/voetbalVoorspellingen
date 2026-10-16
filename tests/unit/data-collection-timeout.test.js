@@ -1,7 +1,16 @@
 import { describe, it, expect, vi, afterEach } from 'vitest';
-import { fetchWithTimeout, fetchExternalJson, mapWithConcurrency, fetchEspnScoreboardEvents } from '../../scripts/worker/data-collection.js';
+import { fetchWithTimeout, fetchExternalJson, mapWithConcurrency, fetchEspnScoreboardEvents, createRunFetchCache } from '../../scripts/worker/data-collection.js';
 afterEach(() => vi.unstubAllGlobals());
 describe('provider deadlines', () => {
+  it('attempts unchanged feeds once per run including unavailable feeds, and retries next run', async () => {
+    const loader = vi.fn(async () => null);
+    const cached = createRunFetchCache(loader);
+    await Promise.all([cached('same'), cached('same')]);
+    await cached('same');
+    expect(loader).toHaveBeenCalledTimes(1);
+    await createRunFetchCache(loader)('same');
+    expect(loader).toHaveBeenCalledTimes(2);
+  });
   it('reuses overlapping ESPN dates without adding requests or caching failed responses', async () => {
     const fetcher = vi.fn(async () => ({ ok: true, json: async () => ({ events: [] }) }));
     vi.stubGlobal('fetch', fetcher);

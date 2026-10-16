@@ -179,7 +179,11 @@ export function evaluateEnrichmentPublication(previousMatches, nextMatches, opti
     if (!nextMatch) continue;
     for (const [field, predicate] of Object.entries(EVIDENCE_FIELDS)) {
       if (field === "providerConflicts") continue;
-      if (predicate(previousMatch) && !predicate(nextMatch)) evidenceLosses.push({ matchId: fixtureEvidenceKey(previousMatch), field });
+      if (predicate(previousMatch) && !predicate(nextMatch)) evidenceLosses.push({ matchId: fixtureEvidenceKey(previousMatch), field,
+        ...(field === 'timestampedOdds' ? { previousKickoff: previousMatch.kickoff, nextKickoff: nextMatch.kickoff,
+          previousCapturedAt: (previousMatch.oddsAtPrediction || previousMatch.odds)?.capturedAt,
+          nextCapturedAt: (nextMatch.oddsAtPrediction || nextMatch.odds)?.capturedAt } : {}),
+      });
     }
   }
   for (const loss of evidenceLosses) regressions.push({ field: loss.field, matchId: loss.matchId, reason: "existing-fixture-evidence-lost" });
@@ -207,6 +211,7 @@ export function evaluateEnrichmentPublication(previousMatches, nextMatches, opti
 
 export function assertEnrichmentPublication(previousMatches, nextMatches, options = {}) {
   const result = evaluateEnrichmentPublication(previousMatches, nextMatches, options);
+  options.onEvaluated?.(result);
   if (!result.allowed) {
     throw new Error(`[enrichment-publication-gate] publicatie geblokkeerd: ${result.regressions.map((item) => item.field).join(", ")}`);
   }
