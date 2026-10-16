@@ -1,13 +1,13 @@
 # Data Quality Audit
 
-Laatst bijgewerkt: 2026-10-15T11:35:42.995Z
+Laatst bijgewerkt: 2026-10-16T06:39:15.269Z
 Lookback: 45 dagen
 
 ## Scores
 - Wedstrijden: 519
-- Oude wedstrijden: 116
+- Oude wedstrijden: 157
 - Pending result backfills: 0
-- Ontbrekende oude scores: 0
+- Ontbrekende oude scores: 41
 - H2H-dekking: 34%
 - Reviews na afloop: 93%
 - Lekvrije post-matchreviews: 0% (0/0)
@@ -37,13 +37,33 @@ Lookback: 45 dagen
 - Europe - Conference League: 57 duels, vorm 60%, H2H 2%, inzetbewijs 0%, lekvrije reviews 0% (0/0), stats 100%; gaten: form, h2h, confirmed_lineups, timestamped_odds, immutable_snapshot_windows, leak_free_reviews
 
 ## Aanbevelingen
-- Resultaatbackfill is schoon binnen de auditperiode.
+- Vul eerst betrouwbare eindstanden aan voordat learning en ROI/CLV zwaarder worden gewogen.
 - Breid H2H via historische competitieprofielen en team-id mappings uit tot minimaal 85% dekking.
 - Evalueer minimaal 95% van de 0 geldige immutable snapshots voordat opnieuw wordt gekalibreerd.
 - Post-match statistiekdekking is voldoende.
 - Toon geen inzetadvies zolang bevestigde opstellingen, verse getimestampte 1X2-odds en minimaal 70% modeldata niet samen aanwezig zijn.
 
 ## Samples
+- Score mist: 2026-10-15: CSKA Sofia - AS Monaco
+- Score mist: 2026-10-15: Universitatea Craiova - Getafe
+- Score mist: 2026-10-15: Egnatia - FC Midtjylland
+- Score mist: 2026-10-15: Lugano - FK Crvena Zvezda
+- Score mist: 2026-10-15: Hajduk Split - Ajax Amsterdam
+- Score mist: 2026-10-15: KAA Gent - AGF
+- Score mist: 2026-10-15: KuPS - Trabzonspor
+- Score mist: 2026-10-15: Mjällby - Inter Club d'Escaldes
+- Score mist: 2026-10-15: Panathinaikos - Borac Banja Luka
+- Score mist: 2026-10-15: Riga FC - Kairat Almaty
+- Score mist: 2026-10-15: Atalanta - Pafos
+- Score mist: 2026-10-15: Brighton & Hove Albion - Kauno Zalgiris
+- Score mist: 2026-10-15: F.C. København - Braga
+- Score mist: 2026-10-15: FC Twente - FC Thun
+- Score mist: 2026-10-15: Heart of Midlothian - FC Nordsjælland
+- Score mist: 2026-10-15: SC Freiburg - Jablonec
+- Score mist: 2026-10-15: St.Truiden - Iberia 1999
+- Score mist: 2026-10-15: Brann - Lincoln Red Imps FC
+- Score mist: 2026-10-15: AZ Alkmaar - Hapoel Be'er
+- Score mist: 2026-10-15: Lech Poznan - Bayer Leverkusen
 - H2H mist: 2026-10-02: Helmond Sport - Heracles Almelo
 - H2H mist: 2026-10-03: TOP Oss - MVV Maastricht
 - H2H mist: 2026-10-03: Vitesse - NAC Breda

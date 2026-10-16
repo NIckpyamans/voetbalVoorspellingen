@@ -1,17 +1,17 @@
 {
-  "generatedAt": "2026-10-15T11:35:42.995Z",
+  "generatedAt": "2026-10-16T06:39:15.269Z",
   "freshness": {
-    "generatedAt": "2026-10-15T11:35:42.995Z",
-    "ageMs": 7,
+    "generatedAt": "2026-10-16T06:39:15.269Z",
+    "ageMs": 8,
     "maxAgeMs": 86400000,
     "fresh": true,
     "status": "fresh"
   },
   "sourceFreshness": {
     "dayFilesLatestModifiedAt": {
-      "timestamp": "2026-10-15T11:35:37.043Z",
-      "generatedAt": "2026-10-15T11:35:37.043Z",
-      "ageMs": 5958.29541015625,
+      "timestamp": "2026-10-16T06:38:59.497Z",
+      "generatedAt": "2026-10-16T06:38:59.497Z",
+      "ageMs": 15779.73486328125,
       "maxAgeMs": 86400000,
       "fresh": true,
       "status": "fresh"
@@ -29,13 +29,13 @@
       "generatedAt": "2026-11-05T00:00:00.000Z",
       "ageMs": 0,
       "maxAgeMs": 86400000,
-      "fresh": true,
-      "status": "fresh"
+      "fresh": false,
+      "status": "invalid_future"
     },
     "snapshotLatest": {
       "timestamp": "2026-08-07T23:19:48.598Z",
       "generatedAt": "2026-08-07T23:19:48.598Z",
-      "ageMs": 5919354404,
+      "ageMs": 5987966679,
       "maxAgeMs": 86400000,
       "fresh": false,
       "status": "stale"
@@ -59,9 +59,9 @@
   "lookbackDays": 45,
   "totals": {
     "matches": 519,
-    "pastMatches": 116,
+    "pastMatches": 157,
     "pendingResultBackfills": 0,
-    "missingPastScores": 0,
+    "missingPastScores": 41,
     "h2hMissing": 342,
     "h2hCovered": 177,
     "h2hCoverage": 0.341,
@@ -69,7 +69,7 @@
     "immutableLedgerEvaluations": 413
   },
   "status": {
-    "resultBackfill": "clean",
+    "resultBackfill": "needs_backfill",
     "h2h": "needs_backfill"
   },
   "coverage": {
@@ -97,9 +97,9 @@
         "pct": 0.064
       },
       "modelReadyData": {
-        "covered": 116,
+        "covered": 167,
         "total": 519,
-        "pct": 0.224
+        "pct": 0.322
       },
       "wagerEvidence": {
         "covered": 0,
@@ -198,9 +198,9 @@
           "pct": 0.194
         },
         "modelReadyData": {
-          "covered": 9,
+          "covered": 10,
           "total": 36,
-          "pct": 0.25
+          "pct": 0.278
         },
         "wagerEvidence": {
           "covered": 0,
@@ -332,9 +332,9 @@
           "pct": 0
         },
         "modelReadyData": {
-          "covered": 18,
+          "covered": 22,
           "total": 48,
-          "pct": 0.375
+          "pct": 0.458
         },
         "wagerEvidence": {
           "covered": 0,
@@ -466,9 +466,9 @@
           "pct": 0.028
         },
         "modelReadyData": {
-          "covered": 9,
+          "covered": 10,
           "total": 36,
-          "pct": 0.25
+          "pct": 0.278
         },
         "wagerEvidence": {
           "covered": 0,
@@ -600,9 +600,9 @@
           "pct": 0
         },
         "modelReadyData": {
-          "covered": 9,
+          "covered": 11,
           "total": 36,
-          "pct": 0.25
+          "pct": 0.306
         },
         "wagerEvidence": {
           "covered": 0,
@@ -871,9 +871,9 @@
           "pct": 0.247
         },
         "modelReadyData": {
-          "covered": 24,
+          "covered": 25,
           "total": 73,
-          "pct": 0.329
+          "pct": 0.342
         },
         "wagerEvidence": {
           "covered": 0,
@@ -1008,9 +1008,9 @@
           "pct": 0.028
         },
         "modelReadyData": {
-          "covered": 9,
+          "covered": 10,
           "total": 36,
-          "pct": 0.25
+          "pct": 0.278
         },
         "wagerEvidence": {
           "covered": 0,
@@ -1142,9 +1142,9 @@
           "pct": 0
         },
         "modelReadyData": {
-          "covered": 9,
+          "covered": 14,
           "total": 36,
-          "pct": 0.25
+          "pct": 0.389
         },
         "wagerEvidence": {
           "covered": 0,
@@ -1416,9 +1416,9 @@
           "pct": 0
         },
         "modelReadyData": {
-          "covered": 0,
+          "covered": 21,
           "total": 64,
-          "pct": 0
+          "pct": 0.328
         },
         "wagerEvidence": {
           "covered": 0,
@@ -1550,9 +1550,9 @@
           "pct": 0
         },
         "modelReadyData": {
-          "covered": 0,
+          "covered": 15,
           "total": 57,
-          "pct": 0
+          "pct": 0.263
         },
         "wagerEvidence": {
           "covered": 0,
@@ -1678,7 +1678,28 @@
   },
   "samples": {
     "pendingResultBackfills": [],
-    "missingPastScores": [],
+    "missingPastScores": [
+      "2026-10-15: CSKA Sofia - AS Monaco",
+      "2026-10-15: Universitatea Craiova - Getafe",
+      "2026-10-15: Egnatia - FC Midtjylland",
+      "2026-10-15: Lugano - FK Crvena Zvezda",
+      "2026-10-15: Hajduk Split - Ajax Amsterdam",
+      "2026-10-15: KAA Gent - AGF",
+      "2026-10-15: KuPS - Trabzonspor",
+      "2026-10-15: Mjällby - Inter Club d'Escaldes",
+      "2026-10-15: Panathinaikos - Borac Banja Luka",
+      "2026-10-15: Riga FC - Kairat Almaty",
+      "2026-10-15: Atalanta - Pafos",
+      "2026-10-15: Brighton & Hove Albion - Kauno Zalgiris",
+      "2026-10-15: F.C. København - Braga",
+      "2026-10-15: FC Twente - FC Thun",
+      "2026-10-15: Heart of Midlothian - FC Nordsjælland",
+      "2026-10-15: SC Freiburg - Jablonec",
+      "2026-10-15: St.Truiden - Iberia 1999",
+      "2026-10-15: Brann - Lincoln Red Imps FC",
+      "2026-10-15: AZ Alkmaar - Hapoel Be'er",
+      "2026-10-15: Lech Poznan - Bayer Leverkusen"
+    ],
     "h2hMissing": [
       "2026-10-02: Helmond Sport - Heracles Almelo",
       "2026-10-03: TOP Oss - MVV Maastricht",
@@ -1703,7 +1724,7 @@
     ]
   },
   "recommendations": [
-    "Resultaatbackfill is schoon binnen de auditperiode.",
+    "Vul eerst betrouwbare eindstanden aan voordat learning en ROI/CLV zwaarder worden gewogen.",
     "Breid H2H via historische competitieprofielen en team-id mappings uit tot minimaal 85% dekking.",
     "Evalueer minimaal 95% van de 0 geldige immutable snapshots voordat opnieuw wordt gekalibreerd.",
     "Post-match statistiekdekking is voldoende.",
