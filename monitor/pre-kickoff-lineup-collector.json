@@ -1,54 +1,37 @@
 {
-  "generatedAt": "2026-10-15T17:48:58.052Z",
-  "checked": 16,
-  "confirmed": 9,
-  "changedConfirmed": 9,
-  "partial": 2,
-  "missing": 5,
-  "r2Stored": 11,
+  "generatedAt": "2026-10-16T18:26:35.104Z",
+  "checked": 2,
+  "confirmed": 2,
+  "changedConfirmed": 2,
+  "partial": 0,
+  "missing": 0,
+  "r2Stored": 2,
   "playerFixtureStatsCaptured": 0,
   "databaseWritable": false,
   "databaseError": "Server error (HTTP status 402): {\"message\":\"Your account or project has exceeded the quota. Upgrade your plan to increase limits.\",\"code\":\"\",\"detail\":null,\"hint\":null,\"position\":null,\"internalPosition\":null,\"internalQuery\":null,\"severity\":\"\",\"where\":null,\"table\":null,\"column\":null,\"schema\":null,\"dataType\":null,\"constraint\":null,\"file\":null,\"line\":null,\"routine\":null,\"neon:retryable\":true}",
   "captureWindows": {
-    "t75": 16,
-    "t45": 0,
-    "t20": 0,
+    "t75": 0,
+    "t45": 1,
+    "t20": 1,
     "outside": 0
   },
   "providers": {
-    "fotmob:lineup_not_published": 5,
-    "sofascore:schedule_http_403": 5,
-    "goal-api:acceptance_gate_closed": 5,
-    "api-football:account_or_plan_unavailable": 5,
-    "sportmonks:plan_coverage_unavailable": 5,
-    "fotmob:ok": 11
+    "sofascore:schedule_http_403": 2,
+    "fotmob:ok": 2
   },
   "matches": [
     {
-      "matchId": "ss-espn-uefa.europa.conf-401915746",
-      "league": "Europe - Conference League",
-      "agent": "conference-league-agent",
-      "kickoff": "2026-10-15T19:00:00.000Z",
-      "minutesBeforeKickoff": 71,
-      "captureWindow": "t75",
-      "homeTeam": "Atalanta",
-      "awayTeam": "Pafos",
-      "provider": "sportmonks",
-      "status": "plan_coverage_unavailable",
+      "matchId": "ss-espn-fra.1-401876437",
+      "league": "France - Ligue 1",
+      "agent": "france-ligue-1-agent",
+      "kickoff": "2026-10-16T18:45:00.000Z",
+      "minutesBeforeKickoff": 18,
+      "captureWindow": "t20",
+      "homeTeam": "Le Mans",
+      "awayTeam": "Toulouse",
+      "provider": "fotmob",
+      "status": "ok",
       "attempts": [
-        {
-          "provider": "fotmob",
-          "status": "lineup_not_published",
-          "lineup": false,
-          "confirmed": false,
-          "durationMs": null,
-          "quota": {
-            "remaining": null,
-            "limit": null,
-            "resetAt": null
-          },
-          "result": "not_published_yet"
-        },
         {
           "provider": "sofascore",
           "status": "schedule_http_403",
@@ -63,74 +46,34 @@
           "result": "http_error"
         },
         {
-          "provider": "goal-api",
-          "status": "acceptance_gate_closed",
-          "lineup": false,
-          "confirmed": false,
+          "provider": "fotmob",
+          "status": "ok",
+          "lineup": true,
+          "confirmed": true,
           "durationMs": null,
           "quota": {
             "remaining": null,
             "limit": null,
             "resetAt": null
           },
-          "result": "acceptance_blocked"
-        },
-        {
-          "provider": "api-football",
-          "status": "account_or_plan_unavailable",
-          "fixtureMapped": false,
-          "lineup": false,
-          "confirmed": false,
-          "durationMs": null,
-          "quota": {
-            "remaining": null,
-            "limit": null,
-            "resetAt": null
-          },
-          "result": "acceptance_blocked"
-        },
-        {
-          "provider": "sportmonks",
-          "status": "plan_coverage_unavailable",
-          "lineup": false,
-          "confirmed": false,
-          "durationMs": null,
-          "quota": {
-            "remaining": null,
-            "limit": null,
-            "resetAt": null
-          },
-          "result": "no_coverage"
+          "result": "found"
         }
       ],
-      "confirmed": false,
+      "confirmed": true,
       "partial": false
     },
     {
-      "matchId": "ss-espn-uefa.europa.conf-401915853",
-      "league": "Europe - Conference League",
-      "agent": "conference-league-agent",
-      "kickoff": "2026-10-15T19:00:00.000Z",
-      "minutesBeforeKickoff": 71,
-      "captureWindow": "t75",
-      "homeTeam": "Brighton & Hove Albion",
-      "awayTeam": "Kauno Zalgiris",
-      "provider": "sportmonks",
-      "status": "plan_coverage_unavailable",
+      "matchId": "ss-espn-eng.2-401880218",
+      "league": "England - Championship",
+      "agent": "england-championship-agent",
+      "kickoff": "2026-10-16T19:00:00.000Z",
+      "minutesBeforeKickoff": 33,
+      "captureWindow": "t45",
+      "homeTeam": "Burnley",
+      "awayTeam": "Wolverhampton Wanderers",
+      "provider": "fotmob",
+      "status": "ok",
       "attempts": [
-        {
-          "provider": "fotmob",
-          "status": "lineup_not_published",
-          "lineup": false,
-          "confirmed": false,
-          "durationMs": null,
-          "quota": {
-            "remaining": null,
-            "limit": null,
-            "resetAt": null
-          },
-          "result": "not_published_yet"
-        },
         {
           "provider": "sofascore",
           "status": "schedule_http_403",
@@ -144,598 +87,6 @@
           },
           "result": "http_error"
         },
-        {
-          "provider": "goal-api",
-          "status": "acceptance_gate_closed",
-          "lineup": false,
-          "confirmed": false,
-          "durationMs": null,
-          "quota": {
-            "remaining": null,
-            "limit": null,
-            "resetAt": null
-          },
-          "result": "acceptance_blocked"
-        },
-        {
-          "provider": "api-football",
-          "status": "account_or_plan_unavailable",
-          "fixtureMapped": false,
-          "lineup": false,
-          "confirmed": false,
-          "durationMs": null,
-          "quota": {
-            "remaining": null,
-            "limit": null,
-            "resetAt": null
-          },
-          "result": "acceptance_blocked"
-        },
-        {
-          "provider": "sportmonks",
-          "status": "plan_coverage_unavailable",
-          "lineup": false,
-          "confirmed": false,
-          "durationMs": null,
-          "quota": {
-            "remaining": null,
-            "limit": null,
-            "resetAt": null
-          },
-          "result": "no_coverage"
-        }
-      ],
-      "confirmed": false,
-      "partial": false
-    },
-    {
-      "matchId": "ss-espn-uefa.europa.conf-401915852",
-      "league": "Europe - Conference League",
-      "agent": "conference-league-agent",
-      "kickoff": "2026-10-15T19:00:00.000Z",
-      "minutesBeforeKickoff": 71,
-      "captureWindow": "t75",
-      "homeTeam": "F.C. København",
-      "awayTeam": "Braga",
-      "provider": "fotmob",
-      "status": "ok",
-      "attempts": [
-        {
-          "provider": "fotmob",
-          "status": "ok",
-          "lineup": true,
-          "confirmed": false,
-          "durationMs": null,
-          "quota": {
-            "remaining": null,
-            "limit": null,
-            "resetAt": null
-          },
-          "result": "found"
-        }
-      ],
-      "confirmed": false,
-      "partial": true
-    },
-    {
-      "matchId": "ss-espn-uefa.europa.conf-401915851",
-      "league": "Europe - Conference League",
-      "agent": "conference-league-agent",
-      "kickoff": "2026-10-15T19:00:00.000Z",
-      "minutesBeforeKickoff": 71,
-      "captureWindow": "t75",
-      "homeTeam": "FC Twente",
-      "awayTeam": "FC Thun",
-      "provider": "fotmob",
-      "status": "ok",
-      "attempts": [
-        {
-          "provider": "fotmob",
-          "status": "ok",
-          "lineup": true,
-          "confirmed": true,
-          "durationMs": null,
-          "quota": {
-            "remaining": null,
-            "limit": null,
-            "resetAt": null
-          },
-          "result": "found"
-        }
-      ],
-      "confirmed": true,
-      "partial": false
-    },
-    {
-      "matchId": "ss-espn-uefa.europa.conf-401915850",
-      "league": "Europe - Conference League",
-      "agent": "conference-league-agent",
-      "kickoff": "2026-10-15T19:00:00.000Z",
-      "minutesBeforeKickoff": 70,
-      "captureWindow": "t75",
-      "homeTeam": "Heart of Midlothian",
-      "awayTeam": "FC Nordsjælland",
-      "provider": "fotmob",
-      "status": "ok",
-      "attempts": [
-        {
-          "provider": "fotmob",
-          "status": "ok",
-          "lineup": true,
-          "confirmed": false,
-          "durationMs": null,
-          "quota": {
-            "remaining": null,
-            "limit": null,
-            "resetAt": null
-          },
-          "result": "found"
-        }
-      ],
-      "confirmed": false,
-      "partial": true
-    },
-    {
-      "matchId": "ss-espn-uefa.europa.conf-401915848",
-      "league": "Europe - Conference League",
-      "agent": "conference-league-agent",
-      "kickoff": "2026-10-15T19:00:00.000Z",
-      "minutesBeforeKickoff": 70,
-      "captureWindow": "t75",
-      "homeTeam": "SC Freiburg",
-      "awayTeam": "Jablonec",
-      "provider": "fotmob",
-      "status": "ok",
-      "attempts": [
-        {
-          "provider": "fotmob",
-          "status": "ok",
-          "lineup": true,
-          "confirmed": true,
-          "durationMs": null,
-          "quota": {
-            "remaining": null,
-            "limit": null,
-            "resetAt": null
-          },
-          "result": "found"
-        }
-      ],
-      "confirmed": true,
-      "partial": false
-    },
-    {
-      "matchId": "ss-fotmob-6112491",
-      "league": "Europe - Conference League",
-      "agent": "conference-league-agent",
-      "kickoff": "2026-10-15T19:00:00.000Z",
-      "minutesBeforeKickoff": 70,
-      "captureWindow": "t75",
-      "homeTeam": "St.Truiden",
-      "awayTeam": "Iberia 1999",
-      "provider": "sportmonks",
-      "status": "plan_coverage_unavailable",
-      "attempts": [
-        {
-          "provider": "fotmob",
-          "status": "lineup_not_published",
-          "lineup": false,
-          "confirmed": false,
-          "durationMs": null,
-          "quota": {
-            "remaining": null,
-            "limit": null,
-            "resetAt": null
-          },
-          "result": "not_published_yet"
-        },
-        {
-          "provider": "sofascore",
-          "status": "schedule_http_403",
-          "lineup": false,
-          "confirmed": false,
-          "durationMs": null,
-          "quota": {
-            "remaining": null,
-            "limit": null,
-            "resetAt": null
-          },
-          "result": "http_error"
-        },
-        {
-          "provider": "goal-api",
-          "status": "acceptance_gate_closed",
-          "lineup": false,
-          "confirmed": false,
-          "durationMs": null,
-          "quota": {
-            "remaining": null,
-            "limit": null,
-            "resetAt": null
-          },
-          "result": "acceptance_blocked"
-        },
-        {
-          "provider": "api-football",
-          "status": "account_or_plan_unavailable",
-          "fixtureMapped": false,
-          "lineup": false,
-          "confirmed": false,
-          "durationMs": null,
-          "quota": {
-            "remaining": null,
-            "limit": null,
-            "resetAt": null
-          },
-          "result": "acceptance_blocked"
-        },
-        {
-          "provider": "sportmonks",
-          "status": "plan_coverage_unavailable",
-          "lineup": false,
-          "confirmed": false,
-          "durationMs": null,
-          "quota": {
-            "remaining": null,
-            "limit": null,
-            "resetAt": null
-          },
-          "result": "no_coverage"
-        }
-      ],
-      "confirmed": false,
-      "partial": false
-    },
-    {
-      "matchId": "ss-fotmob-6112493",
-      "league": "Europe - Conference League",
-      "agent": "conference-league-agent",
-      "kickoff": "2026-10-15T19:00:00.000Z",
-      "minutesBeforeKickoff": 70,
-      "captureWindow": "t75",
-      "homeTeam": "Brann",
-      "awayTeam": "Lincoln Red Imps FC",
-      "provider": "sportmonks",
-      "status": "plan_coverage_unavailable",
-      "attempts": [
-        {
-          "provider": "fotmob",
-          "status": "lineup_not_published",
-          "lineup": false,
-          "confirmed": false,
-          "durationMs": null,
-          "quota": {
-            "remaining": null,
-            "limit": null,
-            "resetAt": null
-          },
-          "result": "not_published_yet"
-        },
-        {
-          "provider": "sofascore",
-          "status": "schedule_http_403",
-          "lineup": false,
-          "confirmed": false,
-          "durationMs": null,
-          "quota": {
-            "remaining": null,
-            "limit": null,
-            "resetAt": null
-          },
-          "result": "http_error"
-        },
-        {
-          "provider": "goal-api",
-          "status": "acceptance_gate_closed",
-          "lineup": false,
-          "confirmed": false,
-          "durationMs": null,
-          "quota": {
-            "remaining": null,
-            "limit": null,
-            "resetAt": null
-          },
-          "result": "acceptance_blocked"
-        },
-        {
-          "provider": "api-football",
-          "status": "account_or_plan_unavailable",
-          "fixtureMapped": false,
-          "lineup": false,
-          "confirmed": false,
-          "durationMs": null,
-          "quota": {
-            "remaining": null,
-            "limit": null,
-            "resetAt": null
-          },
-          "result": "acceptance_blocked"
-        },
-        {
-          "provider": "sportmonks",
-          "status": "plan_coverage_unavailable",
-          "lineup": false,
-          "confirmed": false,
-          "durationMs": null,
-          "quota": {
-            "remaining": null,
-            "limit": null,
-            "resetAt": null
-          },
-          "result": "no_coverage"
-        }
-      ],
-      "confirmed": false,
-      "partial": false
-    },
-    {
-      "matchId": "ss-fotmob-6112328",
-      "league": "Europe - Europa League",
-      "agent": "europa-league-agent",
-      "kickoff": "2026-10-15T19:00:00.000Z",
-      "minutesBeforeKickoff": 70,
-      "captureWindow": "t75",
-      "homeTeam": "AFC Bournemouth",
-      "awayTeam": "Sturm Graz",
-      "provider": "fotmob",
-      "status": "ok",
-      "attempts": [
-        {
-          "provider": "fotmob",
-          "status": "ok",
-          "lineup": true,
-          "confirmed": true,
-          "durationMs": null,
-          "quota": {
-            "remaining": null,
-            "limit": null,
-            "resetAt": null
-          },
-          "result": "found"
-        }
-      ],
-      "confirmed": true,
-      "partial": false
-    },
-    {
-      "matchId": "ss-espn-uefa.europa-401915562",
-      "league": "Europe - Europa League",
-      "agent": "europa-league-agent",
-      "kickoff": "2026-10-15T19:00:00.000Z",
-      "minutesBeforeKickoff": 70,
-      "captureWindow": "t75",
-      "homeTeam": "Benfica",
-      "awayTeam": "Celtic",
-      "provider": "fotmob",
-      "status": "ok",
-      "attempts": [
-        {
-          "provider": "fotmob",
-          "status": "ok",
-          "lineup": true,
-          "confirmed": true,
-          "durationMs": null,
-          "quota": {
-            "remaining": null,
-            "limit": null,
-            "resetAt": null
-          },
-          "result": "found"
-        }
-      ],
-      "confirmed": true,
-      "partial": false
-    },
-    {
-      "matchId": "ss-espn-uefa.europa-401915560",
-      "league": "Europe - Europa League",
-      "agent": "europa-league-agent",
-      "kickoff": "2026-10-15T19:00:00.000Z",
-      "minutesBeforeKickoff": 70,
-      "captureWindow": "t75",
-      "homeTeam": "Celta Vigo",
-      "awayTeam": "Juventus",
-      "provider": "fotmob",
-      "status": "ok",
-      "attempts": [
-        {
-          "provider": "fotmob",
-          "status": "ok",
-          "lineup": true,
-          "confirmed": true,
-          "durationMs": null,
-          "quota": {
-            "remaining": null,
-            "limit": null,
-            "resetAt": null
-          },
-          "result": "found"
-        }
-      ],
-      "confirmed": true,
-      "partial": false
-    },
-    {
-      "matchId": "ss-espn-uefa.europa-401915549",
-      "league": "Europe - Europa League",
-      "agent": "europa-league-agent",
-      "kickoff": "2026-10-15T19:00:00.000Z",
-      "minutesBeforeKickoff": 70,
-      "captureWindow": "t75",
-      "homeTeam": "Dinamo Zagreb",
-      "awayTeam": "Anderlecht",
-      "provider": "fotmob",
-      "status": "ok",
-      "attempts": [
-        {
-          "provider": "fotmob",
-          "status": "ok",
-          "lineup": true,
-          "confirmed": true,
-          "durationMs": null,
-          "quota": {
-            "remaining": null,
-            "limit": null,
-            "resetAt": null
-          },
-          "result": "found"
-        }
-      ],
-      "confirmed": true,
-      "partial": false
-    },
-    {
-      "matchId": "ss-espn-uefa.europa-401915564",
-      "league": "Europe - Europa League",
-      "agent": "europa-league-agent",
-      "kickoff": "2026-10-15T19:00:00.000Z",
-      "minutesBeforeKickoff": 70,
-      "captureWindow": "t75",
-      "homeTeam": "Ferencvaros",
-      "awayTeam": "Viktoria Plzen",
-      "provider": "fotmob",
-      "status": "ok",
-      "attempts": [
-        {
-          "provider": "fotmob",
-          "status": "ok",
-          "lineup": true,
-          "confirmed": true,
-          "durationMs": null,
-          "quota": {
-            "remaining": null,
-            "limit": null,
-            "resetAt": null
-          },
-          "result": "found"
-        }
-      ],
-      "confirmed": true,
-      "partial": false
-    },
-    {
-      "matchId": "ss-espn-uefa.europa-401915561",
-      "league": "Europe - Europa League",
-      "agent": "europa-league-agent",
-      "kickoff": "2026-10-15T19:00:00.000Z",
-      "minutesBeforeKickoff": 70,
-      "captureWindow": "t75",
-      "homeTeam": "Jagiellonia Bialystok",
-      "awayTeam": "Ararat-Armenia",
-      "provider": "sportmonks",
-      "status": "plan_coverage_unavailable",
-      "attempts": [
-        {
-          "provider": "fotmob",
-          "status": "lineup_not_published",
-          "lineup": false,
-          "confirmed": false,
-          "durationMs": null,
-          "quota": {
-            "remaining": null,
-            "limit": null,
-            "resetAt": null
-          },
-          "result": "not_published_yet"
-        },
-        {
-          "provider": "sofascore",
-          "status": "schedule_http_403",
-          "lineup": false,
-          "confirmed": false,
-          "durationMs": null,
-          "quota": {
-            "remaining": null,
-            "limit": null,
-            "resetAt": null
-          },
-          "result": "http_error"
-        },
-        {
-          "provider": "goal-api",
-          "status": "acceptance_gate_closed",
-          "lineup": false,
-          "confirmed": false,
-          "durationMs": null,
-          "quota": {
-            "remaining": null,
-            "limit": null,
-            "resetAt": null
-          },
-          "result": "acceptance_blocked"
-        },
-        {
-          "provider": "api-football",
-          "status": "account_or_plan_unavailable",
-          "fixtureMapped": false,
-          "lineup": false,
-          "confirmed": false,
-          "durationMs": null,
-          "quota": {
-            "remaining": null,
-            "limit": null,
-            "resetAt": null
-          },
-          "result": "acceptance_blocked"
-        },
-        {
-          "provider": "sportmonks",
-          "status": "plan_coverage_unavailable",
-          "lineup": false,
-          "confirmed": false,
-          "durationMs": null,
-          "quota": {
-            "remaining": null,
-            "limit": null,
-            "resetAt": null
-          },
-          "result": "no_coverage"
-        }
-      ],
-      "confirmed": false,
-      "partial": false
-    },
-    {
-      "matchId": "ss-espn-uefa.europa-401915550",
-      "league": "Europe - Europa League",
-      "agent": "europa-league-agent",
-      "kickoff": "2026-10-15T19:00:00.000Z",
-      "minutesBeforeKickoff": 70,
-      "captureWindow": "t75",
-      "homeTeam": "Marseille",
-      "awayTeam": "Olympiacos",
-      "provider": "fotmob",
-      "status": "ok",
-      "attempts": [
-        {
-          "provider": "fotmob",
-          "status": "ok",
-          "lineup": true,
-          "confirmed": true,
-          "durationMs": null,
-          "quota": {
-            "remaining": null,
-            "limit": null,
-            "resetAt": null
-          },
-          "result": "found"
-        }
-      ],
-      "confirmed": true,
-      "partial": false
-    },
-    {
-      "matchId": "ss-espn-uefa.europa-401915565",
-      "league": "Europe - Europa League",
-      "agent": "europa-league-agent",
-      "kickoff": "2026-10-15T19:00:00.000Z",
-      "minutesBeforeKickoff": 70,
-      "captureWindow": "t75",
-      "homeTeam": "NEC Nijmegen",
-      "awayTeam": "Levski Sofia",
-      "provider": "fotmob",
-      "status": "ok",
-      "attempts": [
         {
           "provider": "fotmob",
           "status": "ok",
@@ -756,23 +107,23 @@
   ],
   "leagueCoverage": [
     {
-      "league": "Europe - Conference League",
-      "checked": 8,
-      "covered": 2,
-      "partial": 2,
-      "missing": 4,
-      "coverage": 0.25
+      "league": "England - Championship",
+      "checked": 1,
+      "covered": 1,
+      "partial": 0,
+      "missing": 0,
+      "coverage": 1
     },
     {
-      "league": "Europe - Europa League",
-      "checked": 8,
-      "covered": 7,
+      "league": "France - Ligue 1",
+      "checked": 1,
+      "covered": 1,
       "partial": 0,
-      "missing": 1,
-      "coverage": 0.875
+      "missing": 0,
+      "coverage": 1
     }
   ],
-  "confirmedCoverage": 0.563,
+  "confirmedCoverage": 1,
   "recalculationRequired": true,
   "recalculationSlaMinutes": 5,
   "recalculationReason": "confirmed_lineup_changed"
