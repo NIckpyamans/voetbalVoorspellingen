@@ -1,3 +1,16 @@
+// Bounded parallelism preserves input ordering and does not add provider requests.
+export async function mapWithConcurrency(items, limit, visit) {
+  const output = new Array(items.length);
+  let cursor = 0;
+  await Promise.all(Array.from({ length: Math.min(limit, items.length) }, async () => {
+    while (cursor < items.length) {
+      const index = cursor++;
+      output[index] = await visit(items[index], index);
+    }
+  }));
+  return output;
+}
+
 export const DATA_COLLECTION_MODULE = {
   name: "data-collection",
   owns: ["public API fetches", "source diagnostics", "rate limits", "fallback source ordering"],
@@ -7,21 +20,14 @@ const DEFAULT_USER_AGENT =
   "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 Chrome/123.0 Safari/537.36";
 
 export async function fetchWithTimeout(url, options = {}, timeoutMs = 12000) {
-  const controller = new AbortController();
-  const timeout = setTimeout(() => controller.abort(), timeoutMs);
-  try {
-    return await fetch(url, {
-      ...options,
-      signal: controller.signal,
-    });
-  } finally {
-    clearTimeout(timeout);
-  }
+  // Keep the timeout active while callers consume the response body too.
+  const deadline = AbortSignal.timeout(timeoutMs);
+  return fetch(url, { ...options, signal: options.signal ? AbortSignal.any([options.signal, deadline]) : deadline });
 }
 
 export async function fetchText(url) {
   try {
-    const response = await fetch(url, {
+    const response = await fetchWithTimeout(url, {
       headers: {
         Accept: "text/plain,text/csv,text/*;q=0.9,*/*;q=0.8",
         "User-Agent": DEFAULT_USER_AGENT,
@@ -426,20 +432,22 @@ function getEspnDisplayMinute(status, deps) {
 }
 
 export async function fetchEspnScoreboardEvents(dateISO, deps) {
-  const fallbackEvents = [];
   const requestedDate = new Date(`${dateISO}T12:00:00.000Z`);
   const previousDate = new Date(requestedDate.getTime() - 24 * 60 * 60 * 1000).toISOString().slice(0, 10);
   const queryDates = [...new Set([previousDate, dateISO].map((value) => String(value || "").replace(/-/g, "")))];
 
-  for (const [leagueLabel, espnCode] of Object.entries(deps.espnScoreboardLeagues)) {
+  const batches = await mapWithConcurrency(Object.entries(deps.espnScoreboardLeagues), 3, async ([leagueLabel, espnCode]) => {
+    const fallbackEvents = [];
     const leagueInfo = deps.leagues.find((item) => item.label === leagueLabel);
-    if (!leagueInfo) continue;
+    if (!leagueInfo) return [];
 
     const eventMap = new Map();
     for (const yyyymmdd of queryDates) {
-      const json = await fetchExternalJson(
+      const cacheKey = `${espnCode}|${yyyymmdd}`;
+      const json = deps.scoreboardCache?.get(cacheKey) ?? await fetchExternalJson(
         `https://site.api.espn.com/apis/site/v2/sports/soccer/${espnCode}/scoreboard?dates=${yyyymmdd}`
       );
+      if (json && deps.scoreboardCache) deps.scoreboardCache.set(cacheKey, json);
       for (const event of Array.isArray(json?.events) ? json.events : []) {
         eventMap.set(String(event?.id || `${event?.date || ""}-${event?.name || ""}`), event);
       }
@@ -511,9 +519,10 @@ export async function fetchEspnScoreboardEvents(dateISO, deps) {
       });
     }
     await deps.sleep(20);
-  }
+    return fallbackEvents;
+  });
 
-  return fallbackEvents;
+  return batches.flat();
 }
 
 function decodeHtmlAttribute(value) {

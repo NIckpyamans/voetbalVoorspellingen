@@ -131,7 +131,7 @@ async function fetchWithTimeout(fetchImpl, url, options = {}, timeoutMs = DEFAUL
   }
 }
 
-function inferOddsApiSportKeys(match = {}) {
+export function inferOddsApiSportKeys(match = {}) {
   const override = process.env.ODDS_API_SPORT || process.env.ODDS_SPORT_KEY || "";
   if (override.trim()) return unique([override.trim(), ...configuredExtraSports()]);
   const league = normalizeName(match.league || "");
@@ -144,7 +144,9 @@ function inferOddsApiSportKeys(match = {}) {
     [/championship/, "soccer_efl_champ"],
     [/laliga|la liga/, "soccer_spain_la_liga"],
     [/serie a/, "soccer_italy_serie_a"],
+    [/2 bundesliga|bundesliga 2/, "soccer_germany_bundesliga2"],
     [/bundesliga/, "soccer_germany_bundesliga"],
+    [/ligue 2/, "soccer_france_ligue_two"],
     [/ligue 1/, "soccer_france_ligue_one"],
     [/eredivisie/, "soccer_netherlands_eredivisie"],
     [/liga portugal|portugal/, "soccer_portugal_primeira_liga"],

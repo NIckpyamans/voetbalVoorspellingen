@@ -34,10 +34,12 @@ function mean(values) {
   return xs.length ? xs.reduce((a, b) => a + b, 0) / xs.length : null;
 }
 
-function rate(items, pred) {
-  if (!items.length) return null;
-  return items.filter(pred).length / items.length;
+export function rate(items, pred) {
+  const measured = items.map(pred).filter(value => typeof value === 'boolean');
+  return measured.length ? measured.filter(Boolean).length / measured.length : null;
 }
+
+const percent = value => value == null ? null : value * 100;
 
 function fmt(x, digits = 3) {
   return x == null || !Number.isFinite(x) ? "n/a" : x.toFixed(digits);
@@ -62,7 +64,8 @@ function bucketBy(rows, keyFn) {
   }));
 }
 
-function buildRows(ledger) {
+const measuredNumber = value => value == null || value === '' ? NaN : Number(value);
+export function buildRows(ledger) {
   const snapshots = ledger.predictionSnapshots || {};
   const rows = [];
   const seen = new Set();
@@ -72,8 +75,8 @@ function buildRows(ledger) {
     seen.add(key);
     const snap = snapshots[review.predictionId];
     const p = snap?.prediction || {};
-    const predictedTotal = Number(review.predictedTotalGoals ?? (Number(p.homeXG) + Number(p.awayXG)));
-    const actualTotal = Number(review.actualTotalGoals);
+    const predictedTotal = measuredNumber(review.predictedTotalGoals ?? (measuredNumber(p.homeXG) + measuredNumber(p.awayXG)));
+    const actualTotal = measuredNumber(review.actualTotalGoals);
     rows.push({
       predictionId: review.predictionId,
       matchId: review.matchId,
@@ -86,16 +89,16 @@ function buildRows(ledger) {
       actualScore: review.actualScore,
       predictedOutcome: review.predictedOutcome,
       actualOutcome: review.actualOutcome,
-      outcomeHit: review.outcomeHit === true,
-      over25Hit: review.over25Hit === true,
-      bttsHit: review.bttsHit === true,
-      brierScore: Number(review.brierScore),
+      outcomeHit: typeof review.outcomeHit === 'boolean' ? review.outcomeHit : null,
+      over25Hit: typeof review.over25Hit === 'boolean' ? review.over25Hit : null,
+      bttsHit: typeof review.bttsHit === 'boolean' ? review.bttsHit : null,
+      brierScore: measuredNumber(review.brierScore),
       totalGoalBias: Number.isFinite(predictedTotal) && Number.isFinite(actualTotal) ? predictedTotal - actualTotal : null,
-      homeRestDays: Number(p.homeRestDays),
-      awayRestDays: Number(p.awayRestDays),
-      homeClubElo: Number(p.homeClubElo),
-      awayClubElo: Number(p.awayClubElo),
-      totalXG: Number(p.homeXG) + Number(p.awayXG),
+      homeRestDays: measuredNumber(p.homeRestDays),
+      awayRestDays: measuredNumber(p.awayRestDays),
+      homeClubElo: measuredNumber(p.homeClubElo),
+      awayClubElo: measuredNumber(p.awayClubElo),
+      totalXG: measuredNumber(p.homeXG) + measuredNumber(p.awayXG),
     });
   }
   return rows;
@@ -149,13 +152,13 @@ function main() {
   const lastDate = all.map((r) => r.date).filter(Boolean).sort().at(-1);
 
   const lines = [];
-  const payload = { targetDate, ledgerPath, ledgerLastReviewDate: lastDate, matches: dayRows.length };
+  const payload = { generatedAt: new Date().toISOString(), targetDate, ledgerPath: path.basename(ledgerPath), ledgerLastReviewDate: lastDate, matches: dayRows.length };
   lines.push(`# Voorspellingsmonitor ${targetDate}`, "");
   lines.push(`Ledger: \`${path.basename(ledgerPath)}\`. Laatste review in ledger: ${lastDate}.`, "");
 
   if (!dayRows.length) {
     lines.push(`Geen afgeronde wedstrijden voor ${targetDate} in deze ledger.`);
-    lines.push("Dit is een datagat in de export, geen modelfout. Haal een verse ledger op voor dit moment.");
+    lines.push("Onbekend of er wedstrijden ontbreken: vergelijk de wedstrijdkalender en de actualiteit van de export. Dit bewijst geen modelfout of datagat.");
     payload.status = "no-matches-for-date";
   } else {
     const hitOutcome = rate(dayRows, (r) => r.outcomeHit);
@@ -163,9 +166,9 @@ function main() {
     const hitBtts = rate(dayRows, (r) => r.bttsHit);
     const brier = mean(dayRows.map((r) => r.brierScore));
     lines.push(`## Samenvatting (n=${dayRows.length})`, "");
-    lines.push(`- Uitkomst (1X2) juist: ${fmt(hitOutcome * 100, 1)}%`);
-    lines.push(`- Over 2.5 juist: ${fmt(hitOver * 100, 1)}%`);
-    lines.push(`- BTTS juist: ${fmt(hitBtts * 100, 1)}%`);
+    lines.push(`- Uitkomst (1X2) juist: ${fmt(percent(hitOutcome), 1)}%`);
+    lines.push(`- Over 2.5 juist: ${fmt(percent(hitOver), 1)}%`);
+    lines.push(`- BTTS juist: ${fmt(percent(hitBtts), 1)}%`);
     lines.push(`- Gemiddelde Brier: ${fmt(brier)}`, "");
 
     const sections = [
@@ -177,12 +180,12 @@ function main() {
     for (const [title, keyFn] of sections) {
       lines.push(`## ${title}`, "", "| groep | n | 1X2 | over2.5 | BTTS | Brier | tot-bias |", "|---|---|---|---|---|---|---|");
       for (const b of bucketBy(dayRows, keyFn)) {
-        lines.push(`| ${b.key} | ${b.n} | ${fmt(b.outcomeHit * 100, 0)}% | ${fmt(b.over25Hit * 100, 0)}% | ${fmt(b.bttsHit * 100, 0)}% | ${fmt(b.brier)} | ${fmt(b.totalGoalBias, 2)} |`);
+        lines.push(`| ${b.key} | ${b.n} | ${fmt(percent(b.outcomeHit), 0)}% | ${fmt(percent(b.over25Hit), 0)}% | ${fmt(percent(b.bttsHit), 0)}% | ${fmt(b.brier)} | ${fmt(b.totalGoalBias, 2)} |`);
       }
       lines.push("");
     }
 
-    const bad = dayRows.filter((r) => !r.outcomeHit).slice(0, 15);
+    const bad = dayRows.filter((r) => r.outcomeHit === false).sort((a, b) => (b.brierScore || 0) - (a.brierScore || 0)).slice(0, 15);
     lines.push("## Grootste misses", "", "| wedstrijd | voorspeld | uitslag | Brier |", "|---|---|---|---|");
     for (const r of bad) lines.push(`| ${r.homeName} - ${r.awayName} (${r.league}) | ${r.predictedScore} ${r.predictedOutcome} | ${r.actualScore} | ${fmt(r.brierScore)} |`);
     lines.push("");
@@ -204,4 +207,4 @@ function main() {
   console.log(`\nGeschreven: data/monitor/${targetDate}.md`);
 }
 
-main();
+if (process.argv[1] && path.resolve(process.argv[1]) === fileURLToPath(import.meta.url)) main();

@@ -306,7 +306,8 @@ function freeSolutionForIssue(key) {
 }
 
 function buildRufloReport() {
-  const store = readJsonSafe(DATA_FILE, {});
+  const inputStore = readJsonSafe(DATA_FILE, null);
+  const store = inputStore || {};
   const findings = readJsonSafe(FINDINGS_FILE, { days: {} });
   const proposal = readJsonSafe(PROPOSAL_FILE, null);
   const digest = readJsonSafe(DIGEST_FILE, null);
@@ -316,6 +317,14 @@ function buildRufloReport() {
   const dataAgent = buildSourceAgents(store, run);
   const learningAgent = buildLearningAgents(store);
   const controlAgent = buildControlAgents(findings, proposal, digest);
+  if (!inputStore) {
+    for (const agent of [dataAgent, learningAgent]) {
+      agent.score = null;
+      agent.status = 'unknown';
+      agent.summary = 'Bronbestand server_data.json ontbreekt of is ongeldig; geen betrouwbare meting beschikbaar.';
+      agent.actions = [];
+    }
+  }
   dataAgent.actions = filterResolvedActions(dataAgent.actions, resolvedKeys);
   learningAgent.actions = filterResolvedActions(learningAgent.actions, resolvedKeys);
   controlAgent.actions = filterResolvedActions(controlAgent.actions, resolvedKeys);
@@ -341,7 +350,7 @@ function buildRufloReport() {
     name: "Ruflo-style gratis AI monitor",
     mode: "naast-productie",
     productionSafe: true,
-    summary: "Ruflo draait als extra agentlaag naast de app: hij leest monitor/data/reviews, zoekt gratis oplossingen en maakt patchadvies zonder blind live te wijzigen.",
+    summary: "Ruflo bundelt bestaande rapporten en vaste regels tot advies. Dit is geen zelfstandige AI- of internetanalyse; ontbrekende invoer blijft onbekend.",
     agents: {
       data: dataAgent,
       learning: learningAgent,

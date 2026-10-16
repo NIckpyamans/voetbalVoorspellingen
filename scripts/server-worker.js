@@ -11170,6 +11170,8 @@ async function main() {
   const teamTournamentMap = new Map();
   const tournamentsMap = new Map();
   const requiredTeamIds = new Set();
+  // Reuse overlapping previous-day ESPN requests within this worker run only.
+  const scoreboardCache = new Map();
 
   for (const date of dates) {
     const json = await safeFetch(`${SOFA}/sport/football/scheduled-events/${date}`);
@@ -11200,6 +11202,7 @@ async function main() {
     const fallbackEvents = friendliesDiscoveryMode ? [] : await fetchFallbackScheduledEventsFromMarket(date);
     const sportsDbEvents = await fetchSportsDbScheduledEvents(date, { onlyFriendlies: friendliesDiscoveryMode });
     const espnEvents = await fetchEspnScoreboardEventsSource(date, {
+      scoreboardCache,
       espnScoreboardLeagues: friendliesDiscoveryMode ? FRIENDLY_SCOREBOARD_LEAGUES : ESPN_SCOREBOARD_LEAGUES,
       leagues: LEAGUES,
       isWomenContext,

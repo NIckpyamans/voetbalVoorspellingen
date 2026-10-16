@@ -2,9 +2,14 @@ name: Professional improvement audit
 
 on:
   schedule:
-    # Exact vijf vaste controles per kalendermaand.
-    - cron: "15 6 1,8,15,22,28 * *"
+    # Wekelijks op maandag; analyse gebruikt de laatste zeven kalenderdagen.
+    - cron: "19 6 * * 1"
   workflow_dispatch:
+    inputs:
+      dispatch_actions:
+        description: "Start bestaande herstelworkflows na de analyse"
+        type: boolean
+        default: true
 
 concurrency:
   group: football-professional-improvement-audit
@@ -18,6 +23,7 @@ env:
 jobs:
   build-digest:
     runs-on: ubuntu-latest
+    timeout-minutes: 25
     permissions:
       contents: write
       actions: write
@@ -47,12 +53,27 @@ jobs:
         run: npm ci
 
       - name: Build biweekly digest
+        env:
+          GH_TOKEN: ${{ github.token }}
         run: |
+          node scripts/workflow-health-audit.js
           npm run monitor:data-quality
           npm run monitor:widgets
           npm run monitor:professional
           npm run monitor:competition-agents
           npm run monitor:biweekly
+
+      - name: Preserve audit evidence even on failure
+        if: always()
+        uses: actions/upload-artifact@v5
+        with:
+          name: professional-audit-${{ github.run_id }}
+          path: |
+            monitor/workflow-health.json
+            monitor/biweekly-review-digest.*
+            monitor/ai-professional-audit.*
+          retention-days: 14
+          if-no-files-found: error
 
       - name: Prepare top-five action plan
         run: |
@@ -73,6 +94,7 @@ jobs:
           exit 1
 
       - name: Dispatch top-five safe improvements
+        if: github.event_name != 'workflow_dispatch' || inputs.dispatch_actions == true
         env:
           GH_TOKEN: ${{ github.token }}
         run: |

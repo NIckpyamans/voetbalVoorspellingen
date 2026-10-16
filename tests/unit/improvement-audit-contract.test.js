@@ -14,16 +14,16 @@ function readWorkflow(file) {
 }
 
 describe("improvement audit automation contract", () => {
-  it("schedules exactly five audits per month", () => {
+  it("schedules a weekly audit with a bounded runtime", () => {
     const workflow = readWorkflow("biweekly-review-digest.yml");
-    expect(workflow.on.schedule).toEqual([{ cron: "15 6 1,8,15,22,28 * *" }]);
+    expect(workflow.on.schedule).toEqual([{ cron: "19 6 * * 1" }]);
+    expect(workflow.jobs['build-digest']['timeout-minutes']).toBe(25);
     expect(workflow.jobs["build-digest"].permissions).toMatchObject({ contents: "write", actions: "write" });
   });
 
   it("publishes five unique, executable improvement actions", () => {
     const report = readJson("monitor/biweekly-review-digest.json");
     const workflows = report.actionPlan.map((item) => item.workflow);
-    expect(report.cadence).toBe("5x per maand");
     expect(report.actionPlan).toHaveLength(5);
     expect(new Set(workflows).size).toBe(5);
     for (const workflow of workflows) {

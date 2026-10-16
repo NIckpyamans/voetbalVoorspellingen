@@ -5,7 +5,11 @@ const decimal = (value: unknown) => Number(value || 0).toFixed(3);
 
 const ProviderControlView: React.FC = () => {
   const [data, setData] = useState<any>(null);
+  const [monitoring, setMonitoring] = useState<any>(null);
   const load = async () => {
+    void fetch('/api/system-check?detail=monitoring', { cache: 'no-store' })
+      .then(r => r.ok ? r.json() : Promise.reject())
+      .then(setMonitoring).catch(() => setMonitoring({ status: 'unknown', workflows: [] }));
     const integrity = await fetch("/api/system-check?detail=integrity", { cache: "no-store" }).catch(() => null);
     if (integrity?.ok) return setData(await integrity.json());
     const health = await fetch("/api/system-check", { cache: "no-store" }).catch(() => null);
@@ -34,6 +38,17 @@ const ProviderControlView: React.FC = () => {
       <div className="text-[10px] font-black uppercase tracking-[.25em] text-red-300">Bronbeveiliging</div>
       <h2 className="mt-2 text-3xl font-black text-white">Providerbeheer & herstel</h2>
       <p className="mt-2 text-xs text-slate-400">Start gecontroleerde proefheractivering en volg trust per competitie.</p>
+    </section>
+    <section className="glass-card rounded-3xl border border-cyan-500/15 p-5">
+      <h3 className="text-sm font-black text-cyan-200">Monitoring en taakuitvoering</h3>
+      <p className="mt-2 text-xs text-slate-300">Status: {monitoring?.status || 'laden'} · Laatste controle: {monitoring?.generatedAt ? new Date(monitoring.generatedAt).toLocaleString('nl-NL') : 'onbekend'}</p>
+      <p className="mt-2 text-xs text-slate-400">Uitvoering over de afgelopen zeven dagen. Een geslaagde taak bewijst nog niet dat alle gegevens zijn gepubliceerd.</p>
+      {monitoring?.status === 'unknown' && <p className="mt-2 text-xs text-amber-300">Geen actueel controlebewijs beschikbaar.</p>}
+      <div className="mt-3 grid gap-2 md:grid-cols-2">{(monitoring?.workflows || []).map((item: any) => <div key={item.workflow} className="rounded-xl bg-slate-950/35 p-3 text-xs">
+        <span className={item.status === 'ok' ? 'text-emerald-300' : 'text-amber-300'}>{item.workflow}: {item.status}</span>
+        <div className="mt-1 text-slate-400">{(item.reasons || []).join(', ') || 'Geen uitvoeringsprobleem gevonden'}</div>
+        {item.latestRunUrl && <a className="mt-1 block text-cyan-300 underline" href={item.latestRunUrl} target="_blank" rel="noreferrer">Bekijk laatste uitvoering</a>}
+      </div>)}</div>
     </section>
     <section className="glass-card rounded-3xl border border-cyan-500/15 p-5">
       <div className="flex flex-wrap items-center justify-between gap-2">

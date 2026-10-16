@@ -2,6 +2,7 @@
 
 import fs from "fs";
 import path from "path";
+import { assessAuditFreshness } from './worker/audit-freshness.js';
 
 const ROOT = process.cwd();
 const FINDINGS_FILE = path.join(ROOT, "monitor", "daily-findings.json");
@@ -298,8 +299,10 @@ function buildDigest() {
   const professionalAudit = readJsonSafe(PROFESSIONAL_AUDIT_FILE, null);
   const lineupMonitor = readJsonSafe(LINEUP_MONITOR_FILE, null);
   const apiFootballAcceptance = readJsonSafe(API_FOOTBALL_ACCEPTANCE_FILE, null);
+  const workflowHealth = readJsonSafe(path.join(ROOT, 'monitor/workflow-health.json'), null);
+  const evidenceFreshness = Object.fromEntries(Object.entries({ dataQuality, widgetAudit, predictionEvaluation, snapshotGrowth, professionalAudit, lineupMonitor, apiFootballAcceptance, workflowHealth }).map(([key, report]) => [key, assessAuditFreshness(report)]));
   const allFindingDays = Object.keys(findings.days || {}).sort();
-  const latestFindingDay = allFindingDays.at(-1) || getAmsterdamDate();
+  const latestFindingDay = getAmsterdamDate();
   const lookbackDays = Math.max(1, Number(process.env.AUDIT_LOOKBACK_DAYS || 7));
   const fromDate = subtractDays(latestFindingDay, lookbackDays - 1);
   const includedDays = Object.keys(findings.days || {})
@@ -417,6 +420,8 @@ function buildDigest() {
   const nextRecommendations = actionPlan.map(({ workflow, ...recommendation }) => recommendation);
   const digest = {
     generatedAt,
+    workflowHealth,
+    evidenceFreshness,
     range: {
       from: fromDate,
       to: latestFindingDay,
@@ -424,11 +429,11 @@ function buildDigest() {
     },
     shouldNotify: false,
     shouldRefresh,
-    cadence: "5x per maand",
+    cadence: "wekelijks op maandag 06:19 UTC (GitHub kan vertraagd starten)",
     summary:
       topFindings.length > 0
         ? `AI bundel over de laatste ${lookbackDays} dagen: ${topFindings.length} monitorthema's en ${actionPlan.length} uitvoerbare verbeteracties.`
-        : `Geen nieuwe dagelijkse alarmsignalen; ${actionPlan.length} meetbare verbeteracties blijven actief.`,
+        : totalRuns ? `Geen nieuwe dagelijkse alarmsignalen in ${totalRuns} waarnemingen; ${actionPlan.length} voorstellen blijven beschikbaar.` : 'Geen dagelijkse waarnemingen in deze zeven dagen; gezondheid is onbekend. Workflowbewijs en bronactualiteit staan afzonderlijk vermeld.',
     totals: {
       totalRuns,
       totalIssues,
@@ -504,6 +509,9 @@ function buildDigest() {
     `- Thema's: ${topFindings.length}`,
     "",
     "## Hoofdpunten",
+    `- Ontbrekende/verouderde bronrapporten: ${Object.entries(evidenceFreshness).filter(([, value]) => !value.fresh).map(([key, value]) => `${key} (${value.status})`).join(', ') || 'geen'}`,
+    `- Workflowcontrole: ${workflowHealth?.status || 'unknown'}; groene uitvoering bewijst geen dataverwerking.`,
+    ...(workflowHealth?.workflows || []).filter(w => w.status !== 'ok').map(w => `- ${w.workflow}: ${w.reasons.join(', ')} (${w.latestRunUrl || 'geen runbewijs'})`),
     ...topFindings.flatMap((item) => [
       `- ${item.title} (${item.count}x, severity: ${item.highestSeverity})`,
       `  - ${item.recommendation}`,
@@ -544,7 +552,7 @@ function buildDigest() {
       (item, index) => `${index + 1}. ${item.title} (${item.priority}, impact: ${item.expectedImpact}) - ${item.reason}`
     ),
     "",
-    "## Automatisch gestarte acties",
+    "## Geplande acties (dispatch en herstel nog afzonderlijk te verifiëren)",
     ...actionPlan.map((item, index) => `${index + 1}. ${item.title}: ${item.workflow}`),
     "",
     proposal?.shouldPropose

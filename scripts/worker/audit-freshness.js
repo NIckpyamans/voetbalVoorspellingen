@@ -13,12 +13,13 @@ export function parseAuditTimestamp(value) {
 export function assessAuditFreshness(report, { now = Date.now(), maxAgeMs = AUDIT_FRESHNESS_MAX_AGE_MS } = {}) {
   const generatedAt = parseAuditTimestamp(report?.generatedAt);
   const ageMs = Number.isFinite(generatedAt) ? Math.max(0, now - generatedAt) : null;
+  const future = generatedAt != null && generatedAt > now + 5 * 60 * 1000;
   return {
     generatedAt: Number.isFinite(generatedAt) ? new Date(generatedAt).toISOString() : null,
     ageMs,
     maxAgeMs,
-    fresh: ageMs != null && ageMs <= maxAgeMs,
-    status: ageMs == null ? "unknown" : ageMs <= maxAgeMs ? "fresh" : "stale",
+    fresh: !future && ageMs != null && ageMs <= maxAgeMs,
+    status: future ? "invalid_future" : ageMs == null ? "unknown" : ageMs <= maxAgeMs ? "fresh" : "stale",
   };
 }
 

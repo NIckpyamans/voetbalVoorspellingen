@@ -21,6 +21,10 @@ jobs:
   evaluate:
     runs-on: ubuntu-latest
     timeout-minutes: 20
+    env:
+      # August ledger exceeds 96 MiB; retain a bounded runner-only limit,
+      # matching daily-prediction-monitor. API/serverless defaults stay unchanged.
+      SNAPSHOT_LEDGER_MAX_JSON_BYTES: 536870912
     steps:
       - uses: actions/checkout@v5
         with:

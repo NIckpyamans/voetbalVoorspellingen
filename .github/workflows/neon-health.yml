@@ -16,6 +16,48 @@ concurrency:
   cancel-in-progress: false
 
 jobs:
+  workflow-evidence:
+    # Independent of Neon, npm and the shared football-data-refresh queue.
+    runs-on: ubuntu-latest
+    timeout-minutes: 7
+    env:
+      DATA_BRANCH: codex/step3b-layout
+      GH_TOKEN: ${{ github.token }}
+    steps:
+      - uses: actions/checkout@v5
+        with:
+          ref: ${{ env.DATA_BRANCH }}
+      - uses: actions/setup-node@v5
+        with:
+          node-version: 22
+      - name: Inspect actual workflow executions
+        id: evidence
+        run: node scripts/workflow-health-audit.js
+      - name: Preserve execution evidence
+        if: always()
+        uses: actions/upload-artifact@v5
+        with:
+          name: workflow-health-${{ github.run_id }}
+          path: monitor/workflow-health.json
+          if-no-files-found: error
+          retention-days: 7
+      - name: Publish changes or six-hour heartbeat
+        if: steps.evidence.outputs.publish == 'true'
+        run: |
+          git config user.name github-actions
+          git config user.email github-actions@github.com
+          git add -f monitor/workflow-health.json
+          git diff --staged --quiet && exit 0
+          git commit -m "update workflow health evidence [skip vercel]"
+          for attempt in 1 2 3; do
+            git pull --rebase --autostash origin "$DATA_BRANCH"
+            if git push origin HEAD:"$DATA_BRANCH"; then exit 0; fi
+            sleep $((attempt * 5))
+          done
+          exit 1
+      - name: Surface degraded workflows
+        if: steps.evidence.outputs.status != 'ok'
+        run: echo "::warning::Workflow execution is degraded or unknown. See workflow-health artifact and job summary; green collection is not proof of healthy predictions."
   watchdog:
     runs-on: ubuntu-latest
     timeout-minutes: 10

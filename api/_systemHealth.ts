@@ -8,6 +8,7 @@ import { setCorsHeaders } from "../shared/cors.js";
 import { getSql } from "../shared/database.js";
 import { enforceWriteSecurity } from "../shared/writeSecurity.js";
 import { selectFreshestWorkerSource } from "../shared/healthFreshness.js";
+import { assessWorkflowReport } from '../shared/workflowHealth.js';
 
 const logger = createLogger("api.system-health");
 const ROOT = process.cwd();
@@ -310,6 +311,16 @@ export async function buildSystemHealth(mode = "health") {
 
 export async function sendSystemHealth(_req: any, res: any, mode = "health") {
   try {
+    if (String(_req?.query?.detail || '') === 'monitoring') {
+      let report = null;
+      try {
+        const branch = encodeURIComponent(process.env.DATA_BRANCH || 'codex/step3b-layout');
+        const response = await fetch(`https://raw.githubusercontent.com/NIckpyamans/voetbalVoorspellingen/${branch}/monitor/workflow-health.json`, { signal: AbortSignal.timeout(6000), cache: 'no-store' });
+        if (response.ok) report = await response.json();
+      } catch { /* Unavailable evidence must never be shown as healthy. */ }
+      res.setHeader('Cache-Control', 'no-store');
+      return res.status(200).json(assessWorkflowReport(report));
+    }
     if (String(_req?.query?.detail || "") === "integrity-alert" && _req.method === "POST") {
       if (!enforceWriteSecurity(_req, res, { scope: "integrity-alert", limit: 8, requireToken: true, requiredRole: "operator" })) return;
       const sql = getSql();
