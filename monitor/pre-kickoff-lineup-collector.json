@@ -1,34 +1,76 @@
 {
-  "generatedAt": "2026-10-16T18:26:35.104Z",
-  "checked": 2,
-  "confirmed": 2,
-  "changedConfirmed": 2,
-  "partial": 0,
+  "generatedAt": "2026-10-17T13:01:31.281Z",
+  "checked": 16,
+  "confirmed": 12,
+  "changedConfirmed": 12,
+  "partial": 4,
   "missing": 0,
-  "r2Stored": 2,
+  "r2Stored": 16,
   "playerFixtureStatsCaptured": 0,
   "databaseWritable": false,
   "databaseError": "Server error (HTTP status 402): {\"message\":\"Your account or project has exceeded the quota. Upgrade your plan to increase limits.\",\"code\":\"\",\"detail\":null,\"hint\":null,\"position\":null,\"internalPosition\":null,\"internalQuery\":null,\"severity\":\"\",\"where\":null,\"table\":null,\"column\":null,\"schema\":null,\"dataType\":null,\"constraint\":null,\"file\":null,\"line\":null,\"routine\":null,\"neon:retryable\":true}",
   "captureWindows": {
     "t75": 0,
-    "t45": 1,
-    "t20": 1,
+    "t45": 10,
+    "t20": 6,
     "outside": 0
   },
   "providers": {
-    "sofascore:schedule_http_403": 2,
-    "fotmob:ok": 2
+    "sofascore:schedule_http_403": 16,
+    "fotmob:ok": 16
   },
   "matches": [
     {
-      "matchId": "ss-espn-fra.1-401876437",
-      "league": "France - Ligue 1",
-      "agent": "france-ligue-1-agent",
-      "kickoff": "2026-10-16T18:45:00.000Z",
-      "minutesBeforeKickoff": 18,
+      "matchId": "ss-fotmob-5881189",
+      "league": "Germany - Bundesliga",
+      "agent": "germany-bundesliga-agent",
+      "kickoff": "2026-10-17T13:30:00.000Z",
+      "minutesBeforeKickoff": 28,
       "captureWindow": "t20",
-      "homeTeam": "Le Mans",
-      "awayTeam": "Toulouse",
+      "homeTeam": "Bayern München",
+      "awayTeam": "RB Leipzig",
+      "provider": "fotmob",
+      "status": "ok",
+      "attempts": [
+        {
+          "provider": "sofascore",
+          "status": "schedule_http_403",
+          "lineup": false,
+          "confirmed": false,
+          "durationMs": null,
+          "quota": {
+            "remaining": null,
+            "limit": null,
+            "resetAt": null
+          },
+          "result": "http_error"
+        },
+        {
+          "provider": "fotmob",
+          "status": "ok",
+          "lineup": true,
+          "confirmed": false,
+          "durationMs": null,
+          "quota": {
+            "remaining": null,
+            "limit": null,
+            "resetAt": null
+          },
+          "result": "found"
+        }
+      ],
+      "confirmed": false,
+      "partial": true
+    },
+    {
+      "matchId": "ss-fotmob-5881192",
+      "league": "Germany - Bundesliga",
+      "agent": "germany-bundesliga-agent",
+      "kickoff": "2026-10-17T13:30:00.000Z",
+      "minutesBeforeKickoff": 28,
+      "captureWindow": "t20",
+      "homeTeam": "Elversberg",
+      "awayTeam": "Augsburg",
       "provider": "fotmob",
       "status": "ok",
       "attempts": [
@@ -63,14 +105,560 @@
       "partial": false
     },
     {
-      "matchId": "ss-espn-eng.2-401880218",
+      "matchId": "ss-fotmob-5881193",
+      "league": "Germany - Bundesliga",
+      "agent": "germany-bundesliga-agent",
+      "kickoff": "2026-10-17T13:30:00.000Z",
+      "minutesBeforeKickoff": 28,
+      "captureWindow": "t20",
+      "homeTeam": "Hamburger SV",
+      "awayTeam": "VfB Stuttgart",
+      "provider": "fotmob",
+      "status": "ok",
+      "attempts": [
+        {
+          "provider": "sofascore",
+          "status": "schedule_http_403",
+          "lineup": false,
+          "confirmed": false,
+          "durationMs": null,
+          "quota": {
+            "remaining": null,
+            "limit": null,
+            "resetAt": null
+          },
+          "result": "http_error"
+        },
+        {
+          "provider": "fotmob",
+          "status": "ok",
+          "lineup": true,
+          "confirmed": true,
+          "durationMs": null,
+          "quota": {
+            "remaining": null,
+            "limit": null,
+            "resetAt": null
+          },
+          "result": "found"
+        }
+      ],
+      "confirmed": true,
+      "partial": false
+    },
+    {
+      "matchId": "ss-fotmob-5881194",
+      "league": "Germany - Bundesliga",
+      "agent": "germany-bundesliga-agent",
+      "kickoff": "2026-10-17T13:30:00.000Z",
+      "minutesBeforeKickoff": 28,
+      "captureWindow": "t20",
+      "homeTeam": "Schalke 04",
+      "awayTeam": "Mainz 05",
+      "provider": "fotmob",
+      "status": "ok",
+      "attempts": [
+        {
+          "provider": "sofascore",
+          "status": "schedule_http_403",
+          "lineup": false,
+          "confirmed": false,
+          "durationMs": null,
+          "quota": {
+            "remaining": null,
+            "limit": null,
+            "resetAt": null
+          },
+          "result": "http_error"
+        },
+        {
+          "provider": "fotmob",
+          "status": "ok",
+          "lineup": true,
+          "confirmed": true,
+          "durationMs": null,
+          "quota": {
+            "remaining": null,
+            "limit": null,
+            "resetAt": null
+          },
+          "result": "found"
+        }
+      ],
+      "confirmed": true,
+      "partial": false
+    },
+    {
+      "matchId": "ss-fotmob-5881195",
+      "league": "Germany - Bundesliga",
+      "agent": "germany-bundesliga-agent",
+      "kickoff": "2026-10-17T13:30:00.000Z",
+      "minutesBeforeKickoff": 28,
+      "captureWindow": "t20",
+      "homeTeam": "Union Berlin",
+      "awayTeam": "Borussia Dortmund",
+      "provider": "fotmob",
+      "status": "ok",
+      "attempts": [
+        {
+          "provider": "sofascore",
+          "status": "schedule_http_403",
+          "lineup": false,
+          "confirmed": false,
+          "durationMs": null,
+          "quota": {
+            "remaining": null,
+            "limit": null,
+            "resetAt": null
+          },
+          "result": "http_error"
+        },
+        {
+          "provider": "fotmob",
+          "status": "ok",
+          "lineup": true,
+          "confirmed": true,
+          "durationMs": null,
+          "quota": {
+            "remaining": null,
+            "limit": null,
+            "resetAt": null
+          },
+          "result": "found"
+        }
+      ],
+      "confirmed": true,
+      "partial": false
+    },
+    {
+      "matchId": "ss-fotmob-5881196",
+      "league": "Germany - Bundesliga",
+      "agent": "germany-bundesliga-agent",
+      "kickoff": "2026-10-17T13:30:00.000Z",
+      "minutesBeforeKickoff": 28,
+      "captureWindow": "t20",
+      "homeTeam": "Werder Bremen",
+      "awayTeam": "Paderborn",
+      "provider": "fotmob",
+      "status": "ok",
+      "attempts": [
+        {
+          "provider": "sofascore",
+          "status": "schedule_http_403",
+          "lineup": false,
+          "confirmed": false,
+          "durationMs": null,
+          "quota": {
+            "remaining": null,
+            "limit": null,
+            "resetAt": null
+          },
+          "result": "http_error"
+        },
+        {
+          "provider": "fotmob",
+          "status": "ok",
+          "lineup": true,
+          "confirmed": true,
+          "durationMs": null,
+          "quota": {
+            "remaining": null,
+            "limit": null,
+            "resetAt": null
+          },
+          "result": "found"
+        }
+      ],
+      "confirmed": true,
+      "partial": false
+    },
+    {
+      "matchId": "ss-fotmob-5795476",
+      "league": "England - Premier League",
+      "agent": "england-premier-league-agent",
+      "kickoff": "2026-10-17T14:00:00.000Z",
+      "minutesBeforeKickoff": 58,
+      "captureWindow": "t45",
+      "homeTeam": "Brentford",
+      "awayTeam": "Liverpool",
+      "provider": "fotmob",
+      "status": "ok",
+      "attempts": [
+        {
+          "provider": "sofascore",
+          "status": "schedule_http_403",
+          "lineup": false,
+          "confirmed": false,
+          "durationMs": null,
+          "quota": {
+            "remaining": null,
+            "limit": null,
+            "resetAt": null
+          },
+          "result": "http_error"
+        },
+        {
+          "provider": "fotmob",
+          "status": "ok",
+          "lineup": true,
+          "confirmed": false,
+          "durationMs": null,
+          "quota": {
+            "remaining": null,
+            "limit": null,
+            "resetAt": null
+          },
+          "result": "found"
+        }
+      ],
+      "confirmed": false,
+      "partial": true
+    },
+    {
+      "matchId": "ss-fotmob-5795479",
+      "league": "England - Premier League",
+      "agent": "england-premier-league-agent",
+      "kickoff": "2026-10-17T14:00:00.000Z",
+      "minutesBeforeKickoff": 58,
+      "captureWindow": "t45",
+      "homeTeam": "Fulham",
+      "awayTeam": "Hull City",
+      "provider": "fotmob",
+      "status": "ok",
+      "attempts": [
+        {
+          "provider": "sofascore",
+          "status": "schedule_http_403",
+          "lineup": false,
+          "confirmed": false,
+          "durationMs": null,
+          "quota": {
+            "remaining": null,
+            "limit": null,
+            "resetAt": null
+          },
+          "result": "http_error"
+        },
+        {
+          "provider": "fotmob",
+          "status": "ok",
+          "lineup": true,
+          "confirmed": false,
+          "durationMs": null,
+          "quota": {
+            "remaining": null,
+            "limit": null,
+            "resetAt": null
+          },
+          "result": "found"
+        }
+      ],
+      "confirmed": false,
+      "partial": true
+    },
+    {
+      "matchId": "ss-fotmob-5795481",
+      "league": "England - Premier League",
+      "agent": "england-premier-league-agent",
+      "kickoff": "2026-10-17T14:00:00.000Z",
+      "minutesBeforeKickoff": 58,
+      "captureWindow": "t45",
+      "homeTeam": "Manchester City",
+      "awayTeam": "Ipswich Town",
+      "provider": "fotmob",
+      "status": "ok",
+      "attempts": [
+        {
+          "provider": "sofascore",
+          "status": "schedule_http_403",
+          "lineup": false,
+          "confirmed": false,
+          "durationMs": null,
+          "quota": {
+            "remaining": null,
+            "limit": null,
+            "resetAt": null
+          },
+          "result": "http_error"
+        },
+        {
+          "provider": "fotmob",
+          "status": "ok",
+          "lineup": true,
+          "confirmed": false,
+          "durationMs": null,
+          "quota": {
+            "remaining": null,
+            "limit": null,
+            "resetAt": null
+          },
+          "result": "found"
+        }
+      ],
+      "confirmed": false,
+      "partial": true
+    },
+    {
+      "matchId": "ss-espn-eng.2-401880220",
       "league": "England - Championship",
       "agent": "england-championship-agent",
-      "kickoff": "2026-10-16T19:00:00.000Z",
-      "minutesBeforeKickoff": 33,
+      "kickoff": "2026-10-17T14:00:00.000Z",
+      "minutesBeforeKickoff": 58,
       "captureWindow": "t45",
-      "homeTeam": "Burnley",
-      "awayTeam": "Wolverhampton Wanderers",
+      "homeTeam": "Birmingham City",
+      "awayTeam": "Queens Park Rangers",
+      "provider": "fotmob",
+      "status": "ok",
+      "attempts": [
+        {
+          "provider": "sofascore",
+          "status": "schedule_http_403",
+          "lineup": false,
+          "confirmed": false,
+          "durationMs": null,
+          "quota": {
+            "remaining": null,
+            "limit": null,
+            "resetAt": null
+          },
+          "result": "http_error"
+        },
+        {
+          "provider": "fotmob",
+          "status": "ok",
+          "lineup": true,
+          "confirmed": true,
+          "durationMs": null,
+          "quota": {
+            "remaining": null,
+            "limit": null,
+            "resetAt": null
+          },
+          "result": "found"
+        }
+      ],
+      "confirmed": true,
+      "partial": false
+    },
+    {
+      "matchId": "ss-espn-eng.2-401880219",
+      "league": "England - Championship",
+      "agent": "england-championship-agent",
+      "kickoff": "2026-10-17T14:00:00.000Z",
+      "minutesBeforeKickoff": 58,
+      "captureWindow": "t45",
+      "homeTeam": "Bristol City",
+      "awayTeam": "Sheffield United",
+      "provider": "fotmob",
+      "status": "ok",
+      "attempts": [
+        {
+          "provider": "sofascore",
+          "status": "schedule_http_403",
+          "lineup": false,
+          "confirmed": false,
+          "durationMs": null,
+          "quota": {
+            "remaining": null,
+            "limit": null,
+            "resetAt": null
+          },
+          "result": "http_error"
+        },
+        {
+          "provider": "fotmob",
+          "status": "ok",
+          "lineup": true,
+          "confirmed": true,
+          "durationMs": null,
+          "quota": {
+            "remaining": null,
+            "limit": null,
+            "resetAt": null
+          },
+          "result": "found"
+        }
+      ],
+      "confirmed": true,
+      "partial": false
+    },
+    {
+      "matchId": "ss-espn-eng.2-401880217",
+      "league": "England - Championship",
+      "agent": "england-championship-agent",
+      "kickoff": "2026-10-17T14:00:00.000Z",
+      "minutesBeforeKickoff": 58,
+      "captureWindow": "t45",
+      "homeTeam": "Derby County",
+      "awayTeam": "Stoke City",
+      "provider": "fotmob",
+      "status": "ok",
+      "attempts": [
+        {
+          "provider": "sofascore",
+          "status": "schedule_http_403",
+          "lineup": false,
+          "confirmed": false,
+          "durationMs": null,
+          "quota": {
+            "remaining": null,
+            "limit": null,
+            "resetAt": null
+          },
+          "result": "http_error"
+        },
+        {
+          "provider": "fotmob",
+          "status": "ok",
+          "lineup": true,
+          "confirmed": true,
+          "durationMs": null,
+          "quota": {
+            "remaining": null,
+            "limit": null,
+            "resetAt": null
+          },
+          "result": "found"
+        }
+      ],
+      "confirmed": true,
+      "partial": false
+    },
+    {
+      "matchId": "ss-espn-eng.2-401880214",
+      "league": "England - Championship",
+      "agent": "england-championship-agent",
+      "kickoff": "2026-10-17T14:00:00.000Z",
+      "minutesBeforeKickoff": 58,
+      "captureWindow": "t45",
+      "homeTeam": "Norwich City",
+      "awayTeam": "Portsmouth",
+      "provider": "fotmob",
+      "status": "ok",
+      "attempts": [
+        {
+          "provider": "sofascore",
+          "status": "schedule_http_403",
+          "lineup": false,
+          "confirmed": false,
+          "durationMs": null,
+          "quota": {
+            "remaining": null,
+            "limit": null,
+            "resetAt": null
+          },
+          "result": "http_error"
+        },
+        {
+          "provider": "fotmob",
+          "status": "ok",
+          "lineup": true,
+          "confirmed": true,
+          "durationMs": null,
+          "quota": {
+            "remaining": null,
+            "limit": null,
+            "resetAt": null
+          },
+          "result": "found"
+        }
+      ],
+      "confirmed": true,
+      "partial": false
+    },
+    {
+      "matchId": "ss-espn-eng.2-401880213",
+      "league": "England - Championship",
+      "agent": "england-championship-agent",
+      "kickoff": "2026-10-17T14:00:00.000Z",
+      "minutesBeforeKickoff": 58,
+      "captureWindow": "t45",
+      "homeTeam": "Southampton",
+      "awayTeam": "Bolton Wanderers",
+      "provider": "fotmob",
+      "status": "ok",
+      "attempts": [
+        {
+          "provider": "sofascore",
+          "status": "schedule_http_403",
+          "lineup": false,
+          "confirmed": false,
+          "durationMs": null,
+          "quota": {
+            "remaining": null,
+            "limit": null,
+            "resetAt": null
+          },
+          "result": "http_error"
+        },
+        {
+          "provider": "fotmob",
+          "status": "ok",
+          "lineup": true,
+          "confirmed": true,
+          "durationMs": null,
+          "quota": {
+            "remaining": null,
+            "limit": null,
+            "resetAt": null
+          },
+          "result": "found"
+        }
+      ],
+      "confirmed": true,
+      "partial": false
+    },
+    {
+      "matchId": "ss-espn-eng.2-401880212",
+      "league": "England - Championship",
+      "agent": "england-championship-agent",
+      "kickoff": "2026-10-17T14:00:00.000Z",
+      "minutesBeforeKickoff": 58,
+      "captureWindow": "t45",
+      "homeTeam": "Swansea City",
+      "awayTeam": "West Ham United",
+      "provider": "fotmob",
+      "status": "ok",
+      "attempts": [
+        {
+          "provider": "sofascore",
+          "status": "schedule_http_403",
+          "lineup": false,
+          "confirmed": false,
+          "durationMs": null,
+          "quota": {
+            "remaining": null,
+            "limit": null,
+            "resetAt": null
+          },
+          "result": "http_error"
+        },
+        {
+          "provider": "fotmob",
+          "status": "ok",
+          "lineup": true,
+          "confirmed": true,
+          "durationMs": null,
+          "quota": {
+            "remaining": null,
+            "limit": null,
+            "resetAt": null
+          },
+          "result": "found"
+        }
+      ],
+      "confirmed": true,
+      "partial": false
+    },
+    {
+      "matchId": "ss-espn-eng.2-401880210",
+      "league": "England - Championship",
+      "agent": "england-championship-agent",
+      "kickoff": "2026-10-17T14:00:00.000Z",
+      "minutesBeforeKickoff": 58,
+      "captureWindow": "t45",
+      "homeTeam": "West Bromwich Albion",
+      "awayTeam": "Blackburn Rovers",
       "provider": "fotmob",
       "status": "ok",
       "attempts": [
@@ -107,23 +695,31 @@
   ],
   "leagueCoverage": [
     {
-      "league": "England - Championship",
-      "checked": 1,
-      "covered": 1,
-      "partial": 0,
+      "league": "England - Premier League",
+      "checked": 3,
+      "covered": 0,
+      "partial": 3,
       "missing": 0,
-      "coverage": 1
+      "coverage": 0
     },
     {
-      "league": "France - Ligue 1",
-      "checked": 1,
-      "covered": 1,
+      "league": "Germany - Bundesliga",
+      "checked": 6,
+      "covered": 5,
+      "partial": 1,
+      "missing": 0,
+      "coverage": 0.833
+    },
+    {
+      "league": "England - Championship",
+      "checked": 7,
+      "covered": 7,
       "partial": 0,
       "missing": 0,
       "coverage": 1
     }
   ],
-  "confirmedCoverage": 1,
+  "confirmedCoverage": 0.75,
   "recalculationRequired": true,
   "recalculationSlaMinutes": 5,
   "recalculationReason": "confirmed_lineup_changed"
