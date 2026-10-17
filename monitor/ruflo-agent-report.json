@@ -1,14 +1,14 @@
 {
-  "generatedAt": "2026-10-16T00:26:31.918Z",
-  "date": "2026-10-16",
+  "generatedAt": "2026-10-17T00:30:56.609Z",
+  "date": "2026-10-17",
   "name": "Ruflo-style gratis AI monitor",
   "mode": "naast-productie",
   "productionSafe": true,
-  "summary": "Ruflo draait als extra agentlaag naast de app: hij leest monitor/data/reviews, zoekt gratis oplossingen en maakt patchadvies zonder blind live te wijzigen.",
+  "summary": "Ruflo bundelt bestaande rapporten en vaste regels tot advies. Dit is geen zelfstandige AI- of internetanalyse; ontbrekende invoer blijft onbekend.",
   "agents": {
     "data": {
-      "score": 0,
-      "summary": "Datalaag: H2H 0%, bookmakers 0%, refs 0%.",
+      "score": null,
+      "summary": "Bronbestand server_data.json ontbreekt of is ongeldig; geen betrouwbare meting beschikbaar.",
       "freeSources": [
         {
           "name": "SofaScore public endpoint",
@@ -60,35 +60,26 @@
           "use": "Niet live scrapen op iedere run; alleen gecachte snapshots gebruiken."
         }
       ],
-      "actions": [
-        {
-          "priority": "medium",
-          "title": "H2H-backfill verder vullen",
-          "freeSolution": "Gebruik openfootball en football-data rows per competitie als historische H2H fallback voordat de UI 'leeg' toont.",
-          "files": [
-            "scripts/server-worker.js",
-            "components/MatchCard.tsx"
-          ],
-          "status": "aanbevolen"
-        }
-      ]
+      "actions": [],
+      "status": "unknown"
     },
     "learning": {
-      "score": 0,
-      "summary": "Leerlaag: 0 reviews, exact 0%, winnaar/gelijk 0%, top-5 exact 0%.",
+      "score": null,
+      "summary": "Bronbestand server_data.json ontbreekt of is ongeldig; geen betrouwbare meting beschikbaar.",
       "topConfidence": {},
       "topClubs": [],
-      "actions": []
+      "actions": [],
+      "status": "unknown"
     },
     "control": {
       "score": 52,
-      "summary": "Ontwikkelcontrole: 1 actieve monitorissues op 2026-10-16; digest 2026-10-09 t/m 2026-10-15.",
-      "latestDay": "2026-10-16",
+      "summary": "Ontwikkelcontrole: 1 actieve monitorissues op 2026-10-17; digest 2026-10-10 t/m 2026-10-16.",
+      "latestDay": "2026-10-17",
       "shouldPropose": true,
       "actions": [
         {
           "priority": "high",
-          "title": "Workerdata is 568 minuten oud.",
+          "title": "Workerdata is 851 minuten oud.",
           "freeSolution": "Laat GitHub Actions schedule + manual dispatch draaien; geen mail nodig, alleen data committen.",
           "files": [
             ".github/workflows/worker.yml"
@@ -100,43 +91,24 @@
   },
   "topThemes": [
     {
-      "title": "Workerdata is 568 minuten oud.",
+      "title": "Workerdata is 851 minuten oud.",
       "count": 1,
       "priority": "high",
       "agents": [
         "control"
-      ]
-    },
-    {
-      "title": "H2H-backfill verder vullen",
-      "count": 1,
-      "priority": "medium",
-      "agents": [
-        "data"
       ]
     }
   ],
   "recommendedNextActions": [
     {
       "priority": "high",
-      "title": "Workerdata is 568 minuten oud.",
+      "title": "Workerdata is 851 minuten oud.",
       "freeSolution": "Laat GitHub Actions schedule + manual dispatch draaien; geen mail nodig, alleen data committen.",
       "files": [
         ".github/workflows/worker.yml"
       ],
       "status": "monitor",
       "agent": "control"
-    },
-    {
-      "priority": "medium",
-      "title": "H2H-backfill verder vullen",
-      "freeSolution": "Gebruik openfootball en football-data rows per competitie als historische H2H fallback voordat de UI 'leeg' toont.",
-      "files": [
-        "scripts/server-worker.js",
-        "components/MatchCard.tsx"
-      ],
-      "status": "aanbevolen",
-      "agent": "data"
     }
   ],
   "freeOnlyGuardrails": [
