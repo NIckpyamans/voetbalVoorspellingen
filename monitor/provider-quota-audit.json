@@ -1,5 +1,5 @@
 {
-  "checkedAt": "2026-10-17T08:37:30.907Z",
+  "checkedAt": "2026-10-18T08:53:49.021Z",
   "oddsApi": {
     "configured": true,
     "valid": true,
@@ -10,6 +10,7 @@
       "soccer_concacaf_gold_cup",
       "soccer_concacaf_leagues_cup",
       "soccer_conmebol_copa_america",
+      "soccer_fa_cup",
       "soccer_fifa_club_world_cup",
       "soccer_fifa_world_cup",
       "soccer_fifa_world_cup_qualifiers_europe",
@@ -26,9 +27,9 @@
     ],
     "faCup": {
       "key": "soccer_fa_cup",
-      "status": "active"
+      "status": "expected_inactive"
     },
-    "activeSports": 87,
+    "activeSports": 78,
     "soccerSportKeys": [
       "soccer_argentina_primera_division",
       "soccer_australia_aleague",
@@ -46,7 +47,6 @@
       "soccer_england_league1",
       "soccer_england_league2",
       "soccer_epl",
-      "soccer_fa_cup",
       "soccer_finland_veikkausliiga",
       "soccer_france_ligue_one",
       "soccer_france_ligue_two",
@@ -92,14 +92,14 @@
       "soccer_uefa_europa_conference_league_qualification"
     ],
     "competitionCoverageStatus": "seasonal_unavailable",
-    "newlyInactiveSports": [],
-    "newlyUnavailableSports": [],
-    "newlyAvailableSports": [
-      "soccer_belgium_first_div"
+    "newlyInactiveSports": [
+      "soccer_fa_cup"
     ],
+    "newlyUnavailableSports": [],
+    "newlyAvailableSports": [],
     "quota": {
-      "x-requests-remaining": "362",
-      "x-requests-used": "138",
+      "x-requests-remaining": "343",
+      "x-requests-used": "157",
       "x-requests-last": "0"
     },
     "errorCode": null
@@ -172,7 +172,7 @@
     "quota": {
       "x-ratelimit-limit": "1000",
       "x-ratelimit-remaining": "961",
-      "x-ratelimit-reset": "1792281600"
+      "x-ratelimit-reset": "1792368000"
     },
     "accepted": false,
     "policy": "Veertien dagen meten; nooit automatisch promoveren op basis van alleen een geldige key."
@@ -228,7 +228,7 @@
         "firstName": "Esbjerg vs OB",
         "hasOddsFlag": false,
         "rateLimit": {
-          "resets_in_seconds": 3599,
+          "resets_in_seconds": 3600,
           "remaining": 179,
           "requested_entity": "Fixture"
         },
@@ -242,8 +242,8 @@
         "valid": true,
         "status": 200,
         "records": 1,
-        "firstId": 19722770,
-        "firstName": "St. Johnstone vs Dundee United",
+        "firstId": 19713898,
+        "firstName": "Lyngby Boldklub vs Nordsjælland",
         "hasOddsFlag": true,
         "rateLimit": {
           "resets_in_seconds": 3599,
@@ -260,11 +260,11 @@
         "valid": true,
         "status": 200,
         "records": 1,
-        "firstId": 19722770,
-        "firstName": "St. Johnstone vs Dundee United",
+        "firstId": 19713898,
+        "firstName": "Lyngby Boldklub vs Nordsjælland",
         "hasOddsFlag": true,
         "rateLimit": {
-          "resets_in_seconds": 3598,
+          "resets_in_seconds": 3599,
           "remaining": 177,
           "requested_entity": "Fixture"
         },
@@ -274,13 +274,13 @@
         },
         "errorCode": null
       },
-      "testedFixtureId": 19722770,
+      "testedFixtureId": 19713898,
       "oddsByFixture": {
         "label": "oddsByFixture",
         "valid": true,
         "status": 200,
         "records": 3,
-        "firstId": 246515172157,
+        "firstId": 247964178857,
         "firstName": null,
         "hasOddsFlag": false,
         "rateLimit": {
@@ -319,7 +319,7 @@
         "valid": true,
         "status": 200,
         "records": 3,
-        "firstId": 246515172157,
+        "firstId": 247964178857,
         "firstName": null,
         "hasOddsFlag": false,
         "rateLimit": {
