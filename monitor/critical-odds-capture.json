@@ -1,12 +1,12 @@
 {
-  "generatedAt": "2026-10-18T18:09:06.600Z",
-  "checked": 6,
+  "generatedAt": "2026-10-19T13:26:15.005Z",
+  "checked": 16,
   "captureWindows": {
     "t20": 0,
-    "t45": 1,
+    "t45": 0,
     "t75": 0,
-    "prematch": 0,
-    "opening": 5,
+    "prematch": 5,
+    "opening": 11,
     "outside": 0
   },
   "quotaBudget": {
@@ -31,61 +31,55 @@
       }
     }
   },
-  "captured": 0,
-  "openingCaptured": 0,
-  "prematchCaptured": 0,
+  "captured": 9,
+  "openingCaptured": 9,
+  "prematchCaptured": 9,
   "closingCaptured": 0,
   "closingPairs": 0,
   "statuses": {
-    "not_found": 3
+    "not_found": 5,
+    "available": 9
   },
   "attemptStatuses": {
-    "the-odds-api:seasonal_sport_unavailable": 3,
-    "the-odds-api:unsupported_sport": 6,
-    "the-odds-api:not_found": 12,
-    "sportmonks:fixture_id_missing": 3
+    "the-odds-api:seasonal_sport_unavailable": 34,
+    "the-odds-api:unsupported_sport": 28,
+    "the-odds-api:not_found": 18,
+    "sportmonks:fixture_id_missing": 5,
+    "the-odds-api:available": 9
   },
   "providerStatuses": {
     "the-odds-api": {
-      "seasonal_sport_unavailable": 3,
-      "unsupported_sport": 6,
-      "not_found": 12
+      "seasonal_sport_unavailable": 34,
+      "unsupported_sport": 28,
+      "not_found": 18,
+      "available": 9
     },
     "sportmonks": {
-      "fixture_id_missing": 3
+      "fixture_id_missing": 5
     }
   },
   "providerQuota": {
     "the-odds-api": {
-      "remaining": 333
+      "remaining": 331,
+      "used": 169,
+      "limit": null,
+      "reset": null
     }
   },
-  "skippedExistingRole": 3,
+  "skippedExistingRole": 2,
   "sportmonksMapped": 0,
   "sportmonksMappingStatuses": {
-    "plan_coverage_unavailable": 6
+    "plan_coverage_unavailable": 16
   },
   "matches": [
-    {
-      "matchId": "ss-espn-fra.1-401876434",
-      "kickoff": "2026-10-18T18:45:00.000Z",
-      "league": "France - Ligue 1",
-      "homeTeam": "Lyon",
-      "awayTeam": "Nice",
-      "minutesBeforeKickoff": 36,
-      "captureWindow": "t45",
-      "closingWindow": false,
-      "status": "already_captured",
-      "captureRole": "prematch"
-    },
     {
       "matchId": "ss-espn-ned.2-401875887",
       "kickoff": "2026-10-19T18:00:00.000Z",
       "league": "Netherlands - Eerste Divisie",
       "homeTeam": "Jong Ajax",
       "awayTeam": "De Graafschap",
-      "minutesBeforeKickoff": 1431,
-      "captureWindow": "opening",
+      "minutesBeforeKickoff": 274,
+      "captureWindow": "prematch",
       "closingWindow": false,
       "status": "not_found",
       "providerCompetitionAvailability": null,
@@ -98,8 +92,8 @@
       "league": "Netherlands - Eerste Divisie",
       "homeTeam": "Jong FC Utrecht",
       "awayTeam": "Roda JC Kerkrade",
-      "minutesBeforeKickoff": 1431,
-      "captureWindow": "opening",
+      "minutesBeforeKickoff": 274,
+      "captureWindow": "prematch",
       "closingWindow": false,
       "status": "not_found",
       "providerCompetitionAvailability": null,
@@ -112,8 +106,8 @@
       "league": "Netherlands - Eerste Divisie",
       "homeTeam": "Jong PSV",
       "awayTeam": "FC Dordrecht",
-      "minutesBeforeKickoff": 1431,
-      "captureWindow": "opening",
+      "minutesBeforeKickoff": 274,
+      "captureWindow": "prematch",
       "closingWindow": false,
       "status": "not_found",
       "providerCompetitionAvailability": null,
@@ -126,11 +120,11 @@
       "league": "France - Ligue 2",
       "homeTeam": "Rodez",
       "awayTeam": "Montpellier",
-      "minutesBeforeKickoff": 1476,
-      "captureWindow": "opening",
+      "minutesBeforeKickoff": 319,
+      "captureWindow": "prematch",
       "closingWindow": false,
       "status": "already_captured",
-      "captureRole": "opening"
+      "captureRole": "prematch"
     },
     {
       "matchId": "ss-fotmob-5795484",
@@ -138,11 +132,192 @@
       "league": "England - Premier League",
       "homeTeam": "Tottenham Hotspur",
       "awayTeam": "Coventry City",
-      "minutesBeforeKickoff": 1491,
-      "captureWindow": "opening",
+      "minutesBeforeKickoff": 334,
+      "captureWindow": "prematch",
       "closingWindow": false,
       "status": "already_captured",
-      "captureRole": "opening"
+      "captureRole": "prematch"
+    },
+    {
+      "matchId": "ss-espn-uefa.champions-401915403",
+      "kickoff": "2026-10-20T16:45:00.000Z",
+      "league": "Europe - Champions League",
+      "homeTeam": "Fenerbahce",
+      "awayTeam": "Slavia Prague",
+      "minutesBeforeKickoff": 1639,
+      "captureWindow": "opening",
+      "closingWindow": false,
+      "status": "not_found",
+      "providerCompetitionAvailability": null,
+      "reason": "Sportmonks fixture-id ontbreekt; odds-by-fixture call overgeslagen.",
+      "sportmonksMapping": "plan_coverage_unavailable"
+    },
+    {
+      "matchId": "ss-espn-uefa.champions-401915404",
+      "kickoff": "2026-10-20T16:45:00.000Z",
+      "league": "Europe - Champions League",
+      "homeTeam": "Sabah FK",
+      "awayTeam": "Borussia Dortmund",
+      "minutesBeforeKickoff": 1639,
+      "captureWindow": "opening",
+      "closingWindow": false,
+      "status": "captured",
+      "provider": "the-odds-api",
+      "captureRole": "opening",
+      "sportmonksFixtureId": null,
+      "opening": true,
+      "prematch": true,
+      "closing": false
+    },
+    {
+      "matchId": "ss-espn-eng.2-401880277",
+      "kickoff": "2026-10-20T18:45:00.000Z",
+      "league": "England - Championship",
+      "homeTeam": "Wolverhampton Wanderers",
+      "awayTeam": "Portsmouth",
+      "minutesBeforeKickoff": 1759,
+      "captureWindow": "opening",
+      "closingWindow": false,
+      "status": "captured",
+      "provider": "the-odds-api",
+      "captureRole": "opening",
+      "sportmonksFixtureId": null,
+      "opening": true,
+      "prematch": true,
+      "closing": false
+    },
+    {
+      "matchId": "ss-espn-uefa.champions-401915402",
+      "kickoff": "2026-10-20T19:00:00.000Z",
+      "league": "Europe - Champions League",
+      "homeTeam": "AS Roma",
+      "awayTeam": "Slovan Bratislava",
+      "minutesBeforeKickoff": 1774,
+      "captureWindow": "opening",
+      "closingWindow": false,
+      "status": "captured",
+      "provider": "the-odds-api",
+      "captureRole": "opening",
+      "sportmonksFixtureId": null,
+      "opening": true,
+      "prematch": true,
+      "closing": false
+    },
+    {
+      "matchId": "ss-espn-uefa.champions-401915398",
+      "kickoff": "2026-10-20T19:00:00.000Z",
+      "league": "Europe - Champions League",
+      "homeTeam": "FC Porto",
+      "awayTeam": "PSV Eindhoven",
+      "minutesBeforeKickoff": 1774,
+      "captureWindow": "opening",
+      "closingWindow": false,
+      "status": "captured",
+      "provider": "the-odds-api",
+      "captureRole": "opening",
+      "sportmonksFixtureId": null,
+      "opening": true,
+      "prematch": true,
+      "closing": false
+    },
+    {
+      "matchId": "ss-espn-uefa.champions-401915397",
+      "kickoff": "2026-10-20T19:00:00.000Z",
+      "league": "Europe - Champions League",
+      "homeTeam": "Liverpool",
+      "awayTeam": "Villarreal",
+      "minutesBeforeKickoff": 1774,
+      "captureWindow": "opening",
+      "closingWindow": false,
+      "status": "captured",
+      "provider": "the-odds-api",
+      "captureRole": "opening",
+      "sportmonksFixtureId": null,
+      "opening": true,
+      "prematch": true,
+      "closing": false
+    },
+    {
+      "matchId": "ss-espn-uefa.champions-401915401",
+      "kickoff": "2026-10-20T19:00:00.000Z",
+      "league": "Europe - Champions League",
+      "homeTeam": "Manchester City",
+      "awayTeam": "AEK Athens",
+      "minutesBeforeKickoff": 1774,
+      "captureWindow": "opening",
+      "closingWindow": false,
+      "status": "captured",
+      "provider": "the-odds-api",
+      "captureRole": "opening",
+      "sportmonksFixtureId": null,
+      "opening": true,
+      "prematch": true,
+      "closing": false
+    },
+    {
+      "matchId": "ss-espn-uefa.champions-401915400",
+      "kickoff": "2026-10-20T19:00:00.000Z",
+      "league": "Europe - Champions League",
+      "homeTeam": "Napoli",
+      "awayTeam": "Bodo/Glimt",
+      "minutesBeforeKickoff": 1774,
+      "captureWindow": "opening",
+      "closingWindow": false,
+      "status": "not_found",
+      "providerCompetitionAvailability": null,
+      "reason": "Sportmonks fixture-id ontbreekt; odds-by-fixture call overgeslagen.",
+      "sportmonksMapping": "plan_coverage_unavailable"
+    },
+    {
+      "matchId": "ss-espn-uefa.champions-401915399",
+      "kickoff": "2026-10-20T19:00:00.000Z",
+      "league": "Europe - Champions League",
+      "homeTeam": "Paris Saint-Germain",
+      "awayTeam": "Barcelona",
+      "minutesBeforeKickoff": 1774,
+      "captureWindow": "opening",
+      "closingWindow": false,
+      "status": "captured",
+      "provider": "the-odds-api",
+      "captureRole": "opening",
+      "sportmonksFixtureId": null,
+      "opening": true,
+      "prematch": true,
+      "closing": false
+    },
+    {
+      "matchId": "ss-espn-uefa.champions-401915392",
+      "kickoff": "2026-10-20T19:00:00.000Z",
+      "league": "Europe - Champions League",
+      "homeTeam": "VfB Stuttgart",
+      "awayTeam": "Atlético Madrid",
+      "minutesBeforeKickoff": 1774,
+      "captureWindow": "opening",
+      "closingWindow": false,
+      "status": "captured",
+      "provider": "the-odds-api",
+      "captureRole": "opening",
+      "sportmonksFixtureId": null,
+      "opening": true,
+      "prematch": true,
+      "closing": false
+    },
+    {
+      "matchId": "ss-fotmob-6106320",
+      "kickoff": "2026-10-20T19:00:00.000Z",
+      "league": "Europe - Champions League",
+      "homeTeam": "Napoli",
+      "awayTeam": "Bodø/Glimt",
+      "minutesBeforeKickoff": 1774,
+      "captureWindow": "opening",
+      "closingWindow": false,
+      "status": "captured",
+      "provider": "the-odds-api",
+      "captureRole": "opening",
+      "sportmonksFixtureId": null,
+      "opening": true,
+      "prematch": true,
+      "closing": false
     }
   ],
   "leagueCoverage": [
@@ -163,7 +338,7 @@
       "coverage": 0
     },
     {
-      "league": "France - Ligue 1",
+      "league": "France - Ligue 2",
       "checked": 1,
       "covered": 0,
       "partial": 0,
@@ -171,13 +346,21 @@
       "coverage": 0
     },
     {
-      "league": "France - Ligue 2",
-      "checked": 1,
-      "covered": 0,
+      "league": "Europe - Champions League",
+      "checked": 10,
+      "covered": 8,
       "partial": 0,
-      "missing": 1,
-      "coverage": 0
+      "missing": 2,
+      "coverage": 0.8
+    },
+    {
+      "league": "England - Championship",
+      "checked": 1,
+      "covered": 1,
+      "partial": 0,
+      "missing": 0,
+      "coverage": 1
     }
   ],
-  "coverage": 0
+  "coverage": 0.563
 }
