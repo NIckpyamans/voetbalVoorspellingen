@@ -1,6 +1,6 @@
 # Agent- en Datacollectiebeleid
 
-Laatst bijgewerkt: 2026-10-16T06:39:19.878Z
+Laatst bijgewerkt: 2026-10-19T13:24:29.814Z
 
 ## Principe
 Voeg alleen agents of databronnen toe als ze meetbaar betere dekking, betrouwbaarheid of modelprestatie geven.

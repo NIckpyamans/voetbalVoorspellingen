@@ -1,43 +1,43 @@
 # FootyAI professionele AI-audit
 
-Gegenereerd: 2026-10-16T06:39:18.314Z
+Gegenereerd: 2026-10-19T13:24:26.262Z
 Bron: https://voetbalvoorspellingen-clean.vercel.app
 
 ## Samenvatting
 Professionele audit actief. Kritieke opslagvelden lijken aanwezig; blijf kalibratie en bronkwaliteit bewaken.
 
 ## Live status
-- Wedstrijden vandaag: 15
-- Voorspellingen vandaag: 15
-- Reviews: 1075
+- Wedstrijden vandaag: 5
+- Voorspellingen vandaag: 5
+- Reviews: 1114
 - Prediction snapshotrijen: 25
-- Unieke snapshotwedstrijden: 41
-- Snapshot-evaluatie: 0/41 unieke fixtures; 41 rijen
-- Dagbestanden: 166/172 unieke fixtures; 6 dubbele rijen
+- Unieke snapshotwedstrijden: 35
+- Snapshot-evaluatie: 0/35 unieke fixtures; 35 rijen
+- Dagbestanden: 220/226 unieke fixtures; 6 dubbele rijen
 - Worker: v25-club-rating
 - Auditversheid: fresh
 - Feature coverage: 100%
-- Echte odds coverage: 15%
-- Alleen historisch marktprofiel: 33%
-- Gemiddelde datacompleetheid: 93%
+- Echte odds coverage: 28%
+- Alleen historisch marktprofiel: 20%
+- Gemiddelde datacompleetheid: 94%
 - Datacompleetheid-audit: onbekend
 - Odds readiness: onbekend
 
 ## Recente keten (14 dagen)
-- Afgeronde wedstrijden met eindstand: 116/116 (100%)
-- Geëvalueerde wedstrijden: 116/116 (100%)
+- Afgeronde wedstrijden met eindstand: 180/180 (100%)
+- Geëvalueerde wedstrijden: 180/180 (100%)
 - Snapshot-backed reviews: 0 (0%)
-- Uitkomsthit: 59%
-- Exacte-scorehit: 7%
-- Gemiddelde Brier score: 0.556
-- Gemiddelde log loss: 0.941
-- Echte odds: 15%
+- Uitkomsthit: 60%
+- Exacte-scorehit: 8%
+- Gemiddelde Brier score: 0.560
+- Gemiddelde log loss: 0.947
+- Echte odds: 28%
 - Confirmed lineups: 0%
 
 ## Segmenten
 - club_friendlies: 0 reviews, uitkomst onbekend, exact onbekend, Brier onbekend
 - european_knockout: 19 reviews, uitkomst 53%, exact 0%, Brier 0.577
-- domestic_competitions: 97 reviews, uitkomst 60%, exact 8%, Brier 0.552
+- domestic_competitions: 161 reviews, uitkomst 61%, exact 9%, Brier 0.558
 
 ## Opslag-audit
 - prediction_id: aanwezig; gate voldaan
