@@ -1,15 +1,16 @@
 # Ruflo-style AI monitor
 
-Datum: 2026-10-19
+Datum: 2026-10-20
 
 Ruflo bundelt bestaande rapporten en vaste regels tot advies. Dit is geen zelfstandige AI- of internetanalyse; ontbrekende invoer blijft onbekend.
 
 ## Agents
 - Data: Bronbestand server_data.json ontbreekt of is ongeldig; geen betrouwbare meting beschikbaar.
 - Leren: Bronbestand server_data.json ontbreekt of is ongeldig; geen betrouwbare meting beschikbaar.
-- Controle: Ontwikkelcontrole: 0 actieve monitorissues op 2026-10-19; digest 2026-10-10 t/m 2026-10-16.
+- Controle: Ontwikkelcontrole: 1 actieve monitorissues op 2026-10-20; digest 2026-10-13 t/m 2026-10-19.
 
 ## Gratis acties
+1. [medium] Alle wedstrijden van vandaag hebben lege H2H-data. (control) - Vul H2H uit openfootball/football-data competitiebestanden voordat de UI leeg toont.
 
 ## Guardrails
 - Geen betaalde API key verplicht maken.
