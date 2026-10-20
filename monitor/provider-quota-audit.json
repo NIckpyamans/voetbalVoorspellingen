@@ -1,5 +1,5 @@
 {
-  "checkedAt": "2026-10-19T09:57:39.208Z",
+  "checkedAt": "2026-10-20T09:28:17.595Z",
   "oddsApi": {
     "configured": true,
     "valid": true,
@@ -10,7 +10,6 @@
       "soccer_concacaf_gold_cup",
       "soccer_concacaf_leagues_cup",
       "soccer_conmebol_copa_america",
-      "soccer_fa_cup",
       "soccer_fifa_club_world_cup",
       "soccer_fifa_world_cup",
       "soccer_fifa_world_cup_qualifiers_europe",
@@ -18,6 +17,7 @@
       "soccer_fifa_world_cup_winner",
       "soccer_fifa_world_cup_womens",
       "soccer_france_coupe_de_france",
+      "soccer_germany_bundesliga_women",
       "soccer_italy_coppa_italia",
       "soccer_spain_copa_del_rey",
       "soccer_uefa_champs_league_qualification",
@@ -27,9 +27,9 @@
     ],
     "faCup": {
       "key": "soccer_fa_cup",
-      "status": "expected_inactive"
+      "status": "active"
     },
-    "activeSports": 81,
+    "activeSports": 83,
     "soccerSportKeys": [
       "soccer_argentina_primera_division",
       "soccer_australia_aleague",
@@ -47,12 +47,12 @@
       "soccer_england_league1",
       "soccer_england_league2",
       "soccer_epl",
+      "soccer_fa_cup",
       "soccer_finland_veikkausliiga",
       "soccer_france_ligue_one",
       "soccer_france_ligue_two",
       "soccer_germany_bundesliga",
       "soccer_germany_bundesliga2",
-      "soccer_germany_bundesliga_women",
       "soccer_germany_dfb_pokal",
       "soccer_germany_liga3",
       "soccer_greece_super_league",
@@ -92,12 +92,16 @@
       "soccer_uefa_europa_conference_league_qualification"
     ],
     "competitionCoverageStatus": "seasonal_unavailable",
-    "newlyInactiveSports": [],
+    "newlyInactiveSports": [
+      "soccer_germany_bundesliga_women"
+    ],
     "newlyUnavailableSports": [],
-    "newlyAvailableSports": [],
+    "newlyAvailableSports": [
+      "soccer_fa_cup"
+    ],
     "quota": {
-      "x-requests-remaining": "333",
-      "x-requests-used": "167",
+      "x-requests-remaining": "328",
+      "x-requests-used": "172",
       "x-requests-last": "0"
     },
     "errorCode": null
@@ -170,7 +174,7 @@
     "quota": {
       "x-ratelimit-limit": "1000",
       "x-ratelimit-remaining": "960",
-      "x-ratelimit-reset": "1792454400"
+      "x-ratelimit-reset": "1792540800"
     },
     "accepted": false,
     "policy": "Veertien dagen meten; nooit automatisch promoveren op basis van alleen een geldige key."
@@ -191,13 +195,13 @@
     "status": 200,
     "records": 1,
     "rateLimit": {
-      "resets_in_seconds": 3600,
-      "remaining": 179,
+      "resets_in_seconds": 1454,
+      "remaining": 178,
       "requested_entity": "League"
     },
     "quota": {
       "x-ratelimit-limit": "180",
-      "x-ratelimit-remaining": "179"
+      "x-ratelimit-remaining": "178"
     },
     "endpointAccess": {
       "leagues": {
@@ -208,13 +212,13 @@
         "firstName": "Superliga",
         "hasOddsFlag": false,
         "rateLimit": {
-          "resets_in_seconds": 3600,
-          "remaining": 179,
+          "resets_in_seconds": 1454,
+          "remaining": 178,
           "requested_entity": "League"
         },
         "quota": {
           "x-ratelimit-limit": "180",
-          "x-ratelimit-remaining": "179"
+          "x-ratelimit-remaining": "178"
         },
         "errorCode": null
       },
@@ -239,10 +243,10 @@
       "fixturesDate": {
         "valid": true,
         "status": 200,
-        "records": 1,
-        "firstId": 19713896,
-        "firstName": "Viborg FF vs FC Midtjylland",
-        "hasOddsFlag": true,
+        "records": 0,
+        "firstId": null,
+        "firstName": null,
+        "hasOddsFlag": false,
         "rateLimit": {
           "resets_in_seconds": 3599,
           "remaining": 178,
@@ -258,8 +262,8 @@
         "valid": true,
         "status": 200,
         "records": 1,
-        "firstId": 19713896,
-        "firstName": "Viborg FF vs FC Midtjylland",
+        "firstId": 19713889,
+        "firstName": "Randers FC vs Brøndby IF",
         "hasOddsFlag": true,
         "rateLimit": {
           "resets_in_seconds": 3598,
@@ -272,13 +276,13 @@
         },
         "errorCode": null
       },
-      "testedFixtureId": 19713896,
+      "testedFixtureId": 19713889,
       "oddsByFixture": {
         "label": "oddsByFixture",
         "valid": true,
         "status": 200,
         "records": 3,
-        "firstId": 247971792495,
+        "firstId": 248976457486,
         "firstName": null,
         "hasOddsFlag": false,
         "rateLimit": {
@@ -317,7 +321,7 @@
         "valid": true,
         "status": 200,
         "records": 3,
-        "firstId": 247971792495,
+        "firstId": 248976457486,
         "firstName": null,
         "hasOddsFlag": false,
         "rateLimit": {
