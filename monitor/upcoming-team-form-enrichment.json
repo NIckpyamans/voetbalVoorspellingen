@@ -1,19 +1,19 @@
 {
-  "generatedAt": "2026-10-21T17:38:10.989Z",
+  "generatedAt": "2026-10-21T21:59:10.283Z",
   "daysAhead": 8,
   "targetMatchesPerTeam": 10,
   "candidates": 227,
   "checked": 24,
-  "enriched": 9,
-  "unavailable": 15,
+  "enriched": 4,
+  "unavailable": 20,
   "timedOut": 0,
-  "skippedFresh": 91,
+  "skippedFresh": 100,
   "runBudgetMs": 180000,
   "teamTimeoutMs": 12000,
   "budgetExceeded": false,
   "rejectedWrongSport": 0,
   "localHistoryTeams": 227,
-  "localHistoryMatches": 2387,
+  "localHistoryMatches": 2391,
   "localFriendlyHistoryMatches": 275,
   "samples": [
     {
@@ -32,37 +32,23 @@
       "providerTeam": "Kairat Almaty"
     },
     {
-      "team": "Panathinaikos",
-      "matches": 1,
-      "providerTeam": "Panathinaikos"
-    },
-    {
       "team": "Inter Club d'Escaldes",
       "matches": 7,
       "providerTeam": "Inter Club d'Escaldes"
-    },
-    {
-      "team": "FK Kauno Žalgiris",
-      "matches": 10,
-      "providerTeam": "FK Kauno Žalgiris"
-    },
-    {
-      "team": "Mjällby",
-      "matches": 10,
-      "providerTeam": "Mjällby"
-    },
-    {
-      "team": "FC København",
-      "matches": 10,
-      "providerTeam": "FC København"
-    },
-    {
-      "team": "Sturm Graz",
-      "matches": 10,
-      "providerTeam": "Sturm Graz"
     }
   ],
   "failures": [
+    {
+      "team": "LASK Linz",
+      "reason": "not_found",
+      "requests": [
+        {
+          "provider": "www.thesportsdb.com",
+          "status": "ok"
+        }
+      ],
+      "retainedMatches": 4
+    },
     {
       "team": "Internazionale",
       "reason": "not_found",
@@ -86,14 +72,24 @@
       "retainedMatches": 7
     },
     {
-      "team": "F.C. København",
+      "team": "Panathinaikos",
       "reason": "http_429",
       "requests": [
+        {
+          "provider": "www.thesportsdb.com",
+          "status": "ok"
+        },
         {
           "provider": "www.thesportsdb.com",
           "status": "http_429"
         }
       ],
+      "retainedMatches": 9
+    },
+    {
+      "team": "F.C. København",
+      "reason": "not_found",
+      "requests": [],
       "retainedMatches": 2
     },
     {
@@ -133,46 +129,64 @@
       "retainedMatches": 9
     },
     {
-      "team": "OFI Crete",
+      "team": "AGF",
       "reason": "not_found",
       "requests": [],
-      "retainedMatches": 10
+      "retainedMatches": 2
     },
     {
-      "team": "Dinamo Zagreb",
+      "team": "Lillestrom",
       "reason": "not_found",
       "requests": [],
-      "retainedMatches": 12
+      "retainedMatches": 4
     },
     {
-      "team": "Heart of Midlothian",
+      "team": "Lincoln Red Imps",
       "reason": "not_found",
       "requests": [],
-      "retainedMatches": 12
+      "retainedMatches": 5
     },
     {
-      "team": "Ferencvaros",
+      "team": "FC Thun",
       "reason": "not_found",
       "requests": [],
-      "retainedMatches": 14
+      "retainedMatches": 6
     },
     {
-      "team": "Riga FC",
+      "team": "KAA Gent",
       "reason": "not_found",
       "requests": [],
-      "retainedMatches": 14
+      "retainedMatches": 6
     },
     {
-      "team": "Lech Poznan",
+      "team": "Hajduk Split",
       "reason": "not_found",
       "requests": [],
-      "retainedMatches": 16
+      "retainedMatches": 7
+    },
+    {
+      "team": "Jagiellonia Bialystok",
+      "reason": "not_found",
+      "requests": [],
+      "retainedMatches": 7
+    },
+    {
+      "team": "Ajax Amsterdam",
+      "reason": "not_found",
+      "requests": [],
+      "retainedMatches": 9
+    },
+    {
+      "team": "Besiktas",
+      "reason": "not_found",
+      "requests": [],
+      "retainedMatches": 15
     }
   ],
   "immutableLedgerMatches": 413,
   "immutableHistorySummaryMatches": 1850,
   "r2LedgerAvailable": false,
   "r2LedgerError": "Snapshot ledger maand 2026-08 is groter dan 100663296 bytes; weigert het volledig in geheugen te parsen",
-  "durationMs": 13941,
+  "durationMs": 8657,
   "deferredTeams": 0
 }
