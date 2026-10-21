@@ -1,36 +1,36 @@
 # Upcoming H2H Backfill
 
-Laatst bijgewerkt: 2026-10-21T17:11:39.995Z
-Gecontroleerd: 50
+Laatst bijgewerkt: 2026-10-21T21:44:13.733Z
+Gecontroleerd: 32
 Gevuld: 0
-Geen directe H2H: 50
+Geen directe H2H: 32
 Errors: 0
 
-Openstaand na deze batch: 9
+Openstaand na deze batch: 0
 
 ## Aanbeveling
-API-Football H2H is onafhankelijk van fixture-acceptatie ingeschakeld; 3/3 beperkte paarpogingen gedaan. Er staan nog 9 fixtures in de wachtrij.
+Geen directe H2H gevonden voor de gecontroleerde wedstrijden. Breid team-ID mapping/providerdekking uit of accepteer expliciet no-direct-history voor deze fixtures.
 
 ## Gevuld
 
 ## Geen Directe H2H
-- 2026-10-22: Trabzonspor - Heart of Midlothian (no_direct_history)
-- 2026-10-22: Union St.Gilloise - Hapoel Beer Sheva (no_direct_history)
-- 2026-10-22: FK Crvena Zvezda - FC København (no_direct_history)
-- 2026-10-22: AFC Bournemouth - AC Milan (rate_limited_locally)
-- 2026-10-22: AGF - Egnatia (rate_limited_locally)
-- 2026-10-22: Celtic - Celta Vigo (rate_limited_locally)
-- 2026-10-22: Ajax Amsterdam - Atalanta (rate_limited_locally)
-- 2026-10-22: Lillestrom - Real Sociedad (rate_limited_locally)
-- 2026-10-22: Borac Banja Luka - KuPS (rate_limited_locally)
-- 2026-10-22: NK Celje - Salzburg (rate_limited_locally)
-- 2026-10-22: Braga - KAA Gent (rate_limited_locally)
-- 2026-10-22: Olympiacos - Sparta Prague (rate_limited_locally)
-- 2026-10-22: FC Thun - Hajduk Split (rate_limited_locally)
-- 2026-10-22: Omonia Nicosia - Benfica (rate_limited_locally)
-- 2026-10-22: Lincoln Red Imps - FC Twente (rate_limited_locally)
-- 2026-10-22: Hoffenheim - Lyon (rate_limited_locally)
-- 2026-10-22: Viktoria Plzen - Levski Sofia (rate_limited_locally)
-- 2026-10-22: Jagiellonia Białystok - Anderlecht (rate_limited_locally)
-- 2026-10-22: Lillestrøm - Real Sociedad (rate_limited_locally)
-- 2026-10-23: VfL Bochum - VfL Wolfsburg (rate_limited_locally)
+- 2026-11-06: TSV Eintracht Braunschweig - Energie Cottbus (no_direct_history)
+- 2026-11-06: Willem II - PEC Zwolle (no_direct_history)
+- 2026-11-06: Dijon FCO - Red Star FC 93 (no_direct_history)
+- 2026-11-06: FC Eindhoven - Jong Ajax (rate_limited_locally)
+- 2026-11-06: Hamburg SV - Borussia Mönchengladbach (rate_limited_locally)
+- 2026-11-06: Derby County - Bolton Wanderers (rate_limited_locally)
+- 2026-11-06: Everton - Coventry City (rate_limited_locally)
+- 2026-11-06: Helmond Sport - FC Volendam (rate_limited_locally)
+- 2026-11-06: Heracles Almelo - Roda JC Kerkrade (rate_limited_locally)
+- 2026-11-06: Jong AZ - Almere City (rate_limited_locally)
+- 2026-11-06: TOP Oss - RKC Waalwijk (rate_limited_locally)
+- 2026-11-06: VVV-Venlo - Jong PSV (rate_limited_locally)
+- 2026-11-07: Holstein Kiel - Arminia Bielefeld (rate_limited_locally)
+- 2026-11-07: Bristol City - Norwich City (rate_limited_locally)
+- 2026-11-07: Clermont Foot - Rodez Aveyron (rate_limited_locally)
+- 2026-11-07: Borussia Dortmund - SV Elversberg (rate_limited_locally)
+- 2026-11-07: Arsenal - Hull City (rate_limited_locally)
+- 2026-11-07: FC Den Bosch - Jong FC Utrecht (rate_limited_locally)
+- 2026-11-07: Fortuna Sittard - Telstar (rate_limited_locally)
+- 2026-11-07: AJ Auxerre - Paris FC (rate_limited_locally)
