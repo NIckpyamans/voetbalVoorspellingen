@@ -1,5 +1,5 @@
 {
-  "checkedAt": "2026-10-21T09:25:09.059Z",
+  "checkedAt": "2026-10-22T09:27:36.458Z",
   "oddsApi": {
     "configured": true,
     "valid": true,
@@ -18,7 +18,6 @@
       "soccer_fifa_world_cup_winner",
       "soccer_fifa_world_cup_womens",
       "soccer_france_coupe_de_france",
-      "soccer_germany_bundesliga_women",
       "soccer_italy_coppa_italia",
       "soccer_spain_copa_del_rey",
       "soccer_uefa_champs_league_qualification",
@@ -30,7 +29,7 @@
       "key": "soccer_fa_cup",
       "status": "expected_inactive"
     },
-    "activeSports": 81,
+    "activeSports": 82,
     "soccerSportKeys": [
       "soccer_argentina_primera_division",
       "soccer_australia_aleague",
@@ -53,6 +52,7 @@
       "soccer_france_ligue_two",
       "soccer_germany_bundesliga",
       "soccer_germany_bundesliga2",
+      "soccer_germany_bundesliga_women",
       "soccer_germany_dfb_pokal",
       "soccer_germany_liga3",
       "soccer_greece_super_league",
@@ -92,14 +92,14 @@
       "soccer_uefa_europa_conference_league_qualification"
     ],
     "competitionCoverageStatus": "seasonal_unavailable",
-    "newlyInactiveSports": [
-      "soccer_fa_cup"
-    ],
+    "newlyInactiveSports": [],
     "newlyUnavailableSports": [],
-    "newlyAvailableSports": [],
+    "newlyAvailableSports": [
+      "soccer_germany_bundesliga_women"
+    ],
     "quota": {
-      "x-requests-remaining": "322",
-      "x-requests-used": "178",
+      "x-requests-remaining": "319",
+      "x-requests-used": "181",
       "x-requests-last": "0"
     },
     "errorCode": null
@@ -171,8 +171,8 @@
     "records": 50,
     "quota": {
       "x-ratelimit-limit": "1000",
-      "x-ratelimit-remaining": "963",
-      "x-ratelimit-reset": "1792627200"
+      "x-ratelimit-remaining": "966",
+      "x-ratelimit-reset": "1792713600"
     },
     "accepted": false,
     "policy": "Veertien dagen meten; nooit automatisch promoveren op basis van alleen een geldige key."
@@ -246,7 +246,7 @@
         "firstName": null,
         "hasOddsFlag": false,
         "rateLimit": {
-          "resets_in_seconds": 3599,
+          "resets_in_seconds": 3600,
           "remaining": 178,
           "requested_entity": "Fixture"
         },
@@ -264,7 +264,7 @@
         "firstName": "Randers FC vs Brøndby IF",
         "hasOddsFlag": true,
         "rateLimit": {
-          "resets_in_seconds": 3598,
+          "resets_in_seconds": 3599,
           "remaining": 177,
           "requested_entity": "Fixture"
         },
