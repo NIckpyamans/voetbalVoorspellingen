@@ -1,36 +1,36 @@
 # Upcoming H2H Backfill
 
-Laatst bijgewerkt: 2026-10-22T04:42:37.293Z
-Gecontroleerd: 22
+Laatst bijgewerkt: 2026-10-22T11:51:11.077Z
+Gecontroleerd: 50
 Gevuld: 0
-Geen directe H2H: 22
+Geen directe H2H: 50
 Errors: 0
 
-Openstaand na deze batch: 0
+Openstaand na deze batch: 3
 
 ## Aanbeveling
-Geen directe H2H gevonden voor de gecontroleerde wedstrijden. Breid team-ID mapping/providerdekking uit of accepteer expliciet no-direct-history voor deze fixtures.
+API-Football H2H is onafhankelijk van fixture-acceptatie ingeschakeld; 3/3 beperkte paarpogingen gedaan. Er staan nog 3 fixtures in de wachtrij.
 
 ## Gevuld
 
 ## Geen Directe H2H
-- 2026-11-03: Portsmouth - Swansea City (no_direct_history)
-- 2026-11-03: Atlético Madrid - Bayern Munich (no_direct_history)
-- 2026-11-03: Queens Park Rangers - Burnley (no_direct_history)
-- 2026-11-03: Barcelona - Aston Villa (rate_limited_locally)
-- 2026-11-03: Watford - Lincoln City (rate_limited_locally)
-- 2026-11-03: Bodo/Glimt - Lille (rate_limited_locally)
-- 2026-11-03: Birmingham City - Millwall (rate_limited_locally)
-- 2026-11-03: Feyenoord Rotterdam - Internazionale (rate_limited_locally)
-- 2026-11-03: West Bromwich Albion - Southampton (rate_limited_locally)
-- 2026-11-03: LASK Linz - Slovan Bratislava (rate_limited_locally)
-- 2026-11-04: Slavia Prague - Arsenal (rate_limited_locally)
-- 2026-11-04: Viking FK - Sabah FK (rate_limited_locally)
-- 2026-11-05: FC Twente - Pafos (rate_limited_locally)
-- 2026-11-05: Getafe - Brighton & Hove Albion (rate_limited_locally)
-- 2026-11-07: SC Paderborn 07 - Eintracht Frankfurt (rate_limited_locally)
-- 2026-11-07: Blackburn Rovers - West Ham United (rate_limited_locally)
-- 2026-11-07: Nottingham Forest - Manchester City (rate_limited_locally)
-- 2026-11-07: ADO Den Haag - Sparta Rotterdam (rate_limited_locally)
-- 2026-11-07: Saint-Étienne - Stade Laval (rate_limited_locally)
-- 2026-11-07: Cardiff City - Burnley (rate_limited_locally)
+- 2026-10-22: AS Monaco - SC Freiburg (no_direct_history)
+- 2026-10-22: Besiktas - Crystal Palace (no_direct_history)
+- 2026-10-22: FC Midtjylland - St.Truiden (no_direct_history)
+- 2026-10-22: Jagiellonia Bialystok - Anderlecht (rate_limited_locally)
+- 2026-10-24: 1. FC Magdeburg - Karlsruher SC (rate_limited_locally)
+- 2026-10-24: Sheffield United - Derby County (rate_limited_locally)
+- 2026-10-24: RB Leipzig - SV Elversberg (rate_limited_locally)
+- 2026-10-24: Coventry City - Fulham (rate_limited_locally)
+- 2026-10-24: FC Dordrecht - VVV-Venlo (rate_limited_locally)
+- 2026-10-24: FC Utrecht - PEC Zwolle (rate_limited_locally)
+- 2026-10-24: Saint-Étienne - Nantes (rate_limited_locally)
+- 2026-10-24: Blackburn Rovers - Wrexham (rate_limited_locally)
+- 2026-10-24: SC Paderborn 07 - Hamburg SV (rate_limited_locally)
+- 2026-10-24: Willem II - SC Cambuur (rate_limited_locally)
+- 2026-10-24: Cardiff City - Birmingham City (rate_limited_locally)
+- 2026-10-24: ADO Den Haag - Heerenveen (rate_limited_locally)
+- 2026-10-24: Lincoln City - Burnley (rate_limited_locally)
+- 2026-10-24: Preston North End - West Bromwich Albion (rate_limited_locally)
+- 2026-10-24: Queens Park Rangers - Swansea City (rate_limited_locally)
+- 2026-10-24: Stoke City - Bristol City (rate_limited_locally)
