@@ -1,25 +1,66 @@
 {
-  "generatedAt": "2026-10-19T13:25:51.619Z",
-  "checked": 0,
-  "confirmed": 0,
-  "changedConfirmed": 0,
+  "generatedAt": "2026-10-22T13:15:02.252Z",
+  "checked": 1,
+  "confirmed": 1,
+  "changedConfirmed": 1,
   "partial": 0,
   "missing": 0,
-  "r2Stored": 0,
+  "r2Stored": 1,
   "playerFixtureStatsCaptured": 0,
   "databaseWritable": false,
   "databaseError": "Server error (HTTP status 402): {\"message\":\"Your account or project has exceeded the quota. Upgrade your plan to increase limits.\",\"code\":\"\",\"detail\":null,\"hint\":null,\"position\":null,\"internalPosition\":null,\"internalQuery\":null,\"severity\":\"\",\"where\":null,\"table\":null,\"column\":null,\"schema\":null,\"dataType\":null,\"constraint\":null,\"file\":null,\"line\":null,\"routine\":null,\"neon:retryable\":true}",
   "captureWindows": {
-    "t75": 0,
+    "t75": 1,
     "t45": 0,
     "t20": 0,
     "outside": 0
   },
-  "providers": {},
-  "matches": [],
-  "leagueCoverage": [],
-  "confirmedCoverage": 0,
-  "recalculationRequired": false,
+  "providers": {
+    "fotmob:ok": 1
+  },
+  "matches": [
+    {
+      "matchId": "ss-espn-uefa.europa.conf-401915846",
+      "league": "Europe - Conference League",
+      "agent": "conference-league-agent",
+      "kickoff": "2026-10-22T14:30:00.000Z",
+      "minutesBeforeKickoff": 74,
+      "captureWindow": "t75",
+      "homeTeam": "Kairat Almaty",
+      "awayTeam": "Panathinaikos",
+      "provider": "fotmob",
+      "status": "ok",
+      "attempts": [
+        {
+          "provider": "fotmob",
+          "status": "ok",
+          "lineup": true,
+          "confirmed": true,
+          "durationMs": null,
+          "quota": {
+            "remaining": null,
+            "limit": null,
+            "resetAt": null
+          },
+          "result": "found"
+        }
+      ],
+      "confirmed": true,
+      "partial": false
+    }
+  ],
+  "leagueCoverage": [
+    {
+      "league": "Europe - Conference League",
+      "checked": 1,
+      "covered": 1,
+      "partial": 0,
+      "missing": 0,
+      "coverage": 1
+    }
+  ],
+  "confirmedCoverage": 1,
+  "recalculationRequired": true,
   "recalculationSlaMinutes": 5,
-  "recalculationReason": "no_new_confirmed_lineup_revision"
+  "recalculationReason": "confirmed_lineup_changed"
 }
