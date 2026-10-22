@@ -1,20 +1,20 @@
 {
-  "generatedAt": "2026-10-22T17:36:45.341Z",
+  "generatedAt": "2026-10-22T21:55:14.883Z",
   "daysAhead": 8,
   "targetMatchesPerTeam": 10,
-  "candidates": 221,
+  "candidates": 222,
   "checked": 24,
-  "enriched": 10,
-  "unavailable": 14,
+  "enriched": 2,
+  "unavailable": 22,
   "timedOut": 0,
-  "skippedFresh": 92,
+  "skippedFresh": 95,
   "runBudgetMs": 180000,
   "teamTimeoutMs": 12000,
   "budgetExceeded": false,
   "rejectedWrongSport": 0,
-  "localHistoryTeams": 221,
-  "localHistoryMatches": 2348,
-  "localFriendlyHistoryMatches": 257,
+  "localHistoryTeams": 222,
+  "localHistoryMatches": 2441,
+  "localFriendlyHistoryMatches": 259,
   "samples": [
     {
       "team": "Kairat Almaty",
@@ -25,49 +25,31 @@
       "team": "Panathinaikos",
       "matches": 1,
       "providerTeam": "Panathinaikos"
-    },
-    {
-      "team": "FC Lugano",
-      "matches": 1,
-      "providerTeam": "Lugano"
-    },
-    {
-      "team": "Inter Club d'Escaldes",
-      "matches": 7,
-      "providerTeam": "Inter Club d'Escaldes"
-    },
-    {
-      "team": "Hapoel Beer Sheva",
-      "matches": 10,
-      "providerTeam": "Hapoel Beer Sheva"
-    },
-    {
-      "team": "Universitatea Craiova",
-      "matches": 10,
-      "providerTeam": "Universitatea Craiova"
-    },
-    {
-      "team": "Brann",
-      "matches": 10,
-      "providerTeam": "Brann"
-    },
-    {
-      "team": "FK Crvena Zvezda",
-      "matches": 10,
-      "providerTeam": "FK Crvena Zvezda"
-    },
-    {
-      "team": "Iberia 1999",
-      "matches": 10,
-      "providerTeam": "Iberia 1999"
-    },
-    {
-      "team": "Union St.Gilloise",
-      "matches": 10,
-      "providerTeam": "Union St.Gilloise"
     }
   ],
   "failures": [
+    {
+      "team": "CSU Craiova",
+      "reason": "not_found",
+      "requests": [
+        {
+          "provider": "www.thesportsdb.com",
+          "status": "ok"
+        }
+      ],
+      "retainedMatches": 0
+    },
+    {
+      "team": "SK Sturm Graz",
+      "reason": "not_found",
+      "requests": [
+        {
+          "provider": "www.thesportsdb.com",
+          "status": "ok"
+        }
+      ],
+      "retainedMatches": 0
+    },
     {
       "team": "F.C. København",
       "reason": "not_found",
@@ -102,18 +84,49 @@
       "retainedMatches": 3
     },
     {
-      "team": "FC Nordsjælland",
-      "reason": "http_429",
+      "team": "Mjällby AIF",
+      "reason": "not_found",
       "requests": [
         {
           "provider": "www.thesportsdb.com",
           "status": "ok"
-        },
+        }
+      ],
+      "retainedMatches": 3
+    },
+    {
+      "team": "Inter D'Escaldes",
+      "reason": "http_429",
+      "requests": [
         {
           "provider": "www.thesportsdb.com",
           "status": "http_429"
         }
       ],
+      "retainedMatches": 4
+    },
+    {
+      "team": "Kauno Zalgiris",
+      "reason": "not_found",
+      "requests": [],
+      "retainedMatches": 4
+    },
+    {
+      "team": "SK Brann",
+      "reason": "not_found",
+      "requests": [],
+      "retainedMatches": 4
+    },
+    {
+      "team": "FC Lugano",
+      "reason": "not_found",
+      "requests": [],
+      "retainedMatches": 7
+    },
+    {
+      "team": "FC Nordsjælland",
+      "reason": "not_found",
+      "requests": [],
       "retainedMatches": 7
     },
     {
@@ -129,40 +142,22 @@
       "retainedMatches": 9
     },
     {
-      "team": "Jablonec",
+      "team": "RB Salzburg",
       "reason": "not_found",
       "requests": [],
-      "retainedMatches": 14
-    },
-    {
-      "team": "Trabzonspor",
-      "reason": "not_found",
-      "requests": [],
-      "retainedMatches": 16
-    },
-    {
-      "team": "ARARAT-ARMENIA",
-      "reason": "not_found",
-      "requests": [],
-      "retainedMatches": 18
-    },
-    {
-      "team": "NEC Nijmegen",
-      "reason": "not_found",
-      "requests": [],
-      "retainedMatches": 19
-    },
-    {
-      "team": "Union St.-Gilloise",
-      "reason": "not_found",
-      "requests": [],
-      "retainedMatches": 20
+      "retainedMatches": 1
     },
     {
       "team": "AGF",
       "reason": "not_found",
       "requests": [],
       "retainedMatches": 2
+    },
+    {
+      "team": "KuPS Kuopio",
+      "reason": "not_found",
+      "requests": [],
+      "retainedMatches": 4
     },
     {
       "team": "Lillestrom",
@@ -175,12 +170,36 @@
       "reason": "not_found",
       "requests": [],
       "retainedMatches": 5
+    },
+    {
+      "team": "FC Thun",
+      "reason": "not_found",
+      "requests": [],
+      "retainedMatches": 6
+    },
+    {
+      "team": "KAA Gent",
+      "reason": "not_found",
+      "requests": [],
+      "retainedMatches": 6
+    },
+    {
+      "team": "Jagiellonia Bialystok",
+      "reason": "not_found",
+      "requests": [],
+      "retainedMatches": 7
+    },
+    {
+      "team": "Sint-Truidense",
+      "reason": "not_found",
+      "requests": [],
+      "retainedMatches": 7
     }
   ],
   "immutableLedgerMatches": 413,
   "immutableHistorySummaryMatches": 1850,
   "r2LedgerAvailable": false,
   "r2LedgerError": "Snapshot ledger maand 2026-08 is groter dan 100663296 bytes; weigert het volledig in geheugen te parsen",
-  "durationMs": 16539,
+  "durationMs": 9096,
   "deferredTeams": 0
 }
