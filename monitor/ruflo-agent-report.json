@@ -1,6 +1,6 @@
 {
-  "generatedAt": "2026-10-22T00:42:43.110Z",
-  "date": "2026-10-22",
+  "generatedAt": "2026-10-23T00:42:14.572Z",
+  "date": "2026-10-23",
   "name": "Ruflo-style gratis AI monitor",
   "mode": "naast-productie",
   "productionSafe": true,
@@ -72,47 +72,15 @@
       "status": "unknown"
     },
     "control": {
-      "score": 60,
-      "summary": "Ontwikkelcontrole: 1 actieve monitorissues op 2026-10-22; digest 2026-10-13 t/m 2026-10-19.",
-      "latestDay": "2026-10-22",
-      "shouldPropose": true,
-      "actions": [
-        {
-          "priority": "medium",
-          "title": "Alle wedstrijden van vandaag hebben lege H2H-data.",
-          "freeSolution": "Vul H2H uit openfootball/football-data competitiebestanden voordat de UI leeg toont.",
-          "files": [
-            "scripts/server-worker.js",
-            "components/MatchCard.tsx"
-          ],
-          "status": "monitor"
-        }
-      ]
+      "score": 100,
+      "summary": "Ontwikkelcontrole: 0 actieve monitorissues op 2026-10-23; digest 2026-10-13 t/m 2026-10-19.",
+      "latestDay": "2026-10-23",
+      "shouldPropose": false,
+      "actions": []
     }
   },
-  "topThemes": [
-    {
-      "title": "Alle wedstrijden van vandaag hebben lege H2H-data.",
-      "count": 1,
-      "priority": "medium",
-      "agents": [
-        "control"
-      ]
-    }
-  ],
-  "recommendedNextActions": [
-    {
-      "priority": "medium",
-      "title": "Alle wedstrijden van vandaag hebben lege H2H-data.",
-      "freeSolution": "Vul H2H uit openfootball/football-data competitiebestanden voordat de UI leeg toont.",
-      "files": [
-        "scripts/server-worker.js",
-        "components/MatchCard.tsx"
-      ],
-      "status": "monitor",
-      "agent": "control"
-    }
-  ],
+  "topThemes": [],
+  "recommendedNextActions": [],
   "freeOnlyGuardrails": [
     "Geen betaalde API key verplicht maken.",
     "Geen externe AI blind laten pushen naar productie.",
