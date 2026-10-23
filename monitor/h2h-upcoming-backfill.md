@@ -1,36 +1,36 @@
 # Upcoming H2H Backfill
 
-Laatst bijgewerkt: 2026-10-22T21:36:25.272Z
-Gecontroleerd: 31
+Laatst bijgewerkt: 2026-10-23T00:14:19.581Z
+Gecontroleerd: 50
 Gevuld: 0
-Geen directe H2H: 31
+Geen directe H2H: 50
 Errors: 0
 
-Openstaand na deze batch: 0
+Openstaand na deze batch: 8
 
 ## Aanbeveling
-Geen directe H2H gevonden voor de gecontroleerde wedstrijden. Breid team-ID mapping/providerdekking uit of accepteer expliciet no-direct-history voor deze fixtures.
+API-Football H2H is onafhankelijk van fixture-acceptatie ingeschakeld; 3/3 beperkte paarpogingen gedaan. Er staan nog 8 fixtures in de wachtrij.
 
 ## Gevuld
 
 ## Geen Directe H2H
-- 2026-10-23: VfL Bochum - VfL Wolfsburg (no_direct_history)
-- 2026-10-23: Almere City - Roda JC Kerkrade (no_direct_history)
-- 2026-10-23: Clermont Foot - Guingamp (no_direct_history)
-- 2026-10-23: VfB Stuttgart - Borussia Mönchengladbach (rate_limited_locally)
-- 2026-10-23: Ipswich Town - Nottingham Forest (rate_limited_locally)
-- 2026-10-23: Bolton Wanderers - Middlesbrough (rate_limited_locally)
-- 2026-10-23: De Graafschap - RKC Waalwijk (rate_limited_locally)
-- 2026-11-04: Borussia Dortmund - Real Betis (rate_limited_locally)
-- 2026-11-04: FC Porto - Napoli (rate_limited_locally)
-- 2026-11-04: Lens - Como (rate_limited_locally)
-- 2026-11-04: PSV Eindhoven - Club Brugge (rate_limited_locally)
-- 2026-11-04: RB Leipzig - Manchester City (rate_limited_locally)
-- 2026-11-05: FC Thun - Heart of Midlothian (rate_limited_locally)
-- 2026-11-05: AZ Alkmaar - Juventus (rate_limited_locally)
-- 2026-11-05: F.C. København - Iberia 1999 (rate_limited_locally)
-- 2026-11-05: Bayer Leverkusen - Marseille (rate_limited_locally)
-- 2026-11-05: FC Lugano - Kauno Zalgiris (rate_limited_locally)
-- 2026-11-05: Benfica - Lech Poznan (rate_limited_locally)
-- 2026-11-05: Riga FC - Jablonec (rate_limited_locally)
-- 2026-11-05: Celta Vigo - Union St.-Gilloise (rate_limited_locally)
+- 2026-10-23: FC Den Bosch - MVV Maastricht (no_direct_history)
+- 2026-10-23: FC Eindhoven - Jong PSV (no_direct_history)
+- 2026-10-23: FC Volendam - Jong FC Utrecht (no_direct_history)
+- 2026-10-23: Jong AZ - Helmond Sport (rate_limited_locally)
+- 2026-10-24: 1. FC Heidenheim 1846 - Energie Cottbus (rate_limited_locally)
+- 2026-10-24: Charlton Athletic - Norwich City (rate_limited_locally)
+- 2026-10-24: FC Cologne - Schalke 04 (rate_limited_locally)
+- 2026-10-31: VfL Wolfsburg - VfL Osnabruck (rate_limited_locally)
+- 2026-10-31: Lincoln City - Birmingham City (rate_limited_locally)
+- 2026-10-31: Borussia Mönchengladbach - SC Paderborn 07 (rate_limited_locally)
+- 2026-10-31: AFC Bournemouth - Leeds United (rate_limited_locally)
+- 2026-10-31: Feyenoord Rotterdam - Fortuna Sittard (rate_limited_locally)
+- 2026-10-31: Karlsruher SC - 1. FC Heidenheim 1846 (rate_limited_locally)
+- 2026-10-31: Norwich City - Watford (rate_limited_locally)
+- 2026-10-31: Brentford - Nottingham Forest (rate_limited_locally)
+- 2026-10-31: Stoke City - Preston North End (rate_limited_locally)
+- 2026-10-31: Middlesbrough - Charlton Athletic (rate_limited_locally)
+- 2026-11-02: Jong Ajax - Vitesse (rate_limited_locally)
+- 2026-11-05: KuPS Kuopio - KAA Gent (rate_limited_locally)
+- 2026-11-05: Levski Sofia - Jagiellonia Bialystok (rate_limited_locally)
