@@ -1,34 +1,34 @@
 {
-  "generatedAt": "2026-10-23T15:08:03.336Z",
-  "checked": 2,
-  "confirmed": 2,
-  "changedConfirmed": 2,
+  "generatedAt": "2026-10-24T11:05:59.147Z",
+  "checked": 5,
+  "confirmed": 5,
+  "changedConfirmed": 5,
   "partial": 0,
   "missing": 0,
-  "r2Stored": 2,
+  "r2Stored": 5,
   "playerFixtureStatsCaptured": 0,
   "databaseWritable": false,
   "databaseError": "Server error (HTTP status 402): {\"message\":\"Your account or project has exceeded the quota. Upgrade your plan to increase limits.\",\"code\":\"\",\"detail\":null,\"hint\":null,\"position\":null,\"internalPosition\":null,\"internalQuery\":null,\"severity\":\"\",\"where\":null,\"table\":null,\"column\":null,\"schema\":null,\"dataType\":null,\"constraint\":null,\"file\":null,\"line\":null,\"routine\":null,\"neon:retryable\":true}",
   "captureWindows": {
-    "t75": 2,
-    "t45": 0,
-    "t20": 0,
+    "t75": 0,
+    "t45": 1,
+    "t20": 4,
     "outside": 0
   },
   "providers": {
-    "sofascore:schedule_http_403": 2,
-    "fotmob:ok": 2
+    "sofascore:schedule_http_403": 5,
+    "fotmob:ok": 5
   },
   "matches": [
     {
-      "matchId": "ss-espn-ger.2-401885082",
-      "league": "Germany - 2. Bundesliga",
-      "agent": "germany-2-bundesliga-agent",
-      "kickoff": "2026-10-23T16:30:00.000Z",
-      "minutesBeforeKickoff": 81,
-      "captureWindow": "t75",
-      "homeTeam": "SV Darmstadt 98",
-      "awayTeam": "St. Pauli",
+      "matchId": "ss-espn-eng.2-401880205",
+      "league": "England - Championship",
+      "agent": "england-championship-agent",
+      "kickoff": "2026-10-24T11:30:00.000Z",
+      "minutesBeforeKickoff": 24,
+      "captureWindow": "t20",
+      "homeTeam": "Charlton Athletic",
+      "awayTeam": "Norwich City",
       "provider": "fotmob",
       "status": "ok",
       "attempts": [
@@ -63,14 +63,140 @@
       "partial": false
     },
     {
-      "matchId": "ss-espn-ger.2-401885079",
-      "league": "Germany - 2. Bundesliga",
-      "agent": "germany-2-bundesliga-agent",
-      "kickoff": "2026-10-23T16:30:00.000Z",
-      "minutesBeforeKickoff": 81,
-      "captureWindow": "t75",
-      "homeTeam": "VfL Bochum",
-      "awayTeam": "VfL Wolfsburg",
+      "matchId": "ss-espn-eng.2-401880203",
+      "league": "England - Championship",
+      "agent": "england-championship-agent",
+      "kickoff": "2026-10-24T11:30:00.000Z",
+      "minutesBeforeKickoff": 23,
+      "captureWindow": "t20",
+      "homeTeam": "Portsmouth",
+      "awayTeam": "Millwall",
+      "provider": "fotmob",
+      "status": "ok",
+      "attempts": [
+        {
+          "provider": "sofascore",
+          "status": "schedule_http_403",
+          "lineup": false,
+          "confirmed": false,
+          "durationMs": null,
+          "quota": {
+            "remaining": null,
+            "limit": null,
+            "resetAt": null
+          },
+          "result": "http_error"
+        },
+        {
+          "provider": "fotmob",
+          "status": "ok",
+          "lineup": true,
+          "confirmed": true,
+          "durationMs": null,
+          "quota": {
+            "remaining": null,
+            "limit": null,
+            "resetAt": null
+          },
+          "result": "found"
+        }
+      ],
+      "confirmed": true,
+      "partial": false
+    },
+    {
+      "matchId": "ss-espn-eng.2-401880200",
+      "league": "England - Championship",
+      "agent": "england-championship-agent",
+      "kickoff": "2026-10-24T11:30:00.000Z",
+      "minutesBeforeKickoff": 23,
+      "captureWindow": "t20",
+      "homeTeam": "Sheffield United",
+      "awayTeam": "Derby County",
+      "provider": "fotmob",
+      "status": "ok",
+      "attempts": [
+        {
+          "provider": "sofascore",
+          "status": "schedule_http_403",
+          "lineup": false,
+          "confirmed": false,
+          "durationMs": null,
+          "quota": {
+            "remaining": null,
+            "limit": null,
+            "resetAt": null
+          },
+          "result": "http_error"
+        },
+        {
+          "provider": "fotmob",
+          "status": "ok",
+          "lineup": true,
+          "confirmed": true,
+          "durationMs": null,
+          "quota": {
+            "remaining": null,
+            "limit": null,
+            "resetAt": null
+          },
+          "result": "found"
+        }
+      ],
+      "confirmed": true,
+      "partial": false
+    },
+    {
+      "matchId": "ss-espn-eng.1-401879256",
+      "league": "England - Premier League",
+      "agent": "england-premier-league-agent",
+      "kickoff": "2026-10-24T11:30:00.000Z",
+      "minutesBeforeKickoff": 23,
+      "captureWindow": "t20",
+      "homeTeam": "Aston Villa",
+      "awayTeam": "Manchester City",
+      "provider": "fotmob",
+      "status": "ok",
+      "attempts": [
+        {
+          "provider": "sofascore",
+          "status": "schedule_http_403",
+          "lineup": false,
+          "confirmed": false,
+          "durationMs": null,
+          "quota": {
+            "remaining": null,
+            "limit": null,
+            "resetAt": null
+          },
+          "result": "http_error"
+        },
+        {
+          "provider": "fotmob",
+          "status": "ok",
+          "lineup": true,
+          "confirmed": true,
+          "durationMs": null,
+          "quota": {
+            "remaining": null,
+            "limit": null,
+            "resetAt": null
+          },
+          "result": "found"
+        }
+      ],
+      "confirmed": true,
+      "partial": false
+    },
+    {
+      "matchId": "ss-fotmob-5803292",
+      "league": "France - Ligue 2",
+      "agent": "france-ligue-2-agent",
+      "kickoff": "2026-10-24T12:00:00.000Z",
+      "minutesBeforeKickoff": 53,
+      "captureWindow": "t45",
+      "homeTeam": "Dijon",
+      "awayTeam": "Rodez",
       "provider": "fotmob",
       "status": "ok",
       "attempts": [
@@ -107,9 +233,25 @@
   ],
   "leagueCoverage": [
     {
-      "league": "Germany - 2. Bundesliga",
-      "checked": 2,
-      "covered": 2,
+      "league": "England - Championship",
+      "checked": 3,
+      "covered": 3,
+      "partial": 0,
+      "missing": 0,
+      "coverage": 1
+    },
+    {
+      "league": "England - Premier League",
+      "checked": 1,
+      "covered": 1,
+      "partial": 0,
+      "missing": 0,
+      "coverage": 1
+    },
+    {
+      "league": "France - Ligue 2",
+      "checked": 1,
+      "covered": 1,
       "partial": 0,
       "missing": 0,
       "coverage": 1
