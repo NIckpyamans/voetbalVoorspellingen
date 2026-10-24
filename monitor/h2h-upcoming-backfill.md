@@ -1,9 +1,9 @@
 # Upcoming H2H Backfill
 
-Laatst bijgewerkt: 2026-10-23T22:41:23.203Z
-Gecontroleerd: 24
+Laatst bijgewerkt: 2026-10-24T01:11:59.430Z
+Gecontroleerd: 46
 Gevuld: 0
-Geen directe H2H: 24
+Geen directe H2H: 46
 Errors: 0
 
 Openstaand na deze batch: 0
@@ -14,23 +14,23 @@ Geen directe H2H gevonden voor de gecontroleerde wedstrijden. Breid team-ID mapp
 ## Gevuld
 
 ## Geen Directe H2H
-- 2026-11-04: Borussia Dortmund - Real Betis (no_direct_history)
-- 2026-11-04: FC Porto - Napoli (no_direct_history)
-- 2026-11-04: Lens - Como (no_direct_history)
-- 2026-11-04: PSV Eindhoven - Club Brugge (rate_limited_locally)
-- 2026-11-04: RB Leipzig - Manchester City (rate_limited_locally)
-- 2026-11-05: FC Thun - Heart of Midlothian (rate_limited_locally)
-- 2026-11-05: AZ Alkmaar - Juventus (rate_limited_locally)
-- 2026-11-05: F.C. København - Iberia 1999 (rate_limited_locally)
-- 2026-11-05: Bayer Leverkusen - Marseille (rate_limited_locally)
-- 2026-11-05: FC Lugano - Kauno Zalgiris (rate_limited_locally)
-- 2026-11-05: Benfica - Lech Poznan (rate_limited_locally)
-- 2026-11-05: Riga FC - Jablonec (rate_limited_locally)
-- 2026-11-05: Celta Vigo - Union St.-Gilloise (rate_limited_locally)
-- 2026-11-05: Sint-Truidense - SK Brann (rate_limited_locally)
-- 2026-11-05: Celtic - Besiktas (rate_limited_locally)
-- 2026-11-05: FC København - Iberia 1999 (rate_limited_locally)
-- 2026-11-05: Hapoel Be'er - OFI Crete (rate_limited_locally)
-- 2026-11-05: SK Sturm Graz - NK Celje (rate_limited_locally)
-- 2026-11-05: Sunderland - Dinamo Zagreb (rate_limited_locally)
-- 2026-11-05: Torreense - Ararat-Armenia (rate_limited_locally)
+- 2026-10-24: 1. FC Heidenheim 1846 - Energie Cottbus (no_direct_history)
+- 2026-10-24: Charlton Athletic - Norwich City (no_direct_history)
+- 2026-10-24: FC Cologne - Schalke 04 (no_direct_history)
+- 2026-10-31: VfL Wolfsburg - VfL Osnabruck (rate_limited_locally)
+- 2026-10-31: Lincoln City - Birmingham City (rate_limited_locally)
+- 2026-10-31: Borussia Mönchengladbach - SC Paderborn 07 (rate_limited_locally)
+- 2026-10-31: AFC Bournemouth - Leeds United (rate_limited_locally)
+- 2026-10-31: Feyenoord Rotterdam - Fortuna Sittard (rate_limited_locally)
+- 2026-10-31: Karlsruher SC - 1. FC Heidenheim 1846 (rate_limited_locally)
+- 2026-10-31: Norwich City - Watford (rate_limited_locally)
+- 2026-10-31: Brentford - Nottingham Forest (rate_limited_locally)
+- 2026-10-31: Stoke City - Preston North End (rate_limited_locally)
+- 2026-10-31: Middlesbrough - Charlton Athletic (rate_limited_locally)
+- 2026-11-02: Jong Ajax - Vitesse (rate_limited_locally)
+- 2026-11-05: KuPS Kuopio - KAA Gent (rate_limited_locally)
+- 2026-11-05: Levski Sofia - Jagiellonia Bialystok (rate_limited_locally)
+- 2026-11-05: Lincoln Red Imps - Hajduk Split (rate_limited_locally)
+- 2026-11-05: Lillestrom - Viktoria Plzen (rate_limited_locally)
+- 2026-11-05: Mjällby AIF - Borac Banja Luka (rate_limited_locally)
+- 2026-11-05: NEC Nijmegen - Omonia Nicosia (rate_limited_locally)
