@@ -1,36 +1,36 @@
 # Data Quality Audit
 
-Laatst bijgewerkt: 2026-10-25T07:53:58.900Z
+Laatst bijgewerkt: 2026-10-26T08:12:18.464Z
 Lookback: 45 dagen
 
 ## Scores
-- Wedstrijden: 536
-- Oude wedstrijden: 280
+- Wedstrijden: 521
+- Oude wedstrijden: 285
 - Pending result backfills: 0
 - Ontbrekende oude scores: 41
-- H2H-dekking: 27%
-- Reviews na afloop: 58%
+- H2H-dekking: 26%
+- Reviews na afloop: 57%
 - Lekvrije post-matchreviews: 0% (0/0)
 - Immutable snapshot-evaluaties: 0% (0/0 unieke fixtures)
 - Snapshotrijen / unieke fixtures: 708/545 (163 herhaalde rijen)
-- Dagbestandwedstrijden / unieke fixtures: 536/520
+- Dagbestandwedstrijden / unieke fixtures: 521/505
 - Auditstatus freshness: fresh
 - Bruikbare wedstrijdstatistieken: 86%
 - Bevestigde opstellingen: 0%
-- Historisch teruggevonden basiselftallen: 78%
-- Verse getimestampte prematch-odds: 14%
+- Historisch teruggevonden basiselftallen: 79%
+- Verse getimestampte prematch-odds: 13%
 - Volledige pre-match bewijsset: 0%
-- Doelpunten met tijdlijn: 83%
-- Kaarten met tijdlijn: 85%
+- Doelpunten met tijdlijn: 82%
+- Kaarten met tijdlijn: 84%
 
 ## Per competitie
-- Netherlands - Eredivisie: 40 duels, vorm 100%, H2H 50%, inzetbewijs 0%, lekvrije reviews 0% (0/0), stats 100%; gaten: h2h, confirmed_lineups, timestamped_odds, immutable_snapshot_windows, leak_free_reviews
-- Netherlands - Eerste Divisie: 47 duels, vorm 100%, H2H 6%, inzetbewijs 0%, lekvrije reviews 0% (0/0), stats 100%; gaten: h2h, confirmed_lineups, timestamped_odds, immutable_snapshot_windows, leak_free_reviews
-- Germany - Bundesliga: 38 duels, vorm 100%, H2H 55%, inzetbewijs 0%, lekvrije reviews 0% (0/0), stats 94%; gaten: h2h, confirmed_lineups, timestamped_odds, immutable_snapshot_windows, leak_free_reviews
-- Germany - 2. Bundesliga: 39 duels, vorm 100%, H2H 49%, inzetbewijs 0%, lekvrije reviews 0% (0/0), stats 78%; gaten: h2h, confirmed_lineups, timestamped_odds, immutable_snapshot_windows, leak_free_reviews, post_match_statistics, goal_timeline, card_timeline
-- England - Premier League: 44 duels, vorm 100%, H2H 46%, inzetbewijs 0%, lekvrije reviews 0% (0/0), stats 100%; gaten: h2h, confirmed_lineups, timestamped_odds, immutable_snapshot_windows, leak_free_reviews
-- England - Championship: 74 duels, vorm 100%, H2H 18%, inzetbewijs 0%, lekvrije reviews 0% (0/0), stats 100%; gaten: h2h, confirmed_lineups, timestamped_odds, immutable_snapshot_windows, leak_free_reviews
-- France - Ligue 1: 39 duels, vorm 100%, H2H 80%, inzetbewijs 0%, lekvrije reviews 0% (0/0), stats 93%; gaten: h2h, confirmed_lineups, timestamped_odds, immutable_snapshot_windows, leak_free_reviews
+- Netherlands - Eredivisie: 36 duels, vorm 100%, H2H 50%, inzetbewijs 0%, lekvrije reviews 0% (0/0), stats 100%; gaten: h2h, confirmed_lineups, timestamped_odds, immutable_snapshot_windows, leak_free_reviews
+- Netherlands - Eerste Divisie: 48 duels, vorm 100%, H2H 6%, inzetbewijs 0%, lekvrije reviews 0% (0/0), stats 100%; gaten: h2h, confirmed_lineups, timestamped_odds, immutable_snapshot_windows, leak_free_reviews
+- Germany - Bundesliga: 36 duels, vorm 100%, H2H 56%, inzetbewijs 0%, lekvrije reviews 0% (0/0), stats 89%; gaten: h2h, confirmed_lineups, timestamped_odds, immutable_snapshot_windows, leak_free_reviews, goal_timeline
+- Germany - 2. Bundesliga: 36 duels, vorm 100%, H2H 47%, inzetbewijs 0%, lekvrije reviews 0% (0/0), stats 83%; gaten: h2h, confirmed_lineups, timestamped_odds, immutable_snapshot_windows, leak_free_reviews, goal_timeline
+- England - Premier League: 41 duels, vorm 100%, H2H 42%, inzetbewijs 0%, lekvrije reviews 0% (0/0), stats 100%; gaten: h2h, confirmed_lineups, timestamped_odds, immutable_snapshot_windows, leak_free_reviews
+- England - Championship: 73 duels, vorm 100%, H2H 16%, inzetbewijs 0%, lekvrije reviews 0% (0/0), stats 100%; gaten: h2h, confirmed_lineups, timestamped_odds, immutable_snapshot_windows, leak_free_reviews
+- France - Ligue 1: 36 duels, vorm 100%, H2H 81%, inzetbewijs 0%, lekvrije reviews 0% (0/0), stats 88%; gaten: h2h, confirmed_lineups, timestamped_odds, immutable_snapshot_windows, leak_free_reviews, goal_timeline
 - France - Ligue 2: 37 duels, vorm 100%, H2H 49%, inzetbewijs 0%, lekvrije reviews 0% (0/0), stats 53%; gaten: h2h, confirmed_lineups, timestamped_odds, immutable_snapshot_windows, leak_free_reviews, post_match_statistics, goal_timeline, card_timeline
 - Europe - Champions League: 57 duels, vorm 95%, H2H 2%, inzetbewijs 0%, lekvrije reviews 0% (0/0), stats 84%; gaten: h2h, confirmed_lineups, timestamped_odds, immutable_snapshot_windows, leak_free_reviews
 - Europe - Europa League: 64 duels, vorm 88%, H2H 0%, inzetbewijs 0%, lekvrije reviews 0% (0/0), stats 71%; gaten: form, h2h, confirmed_lineups, timestamped_odds, immutable_snapshot_windows, leak_free_reviews, post_match_statistics, goal_timeline, card_timeline
@@ -64,13 +64,13 @@ Lookback: 45 dagen
 - Score mist: 2026-10-15: Brann - Lincoln Red Imps FC
 - Score mist: 2026-10-15: AZ Alkmaar - Hapoel Be'er
 - Score mist: 2026-10-15: Lech Poznan - Bayer Leverkusen
-- H2H mist: 2026-10-11: Hull City - Everton
-- H2H mist: 2026-10-11: Stade Rennais - AJ Auxerre
-- H2H mist: 2026-10-11: St. Pauli - Karlsruher SC
-- H2H mist: 2026-10-11: FC Cologne - Borussia Mönchengladbach
-- H2H mist: 2026-10-11: PEC Zwolle - SC Cambuur
-- H2H mist: 2026-10-11: Telstar - ADO Den Haag
 - H2H mist: 2026-10-12: Coventry City - Newcastle United
 - H2H mist: 2026-10-13: Bristol City - Blackburn Rovers
 - H2H mist: 2026-10-13: Burnley - Charlton Athletic
 - H2H mist: 2026-10-13: Cardiff City - Watford
+- H2H mist: 2026-10-13: Millwall - Swansea City
+- H2H mist: 2026-10-13: Wolverhampton Wanderers - Bolton Wanderers
+- H2H mist: 2026-10-13: Wrexham - West Bromwich Albion
+- H2H mist: 2026-10-13: Birmingham City - Preston North End
+- H2H mist: 2026-10-13: Stoke City - Middlesbrough
+- H2H mist: 2026-10-13: Lens - Sporting CP
