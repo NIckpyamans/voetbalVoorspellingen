@@ -2,9 +2,13 @@
 // Gebruik: node scripts/club-analysis.js [minimum-wedstrijden=8] [afwijking-in-procentpunten=15]
 // Leest data/history-summary.json (één grote JSON-regel) met JSON.parse, dus geen shell-zoekopdrachten nodig.
 // Alleen-lezen: schrijft niets weg, alleen naar stdout.
+// Let op: scripts/package.json declareert "type": "module", dus dit script moet ES-modules gebruiken.
 
-const fs = require("fs");
-const path = require("path");
+import fs from "node:fs";
+import path from "node:path";
+import { fileURLToPath } from "node:url";
+
+const __dirname = path.dirname(fileURLToPath(import.meta.url));
 
 const minMatches = Number(process.argv[2] ?? 8);
 const deviation = Number(process.argv[3] ?? 15);
