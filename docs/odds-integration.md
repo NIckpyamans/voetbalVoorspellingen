@@ -86,3 +86,31 @@ An inactive provider key describes provider availability, not proof that the act
 competition has no fixtures (qualifying rounds can already be underway).
 
 Source: https://the-odds-api.com/liveapi/guides/v4/#get-sports
+
+## Marktbestand: data/market-odds.json (football-data.co.uk)
+
+De marktbaseline in `shared/modelMetrics.js` rustte alleen op pre-match
+`oddsAtPrediction`-captures (~7% van de reviews, marktvergelijking n≈94).
+`data/market-odds.json` vult dat gat voor de twaalf competities waarvoor
+football-data.co.uk gratis seizoens-CSV's publiceert (E0, E1, D1, D2, I1,
+SP1, F1, F2, N1, N2, B1, P1):
+
+1. `scripts/build-market-odds.js` haalt alleen de seizoenen/competities op die
+   nodig zijn voor beoordeelde wedstrijden zonder pre-match odds, met een
+   7-dagen-drempel. Fair-use van football-data.co.uk: maximaal twee
+   geautomatiseerde ophalingen per week voor niet-commercieel priv-gebruik;
+   deze drempel houdt de workflow op maximaal één ophaling per week.
+2. Koppeling op datum + competitie + einduitslag, met clubnamen als tiebreak;
+   bij meerdere evenwaardige kandidaten wordt overgeslagen (nooit gokken op
+   de verkeerde wedstrijd). Kolomvolgorde: AvgCH/CD/CA (closing-marktconsensus)
+   eerst, dan MarketAvg, dan Bet365/Pinnacle.
+3. `buildMatchStore` vult `mk`/`mh` vanuit het bestand wanneer een review geen
+   `oddsAtPrediction` heeft, en markeert die records met `mks: "fdc"`.
+   Pre-match captures houden altijd voorrang en blijven ongemarkeerd.
+4. `marketBaselineReport` telt `nPreMatch` en `nMarketFile` apart, zodat in
+   `monitor/model-report.json` zichtbaar blijft hoe groot de steekproef per
+   bron is.
+
+Beide bronnen liggen voor de uitslag (closing koersen zijn pre-kickoff), dus
+de marktvergelijking blijft lek-vrij. Als modelinput gelden alleen
+`oddsAtPrediction`-captures met `capturedAt <= cutoffAt` - de vorige sectie.
