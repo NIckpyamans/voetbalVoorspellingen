@@ -1,38 +1,26 @@
 #!/usr/bin/env node
 
 // Clubanalyse op de compacte wedstrijdopslag.
-// Gebruik: node scripts/club-analysis.js [minimum-wedstrijden=8] [afwijking-in-procentpunten=15]
-// Leest data/match-store.json + data/match-index.json; als die ontbreken wordt de
-// store direct uit data/history-summary.json + data/days gebouwd (eenmaal, niet
-// per club — dat was het trage gedeelte).
+// Gebruik: node scripts/club-analysis.js [minimum-beoordeelde-voorspellingen=8] [afwijking-in-procentpunten=15]
+// Gebruikt loadMatchStore: de gegenereerde data/match-store.json telt alleen als
+// die nieuwer is dan de brondata (data/history-summary.json + data/days); anders
+// wordt de store opnieuw gebouwd. Zo raakt de analyse nooit verouderd.
+// Schrijft daarnaast monitor/club-analysis.md + monitor/club-analysis.json, zodat
+// de vaste sectie 3.6 van het verslag automatisch gevuld kan worden.
 
 import fs from "node:fs";
 import path from "node:path";
 import {
   aggregateClubPerformance,
-  buildMatchIndex,
-  buildMatchStore,
-  collectMatchSources,
+  loadMatchStore,
 } from "../shared/matchStore.js";
 
 const minMatches = Number(process.argv[2] ?? 8);
 const deviation = Number(process.argv[3] ?? 15);
 const dataDir = path.join(process.cwd(), "data");
+const monitorDir = path.join(process.cwd(), "monitor");
 
-function loadStoreAndIndex() {
-  const storeFile = path.join(dataDir, "match-store.json");
-  const indexFile = path.join(dataDir, "match-index.json");
-  if (fs.existsSync(storeFile) && fs.existsSync(indexFile)) {
-    return {
-      store: JSON.parse(fs.readFileSync(storeFile, "utf8")),
-      index: JSON.parse(fs.readFileSync(indexFile, "utf8")),
-    };
-  }
-  const store = buildMatchStore(collectMatchSources(dataDir));
-  return { store, index: buildMatchIndex(store) };
-}
-
-const { store, index } = loadStoreAndIndex();
+const { store, index } = loadMatchStore(dataDir);
 
 let decided = 0;
 let hit = 0;
@@ -53,13 +41,42 @@ const rows = aggregateClubPerformance(store, index, { minMatches })
     flag: Math.abs(row.hitPct - overallHit) >= deviation ? "AFWIJKEND" : "",
   }));
 
-console.log(`Wedstrijden in store: ${Object.keys(store.matches).length} | voorspellingen beoordeeld: ${decided} | 1X2 algemeen: ${overallHit.toFixed(1)}% | exact: ${decided ? ((exact / decided) * 100).toFixed(1) : "0.0"}%`);
-console.log(`Clubs met >= ${minMatches} wedstrijden: ${rows.length} (afwijking-drempel ${deviation} procentpunten)`);
+const summary = {
+  matches: Object.keys(store.matches).length,
+  decided,
+  overallHitPct: Math.round(overallHit * 10) / 10,
+  exactPct: decided ? Math.round((exact / decided) * 1000) / 10 : 0,
+  minMatches,
+  deviation,
+  clubs: rows,
+};
+
+console.log(`Wedstrijden in store: ${summary.matches} | voorspellingen beoordeeld: ${decided} | 1X2 algemeen: ${summary.overallHitPct.toFixed(1)}% | exact: ${summary.exactPct.toFixed(1)}%`);
+console.log(`Clubs met >= ${minMatches} beoordeelde voorspellingen: ${rows.length} (afwijking-drempel ${deviation} procentpunten)`);
 console.log("");
-console.log("| Club | Competitie | N | Thuis | Uit | 1X2% | Exact% | Gem. doelpuntfout | Verschil | Vlag |");
-console.log("|---|---|---|---|---|---|---|---|---|---|");
+console.log("| Club | Competitie | Wedstrijden | Beoordeeld | Thuis | Uit | 1X2% | Exact% | Gem. doelpuntfout | Verschil | Vlag |");
+console.log("|---|---|---|---|---|---|---|---|---|---|---|");
 for (const row of rows) {
   console.log(
-    `| ${row.name} | ${row.league || ""} | ${row.n} | ${row.home} | ${row.away} | ${row.hitPct.toFixed(1)} | ${row.exactPct.toFixed(1)} | ${row.goalErr.toFixed(2)} | ${row.diff >= 0 ? "+" : ""}${row.diff.toFixed(1)} | ${row.flag} |`
+    `| ${row.name} | ${row.league || ""} | ${row.matches} | ${row.n} | ${row.home} | ${row.away} | ${row.hitPct.toFixed(1)} | ${row.exactPct.toFixed(1)} | ${row.goalErr.toFixed(2)} | ${row.diff >= 0 ? "+" : ""}${row.diff.toFixed(1)} | ${row.flag} |`
   );
 }
+
+// Monitor-uitvoer voor verslag-sectie 3.6 en de CI-workflow.
+fs.mkdirSync(monitorDir, { recursive: true });
+const markdown = [
+  "# Clubanalyse",
+  "",
+  `Wedstrijden in store: ${summary.matches} | voorspellingen beoordeeld: ${decided} | 1X2 algemeen: ${summary.overallHitPct.toFixed(1)}% | exact: ${summary.exactPct.toFixed(1)}%`,
+  "",
+  `Clubs met >= ${minMatches} beoordeelde voorspellingen: ${rows.length} (afwijking-drempel ${deviation} procentpunten)`,
+  "",
+  "| Club | Competitie | Wedstrijden | Beoordeeld | Thuis | Uit | 1X2% | Exact% | Gem. doelpuntfout | Verschil | Vlag |",
+  "|---|---|---|---|---|---|---|---|---|---|---|",
+  ...rows.map(
+    (row) => `| ${row.name} | ${row.league || ""} | ${row.matches} | ${row.n} | ${row.home} | ${row.away} | ${row.hitPct.toFixed(1)} | ${row.exactPct.toFixed(1)} | ${row.goalErr.toFixed(2)} | ${row.diff >= 0 ? "+" : ""}${row.diff.toFixed(1)} | ${row.flag} |`,
+  ),
+  "",
+].join("\n");
+fs.writeFileSync(path.join(monitorDir, "club-analysis.md"), markdown);
+fs.writeFileSync(path.join(monitorDir, "club-analysis.json"), `${JSON.stringify(summary)}\n`);
