@@ -1,15 +1,15 @@
 # Data Quality Audit
 
-Laatst bijgewerkt: 2026-10-26T13:09:55.827Z
+Laatst bijgewerkt: 2026-10-27T08:26:50.052Z
 Lookback: 45 dagen
 
 ## Scores
 - Wedstrijden: 519
-- Oude wedstrijden: 283
+- Oude wedstrijden: 286
 - Pending result backfills: 0
 - Ontbrekende oude scores: 41
-- H2H-dekking: 35%
-- Reviews na afloop: 57%
+- H2H-dekking: 26%
+- Reviews na afloop: 56%
 - Lekvrije post-matchreviews: 0% (0/0)
 - Immutable snapshot-evaluaties: 0% (0/0 unieke fixtures)
 - Snapshotrijen / unieke fixtures: 708/545 (163 herhaalde rijen)
@@ -21,17 +21,17 @@ Lookback: 45 dagen
 - Verse getimestampte prematch-odds: 13%
 - Volledige pre-match bewijsset: 0%
 - Doelpunten met tijdlijn: 82%
-- Kaarten met tijdlijn: 85%
+- Kaarten met tijdlijn: 84%
 
 ## Per competitie
-- Netherlands - Eredivisie: 36 duels, vorm 100%, H2H 67%, inzetbewijs 0%, lekvrije reviews 0% (0/0), stats 100%; gaten: h2h, confirmed_lineups, timestamped_odds, immutable_snapshot_windows, leak_free_reviews
-- Netherlands - Eerste Divisie: 48 duels, vorm 100%, H2H 21%, inzetbewijs 0%, lekvrije reviews 0% (0/0), stats 100%; gaten: h2h, confirmed_lineups, timestamped_odds, immutable_snapshot_windows, leak_free_reviews
-- Germany - Bundesliga: 36 duels, vorm 100%, H2H 69%, inzetbewijs 0%, lekvrije reviews 0% (0/0), stats 89%; gaten: h2h, confirmed_lineups, timestamped_odds, immutable_snapshot_windows, leak_free_reviews, goal_timeline
-- Germany - 2. Bundesliga: 36 duels, vorm 100%, H2H 58%, inzetbewijs 0%, lekvrije reviews 0% (0/0), stats 83%; gaten: h2h, confirmed_lineups, timestamped_odds, immutable_snapshot_windows, leak_free_reviews, goal_timeline
-- England - Premier League: 40 duels, vorm 100%, H2H 60%, inzetbewijs 0%, lekvrije reviews 0% (0/0), stats 100%; gaten: h2h, confirmed_lineups, timestamped_odds, immutable_snapshot_windows, leak_free_reviews
-- England - Championship: 73 duels, vorm 100%, H2H 30%, inzetbewijs 0%, lekvrije reviews 0% (0/0), stats 100%; gaten: h2h, confirmed_lineups, timestamped_odds, immutable_snapshot_windows, leak_free_reviews
-- France - Ligue 1: 36 duels, vorm 100%, H2H 83%, inzetbewijs 0%, lekvrije reviews 0% (0/0), stats 88%; gaten: h2h, confirmed_lineups, timestamped_odds, immutable_snapshot_windows, leak_free_reviews, goal_timeline
-- France - Ligue 2: 36 duels, vorm 100%, H2H 58%, inzetbewijs 0%, lekvrije reviews 0% (0/0), stats 56%; gaten: h2h, confirmed_lineups, timestamped_odds, immutable_snapshot_windows, leak_free_reviews, post_match_statistics, goal_timeline, card_timeline
+- Netherlands - Eredivisie: 36 duels, vorm 100%, H2H 50%, inzetbewijs 0%, lekvrije reviews 0% (0/0), stats 100%; gaten: h2h, confirmed_lineups, timestamped_odds, immutable_snapshot_windows, leak_free_reviews
+- Netherlands - Eerste Divisie: 48 duels, vorm 100%, H2H 6%, inzetbewijs 0%, lekvrije reviews 0% (0/0), stats 100%; gaten: h2h, confirmed_lineups, timestamped_odds, immutable_snapshot_windows, leak_free_reviews
+- Germany - Bundesliga: 36 duels, vorm 100%, H2H 56%, inzetbewijs 0%, lekvrije reviews 0% (0/0), stats 89%; gaten: h2h, confirmed_lineups, timestamped_odds, immutable_snapshot_windows, leak_free_reviews, goal_timeline
+- Germany - 2. Bundesliga: 36 duels, vorm 100%, H2H 47%, inzetbewijs 0%, lekvrije reviews 0% (0/0), stats 83%; gaten: h2h, confirmed_lineups, timestamped_odds, immutable_snapshot_windows, leak_free_reviews, goal_timeline
+- England - Premier League: 40 duels, vorm 100%, H2H 43%, inzetbewijs 0%, lekvrije reviews 0% (0/0), stats 100%; gaten: h2h, confirmed_lineups, timestamped_odds, immutable_snapshot_windows, leak_free_reviews
+- England - Championship: 73 duels, vorm 100%, H2H 16%, inzetbewijs 0%, lekvrije reviews 0% (0/0), stats 100%; gaten: h2h, confirmed_lineups, timestamped_odds, immutable_snapshot_windows, leak_free_reviews
+- France - Ligue 1: 36 duels, vorm 100%, H2H 81%, inzetbewijs 0%, lekvrije reviews 0% (0/0), stats 89%; gaten: h2h, confirmed_lineups, timestamped_odds, immutable_snapshot_windows, leak_free_reviews, goal_timeline
+- France - Ligue 2: 36 duels, vorm 100%, H2H 47%, inzetbewijs 0%, lekvrije reviews 0% (0/0), stats 50%; gaten: h2h, confirmed_lineups, timestamped_odds, immutable_snapshot_windows, leak_free_reviews, post_match_statistics, goal_timeline, card_timeline
 - Europe - Champions League: 57 duels, vorm 95%, H2H 2%, inzetbewijs 0%, lekvrije reviews 0% (0/0), stats 84%; gaten: h2h, confirmed_lineups, timestamped_odds, immutable_snapshot_windows, leak_free_reviews
 - Europe - Europa League: 64 duels, vorm 88%, H2H 0%, inzetbewijs 0%, lekvrije reviews 0% (0/0), stats 71%; gaten: form, h2h, confirmed_lineups, timestamped_odds, immutable_snapshot_windows, leak_free_reviews, post_match_statistics, goal_timeline, card_timeline
 - Europe - Conference League: 57 duels, vorm 68%, H2H 2%, inzetbewijs 0%, lekvrije reviews 0% (0/0), stats 63%; gaten: form, h2h, confirmed_lineups, timestamped_odds, immutable_snapshot_windows, leak_free_reviews, post_match_statistics, referee, goal_timeline, card_timeline
