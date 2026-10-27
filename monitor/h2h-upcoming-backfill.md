@@ -1,9 +1,9 @@
 # Upcoming H2H Backfill
 
-Laatst bijgewerkt: 2026-10-27T15:22:47.769Z
-Gecontroleerd: 46
+Laatst bijgewerkt: 2026-10-27T22:13:34.529Z
+Gecontroleerd: 16
 Gevuld: 0
-Geen directe H2H: 46
+Geen directe H2H: 16
 Errors: 0
 
 Openstaand na deze batch: 0
@@ -14,23 +14,19 @@ Geen directe H2H gevonden voor de gecontroleerde wedstrijden. Breid team-ID mapp
 ## Gevuld
 
 ## Geen Directe H2H
-- 2026-10-30: Energie Cottbus - VfL Bochum (no_direct_history)
-- 2026-10-30: FC Volendam - De Graafschap (no_direct_history)
-- 2026-10-30: SV Elversberg - Mainz (no_direct_history)
-- 2026-10-31: Bolton Wanderers - Bristol City (rate_limited_locally)
-- 2026-10-31: Coventry City - Sunderland (rate_limited_locally)
-- 2026-10-31: Bayern Munich - Borussia Dortmund (rate_limited_locally)
-- 2026-10-31: Guingamp - Saint-Étienne (rate_limited_locally)
-- 2026-10-31: Troyes - Le Mans (rate_limited_locally)
-- 2026-10-31: Ajax Amsterdam - AZ Alkmaar (rate_limited_locally)
-- 2026-10-31: Millwall - Derby County (rate_limited_locally)
-- 2026-10-31: Hull City - Ipswich Town (rate_limited_locally)
-- 2026-10-31: Southampton - Queens Park Rangers (rate_limited_locally)
-- 2026-10-31: Manchester City - Brighton & Hove Albion (rate_limited_locally)
-- 2026-10-31: Swansea City - Blackburn Rovers (rate_limited_locally)
-- 2026-10-31: Tottenham Hotspur - Crystal Palace (rate_limited_locally)
-- 2026-10-31: West Ham United - West Bromwich Albion (rate_limited_locally)
-- 2026-10-31: Wolverhampton Wanderers - Cardiff City (rate_limited_locally)
-- 2026-11-01: PEC Zwolle - ADO Den Haag (rate_limited_locally)
-- 2026-11-01: Hannover 96 - Dynamo Dresden (rate_limited_locally)
-- 2026-11-01: FC Emmen - FC Den Bosch (rate_limited_locally)
+- 2026-11-07: Wrexham - Wolverhampton Wanderers (no_direct_history)
+- 2026-11-07: Nottingham Forest - Manchester City (no_direct_history)
+- 2026-11-07: ADO Den Haag - Sparta Rotterdam (no_direct_history)
+- 2026-11-07: Pau - Nantes (rate_limited_locally)
+- 2026-11-07: Blackburn Rovers - West Ham United (rate_limited_locally)
+- 2026-11-07: Saint-Étienne - Stade Laval (rate_limited_locally)
+- 2026-11-07: Cardiff City - Burnley (rate_limited_locally)
+- 2026-11-07: Charlton Athletic - Sheffield United (rate_limited_locally)
+- 2026-11-07: Preston North End - Southampton (rate_limited_locally)
+- 2026-11-07: Queens Park Rangers - Lincoln City (rate_limited_locally)
+- 2026-11-08: FC Emmen - MVV Maastricht (rate_limited_locally)
+- 2026-11-08: Le Mans - AS Monaco (rate_limited_locally)
+- 2026-11-08: Manchester United - Aston Villa (rate_limited_locally)
+- 2026-11-14: NAC Breda - FC Emmen (rate_limited_locally)
+- 2026-11-14: Almere City - Helmond Sport (rate_limited_locally)
+- 2026-11-14: De Graafschap - TOP Oss (rate_limited_locally)
