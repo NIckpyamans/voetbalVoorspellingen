@@ -1,7 +1,17 @@
 name: Match store
 
+# Bouwt de compacte wedstrijdopslag (data/match-store.json + match-index.json) en
+# de vaste rapporten (monitor/club-analysis.*, monitor/model-report.json).
+# De store wordt gevoed vanuit de runtime-publicatie: de workflows die data/days
+# en reviews produceren schrijven uitsluitend naar Neon/R2 (geen data/-commits),
+# dus de triggers hieronder volgen die workflows plus een dagelijkse vangnetronde.
 on:
   workflow_dispatch:
+  schedule:
+    - cron: "17 2 * * *"
+  workflow_run:
+    workflows: ["Football AI Worker", "Prediction evaluation", "Post-match Enrichment", "Live Score Refresh"]
+    types: [completed]
   push:
     branches: ["codex/step3b-layout"]
     paths:
@@ -20,22 +30,48 @@ concurrency:
 jobs:
   build:
     runs-on: ubuntu-latest
-    timeout-minutes: 10
+    timeout-minutes: 15
+    # Alleen geslaagde runtime-runs leveren bruikbare data op.
+    if: ${{ github.event_name != 'workflow_run' || github.event.workflow_run.conclusion == 'success' }}
+    env:
+      DATABASE_URL: ${{ secrets.DATABASE_URL }}
+      POSTGRES_URL: ${{ secrets.POSTGRES_URL }}
+      CLOUDFLARE_R2_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_R2_ACCOUNT_ID }}
+      CLOUDFLARE_R2_ACCESS_KEY_ID: ${{ secrets.CLOUDFLARE_R2_ACCESS_KEY_ID }}
+      CLOUDFLARE_R2_SECRET_ACCESS_KEY: ${{ secrets.CLOUDFLARE_R2_SECRET_ACCESS_KEY }}
+      CLOUDFLARE_R2_BUCKET: ${{ secrets.CLOUDFLARE_R2_BUCKET }}
+      CLOUDFLARE_R2_ENDPOINT: ${{ secrets.CLOUDFLARE_R2_ENDPOINT }}
+      CLOUDFLARE_R2_PREFIX: ${{ secrets.CLOUDFLARE_R2_PREFIX }}
     steps:
       - uses: actions/checkout@v5
       - uses: actions/setup-node@v5
         with:
           node-version: 22
+          cache: npm
+      - name: Install dependencies
+        run: npm ci
+      - name: Refresh day data and reviews from runtime storage (Neon/R2)
+        continue-on-error: true
+        run: npm run db:predictions:materialize-reviews
       - name: Build compact match store
         run: node scripts/build-match-store.js
-      - name: Commit match store
+      - name: Build club analysis
+        run: node scripts/club-analysis.js
+      - name: Build model report
+        run: node scripts/model-report.js
+      - name: Commit match store and reports
         run: |
-          git add data/match-store.json data/match-index.json
+          git add data/match-store.json data/match-index.json monitor/club-analysis.md monitor/club-analysis.json monitor/model-report.json
           if git diff --cached --quiet; then
-            echo "Geen wijzigingen in de match-store."
+            echo "Geen wijzigingen in de match-store of rapporten."
           else
             git config user.name "github-actions[bot]"
             git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-            git commit -m "Vernieuw compacte match-store [skip vercel]"
-            git push
+            git commit -m "Vernieuw compacte match-store en rapporten [skip vercel]"
+            for attempt in 1 2 3; do
+              git pull --rebase --autostash origin "codex/step3b-layout"
+              if git push origin "HEAD:codex/step3b-layout"; then exit 0; fi
+              sleep $((attempt * 5))
+            done
+            exit 1
           fi
