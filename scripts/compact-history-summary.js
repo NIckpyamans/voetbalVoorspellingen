@@ -8,7 +8,7 @@ const file = path.join(process.cwd(), "data", "history-summary.json");
 const beforeBytes = fs.statSync(file).size;
 const history = JSON.parse(fs.readFileSync(file, "utf8"));
 const compacted = compactHistorySummary(history);
-fs.writeFileSync(file, `${JSON.stringify(compacted, null, 2)}\n`);
+fs.writeFileSync(file, `${JSON.stringify(compacted)}\n`);
 const afterBytes = fs.statSync(file).size;
 
 console.log(JSON.stringify({
