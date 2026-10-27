@@ -157,6 +157,8 @@ export function marketBaselineReport(records = [], options = {}) {
   let n = 0;
   let modelHit = 0;
   let marketHit = 0;
+  let nPreMatch = 0;
+  let nMarketFile = 0;
   for (const record of records || []) {
     if (!record.mk || typeof record.mh !== "boolean") continue;
     const model = typeof record.hit === "boolean" ? record.hit : null;
@@ -164,6 +166,8 @@ export function marketBaselineReport(records = [], options = {}) {
     n += 1;
     if (model) modelHit += 1;
     if (record.mh) marketHit += 1;
+    if (record.mks === "fdc") nMarketFile += 1;
+    else nPreMatch += 1;
     const league = leagueKey(record);
     if (!leagueState.has(league)) {
       leagueState.set(league, { league, n: 0, modelHit: 0, marketHit: 0 });
@@ -185,6 +189,8 @@ export function marketBaselineReport(records = [], options = {}) {
     .sort((left, right) => right.n - left.n);
   return {
     n,
+    nPreMatch,
+    nMarketFile,
     modelHitPct: pct(modelHit, n),
     marketHitPct: pct(marketHit, n),
     edgePct: n ? Math.round(((modelHit - marketHit) / n) * 1000) / 10 : null,

@@ -7,6 +7,7 @@
 import fs from "node:fs";
 import path from "node:path";
 import { canonicalDedupeTeam } from "./matchNormalization.js";
+import { favoriteFromOdds, marketOddsKey } from "./marketOdds.js";
 
 export const MATCH_STORE_SCHEMA = "match-store-v1";
 
@@ -103,6 +104,22 @@ function mergeRecords(preferred, other) {
   return merged;
 }
 
+// Marktbaseline-uitbreiding: wanneer een review geen pre-match oddsAtPrediction
+// heeft, vullen mk/mh alsnog vanuit het marktbestand (football-data.co.uk
+// closing-marktconsensus). `mks: "fdc"` markeert die bron; echte pre-match
+// captures houden altijd voorrang en blijven ongemarkeerd.
+function applyMarketOddsFallback(record, marketOdds) {
+  if (!record || record.mk !== undefined || !marketOdds) return;
+  if (typeof record.hit !== "boolean" || !record.ao) return;
+  const odds = marketOdds.entries?.[marketOddsKey(record.d, record.h, record.a)];
+  if (!Array.isArray(odds)) return;
+  const favorite = favoriteFromOdds(odds[0], odds[1], odds[2]);
+  if (!favorite) return;
+  record.mk = favorite;
+  record.mh = favorite === record.ao;
+  record.mks = "fdc";
+}
+
 function recordSignature(record) {
   return [
     record.d,
@@ -140,7 +157,17 @@ export function collectMatchSources(dataDir) {
       reviews = {};
     }
   }
-  return { dayMatches, reviews };
+  // Marktparen (football-data.co.uk) voor de marktbaseline-fallback; optioneel.
+  let marketOdds = null;
+  const marketOddsFile = path.join(dataDir, "market-odds.json");
+  if (fs.existsSync(marketOddsFile)) {
+    try {
+      marketOdds = JSON.parse(fs.readFileSync(marketOddsFile, "utf8"));
+    } catch {
+      marketOdds = null;
+    }
+  }
+  return { dayMatches, reviews, marketOdds };
 }
 
 // Laadt de voorgegenereerde store, maar herbouwt die wanneer de brondata nieuwer
@@ -160,6 +187,8 @@ export function loadMatchStore(dataDir) {
   }
   const historyFile = path.join(dataDir, "history-summary.json");
   if (fs.existsSync(historyFile)) sourceFiles.push(historyFile);
+  const marketOddsFile = path.join(dataDir, "market-odds.json");
+  if (fs.existsSync(marketOddsFile)) sourceFiles.push(marketOddsFile);
 
   const sourcesMtime = sourceFiles.reduce(
     (latest, filePath) => Math.max(latest, fs.statSync(filePath).mtimeMs),
@@ -183,14 +212,14 @@ export function loadMatchStore(dataDir) {
       // Corrupte gegenereerde bestanden: hieronder opnieuw opbouwen.
     }
   }
-  const { dayMatches, reviews } = collectMatchSources(dataDir);
-  const store = buildMatchStore({ dayMatches, reviews });
+  const { dayMatches, reviews, marketOdds } = collectMatchSources(dataDir);
+  const store = buildMatchStore({ dayMatches, reviews, marketOdds });
   return { store, index: buildMatchIndex(store) };
 }
 
 // Bouwt de store uit dagbestanden (dayMatches) en postMatchReviews. Wedstrijden
 // met dezelfde datum/clubs/uitslag onder verschillende ids worden samengevoegd.
-export function buildMatchStore({ dayMatches = [], reviews = {} } = {}) {
+export function buildMatchStore({ dayMatches = [], reviews = {}, marketOdds = null } = {}) {
   const staged = new Map();
   // incomingWins: reviews dragen de gecontroleerde einduitslag en moeten een
   // eerdere (eventueel voorlopige) dagstand overschrijven.
@@ -217,6 +246,7 @@ export function buildMatchStore({ dayMatches = [], reviews = {} } = {}) {
   const bySignature = new Map();
   for (const id of [...staged.keys()].sort()) {
     const record = staged.get(id);
+    applyMarketOddsFallback(record, marketOdds);
     const signature = recordSignature(record);
     const keptId = bySignature.get(signature);
     if (keptId) {

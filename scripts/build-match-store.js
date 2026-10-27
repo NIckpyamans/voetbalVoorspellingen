@@ -14,8 +14,8 @@ import {
 } from "../shared/matchStore.js";
 
 const dataDir = path.join(process.cwd(), "data");
-const { dayMatches, reviews } = collectMatchSources(dataDir);
-const store = buildMatchStore({ dayMatches, reviews });
+const { dayMatches, reviews, marketOdds } = collectMatchSources(dataDir);
+const store = buildMatchStore({ dayMatches, reviews, marketOdds });
 const index = buildMatchIndex(store);
 
 const storeFile = path.join(dataDir, "match-store.json");
@@ -29,6 +29,7 @@ console.log(JSON.stringify({
   pairs: Object.keys(index.byPair).length,
   sourceDayMatches: dayMatches.length,
   sourceReviews: Object.keys(reviews).length,
+  marketOddsEntries: Object.keys(marketOdds?.entries || {}).length,
   storeBytes: fs.statSync(storeFile).size,
   indexBytes: fs.statSync(indexFile).size,
 }, null, 2));

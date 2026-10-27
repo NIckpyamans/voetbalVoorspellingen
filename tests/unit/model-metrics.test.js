@@ -92,6 +92,17 @@ describe("marketBaselineReport", () => {
     });
     expect(report.leagues[0].edgePct).toBeCloseTo(33.3, 1);
   });
+
+  it("splitst pre-match odds van het marktbestand", () => {
+    const report = marketBaselineReport([
+      { lg: "Eredivisie", hit: true, mk: "H", mh: true },
+      { lg: "Eredivisie", hit: true, mk: "A", mh: false, mks: "fdc" },
+      { lg: "Eredivisie", hit: false, mk: "D", mh: false, mks: "fdc" },
+    ]);
+    expect(report.n).toBe(3);
+    expect(report.nPreMatch).toBe(1);
+    expect(report.nMarketFile).toBe(2);
+  });
 });
 
 describe("dataQualityReport", () => {
