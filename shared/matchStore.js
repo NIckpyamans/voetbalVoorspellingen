@@ -146,6 +146,8 @@ export function collectMatchSources(dataDir) {
 // Laadt de voorgegenereerde store, maar herbouwt die wanneer de brondata nieuwer
 // is dan de gegenereerde bestanden. Zo raakt de analyse nooit verouderd doordat
 // match-store.json een keer niet is bijgewerkt (of juist wel, maar achterhaald).
+// Retourneert altijd { store, index }, zodat consumers uniform de store- en
+// indexvorm krijgen.
 export function loadMatchStore(dataDir) {
   const storeFile = path.join(dataDir, "match-store.json");
   const indexFile = path.join(dataDir, "match-index.json");
@@ -174,7 +176,7 @@ export function loadMatchStore(dataDir) {
   if (fresh) {
     try {
       return {
-        ...JSON.parse(fs.readFileSync(storeFile, "utf8")),
+        store: JSON.parse(fs.readFileSync(storeFile, "utf8")),
         index: JSON.parse(fs.readFileSync(indexFile, "utf8")),
       };
     } catch {
@@ -183,7 +185,7 @@ export function loadMatchStore(dataDir) {
   }
   const { dayMatches, reviews } = collectMatchSources(dataDir);
   const store = buildMatchStore({ dayMatches, reviews });
-  return { ...store, index: buildMatchIndex(store) };
+  return { store, index: buildMatchIndex(store) };
 }
 
 // Bouwt de store uit dagbestanden (dayMatches) en postMatchReviews. Wedstrijden
