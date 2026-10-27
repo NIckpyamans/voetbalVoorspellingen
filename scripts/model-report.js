@@ -43,7 +43,7 @@ fs.writeFileSync(path.join(monitorDir, "model-report.json"), `${JSON.stringify(r
 
 console.log(`Wedstrijden in store: ${report.matches}`);
 console.log(`Kalibratie: hit ${report.calibration.hitPct}% bij gemiddeld vertrouwen ${report.calibration.avgConfidence} (ECE ${report.calibration.ece})`);
-console.log(`Marktbaseline: model ${report.marketBaseline.modelHitPct}% vs markt ${report.marketBaseline.marketHitPct}% (${report.marketBaseline.n} met odds)`);
+console.log(`Marktbaseline: model ${report.marketBaseline.modelHitPct}% vs markt ${report.marketBaseline.marketHitPct}% (${report.marketBaseline.n} met odds: ${report.marketBaseline.nPreMatch} pre-match, ${report.marketBaseline.nMarketFile} marktbestand)`);
 console.log(`Datakwaliteit: odds beschikbaar op ${report.dataQuality.oddsAvailablePct}% van ${report.dataQuality.withDq} reviews`);
 console.log(`Lege invoerbronnen: ${report.sourceHealth.empty.join(", ") || "geen"}`);
 console.log(`Dunne invoerbronnen: ${report.sourceHealth.thin.join(", ") || "geen"}`);
