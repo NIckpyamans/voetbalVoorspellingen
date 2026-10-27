@@ -271,15 +271,19 @@ describe("matchStore", () => {
 
       // Bronbestand is nieuwer: de gedateerde store wordt genegeerd en herbouwd.
       const rebuilt = loadMatchStore(dataDir);
-      expect(rebuilt.marker).toBeUndefined();
-      expect(rebuilt.matches.t1).toMatchObject({ d: "2026-10-01", hs: 1, as: 0 });
+      expect(rebuilt.store.marker).toBeUndefined();
+      expect(rebuilt.store.matches.t1).toMatchObject({ d: "2026-10-01", hs: 1, as: 0 });
+      expect(rebuilt.index.byTeam.a).toEqual(["t1"]);
+      expect(rebuilt.index.byPair["a|b"]).toEqual(["t1"]);
+      expect(rebuilt.index.byDate["2026-10-01"]).toEqual(["t1"]);
 
       // Wanneer de gegenereerde bestanden juist nieuwer zijn, tellen ze.
       const fresh = new Date("2100-01-01T00:00:00Z");
       fs.utimesSync(path.join(dataDir, "match-store.json"), fresh, fresh);
       fs.utimesSync(path.join(dataDir, "match-index.json"), fresh, fresh);
       const loaded = loadMatchStore(dataDir);
-      expect(loaded.marker).toBe("from-disk");
+      expect(loaded.store.marker).toBe("from-disk");
+      expect(loaded.index.byTeam).toEqual({});
     } finally {
       fs.rmSync(dataDir, { recursive: true, force: true });
     }
