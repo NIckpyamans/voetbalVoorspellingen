@@ -6,11 +6,20 @@
 
 import fs from "node:fs";
 import path from "node:path";
+import { canonicalDedupeTeam } from "./matchNormalization.js";
 
 export const MATCH_STORE_SCHEMA = "match-store-v1";
 
 export function normalizeTeamName(value) {
   return String(value || "").trim().toLowerCase().replace(/\s+/g, " ");
+}
+
+// Clubsleutel via dezelfde canonicalisatie als de rest van de app
+// (shared/matchNormalization.js): "FC Utrecht"/"Utrecht", "NEC"/"NEC Nijmegen"
+// en provider-varianten komen zo in één indexpost terecht, waardoor een lookup
+// meer historie vindt dan een simpele kleine-letter-sleutel.
+export function clubKey(value) {
+  return canonicalDedupeTeam(value) || normalizeTeamName(value);
 }
 
 function parseScore(match = {}) {
@@ -24,7 +33,15 @@ function parseScore(match = {}) {
 // Compacte velden: d=datum, lg=competitie, h/thuis, a=uit, hs/as=doelpunten,
 // po=voorspelde uitkomst, ao=werkelijke uitkomst, cf=confidence, hit=1X2 goed,
 // ex=exacte score goed, ge=doelpuntfout.
+//
+// Alleen afgeronde wedstrijden horen in de historische opslag. Dagbestanden
+// bevatten ook LIVE/HT/NS-duels met een voorlopige stand; zonder deze statuscheck
+// zou die voorlopige stand als einduitslag worden bewaard.
+const FINISHED_STATUSES = ["FT", "AET", "PEN"];
+
 export function recordFromDayMatch(match = {}) {
+  const status = String(match.status || match.period || "").toUpperCase();
+  if (!FINISHED_STATUSES.includes(status)) return null;
   const score = parseScore(match);
   const date = String(match.date || "").slice(0, 10);
   if (!score || !date || !match.homeTeamName || !match.awayTeamName) return null;
@@ -57,6 +74,23 @@ export function recordFromReview(review = {}) {
   if (typeof review.outcomeHit === "boolean") record.hit = review.outcomeHit;
   if (typeof review.exactHit === "boolean") record.ex = review.exactHit;
   if (typeof review.totalGoalError === "number") record.ge = review.totalGoalError;
+  // Datakwaliteit per voorspelling compact vastleggen (odds-status + deel van de
+  // bronvelden met een bekend tijdstip), zodat analyses niet op ruis rekenen.
+  const dq = {};
+  const timestampCoverage = Number(review.featureSourceMetadata?.coverage?.timestampCoverage);
+  if (Number.isFinite(timestampCoverage)) dq.ts = Math.round(timestampCoverage * 1000) / 1000;
+  if (review.oddsStatus) dq.od = String(review.oddsStatus);
+  if (Object.keys(dq).length) record.dq = dq;
+  // Marktbaseline: de marktfavoriet (laagste odd — invariant onder de-vig) en
+  // of die uitkwam, compact naast de modelbeoordeling.
+  const odds = review.oddsAtPrediction;
+  const decimalOdds = odds ? [Number(odds.home), Number(odds.draw), Number(odds.away)] : [];
+  if (decimalOdds.length && decimalOdds.every((value) => Number.isFinite(value) && value > 1.01)) {
+    const favorite = [["H", decimalOdds[0]], ["D", decimalOdds[1]], ["A", decimalOdds[2]]]
+      .sort((left, right) => left[1] - right[1])[0][0];
+    record.mk = favorite;
+    if (review.actualOutcome) record.mh = favorite === review.actualOutcome;
+  }
   return record;
 }
 
@@ -72,8 +106,8 @@ function mergeRecords(preferred, other) {
 function recordSignature(record) {
   return [
     record.d,
-    normalizeTeamName(record.h),
-    normalizeTeamName(record.a),
+    clubKey(record.h),
+    clubKey(record.a),
     `${record.hs}-${record.as}`,
   ].join("|");
 }
@@ -109,14 +143,63 @@ export function collectMatchSources(dataDir) {
   return { dayMatches, reviews };
 }
 
+// Laadt de voorgegenereerde store, maar herbouwt die wanneer de brondata nieuwer
+// is dan de gegenereerde bestanden. Zo raakt de analyse nooit verouderd doordat
+// match-store.json een keer niet is bijgewerkt (of juist wel, maar achterhaald).
+export function loadMatchStore(dataDir) {
+  const storeFile = path.join(dataDir, "match-store.json");
+  const indexFile = path.join(dataDir, "match-index.json");
+  const sourceFiles = [];
+  const daysDir = path.join(dataDir, "days");
+  if (fs.existsSync(daysDir)) {
+    for (const name of fs.readdirSync(daysDir)) {
+      if (/^\d{4}-\d{2}-\d{2}\.json$/.test(name)) sourceFiles.push(path.join(daysDir, name));
+    }
+  }
+  const historyFile = path.join(dataDir, "history-summary.json");
+  if (fs.existsSync(historyFile)) sourceFiles.push(historyFile);
+
+  const sourcesMtime = sourceFiles.reduce(
+    (latest, filePath) => Math.max(latest, fs.statSync(filePath).mtimeMs),
+    0,
+  );
+  const generatedMtime = Math.min(
+    fs.existsSync(storeFile) ? fs.statSync(storeFile).mtimeMs : 0,
+    fs.existsSync(indexFile) ? fs.statSync(indexFile).mtimeMs : 0,
+  );
+  const fresh = fs.existsSync(storeFile)
+    && fs.existsSync(indexFile)
+    && generatedMtime > sourcesMtime;
+
+  if (fresh) {
+    try {
+      return {
+        ...JSON.parse(fs.readFileSync(storeFile, "utf8")),
+        index: JSON.parse(fs.readFileSync(indexFile, "utf8")),
+      };
+    } catch {
+      // Corrupte gegenereerde bestanden: hieronder opnieuw opbouwen.
+    }
+  }
+  const { dayMatches, reviews } = collectMatchSources(dataDir);
+  const store = buildMatchStore({ dayMatches, reviews });
+  return { ...store, index: buildMatchIndex(store) };
+}
+
 // Bouwt de store uit dagbestanden (dayMatches) en postMatchReviews. Wedstrijden
 // met dezelfde datum/clubs/uitslag onder verschillende ids worden samengevoegd.
 export function buildMatchStore({ dayMatches = [], reviews = {} } = {}) {
   const staged = new Map();
-  const upsert = (id, record) => {
+  // incomingWins: reviews dragen de gecontroleerde einduitslag en moeten een
+  // eerdere (eventueel voorlopige) dagstand overschrijven.
+  const upsert = (id, record, incomingWins = false) => {
     if (!record) return;
     const existing = staged.get(id);
-    staged.set(id, existing ? mergeRecords(existing, record) : record);
+    if (!existing) {
+      staged.set(id, record);
+      return;
+    }
+    staged.set(id, incomingWins ? mergeRecords(record, existing) : mergeRecords(existing, record));
   };
 
   for (const match of dayMatches || []) {
@@ -125,7 +208,7 @@ export function buildMatchStore({ dayMatches = [], reviews = {} } = {}) {
   }
   for (const [key, review] of Object.entries(reviews || {})) {
     const record = recordFromReview(review);
-    if (record) upsert(recordIdentity(review, record), record);
+    if (record) upsert(recordIdentity(review, record), record, true);
   }
 
   const matches = {};
@@ -154,11 +237,11 @@ export function buildMatchIndex(store = {}) {
     const record = store.matches[id];
     if (!record) continue;
     for (const team of [record.h, record.a]) {
-      const key = normalizeTeamName(team);
+      const key = clubKey(team);
       if (!byTeam[key]) byTeam[key] = [];
       byTeam[key].push(id);
     }
-    const pairKey = `${normalizeTeamName(record.h)}|${normalizeTeamName(record.a)}`;
+    const pairKey = `${clubKey(record.h)}|${clubKey(record.a)}`;
     if (!byPair[pairKey]) byPair[pairKey] = [];
     byPair[pairKey].push(id);
     if (!byDate[record.d]) byDate[record.d] = [];
@@ -178,15 +261,15 @@ export function queryTeamMatches(store, index, teamName, options = {}) {
   const limit = Math.max(1, Number(options.limit || 10));
   const before = options.before ? String(options.before).slice(0, 10) : null;
   const venue = options.venue === "home" || options.venue === "away" ? options.venue : null;
-  const teamKey = normalizeTeamName(teamName);
-  const ids = index?.byTeam?.[teamKey] || [];
+  const key = clubKey(teamName);
+  const ids = index?.byTeam?.[key] || [];
   const results = [];
   for (let i = ids.length - 1; i >= 0 && results.length < limit; i -= 1) {
     const record = store.matches?.[ids[i]];
     if (!record) continue;
     if (before && record.d >= before) continue;
-    if (venue === "home" && normalizeTeamName(record.h) !== teamKey) continue;
-    if (venue === "away" && normalizeTeamName(record.a) !== teamKey) continue;
+    if (venue === "home" && clubKey(record.h) !== key) continue;
+    if (venue === "away" && clubKey(record.a) !== key) continue;
     results.push(record);
   }
   return results;
@@ -197,8 +280,8 @@ export function queryPairMatches(store, index, homeTeamName, awayTeamName, optio
   const limit = Math.max(1, Number(options.limit || 5));
   const before = options.before ? String(options.before).slice(0, 10) : null;
   const keys = [
-    `${normalizeTeamName(homeTeamName)}|${normalizeTeamName(awayTeamName)}`,
-    `${normalizeTeamName(awayTeamName)}|${normalizeTeamName(homeTeamName)}`,
+    `${clubKey(homeTeamName)}|${clubKey(awayTeamName)}`,
+    `${clubKey(awayTeamName)}|${clubKey(homeTeamName)}`,
   ];
   const ids = new Set();
   for (const key of keys) {
@@ -212,25 +295,85 @@ export function queryPairMatches(store, index, homeTeamName, awayTeamName, optio
     .slice(0, limit);
 }
 
+// Onderlinge duels samengevat vanuit het perspectief van het opgegeven thuis-team.
+export function headToHeadSummary(store, index, homeTeamName, awayTeamName, options = {}) {
+  const matches = queryPairMatches(store, index, homeTeamName, awayTeamName, options);
+  const homeKey = clubKey(homeTeamName);
+  let homeWins = 0;
+  let draws = 0;
+  let awayWins = 0;
+  let homeGoals = 0;
+  let awayGoals = 0;
+  for (const record of matches) {
+    const homeIsHome = clubKey(record.h) === homeKey;
+    const goalsFor = homeIsHome ? record.hs : record.as;
+    const goalsAgainst = homeIsHome ? record.as : record.hs;
+    homeGoals += goalsFor;
+    awayGoals += goalsAgainst;
+    if (goalsFor > goalsAgainst) homeWins += 1;
+    else if (goalsFor === goalsAgainst) draws += 1;
+    else awayWins += 1;
+  }
+  return {
+    played: matches.length,
+    homeWins,
+    draws,
+    awayWins,
+    homeGoals,
+    awayGoals,
+    last5: matches.slice(0, 5),
+  };
+}
+
+// Alles wat een nieuwe voorspelling in één keer moet raadplegen: recente vorm
+// van beide clubs, onderlinge duels en de rustdagen sinds het laatste duel.
+// Gebruik altijd `before` = de wedstrijddatum van de nieuwe voorspelling, zodat
+// er geen informatie uit de toekomst in de voorspelling lekt.
+export function buildPredictionContext(store, index, homeTeamName, awayTeamName, options = {}) {
+  const before = options.before ? String(options.before).slice(0, 10) : null;
+  const limit = Math.max(1, Number(options.limit || 10));
+  const teamContext = (teamName) => {
+    const recent = queryTeamMatches(store, index, teamName, { before, limit });
+    const lastMatchDate = recent[0]?.d || null;
+    return {
+      team: teamName,
+      recent,
+      lastMatchDate,
+      restDays: before && lastMatchDate
+        ? Math.round((Date.parse(before) - Date.parse(lastMatchDate)) / 86400000)
+        : null,
+    };
+  };
+  return {
+    before,
+    home: teamContext(homeTeamName),
+    away: teamContext(awayTeamName),
+    headToHead: headToHeadSummary(store, index, homeTeamName, awayTeamName, { before, limit: 10 }),
+  };
+}
+
 // Per club prestaties van de opgeslagen voorspellingen (voor clubanalyse).
+// De steekproefdrempel geldt voor de beoordeelde voorspellingen (n), niet voor
+// het aantal gespeelde wedstrijden: een club met acht duels maar één review
+// levert anders een 100%-regel op basis van één voorspelling.
 export function aggregateClubPerformance(store, index, options = {}) {
   const minMatches = Math.max(1, Number(options.minMatches || 8));
   const rows = [];
-  for (const [teamKey, ids] of Object.entries(index?.byTeam || {})) {
-    if (ids.length < minMatches) continue;
-    let name = teamKey;
+  for (const [key, ids] of Object.entries(index?.byTeam || {})) {
+    let name = key;
     const leagues = new Map();
     let home = 0;
     let away = 0;
     let decided = 0;
     let hit = 0;
     let exact = 0;
+    let exactDecided = 0;
     let goalErr = 0;
     let goalErrN = 0;
     for (const id of ids) {
       const record = store.matches?.[id];
       if (!record) continue;
-      if (normalizeTeamName(record.h) === teamKey) {
+      if (clubKey(record.h) === key) {
         home += 1;
         name = record.h;
       } else {
@@ -242,22 +385,26 @@ export function aggregateClubPerformance(store, index, options = {}) {
         decided += 1;
         if (record.hit) hit += 1;
       }
-      if (record.ex === true) exact += 1;
+      if (typeof record.ex === "boolean") {
+        exactDecided += 1;
+        if (record.ex) exact += 1;
+      }
       if (typeof record.ge === "number") {
         goalErr += record.ge;
         goalErrN += 1;
       }
     }
-    if (!decided) continue;
+    if (decided < minMatches) continue;
     rows.push({
       name,
       league: [...leagues.entries()].sort((left, right) => right[1] - left[1])[0]?.[0] || null,
-      n: ids.length,
+      n: decided,
+      matches: ids.length,
       home,
       away,
       decided,
       hitPct: (hit / decided) * 100,
-      exactPct: (exact / decided) * 100,
+      exactPct: exactDecided ? (exact / exactDecided) * 100 : 0,
       goalErr: goalErrN ? goalErr / goalErrN : 0,
     });
   }
