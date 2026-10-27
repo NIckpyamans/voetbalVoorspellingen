@@ -19,6 +19,9 @@ on:
       - "data/history-summary.json"
       - "shared/matchStore.js"
       - "scripts/build-match-store.js"
+      - "scripts/build-market-odds.js"
+      - "shared/marketOdds.js"
+      - "data/market-odds.json"
 
 permissions:
   contents: write
@@ -53,6 +56,9 @@ jobs:
       - name: Refresh day data and reviews from runtime storage (Neon/R2)
         continue-on-error: true
         run: npm run db:predictions:materialize-reviews
+      - name: Refresh market odds from football-data.co.uk (wekelijkse drempel)
+        continue-on-error: true
+        run: node scripts/build-market-odds.js
       - name: Build compact match store
         run: node scripts/build-match-store.js
       - name: Build club analysis
@@ -61,7 +67,7 @@ jobs:
         run: node scripts/model-report.js
       - name: Commit match store and reports
         run: |
-          git add data/match-store.json data/match-index.json monitor/club-analysis.md monitor/club-analysis.json monitor/model-report.json
+          git add data/match-store.json data/match-index.json data/market-odds.json monitor/club-analysis.md monitor/club-analysis.json monitor/model-report.json
           if git diff --cached --quiet; then
             echo "Geen wijzigingen in de match-store of rapporten."
           else
