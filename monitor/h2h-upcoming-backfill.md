@@ -1,36 +1,27 @@
 # Upcoming H2H Backfill
 
-Laatst bijgewerkt: 2026-10-27T00:08:44.033Z
-Gecontroleerd: 50
+Laatst bijgewerkt: 2026-10-27T00:27:39.641Z
+Gecontroleerd: 11
 Gevuld: 0
-Geen directe H2H: 50
+Geen directe H2H: 11
 Errors: 0
 
-Openstaand na deze batch: 11
+Openstaand na deze batch: 0
 
 ## Aanbeveling
-API-Football H2H is onafhankelijk van fixture-acceptatie ingeschakeld; 3/3 beperkte paarpogingen gedaan. Er staan nog 11 fixtures in de wachtrij.
+Geen directe H2H gevonden voor de gecontroleerde wedstrijden. Breid team-ID mapping/providerdekking uit of accepteer expliciet no-direct-history voor deze fixtures.
 
 ## Gevuld
 
 ## Geen Directe H2H
-- 2026-10-30: Arminia Bielefeld - TSV Eintracht Braunschweig (no_direct_history)
-- 2026-10-30: Nantes - Clermont Foot (no_direct_history)
-- 2026-10-30: Helmond Sport - FC Eindhoven (no_direct_history)
-- 2026-10-30: RKC Waalwijk - Almere City (rate_limited_locally)
-- 2026-10-30: Roda JC Kerkrade - Jong AZ (rate_limited_locally)
-- 2026-10-31: Chelsea - Manchester United (rate_limited_locally)
-- 2026-10-31: Stade de Reims - Sochaux (rate_limited_locally)
-- 2026-10-31: MVV Maastricht - VVV-Venlo (rate_limited_locally)
-- 2026-11-01: Strasbourg - AJ Auxerre (rate_limited_locally)
-- 2026-11-02: Heracles Almelo - TOP Oss (rate_limited_locally)
-- 2026-11-02: Jong FC Utrecht - FC Dordrecht (rate_limited_locally)
-- 2026-11-03: Manchester United - AS Roma (rate_limited_locally)
-- 2026-11-03: Villarreal - Paris Saint-Germain (rate_limited_locally)
-- 2026-11-03: Bodø/Glimt - Lille (rate_limited_locally)
-- 2026-11-04: AEK Athens - Real Madrid (rate_limited_locally)
-- 2026-11-04: Cardiff City - West Ham United (rate_limited_locally)
-- 2026-11-04: Fenerbahce - Liverpool (rate_limited_locally)
-- 2026-11-04: Bristol City - Wolverhampton Wanderers (rate_limited_locally)
-- 2026-11-04: Borussia Dortmund - Real Betis (rate_limited_locally)
-- 2026-11-04: FC Porto - Napoli (rate_limited_locally)
+- 2026-11-06: AS Nancy Lorraine - Sochaux (no_direct_history)
+- 2026-11-06: FC Dordrecht - NAC Breda (no_direct_history)
+- 2026-11-08: Vitesse - De Graafschap (no_direct_history)
+- 2026-11-08: Heerenveen - Feyenoord Rotterdam (rate_limited_locally)
+- 2026-11-08: Brighton & Hove Albion - Brentford (rate_limited_locally)
+- 2026-11-08: FC Cologne - Bayer Leverkusen (rate_limited_locally)
+- 2026-11-08: FC Twente - Ajax Amsterdam (rate_limited_locally)
+- 2026-11-08: Ipswich Town - AFC Bournemouth (rate_limited_locally)
+- 2026-11-14: NAC Breda - FC Emmen (rate_limited_locally)
+- 2026-11-14: Almere City - Helmond Sport (rate_limited_locally)
+- 2026-11-14: De Graafschap - TOP Oss (rate_limited_locally)
