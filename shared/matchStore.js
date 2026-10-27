@@ -239,7 +239,7 @@ export function buildMatchStore({ dayMatches = [], reviews = {}, marketOdds = nu
   }
   for (const [key, review] of Object.entries(reviews || {})) {
     const record = recordFromReview(review);
-    if (record) upsert(recordIdentity(review, record), true);
+    if (record) upsert(recordIdentity(review, record), record, true);
   }
 
   const matches = {};
