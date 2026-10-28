@@ -1,9 +1,6 @@
 import { describe, expect, it } from "vitest";
-import {
-  buildMatchIndex,
-  buildPredictionContext,
-  sanitizeMatchStore,
-} from "../../shared/matchStore.js";
+import { buildMatchIndex, buildPredictionContext } from "../../shared/matchStore.js";
+import { sanitizeMatchStore } from "../../shared/matchStoreIntegrity.js";
 
 const store = {
   schema: "match-store-v2",

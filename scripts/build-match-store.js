@@ -11,9 +11,9 @@ import {
   buildMatchIndex,
   buildMatchStore,
   collectMatchSources,
-  sanitizeMatchStore,
   sourceFingerprint,
 } from "../shared/matchStore.js";
+import { sanitizeMatchStore } from "../shared/matchStoreIntegrity.js";
 
 const dataDir = path.join(process.cwd(), "data");
 const { dayMatches, reviews, marketOdds } = collectMatchSources(dataDir);
