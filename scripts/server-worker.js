@@ -89,6 +89,7 @@ import { fetchR2H2HProfile, fetchR2LineupSummary, fetchR2OddsSnapshot } from "./
 import { buildH2HAgentProfile } from "./worker/h2h.js";
 import { buildTwoLegAggregate, deriveH2HWinnerId, findOrientedPreviousLeg } from "./worker/two-leg.js";
 import { mergePersistedTeamFormCache } from "./worker/local-team-form-history.js";
+import { loadRemoteMatchStoreIndex, matchStoreFormProfile } from "./worker/match-store-history.js";
 import { selectFreshestSquadProfile } from "./worker/squad-cache-policy.js";
 import { summarizeGoalTiming } from "./worker/goal-timing.js";
 import { buildLiveGoalEventsFromMatch } from "./worker/live-goal-events.js";
@@ -11030,6 +11031,23 @@ async function main() {
       `(R2 ${store.snapshotLedger.r2Available ? "geladen" : store.snapshotLedger.r2Configured ? "leeg/onbereikbaar" : "niet geconfigureerd"})`
   );
 
+  // Gepubliceerde compacte wedstrijdopslag uit R2: dezelfde historie als de
+  // analyses in de repo. Alleen de samenvatting gaat mee de store in; de index
+  // (een Map) blijft in dit proces zodat server_data.json compact blijft.
+  const matchStoreRemote = await loadRemoteMatchStoreIndex({ now: Date.now() });
+  store.matchStoreRemote = {
+    hydratedAt: new Date().toISOString(),
+    loaded: matchStoreRemote.loaded,
+    matches: matchStoreRemote.matches,
+    teams: matchStoreRemote.teams,
+    publishedAt: matchStoreRemote.publishedAt,
+    sourceFingerprint: matchStoreRemote.sourceFingerprint,
+    reason: matchStoreRemote.reason,
+  };
+  console.log(
+    `[worker] match-store (R2): ${matchStoreRemote.loaded ? `${matchStoreRemote.matches} wedstrijden, ${matchStoreRemote.teams} clubs, gepubliceerd ${matchStoreRemote.publishedAt || "onbekend"}` : `niet geladen (${matchStoreRemote.reason || "onbekend"})`}`
+  );
+
   const now = Date.now();
   const today = toAmsterdamDateKey(new Date());
   const yesterday = addDaysToDateKey(today, -1);
@@ -11702,6 +11720,12 @@ async function main() {
       }
       if (homeSportsDbForm) homeRecent = mergeTeamFormWithExternalRecent(homeRecent, homeSportsDbForm, "thesportsdb-recent-results");
       if (awaySportsDbForm) awayRecent = mergeTeamFormWithExternalRecent(awayRecent, awaySportsDbForm, "thesportsdb-recent-results");
+      // Zelfde historie als de analyses: afgeronde duels uit de gepubliceerde
+      // match-store, pas na de providerbronnen zodat verse providerdata leidend blijft.
+      const homeMatchStoreForm = matchStoreFormProfile(matchStoreRemote.index, homeName, { now });
+      const awayMatchStoreForm = matchStoreFormProfile(matchStoreRemote.index, awayName, { now });
+      if (homeMatchStoreForm) homeRecent = mergeTeamFormWithExternalRecent(homeRecent, homeMatchStoreForm, "match-store-r2");
+      if (awayMatchStoreForm) awayRecent = mergeTeamFormWithExternalRecent(awayRecent, awayMatchStoreForm, "match-store-r2");
       if (homeId && (homeRecent?.recentMatches || []).length > (store.teamStats[homeId]?.recentMatches || []).length) {
         store.teamStats[homeId] = homeRecent;
         store.teamStatsUpdated[homeId] = now;
