@@ -27,10 +27,12 @@ on:
       - "shared/matchStoreIntegrity.js"
       - "shared/matchStoreRemote.js"
       - "shared/ensembleWeightPolicy.js"
+      - "shared/ensembleWeightFit.js"
       - "shared/modelHealth.js"
       - "scripts/build-match-store.js"
       - "scripts/verify-match-store.js"
       - "scripts/publish-match-store.js"
+      - "scripts/fit-market-weight.js"
       - "scripts/build-market-odds.js"
       - "scripts/model-report.js"
       - "scripts/club-analysis.js"
@@ -83,6 +85,11 @@ jobs:
         run: node scripts/club-analysis.js
       - name: Build model report
         run: node scripts/model-report.js
+      # Meet het marktgewicht op de eigen historie (chronologisch train/holdout).
+      # Geen poort: zonder genoeg gekoppelde duels slaat de meting over.
+      - name: Fit market weight on own history
+        continue-on-error: true
+        run: node scripts/fit-market-weight.js
       # Walk-forward meting van de clubsterktes plus een sweep van de
       # Dixon-Coles-rho. Geen poort: een slechtere meting blokkeert de opslag niet.
       - name: Backtest strength model and rho sweep
@@ -96,6 +103,7 @@ jobs:
       - name: Commit match store and reports
         run: |
           git add data/match-store.json data/match-index.json data/market-odds.json monitor/club-analysis.md monitor/club-analysis.json monitor/model-report.json monitor/match-store-publish.json
+          if [ -f monitor/market-weight-fit.json ]; then git add monitor/market-weight-fit.json; fi
           # De backtest schrijft alleen bij genoeg wedstrijden een bestand.
           if [ -f monitor/strength-backtest.json ]; then git add monitor/strength-backtest.json; fi
           if git diff --cached --quiet; then
