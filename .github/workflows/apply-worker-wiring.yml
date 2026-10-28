@@ -1,0 +1,40 @@
+name: Apply worker match-store wiring
+
+# Eenmalige hulp: brengt de match-store-koppeling aan in scripts/server-worker.js
+# op de tak uit de dispatch-ref en commit het resultaat. Na gebruik worden deze
+# workflow en scripts/apply-worker-match-store-wiring.js verwijderd.
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: apply-worker-wiring
+  cancel-in-progress: false
+
+jobs:
+  apply:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v5
+        with:
+          ref: perf/worker-match-store-lezing
+      - uses: actions/setup-node@v5
+        with:
+          node-version: 22
+      - name: Apply wiring to server-worker.js
+        run: node scripts/apply-worker-match-store-wiring.js
+      - name: Commit wiring
+        run: |
+          git add scripts/server-worker.js
+          if git diff --cached --quiet; then
+            echo "Geen wijzigingen; de koppeling was al toegepast."
+          else
+            git config user.name "github-actions[bot]"
+            git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+            git commit -m "Koppel server-worker aan de gepubliceerde match-store"
+            git push
+          fi
