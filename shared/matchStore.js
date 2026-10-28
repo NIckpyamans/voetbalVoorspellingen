@@ -40,8 +40,9 @@ function parseScore(match = {}) {
 
 // Compacte velden: d=datum, lg=competitie, h/thuis, a=uit, hs/as=doelpunten,
 // po=voorspelde uitkomst, ao=werkelijke uitkomst, cf=confidence, hit=1X2 goed,
-// ex=exacte score goed, ge=doelpuntfout, mp=gede-vigde marktkansen, y=uitkomst,
-// ll/bs=modelmaten, mk/mh=marktfavoriet en of die uitkwam.
+// ex=exacte score goed, ge=doelpuntfout, mp=gede-vigde marktkansen,
+// ll/bs=modelmaten, mk/mh=marktfavoriet en of die uitkwam. De werkelijke
+// uitkomst staat in ao; er is geen tweede uitkomstveld.
 //
 // Alleen afgeronde wedstrijden horen in de historische opslag. Dagbestanden
 // bevatten ook LIVE/HT/NS-duels met een voorlopige stand; zonder deze statuscheck
@@ -101,11 +102,8 @@ export function recordFromReview(review = {}) {
     dq.f = freshness.f;
   }
   if (Object.keys(dq).length) record.dq = dq;
-  // Uitkomst plus de modelmaten van diezelfde wedstrijd. Samen met mp
-  // (marktkansen) maakt dat een kansniveau-vergelijking model tegen markt
-  // mogelijk op precies dezelfde duels.
-  const actualOutcome = String(review.actualOutcome || "").toUpperCase();
-  if (actualOutcome === "H" || actualOutcome === "D" || actualOutcome === "A") record.y = actualOutcome;
+  // Modelmaten van diezelfde wedstrijd. Samen met mp (marktkansen) maakt dat een
+  // kansniveau-vergelijking model tegen markt mogelijk op precies dezelfde duels.
   if (Number.isFinite(Number(review.logLoss))) record.ll = round3(review.logLoss);
   if (Number.isFinite(Number(review.brierScore))) record.bs = round3(review.brierScore);
   // Marktbaseline: de marktfavoriet (laagste odd, invariant onder de-vig) en of
@@ -156,7 +154,6 @@ function applyMarketOddsFallback(record, marketOdds) {
   // zijn de sterkste benchmark die er gratis is.
   const market = devigThreeWay(odds, "power");
   if (market) record.mp = market;
-  if (record.ao) record.y = record.ao;
 }
 
 function recordSignature(record) {
