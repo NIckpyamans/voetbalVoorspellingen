@@ -101,9 +101,9 @@ export function recordFromReview(review = {}) {
     dq.f = freshness.f;
   }
   if (Object.keys(dq).length) record.dq = dq;
-  // Uitkomst als compacte index (0=H, 1=D, 2=A) plus de modelmaten van diezelfde
-  // wedstrijd. Samen met mp (marktkansen) maakt dat een kansniveau-vergelijking
-  // model tegen markt mogelijk op precies dezelfde duels.
+  // Uitkomst plus de modelmaten van diezelfde wedstrijd. Samen met mp
+  // (marktkansen) maakt dat een kansniveau-vergelijking model tegen markt
+  // mogelijk op precies dezelfde duels.
   const actualOutcome = String(review.actualOutcome || "").toUpperCase();
   if (actualOutcome === "H" || actualOutcome === "D" || actualOutcome === "A") record.y = actualOutcome;
   if (Number.isFinite(Number(review.logLoss))) record.ll = round3(review.logLoss);
@@ -170,6 +170,21 @@ function recordSignature(record) {
 
 function recordIdentity(match, record) {
   return String(match?.id || match?.matchId || `${record.d}-${normalizeTeamName(record.h)}-${normalizeTeamName(record.a)}`);
+}
+
+function sourceFiles(dataDir) {
+  const files = [];
+  const daysDir = path.join(dataDir, "days");
+  if (fs.existsSync(daysDir)) {
+    for (const name of fs.readdirSync(daysDir)) {
+      if (/^\d{4}-\d{2}-\d{2}\.json$/.test(name)) files.push(path.join(daysDir, name));
+    }
+  }
+  for (const name of ["history-summary.json", "market-odds.json"]) {
+    const file = path.join(dataDir, name);
+    if (fs.existsSync(file)) files.push(file);
+  }
+  return files;
 }
 
 // Verzamelt bronnen uit data/days/*.json en data/history-summary.json.
@@ -247,6 +262,8 @@ export function sourceFingerprint(dataDir) {
 // Laadt de voorgegenereerde store, maar herbouwt die wanneer de inhoud van de
 // brondata niet meer overeenkomt met de hash die bij de store is opgeslagen.
 // Zo raakt de analyse nooit verouderd en wordt er niets onnodig geparst.
+// Een store van voor deze wijziging heeft nog geen src; die valt terug op de
+// oude mtime-controle zodat de overstap geleidelijk gaat.
 // Retourneert altijd { store, index, fresh, sourceFingerprint }.
 export function loadMatchStore(dataDir) {
   const storeFile = path.join(dataDir, "match-store.json");
@@ -257,8 +274,24 @@ export function loadMatchStore(dataDir) {
     try {
       const store = JSON.parse(fs.readFileSync(storeFile, "utf8"));
       const index = JSON.parse(fs.readFileSync(indexFile, "utf8"));
-      if (store?.matches && index?.byTeam && store.src && store.src === fingerprint) {
-        return { store, index, fresh: true, sourceFingerprint: fingerprint };
+      if (store?.matches && index?.byTeam) {
+        if (store.src) {
+          if (store.src === fingerprint) {
+            return { store, index, fresh: true, sourceFingerprint: fingerprint };
+          }
+        } else {
+          const sourcesMtime = sourceFiles(dataDir).reduce(
+            (latest, filePath) => Math.max(latest, fs.statSync(filePath).mtimeMs),
+            0,
+          );
+          const generatedMtime = Math.min(
+            fs.statSync(storeFile).mtimeMs,
+            fs.statSync(indexFile).mtimeMs,
+          );
+          if (generatedMtime > sourcesMtime) {
+            return { store, index, fresh: true, sourceFingerprint: fingerprint };
+          }
+        }
       }
     } catch {
       // Corrupte of verouderde gegenereerde bestanden: hieronder opnieuw opbouwen.
