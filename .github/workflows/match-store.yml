@@ -1,8 +1,7 @@
 name: Match store
 
 # Bouwt de compacte wedstrijdopslag (data/match-store.json + match-index.json) en
-# de vaste rapporten (monitor/club-analysis.*, monitor/model-report.json,
-# monitor/strength-backtest.json).
+# de vaste rapporten (monitor/club-analysis.*, monitor/model-report.json).
 # De store wordt gevoed vanuit de runtime-publicatie: de workflows die data/days
 # en reviews produceren schrijven uitsluitend naar Neon/R2 (geen data/-commits),
 # dus de triggers hieronder volgen die workflows plus een dagelijkse vangnetronde.
@@ -74,12 +73,16 @@ jobs:
         run: node scripts/club-analysis.js
       - name: Build model report
         run: node scripts/model-report.js
-      - name: Backtest club strength against baseline
+      # Walk-forward meting van de clubsterktes plus een sweep van de
+      # Dixon-Coles-rho. Geen poort: een slechtere meting blokkeert de opslag niet.
+      - name: Backtest strength model and rho sweep
         continue-on-error: true
         run: node scripts/backtest-strength-model.js
       - name: Commit match store and reports
         run: |
-          git add data/match-store.json data/match-index.json data/market-odds.json monitor/club-analysis.md monitor/club-analysis.json monitor/model-report.json monitor/strength-backtest.json
+          git add data/match-store.json data/match-index.json data/market-odds.json monitor/club-analysis.md monitor/club-analysis.json monitor/model-report.json
+          # De backtest schrijft alleen bij genoeg wedstrijden een bestand.
+          if [ -f monitor/strength-backtest.json ]; then git add monitor/strength-backtest.json; fi
           if git diff --cached --quiet; then
             echo "Geen wijzigingen in de match-store of rapporten."
           else
