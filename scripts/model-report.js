@@ -9,7 +9,8 @@
 
 import fs from "node:fs";
 import path from "node:path";
-import { loadMatchStore, sanitizeMatchStore } from "../shared/matchStore.js";
+import { loadMatchStore } from "../shared/matchStore.js";
+import { sanitizeMatchStore } from "../shared/matchStoreIntegrity.js";
 import {
   calibrationReport,
   dataQualityReport,
@@ -27,8 +28,8 @@ const dataDir = path.join(process.cwd(), "data");
 const monitorDir = path.join(process.cwd(), "monitor");
 
 const { store, fresh, sourceFingerprint } = loadMatchStore(dataDir);
-// De integriteitscontrole woont in shared/matchStore.js: één implementatie, zodat
-// de build en de rapportage niet uit elkaar kunnen lopen.
+// Dezelfde integriteitscontrole als de build (shared/matchStoreIntegrity.js),
+// zodat build en rapportage niet van mening verschillen over een geldig record.
 const records = Object.values(store.matches || {});
 
 let meta = {};
