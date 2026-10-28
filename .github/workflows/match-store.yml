@@ -18,9 +18,25 @@ on:
       - "data/days/**"
       - "data/history-summary.json"
       - "shared/matchStore.js"
-      - "scripts/build-match-store.js"
-      - "scripts/build-market-odds.js"
+      - "shared/modelMetrics.js"
+      - "shared/marketBenchmark.js"
       - "shared/marketOdds.js"
+      - "shared/clubStrength.js"
+      - "shared/calibrationFit.js"
+      - "shared/oddsFreshness.js"
+      - "shared/matchStoreIntegrity.js"
+      - "shared/matchStoreRemote.js"
+      - "shared/ensembleWeightPolicy.js"
+      - "shared/ensembleWeightFit.js"
+      - "shared/modelHealth.js"
+      - "scripts/build-match-store.js"
+      - "scripts/verify-match-store.js"
+      - "scripts/publish-match-store.js"
+      - "scripts/fit-market-weight.js"
+      - "scripts/build-market-odds.js"
+      - "scripts/model-report.js"
+      - "scripts/club-analysis.js"
+      - "scripts/backtest-strength-model.js"
       - "data/market-odds.json"
 
 permissions:
@@ -61,13 +77,35 @@ jobs:
         run: node scripts/build-market-odds.js
       - name: Build compact match store
         run: node scripts/build-match-store.js
+      # Poort: de opslag moet bij de brondata horen en schoon zijn. Anders
+      # rapporteren de analyses over een historie die niet meer bestaat.
+      - name: Verify compact match store against its sources
+        run: node scripts/verify-match-store.js
       - name: Build club analysis
         run: node scripts/club-analysis.js
       - name: Build model report
         run: node scripts/model-report.js
+      # Meet het marktgewicht op de eigen historie (chronologisch train/holdout).
+      # Geen poort: zonder genoeg gekoppelde duels slaat de meting over.
+      - name: Fit market weight on own history
+        continue-on-error: true
+        run: node scripts/fit-market-weight.js
+      # Walk-forward meting van de clubsterktes plus een sweep van de
+      # Dixon-Coles-rho. Geen poort: een slechtere meting blokkeert de opslag niet.
+      - name: Backtest strength model and rho sweep
+        continue-on-error: true
+        run: node scripts/backtest-strength-model.js
+      # Dezelfde historie die de analyses gebruiken, nu ook als R2-object voor
+      # de live worker. Zonder R2-secrets slaat het script over.
+      - name: Publish compact match store to R2
+        continue-on-error: true
+        run: node scripts/publish-match-store.js
       - name: Commit match store and reports
         run: |
-          git add data/match-store.json data/match-index.json data/market-odds.json monitor/club-analysis.md monitor/club-analysis.json monitor/model-report.json
+          git add data/match-store.json data/match-index.json data/market-odds.json monitor/club-analysis.md monitor/club-analysis.json monitor/model-report.json monitor/match-store-publish.json
+          if [ -f monitor/market-weight-fit.json ]; then git add monitor/market-weight-fit.json; fi
+          # De backtest schrijft alleen bij genoeg wedstrijden een bestand.
+          if [ -f monitor/strength-backtest.json ]; then git add monitor/strength-backtest.json; fi
           if git diff --cached --quiet; then
             echo "Geen wijzigingen in de match-store of rapporten."
           else

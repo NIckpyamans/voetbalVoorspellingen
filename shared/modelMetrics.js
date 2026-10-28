@@ -1,6 +1,9 @@
 // Modelmetingen over de compacte wedstrijdopslag. Alles hier is puur en werkt
-// op records uit shared/matchStore.js (d/dq/cf/hit/ex/ge/mk/mh), zodat de
-// metingen lokaal, in CI en in workflows identiek rekenen.
+// op records uit shared/matchStore.js (d/dq/cf/hit/ex/ge/mk/mh/mp/ao/ll/bs), zodat
+// de metingen lokaal, in CI en in workflows identiek rekenen.
+
+import { selectCalibration } from "./calibrationFit.js";
+import { benchmarkModelVsMarket } from "./marketBenchmark.js";
 
 function pct(part, total) {
   return total > 0 ? Math.round((part / total) * 1000) / 10 : 0;
@@ -92,7 +95,7 @@ export function calibrationReport(records = [], options = {}) {
 
 // 2. Tijdsgewijze validatie: toets de prestaties over opeenvolgende vensters, zodat
 // gewichtswijzigingen (docs/data-weighting-policy.md) op hun werking in de tijd
-// beoordeeld kunnen worden in plaats van op één totaalbeeld.
+// beoordeeld kunnen worden in plaats van op een totaalbeeld.
 export function temporalReport(records = [], options = {}) {
   const window = options.window === "week" ? "week" : "month";
   const periodKey = (date) => {
@@ -151,6 +154,7 @@ export function temporalReport(records = [], options = {}) {
 // 3. Marktbaseline per competitie: model-hitrate tegenover de marktfavoriet uit de
 // pre-kickoff odds (oddsAtPrediction). De favoriet is de laagste odd; die keuze is
 // invariant onder de-vig, dus de vergelijking is eerlijk zonder aparte de-vig-stap.
+// Sinds deze ronde ook op kansniveau (logloss/Brier/RPS) via shared/marketBenchmark.js.
 export function marketBaselineReport(records = [], options = {}) {
   const minLeagueSample = Math.max(1, Number(options.minLeagueSample || 30));
   const leagueState = new Map();
@@ -187,6 +191,23 @@ export function marketBaselineReport(records = [], options = {}) {
       edgePct: Math.round(((entry.modelHit - entry.marketHit) / entry.n) * 1000) / 10,
     }))
     .sort((left, right) => right.n - left.n);
+
+  // Kansniveau: de favoriet-hitrate hierboven zegt niet hoe zeker de markt was.
+  // Vergelijk daarom de volledige verdeling via logloss, Brier en RPS op precies
+  // dezelfde wedstrijden (mp = gede-vigde marktkansen, ll/bs = modelmaten, ao =
+  // werkelijke uitkomst).
+  const benchmarkRows = [];
+  for (const record of records || []) {
+    if (!Array.isArray(record.mp) || record.mp.length !== 3) continue;
+    if (!record.ao) continue;
+    benchmarkRows.push({
+      lg: leagueKey(record),
+      mp: record.mp,
+      y: record.ao,
+      ll: record.ll,
+      bs: record.bs,
+    });
+  }
   return {
     n,
     nPreMatch,
@@ -194,12 +215,13 @@ export function marketBaselineReport(records = [], options = {}) {
     modelHitPct: pct(modelHit, n),
     marketHitPct: pct(marketHit, n),
     edgePct: n ? Math.round(((modelHit - marketHit) / n) * 1000) / 10 : null,
+    probability: benchmarkModelVsMarket(benchmarkRows, { minLeagueSample }),
     leagues,
   };
 }
 
-// 5. Datakwaliteit per voorspelling: timestamp-dekking van de odds en de
-// odds-status (dq uit recordFromReview), per competitie samengevat.
+// 5. Datakwaliteit per voorspelling: timestamp-dekking van de odds, odds-status en
+// odds-versheid (dq uit recordFromReview), per competitie samengevat.
 export function dataQualityReport(records = [], options = {}) {
   const minLeagueSample = Math.max(1, Number(options.minLeagueSample || 1));
   const leagueState = new Map();
@@ -207,13 +229,17 @@ export function dataQualityReport(records = [], options = {}) {
   let tsSum = 0;
   let tsN = 0;
   let oddsAvailable = 0;
+  let ageSum = 0;
+  let ageN = 0;
+  // Versheidsklassen (shared/oddsFreshness.js): fresh/recent/stale/old/unknown.
+  const freshness = { fresh: 0, recent: 0, stale: 0, old: 0, unknown: 0 };
   for (const record of records || []) {
     const dq = record.dq;
     if (!dq) continue;
     withDq += 1;
     const league = leagueKey(record);
     if (!leagueState.has(league)) {
-      leagueState.set(league, { league, n: 0, tsSum: 0, tsN: 0, oddsAvailable: 0 });
+      leagueState.set(league, { league, n: 0, tsSum: 0, tsN: 0, oddsAvailable: 0, ageSum: 0, ageN: 0 });
     }
     const entry = leagueState.get(league);
     entry.n += 1;
@@ -227,11 +253,21 @@ export function dataQualityReport(records = [], options = {}) {
       oddsAvailable += 1;
       entry.oddsAvailable += 1;
     }
+    const cls = freshness[dq.f] !== undefined ? dq.f : "unknown";
+    freshness[cls] += 1;
+    if (Number.isFinite(Number(dq.h))) {
+      ageSum += Number(dq.h);
+      ageN += 1;
+      entry.ageSum += Number(dq.h);
+      entry.ageN += 1;
+    }
   }
   return {
     withDq,
     avgTimestampCoverage: tsN ? Math.round((tsSum / tsN) * 1000) / 1000 : null,
     oddsAvailablePct: pct(oddsAvailable, withDq),
+    freshness,
+    avgOddsAgeHours: ageN ? Math.round((ageSum / ageN) * 10) / 10 : null,
     leagues: [...leagueState.values()]
       .filter((entry) => entry.n >= minLeagueSample)
       .map((entry) => ({
@@ -241,6 +277,7 @@ export function dataQualityReport(records = [], options = {}) {
           ? Math.round((entry.tsSum / entry.tsN) * 1000) / 1000
           : null,
         oddsAvailablePct: pct(entry.oddsAvailable, entry.n),
+        avgOddsAgeHours: entry.ageN ? Math.round((entry.ageSum / entry.ageN) * 10) / 10 : null,
       }))
       .sort((left, right) => right.n - left.n),
   };
@@ -281,6 +318,7 @@ export function sourceHealthReport(meta = {}) {
 export function allMetrics(records = [], meta = {}, options = {}) {
   return {
     calibration: calibrationReport(records, options),
+    calibrationSelection: selectCalibration(records, options),
     temporal: temporalReport(records, options),
     marketBaseline: marketBaselineReport(records, options),
     dataQuality: dataQualityReport(records, options),

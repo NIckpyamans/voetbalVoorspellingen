@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest";
 import {
+  buildEloOutcomeModel,
   buildOutcomeEnsemble,
   buildMarketConsensus,
   buildSquadStrengthOutcomeModel,
@@ -106,7 +107,24 @@ describe("independent 1X2 outcome ensemble", () => {
     });
     // De club-rating/Elo-heuristiek weegt lichter dan het doelpuntenmodel.
     expect(requested.club_elo).toBeLessThan(requested.dixon_coles_poisson);
-    expect(result.version).toBe("outcome-ensemble-v3");
+    expect(result.version).toBe("outcome-ensemble-v4");
+  });
+
+  it("geeft een oudere marktquotering minder gewicht dan verse odds", () => {
+    const base = {
+      poisson: { homeProb: 0.5, drawProb: 0.28, awayProb: 0.22 },
+      heuristic: { homeProb: 0.55, drawProb: 0.25, awayProb: 0.2 },
+      kickoff: "2026-08-27T19:00:00Z",
+    };
+    const quote = { home: 1.7, draw: 3.8, away: 4.6 };
+    const vers = buildOutcomeEnsemble({ ...base, oddsAtPrediction: { ...quote, capturedAt: "2026-08-27T17:00:00Z" } });
+    const oud = buildOutcomeEnsemble({ ...base, oddsAtPrediction: { ...quote, capturedAt: "2026-08-25T17:00:00Z" } });
+    expect(vers.market.freshness).toBe("fresh");
+    expect(oud.market.freshness).toBe("stale");
+    expect(oud.market.weightMultiplier).toBeLessThan(1);
+    const weightOf = (result) => result.components.find((item) => item.key === "de_vig_market").requestedWeight;
+    expect(weightOf(oud)).toBeLessThan(weightOf(vers));
+    expect(Object.values(oud.probabilities).reduce((sum, value) => sum + value, 0)).toBeCloseTo(1, 3);
   });
 
   it("reports honest top-3 and top-5 score coverage", () => {
@@ -114,5 +132,30 @@ describe("independent 1X2 outcome ensemble", () => {
     expect(coverage.top1).toBe(0.14);
     expect(coverage.top3).toBe(0.39);
     expect(coverage.top5).toBe(0.57);
+  });
+
+  it("tempert de Elo-component voor interlands via club_elo_scale", () => {
+    const strong = buildEloOutcomeModel(1900, 1500, { scale: 1 });
+    const tempered = buildEloOutcomeModel(1900, 1500, { scale: 0.35 });
+    expect(strong.homeProb - strong.awayProb).toBeGreaterThan(tempered.homeProb - tempered.awayProb);
+  });
+
+  it("trekt de kansen naar de marktconsensus wanneer de modellen het oneens zijn", () => {
+    const inputs = {
+      poisson: { homeProb: 0.8, drawProb: 0.1, awayProb: 0.1 },
+      heuristic: { homeProb: 0.1, drawProb: 0.1, awayProb: 0.8 },
+      monteCarlo: { homeProb: 0.1, drawProb: 0.15, awayProb: 0.75 },
+      oddsAtPrediction: { home: 1.6, draw: 3.9, away: 5.5, capturedAt: "2026-08-27T17:00:00Z" },
+      kickoff: "2026-08-27T19:00:00Z",
+    };
+    const result = buildOutcomeEnsemble(inputs);
+    expect(result.agreement).toBeLessThan(0.55);
+    expect(result.marketShrink).toBeGreaterThan(0);
+    expect(result.marketShrink).toBeLessThanOrEqual(0.25);
+    expect(
+      result.probabilities.homeProb + result.probabilities.drawProb + result.probabilities.awayProb,
+    ).toBeCloseTo(1, 3);
+    const withoutMarket = buildOutcomeEnsemble({ ...inputs, oddsAtPrediction: null });
+    expect(withoutMarket.marketShrink).toBe(0);
   });
 });

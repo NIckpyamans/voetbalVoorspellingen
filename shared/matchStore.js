@@ -4,12 +4,19 @@
 // historische informatie nodig heeft. De kernfuncties zijn puur; alleen
 // collectMatchSources leest van schijf.
 
+import crypto from "node:crypto";
 import fs from "node:fs";
 import path from "node:path";
 import { canonicalDedupeTeam } from "./matchNormalization.js";
+import { devigThreeWay } from "./marketBenchmark.js";
+import { compactOddsFreshness } from "./oddsFreshness.js";
 import { favoriteFromOdds, marketOddsKey } from "./marketOdds.js";
 
-export const MATCH_STORE_SCHEMA = "match-store-v1";
+export const MATCH_STORE_SCHEMA = "match-store-v2";
+
+function round3(value) {
+  return Math.round(Number(value) * 1000) / 1000;
+}
 
 export function normalizeTeamName(value) {
   return String(value || "").trim().toLowerCase().replace(/\s+/g, " ");
@@ -17,7 +24,7 @@ export function normalizeTeamName(value) {
 
 // Clubsleutel via dezelfde canonicalisatie als de rest van de app
 // (shared/matchNormalization.js): "FC Utrecht"/"Utrecht", "NEC"/"NEC Nijmegen"
-// en provider-varianten komen zo in één indexpost terecht, waardoor een lookup
+// en provider-varianten komen zo in een indexpost terecht, waardoor een lookup
 // meer historie vindt dan een simpele kleine-letter-sleutel.
 export function clubKey(value) {
   return canonicalDedupeTeam(value) || normalizeTeamName(value);
@@ -33,7 +40,9 @@ function parseScore(match = {}) {
 
 // Compacte velden: d=datum, lg=competitie, h/thuis, a=uit, hs/as=doelpunten,
 // po=voorspelde uitkomst, ao=werkelijke uitkomst, cf=confidence, hit=1X2 goed,
-// ex=exacte score goed, ge=doelpuntfout.
+// ex=exacte score goed, ge=doelpuntfout, mp=gede-vigde marktkansen,
+// ll/bs=modelmaten, mk/mh=marktfavoriet en of die uitkwam. De werkelijke
+// uitkomst staat in ao; er is geen tweede uitkomstveld.
 //
 // Alleen afgeronde wedstrijden horen in de historische opslag. Dagbestanden
 // bevatten ook LIVE/HT/NS-duels met een voorlopige stand; zonder deze statuscheck
@@ -81,9 +90,24 @@ export function recordFromReview(review = {}) {
   const timestampCoverage = Number(review.featureSourceMetadata?.coverage?.timestampCoverage);
   if (Number.isFinite(timestampCoverage)) dq.ts = Math.round(timestampCoverage * 1000) / 1000;
   if (review.oddsStatus) dq.od = String(review.oddsStatus);
+  // Odds-versheid: hoeveel uur voor aftrap zijn de odds vastgelegd? Zo kan de
+  // analyse oude odds niet als even sterk signaal behandelen als verse.
+  const kickoffValue = review.kickoff || review.kickoffAt || review.matchKickoff || null;
+  const oddsCapturedAt = review.oddsAtPrediction?.capturedAt
+    || review.oddsAtPrediction?.lastUpdated
+    || null;
+  const freshness = compactOddsFreshness(oddsCapturedAt, kickoffValue);
+  if (freshness) {
+    dq.h = freshness.h;
+    dq.f = freshness.f;
+  }
   if (Object.keys(dq).length) record.dq = dq;
-  // Marktbaseline: de marktfavoriet (laagste odd — invariant onder de-vig) en
-  // of die uitkwam, compact naast de modelbeoordeling.
+  // Modelmaten van diezelfde wedstrijd. Samen met mp (marktkansen) maakt dat een
+  // kansniveau-vergelijking model tegen markt mogelijk op precies dezelfde duels.
+  if (Number.isFinite(Number(review.logLoss))) record.ll = round3(review.logLoss);
+  if (Number.isFinite(Number(review.brierScore))) record.bs = round3(review.brierScore);
+  // Marktbaseline: de marktfavoriet (laagste odd, invariant onder de-vig) en of
+  // die uitkwam, compact naast de modelbeoordeling.
   const odds = review.oddsAtPrediction;
   const decimalOdds = odds ? [Number(odds.home), Number(odds.draw), Number(odds.away)] : [];
   if (decimalOdds.length && decimalOdds.every((value) => Number.isFinite(value) && value > 1.01)) {
@@ -91,6 +115,14 @@ export function recordFromReview(review = {}) {
       .sort((left, right) => left[1] - right[1])[0][0];
     record.mk = favorite;
     if (review.actualOutcome) record.mh = favorite === review.actualOutcome;
+    // Gede-vigde marktkansen, alleen wanneer de odds aantoonbaar voor aftrap zijn
+    // vastgelegd. Zonder tijdstip geen mp: dan is de markt geen eerlijke basis.
+    const kickoffMs = Date.parse(String(kickoffValue || ""));
+    const capturedMs = Date.parse(String(oddsCapturedAt || ""));
+    if (Number.isFinite(kickoffMs) && Number.isFinite(capturedMs) && capturedMs < kickoffMs) {
+      const market = devigThreeWay(decimalOdds, "power");
+      if (market) record.mp = market;
+    }
   }
   return record;
 }
@@ -118,6 +150,10 @@ function applyMarketOddsFallback(record, marketOdds) {
   record.mk = favorite;
   record.mh = favorite === record.ao;
   record.mks = "fdc";
+  // Ook uit het marktbestand de volledige kansverdeling bewaren; closing odds
+  // zijn de sterkste benchmark die er gratis is.
+  const market = devigThreeWay(odds, "power");
+  if (market) record.mp = market;
 }
 
 function recordSignature(record) {
@@ -131,6 +167,21 @@ function recordSignature(record) {
 
 function recordIdentity(match, record) {
   return String(match?.id || match?.matchId || `${record.d}-${normalizeTeamName(record.h)}-${normalizeTeamName(record.a)}`);
+}
+
+function sourceFiles(dataDir) {
+  const files = [];
+  const daysDir = path.join(dataDir, "days");
+  if (fs.existsSync(daysDir)) {
+    for (const name of fs.readdirSync(daysDir)) {
+      if (/^\d{4}-\d{2}-\d{2}\.json$/.test(name)) files.push(path.join(daysDir, name));
+    }
+  }
+  for (const name of ["history-summary.json", "market-odds.json"]) {
+    const file = path.join(dataDir, name);
+    if (fs.existsSync(file)) files.push(file);
+  }
+  return files;
 }
 
 // Verzamelt bronnen uit data/days/*.json en data/history-summary.json.
@@ -170,56 +221,87 @@ export function collectMatchSources(dataDir) {
   return { dayMatches, reviews, marketOdds };
 }
 
-// Laadt de voorgegenereerde store, maar herbouwt die wanneer de brondata nieuwer
-// is dan de gegenereerde bestanden. Zo raakt de analyse nooit verouderd doordat
-// match-store.json een keer niet is bijgewerkt (of juist wel, maar achterhaald).
-// Retourneert altijd { store, index }, zodat consumers uniform de store- en
-// indexvorm krijgen.
+// Inhoudshash van alle bronbestanden. Bewust inhoud en niet mtime: na een
+// git-checkout hebben alle bestanden dezelfde mtime, waardoor een
+// mtime-vergelijking de store onnodig herbouwt (traag) of, bij een bron die
+// alleen is aangeraakt, onterecht als vers ziet.
+export function sourceFingerprint(dataDir) {
+  const hash = crypto.createHash("sha1");
+  const daysDir = path.join(dataDir, "days");
+  const names = [];
+  if (fs.existsSync(daysDir)) {
+    for (const name of fs.readdirSync(daysDir)) {
+      if (/^\d{4}-\d{2}-\d{2}\.json$/.test(name)) names.push(name);
+    }
+  }
+  names.sort();
+  for (const name of names) {
+    hash.update(name);
+    try {
+      hash.update(fs.readFileSync(path.join(daysDir, name)));
+    } catch {
+      // Onleesbaar bestand overslaan; de rest bepaalt de hash.
+    }
+  }
+  for (const name of ["history-summary.json", "market-odds.json"]) {
+    const file = path.join(dataDir, name);
+    if (!fs.existsSync(file)) continue;
+    hash.update(name);
+    try {
+      hash.update(fs.readFileSync(file));
+    } catch {
+      // Idem.
+    }
+  }
+  return hash.digest("hex").slice(0, 16);
+}
+
+// Laadt de voorgegenereerde store, maar herbouwt die wanneer de inhoud van de
+// brondata niet meer overeenkomt met de hash die bij de store is opgeslagen.
+// Zo raakt de analyse nooit verouderd en wordt er niets onnodig geparst.
+// Een store van voor deze wijziging heeft nog geen src; die valt terug op de
+// oude mtime-controle zodat de overstap geleidelijk gaat.
+// Retourneert altijd { store, index, fresh, sourceFingerprint }.
 export function loadMatchStore(dataDir) {
   const storeFile = path.join(dataDir, "match-store.json");
   const indexFile = path.join(dataDir, "match-index.json");
-  const sourceFiles = [];
-  const daysDir = path.join(dataDir, "days");
-  if (fs.existsSync(daysDir)) {
-    for (const name of fs.readdirSync(daysDir)) {
-      if (/^\d{4}-\d{2}-\d{2}\.json$/.test(name)) sourceFiles.push(path.join(daysDir, name));
-    }
-  }
-  const historyFile = path.join(dataDir, "history-summary.json");
-  if (fs.existsSync(historyFile)) sourceFiles.push(historyFile);
-  const marketOddsFile = path.join(dataDir, "market-odds.json");
-  if (fs.existsSync(marketOddsFile)) sourceFiles.push(marketOddsFile);
+  const fingerprint = sourceFingerprint(dataDir);
 
-  const sourcesMtime = sourceFiles.reduce(
-    (latest, filePath) => Math.max(latest, fs.statSync(filePath).mtimeMs),
-    0,
-  );
-  const generatedMtime = Math.min(
-    fs.existsSync(storeFile) ? fs.statSync(storeFile).mtimeMs : 0,
-    fs.existsSync(indexFile) ? fs.statSync(indexFile).mtimeMs : 0,
-  );
-  const fresh = fs.existsSync(storeFile)
-    && fs.existsSync(indexFile)
-    && generatedMtime > sourcesMtime;
-
-  if (fresh) {
+  if (fs.existsSync(storeFile) && fs.existsSync(indexFile)) {
     try {
-      return {
-        store: JSON.parse(fs.readFileSync(storeFile, "utf8")),
-        index: JSON.parse(fs.readFileSync(indexFile, "utf8")),
-      };
+      const store = JSON.parse(fs.readFileSync(storeFile, "utf8"));
+      const index = JSON.parse(fs.readFileSync(indexFile, "utf8"));
+      if (store?.matches && index?.byTeam) {
+        if (store.src) {
+          if (store.src === fingerprint) {
+            return { store, index, fresh: true, sourceFingerprint: fingerprint };
+          }
+        } else {
+          const sourcesMtime = sourceFiles(dataDir).reduce(
+            (latest, filePath) => Math.max(latest, fs.statSync(filePath).mtimeMs),
+            0,
+          );
+          const generatedMtime = Math.min(
+            fs.statSync(storeFile).mtimeMs,
+            fs.statSync(indexFile).mtimeMs,
+          );
+          if (generatedMtime > sourcesMtime) {
+            return { store, index, fresh: true, sourceFingerprint: fingerprint };
+          }
+        }
+      }
     } catch {
-      // Corrupte gegenereerde bestanden: hieronder opnieuw opbouwen.
+      // Corrupte of verouderde gegenereerde bestanden: hieronder opnieuw opbouwen.
     }
   }
   const { dayMatches, reviews, marketOdds } = collectMatchSources(dataDir);
-  const store = buildMatchStore({ dayMatches, reviews, marketOdds });
-  return { store, index: buildMatchIndex(store) };
+  const store = buildMatchStore({ dayMatches, reviews, marketOdds, sourceFingerprint: fingerprint });
+  return { store, index: buildMatchIndex(store), fresh: false, sourceFingerprint: fingerprint };
 }
 
 // Bouwt de store uit dagbestanden (dayMatches) en postMatchReviews. Wedstrijden
 // met dezelfde datum/clubs/uitslag onder verschillende ids worden samengevoegd.
-export function buildMatchStore({ dayMatches = [], reviews = {}, marketOdds = null } = {}) {
+export function buildMatchStore({ dayMatches = [], reviews = {}, marketOdds = null, sourceFingerprint = null } = {}) {
   const staged = new Map();
   // incomingWins: reviews dragen de gecontroleerde einduitslag en moeten een
   // eerdere (eventueel voorlopige) dagstand overschrijven.
@@ -256,7 +338,9 @@ export function buildMatchStore({ dayMatches = [], reviews = {}, marketOdds = nu
     bySignature.set(signature, id);
     matches[id] = record;
   }
-  return { schema: MATCH_STORE_SCHEMA, matches };
+  const store = { schema: MATCH_STORE_SCHEMA, matches };
+  if (sourceFingerprint) store.src = String(sourceFingerprint);
+  return store;
 }
 
 export function buildMatchIndex(store = {}) {
@@ -269,9 +353,9 @@ export function buildMatchIndex(store = {}) {
     const record = store.matches[id];
     if (!record) continue;
     for (const team of [record.h, record.a]) {
-      const key = clubKey(team);
-      if (!byTeam[key]) byTeam[key] = [];
-      byTeam[key].push(id);
+      const teamKey = clubKey(team);
+      if (!byTeam[teamKey]) byTeam[teamKey] = [];
+      byTeam[teamKey].push(id);
     }
     const pairKey = `${clubKey(record.h)}|${clubKey(record.a)}`;
     if (!byPair[pairKey]) byPair[pairKey] = [];
@@ -296,8 +380,8 @@ export function queryTeamMatches(store, index, teamName, options = {}) {
   const key = clubKey(teamName);
   const ids = index?.byTeam?.[key] || [];
   const results = [];
-  for (let i = ids.length - 1; i >= 0 && results.length < limit; i -= 1) {
-    const record = store.matches?.[ids[i]];
+  for (let position = ids.length - 1; position >= 0 && results.length < limit; position -= 1) {
+    const record = store.matches?.[ids[position]];
     if (!record) continue;
     if (before && record.d >= before) continue;
     if (venue === "home" && clubKey(record.h) !== key) continue;
@@ -316,8 +400,8 @@ export function queryPairMatches(store, index, homeTeamName, awayTeamName, optio
     `${clubKey(awayTeamName)}|${clubKey(homeTeamName)}`,
   ];
   const ids = new Set();
-  for (const key of keys) {
-    for (const id of index?.byPair?.[key] || []) ids.add(id);
+  for (const pairKey of keys) {
+    for (const id of index?.byPair?.[pairKey] || []) ids.add(id);
   }
   return [...ids]
     .map((id) => store.matches?.[id])
@@ -357,7 +441,7 @@ export function headToHeadSummary(store, index, homeTeamName, awayTeamName, opti
   };
 }
 
-// Alles wat een nieuwe voorspelling in één keer moet raadplegen: recente vorm
+// Alles wat een nieuwe voorspelling in een keer moet raadplegen: recente vorm
 // van beide clubs, onderlinge duels en de rustdagen sinds het laatste duel.
 // Gebruik altijd `before` = de wedstrijddatum van de nieuwe voorspelling, zodat
 // er geen informatie uit de toekomst in de voorspelling lekt.
@@ -386,8 +470,8 @@ export function buildPredictionContext(store, index, homeTeamName, awayTeamName,
 
 // Per club prestaties van de opgeslagen voorspellingen (voor clubanalyse).
 // De steekproefdrempel geldt voor de beoordeelde voorspellingen (n), niet voor
-// het aantal gespeelde wedstrijden: een club met acht duels maar één review
-// levert anders een 100%-regel op basis van één voorspelling.
+// het aantal gespeelde wedstrijden: een club met acht duels maar een review
+// levert anders een 100%-regel op basis van een voorspelling.
 export function aggregateClubPerformance(store, index, options = {}) {
   const minMatches = Math.max(1, Number(options.minMatches || 8));
   const rows = [];
@@ -428,6 +512,7 @@ export function aggregateClubPerformance(store, index, options = {}) {
     }
     if (decided < minMatches) continue;
     rows.push({
+      key,
       name,
       league: [...leagues.entries()].sort((left, right) => right[1] - left[1])[0]?.[0] || null,
       n: decided,
