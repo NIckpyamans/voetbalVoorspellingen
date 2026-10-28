@@ -160,6 +160,10 @@ export function buildSplitMeta(store) {
     topExactClubs: store.topExactClubs || null,
     competitionArchiveIndex: store.competitionArchiveIndex || null,
     teamSquadSummary: store.teamSquadSummary || null,
+    // Alleen de samenvatting van de R2-lectuur; de clubindex (een Map) blijft
+    // buiten dit bestand zodat meta.json compact blijft. Zonder dit veld is
+    // niet te zien of voorspelling en analyse dezelfde historie lazen.
+    matchStoreRemote: store.matchStoreRemote || null,
   };
 }
 

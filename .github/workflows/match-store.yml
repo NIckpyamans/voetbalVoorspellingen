@@ -102,7 +102,11 @@ jobs:
         run: node scripts/publish-match-store.js
       - name: Commit match store and reports
         run: |
-          git add data/match-store.json data/match-index.json data/market-odds.json monitor/club-analysis.md monitor/club-analysis.json monitor/model-report.json monitor/match-store-publish.json
+          git add data/match-store.json data/match-index.json data/market-odds.json monitor/club-analysis.md monitor/club-analysis.json monitor/model-report.json
+          # De monitor-rapporten vallen onder de ignore-regel `monitor/*.json`.
+          # Deze workflow hoort ze bewust te verspreiden, dus forceer ze en voeg
+          # ze alleen toe wanneer het desbetreffende script ze ook echt schreef.
+          if [ -f monitor/match-store-publish.json ]; then git add -f monitor/match-store-publish.json; fi
           if [ -f monitor/market-weight-fit.json ]; then git add monitor/market-weight-fit.json; fi
           # De backtest schrijft alleen bij genoeg wedstrijden een bestand.
           if [ -f monitor/strength-backtest.json ]; then git add monitor/strength-backtest.json; fi
