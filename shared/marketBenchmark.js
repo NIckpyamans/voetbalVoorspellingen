@@ -5,14 +5,14 @@
 // was. Deze module vergelijkt de volledige kansverdeling van het model met de
 // de-vigde marktkansen via logloss, Brier en RPS (ranked probability score).
 //
-// De-vig-methoden:
+// De-vig-methoden (bron: football-data.co.uk odds + literatuur over
+// bookmakersmarges):
 //   - multiplicative: q_i = p_i / sum(p). Eenvoudig, standaardbenchmark.
-//   - power: zoek k met sum(p_i^k) = 1. Haalt de marge vooral bij de outsiders
-//     weg, waardoor de favoriet zwaarder gaat wegen; dezelfde methode als
-//     powerDevig in worker/outcome-ensemble.js.
+//   - power: zoek k met sum(p_i^k) = 1. Haalt de marge vooral bij favorieten
+//     weg; dezelfde methode als powerDevig in worker/outcome-ensemble.js.
 //   - shin: q_i = (sqrt(z^2 + 4(1-z)p_i^2/S) - z) / (2(1-z)) met z zo gekozen
-//     dat de kansen optellen tot 1 (Jullien & Salanie). Modelleert bewust
-//     geinformeerde wedders; alternatieve aanname, niet per se beter.
+//     dat de kansen optellen tot 1 (Jullien & Salanié). Modelleert bewust
+//     geïnformeerde wedders; alternatieve aanname, niet per se beter.
 //
 // Alle functies zijn puur, zodat rapportage lokaal, in CI en in de workflows
 // identiek rekent.
@@ -102,9 +102,17 @@ export function outcomeIndex(outcome) {
   return OUTCOME_INDEX[String(outcome || "").toUpperCase()] ?? null;
 }
 
+// Normaliseert zonder een ondergrens op te leggen: een kans van 0 blijft 0.
+// Eerder stond hier max(EPS, p), waardoor een perfecte voorspelling [1,0,0] niet
+// exact nul scoorde op Brier en RPS (de test legde dat bloot). De logloss klemt
+// zijn eigen waarde al tegen EPS, dus daar is de ondergrens niet nodig.
 function normalise(probabilities = []) {
-  const values = probabilities.map((value) => Math.max(EPS, Number(value) || 0));
-  const total = values.reduce((sum, value) => sum + value, 0) || 1;
+  const values = probabilities.map((value) => Math.max(0, Number(value) || 0));
+  const total = values.reduce((sum, value) => sum + value, 0);
+  if (!(total > 0)) {
+    const size = Math.max(1, values.length);
+    return values.map(() => 1 / size);
+  }
   return values.map((value) => value / total);
 }
 
@@ -129,16 +137,17 @@ export function brier3(probabilities, actual) {
 }
 
 // Ranked probability score: straft ook afstand in de ordening (H < D < A).
-// cumulatieve kans minus cumulatieve uitkomst; de uitkomst draagt alleen op de
-// eigen positie bij (dus position === index, niet <=).
 export function rps3(probabilities, actual) {
   const index = outcomeIndex(actual);
   if (index === null) return null;
   const values = normalise(probabilities);
   let cumulative = 0;
   let score = 0;
+  // Cumulatieve kans minus cumulatieve uitkomst; de uitkomst telt mee vanaf de
+  // positie van de werkelijke klasse (index <= position), anders keert het teken
+  // om en krijgt een perfecte voorspelling een score groter dan nul.
   for (let position = 0; position < 2; position += 1) {
-    cumulative += values[position] - (position === index ? 1 : 0);
+    cumulative += values[position] - (index <= position ? 1 : 0);
     score += cumulative * cumulative;
   }
   return score / 2;
