@@ -1,9 +1,9 @@
 #!/usr/bin/env node
 
-// Modelrapport: kalibratie, tijdsgewijze validatie, marktbaseline (favoriet en
-// kansniveau), datakwaliteit, odds-versheid, lege invoerbronnen en de
-// clubsterkte met tijdsverval, allemaal uitgerekend over de compacte
-// wedstrijdopslag.
+// Modelrapport: kalibratie, tijdsgewijze validatie, marktbaseline (favoriet én
+// kansniveau), datakwaliteit, odds-versheid, lege invoerbronnen, de clubsterkte
+// met tijdsverval, de opslagintegriteit, het marktgewicht-advies en één
+// gezondheidsoordeel over het geheel.
 // Gebruik: node scripts/model-report.js
 // Schrijft monitor/model-report.json en print een samenvatting.
 
@@ -19,6 +19,9 @@ import {
 } from "../shared/modelMetrics.js";
 import { selectCalibration } from "../shared/calibrationFit.js";
 import { buildStrengthModel, strengthRows } from "../shared/clubStrength.js";
+import { sanitizeMatchStore } from "../shared/matchStoreIntegrity.js";
+import { adviseMarketWeight } from "../shared/ensembleWeightPolicy.js";
+import { assessModelHealth } from "../shared/modelHealth.js";
 
 const dataDir = path.join(process.cwd(), "data");
 const monitorDir = path.join(process.cwd(), "monitor");
@@ -33,16 +36,19 @@ try {
   meta = {};
 }
 
+let backtest = null;
+try {
+  backtest = JSON.parse(fs.readFileSync(path.join(monitorDir, "strength-backtest.json"), "utf8"));
+} catch {
+  backtest = null;
+}
+
 const strengthModel = buildStrengthModel(records);
 const strengths = strengthRows(strengthModel, { minMatches: 5 });
 
 const report = {
   matches: records.length,
-  store: {
-    schema: store.schema || null,
-    fresh,
-    sourceFingerprint,
-  },
+  store: { schema: store.schema || null, fresh, sourceFingerprint },
   calibration: calibrationReport(records),
   calibrationSelection: selectCalibration(records),
   temporal: temporalReport(records),
@@ -60,6 +66,20 @@ const report = {
   },
 };
 
+// De opslag is de bron van alle cijfers hierboven; leg vast of die zelf schoon
+// is, anders rapporteert het model over een vervuilde historie.
+const integrity = sanitizeMatchStore(store).report;
+report.integrity = integrity;
+report.marketWeight = adviseMarketWeight(report.marketBaseline.probability);
+report.health = assessModelHealth({
+  store: { matches: records.length },
+  integrity,
+  calibration: report.calibration,
+  dataQuality: report.dataQuality,
+  marketBaseline: report.marketBaseline,
+  backtest,
+});
+
 fs.mkdirSync(monitorDir, { recursive: true });
 fs.writeFileSync(path.join(monitorDir, "model-report.json"), `${JSON.stringify(report)}\n`);
 
@@ -71,9 +91,12 @@ console.log(`Marktbaseline: model ${report.marketBaseline.modelHitPct}% vs markt
 console.log(`Kansniveau: n=${probability.n} modellogloss ${probability.model?.logLoss ?? "-"} vs markt ${probability.market?.logLoss ?? "-"} (${probability.veredict || "n/a"}); RPS markt ${probability.market?.rps ?? "-"}`);
 console.log(`Datakwaliteit: odds beschikbaar op ${report.dataQuality.oddsAvailablePct}% van ${report.dataQuality.withDq} reviews; gemiddelde oddsleeftijd ${report.dataQuality.avgOddsAgeHours ?? "-"} uur`);
 console.log(`Odds-versheid: ${JSON.stringify(report.dataQuality.freshness)}`);
+console.log(`Opslagintegriteit: ${integrity.kept} van ${integrity.total} records geldig (${integrity.dropped} verwijderd)`);
 console.log(`Lege invoerbronnen: ${report.sourceHealth.empty.join(", ") || "geen"}`);
 console.log(`Dunne invoerbronnen: ${report.sourceHealth.thin.join(", ") || "geen"}`);
 console.log(`Clubsterkte: ${report.strengths.teams} clubs, basis ${report.strengths.baseGoals} goals/team, thuisvoordeel x${report.strengths.homeAdvantage}`);
+console.log(`Marktgewicht-advies: ${report.marketWeight.advised} (huidig ${report.marketWeight.current}, ${report.marketWeight.reason}, n=${report.marketWeight.sample})`);
+console.log(`Gezondheid: ${report.health.status}${report.health.summary.length ? ` (${report.health.summary.join("; ")})` : ""}`);
 for (const entry of report.temporal.periods) {
   console.log(`Periode ${entry.period}: ${entry.decided} beoordeeld, 1X2 ${entry.hitPct}%, exact ${entry.exactPct}%`);
 }
