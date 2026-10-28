@@ -33,9 +33,9 @@ describe("de-vig", () => {
       expect(probabilities[0]).toBeGreaterThan(probabilities[1]);
       expect(probabilities[1]).toBeGreaterThan(probabilities[2]);
     }
-    // Power haalt de marge vooral bij de favoriet weg: die zakt tegenover de
-    // proportionele methode.
-    expect(devigPower(implied)[0]).toBeLessThan(devigMultiplicative(implied)[0]);
+    // Power haalt de marge vooral bij de outsiders weg: de favoriet stijgt dus
+    // tegenover de proportionele methode (favoriet-longshot-correctie).
+    expect(devigPower(implied)[0]).toBeGreaterThan(devigMultiplicative(implied)[0]);
   });
 
   it("geeft null bij onbruikbare odds", () => {

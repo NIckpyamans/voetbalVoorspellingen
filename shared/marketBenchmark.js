@@ -8,8 +8,9 @@
 // De-vig-methoden (bron: football-data.co.uk odds + literatuur over
 // bookmakersmarges):
 //   - multiplicative: q_i = p_i / sum(p). Eenvoudig, standaardbenchmark.
-//   - power: zoek k met sum(p_i^k) = 1. Haalt de marge vooral bij favorieten
-//     weg; dezelfde methode als powerDevig in worker/outcome-ensemble.js.
+//   - power: zoek k met sum(p_i^k) = 1. Haalt de marge vooral bij de outsiders
+//     weg, waardoor de favoriet juist iets stijgt tegenover proportioneel
+//     normaliseren; dezelfde methode als powerDevig in worker/outcome-ensemble.js.
 //   - shin: q_i = (sqrt(z^2 + 4(1-z)p_i^2/S) - z) / (2(1-z)) met z zo gekozen
 //     dat de kansen optellen tot 1 (Jullien & Salanié). Modelleert bewust
 //     geïnformeerde wedders; alternatieve aanname, niet per se beter.
@@ -141,14 +142,17 @@ export function rps3(probabilities, actual) {
   const index = outcomeIndex(actual);
   if (index === null) return null;
   const values = normalise(probabilities);
-  let cumulative = 0;
+  let cumulativeForecast = 0;
   let score = 0;
-  // Cumulatieve kans minus cumulatieve uitkomst; de uitkomst telt mee vanaf de
-  // positie van de werkelijke klasse (index <= position), anders keert het teken
-  // om en krijgt een perfecte voorspelling een score groter dan nul.
+  // RPS vergelijkt twee *cumulatieve* verdelingen: de voorspelling en de
+  // uitkomst. De cumulatieve uitkomst is een voorraad (1 vanaf de positie van de
+  // werkelijke klasse), geen stroom. Eerder werd hier per stap 1 afgetrokken,
+  // waardoor [1,0,0] op H niet nul maar 0,5 scoorde.
   for (let position = 0; position < 2; position += 1) {
-    cumulative += values[position] - (index <= position ? 1 : 0);
-    score += cumulative * cumulative;
+    cumulativeForecast += values[position];
+    const cumulativeOutcome = index <= position ? 1 : 0;
+    const difference = cumulativeForecast - cumulativeOutcome;
+    score += difference * difference;
   }
   return score / 2;
 }
