@@ -3,17 +3,15 @@
 // De literatuur is duidelijk: closing odds zijn het scherpste signaal dat gratis
 // beschikbaar is. Toch staat het marktgewicht in het ensemble al maanden op 0,16
 // zonder dat iemand heeft gemeten of dat klopt. Deze module doet geen aanname
-// maar rekent met de eigen kansniveau-benchmark (model vs markt op dezelfde
-// duels) en geeft een *begrensd* advies:
+// maar combineert twee eigen metingen:
 //
-//   - te weinig paren (< minSample)  -> houd het huidige gewicht, geen advies;
-//   - model even goed of beter       -> houd het huidige gewicht (de markt is
-//     een benchmark, geen automatische winnaar);
-//   - model aantoonbaar slechter     -> verhoog het marktgewicht, evenredig aan
-//     de gemeten achterstand, met een harde bovengrens.
+//   1. de kansniveau-benchmark (model vs markt op dezelfde duels);
+//   2. de fit uit shared/ensembleWeightFit.js (welk gewicht voorspelt op de
+//      holdout het beste).
 //
-// De stap is bewust klein en begrensd: één meting mag het model niet omgooien.
-// Het resultaat wordt gerapporteerd, niet stil toegepast.
+// De fit weegt zwaarder wanneer hij bestaat, want die is direct op de vraag
+// gericht. Zonder fit of zonder bevestiging op de holdout blijft het gewicht
+// staan. Het advies wordt gerapporteerd, niet stil toegepast.
 
 export const DEFAULT_MARKET_WEIGHT = 0.16;
 export const MAX_MARKET_WEIGHT = 0.55;
@@ -24,14 +22,20 @@ function round(value, digits = 3) {
   return Math.round(Number(value) * 10 ** digits) / 10 ** digits;
 }
 
+function clampWeight(value, maxWeight) {
+  return Math.min(maxWeight, Math.max(0, Number(value)));
+}
+
 // benchmark: het `probability`-blok uit shared/modelMetrics.js
 //   { n, modelN, model: { logLoss }, market: { logLoss }, delta: { logLoss } }
+// fit: het resultaat van fitMarketWeightBlend (mag ontbreken)
 export function adviseMarketWeight(benchmark = {}, options = {}) {
   const current = Number.isFinite(Number(options.current))
     ? Number(options.current)
     : DEFAULT_MARKET_WEIGHT;
   const minSample = Math.max(1, Number(options.minSample || MIN_SAMPLE));
   const maxWeight = Math.max(current, Number(options.maxWeight || MAX_MARKET_WEIGHT));
+  const fit = options.fit && typeof options.fit === "object" ? options.fit : null;
 
   const sample = Number(benchmark?.modelN || 0);
   const modelLogLoss = Number(benchmark?.model?.logLoss);
@@ -45,9 +49,27 @@ export function adviseMarketWeight(benchmark = {}, options = {}) {
     marketLogLoss: Number.isFinite(marketLogLoss) ? round(marketLogLoss, 4) : null,
   };
 
+  // De fit is de sterkste meting: hij toetst het gewicht zelf op een holdout.
+  if (fit && fit.available && Number.isFinite(Number(fit.recommendedWeight))) {
+    const advised = clampWeight(fit.recommendedWeight, maxWeight);
+    return {
+      ...base,
+      source: "holdout-fit",
+      sample: Number(fit.sample || 0),
+      advised: round(advised),
+      change: round(advised - current),
+      direction: Math.abs(advised - current) < 0.005 ? "hold" : advised > current ? "up" : "down",
+      reason: fit.holdoutImproves ? "gemeten-op-eigen-historie" : "holdout-bevestigt-geen-verbetering",
+      holdoutLogLoss: fit.holdoutLogLoss ?? null,
+      currentHoldoutLogLoss: fit.currentHoldoutLogLoss ?? null,
+      confidence: round(Math.min(1, Number(fit.holdoutSample || 0) / (minSample * 2)), 2),
+    };
+  }
+
   if (sample < minSample) {
     return {
       ...base,
+      source: "benchmark",
       advised: round(current),
       change: 0,
       direction: "hold",
@@ -58,6 +80,7 @@ export function adviseMarketWeight(benchmark = {}, options = {}) {
   if (!Number.isFinite(modelLogLoss) || !Number.isFinite(marketLogLoss) || marketLogLoss <= 0) {
     return {
       ...base,
+      source: "benchmark",
       advised: round(current),
       change: 0,
       direction: "hold",
@@ -71,6 +94,7 @@ export function adviseMarketWeight(benchmark = {}, options = {}) {
   if (excess === 0) {
     return {
       ...base,
+      source: "benchmark",
       advised: round(current),
       change: 0,
       direction: "hold",
@@ -83,6 +107,7 @@ export function adviseMarketWeight(benchmark = {}, options = {}) {
   const advised = Math.min(maxWeight, current + excess * STEPS_PER_EXCESS);
   return {
     ...base,
+    source: "benchmark",
     advised: round(advised),
     change: round(advised - current),
     direction: advised > current ? "up" : "hold",
