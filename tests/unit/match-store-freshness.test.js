@@ -65,7 +65,7 @@ describe("bronhash", () => {
 });
 
 describe("evaluatievelden in de review", () => {
-  it("legt marktkansen, uitkomst en modelmaten compact vast", () => {
+  it("legt marktkansen en modelmaten compact vast", () => {
     const record = recordFromReview({
       matchId: "q2",
       date: "2026-10-02",
@@ -85,7 +85,8 @@ describe("evaluatievelden in de review", () => {
         capturedAt: "2026-10-02T09:00:00Z",
       },
     });
-    expect(record.y).toBe("H");
+    // De uitkomst staat al in ao; geen tweede uitkomstveld ernaast.
+    expect(record.ao).toBe("H");
     expect(record.ll).toBeCloseTo(0.512, 3);
     expect(record.bs).toBeCloseTo(0.421, 3);
     expect(record.mp).toHaveLength(3);
@@ -133,7 +134,7 @@ describe("evaluatievelden in de review", () => {
     });
     const record = store.matches.r1;
     expect(record.mks).toBe("fdc");
-    expect(record.y).toBe("H");
+    expect(record.ao).toBe("H");
     if (record.mp) {
       expect(record.mp).toHaveLength(3);
     }

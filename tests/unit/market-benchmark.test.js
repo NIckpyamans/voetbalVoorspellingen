@@ -33,9 +33,9 @@ describe("de-vig", () => {
       expect(probabilities[0]).toBeGreaterThan(probabilities[1]);
       expect(probabilities[1]).toBeGreaterThan(probabilities[2]);
     }
-    // Power haalt de marge vooral bij de favoriet weg: die zakt tegenover de
-    // proportionele methode.
-    expect(devigPower(implied)[0]).toBeLessThan(devigMultiplicative(implied)[0]);
+    // Power haalt de marge vooral bij de outsiders weg: de favoriet gaat dus
+    // zwaarder wegen dan bij de proportionele methode.
+    expect(devigPower(implied)[0]).toBeGreaterThan(devigMultiplicative(implied)[0]);
   });
 
   it("geeft null bij onbruikbare odds", () => {
@@ -55,6 +55,8 @@ describe("de-vig", () => {
 describe("kansniveau-scores", () => {
   it("een perfecte voorspelling scoort nul op RPS en Brier", () => {
     expect(rps3([1, 0, 0], "H")).toBe(0);
+    expect(rps3([0, 1, 0], "D")).toBe(0);
+    expect(rps3([0, 0, 1], "A")).toBe(0);
     expect(brier3([1, 0, 0], "H")).toBe(0);
   });
 

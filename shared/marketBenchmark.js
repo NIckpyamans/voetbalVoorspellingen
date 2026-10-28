@@ -7,8 +7,9 @@
 //
 // De-vig-methoden:
 //   - multiplicative: q_i = p_i / sum(p). Eenvoudig, standaardbenchmark.
-//   - power: zoek k met sum(p_i^k) = 1. Haalt de marge vooral bij favorieten
-//     weg; dezelfde methode als powerDevig in worker/outcome-ensemble.js.
+//   - power: zoek k met sum(p_i^k) = 1. Haalt de marge vooral bij de outsiders
+//     weg, waardoor de favoriet zwaarder gaat wegen; dezelfde methode als
+//     powerDevig in worker/outcome-ensemble.js.
 //   - shin: q_i = (sqrt(z^2 + 4(1-z)p_i^2/S) - z) / (2(1-z)) met z zo gekozen
 //     dat de kansen optellen tot 1 (Jullien & Salanie). Modelleert bewust
 //     geinformeerde wedders; alternatieve aanname, niet per se beter.
@@ -128,17 +129,16 @@ export function brier3(probabilities, actual) {
 }
 
 // Ranked probability score: straft ook afstand in de ordening (H < D < A).
+// cumulatieve kans minus cumulatieve uitkomst; de uitkomst draagt alleen op de
+// eigen positie bij (dus position === index, niet <=).
 export function rps3(probabilities, actual) {
   const index = outcomeIndex(actual);
   if (index === null) return null;
   const values = normalise(probabilities);
   let cumulative = 0;
   let score = 0;
-  // Cumulatieve kans minus cumulatieve uitkomst; de uitkomst telt mee vanaf de
-  // positie van de werkelijke klasse (index <= position), anders keert het teken
-  // om en krijgt een perfecte voorspelling een score groter dan nul.
   for (let position = 0; position < 2; position += 1) {
-    cumulative += values[position] - (index <= position ? 1 : 0);
+    cumulative += values[position] - (position === index ? 1 : 0);
     score += cumulative * cumulative;
   }
   return score / 2;
