@@ -11,9 +11,8 @@
 
 import fs from "node:fs";
 import path from "node:path";
-import { sourceFingerprint } from "../shared/matchStore.js";
+import { sanitizeMatchStore, sourceFingerprint } from "../shared/matchStore.js";
 import { buildStoreManifest } from "../shared/matchStoreRemote.js";
-import { sanitizeMatchStore } from "../shared/matchStoreIntegrity.js";
 
 const dataDir = path.join(process.cwd(), "data");
 const issues = [];
