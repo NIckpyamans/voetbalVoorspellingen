@@ -2,7 +2,7 @@
 
 Dit document hoort bij de commit-reeks op `review/code-audit-2026-10-28` (PR #35).
 De lokale shell is geblokkeerd (EPERM), dus de CI-poort (typecheck + alle
-unit-tests) is de testbasis. Wat hier staat is getest door die poort, niet
+unit-tests) is de testbasis. Wat hier staat is door die poort getest, niet
 handmatig in een terminal.
 
 ## 1. Gevonden fouten
@@ -10,6 +10,8 @@ handmatig in een terminal.
 | # | Fout | Gevolg | Herstel |
 |---|---|---|---|
 | 1 | `normalise` in `shared/marketBenchmark.js` zette elke kans op minimaal `EPS` | Een perfecte voorspelling `[1,0,0]` scoorde niet nul op Brier en RPS, maar ±5e-11. De unit-test legde dat bloot. | Nullen blijven nul; alleen `logLoss3` klemt zijn eigen waarde tegen `EPS`. |
+| 1b | `rps3` trok per stap 1 af in plaats van de cumulatieve uitkomst te gebruiken | `[1,0,0]` op H scoorde 0,5 in plaats van 0; elke RPS-vergelijking met de markt was te hoog. | Cumulatieve voorspelling minus cumulatieve uitkomst, zoals de definitie van RPS. |
+| 1c | De test bij de power-de-vig verwachtte dat de favoriet daalt | Power haalt de marge bij de outsiders weg, dus de favoriet stijgt; de oude assertie was wiskundig onjuist. | Assertie en toelichting kloppen nu met de methode. |
 | 2 | `oddsFreshnessGate(null)` gaf `usable: true` | Een quotering zonder tijdstip kwam door de poort met gewicht 0,5, terwijl de reden al zei dat er geen betrouwbaar tijdstip was. | `unknown` is nooit bruikbaar, ongeacht het gewicht. |
 | 3 | Onmogelijke records konden de historie in | Negatieve score, ongeldige datum of een team tegen zichzelf telt mee in het sterktenmodel, de kalibratie en de clubanalyse. | `shared/matchStoreIntegrity.js` verwijdert zulke records, herstelt `y`/`ao` uit de doelpunten en herrekent `hit`. De build rapporteert de aantallen. |
 | 4 | Het marktdeel van het live-ensemble behandelde oude odds als closing odds | Odds van vier dagen voor aftrap kregen hetzelfde gewicht (0,16) als odds van twee uur voor aftrap. | De versheidsklasse schaalt het marktgewicht (1 → 0,85 → 0,55 → 0,25) en ook de markt-shrink. |
