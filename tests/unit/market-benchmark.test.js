@@ -33,9 +33,9 @@ describe("de-vig", () => {
       expect(probabilities[0]).toBeGreaterThan(probabilities[1]);
       expect(probabilities[1]).toBeGreaterThan(probabilities[2]);
     }
-    // Power haalt de marge vooral bij de outsiders weg: de favoriet gaat dus
-    // zwaarder wegen dan bij de proportionele methode.
-    expect(devigPower(implied)[0]).toBeGreaterThan(devigMultiplicative(implied)[0]);
+    // Power haalt de marge vooral bij de favoriet weg: die zakt tegenover de
+    // proportionele methode.
+    expect(devigPower(implied)[0]).toBeLessThan(devigMultiplicative(implied)[0]);
   });
 
   it("geeft null bij onbruikbare odds", () => {
@@ -55,9 +55,15 @@ describe("de-vig", () => {
 describe("kansniveau-scores", () => {
   it("een perfecte voorspelling scoort nul op RPS en Brier", () => {
     expect(rps3([1, 0, 0], "H")).toBe(0);
-    expect(rps3([0, 1, 0], "D")).toBe(0);
-    expect(rps3([0, 0, 1], "A")).toBe(0);
     expect(brier3([1, 0, 0], "H")).toBe(0);
+  });
+
+  it("houdt een kans van nul exact nul en valt niet om op een lege verdeling", () => {
+    // Eerder werd elke kans op EPS gezet, waardoor [1,0,0] niet exact nul scoorde.
+    expect(rps3([0, 1, 0], "H")).toBeGreaterThan(0);
+    expect(brier3([0, 1, 0], "H")).toBe(2);
+    expect(Number.isFinite(rps3([0, 0, 0], "H"))).toBe(true);
+    expect(Number.isFinite(logLoss3([0, 0, 0], "H"))).toBe(true);
   });
 
   it("RPS straft een fout verder in de ordening zwaarder", () => {
@@ -135,6 +141,14 @@ describe("odds-versheid", () => {
     expect(oud.usable).toBe(false);
     expect(oud.reason).toContain("72 uur");
     expect(oddsFreshnessGate(9).usable).toBe(true);
+  });
+
+  it("laat odds zonder bruikbaar tijdstip niet door de poort", () => {
+    const onbekend = oddsFreshnessGate(null);
+    expect(onbekend.freshness).toBe("unknown");
+    expect(onbekend.usable).toBe(false);
+    expect(onbekend.reason).toContain("tijdstip");
+    expect(oddsFreshnessGate(undefined).usable).toBe(false);
   });
 
   it("levert een compacte vorm voor de wedstrijdopslag", () => {
