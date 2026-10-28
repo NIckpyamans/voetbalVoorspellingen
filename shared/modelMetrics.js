@@ -1,5 +1,5 @@
 // Modelmetingen over de compacte wedstrijdopslag. Alles hier is puur en werkt
-// op records uit shared/matchStore.js (d/dq/cf/hit/ex/ge/mk/mh/mp/y/ll/bs), zodat
+// op records uit shared/matchStore.js (d/dq/cf/hit/ex/ge/mk/mh/mp/ao/ll/bs), zodat
 // de metingen lokaal, in CI en in workflows identiek rekenen.
 
 import { selectCalibration } from "./calibrationFit.js";
@@ -194,15 +194,16 @@ export function marketBaselineReport(records = [], options = {}) {
 
   // Kansniveau: de favoriet-hitrate hierboven zegt niet hoe zeker de markt was.
   // Vergelijk daarom de volledige verdeling via logloss, Brier en RPS op precies
-  // dezelfde wedstrijden (mp = gede-vigde marktkansen, ll/bs = modelmaten).
+  // dezelfde wedstrijden (mp = gede-vigde marktkansen, ll/bs = modelmaten, ao =
+  // werkelijke uitkomst).
   const benchmarkRows = [];
   for (const record of records || []) {
     if (!Array.isArray(record.mp) || record.mp.length !== 3) continue;
-    if (!record.y) continue;
+    if (!record.ao) continue;
     benchmarkRows.push({
       lg: leagueKey(record),
       mp: record.mp,
-      y: record.y,
+      y: record.ao,
       ll: record.ll,
       bs: record.bs,
     });
