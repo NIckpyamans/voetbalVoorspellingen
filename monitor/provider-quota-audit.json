@@ -1,5 +1,5 @@
 {
-  "checkedAt": "2026-10-27T09:52:11.455Z",
+  "checkedAt": "2026-10-28T10:38:08.007Z",
   "oddsApi": {
     "configured": true,
     "valid": true,
@@ -7,7 +7,6 @@
     "catalogIncludesInactive": true,
     "inactiveSoccerSportKeys": [
       "soccer_africa_cup_of_nations",
-      "soccer_china_superleague",
       "soccer_concacaf_gold_cup",
       "soccer_concacaf_leagues_cup",
       "soccer_conmebol_copa_america",
@@ -20,8 +19,6 @@
       "soccer_fifa_world_cup_womens",
       "soccer_france_coupe_de_france",
       "soccer_italy_coppa_italia",
-      "soccer_saudi_arabia_pro_league",
-      "soccer_spain_copa_del_rey",
       "soccer_uefa_champs_league_qualification",
       "soccer_uefa_euro_qualification",
       "soccer_uefa_european_championship"
@@ -30,7 +27,7 @@
       "key": "soccer_fa_cup",
       "status": "expected_inactive"
     },
-    "activeSports": 84,
+    "activeSports": 89,
     "soccerSportKeys": [
       "soccer_argentina_primera_division",
       "soccer_australia_aleague",
@@ -39,6 +36,7 @@
       "soccer_brazil_campeonato",
       "soccer_brazil_serie_b",
       "soccer_chile_campeonato",
+      "soccer_china_superleague",
       "soccer_conmebol_copa_libertadores",
       "soccer_conmebol_copa_sudamericana",
       "soccer_denmark_superliga",
@@ -67,6 +65,8 @@
       "soccer_poland_ekstraklasa",
       "soccer_portugal_primeira_liga",
       "soccer_russia_premier_league",
+      "soccer_saudi_arabia_pro_league",
+      "soccer_spain_copa_del_rey",
       "soccer_spain_la_liga",
       "soccer_spain_segunda_division",
       "soccer_spl",
@@ -92,14 +92,12 @@
       "soccer_uefa_europa_conference_league_qualification"
     ],
     "competitionCoverageStatus": "seasonal_unavailable",
-    "newlyInactiveSports": [
-      "soccer_saudi_arabia_pro_league"
-    ],
+    "newlyInactiveSports": [],
     "newlyUnavailableSports": [],
     "newlyAvailableSports": [
-      "soccer_germany_bundesliga_women",
-      "soccer_korea_kleague1",
-      "soccer_uefa_europa_conference_league"
+      "soccer_china_superleague",
+      "soccer_saudi_arabia_pro_league",
+      "soccer_spain_copa_del_rey"
     ],
     "quota": {
       "x-requests-remaining": "270",
@@ -175,8 +173,8 @@
     "records": 50,
     "quota": {
       "x-ratelimit-limit": "1000",
-      "x-ratelimit-remaining": "969",
-      "x-ratelimit-reset": "1793145600"
+      "x-ratelimit-remaining": "967",
+      "x-ratelimit-reset": "1793232000"
     },
     "accepted": false,
     "policy": "Veertien dagen meten; nooit automatisch promoveren op basis van alleen een geldige key."
@@ -197,13 +195,13 @@
     "status": 200,
     "records": 1,
     "rateLimit": {
-      "resets_in_seconds": 1641,
-      "remaining": 178,
+      "resets_in_seconds": 3600,
+      "remaining": 179,
       "requested_entity": "League"
     },
     "quota": {
       "x-ratelimit-limit": "180",
-      "x-ratelimit-remaining": "178"
+      "x-ratelimit-remaining": "179"
     },
     "endpointAccess": {
       "leagues": {
@@ -214,13 +212,13 @@
         "firstName": "Superliga",
         "hasOddsFlag": false,
         "rateLimit": {
-          "resets_in_seconds": 1641,
-          "remaining": 178,
+          "resets_in_seconds": 3600,
+          "remaining": 179,
           "requested_entity": "League"
         },
         "quota": {
           "x-ratelimit-limit": "180",
-          "x-ratelimit-remaining": "178"
+          "x-ratelimit-remaining": "179"
         },
         "errorCode": null
       },
@@ -245,12 +243,12 @@
       "fixturesDate": {
         "valid": true,
         "status": 200,
-        "records": 0,
-        "firstId": null,
-        "firstName": null,
-        "hasOddsFlag": false,
+        "records": 1,
+        "firstId": 19722758,
+        "firstName": "St. Mirren vs Hibernian",
+        "hasOddsFlag": true,
         "rateLimit": {
-          "resets_in_seconds": 3599,
+          "resets_in_seconds": 3600,
           "remaining": 178,
           "requested_entity": "Fixture"
         },
@@ -308,7 +306,7 @@
         "firstName": "1",
         "hasOddsFlag": false,
         "rateLimit": {
-          "resets_in_seconds": 3599,
+          "resets_in_seconds": 3600,
           "remaining": 178,
           "requested_entity": "Odd"
         },
@@ -327,7 +325,7 @@
         "firstName": null,
         "hasOddsFlag": false,
         "rateLimit": {
-          "resets_in_seconds": 3599,
+          "resets_in_seconds": 3600,
           "remaining": 177,
           "requested_entity": "Odd"
         },
