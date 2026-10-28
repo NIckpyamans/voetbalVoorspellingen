@@ -1,3 +1,5 @@
+import { classifyOddsAge, oddsAgeHours, oddsWeightMultiplier } from "../../shared/oddsFreshness.js";
+
 const clamp = (value, min, max) => Math.max(min, Math.min(max, value));
 
 export function normalizeOutcomeProbabilities(probabilities = {}) {
@@ -212,6 +214,13 @@ export function buildOutcomeEnsemble({
   lineupConfirmed = false,
 } = {}) {
   const market = buildMarketConsensus(oddsAtPrediction || {}, kickoff);
+  // Versheid van de marktquotering: odds van vier dagen voor aftrap zijn geen
+  // scherpe closing-lijn. Het marktdeel houdt daardoor minder gewicht, zodat een
+  // oude quotering het ensemble niet domineert. Zonder vastgesteld tijdstip
+  // blijft het gewicht ongewijzigd en wordt de versheid als "unknown" gemeld.
+  const marketAgeHours = oddsAgeHours(oddsAtPrediction?.capturedAt, kickoff);
+  const marketFreshness = marketAgeHours === null ? "unknown" : classifyOddsAge(marketAgeHours);
+  const marketWeightMultiplier = marketAgeHours === null ? 1 : oddsWeightMultiplier(marketAgeHours);
   const elo = featureVector.club_rating_active ? null : buildEloOutcomeModel(homeElo, awayElo, { scale: featureVector.club_elo_scale });
   const lineup = buildLineupOutcomeModel(featureVector, lineupConfirmed);
   const squadStrength = buildSquadStrengthOutcomeModel(featureVector);
@@ -221,7 +230,7 @@ export function buildOutcomeEnsemble({
     ["feature_score_model", heuristic, OUTCOME_ENSEMBLE_WEIGHTS.feature_score_model],
     ["monte_carlo", monteCarlo, OUTCOME_ENSEMBLE_WEIGHTS.monte_carlo],
     ["club_elo", elo, OUTCOME_ENSEMBLE_WEIGHTS.club_elo],
-    ["de_vig_market", market, OUTCOME_ENSEMBLE_WEIGHTS.de_vig_market],
+    ["de_vig_market", market, OUTCOME_ENSEMBLE_WEIGHTS.de_vig_market * marketWeightMultiplier],
     ["confirmed_lineup", lineup, OUTCOME_ENSEMBLE_WEIGHTS.confirmed_lineup],
     ["squad_strength", squadStrength, OUTCOME_ENSEMBLE_WEIGHTS.squad_strength],
     ["two_leg_context", twoLegContext, OUTCOME_ENSEMBLE_WEIGHTS.two_leg_context],
@@ -251,7 +260,7 @@ export function buildOutcomeEnsemble({
   // afzonderlijke bron en dempt dit een uitschieter in het ensemble.
   let marketShrink = 0;
   if (market && agreement < 0.55) {
-    marketShrink = Number(Math.min(0.25, (0.55 - agreement) * 0.8).toFixed(3));
+    marketShrink = Number((Math.min(0.25, (0.55 - agreement) * 0.8) * marketWeightMultiplier).toFixed(3));
     probabilities = normalizeOutcomeProbabilities({
       homeProb: probabilities.homeProb * (1 - marketShrink) + market.homeProb * marketShrink,
       drawProb: probabilities.drawProb * (1 - marketShrink) + market.drawProb * marketShrink,
@@ -270,8 +279,11 @@ export function buildOutcomeEnsemble({
       capturedAt: market.capturedAt,
       disagreement: market.disagreement,
       movement: market.movement,
+      freshness: marketFreshness,
+      ageHours: marketAgeHours,
+      weightMultiplier: marketWeightMultiplier,
     } : null,
-    version: "outcome-ensemble-v3",
+    version: "outcome-ensemble-v4",
   };
 }
 
