@@ -107,9 +107,9 @@ jobs:
           # Deze workflow hoort ze bewust te verspreiden, dus forceer ze en voeg
           # ze alleen toe wanneer het desbetreffende script ze ook echt schreef.
           if [ -f monitor/match-store-publish.json ]; then git add -f monitor/match-store-publish.json; fi
-          if [ -f monitor/market-weight-fit.json ]; then git add monitor/market-weight-fit.json; fi
+          if [ -f monitor/market-weight-fit.json ]; then git add -f monitor/market-weight-fit.json; fi
           # De backtest schrijft alleen bij genoeg wedstrijden een bestand.
-          if [ -f monitor/strength-backtest.json ]; then git add monitor/strength-backtest.json; fi
+          if [ -f monitor/strength-backtest.json ]; then git add -f monitor/strength-backtest.json; fi
           if git diff --cached --quiet; then
             echo "Geen wijzigingen in de match-store of rapporten."
           else
