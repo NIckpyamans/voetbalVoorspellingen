@@ -1,9 +1,9 @@
 # Upcoming H2H Backfill
 
-Laatst bijgewerkt: 2026-10-28T20:18:19.920Z
-Gecontroleerd: 46
+Laatst bijgewerkt: 2026-10-28T21:59:26.178Z
+Gecontroleerd: 0
 Gevuld: 0
-Geen directe H2H: 46
+Geen directe H2H: 0
 Errors: 0
 
 Openstaand na deze batch: 0
@@ -14,23 +14,3 @@ Geen directe H2H gevonden voor de gecontroleerde wedstrijden. Breid team-ID mapp
 ## Gevuld
 
 ## Geen Directe H2H
-- 2026-10-30: Energie Cottbus - VfL Bochum (no_direct_history)
-- 2026-10-30: FC Volendam - De Graafschap (no_direct_history)
-- 2026-10-30: SV Elversberg - Mainz (no_direct_history)
-- 2026-10-31: Bolton Wanderers - Bristol City (rate_limited_locally)
-- 2026-10-31: Coventry City - Sunderland (rate_limited_locally)
-- 2026-10-31: Bayern Munich - Borussia Dortmund (rate_limited_locally)
-- 2026-10-31: Guingamp - Saint-Étienne (rate_limited_locally)
-- 2026-10-31: Troyes - Le Mans (rate_limited_locally)
-- 2026-10-31: Ajax Amsterdam - AZ Alkmaar (rate_limited_locally)
-- 2026-10-31: Millwall - Derby County (rate_limited_locally)
-- 2026-10-31: Hull City - Ipswich Town (rate_limited_locally)
-- 2026-10-31: Southampton - Queens Park Rangers (rate_limited_locally)
-- 2026-10-31: Manchester City - Brighton & Hove Albion (rate_limited_locally)
-- 2026-10-31: Swansea City - Blackburn Rovers (rate_limited_locally)
-- 2026-10-31: Tottenham Hotspur - Crystal Palace (rate_limited_locally)
-- 2026-10-31: West Ham United - West Bromwich Albion (rate_limited_locally)
-- 2026-10-31: Wolverhampton Wanderers - Cardiff City (rate_limited_locally)
-- 2026-11-01: PEC Zwolle - ADO Den Haag (rate_limited_locally)
-- 2026-11-01: Hannover 96 - Dynamo Dresden (rate_limited_locally)
-- 2026-11-01: FC Emmen - FC Den Bosch (rate_limited_locally)
