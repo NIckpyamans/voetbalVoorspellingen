@@ -3,13 +3,16 @@
 Vervolg op `docs/audit-2026-10-28-vervolg.md`. Dit document legt vast wat er na
 die audit is aangepast, waarom, en wat er nog openstaat.
 
-## 1. Eén opslagcontrole, door iedereen hergebruikt
+## 1. Structuur: één integriteitscontrole, niet twee
 
-De integriteitscontrole (`sanitizeMatchStore`) staat in
-`shared/matchStoreIntegrity.js`. De build gebruikt hem al; nu controleren ook
-`scripts/verify-match-store.js` en `scripts/model-report.js` met precies dezelfde
-functie of de opgeslagen historie schoon is. Bouw en rapportage kunnen daardoor
-niet van mening verschillen over wat een geldig record is.
+`shared/matchStore.js` bevatte de integriteitscontrole (`sanitizeMatchStore`),
+maar er stond een tweede kopie in `shared/matchStoreIntegrity.js`. Twee kopieën
+van dezelfde regel lopen vroeg of laat uiteen; dan vindt de build een record
+geldig dat de rapportage afkeurt. De tweede module is nu een doorverwijzing naar
+de enige implementatie, zodat bestaande imports blijven werken.
+
+`scripts/verify-match-store.js` leest de controle nu rechtstreeks uit
+`shared/matchStore.js`.
 
 ## 2. Het marktgewicht is geen aanname meer
 
@@ -45,9 +48,9 @@ elke wedstrijd twee teamslots in de index heeft. `scripts/publish-match-store.js
 schrijft die objecten met de bestaande R2-ondertekening; zonder R2-secrets slaat
 het script over in plaats van te falen.
 
-Dat is de eerste helft van "de worker leest dezelfde historie als de analyses".
-De tweede helft — de worker die dit object daadwerkelijk als bron gebruikt —
-staat nog open; die leest nu uit Neon en de losse R2-objecten.
+Dat is de eerste helft van "de worker leest dezelfde historie als de analyses";
+de tweede helft — de worker die dit object daadwerkelijk als bron gebruikt —
+staat beschreven in §6.
 
 ## 4. De rapporten vertrouwen niet meer blind op het bestand
 
@@ -64,9 +67,31 @@ met uitlegbare checks: opslag gevuld, integriteit, odds-versheid, kalibratie,
 marktbenchmark en het sterktemodel. Het is een signaal, geen poort: een tijdelijke
 dip mag de voorspellingen niet stilzetten.
 
+## 6. De worker leest dezelfde gepubliceerde opslag
+
+`scripts/worker/match-store-history.js` leest bij de start van de worker het
+gepubliceerde `match-store/manifest.json` uit R2, weigert objecten die niet bij
+het manifest passen, en zet de compacte records om in dezelfde vorm-index als
+de lokale dagbronnen. Per voorspelling worden die afgeronde duels na de
+providerbronnen in `homeRecent`/`awayRecent` gemerged, met de bron
+`match-store-r2`. Zo geldt voor de voorspelling precies dezelfde historie als
+voor clubanalyse en modelrapport, en is die herleidbaar in de
+`formQualityWarnings` en `homeFormSource`-velden.
+
+Faalt R2 (niet geconfigureerd, manifest ontbreekt, object onleesbaar), dan
+rapporteert de worker de reden in `store.matchStoreRemote` en draait door op de
+bestaande bronnen: de koppeling kan de voorspellingen nooit stilzetten. De
+clubindex blijft een `Map` buiten `server_data.json`; alleen de samenvatting
+(matches, clubs, publicatietijdstip, reden) wordt bewaard.
+
+Afgedekt door `tests/unit/match-store-history.test.js`: conversie, weigering van
+onmogelijke records, canonical clublookup, manifest-mismatch, ontbrekend
+manifest, niet-geconfigureerde R2 en een falende reader.
+
 ## Wat er nog openstaat
 
-1. De worker laten lezen uit het gepubliceerde `match-store/manifest.json`.
-2. Modelprobabiliteiten per wedstrijd bewaren, zodat de fit op de volledige
+1. Modelprobabiliteiten per wedstrijd bewaren, zodat de fit op de volledige
    verdeling kan in plaats van alleen op de gekozen uitkomst.
-3. De rho-sweep heeft pas betekenis vanaf ongeveer 250 walk-forward-duels.
+2. De rho-sweep heeft pas betekenis vanaf ongeveer 250 walk-forward-duels.
+3. De worker gebruikt de opslag nu voor vorm; de volgende stap is onderlinge
+   duels (h2h) en rustdagen uit dezelfde bron laten komen.
