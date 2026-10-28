@@ -3,16 +3,13 @@
 Vervolg op `docs/audit-2026-10-28-vervolg.md`. Dit document legt vast wat er na
 die audit is aangepast, waarom, en wat er nog openstaat.
 
-## 1. Structuur: één integriteitscontrole, niet twee
+## 1. Eén opslagcontrole, door iedereen hergebruikt
 
-`shared/matchStore.js` bevatte de integriteitscontrole (`sanitizeMatchStore`),
-maar er stond een tweede kopie in `shared/matchStoreIntegrity.js`. Twee kopieën
-van dezelfde regel lopen vroeg of laat uiteen; dan vindt de build een record
-geldig dat de rapportage afkeurt. De tweede module is nu een doorverwijzing naar
-de enige implementatie, zodat bestaande imports blijven werken.
-
-`scripts/verify-match-store.js` leest de controle nu rechtstreeks uit
-`shared/matchStore.js`.
+De integriteitscontrole (`sanitizeMatchStore`) staat in
+`shared/matchStoreIntegrity.js`. De build gebruikt hem al; nu controleren ook
+`scripts/verify-match-store.js` en `scripts/model-report.js` met precies dezelfde
+functie of de opgeslagen historie schoon is. Bouw en rapportage kunnen daardoor
+niet van mening verschillen over wat een geldig record is.
 
 ## 2. Het marktgewicht is geen aanname meer
 
