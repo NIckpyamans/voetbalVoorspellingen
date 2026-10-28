@@ -44,6 +44,9 @@ export function oddsWeightMultiplier(hours) {
 }
 
 // Poort: mag het marktdeel meewegen, en met welk gewicht?
+// Zonder bruikbaar tijdstip is niet vast te stellen dat de odds vóór aftrap zijn
+// vastgelegd; zo'n quotering mag dus nooit als bewezen marktsignaal door de poort
+// (eerder gaf `unknown` met gewicht 0,5 ten onrechte `usable: true`).
 export function oddsFreshnessGate(hours, options = {}) {
   const minWeight = Number.isFinite(Number(options.minWeight)) ? Number(options.minWeight) : 0.3;
   const weight = oddsWeightMultiplier(hours);
@@ -52,7 +55,7 @@ export function oddsFreshnessGate(hours, options = {}) {
     freshness,
     hours: hours === null || hours === undefined ? null : Number(hours),
     weight,
-    usable: weight >= minWeight,
+    usable: freshness !== "unknown" && weight >= minWeight,
     reason: freshness === "unknown"
       ? "geen betrouwbaar tijdstip van de odds"
       : freshness === "old"
