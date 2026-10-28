@@ -24,7 +24,13 @@ on:
       - "shared/clubStrength.js"
       - "shared/calibrationFit.js"
       - "shared/oddsFreshness.js"
+      - "shared/matchStoreIntegrity.js"
+      - "shared/matchStoreRemote.js"
+      - "shared/ensembleWeightPolicy.js"
+      - "shared/modelHealth.js"
       - "scripts/build-match-store.js"
+      - "scripts/verify-match-store.js"
+      - "scripts/publish-match-store.js"
       - "scripts/build-market-odds.js"
       - "scripts/model-report.js"
       - "scripts/club-analysis.js"
@@ -69,6 +75,10 @@ jobs:
         run: node scripts/build-market-odds.js
       - name: Build compact match store
         run: node scripts/build-match-store.js
+      # Poort: de opslag moet bij de brondata horen en schoon zijn. Anders
+      # rapporteren de analyses over een historie die niet meer bestaat.
+      - name: Verify compact match store against its sources
+        run: node scripts/verify-match-store.js
       - name: Build club analysis
         run: node scripts/club-analysis.js
       - name: Build model report
@@ -78,9 +88,14 @@ jobs:
       - name: Backtest strength model and rho sweep
         continue-on-error: true
         run: node scripts/backtest-strength-model.js
+      # Dezelfde historie die de analyses gebruiken, nu ook als R2-object voor
+      # de live worker. Zonder R2-secrets slaat het script over.
+      - name: Publish compact match store to R2
+        continue-on-error: true
+        run: node scripts/publish-match-store.js
       - name: Commit match store and reports
         run: |
-          git add data/match-store.json data/match-index.json data/market-odds.json monitor/club-analysis.md monitor/club-analysis.json monitor/model-report.json
+          git add data/match-store.json data/match-index.json data/market-odds.json monitor/club-analysis.md monitor/club-analysis.json monitor/model-report.json monitor/match-store-publish.json
           # De backtest schrijft alleen bij genoeg wedstrijden een bestand.
           if [ -f monitor/strength-backtest.json ]; then git add monitor/strength-backtest.json; fi
           if git diff --cached --quiet; then
