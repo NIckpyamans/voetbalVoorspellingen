@@ -9,7 +9,7 @@
 
 import fs from "node:fs";
 import path from "node:path";
-import { loadMatchStore } from "../shared/matchStore.js";
+import { loadMatchStore, sanitizeMatchStore } from "../shared/matchStore.js";
 import {
   calibrationReport,
   dataQualityReport,
@@ -19,14 +19,16 @@ import {
 } from "../shared/modelMetrics.js";
 import { selectCalibration } from "../shared/calibrationFit.js";
 import { buildStrengthModel, strengthRows } from "../shared/clubStrength.js";
-import { sanitizeMatchStore } from "../shared/matchStoreIntegrity.js";
 import { adviseMarketWeight } from "../shared/ensembleWeightPolicy.js";
+import { fitMarketWeightBlend } from "../shared/ensembleWeightFit.js";
 import { assessModelHealth } from "../shared/modelHealth.js";
 
 const dataDir = path.join(process.cwd(), "data");
 const monitorDir = path.join(process.cwd(), "monitor");
 
 const { store, fresh, sourceFingerprint } = loadMatchStore(dataDir);
+// De integriteitscontrole woont in shared/matchStore.js: één implementatie, zodat
+// de build en de rapportage niet uit elkaar kunnen lopen.
 const records = Object.values(store.matches || {});
 
 let meta = {};
@@ -48,7 +50,11 @@ const strengths = strengthRows(strengthModel, { minMatches: 5 });
 
 const report = {
   matches: records.length,
-  store: { schema: store.schema || null, fresh, sourceFingerprint },
+  store: {
+    schema: store.schema || null,
+    fresh,
+    sourceFingerprint,
+  },
   calibration: calibrationReport(records),
   calibrationSelection: selectCalibration(records),
   temporal: temporalReport(records),
@@ -70,7 +76,20 @@ const report = {
 // is, anders rapporteert het model over een vervuilde historie.
 const integrity = sanitizeMatchStore(store).report;
 report.integrity = integrity;
-report.marketWeight = adviseMarketWeight(report.marketBaseline.probability);
+const weightFit = fitMarketWeightBlend(records);
+report.marketWeightFit = {
+  available: weightFit.available,
+  sample: weightFit.sample,
+  trainSample: weightFit.trainSample ?? null,
+  holdoutSample: weightFit.holdoutSample ?? null,
+  bestWeight: weightFit.bestWeight ?? null,
+  holdoutLogLoss: weightFit.holdoutLogLoss ?? null,
+  currentHoldoutLogLoss: weightFit.currentHoldoutLogLoss ?? null,
+  baselineHoldoutLogLoss: weightFit.baselineHoldoutLogLoss ?? null,
+  improvement: weightFit.improvement ?? null,
+  holdoutImproves: Boolean(weightFit.holdoutImproves),
+};
+report.marketWeight = adviseMarketWeight(report.marketBaseline.probability, { fit: weightFit });
 report.health = assessModelHealth({
   store: { matches: records.length },
   integrity,
@@ -96,6 +115,11 @@ console.log(`Lege invoerbronnen: ${report.sourceHealth.empty.join(", ") || "geen
 console.log(`Dunne invoerbronnen: ${report.sourceHealth.thin.join(", ") || "geen"}`);
 console.log(`Clubsterkte: ${report.strengths.teams} clubs, basis ${report.strengths.baseGoals} goals/team, thuisvoordeel x${report.strengths.homeAdvantage}`);
 console.log(`Marktgewicht-advies: ${report.marketWeight.advised} (huidig ${report.marketWeight.current}, ${report.marketWeight.reason}, n=${report.marketWeight.sample})`);
+console.log(
+  report.marketWeightFit.available
+    ? `Marktgewicht-fit: beste ${report.marketWeightFit.bestWeight} op holdout ${report.marketWeightFit.holdoutLogLoss} tegen ${report.marketWeightFit.currentHoldoutLogLoss} bij huidig gewicht (${report.marketWeightFit.holdoutImproves ? "bevestigd" : "niet bevestigd"}, n=${report.marketWeightFit.holdoutSample})`
+    : `Marktgewicht-fit: nog geen meting (${report.marketWeightFit.sample} paren, minimaal 150 nodig)`,
+);
 console.log(`Gezondheid: ${report.health.status}${report.health.summary.length ? ` (${report.health.summary.join("; ")})` : ""}`);
 for (const entry of report.temporal.periods) {
   console.log(`Periode ${entry.period}: ${entry.decided} beoordeeld, 1X2 ${entry.hitPct}%, exact ${entry.exactPct}%`);
