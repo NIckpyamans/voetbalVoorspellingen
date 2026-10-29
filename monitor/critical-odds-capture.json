@@ -1,12 +1,12 @@
 {
-  "generatedAt": "2026-10-26T15:14:50.562Z",
-  "checked": 3,
+  "generatedAt": "2026-10-29T18:35:18.649Z",
+  "checked": 16,
   "captureWindows": {
     "t20": 0,
     "t45": 0,
     "t75": 0,
-    "prematch": 3,
-    "opening": 0,
+    "prematch": 0,
+    "opening": 16,
     "outside": 0
   },
   "quotaBudget": {
@@ -31,75 +31,410 @@
       }
     }
   },
-  "captured": 0,
-  "openingCaptured": 0,
-  "prematchCaptured": 0,
+  "captured": 10,
+  "openingCaptured": 10,
+  "prematchCaptured": 10,
   "closingCaptured": 0,
   "closingPairs": 0,
-  "statuses": {},
-  "attemptStatuses": {},
-  "providerStatuses": {},
-  "providerQuota": {},
-  "skippedExistingRole": 3,
+  "statuses": {
+    "available": 10,
+    "not_found": 6
+  },
+  "attemptStatuses": {
+    "the-odds-api:seasonal_sport_unavailable": 16,
+    "the-odds-api:unsupported_sport": 32,
+    "the-odds-api:available": 10,
+    "the-odds-api:not_found": 24,
+    "sportmonks:fixture_id_missing": 6
+  },
+  "providerStatuses": {
+    "the-odds-api": {
+      "seasonal_sport_unavailable": 16,
+      "unsupported_sport": 32,
+      "available": 10,
+      "not_found": 24
+    },
+    "sportmonks": {
+      "fixture_id_missing": 6
+    }
+  },
+  "providerQuota": {
+    "the-odds-api": {
+      "remaining": 268,
+      "used": 232,
+      "limit": null,
+      "reset": null
+    }
+  },
+  "skippedExistingRole": 0,
   "sportmonksMapped": 0,
   "sportmonksMappingStatuses": {
-    "plan_coverage_unavailable": 3
+    "plan_coverage_unavailable": 16
   },
   "matches": [
     {
-      "matchId": "ss-espn-fra.1-401876422",
-      "kickoff": "2026-10-26T19:30:00.000Z",
+      "matchId": "ss-espn-ger.2-401885068",
+      "kickoff": "2026-10-30T17:30:00.000Z",
+      "league": "Germany - 2. Bundesliga",
+      "homeTeam": "Arminia Bielefeld",
+      "awayTeam": "TSV Eintracht Braunschweig",
+      "minutesBeforeKickoff": 1375,
+      "captureWindow": "opening",
+      "closingWindow": false,
+      "status": "captured",
+      "provider": "the-odds-api",
+      "captureRole": "opening",
+      "sportmonksFixtureId": null,
+      "opening": true,
+      "prematch": true,
+      "closing": false
+    },
+    {
+      "matchId": "ss-espn-ger.2-401885066",
+      "kickoff": "2026-10-30T17:30:00.000Z",
+      "league": "Germany - 2. Bundesliga",
+      "homeTeam": "Energie Cottbus",
+      "awayTeam": "VfL Bochum",
+      "minutesBeforeKickoff": 1375,
+      "captureWindow": "opening",
+      "closingWindow": false,
+      "status": "captured",
+      "provider": "the-odds-api",
+      "captureRole": "opening",
+      "sportmonksFixtureId": null,
+      "opening": true,
+      "prematch": true,
+      "closing": false
+    },
+    {
+      "matchId": "ss-espn-fra.1-401876421",
+      "kickoff": "2026-10-30T18:00:00.000Z",
       "league": "France - Ligue 1",
-      "homeTeam": "Paris Saint-Germain",
-      "awayTeam": "Lyon",
-      "minutesBeforeKickoff": 255,
-      "captureWindow": "prematch",
+      "homeTeam": "Le Havre AC",
+      "awayTeam": "Paris Saint-Germain",
+      "minutesBeforeKickoff": 1405,
+      "captureWindow": "opening",
       "closingWindow": false,
-      "status": "already_captured",
-      "captureRole": "prematch"
+      "status": "captured",
+      "provider": "the-odds-api",
+      "captureRole": "opening",
+      "sportmonksFixtureId": null,
+      "opening": true,
+      "prematch": true,
+      "closing": false
     },
     {
-      "matchId": "ss-fotmob-5803290",
-      "kickoff": "2026-10-26T19:45:00.000Z",
-      "league": "France - Ligue 2",
-      "homeTeam": "Boulogne",
-      "awayTeam": "Reims",
-      "minutesBeforeKickoff": 270,
-      "captureWindow": "prematch",
+      "matchId": "ss-espn-fra.1-401876416",
+      "kickoff": "2026-10-30T18:00:00.000Z",
+      "league": "France - Ligue 1",
+      "homeTeam": "Nice",
+      "awayTeam": "Stade Rennais",
+      "minutesBeforeKickoff": 1405,
+      "captureWindow": "opening",
       "closingWindow": false,
-      "status": "already_captured",
-      "captureRole": "prematch"
+      "status": "not_found",
+      "providerCompetitionAvailability": null,
+      "reason": "Sportmonks fixture-id ontbreekt; odds-by-fixture call overgeslagen.",
+      "sportmonksMapping": "plan_coverage_unavailable"
     },
     {
-      "matchId": "ss-espn-fra.2-401876714",
-      "kickoff": "2026-10-26T19:45:00.000Z",
+      "matchId": "ss-espn-fra.2-401876708",
+      "kickoff": "2026-10-30T19:00:00.000Z",
       "league": "France - Ligue 2",
-      "homeTeam": "Montpellier",
-      "awayTeam": "Red Star FC 93",
-      "minutesBeforeKickoff": 270,
-      "captureWindow": "prematch",
+      "homeTeam": "Grenoble",
+      "awayTeam": "Dijon FCO",
+      "minutesBeforeKickoff": 1465,
+      "captureWindow": "opening",
       "closingWindow": false,
-      "status": "already_captured",
-      "captureRole": "prematch"
+      "status": "captured",
+      "provider": "the-odds-api",
+      "captureRole": "opening",
+      "sportmonksFixtureId": null,
+      "opening": true,
+      "prematch": true,
+      "closing": false
+    },
+    {
+      "matchId": "ss-espn-fra.2-401876705",
+      "kickoff": "2026-10-30T19:00:00.000Z",
+      "league": "France - Ligue 2",
+      "homeTeam": "Metz",
+      "awayTeam": "Pau",
+      "minutesBeforeKickoff": 1465,
+      "captureWindow": "opening",
+      "closingWindow": false,
+      "status": "captured",
+      "provider": "the-odds-api",
+      "captureRole": "opening",
+      "sportmonksFixtureId": null,
+      "opening": true,
+      "prematch": true,
+      "closing": false
+    },
+    {
+      "matchId": "ss-espn-fra.2-401876704",
+      "kickoff": "2026-10-30T19:00:00.000Z",
+      "league": "France - Ligue 2",
+      "homeTeam": "Nantes",
+      "awayTeam": "Clermont Foot",
+      "minutesBeforeKickoff": 1465,
+      "captureWindow": "opening",
+      "closingWindow": false,
+      "status": "captured",
+      "provider": "the-odds-api",
+      "captureRole": "opening",
+      "sportmonksFixtureId": null,
+      "opening": true,
+      "prematch": true,
+      "closing": false
+    },
+    {
+      "matchId": "ss-espn-fra.2-401876701",
+      "kickoff": "2026-10-30T19:00:00.000Z",
+      "league": "France - Ligue 2",
+      "homeTeam": "Rodez Aveyron",
+      "awayTeam": "Dunkerque",
+      "minutesBeforeKickoff": 1465,
+      "captureWindow": "opening",
+      "closingWindow": false,
+      "status": "not_found",
+      "providerCompetitionAvailability": null,
+      "reason": "Sportmonks fixture-id ontbreekt; odds-by-fixture call overgeslagen.",
+      "sportmonksMapping": "plan_coverage_unavailable"
+    },
+    {
+      "matchId": "ss-espn-fra.2-401876706",
+      "kickoff": "2026-10-30T19:00:00.000Z",
+      "league": "France - Ligue 2",
+      "homeTeam": "Stade Laval",
+      "awayTeam": "Boulogne",
+      "minutesBeforeKickoff": 1465,
+      "captureWindow": "opening",
+      "closingWindow": false,
+      "status": "captured",
+      "provider": "the-odds-api",
+      "captureRole": "opening",
+      "sportmonksFixtureId": null,
+      "opening": true,
+      "prematch": true,
+      "closing": false
+    },
+    {
+      "matchId": "ss-espn-ned.2-401875873",
+      "kickoff": "2026-10-30T19:00:00.000Z",
+      "league": "Netherlands - Eerste Divisie",
+      "homeTeam": "FC Volendam",
+      "awayTeam": "De Graafschap",
+      "minutesBeforeKickoff": 1465,
+      "captureWindow": "opening",
+      "closingWindow": false,
+      "status": "not_found",
+      "providerCompetitionAvailability": null,
+      "reason": "Sportmonks fixture-id ontbreekt; odds-by-fixture call overgeslagen.",
+      "sportmonksMapping": "plan_coverage_unavailable"
+    },
+    {
+      "matchId": "ss-espn-ned.2-401875872",
+      "kickoff": "2026-10-30T19:00:00.000Z",
+      "league": "Netherlands - Eerste Divisie",
+      "homeTeam": "Helmond Sport",
+      "awayTeam": "FC Eindhoven",
+      "minutesBeforeKickoff": 1465,
+      "captureWindow": "opening",
+      "closingWindow": false,
+      "status": "not_found",
+      "providerCompetitionAvailability": null,
+      "reason": "Sportmonks fixture-id ontbreekt; odds-by-fixture call overgeslagen.",
+      "sportmonksMapping": "plan_coverage_unavailable"
+    },
+    {
+      "matchId": "ss-espn-ned.2-401875870",
+      "kickoff": "2026-10-30T19:00:00.000Z",
+      "league": "Netherlands - Eerste Divisie",
+      "homeTeam": "RKC Waalwijk",
+      "awayTeam": "Almere City",
+      "minutesBeforeKickoff": 1465,
+      "captureWindow": "opening",
+      "closingWindow": false,
+      "status": "not_found",
+      "providerCompetitionAvailability": null,
+      "reason": "Sportmonks fixture-id ontbreekt; odds-by-fixture call overgeslagen.",
+      "sportmonksMapping": "plan_coverage_unavailable"
+    },
+    {
+      "matchId": "ss-espn-ned.2-401875869",
+      "kickoff": "2026-10-30T19:00:00.000Z",
+      "league": "Netherlands - Eerste Divisie",
+      "homeTeam": "Roda JC Kerkrade",
+      "awayTeam": "Jong AZ",
+      "minutesBeforeKickoff": 1465,
+      "captureWindow": "opening",
+      "closingWindow": false,
+      "status": "not_found",
+      "providerCompetitionAvailability": null,
+      "reason": "Sportmonks fixture-id ontbreekt; odds-by-fixture call overgeslagen.",
+      "sportmonksMapping": "plan_coverage_unavailable"
+    },
+    {
+      "matchId": "ss-espn-ger.1-401884746",
+      "kickoff": "2026-10-30T19:30:00.000Z",
+      "league": "Germany - Bundesliga",
+      "homeTeam": "SV Elversberg",
+      "awayTeam": "Mainz",
+      "minutesBeforeKickoff": 1495,
+      "captureWindow": "opening",
+      "closingWindow": false,
+      "status": "captured",
+      "provider": "the-odds-api",
+      "captureRole": "opening",
+      "sportmonksFixtureId": null,
+      "opening": true,
+      "prematch": true,
+      "closing": false
+    },
+    {
+      "matchId": "ss-espn-eng.2-401880190",
+      "kickoff": "2026-10-30T20:00:00.000Z",
+      "league": "England - Championship",
+      "homeTeam": "Sheffield United",
+      "awayTeam": "Wrexham",
+      "minutesBeforeKickoff": 1525,
+      "captureWindow": "opening",
+      "closingWindow": false,
+      "status": "captured",
+      "provider": "the-odds-api",
+      "captureRole": "opening",
+      "sportmonksFixtureId": null,
+      "opening": true,
+      "prematch": true,
+      "closing": false
+    },
+    {
+      "matchId": "ss-espn-fra.1-401876420",
+      "kickoff": "2026-10-30T20:05:00.000Z",
+      "league": "France - Ligue 1",
+      "homeTeam": "Lille",
+      "awayTeam": "Lens",
+      "minutesBeforeKickoff": 1530,
+      "captureWindow": "opening",
+      "closingWindow": false,
+      "status": "captured",
+      "provider": "the-odds-api",
+      "captureRole": "opening",
+      "sportmonksFixtureId": null,
+      "opening": true,
+      "prematch": true,
+      "closing": false
+    }
+  ],
+  "covered": 10,
+  "alreadyCaptured": 0,
+  "missing": 6,
+  "missingMatches": [
+    {
+      "matchId": "ss-espn-fra.1-401876416",
+      "kickoff": "2026-10-30T18:00:00.000Z",
+      "league": "France - Ligue 1",
+      "home": "Nice",
+      "away": "Stade Rennais",
+      "status": "not_found",
+      "reason": "Sportmonks fixture-id ontbreekt; odds-by-fixture call overgeslagen."
+    },
+    {
+      "matchId": "ss-espn-fra.2-401876701",
+      "kickoff": "2026-10-30T19:00:00.000Z",
+      "league": "France - Ligue 2",
+      "home": "Rodez Aveyron",
+      "away": "Dunkerque",
+      "status": "not_found",
+      "reason": "Sportmonks fixture-id ontbreekt; odds-by-fixture call overgeslagen."
+    },
+    {
+      "matchId": "ss-espn-ned.2-401875873",
+      "kickoff": "2026-10-30T19:00:00.000Z",
+      "league": "Netherlands - Eerste Divisie",
+      "home": "FC Volendam",
+      "away": "De Graafschap",
+      "status": "not_found",
+      "reason": "Sportmonks fixture-id ontbreekt; odds-by-fixture call overgeslagen."
+    },
+    {
+      "matchId": "ss-espn-ned.2-401875872",
+      "kickoff": "2026-10-30T19:00:00.000Z",
+      "league": "Netherlands - Eerste Divisie",
+      "home": "Helmond Sport",
+      "away": "FC Eindhoven",
+      "status": "not_found",
+      "reason": "Sportmonks fixture-id ontbreekt; odds-by-fixture call overgeslagen."
+    },
+    {
+      "matchId": "ss-espn-ned.2-401875870",
+      "kickoff": "2026-10-30T19:00:00.000Z",
+      "league": "Netherlands - Eerste Divisie",
+      "home": "RKC Waalwijk",
+      "away": "Almere City",
+      "status": "not_found",
+      "reason": "Sportmonks fixture-id ontbreekt; odds-by-fixture call overgeslagen."
+    },
+    {
+      "matchId": "ss-espn-ned.2-401875869",
+      "kickoff": "2026-10-30T19:00:00.000Z",
+      "league": "Netherlands - Eerste Divisie",
+      "home": "Roda JC Kerkrade",
+      "away": "Jong AZ",
+      "status": "not_found",
+      "reason": "Sportmonks fixture-id ontbreekt; odds-by-fixture call overgeslagen."
     }
   ],
   "leagueCoverage": [
     {
-      "league": "France - Ligue 2",
-      "checked": 2,
+      "league": "Netherlands - Eerste Divisie",
+      "checked": 4,
       "covered": 0,
       "partial": 0,
-      "missing": 2,
+      "missing": 4,
       "coverage": 0
     },
     {
       "league": "France - Ligue 1",
-      "checked": 1,
-      "covered": 0,
+      "checked": 3,
+      "covered": 2,
       "partial": 0,
       "missing": 1,
-      "coverage": 0
+      "coverage": 0.667
+    },
+    {
+      "league": "France - Ligue 2",
+      "checked": 5,
+      "covered": 4,
+      "partial": 0,
+      "missing": 1,
+      "coverage": 0.8
+    },
+    {
+      "league": "Germany - 2. Bundesliga",
+      "checked": 2,
+      "covered": 2,
+      "partial": 0,
+      "missing": 0,
+      "coverage": 1
+    },
+    {
+      "league": "England - Championship",
+      "checked": 1,
+      "covered": 1,
+      "partial": 0,
+      "missing": 0,
+      "coverage": 1
+    },
+    {
+      "league": "Germany - Bundesliga",
+      "checked": 1,
+      "covered": 1,
+      "partial": 0,
+      "missing": 0,
+      "coverage": 1
     }
   ],
-  "coverage": 0
+  "coverage": 0.625
 }
