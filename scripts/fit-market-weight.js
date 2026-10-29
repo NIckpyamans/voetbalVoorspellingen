@@ -11,7 +11,7 @@
 import fs from "node:fs";
 import path from "node:path";
 import { loadMatchStore } from "../shared/matchStore.js";
-import { fitMarketWeightBlend } from "../shared/ensembleWeightFit.js";
+import { fitMarketWeightBlend, fitMarketWeightByCompetition } from "../shared/ensembleWeightFit.js";
 import { DEFAULT_MARKET_WEIGHT } from "../shared/ensembleWeightPolicy.js";
 
 const dataDir = path.join(process.cwd(), "data");
@@ -20,11 +20,13 @@ const monitorDir = path.join(process.cwd(), "monitor");
 const { store } = loadMatchStore(dataDir);
 const records = Object.values(store.matches || {});
 const fit = fitMarketWeightBlend(records, { current: DEFAULT_MARKET_WEIGHT });
+const byCompetition = fitMarketWeightByCompetition(records, { current: DEFAULT_MARKET_WEIGHT });
 
 const result = {
   generatedAt: new Date().toISOString(),
   matches: records.length,
   ...fit,
+  byCompetition,
 };
 
 fs.mkdirSync(monitorDir, { recursive: true });
@@ -44,4 +46,10 @@ console.log(
   fit.holdoutImproves
     ? `Advies: gewicht naar ${fit.recommendedWeight} (holdout ${fit.improvement} logloss beter).`
     : `Advies: gewicht houden op ${fit.recommendedWeight}; de holdout bevestigt geen verbetering.`,
+);
+console.log(
+  `Per competitie: ${byCompetition.competitionsAgreed} van ${byCompetition.competitionsTotal} haalt de holdout-poort`
+  + `${byCompetition.confirmedCompetitions.length ? " (" + byCompetition.confirmedCompetitions.map((entry) => `${entry.league}: ${entry.weight}`).join(", ") + ")" : ""}.`
+  + ` Competitieverslecht ${byCompetition.currentWeight} prior met ${byCompetition.shrink}x shrinkage en 0,35 grens.`
+  + ` Competities zonder de poort blijven ${byCompetition.currentWeight}.`
 );

@@ -23,7 +23,14 @@ const EPS = 1e-9;
 const OUTCOME_INDEX = { H: 0, D: 1, A: 2 };
 
 export const DEFAULT_WEIGHT_GRID = Array.from({ length: 31 }, (_, index) => index / 50); // 0,00 t/m 0,60
+// Net begrensd raster voor fits per competitie: met ~75-150 duels per competitie
+// is het bovenste deel van het raster (0,4+) ruis. De prior (0,16) en de
+// shrinkage vullen de rest aan.
+export const PER_COMPETITION_WEIGHT_GRID = Array.from({ length: 19 }, (_, index) => index / 50); // 0,00 t/m 0,36 -> gevormd met de limiet van 0,35
 const MIN_SAMPLE = 150;
+const MIN_SAMPLE_PER_COMPETITION = 100;
+const MAX_PER_COMPETITION_WEIGHT = 0.35;
+const SHRINK_TOWARD_CURRENT = 0.5;
 
 function clampProbability(value) {
   return Math.min(1 - EPS, Math.max(EPS, Number(value)));
@@ -61,6 +68,7 @@ export function weightFitRows(records = []) {
     if (!Number.isFinite(modelProbability) || modelProbability <= 0 || modelProbability >= 1) continue;
     rows.push({
       date: String(record.d || ""),
+      league: String(record.lg || "onbekend"),
       outcome: String(record.po).toUpperCase(),
       hit: typeof record.hit === "boolean" ? record.hit : null,
       modelProbability,
@@ -127,5 +135,116 @@ export function fitMarketWeightBlend(records = [], options = {}) {
     // Het gemeten gewicht is pas een advies als de holdout het bevestigt.
     recommendedWeight: improvement !== null && improvement >= 0.002 ? best.weight : round(currentWeight, 3),
     curve,
+  };
+}
+
+// Per-competitie-fit met een overfitting-poort.
+//
+// De globale fit is sterk, maar het model wint per competitie duidelijk uiteen
+// (Eredivisie +8,3 procentpunt vs Portugal -20). Fitten per competitie is dus
+// zinvol, maar met ~40-160 paren per competitie is het rechtstreeks nemen van
+// het best gefitte gewicht overfitten. Er staan daarom vier remmen op:
+//
+//   1. chronologische splitsing per competitie (zelfde 70/30 als globaal);
+//   2. het raster stopt bij 0,35 — nooit gokken op een gewicht dat de data
+//      niet ondersteunt;
+//   3. shrinkage: het gefitte gewicht gaat halfweg naar de prior (0,16);
+//   4. holdout-poort: de shrunk-versie moet op de holdout van die competitie
+//      minimaal 0,002 logloss beter zijn dan de vaste prior, anders valt
+//      die competitie terug op de prior.
+export function fitMarketWeightByCompetition(records = [], options = {}) {
+  const minSample = Math.max(1, Number(options.minSamplePerCompetition || MIN_SAMPLE_PER_COMPETITION));
+  const trainShare = Math.min(0.9, Math.max(0.5, Number(options.trainShare || 0.7)));
+  const grid = Array.isArray(options.grid) && options.grid.length
+    ? options.grid.map(Number).filter((value) => Number.isFinite(value) && value >= 0 && value <= 0.5)
+    : PER_COMPETITION_WEIGHT_GRID.map((value) => Math.min(value, MAX_PER_COMPETITION_WEIGHT));
+  const currentWeight = Number.isFinite(Number(options.current)) ? Number(options.current) : 0.16;
+  const shrink = Math.min(1, Math.max(0, Number(options.shrink ?? SHRINK_TOWARD_CURRENT)));
+
+  const rows = weightFitRows(records);
+  const byLeague = new Map();
+  for (const row of rows) {
+    const entry = byLeague.get(row.league) || [];
+    entry.push(row);
+    byLeague.set(row.league, entry);
+  }
+
+  const competitions = [];
+  for (const [league, leagueRows] of [...byLeague.entries()].sort((left, right) => right[1].length - left[1].length)) {
+    if (leagueRows.length < minSample) {
+      competitions.push({
+        league,
+        sample: leagueRows.length,
+        minSample,
+        available: false,
+        reason: "te-weinig-paren",
+        weight: round(currentWeight, 3),
+        prior: round(currentWeight, 3),
+      });
+      continue;
+    }
+    const cut = Math.max(1, Math.min(leagueRows.length - 1, Math.floor(leagueRows.length * trainShare)));
+    const train = leagueRows.slice(0, cut);
+    const holdout = leagueRows.slice(cut);
+
+    const curve = grid.map((weight) => ({
+      weight: round(weight, 3),
+      trainLogLoss: round(meanLogLoss(train, weight)),
+      holdoutLogLoss: round(meanLogLoss(holdout, weight)),
+    }));
+    let best = curve[0];
+    for (const point of curve) {
+      if (point.trainLogLoss !== null && point.trainLogLoss < best.trainLogLoss) best = point;
+    }
+
+    // Shrinkage naar de prior en begrenzing bovenop het raster.
+    const rawBest = Number(best.weight);
+    const shrunk = Math.min(
+      MAX_PER_COMPETITION_WEIGHT,
+      Math.max(0, round(currentWeight + (rawBest - currentWeight) * shrink, 3)),
+    );
+    const priorLogLoss = meanLogLoss(holdout, currentWeight);
+    const shrunkLogLoss = meanLogLoss(holdout, shrunk);
+    const improvement = priorLogLoss === null || shrunkLogLoss === null
+      ? null
+      : priorLogLoss - shrunkLogLoss;
+    const gatePasses = improvement !== null && improvement >= 0.002;
+
+    competitions.push({
+      league,
+      sample: leagueRows.length,
+      trainSample: train.length,
+      holdoutSample: holdout.length,
+      minSample,
+      available: true,
+      bestWeight: best.weight,
+      rawBestWeight: round(rawBest, 3),
+      shrunkWeight: round(shrunk, 3),
+      priorLogLoss: round(priorLogLoss),
+      shrunkHoldoutLogLoss: round(shrunkLogLoss),
+      improvement: round(improvement),
+      gate: gatePasses ? "gehaald" : "niet-gehaald",
+      // Zonder poort is het gefitte gewicht een vermoeden, dus niet adverteren.
+      recommendedWeight: gatePasses ? round(shrunk, 3) : round(currentWeight, 3),
+      holdoutImproves: gatePasses,
+    });
+  }
+
+  const withFit = competitions.filter((entry) => entry.available);
+  const confirmed = withFit.filter((entry) => entry.holdoutImproves);
+  return {
+    currentWeight: round(currentWeight, 3),
+    minSample,
+    shrink,
+    sample: rows.length,
+    competitions,
+    competitionsAgreed: confirmed.length,
+    competitionsTotal: withFit.length,
+    confirmedCompetitions: confirmed.map((entry) => ({
+      league: entry.league,
+      weight: entry.recommendedWeight,
+      improvement: entry.improvement,
+      holdoutSample: entry.holdoutSample,
+    })),
   };
 }

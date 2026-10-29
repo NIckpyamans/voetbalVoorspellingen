@@ -32,6 +32,12 @@ p(gemengd) = (1 - w) * p(model) + w * p(markt)
   `scripts/model-report.js` neemt de meting op als `marketWeightFit`.
 - `shared/ensembleWeightPolicy.js` laat de gemeten fit voorgaan op de
   kansniveau-benchmark, maar alleen wanneer de holdout de verbetering bevestigt.
+- `fitMarketWeightByCompetition` fit bovendien per competitie, met vier remmen
+  tegen overfitting: chronologische 70/30-splitsing per competitie, raster tot
+  0,35, shrinkage halfweg naar de prior (0,16) en een holdout-poort (minimaal
+  0,002 logloss beter dan de prior, anders valt de competitie terug op de
+  prior). Dit zit in hetzelfde rapport als `marketWeightFitByCompetition` en in
+  `monitor/market-weight-fit.json` als `byCompetition`.
 
 **Beperking, bewust:** alleen de kans op de gekozen uitkomst wordt gemengd. De
 massa op de andere twee uitkomsten staat niet in de compacte opslag (daar staat

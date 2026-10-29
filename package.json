@@ -46,6 +46,8 @@
     "db:availability": "node scripts/database-availability.js",
     "test:unit": "vitest run",
     "test:e2e": "playwright test",
+    "verify": "npm run check && npm run test:unit && npm run build && npm run test:archive-retention && npm run monitor:repository-size && npm run monitor:regressions",
+    "verify:e2e": "npm run verify && npx playwright install --with-deps chromium && npm run test:e2e",
     "train:snapshots:recover": "node scripts/recover-snapshot-training.js",
     "db:predictions:enrich-model-ledger": "node scripts/enrich-model-holdout-ledger.js",
     "db:predictions:enrich-model-ledger:dry-run": "node scripts/enrich-model-holdout-ledger.js --dry-run",

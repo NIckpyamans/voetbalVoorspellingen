@@ -21,7 +21,7 @@ import {
 import { selectCalibration } from "../shared/calibrationFit.js";
 import { buildStrengthModel, strengthRows } from "../shared/clubStrength.js";
 import { adviseMarketWeight } from "../shared/ensembleWeightPolicy.js";
-import { fitMarketWeightBlend } from "../shared/ensembleWeightFit.js";
+import { fitMarketWeightBlend, fitMarketWeightByCompetition } from "../shared/ensembleWeightFit.js";
 import { assessModelHealth } from "../shared/modelHealth.js";
 
 const dataDir = path.join(process.cwd(), "data");
@@ -91,6 +91,19 @@ report.marketWeightFit = {
   holdoutImproves: Boolean(weightFit.holdoutImproves),
 };
 report.marketWeight = adviseMarketWeight(report.marketBaseline.probability, { fit: weightFit });
+// Per-competitie-fit: gemeten, afgedwongen met dezelfde holdout-poort en
+// shrinkage, maar het advies blijft rapportage — de live worker past het niet
+// stil aan.
+const weightFitByCompetition = fitMarketWeightByCompetition(records);
+report.marketWeightFitByCompetition = {
+  currentWeight: weightFitByCompetition.currentWeight,
+  shrink: weightFitByCompetition.shrink,
+  sample: weightFitByCompetition.sample,
+  competitionsAgreed: weightFitByCompetition.competitionsAgreed,
+  competitionsTotal: weightFitByCompetition.competitionsTotal,
+  confirmedCompetitions: weightFitByCompetition.confirmedCompetitions,
+  competitions: weightFitByCompetition.competitions,
+};
 report.health = assessModelHealth({
   store: { matches: records.length },
   integrity,
@@ -121,6 +134,7 @@ console.log(
     ? `Marktgewicht-fit: beste ${report.marketWeightFit.bestWeight} op holdout ${report.marketWeightFit.holdoutLogLoss} tegen ${report.marketWeightFit.currentHoldoutLogLoss} bij huidig gewicht (${report.marketWeightFit.holdoutImproves ? "bevestigd" : "niet bevestigd"}, n=${report.marketWeightFit.holdoutSample})`
     : `Marktgewicht-fit: nog geen meting (${report.marketWeightFit.sample} paren, minimaal 150 nodig)`,
 );
+console.log(`Per-competitie-fit: ${report.marketWeightFitByCompetition.competitionsAgreed} van ${report.marketWeightFitByCompetition.competitionsTotal} haalt de holdout-poort${report.marketWeightFitByCompetition.confirmedCompetitions.length ? " (" + report.marketWeightFitByCompetition.confirmedCompetitions.map((entry) => `${entry.league}: ${entry.weight}`).join(", ") + ")" : ""}`);
 console.log(`Gezondheid: ${report.health.status}${report.health.summary.length ? ` (${report.health.summary.join("; ")})` : ""}`);
 for (const entry of report.temporal.periods) {
   console.log(`Periode ${entry.period}: ${entry.decided} beoordeeld, 1X2 ${entry.hitPct}%, exact ${entry.exactPct}%`);

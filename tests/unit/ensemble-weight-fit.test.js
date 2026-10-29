@@ -1,5 +1,9 @@
 import { describe, expect, it } from "vitest";
-import { fitMarketWeightBlend, weightFitRows } from "../../shared/ensembleWeightFit.js";
+import {
+  fitMarketWeightBlend,
+  fitMarketWeightByCompetition,
+  weightFitRows,
+} from "../../shared/ensembleWeightFit.js";
 import { adviseMarketWeight } from "../../shared/ensembleWeightPolicy.js";
 
 // Bouwt records waarin de markt consequent beter is dan het model: de markt
@@ -21,6 +25,11 @@ function buildRecords(count) {
     });
   }
   return records;
+}
+
+// Dekking voor de geronde output van de fitter.
+function withLeague(records, league) {
+  return records.map((record) => ({ ...record, lg: league }));
 }
 
 describe("weightFitRows", () => {
@@ -80,6 +89,75 @@ describe("fitMarketWeightBlend", () => {
       expect(point.weight).toBeGreaterThanOrEqual(0);
       expect(point.weight).toBeLessThanOrEqual(0.6);
     }
+  });
+});
+
+describe("fitMarketWeightByCompetition", () => {
+  it("geeft per competitie een meting en laat te klein geworden competities terugvallen op de prior", () => {
+    const records = [
+      ...withLeague(buildRecords(160), "England - Premier League"),
+      ...withLeague(buildRecords(30), "Portugal - Liga Portugal"),
+    ];
+    const fit = fitMarketWeightByCompetition(records, { current: 0.16 });
+    expect(fit.competitions).toHaveLength(2);
+    const england = fit.competitions.find((entry) => entry.league === "England - Premier League");
+    const portugal = fit.competitions.find((entry) => entry.league === "Portugal - Liga Portugal");
+    expect(england.available).toBe(true);
+    expect(england.trainSample + england.holdoutSample).toBe(160);
+    expect(portugal).toMatchObject({ available: false, reason: "te-weinig-paren", weight: 0.16 });
+  });
+
+  it("splitst chronologisch: training eerst, holdout daarna", () => {
+    // Later de datums sorteert: training eerst, holdout daarna.
+    const records = withLeague(buildRecords(100).map((record) => (record.d === "2026-01-01" ? { ...record, mp: [0.9, 0.05, 0.05] } : record)), "Test - League");
+    const fit = fitMarketWeightByCompetition(records, { current: 0.16, minSamplePerCompetition: 100 });
+    const entry = fit.competitions.find((item) => item.league === "Test - League");
+    expect(entry.trainSample).toBe(70);
+    expect(entry.holdoutSample).toBe(30);
+  });
+
+  it("begrenst het advies met shrinkage naar de prior en een raster tot 0,35", () => {
+    const fit = fitMarketWeightByCompetition(withLeague(buildRecords(300), "Test - League"), { current: 0.16, minSamplePerCompetition: 100 });
+    for (const entry of fit.competitions) {
+      if (!entry.available) continue;
+      expect(Number(entry.shrunkWeight)).toBeLessThanOrEqual(0.35);
+      // Shrinkage pullt het advies halfweg richting de prior van de globale fit.
+      expect(Number(entry.shrunkWeight)).toBeLessThanOrEqual(Math.max(0.16, entry.rawBestWeight));
+      expect(Number(entry.recommendedWeight)).toBeLessThanOrEqual(0.35);
+    }
+  });
+
+  it("draait het advies terug naar de prior wanneer de holdout niets bevestigt", () => {
+    // Wanneer de poort niet gehaald wordt, is het advies precies de prior:
+    // geen gemeten voordeel betekent geen gemeten advies.
+    // Trainingsfase zegt: markt beter (model 0,45 tegen markt 0,70); de
+    // holdout zegt het omgekeerde (markt 0,10). De gefitte richting gilt in
+    // de holdout aantoonbaar slechter, dus de poort deseint en de prior
+    // blijft staan.
+    const records = [];
+    for (let index = 0; index < 300; index += 1) {
+      const day = String(1 + (index % 28)).padStart(2, "0");
+      const month = String(1 + Math.floor(index / 28)).padStart(2, "0");
+      const homeWins = index % 2 === 0;
+      const outcome = homeWins ? "H" : "A";
+      const marketBetter = index < 210;
+      records.push({
+        d: `2026-${month}-${day}`,
+        y: outcome,
+        po: outcome,
+        hit: true,
+        cf: 0.45,
+        lg: "Test - League",
+        mp: marketBetter
+          ? (homeWins ? [0.7, 0.15, 0.15] : [0.15, 0.15, 0.7])
+          : (homeWins ? [0.1, 0.45, 0.45] : [0.45, 0.45, 0.1]),
+      });
+    }
+    const fit = fitMarketWeightByCompetition(records, { current: 0.16, minSamplePerCompetition: 100 });
+    const entry = fit.competitions.find((item) => item.league === "Test - League");
+    expect(entry.available).toBe(true);
+    expect(entry.holdoutImproves).toBe(false);
+    expect(Number(entry.recommendedWeight)).toBe(0.16);
   });
 });
 
