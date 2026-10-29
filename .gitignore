@@ -28,8 +28,13 @@ monitor/*.json
 !monitor/probability-calibration-report.json
 !monitor/ml-ensemble-report.json
 # Match-store-workflow commit deze compacte rapporten bewust (clubanalyse + modelmetingen).
+# Zonder de uitzonderingen hieronder faalt een blote `git add` op de ignore-regel
+# `monitor/*.json`; de workflow gebruikt daarnaast `git add -f` als vangnet.
 !monitor/club-analysis.json
 !monitor/model-report.json
+!monitor/match-store-publish.json
+!monitor/market-weight-fit.json
+!monitor/strength-backtest.json
 
 # Editor directories and files
 .vscode/*
