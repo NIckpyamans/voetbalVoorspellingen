@@ -123,3 +123,28 @@ jobs:
             done
             exit 1
           fi
+      # Poort: de twee metingen hierboven staan op `continue-on-error`, zodat een
+      # mislukte meting de publicatie van de opslag niet blokkeert. Daardoor bleef
+      # het onzichtbaar wanneer fit-market-weight.js of backtest-strength-model.js
+      # helemaal niets schreef. Deze stap controleert achteraf of de rapporten
+      # bestaan en van deze run zijn; de run wordt dan rood, terwijl de
+      # match-store gewoon gecommit blijft.
+      - name: Assert model measurement reports exist for this run
+        if: always()
+        run: |
+          failed=0
+          for report in monitor/market-weight-fit.json monitor/strength-backtest.json; do
+            if [ ! -f "$report" ]; then
+              echo "::error file=$report::Ontbreekt: het bijbehorende script heeft dit rapport niet geschreven."
+              failed=1
+              continue
+            fi
+            age_minutes=$(node -e "const fs=require('fs');const r=JSON.parse(fs.readFileSync('$report','utf8'));const age=Date.now()-Date.parse(r.generatedAt||0);process.stdout.write(String(Number.isFinite(age)?Math.round(age/60000):-1))")
+            if [ "$age_minutes" -lt 0 ] || [ "$age_minutes" -gt 360 ]; then
+              echo "::error file=$report::Rapport is niet van deze run (${age_minutes} minuten oud)."
+              failed=1
+              continue
+            fi
+            echo "ok: $report van deze run (${age_minutes} minuten oud)."
+          done
+          exit "$failed"

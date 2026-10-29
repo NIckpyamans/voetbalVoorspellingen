@@ -18,13 +18,19 @@ export const MARKET_ODDS_SCHEMA = "market-odds-v1";
 // football-data.co.uk. Competities buiten deze lijst ( Europa Cup,
 // vriendschappelijk) hebben geen gratis CSV met odds en vallen terug op de
 // pre-match oddsAtPrediction-captures.
+//
+// Serie B en LaLiga2 staan in dezelfde mmz4281-map als de hoogste divisies, dus
+// deze twee kosten geen extra ophaal-URL zolang ze niet in de opslag voorkomen:
+// build-market-odds.js leidt de op te halen codes af uit de records.
 export const LEAGUE_CODE_BY_LEAGUE = {
   "England - Premier League": "E0",
   "England - Championship": "E1",
   "Germany - Bundesliga": "D1",
   "Germany - 2. Bundesliga": "D2",
   "Italy - Serie A": "I1",
+  "Italy - Serie B": "I2",
   "Spain - LaLiga": "SP1",
+  "Spain - LaLiga2": "SP2",
   "France - Ligue 1": "F1",
   "France - Ligue 2": "F2",
   "Netherlands - Eredivisie": "N1",
