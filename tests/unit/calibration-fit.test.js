@@ -44,6 +44,64 @@ describe("kalibratiemethoden", () => {
     expect(applyIsotonic(0.1, { bins: [{ p: 0.5, y: 0.2 }, { p: 1, y: 0.8 }] })).toBeCloseTo(0.2, 6);
   });
 
+  it("isotonic zonder minimum laat kleine blokken staan", () => {
+    const model = fitIsotonic([
+      { p: 0.1, y: 0 },
+      { p: 0.2, y: 1 },
+      { p: 0.3, y: 1 },
+      { p: 0.4, y: 0 },
+      { p: 0.5, y: 1 },
+    ]);
+    // Zonder drempel: klassieke PAV. De violatie op p=0,4 poolt de middelste
+    // blokken; de randblokken (n=1) blijven als losse blokken staan.
+    // (Of gelijkwaardige gemiddeldes samen worden gepoolt laat de klassieke
+    // definitie vrij, daarom toetsen we het structurele resultaat.)
+    expect(model.bins).toHaveLength(3);
+    expect(model.bins[0].n).toBe(1);
+    expect(model.bins[model.bins.length - 1].n).toBe(1);
+    for (let position = 1; position < model.bins.length; position += 1) {
+      expect(model.bins[position].y).toBeGreaterThanOrEqual(model.bins[position - 1].y);
+    }
+  });
+
+  it("isotonic poolt blokken onder de minimum steekproef en blijft monotoon", () => {
+    const pairs = [
+      { p: 0.1, y: 0 },
+      { p: 0.2, y: 1 },
+      { p: 0.3, y: 1 },
+      { p: 0.4, y: 0 },
+      { p: 0.5, y: 1 },
+    ];
+    const pooled = fitIsotonic(pairs, { minBinSample: 3 });
+    expect(pooled.minBinSample).toBe(3);
+    expect(pooled.bins.length).toBeGreaterThan(0);
+    for (const bin of pooled.bins) {
+      expect(bin.n).toBeGreaterThanOrEqual(3);
+    }
+    for (let position = 1; position < pooled.bins.length; position += 1) {
+      expect(pooled.bins[position].y).toBeGreaterThanOrEqual(pooled.bins[position - 1].y);
+    }
+    // Geen blok onder de drempel betekent hier: alles samengevoegd tot n=5.
+    expect(pooled.bins.reduce((total, bin) => total + bin.n, 0)).toBe(5);
+  });
+
+  it("isotonic met steekproef drempel interpoleert nog steeds tussen de gepoolde blokken", () => {
+    const pairs = [
+      { p: 0.1, y: 0 }, { p: 0.15, y: 0 }, { p: 0.2, y: 0 },
+      { p: 0.6, y: 1 }, { p: 0.65, y: 1 },
+      { p: 0.7, y: 0 }, { p: 0.75, y: 0 },
+      { p: 0.9, y: 1 },
+    ];
+    const model = fitIsotonic(pairs, { minBinSample: 3 });
+    for (const bin of model.bins) expect(bin.n).toBeGreaterThanOrEqual(3);
+    // 0,35 ligt tussen de eerste twee gepoolde bins: de waarde moet de
+    // lineaire interpolatie tussen die bins volgen, niet uitkomen op een
+    // van de randwaarden.
+    const share = (0.35 - model.bins[0].p) / (model.bins[1].p - model.bins[0].p);
+    const expected = model.bins[0].y + share * (model.bins[1].y - model.bins[0].y);
+    expect(applyIsotonic(0.35, model)).toBeCloseTo(expected, 6);
+  });
+
   it("platt blijft binnen de ingestelde grenzen", () => {
     const params = fitPlatt([
       { p: 0.9, y: 1 },
@@ -78,6 +136,14 @@ describe("selectCalibration", () => {
     expect(report.fitSample + report.holdoutSample).toBe(200);
     expect(["identity", "platt", "temperature", "isotonic"]).toContain(report.method);
     expect(report.baselineLogLoss).not.toBeNull();
+    // Bucket-pooling: de isotonic-kandidaat heeft geen losse n=1-blokjes meer.
+    const minimum = Math.max(5, Math.ceil(report.fitSample / 60));
+    expect(report.isotonicMinBinSample).toBe(minimum);
+    const isotonic = report.candidates.find((candidate) => candidate.method === "isotonic");
+    expect(isotonic.params.minBinSample).toBe(minimum);
+    for (const bin of isotonic.params.bins) {
+      expect(bin.n).toBeGreaterThanOrEqual(minimum);
+    }
   });
 
   it("negeert records zonder bruikbare confidence of beoordeling", () => {

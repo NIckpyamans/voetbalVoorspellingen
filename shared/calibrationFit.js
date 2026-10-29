@@ -116,9 +116,15 @@ export function fitTemperature(pairs = [], options = {}) {
 }
 
 // Pool adjacent violators: monotone niet-dalende fit van y tegen p.
-export function fitIsotonic(pairs = []) {
+// `minBinSample`: minimum steekproef per bucket. Blokken die kleiner zijn
+// worden poolen met de naastgelegen blok waarvan het gemiddelde het dichtst
+// bij zit; het gepoolde gemiddelde ligt tussen beide, dus de monotone
+// volgorde blijft gegarandeerd staan. Zonder pooling ontstond in de
+// rapportage een isotonic-fit met losse n=1-blokjes: puur ruis die de
+// holdout-toets kan winnen, maar nooit leerbaar is.
+export function fitIsotonic(pairs = [], options = {}) {
   const sorted = [...pairs].sort((left, right) => left.p - right.p);
-  const blocks = [];
+  let blocks = [];
   for (const pair of sorted) {
     blocks.push({ sum: pair.y, weight: 1, pSum: pair.p });
     while (blocks.length > 1) {
@@ -132,13 +138,47 @@ export function fitIsotonic(pairs = []) {
       });
     }
   }
+  blocks = poolUnderweightBlocks(blocks, Math.max(0, Number(options.minBinSample || 0)));
   return {
+    minBinSample: Math.max(0, Number(options.minBinSample || 0)) || null,
     bins: blocks.map((block) => ({
       p: Math.round((block.pSum / block.weight) * 10000) / 10000,
       y: Math.round((block.sum / block.weight) * 10000) / 10000,
       n: block.weight,
     })),
   };
+}
+
+// Poolt accumulatieve blokken onder de drempel: kleinste ondermaat eerst,
+// dichtstbijzijnde buurblok als partner. Deterministisch; elke samenvoeging
+// verlaagt het aantal blokken, dus de lus eindigt altijd.
+function poolUnderweightBlocks(blocks, minBinSample) {
+  if (!minBinSample || minBinSample <= 1) return blocks;
+  const list = [...blocks];
+  while (list.length > 1) {
+    let underSizeIndex = -1;
+    for (let index = 0; index < list.length; index += 1) {
+      if (list[index].weight < minBinSample && (underSizeIndex === -1 || list[index].weight < list[underSizeIndex].weight)) {
+        underSizeIndex = index;
+      }
+    }
+    if (underSizeIndex === -1) break;
+    const undersized = list[underSizeIndex];
+    const left = underSizeIndex > 0 ? list[underSizeIndex - 1] : null;
+    const right = underSizeIndex < list.length - 1 ? list[underSizeIndex + 1] : null;
+    const undersizedMean = undersized.sum / undersized.weight;
+    const leftGap = left ? Math.abs(left.sum / left.weight - undersizedMean) : Infinity;
+    const rightGap = right ? Math.abs(right.sum / right.weight - undersizedMean) : Infinity;
+    const mergeIndex = leftGap <= rightGap ? underSizeIndex - 1 : underSizeIndex + 1;
+    const first = Math.min(underSizeIndex, mergeIndex);
+    const second = Math.max(underSizeIndex, mergeIndex);
+    list.splice(first, 2, {
+      sum: list[first].sum + list[second].sum,
+      weight: list[first].weight + list[second].weight,
+      pSum: list[first].pSum + list[second].pSum,
+    });
+  }
+  return list;
 }
 
 // Piecewise-lineaire interpolatie tussen de blokken; buiten het bereik klemmen.
@@ -193,9 +233,13 @@ export function selectCalibration(rows = [], options = {}) {
     };
   }
 
+  // Minimum steekproef per isotonic-bucket: losse duels zijn geen bewijs,
+  // dus sinds deze ronde worden kleine blokken gepoolt. Afleidbaar via
+  // options; standaard zo gekozen dat er maximaal ~60 buckets ontstaan.
+  const minBinSample = Math.max(1, Number(options.minBinSample || Math.max(5, Math.ceil(fitSet.length / 60))));
   const platt = fitPlatt(fitSet);
   const temperature = fitTemperature(fitSet);
-  const isotonic = fitIsotonic(fitSet);
+  const isotonic = fitIsotonic(fitSet, { minBinSample });
   const candidates = [
     { method: "identity", predict: (value) => value, params: null },
     { method: "platt", predict: (value) => applyPlatt(value, platt), params: platt },
@@ -227,6 +271,7 @@ export function selectCalibration(rows = [], options = {}) {
     sample: pairs.length,
     fitSample: fitSet.length,
     holdoutSample: holdoutSet.length,
+    isotonicMinBinSample: minBinSample,
     minSample,
     baselineLogLoss: baseline?.holdoutLogLoss ?? null,
     improvement: winner && Number.isFinite(winner.holdoutLogLoss)
