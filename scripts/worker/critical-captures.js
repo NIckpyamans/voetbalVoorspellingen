@@ -1,4 +1,4 @@
-import { buildR2ObjectKey, getR2Config, getR2Object } from "../../shared/cloudflare-r2.js";
+import { buildR2ObjectKey, getR2Config, getR2Object, putR2Object } from "../../shared/cloudflare-r2.js";
 
 const MINUTE = 60 * 1000;
 
@@ -205,6 +205,60 @@ export function selectOddsCapture(ledger, kickoffAt) {
       closingCapturedAt: closing?.capturedAt || null,
     },
   };
+}
+
+// Pure stap tussen read en write, zodat de samenvoeglogica unit-testbaar is zonder
+// R2: bestaande ledger + nieuwe prematch-capture -> volgende ledger, of null
+// wanneer er niets geldigs toe te voegen valt.
+export function composeOddsLedgerWrite(currentLedger, match, oddsAtPrediction, capturedAt = new Date().toISOString()) {
+  if (!match?.matchId || !oddsAtPrediction) return null;
+  const odds = {
+    provider: oddsAtPrediction.provider,
+    bookmaker: oddsAtPrediction.bookmaker,
+    market: oddsAtPrediction.market || "1X2",
+    home: oddsAtPrediction.home,
+    draw: oddsAtPrediction.draw,
+    away: oddsAtPrediction.away,
+  };
+  if (![odds.home, odds.draw, odds.away].every((value) => Number(value) > 1)) return null;
+  const capturedMs = validDate(capturedAt);
+  const kickoffMs = validDate(match.kickoff);
+  if (capturedMs == null || kickoffMs == null || capturedMs >= kickoffMs) return null;
+  return mergeOddsCaptureLedger(currentLedger, { matchId: match.matchId, kickoff: match.kickoff }, odds, capturedAt);
+}
+
+// Worker-kant van de critical-capture pipeline: het werkproces haalt per run
+// verse pre-match odds op, maar de enige schrijver was de aparte
+// capture-critical-odds-to-r2-run (maximaal 40 duels, 36 uur vooruit). Zonder
+// deze terugweg verdwenen elke verses capture bij de volgende run weer uit de
+// published store. Best-effort: een mislukte weg schrijffunctie mag de
+// voorspelling niet blokkeren.
+export async function saveR2OddsLedgerEntry(matchId, kickoffAt, oddsAtPrediction, options = {}) {
+  const result = { ok: false, skipped: false, error: null };
+  if (String(process.env.R2_CRITICAL_CAPTURE_ENABLED || "true").toLowerCase() === "false") {
+    result.skipped = true;
+    return result;
+  }
+  const config = getR2Config();
+  if (!config.configured) {
+    result.skipped = true;
+    return result;
+  }
+  try {
+    const key = buildR2ObjectKey(config, `critical-captures/odds/${matchId}.json`);
+    const currentLedger = await readCriticalCapture(`critical-captures/odds/${matchId}.json`);
+    const nextLedger = composeOddsLedgerWrite(currentLedger, { matchId, kickoff: kickoffAt }, oddsAtPrediction, options.capturedAt || oddsAtPrediction?.capturedAt || new Date().toISOString());
+    if (!nextLedger) {
+      result.skipped = true;
+      return result;
+    }
+    await putR2Object({ config, key, body: `${JSON.stringify(nextLedger)}\n`, contentType: "application/json", metadata: { match: String(matchId), provider: String(nextLedger.prematch?.provider || "unknown") } });
+    result.ok = true;
+    result.role = nextLedger.prematch?.roleAtCapture || null;
+  } catch (error) {
+    result.error = error?.message || String(error);
+  }
+  return result;
 }
 
 async function readCriticalCapture(relativeKey) {

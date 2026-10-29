@@ -2,8 +2,10 @@ import { describe, expect, it } from "vitest";
 import {
   classifyLineupCaptureWindow,
   classifyOddsCaptureRole,
+  composeOddsLedgerWrite,
   mergeLineupCaptureLedger,
   mergeOddsCaptureLedger,
+  saveR2OddsLedgerEntry,
   selectConfirmedLineupCapture,
   selectOddsCapture,
   summarizeOddsCapture,
@@ -56,6 +58,49 @@ describe("immutable odds ledger", () => {
     ledger = mergeOddsCaptureLedger(ledger, match, odds, "2026-07-20T20:01:00.000Z");
     expect(ledger.snapshots).toHaveLength(0);
     expect(selectOddsCapture({ prematch: { ...odds, capturedAt: "not-a-date" } }, match.kickoff)).toBeNull();
+  });
+});
+
+describe("worker odds ledger write-back", () => {
+  const match = { matchId: "m1", kickoff: "2026-07-20T20:00:00.000Z" };
+  const odds = { provider: "test", bookmaker: "book", market: "1X2", home: 2, draw: 3.2, away: 3.8 };
+
+  it("composes a valid pre-kickoff capture into the existing ledger", () => {
+    const existing = mergeOddsCaptureLedger(null, match, { ...odds, home: 2.4 }, "2026-07-19T20:00:00.000Z");
+    const next = composeOddsLedgerWrite(existing, match, { ...odds, capturedAt: "2026-07-20T17:30:00.000Z" }, "2026-07-20T17:30:00.000Z");
+    expect(next).not.toBeNull();
+    expect(next.prematch?.home).toBe(2);
+    expect(next.snapshots).toHaveLength(2);
+    // De opening blijft de oudste capture behouden.
+    expect(next.opening?.market).toBe("1X2");
+  });
+
+  it("refuses incomplete odds, post-kickoff captures and matches without id", () => {
+    const incomplete = composeOddsLedgerWrite(null, match, { ...odds, away: null }, "2026-07-20T17:30:00.000Z");
+    expect(incomplete).toBeNull();
+    const afterKickoff = composeOddsLedgerWrite(null, match, { ...odds, capturedAt: match.kickoff }, match.kickoff);
+    expect(afterKickoff).toBeNull();
+    const noMatch = composeOddsLedgerWrite(null, { kickoff: match.kickoff }, { ...odds, capturedAt: "2026-07-20T17:30:00.000Z" }, "2026-07-20T17:30:00.000Z");
+    expect(noMatch).toBeNull();
+  });
+
+  it("skips the write without R2 credentials instead of throwing", async () => {
+    delete process.env.R2_CRITICAL_CAPTURE_ENABLED;
+    delete process.env.CLOUDFLARE_R2_ACCESS_KEY_ID;
+    const result = await saveR2OddsLedgerEntry("m1", match.kickoff, { ...odds, capturedAt: "2026-07-20T17:30:00.000Z" });
+    expect(result).toMatchObject({ ok: false, skipped: true, error: null });
+  });
+
+  it("skips the write when critical capture is disabled", async () => {
+    process.env.R2_CRITICAL_CAPTURE_ENABLED = "false";
+    const result = await saveR2OddsLedgerEntry("m1", match.kickoff, { ...odds, capturedAt: "2026-07-20T17:30:00.000Z" });
+    expect(result).toMatchObject({ ok: false, skipped: true });
+    delete process.env.R2_CRITICAL_CAPTURE_ENABLED;
+  });
+
+  it("refuses to persist when the odds lack a usable timestamp", () => {
+    const next = composeOddsLedgerWrite(null, match, { ...odds, capturedAt: "not-a-date" }, new Date().toISOString());
+    expect(next).toBeNull();
   });
 });
 

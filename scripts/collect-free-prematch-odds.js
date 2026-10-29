@@ -33,6 +33,12 @@ const oddsApiMatchLimit = Math.max(0, Number(process.env.ODDS_API_MATCH_LIMIT ||
 const oddsApiDaysAhead = Math.max(1, Number(process.env.ODDS_API_DAYS_AHEAD || 14));
 const oddsApiClosingLimit = Math.max(0, Number(process.env.ODDS_API_CLOSING_LIMIT || 160));
 const oddsApiClosingLookaheadMinutes = Math.max(15, Number(process.env.ODDS_API_CLOSING_LOOKAHEAD_MINUTES || 180));
+// Dekt dekking verbreden: playede duels in deze terugblik krijgen hun échte
+// market-closing (AvgCH/CD/CA, B365CH/CD/CA) uit dezelfde CSV, zodat prematch-
+// snapshots ook een closingpaar krijgen wanneer de 2-uurs-window door de
+// 6-uurs-cadans gemist werd. 0 zet de terugblik uit.
+const closingLookbackDays = Math.max(0, Number(process.env.ODDS_CLOSING_LOOKBACK_DAYS || 14));
+const closingLookbackCutoff = new Date(now.getTime() - closingLookbackDays * 86400000).toISOString().slice(0, 10);
 const start = now.getUTCMonth() + 1 >= 7 ? now.getUTCFullYear() : now.getUTCFullYear() - 1;
 const folders = [`${String(start).slice(2)}${String(start + 1).slice(2)}`, `${String(start + 1).slice(2)}${String(start + 2).slice(2)}`];
 async function fetchWithTimeout(url) {
@@ -64,6 +70,7 @@ function parseDate(value) {
 let captured = 0;
 let closingUpdated = 0;
 let futureRows = 0;
+let closingBackfilled = 0;
 let oddsApiCaptured = 0;
 let oddsApiClosingUpdated = 0;
 let oddsApiCandidates = 0;
@@ -83,7 +90,31 @@ for (const folder of folders) for (const code of leagues) {
     for (const row of parseCsv(await response.text())) {
       const dateKey = parseDate(row.Date);
       if (!dateKey || !row.HomeTeam || !row.AwayTeam) continue;
-      if (dateKey < todayKey) continue;
+      if (dateKey < todayKey) {
+        // Terugblik: alleen duels in de recente closing-window.
+        if (!closingLookbackDays || dateKey < closingLookbackCutoff) continue;
+        for (const [bookmaker, home, draw, away] of [
+          ["MarketAvg", row.AvgCH, row.AvgCD, row.AvgCA],
+          ["Bet365", row.B365CH, row.B365CD, row.B365CA],
+        ]) {
+          if (![home, draw, away].every((value) => Number(value) > 1)) continue;
+          const [match] = await sql.query(
+            `select match_id from matches where date_key=$1 and identity_status='resolved'
+             and regexp_replace(lower(home_team_name),'[^a-z0-9]','','g')=$2
+             and regexp_replace(lower(away_team_name),'[^a-z0-9]','','g')=$3 limit 1`,
+            [dateKey, normalize(row.HomeTeam), normalize(row.AwayTeam)]
+          );
+          if (!match) continue;
+          const updated = await sql.query(
+            `update historical_odds_snapshots set closing_home=$3,closing_draw=$4,closing_away=$5,
+              closing_captured_at=$6
+             where match_id=$1 and bookmaker=$2 and odds_role='prematch' and closing_captured_at is null`,
+            [match.match_id, bookmaker, Number(home), Number(draw), Number(away), fetchedAt]
+          );
+          closingBackfilled += updated.length;
+        }
+        continue;
+      }
       const [match] = await sql.query(
         `select match_id,kickoff_at from matches where date_key=$1 and identity_status='resolved'
          and regexp_replace(lower(home_team_name),'[^a-z0-9]','','g')=$2
@@ -339,6 +370,7 @@ console.log(
     {
       captured,
       closingUpdated,
+      closingBackfilled,
       matchedFutureRows: futureRows,
       oddsApiCandidates,
       oddsApiCaptured,

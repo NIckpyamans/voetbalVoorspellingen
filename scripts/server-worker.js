@@ -85,7 +85,7 @@ import { selectUniqueTeamTopPicks } from "./worker/top-picks.js";
 import { mergeTrainingSnapshots } from "./worker/training-snapshot.js";
 import { buildTrainingSnapshot } from "./worker/training-builder.js";
 import { buildTeamIdentity, getKnownProviderIds } from "./worker/team-identity.js";
-import { fetchR2H2HProfile, fetchR2LineupSummary, fetchR2OddsSnapshot } from "./worker/critical-captures.js";
+import { fetchR2H2HProfile, fetchR2LineupSummary, fetchR2OddsSnapshot, saveR2OddsLedgerEntry } from "./worker/critical-captures.js";
 import { buildH2HAgentProfile } from "./worker/h2h.js";
 import { buildTwoLegAggregate, deriveH2HWinnerId, findOrientedPreviousLeg } from "./worker/two-leg.js";
 import { mergePersistedTeamFormCache } from "./worker/local-team-form-history.js";
@@ -12161,6 +12161,17 @@ async function main() {
         oddsCapture = (await fetchR2OddsSnapshot(matchId, kickoff)) || oddsCapture;
       }
       const oddsAtPrediction = oddsCapture?.oddsAtPrediction || null;
+      // Verse pre-match captures terug naar de R2-ledger: zonder deze schrijfstap
+      // verdwijnt elke capture die buiten de critical-capture-run valt bij de
+      // volgende worker-run uit beeld. Best-effort, mag het voorspellen niet
+      // blokkeren.
+      if (oddsAtPrediction && kickoff) {
+        try {
+          await saveR2OddsLedgerEntry(matchId, kickoff, oddsAtPrediction);
+        } catch {
+          // R2-terugschrijven is niet kritiek voor het voorspellen van deze run.
+        }
+      }
       const prediction = predict({
         homeTeamId: homeId,
         awayTeamId: awayId,
