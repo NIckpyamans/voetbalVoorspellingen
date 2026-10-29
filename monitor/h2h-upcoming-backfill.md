@@ -1,9 +1,9 @@
 # Upcoming H2H Backfill
 
-Laatst bijgewerkt: 2026-10-29T15:41:03.126Z
-Gecontroleerd: 4
+Laatst bijgewerkt: 2026-10-29T18:28:45.241Z
+Gecontroleerd: 0
 Gevuld: 0
-Geen directe H2H: 4
+Geen directe H2H: 0
 Errors: 0
 
 Openstaand na deze batch: 0
@@ -14,7 +14,3 @@ Geen directe H2H gevonden voor de gecontroleerde wedstrijden. Breid team-ID mapp
 ## Gevuld
 
 ## Geen Directe H2H
-- 2026-11-04: Rennes - Olympiakos (no_direct_history)
-- 2026-11-04: Rennes - Olympiacos (no_direct_history)
-- 2026-11-08: Ipswich Town - AFC Bournemouth (no_direct_history)
-- 2026-11-15: MVV Maastricht - Vitesse (rate_limited_locally)
