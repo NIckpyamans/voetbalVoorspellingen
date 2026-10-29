@@ -2,6 +2,13 @@ name: Free timestamped prematch odds
 
 on:
   workflow_dispatch:
+  # Prematch odds moeten vóór aftrap vastliggen. Zonder schema draaide deze
+  # capture alleen handmatig, waardoor het verse marktsignaal in de worker
+  # vrijwel leeg bleef (nPreMatch ≈ 1) en de versheidsweging (0,85/0,55/0,25)
+  # niets te wegen had. Elke 6 uur, zoals beschreven in
+  # config/free-odds-sources.json.
+  schedule:
+    - cron: "23 */6 * * *"
 
 concurrency:
   group: football-prematch-odds
@@ -71,6 +78,11 @@ jobs:
           ODDS_API_MIN_REMAINING: 50
           ODDS_API_CRITICAL_MIN_REMAINING: 10
           ODDS_API_REQUEST_COST_RESERVE: 10
+      - name: Report capture coverage
+        if: always()
+        continue-on-error: true
+        run: |
+          node -e "const fs=require('fs');try{const r=JSON.parse(fs.readFileSync('monitor/critical-odds-capture.json','utf8'));console.log('gecheckt:',r.checked,'vastgelegd:',r.captured,'dekking:',r.coverage);}catch(e){console.log('geen capture-rapport')}"
       - name: Persist prematch odds to Neon
         if: steps.database.outputs.available == 'true'
         run: node scripts/ci-neon-safe.js -- npm run db:odds:prematch:collect
@@ -122,7 +134,7 @@ jobs:
           # Deze workflow bezit alleen odds-bewijs. Gedeelde database-status wordt
           # door storage-recovery beheerd om parallelle add/add-conflicten te voorkomen.
           for report in monitor/critical-odds-capture.json; do
-            if [ -f "$report" ]; then git add "$report"; fi
+            if [ -f "$report" ]; then git add -f "$report"; fi
           done
           git diff --staged --quiet && exit 0
           git commit -m "update timestamped odds evidence [skip vercel]"
