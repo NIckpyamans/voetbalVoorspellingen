@@ -31,10 +31,20 @@ describe("improvement audit automation contract", () => {
     }
   });
 
-  it("keeps automatic model maintenance in shadow mode", () => {
+  it("schedules model maintenance daily with shadow-only promotion by default", () => {
     const workflow = readWorkflow("nightly-model-maintenance.yml");
+    expect(workflow.on.schedule).toEqual([{ cron: "15 7 * * *" }]);
     expect(workflow.on.workflow_dispatch.inputs.apply_live.default).toBe(false);
     expect(workflow.jobs.maintain.steps.some((step) => step.name === "Recalibrate league/model profiles in shadow mode")).toBe(true);
+    expect(workflow.jobs.maintain.steps.findIndex((step) => step.name === "Recover historical snapshot training evidence from R2"))
+      .toBeLessThan(workflow.jobs.maintain.steps.findIndex((step) => step.name === "Recalibrate league/model profiles in shadow mode"));
+    expect(workflow.jobs.maintain.steps.some((step) => step.name === "Backfill eligible immutable snapshots from historical results")).toBe(true);
+    expect(workflow.jobs.maintain.steps.find((step) => step.name === "Backfill eligible immutable snapshots from historical results").if)
+      .toContain("databaseWritable == 'true'");
+    expect(workflow.jobs.maintain.steps.find((step) => step.name === "Promote accepted profiles explicitly").if)
+      .toContain("github.event_name == 'workflow_dispatch'");
+    expect(workflow.jobs.maintain.steps.find((step) => step.name === "Promote probability calibration and ML model explicitly").if)
+      .toContain("github.event_name == 'workflow_dispatch'");
   });
 
   it("gives shared database evidence a single workflow owner", () => {

@@ -2,6 +2,7 @@
 // snapshot-reviews. Eén wedstrijd = één onafhankelijke steekproef; walk-forward
 // fitting voorkomt informatie-lekkage uit toekomstige wedstrijden.
 import { competitionSegment } from "./competition-segmentation.js";
+import { buildModelPromotionGate } from "./model-promotion.js";
 
 const clamp = (value, min, max) => Math.max(min, Math.min(max, Number(value || 0)));
 const toLogit = (probability) => {
@@ -45,15 +46,15 @@ function rowWeight(row) {
 
 export function buildCalibrationRows(rows = []) {
   const seen = new Set();
-  return rows
+  return [...rows]
+    .sort((left, right) => Date.parse(right?.generated_at || right?.generatedAt || "") - Date.parse(left?.generated_at || left?.generatedAt || ""))
     .map((row) => {
       const probabilities = rowProbabilities(row);
       const outcome = rowOutcome(row);
       if (!probabilities || !outcome) return null;
       const matchKey = String(row?.match_id || row?.matchId || "").trim();
-      const key = `${matchKey}::${String(row?.model_version || "unknown")}`;
-      if (matchKey && seen.has(key)) return null;
-      if (matchKey) seen.add(key);
+      if (matchKey && seen.has(matchKey)) return null;
+      if (matchKey) seen.add(matchKey);
       return {
         matchId: matchKey || null,
         league: String(row?.league || row?.competition_id || "unknown").trim() || "unknown",
@@ -203,10 +204,25 @@ export function buildCalibrationProfile(rows = []) {
   const validationBaseline = calibrationMetrics(validationRows);
   const brierImprovement = Number(((validationBaseline.brier ?? 1) - (validationCalibrated.brier ?? 1)).toFixed(5));
   const logLossImprovement = Number(((validationBaseline.logLoss ?? 5) - (validationCalibrated.logLoss ?? 5)).toFixed(5));
-  const accepted = validationRows.length >= 8 && brierImprovement > 0.002 && logLossImprovement > 0;
+  const uniqueMatches = (items) => new Set(items.map((row) => row.matchId).filter(Boolean)).size;
+  const promotionGate = buildModelPromotionGate(uniqueMatches(rows), {
+    calibrationMin: 40,
+    promotionMin: 150,
+    requireQualityEvidence: true,
+    validationRows: uniqueMatches(validationRows),
+    validationMin: 30,
+    leakageCoverage: 1,
+    minLeakageCoverage: 0.95,
+    brierImprovement,
+    minBrierImprovement: 0.003,
+    logLossImprovement,
+    minLogLossImprovement: 0.001,
+  });
+  const accepted = promotionGate.canPromote;
   return {
-    eligible: true,
+    eligible: promotionGate.canCalibrate,
     accepted,
+    promotionGate,
     profile: {
       ...fitted,
       version: PROBABILITY_CALIBRATION_VERSION,

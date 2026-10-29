@@ -15,26 +15,43 @@ describe("model promotion gate", () => {
 });
 
 describe("quality-aware model promotion", () => {
+  const passingEvidence = {
+    requireQualityEvidence: true,
+    validationRows: 45,
+    leakageCoverage: 0.98,
+    brierImprovement: 0.004,
+    logLossImprovement: 0.003,
+  };
+
+  it("blocks otherwise promising quality when fewer than 150 independent fixtures exist", () => {
+    const gate = buildModelPromotionGate(90, passingEvidence);
+    expect(gate.sampleCanPromote).toBe(false);
+    expect(gate.canPromote).toBe(false);
+    expect(gate.promotionGap).toBe(60);
+  });
+
+  it("blocks a large sample when the holdout is too small", () => {
+    const gate = buildModelPromotionGate(180, { ...passingEvidence, validationRows: 29 });
+    expect(gate.sampleCanPromote).toBe(true);
+    expect(gate.canPromote).toBe(false);
+    expect(gate.quality.reasons).toContain("insufficient_walk_forward_validation_rows");
+  });
+
   it("blocks a large sample when walk-forward quality does not improve", () => {
     const gate = buildModelPromotionGate(180, {
-      requireQualityEvidence: true,
-      validationRows: 45,
-      leakageCoverage: 0.98,
+      ...passingEvidence,
       brierImprovement: 0.001,
-      logLossImprovement: 0.002,
+      logLossImprovement: 0.0001,
     });
     expect(gate.sampleCanPromote).toBe(true);
     expect(gate.canPromote).toBe(false);
-    expect(gate.quality.reasons).toContain("insufficient_brier_improvement");
+    expect(gate.quality.reasons).toEqual(expect.arrayContaining([
+      "insufficient_brier_improvement",
+      "insufficient_log_loss_improvement",
+    ]));
   });
 
   it("promotes only with enough leakage-free validation improvement", () => {
-    expect(buildModelPromotionGate(180, {
-      requireQualityEvidence: true,
-      validationRows: 45,
-      leakageCoverage: 0.98,
-      brierImprovement: 0.004,
-      logLossImprovement: 0.003,
-    }).canPromote).toBe(true);
+    expect(buildModelPromotionGate(180, passingEvidence).canPromote).toBe(true);
   });
 });

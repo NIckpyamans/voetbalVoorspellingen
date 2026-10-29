@@ -273,6 +273,8 @@ export async function buildSystemHealth(mode = "health") {
       backtestSummary: meta?.backtestSummary || null,
       anomalyReport: meta?.anomalyReport || null,
       storagePolicy: meta?.storagePolicy || null,
+      // Of de worker dezelfde gepubliceerde match-store las als de analyses.
+      matchStoreRemote: meta?.matchStoreRemote || null,
     },
     cache: {
       ttlMs: Number(process.env.DATA_CACHE_TTL_MS || 60_000),

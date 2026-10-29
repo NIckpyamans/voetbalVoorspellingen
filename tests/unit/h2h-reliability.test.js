@@ -57,4 +57,37 @@ describe("H2H reliability", () => {
     const reliability = buildH2HReliability({ played: 8, sameCompetitionPlayed: 8, results: [{ date: "2026-08-21" }] }, { kickoff });
     expect(reliability).toMatchObject({ sampleSize: 0, score: 0, label: "empty", excludedResults: 1 });
   });
+
+  it("verliest geleidelijk waarde met de leeftijd van de duels", () => {
+    const build = (dates) => buildH2HReliability(
+      { played: 5, sameCompetitionPlayed: 5, results: dates.map((date) => ({ date })) },
+      { kickoff },
+    );
+    const fresh = build(["2026-08-10", "2026-06-01", "2026-04-01", "2026-02-01", "2025-12-01"]);
+    const middle = build(["2025-08-01", "2025-06-01", "2025-04-01", "2025-02-01", "2024-12-01"]);
+    const stale = build(["2022-08-01", "2021-08-01", "2020-08-10", "2019-08-01", "2018-08-01"]);
+    expect(fresh.score).toBeGreaterThan(middle.score);
+    expect(middle.score).toBeGreaterThan(stale.score);
+  });
+
+  it("dempt H2H die deels uit een ander competitietype komt", () => {
+    const dates = ["2026-08-10", "2026-05-01", "2026-02-01", "2025-11-01", "2025-08-01"];
+    const options = { kickoff, competitionId: "eredivisie-2025" };
+    const sameType = buildH2HReliability({
+      played: 5,
+      sameCompetitionPlayed: 5,
+      results: dates.map((date) => ({ date, competitionId: "eredivisie-2025" })),
+    }, options);
+    const mixed = buildH2HReliability({
+      played: 5,
+      sameCompetitionPlayed: 3,
+      results: [
+        ...dates.slice(0, 3).map((date) => ({ date, competitionId: "eredivisie-2025" })),
+        ...dates.slice(3).map((date) => ({ date, competitionId: "knvb-beker-2025" })),
+      ],
+    }, options);
+    expect(mixed.competitionType).toBe("league");
+    expect(mixed.crossTypeShare).toBeCloseTo(0.4, 2);
+    expect(mixed.score).toBeLessThan(sameType.score);
+  });
 });

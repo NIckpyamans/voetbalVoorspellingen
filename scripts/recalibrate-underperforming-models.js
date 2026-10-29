@@ -12,7 +12,7 @@ import { isRegularCompetitionRow, uniqueRegularMatchCount } from "./worker/compe
 const ROOT = process.cwd();
 const APPLY_LIVE = process.argv.includes("--apply-live");
 const MIN_ROWS = Math.max(10, Number(process.env.MODEL_RECALIBRATION_MIN_ROWS || 20));
-const MIN_VALIDATION_ROWS = Math.max(5, Number(process.env.MODEL_RECALIBRATION_MIN_VALIDATION_ROWS || 8));
+const MIN_VALIDATION_ROWS = Math.max(30, Number(process.env.MODEL_RECALIBRATION_MIN_VALIDATION_ROWS || 30));
 // Brier op de standaardschaal (0-2, som over de drie uitkomsten).
 const MIN_BRIER_IMPROVEMENT = Number(process.env.MODEL_RECALIBRATION_MIN_BRIER_IMPROVEMENT || 0.009);
 const MIN_LOG_LOSS_IMPROVEMENT = Number(process.env.MODEL_RECALIBRATION_MIN_LOG_LOSS_IMPROVEMENT || 0.001);
@@ -276,29 +276,36 @@ async function main() {
     const model = String(row.model_version || "unknown");
     const key = `${league}||${model}`;
     const group = groups.get(key) || { league, model, competitionId: row.competition_id || null, rows: [] };
-    group.rows.push(row);
+    const normalizedRow = { ...row, matchId: row.match_id || row.matchId };
+    const existingIndex = group.rows.findIndex((item) => item.matchId === normalizedRow.matchId);
+    if (existingIndex < 0) group.rows.push(normalizedRow);
+    else if (Date.parse(normalizedRow.generated_at || "") > Date.parse(group.rows[existingIndex].generated_at || "")) group.rows[existingIndex] = normalizedRow;
     groups.set(key, group);
   }
 
   const candidates = [];
   const acceptedByLeague = new Map();
   for (const group of groups.values()) {
+    group.rows.sort((left, right) => Date.parse(left.kickoff_at || left.kickoff || left.generated_at || "") - Date.parse(right.kickoff_at || right.kickoff || right.generated_at || ""));
     if (group.rows.length < MIN_ROWS) continue;
     const best = [0.25, 0.5, 0.75, 1]
       .map((scale) => buildWalkForwardProfile(group.rows, scale))
       .filter(Boolean)
       .sort((a, b) => b.improvement - a.improvement || b.logLossImprovement - a.logLossImprovement)[0];
     if (!best) continue;
-    const qualityPromotionGate = buildModelPromotionGate(group.rows.length, {
+    const qualityPromotionGate = buildModelPromotionGate(uniqueRegularMatchCount(group.rows), {
+      calibrationMin: MIN_ROWS,
+      promotionMin: MIN_UNIQUE_COMPLETED_SNAPSHOT_MATCHES_FOR_LIVE,
       requireQualityEvidence: true,
       validationRows: best.walkForwardValidationRows,
+      validationMin: MIN_VALIDATION_ROWS,
       leakageCoverage: 1,
       brierImprovement: best.improvement,
       logLossImprovement: best.logLossImprovement,
       minBrierImprovement: MIN_BRIER_IMPROVEMENT,
       minLogLossImprovement: MIN_LOG_LOSS_IMPROVEMENT,
     });
-    const accepted = best.improvement >= MIN_BRIER_IMPROVEMENT && best.logLossImprovement >= MIN_LOG_LOSS_IMPROVEMENT;
+    const accepted = qualityPromotionGate.canPromote;
     const profile = {
       status: accepted ? "accepted_live_candidate" : "candidate_no_improvement",
       adjustmentType: "league_bias_v1",
@@ -307,8 +314,9 @@ async function main() {
       competitionId: group.competitionId,
       trainRows: best.trainRows,
       validationRows: best.walkForwardValidationRows,
-      sampleSize: group.rows.length,
+      sampleSize: uniqueRegularMatchCount(group.rows),
       minimumRows: MIN_ROWS,
+      minimumPromotionRows: MIN_UNIQUE_COMPLETED_SNAPSHOT_MATCHES_FOR_LIVE,
       minimumValidationRows: MIN_VALIDATION_ROWS,
       leakageSafe: true,
       method: "expanding_window_walk_forward_league_probability_bias_v2",

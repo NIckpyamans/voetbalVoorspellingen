@@ -13,6 +13,7 @@ function probabilities(row) {
 export function trainingCalibrationRows(training) {
   const candidates = (Array.isArray(training?.rows) ? training.rows : [])
     .filter((row) => row?.snapshotBacked)
+    .filter((row) => Boolean(String(row?.kickoffAt || row?.kickoff || "").trim()))
     .filter((row) => snapshotTrainingEligibility({
       ...row,
       features: row.featureVector,
@@ -25,6 +26,7 @@ export function trainingCalibrationRows(training) {
       model_version: row.modelVersion || row.review?.modelVersion || "unknown",
       probabilities: probabilities(row),
       generated_at: row.generatedAt,
+      kickoff_at: row.kickoffAt || row.kickoff || null,
       competition_id: null,
       league: row.league,
       competition_segment: competitionSegment(row),
@@ -48,7 +50,7 @@ export function trainingCalibrationRows(training) {
   }
 
   return [...latestByMatchAndModel.values()]
-    .sort((left, right) => Date.parse(left.generated_at || "") - Date.parse(right.generated_at || ""));
+    .sort((left, right) => Date.parse(left.kickoff_at || "") - Date.parse(right.kickoff_at || ""));
 }
 
 export function ledgerCalibrationRows(ledger = {}) {
@@ -71,6 +73,7 @@ export function ledgerCalibrationRows(ledger = {}) {
         model_version: snapshot.modelVersion || snapshot.prediction?.modelVersion || "unknown",
         probabilities: rowProbabilities,
         generated_at: generatedAt,
+        kickoff_at: kickoff,
         competition_id: snapshot.competitionId || null,
         league: snapshot.league || snapshot.prediction?.league || null,
         competition_segment: competitionSegment(snapshot),
@@ -80,7 +83,7 @@ export function ledgerCalibrationRows(ledger = {}) {
         snapshot_window: eligibility.snapshotWindow,
       };
     })
-    .filter((row) => row?.prediction_id && row?.match_id && row?.league);
+    .filter((row) => row?.prediction_id && row?.match_id && row?.league && row.kickoff_at);
 
   const latestByMatchAndModel = new Map();
   for (const row of candidates) {
@@ -93,7 +96,7 @@ export function ledgerCalibrationRows(ledger = {}) {
     }
   }
   return [...latestByMatchAndModel.values()]
-    .sort((left, right) => Date.parse(left.generated_at || "") - Date.parse(right.generated_at || ""));
+    .sort((left, right) => Date.parse(left.kickoff_at || "") - Date.parse(right.kickoff_at || ""));
 }
 
 export function mergeCalibrationRows(...rowSets) {
@@ -107,5 +110,5 @@ export function mergeCalibrationRows(...rowSets) {
     }
   }
   return [...latestByMatchAndModel.values()]
-    .sort((left, right) => Date.parse(left.generated_at || "") - Date.parse(right.generated_at || ""));
+    .sort((left, right) => Date.parse(left.kickoff_at || left.generated_at || "") - Date.parse(right.kickoff_at || right.generated_at || ""));
 }

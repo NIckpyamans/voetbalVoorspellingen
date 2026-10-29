@@ -23,7 +23,7 @@ try {
   }, null, 2));
   process.exit(0);
 }
-const leagues = ["E0", "E1", "N1", "N2", "D1", "SP1", "SP2", "I1", "F1", "B1", "P1"];
+const leagues = ["E0", "E1", "N1", "N2", "D1", "D2", "SP1", "SP2", "I1", "F1", "F2", "B1", "P1"];
 const digest = (value) => crypto.createHash("sha1").update(String(value)).digest("hex").slice(0, 22);
 const normalize = (value) => String(value || "").toLowerCase().normalize("NFKD").replace(/[\u0300-\u036f]/g, "").replace(/[^a-z0-9]+/g, "");
 const now = new Date();

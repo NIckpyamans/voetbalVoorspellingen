@@ -1,6 +1,9 @@
 name: Nightly model maintenance
 
 on:
+  schedule:
+    # Shadow-run na de dagelijkse snapshot-evaluatie en recovery (05:40 UTC).
+    - cron: "15 7 * * *"
   workflow_dispatch:
     inputs:
       apply_live:
@@ -28,10 +31,11 @@ jobs:
       POSTGRES_URL: ${{ secrets.POSTGRES_URL }}
       SUPABASE_DB_URL: ${{ secrets.SUPABASE_DB_URL }}
       MODEL_RECALIBRATION_MIN_ROWS: "20"
-      MODEL_RECALIBRATION_MIN_VALIDATION_ROWS: "8"
+      MODEL_RECALIBRATION_MIN_VALIDATION_ROWS: "30"
       MODEL_RECALIBRATION_MIN_BRIER_IMPROVEMENT: "0.001"
       MODEL_RECALIBRATION_MIN_UNIQUE_COMPLETED_SNAPSHOTS: "50"
       MODEL_PROMOTION_MIN_UNIQUE_COMPLETED_SNAPSHOTS: "150"
+      SNAPSHOT_LEDGER_MAX_JSON_BYTES: "536870912"
       LOGO_BACKFILL_LIMIT: "80"
       CLOUDFLARE_R2_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_R2_ACCOUNT_ID }}
       CLOUDFLARE_R2_ACCESS_KEY_ID: ${{ secrets.CLOUDFLARE_R2_ACCESS_KEY_ID }}
@@ -53,8 +57,21 @@ jobs:
 
       - run: npm ci
 
+      - name: Check Neon availability once
+        id: database
+        run: npm run db:availability -- --emit-github-output
+
       - name: Backfill generated logo fallbacks
+        if: github.event_name == 'workflow_dispatch' && steps.database.outputs.databaseWritable == 'true'
         run: node scripts/ci-neon-safe.js -- npm run db:logos:backfill:apply
+
+      - name: Recover historical snapshot training evidence from R2
+        if: steps.database.outputs.available == 'true'
+        run: node scripts/ci-neon-safe.js -- npm run train:snapshots:recover
+
+      - name: Backfill eligible immutable snapshots from historical results
+        if: steps.database.outputs.available == 'true' && steps.database.outputs.databaseWritable == 'true'
+        run: node scripts/ci-neon-safe.js -- node scripts/enrich-model-holdout-ledger.js
 
       - name: Recalibrate league/model profiles in shadow mode
         if: inputs.apply_live != true
@@ -65,18 +82,19 @@ jobs:
         run: node scripts/ci-neon-safe.js -- npm run db:probability-calibration
 
       - name: Backfill historical closing odds
+        if: github.event_name == 'workflow_dispatch'
         run: node scripts/ci-neon-safe.js -- npm run db:odds:closing:backfill:apply
 
       - name: Train ML ensemble (shadow)
-        if: inputs.apply_live != true
+        if: inputs.apply_live != true && steps.database.outputs.available == 'true'
         run: node scripts/ci-neon-safe.js -- npm run db:ml:train
 
       - name: Promote probability calibration and ML model explicitly
-        if: inputs.apply_live == true
+        if: github.event_name == 'workflow_dispatch' && inputs.apply_live == true && steps.database.outputs.databaseWritable == 'true'
         run: node scripts/ci-neon-safe.js -- bash -lc "npm run db:probability-calibration:apply && npm run db:ml:train:apply"
 
       - name: Promote accepted profiles explicitly
-        if: inputs.apply_live == true
+        if: github.event_name == 'workflow_dispatch' && inputs.apply_live == true && steps.database.outputs.databaseWritable == 'true'
         run: node scripts/ci-neon-safe.js -- npm run db:models:recalibrate:apply
 
       - name: Monitor calibration sample health
@@ -87,16 +105,22 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: model-recalibration-report
-          path: monitor/model-recalibration-report.json
-          if-no-files-found: error
+          path: |
+            monitor/model-recalibration-report.json
+            monitor/model-holdout-ledger-enrichment.json
+            monitor/probability-calibration-report.json
+            monitor/ml-ensemble-report.json
+            monitor/shadow-prediction-evaluation.json
+            monitor/calibration-sample-health.json
+          if-no-files-found: warn
           retention-days: 30
 
       - name: Persist compact calibration evidence
-        if: always()
+        if: always() && github.event_name == 'workflow_dispatch'
         run: |
           git config user.name github-actions
           git config user.email github-actions@github.com
-          for report in monitor/model-recalibration-report.json monitor/calibration-sample-health.json monitor/shadow-prediction-evaluation.json monitor/probability-calibration-report.json monitor/ml-ensemble-report.json; do
+          for report in monitor/model-recalibration-report.json monitor/model-holdout-ledger-enrichment.json monitor/calibration-sample-health.json monitor/shadow-prediction-evaluation.json monitor/probability-calibration-report.json monitor/ml-ensemble-report.json; do
             if [ -f "$report" ]; then git add "$report"; fi
           done
           git diff --staged --quiet && exit 0

@@ -58,7 +58,7 @@ markt/boosting stijgt het aandeel van het doelpuntenmodel.
 | --- | --- | --- | --- |
 | `club_elo_diff` | onbegrensd, coëfficiënt 0.18 | afgetopt op ±120 Elo, coëfficiënt 0.15 | `clubelo_misread` 141x |
 | `market_overperformance_diff` | 0.10 | `MARKET_OVERPERFORMANCE_WEIGHT` = 0.06 | `market_misread` 274x |
-| `rest_diff` | 0.08 | `REST_DIFF_WEIGHT` = 0.05 | `rest_gap` 156x |
+| `rest_diff` | 0.08 lineair | `REST_DIFF_WEIGHT` = 0.05 op `buildRestEdge`: ruisdrempel 2 dagen, aftopping op 3, congestiedemping, demping bij aanlopen >= 10 dagen | `rest_gap` 156x |
 | `h2h_balance` | 0.05 x reliability, altijd | 0.04 x reliability, alleen bij reliability >= 0.5 | `h2h_signal` 273x |
 | `h2h_recent_5_balance` | 0.12 x reliability, altijd | 0.09 x reliability, alleen bij reliability >= 0.5 én >= 3 duels | `h2h_signal` 273x |
 

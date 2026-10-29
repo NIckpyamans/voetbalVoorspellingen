@@ -59,6 +59,52 @@ describe("probability calibration module", () => {
     expect(fitPlattProfile(buildCalibrationRows(overconfidentRows(5)))).toBeNull();
   });
 
+  it("holdout-gate houdt kleine steekproef alleen experimenteel", () => {
+    const outcome = buildCalibrationProfile(buildCalibrationRows(overconfidentRows(90)));
+    expect(outcome.eligible).toBe(true);
+    expect(outcome.accepted).toBe(false);
+    expect(outcome.promotionGate.canCalibrate).toBe(true);
+    expect(outcome.promotionGate.canPromote).toBe(false);
+    expect(outcome.promotionGate.promotionGap).toBeGreaterThan(0);
+  });
+
+  it("telt dezelfde wedstrijd maar één keer, ook bij meerdere modelversies", () => {
+    const source = overconfidentRows(90).map((item) => ({ ...item, model_version: "model-a" }));
+    const secondModel = source.map((item) => ({ ...item, model_version: "model-b" }));
+    const rows = buildCalibrationRows([...source, ...secondModel]);
+    const outcome = buildCalibrationProfile(rows);
+    expect(rows).toHaveLength(90);
+    expect(outcome.promotionGate.uniqueCompletedMatches).toBe(90);
+    expect(outcome.promotionGate.canPromote).toBe(false);
+  });
+
+  it("vereist duidelijke Brier- en log-loss-winst op een voldoende holdout", () => {
+    const rows = buildCalibrationRows(overconfidentRows(180));
+    const outcome = buildCalibrationProfile(rows);
+    expect(outcome.promotionGate.quality.validationRows).toBeGreaterThanOrEqual(30);
+    expect(outcome.accepted).toBe(outcome.promotionGate.canPromote);
+    if (outcome.accepted) {
+      expect(outcome.brierImprovement).toBeGreaterThanOrEqual(0.003);
+      expect(outcome.logLossImprovement).toBeGreaterThanOrEqual(0.001);
+    }
+  });
+
+  it("weigert live-promotie als de holdout niet beide kwaliteitsdrempels haalt", () => {
+    const outcome = buildCalibrationProfile(buildCalibrationRows(overconfidentRows(90)));
+    expect(outcome.promotionGate.quality.reasons).toContain("insufficient_walk_forward_validation_rows");
+    expect(outcome.accepted).toBe(false);
+  });
+
+  it("weigert een holdout met onvoldoende unieke wedstrijden", () => {
+    const manySnapshots = overconfidentRows(90).map((item, index) => ({
+      ...item,
+      match_id: `fixture-${Math.floor(index / 3)}`,
+    }));
+    const outcome = buildCalibrationProfile(buildCalibrationRows(manySnapshots));
+    expect(outcome.promotionGate.uniqueCompletedMatches).toBe(30);
+    expect(outcome.accepted).toBe(false);
+  });
+
   it("applyPlattProfile normaliseert en respecteert grenzen", () => {
     const profile = { kind: "platt", slope: 0.8, intercept: -0.5 };
     const result = applyPlattProfile({ homeProb: 0.8, drawProb: 0.15, awayProb: 0.05 }, profile);

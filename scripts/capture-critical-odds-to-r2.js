@@ -7,7 +7,7 @@ import { loadLocalEnv } from "../shared/database.js";
 import { fetchOddsAtPrediction } from "./odds-provider.js";
 import { findSportmonksFixture } from "./sportmonks-fixture-resolver.js";
 import { sportmonksEligibleFixtures } from "./worker/sportmonks-coverage-policy.js";
-import { classifyOddsCaptureRole, mergeOddsCaptureLedger } from "./worker/critical-captures.js";
+import { classifyOddsCaptureRole, mergeOddsCaptureLedger, summarizeOddsCapture } from "./worker/critical-captures.js";
 import { summarizeLeagueCoverage } from "./worker/coverage-summary.js";
 import { prioritizeCaptureCandidates, summarizeCaptureWindows, applyCaptureBudget } from "./worker/capture-window-policy.js";
 import { buildCentralQuotaPlan } from "./worker/quota-budget.js";
@@ -162,10 +162,18 @@ async function main() {
     if (ledger.opening && ledger.prematch && ledger.closing) report.closingPairs += 1;
     report.matches.push({ ...match, minutesBeforeKickoff, closingWindow, status: "captured", provider: odds.provider, captureRole: latestRole, sportmonksFixtureId: sportmonks?.fixtureId || null, opening: Boolean(ledger.opening), prematch: Boolean(ledger.prematch), closing: Boolean(ledger.closing) });
   }
+  // Dekking: opgeslagen rollen (already_captured) tellen mee als gedekt en de
+  // werkelijk ontbrekende duels worden apart gerapporteerd, zodat een herhaalrun
+  // de dekking niet ten onrechte naar 0% zakt.
+  const coverageSummary = summarizeOddsCapture(report.matches);
+  report.covered = coverageSummary.covered;
+  report.alreadyCaptured = coverageSummary.alreadyCaptured;
+  report.missing = coverageSummary.missing;
+  report.missingMatches = coverageSummary.missingMatches;
   report.leagueCoverage = summarizeLeagueCoverage(report.matches, {
-    success: (row) => row.status === "captured",
+    success: (row) => row.status === "captured" || row.status === "already_captured",
   });
-  report.coverage = report.checked ? Number((report.captured / report.checked).toFixed(3)) : 0;
+  report.coverage = coverageSummary.coverage;
   fs.mkdirSync(path.dirname(OUTPUT), { recursive: true });
   fs.writeFileSync(OUTPUT, `${JSON.stringify(report, null, 2)}\n`);
   console.log(JSON.stringify(report, null, 2));

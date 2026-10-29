@@ -89,4 +89,27 @@ describe("shadow calibration data", () => {
     expect(rows).toHaveLength(1);
     expect(rows[0].prediction_id).toBe("new");
   });
+
+  it("sorts calibration history by match kickoff rather than snapshot creation time", () => {
+    const rows = mergeCalibrationRows([
+      { match_id: "later", prediction_id: "p2", model_version: "v1", generated_at: "2026-08-01T10:00:00Z", kickoff_at: "2026-08-03T11:00:00Z", probabilities: { home: 0.5, draw: 0.3, away: 0.2 } },
+      { match_id: "earlier", prediction_id: "p1", model_version: "v1", generated_at: "2026-08-02T10:00:00Z", kickoff_at: "2026-08-02T11:00:00Z", probabilities: { home: 0.5, draw: 0.3, away: 0.2 } },
+    ]);
+    expect(rows.map((row) => row.match_id)).toEqual(["earlier", "later"]);
+  });
+
+  it("requires a kickoff timestamp for fallback calibration training rows", () => {
+    const row = {
+      snapshotBacked: true,
+      status: "FT",
+      predictionId: "p1",
+      matchId: "m1",
+      league: "Netherlands - Eredivisie",
+      label: "H",
+      inputSnapshotHash: "immutable",
+      featureVector: { ppg_diff: 0.4 },
+      probabilities: { home: 0.5, draw: 0.3, away: 0.2 },
+    };
+    expect(trainingCalibrationRows({ rows: [row] })).toHaveLength(0);
+  });
 });

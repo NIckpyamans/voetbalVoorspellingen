@@ -29,6 +29,34 @@ export function classifyOddsCaptureRole(minutes) {
   return "opening";
 }
 
+// Dekking van een capturerun: "already_captured" betekent dat de opgeslagen
+// oddsrol (opening/prematch/closing) al in de R2-ledger staat en telt daarmee
+// als gedekt. Zonder deze telling zakt de dekking bij een herhaalrun ten
+// onrechte naar 0%, terwijl er juist dekking bewezen is.
+export function summarizeOddsCapture(rows = []) {
+  const matches = Array.isArray(rows) ? rows : [];
+  const isCovered = (row) => row?.status === "captured" || row?.status === "already_captured";
+  const covered = matches.filter(isCovered);
+  const missing = matches.filter((row) => !isCovered(row));
+  return {
+    checked: matches.length,
+    covered: covered.length,
+    captured: matches.filter((row) => row?.status === "captured").length,
+    alreadyCaptured: matches.filter((row) => row?.status === "already_captured").length,
+    missing: missing.length,
+    coverage: matches.length ? Number((covered.length / matches.length).toFixed(3)) : 0,
+    missingMatches: missing.map((row) => ({
+      matchId: row?.matchId ?? null,
+      kickoff: row?.kickoff ?? null,
+      league: row?.league ?? "unknown",
+      home: row?.home ?? row?.homeTeam ?? null,
+      away: row?.away ?? row?.awayTeam ?? null,
+      status: row?.status || "unknown",
+      reason: row?.reason || null,
+    })),
+  };
+}
+
 function captureId(provider, capturedAt, role) {
   return `${String(provider || "unknown").toLowerCase()}|${capturedAt}|${role}`;
 }

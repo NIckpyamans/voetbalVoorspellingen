@@ -46,10 +46,16 @@ function mergeCalibrationRows(...rowSets) {
       const existing = latestByMatchAndModel.get(key);
       const candidateTime = Date.parse(String(row?.generated_at || row?.generatedAt || "")) || 0;
       const existingTime = Date.parse(String(existing?.generated_at || existing?.generatedAt || "")) || 0;
-      if (!existing || candidateTime >= existingTime) latestByMatchAndModel.set(key, row);
+      const candidateKickoff = Date.parse(String(row?.kickoff_at || "")) || 0;
+      const existingKickoff = Date.parse(String(existing?.kickoff_at || "")) || 0;
+      if (!existing || candidateKickoff > existingKickoff || (candidateKickoff === existingKickoff && candidateTime >= existingTime)) {
+        latestByMatchAndModel.set(key, row);
+      }
     }
   }
-  return [...latestByMatchAndModel.values()];
+  return [...latestByMatchAndModel.values()].sort((left, right) =>
+    Date.parse(left.kickoff_at || left.generated_at || "") - Date.parse(right.kickoff_at || right.generated_at || "")
+  );
 }
 
 async function readLedgerRows() {
@@ -64,18 +70,21 @@ async function readLedgerRows() {
     if (!snapshot || !["H", "D", "A"].includes(actualOutcome)) continue;
     const probabilities = snapshot.probabilities || snapshot.prediction?.probabilities || null;
     if (!probabilities) continue;
+    const kickoffAt = snapshot.kickoff || evaluation.kickoff || null;
+    if (!kickoffAt) continue;
     rows.push({
       prediction_id: snapshot.predictionId || predictionId,
       match_id: snapshot.matchId,
       model_version: snapshot.modelVersion || "unknown",
       probabilities,
       generated_at: snapshot.generatedAt || snapshot.cutoffAt || null,
+      kickoff_at: kickoffAt,
       league: snapshot.league || null,
       actual_outcome: actualOutcome,
       status: "FT",
     });
   }
-  return rows;
+  return rows.filter((row) => row.kickoff_at);
 }
 
 async function main() {
@@ -89,14 +98,14 @@ async function main() {
       // Lekvrij: snapshot moet vóór kickoff zijn gegenereerd met een echte uitslag.
       const rows = await sql.query(
         `select ps.prediction_id, ps.match_id, ps.model_version, ps.probabilities,
-                ps.generated_at, m.league, mr.actual_outcome
+                ps.generated_at, m.kickoff_at, m.league, mr.actual_outcome
          from prediction_snapshots ps
          join matches m on m.match_id = ps.match_id
          join match_results mr on mr.match_id = ps.match_id
          where mr.actual_outcome in ('H','D','A')
            and ps.probabilities is not null
            and ps.generated_at < m.kickoff_at
-         order by ps.generated_at asc
+         order by ps.generated_at asc, ps.match_id asc
          limit 20000`
       );
       neonRows = rows || [];
@@ -105,9 +114,32 @@ async function main() {
       console.warn(`[probability-calibration] Neon query mislukt: ${error?.message || error}`);
     }
   }
-  const ledgerRows = databaseAvailable ? [] : await readLedgerRows();
-  const mergedRows = mergeCalibrationRows(neonRows, ledgerRows);
-  const regularRows = mergedRows.filter(isRegularCompetitionRow);
+  const ledgerLoad = await loadSnapshotLedger({ root: ROOT });
+  const ledger = ledgerLoad?.ledger || {};
+  const ledgerRows = databaseAvailable
+    ? []
+    : Object.entries(ledger.evaluations || {}).flatMap(([predictionId, evaluation]) => {
+      const snapshot = ledger.predictionSnapshots?.[predictionId];
+      const actualOutcome = String(evaluation?.actualOutcome || evaluation?.actual_outcome || "").toUpperCase();
+      const probabilities = snapshot?.probabilities || snapshot?.prediction?.probabilities || null;
+      const kickoffAt = snapshot?.kickoff || evaluation?.kickoff || null;
+      if (!snapshot || !["H", "D", "A"].includes(actualOutcome) || !probabilities || !kickoffAt) return [];
+      return [{
+        prediction_id: snapshot.predictionId || predictionId,
+        match_id: snapshot.matchId || evaluation.matchId,
+        model_version: snapshot.modelVersion || "unknown",
+        probabilities,
+        generated_at: snapshot.generatedAt || snapshot.cutoffAt || null,
+        kickoff_at: kickoffAt,
+        league: snapshot.league || null,
+        actual_outcome: actualOutcome,
+        status: "FT",
+      }];
+    });
+  const mergedRows = mergeCalibrationRows(neonRows, ledgerRows).sort((left, right) =>
+    Date.parse(left.kickoff_at || "") - Date.parse(right.kickoff_at || "")
+  );
+  const regularRows = mergedRows.filter((row) => row.kickoff_at && isRegularCompetitionRow(row));
   const calibrationRows = buildCalibrationRows(regularRows);
 
   const byLeague = new Map();
@@ -170,8 +202,15 @@ async function main() {
     applyLive: APPLY_LIVE,
     version: PROBABILITY_CALIBRATION_VERSION,
     databaseAvailable,
+    calibrationSource: databaseAvailable ? "neon_snapshots" : ledgerLoad.sources.r2?.available ? "r2_snapshot_ledger" : ledgerLoad.sources.local?.available ? "local_snapshot_ledger" : "no_ledger",
+    ledgerSources: {
+      r2Available: Boolean(ledgerLoad.sources.r2?.available),
+      r2Error: ledgerLoad.sources.r2?.error || null,
+      localAvailable: Boolean(ledgerLoad.sources.local?.available),
+    },
     sourceRows: mergedRows.length,
     regularRows: regularRows.length,
+    validKickoffRows: calibrationRows.length,
     calibrationRows: calibrationRows.length,
     leaguesEvaluated: results.length,
     acceptedLeagues: Object.keys(acceptedProfiles),

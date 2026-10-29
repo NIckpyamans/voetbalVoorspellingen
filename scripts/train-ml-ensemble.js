@@ -11,11 +11,14 @@ import fs from "fs";
 import path from "path";
 import { getSql, loadLocalEnv } from "../shared/database.js";
 import { ML_ENSEMBLE_VERSION, ML_FEATURES } from "./worker/ml-ensemble.js";
+import { buildModelPromotionGate } from "./worker/model-promotion.js";
 
 const ROOT = process.cwd();
 const APPLY = process.argv.includes("--apply");
 const REPORT_PATH = path.join(ROOT, "monitor", "ml-ensemble-report.json");
 const MIN_ROWS = Math.max(50, Number(process.env.ML_ENSEMBLE_MIN_ROWS || 300));
+const MIN_PROMOTION_MATCHES = Math.max(150, Number(process.env.MODEL_PROMOTION_MIN_UNIQUE_COMPLETED_SNAPSHOTS || 150));
+const MIN_VALIDATION_ROWS = Math.max(30, Number(process.env.ML_ENSEMBLE_MIN_VALIDATION_ROWS || 30));
 const MAX_STUMPS = Math.max(10, Number(process.env.ML_ENSEMBLE_MAX_STUMPS || 120));
 const LEARNING_RATE = clampEnvNumber(process.env.ML_ENSEMBLE_LEARNING_RATE, 0.06);
 const MIN_LEAF = Math.max(5, Number(process.env.ML_ENSEMBLE_MIN_LEAF || 25));
@@ -36,16 +39,25 @@ const softmax = (values) => {
 
 function loadRows(sql) {
   return sql.query(
-    `select ps.prediction_id, ps.features, ps.probabilities, ps.model_version,
-            ps.generated_at, m.kickoff_at, m.league, mr.actual_outcome
-     from prediction_snapshots ps
-     join matches m on m.match_id = ps.match_id
-     join match_results mr on mr.match_id = ps.match_id
-     where mr.actual_outcome in ('H','D','A')
-       and ps.features is not null
-       and ps.features <> '{}'::jsonb
-       and ps.generated_at < m.kickoff_at
-     order by ps.generated_at asc
+    `with latest_snapshot_per_match as (
+         select distinct on (ps.match_id)
+              ps.prediction_id, ps.match_id, ps.features, ps.probabilities,
+              ps.model_version, ps.generated_at, m.kickoff_at, m.league,
+              mr.actual_outcome
+       from prediction_snapshots ps
+       join matches m on m.match_id = ps.match_id
+       join match_results mr on mr.match_id = ps.match_id
+       where mr.actual_outcome in ('H','D','A')
+         and ps.features is not null
+         and ps.features <> '{}'::jsonb
+         and ps.generated_at < m.kickoff_at
+       order by ps.match_id, ps.generated_at desc
+     ), chronological as (
+       select *, row_number() over (order by generated_at asc, match_id asc) as chronological_index
+       from latest_snapshot_per_match
+     )
+     select * from chronological
+     order by chronological_index
      limit 30000`
   );
 }
@@ -56,6 +68,7 @@ function toTrainingRows(dbRows) {
   for (const row of dbRows || []) {
     const outcome = String(row.actual_outcome || "").toUpperCase();
     if (!(outcome in OUTCOME_INDEX)) continue;
+    if (!String(row.match_id || "").trim()) continue;
     const features = row.features || {};
     const vector = ML_FEATURES.map((feature) => Number(features[feature])).filter(Number.isFinite);
     if (vector.length < Math.ceil(ML_FEATURES.length * 0.6)) continue;
@@ -63,6 +76,7 @@ function toTrainingRows(dbRows) {
     if (seen.has(key)) continue;
     seen.add(key);
     rows.push({
+      matchId: String(row.match_id || "").trim(),
       values: ML_FEATURES.map((feature) => (Number.isFinite(Number(features[feature])) ? Number(features[feature]) : 0)),
       outcomeIndex: OUTCOME_INDEX[outcome],
     });
@@ -129,6 +143,7 @@ function bestStump(rows, gradients) {
 
 function evaluate(rows, base, stumps) {
   let brierSum = 0;
+  let logLossSum = 0;
   let correct = 0;
   for (const row of rows) {
     const scores = [...base];
@@ -138,10 +153,16 @@ function evaluate(rows, base, stumps) {
     }
     const probabilities = softmax(scores);
     brierSum += brier(probabilities, row.outcomeIndex);
+    logLossSum -= Math.log(clamp(probabilities[row.outcomeIndex], 1e-6, 1));
     if (probabilities.indexOf(Math.max(...probabilities)) === row.outcomeIndex) correct += 1;
   }
   const total = rows.length || 1;
-  return { brier: Number((brierSum / total).toFixed(5)), outcomeHitRate: Number((correct / total).toFixed(4)), rows: rows.length };
+  return {
+    brier: Number((brierSum / total).toFixed(5)),
+    logLoss: Number((logLossSum / total).toFixed(5)),
+    outcomeHitRate: Number((correct / total).toFixed(4)),
+    rows: rows.length,
+  };
 }
 
 async function main() {
@@ -161,6 +182,8 @@ async function main() {
     return;
   }
   // Chronologische split: 80% train, 20% validatie (lekvrij).
+  const uniqueMatchIds = new Set(rows.map((row) => row.matchId).filter(Boolean));
+  const uniqueCompletedMatches = uniqueMatchIds.size;
   const splitIndex = Math.floor(rows.length * 0.8);
   const trainRows = rows.slice(0, splitIndex);
   const validationRows = rows.slice(splitIndex);
@@ -187,7 +210,18 @@ async function main() {
   }
   const baseline = evaluate(validationRows, base, []);
   const trained = evaluate(validationRows, base, stumps);
-  const accepted = trained.brier < baseline.brier;
+  const promotionGate = buildModelPromotionGate(uniqueCompletedMatches, {
+    promotionMin: MIN_PROMOTION_MATCHES,
+    requireQualityEvidence: true,
+    validationRows: new Set(validationRows.map((row) => row.matchId).filter(Boolean)).size,
+    validationMin: MIN_VALIDATION_ROWS,
+    leakageCoverage: 1,
+    brierImprovement: Number((baseline.brier - trained.brier).toFixed(5)),
+    minBrierImprovement: 0.003,
+    logLossImprovement: Number((baseline.logLoss - trained.logLoss).toFixed(5)),
+    minLogLossImprovement: 0.001,
+  });
+  const accepted = promotionGate.canPromote;
   const model = {
     version: ML_ENSEMBLE_VERSION,
     featureSchema: ML_FEATURES,
@@ -196,14 +230,19 @@ async function main() {
     stumps: stumps.map(({ feature, threshold, left, right, gain }) => ({ feature, threshold, left, right, gain: Number(gain.toFixed(5)) })),
     trainingMeta: {
       rows: rows.length,
+      uniqueCompletedMatches,
       trainRows: trainRows.length,
       validationRows: validationRows.length,
       trainedAt: generatedAt,
       validationBrier: trained.brier,
       baselineBrier: baseline.brier,
       brierImprovement: Number((baseline.brier - trained.brier).toFixed(5)),
+      baselineLogLoss: baseline.logLoss,
+      validationLogLoss: trained.logLoss,
+      logLossImprovement: Number((baseline.logLoss - trained.logLoss).toFixed(5)),
       outcomeHitRate: trained.outcomeHitRate,
       accepted,
+      promotionGate,
     },
   };
   let promotion = { applied: false, reason: APPLY ? "not_attempted" : "shadow_only" };
@@ -228,7 +267,11 @@ async function main() {
     ok: true,
     generatedAt,
     rows: rows.length,
+    uniqueCompletedMatches,
     minRows: MIN_ROWS,
+    minPromotionMatches: MIN_PROMOTION_MATCHES,
+    minValidationRows: MIN_VALIDATION_ROWS,
+    promotionGate,
     stumps: stumps.length,
     baseline,
     trained,
