@@ -31,6 +31,10 @@ const MIN_SAMPLE = 150;
 const MIN_SAMPLE_PER_COMPETITION = 100;
 const MAX_PER_COMPETITION_WEIGHT = 0.35;
 const SHRINK_TOWARD_CURRENT = 0.5;
+// Odds ouder dan 72 uur zijn volgens shared/oddsFreshness.js geen marktsignaal
+// meer. Ze mogen dus niet meewegen in een fit die zegt hoeveel gewicht de markt
+// verdient: dan leert het model van een quotering die niets over dit duel wist.
+export const DEFAULT_MAX_ODDS_AGE_HOURS = 72;
 
 function clampProbability(value) {
   return Math.min(1 - EPS, Math.max(EPS, Number(value)));
@@ -52,10 +56,28 @@ function round(value, digits = 4) {
     : Math.round(Number(value) * 10 ** digits) / 10 ** digits;
 }
 
-// Zet records om naar meetbare rijen. Records zonder marktkans of zonder
-// modelzekerheid vallen af; ze kunnen niets over het gewicht zeggen.
-export function weightFitRows(records = []) {
+// Is de marktkans van dit record bruikbaar? Zonder dq is er niets gemeten en
+// blijft het record staan (de marktkans kwam dan uit het marktbestand). Met dq
+// telt alleen een quotering die aantoonbaar niet te oud is.
+function oddsUsable(record, maxOddsAgeHours) {
+  const dq = record?.dq;
+  if (!dq || typeof dq !== "object") return true;
+  if (dq.f === "old") return false;
+  const hours = Number(dq.h);
+  if (Number.isFinite(hours) && hours > maxOddsAgeHours) return false;
+  return true;
+}
+
+// Zet records om naar meetbare rijen, met een telling van wat er afviel. Records
+// zonder marktkans of zonder modelzekerheid kunnen niets over het gewicht
+// zeggen; records met te oude odds net zo min.
+export function weightFitRowSelection(records = [], options = {}) {
+  const maxOddsAgeHours = Number.isFinite(Number(options.maxOddsAgeHours))
+    ? Number(options.maxOddsAgeHours)
+    : DEFAULT_MAX_ODDS_AGE_HOURS;
   const rows = [];
+  let candidates = 0;
+  let droppedStaleOdds = 0;
   for (const record of records || []) {
     if (!record) continue;
     const outcome = OUTCOME_INDEX[String(record.po || "").toUpperCase()];
@@ -66,6 +88,11 @@ export function weightFitRows(records = []) {
     if (!Number.isFinite(marketProbability) || marketProbability <= 0 || marketProbability >= 1) continue;
     const modelProbability = Number(record.cf);
     if (!Number.isFinite(modelProbability) || modelProbability <= 0 || modelProbability >= 1) continue;
+    candidates += 1;
+    if (!oddsUsable(record, maxOddsAgeHours)) {
+      droppedStaleOdds += 1;
+      continue;
+    }
     rows.push({
       date: String(record.d || ""),
       league: String(record.lg || "onbekend"),
@@ -75,7 +102,12 @@ export function weightFitRows(records = []) {
       marketProbability,
     });
   }
-  return rows.sort((left, right) => left.date.localeCompare(right.date));
+  rows.sort((left, right) => left.date.localeCompare(right.date));
+  return { rows, candidates, droppedStaleOdds, maxOddsAgeHours };
+}
+
+export function weightFitRows(records = [], options = {}) {
+  return weightFitRowSelection(records, options).rows;
 }
 
 // Zoekt het gewicht met de laagste logloss op de trainingsset en toetst dat op
@@ -89,9 +121,18 @@ export function fitMarketWeightBlend(records = [], options = {}) {
     : DEFAULT_WEIGHT_GRID;
   const currentWeight = Number.isFinite(Number(options.current)) ? Number(options.current) : 0.16;
 
-  const rows = weightFitRows(records);
+  const selection = weightFitRowSelection(records, options);
+  const rows = selection.rows;
   if (rows.length < minSample) {
-    return { sample: rows.length, minSample, available: false, reason: "te-weinig-paren", currentWeight };
+    return {
+      sample: rows.length,
+      minSample,
+      available: false,
+      reason: "te-weinig-paren",
+      currentWeight,
+      droppedStaleOdds: selection.droppedStaleOdds,
+      maxOddsAgeHours: selection.maxOddsAgeHours,
+    };
   }
 
   const cut = Math.max(1, Math.min(rows.length - 1, Math.floor(rows.length * trainShare)));
@@ -134,6 +175,11 @@ export function fitMarketWeightBlend(records = [], options = {}) {
     holdoutImproves: improvement !== null && improvement >= 0.002,
     // Het gemeten gewicht is pas een advies als de holdout het bevestigt.
     recommendedWeight: improvement !== null && improvement >= 0.002 ? best.weight : round(currentWeight, 3),
+    // Zichtbaar houden dat een deel van de paren niet meedeed: anders lijkt de
+    // steekproef groter dan de data die de fit werkelijk droeg.
+    candidates: selection.candidates,
+    droppedStaleOdds: selection.droppedStaleOdds,
+    maxOddsAgeHours: selection.maxOddsAgeHours,
     curve,
   };
 }
@@ -161,7 +207,8 @@ export function fitMarketWeightByCompetition(records = [], options = {}) {
   const currentWeight = Number.isFinite(Number(options.current)) ? Number(options.current) : 0.16;
   const shrink = Math.min(1, Math.max(0, Number(options.shrink ?? SHRINK_TOWARD_CURRENT)));
 
-  const rows = weightFitRows(records);
+  const selection = weightFitRowSelection(records, options);
+  const rows = selection.rows;
   const byLeague = new Map();
   for (const row of rows) {
     const entry = byLeague.get(row.league) || [];
@@ -237,6 +284,9 @@ export function fitMarketWeightByCompetition(records = [], options = {}) {
     minSample,
     shrink,
     sample: rows.length,
+    candidates: selection.candidates,
+    droppedStaleOdds: selection.droppedStaleOdds,
+    maxOddsAgeHours: selection.maxOddsAgeHours,
     competitions,
     competitionsAgreed: confirmed.length,
     competitionsTotal: withFit.length,

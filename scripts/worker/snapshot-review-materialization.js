@@ -5,6 +5,9 @@
 // snapshot-kansen worden berekend. De oude waarden blijven bewaard in
 // `reboundFrom` zodat er geen informatie verloren gaat.
 
+import { deriveDataSufficiency } from "../../shared/dataSufficiency.js";
+import { compactOddsFreshness } from "../../shared/oddsFreshness.js";
+
 function clamp(value, min, max) {
   return Math.min(max, Math.max(min, value));
 }
@@ -63,6 +66,24 @@ function clvFromOdds(oddsAtPrediction, predictedOutcome) {
   const closingOdd = Number(closingRaw);
   if (!preMatchOdd || !(Number.isFinite(closingOdd) && closingOdd > 1)) return null;
   return Number(((preMatchOdd - closingOdd) / closingOdd).toFixed(4));
+}
+
+function componentProbabilitiesFromSnapshot(snapshot) {
+  const components = snapshot?.ensembleMeta?.components || snapshot?.prediction?.ensembleMeta?.components || null;
+  if (!Array.isArray(components)) return null;
+  return components.map((component) => ({
+    key: component.key,
+    active: !!component.active,
+    weight: Number.isFinite(Number(component.weight)) ? Number(component.weight) : null,
+    reason: component.reason || null,
+    probabilities: component.probabilities
+      ? {
+          home: Number(component.probabilities.homeProb),
+          draw: Number(component.probabilities.drawProb),
+          away: Number(component.probabilities.awayProb),
+        }
+      : null,
+  }));
 }
 
 function snapshotProbabilities(snapshot) {
@@ -132,6 +153,23 @@ export function rebindReviewToSnapshot(review, snapshot) {
   const roi = snapshot.prediction?.roi ?? roiFromOdds(oddsAtPrediction, probabilityOutcome, actualOutcome);
   const clv = snapshot.prediction?.clv ?? clvFromOdds(oddsAtPrediction, probabilityOutcome);
   const modelEdges = snapshot.prediction?.modelEdges || snapshot.explanation?.modelEdges || null;
+  // Datakwaliteit en sufficiency moeten er altijd staan: zonder dat veld is
+  // achteraf niet te scheiden of een miss door het model kwam of doordat de
+  // invoer ontbrak. Snapshot of review levert het meestal niet mee, dus het
+  // wordt hier afgeleid uit wat er wel is vastgelegd.
+  const dataCompleteness = snapshot.dataCompleteness || snapshot.prediction?.dataCompleteness || review.dataCompleteness || null;
+  const missingData = snapshot.missingData || snapshot.prediction?.dataCompleteness?.missing || review.missingData || [];
+  const oddsStatus = snapshot.oddsStatus || review.oddsStatus || null;
+  const dataSufficiency = snapshot.prediction?.dataSufficiency || snapshot.dataSufficiency || review.dataSufficiency
+    || deriveDataSufficiency({
+      dataCompleteness,
+      missingData,
+      oddsStatus,
+      freshness: compactOddsFreshness(
+        oddsAtPrediction?.capturedAt || oddsAtPrediction?.lastUpdated,
+        snapshot.kickoff || review.kickoff || review.date,
+      ),
+    });
 
   return {
     ...review,
@@ -160,9 +198,18 @@ export function rebindReviewToSnapshot(review, snapshot) {
     clv,
     clvStatus: clv == null ? "closing_odds_missing" : "settled",
     oddsAtPrediction,
-    oddsStatus: snapshot.oddsStatus || review.oddsStatus || null,
+    oddsStatus,
     oddsMissingReason: snapshot.oddsMissingReason ?? review.oddsMissingReason ?? null,
     featureSourceMetadata: snapshot.featureSourceMetadata || snapshot.prediction?.featureSourceMetadata || review.featureSourceMetadata || null,
+    // Datakwaliteit en sufficiency zoals die BIJ de voorspelling golden. Zo kan
+    // achteraf worden gezien of er genoeg info was, ook bij een miss.
+    dataCompleteness,
+    missingData,
+    dataSufficiency,
+    // Componentkansen per model (poisson, feature, monte carlo, elo, markt, ...),
+    // met active/reason, zodat een miss herleidbaar is tot het model dat faalde.
+    componentProbabilities: componentProbabilitiesFromSnapshot(snapshot),
+    competitionKey: snapshot.competitionKey || review.competitionKey || review.league || null,
     leakageGuard: snapshot.leakageGuard || review.leakageGuard || null,
     leakageRisk: null,
     outcomeHit: predictedOutcome === actualOutcome,

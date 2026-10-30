@@ -89,6 +89,10 @@ report.marketWeightFit = {
   baselineHoldoutLogLoss: weightFit.baselineHoldoutLogLoss ?? null,
   improvement: weightFit.improvement ?? null,
   holdoutImproves: Boolean(weightFit.holdoutImproves),
+  // Paren die afvielen omdat de odds te oud waren: anders lijkt de steekproef
+  // groter dan de data die de fit werkelijk droeg.
+  droppedStaleOdds: weightFit.droppedStaleOdds ?? 0,
+  maxOddsAgeHours: weightFit.maxOddsAgeHours ?? null,
 };
 report.marketWeight = adviseMarketWeight(report.marketBaseline.probability, { fit: weightFit });
 // Per-competitie-fit: gemeten, afgedwongen met dezelfde holdout-poort en

@@ -2,6 +2,7 @@ import { describe, expect, it } from "vitest";
 import {
   fitMarketWeightBlend,
   fitMarketWeightByCompetition,
+  weightFitRowSelection,
   weightFitRows,
 } from "../../shared/ensembleWeightFit.js";
 import { adviseMarketWeight } from "../../shared/ensembleWeightPolicy.js";
@@ -197,5 +198,30 @@ describe("adviseMarketWeight met een holdout-fit", () => {
     const advice = adviseMarketWeight({ modelN: 400, model: { logLoss: 1.1 }, market: { logLoss: 1.0 } });
     expect(advice.source).toBe("benchmark");
     expect(advice.advised).toBeCloseTo(0.24, 3);
+  });
+});
+
+describe("oddsversheid in de gewichtsfit", () => {
+  it("laat odds ouder dan 72 uur niet meewegen", () => {
+    const freshRecord = { d: "2026-01-01", po: "H", cf: 0.5, mp: [0.4, 0.3, 0.3], dq: { f: "recent", h: 9 } };
+    const staleRecord = { d: "2026-01-02", po: "H", cf: 0.5, mp: [0.4, 0.3, 0.3], dq: { f: "old", h: 100 } };
+    const selection = weightFitRowSelection([freshRecord, staleRecord]);
+    expect(selection.rows).toHaveLength(1);
+    expect(selection.candidates).toBe(2);
+    expect(selection.droppedStaleOdds).toBe(1);
+  });
+
+  it("houdt records zonder vastgelegde oddsversheid", () => {
+    expect(weightFitRows([{ d: "2026-01-01", po: "H", cf: 0.5, mp: [0.4, 0.3, 0.3] }])).toHaveLength(1);
+  });
+
+  it("rapporteert hoeveel paren door oude odds afvielen", () => {
+    const records = buildRecords(400).map((record, index) => (
+      index % 2 === 0 ? { ...record, dq: { f: "old", h: 200 } } : record
+    ));
+    const fit = fitMarketWeightBlend(records, { minSample: 150 });
+    expect(fit.available).toBe(true);
+    expect(fit.droppedStaleOdds).toBe(200);
+    expect(fit.sample).toBe(200);
   });
 });

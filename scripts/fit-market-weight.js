@@ -42,6 +42,12 @@ console.log(
   + `holdout ${fit.holdoutLogLoss} tegen ${fit.currentHoldoutLogLoss} bij huidig ${fit.currentWeight} `
   + `(model zonder markt ${fit.baselineHoldoutLogLoss}, n=${fit.holdoutSample}).`,
 );
+if (fit.droppedStaleOdds) {
+  console.log(
+    `Buiten de fit: ${fit.droppedStaleOdds} paren met odds ouder dan ${fit.maxOddsAgeHours} uur `
+    + `(${fit.candidates} kandidaten, ${fit.sample} gebruikt).`,
+  );
+}
 console.log(
   fit.holdoutImproves
     ? `Advies: gewicht naar ${fit.recommendedWeight} (holdout ${fit.improvement} logloss beter).`

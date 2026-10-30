@@ -29,6 +29,8 @@ on:
       - "shared/ensembleWeightPolicy.js"
       - "shared/ensembleWeightFit.js"
       - "shared/modelHealth.js"
+      - "shared/missAnalysis.js"
+      - "shared/dataSufficiency.js"
       - "scripts/build-match-store.js"
       - "scripts/verify-match-store.js"
       - "scripts/publish-match-store.js"
@@ -37,6 +39,7 @@ on:
       - "scripts/model-report.js"
       - "scripts/club-analysis.js"
       - "scripts/backtest-strength-model.js"
+      - "scripts/miss-review.js"
       - "data/market-odds.json"
 
 permissions:
@@ -95,6 +98,12 @@ jobs:
       - name: Backtest strength model and rho sweep
         continue-on-error: true
         run: node scripts/backtest-strength-model.js
+      # Achteraf oordelen: welke duels gingen mis, was er genoeg informatie en
+      # wat zou er per competitie anders moeten? Schrijft alleen een voorstel;
+      # past niets toe op de live worker.
+      - name: Review misses per competition (analysis bot)
+        continue-on-error: true
+        run: node scripts/miss-review.js
       # Dezelfde historie die de analyses gebruiken, nu ook als R2-object voor
       # de live worker. Zonder R2-secrets slaat het script over.
       - name: Publish compact match store to R2
@@ -110,6 +119,7 @@ jobs:
           if [ -f monitor/market-weight-fit.json ]; then git add -f monitor/market-weight-fit.json; fi
           # De backtest schrijft alleen bij genoeg wedstrijden een bestand.
           if [ -f monitor/strength-backtest.json ]; then git add -f monitor/strength-backtest.json; fi
+          if [ -f monitor/miss-analysis.json ]; then git add -f monitor/miss-analysis.json; fi
           if git diff --cached --quiet; then
             echo "Geen wijzigingen in de match-store of rapporten."
           else
@@ -133,7 +143,7 @@ jobs:
         if: always()
         run: |
           failed=0
-          for report in monitor/market-weight-fit.json monitor/strength-backtest.json; do
+          for report in monitor/market-weight-fit.json monitor/strength-backtest.json monitor/miss-analysis.json; do
             if [ ! -f "$report" ]; then
               echo "::error file=$report::Ontbreekt: het bijbehorende script heeft dit rapport niet geschreven."
               failed=1

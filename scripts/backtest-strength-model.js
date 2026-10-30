@@ -87,8 +87,37 @@ function summarise(rows) {
   };
 }
 
+// Onder deze drempel is een rho-keuze of een sterktemodel niet te onderbouwen.
+// Het rapport wordt dan toch geschreven met status, zodat een analyse altijd
+// ziet waarom er (nog) geen meting is.
+const MIN_MATCHES_FOR_VERDICT = Number(process.env.STRENGTH_MIN_MATCHES || 250);
+// Kleinste verschil in logloss dat als echt verschil telt (zelfde marge als de
+// holdout-poort van de marktgewicht-fit).
+const MIN_EFFECT = 0.002;
 if (matches.length <= MIN_TRAIN + 50) {
-  console.error(JSON.stringify({ ok: false, reason: "te-weinig-wedstrijden", matches: matches.length, minTrain: MIN_TRAIN }));
+  const insufficient = {
+    ok: false,
+    status: "te-weinig-wedstrijden",
+    generatedAt: new Date().toISOString(),
+    matches: matches.length,
+    minTrain: MIN_TRAIN,
+    minMatchesForVerdict: MIN_MATCHES_FOR_VERDICT,
+    // Ook zonder meting blijft de pre-registratie staan: de hypothese en de
+    // beslisregel zijn niet afhankelijk van de uitkomst.
+    preregistration: {
+      hypothesis: "Het clubsterktemodel voorspelt 1X2 beter dan dezelfde Poisson-motor zonder teamsterktes.",
+      ablation: "baseline = dezelfde motor met aanval/verdediging = 1",
+      primaryMetric: "logloss op 1X2, walk-forward",
+      minimumEffect: MIN_EFFECT,
+      minimumMatches: MIN_MATCHES_FOR_VERDICT,
+      liveEffect: "geen",
+      registeredAt: "2026-10-30",
+    },
+    verdict: "onvoldoende-data",
+  };
+  fs.mkdirSync(monitorDir, { recursive: true });
+  fs.writeFileSync(path.join(monitorDir, "strength-backtest.json"), `${JSON.stringify(insufficient)}\n`);
+  console.log(JSON.stringify(insufficient));
   process.exit(0);
 }
 
@@ -191,8 +220,11 @@ const bestRho = [...rhoSweep]
   .filter((entry) => entry.logLoss !== null)
   .sort((left, right) => left.logLoss - right.logLoss)[0] || null;
 
+const sufficient = matches.length >= MIN_MATCHES_FOR_VERDICT;
 const report = {
   ok: true,
+  status: sufficient ? "voldoende-data" : "te-weinig-wedstrijden",
+  minMatchesForVerdict: MIN_MATCHES_FOR_VERDICT,
   generatedAt: new Date().toISOString(),
   method: {
     minTrain: MIN_TRAIN,
@@ -200,13 +232,32 @@ const report = {
     asOfGuard: "model gebruikt alleen wedstrijden met datum < voorspeldatum",
     baseline: "zelfde Poisson-motor met aanval/verdediging = 1",
   },
+  // Pre-registratie: hypothese, metriek en beslisregel staan vast vóór de
+  // uitkomst wordt gelezen. Zo kan een gunstige meting achteraf niet als bewijs
+  // worden omgedraaid, en een ongunstige niet worden weggeschreven.
+  // Er is geen live-effect: de worker gebruikt het sterkte-model niet bij de
+  // voorspelling, dus dit is een ablatiemeting, geen ingreep.
+  preregistration: {
+    hypothesis: "Het clubsterktemodel voorspelt 1X2 beter dan dezelfde Poisson-motor zonder teamsterktes.",
+    ablation: "baseline = dezelfde motor met aanval/verdediging = 1 (alleen basisdoelpunten en thuisvoordeel)",
+    primaryMetric: "logloss op 1X2, walk-forward, alleen wedstrijden met datum vóór het voorspelde duel",
+    minimumEffect: MIN_EFFECT,
+    minimumMatches: MIN_MATCHES_FOR_VERDICT,
+    decisionRule: `verdict "sterktemodel-beter" alleen bij een lagere logloss met minimaal ${MIN_EFFECT} verschil op minimaal ${MIN_MATCHES_FOR_VERDICT} wedstrijden; anders geen conclusie`,
+    liveEffect: "geen",
+    registeredAt: "2026-10-30",
+  },
   overall,
   defaultRho: DEFAULT_RHO,
   rhoSweep,
   bestRho,
-  verdict: overall.model.logLoss !== null && overall.baseline.logLoss !== null
-    ? (overall.model.logLoss < overall.baseline.logLoss ? "sterktemodel-beter" : "baseline-beter")
-    : "onvoldoende-data",
+  verdict: !sufficient
+    ? "onvoldoende-data"
+    : overall.model.logLoss !== null && overall.baseline.logLoss !== null
+      ? (overall.model.logLoss + MIN_EFFECT < overall.baseline.logLoss
+        ? "sterktemodel-beter"
+        : (overall.baseline.logLoss + MIN_EFFECT < overall.model.logLoss ? "baseline-beter" : "geen-verschil"))
+      : "onvoldoende-data",
   leagues: [...byLeague.entries()]
     .filter(([, leagueRows]) => leagueRows.length >= MIN_LEAGUE_SAMPLE)
     .map(([league, leagueRows]) => ({ league, ...summarise(leagueRows) }))
