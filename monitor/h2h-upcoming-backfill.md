@@ -1,32 +1,36 @@
 # Upcoming H2H Backfill
 
-Laatst bijgewerkt: 2026-10-30T01:00:00.456Z
-Gecontroleerd: 16
+Laatst bijgewerkt: 2026-10-30T10:01:19.890Z
+Gecontroleerd: 50
 Gevuld: 0
-Geen directe H2H: 16
+Geen directe H2H: 50
 Errors: 0
 
-Openstaand na deze batch: 0
+Openstaand na deze batch: 49
 
 ## Aanbeveling
-Geen directe H2H gevonden voor de gecontroleerde wedstrijden. Breid team-ID mapping/providerdekking uit of accepteer expliciet no-direct-history voor deze fixtures.
+API-Football H2H is onafhankelijk van fixture-acceptatie ingeschakeld; 3/3 beperkte paarpogingen gedaan. Er staan nog 49 fixtures in de wachtrij.
 
 ## Gevuld
 
 ## Geen Directe H2H
-- 2026-11-07: Wrexham - Wolverhampton Wanderers (no_direct_history)
-- 2026-11-07: Nottingham Forest - Manchester City (no_direct_history)
-- 2026-11-07: ADO Den Haag - Sparta Rotterdam (no_direct_history)
-- 2026-11-07: Pau - Nantes (rate_limited_locally)
-- 2026-11-07: Blackburn Rovers - West Ham United (rate_limited_locally)
-- 2026-11-07: Saint-Étienne - Stade Laval (rate_limited_locally)
-- 2026-11-07: Cardiff City - Burnley (rate_limited_locally)
-- 2026-11-07: Charlton Athletic - Sheffield United (rate_limited_locally)
-- 2026-11-07: Preston North End - Southampton (rate_limited_locally)
-- 2026-11-07: Queens Park Rangers - Lincoln City (rate_limited_locally)
-- 2026-11-08: FC Emmen - MVV Maastricht (rate_limited_locally)
-- 2026-11-08: Le Mans - AS Monaco (rate_limited_locally)
-- 2026-11-08: Manchester United - Aston Villa (rate_limited_locally)
-- 2026-11-14: NAC Breda - FC Emmen (rate_limited_locally)
-- 2026-11-14: Almere City - Helmond Sport (rate_limited_locally)
-- 2026-11-14: De Graafschap - TOP Oss (rate_limited_locally)
+- 2026-10-30: Arminia Bielefeld - TSV Eintracht Braunschweig (no_direct_history)
+- 2026-10-30: Nantes - Clermont Foot (no_direct_history)
+- 2026-10-30: Helmond Sport - FC Eindhoven (no_direct_history)
+- 2026-10-30: RKC Waalwijk - Almere City (rate_limited_locally)
+- 2026-10-30: Roda JC Kerkrade - Jong AZ (rate_limited_locally)
+- 2026-10-31: VfL Wolfsburg - VfL Osnabruck (rate_limited_locally)
+- 2026-10-31: Lincoln City - Birmingham City (rate_limited_locally)
+- 2026-10-31: Chelsea - Manchester United (rate_limited_locally)
+- 2026-10-31: Borussia Mönchengladbach - SC Paderborn 07 (rate_limited_locally)
+- 2026-10-31: MVV Maastricht - VVV-Venlo (rate_limited_locally)
+- 2026-10-31: Feyenoord Rotterdam - Fortuna Sittard (rate_limited_locally)
+- 2026-10-31: Karlsruher SC - 1. FC Heidenheim 1846 (rate_limited_locally)
+- 2026-10-31: Norwich City - Watford (rate_limited_locally)
+- 2026-10-31: AFC Bournemouth - Leeds United (rate_limited_locally)
+- 2026-10-31: Stoke City - Preston North End (rate_limited_locally)
+- 2026-10-31: Brentford - Nottingham Forest (rate_limited_locally)
+- 2026-10-31: Middlesbrough - Charlton Athletic (rate_limited_locally)
+- 2026-11-01: Strasbourg - AJ Auxerre (rate_limited_locally)
+- 2026-11-02: Heracles Almelo - TOP Oss (rate_limited_locally)
+- 2026-11-02: Stade de Reims - Sochaux (rate_limited_locally)
