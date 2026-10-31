@@ -1,34 +1,34 @@
 {
-  "generatedAt": "2026-10-31T15:22:46.308Z",
-  "checked": 2,
-  "confirmed": 2,
-  "changedConfirmed": 2,
+  "generatedAt": "2026-10-31T19:35:43.504Z",
+  "checked": 4,
+  "confirmed": 4,
+  "changedConfirmed": 4,
   "partial": 0,
   "missing": 0,
-  "r2Stored": 2,
+  "r2Stored": 4,
   "playerFixtureStatsCaptured": 0,
   "databaseWritable": false,
   "databaseError": "Server error (HTTP status 402): {\"message\":\"Your account or project has exceeded the quota. Upgrade your plan to increase limits.\",\"code\":\"\",\"detail\":null,\"hint\":null,\"position\":null,\"internalPosition\":null,\"internalQuery\":null,\"severity\":\"\",\"where\":null,\"table\":null,\"column\":null,\"schema\":null,\"dataType\":null,\"constraint\":null,\"file\":null,\"line\":null,\"routine\":null,\"neon:retryable\":true}",
   "captureWindows": {
     "t75": 0,
     "t45": 0,
-    "t20": 2,
+    "t20": 4,
     "outside": 0
   },
   "providers": {
-    "sofascore:schedule_http_403": 2,
-    "fotmob:ok": 2
+    "sofascore:schedule_http_403": 4,
+    "fotmob:ok": 4
   },
   "matches": [
     {
-      "matchId": "ss-espn-ned.2-401875868",
-      "league": "Netherlands - Eerste Divisie",
-      "agent": "netherlands-eerste-divisie-agent",
-      "kickoff": "2026-10-31T15:30:00.000Z",
-      "minutesBeforeKickoff": 7,
+      "matchId": "ss-espn-fra.1-401876413",
+      "league": "France - Ligue 1",
+      "agent": "france-ligue-1-agent",
+      "kickoff": "2026-10-31T19:45:00.000Z",
+      "minutesBeforeKickoff": 9,
       "captureWindow": "t20",
-      "homeTeam": "MVV Maastricht",
-      "awayTeam": "VVV-Venlo",
+      "homeTeam": "Troyes",
+      "awayTeam": "Le Mans",
       "provider": "fotmob",
       "status": "ok",
       "attempts": [
@@ -63,14 +63,98 @@
       "partial": false
     },
     {
-      "matchId": "ss-espn-ned.1-401875565",
+      "matchId": "ss-espn-eng.1-401879250",
+      "league": "England - Premier League",
+      "agent": "england-premier-league-agent",
+      "kickoff": "2026-10-31T20:00:00.000Z",
+      "minutesBeforeKickoff": 24,
+      "captureWindow": "t20",
+      "homeTeam": "Aston Villa",
+      "awayTeam": "Fulham",
+      "provider": "fotmob",
+      "status": "ok",
+      "attempts": [
+        {
+          "provider": "sofascore",
+          "status": "schedule_http_403",
+          "lineup": false,
+          "confirmed": false,
+          "durationMs": null,
+          "quota": {
+            "remaining": null,
+            "limit": null,
+            "resetAt": null
+          },
+          "result": "http_error"
+        },
+        {
+          "provider": "fotmob",
+          "status": "ok",
+          "lineup": true,
+          "confirmed": true,
+          "durationMs": null,
+          "quota": {
+            "remaining": null,
+            "limit": null,
+            "resetAt": null
+          },
+          "result": "found"
+        }
+      ],
+      "confirmed": true,
+      "partial": false
+    },
+    {
+      "matchId": "ss-espn-ned.1-401875562",
       "league": "Netherlands - Eredivisie",
       "agent": "netherlands-eredivisie-agent",
-      "kickoff": "2026-10-31T15:30:00.000Z",
-      "minutesBeforeKickoff": 7,
+      "kickoff": "2026-10-31T20:00:00.000Z",
+      "minutesBeforeKickoff": 24,
       "captureWindow": "t20",
-      "homeTeam": "Feyenoord Rotterdam",
-      "awayTeam": "Fortuna Sittard",
+      "homeTeam": "Ajax Amsterdam",
+      "awayTeam": "AZ Alkmaar",
+      "provider": "fotmob",
+      "status": "ok",
+      "attempts": [
+        {
+          "provider": "sofascore",
+          "status": "schedule_http_403",
+          "lineup": false,
+          "confirmed": false,
+          "durationMs": null,
+          "quota": {
+            "remaining": null,
+            "limit": null,
+            "resetAt": null
+          },
+          "result": "http_error"
+        },
+        {
+          "provider": "fotmob",
+          "status": "ok",
+          "lineup": true,
+          "confirmed": true,
+          "durationMs": null,
+          "quota": {
+            "remaining": null,
+            "limit": null,
+            "resetAt": null
+          },
+          "result": "found"
+        }
+      ],
+      "confirmed": true,
+      "partial": false
+    },
+    {
+      "matchId": "ss-espn-ned.1-401875561",
+      "league": "Netherlands - Eredivisie",
+      "agent": "netherlands-eredivisie-agent",
+      "kickoff": "2026-10-31T20:00:00.000Z",
+      "minutesBeforeKickoff": 24,
+      "captureWindow": "t20",
+      "homeTeam": "SC Cambuur",
+      "awayTeam": "Go Ahead Eagles",
       "provider": "fotmob",
       "status": "ok",
       "attempts": [
@@ -107,7 +191,15 @@
   ],
   "leagueCoverage": [
     {
-      "league": "Netherlands - Eerste Divisie",
+      "league": "Netherlands - Eredivisie",
+      "checked": 2,
+      "covered": 2,
+      "partial": 0,
+      "missing": 0,
+      "coverage": 1
+    },
+    {
+      "league": "England - Premier League",
       "checked": 1,
       "covered": 1,
       "partial": 0,
@@ -115,7 +207,7 @@
       "coverage": 1
     },
     {
-      "league": "Netherlands - Eredivisie",
+      "league": "France - Ligue 1",
       "checked": 1,
       "covered": 1,
       "partial": 0,
