@@ -1,5 +1,5 @@
 {
-  "checkedAt": "2026-10-31T10:25:51.368Z",
+  "checkedAt": "2026-11-01T11:19:38.052Z",
   "oddsApi": {
     "configured": true,
     "valid": true,
@@ -10,7 +10,6 @@
       "soccer_concacaf_gold_cup",
       "soccer_concacaf_leagues_cup",
       "soccer_conmebol_copa_america",
-      "soccer_fa_cup",
       "soccer_fifa_club_world_cup",
       "soccer_fifa_world_cup",
       "soccer_fifa_world_cup_qualifiers_europe",
@@ -30,9 +29,9 @@
     ],
     "faCup": {
       "key": "soccer_fa_cup",
-      "status": "expected_inactive"
+      "status": "active"
     },
-    "activeSports": 85,
+    "activeSports": 78,
     "soccerSportKeys": [
       "soccer_argentina_primera_division",
       "soccer_australia_aleague",
@@ -50,6 +49,7 @@
       "soccer_england_league1",
       "soccer_england_league2",
       "soccer_epl",
+      "soccer_fa_cup",
       "soccer_finland_veikkausliiga",
       "soccer_france_ligue_one",
       "soccer_france_ligue_two",
@@ -92,14 +92,14 @@
       "soccer_uefa_europa_conference_league_qualification"
     ],
     "competitionCoverageStatus": "seasonal_unavailable",
-    "newlyInactiveSports": [
-      "soccer_league_of_ireland"
-    ],
+    "newlyInactiveSports": [],
     "newlyUnavailableSports": [],
-    "newlyAvailableSports": [],
+    "newlyAvailableSports": [
+      "soccer_fa_cup"
+    ],
     "quota": {
-      "x-requests-remaining": "225",
-      "x-requests-used": "275",
+      "x-requests-remaining": "472",
+      "x-requests-used": "28",
       "x-requests-last": "0"
     },
     "errorCode": null
@@ -172,7 +172,7 @@
     "quota": {
       "x-ratelimit-limit": "1000",
       "x-ratelimit-remaining": "960",
-      "x-ratelimit-reset": "1793491200"
+      "x-ratelimit-reset": "1793577600"
     },
     "accepted": false,
     "policy": "Veertien dagen meten; nooit automatisch promoveren op basis van alleen een geldige key."
@@ -242,11 +242,11 @@
         "valid": true,
         "status": 200,
         "records": 1,
-        "firstId": 19722753,
-        "firstName": "Motherwell vs St. Mirren",
+        "firstId": 19713872,
+        "firstName": "Viborg FF vs Horsens",
         "hasOddsFlag": true,
         "rateLimit": {
-          "resets_in_seconds": 3600,
+          "resets_in_seconds": 3599,
           "remaining": 178,
           "requested_entity": "Fixture"
         },
@@ -260,8 +260,8 @@
         "valid": true,
         "status": 200,
         "records": 1,
-        "firstId": 19722753,
-        "firstName": "Motherwell vs St. Mirren",
+        "firstId": 19713872,
+        "firstName": "Viborg FF vs Horsens",
         "hasOddsFlag": true,
         "rateLimit": {
           "resets_in_seconds": 3599,
@@ -274,13 +274,13 @@
         },
         "errorCode": null
       },
-      "testedFixtureId": 19722753,
+      "testedFixtureId": 19713872,
       "oddsByFixture": {
         "label": "oddsByFixture",
         "valid": true,
         "status": 200,
         "records": 3,
-        "firstId": 250038451797,
+        "firstId": 249808329504,
         "firstName": null,
         "hasOddsFlag": false,
         "rateLimit": {
@@ -304,7 +304,7 @@
         "firstName": "1",
         "hasOddsFlag": false,
         "rateLimit": {
-          "resets_in_seconds": 3599,
+          "resets_in_seconds": 3600,
           "remaining": 178,
           "requested_entity": "Odd"
         },
@@ -319,7 +319,7 @@
         "valid": true,
         "status": 200,
         "records": 3,
-        "firstId": 250038451797,
+        "firstId": 249808329504,
         "firstName": null,
         "hasOddsFlag": false,
         "rateLimit": {
