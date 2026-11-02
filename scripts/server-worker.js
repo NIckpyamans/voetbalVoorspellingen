@@ -120,11 +120,21 @@ import { assertEnrichmentPublication, preserveEnrichmentEvidence } from "./worke
 import { buildTargetedRepairQueue, summarizeRepairNeeds } from "./worker/targeted-repair-queue.js";
 import { buildCompetitionQuality } from "./worker/competition-quality.js";
 import { classifyPredictionSnapshotWindow, minutesBeforeKickoff as snapshotMinutesBeforeKickoff } from "./worker/snapshot-policy.js";
+import { createProviderCircuit, wrapFetchWithCircuit } from "./worker/provider-circuit.js";
 
 const SOFA = "https://api.sofascore.com/api/v1";
 const THESPORTSDB_BASE = "https://www.thesportsdb.com/api/v1/json";
 const FOOTBALL_DATA_BASE = "https://api.football-data.org/v4";
 const sofaFetchCircuit = { blocked: false, failures: 0, logged: false };
+// Live-refresh had herhaald 403's van SofaScore en TheSportsDB en liep daarna
+// tegen de step-timeout. Eén circuit voor de hele run: na de eerste 403 gaat
+// die host niet meer de deur uit en nemen de gratis fallbackbronnen over.
+const providerCircuit = createProviderCircuit({
+  onBlock: (host, status) => console.warn(`[worker] ${host} gaf ${status}; provider wordt deze run overgeslagen.`),
+});
+if (process.env.FOOTYAI_PROVIDER_403_CIRCUIT !== "false" && typeof globalThis.fetch === "function") {
+  globalThis.fetch = wrapFetchWithCircuit(globalThis.fetch.bind(globalThis), providerCircuit);
+}
 const ROOT = process.cwd();
 const DATA_FILE = path.resolve(process.cwd(), "server_data.json");
 const SPLIT_DATA_DIR = path.resolve(process.cwd(), "data");

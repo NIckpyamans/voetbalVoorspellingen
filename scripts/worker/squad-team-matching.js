@@ -99,19 +99,81 @@ export function suggestAliasCandidates(candidateNames = [], teamName, options = 
     .slice(0, limit);
 }
 
-// Cache-canonicalisatie: dubbele teamnamen ("drita" en "drita gjilan") worden
-// één identiteit via canonicalDedupeTeam. Alle sleutels blijven werken en
-// sourceIds worden samengevoegd, zodat er geen informatie verloren gaat; de
-// spelerslijst komt van de meest actieve bron (zelfde beleid als enrichment).
+// Provider-identiteiten van een cache-entry. Twee schrijfwijzen die naar
+// hetzelfde FotMob-team verwijzen zijn dezelfde club, ook als de naam daar
+// niet uit af te leiden is ("Jagiellonia" versus "Jagiellonia Bialystok").
+function providerIdentityIds(entry) {
+  const ids = [];
+  for (const [provider, value] of Object.entries(entry?.sourceIds || {})) {
+    const text = String(value ?? "").trim().toLowerCase();
+    if (text) ids.push(`${String(provider).toLowerCase()}:${text}`);
+  }
+  for (const value of Array.isArray(entry?.providerTeamIds) ? entry.providerTeamIds : []) {
+    const text = String(value || "").trim().toLowerCase();
+    if (text) ids.push(text);
+  }
+  return [...new Set(ids)];
+}
+
+function preferredProviderId(entry) {
+  const ids = providerIdentityIds(entry);
+  return ids.find((id) => id.startsWith("fotmob:") || id.startsWith("fotmob-")) || ids[0] || null;
+}
+
+// Cache-canonicalisatie: dubbele teamnamen ("drita" en "drita gjilan") en
+// dubbele provider-ID's (dezelfde club onder twee schrijfwijzen) worden één
+// identiteit. Alle sleutels blijven werken en sourceIds worden samengevoegd,
+// zodat er geen informatie verloren gaat; de spelerslijst komt van de meest
+// actieve bron (zelfde beleid als enrichment).
 export function canonicalizeSquadCache(cache = {}, options = {}) {
   const canonicalOf = options.canonicalOf || ((value) => String(value || ""));
-  const groups = new Map();
-  for (const [key, entry] of Object.entries(cache)) {
+  const items = Object.entries(cache).map(([key, entry]) => {
     const name = String(entry?.teamName || key.replace(/^name:/, ""));
-    const canonical = String(canonicalOf(name) || name);
-    if (!groups.has(canonical)) groups.set(canonical, []);
-    groups.get(canonical).push({ key, entry });
-  }
+    return {
+      key,
+      entry,
+      canonical: String(canonicalOf(name) || name),
+      providerIds: providerIdentityIds(entry),
+    };
+  });
+
+  // Union-find: koppel entries op canonieke naam én op gedeelde provider-ID's.
+  const parent = items.map((_, index) => index);
+  const find = (index) => {
+    let root = index;
+    while (parent[root] !== root) root = parent[root];
+    while (parent[index] !== root) {
+      const next = parent[index];
+      parent[index] = root;
+      index = next;
+    }
+    return root;
+  };
+  const union = (left, right) => {
+    const leftRoot = find(left);
+    const rightRoot = find(right);
+    if (leftRoot !== rightRoot) parent[rightRoot] = leftRoot;
+  };
+  const byCanonicalName = new Map();
+  const byProviderId = new Map();
+  items.forEach((item, index) => {
+    if (item.canonical) {
+      const nameKey = `name:${item.canonical}`;
+      if (byCanonicalName.has(nameKey)) union(byCanonicalName.get(nameKey), index);
+      else byCanonicalName.set(nameKey, index);
+    }
+    for (const id of item.providerIds) {
+      if (byProviderId.has(id)) union(byProviderId.get(id), index);
+      else byProviderId.set(id, index);
+    }
+  });
+  const groups = new Map();
+  items.forEach((item, index) => {
+    const root = find(index);
+    if (!groups.has(root)) groups.set(root, []);
+    groups.get(root).push(item);
+  });
+
   let mergedKeys = 0;
   let mergedGroups = 0;
   for (const members of groups.values()) {
@@ -128,6 +190,7 @@ export function canonicalizeSquadCache(cache = {}, options = {}) {
     const primary = sorted[0];
     const primaryPlayers = Array.isArray(primary.entry?.players) && primary.entry.players.length ? primary.entry.players : null;
     const sourceIds = Object.assign({}, ...sorted.map((item) => item?.entry?.sourceIds || {}));
+    const canonicalProviderId = preferredProviderId(primary.entry) || preferredProviderId({ sourceIds });
     for (const { key, entry } of members) {
       cache[key] = {
         ...entry,
@@ -135,6 +198,7 @@ export function canonicalizeSquadCache(cache = {}, options = {}) {
           ? { players: primaryPlayers, playerCount: primaryPlayers.length, starPlayer: primary.entry?.starPlayer || primaryPlayers[0] || null }
           : {}),
         sourceIds,
+        canonicalProviderId,
         canonicalTeamName: primary.entry?.teamName || entry?.teamName || null,
         canonicalKey: primary.key,
         duplicateKeys: members.map((item) => item.key),

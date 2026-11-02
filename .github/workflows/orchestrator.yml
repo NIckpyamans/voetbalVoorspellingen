@@ -42,12 +42,22 @@ jobs:
         name: Build orchestration plan
         run: node scripts/workflow-orchestrator.js --emit-github-output
       - name: Dispatch planned workflows
+        id: dispatch
         if: steps.plan.outputs.count != '0'
         run: |
+          echo "DISPATCH_STARTED_AT=$(date -u +%Y-%m-%dT%H:%M:%SZ)" >> "$GITHUB_ENV"
           for workflow in ${{ steps.plan.outputs.workflows }}; do
             echo "Dispatching $workflow on $DATA_BRANCH"
             gh workflow run "$workflow" --ref "$DATA_BRANCH"
           done
+      - name: Verify dispatched runs actually started
+        # Een dispatch is pas gelukt als de child-run queued of in_progress
+        # wordt. Zo niet, dan faalt de orchestrator in plaats van groen te
+        # blijven terwijl het werk stil is geannuleerd.
+        if: steps.plan.outputs.count != '0'
+        env:
+          WORKFLOWS: ${{ steps.plan.outputs.workflows }}
+        run: node scripts/verify-dispatched-workflows.js
       - name: No work planned
         if: steps.plan.outputs.count == '0'
         run: echo "No workflows planned for this hour."

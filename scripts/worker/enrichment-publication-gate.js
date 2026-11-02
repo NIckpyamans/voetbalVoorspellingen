@@ -68,6 +68,18 @@ function fixtureIdentityKey(match) {
   return date && home && away ? `${date}|${home}|${away}` : "";
 }
 
+function fixtureKeys(match) {
+  return [String(match?.id || ""), fixtureIdentityKey(match)].filter(Boolean);
+}
+
+// Alleen wedstrijden die in beide vensters voorkomen, zodat een verschuivend
+// datumvenster niet als dekkingregressie telt.
+function sharedFixtures(left, right) {
+  const keys = new Set(rows(right).flatMap(fixtureKeys));
+  if (!keys.size) return [];
+  return rows(left).filter((match) => fixtureKeys(match).some((key) => keys.has(key)));
+}
+
 function profileEvidenceScore(profile) {
   const players = profilePlayers(profile);
   const identified = players.filter((player) => player?.id || player?.playerId || player?.providerId || player?.sourceId).length;
@@ -190,9 +202,15 @@ export function evaluateEnrichmentPublication(previousMatches, nextMatches, opti
   if (previous.fixtures >= minimumSample && next.fixtures < previous.fixtures * (1 - maxRelativeDrop)) {
     regressions.push({ field: "fixtures", before: previous.fixtures, after: next.fixtures });
   }
-  const previousScores = previous.finalScores;
-  const nextScores = next.finalScores;
-  if (previousScores.total >= minimumSample && previousScores.covered > 0 && nextScores.covered < previousScores.covered) {
+  // Vergelijk scores alleen op dezelfde canonieke wedstrijden. Het venster
+  // schuift elke run op: 16/16 naar 15/15 is geen dataverlies maar een
+  // afgelopen wedstrijd die uit het venster valt. Echte scoreverliezen per
+  // wedstrijd staan al in evidenceLosses hierboven.
+  const previousShared = sharedFixtures(previousMatches, nextMatches);
+  const nextShared = sharedFixtures(nextMatches, previousMatches);
+  const previousScores = summarizeEnrichmentCoverage(previousShared).finalScores;
+  const nextScores = summarizeEnrichmentCoverage(nextShared).finalScores;
+  if (previousScores.total >= minimumSample && nextScores.covered < previousScores.covered) {
     if (!regressions.some((item) => item.field === "finalScores")) {
       regressions.push({ field: "finalScores", before: previousScores, after: nextScores });
     }

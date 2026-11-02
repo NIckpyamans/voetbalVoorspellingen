@@ -5,8 +5,12 @@ on:
   schedule:
     - cron: "17 */3 * * *"
 
+# Eigen groep: GitHub bewaart per concurrency-groep maar één wachtende run.
+# Met een gedeelde groep verdrong elke volgende dispatch de vorige wachtende
+# run (de H2H-run werd zo na 4 seconden geannuleerd zonder dat er een job
+# startte). Runs van dezelfde workflow wachten nu netjes op elkaar.
 concurrency:
-  group: football-data-refresh
+  group: ${{ github.workflow }}
   cancel-in-progress: false
 
 permissions:

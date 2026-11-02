@@ -9,10 +9,14 @@ on:
       date_window:
         description: "Datums relatief aan vandaag, bijvoorbeeld -14..+1 voor resultatenbackfill"
         required: false
-        default: "-3..+1"
+        # Korter venster: de urenrun raakt alleen gisteren, vandaag en morgen.
+        # Een brede resultatenbackfill hoort via workflow_dispatch te lopen.
+        default: "-1..+1"
 
+# Eigen groep; zie h2h-enrichment.yml: één gedeelde groep laat GitHub een
+# nieuwe wachtende run de vorige verdringen, waardoor taken stil verdwijnen.
 concurrency:
-  group: football-data-refresh
+  group: ${{ github.workflow }}
   cancel-in-progress: false
 
 permissions:
@@ -23,7 +27,7 @@ env:
   FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: "true"
   DATA_BRANCH: codex/step3b-layout
   FOOTYAI_REFRESH_MODE: live-results
-  FOOTYAI_DATE_WINDOW: ${{ inputs.date_window || '-3..+1' }}
+  FOOTYAI_DATE_WINDOW: ${{ inputs.date_window || '-1..+1' }}
   FOOTYAI_LIGHTWEIGHT_REFRESH: "true"
   API_KEY_FOOTBALL_DATA: ${{ secrets.API_KEY_FOOTBALL_DATA }}
   API_KEY_API_FOOTBALL: ${{ secrets.API_KEY_API_FOOTBALL }}

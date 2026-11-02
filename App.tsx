@@ -16,6 +16,7 @@ import {
   LEAGUE_ORDER,
   belongsToSelectedDate,
   buildLeaguePerformance,
+  compareSelectionPerformance,
   buildWagerReadiness,
   formatDateLabel,
   hydrateDashboardHistory,
@@ -28,28 +29,46 @@ import { filterVisibleMatches, filterVisiblePredictionMap } from "./shared/compe
 import { buildMatchDedupeKey } from "./shared/matchNormalization.js";
 import { buildStandingsLookup, findStandingPosition } from "./shared/standingsLookup.js";
 import { getMatchEvidenceCoverage } from "./shared/dashboardCoverage";
+import { parseScoreline } from "./shared/scoreOutcome.js";
 
 type View = "dashboard" | "knowledge" | "history" | "standings" | "modelops" | "integrity" | "providers" | "settings";
 type FilterMode = "alle" | "favorieten" | "live" | "gepland" | "gespeeld" | "brondekking" | "odds" | "xg" | "weer" | "mistdata";
 
 const MATCH_RENDER_BATCH = 80;
 
-// Vaste accentklassen per competitie (Tailwind kan dynamische klassen niet
-// genereren); de toewijzing is stabiel op positie in allLeagues.
-const LEAGUE_ACCENTS = [
-  { bar: "bg-cyan-400", text: "text-cyan-300" },
-  { bar: "bg-emerald-400", text: "text-emerald-300" },
-  { bar: "bg-amber-400", text: "text-amber-300" },
-  { bar: "bg-violet-400", text: "text-violet-300" },
-  { bar: "bg-rose-400", text: "text-rose-300" },
-  { bar: "bg-sky-400", text: "text-sky-300" },
-  { bar: "bg-lime-400", text: "text-lime-300" },
-  { bar: "bg-fuchsia-400", text: "text-fuchsia-300" },
+// Accentkleur per land in plaats van per positie in de competitielijst. De
+// balk links van een competitiekop volgt de vlag van het land, zodat je een
+// competitie herkent zonder de naam te lezen. Vaste klassen, want Tailwind
+// kan dynamisch samengestelde klassen niet genereren.
+const COUNTRY_ACCENTS: Array<{ pattern: RegExp; bar: string }> = [
+  { pattern: /^netherlands/i, bar: "from-red-500 via-slate-100 to-blue-600" },
+  { pattern: /^germany/i, bar: "from-slate-900 via-red-600 to-amber-400" },
+  { pattern: /^england/i, bar: "from-slate-100 via-red-600 to-red-700" },
+  { pattern: /^spain/i, bar: "from-red-600 via-amber-400 to-red-700" },
+  { pattern: /^italy/i, bar: "from-emerald-500 via-slate-100 to-red-600" },
+  { pattern: /^france/i, bar: "from-blue-600 via-slate-100 to-red-600" },
+  { pattern: /^belgium/i, bar: "from-slate-900 via-amber-400 to-red-600" },
+  { pattern: /^portugal/i, bar: "from-emerald-600 via-emerald-500 to-red-600" },
+  { pattern: /^scotland/i, bar: "from-blue-600 via-slate-100 to-blue-700" },
+  { pattern: /^austria/i, bar: "from-red-600 via-slate-100 to-red-700" },
+  { pattern: /^switzerland/i, bar: "from-red-600 via-slate-100 to-red-700" },
+  { pattern: /^turkey/i, bar: "from-red-600 via-slate-100 to-red-600" },
+  { pattern: /^greece/i, bar: "from-blue-600 via-slate-100 to-blue-700" },
+  { pattern: /^denmark/i, bar: "from-red-600 via-slate-100 to-red-700" },
+  { pattern: /^norway/i, bar: "from-red-600 via-slate-100 to-blue-700" },
+  { pattern: /^sweden/i, bar: "from-blue-600 via-amber-400 to-blue-700" },
+  { pattern: /^poland/i, bar: "from-slate-100 via-red-600 to-red-700" },
+  { pattern: /^croatia/i, bar: "from-red-600 via-slate-100 to-blue-700" },
+  { pattern: /^argentina/i, bar: "from-sky-400 via-slate-100 to-sky-500" },
+  { pattern: /^brazil/i, bar: "from-emerald-500 via-amber-400 to-blue-700" },
 ];
+// Europees en wereldwijd voetbal hebben geen landkleur; die krijgen een
+// neutrale blauwe balk.
+const DEFAULT_LEAGUE_ACCENT = { bar: "from-sky-400 via-slate-200 to-sky-500" };
 
-function leagueAccent(league: string, allLeagues: string[]) {
-  const index = Math.max(0, allLeagues.indexOf(league));
-  return LEAGUE_ACCENTS[index % LEAGUE_ACCENTS.length];
+function leagueAccent(league: string) {
+  const value = String(league || "");
+  return COUNTRY_ACCENTS.find((entry) => entry.pattern.test(value)) || DEFAULT_LEAGUE_ACCENT;
 }
 
 const PredictionHistory = lazy(() => import("./components/PredictionHistory"));
@@ -697,16 +716,24 @@ const App: React.FC = () => {
   }, [predictions, dayMatches, leaguePerformance]);
 
   const dashboardInsights = useMemo(() => {
-    const topFiveReviews = historyItems.filter((item) => item.topExactScorePick || (Number(item.bestBetRank || 0) > 0 && Number(item.bestBetRank || 0) <= 5));
-    const otherReviews = historyItems.filter((item) => !(item.topExactScorePick || (Number(item.bestBetRank || 0) > 0 && Number(item.bestBetRank || 0) <= 5)));
+    const evaluatedReviews = historyItems.filter((item) => parseScoreline(item.prediction) && parseScoreline(item.actual));
+    const topFiveReviews = evaluatedReviews.filter((item) => item.topExactScorePick || (Number(item.bestBetRank || 0) > 0 && Number(item.bestBetRank || 0) <= 5));
+    const otherReviews = evaluatedReviews.filter((item) => !(item.topExactScorePick || (Number(item.bestBetRank || 0) > 0 && Number(item.bestBetRank || 0) <= 5)));
     const topExact = topFiveReviews.filter((item) => item.wasCorrect).length;
     const topOutcome = topFiveReviews.filter((item) => item.winnerCorrect).length;
     const otherExact = otherReviews.filter((item) => item.wasCorrect).length;
-    const topAvgError = topFiveReviews.length
-      ? (topFiveReviews.reduce((sum, item) => sum + Number(item.errorMargin || 0), 0) / topFiveReviews.length).toFixed(2)
+    const topGoalErrors = topFiveReviews.filter((item) => item.errorMargin != null && Number.isFinite(Number(item.errorMargin)));
+    const topAvgError = topGoalErrors.length
+      ? (topGoalErrors.reduce((sum, item) => sum + Number(item.errorMargin), 0) / topGoalErrors.length).toFixed(2)
       : "0.00";
     const otherExactPct = pct(otherExact, otherReviews.length);
     const topExactPct = pct(topExact, topFiveReviews.length);
+    const selectionComparison = compareSelectionPerformance({
+      topExact,
+      topTotal: topFiveReviews.length,
+      otherExact,
+      otherTotal: otherReviews.length,
+    });
     const clubMap = new Map<string, {
       team: string;
       total: number;
@@ -715,7 +742,7 @@ const App: React.FC = () => {
       avgError: number;
       exactMatches: DashboardHistoryItem[];
     }>();
-    for (const item of historyItems) {
+    for (const item of evaluatedReviews) {
       for (const team of [item.homeTeam, item.awayTeam]) {
         const name = String(team || "").trim();
         if (!name) continue;
@@ -750,7 +777,8 @@ const App: React.FC = () => {
       otherExactPct,
       otherExactCount: otherExact,
       otherTotal: otherReviews.length,
-      topSelectionIsBetter: topExactPct >= otherExactPct,
+      comparisonSample: selectionComparison.comparisonSample,
+      topSelectionIsBetter: selectionComparison.topSelectionIsBetter,
       topClubs,
       leaguePerformance,
     };
@@ -964,7 +992,9 @@ const App: React.FC = () => {
                   <span className="text-slate-600">|</span>
                   <span>Rest exact <strong className="text-white">{dashboardInsights.otherExactPct}%</strong></span>
                   <span className={`ml-auto rounded-full px-2 py-0.5 text-[9px] font-black ${dashboardInsights.topSelectionIsBetter ? "bg-green-500/10 text-green-300" : "bg-amber-500/10 text-amber-300"}`}>
-                    {dashboardInsights.topSelectionIsBetter || !Number(dashboardInsights.topFiveAvgError) ? "AI kiest beter" : "bijsturen nodig"} · foutmarge {Number(dashboardInsights.topFiveAvgError) > 0 ? dashboardInsights.topFiveAvgError : "—"}
+                    {dashboardInsights.comparisonSample < 30
+                      ? `te weinig data (${dashboardInsights.comparisonSample}/30 per groep)`
+                      : dashboardInsights.topSelectionIsBetter ? "top-5 presteert beter" : "bijsturen nodig"} · foutmarge {Number(dashboardInsights.topFiveAvgError) > 0 ? dashboardInsights.topFiveAvgError : "—"}
                   </span>
                 </div>
                 {dashboardInsights.leaguePerformance.best && (
@@ -1015,10 +1045,11 @@ const App: React.FC = () => {
               <div className="space-y-4">
                 {visibleLeagueGroups.map((group) => {
                   const summary = leagueSummaries.get(group.league);
-                  const accent = leagueAccent(group.league, allLeagues);
+                  const accent = leagueAccent(group.league);
                   return (
                     <section key={group.league} className="overflow-hidden rounded-2xl border border-white/10 bg-slate-950/40">
-                      <header className={`flex flex-wrap items-center gap-x-3 gap-y-1 border-l-4 ${accent.bar} bg-slate-900/60 px-3 py-2`}>
+                      <header className="relative flex flex-wrap items-center gap-x-3 gap-y-1 bg-slate-900/60 py-2 pl-4 pr-3">
+                        <span aria-hidden className={`absolute inset-y-0 left-0 w-1.5 bg-gradient-to-b ${accent.bar}`} />
                         <h3 className="text-[11px] font-black uppercase tracking-wide text-white">{group.league}</h3>
                         <div className="flex flex-wrap items-center gap-1 text-[9px] font-bold text-slate-400">
                           <span>{group.matches.length} wedstrijden</span>

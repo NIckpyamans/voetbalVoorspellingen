@@ -131,17 +131,17 @@ async function fetchWithTimeout(fetchImpl, url, options = {}, timeoutMs = DEFAUL
   }
 }
 
-export function inferOddsApiSportKeys(match = {}) {
-  const override = process.env.ODDS_API_SPORT || process.env.ODDS_SPORT_KEY || "";
-  if (override.trim()) return unique([override.trim(), ...configuredExtraSports()]);
-  const league = normalizeName(match.league || "");
-  const mappings = [
+// Competities waarvoor The Odds API een sportkey heeft. Dezelfde lijst bepaalt
+// de fallbackvolgorde: zonder sportkey is Sportmonks de enige oddsbron (zoals
+// voor de Nederlandse Eerste Divisie, die niet in de catalogus staat).
+const ODDS_API_LEAGUE_MAPPINGS = [
     [/champions league.*qual|qual.*champions league|ucl.*qual/, "soccer_uefa_champs_league_qualification"],
     [/europa league.*qual|qual.*europa league/, "soccer_uefa_europa_league_qualification"],
     [/conference league.*qual|qual.*conference league/, "soccer_uefa_europa_conference_league_qualification"],
     [/^(?:england )?(?:the )?(?:emirates )?fa cup$/, "soccer_fa_cup"],
     [/premier league/, "soccer_epl"],
     [/championship/, "soccer_efl_champ"],
+    [/la liga 2|laliga 2|segunda division/, "soccer_spain_segunda_division"],
     [/laliga|la liga/, "soccer_spain_la_liga"],
     [/serie a/, "soccer_italy_serie_a"],
     [/2 bundesliga|bundesliga 2/, "soccer_germany_bundesliga2"],
@@ -149,12 +149,24 @@ export function inferOddsApiSportKeys(match = {}) {
     [/ligue 2/, "soccer_france_ligue_two"],
     [/ligue 1/, "soccer_france_ligue_one"],
     [/eredivisie/, "soccer_netherlands_eredivisie"],
+    [/pro league|jupiler|belgium/, "soccer_belgium_first_div"],
     [/liga portugal|portugal/, "soccer_portugal_primeira_liga"],
     [/champions league/, "soccer_uefa_champs_league"],
     [/europa league/, "soccer_uefa_europa_league"],
     [/conference league/, "soccer_uefa_europa_conference_league"],
-  ];
-  const primary = mappings.find(([pattern]) => pattern.test(league))?.[1] || "soccer_epl";
+];
+
+export function theOddsApiCoversLeague(league) {
+  const value = normalizeName(league || "");
+  return ODDS_API_LEAGUE_MAPPINGS.some(([pattern]) => pattern.test(value));
+}
+
+export function inferOddsApiSportKeys(match = {}) {
+  const override = process.env.ODDS_API_SPORT || process.env.ODDS_SPORT_KEY || "";
+  if (override.trim()) return unique([override.trim(), ...configuredExtraSports()]);
+  const league = normalizeName(match.league || "");
+  const mappings = ODDS_API_LEAGUE_MAPPINGS;
+  const primary = mappings.find(([pattern]) => pattern.test(league))?.[1] || null;
   const fallbackByFamily = [];
   if (/champions league|ucl|europe/.test(league)) {
     fallbackByFamily.push("soccer_uefa_champs_league_qualification", "soccer_uefa_champs_league");
@@ -166,11 +178,11 @@ export function inferOddsApiSportKeys(match = {}) {
     fallbackByFamily.push("soccer_uefa_europa_conference_league_qualification", "soccer_uefa_europa_conference_league");
   }
   fallbackByFamily.push(...configuredExtraSports());
-  return unique([primary, ...fallbackByFamily]);
+  return unique([primary, ...fallbackByFamily].filter(Boolean));
 }
 
 function inferOddsApiSportKey(match = {}) {
-  return inferOddsApiSportKeys(match)[0] || "soccer_epl";
+  return inferOddsApiSportKeys(match)[0] || null;
 }
 
 function pickFlatOdds(node) {
@@ -288,9 +300,11 @@ function extractSportmonksSnapshot(payload, match) {
   return snapshot.home || snapshot.draw || snapshot.away ? snapshot : null;
 }
 
-function extractTheOddsApiSnapshot(payload, match) {
-  const events = Array.isArray(payload) ? payload : payload?.events || payload?.data || [];
+function extractTheOddsApiSnapshot(payload, match, sportKey = null) {
+  let events = Array.isArray(payload) ? payload : payload?.events || payload?.data || [];
   if (!Array.isArray(events)) return null;
+  // Alleen events van de gevraagde competitie: een ander sport_key betekent een andere competitie.
+  events = events.filter((item) => !sportKey || !item?.sport_key || item.sport_key === sportKey);
   const homeName = normalizeName(match.homeTeam);
   const awayName = normalizeName(match.awayTeam);
   const event =
@@ -333,7 +347,7 @@ export function normalizeOddsSnapshot(raw, match, options = {}) {
   const generatedAt = options.generatedAt || new Date().toISOString();
   const cutoffAt = options.cutoffAt || generatedAt;
   const kickoff = match?.kickoff || options.kickoff || null;
-  const snapshot = pickFlatOdds(raw) || extractSportmonksSnapshot(raw, match || {}) || extractTheOddsApiSnapshot(raw, match || {});
+  const snapshot = pickFlatOdds(raw) || extractSportmonksSnapshot(raw, match || {}) || extractTheOddsApiSnapshot(raw, match || {}, options.sportKey || null);
   if (!snapshot) {
     return {
       status: "not_found",
@@ -454,11 +468,12 @@ export async function fetchOddsAtPrediction(match, options = {}) {
         };
         continue;
       }
-      let sports = /the-odds-api\.com/i.test(configTemplate) && /\{sport\}/i.test(configTemplate)
+      const requiresSportKey = /\{sport\}/i.test(configTemplate);
+      let sports = requiresSportKey
         ? inferOddsApiSportKeys(match)
-        : [inferOddsApiSportKey(match)];
+        : [inferOddsApiSportKey(match) || ""];
       let sportDiscovery = null;
-      if (/the-odds-api\.com/i.test(configTemplate) && /\{sport\}/i.test(configTemplate)) {
+      if (/the-odds-api\.com/i.test(configTemplate) && requiresSportKey) {
         sportDiscovery = await discoverTheOddsApiSports(fetchImpl, configApiKey);
         if (sportDiscovery.active) {
           const unsupported = sports.filter((sport) => !sportDiscovery.active.has(sport));
@@ -588,6 +603,7 @@ export async function fetchOddsAtPrediction(match, options = {}) {
           provider: configProvider,
           generatedAt: receivedAt,
           cutoffAt: effectiveCutoffAt,
+          sportKey: sport,
           kickoff: match?.kickoff,
         }),
         provider: configProvider,

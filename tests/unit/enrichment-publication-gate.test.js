@@ -106,6 +106,26 @@ describe("enrichment publication gate", () => {
     expect(result.allowed).toBe(true);
     expect(result.evidenceLosses).toEqual([]);
   });
+
+  it("treat a shrinking finished window as normal when coverage stays complete", () => {
+    const finished = (id) => match(id, { status: "FT", homeScore: 2, awayScore: 1 });
+    const previous = Array.from({ length: 16 }, (_, index) => finished(`ft-${index}`));
+    const next = previous.slice(1);
+    const result = evaluateEnrichmentPublication(previous, next);
+    expect(result.allowed).toBe(true);
+    expect(result.next.finalScores).toMatchObject({ covered: 15, total: 15 });
+    expect(result.regressions).toEqual([]);
+  });
+
+  it("still blocks when a shared finished fixture loses its score", () => {
+    const finished = (id) => match(id, { status: "FT", homeScore: 2, awayScore: 1 });
+    const previous = [finished("a"), finished("b"), finished("c"), finished("d")];
+    const next = [{ ...finished("a"), status: "NS", homeScore: null, awayScore: null }, finished("b"), finished("c"), finished("d")];
+    const result = evaluateEnrichmentPublication(previous, next);
+    expect(result.allowed).toBe(false);
+    expect(result.regressions.map((row) => row.field)).toContain("finalScores");
+  });
+
   it("keeps a fresh roster when a richer but expired cache arrives", () => {
     const profile = (days, count) => ({ squad: { fetchedAt: Date.now() - days * 86400000, players: Array.from({ length: count }, (_, i) => ({ id: String(i) })) } });
     const previous = match("fresh", { homeTeamProfile: profile(1, 18), awayTeamProfile: profile(1, 18) });

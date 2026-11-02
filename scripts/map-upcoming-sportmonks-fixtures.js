@@ -6,10 +6,14 @@ import { fileURLToPath } from "url";
 import { loadLocalEnv } from "../shared/database.js";
 import { getSportmonksApiKey } from "./provider-env.js";
 import { findSportmonksFixture } from "./sportmonks-fixture-resolver.js";
+import { theOddsApiCoversLeague } from "./odds-provider.js";
 
 const ROOT = process.cwd();
 const DAYS_AHEAD = Math.max(1, Number(process.env.SPORTMONKS_MAPPING_DAYS_AHEAD || 8));
-const LIMIT = Math.max(1, Number(process.env.SPORTMONKS_MAPPING_LIMIT || 80));
+// Meer fixtures per run: met een limiet van 80 bleven kleinere competities
+// (zoals de Nederlandse Eerste Divisie) buiten de batch en kregen ze nooit een
+// Sportmonks-fixture-ID, waardoor er ook geen odds voor ze opgehaald werden.
+const LIMIT = Math.max(1, Number(process.env.SPORTMONKS_MAPPING_LIMIT || 160));
 const CACHE_PATH = path.join(ROOT, "data", "sportmonks-fixture-cache.json");
 const REPORT_PATH = path.join(ROOT, "monitor", "sportmonks-fixture-mapping.json");
 
@@ -23,6 +27,15 @@ function readJson(filePath, fallback) {
 
 function matchId(match) {
   return String(match?.id || match?.sofaId || "");
+}
+
+// Competities zonder The Odds API-sportkey eerst, daarna op aftrap. Zo komt de
+// Eerste Divisie binnen de limiet voordat de grote competities de batch vullen.
+export function prioritizeMappings(rows, limit) {
+  const sorted = [...rows].sort((left, right) =>
+    Number(theOddsApiCoversLeague(left.league)) - Number(theOddsApiCoversLeague(right.league)) ||
+    Date.parse(left.kickoff) - Date.parse(right.kickoff));
+  return sorted.slice(0, Math.max(1, Number(limit) || sorted.length));
 }
 
 function upcomingMatches() {
@@ -44,7 +57,7 @@ function upcomingMatches() {
       });
     }
   }
-  return rows.sort((a, b) => Date.parse(a.kickoff) - Date.parse(b.kickoff)).slice(0, LIMIT);
+  return prioritizeMappings(rows, LIMIT);
 }
 
 function competitionReport(rows) {

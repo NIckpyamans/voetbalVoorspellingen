@@ -10,8 +10,10 @@ on:
   schedule:
     - cron: "37 2 * * *"
 
+# Eigen groep; zie h2h-enrichment.yml: een gedeelde groep laat GitHub een
+# nieuwe wachtende run de vorige verdringen.
 concurrency:
-  group: football-data-refresh
+  group: ${{ github.workflow }}
   cancel-in-progress: false
 
 permissions:

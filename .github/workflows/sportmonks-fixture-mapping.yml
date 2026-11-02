@@ -23,7 +23,7 @@ jobs:
       DATA_BRANCH: codex/step3b-layout
       SPORTMONKS_API_KEY: ${{ secrets.SPORTMONKS_API_KEY || secrets.MYSPORTS_API_KEY }}
       SPORTMONKS_MAPPING_DAYS_AHEAD: ${{ inputs.days_ahead || '8' }}
-      SPORTMONKS_MAPPING_LIMIT: "80"
+      SPORTMONKS_MAPPING_LIMIT: "160"
     steps:
       - uses: actions/checkout@v5
         with:

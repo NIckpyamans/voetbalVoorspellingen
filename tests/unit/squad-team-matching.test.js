@@ -80,4 +80,30 @@ describe("squad team matching", () => {
     expect(cache["name:drita"].duplicateKeys).toEqual(["name:drita gjilan", "name:drita"]);
     expect(cache["name:ajax"].canonicalKey).toBeUndefined();
   });
+
+  it("voegt dezelfde club onder twee schrijfwijzen samen op providerteam-ID", () => {
+    const cache = {
+      "name:jagiellonia bialystok": {
+        teamName: "Jagiellonia Białystok",
+        players: [{ name: "A" }, { name: "B" }],
+        playerCount: 2,
+        fetchedAt: "2026-10-01T08:00:00.000Z",
+        sourceIds: { fotmob: "12345" },
+      },
+      "name:jagiellonia": {
+        teamName: "Jagiellonia",
+        players: [{ name: "A" }, { name: "B" }, { name: "C" }],
+        playerCount: 3,
+        fetchedAt: "2026-10-02T08:00:00.000Z",
+        sourceIds: { fotmob: 12345, theSportsDb: "999" },
+      },
+    };
+    const result = canonicalizeSquadCache(cache, { canonicalOf: canonicalDedupeTeam });
+    expect(result.mergedGroups).toBe(1);
+    expect(result.mergedKeys).toBe(1);
+    expect(cache["name:jagiellonia"].players).toHaveLength(3);
+    expect(cache["name:jagiellonia bialystok"].players).toHaveLength(3);
+    expect(cache["name:jagiellonia bialystok"].sourceIds).toEqual({ fotmob: "12345", theSportsDb: "999" });
+    expect(cache["name:jagiellonia bialystok"].canonicalProviderId).toBe("fotmob:12345");
+  });
 });
