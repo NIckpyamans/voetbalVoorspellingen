@@ -37,7 +37,7 @@ type FilterMode = "alle" | "favorieten" | "live" | "gepland" | "gespeeld" | "bro
 const MATCH_RENDER_BATCH = 80;
 
 // Accentkleur per land in plaats van per positie in de competitielijst. De
-// balk links van een competitiekop volgt de vlag van het land, zodat je een
+// De bovenrand van een competitiekop volgt de vlag van het land, zodat je een
 // competitie herkent zonder de naam te lezen. Vaste klassen, want Tailwind
 // kan dynamisch samengestelde klassen niet genereren.
 const COUNTRY_ACCENTS: Array<{ pattern: RegExp; bar: string }> = [
@@ -133,7 +133,18 @@ function hasCoverageEntry(match: Match, key: string) {
 }
 
 function hasOddsData(match: Match) {
-  return Boolean((match as any).hasOdds) || hasCoverageEntry(match, "odds") || Number((match as any).dbFeatureContext?.historicalOdds?.samples || 0) > 0;
+  // De rij toont ook odds die alleen in de voorspelling zitten (odds_status of
+  // odds_at_prediction). Zonder die velden telde de competitiestrip "odds 0/N"
+  // terwijl de wedstrijdrij zelf wel odds liet zien.
+  const oddsStatus = String((match as any).oddsStatus || (match as any).prediction?.oddsStatus || "").toLowerCase();
+  return (
+    Boolean((match as any).hasOdds) ||
+    hasCoverageEntry(match, "odds") ||
+    Number((match as any).dbFeatureContext?.historicalOdds?.samples || 0) > 0 ||
+    oddsStatus === "available" ||
+    oddsStatus === "partial" ||
+    Boolean((match as any).prediction?.oddsAtPrediction)
+  );
 }
 
 function hasXgData(match: Match) {
@@ -1048,8 +1059,8 @@ const App: React.FC = () => {
                   const accent = leagueAccent(group.league);
                   return (
                     <section key={group.league} className="overflow-hidden rounded-2xl border border-white/10 bg-slate-950/40">
-                      <header className="relative flex flex-wrap items-center gap-x-3 gap-y-1 bg-slate-900/60 py-2 pl-4 pr-3">
-                        <span aria-hidden className={`absolute inset-y-0 left-0 w-1.5 bg-gradient-to-b ${accent.bar}`} />
+                      <header className="relative flex flex-wrap items-center gap-x-3 gap-y-1 bg-slate-900/60 px-4 pb-2 pt-3">
+                        <span aria-hidden className={`absolute inset-x-0 top-0 h-1.5 bg-gradient-to-r ${accent.bar}`} />
                         <h3 className="text-[11px] font-black uppercase tracking-wide text-white">{group.league}</h3>
                         <div className="flex flex-wrap items-center gap-1 text-[9px] font-bold text-slate-400">
                           <span>{group.matches.length} wedstrijden</span>

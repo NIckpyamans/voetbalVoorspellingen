@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { theOddsApiCoversLeague } from "../../scripts/odds-provider.js";
+import { orderOddsProviderConfigs, theOddsApiCoversLeague } from "../../scripts/odds-provider.js";
 import { prioritizeMappings } from "../../scripts/map-upcoming-sportmonks-fixtures.js";
 
 describe("odds coverage per competitie", () => {
@@ -23,5 +23,26 @@ describe("odds coverage per competitie", () => {
       "eredivisie-later",
     ]);
     expect(prioritizeMappings(rows, 2).map((row) => row.matchId)).toEqual(["eerste-vroeg", "eerste-laat"]);
+  });
+
+  it("zet Sportmonks voorop als de competitie geen Odds API-sportkey heeft", () => {
+    const configs = [
+      { provider: "the-odds-api", template: "https://api.the-odds-api.com/v4/sports/{sport}/odds/?apiKey={apiKey}" },
+      { provider: "sportmonks", template: "https://api.sportmonks.com/v3/football/odds/pre-match/fixtures/{sportmonksFixtureId}?api_token={apiKey}" },
+    ];
+    const ordered = orderOddsProviderConfigs(configs, {
+      league: "Netherlands - Eerste Divisie",
+      sportmonksFixtureId: "19123456",
+    });
+    expect(ordered.map((config) => config.provider)).toEqual(["sportmonks", "the-odds-api"]);
+
+    const covered = orderOddsProviderConfigs(configs, {
+      league: "Netherlands - Eredivisie",
+      sportmonksFixtureId: "19123456",
+    });
+    expect(covered.map((config) => config.provider)).toEqual(["the-odds-api", "sportmonks"]);
+
+    const withoutFixtureId = orderOddsProviderConfigs(configs, { league: "Netherlands - Eerste Divisie" });
+    expect(withoutFixtureId.map((config) => config.provider)).toEqual(["the-odds-api", "sportmonks"]);
   });
 });

@@ -185,6 +185,23 @@ function inferOddsApiSportKey(match = {}) {
   return inferOddsApiSportKeys(match)[0] || null;
 }
 
+function isSportmonksTemplate(template) {
+  return /sportmonks/i.test(String(template || ""));
+}
+
+// Voor competities zonder The Odds API-sportkey (zoals de Nederlandse Eerste
+// Divisie) is Sportmonks de enige oddsbron. Die provider gaat daarom voor, zodat
+// er geen discovery-call en quota verloren gaat aan een bron die de competitie
+// niet voert.
+export function orderOddsProviderConfigs(configs = [], match = {}) {
+  const list = Array.isArray(configs) ? configs : [];
+  const hasFixtureId = /^\d+$/.test(String(match?.sportmonksFixtureId || "").trim());
+  if (!hasFixtureId || theOddsApiCoversLeague(match?.league)) return list;
+  return [...list].sort(
+    (left, right) => Number(isSportmonksTemplate(right?.template)) - Number(isSportmonksTemplate(left?.template))
+  );
+}
+
 function pickFlatOdds(node) {
   if (!node || typeof node !== "object") return null;
   const odds = node.odds && typeof node.odds === "object" ? node.odds : node;
@@ -453,7 +470,10 @@ export async function fetchOddsAtPrediction(match, options = {}) {
     const attempts = [];
     let lastResult = null;
     let seasonalUnavailableResult = null;
-    const configs = providerConfigs.length ? providerConfigs : [{ template, apiKey, provider, suffix: "" }];
+    const configs = orderOddsProviderConfigs(
+      providerConfigs.length ? providerConfigs : [{ template, apiKey, provider, suffix: "" }],
+      match
+    );
     for (const config of configs) {
       const configTemplate = config.template;
       const configApiKey = config.apiKey;

@@ -16,6 +16,15 @@ describe("Sportmonks coverage policy", () => {
     expect([...supportedSportmonksCountries(catalog)]).toEqual(["denmark", "scotland"]);
   });
 
+  it("laat fixtures door als de catalogussync nog geen landen kent", () => {
+    const fixtures = [
+      { league: "Netherlands - Eerste Divisie", homeTeam: "A", awayTeam: "B" },
+      { league: "France - Ligue 1", homeTeam: "C", awayTeam: "D" },
+    ];
+    expect(sportmonksEligibleFixtures(fixtures, {})).toEqual(fixtures);
+    expect(sportmonksEligibleFixtures(fixtures, { domesticLeagueExamples: [] })).toEqual(fixtures);
+  });
+
   it("only schedules fixtures covered by the catalog", () => {
     const fixtures = [
       { league: "Denmark - Superliga", homeTeam: "A", awayTeam: "B" },

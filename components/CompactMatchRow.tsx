@@ -79,6 +79,21 @@ const CompactMatchRow: React.FC<CompactMatchRowProps> = ({ match, prediction, ex
   const exactProbability = Number(prediction?.exactProb || 0);
   const lineupConfirmed = Boolean((match as any).lineupConfirmed || match.lineupSummary?.confirmed || prediction?.lineupSummary?.confirmed);
   const hasOdds = Boolean((match as any).hasOdds || prediction?.odds || prediction?.oddsAtPrediction || match.dbFeatureContext?.historicalOdds?.samples);
+  // Odds zonder leeftijd zijn niet te beoordelen: een markt van drie dagen oud
+  // is geen actueel signaal. De pil toont daarom de leeftijd en kleurt amber
+  // zodra de capture ouder is dan een dag.
+  const oddsCapturedAt = String(
+    (match as any)?.oddsAtPrediction?.capturedAt ||
+      (match as any)?.odds?.capturedAt ||
+      (prediction as any)?.oddsAtPrediction?.capturedAt ||
+      ""
+  );
+  const oddsCapturedMs = Date.parse(oddsCapturedAt);
+  const oddsAgeHours = Number.isFinite(oddsCapturedMs) ? (Date.now() - oddsCapturedMs) / 3600000 : null;
+  const oddsStale = oddsAgeHours != null && oddsAgeHours > 24;
+  const oddsAgeLabel =
+    oddsAgeHours == null ? null : oddsAgeHours < 1 ? "net" : oddsAgeHours < 24 ? `${Math.round(oddsAgeHours)}u` : `${Math.round(oddsAgeHours / 24)}d`;
+  const oddsMissingReason = String((prediction as any)?.oddsMissingReason || (match as any)?.oddsMissingReason || "");
   const h2hInfo = h2hMetadata({ ...match, h2h: match.h2h || prediction?.h2h, h2hStatus: match.h2hStatus || prediction?.h2hStatus });
   const h2hPlayed = h2hInfo.sampleSize;
   const coverage = sourcePct(match);
@@ -146,8 +161,17 @@ const CompactMatchRow: React.FC<CompactMatchRowProps> = ({ match, prediction, ex
           <span className={`rounded-full px-2 py-0.5 text-[8px] font-black ${lineupConfirmed ? "bg-green-500/15 text-green-300" : "bg-slate-700/70 text-slate-300"}`}>
             {lineupConfirmed ? "opstelling" : "lineup open"}
           </span>
-          <span className={`rounded-full px-2 py-0.5 text-[8px] font-black ${hasOdds ? "bg-emerald-500/15 text-emerald-300" : "bg-slate-700/70 text-slate-300"}`}>
-            {hasOdds ? "odds" : "geen odds"}
+          <span
+            title={
+              hasOdds
+                ? `Odds vastgelegd ${oddsAgeLabel ? `${oddsAgeLabel} geleden` : "op onbekend moment"}${oddsStale ? " · verouderd" : ""}`
+                : oddsMissingReason || "Nog geen prematch-odds vastgelegd voor deze wedstrijd"
+            }
+            className={`rounded-full px-2 py-0.5 text-[8px] font-black ${
+              !hasOdds ? "bg-slate-700/70 text-slate-300" : oddsStale ? "bg-amber-500/15 text-amber-300" : "bg-emerald-500/15 text-emerald-300"
+            }`}
+          >
+            {hasOdds ? (oddsAgeLabel ? `odds ${oddsAgeLabel}` : "odds") : "geen odds"}
           </span>
           <span
             title={`Status: ${h2hInfo.status}; geldig: ${h2hPlayed}; zelfde competitie: ${h2hInfo.sameCompetitionSampleSize}; bron: ${h2hInfo.source || "onbekend"}; bijgewerkt: ${h2hInfo.updatedAt || "onbekend"}`}
