@@ -108,6 +108,14 @@ nul requests. Het resultaat staat als `oddspapi` in
 Zolang OddsPapi geen data levert, valt de capture terug op de bestaande
 providers en blijft de dekking gelijk; er wordt niets overschreven.
 
+Workflow-gedrag (`free-prematch-odds.yml`):
+
+- `cancel-in-progress` staat uit. Een afgebroken run kan requests hebben gedaan
+  zonder dat de maandteller is opgeslagen; een lopende run moet dus afmaken.
+- De herberekening (`worker.yml`) start alleen als de capture-stap zelf is
+  geslaagd én `captured > 0` rapporteert. Een oud rapport uit de repo triggert
+  dus geen extra worker-run.
+
 ## Nog te doen
 
 De provider is bewust nog niet in `capture-critical-odds-to-r2.js` gehangen.

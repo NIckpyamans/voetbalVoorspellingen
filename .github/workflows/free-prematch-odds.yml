@@ -12,7 +12,9 @@ on:
 
 concurrency:
   group: football-prematch-odds
-  cancel-in-progress: true
+  # Niet afbreken: een afgebroken run kan OddsPapi-requests hebben gedaan zonder
+  # de maandteller in R2 op te slaan, waardoor het quotum te laag wordt geteld.
+  cancel-in-progress: false
 
 permissions:
   actions: write
@@ -49,6 +51,7 @@ jobs:
           SPORTMONKS_API_KEY: ${{ secrets.SPORTMONKS_API_KEY }}
           SPORTMONKS_ODDS_API_URL_TEMPLATE: ${{ secrets.SPORTMONKS_ODDS_API_URL_TEMPLATE }}
       - name: Capture critical odds to R2
+        id: capture
         run: npm run db:odds:critical:r2
         env:
           ODDS_PROVIDER_NAME: ${{ secrets.ODDS_PROVIDER_NAME }}
@@ -152,7 +155,9 @@ jobs:
           exit 1
 
       - name: Rebuild predictions after a new timestamped odds capture
-        if: always()
+        # Alleen na een geslaagde capture van deze run; anders kan een oud rapport
+        # uit de repo een onnodige worker-run triggeren.
+        if: always() && steps.capture.outcome == 'success'
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
