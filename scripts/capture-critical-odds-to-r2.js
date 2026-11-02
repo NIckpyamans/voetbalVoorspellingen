@@ -11,6 +11,7 @@ import { classifyOddsCaptureRole, mergeOddsCaptureLedger, summarizeOddsCapture }
 import { summarizeLeagueCoverage } from "./worker/coverage-summary.js";
 import { prioritizeCaptureCandidates, summarizeCaptureWindows, applyCaptureBudget } from "./worker/capture-window-policy.js";
 import { buildCentralQuotaPlan } from "./worker/quota-budget.js";
+import { dedupeUpcomingMatches } from "./worker/odds-fixture-dedupe.js";
 
 const ROOT = process.cwd();
 const HOURS_AHEAD = Math.max(3, Number(process.env.CRITICAL_ODDS_HOURS_AHEAD || 36));
@@ -47,7 +48,9 @@ function upcomingMatches() {
       });
     }
   }
-  return rows.sort((left, right) => Date.parse(left.kickoff) - Date.parse(right.kickoff)).slice(0, LIMIT);
+  return dedupeUpcomingMatches(rows)
+    .sort((left, right) => Date.parse(left.kickoff) - Date.parse(right.kickoff))
+    .slice(0, LIMIT);
 }
 
 async function readLedger(config, key) {
@@ -67,9 +70,14 @@ async function main() {
   const quotaPlan = buildCentralQuotaPlan(readJson(path.join(ROOT, "monitor", "provider-quota-audit.json"), {}) || {});
   const budgeted = applyCaptureBudget(candidates, quotaPlan, nowMs);
   const matches = budgeted.selected.slice(0, LIMIT);
+  const duplicateFixturesMerged = candidates.reduce(
+    (total, row) => total + (Array.isArray(row?.duplicateIds) ? row.duplicateIds.length : 0),
+    0
+  );
   const report = {
     generatedAt: new Date().toISOString(),
     checked: matches.length,
+    duplicateFixturesMerged,
     captureWindows: summarizeCaptureWindows(candidates, nowMs),
     quotaBudget: {
       spendable: budgeted.spendable,
