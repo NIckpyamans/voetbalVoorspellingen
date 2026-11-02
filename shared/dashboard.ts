@@ -4,6 +4,7 @@ import { shortLeagueName } from "./matchText.js";
 import { ACTIVE_COMPETITIONS } from "./competitionVisibility.js";
 import { getMatchEvidenceCoverage, parseEvidenceTimestamp } from "./dashboardCoverage.js";
 import { buildMatchDedupeKey } from "./matchNormalization.js";
+import { parseScoreline } from "./scoreOutcome.js";
 
 export type DashboardHistoryItem = {
   matchId: string;
@@ -11,7 +12,7 @@ export type DashboardHistoryItem = {
   actual: string;
   wasCorrect: boolean;
   winnerCorrect?: boolean;
-  errorMargin?: number;
+  errorMargin?: number | null;
   timestamp?: number;
   date?: string | null;
   kickoff?: string | null;
@@ -41,7 +42,7 @@ export type LeaguePerformanceRow = {
   outcome: number;
   exactPct: number;
   outcomePct: number;
-  avgGoalError: number;
+  avgGoalError: number | null;
   avgBrierScore: number | null;
   calibrationError: number | null;
   roiTotal: number | null;
@@ -94,8 +95,9 @@ export function buildLeaguePerformance(items: DashboardHistoryItem[], minSample 
     return [...fixtures.values()];
   };
 
-  const allReviews = dedupeFixtures(items.filter((item) => !item.leakageRisk));
-  const trustworthy = dedupeFixtures(items.filter((item) => item.evaluationSource === "prediction_snapshot" && !item.leakageRisk));
+  const validReviews = items.filter((item) => parseScoreline(item.prediction) && parseScoreline(item.actual));
+  const allReviews = dedupeFixtures(validReviews.filter((item) => !item.leakageRisk));
+  const trustworthy = dedupeFixtures(validReviews.filter((item) => item.evaluationSource === "prediction_snapshot" && !item.leakageRisk));
   const immutableByLeague = new Map<string, DashboardHistoryItem[]>();
   for (const item of trustworthy) {
     const league = String(item.league || "").trim();
@@ -117,9 +119,11 @@ export function buildLeaguePerformance(items: DashboardHistoryItem[], minSample 
     if (total < minSample) continue;
     const exact = selected.filter((item) => item.wasCorrect).length;
     const outcome = selected.filter((item) => item.winnerCorrect).length;
-    const brier = selected.map((item) => Number(item.brierScore)).filter(Number.isFinite);
-    const confidence = selected.map((item) => Number(item.confidence)).filter(Number.isFinite);
-    const roi = selected.map((item) => Number(item.roi)).filter(Number.isFinite);
+    const brier = selected.filter((item) => item.brierScore != null).map((item) => Number(item.brierScore)).filter(Number.isFinite);
+    const calibratedReviews = selected.filter((item) => item.confidence != null && Number.isFinite(Number(item.confidence)) && typeof item.winnerCorrect === "boolean");
+    const confidence = calibratedReviews.map((item) => Number(item.confidence));
+    const roi = selected.filter((item) => item.roi != null).map((item) => Number(item.roi)).filter(Number.isFinite);
+    const goalErrors = selected.filter((item) => item.errorMargin != null).map((item) => Number(item.errorMargin)).filter(Number.isFinite);
     rows.push({
       league,
       total,
@@ -128,17 +132,31 @@ export function buildLeaguePerformance(items: DashboardHistoryItem[], minSample 
       outcome,
       exactPct: pct(exact, total),
       outcomePct: pct(outcome, total),
-      avgGoalError: Number((selected.reduce((sum, item) => sum + Number(item.errorMargin || 0), 0) / total).toFixed(2)),
+      avgGoalError: goalErrors.length ? Number((goalErrors.reduce((sum, value) => sum + value, 0) / goalErrors.length).toFixed(2)) : null,
       avgBrierScore: brier.length ? Number((brier.reduce((sum, value) => sum + value, 0) / brier.length).toFixed(4)) : null,
-      calibrationError: confidence.length ? Number((outcome / total - confidence.reduce((sum, value) => sum + value, 0) / confidence.length).toFixed(3)) : null,
+      calibrationError: confidence.length ? Number((calibratedReviews.filter((item) => item.winnerCorrect).length / confidence.length - confidence.reduce((sum, value) => sum + value, 0) / confidence.length).toFixed(3)) : null,
       roiTotal: roi.length ? Number(roi.reduce((sum, value) => sum + value, 0).toFixed(3)) : null,
       roiSamples: roi.length,
       evaluationMethod,
     });
   }
-  rows.sort((a, b) => b.outcomePct - a.outcomePct || b.exactPct - a.exactPct || a.avgGoalError - b.avgGoalError || b.total - a.total);
+  rows.sort((a, b) => b.outcomePct - a.outcomePct || b.exactPct - a.exactPct || (a.avgGoalError ?? Infinity) - (b.avgGoalError ?? Infinity) || b.total - a.total);
   const method: LeaguePerformanceRow["evaluationMethod"] = rows.some((row) => row.evaluationMethod === "immutable_snapshots") ? "immutable_snapshots" : "all_evaluated_reviews";
   return { best: rows[0] || null, rows, method, minSample, trustworthyUniqueFixtures: trustworthy.length };
+}
+
+export function compareSelectionPerformance({ topExact, topTotal, otherExact, otherTotal }: { topExact: number; topTotal: number; otherExact: number; otherTotal: number }) {
+  const comparisonSample = Math.min(topTotal, otherTotal);
+  const topExactPct = pct(topExact, topTotal);
+  const otherExactPct = pct(otherExact, otherTotal);
+  const hasEnoughData = comparisonSample >= 30;
+  const topSelectionIsBetter = hasEnoughData && topExactPct > otherExactPct;
+  return {
+    comparisonSample,
+    hasEnoughData,
+    topSelectionIsBetter,
+    label: !hasEnoughData ? "insufficient_sample" : topSelectionIsBetter ? "top_better" : "needs_adjustment",
+  } as const;
 }
 
 export function buildWagerReadiness(bet: any, leaguePerformance?: LeaguePerformanceRow | null, { now = Date.now() }: { now?: number } = {}): WagerReadiness {
@@ -275,10 +293,10 @@ export function getStandingLabel(table: any, key: string) {
 }
 
 export function outcomeFromScore(score?: string | null) {
-  const [home, away] = String(score || "").split("-").map(Number);
-  if (!Number.isFinite(home) || !Number.isFinite(away)) return null;
-  if (home > away) return "Thuis";
-  if (away > home) return "Uit";
+  const parsed = parseScoreline(score);
+  if (!parsed) return null;
+  if (parsed.home > parsed.away) return "Thuis";
+  if (parsed.away > parsed.home) return "Uit";
   return "Gelijk";
 }
 
@@ -286,12 +304,13 @@ export function hydrateDashboardHistory(items: DashboardHistoryItem[]) {
   return items.map((item) => {
     const predictedOutcome = item.predictedOutcome || outcomeFromScore(item.prediction);
     const actualOutcome = item.actualOutcome || outcomeFromScore(item.actual);
+    const hasValidScores = Boolean(parseScoreline(item.prediction) && parseScoreline(item.actual));
     return {
       ...item,
       predictedOutcome,
       actualOutcome,
-      winnerCorrect: typeof item.winnerCorrect === "boolean" ? item.winnerCorrect : predictedOutcome === actualOutcome,
-      wasCorrect: String(item.prediction || "").trim() === String(item.actual || "").trim(),
+      winnerCorrect: hasValidScores && (typeof item.winnerCorrect === "boolean" ? item.winnerCorrect : predictedOutcome !== null && predictedOutcome === actualOutcome),
+      wasCorrect: hasValidScores && String(item.prediction).trim() === String(item.actual).trim(),
     };
   });
 }
@@ -300,9 +319,10 @@ export function mergeDashboardHistory(localItems: DashboardHistoryItem[], server
   const merged = new Map<string, DashboardHistoryItem>();
   for (const item of [...serverItems, ...localItems]) {
     if (!item?.matchId) continue;
-    const current = merged.get(item.matchId);
+    const key = String(item.predictionId || item.matchId);
+    const current = merged.get(key);
     if (!current || Number(item.timestamp || 0) >= Number(current.timestamp || 0)) {
-      merged.set(item.matchId, item);
+      merged.set(key, item);
     }
   }
   return [...merged.values()].sort((a, b) => Number(b.timestamp || 0) - Number(a.timestamp || 0));
