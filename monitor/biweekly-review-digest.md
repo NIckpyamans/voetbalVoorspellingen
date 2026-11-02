@@ -1,21 +1,20 @@
 # FootyAI verbeteraudit
 
-Periode: 2026-10-20 t/m 2026-10-26
+Periode: 2026-10-27 t/m 2026-11-02
 
-AI bundel over de laatste 7 dagen: 1 monitorthema's en 5 uitvoerbare verbeteracties.
+Geen nieuwe dagelijkse alarmsignalen in 7 waarnemingen; 5 voorstellen blijven beschikbaar.
 
 - Runs: 7
-- Bevindingen: 3
-- Thema's: 1
+- Bevindingen: 0
+- Thema's: 0
 
 ## Hoofdpunten
-- Ontbrekende/verouderde bronrapporten: predictionEvaluation (stale), snapshotGrowth (stale)
+- Ontbrekende/verouderde bronrapporten: predictionEvaluation (stale), snapshotGrowth (stale), lineupMonitor (stale), apiFootballAcceptance (stale)
 - Workflowcontrole: degraded; groene uitvoering bewijst geen dataverwerking.
-- orchestrator.yml: stale_success (https://github.com/NIckpyamans/voetbalVoorspellingen/actions/runs/40288126720)
-- worker.yml: stale_success, latest_cancelled (https://github.com/NIckpyamans/voetbalVoorspellingen/actions/runs/40244060045)
-- neon-health.yml: stale_success (https://github.com/NIckpyamans/voetbalVoorspellingen/actions/runs/40282396443)
-- H2H niet gevuld (3x, severity: medium)
-  - Trek H2H verder uit historische competitiebestanden en bewaak fallbackdekking in de worker.
+- orchestrator.yml: stale_success (https://github.com/NIckpyamans/voetbalVoorspellingen/actions/runs/41407887834)
+- worker.yml: latest_failure (https://github.com/NIckpyamans/voetbalVoorspellingen/actions/runs/41420732124)
+- prediction-evaluation.yml: latest_failure (https://github.com/NIckpyamans/voetbalVoorspellingen/actions/runs/41456238326)
+- biweekly-review-digest.yml: success_not_observed (geen runbewijs)
 
 ## Architectuuranalyse
 Professionele architectuuranalyse voor schaalbaarheid, datakwaliteit, AI-agentwaarde, databasegroei en modelbetrouwbaarheid.
@@ -48,9 +47,9 @@ Professionele architectuuranalyse voor schaalbaarheid, datakwaliteit, AI-agentwa
 
 ## Datakwaliteit
 - Pending result backfills: 0
-- Ontbrekende oude scores: 41
-- H2H-dekking: 35%
-- Vul eerst betrouwbare eindstanden aan voordat learning en ROI/CLV zwaarder worden gewogen.
+- Ontbrekende oude scores: 0
+- H2H-dekking: 30%
+- Resultaatbackfill is schoon binnen de auditperiode.
 - Breid H2H via historische competitieprofielen en team-id mappings uit tot minimaal 85% dekking.
 - Evalueer minimaal 95% van de 0 geldige immutable snapshots voordat opnieuw wordt gekalibreerd.
 - Post-match statistiekdekking is voldoende.
@@ -58,10 +57,9 @@ Professionele architectuuranalyse voor schaalbaarheid, datakwaliteit, AI-agentwa
 
 ## Widgetintegraties
 - Status: degraded
-- Neon: niet verbonden
-- Checks: 8/10 geslaagd
-- Vul gratis pre-match odds snapshots voordat ROI/CLV wordt beoordeeld.
-- Herstel de mislukte widgetcontracten: Neon database, Provider- en integriteitswidget.
+- Neon: verbonden
+- Checks: 9/10 geslaagd
+- Herstel de mislukte widgetcontracten: Provider- en integriteitswidget.
 
 ## Snapshot-evaluatie
 - Status: completed (evaluated)
@@ -83,9 +81,9 @@ Professionele architectuuranalyse voor schaalbaarheid, datakwaliteit, AI-agentwa
 - Herbruikbare data context bewaken: docs/data-context/analysis-context.json (context-active)
 
 ## Volgende aanbevelingen
-1. H2H-dekking gericht verhogen (Hoog, impact: Hoog) - Actuele H2H-dekking is 35%; doel is minimaal 85% met betrouwbare historie en expliciete missing reasons.
+1. H2H-dekking gericht verhogen (Hoog, impact: Hoog) - Actuele H2H-dekking is 30%; doel is minimaal 85% met betrouwbare historie en expliciete missing reasons.
 2. Confirmed lineups rond kickoff verzamelen (Hoog, impact: Zeer hoog) - Confirmed-lineupdekking is 0%; T-75, T-45 en T-20 blijven de actieve capturevensters.
-3. Opening-, prematch- en closing odds vastleggen (Hoog, impact: Zeer hoog) - Echte oddsdekking is 45%; CLV/ROI blijft geblokkeerd zonder geldige timestamped paren. API-Football accepteert het huidige plan nog niet.
+3. Opening-, prematch- en closing odds vastleggen (Hoog, impact: Zeer hoog) - Echte oddsdekking is 72%; CLV/ROI blijft geblokkeerd zonder geldige timestamped paren. API-Football accepteert het huidige plan nog niet.
 4. R2/Neon-herstelketen controleren (Hoog, impact: Hoog) - Neon is geconfigureerd maar blokkeert met HTTP 402/quota; R2 blijft actief en replay moet automatisch hervatten na herstel.
 5. League/phase-kalibratie in shadow mode beoordelen (Middel, impact: Hoog) - 71 unieke reguliere wedstrijden; gate gehaald. Promoveer alleen profielen met voldoende Brier-verbetering.
 
