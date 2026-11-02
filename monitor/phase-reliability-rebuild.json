@@ -1,7 +1,7 @@
 {
-  "generatedAt": "2026-11-02T06:30:23.838Z",
+  "generatedAt": "2026-11-02T16:05:21.433Z",
   "source": "prediction_evaluations",
-  "evaluatedRows": 393,
+  "evaluatedRows": 399,
   "database": {
     "configured": true,
     "available": true,
@@ -13,11 +13,24 @@
     "bucket": "voetbalvoorspellingen-cold-storage",
     "key": "voetbalvoorspellingen/raw/model/phase-reliability.json",
     "bytes": 689,
-    "etag": "\"324f4f3f8e81fcab703b421e5df47da4\"",
+    "etag": "\"a36b1d0f97d09fe667325e99c42d73a9\"",
     "endpoint": "https://1e7e119c26075bf248bb33ff40b522cb.r2.cloudflarestorage.com"
   },
   "phaseCount": 2,
   "rows": [
+    {
+      "phase": "league",
+      "matches": 392,
+      "outcomeHitRate": 0.429,
+      "exactHitRate": 0.079,
+      "avgGoalError": 2.383,
+      "reliabilityScore": 0.405,
+      "summary": "league: 43% 1X2, 8% exact uit 392 review(s)",
+      "source": "prediction_evaluations",
+      "generatedAt": "2026-11-02T16:05:20.953Z",
+      "minRows": 5,
+      "mature": true
+    },
     {
       "phase": "qualification",
       "matches": 7,
@@ -27,20 +40,7 @@
       "reliabilityScore": 0.127,
       "summary": "qualification: 0% 1X2, 0% exact uit 7 review(s)",
       "source": "prediction_evaluations",
-      "generatedAt": "2026-11-02T06:30:23.197Z",
-      "minRows": 5,
-      "mature": true
-    },
-    {
-      "phase": "league",
-      "matches": 386,
-      "outcomeHitRate": 0.427,
-      "exactHitRate": 0.078,
-      "avgGoalError": 2.368,
-      "reliabilityScore": 0.404,
-      "summary": "league: 43% 1X2, 8% exact uit 386 review(s)",
-      "source": "prediction_evaluations",
-      "generatedAt": "2026-11-02T06:30:23.579Z",
+      "generatedAt": "2026-11-02T16:05:21.242Z",
       "minRows": 5,
       "mature": true
     }
