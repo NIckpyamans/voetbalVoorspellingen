@@ -39,6 +39,17 @@ export function snapshotLedgerMaxJsonBytes(env = process.env) {
   return Number.isFinite(configured) && configured > 0 ? Math.floor(configured) : SNAPSHOT_LEDGER_DEFAULT_MAX_JSON_BYTES;
 }
 
+export const SNAPSHOT_LEDGER_DEFAULT_MONTH_MAX_JSON_BYTES = 512 * 1024 * 1024;
+
+// Maandshards bevatten een volledige maand snapshots en zijn daarmee per definitie
+// groot; de 96 MB-grens hoort bij het monolithische ledger. Zonder eigen, ruimere
+// grens klapte de recalibratie op één maand (2026-08) en bleef kalibratie steken op
+// drie afgeronde wedstrijden.
+export function snapshotLedgerMonthMaxJsonBytes(env = process.env) {
+  const configured = Number(env.SNAPSHOT_LEDGER_MONTH_MAX_JSON_BYTES);
+  return Number.isFinite(configured) && configured > 0 ? Math.floor(configured) : SNAPSHOT_LEDGER_DEFAULT_MONTH_MAX_JSON_BYTES;
+}
+
 // Decodeert een (eventueel gzip-) ledgerbuffer naar tekst. De grootte wordt vóór
 // JSON.parse gecontroleerd: gunzip stopt zodra de outputlimiet wordt overschreden.
 export function decodeLedgerJson(buffer, label = "ledger", maxBytes = snapshotLedgerMaxJsonBytes()) {
@@ -267,10 +278,11 @@ function checksum(value) {
   return crypto.createHash("sha256").update(value).digest("hex");
 }
 
-// Laadt maandshards één voor één: de ruwe bytes, de uitgepakte tekst en de geparste
-// JSON van één maand zijn zo nooit tegelijk in geheugen voor alle maanden.
-async function loadMonthShards({ config, entries, api = false, getObject = getR2Object }) {
-  const shards = [];
+// Laadt maandshards één voor één en vouwt elke shard direct in het resultaat, zodat
+// de uitgepakte tekst en de geparste JSON van één maand niet naast alle andere
+// maanden in het geheugen blijven staan.
+async function loadMonthShards({ config, entries, api = false, getObject = getR2Object, maxBytes = snapshotLedgerMonthMaxJsonBytes() }) {
+  const accumulated = { predictionSnapshots: {}, postMatchReviews: {}, evaluations: {} };
   for (const entry of entries) {
     const month = entry?.month;
     if (!/^\d{4}-\d{2}$/.test(String(month || ""))) throw new Error(`Invalid month in R2 index: ${month}`);
@@ -282,11 +294,20 @@ async function loadMonthShards({ config, entries, api = false, getObject = getR2
     const object = await getObject({ config, key: buildR2ObjectKey(config, relativeKey) });
     if (!object.ok) throw new Error(`R2 monthly ledger missing (${month}): ${object.reason || "unknown error"}`);
     const bytes = Buffer.isBuffer(object.body) ? object.body : Buffer.from(object.body);
-    const json = decodeLedgerJson(bytes, `maand ${month}`);
+    const json = decodeLedgerJson(bytes, `maand ${month}`, maxBytes);
     if (checksum(json) !== hash) throw new Error(`R2 monthly ledger checksum mismatch (${month})`);
-    shards.push(normalizeSnapshotLedger(JSON.parse(json)));
+    const shard = normalizeSnapshotLedger(JSON.parse(json));
+    for (const [predictionId, snapshot] of Object.entries(shard.predictionSnapshots)) {
+      if (predictionId && snapshot && !accumulated.predictionSnapshots[predictionId]) accumulated.predictionSnapshots[predictionId] = snapshot;
+    }
+    for (const [matchId, review] of Object.entries(shard.postMatchReviews)) {
+      accumulated.postMatchReviews[matchId] = newerRecord(accumulated.postMatchReviews[matchId], review);
+    }
+    for (const [predictionId, evaluation] of Object.entries(shard.evaluations)) {
+      accumulated.evaluations[predictionId] = newerRecord(accumulated.evaluations[predictionId], evaluation);
+    }
   }
-  return shards;
+  return mergeSnapshotLedgers(accumulated);
 }
 
 // Leest alleen de maandshards die een incrementele schrijfactie raakt. Ongewijzigde
@@ -300,8 +321,8 @@ async function readTouchedR2Ledger({ config, ledger, getObject = getR2Object }) 
   }
   const touched = new Set(partitionSnapshotLedgerByMonth(ledger).keys());
   const entries = manifest.months.filter((entry) => touched.has(entry?.month));
-  const shards = await loadMonthShards({ config, entries, getObject });
-  return { available: true, configured: true, source: "r2", ledger: mergeSnapshotLedgers(...shards), manifest, months: manifest.months.length, touchedMonths: entries.length };
+  const shardLedger = await loadMonthShards({ config, entries, getObject });
+  return { available: true, configured: true, source: "r2", ledger: shardLedger, manifest, months: manifest.months.length, touchedMonths: entries.length };
 }
 
 async function readPartitionedR2Ledger({ config, legacyKey, api = false, getObject = getR2Object }) {
@@ -319,10 +340,10 @@ async function readPartitionedR2Ledger({ config, legacyKey, api = false, getObje
   if (manifest.version !== "v2-monthly-ledger" || !Array.isArray(manifest.months)) {
     throw new Error("R2 month index has an unsupported format");
   }
-  const objects = await loadMonthShards({ config, entries: manifest.months, api, getObject });
+  const shardLedger = await loadMonthShards({ config, entries: manifest.months, api, getObject });
   return {
     available: true,
-    ledger: mergeSnapshotLedgers(...objects),
+    ledger: shardLedger,
     key: indexKey,
     manifest,
     months: manifest.months.length,

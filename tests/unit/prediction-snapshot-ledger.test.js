@@ -1,6 +1,39 @@
 import { gzipSync } from "node:zlib";
 import { describe, expect, it } from "vitest";
-import { compactSnapshotLedgerForApi, compactSnapshotLedgerForLocalRecovery, decodeLedgerJson, ledgerDeltaSince, partitionSnapshotLedgerByMonth, persistSnapshotLedger, readR2SnapshotLedger, readSnapshotLedgerStorageSummary, SNAPSHOT_LEDGER_MONTH_INDEX_R2_KEY, snapshotLedgerMaxJsonBytes, SnapshotLedgerTooLargeError } from "../../shared/predictionSnapshotLedger.js";
+import { compactSnapshotLedgerForApi, compactSnapshotLedgerForLocalRecovery, decodeLedgerJson, ledgerDeltaSince, partitionSnapshotLedgerByMonth, persistSnapshotLedger, readR2SnapshotLedger, readSnapshotLedgerStorageSummary, SNAPSHOT_LEDGER_MONTH_INDEX_R2_KEY, snapshotLedgerMaxJsonBytes, snapshotLedgerMonthMaxJsonBytes, SnapshotLedgerTooLargeError } from "../../shared/predictionSnapshotLedger.js";
+
+describe("month shard parse limit", () => {
+  const config = { configured: true, prefix: "test", bucket: "bucket" };
+
+  it("geeft maandshards een ruimere limiet dan het monolithische ledger", () => {
+    expect(snapshotLedgerMonthMaxJsonBytes({})).toBe(512 * 1024 * 1024);
+    expect(snapshotLedgerMonthMaxJsonBytes({ SNAPSHOT_LEDGER_MONTH_MAX_JSON_BYTES: "4096" })).toBe(4096);
+    expect(snapshotLedgerMonthMaxJsonBytes({ SNAPSHOT_LEDGER_MONTH_MAX_JSON_BYTES: "nonsense" })).toBe(512 * 1024 * 1024);
+  });
+
+  it("leest een maandshard die groter is dan de parselimiet van het monolithische ledger", async () => {
+    const previous = process.env.SNAPSHOT_LEDGER_MAX_JSON_BYTES;
+    process.env.SNAPSHOT_LEDGER_MAX_JSON_BYTES = "1024";
+    try {
+      const objects = new Map();
+      const getObject = async ({ key }) => (objects.has(key) ? { ok: true, body: objects.get(key) } : { ok: false, reason: "not_found" });
+      const putObject = async ({ key, body }) => {
+        objects.set(key, Buffer.from(body));
+        return { ok: true, key };
+      };
+      await persistSnapshotLedger(
+        { predictionSnapshots: { big: { predictionId: "big", matchId: "match-big", generatedAt: "2026-08-31T23:59:00Z", features: { padding: "x".repeat(4096) } } } },
+        { config, getObject, putObject, allowInitialize: true }
+      );
+      const result = await readR2SnapshotLedger({ config, getObject });
+      expect(result.available).toBe(true);
+      expect(Object.keys(result.ledger.predictionSnapshots)).toEqual(["big"]);
+    } finally {
+      if (previous == null) delete process.env.SNAPSHOT_LEDGER_MAX_JSON_BYTES;
+      else process.env.SNAPSHOT_LEDGER_MAX_JSON_BYTES = previous;
+    }
+  });
+});
 
 describe("local snapshot recovery projection", () => {
   it("keeps the latest immutable snapshot per match and model", () => {

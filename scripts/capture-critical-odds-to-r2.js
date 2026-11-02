@@ -12,6 +12,9 @@ import { summarizeLeagueCoverage } from "./worker/coverage-summary.js";
 import { prioritizeCaptureCandidates, summarizeCaptureWindows, applyCaptureBudget } from "./worker/capture-window-policy.js";
 import { buildCentralQuotaPlan } from "./worker/quota-budget.js";
 import { dedupeUpcomingMatches } from "./worker/odds-fixture-dedupe.js";
+import { fetchOddspapiTournamentOdds, oddspapiApiKey } from "./providers/oddspapi-provider.js";
+import { loadOddspapiUsage, oddspapiAllowance, oddspapiMonthId, saveOddspapiUsage } from "./worker/oddspapi-budget.js";
+import { oddspapiOddsByMatch } from "./worker/oddspapi-fixture-map.js";
 
 const ROOT = process.cwd();
 const HOURS_AHEAD = Math.max(3, Number(process.env.CRITICAL_ODDS_HOURS_AHEAD || 36));
@@ -59,6 +62,90 @@ async function readLedger(config, key) {
   return JSON.parse(object.body.toString("utf8"));
 }
 
+// OddsPapi dekt de Eerste Divisie waar The Odds API geen sportkey voor heeft. Eén
+// odds-by-tournaments-call levert alle fixtures van de competitie tegelijk, dus we
+// halen hem hooguit één keer per run op — en alleen als er nog een divisieduel
+// zonder de juiste oddsrol openstaat. Zo blijft het verbruik ruim onder de 250
+// requests van het gratis plan.
+async function captureOddspapiFallback({ config, matches, report, readLedger }) {
+  const divisieMatches = matches.filter((match) => /eerste\s*divisie/i.test(String(match?.league || "")));
+  const state = { status: "skipped", candidates: divisieMatches.length };
+  if (!divisieMatches.length) {
+    state.reason = "geen eerste-divisie-duels in dit venster";
+    report.oddspapi = state;
+    return new Map();
+  }
+  const apiKey = oddspapiApiKey();
+  if (!apiKey) {
+    state.status = "missing_key";
+    report.oddspapi = state;
+    return new Map();
+  }
+  const pending = [];
+  for (const match of divisieMatches) {
+    const key = buildR2ObjectKey(config, `critical-captures/odds/${match.matchId}.json`);
+    const ledger = await readLedger(config, key);
+    const minutes = Math.round((Date.parse(match.kickoff) - Date.now()) / 60000);
+    const role = classifyOddsCaptureRole(minutes);
+    const existing = role === "closing" ? ledger?.closing : role === "prematch" ? ledger?.prematch : ledger?.opening;
+    if (!existing) pending.push(match);
+  }
+  state.pending = pending.length;
+  if (!pending.length) {
+    state.status = "all_roles_captured";
+    report.oddspapi = state;
+    return new Map();
+  }
+  const month = oddspapiMonthId();
+  const { usage } = await loadOddspapiUsage({ config, month });
+  const allowance = oddspapiAllowance(usage);
+  state.monthly = allowance;
+  if (allowance.perRunCap <= 0) {
+    state.status = "month_budget_exhausted";
+    report.oddspapi = state;
+    return new Map();
+  }
+  const configured = String(process.env.ODDSPAPI_BOOKMAKERS || "pinnacle,bet99,bpremium")
+    .split(",")
+    .map((item) => item.trim())
+    .filter(Boolean);
+  const bookmakers = (usage.preferredBookmaker ? [usage.preferredBookmaker] : configured).slice(0, allowance.perRunCap);
+  const tournamentId = Number(process.env.ODDSPAPI_TOURNAMENT_ID || 131);
+  const result = await fetchOddspapiTournamentOdds({
+    apiKey,
+    tournamentIds: [tournamentId],
+    bookmakers,
+    minIntervalMs: 1100,
+  });
+  const withQuotes = result.fixtures.filter((fixture) => fixture.quotes.length > 0);
+  const byMatch = oddspapiOddsByMatch(result.fixtures, pending);
+  const nextUsage = {
+    ...usage,
+    month,
+    requests: allowance.used + result.requests,
+    runs: Number(usage.runs || 0) + 1,
+    // Onthoud de bookmaker die data gaf: daarna is één request per run genoeg en
+    // hoeven we de bookmakerslijst niet elke keer opnieuw te proberen.
+    preferredBookmaker: withQuotes.length ? withQuotes[0].quotes[0]?.bookmaker || bookmakers[0] || null : null,
+  };
+  const saved = await saveOddspapiUsage({ config, usage: nextUsage }).catch(() => nextUsage);
+  report.oddspapi = {
+    ...state,
+    status: byMatch.size ? "captured" : "no_match",
+    tournamentId,
+    bookmakersTried: bookmakers,
+    requests: result.requests,
+    monthlyUsed: saved.requests,
+    monthlyLimit: allowance.limit,
+    monthlyRemaining: Math.max(0, allowance.limit - allowance.reserve - saved.requests),
+    fixtures: result.fixtures.length,
+    fixturesWithOdds: withQuotes.length,
+    matchedMatches: byMatch.size,
+    providerFailures: result.failures,
+  };
+  return byMatch;
+}
+
 async function main() {
   loadLocalEnv(ROOT);
   const config = getR2Config();
@@ -97,7 +184,9 @@ async function main() {
     sportmonksMapped: 0,
     sportmonksMappingStatuses: {},
     matches: [],
+    oddspapi: null,
   };
+  const oddspapiOdds = await captureOddspapiFallback({ config, matches, report, readLedger });
   const sportmonksCatalog = readJson(path.join(ROOT, "monitor", "sportmonks-catalog-sync.json"), {});
   for (const match of matches) {
     const sportmonks = sportmonksEligibleFixtures([match], sportmonksCatalog).length
@@ -147,8 +236,17 @@ async function main() {
         reset: quota.reset || null,
       };
     }
-    const odds = result?.oddsAtPrediction;
-    if (!odds || ![odds.home, odds.draw, odds.away].every((value) => Number(value) > 1)) {
+    const providerOdds = result?.oddsAtPrediction;
+    const providerUsable = providerOdds && [providerOdds.home, providerOdds.draw, providerOdds.away].every((value) => Number(value) > 1);
+    // The Odds API heeft geen sportkey voor de Eerste Divisie; OddsPapi levert die
+    // odds in één call per run, hier als terugvaloptie.
+    const divisieOdds = providerUsable ? null : oddspapiOdds.get(String(match.matchId));
+    const odds = providerUsable
+      ? providerOdds
+      : divisieOdds
+        ? { provider: "oddspapi", bookmaker: divisieOdds.bookmaker, market: "1X2", home: divisieOdds.home, draw: divisieOdds.draw, away: divisieOdds.away, capturedAt }
+        : null;
+    if (!odds) {
       report.matches.push({
         ...match,
         minutesBeforeKickoff,
@@ -168,7 +266,7 @@ async function main() {
     if (ledger.prematch) report.prematchCaptured += 1;
     if (ledger.closing) report.closingCaptured += 1;
     if (ledger.opening && ledger.prematch && ledger.closing) report.closingPairs += 1;
-    report.matches.push({ ...match, minutesBeforeKickoff, closingWindow, status: "captured", provider: odds.provider, captureRole: latestRole, sportmonksFixtureId: sportmonks?.fixtureId || null, opening: Boolean(ledger.opening), prematch: Boolean(ledger.prematch), closing: Boolean(ledger.closing) });
+    report.matches.push({ ...match, minutesBeforeKickoff, closingWindow, status: "captured", provider: odds.provider, captureRole: latestRole, sportmonksFixtureId: sportmonks?.fixtureId || null, oddspapiFixtureId: divisieOdds?.fixtureId || null, opening: Boolean(ledger.opening), prematch: Boolean(ledger.prematch), closing: Boolean(ledger.closing) });
   }
   // Dekking: opgeslagen rollen (already_captured) tellen mee als gedekt en de
   // werkelijk ontbrekende duels worden apart gerapporteerd, zodat een herhaalrun

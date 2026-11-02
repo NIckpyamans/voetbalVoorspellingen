@@ -1,5 +1,5 @@
 {
-  "version": "2026-06-06",
+  "version": "2026-11-02",
   "policy": {
     "liveRoiRequiresTimestampedPrematchOdds": true,
     "clvRequiresSeparateClosingTimestamp": true,
@@ -18,7 +18,7 @@
       "supportsLiveRoi": true,
       "supportsLiveClv": false,
       "integrated": true,
-      "note": "Aankomende odds worden iedere 6 uur opgehaald; onze fetch-tijd is de controleerbare prematch-timestamp."
+      "note": "Aankomende odds worden iedere 6 uur opgehaald; onze fetch-tijd is de controleerbare prematch-timestamp. De Nederlandse bestanden dekken alleen de Eredivisie, niet de Eerste Divisie."
     },
     {
       "key": "betfair-historical-basic",
@@ -32,6 +32,19 @@
       "supportsLiveClv": false,
       "integrated": false,
       "note": "Optionele handmatige import; vereist een Betfair-account en mag niet als anonieme live feed worden behandeld."
+    },
+    {
+      "key": "oddspapi",
+      "name": "OddsPapi",
+      "url": "https://oddspapi.io/",
+      "cost": "pay-per-request",
+      "access": "api-key",
+      "role": "eerste-divisie-prematch-odds",
+      "supportsHistoricalRoiBacktest": false,
+      "supportsLiveRoi": true,
+      "supportsLiveClv": true,
+      "integrated": false,
+      "note": "Enige gevonden bron met dekking voor de Nederlandse Eerste Divisie (253-254 bookmakers op een fixture, tournamentId 131). Nog niet in de capture-pipeline; eerst meten met npm run odds:oddspapi:dryrun."
     }
   ]
 }

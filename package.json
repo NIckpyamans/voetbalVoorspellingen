@@ -140,6 +140,7 @@
     "db:club-ids:backfill": "node scripts/backfill-club-ids-from-names.js",
     "db:club-ids:backfill:apply": "node scripts/backfill-club-ids-from-names.js --apply && node scripts/rebuild-h2h-edges.js",
     "odds:free:analyze": "node scripts/analyze-free-odds-readiness.js",
+    "odds:oddspapi:dryrun": "node scripts/oddspapi-dry-run.js",
     "db:seasons:reset": "node scripts/reset-competition-seasons.js",
     "season:prepare-next": "node scripts/prepare-next-season.js",
     "season:sync-membership": "node scripts/sync-competition-membership.js",

@@ -73,6 +73,10 @@ export function buildCentralQuotaPlan(providerHealth = {}) {
       // ruimte van het abonnement en remaining komt uit de responseheaders.
       oddsApi: buildQuotaBudget("the-odds-api", providerHealth.oddsApi || {}, { reserve: 5, perRun: 8 }),
       apiFootballCom: buildQuotaBudget("apifootball-com", providerHealth.apiFootballCom || {}, { dailyLimit: 180, reserve: 30, perRun: 20 }),
+      // OddsPapi is de enige bron met dekking voor de Nederlandse Eerste Divisie.
+      // De limiet komt uit de auditheaders; zonder meting blijft spendable 0 en
+      // geeft de droogrun zelf een expliciete, lage bovengrens mee.
+      oddspapi: buildQuotaBudget("oddspapi", providerHealth.oddspapi || {}, { reserve: 10, perRun: 25 }),
     },
   };
 }

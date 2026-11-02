@@ -104,6 +104,10 @@ export function getGoalApiKey() {
   return String(process.env.GOAL_API_KEY || process.env.API_GOAL || "").trim();
 }
 
+export function getOddspapiApiKey() {
+  return String(process.env.ODDSPAPI_API_KEY || process.env.ODDSPAPI_KEY || "").trim();
+}
+
 export function getOddsProviderConfigs() {
   const configs = [];
   const add = (template, suffix = "") => {
@@ -137,6 +141,7 @@ export function buildProviderEnvStatus() {
     apiFootballComConfigured: !!getApiFootballComKey(),
     goalApiConfigured: !!getGoalApiKey(),
     sportmonksConfigured: !!getSportmonksApiKey(),
+    oddspapiConfigured: !!getOddspapiApiKey(),
     oddsConfigured: !!getOddsApiKey(oddsTemplate),
     oddsProviderCount: oddsProviderConfigs.length,
     oddsConfiguredProviderCount: oddsProviderConfigs.filter((config) => !!config.apiKey || !/\{apiKey\}/i.test(config.template)).length,

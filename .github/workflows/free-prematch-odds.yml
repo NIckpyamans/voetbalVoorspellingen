@@ -66,6 +66,12 @@ jobs:
           SPORTMONKS_API_KEY: ${{ secrets.SPORTMONKS_API_KEY }}
           MYSPORTS_API_KEY: ${{ secrets.MYSPORTS_API_KEY }}
           SPORTMONKS_ODDS_API_URL_TEMPLATE: ${{ secrets.SPORTMONKS_ODDS_API_URL_TEMPLATE }}
+          ODDSPAPI_API_KEY: ${{ secrets.ODDSPAPI_API_KEY }}
+          ODDSPAPI_TOURNAMENT_ID: 131
+          ODDSPAPI_BOOKMAKERS: pinnacle,bet99,bpremium
+          ODDSPAPI_MONTHLY_LIMIT: 250
+          ODDSPAPI_MONTHLY_RESERVE: 25
+          ODDSPAPI_MAX_REQUESTS_PER_RUN: 2
           ODDS_API_EXTRA_SPORTS: soccer_uefa_champs_league_qualification,soccer_uefa_champs_league,soccer_uefa_europa_league,soccer_uefa_europa_conference_league,soccer_club_friendly,soccer_friendly
           CLOUDFLARE_R2_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_R2_ACCOUNT_ID }}
           CLOUDFLARE_R2_ACCESS_KEY_ID: ${{ secrets.CLOUDFLARE_R2_ACCESS_KEY_ID }}
