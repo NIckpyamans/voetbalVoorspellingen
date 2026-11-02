@@ -2,6 +2,7 @@ import { fetchMetaData, fetchRepoJson } from "./_dataSource.js";
 import { createLogger, getErrorDetails } from "../shared/logger.js";
 import { setCorsHeaders } from "../shared/cors.js";
 import { databaseConfigured, getSql, readDatabaseHistoryItems } from "../shared/database.js";
+import { parseScoreline } from "../shared/scoreOutcome.js";
 
 const logger = createLogger("api.history");
 
@@ -22,14 +23,16 @@ function mapServerReview(review: any) {
         : review.actualOutcome === "D"
           ? "Gelijk"
           : review.actualOutcome || null;
-  const winnerCorrect =
+  const predictedGoals = parseScoreline(review.predictedScore);
+  const actualGoals = parseScoreline(review.actualScore);
+  const hasValidScores = Boolean(predictedGoals && actualGoals);
+  const winnerCorrect = hasValidScores && (
     typeof review.outcomeHit === "boolean"
       ? review.outcomeHit
       : predictedOutcome && actualOutcome
-      ? predictedOutcome === actualOutcome
-      : false;
-  const predictedGoals = parseGoals(review.predictedScore);
-  const actualGoals = parseGoals(review.actualScore);
+        ? predictedOutcome === actualOutcome
+        : false
+  );
   const totalGoalError =
     review.totalGoalError != null
       ? Number(review.totalGoalError || 0)
@@ -41,8 +44,8 @@ function mapServerReview(review: any) {
     predictionId: review.predictionId || null,
     prediction: review.predictedScore,
     actual: review.actualScore,
-    wasCorrect: !!review.exactHit,
-    errorMargin: totalGoalError,
+    wasCorrect: hasValidScores && !!review.exactHit,
+    errorMargin: hasValidScores ? totalGoalError : null,
     timestamp: Number(review.createdAt || Date.now()),
     homeTeam: review.homeTeamName || null,
     awayTeam: review.awayTeamName || null,
@@ -239,8 +242,7 @@ function pct(value: number, total: number) {
 }
 
 function parseGoals(score: any) {
-  const [home, away] = String(score || "").split(/[-:]/).map(Number);
-  return Number.isFinite(home) && Number.isFinite(away) ? { home, away } : null;
+  return parseScoreline(score);
 }
 
 function outcomeFromScore(score: any) {
@@ -316,17 +318,20 @@ function buildHistorySummary(items: any[]) {
   let brierCount = 0;
   let logLossSum = 0;
   let logLossCount = 0;
+  let evaluatedTotal = 0;
 
   for (const item of items) {
+    if (!parseScoreline(item.prediction) || !parseScoreline(item.actual)) continue;
+    evaluatedTotal += 1;
     if (item.wasCorrect) exact += 1;
     if (item.winnerCorrect) outcome += 1;
-    if (item.oddsStatus === "available" || item.oddsStatus === "partial" || Number.isFinite(Number(item.roi))) withOdds += 1;
+    if (item.oddsStatus === "available" || item.oddsStatus === "partial" || (item.roi != null && Number.isFinite(Number(item.roi)))) withOdds += 1;
     if (item.predictionId && item.evaluationSource === "prediction_snapshot") withSnapshot += 1;
-    if (Number.isFinite(Number(item.brierScore))) {
+    if (item.brierScore != null && Number.isFinite(Number(item.brierScore))) {
       brierSum += Number(item.brierScore);
       brierCount += 1;
     }
-    if (Number.isFinite(Number(item.logLoss))) {
+    if (item.logLoss != null && Number.isFinite(Number(item.logLoss))) {
       logLossSum += Number(item.logLoss);
       logLossCount += 1;
     }
@@ -348,7 +353,7 @@ function buildHistorySummary(items: any[]) {
       .sort((a: any, b: any) => b.outcomePct - a.outcomePct || b.exactPct - a.exactPct || b.total - a.total)
       .slice(0, limit);
 
-  const total = items.length;
+  const total = evaluatedTotal;
   const byLeague = top(leagueBuckets, 1, 12);
   const byModel = top(modelBuckets, 1, 8);
   const byTeam = top(teamBuckets, 2, 12);

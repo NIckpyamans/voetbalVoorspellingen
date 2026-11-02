@@ -1,4 +1,5 @@
 ﻿import React, { useEffect, useMemo, useRef, useState } from "react";
+import { parseScoreline } from "../shared/scoreOutcome.js";
 
 interface HistoryItem {
   matchId: string;
@@ -52,10 +53,10 @@ type LeagueHistoryStats = {
 };
 
 function outcomeFromScore(score?: string | null) {
-  const [home, away] = String(score || "").split("-").map(Number);
-  if (!Number.isFinite(home) || !Number.isFinite(away)) return null;
-  if (home > away) return "Thuis";
-  if (away > home) return "Uit";
+  const parsed = parseScoreline(score);
+  if (!parsed) return null;
+  if (parsed.home > parsed.away) return "Thuis";
+  if (parsed.away > parsed.home) return "Uit";
   return "Gelijk";
 }
 
@@ -63,14 +64,14 @@ function hydrateHistory(items: HistoryItem[]) {
   return items.map((item) => {
     const predictedOutcome = item.predictedOutcome || outcomeFromScore(item.prediction);
     const actualOutcome = item.actualOutcome || outcomeFromScore(item.actual);
-    const winnerCorrect =
-      typeof item.winnerCorrect === "boolean" ? item.winnerCorrect : predictedOutcome === actualOutcome;
+    const hasValidScores = Boolean(parseScoreline(item.prediction) && parseScoreline(item.actual));
+    const winnerCorrect = hasValidScores && (typeof item.winnerCorrect === "boolean" ? item.winnerCorrect : predictedOutcome !== null && predictedOutcome === actualOutcome);
     return {
       ...item,
       predictedOutcome,
       actualOutcome,
       winnerCorrect,
-      wasCorrect: String(item.prediction || "").trim() === String(item.actual || "").trim(),
+      wasCorrect: hasValidScores && String(item.prediction).trim() === String(item.actual).trim(),
     };
   });
 }
@@ -233,26 +234,28 @@ const PredictionHistory: React.FC = () => {
   };
 
   const stats = useMemo(() => {
-    const total = history.length;
-    const exactCorrect = history.filter((item) => item.wasCorrect).length;
-    const outcomeCorrect = history.filter((item) => item.winnerCorrect).length;
-    const avgError = total
-      ? (history.reduce((sum, item) => sum + Number(item.errorMargin || 0), 0) / total).toFixed(2)
-      : "0.00";
-    const withBrier = history.filter((item) => Number.isFinite(Number(item.brierScore)));
+    const evaluatedHistory = history.filter((item) => parseScoreline(item.prediction) && parseScoreline(item.actual));
+    const total = evaluatedHistory.length;
+    const exactCorrect = evaluatedHistory.filter((item) => item.wasCorrect).length;
+    const outcomeCorrect = evaluatedHistory.filter((item) => item.winnerCorrect).length;
+    const goalErrors = evaluatedHistory.filter((item) => item.errorMargin != null && Number.isFinite(Number(item.errorMargin)));
+    const avgError = goalErrors.length
+      ? (goalErrors.reduce((sum, item) => sum + Number(item.errorMargin), 0) / goalErrors.length).toFixed(2)
+      : "-";
+    const withBrier = evaluatedHistory.filter((item) => item.brierScore != null && Number.isFinite(Number(item.brierScore)));
     const avgBrier = withBrier.length
       ? (withBrier.reduce((sum, item) => sum + Number(item.brierScore || 0), 0) / withBrier.length).toFixed(3)
       : "-";
-    const withLogLoss = history.filter((item) => Number.isFinite(Number(item.logLoss)));
+    const withLogLoss = evaluatedHistory.filter((item) => item.logLoss != null && Number.isFinite(Number(item.logLoss)));
     const avgLogLoss = withLogLoss.length
       ? (withLogLoss.reduce((sum, item) => sum + Number(item.logLoss || 0), 0) / withLogLoss.length).toFixed(3)
       : "-";
-    const withRoi = history.filter((item) => Number.isFinite(Number(item.roi)));
+    const withRoi = evaluatedHistory.filter((item) => item.roi != null && Number.isFinite(Number(item.roi)));
     const roiTotal = withRoi.length
       ? `${(withRoi.reduce((sum, item) => sum + Number(item.roi || 0), 0) * 100).toFixed(1)}%`
       : "geen odds";
     const oddsCoverage = total
-      ? `${((history.filter((item) => item.oddsStatus === "available" || item.oddsStatus === "partial" || Number.isFinite(Number(item.roi))).length / total) * 100).toFixed(0)}%`
+      ? `${((evaluatedHistory.filter((item) => item.oddsStatus === "available" || item.oddsStatus === "partial" || (item.roi != null && Number.isFinite(Number(item.roi)))).length / total) * 100).toFixed(0)}%`
       : "0%";
     const snapshotCoverage = total
       ? `${((history.filter((item) => item.predictionId && item.evaluationSource === "prediction_snapshot").length / total) * 100).toFixed(0)}%`
@@ -270,7 +273,7 @@ const PredictionHistory: React.FC = () => {
     }
 
     const byLeague = (Object.entries(
-      history.reduce((acc: Record<string, { exact: number; outcome: number; total: number; topChance: number }>, item) => {
+      evaluatedHistory.reduce((acc: Record<string, { exact: number; outcome: number; total: number; topChance: number }>, item) => {
         const league = item.league || "Onbekend";
         if (!acc[league]) acc[league] = { exact: 0, outcome: 0, total: 0, topChance: 0 };
         acc[league].total += 1;
@@ -293,16 +296,17 @@ const PredictionHistory: React.FC = () => {
       .filter((item) => item.league !== "Onbekend")
       .sort((a, b) => b.exactPct - a.exactPct || b.outcomePct - a.outcomePct || b.total - a.total);
 
-    const topFiveItems = history.filter((item) => item.topExactScorePick || (Number(item.bestBetRank || 0) > 0 && Number(item.bestBetRank || 0) <= 5));
+    const topFiveItems = evaluatedHistory.filter((item) => item.topExactScorePick || (Number(item.bestBetRank || 0) > 0 && Number(item.bestBetRank || 0) <= 5));
     const topFiveTotal = topFiveItems.length;
     const topFiveExact = topFiveItems.filter((item) => item.wasCorrect).length;
     const topFiveOutcome = topFiveItems.filter((item) => item.winnerCorrect).length;
-    const topFiveAvgError = topFiveTotal
-      ? (topFiveItems.reduce((sum, item) => sum + Number(item.errorMargin || 0), 0) / topFiveTotal).toFixed(2)
-      : "0.00";
+    const topFiveGoalErrors = topFiveItems.filter((item) => item.errorMargin != null && Number.isFinite(Number(item.errorMargin)));
+    const topFiveAvgError = topFiveGoalErrors.length
+      ? (topFiveGoalErrors.reduce((sum, item) => sum + Number(item.errorMargin), 0) / topFiveGoalErrors.length).toFixed(2)
+      : "-";
 
     const clubMap = new Map<string, { team: string; total: number; exact: number; outcome: number; avgError: number }>();
-    for (const item of history) {
+    for (const item of evaluatedHistory) {
       for (const team of [item.homeTeam, item.awayTeam]) {
         const name = String(team || "").trim();
         if (!name) continue;
@@ -387,7 +391,7 @@ const PredictionHistory: React.FC = () => {
   );
 
   const filteredWrongCount = useMemo(
-    () => history.filter((item) => !item.wasCorrect && !item.winnerCorrect).length,
+    () => history.filter((item) => parseScoreline(item.prediction) && parseScoreline(item.actual) && !item.wasCorrect && !item.winnerCorrect).length,
     [history]
   );
 
@@ -739,7 +743,7 @@ const PredictionHistory: React.FC = () => {
                   <div className="space-y-3">
                     {items.map((item) => (
                       <div
-                        key={item.matchId}
+                        key={item.predictionId || item.matchId}
                         className={`glass-card rounded-2xl border p-4 ${
                           item.wasCorrect
                             ? "border-green-500/20"

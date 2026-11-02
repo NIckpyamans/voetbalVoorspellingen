@@ -101,7 +101,24 @@ export function recordFromReview(review = {}) {
     dq.h = freshness.h;
     dq.f = freshness.f;
   }
+  // Datakwaliteit bij de voorspelling: score, aantal ontbrekende bronvelden en
+  // de sufficiency-status. Zo blijft zichtbaar of er genoeg info was bij een miss.
+  const completenessScore = Number(review.dataCompleteness?.score);
+  if (Number.isFinite(completenessScore)) dq.cs = Math.round(completenessScore * 1000) / 1000;
+  if (Array.isArray(review.missingData)) dq.mi = review.missingData.length;
+  if (review.dataSufficiency?.status) dq.sf = String(review.dataSufficiency.status);
   if (Object.keys(dq).length) record.dq = dq;
+  // Componentkansen per model, compact als [sleutel, actief(0/1), thuis, gelijk, uit].
+  // Hiermee is per miss na te gaan welk model er naast zat.
+  if (Array.isArray(review.componentProbabilities) && review.componentProbabilities.length) {
+    record.cp = review.componentProbabilities.map((component) => [
+      String(component.key || ""),
+      component.active ? 1 : 0,
+      component.probabilities ? round3(component.probabilities.home) : null,
+      component.probabilities ? round3(component.probabilities.draw) : null,
+      component.probabilities ? round3(component.probabilities.away) : null,
+    ]);
+  }
   // Modelmaten van diezelfde wedstrijd. Samen met mp (marktkansen) maakt dat een
   // kansniveau-vergelijking model tegen markt mogelijk op precies dezelfde duels.
   if (Number.isFinite(Number(review.logLoss))) record.ll = round3(review.logLoss);

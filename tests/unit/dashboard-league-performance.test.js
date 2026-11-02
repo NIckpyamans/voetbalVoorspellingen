@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { buildLeaguePerformance, buildWagerReadiness } from "../../shared/dashboard.ts";
+import { buildLeaguePerformance, buildWagerReadiness, compareSelectionPerformance, hydrateDashboardHistory, outcomeFromScore } from "../../shared/dashboard.ts";
 
 function reviews(league, total, outcome, exact, extra = {}) {
   return Array.from({ length: total }, (_, index) => ({
@@ -15,6 +15,37 @@ function reviews(league, total, outcome, exact, extra = {}) {
     ...extra,
   }));
 }
+
+describe("history score validation", () => {
+  it("does not count missing, malformed, or unsafe scores as correct evaluations", () => {
+    const [missing, malformed, valid] = hydrateDashboardHistory([
+      { matchId: "missing", prediction: "", actual: "", wasCorrect: true, winnerCorrect: true },
+      { matchId: "malformed", prediction: "abc", actual: "abc", wasCorrect: true, winnerCorrect: true },
+      { matchId: "valid", prediction: "2-1", actual: "2-1", wasCorrect: false },
+    ]);
+    expect(missing).toMatchObject({ wasCorrect: false, winnerCorrect: false, predictedOutcome: null, actualOutcome: null });
+    expect(malformed).toMatchObject({ wasCorrect: false, winnerCorrect: false, predictedOutcome: null, actualOutcome: null });
+    expect(valid).toMatchObject({ wasCorrect: true, winnerCorrect: true });
+    expect(outcomeFromScore("")).toBeNull();
+  });
+});
+
+describe("selection comparison sample guard", () => {
+  it("does not claim top picks outperform the rest until both groups have 30 reviews", () => {
+    expect(compareSelectionPerformance({ topExact: 10, topTotal: 20, otherExact: 1, otherTotal: 20 })).toMatchObject({
+      comparisonSample: 20,
+      hasEnoughData: false,
+      topSelectionIsBetter: false,
+      label: "insufficient_sample",
+    });
+    expect(compareSelectionPerformance({ topExact: 20, topTotal: 30, otherExact: 10, otherTotal: 30 })).toMatchObject({
+      comparisonSample: 30,
+      hasEnoughData: true,
+      topSelectionIsBetter: true,
+      label: "top_better",
+    });
+  });
+});
 
 describe("buildLeaguePerformance", () => {
   it("ranks only active leagues with a meaningful immutable sample", () => {
@@ -45,6 +76,14 @@ describe("buildLeaguePerformance", () => {
     expect(result.method).toBe("all_evaluated_reviews");
     expect(result.trustworthyUniqueFixtures).toBe(1);
     expect(result.rows).toHaveLength(0);
+  });
+
+  it("excludes invalid scores and missing metric values from league diagnostics", () => {
+    const result = buildLeaguePerformance([
+      ...reviews("England - Championship", 10, 6, 3).map((item) => ({ ...item, errorMargin: null, brierScore: null, confidence: null, roi: null })),
+      { ...reviews("England - Championship", 1, 1, 1)[0], matchId: "invalid", prediction: "", actual: "" },
+    ], 10);
+    expect(result.best).toMatchObject({ total: 10, avgGoalError: null, avgBrierScore: null, calibrationError: null, roiTotal: null, roiSamples: 0 });
   });
 
   it("falls back to evaluated reviews when immutable history is still too small", () => {

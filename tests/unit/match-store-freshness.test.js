@@ -95,6 +95,29 @@ describe("evaluatievelden in de review", () => {
     expect(record.dq).toMatchObject({ h: 9, f: "recent" });
   });
 
+  it("legt datakwaliteit, sufficiency en componentkansen compact vast", () => {
+    const record = recordFromReview({
+      date: "2026-10-03",
+      league: "Netherlands - Eredivisie",
+      homeTeamName: "A",
+      awayTeamName: "B",
+      actualScore: "0-2",
+      actualOutcome: "A",
+      dataCompleteness: { score: 0.6123, missing: ["lineup", "injuries"] },
+      missingData: ["lineup", "injuries"],
+      dataSufficiency: { status: "beperkt" },
+      componentProbabilities: [
+        { key: "dixon_coles_poisson", active: true, probabilities: { home: 0.4, draw: 0.3, away: 0.3 } },
+        { key: "club_elo", active: false, probabilities: null },
+      ],
+    });
+    expect(record.dq).toMatchObject({ cs: 0.612, mi: 2, sf: "beperkt" });
+    expect(record.cp).toEqual([
+      ["dixon_coles_poisson", 1, 0.4, 0.3, 0.3],
+      ["club_elo", 0, null, null, null],
+    ]);
+  });
+
   it("bewaart geen marktkansen wanneer de odds pas na de aftrap zijn vastgelegd", () => {
     const record = recordFromReview({
       matchId: "q3",
