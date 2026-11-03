@@ -1,36 +1,36 @@
 # Upcoming H2H Backfill
 
-Laatst bijgewerkt: 2026-11-03T21:09:31.456Z
-Gecontroleerd: 26
+Laatst bijgewerkt: 2026-11-03T23:22:56.778Z
+Gecontroleerd: 50
 Gevuld: 0
-Geen directe H2H: 26
+Geen directe H2H: 50
 Errors: 0
 
-Openstaand na deze batch: 0
+Openstaand na deze batch: 4
 
 ## Aanbeveling
-Geen directe H2H gevonden voor de gecontroleerde wedstrijden. Breid team-ID mapping/providerdekking uit of accepteer expliciet no-direct-history voor deze fixtures.
+API-Football H2H is onafhankelijk van fixture-acceptatie ingeschakeld; 3/3 beperkte paarpogingen gedaan. Er staan nog 4 fixtures in de wachtrij.
 
 ## Gevuld
 
 ## Geen Directe H2H
-- 2026-11-06: Hamburg - Borussia Mönchengladbach (no_direct_history)
-- 2026-11-20: Arminia Bielefeld - 1. FC Magdeburg (no_direct_history)
-- 2026-11-20: Annecy - Clermont Foot (no_direct_history)
-- 2026-11-20: Almere City - NAC Breda (rate_limited_locally)
-- 2026-11-20: Helmond Sport - FC Dordrecht (rate_limited_locally)
-- 2026-11-20: Heracles Almelo - Jong PSV (rate_limited_locally)
-- 2026-11-20: Jong FC Utrecht - FC Emmen (rate_limited_locally)
-- 2026-11-20: TOP Oss - Roda JC Kerkrade (rate_limited_locally)
-- 2026-11-20: Vitesse - Jong AZ (rate_limited_locally)
-- 2026-11-21: 1. FC Nürnberg - TSV Eintracht Braunschweig (rate_limited_locally)
-- 2026-11-21: Nantes - Grenoble (rate_limited_locally)
-- 2026-11-21: Bayer Leverkusen - SC Paderborn 07 (rate_limited_locally)
-- 2026-11-24: Bodo/Glimt - LASK Linz (rate_limited_locally)
-- 2026-11-24: Cardiff City - Preston North End (rate_limited_locally)
-- 2026-11-24: Galatasaray - Aston Villa (rate_limited_locally)
-- 2026-11-24: Charlton Athletic - Lincoln City (rate_limited_locally)
-- 2026-11-24: Bodø/Glimt - LASK (rate_limited_locally)
-- 2026-11-24: Middlesbrough - Swansea City (rate_limited_locally)
-- 2026-11-24: Como - AEK Athens (rate_limited_locally)
-- 2026-11-24: Norwich City - Queens Park Rangers (rate_limited_locally)
+- 2026-11-04: Rennes - Olympiakos (no_direct_history)
+- 2026-11-04: Rennes - Olympiacos (no_direct_history)
+- 2026-11-05: Trabzonspor - SC Freiburg (no_direct_history)
+- 2026-11-05: Levski Sofia - Jagiellonia Białystok (rate_limited_locally)
+- 2026-11-05: AS Monaco - FC Nordsjælland (rate_limited_locally)
+- 2026-11-05: Lillestrøm - Viktoria Plzeň (rate_limited_locally)
+- 2026-11-05: CSU Craiova - Egnatia (rate_limited_locally)
+- 2026-11-05: AZ Alkmaar - Juventus (rate_limited_locally)
+- 2026-11-05: F.C. København - Iberia 1999 (rate_limited_locally)
+- 2026-11-05: Bayer Leverkusen - Marseille (rate_limited_locally)
+- 2026-11-05: FC Lugano - Kauno Zalgiris (rate_limited_locally)
+- 2026-11-05: Benfica - Lech Poznan (rate_limited_locally)
+- 2026-11-05: Riga FC - Jablonec (rate_limited_locally)
+- 2026-11-05: Celta Vigo - Union St.-Gilloise (rate_limited_locally)
+- 2026-11-05: Sint-Truidense - SK Brann (rate_limited_locally)
+- 2026-11-05: Celtic - Besiktas (rate_limited_locally)
+- 2026-11-05: FC København - Iberia 1999 (rate_limited_locally)
+- 2026-11-05: Hapoel Be'er - OFI Crete (rate_limited_locally)
+- 2026-11-05: SK Sturm Graz - NK Celje (rate_limited_locally)
+- 2026-11-05: Sunderland - Dinamo Zagreb (rate_limited_locally)
