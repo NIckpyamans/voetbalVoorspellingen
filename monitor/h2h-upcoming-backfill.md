@@ -1,36 +1,34 @@
 # Upcoming H2H Backfill
 
-Laatst bijgewerkt: 2026-11-02T21:45:17.954Z
-Gecontroleerd: 50
+Laatst bijgewerkt: 2026-11-03T00:06:34.925Z
+Gecontroleerd: 18
 Gevuld: 0
-Geen directe H2H: 50
+Geen directe H2H: 18
 Errors: 0
 
-Openstaand na deze batch: 18
+Openstaand na deze batch: 0
 
 ## Aanbeveling
-API-Football H2H is onafhankelijk van fixture-acceptatie ingeschakeld; 3/3 beperkte paarpogingen gedaan. Er staan nog 18 fixtures in de wachtrij.
+Geen directe H2H gevonden voor de gecontroleerde wedstrijden. Breid team-ID mapping/providerdekking uit of accepteer expliciet no-direct-history voor deze fixtures.
 
 ## Gevuld
 
 ## Geen Directe H2H
-- 2026-11-04: Rennes - Olympiakos (no_direct_history)
-- 2026-11-04: Rennes - Olympiacos (no_direct_history)
-- 2026-11-05: Trabzonspor - SC Freiburg (no_direct_history)
-- 2026-11-05: Levski Sofia - Jagiellonia Białystok (rate_limited_locally)
-- 2026-11-05: AS Monaco - FC Nordsjælland (rate_limited_locally)
-- 2026-11-05: Lillestrøm - Viktoria Plzeň (rate_limited_locally)
-- 2026-11-05: CSU Craiova - Egnatia (rate_limited_locally)
-- 2026-11-05: AZ Alkmaar - Juventus (rate_limited_locally)
-- 2026-11-05: F.C. København - Iberia 1999 (rate_limited_locally)
-- 2026-11-05: Bayer Leverkusen - Marseille (rate_limited_locally)
-- 2026-11-05: FC Lugano - Kauno Zalgiris (rate_limited_locally)
-- 2026-11-05: Benfica - Lech Poznan (rate_limited_locally)
-- 2026-11-05: Riga FC - Jablonec (rate_limited_locally)
-- 2026-11-05: Celta Vigo - Union St.-Gilloise (rate_limited_locally)
-- 2026-11-05: Sint-Truidense - SK Brann (rate_limited_locally)
-- 2026-11-05: Celtic - Besiktas (rate_limited_locally)
-- 2026-11-05: FC København - Iberia 1999 (rate_limited_locally)
-- 2026-11-05: Hapoel Be'er - OFI Crete (rate_limited_locally)
-- 2026-11-05: SK Sturm Graz - NK Celje (rate_limited_locally)
-- 2026-11-05: Sunderland - Dinamo Zagreb (rate_limited_locally)
+- 2026-11-21: Eintracht Frankfurt - TSG Hoffenheim (no_direct_history)
+- 2026-11-21: Stoke City - Birmingham City (no_direct_history)
+- 2026-11-21: Coventry City - Crystal Palace (no_direct_history)
+- 2026-11-21: Swansea City - West Bromwich Albion (rate_limited_locally)
+- 2026-11-21: Tottenham Hotspur - Ipswich Town (rate_limited_locally)
+- 2026-11-21: West Ham United - Preston North End (rate_limited_locally)
+- 2026-11-21: Lincoln City - Wrexham (rate_limited_locally)
+- 2026-11-22: Burnley - Blackburn Rovers (rate_limited_locally)
+- 2026-11-22: Energie Cottbus - Hertha Berlin (rate_limited_locally)
+- 2026-11-22: Ajax Amsterdam - ADO Den Haag (rate_limited_locally)
+- 2026-11-22: Hull City - Brighton & Hove Albion (rate_limited_locally)
+- 2026-11-22: Marseille - Le Mans (rate_limited_locally)
+- 2026-11-22: Karlsruher SC - VfL Osnabruck (rate_limited_locally)
+- 2026-11-22: Go Ahead Eagles - Fortuna Sittard (rate_limited_locally)
+- 2026-11-22: Liverpool - Manchester United (rate_limited_locally)
+- 2026-11-23: Jong Ajax - Jong AZ (rate_limited_locally)
+- 2026-11-23: Sochaux - Dunkerque (rate_limited_locally)
+- 2026-11-23: Jong PSV - Jong FC Utrecht (rate_limited_locally)
