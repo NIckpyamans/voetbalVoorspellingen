@@ -1,14 +1,14 @@
 {
-  "generatedAt": "2026-11-04T01:25:13.459Z",
+  "generatedAt": "2026-11-04T10:51:21.401Z",
   "daysAhead": 8,
   "targetPlayersPerTeam": 18,
   "candidates": 240,
-  "checked": 31,
+  "checked": 32,
   "enriched": 31,
-  "unavailable": 0,
-  "skippedFresh": 209,
-  "pendingBeforeBatch": 31,
-  "pendingAfterBatch": 0,
+  "unavailable": 1,
+  "skippedFresh": 172,
+  "pendingBeforeBatch": 68,
+  "pendingAfterBatch": 36,
   "rateLimited": false,
   "retryAfterSeconds": 0,
   "byProvider": {
@@ -20,256 +20,282 @@
     "Wikipedia": 0
   },
   "byCompetition": {
-    "Germany - Bundesliga": {
-      "checked": 7,
-      "enriched": 7,
+    "Europe - Europa League": {
+      "checked": 9,
+      "enriched": 8,
+      "unavailable": 1
+    },
+    "England - Premier League": {
+      "checked": 2,
+      "enriched": 2,
+      "unavailable": 0
+    },
+    "Europe - Conference League": {
+      "checked": 10,
+      "enriched": 10,
       "unavailable": 0
     },
     "Germany - 2. Bundesliga": {
-      "checked": 1,
-      "enriched": 1,
-      "unavailable": 0
-    },
-    "Europe - Champions League": {
       "checked": 4,
       "enriched": 4,
       "unavailable": 0
     },
-    "Europe - Conference League": {
+    "England - Championship": {
+      "checked": 2,
+      "enriched": 2,
+      "unavailable": 0
+    },
+    "Europe - Champions League": {
       "checked": 1,
       "enriched": 1,
       "unavailable": 0
     },
-    "Europe - Europa League": {
-      "checked": 1,
-      "enriched": 1,
-      "unavailable": 0
-    },
-    "Netherlands - Eerste Divisie": {
-      "checked": 17,
-      "enriched": 17,
+    "Germany - Bundesliga": {
+      "checked": 4,
+      "enriched": 4,
       "unavailable": 0
     }
   },
-  "failureReasons": {},
-  "failures": [],
+  "failureReasons": {
+    "no_provider_team_or_roster_match": 1
+  },
+  "failures": [
+    {
+      "team": "Olympiakos",
+      "competition": "Europe - Europa League",
+      "reason": "no_provider_team_or_roster_match",
+      "attemptedProviders": [
+        "FotMob",
+        "Transfermarkt Datasets",
+        "ESPN",
+        "TheSportsDB",
+        "Wikipedia"
+      ],
+      "aliasSuggestions": [
+        {
+          "name": "Olympiakos Volou",
+          "score": 1
+        }
+      ]
+    }
+  ],
   "samples": [
     {
-      "team": "Borussia Mönchengladbach",
-      "competition": "Germany - Bundesliga",
-      "players": 46,
+      "team": "Real Sociedad",
+      "competition": "Europe - Europa League",
+      "players": 26,
       "provider": "FotMob + Laatste bevestigde opstelling",
-      "providerTeam": "Schalke 04"
+      "providerTeam": "Real Sociedad"
     },
     {
-      "team": "FC Augsburg",
-      "competition": "Germany - Bundesliga",
-      "players": 46,
+      "team": "Crystal Palace",
+      "competition": "England - Premier League",
+      "players": 28,
       "provider": "FotMob + Laatste bevestigde opstelling",
-      "providerTeam": "Schalke 04"
+      "providerTeam": "Crystal Palace"
     },
     {
-      "team": "FC Cologne",
+      "team": "AGF",
+      "competition": "Europe - Conference League",
+      "players": 28,
+      "provider": "FotMob + Laatste bevestigde opstelling",
+      "providerTeam": "AGF"
+    },
+    {
+      "team": "CSKA Sofia",
+      "competition": "Europe - Conference League",
+      "players": 28,
+      "provider": "FotMob + Laatste bevestigde opstelling",
+      "providerTeam": "CSKA Sofia"
+    },
+    {
+      "team": "Lillestrom",
+      "competition": "Europe - Europa League",
+      "players": 28,
+      "provider": "FotMob + Laatste bevestigde opstelling",
+      "providerTeam": "Lillestrøm"
+    },
+    {
+      "team": "Karlsruher SC",
+      "competition": "Germany - 2. Bundesliga",
+      "players": 28,
+      "provider": "FotMob + Laatste bevestigde opstelling",
+      "providerTeam": "Karlsruher SC"
+    },
+    {
+      "team": "St. Pauli",
+      "competition": "Germany - 2. Bundesliga",
+      "players": 28,
+      "provider": "FotMob + Laatste bevestigde opstelling",
+      "providerTeam": "St. Pauli"
+    },
+    {
+      "team": "Norwich City",
+      "competition": "England - Championship",
+      "players": 28,
+      "provider": "FotMob + Laatste bevestigde opstelling",
+      "providerTeam": "Norwich City"
+    },
+    {
+      "team": "Coventry City",
+      "competition": "England - Premier League",
+      "players": 29,
+      "provider": "FotMob + Laatste bevestigde opstelling",
+      "providerTeam": "Coventry City"
+    },
+    {
+      "team": "Fenerbahce",
+      "competition": "Europe - Champions League",
+      "players": 29,
+      "provider": "FotMob",
+      "providerTeam": "Fenerbahçe"
+    },
+    {
+      "team": "RB Leipzig",
+      "competition": "Germany - Bundesliga",
+      "players": 29,
+      "provider": "FotMob + Laatste bevestigde opstelling",
+      "providerTeam": "RB Leipzig"
+    },
+    {
+      "team": "FC Midtjylland",
+      "competition": "Europe - Conference League",
+      "players": 29,
+      "provider": "FotMob + Laatste bevestigde opstelling",
+      "providerTeam": "FC Midtjylland"
+    },
+    {
+      "team": "Kauno Zalgiris",
+      "competition": "Europe - Conference League",
+      "players": 29,
+      "provider": "FotMob + Laatste bevestigde opstelling",
+      "providerTeam": "FK Kauno Žalgiris"
+    },
+    {
+      "team": "Ararat-Armenia",
+      "competition": "Europe - Europa League",
+      "players": 29,
+      "provider": "FotMob + Laatste bevestigde opstelling",
+      "providerTeam": "Ararat Armenia"
+    },
+    {
+      "team": "Hajduk Split",
+      "competition": "Europe - Conference League",
+      "players": 30,
+      "provider": "FotMob + Laatste bevestigde opstelling",
+      "providerTeam": "Hajduk Split"
+    },
+    {
+      "team": "Celtic",
+      "competition": "Europe - Europa League",
+      "players": 30,
+      "provider": "FotMob + Laatste bevestigde opstelling",
+      "providerTeam": "Celtic"
+    },
+    {
+      "team": "Dinamo Zagreb",
+      "competition": "Europe - Europa League",
+      "players": 30,
+      "provider": "FotMob + Laatste bevestigde opstelling",
+      "providerTeam": "Dinamo Zagreb"
+    },
+    {
+      "team": "Levski Sofia",
+      "competition": "Europe - Europa League",
+      "players": 30,
+      "provider": "FotMob + Laatste bevestigde opstelling",
+      "providerTeam": "Levski Sofia"
+    },
+    {
+      "team": "Watford",
+      "competition": "England - Championship",
+      "players": 32,
+      "provider": "FotMob + Laatste bevestigde opstelling",
+      "providerTeam": "Watford"
+    },
+    {
+      "team": "Iberia 1999",
+      "competition": "Europe - Conference League",
+      "players": 31,
+      "provider": "FotMob + Laatste bevestigde opstelling",
+      "providerTeam": "Iberia 1999"
+    },
+    {
+      "team": "Borac Banja Luka",
+      "competition": "Europe - Conference League",
+      "players": 34,
+      "provider": "FotMob + Laatste bevestigde opstelling",
+      "providerTeam": "Borac Banja Luka"
+    },
+    {
+      "team": "Panathinaikos",
+      "competition": "Europe - Conference League",
+      "players": 34,
+      "provider": "FotMob + Laatste bevestigde opstelling",
+      "providerTeam": "Panathinaikos"
+    },
+    {
+      "team": "Trabzonspor",
+      "competition": "Europe - Conference League",
+      "players": 34,
+      "provider": "FotMob + Laatste bevestigde opstelling",
+      "providerTeam": "Trabzonspor"
+    },
+    {
+      "team": "Bayern Munich",
       "competition": "Germany - Bundesliga",
       "players": 35,
       "provider": "FotMob",
       "providerTeam": "Schalke 04"
     },
     {
-      "team": "Hamburg",
-      "competition": "Germany - Bundesliga",
-      "players": 46,
-      "provider": "FotMob + Laatste bevestigde opstelling",
-      "providerTeam": "Schalke 04"
-    },
-    {
-      "team": "Hamburg SV",
-      "competition": "Germany - Bundesliga",
-      "players": 46,
-      "provider": "FotMob + Laatste bevestigde opstelling",
-      "providerTeam": "Schalke 04"
-    },
-    {
-      "team": "SC Paderborn 07",
-      "competition": "Germany - Bundesliga",
-      "players": 46,
-      "provider": "FotMob + Laatste bevestigde opstelling",
-      "providerTeam": "Schalke 04"
-    },
-    {
-      "team": "Schalke 04",
-      "competition": "Germany - Bundesliga",
-      "players": 35,
-      "provider": "FotMob + Laatste bevestigde opstelling",
-      "providerTeam": "Schalke 04"
-    },
-    {
-      "team": "Kaiserslautern",
-      "competition": "Germany - 2. Bundesliga",
+      "team": "Getafe",
+      "competition": "Europe - Conference League",
       "players": 36,
       "provider": "FotMob + Laatste bevestigde opstelling",
+      "providerTeam": "Osasuna"
+    },
+    {
+      "team": "Celta Vigo",
+      "competition": "Europe - Europa League",
+      "players": 36,
+      "provider": "FotMob + Laatste bevestigde opstelling",
+      "providerTeam": "Osasuna"
+    },
+    {
+      "team": "TSG Hoffenheim",
+      "competition": "Germany - Bundesliga",
+      "players": 46,
+      "provider": "FotMob + Laatste bevestigde opstelling",
+      "providerTeam": "Schalke 04"
+    },
+    {
+      "team": "Eintracht Frankfurt",
+      "competition": "Germany - Bundesliga",
+      "players": 46,
+      "provider": "FotMob + Laatste bevestigde opstelling",
+      "providerTeam": "Schalke 04"
+    },
+    {
+      "team": "RB Salzburg",
+      "competition": "Europe - Europa League",
+      "players": 40,
+      "provider": "FotMob + Laatste bevestigde opstelling",
+      "providerTeam": "Viktoria Plzeň"
+    },
+    {
+      "team": "Hertha Berlin",
+      "competition": "Germany - 2. Bundesliga",
+      "players": 36,
+      "provider": "FotMob",
       "providerTeam": "Kaiserslautern"
     },
     {
-      "team": "Sabah FK",
-      "competition": "Europe - Champions League",
-      "players": 30,
-      "provider": "FotMob",
-      "providerTeam": "Viking"
-    },
-    {
-      "team": "Slavia Prague",
-      "competition": "Europe - Champions League",
-      "players": 30,
-      "provider": "FotMob",
-      "providerTeam": "Viking"
-    },
-    {
-      "team": "Kairat Almaty",
-      "competition": "Europe - Conference League",
-      "players": 41,
+      "team": "SV Darmstadt 98",
+      "competition": "Germany - 2. Bundesliga",
+      "players": 47,
       "provider": "FotMob + Laatste bevestigde opstelling",
-      "providerTeam": "Viking"
-    },
-    {
-      "team": "Olympiacos",
-      "competition": "Europe - Europa League",
-      "players": 32,
-      "provider": "FotMob + Laatste bevestigde opstelling",
-      "providerTeam": "Olympiacos"
-    },
-    {
-      "team": "De Graafschap",
-      "competition": "Netherlands - Eerste Divisie",
-      "players": 45,
-      "provider": "FotMob + Laatste bevestigde opstelling",
-      "providerTeam": "Almere City FC"
-    },
-    {
-      "team": "FC Den Bosch",
-      "competition": "Netherlands - Eerste Divisie",
-      "players": 45,
-      "provider": "FotMob + Laatste bevestigde opstelling",
-      "providerTeam": "Almere City FC"
-    },
-    {
-      "team": "FC Dordrecht",
-      "competition": "Netherlands - Eerste Divisie",
-      "players": 45,
-      "provider": "FotMob + Laatste bevestigde opstelling",
-      "providerTeam": "Almere City FC"
-    },
-    {
-      "team": "FC Eindhoven",
-      "competition": "Netherlands - Eerste Divisie",
-      "players": 45,
-      "provider": "FotMob + Laatste bevestigde opstelling",
-      "providerTeam": "Almere City FC"
-    },
-    {
-      "team": "FC Emmen",
-      "competition": "Netherlands - Eerste Divisie",
-      "players": 45,
-      "provider": "FotMob + Laatste bevestigde opstelling",
-      "providerTeam": "Almere City FC"
-    },
-    {
-      "team": "FC Volendam",
-      "competition": "Netherlands - Eerste Divisie",
-      "players": 45,
-      "provider": "FotMob + Laatste bevestigde opstelling",
-      "providerTeam": "Almere City FC"
-    },
-    {
-      "team": "Helmond Sport",
-      "competition": "Netherlands - Eerste Divisie",
-      "players": 45,
-      "provider": "FotMob + Laatste bevestigde opstelling",
-      "providerTeam": "Almere City FC"
-    },
-    {
-      "team": "Jong Ajax",
-      "competition": "Netherlands - Eerste Divisie",
-      "players": 45,
-      "provider": "FotMob + Laatste bevestigde opstelling",
-      "providerTeam": "Almere City FC"
-    },
-    {
-      "team": "Jong AZ",
-      "competition": "Netherlands - Eerste Divisie",
-      "players": 45,
-      "provider": "FotMob + Laatste bevestigde opstelling",
-      "providerTeam": "Almere City FC"
-    },
-    {
-      "team": "Jong FC Utrecht",
-      "competition": "Netherlands - Eerste Divisie",
-      "players": 45,
-      "provider": "FotMob + Laatste bevestigde opstelling",
-      "providerTeam": "Almere City FC"
-    },
-    {
-      "team": "MVV Maastricht",
-      "competition": "Netherlands - Eerste Divisie",
-      "players": 45,
-      "provider": "FotMob + Laatste bevestigde opstelling",
-      "providerTeam": "Almere City FC"
-    },
-    {
-      "team": "NAC Breda",
-      "competition": "Netherlands - Eerste Divisie",
-      "players": 45,
-      "provider": "FotMob + Laatste bevestigde opstelling",
-      "providerTeam": "Almere City FC"
-    },
-    {
-      "team": "RKC Waalwijk",
-      "competition": "Netherlands - Eerste Divisie",
-      "players": 45,
-      "provider": "FotMob + Laatste bevestigde opstelling",
-      "providerTeam": "Almere City FC"
-    },
-    {
-      "team": "Roda JC Kerkrade",
-      "competition": "Netherlands - Eerste Divisie",
-      "players": 45,
-      "provider": "FotMob + Laatste bevestigde opstelling",
-      "providerTeam": "Almere City FC"
-    },
-    {
-      "team": "TOP Oss",
-      "competition": "Netherlands - Eerste Divisie",
-      "players": 45,
-      "provider": "FotMob + Laatste bevestigde opstelling",
-      "providerTeam": "Almere City FC"
-    },
-    {
-      "team": "Vitesse",
-      "competition": "Netherlands - Eerste Divisie",
-      "players": 45,
-      "provider": "FotMob + Laatste bevestigde opstelling",
-      "providerTeam": "Almere City FC"
-    },
-    {
-      "team": "VVV-Venlo",
-      "competition": "Netherlands - Eerste Divisie",
-      "players": 45,
-      "provider": "FotMob + Laatste bevestigde opstelling",
-      "providerTeam": "Almere City FC"
-    },
-    {
-      "team": "Galatasaray",
-      "competition": "Europe - Champions League",
-      "players": 41,
-      "provider": "FotMob + Laatste bevestigde opstelling",
-      "providerTeam": "Viking"
-    },
-    {
-      "team": "LASK Linz",
-      "competition": "Europe - Champions League",
-      "players": 41,
-      "provider": "FotMob + Laatste bevestigde opstelling",
-      "providerTeam": "Viking"
+      "providerTeam": "Kaiserslautern"
     }
   ],
   "coverage": {
