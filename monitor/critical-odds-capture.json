@@ -1,18 +1,18 @@
 {
-  "generatedAt": "2026-11-04T16:22:27.828Z",
-  "checked": 38,
-  "duplicateFixturesMerged": 3,
+  "generatedAt": "2026-11-04T19:55:04.582Z",
+  "checked": 40,
+  "duplicateFixturesMerged": 4,
   "captureWindows": {
-    "t20": 0,
+    "t20": 8,
     "t45": 0,
-    "t75": 2,
-    "prematch": 10,
-    "opening": 28,
+    "t75": 0,
+    "prematch": 0,
+    "opening": 32,
     "outside": 0
   },
   "quotaBudget": {
     "spendable": 38,
-    "skippedByBudget": 2,
+    "skippedByBudget": 0,
     "providers": {
       "goalApi": {
         "spendable": 30,
@@ -36,106 +36,61 @@
       }
     }
   },
-  "captured": 2,
-  "openingCaptured": 2,
-  "prematchCaptured": 2,
-  "closingCaptured": 0,
-  "closingPairs": 0,
+  "captured": 11,
+  "openingCaptured": 11,
+  "prematchCaptured": 11,
+  "closingCaptured": 7,
+  "closingPairs": 7,
   "statuses": {
-    "not_found": 7,
-    "available": 2
+    "available": 11,
+    "not_found": 9
   },
   "attemptStatuses": {
-    "the-odds-api:seasonal_sport_unavailable": 27,
-    "the-odds-api:unsupported_sport": 18,
-    "the-odds-api:not_found": 21,
-    "sportmonks:fixture_id_missing": 7,
-    "the-odds-api:available": 2
+    "the-odds-api:seasonal_sport_unavailable": 58,
+    "the-odds-api:unsupported_sport": 40,
+    "the-odds-api:available": 11,
+    "the-odds-api:not_found": 27,
+    "sportmonks:fixture_id_missing": 9
   },
   "providerStatuses": {
     "the-odds-api": {
-      "seasonal_sport_unavailable": 27,
-      "unsupported_sport": 18,
-      "not_found": 21,
-      "available": 2
+      "seasonal_sport_unavailable": 58,
+      "unsupported_sport": 40,
+      "available": 11,
+      "not_found": 27
     },
     "sportmonks": {
-      "fixture_id_missing": 7
+      "fixture_id_missing": 9
     }
   },
   "providerQuota": {
     "the-odds-api": {
-      "remaining": 226,
-      "used": 274,
-      "limit": null,
-      "reset": null
+      "remaining": 212
     }
   },
-  "skippedExistingRole": 29,
+  "skippedExistingRole": 20,
   "sportmonksMapped": 0,
   "sportmonksMappingStatuses": {
-    "plan_coverage_unavailable": 38
+    "plan_coverage_unavailable": 40
   },
   "matches": [
-    {
-      "matchId": "ss-espn-uefa.champions-401915383",
-      "kickoff": "2026-11-04T17:45:00.000Z",
-      "league": "Europe - Champions League",
-      "homeTeam": "AEK Athens",
-      "awayTeam": "Real Madrid",
-      "minutesBeforeKickoff": 83,
-      "captureWindow": "t75",
-      "closingWindow": false,
-      "status": "already_captured",
-      "captureRole": "prematch"
-    },
-    {
-      "matchId": "ss-espn-uefa.champions-401915382",
-      "kickoff": "2026-11-04T17:45:00.000Z",
-      "league": "Europe - Champions League",
-      "homeTeam": "Fenerbahce",
-      "awayTeam": "Liverpool",
-      "minutesBeforeKickoff": 83,
-      "captureWindow": "t75",
-      "closingWindow": false,
-      "status": "already_captured",
-      "captureRole": "prematch"
-    },
-    {
-      "matchId": "ss-espn-eng.2-401880175",
-      "kickoff": "2026-11-04T19:45:00.000Z",
-      "league": "England - Championship",
-      "homeTeam": "Cardiff City",
-      "awayTeam": "West Ham United",
-      "minutesBeforeKickoff": 203,
-      "captureWindow": "prematch",
-      "closingWindow": false,
-      "status": "already_captured",
-      "captureRole": "prematch"
-    },
-    {
-      "matchId": "ss-espn-eng.2-401880173",
-      "kickoff": "2026-11-04T19:45:00.000Z",
-      "league": "England - Championship",
-      "homeTeam": "Wrexham",
-      "awayTeam": "Middlesbrough",
-      "minutesBeforeKickoff": 203,
-      "captureWindow": "prematch",
-      "closingWindow": false,
-      "status": "already_captured",
-      "captureRole": "prematch"
-    },
     {
       "matchId": "ss-espn-eng.2-401880176",
       "kickoff": "2026-11-04T20:00:00.000Z",
       "league": "England - Championship",
       "homeTeam": "Bristol City",
       "awayTeam": "Wolverhampton Wanderers",
-      "minutesBeforeKickoff": 218,
-      "captureWindow": "prematch",
-      "closingWindow": false,
-      "status": "already_captured",
-      "captureRole": "prematch"
+      "minutesBeforeKickoff": 5,
+      "captureWindow": "t20",
+      "closingWindow": true,
+      "status": "captured",
+      "provider": "the-odds-api",
+      "captureRole": "closing",
+      "sportmonksFixtureId": null,
+      "oddspapiFixtureId": null,
+      "opening": true,
+      "prematch": true,
+      "closing": true
     },
     {
       "matchId": "ss-espn-uefa.champions-401915304",
@@ -143,11 +98,17 @@
       "league": "Europe - Champions League",
       "homeTeam": "Borussia Dortmund",
       "awayTeam": "Real Betis",
-      "minutesBeforeKickoff": 218,
-      "captureWindow": "prematch",
-      "closingWindow": false,
-      "status": "already_captured",
-      "captureRole": "prematch"
+      "minutesBeforeKickoff": 5,
+      "captureWindow": "t20",
+      "closingWindow": true,
+      "status": "captured",
+      "provider": "the-odds-api",
+      "captureRole": "closing",
+      "sportmonksFixtureId": null,
+      "oddspapiFixtureId": null,
+      "opening": true,
+      "prematch": true,
+      "closing": true
     },
     {
       "matchId": "ss-espn-uefa.champions-401915301",
@@ -155,11 +116,17 @@
       "league": "Europe - Champions League",
       "homeTeam": "FC Porto",
       "awayTeam": "Napoli",
-      "minutesBeforeKickoff": 217,
-      "captureWindow": "prematch",
-      "closingWindow": false,
-      "status": "already_captured",
-      "captureRole": "prematch"
+      "minutesBeforeKickoff": 5,
+      "captureWindow": "t20",
+      "closingWindow": true,
+      "status": "captured",
+      "provider": "the-odds-api",
+      "captureRole": "closing",
+      "sportmonksFixtureId": null,
+      "oddspapiFixtureId": null,
+      "opening": true,
+      "prematch": true,
+      "closing": true
     },
     {
       "matchId": "ss-espn-uefa.champions-401915305",
@@ -167,11 +134,17 @@
       "league": "Europe - Champions League",
       "homeTeam": "Lens",
       "awayTeam": "Como",
-      "minutesBeforeKickoff": 217,
-      "captureWindow": "prematch",
-      "closingWindow": false,
-      "status": "already_captured",
-      "captureRole": "prematch"
+      "minutesBeforeKickoff": 5,
+      "captureWindow": "t20",
+      "closingWindow": true,
+      "status": "captured",
+      "provider": "the-odds-api",
+      "captureRole": "closing",
+      "sportmonksFixtureId": null,
+      "oddspapiFixtureId": null,
+      "opening": true,
+      "prematch": true,
+      "closing": true
     },
     {
       "matchId": "ss-espn-uefa.champions-401915303",
@@ -179,11 +152,17 @@
       "league": "Europe - Champions League",
       "homeTeam": "PSV Eindhoven",
       "awayTeam": "Club Brugge",
-      "minutesBeforeKickoff": 217,
-      "captureWindow": "prematch",
-      "closingWindow": false,
-      "status": "already_captured",
-      "captureRole": "prematch"
+      "minutesBeforeKickoff": 5,
+      "captureWindow": "t20",
+      "closingWindow": true,
+      "status": "captured",
+      "provider": "the-odds-api",
+      "captureRole": "closing",
+      "sportmonksFixtureId": null,
+      "oddspapiFixtureId": null,
+      "opening": true,
+      "prematch": true,
+      "closing": true
     },
     {
       "matchId": "ss-espn-uefa.champions-401915306",
@@ -191,11 +170,17 @@
       "league": "Europe - Champions League",
       "homeTeam": "RB Leipzig",
       "awayTeam": "Manchester City",
-      "minutesBeforeKickoff": 217,
-      "captureWindow": "prematch",
-      "closingWindow": false,
-      "status": "already_captured",
-      "captureRole": "prematch"
+      "minutesBeforeKickoff": 5,
+      "captureWindow": "t20",
+      "closingWindow": true,
+      "status": "captured",
+      "provider": "the-odds-api",
+      "captureRole": "closing",
+      "sportmonksFixtureId": null,
+      "oddspapiFixtureId": null,
+      "opening": true,
+      "prematch": true,
+      "closing": true
     },
     {
       "matchId": "ss-espn-uefa.champions-401915381",
@@ -203,9 +188,9 @@
       "league": "Europe - Champions League",
       "homeTeam": "Slavia Prague",
       "awayTeam": "Arsenal",
-      "minutesBeforeKickoff": 217,
-      "captureWindow": "prematch",
-      "closingWindow": false,
+      "minutesBeforeKickoff": 5,
+      "captureWindow": "t20",
+      "closingWindow": true,
       "status": "not_found",
       "providerCompetitionAvailability": null,
       "reason": "Sportmonks fixture-id ontbreekt; odds-by-fixture call overgeslagen.",
@@ -217,11 +202,17 @@
       "league": "Europe - Champions League",
       "homeTeam": "Viking FK",
       "awayTeam": "Sabah FK",
-      "minutesBeforeKickoff": 217,
-      "captureWindow": "prematch",
-      "closingWindow": false,
-      "status": "already_captured",
-      "captureRole": "prematch"
+      "minutesBeforeKickoff": 5,
+      "captureWindow": "t20",
+      "closingWindow": true,
+      "status": "captured",
+      "provider": "the-odds-api",
+      "captureRole": "closing",
+      "sportmonksFixtureId": null,
+      "oddspapiFixtureId": null,
+      "opening": true,
+      "prematch": true,
+      "closing": true
     },
     {
       "matchId": "ss-espn-uefa.europa.conf-401915831",
@@ -229,7 +220,7 @@
       "league": "Europe - Conference League",
       "homeTeam": "AGF",
       "awayTeam": "Braga",
-      "minutesBeforeKickoff": 1522,
+      "minutesBeforeKickoff": 1310,
       "captureWindow": "opening",
       "closingWindow": false,
       "status": "already_captured",
@@ -241,7 +232,7 @@
       "league": "Europe - Conference League",
       "homeTeam": "Atalanta",
       "awayTeam": "Kairat Almaty",
-      "minutesBeforeKickoff": 1522,
+      "minutesBeforeKickoff": 1310,
       "captureWindow": "opening",
       "closingWindow": false,
       "status": "already_captured",
@@ -253,7 +244,7 @@
       "league": "Europe - Conference League",
       "homeTeam": "FC Midtjylland",
       "awayTeam": "Ajax Amsterdam",
-      "minutesBeforeKickoff": 1522,
+      "minutesBeforeKickoff": 1310,
       "captureWindow": "opening",
       "closingWindow": false,
       "status": "already_captured",
@@ -265,7 +256,7 @@
       "league": "Europe - Conference League",
       "homeTeam": "FC Thun",
       "awayTeam": "Heart of Midlothian",
-      "minutesBeforeKickoff": 1522,
+      "minutesBeforeKickoff": 1310,
       "captureWindow": "opening",
       "closingWindow": false,
       "status": "not_found",
@@ -279,7 +270,7 @@
       "league": "Europe - Conference League",
       "homeTeam": "KuPS Kuopio",
       "awayTeam": "KAA Gent",
-      "minutesBeforeKickoff": 1522,
+      "minutesBeforeKickoff": 1310,
       "captureWindow": "opening",
       "closingWindow": false,
       "status": "already_captured",
@@ -291,7 +282,7 @@
       "league": "Europe - Conference League",
       "homeTeam": "Lincoln Red Imps",
       "awayTeam": "Hajduk Split",
-      "minutesBeforeKickoff": 1522,
+      "minutesBeforeKickoff": 1310,
       "captureWindow": "opening",
       "closingWindow": false,
       "status": "already_captured",
@@ -303,7 +294,7 @@
       "league": "Europe - Conference League",
       "homeTeam": "Mjällby AIF",
       "awayTeam": "Borac Banja Luka",
-      "minutesBeforeKickoff": 1522,
+      "minutesBeforeKickoff": 1310,
       "captureWindow": "opening",
       "closingWindow": false,
       "status": "already_captured",
@@ -315,7 +306,7 @@
       "league": "Europe - Conference League",
       "homeTeam": "Red Star Belgrade",
       "awayTeam": "Inter D'Escaldes",
-      "minutesBeforeKickoff": 1522,
+      "minutesBeforeKickoff": 1310,
       "captureWindow": "opening",
       "closingWindow": false,
       "status": "already_captured",
@@ -327,7 +318,7 @@
       "league": "Europe - Conference League",
       "homeTeam": "Trabzonspor",
       "awayTeam": "SC Freiburg",
-      "minutesBeforeKickoff": 1522,
+      "minutesBeforeKickoff": 1310,
       "captureWindow": "opening",
       "closingWindow": false,
       "status": "already_captured",
@@ -339,7 +330,7 @@
       "league": "Europe - Europa League",
       "homeTeam": "AC Milan",
       "awayTeam": "Ferencvaros",
-      "minutesBeforeKickoff": 1522,
+      "minutesBeforeKickoff": 1310,
       "captureWindow": "opening",
       "closingWindow": false,
       "status": "already_captured",
@@ -351,7 +342,7 @@
       "league": "Europe - Europa League",
       "homeTeam": "Anderlecht",
       "awayTeam": "RB Salzburg",
-      "minutesBeforeKickoff": 1522,
+      "minutesBeforeKickoff": 1310,
       "captureWindow": "opening",
       "closingWindow": false,
       "status": "already_captured",
@@ -363,7 +354,7 @@
       "league": "Europe - Europa League",
       "homeTeam": "Crystal Palace",
       "awayTeam": "TSG Hoffenheim",
-      "minutesBeforeKickoff": 1522,
+      "minutesBeforeKickoff": 1310,
       "captureWindow": "opening",
       "closingWindow": false,
       "status": "already_captured",
@@ -378,7 +369,7 @@
       "duplicateIds": [
         "ss-espn-uefa.europa-401915536"
       ],
-      "minutesBeforeKickoff": 1522,
+      "minutesBeforeKickoff": 1310,
       "captureWindow": "opening",
       "closingWindow": false,
       "status": "already_captured",
@@ -393,7 +384,7 @@
       "duplicateIds": [
         "ss-espn-uefa.europa-401915527"
       ],
-      "minutesBeforeKickoff": 1522,
+      "minutesBeforeKickoff": 1310,
       "captureWindow": "opening",
       "closingWindow": false,
       "status": "not_found",
@@ -407,7 +398,7 @@
       "league": "Europe - Europa League",
       "homeTeam": "NEC Nijmegen",
       "awayTeam": "Omonia Nicosia",
-      "minutesBeforeKickoff": 1522,
+      "minutesBeforeKickoff": 1310,
       "captureWindow": "opening",
       "closingWindow": false,
       "status": "not_found",
@@ -421,7 +412,7 @@
       "league": "Europe - Europa League",
       "homeTeam": "Real Sociedad",
       "awayTeam": "Lyon",
-      "minutesBeforeKickoff": 1522,
+      "minutesBeforeKickoff": 1310,
       "captureWindow": "opening",
       "closingWindow": false,
       "status": "already_captured",
@@ -433,7 +424,7 @@
       "league": "Europe - Europa League",
       "homeTeam": "Sparta Prague",
       "awayTeam": "AFC Bournemouth",
-      "minutesBeforeKickoff": 1522,
+      "minutesBeforeKickoff": 1310,
       "captureWindow": "opening",
       "closingWindow": false,
       "status": "already_captured",
@@ -445,7 +436,7 @@
       "league": "Europe - Conference League",
       "homeTeam": "AS Monaco",
       "awayTeam": "FC Nordsjælland",
-      "minutesBeforeKickoff": 1657,
+      "minutesBeforeKickoff": 1445,
       "captureWindow": "opening",
       "closingWindow": false,
       "status": "not_found",
@@ -459,7 +450,7 @@
       "league": "Europe - Conference League",
       "homeTeam": "CSU Craiova",
       "awayTeam": "Egnatia",
-      "minutesBeforeKickoff": 1657,
+      "minutesBeforeKickoff": 1445,
       "captureWindow": "opening",
       "closingWindow": false,
       "status": "not_found",
@@ -476,7 +467,7 @@
       "duplicateIds": [
         "ss-espn-uefa.europa.conf-401915740"
       ],
-      "minutesBeforeKickoff": 1657,
+      "minutesBeforeKickoff": 1445,
       "captureWindow": "opening",
       "closingWindow": false,
       "status": "not_found",
@@ -490,7 +481,7 @@
       "league": "Europe - Conference League",
       "homeTeam": "FC Lugano",
       "awayTeam": "Kauno Zalgiris",
-      "minutesBeforeKickoff": 1657,
+      "minutesBeforeKickoff": 1445,
       "captureWindow": "opening",
       "closingWindow": false,
       "status": "already_captured",
@@ -502,7 +493,7 @@
       "league": "Europe - Conference League",
       "homeTeam": "FC Twente",
       "awayTeam": "Pafos",
-      "minutesBeforeKickoff": 1657,
+      "minutesBeforeKickoff": 1445,
       "captureWindow": "opening",
       "closingWindow": false,
       "status": "already_captured",
@@ -514,7 +505,7 @@
       "league": "Europe - Conference League",
       "homeTeam": "Getafe",
       "awayTeam": "Brighton & Hove Albion",
-      "minutesBeforeKickoff": 1657,
+      "minutesBeforeKickoff": 1445,
       "captureWindow": "opening",
       "closingWindow": false,
       "status": "already_captured",
@@ -526,7 +517,7 @@
       "league": "Europe - Conference League",
       "homeTeam": "Panathinaikos",
       "awayTeam": "CSKA Sofia",
-      "minutesBeforeKickoff": 1657,
+      "minutesBeforeKickoff": 1445,
       "captureWindow": "opening",
       "closingWindow": false,
       "status": "already_captured",
@@ -538,7 +529,31 @@
       "league": "Europe - Conference League",
       "homeTeam": "Riga FC",
       "awayTeam": "Jablonec",
-      "minutesBeforeKickoff": 1657,
+      "minutesBeforeKickoff": 1445,
+      "captureWindow": "opening",
+      "closingWindow": false,
+      "status": "already_captured",
+      "captureRole": "opening"
+    },
+    {
+      "matchId": "ss-espn-uefa.europa.conf-401915820",
+      "kickoff": "2026-11-05T20:00:00.000Z",
+      "league": "Europe - Conference League",
+      "homeTeam": "Sint-Truidense",
+      "awayTeam": "SK Brann",
+      "minutesBeforeKickoff": 1445,
+      "captureWindow": "opening",
+      "closingWindow": false,
+      "status": "already_captured",
+      "captureRole": "opening"
+    },
+    {
+      "matchId": "ss-espn-uefa.europa-401915529",
+      "kickoff": "2026-11-05T20:00:00.000Z",
+      "league": "Europe - Europa League",
+      "homeTeam": "AZ Alkmaar",
+      "awayTeam": "Juventus",
+      "minutesBeforeKickoff": 1445,
       "captureWindow": "opening",
       "closingWindow": false,
       "status": "captured",
@@ -551,12 +566,12 @@
       "closing": false
     },
     {
-      "matchId": "ss-espn-uefa.europa.conf-401915820",
+      "matchId": "ss-espn-uefa.europa-401915533",
       "kickoff": "2026-11-05T20:00:00.000Z",
-      "league": "Europe - Conference League",
-      "homeTeam": "Sint-Truidense",
-      "awayTeam": "SK Brann",
-      "minutesBeforeKickoff": 1657,
+      "league": "Europe - Europa League",
+      "homeTeam": "Bayer Leverkusen",
+      "awayTeam": "Marseille",
+      "minutesBeforeKickoff": 1445,
       "captureWindow": "opening",
       "closingWindow": false,
       "status": "captured",
@@ -567,6 +582,73 @@
       "opening": true,
       "prematch": true,
       "closing": false
+    },
+    {
+      "matchId": "ss-espn-uefa.europa-401915525",
+      "kickoff": "2026-11-05T20:00:00.000Z",
+      "league": "Europe - Europa League",
+      "homeTeam": "Benfica",
+      "awayTeam": "Lech Poznan",
+      "minutesBeforeKickoff": 1445,
+      "captureWindow": "opening",
+      "closingWindow": false,
+      "status": "captured",
+      "provider": "the-odds-api",
+      "captureRole": "opening",
+      "sportmonksFixtureId": null,
+      "oddspapiFixtureId": null,
+      "opening": true,
+      "prematch": true,
+      "closing": false
+    },
+    {
+      "matchId": "ss-espn-uefa.europa-401915531",
+      "kickoff": "2026-11-05T20:00:00.000Z",
+      "league": "Europe - Europa League",
+      "homeTeam": "Celta Vigo",
+      "awayTeam": "Union St.-Gilloise",
+      "minutesBeforeKickoff": 1445,
+      "captureWindow": "opening",
+      "closingWindow": false,
+      "status": "not_found",
+      "providerCompetitionAvailability": null,
+      "reason": "Sportmonks fixture-id ontbreekt; odds-by-fixture call overgeslagen.",
+      "sportmonksMapping": "plan_coverage_unavailable"
+    },
+    {
+      "matchId": "ss-espn-uefa.europa-401915522",
+      "kickoff": "2026-11-05T20:00:00.000Z",
+      "league": "Europe - Europa League",
+      "homeTeam": "Celtic",
+      "awayTeam": "Besiktas",
+      "minutesBeforeKickoff": 1445,
+      "captureWindow": "opening",
+      "closingWindow": false,
+      "status": "captured",
+      "provider": "the-odds-api",
+      "captureRole": "opening",
+      "sportmonksFixtureId": null,
+      "oddspapiFixtureId": null,
+      "opening": true,
+      "prematch": true,
+      "closing": false
+    },
+    {
+      "matchId": "ss-fotmob-6112365",
+      "kickoff": "2026-11-05T20:00:00.000Z",
+      "league": "Europe - Europa League",
+      "homeTeam": "Hapoel Beer Sheva",
+      "awayTeam": "OFI Crete",
+      "duplicateIds": [
+        "ss-espn-uefa.europa-401915532"
+      ],
+      "minutesBeforeKickoff": 1445,
+      "captureWindow": "opening",
+      "closingWindow": false,
+      "status": "not_found",
+      "providerCompetitionAvailability": null,
+      "reason": "Sportmonks fixture-id ontbreekt; odds-by-fixture call overgeslagen.",
+      "sportmonksMapping": "plan_coverage_unavailable"
     }
   ],
   "oddspapi": {
@@ -575,8 +657,8 @@
     "reason": "geen eerste-divisie-duels in dit venster"
   },
   "covered": 31,
-  "alreadyCaptured": 29,
-  "missing": 7,
+  "alreadyCaptured": 20,
+  "missing": 9,
   "missingMatches": [
     {
       "matchId": "ss-espn-uefa.champions-401915381",
@@ -640,16 +722,34 @@
       "away": "Iberia 1999",
       "status": "not_found",
       "reason": "Sportmonks fixture-id ontbreekt; odds-by-fixture call overgeslagen."
+    },
+    {
+      "matchId": "ss-espn-uefa.europa-401915531",
+      "kickoff": "2026-11-05T20:00:00.000Z",
+      "league": "Europe - Europa League",
+      "home": "Celta Vigo",
+      "away": "Union St.-Gilloise",
+      "status": "not_found",
+      "reason": "Sportmonks fixture-id ontbreekt; odds-by-fixture call overgeslagen."
+    },
+    {
+      "matchId": "ss-fotmob-6112365",
+      "kickoff": "2026-11-05T20:00:00.000Z",
+      "league": "Europe - Europa League",
+      "home": "Hapoel Beer Sheva",
+      "away": "OFI Crete",
+      "status": "not_found",
+      "reason": "Sportmonks fixture-id ontbreekt; odds-by-fixture call overgeslagen."
     }
   ],
   "leagueCoverage": [
     {
       "league": "Europe - Europa League",
-      "checked": 8,
-      "covered": 6,
+      "checked": 14,
+      "covered": 10,
       "partial": 0,
-      "missing": 2,
-      "coverage": 0.75
+      "missing": 4,
+      "coverage": 0.714
     },
     {
       "league": "Europe - Conference League",
@@ -661,20 +761,20 @@
     },
     {
       "league": "Europe - Champions League",
-      "checked": 9,
-      "covered": 8,
+      "checked": 7,
+      "covered": 6,
       "partial": 0,
       "missing": 1,
-      "coverage": 0.889
+      "coverage": 0.857
     },
     {
       "league": "England - Championship",
-      "checked": 3,
-      "covered": 3,
+      "checked": 1,
+      "covered": 1,
       "partial": 0,
       "missing": 0,
       "coverage": 1
     }
   ],
-  "coverage": 0.816
+  "coverage": 0.775
 }
