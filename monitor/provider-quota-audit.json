@@ -1,5 +1,5 @@
 {
-  "checkedAt": "2026-11-03T11:58:49.948Z",
+  "checkedAt": "2026-11-04T12:13:00.338Z",
   "oddsApi": {
     "configured": true,
     "valid": true,
@@ -10,6 +10,7 @@
       "soccer_concacaf_gold_cup",
       "soccer_concacaf_leagues_cup",
       "soccer_conmebol_copa_america",
+      "soccer_england_league2",
       "soccer_fifa_club_world_cup",
       "soccer_fifa_world_cup",
       "soccer_fifa_world_cup_qualifiers_europe",
@@ -17,8 +18,8 @@
       "soccer_fifa_world_cup_winner",
       "soccer_fifa_world_cup_womens",
       "soccer_france_coupe_de_france",
-      "soccer_germany_bundesliga_women",
       "soccer_italy_coppa_italia",
+      "soccer_saudi_arabia_pro_league",
       "soccer_uefa_champs_league_qualification",
       "soccer_uefa_champs_league_women",
       "soccer_uefa_euro_qualification",
@@ -44,7 +45,6 @@
       "soccer_efl_champ",
       "soccer_england_efl_cup",
       "soccer_england_league1",
-      "soccer_england_league2",
       "soccer_epl",
       "soccer_fa_cup",
       "soccer_finland_veikkausliiga",
@@ -52,6 +52,7 @@
       "soccer_france_ligue_two",
       "soccer_germany_bundesliga",
       "soccer_germany_bundesliga2",
+      "soccer_germany_bundesliga_women",
       "soccer_germany_dfb_pokal",
       "soccer_germany_liga3",
       "soccer_greece_super_league",
@@ -66,7 +67,6 @@
       "soccer_poland_ekstraklasa",
       "soccer_portugal_primeira_liga",
       "soccer_russia_premier_league",
-      "soccer_saudi_arabia_pro_league",
       "soccer_spain_copa_del_rey",
       "soccer_spain_la_liga",
       "soccer_spain_segunda_division",
@@ -92,14 +92,17 @@
       "soccer_uefa_europa_conference_league_qualification"
     ],
     "competitionCoverageStatus": "seasonal_unavailable",
-    "newlyInactiveSports": [],
+    "newlyInactiveSports": [
+      "soccer_england_league2",
+      "soccer_saudi_arabia_pro_league"
+    ],
     "newlyUnavailableSports": [],
     "newlyAvailableSports": [
-      "soccer_league_of_ireland"
+      "soccer_germany_bundesliga_women"
     ],
     "quota": {
-      "x-requests-remaining": "316",
-      "x-requests-used": "184",
+      "x-requests-remaining": "239",
+      "x-requests-used": "261",
       "x-requests-last": "0"
     },
     "errorCode": null
@@ -171,8 +174,8 @@
     "records": 50,
     "quota": {
       "x-ratelimit-limit": "1000",
-      "x-ratelimit-remaining": "963",
-      "x-ratelimit-reset": "1793750400"
+      "x-ratelimit-remaining": "966",
+      "x-ratelimit-reset": "1793836800"
     },
     "accepted": false,
     "policy": "Veertien dagen meten; nooit automatisch promoveren op basis van alleen een geldige key."
@@ -193,13 +196,13 @@
     "status": 200,
     "records": 1,
     "rateLimit": {
-      "resets_in_seconds": 1213,
-      "remaining": 178,
+      "resets_in_seconds": 3600,
+      "remaining": 179,
       "requested_entity": "League"
     },
     "quota": {
       "x-ratelimit-limit": "180",
-      "x-ratelimit-remaining": "178"
+      "x-ratelimit-remaining": "179"
     },
     "endpointAccess": {
       "leagues": {
@@ -210,13 +213,13 @@
         "firstName": "Superliga",
         "hasOddsFlag": false,
         "rateLimit": {
-          "resets_in_seconds": 1213,
-          "remaining": 178,
+          "resets_in_seconds": 3600,
+          "remaining": 179,
           "requested_entity": "League"
         },
         "quota": {
           "x-ratelimit-limit": "180",
-          "x-ratelimit-remaining": "178"
+          "x-ratelimit-remaining": "179"
         },
         "errorCode": null
       },
@@ -304,7 +307,7 @@
         "firstName": "1",
         "hasOddsFlag": false,
         "rateLimit": {
-          "resets_in_seconds": 3600,
+          "resets_in_seconds": 3599,
           "remaining": 178,
           "requested_entity": "Odd"
         },
