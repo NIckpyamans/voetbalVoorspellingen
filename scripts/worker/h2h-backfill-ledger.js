@@ -2,6 +2,9 @@ import { PROVIDER_RESULT } from "./provider-observability.js";
 
 const DAY_MS = 24 * 60 * 60 * 1000;
 const TRANSIENT_RESULTS = new Set([PROVIDER_RESULT.QUOTA, PROVIDER_RESULT.HTTP_ERROR]);
+// Statussen die duiden op een provider-/netwerkfout (geen bewijs van afwezige
+// historie) en dus met backoff opnieuw mogen.
+const TRANSIENT_STATUSES = new Set(["provider_unreachable", "provider_payload_error", "error"]);
 
 export function isH2HAttemptDue(attempt, { now = Date.now(), staleDays = 1 } = {}) {
   if (!attempt) return true;
@@ -11,7 +14,7 @@ export function isH2HAttemptDue(attempt, { now = Date.now(), staleDays = 1 } = {
   if (Number.isFinite(nextRetryAt)) return now >= nextRetryAt;
   const checkedAt = Date.parse(attempt.checkedAt || "");
   if (!Number.isFinite(checkedAt)) return true;
-  const transient = TRANSIENT_RESULTS.has(attempt.result) || ["provider_unreachable", "error"].includes(status);
+  const transient = TRANSIENT_RESULTS.has(attempt.result) || TRANSIENT_STATUSES.has(status);
   const cooldown = transient ? Math.max(0, Number(attempt.backoffHours || 0)) * 60 * 60 * 1000
     : status === "no_direct_history" ? Math.max(0, Number(staleDays)) * DAY_MS : 0;
   return now - checkedAt >= cooldown;
@@ -21,7 +24,7 @@ export function buildH2HAttemptState(previous, { status, result, error = null, c
   const previousAttempts = Number(previous?.attempts || 0);
   const attempts = Math.max(0, Number.isFinite(previousAttempts) ? previousAttempts : 0) + 1;
   const normalizedStatus = String(status || "error").toLowerCase();
-  const transient = TRANSIENT_RESULTS.has(result) || ["provider_unreachable", "error"].includes(normalizedStatus);
+  const transient = TRANSIENT_RESULTS.has(result) || TRANSIENT_STATUSES.has(normalizedStatus);
   const configuredMaxBackoff = Number(maxBackoffHours);
   const backoffHours = transient ? Math.min(Math.max(1, Number.isFinite(configuredMaxBackoff) ? configuredMaxBackoff : 24), 2 ** Math.min(attempts - 1, 12)) : 0;
   const parsedTimestamp = Date.parse(checkedAt);

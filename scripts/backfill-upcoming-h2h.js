@@ -313,7 +313,9 @@ function buildNoDirectHistoryProfile(match, status, providerAttempts = []) {
           ? "Providerteam-ID mapping ontbreekt; voeg aliases of provider-ID's toe voor dit clubpaar."
           : normalizedStatus === "rate_limited_locally"
             ? "Providerquota voor deze run is bereikt; volgende geplande run probeert opnieuw."
-            : normalizedStatus === "no_direct_history"
+            : normalizedStatus === "provider_payload_error"
+              ? "De provider gaf een fout in de payload (lege of afwijkende respons); dit is geen bewijs dat H2H ontbreekt."
+              : normalizedStatus === "no_direct_history"
             ? "Geen betrouwbare directe H2H gevonden bij de providers die met succes konden worden bevraagd."
             : "H2H-status is nog niet vastgesteld.",
   };
@@ -481,6 +483,9 @@ async function main() {
           status: apiFootballProfile?.results?.length ? "ok" : apiFootballAttempt?.status || (apiFootballBudgetSkipped ? "rate_limited_locally" : "not_found"),
           records: apiFootballProfile?.results?.length || apiFootballAttempt?.data?.results?.length || 0,
           statusCode: apiFootballAttempt?.statusCode,
+          // Zonder deze velden bleef een payloadfout onzichtbaar in het rapport.
+          errorCategory: apiFootballAttempt?.errorCategory || null,
+          error: apiFootballAttempt?.error || apiFootballAttempt?.errorDetail || null,
         }));
       }
       const profile = localProfile?.results?.length ? localProfile : footballDataProfile?.results?.length ? footballDataProfile : apiFootballComProfile?.results?.length ? apiFootballComProfile : goalApiProfile?.results?.length ? goalApiProfile : apiFootballProfile;
@@ -535,9 +540,17 @@ async function main() {
         const providerResults = providerAttempts.map((attempt) => attempt.result);
         const hadProviderError = providerResults.includes("http_error") || providerAttempts.some((attempt) => attempt.result === "quota" && attempt.status !== "rate_limited_locally");
         const hadProviderUnreachable = providerAttempts.some((attempt) => /request_failed|provider_unreachable/.test(String(attempt.status || "")));
+        // Een payloadfout (lege/afwijkende providerrespons) is geen bewijs dat er
+        // geen H2H bestaat; die mag dus niet als "geen historie" eindigen.
+        const hadProviderPayloadError = providerAttempts.some((attempt) =>
+          /payload|provider_error/.test(String(attempt.status || "")) ||
+          /payload|auth_or_plan/.test(String(attempt.errorCategory || ""))
+        );
         const locallyRateLimited = providerAttempts.some((attempt) => attempt.status === "rate_limited_locally");
         const hadConfiguredProvider = providerAttempts.some((attempt) => ["found", "no_coverage", "not_published_yet", "http_error", "quota"].includes(attempt.result));
-        const status = hadProviderError || hadProviderUnreachable
+        const status = hadProviderPayloadError
+          ? "provider_payload_error"
+          : hadProviderError || hadProviderUnreachable
           ? "provider_unreachable"
           : locallyRateLimited
             ? "rate_limited_locally"
@@ -560,6 +573,31 @@ async function main() {
     }
   }
 
+  // Volledige providerfouten in het rapport: alleen een status als "not_found"
+  // verbergt waarom een batch leeg blijft.
+  const providerErrorSamples = [...filled, ...noDirectHistory]
+    .flatMap((item) => (item.providerAttempts || []).map((attempt) => ({
+      matchId: item.matchId,
+      league: item.league,
+      homeTeam: item.homeTeam,
+      awayTeam: item.awayTeam,
+      provider: attempt.provider,
+      status: attempt.status,
+      result: attempt.result,
+      statusCode: attempt.statusCode ?? null,
+      errorCategory: attempt.errorCategory ?? null,
+      error: attempt.error ?? null,
+    })))
+    .filter((row) => row.result !== "found" && /error|payload|quota|acceptance|mapping|unreachable|not_configured|rate_limited/.test(String(row.status || "")));
+  // Een batch die niets oplevert is een signaal, geen uitkomst: laat de workflow falen.
+  const minBatchForGate = Math.max(1, Number(process.env.H2H_BACKFILL_QUALITY_MIN_BATCH || 20));
+  const qualityGate = {
+    minBatch: minBatchForGate,
+    batch: candidates.length,
+    filled: filled.length,
+    applied: candidates.length >= minBatchForGate,
+    failed: candidates.length >= minBatchForGate && filled.length === 0,
+  };
   const remaining = Math.max(0, candidateTotal - candidates.length);
   const report = {
     generatedAt: new Date().toISOString(),
@@ -582,6 +620,9 @@ async function main() {
     filled: filled.length,
     noDirectHistory: noDirectHistory.length,
     errors: errors.length,
+    providerErrorCount: providerErrorSamples.length,
+    providerErrors: providerErrorSamples.slice(0, 25),
+    qualityGate,
     apiFootballAcceptance: {
       configured: providerConfigured,
       enabled: apiFootballEnabled,
@@ -639,6 +680,8 @@ async function main() {
       `Gevuld: ${report.filled}`,
       `Geen directe H2H: ${report.noDirectHistory}`,
       `Errors: ${report.errors}`,
+      `Providerfouten: ${report.providerErrorCount}`,
+      `Kwaliteitsgate: ${report.qualityGate.failed ? "gefaald (0 resultaten in een volle batch)" : report.qualityGate.applied ? "geslaagd" : "niet van toepassing"}`,
       "",
       `Openstaand na deze batch: ${report.remaining}`,
       "",
@@ -655,6 +698,14 @@ async function main() {
   );
 
   console.log(JSON.stringify(report, null, 2));
+  if (providerErrorSamples.length) {
+    // Volledige providerfouten in de runlog, zodat "0 van 50" traceerbaar is.
+    console.error("[h2h-backfill] providerfouten:", JSON.stringify(providerErrorSamples, null, 2));
+  }
+  if (report.qualityGate.failed) {
+    console.error(`[h2h-backfill] kwaliteitsgate: 0 van ${report.qualityGate.batch} gecontroleerde wedstrijden kreeg H2H (${report.providerErrorCount} providerfouten). Controleer de providerfouten en de team-ID-koppelingen; dit is geen bewijs dat H2H ontbreekt.`);
+    process.exitCode = 1;
+  }
 }
 
 export { buildBackfillRecommendation };

@@ -1,8 +1,11 @@
 #!/usr/bin/env node
 
 import { getSql, loadLocalEnv } from "../shared/database.js";
+import { getR2Config } from "../shared/cloudflare-r2.js";
 
-const DEFAULT_LIMIT_BYTES = 512 * 1024 * 1024;
+// Neon is opgehoogd naar 1 GB. De oude 512 MB gaf een scheef gebruikt-percentage
+// (en daarmee een te laat of juist vals alarm) in dit rapport.
+const DEFAULT_LIMIT_BYTES = 1024 * 1024 * 1024;
 const LIMIT_BYTES = Number(process.env.NEON_STORAGE_LIMIT_BYTES || process.env.DATABASE_STORAGE_LIMIT_BYTES || DEFAULT_LIMIT_BYTES);
 const WARNING_RATIO = Number(process.env.NEON_STORAGE_WARNING_RATIO || 0.8);
 const CRITICAL_RATIO = Number(process.env.NEON_STORAGE_CRITICAL_RATIO || 0.95);
@@ -63,22 +66,25 @@ async function measure() {
 
 const before = await measure();
 const cleanup = [];
-if (APPLY && before.database.status === "critical" && (!ARCHIVES_VERIFIED || !getR2Config().configured)) {
-  console.error(JSON.stringify({
-    generatedAt: new Date().toISOString(),
-    mode: "apply",
-    status: "blocked_at_critical_storage_pressure",
-    reason: "Archive canonical snapshot/payload rows to R2 before applying any cleanup. This tool has no backup for the records it deletes.",
-    before,
-    cleanup: [],
-  }, null, 2));
-  process.exit(1);
-}
+// Een volle database mag het opruimen niet blokkeren: anders kan de
+// herstelworkflow precies datgene niet doen wat de opslaglimiet moet oplossen
+// (dat gebeurde bij 1024 MB: elke run stopte op deze gate). Canonieke rijen
+// (wedstrijden, uitslagen, H2H, odds, snapshots) worden hier nooit verwijderd;
+// alleen afgeleide caches en audit-historie.
+const archiveGate = {
+  archivesVerified: ARCHIVES_VERIFIED,
+  r2Configured: getR2Config().configured,
+  canonicalCompactionBlocked: APPLY && before.database.status === "critical" && (!ARCHIVES_VERIFIED || !getR2Config().configured),
+};
 if (APPLY) {
   // These rows are derived caches or monitoring history. Canonical football and model data is retained.
   const pressureBeforeCleanup = before.database.bytes >= LIMIT_BYTES * WARNING_RATIO;
+  const criticalBeforeCleanup = before.database.status === "critical";
   const backupRetention = pressureBeforeCleanup ? 1 : 3;
-  const appStateRetentionDays = pressureBeforeCleanup ? 2 : 3;
+  const appStateRetentionDays = criticalBeforeCleanup ? 1 : pressureBeforeCleanup ? 2 : 3;
+  // Bij critical is de nood hoog: bewaar alleen wat de eerstvolgende runs nodig hebben.
+  const auditRetentionDays = criticalBeforeCleanup ? 30 : 400;
+  const appStateCacheDays = criticalBeforeCleanup ? 1 : 2;
   cleanup.push({
     target: "stale prediction snapshot cache chunks",
     rows: Number((await sql.query(`
@@ -97,10 +103,10 @@ if (APPLY) {
         with deleted as (
           delete from app_state_segments
           where segment_group in ('root', 'matches', 'predictions')
-            and updated_at < now() - interval '2 days'
+            and updated_at < now() - ($1::int || ' days')::interval
           returning 1
         ) select count(*)::int as rows from deleted
-      `))[0]?.rows || 0),
+      `, [appStateCacheDays]))[0]?.rows || 0),
     });
   }
   cleanup.push({
@@ -108,10 +114,10 @@ if (APPLY) {
     rows: Number((await sql.query(`
       with deleted as (
         delete from source_audit
-        where as_of < now() - interval '400 days'
+        where as_of < now() - ($1::int || ' days')::interval
         returning 1
       ) select count(*)::int as rows from deleted
-    `))[0]?.rows || 0),
+    `, [auditRetentionDays]))[0]?.rows || 0),
   });
   cleanup.push({
     target: "old match/prediction cache segments",
@@ -130,20 +136,20 @@ if (APPLY) {
     rows: Number((await sql.query(`
       with deleted as (
         delete from integrity_metric_snapshots
-        where captured_at < now() - interval '400 days'
+        where captured_at < now() - ($1::int || ' days')::interval
         returning 1
       ) select count(*)::int as rows from deleted
-    `))[0]?.rows || 0),
+    `, [auditRetentionDays]))[0]?.rows || 0),
   });
   cleanup.push({
     target: "old provider trust history",
     rows: Number((await sql.query(`
       with deleted as (
         delete from provider_trust_history
-        where captured_at < now() - interval '400 days'
+        where captured_at < now() - ($1::int || ' days')::interval
         returning 1
       ) select count(*)::int as rows from deleted
-    `))[0]?.rows || 0),
+    `, [auditRetentionDays]))[0]?.rows || 0),
   });
   cleanup.push({
     target: `encrypted recovery backups beyond latest ${backupRetention} per type`,
@@ -213,6 +219,7 @@ const report = {
     canonicalDataRetained: ["matches", "prediction_snapshots", "prediction_evaluations", "odds", "H2H", "source lineage"],
   },
   before,
+  archiveGate,
   cleanup,
   after,
   recheck,

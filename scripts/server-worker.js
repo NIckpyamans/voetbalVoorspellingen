@@ -22,6 +22,10 @@ import {
 } from "./prediction-analytics.js";
 import { fetchApiFootballH2HProfile, summarizeApiFootballUsage } from "./api-football-provider.js";
 import { fetchEspnH2HProfile } from "./providers/espn-h2h-provider.js";
+import {
+  fetchFootballDataCoUkWorkerH2HProfile,
+  footballDataLeagueCode,
+} from "./providers/football-data-co-uk-h2h-provider.js";
 import { fetchTheSportsDbTeamForm, findTheSportsDbDirectResult } from "./providers/thesportsdb-team-form-provider.js";
 import { fetchOddsAtPrediction } from "./odds-provider.js";
 import { getApiFootballKey, getFootballDataApiKey } from "./provider-env.js";
@@ -146,6 +150,15 @@ const ODDS_FETCH_ENABLED = process.env.ODDS_FETCH_ENABLED !== "false";
 // Calendar refreshes must finish even when a provider is slow. They publish
 // fixtures first; the full worker enriches lineups, H2H, odds and form later.
 const LIGHTWEIGHT_REFRESH = process.env.FOOTYAI_LIGHTWEIGHT_REFRESH === "true";
+// Een lichte kalenderrefresh slaat event-details en H2H standaard over. Zonder
+// die twee blijft de brondekking echter structureel laag (geen stadion­coördinaten
+// betekent geen weer, en geen H2H-bron betekent geen onderlinge historie). Daarom
+// een klein, begrensd budget per run in plaats van alles of niets.
+const LIGHTWEIGHT_EVENT_DETAIL_MAX_FETCHES = Math.max(0, Number(process.env.FOOTYAI_LIGHTWEIGHT_EVENT_DETAIL_MAX || 24));
+const LIGHTWEIGHT_EVENT_DETAIL_HORIZON_MS = 48 * 60 * 60 * 1000;
+const LIGHTWEIGHT_ESPN_H2H_MAX_PAIRS = Math.max(0, Number(process.env.FOOTYAI_LIGHTWEIGHT_ESPN_H2H_MAX_PAIRS || 12));
+let lightweightEventDetailFetches = 0;
+let lightweightEspnH2HPairs = 0;
 
 loadLocalEnv(process.cwd());
 
@@ -11641,8 +11654,22 @@ async function main() {
       getTeam(store.teams, awayId, awayName);
 
       let eventDetails = isFallbackEvent ? null : store.eventCache?.[event.id] || null;
-      if (!LIGHTWEIGHT_REFRESH && !isFallbackEvent && (!eventDetails || now - Number(store.eventCacheUpdated?.[event.id] || 0) > EVENT_TTL)) {
+      const eventDetailsStale = !eventDetails || now - Number(store.eventCacheUpdated?.[event.id] || 0) > EVENT_TTL;
+      const kickoffMs = Date.parse(kickoff || "");
+      // In een lichte refresh alleen event-details ophalen voor duels die snel
+      // beginnen: dat levert de stadioncoördinaten voor het weer, met een harde
+      // bovengrens zodat de run binnen de time-out blijft.
+      const lightweightEventDetailsAllowed =
+        LIGHTWEIGHT_REFRESH &&
+        !isFallbackEvent &&
+        eventDetailsStale &&
+        lightweightEventDetailFetches < LIGHTWEIGHT_EVENT_DETAIL_MAX_FETCHES &&
+        Number.isFinite(kickoffMs) &&
+        kickoffMs > now &&
+        kickoffMs - now <= LIGHTWEIGHT_EVENT_DETAIL_HORIZON_MS;
+      if (!isFallbackEvent && (!LIGHTWEIGHT_REFRESH || lightweightEventDetailsAllowed) && eventDetailsStale) {
         eventDetails = await fetchEventDetails(event.id);
+        if (LIGHTWEIGHT_REFRESH) lightweightEventDetailFetches += 1;
         if (eventDetails) {
           store.eventCache[event.id] = eventDetails;
           store.eventCacheUpdated[event.id] = now;
@@ -11776,28 +11803,52 @@ async function main() {
         awayProviderIds,
         leagueLabel: leagueInfo.label,
       });
-      const espnProfile = LIGHTWEIGHT_REFRESH || apiFootballProfile?.results?.length ? null : await fetchEspnH2HProfile({
-        store,
-        homeName,
-        awayName,
-        homeProviderIds,
-        awayProviderIds,
-        kickoff,
-      });
+      const espnPairKey = `${homeProviderIds.espn}:${awayProviderIds.espn}:${homeProviderIds.espnLeagueCode || awayProviderIds.espnLeagueCode}`;
+      const espnPairUsable = Boolean(homeProviderIds.espn && awayProviderIds.espn && (homeProviderIds.espnLeagueCode || awayProviderIds.espnLeagueCode));
+      const espnPairCached = Boolean(store.espnH2HCache?.[espnPairKey]);
+      // ESPN-H2H is gratis en heeft een cache van 12 uur. In een lichte refresh
+      // alleen binnen een begrensd budget ophalen, zodat de run niet uitloopt.
+      const espnFetchAllowed = !apiFootballProfile?.results?.length &&
+        (LIGHTWEIGHT_REFRESH
+          ? espnPairUsable && (espnPairCached || lightweightEspnH2HPairs < LIGHTWEIGHT_ESPN_H2H_MAX_PAIRS)
+          : true);
+      if (espnFetchAllowed && LIGHTWEIGHT_REFRESH && !espnPairCached) lightweightEspnH2HPairs += 1;
+      const espnProfile = espnFetchAllowed
+        ? await fetchEspnH2HProfile({
+            store,
+            homeName,
+            awayName,
+            homeProviderIds,
+            awayProviderIds,
+            kickoff,
+          })
+        : null;
+      // football-data.co.uk levert gratis historische uitslagen per competitie
+      // (één CSV per seizoen, binnen de run gecached). Dit vult H2H voor
+      // competities waar ESPN-ID's of een betaalde provider ontbreken.
+      const footballDataProfile = !apiFootballProfile?.results?.length && !espnProfile?.results?.length
+        ? await fetchFootballDataCoUkWorkerH2HProfile({
+            league: leagueInfo.label,
+            homeName,
+            awayName,
+            kickoff,
+          }).catch(() => null)
+        : null;
       // Elke H2H-bron levert een status, zodat "geen ontmoetingen gevonden"
       // niet wordt verward met een geblokkeerde of onbereikbare provider.
       const h2hProviderAttempts = [];
       const apiFootballPairKey = `${normalizeName(leagueInfo.label)}:${normalizeName(homeName)}__${normalizeName(awayName)}`;
       const apiFootballCachedAttempt = store.apiFootballH2HCache?.[apiFootballPairKey];
-      const espnCacheKey = `${homeProviderIds.espn}:${awayProviderIds.espn}:${homeProviderIds.espnLeagueCode || awayProviderIds.espnLeagueCode}`;
-      const espnCachedAttempt = store.espnH2HCache?.[espnCacheKey];
+      const espnCachedAttempt = store.espnH2HCache?.[espnPairKey];
       if (h2h?.results?.length) {
         h2hProviderAttempts.push({ provider: "sofascore-h2h", status: "available", records: h2h.results.length });
-      } else if (!isFallbackEvent && !LIGHTWEIGHT_REFRESH) {
-        h2hProviderAttempts.push({ provider: "sofascore-h2h", status: h2h?.status || "not_checked" });
+      } else if (!isFallbackEvent) {
+        h2hProviderAttempts.push({ provider: "sofascore-h2h", status: LIGHTWEIGHT_REFRESH ? "skipped_lightweight" : h2h?.status || "not_checked" });
       }
       const apiFootballEnabled = String(process.env.API_FOOTBALL_H2H_ENABLED || "true").toLowerCase() !== "false";
-      if (LIGHTWEIGHT_REFRESH || !apiFootballEnabled) {
+      if (LIGHTWEIGHT_REFRESH) {
+        h2hProviderAttempts.push({ provider: "api-football", status: "skipped_lightweight" });
+      } else if (!apiFootballEnabled) {
         h2hProviderAttempts.push({ provider: "api-football", status: "acceptance_gate_closed" });
       } else if (!getApiFootballKey()) {
         h2hProviderAttempts.push({ provider: "api-football", status: "not_configured" });
@@ -11812,10 +11863,18 @@ async function main() {
       }
       if (espnProfile?.results?.length) {
         h2hProviderAttempts.push({ provider: "espn-team-schedule", status: "available", records: espnProfile.results.length });
-      } else if (homeProviderIds.espn && awayProviderIds.espn && (homeProviderIds.espnLeagueCode || awayProviderIds.espnLeagueCode)) {
-        h2hProviderAttempts.push({ provider: "espn-team-schedule", status: espnCachedAttempt?.status || "not_checked" });
+      } else if (espnPairUsable) {
+        h2hProviderAttempts.push({
+          provider: "espn-team-schedule",
+          status: espnCachedAttempt?.status || (LIGHTWEIGHT_REFRESH ? "skipped_lightweight" : "not_checked"),
+        });
       } else {
         h2hProviderAttempts.push({ provider: "espn-team-schedule", status: "team_mapping_missing" });
+      }
+      if (footballDataProfile?.results?.length) {
+        h2hProviderAttempts.push({ provider: "football-data-co-uk", status: "available", records: footballDataProfile.results.length });
+      } else if (footballDataLeagueCode(leagueInfo.label)) {
+        h2hProviderAttempts.push({ provider: "football-data-co-uk", status: "no_coverage" });
       }
       h2h = buildH2HAgentProfile({
         baseH2H: h2h,
@@ -11825,6 +11884,7 @@ async function main() {
         nationalProfile: nationalH2HProfile,
         apiFootballProfile,
         espnProfile,
+        footballDataProfile,
         extraProfiles: globalTeamFormProfiles,
         homeName,
         awayName,
@@ -12652,11 +12712,17 @@ async function main() {
   console.log(`[worker] Vandaag: ${(store.matches?.[today] || []).length} wedstrijden`);
   console.log(`[worker] Morgen: ${(store.matches?.[tomorrow] || []).length} wedstrijden`);
   
+  // Fase-timings: de assemblage werd op de oude 9-minutengrens afgebroken
+  // zonder dat de log aanwees welke fase dat kostte.
+  const phaseStartedAt = () => Date.now();
+  const logPhase = (label, startedAt) => console.log(`[worker][timing] ${label}: ${Date.now() - startedAt} ms`);
+  const snapshotLedgerStartedAt = phaseStartedAt();
   try {
     // Alleen wat deze run nieuw of gewijzigd heeft gaat terug naar R2; alleen de
     // maandshards die die delta raakt worden gelezen en herschreven.
     const pendingLedger = ledgerDeltaSince(snapshotLedgerLoad.ledger, ledgerFromStore(store));
     const persistedLedger = await persistSnapshotLedger(pendingLedger, { touchedOnly: true });
+    logPhase("snapshot-ledger naar R2", snapshotLedgerStartedAt);
     store.snapshotLedger = {
       ...(store.snapshotLedger || {}),
       persistedAt: new Date().toISOString(),
@@ -12673,6 +12739,7 @@ async function main() {
     console.warn(`[worker] snapshot-ledger R2 opslag mislukt: ${store.snapshotLedger.r2PersistError}`);
   }
 
+  const trainingSnapshotStartedAt = phaseStartedAt();
   fs.mkdirSync(path.dirname(TRAINING_SNAPSHOT_FILE), { recursive: true });
   let previousTrainingSnapshot = { rows: [] };
   try {
@@ -12690,10 +12757,12 @@ async function main() {
     })
   );
   fs.writeFileSync(TRAINING_SNAPSHOT_FILE, JSON.stringify(trainingSnapshot));
+  logPhase("trainingssnapshot", trainingSnapshotStartedAt);
   console.log(
     `[worker] training behouden: ${trainingSnapshot.rows.length} rows, ` +
       `${trainingSnapshot.preservation.snapshotBackedRows} snapshot-backed`
   );
+  const splitExportStartedAt = phaseStartedAt();
   const staticExport = writeSplitDataFiles(store, {
     splitDataDir: SPLIT_DATA_DIR,
     preserveExistingDayFiles: LIGHTWEIGHT_REFRESH,
@@ -12705,7 +12774,9 @@ async function main() {
         `${staticExport.retainedDateKeys.length} dagbestanden behouden`,
     );
   }
+  logPhase("dagbestanden exporteren", splitExportStartedAt);
   fs.writeFileSync(DATA_FILE, JSON.stringify(store));
+  const databaseSyncStartedAt = phaseStartedAt();
   try {
     const dbSync = await syncStoreToDatabase(store, { dateKeys: dates });
     store.databaseSync = { ...dbSync, syncedAt: new Date().toISOString() };
@@ -12716,16 +12787,20 @@ async function main() {
         `[worker] database sync: ${dbSync.matches} matches, ${dbSync.predictionSnapshots} prediction snapshots`
       );
     }
-    fs.writeFileSync(DATA_FILE, JSON.stringify(store));
   } catch (error) {
     store.databaseSync = {
       syncedAt: new Date().toISOString(),
       skipped: false,
       error: error?.message || String(error),
     };
-    fs.writeFileSync(DATA_FILE, JSON.stringify(store));
     console.warn(`[worker] database sync mislukt: ${store.databaseSync.error}`);
   }
+  logPhase("database-sync", databaseSyncStartedAt);
+  // Eén keer schrijven na de sync in plaats van na elke fase: elke extra
+  // JSON.stringify van de volledige store kostte tijd binnen dezelfde stap.
+  const storeWriteStartedAt = phaseStartedAt();
+  fs.writeFileSync(DATA_FILE, JSON.stringify(store));
+  logPhase("store.json schrijven", storeWriteStartedAt);
   console.log("[worker] klaar");
 }
 

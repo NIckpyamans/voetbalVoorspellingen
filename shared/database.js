@@ -259,10 +259,21 @@ export async function readDatabaseServerStore(options = {}) {
   };
 }
 
+// De eindstand bestaat pas nadat er gespeeld is. Vóór aftrap mag dat veld de
+// dekking niet drukken: anders blijft het cijfer structureel onder 100% hangen.
+function matchHasStarted(match = {}) {
+  if (parseScore(match.score) || hasNumber(match.homeScore) || hasNumber(match.awayScore)) return true;
+  const status = String(match.status || match.statusNormalized || "").toLowerCase();
+  if (/(finished|final|full[-_ ]?time|\bft\b|live|in[-_ ]?play|1h|2h|half|extra|penalt)/.test(status)) return true;
+  const kickoff = Date.parse(match.kickoff || match.date || "");
+  return Number.isFinite(kickoff) && kickoff <= Date.now();
+}
+
 export function buildMatchSourceCoverage(match = {}, prediction = null) {
   const homeStats = match.homeSeasonStats || {};
   const awayStats = match.awaySeasonStats || {};
   const marketCalibration = prediction?.marketCalibration || match.marketCalibration || {};
+  const started = matchHasStarted(match);
   const entries = [
     {
       key: "fixture",
@@ -273,6 +284,7 @@ export function buildMatchSourceCoverage(match = {}, prediction = null) {
     {
       key: "result",
       label: "Eindstand",
+      applicable: started,
       available: Boolean(parseScore(match.score) || hasNumber(match.homeScore) || hasNumber(match.awayScore)),
       source: match.resultSource || match.dataSource || null,
     },
@@ -332,12 +344,16 @@ export function buildMatchSourceCoverage(match = {}, prediction = null) {
       source: marketCalibration.source || prediction?.oddsProviderStatus || null,
     },
   ];
-  const available = entries.filter((entry) => entry.available).length;
+  // Alleen velden die op dit moment kúnnen bestaan tellen mee in de noemer.
+  const applicableEntries = entries.filter((entry) => entry.applicable !== false);
+  const available = applicableEntries.filter((entry) => entry.available).length;
   return {
-    score: entries.length ? available / entries.length : 0,
-    percent: entries.length ? Math.round((available / entries.length) * 100) : 0,
+    score: applicableEntries.length ? available / applicableEntries.length : 0,
+    percent: applicableEntries.length ? Math.round((available / applicableEntries.length) * 100) : 0,
     available,
-    total: entries.length,
+    total: applicableEntries.length,
+    availableAll: entries.filter((entry) => entry.available).length,
+    totalAll: entries.length,
     entries,
     sources: uniqueTruthy(entries.map((entry) => entry.source)),
     generatedAt: new Date().toISOString(),

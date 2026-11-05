@@ -17,7 +17,7 @@ export function classifyProviderResult(input = {}) {
   if (/not_configured|missing_key/.test(status)) return PROVIDER_RESULT.NOT_CONFIGURED;
   if (/quota|rate|reserve|local_quota/.test(status) || code === 429) return PROVIDER_RESULT.QUOTA;
   if (/mapping|fixture_id_missing|no_fixture/.test(status) || input.fixtureMapped === false) return PROVIDER_RESULT.MAPPING_FAILED;
-  if (code >= 400 || /request_failed|provider_error|provider_unreachable|fetch_failed|http_/.test(status)) return PROVIDER_RESULT.HTTP_ERROR;
+  if (code >= 400 || /request_failed|provider_error|provider_payload_error|payload_error|provider_unreachable|fetch_failed|http_/.test(status)) return PROVIDER_RESULT.HTTP_ERROR;
   if (/not_published|lineup_unavailable|too_early/.test(status)) return PROVIDER_RESULT.NOT_PUBLISHED;
   return PROVIDER_RESULT.NO_COVERAGE;
 }

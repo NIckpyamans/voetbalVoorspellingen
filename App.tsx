@@ -108,22 +108,30 @@ function dashboardMatchQuality(match: Match) {
   return score;
 }
 
+function matchStartedForCoverage(match: Match) {
+  if (match.score && match.score !== "VS") return true;
+  if (isFinished(match) || isLive(match)) return true;
+  const kickoff = Date.parse(match.kickoff || match.date || "");
+  return Number.isFinite(kickoff) && kickoff <= Date.now();
+}
+
 function freeSourceCoveragePercent(match: Match) {
   const coverage = match.freeSourceCoverage || match.sourceCoverage || (match as any).sourceCoverage;
   if (coverage?.percent != null || coverage?.score != null) {
     return Number(coverage?.percent ?? coverage.score * 100);
   }
   const observed = [
-    Boolean(match.id && match.homeTeamName && match.awayTeamName && (match.kickoff || match.date)),
-    Boolean(match.score || match.homeScore != null || match.awayScore != null),
-    Boolean(match.h2h?.played || match.h2h?.results?.length || match.h2h?.lastMatches?.length),
-    Boolean(match.homeForm || match.awayForm || match.homeRecent?.recentMatches?.length || match.awayRecent?.recentMatches?.length),
-    Boolean((match as any).homePos != null || (match as any).awayPos != null),
-    hasWeatherData(match),
-    hasXgData(match),
-    hasOddsData(match),
+    { applicable: true, available: Boolean(match.id && match.homeTeamName && match.awayTeamName && (match.kickoff || match.date)) },
+    { applicable: matchStartedForCoverage(match), available: Boolean(match.score || match.homeScore != null || match.awayScore != null) },
+    { applicable: true, available: Boolean(match.h2h?.played || match.h2h?.results?.length || match.h2h?.lastMatches?.length) },
+    { applicable: true, available: Boolean(match.homeForm || match.awayForm || match.homeRecent?.recentMatches?.length || match.awayRecent?.recentMatches?.length) },
+    { applicable: true, available: Boolean((match as any).homePos != null || (match as any).awayPos != null) },
+    { applicable: true, available: hasWeatherData(match) },
+    { applicable: true, available: hasXgData(match) },
+    { applicable: true, available: hasOddsData(match) },
   ];
-  return Math.round((observed.filter(Boolean).length / observed.length) * 100);
+  const applicable = observed.filter((entry) => entry.applicable);
+  return Math.round((applicable.filter((entry) => entry.available).length / applicable.length) * 100);
 }
 
 function hasCoverageEntry(match: Match, key: string) {

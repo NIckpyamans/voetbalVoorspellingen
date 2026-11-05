@@ -68,6 +68,7 @@
     "monitor:standings-integrity": "node scripts/standings-integrity-audit.js",
     "standings:refresh-europe": "node scripts/standings-integrity-audit.js --refresh-european",
     "monitor:neon-storage": "node scripts/manage-neon-storage.js",
+    "db:neon-storage:recover": "NEON_STORAGE_FAIL_ON_CRITICAL=false NEON_STORAGE_ARCHIVES_VERIFIED=false node scripts/manage-neon-storage.js --apply",
     "monitor:storage-hotspots": "node scripts/storage-hotspot-audit.js",
     "db:exports:archive:r2": "node scripts/archive-server-data-to-r2.js --apply",
     "db:prediction-snapshots:archive:r2": "node scripts/archive-prediction-snapshots-to-r2.js --apply",

@@ -68,9 +68,31 @@ function sameTeam(left, right) {
   return canonicalDedupeTeam(left) === canonicalDedupeTeam(right);
 }
 
-function isPair(row, homeName, awayName) {
-  return (sameTeam(row.HomeTeam, homeName) && sameTeam(row.AwayTeam, awayName)) ||
-    (sameTeam(row.HomeTeam, awayName) && sameTeam(row.AwayTeam, homeName));
+// football-data.co.uk schrijft "Charlton", onze kaart "Charlton Athletic". Een
+// toevoegsel uit deze lijst mag ontbreken; andere woorden ("United" vs "City")
+// nooit, anders koppelen we de verkeerde club.
+const CLUB_SUFFIX_TOKENS = new Set([
+  "athletic", "wanderers", "rovers", "city", "town", "united", "albion",
+  "county", "dons", "hotspur", "end", "sporting",
+]);
+
+export function sameFootballDataTeam(left, right) {
+  const a = canonicalDedupeTeam(left);
+  const b = canonicalDedupeTeam(right);
+  if (!a || !b) return false;
+  if (a === b) return true;
+  const [short, long] = a.length <= b.length ? [a, b] : [b, a];
+  if (!long.startsWith(`${short} `)) return false;
+  return long.slice(short.length + 1).split(" ").every((token) => CLUB_SUFFIX_TOKENS.has(token));
+}
+
+function pairMatcher(options = {}) {
+  return options.matchMode === "loose" ? sameFootballDataTeam : sameTeam;
+}
+
+function isPair(row, homeName, awayName, same) {
+  return (same(row.HomeTeam, homeName) && same(row.AwayTeam, awayName)) ||
+    (same(row.HomeTeam, awayName) && same(row.AwayTeam, homeName));
 }
 
 async function fetchSeason(folder, code, fetchImpl) {
@@ -88,6 +110,7 @@ export async function fetchFootballDataCoUkH2HProfile(match, options = {}) {
   const leagueCode = LEAGUE_CODES.get(String(match?.league || "").trim().toLowerCase());
   if (!leagueCode) return null;
   const fetchImpl = options.fetchImpl || fetch;
+  const same = pairMatcher(options);
   const cutoff = Date.parse(match?.kickoff_at || "") || Date.now();
   const results = [];
   for (const folder of seasonFolders(match?.kickoff_at)) {
@@ -96,7 +119,7 @@ export async function fetchFootballDataCoUkH2HProfile(match, options = {}) {
       const date = parseDate(row.Date);
       const homeScore = Number(row.FTHG);
       const awayScore = Number(row.FTAG);
-      if (!date || Date.parse(`${date}T23:59:59Z`) >= cutoff || !isPair(row, match.home_team_name, match.away_team_name)) continue;
+      if (!date || Date.parse(`${date}T23:59:59Z`) >= cutoff || !isPair(row, match.home_team_name, match.away_team_name, same)) continue;
       if (!Number.isFinite(homeScore) || !Number.isFinite(awayScore)) continue;
       results.push({
         date,
@@ -105,6 +128,7 @@ export async function fetchFootballDataCoUkH2HProfile(match, options = {}) {
         awayTeam: row.AwayTeam,
         homeScore,
         awayScore,
+        homeIsTargetHome: same(row.HomeTeam, match.home_team_name),
         source: "football-data.co.uk",
       });
     }
@@ -117,6 +141,54 @@ export async function fetchFootballDataCoUkH2HProfile(match, options = {}) {
   return selected.length
     ? { results: selected, source: "football-data.co.uk historical results", asOf: new Date().toISOString() }
     : null;
+}
+
+export function footballDataLeagueCode(league) {
+  return LEAGUE_CODES.get(String(league || "").trim().toLowerCase()) || null;
+}
+
+// De worker en het dashboard gebruiken de compacte H2H-vorm ({ home, away, score },
+// georiënteerd op de huidige wedstrijd). Deze wrapper levert die vorm zonder
+// API-sleutel; de CSV's worden per run maar één keer per competitie opgehaald.
+export async function fetchFootballDataCoUkWorkerH2HProfile({ league, homeName, awayName, kickoff }, options = {}) {
+  if (!footballDataLeagueCode(league)) return null;
+  const profile = await fetchFootballDataCoUkH2HProfile({
+    league,
+    home_team_name: homeName,
+    away_team_name: awayName,
+    kickoff_at: kickoff,
+  }, { ...options, matchMode: "loose" });
+  if (!profile?.results?.length) return null;
+  const results = profile.results.map((row) => {
+    const direct = row.homeIsTargetHome !== undefined ? row.homeIsTargetHome : sameFootballDataTeam(row.homeTeam, homeName);
+    const homeScore = direct ? row.homeScore : row.awayScore;
+    const awayScore = direct ? row.awayScore : row.homeScore;
+    return {
+      date: row.date,
+      home: homeName,
+      away: awayName,
+      score: `${homeScore}-${awayScore}`,
+      homeScore,
+      awayScore,
+      league: row.league,
+      source: "football-data-co-uk-h2h",
+      sourceTimestamp: `${row.date}T12:00:00.000Z`,
+    };
+  });
+  const homeWins = results.filter((row) => row.homeScore > row.awayScore).length;
+  const awayWins = results.filter((row) => row.awayScore > row.homeScore).length;
+  return {
+    played: results.length,
+    homeWins,
+    draws: results.length - homeWins - awayWins,
+    awayWins,
+    sameCompetitionPlayed: results.length,
+    results,
+    status: "football-data-co-uk-h2h",
+    source: "football-data.co.uk",
+    asOf: new Date().toISOString(),
+    sourceTimestamp: new Date().toISOString(),
+  };
 }
 
 export function resetFootballDataH2HCacheForTests() {

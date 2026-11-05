@@ -50,8 +50,10 @@ child.on("close", (code, signal) => {
     // psql-formaat (db:schema:apply draait via psql i.p.v. de Neon HTTP-driver):
     /Your account or project has exceeded the quota/i.test(output) ||
     /exceeded the quota/i.test(output) ||
-    /project size limit \(512 MB\) has been exceeded/i.test(output) ||
-    /NeonDbError:[^\n]*could not extend file/i.test(output) ||
+    // Limiet-onafhankelijk: Neon meldt de projectgrootte in MB en die is al eens
+    // verhoogd (512 → 1024), waardoor de oude vaste 512-tekst niet meer matchte.
+    /project size limit[^\n]*exceeded/i.test(output) ||
+    /(?:NeonDbError:)?[^\n]*could not extend file/i.test(output) ||
     /code:\s*['\"]53100['\"]/i.test(output);
 
   if (quotaExceeded) {

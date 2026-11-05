@@ -18,6 +18,7 @@ export function buildH2HAgentProfile(input, deps) {
     nationalProfile,
     apiFootballProfile,
     espnProfile,
+    footballDataProfile,
     extraProfiles = [],
     providerAttempts = [],
     asOf,
@@ -62,6 +63,7 @@ export function buildH2HAgentProfile(input, deps) {
     [nationalProfile, "openfootball-international-h2h"],
     [apiFootballProfile, "api-football-h2h"],
     [espnProfile, "espn-team-schedule-h2h"],
+    [footballDataProfile, "football-data-co-uk-h2h"],
   ]) {
     if (!profile?.results?.length) continue;
     results = mergeH2HResultLists(results, profile.results);
@@ -72,15 +74,21 @@ export function buildH2HAgentProfile(input, deps) {
   if (!results.length) {
     const failedAttempts = Array.isArray(providerAttempts) ? providerAttempts : [];
     const statuses = failedAttempts.map((attempt) => String(attempt?.status || "").toLowerCase());
-    const status = statuses.some((value) => /request_failed|provider_unreachable|provider_error|provider_exception|fetch_unavailable|http_\d+/.test(value))
-      ? "provider_unreachable"
-      : statuses.some((value) => /acceptance|not_configured|gate_closed|disabled/.test(value))
-        ? "provider_acceptance_blocked"
-        : statuses.some((value) => /mapping/.test(value))
-          ? "team_mapping_missing"
-          : statuses.length > 0 && statuses.every((value) => /available|ok|no_coverage|not_found|no_direct_history/.test(value))
-            ? "no_direct_history"
-            : "not_checked";
+    // Een bron die deze run bewust is overgeslagen (lichte refresh) is géén
+    // uitgeschakelde bron: dat verschil mag de dashboardmelding niet verliezen.
+    const status =
+      statuses.some((value) => /request_failed|provider_unreachable|provider_error|provider_exception|fetch_unavailable|http_\d+/.test(value))
+        ? "provider_unreachable"
+        : statuses.some((value) => /acceptance|not_configured|gate_closed|disabled/.test(value))
+          ? "provider_acceptance_blocked"
+          : statuses.some((value) => /mapping/.test(value))
+            ? "team_mapping_missing"
+            : statuses.some((value) => /no_coverage|not_found|no_direct_history/.test(value)) ||
+                (statuses.length > 0 && statuses.every((value) => /available|ok/.test(value)))
+              ? "no_direct_history"
+              : statuses.some((value) => /skipped/.test(value))
+                ? "skipped_lightweight"
+                : "not_checked";
     return {
       played: 0,
       homeWins: 0,

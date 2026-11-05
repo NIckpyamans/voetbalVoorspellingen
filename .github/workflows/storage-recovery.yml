@@ -43,6 +43,10 @@ jobs:
           node-version: 22
           cache: npm
       - run: npm ci
+      - name: Free Neon storage on derived caches
+        # Alleen afgeleide caches en audit-historie (geen canonieke data), zodat
+        # de stappen hierna weer naar Neon kunnen schrijven als de limiet vol zit.
+        run: npm run db:neon-storage:recover
       - name: Verify immutable R2 storage
         run: npm run test:r2-snapshot-canary
       - id: database

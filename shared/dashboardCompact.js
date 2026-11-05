@@ -43,6 +43,7 @@ export function h2hAvailabilityLabel(match) {
   if (/provider_unreachable|source_unreachable|request_failed|provider_exception|fetch_unavailable|http_error|provider_error/.test(status)) return "bron niet bereikbaar";
   if (/mapping_missing|team_mapping_missing|mapping_failed/.test(status)) return "team-ID ontbreekt";
   if (/not_configured|acceptance_blocked|acceptance_gate_closed|gate_closed/.test(status)) return "bron uitgeschakeld";
+  if (/skipped_lightweight|skipped/.test(status)) return "nog niet opgehaald";
   if (/no_direct_history|not_found|no_coverage|h2h-agent-empty|geen.*ontmoeting/.test(status)) return "geen ontmoetingen gevonden";
   return "nog niet gecontroleerd";
 }

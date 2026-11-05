@@ -13,6 +13,7 @@ const H2H_AVAILABILITY_STATUSES = new Set([
   "provider_acceptance_blocked",
   "team_mapping_missing",
   "no_direct_history",
+  "skipped_lightweight",
   "not_checked",
 ]);
 
