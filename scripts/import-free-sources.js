@@ -1011,11 +1011,18 @@ async function importStoredWeather(sql) {
   }
   const rows = await sql.query(
     `
-      select m.match_id, m.date_key, m.kickoff_at, m.source_coverage, v.latitude, v.longitude, v.name as venue_name
+      select m.match_id, m.date_key, m.kickoff_at, m.source_coverage,
+             coalesce(v.latitude, home_venue.latitude) as latitude,
+             coalesce(v.longitude, home_venue.longitude) as longitude,
+             coalesce(v.name, home_venue.name) as venue_name
       from matches m
-      join venues v on v.venue_id = m.venue_id
-      where v.latitude is not null
-        and v.longitude is not null
+      left join venues v on v.venue_id = m.venue_id
+      -- Fallback via de thuisclub: een fixture die vóór de geocode-stap is
+      -- aangemaakt heeft geen eigen venue_id en bleef daardoor zonder weer.
+      left join clubs home_club on home_club.club_id = m.home_club_id
+      left join venues home_venue on home_venue.venue_id = home_club.venue_id
+      where coalesce(v.latitude, home_venue.latitude) is not null
+        and coalesce(v.longitude, home_venue.longitude) is not null
         and m.date_key is not null
         and coalesce(m.weather_payload, '{}'::jsonb) = '{}'::jsonb
       order by m.kickoff_at nulls last, m.date_key desc
@@ -1154,7 +1161,30 @@ async function backfillVenueCoordinates(sql) {
       errors.push({ clubId: row.club_id, error: error.message });
     }
   }
-  return { scanned: targetRows.length, candidatePool: rows.length, curated, geocoded, errors };
+  // Bestaande fixtures houden anders venue_id null: de weerimport joint op
+  // matches.venue_id en vond zo nooit coördinaten, ook niet nadat het stadion
+  // bekend was. Alleen wedstrijden zonder venue in een relevante periode worden
+  // aangevuld, zodat dit geen volledige tabelupdate wordt.
+  const propagatedRows = await sql.query(
+    `
+      update matches m
+      set venue_id = c.venue_id, updated_at = now()
+      from clubs c
+      where m.venue_id is null
+        and m.home_club_id = c.club_id
+        and c.venue_id is not null
+        and m.kickoff_at >= now() - interval '3 days'
+      returning m.match_id
+    `
+  );
+  return {
+    scanned: targetRows.length,
+    candidatePool: rows.length,
+    curated,
+    geocoded,
+    propagated: propagatedRows.length,
+    errors,
+  };
 }
 
 async function backfillClubAliases(sql) {

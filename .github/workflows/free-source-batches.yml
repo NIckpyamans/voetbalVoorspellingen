@@ -116,6 +116,14 @@ jobs:
           DATABASE_URL: ${{ secrets.DATABASE_URL }}
           POSTGRES_URL: ${{ secrets.POSTGRES_URL }}
           FREE_SOURCE_IMPORT_LIMIT: 700
+      - name: Resolve stadium coordinates for free weather context
+        # De geocoder draaide alleen bij een handmatige dispatch, waardoor de
+        # weerimport nooit coördinaten vond en de weerdekking op nul bleef.
+        run: node scripts/ci-neon-safe.js -- node scripts/import-free-sources.js --source=venues
+        env:
+          DATABASE_URL: ${{ secrets.DATABASE_URL }}
+          POSTGRES_URL: ${{ secrets.POSTGRES_URL }}
+          VENUE_GEOCODE_LIMIT: 40
       - name: Backfill weather after season discovery
         run: node scripts/ci-neon-safe.js -- node scripts/import-free-sources.js --source=weather
         env:
