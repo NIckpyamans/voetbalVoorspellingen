@@ -316,8 +316,14 @@ export function buildMatchSourceCoverage(match = {}, prediction = null) {
     {
       key: "weather",
       label: "Weer",
+      // Alleen een bron noemen als er echt weerdata is. Anders kwam "Open-Meteo"
+      // in de bronnenlijst terecht terwijl het veld leeg was, en telde de chip
+      // een bron mee die niets leverde.
       available: Boolean(match.weather?.conditions || hasNumber(match.weather?.temperature)),
-      source: match.weather?.source || "Open-Meteo",
+      source: Boolean(match.weather?.conditions || hasNumber(match.weather?.temperature))
+        ? match.weather?.source || "Open-Meteo"
+        : null,
+      reason: match.weatherStatus || match.weather?.status || null,
     },
     {
       key: "xg_style",

@@ -56,10 +56,18 @@ child.on("close", (code, signal) => {
     /(?:NeonDbError:)?[^\n]*could not extend file/i.test(output) ||
     /code:\s*['\"]53100['\"]/i.test(output);
 
+  // Een soft skip houdt de run groen, maar mag niet onzichtbaar zijn: zonder
+  // annotatie zag een volle database eruit als een geslaagde datarun.
+  const annotateSoftSkip = (reason) => {
+    if (process.env.GITHUB_ACTIONS === "true") {
+      console.log(`::warning title=Neon soft skip::${reason}`);
+    }
+  };
+
   if (quotaExceeded) {
-    console.warn(
-      "[ci-neon-safe] Neon quota or project-size limit reached. Treating this data job as a soft skip; R2/local evidence remains available and the next run can replay writes after recovery."
-    );
+    const reason = "Neon quota of projectgrootte bereikt: data-job soft geskipt. R2-bewijs blijft staan; na herstel kan de volgende run opnieuw schrijven.";
+    console.warn(`[ci-neon-safe] ${reason}`);
+    annotateSoftSkip(reason);
     process.exit(0);
   }
 
@@ -69,9 +77,9 @@ child.on("close", (code, signal) => {
     /connect E(?:ACCES|CONNRESET|TIMEDOUT|HOSTUNREACH)/i.test(output);
 
   if (transientNeonFailure) {
-    console.warn(
-      "[ci-neon-safe] Neon/network temporarily unavailable. Treating this scheduled data job as a soft skip; the next orchestrated run can retry."
-    );
+    const reason = "Neon/netwerk tijdelijk niet bereikbaar: data-job soft geskipt; de volgende georkestreerde run probeert opnieuw.";
+    console.warn(`[ci-neon-safe] ${reason}`);
+    annotateSoftSkip(reason);
     process.exit(0);
   }
 

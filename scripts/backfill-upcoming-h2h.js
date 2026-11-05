@@ -589,15 +589,15 @@ async function main() {
       error: attempt.error ?? null,
     })))
     .filter((row) => row.result !== "found" && /error|payload|quota|acceptance|mapping|unreachable|not_configured|rate_limited/.test(String(row.status || "")));
-  // Een batch die niets oplevert is een signaal, geen uitkomst: laat de workflow falen.
-  const minBatchForGate = Math.max(1, Number(process.env.H2H_BACKFILL_QUALITY_MIN_BATCH || 20));
-  const qualityGate = {
-    minBatch: minBatchForGate,
-    batch: candidates.length,
+  // Een batch die niets oplevert is een signaal, geen uitkomst: laat de workflow
+  // falen. Maar alleen wanneer de providers niets bruikbaars antwoordden; een
+  // correcte "geen historie"-ronde is data, geen fout.
+  const qualityGate = buildH2HQualityGate({
+    minBatch: process.env.H2H_BACKFILL_QUALITY_MIN_BATCH,
+    candidates: candidates.length,
     filled: filled.length,
-    applied: candidates.length >= minBatchForGate,
-    failed: candidates.length >= minBatchForGate && filled.length === 0,
-  };
+    attempts: [...filled, ...noDirectHistory].flatMap((item) => item.providerAttempts || []),
+  });
   const remaining = Math.max(0, candidateTotal - candidates.length);
   const report = {
     generatedAt: new Date().toISOString(),
@@ -633,6 +633,21 @@ async function main() {
     apiFootballH2HPolicy: { ...apiFootballPolicy, pairsAttempted: apiFootballPairsAttempted },
     apiFootball: summarizeApiFootballUsage(store),
     providerMetrics: summarizeProviderMetrics([...filled.flatMap((item) => item.providerAttempts || []), ...noDirectHistory.flatMap((item) => item.providerAttempts || [])]),
+    // Trend t.o.v. de vorige run: een zakkende dekking valt zo op vóór iemand
+    // een chip in het dashboard opmerkt.
+    coverageTrend: (() => {
+      const previous = readJson(OUTPUT_JSON);
+      if (!previous || previous.checked === undefined) return null;
+      const previousChecked = Number(previous.checked || 0);
+      const previousFilled = Number(previous.filled || 0);
+      return {
+        generatedAt: previous.generatedAt || null,
+        checked: previousChecked,
+        filled: previousFilled,
+        deltaFilled: filled.length - previousFilled,
+        deltaChecked: candidates.length - previousChecked,
+      };
+    })(),
     filledSamples: filled.slice(0, 20),
     noDirectHistorySamples: noDirectHistory.slice(0, 20),
     errorSamples: errors.slice(0, 10),
@@ -681,7 +696,11 @@ async function main() {
       `Geen directe H2H: ${report.noDirectHistory}`,
       `Errors: ${report.errors}`,
       `Providerfouten: ${report.providerErrorCount}`,
-      `Kwaliteitsgate: ${report.qualityGate.failed ? "gefaald (0 resultaten in een volle batch)" : report.qualityGate.applied ? "geslaagd" : "niet van toepassing"}`,
+      `Kwaliteitsgate: ${report.qualityGate.failed
+        ? `gefaald (${report.qualityGate.outcome === "no_provider_attempts" ? "geen enkele providerpoging" : "providers geblokkeerd"} in een volle batch)`
+        : report.qualityGate.applied
+          ? `geslaagd (${report.qualityGate.outcome})`
+          : "niet van toepassing"}`,
       "",
       `Openstaand na deze batch: ${report.remaining}`,
       "",
@@ -694,6 +713,24 @@ async function main() {
       "## Geen Directe H2H",
       ...report.noDirectHistorySamples.map((item) => `- ${item.date}: ${item.homeTeam} - ${item.awayTeam} (${item.status})`),
       "",
+      ...(providerErrorSamples.length
+        ? [
+            "## Providerfouten",
+            ...Object.entries(
+              providerErrorSamples.reduce((counts, row) => {
+                const code = row.statusCode ? ` ${row.statusCode}` : "";
+                const category = row.errorCategory ? ` / ${row.errorCategory}` : "";
+                const key = `${row.provider || "provider"}: ${row.status || row.result}${code}${category}`;
+                counts[key] = (counts[key] || 0) + 1;
+                return counts;
+              }, {})
+            )
+              .sort((left, right) => right[1] - left[1])
+              .slice(0, 8)
+              .map(([key, count]) => `- ${count}× ${key}`),
+            "",
+          ]
+        : []),
     ].join("\n")
   );
 
@@ -703,9 +740,48 @@ async function main() {
     console.error("[h2h-backfill] providerfouten:", JSON.stringify(providerErrorSamples, null, 2));
   }
   if (report.qualityGate.failed) {
-    console.error(`[h2h-backfill] kwaliteitsgate: 0 van ${report.qualityGate.batch} gecontroleerde wedstrijden kreeg H2H (${report.providerErrorCount} providerfouten). Controleer de providerfouten en de team-ID-koppelingen; dit is geen bewijs dat H2H ontbreekt.`);
+    console.error(`[h2h-backfill] kwaliteitsgate: 0 van ${report.qualityGate.batch} gecontroleerde wedstrijden kreeg H2H (${report.providerErrorCount} providerfouten, oorzaak: ${report.qualityGate.outcome}). Controleer de providerfouten en de team-ID-koppelingen; dit is geen bewijs dat H2H ontbreekt.`);
     process.exitCode = 1;
   }
+}
+
+// Gate-semantiek: alleen falen als een volle batch niets opleverde én de
+// providers geen bruikbaar antwoord gaven. Nul providerpogingen (acceptatie
+// geblokkeerd, provider niet geconfigureerd) of alleen quota-/HTTP-fouten zijn
+// een systeemprobleem, geen bewijs dat er geen historie is.
+const H2H_BLOCKED_ATTEMPT_RESULTS = new Set(["http_error", "quota", "mapping_failed"]);
+
+export function buildH2HQualityGate({ minBatch, candidates, filled, attempts = [] } = {}) {
+  const minBatchForGate = Math.max(1, Number(minBatch || 20));
+  const batch = Number(candidates || 0);
+  const filledCount = Number(filled || 0);
+  // Een lokale rate-limit betekent dat er niets gevraagd is, dus telt niet als
+  // providerantwoord en ook niet als providerblokkade.
+  const effectiveAttempts = (Array.isArray(attempts) ? attempts : [])
+    .filter((attempt) => String(attempt?.status || "") !== "rate_limited_locally");
+  const blockedAttempts = effectiveAttempts.filter((attempt) =>
+    H2H_BLOCKED_ATTEMPT_RESULTS.has(String(attempt?.result || ""))
+  ).length;
+  const applied = batch >= minBatchForGate;
+  const outcome = !applied
+    ? "not_applicable"
+    : filledCount > 0
+      ? "filled"
+      : effectiveAttempts.length === 0
+        ? "no_provider_attempts"
+        : blockedAttempts > 0
+          ? "provider_blocked"
+          : "providers_reported_no_history";
+  return {
+    minBatch: minBatchForGate,
+    batch,
+    filled: filledCount,
+    attempts: effectiveAttempts.length,
+    blockedAttempts,
+    applied,
+    outcome,
+    failed: outcome === "no_provider_attempts" || outcome === "provider_blocked",
+  };
 }
 
 export { buildBackfillRecommendation };
