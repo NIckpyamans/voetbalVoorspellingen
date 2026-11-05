@@ -7,6 +7,7 @@ import path from "path";
 import crypto from "crypto";
 import { spawnSync } from "child_process";
 import { normalizeMinute, parseMinuteValue } from "../shared/minute.js";
+import { openMeteoUrl, weatherRiskLevel } from "../shared/openMeteo.js";
 import {
   ACTIVE_COMPETITIONS,
   filterVisibleMatches,
@@ -8760,7 +8761,7 @@ async function fetchWeather(lat, lon, kickoffISO) {
   if (!kickoffISO) return null;
   const kickoff = new Date(kickoffISO);
   const date = kickoff.toISOString().split("T")[0];
-  const url = `https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}&hourly=temperature_2m,precipitation_probability,precipitation,windspeed_10m&timezone=auto&start_date=${date}&end_date=${date}`;
+  const url = openMeteoUrl({ latitude: lat, longitude: lon, dateKey: date, includeProbability: true });
   try {
     const response = await fetch(url);
     if (!response.ok) return null;
@@ -8777,9 +8778,11 @@ async function fetchWeather(lat, lon, kickoffISO) {
       }
     }
 
-    const windSpeed = json.hourly.windspeed_10m?.[bestIndex] ?? null;
+    const windSpeed = json.hourly.wind_speed_10m?.[bestIndex] ?? null;
     const precipitationProbability = json.hourly.precipitation_probability?.[bestIndex] ?? null;
     const precipitation = json.hourly.precipitation?.[bestIndex] ?? null;
+    // Het archief levert geen neerslagkans; de helper valt daar terug op de hoeveelheid.
+    const weatherRisk = weatherRiskLevel({ windSpeed, precipitationProbability, precipitation });
 
     return {
       temperature: json.hourly.temperature_2m?.[bestIndex] ?? null,
@@ -8787,9 +8790,9 @@ async function fetchWeather(lat, lon, kickoffISO) {
       precipitationProbability,
       precipitation,
       riskLevel:
-        Number(windSpeed || 0) >= 28 || Number(precipitationProbability || 0) >= 70
+        weatherRisk === "high"
           ? "high"
-          : Number(windSpeed || 0) >= 20 || Number(precipitationProbability || 0) >= 50
+          : weatherRisk === "medium"
             ? "medium"
             : "low",
     };
@@ -12263,7 +12266,16 @@ async function main() {
         awayInjuries: store.teamInjuries[awayId] || null,
         homeRestDays,
         awayRestDays,
-        weather,
+        // Zonder venuecoordinaten levert de live fetch niets; val dan terug op
+        // de weercontext die de import al in de database heeft gezet.
+        weather:
+          weather ||
+          (dbFeatureContext?.weather && Object.keys(dbFeatureContext.weather).length
+            ? {
+                ...dbFeatureContext.weather,
+                riskLevel: dbFeatureContext.weather.riskLevel || weatherRiskLevel(dbFeatureContext.weather),
+              }
+            : null),
         lineupSummary,
         availabilitySummary,
         h2h,

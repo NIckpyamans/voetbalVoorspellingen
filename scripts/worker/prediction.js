@@ -357,7 +357,9 @@ export function buildFeatureVector(input, deps) {
   const dbAvgAwayOdds = Number(dbHistoricalOdds.avgAway || 0);
   const dbHomeImplied = dbAvgHomeOdds > 1.01 ? 1 / dbAvgHomeOdds : 0;
   const dbAwayImplied = dbAvgAwayOdds > 1.01 ? 1 / dbAvgAwayOdds : 0;
-  const dbWeather = input.weather || {};
+  // Zonder venuecoordinaten levert de live fetch niets; gebruik dan de
+  // weercontext die de import al in de database heeft gezet.
+  const dbWeather = input.weather || dbFeatureContext.weather || dbFeatureContext.weatherPayload || {};
   const dbWeatherRisk =
     dbWeather.riskLevel === "high" || Number(dbWeather.precipitation || 0) >= 4 || Number(dbWeather.windSpeed || 0) >= 45
       ? 2
