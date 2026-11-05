@@ -1,18 +1,18 @@
 {
-  "generatedAt": "2026-11-04T20:26:11.783Z",
+  "generatedAt": "2026-11-05T10:48:09.894Z",
   "daysAhead": 8,
   "targetPlayersPerTeam": 18,
   "candidates": 238,
   "checked": 32,
-  "enriched": 32,
-  "unavailable": 0,
-  "skippedFresh": 201,
-  "pendingBeforeBatch": 37,
-  "pendingAfterBatch": 5,
+  "enriched": 30,
+  "unavailable": 2,
+  "skippedFresh": 171,
+  "pendingBeforeBatch": 67,
+  "pendingAfterBatch": 35,
   "rateLimited": false,
   "retryAfterSeconds": 0,
   "byProvider": {
-    "FotMob": 32,
+    "FotMob": 24,
     "Laatste bevestigde opstelling": 30,
     "Transfermarkt Datasets": 0,
     "TheSportsDB": 0,
@@ -21,290 +21,332 @@
   },
   "byCompetition": {
     "England - Premier League": {
-      "checked": 2,
-      "enriched": 2,
-      "unavailable": 0
-    },
-    "Germany - 2. Bundesliga": {
-      "checked": 4,
-      "enriched": 4,
-      "unavailable": 0
-    },
-    "Europe - Europa League": {
-      "checked": 2,
-      "enriched": 2,
-      "unavailable": 0
-    },
-    "Europe - Conference League": {
-      "checked": 1,
-      "enriched": 1,
-      "unavailable": 0
-    },
-    "France - Ligue 2": {
       "checked": 9,
       "enriched": 9,
       "unavailable": 0
     },
     "England - Championship": {
-      "checked": 1,
-      "enriched": 1,
+      "checked": 7,
+      "enriched": 7,
       "unavailable": 0
     },
     "France - Ligue 1": {
-      "checked": 6,
-      "enriched": 6,
-      "unavailable": 0
-    },
-    "Netherlands - Eredivisie": {
-      "checked": 3,
-      "enriched": 3,
-      "unavailable": 0
-    },
-    "Netherlands - Eerste Divisie": {
-      "checked": 3,
-      "enriched": 3,
+      "checked": 1,
+      "enriched": 1,
       "unavailable": 0
     },
     "Germany - Bundesliga": {
       "checked": 1,
       "enriched": 1,
       "unavailable": 0
+    },
+    "Europe - Conference League": {
+      "checked": 7,
+      "enriched": 6,
+      "unavailable": 1
+    },
+    "Europe - Europa League": {
+      "checked": 5,
+      "enriched": 4,
+      "unavailable": 1
+    },
+    "Germany - 2. Bundesliga": {
+      "checked": 2,
+      "enriched": 2,
+      "unavailable": 0
     }
   },
-  "failureReasons": {},
-  "failures": [],
+  "failureReasons": {
+    "no_provider_team_or_roster_match": 2
+  },
+  "failures": [
+    {
+      "team": "Red Star Belgrade",
+      "competition": "Europe - Conference League",
+      "reason": "no_provider_team_or_roster_match",
+      "attemptedProviders": [
+        "FotMob",
+        "Transfermarkt Datasets",
+        "ESPN",
+        "TheSportsDB",
+        "Wikipedia"
+      ],
+      "aliasSuggestions": []
+    },
+    {
+      "team": "Hapoel Be'er",
+      "competition": "Europe - Europa League",
+      "reason": "no_provider_team_or_roster_match",
+      "attemptedProviders": [
+        "FotMob",
+        "Transfermarkt Datasets",
+        "ESPN",
+        "TheSportsDB",
+        "Wikipedia"
+      ],
+      "aliasSuggestions": []
+    }
+  ],
   "samples": [
     {
-      "team": "Manchester United",
+      "team": "Everton",
       "competition": "England - Premier League",
-      "players": 30,
+      "players": 21,
       "provider": "FotMob + Laatste bevestigde opstelling",
-      "providerTeam": "Manchester United"
+      "providerTeam": "Everton"
     },
     {
-      "team": "Dynamo Dresden",
-      "competition": "Germany - 2. Bundesliga",
-      "players": 30,
+      "team": "Southampton",
+      "competition": "England - Championship",
+      "players": 22,
       "provider": "FotMob + Laatste bevestigde opstelling",
-      "providerTeam": "Dynamo Dresden"
+      "providerTeam": "Southampton"
     },
     {
-      "team": "SpVgg Greuther Fürth",
-      "competition": "Germany - 2. Bundesliga",
-      "players": 30,
+      "team": "Arsenal",
+      "competition": "England - Premier League",
+      "players": 24,
       "provider": "FotMob + Laatste bevestigde opstelling",
-      "providerTeam": "Greuther Fürth"
+      "providerTeam": "Arsenal"
     },
     {
-      "team": "VfL Osnabruck",
-      "competition": "Germany - 2. Bundesliga",
-      "players": 30,
+      "team": "Angers",
+      "competition": "France - Ligue 1",
+      "players": 24,
       "provider": "FotMob + Laatste bevestigde opstelling",
-      "providerTeam": "VfL Osnabrück"
+      "providerTeam": "Angers"
     },
     {
-      "team": "VfL Wolfsburg",
-      "competition": "Germany - 2. Bundesliga",
-      "players": 30,
+      "team": "Preston North End",
+      "competition": "England - Championship",
+      "players": 25,
       "provider": "FotMob + Laatste bevestigde opstelling",
-      "providerTeam": "Wolfsburg"
+      "providerTeam": "Preston North End"
     },
     {
-      "team": "Juventus",
+      "team": "Fulham",
+      "competition": "England - Premier League",
+      "players": 25,
+      "provider": "FotMob + Laatste bevestigde opstelling",
+      "providerTeam": "Fulham"
+    },
+    {
+      "team": "Manchester City",
+      "competition": "England - Premier League",
+      "players": 25,
+      "provider": "FotMob + Laatste bevestigde opstelling",
+      "providerTeam": "Manchester City"
+    },
+    {
+      "team": "VfB Stuttgart",
+      "competition": "Germany - Bundesliga",
+      "players": 25,
+      "provider": "FotMob + Laatste bevestigde opstelling",
+      "providerTeam": "VfB Stuttgart"
+    },
+    {
+      "team": "Stoke City",
+      "competition": "England - Championship",
+      "players": 26,
+      "provider": "FotMob + Laatste bevestigde opstelling",
+      "providerTeam": "Stoke City"
+    },
+    {
+      "team": "Wolverhampton Wanderers",
+      "competition": "England - Championship",
+      "players": 26,
+      "provider": "FotMob + Laatste bevestigde opstelling",
+      "providerTeam": "Wolverhampton Wanderers"
+    },
+    {
+      "team": "Braga",
+      "competition": "Europe - Conference League",
+      "players": 27,
+      "provider": "FotMob + Laatste bevestigde opstelling",
+      "providerTeam": "Braga"
+    },
+    {
+      "team": "Lincoln Red Imps",
+      "competition": "Europe - Conference League",
+      "players": 11,
+      "provider": "Laatste bevestigde opstelling",
+      "providerTeam": "Lincoln Red Imps"
+    },
+    {
+      "team": "SK Brann",
+      "competition": "Europe - Conference League",
+      "players": 11,
+      "provider": "Laatste bevestigde opstelling",
+      "providerTeam": "SK Brann"
+    },
+    {
+      "team": "Sheffield United",
+      "competition": "England - Championship",
+      "players": 26,
+      "provider": "FotMob + Laatste bevestigde opstelling",
+      "providerTeam": "Sheffield United"
+    },
+    {
+      "team": "Aston Villa",
+      "competition": "England - Premier League",
+      "players": 27,
+      "provider": "FotMob + Laatste bevestigde opstelling",
+      "providerTeam": "Aston Villa"
+    },
+    {
+      "team": "Chelsea",
+      "competition": "England - Premier League",
+      "players": 27,
+      "provider": "FotMob + Laatste bevestigde opstelling",
+      "providerTeam": "Chelsea"
+    },
+    {
+      "team": "Atalanta",
+      "competition": "Europe - Conference League",
+      "players": 27,
+      "provider": "FotMob + Laatste bevestigde opstelling",
+      "providerTeam": "Atalanta"
+    },
+    {
+      "team": "Egnatia",
+      "competition": "Europe - Conference League",
+      "players": 27,
+      "provider": "FotMob + Laatste bevestigde opstelling",
+      "providerTeam": "Egnatia"
+    },
+    {
+      "team": "West Ham United",
+      "competition": "England - Championship",
+      "players": 28,
+      "provider": "FotMob + Laatste bevestigde opstelling",
+      "providerTeam": "West Ham United"
+    },
+    {
+      "team": "Lillestrøm",
+      "competition": "Europe - Europa League",
+      "players": 28,
+      "provider": "FotMob + Laatste bevestigde opstelling",
+      "providerTeam": "Lillestrøm"
+    },
+    {
+      "team": "Hapoel Beer Sheva",
       "competition": "Europe - Europa League",
       "players": 31,
-      "provider": "FotMob",
-      "providerTeam": "Monza"
+      "provider": "FotMob + Laatste bevestigde opstelling",
+      "providerTeam": "Hapoel Beer Sheva"
     },
     {
-      "team": "F.C. København",
+      "team": "SK Sturm Graz",
+      "competition": "Europe - Europa League",
+      "players": 11,
+      "provider": "Laatste bevestigde opstelling",
+      "providerTeam": "SK Sturm Graz"
+    },
+    {
+      "team": "Leeds United",
+      "competition": "England - Premier League",
+      "players": 11,
+      "provider": "Laatste bevestigde opstelling",
+      "providerTeam": "Leeds United"
+    },
+    {
+      "team": "Newcastle United",
+      "competition": "England - Premier League",
+      "players": 11,
+      "provider": "Laatste bevestigde opstelling",
+      "providerTeam": "Newcastle United"
+    },
+    {
+      "team": "Nottingham Forest",
+      "competition": "England - Premier League",
+      "players": 11,
+      "provider": "Laatste bevestigde opstelling",
+      "providerTeam": "Nottingham Forest"
+    },
+    {
+      "team": "Millwall",
+      "competition": "England - Championship",
+      "players": 31,
+      "provider": "FotMob + Laatste bevestigde opstelling",
+      "providerTeam": "Millwall"
+    },
+    {
+      "team": "FC Thun",
       "competition": "Europe - Conference League",
-      "players": 26,
+      "players": 31,
+      "provider": "FotMob + Laatste bevestigde opstelling",
+      "providerTeam": "Thun"
+    },
+    {
+      "team": "Lech Poznan",
+      "competition": "Europe - Europa League",
+      "players": 31,
+      "provider": "FotMob + Laatste bevestigde opstelling",
+      "providerTeam": "Lech Poznań"
+    },
+    {
+      "team": "Arminia Bielefeld",
+      "competition": "Germany - 2. Bundesliga",
+      "players": 31,
+      "provider": "FotMob + Laatste bevestigde opstelling",
+      "providerTeam": "Arminia Bielefeld"
+    },
+    {
+      "team": "VfL Bochum",
+      "competition": "Germany - 2. Bundesliga",
+      "players": 31,
+      "provider": "FotMob + Laatste bevestigde opstelling",
+      "providerTeam": "Bochum"
+    }
+  ],
+  "rejectedProviderTeams": [
+    {
+      "team": "Lincoln Red Imps",
       "provider": "FotMob",
       "providerTeam": "FK Crvena Zvezda"
     },
     {
-      "team": "Annecy",
-      "competition": "France - Ligue 2",
-      "players": 39,
-      "provider": "FotMob + Laatste bevestigde opstelling",
-      "providerTeam": "Red Star"
+      "team": "Red Star Belgrade",
+      "provider": "FotMob",
+      "providerTeam": "FK Crvena Zvezda"
     },
     {
-      "team": "Boulogne",
-      "competition": "France - Ligue 2",
-      "players": 39,
-      "provider": "FotMob + Laatste bevestigde opstelling",
-      "providerTeam": "Red Star"
+      "team": "SK Brann",
+      "provider": "FotMob",
+      "providerTeam": "FK Crvena Zvezda"
     },
     {
-      "team": "Clermont Foot",
-      "competition": "France - Ligue 2",
-      "players": 39,
-      "provider": "FotMob + Laatste bevestigde opstelling",
-      "providerTeam": "Red Star"
-    },
-    {
-      "team": "Dijon FCO",
-      "competition": "France - Ligue 2",
-      "players": 39,
-      "provider": "FotMob + Laatste bevestigde opstelling",
-      "providerTeam": "Red Star"
-    },
-    {
-      "team": "Guingamp",
-      "competition": "France - Ligue 2",
-      "players": 39,
-      "provider": "FotMob + Laatste bevestigde opstelling",
-      "providerTeam": "Red Star"
-    },
-    {
-      "team": "Metz",
-      "competition": "France - Ligue 2",
-      "players": 39,
-      "provider": "FotMob + Laatste bevestigde opstelling",
-      "providerTeam": "Red Star"
-    },
-    {
-      "team": "Pau",
-      "competition": "France - Ligue 2",
-      "players": 39,
-      "provider": "FotMob + Laatste bevestigde opstelling",
-      "providerTeam": "Red Star"
-    },
-    {
-      "team": "Saint-Étienne",
-      "competition": "France - Ligue 2",
-      "players": 39,
-      "provider": "FotMob + Laatste bevestigde opstelling",
-      "providerTeam": "Red Star"
-    },
-    {
-      "team": "Sochaux",
-      "competition": "France - Ligue 2",
-      "players": 39,
-      "provider": "FotMob + Laatste bevestigde opstelling",
-      "providerTeam": "Red Star"
-    },
-    {
-      "team": "Viktoria Plzen",
-      "competition": "Europe - Europa League",
-      "players": 29,
-      "provider": "FotMob + Laatste bevestigde opstelling",
+      "team": "Hapoel Be'er",
+      "provider": "FotMob",
       "providerTeam": "Viktoria Plzeň"
     },
     {
-      "team": "Derby County",
-      "competition": "England - Championship",
-      "players": 32,
-      "provider": "FotMob + Laatste bevestigde opstelling",
-      "providerTeam": "Derby County"
+      "team": "SK Sturm Graz",
+      "provider": "FotMob",
+      "providerTeam": "Viktoria Plzeň"
     },
     {
-      "team": "AFC Bournemouth",
-      "competition": "England - Premier League",
-      "players": 30,
-      "provider": "FotMob + Laatste bevestigde opstelling",
+      "team": "Leeds United",
+      "provider": "FotMob",
       "providerTeam": "AFC Bournemouth"
     },
     {
-      "team": "Lyon",
-      "competition": "France - Ligue 1",
-      "players": 31,
-      "provider": "FotMob + Laatste bevestigde opstelling",
-      "providerTeam": "Lyon"
+      "team": "Newcastle United",
+      "provider": "FotMob",
+      "providerTeam": "AFC Bournemouth"
     },
     {
-      "team": "AJ Auxerre",
-      "competition": "France - Ligue 1",
-      "players": 42,
-      "provider": "FotMob + Laatste bevestigde opstelling",
-      "providerTeam": "Lyon"
-    },
-    {
-      "team": "Le Havre AC",
-      "competition": "France - Ligue 1",
-      "players": 42,
-      "provider": "FotMob + Laatste bevestigde opstelling",
-      "providerTeam": "Lyon"
-    },
-    {
-      "team": "Le Mans",
-      "competition": "France - Ligue 1",
-      "players": 42,
-      "provider": "FotMob + Laatste bevestigde opstelling",
-      "providerTeam": "Lyon"
-    },
-    {
-      "team": "Nice",
-      "competition": "France - Ligue 1",
-      "players": 42,
-      "provider": "FotMob + Laatste bevestigde opstelling",
-      "providerTeam": "Lyon"
-    },
-    {
-      "team": "Troyes",
-      "competition": "France - Ligue 1",
-      "players": 42,
-      "provider": "FotMob + Laatste bevestigde opstelling",
-      "providerTeam": "Lyon"
-    },
-    {
-      "team": "AZ Alkmaar",
-      "competition": "Netherlands - Eredivisie",
-      "players": 44,
-      "provider": "FotMob + Laatste bevestigde opstelling",
-      "providerTeam": "NEC Nijmegen"
-    },
-    {
-      "team": "Excelsior",
-      "competition": "Netherlands - Eredivisie",
-      "players": 44,
-      "provider": "FotMob + Laatste bevestigde opstelling",
-      "providerTeam": "NEC Nijmegen"
-    },
-    {
-      "team": "FC Groningen",
-      "competition": "Netherlands - Eredivisie",
-      "players": 44,
-      "provider": "FotMob + Laatste bevestigde opstelling",
-      "providerTeam": "NEC Nijmegen"
-    },
-    {
-      "team": "Almere City",
-      "competition": "Netherlands - Eerste Divisie",
-      "players": 34,
-      "provider": "FotMob + Laatste bevestigde opstelling",
-      "providerTeam": "Almere City FC"
-    },
-    {
-      "team": "Heracles Almelo",
-      "competition": "Netherlands - Eerste Divisie",
-      "players": 45,
-      "provider": "FotMob + Laatste bevestigde opstelling",
-      "providerTeam": "Almere City FC"
-    },
-    {
-      "team": "Jong PSV",
-      "competition": "Netherlands - Eerste Divisie",
-      "players": 45,
-      "provider": "FotMob + Laatste bevestigde opstelling",
-      "providerTeam": "Almere City FC"
-    },
-    {
-      "team": "1. FC Union Berlin",
-      "competition": "Germany - Bundesliga",
-      "players": 46,
-      "provider": "FotMob + Laatste bevestigde opstelling",
-      "providerTeam": "Schalke 04"
+      "team": "Nottingham Forest",
+      "provider": "FotMob",
+      "providerTeam": "AFC Bournemouth"
     }
   ],
   "coverage": {
     "totalTeams": 238,
     "teamsWithRoster": 238,
-    "teamsWithProviderRatings": 231,
+    "teamsWithProviderRatings": 222,
     "rosterCoverage": 1,
-    "ratingCoverage": 0.971
+    "ratingCoverage": 0.933
   },
   "competitionCoverage": {
     "Netherlands - Eredivisie": {
@@ -317,16 +359,16 @@
     "Europe - Conference League": {
       "teams": 37,
       "teamsWithRoster": 37,
-      "teamsWithProviderRatings": 33,
+      "teamsWithProviderRatings": 25,
       "rosterCoverage": 1,
-      "ratingCoverage": 0.892
+      "ratingCoverage": 0.676
     },
     "Europe - Europa League": {
       "teams": 39,
       "teamsWithRoster": 39,
-      "teamsWithProviderRatings": 37,
+      "teamsWithProviderRatings": 35,
       "rosterCoverage": 1,
-      "ratingCoverage": 0.949
+      "ratingCoverage": 0.897
     },
     "Europe - Champions League": {
       "teams": 36,
@@ -366,9 +408,9 @@
     "England - Championship": {
       "teams": 24,
       "teamsWithRoster": 24,
-      "teamsWithProviderRatings": 23,
+      "teamsWithProviderRatings": 24,
       "rosterCoverage": 1,
-      "ratingCoverage": 0.958
+      "ratingCoverage": 1
     },
     "France - Ligue 1": {
       "teams": 18,
@@ -386,7 +428,37 @@
     }
   },
   "cacheCanonicalization": {
-    "mergedGroups": 38,
-    "mergedKeys": 287
+    "mergedGroups": 85,
+    "mergedKeys": 93
+  },
+  "cacheRosterPurge": {
+    "cleared": 276,
+    "teams": [
+      "Crvena zvezda",
+      "KuPS",
+      "Mjällby",
+      "Universitatea Craiova",
+      "FC Nordsjaelland",
+      "Drita Gjilan",
+      "Noah",
+      "Celje",
+      "Inter Club d'Escaldes",
+      "KuPS Kuopio",
+      "Dynamo Kyiv",
+      "Mjällby AIF",
+      "NK Celje",
+      "Drita",
+      "FC København",
+      "Nordsjælland",
+      "FK Crvena Zvezda",
+      "F.C. København",
+      "Aberdeen",
+      "BK Häcken",
+      "Breidablik",
+      "CSU Craiova",
+      "FC Noah",
+      "Hamrun Spartans",
+      "KF Shkëndija"
+    ]
   }
 }
