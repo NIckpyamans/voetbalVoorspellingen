@@ -24,9 +24,11 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 20
     env:
-      # August ledger exceeds 96 MiB; retain a bounded runner-only limit,
-      # matching daily-prediction-monitor. API/serverless defaults stay unchanged.
-      SNAPSHOT_LEDGER_MAX_JSON_BYTES: 536870912
+      # De lokale recovery-ledger is alleen fallback; R2 levert de maandshards.
+      # Een limiet van 512 MiB liet JSON.parse ruim 4 GB heap vragen, waardoor de
+      # run stopte met "JavaScript heap out of memory". 128 MiB is de bovengrens
+      # waarin de fallback nog zinvol is naast de R2-ledger.
+      SNAPSHOT_LEDGER_MAX_JSON_BYTES: 134217728
     steps:
       - uses: actions/checkout@v5
         with:

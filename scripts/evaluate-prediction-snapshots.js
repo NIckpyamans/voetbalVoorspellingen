@@ -5,7 +5,7 @@ import path from "node:path";
 import { getSql, loadLocalEnv } from "../shared/database.js";
 import {
   loadSnapshotLedger,
-  mergeSnapshotLedgers,
+  normalizeSnapshotLedger,
   persistLocalSnapshotLedger,
   persistSnapshotLedger,
 } from "../shared/predictionSnapshotLedger.js";
@@ -28,6 +28,19 @@ const MAX_EVALUATION_LIMIT = 500;
 const EVALUATION_PAGE_SIZE = 100;
 const requestedLimit = Number(process.env.PREDICTION_EVALUATION_LIMIT || 500);
 const limit = Number.isFinite(requestedLimit) ? Math.min(MAX_EVALUATION_LIMIT, Math.max(1, Math.trunc(requestedLimit))) : MAX_EVALUATION_LIMIT;
+
+// De laatste `count` snapshots bepalen de evaluatie. Sorteren met Date.parse in
+// de comparator parseerde dezelfde tijd steeds opnieuw en hield daarnaast de
+// volledige geschiedenis in een extra array vast; één numerieke sort volstaat.
+function recentSnapshots(ledgerSnapshots, count) {
+  const rows = [];
+  for (const snapshot of Object.values(ledgerSnapshots || {})) {
+    if (!snapshot) continue;
+    rows.push({ snapshot, time: Date.parse(snapshot.generatedAt || snapshot.cutoffAt || "") || 0 });
+  }
+  rows.sort((left, right) => left.time - right.time);
+  return rows.slice(Math.max(0, rows.length - count)).map((row) => row.snapshot);
+}
 
 function readStaticResults() {
   const results = createEvaluationResultIndex();
@@ -148,7 +161,11 @@ async function main() {
   loadLocalEnv(ROOT);
   const sql = getSql();
   const neon = await evaluateNeon(sql);
-  const loaded = await loadSnapshotLedger({ root: ROOT });
+  // De lokale recovery-ledger is alleen fallback: R2 levert de maandshards.
+  // Hem daarnaast ook inlezen hield een tweede volledige kopie van de
+  // geschiedenis in de heap en liep tegen de 4 GB-grens aan.
+  const r2Configured = Boolean(process.env.CLOUDFLARE_R2_BUCKET || process.env.R2_BUCKET_NAME);
+  const loaded = await loadSnapshotLedger({ root: ROOT, includeLocal: !r2Configured });
   let ledger = loaded.ledger;
   const results = readStaticResults();
   for (const [matchId, review] of Object.entries(ledger.postMatchReviews || {})) {
@@ -162,11 +179,11 @@ async function main() {
   let canonicalResultMatches = 0;
   let ambiguousResultMatches = 0;
   const linkedReviewMatches = new Set();
+  const changedEvaluations = {};
+  const changedReviews = {};
   const r2PredictionIds = new Set(Object.keys(loaded.sources.r2?.ledger?.predictionSnapshots || {}));
   const allSnapshots = Object.values(ledger.predictionSnapshots || {});
-  const snapshots = allSnapshots
-    .sort((a, b) => Date.parse(a?.generatedAt || "") - Date.parse(b?.generatedAt || ""))
-    .slice(-limit);
+  const snapshots = recentSnapshots(ledger.predictionSnapshots, limit);
   for (const snapshot of snapshots) {
     const resolved = resolveEvaluationResult(results, snapshot);
     const result = resolved.result;
@@ -182,6 +199,7 @@ async function main() {
     });
     if (!evaluation) continue;
     ledger.evaluations[evaluation.predictionId] = evaluation;
+    changedEvaluations[evaluation.predictionId] = evaluation;
     const linkedReview = buildSnapshotBackedReview(
       snapshot,
       result,
@@ -190,20 +208,31 @@ async function main() {
     );
     if (linkedReview) {
       ledger.postMatchReviews[snapshot.matchId] = linkedReview;
+      changedReviews[snapshot.matchId] = linkedReview;
       linkedReviewMatches.add(snapshot.matchId);
     }
     if (r2PredictionIds.has(evaluation.predictionId)) r2Evaluated += 1;
     else fallbackEvaluated += 1;
   }
 
+  // Alleen de delta van deze run terugschrijven. De volledige ledger opnieuw
+  // lezen (mergeRemote) en samenvoegen verdubbelde het geheugengebruik; de
+  // worker schrijft om precies dezelfde reden met touchedOnly.
+  const hasDelta = Object.keys(changedEvaluations).length > 0 || Object.keys(changedReviews).length > 0;
   let r2Write = { ok: false, skipped: true, reason: "no_changes" };
-  if (snapshots.length) {
-    persistLocalSnapshotLedger(ledger, ROOT);
-    r2Write = await persistSnapshotLedger(mergeSnapshotLedgers(ledger), { mergeRemote: true }).catch((error) => ({
+  if (hasDelta && r2Configured) {
+    r2Write = await persistSnapshotLedger(
+      normalizeSnapshotLedger({ evaluations: changedEvaluations, postMatchReviews: changedReviews }),
+      { touchedOnly: true },
+    ).catch((error) => ({
       ok: false,
       skipped: false,
       error: error?.message || String(error),
     }));
+    if (!r2Write.ok) persistLocalSnapshotLedger(ledger, ROOT);
+  } else if (hasDelta) {
+    persistLocalSnapshotLedger(ledger, ROOT);
+    r2Write = { ok: false, skipped: true, reason: "r2_not_configured" };
   }
 
   const generatedAt = new Date().toISOString();

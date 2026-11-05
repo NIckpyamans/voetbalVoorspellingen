@@ -26,6 +26,9 @@ export const SQUAD_TEAM_ALIASES = {
   "qarabag agdam": ["Qarabag", "FK Qarabag", "Qarabağ", "Karabakh Agdam"],
   "karabakh agdam": ["Qarabag", "FK Qarabag", "Qarabağ", "Qarabag Agdam"],
   "karabakh": ["Qarabag", "FK Qarabag", "Qarabağ", "Qarabag Agdam", "Karabakh Agdam"],
+  // Griekse club: providers schrijven Olympiacos en Olympiakos door elkaar.
+  olympiakos: ["Olympiacos", "Olympiacos Piraeus", "Olympiakos Piraeus"],
+  olympiacos: ["Olympiakos", "Olympiakos Piraeus", "Olympiacos Piraeus"],
 };
 
 // Aliassen zijn gesleuteld op naam mét voorvoegsels ("fc drita"), zodat ook
@@ -76,6 +79,25 @@ export function providerTeamMatches(providerTeamName, queryName) {
   const left = normalizeSquadTeamKey(providerTeamName);
   const right = normalizeSquadTeamKey(queryName);
   return Boolean(left) && left === right;
+}
+
+// Twee namen horen alleen bij dezelfde club als de tokens daarop wijzen.
+// Alleen op een gedeeld provider-ID samenvoegen koppelde eerder willekeurige
+// clubs aan elkaar (Porto/Vitória de Guimarães, Inter/Monza, Leeds/Bournemouth);
+// de spelerslijst van de "primair" gekozen entry werd daarna bij alle leden van
+// de groep gepubliceerd.
+export function squadNamesCompatible(left, right) {
+  const leftKey = normalizeSquadTeamKey(left);
+  const rightKey = normalizeSquadTeamKey(right);
+  if (!leftKey || !rightKey) return false;
+  if (leftKey === rightKey) return true;
+  const leftTokens = leftKey.split(" ").filter(Boolean);
+  const rightTokens = rightKey.split(" ").filter(Boolean);
+  const [smaller, larger] = leftTokens.length <= rightTokens.length
+    ? [leftTokens, rightTokens]
+    : [rightTokens, leftTokens];
+  // "Drita" past bij "Drita Gjilan"; "Porto" niet bij "Vitória de Guimarães".
+  return smaller.length < larger.length && smaller.every((token) => larger.includes(token));
 }
 
 // Preventie: stel uit provider-zoekresultaten automatisch kandidaat-aliassen
@@ -163,8 +185,10 @@ export function canonicalizeSquadCache(cache = {}, options = {}) {
       else byCanonicalName.set(nameKey, index);
     }
     for (const id of item.providerIds) {
-      if (byProviderId.has(id)) union(byProviderId.get(id), index);
-      else byProviderId.set(id, index);
+      const known = byProviderId.get(id);
+      // Alleen samenvoegen wanneer de teamnaam dezelfde club ondersteunt.
+      if (known === undefined) byProviderId.set(id, index);
+      else if (squadNamesCompatible(items[known].canonical, item.canonical)) union(known, index);
     }
   });
   const groups = new Map();
@@ -192,9 +216,14 @@ export function canonicalizeSquadCache(cache = {}, options = {}) {
     const sourceIds = Object.assign({}, ...sorted.map((item) => item?.entry?.sourceIds || {}));
     const canonicalProviderId = preferredProviderId(primary.entry) || preferredProviderId({ sourceIds });
     for (const { key, entry } of members) {
+      // Spelers alleen overnemen wanneer de clubnaam bij de primaire entry past.
+      const compatibleWithPrimary = squadNamesCompatible(
+        entry?.teamName || key.replace(/^name:/, ""),
+        primary.entry?.teamName || primary.key.replace(/^name:/, ""),
+      );
       cache[key] = {
         ...entry,
-        ...(primaryPlayers
+        ...(primaryPlayers && compatibleWithPrimary
           ? { players: primaryPlayers, playerCount: primaryPlayers.length, starPlayer: primary.entry?.starPlayer || primaryPlayers[0] || null }
           : {}),
         sourceIds,
@@ -207,4 +236,51 @@ export function canonicalizeSquadCache(cache = {}, options = {}) {
     }
   }
   return { cache, mergedGroups, mergedKeys };
+}
+
+// Opruimen: een selectie die onder meerdere, niet-verwante clubnamen staat is per
+// definitie fout (één club, één selectie). Zulke entries verliezen hun spelers en
+// worden als "unavailable" gemarkeerd, zodat de volgende enrichment-run ze met
+// een expliciete teamcontrole opnieuw ophaalt.
+export function purgeMismatchedSquadRosters(cache = {}) {
+  const byRoster = new Map();
+  for (const [key, entry] of Object.entries(cache)) {
+    const players = Array.isArray(entry?.players) ? entry.players : [];
+    if (players.length < 11) continue;
+    const signature = players
+      .map((player) => normalizeSquadTeamKey(player?.name || ""))
+      .filter(Boolean)
+      .sort()
+      .join("|");
+    if (!signature) continue;
+    if (!byRoster.has(signature)) byRoster.set(signature, []);
+    byRoster.get(signature).push({
+      key,
+      entry,
+      teamName: String(entry?.teamName || key.replace(/^name:/, "")),
+    });
+  }
+  const cleared = [];
+  for (const members of byRoster.values()) {
+    if (members.length < 2) continue;
+    const distinctNames = members.filter((member, index) =>
+      members.findIndex((other) => squadNamesCompatible(member.teamName, other.teamName)) === index
+    );
+    if (distinctNames.length < 2) continue;
+    for (const member of members) {
+      const providerTeamName = String(member.entry?.providerTeamName || "");
+      if (providerTeamName && squadNamesCompatible(providerTeamName, member.teamName)) continue;
+      cache[member.key] = {
+        ...member.entry,
+        players: [],
+        playerCount: 0,
+        starPlayer: null,
+        unavailable: true,
+        lastFailureReason: "roster_team_mismatch",
+        rosterMismatchClearedAt: new Date().toISOString(),
+      };
+      cleared.push(member.teamName);
+    }
+  }
+  return { cleared };
 }

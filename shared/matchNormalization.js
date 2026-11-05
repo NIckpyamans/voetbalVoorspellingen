@@ -75,6 +75,13 @@ const TEAM_DEDUPE_ALIASES = {
   "qarabag agdam": "qarabag",
   "karabakh agdam": "qarabag",
   karabakh: "qarabag",
+  // Griekse club: providers schrijven Olympiacos en Olympiakos door elkaar,
+  // waardoor hetzelfde duel twee keer in de opslag stond (Rennes, 13:30 en
+  // 15:30) en de odds maar bij één van de twee records belandden.
+  olympiakos: "olympiacos",
+  olympiacos: "olympiacos",
+  "olympiakos piraeus": "olympiacos",
+  "olympiacos piraeus": "olympiacos",
 };
 
 const VERIFIED_RESULT_BACKFILL = [

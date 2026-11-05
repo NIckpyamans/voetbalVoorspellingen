@@ -6,7 +6,7 @@ import { fetchEspnSquad } from "./providers/espn-squad-provider.js";
 import { fetchWikipediaSquad } from "./providers/wikipedia-squad-provider.js";
 import { fetchTransfermarktDatasetSquad } from "./providers/transfermarkt-squad-provider.js";
 import { fetchFotMobSquad } from "./providers/fotmob-squad-provider.js";
-import { squadQueryVariants, providerTeamMatches, suggestAliasCandidates, canonicalizeSquadCache } from "./worker/squad-team-matching.js";
+import { squadQueryVariants, providerTeamMatches, suggestAliasCandidates, canonicalizeSquadCache, purgeMismatchedSquadRosters } from "./worker/squad-team-matching.js";
 import { canonicalDedupeTeam } from "../shared/matchNormalization.js";
 
 const ROOT = process.cwd();
@@ -346,18 +346,33 @@ for (const candidate of pending) {
     if (wikipediaProfile) providerProfiles.push({ provider: "Wikipedia", profile: wikipediaProfile });
   }
   const recentLineup = recentLineups.get(candidate.key) || null;
-  const preferredProfile = providerProfiles.find((item) => mergePlayers([], item.profile.players).length >= TARGET_SQUAD_PLAYERS) || null;
+  // Publicatieguard: een provider mag alleen een selectie leveren wanneer zijn
+  // eigen teamnaam genormaliseerd bij het doelteam past. Zonder deze controle
+  // belandde de selectie van een verkeerd gevonden club in de cache (FC Porto
+  // en Sporting CP bij Vitória de Guimarães, Inter bij Monza).
+  const verifiedProfiles = [];
+  for (const item of providerProfiles) {
+    const providerTeamName = String(item?.profile?.providerTeamName || "").trim();
+    if (!providerTeamName || providerTeamMatches(providerTeamName, candidate.teamName)) {
+      verifiedProfiles.push(item);
+      continue;
+    }
+    report.rejectedProviderTeams = report.rejectedProviderTeams || [];
+    report.rejectedProviderTeams.push({ team: candidate.teamName, provider: item.provider, providerTeam: providerTeamName });
+    console.warn(`[squad-enrichment] ${candidate.teamName}: ${item.provider} leverde "${providerTeamName}"; selectie geweigerd (teamnaam komt niet overeen).`);
+  }
+  const preferredProfile = verifiedProfiles.find((item) => mergePlayers([], item.profile.players).length >= TARGET_SQUAD_PLAYERS) || null;
   const basePlayers = preferredProfile
     ? mergePlayers([], preferredProfile.profile.players)
-    : mergePlayers([], providerProfiles.flatMap((item) => item.profile.players));
+    : mergePlayers([], verifiedProfiles.flatMap((item) => item.profile.players));
   const playersWithRecentXi = mergePlayers(basePlayers, recentLineup?.players || []);
   const providers = [...new Set([
-    ...(preferredProfile ? [preferredProfile.provider] : providerProfiles.map((item) => item.provider)),
+    ...(preferredProfile ? [preferredProfile.provider] : verifiedProfiles.map((item) => item.provider)),
     ...(recentLineup ? ["Laatste bevestigde opstelling"] : []),
   ])];
   const profile = playersWithRecentXi.length
     ? {
-        providerTeamName: preferredProfile?.profile?.providerTeamName || providerProfiles.find((item) => item.profile?.providerTeamName)?.profile.providerTeamName || candidate.teamName,
+        providerTeamName: preferredProfile?.profile?.providerTeamName || verifiedProfiles.find((item) => item.profile?.providerTeamName)?.profile.providerTeamName || candidate.teamName,
         players: playersWithRecentXi,
       }
     : null;
@@ -388,6 +403,9 @@ for (const candidate of pending) {
     ...(candidate.existing || {}),
     key: candidate.key,
     teamName: candidate.teamName,
+    // Bewaakt dat een volgende run kan controleren of deze selectie bij deze
+    // club hoort (zie purgeMismatchedSquadRosters).
+    providerTeamName: profile.providerTeamName,
     source: providers.join(" + "),
     sources: providers,
     sourceIds: {
@@ -445,6 +463,11 @@ for (const row of Object.values(report.competitionCoverage)) {
 // identiteit; alle sleutels blijven werken en sourceIds worden samengevoegd.
 const canonicalized = canonicalizeSquadCache(cache, { canonicalOf: canonicalDedupeTeam });
 report.cacheCanonicalization = { mergedGroups: canonicalized.mergedGroups, mergedKeys: canonicalized.mergedKeys };
+const purgedRosters = purgeMismatchedSquadRosters(cache);
+report.cacheRosterPurge = { cleared: purgedRosters.cleared.length, teams: purgedRosters.cleared.slice(0, 25) };
+if (purgedRosters.cleared.length) {
+  console.warn(`[squad-enrichment] ${purgedRosters.cleared.length} selectie(s) gewist die onder niet-verwante clubnamen stonden; volgende run haalt ze opnieuw op.`);
+}
 
 fs.mkdirSync(path.dirname(CACHE_FILE), { recursive: true });
 fs.writeFileSync(CACHE_FILE, `${JSON.stringify({ schemaVersion: "team-squad-cache-v1", generatedAt: report.generatedAt, teams: cache })}\n`);
