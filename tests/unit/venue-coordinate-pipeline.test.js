@@ -16,6 +16,14 @@ function weatherJobSteps() {
 }
 
 describe("venue-coordinate pipeline", () => {
+  it("keeps the batch scheduled, otherwise every guarded job is dead code", () => {
+    const text = fs.readFileSync(path.join(ROOT, ".github", "workflows", "free-source-batches.yml"), "utf8");
+    const workflow = YAML.parse(text);
+    const schedules = Array.isArray(workflow.on.schedule) ? workflow.on.schedule : [];
+    expect(schedules.length).toBeGreaterThan(0);
+    expect(String(schedules[0].cron || "")).toMatch(/^\S+ \S+ \S+ \S+ \S+$/);
+  });
+
   it("resolves stadium coordinates before the scheduled weather import", () => {
     const steps = weatherJobSteps();
     const venues = steps.findIndex((step) => String(step.run || "").includes("--source=venues"));

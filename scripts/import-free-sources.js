@@ -4,6 +4,7 @@ import crypto from "crypto";
 import fs from "fs";
 import path from "path";
 import { getSql, loadLocalEnv } from "../shared/database.js";
+import { openMeteoUrl } from "../shared/openMeteo.js";
 
 const ROOT = process.cwd();
 const ARGS = new Set(process.argv.slice(2));
@@ -359,11 +360,26 @@ function weatherCodeLabel(code) {
   return "onbekend";
 }
 
+async function fetchOpenMeteoPayload(lat, lon, dateKey) {
+  const primaryUrl = openMeteoUrl({ latitude: lat, longitude: lon, dateKey });
+  try {
+    return await fetchJson(primaryUrl);
+  } catch (error) {
+    // Het archief heeft geen bruikbare data voor wedstrijden die nog spelen; de
+    // forecast-API is dan leidend. Andersom blijft het archief de terugval.
+    if (!primaryUrl.includes("/v1/forecast")) throw error;
+    return fetchJson(openMeteoUrl({ latitude: lat, longitude: lon, dateKey, forceArchive: true }));
+  }
+}
+
 async function fetchOpenMeteoWeather(lat, lon, dateKey) {
-  const url = `https://archive-api.open-meteo.com/v1/archive?latitude=${lat}&longitude=${lon}&start_date=${dateKey}&end_date=${dateKey}&hourly=temperature_2m,precipitation,weather_code,wind_speed_10m&timezone=UTC`;
-  const data = await fetchJson(url);
+  const data = await fetchOpenMeteoPayload(lat, lon, dateKey);
   const hours = data?.hourly?.time || [];
+  if (!hours.length) throw new Error(`Open-Meteo gaf geen uurlijkse waarden voor ${dateKey}`);
   const index = Math.min(Math.max(hours.findIndex((time) => String(time).includes("15:00")), 0), Math.max(hours.length - 1, 0));
+  if (numeric(data?.hourly?.temperature_2m?.[index]) === null && numeric(data?.hourly?.wind_speed_10m?.[index]) === null) {
+    throw new Error(`Open-Meteo gaf geen temperatuur of wind voor ${dateKey}`);
+  }
   return {
     source: "Open-Meteo",
     latitude: lat,
@@ -1025,7 +1041,7 @@ async function importStoredWeather(sql) {
         and coalesce(v.longitude, home_venue.longitude) is not null
         and m.date_key is not null
         and coalesce(m.weather_payload, '{}'::jsonb) = '{}'::jsonb
-      order by m.kickoff_at nulls last, m.date_key desc
+      order by (coalesce(m.kickoff_at, now()) < now()) asc, m.kickoff_at asc nulls last, m.date_key desc
       limit $1
     `,
     [Math.max(0, WEATHER_LIMIT - matches)]
@@ -1063,10 +1079,16 @@ async function importStoredWeather(sql) {
 async function backfillVenueCoordinates(sql) {
   const rows = await sql.query(
     `
-      select club_id, name, country_name
-      from clubs
-      where venue_id is null
-      order by updated_at desc nulls last, name
+      select c.club_id, c.name, c.country_name, c.venue_id
+      from clubs c
+      left join venues v on v.venue_id = c.venue_id
+      -- Ook clubs met een venue-rij zonder coordinaten horen hier: die bleven
+      -- anders voorgoed zonder weer omdat hun venue_id al gevuld was.
+      where c.venue_id is null
+         or v.venue_id is null
+         or v.latitude is null
+         or v.longitude is null
+      order by c.updated_at desc nulls last, c.name
       limit $1
     `,
     [Math.max(VENUE_GEOCODE_LIMIT * 20, VENUE_GEOCODE_LIMIT)]
@@ -1085,7 +1107,7 @@ async function backfillVenueCoordinates(sql) {
     try {
       const knownVenue = knownVenueForTeam(row.name);
       if (knownVenue) {
-        const venueId = `venue-${slug(knownVenue.name)}-${slug(knownVenue.city)}`;
+        const venueId = row.venue_id || `venue-${slug(knownVenue.name)}-${slug(knownVenue.city)}`;
         const sourceRecordId = `src_venue_curated_${digest(row.club_id)}`;
         const payload = { provider: "curated-free-venue-seed", team: row.name, venue: knownVenue };
         await upsertSourceRecord(sql, sourceRecordId, "curated-free-venue-seed", null, "venue_geocode", row.club_id, payload, 0.82);
@@ -1098,7 +1120,7 @@ async function backfillVenueCoordinates(sql) {
               city = excluded.city,
               latitude = excluded.latitude,
               longitude = excluded.longitude,
-              provider_ids = excluded.provider_ids,
+              provider_ids = venues.provider_ids || excluded.provider_ids,
               updated_at = now()
           `,
           [
@@ -1123,7 +1145,7 @@ async function backfillVenueCoordinates(sql) {
       const results = await fetchNominatimJson(url);
       const first = Array.isArray(results) ? results[0] : null;
       if (!first?.lat || !first?.lon) continue;
-      const venueId = `venue-osm-${digest(`${row.club_id}|${first.osm_type}|${first.osm_id}`)}`;
+      const venueId = row.venue_id || `venue-osm-${digest(`${row.club_id}|${first.osm_type}|${first.osm_id}`)}`;
       const payload = {
         provider: "OpenStreetMap Nominatim",
         query: decodeURIComponent(query),
@@ -1138,7 +1160,7 @@ async function backfillVenueCoordinates(sql) {
           on conflict (venue_id) do update set
             latitude = excluded.latitude,
             longitude = excluded.longitude,
-            provider_ids = excluded.provider_ids,
+            provider_ids = venues.provider_ids || excluded.provider_ids,
             updated_at = now()
         `,
         [

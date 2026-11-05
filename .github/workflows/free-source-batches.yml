@@ -15,6 +15,11 @@ on:
         description: "Optional Football-Data season folder, e.g. 2526 or 2425"
         required: false
         default: ""
+  # Alle zware jobs hieronder staan op `if: github.event_name == 'schedule'`.
+  # Zonder deze trigger draaide de hele batch nooit: het manifest bleef sinds
+  # 6 juni op statsbomb staan en de geocoder/weerimport kwamen nooit aan de beurt.
+  schedule:
+    - cron: "43 3 * * *"
 
 jobs:
   prepare-database:
@@ -204,7 +209,7 @@ jobs:
           FREE_SOURCE_WEATHER_LIMIT: 250
           STATSBOMB_EVENT_LIMIT: 24
           STATSBOMB_COMPETITION_LIMIT: 16
-          VENUE_GEOCODE_LIMIT: 20
+          VENUE_GEOCODE_LIMIT: 60
       - run: node scripts/ci-neon-safe.js -- node scripts/reset-competition-seasons.js
         env:
           DATABASE_URL: ${{ secrets.DATABASE_URL }}
