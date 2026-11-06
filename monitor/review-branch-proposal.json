@@ -1,46 +1,61 @@
 {
-  "generatedAt": "2026-11-05T02:30:16.978Z",
-  "date": "2026-11-05",
+  "generatedAt": "2026-11-06T02:28:29.429Z",
+  "date": "2026-11-06",
   "proposalOnly": true,
-  "shouldPropose": false,
-  "branchName": "codex/review-20261105",
-  "summary": "Geen reviewbranch nodig op 2026-11-05.",
+  "shouldPropose": true,
+  "branchName": "codex/review-20261106",
+  "summary": "AI reviewvoorstel voor 2026-11-06: 1 aandachtspunt(en) met patchadvies, niet automatisch live.",
   "latestStats": {
-    "today": "2026-11-05",
-    "tomorrow": "2026-11-06",
+    "today": "2026-11-06",
+    "tomorrow": "2026-11-07",
     "dataPresent": true,
-    "lastRun": 1793845434876,
-    "ageMinutes": 6,
+    "lastRun": 1793904477428,
+    "ageMinutes": 461,
     "maxWorkerAgeMinutes": 180,
-    "todayMatches": 39,
-    "tomorrowMatches": 21,
+    "todayMatches": 21,
+    "tomorrowMatches": 33,
     "fixtureCalendar": {
       "status": "has_current_matches",
       "healthy": true,
       "emptyWindowOk": true,
       "severity": "none",
-      "todayCount": 39,
-      "tomorrowCount": 21,
+      "todayCount": 21,
+      "tomorrowCount": 33,
       "windowDays": 7,
       "checkedDates": [
-        "2026-11-05",
         "2026-11-06",
         "2026-11-07",
         "2026-11-08"
       ],
-      "nextMatchDate": "2026-11-05",
-      "nextMatchCount": 39,
+      "nextMatchDate": "2026-11-06",
+      "nextMatchCount": 21,
       "explanation": "Vandaag of morgen staan er wedstrijden in de actuele data."
     },
     "liveMatches": 0,
     "liveWithoutMinute": 0,
-    "h2hFilled": 1,
-    "h2hMissing": 38,
+    "h2hFilled": 4,
+    "h2hMissing": 17,
     "standingsCount": 11,
     "cupSheetCount": 4,
-    "phaseReliabilityCount": 5
+    "phaseReliabilityCount": 2
   },
-  "findings": [],
-  "recommendedFiles": [],
-  "nextStep": "Geen actie nodig; monitor blijft op de achtergrond doorlopen."
+  "findings": [
+    {
+      "priority": 1,
+      "key": "worker_stale",
+      "severity": "high",
+      "message": "Workerdata is 461 minuten oud.",
+      "whyItMatters": "Workerdata is te oud en verdient een workflow- of broncheck.",
+      "recommendedFiles": [
+        ".github/workflows/worker.yml",
+        "scripts/server-worker.js"
+      ],
+      "details": {}
+    }
+  ],
+  "recommendedFiles": [
+    ".github/workflows/worker.yml",
+    "scripts/server-worker.js"
+  ],
+  "nextStep": "Gebruik deze proposal om gericht een reviewbranch te maken en alleen na controle te mergen."
 }
