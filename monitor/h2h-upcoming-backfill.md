@@ -1,45 +1,45 @@
 # Upcoming H2H Backfill
 
-Laatst bijgewerkt: 2026-11-06T14:17:06.525Z
+Laatst bijgewerkt: 2026-11-06T16:47:46.493Z
 Gecontroleerd: 50
 Gevuld: 0
 Geen directe H2H: 50
 Errors: 0
-Providerfouten: 122
+Providerfouten: 127
 Kwaliteitsgate: gedegradeerd (providers geblokkeerd in een volle batch)
 
-Openstaand na deze batch: 129
+Openstaand na deze batch: 98
 
 ## Aanbeveling
-API-Football H2H is onafhankelijk van fixture-acceptatie ingeschakeld; 3/3 beperkte paarpogingen gedaan. Er staan nog 129 fixtures in de wachtrij.
+API-Football H2H is onafhankelijk van fixture-acceptatie ingeschakeld; 3/3 beperkte paarpogingen gedaan. Er staan nog 98 fixtures in de wachtrij.
 
 ## Gevuld
 
 ## Geen Directe H2H
-- 2026-11-06: Dynamo Dresden - SpVgg Greuther Fürth (no_direct_history)
-- 2026-11-06: Montpellier - Metz (no_direct_history)
-- 2026-11-06: FC Dordrecht - NAC Breda (no_direct_history)
-- 2026-11-06: Willem II - PEC Zwolle (rate_limited_locally)
-- 2026-11-06: Hamburg SV - Borussia Mönchengladbach (rate_limited_locally)
-- 2026-11-06: Derby County - Bolton Wanderers (rate_limited_locally)
-- 2026-11-06: Everton - Coventry City (rate_limited_locally)
-- 2026-11-06: TSV Eintracht Braunschweig - Energie Cottbus (rate_limited_locally)
-- 2026-11-06: AS Nancy Lorraine - Sochaux (rate_limited_locally)
-- 2026-11-06: FC Eindhoven - Jong Ajax (rate_limited_locally)
-- 2026-11-06: Hamburg - Borussia Mönchengladbach (rate_limited_locally)
-- 2026-11-06: Dijon FCO - Red Star FC 93 (rate_limited_locally)
-- 2026-11-06: Helmond Sport - FC Volendam (rate_limited_locally)
-- 2026-11-06: Heracles Almelo - Roda JC Kerkrade (rate_limited_locally)
-- 2026-11-06: Jong AZ - Almere City (rate_limited_locally)
-- 2026-11-06: TOP Oss - RKC Waalwijk (rate_limited_locally)
-- 2026-11-06: VVV-Venlo - Jong PSV (rate_limited_locally)
-- 2026-11-07: Holstein Kiel - Arminia Bielefeld (rate_limited_locally)
-- 2026-11-07: Wrexham - Wolverhampton Wanderers (rate_limited_locally)
-- 2026-11-07: Clermont Foot - Rodez Aveyron (rate_limited_locally)
+- 2026-11-20: Arminia Bielefeld - 1. FC Magdeburg (no_direct_history)
+- 2026-11-20: AS Nancy Lorraine - Dijon FCO (no_direct_history)
+- 2026-11-20: De Graafschap - MVV Maastricht (no_direct_history)
+- 2026-11-20: Troyes - Le Havre AC (rate_limited_locally)
+- 2026-11-20: Metz - Boulogne (rate_limited_locally)
+- 2026-11-20: FC Den Bosch - VVV-Venlo (rate_limited_locally)
+- 2026-11-20: Annecy - Clermont Foot (rate_limited_locally)
+- 2026-11-20: FC Volendam - Jong Ajax (rate_limited_locally)
+- 2026-11-20: Almere City - NAC Breda (rate_limited_locally)
+- 2026-11-20: Helmond Sport - FC Dordrecht (rate_limited_locally)
+- 2026-11-20: Heracles Almelo - Jong PSV (rate_limited_locally)
+- 2026-11-20: Jong FC Utrecht - FC Emmen (rate_limited_locally)
+- 2026-11-20: TOP Oss - Roda JC Kerkrade (rate_limited_locally)
+- 2026-11-20: Vitesse - Jong AZ (rate_limited_locally)
+- 2026-11-21: VfL Wolfsburg - Holstein Kiel (rate_limited_locally)
+- 2026-11-21: Nantes - Grenoble (rate_limited_locally)
+- 2026-11-21: SV Elversberg - SC Freiburg (rate_limited_locally)
+- 2026-11-21: Bolton Wanderers - Portsmouth (rate_limited_locally)
+- 2026-11-21: Coventry City - Crystal Palace (rate_limited_locally)
+- 2026-11-21: FC Eindhoven - RKC Waalwijk (rate_limited_locally)
 
 ## Providerfouten
 - 50× goal-api: acceptance_gate_closed
 - 47× api-football: rate_limited_locally
-- 18× football-data-co-uk: not_configured
-- 4× espn-team-schedule: team_mapping_missing
+- 17× football-data-co-uk: not_configured
+- 10× espn-team-schedule: team_mapping_missing
 - 3× api-football: team_mapping_missing
