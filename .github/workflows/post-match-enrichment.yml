@@ -76,7 +76,13 @@ jobs:
           BRANCH_NAME="${DATA_BRANCH:-${{ github.ref_name }}}"
           git config user.name github-actions
           git config user.email github-actions@github.com
-          git add data monitor/data-quality-audit.json monitor/data-quality-audit.md monitor/recent-match-context-backfill.json
+          git add data
+          # monitor/*.json staat in .gitignore en de audits schrijven niet elk
+          # rapport elke run. Forceer daarom alleen bestaande, expliciete paden;
+          # een `git add` op een ontbrekend of genegeerd pad liet de stap falen.
+          for report in monitor/data-quality-audit.json monitor/data-quality-audit.md monitor/recent-match-context-backfill.json; do
+            if [ -f "$report" ]; then git add -f "$report"; fi
+          done
           git diff --staged --quiet && echo "geen post-matchwijzigingen" && exit 0
           git commit -m "post-match enrichment [skip vercel]"
           for attempt in 1 2 3; do
