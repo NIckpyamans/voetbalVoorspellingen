@@ -49,7 +49,7 @@ env:
 jobs:
   enrich-completed-matches:
     runs-on: ubuntu-latest
-    timeout-minutes: 20
+    timeout-minutes: 32
     steps:
       - uses: actions/checkout@v5
         with:
@@ -62,7 +62,7 @@ jobs:
           cache: npm
       - run: npm ci
       - name: Backfill scores, incidents, cards, referee and match statistics
-        timeout-minutes: 14
+        timeout-minutes: 20
         run: node scripts/ci-neon-safe.js -- node scripts/server-worker.js
       - name: Backfill recent H2H, form and historical confirmed lineups
         timeout-minutes: 8

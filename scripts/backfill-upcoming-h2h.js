@@ -697,10 +697,12 @@ async function main() {
       `Errors: ${report.errors}`,
       `Providerfouten: ${report.providerErrorCount}`,
       `Kwaliteitsgate: ${report.qualityGate.failed
-        ? `gefaald (${report.qualityGate.outcome === "no_provider_attempts" ? "geen enkele providerpoging" : "providers geblokkeerd"} in een volle batch)`
-        : report.qualityGate.applied
-          ? `geslaagd (${report.qualityGate.outcome})`
-          : "niet van toepassing"}`,
+        ? "gefaald (geen enkele providerpoging in een volle batch)"
+        : report.qualityGate.degraded
+          ? "gedegradeerd (providers geblokkeerd in een volle batch)"
+          : report.qualityGate.applied
+            ? `geslaagd (${report.qualityGate.outcome})`
+            : "niet van toepassing"}`,
       "",
       `Openstaand na deze batch: ${report.remaining}`,
       "",
@@ -740,15 +742,22 @@ async function main() {
     console.error("[h2h-backfill] providerfouten:", JSON.stringify(providerErrorSamples, null, 2));
   }
   if (report.qualityGate.failed) {
-    console.error(`[h2h-backfill] kwaliteitsgate: 0 van ${report.qualityGate.batch} gecontroleerde wedstrijden kreeg H2H (${report.providerErrorCount} providerfouten, oorzaak: ${report.qualityGate.outcome}). Controleer de providerfouten en de team-ID-koppelingen; dit is geen bewijs dat H2H ontbreekt.`);
+    console.error(`[h2h-backfill] kwaliteitsgate: 0 van ${report.qualityGate.batch} gecontroleerde wedstrijden kreeg H2H (${report.providerErrorCount} providerfouten, oorzaak: ${report.qualityGate.outcome}). Er is geen enkele providerpoging gedaan; controleer de configuratie.`);
     process.exitCode = 1;
+  } else if (report.qualityGate.degraded) {
+    const reason = `[h2h-backfill] providers geblokkeerd: 0 van ${report.qualityGate.batch} wedstrijden kreeg H2H (${report.providerErrorCount} providerfouten, ${report.qualityGate.blockedAttempts} geblokkeerde pogingen). Dit is een providerbeperking, geen bewijs dat H2H ontbreekt.`;
+    console.error(reason);
+    if (process.env.GITHUB_ACTIONS === "true") {
+      console.log(`::warning title=H2H providers geblokkeerd::${reason}`);
+    }
   }
 }
 
-// Gate-semantiek: alleen falen als een volle batch niets opleverde én de
-// providers geen bruikbaar antwoord gaven. Nul providerpogingen (acceptatie
-// geblokkeerd, provider niet geconfigureerd) of alleen quota-/HTTP-fouten zijn
-// een systeemprobleem, geen bewijs dat er geen historie is.
+// Gate-semantiek: alleen falen als een volle batch geen enkele providerpoging
+// deed; dan is er aantoonbaar niets geprobeerd. Quota-, HTTP- en
+// mappingfouten zijn een blokkade bij de provider, geen bewijs dat er geen
+// historie is: die markeren we als gedegradeerd (waarschuwing, groene run),
+// zodat elke run geen failure-mail oplevert voor een externe beperking.
 const H2H_BLOCKED_ATTEMPT_RESULTS = new Set(["http_error", "quota", "mapping_failed"]);
 
 export function buildH2HQualityGate({ minBatch, candidates, filled, attempts = [] } = {}) {
@@ -780,7 +789,8 @@ export function buildH2HQualityGate({ minBatch, candidates, filled, attempts = [
     blockedAttempts,
     applied,
     outcome,
-    failed: outcome === "no_provider_attempts" || outcome === "provider_blocked",
+    failed: outcome === "no_provider_attempts",
+    degraded: outcome === "provider_blocked",
   };
 }
 

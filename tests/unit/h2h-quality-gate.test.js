@@ -10,9 +10,10 @@ describe("H2H-kwaliteitsgate", () => {
     expect(gate.applied).toBe(true);
     expect(gate.outcome).toBe("no_provider_attempts");
     expect(gate.failed).toBe(true);
+    expect(gate.degraded).toBe(false);
   });
 
-  it("faalt wanneer alle pogingen op quota of HTTP-fouten stukliepen", () => {
+  it("markeert quota- of HTTP-fouten als gedegradeerd, niet als mislukte run", () => {
     const gate = buildH2HQualityGate({
       candidates: 50,
       filled: 0,
@@ -20,7 +21,8 @@ describe("H2H-kwaliteitsgate", () => {
     });
     expect(gate.outcome).toBe("provider_blocked");
     expect(gate.blockedAttempts).toBe(3);
-    expect(gate.failed).toBe(true);
+    expect(gate.failed).toBe(false);
+    expect(gate.degraded).toBe(true);
   });
 
   it("faalt niet wanneer providers netjes 'geen historie' antwoordden", () => {
@@ -31,6 +33,7 @@ describe("H2H-kwaliteitsgate", () => {
     });
     expect(gate.outcome).toBe("providers_reported_no_history");
     expect(gate.failed).toBe(false);
+    expect(gate.degraded).toBe(false);
   });
 
   it("telt een lokale rate-limit niet als providerantwoord", () => {

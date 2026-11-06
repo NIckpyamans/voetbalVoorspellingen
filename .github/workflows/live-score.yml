@@ -58,7 +58,7 @@ env:
 jobs:
   refresh-live-scores:
     runs-on: ubuntu-latest
-    timeout-minutes: 15
+    timeout-minutes: 20
 
     steps:
       - uses: actions/checkout@v5
@@ -76,7 +76,7 @@ jobs:
         run: npm ci
 
       - name: Refresh scores and standings
-        timeout-minutes: 8
+        timeout-minutes: 12
         run: node scripts/ci-neon-safe.js -- node scripts/server-worker.js
 
       - name: Audit competition agents
