@@ -1,45 +1,45 @@
 # Upcoming H2H Backfill
 
-Laatst bijgewerkt: 2026-11-07T19:29:40.146Z
+Laatst bijgewerkt: 2026-11-07T20:35:43.200Z
 Gecontroleerd: 50
 Gevuld: 0
 Geen directe H2H: 50
 Errors: 0
-Providerfouten: 128
+Providerfouten: 169
 Kwaliteitsgate: gedegradeerd (providers geblokkeerd in een volle batch)
 
-Openstaand na deze batch: 73
+Openstaand na deze batch: 52
 
 ## Aanbeveling
-API-Football H2H is onafhankelijk van fixture-acceptatie ingeschakeld; 3/3 beperkte paarpogingen gedaan. Er staan nog 73 fixtures in de wachtrij.
+API-Football H2H is onafhankelijk van fixture-acceptatie ingeschakeld; 3/3 beperkte paarpogingen gedaan. Er staan nog 52 fixtures in de wachtrij.
 
 ## Gevuld
 
 ## Geen Directe H2H
-- 2026-11-20: Arminia Bielefeld - 1. FC Magdeburg (no_direct_history)
-- 2026-11-20: Annecy - Clermont Foot (no_direct_history)
-- 2026-11-20: Almere City - NAC Breda (no_direct_history)
-- 2026-11-20: Troyes - Le Havre AC (rate_limited_locally)
-- 2026-11-20: AS Nancy Lorraine - Dijon FCO (rate_limited_locally)
-- 2026-11-20: De Graafschap - MVV Maastricht (rate_limited_locally)
-- 2026-11-20: Metz - Boulogne (rate_limited_locally)
-- 2026-11-20: FC Den Bosch - VVV-Venlo (rate_limited_locally)
-- 2026-11-20: FC Volendam - Jong Ajax (rate_limited_locally)
-- 2026-11-20: Helmond Sport - FC Dordrecht (rate_limited_locally)
-- 2026-11-20: Heracles Almelo - Jong PSV (rate_limited_locally)
-- 2026-11-20: Jong FC Utrecht - FC Emmen (rate_limited_locally)
-- 2026-11-20: TOP Oss - Roda JC Kerkrade (rate_limited_locally)
-- 2026-11-20: Vitesse - Jong AZ (rate_limited_locally)
-- 2026-11-21: 1. FC Nürnberg - TSV Eintracht Braunschweig (rate_limited_locally)
-- 2026-11-21: Nantes - Grenoble (rate_limited_locally)
-- 2026-11-21: Bayer Leverkusen - SC Paderborn 07 (rate_limited_locally)
-- 2026-11-21: Bolton Wanderers - Portsmouth (rate_limited_locally)
-- 2026-11-21: Coventry City - Crystal Palace (rate_limited_locally)
-- 2026-11-21: FC Eindhoven - RKC Waalwijk (rate_limited_locally)
+- 2026-11-24: RB Leipzig - Lens (no_direct_history)
+- 2026-11-24: Real Madrid - PSV Eindhoven (no_direct_history)
+- 2026-11-24: Slovan Bratislava - Real Betis (no_direct_history)
+- 2026-11-26: Jablonec - FC Lugano (rate_limited_locally)
+- 2026-11-26: Dinamo Zagreb - Bayer Leverkusen (rate_limited_locally)
+- 2026-11-26: Kauno Zalgiris - Riga FC (rate_limited_locally)
+- 2026-11-26: Marseille - Levski Sofia (rate_limited_locally)
+- 2026-11-26: Pafos - FC Midtjylland (rate_limited_locally)
+- 2026-11-26: Olympiacos - AC Milan (rate_limited_locally)
+- 2026-11-26: SK Brann - AGF (rate_limited_locally)
+- 2026-11-26: RB Salzburg - Ararat-Armenia (rate_limited_locally)
+- 2026-11-26: Borac Banja Luka - Atalanta (rate_limited_locally)
+- 2026-11-26: Union St.-Gilloise - Lech Poznan (rate_limited_locally)
+- 2026-11-26: Braga - KuPS Kuopio (rate_limited_locally)
+- 2026-11-26: Viktoria Plzen - Benfica (rate_limited_locally)
+- 2026-11-26: CSKA Sofia - Trabzonspor (rate_limited_locally)
+- 2026-11-26: Beşiktaş - Hapoel Beer Sheva (rate_limited_locally)
+- 2026-11-26: FC Nordsjælland - Panathinaikos (rate_limited_locally)
+- 2026-11-26: Crystal Palace - Real Sociedad (rate_limited_locally)
+- 2026-11-26: Hajduk Split - Sint-Truidense (rate_limited_locally)
 
 ## Providerfouten
 - 50× goal-api: acceptance_gate_closed
 - 47× api-football: rate_limited_locally
-- 18× football-data-co-uk: not_configured
-- 10× espn-team-schedule: team_mapping_missing
+- 40× football-data-co-uk: not_configured
+- 29× espn-team-schedule: team_mapping_missing
 - 3× api-football: team_mapping_missing
