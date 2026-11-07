@@ -1,6 +1,6 @@
 # Clubanalyse
 
-Wedstrijden in store: 1863 | voorspellingen beoordeeld: 1831 | 1X2 algemeen: 45.8% | exact: 9.7%
+Wedstrijden in store: 1863 | voorspellingen beoordeeld: 1831 | 1X2 algemeen: 45.8% | exact: 9.8%
 
 Clubs met >= 8 beoordeelde voorspellingen: 204 (afwijking-drempel 15 procentpunten)
 
@@ -15,7 +15,7 @@ Sterktemodel: basis 1.488 goals per team, thuisvoordeel x1.277 (aanval/verdedigi
 | FC Twente | Netherlands - Eredivisie | 20 | 20 | 9 | 11 | 55.0 | 5.0 | 2.59 | 1.598 | 0.675 | WDWWW | +9.2 |  |
 | Liverpool | England - Premier League | 19 | 19 | 13 | 6 | 26.3 | 0.0 | 2.50 | 1.381 | 0.662 | WLWLL | -19.5 | AFWIJKEND |
 | Manchester United | England - Premier League | 19 | 19 | 13 | 6 | 21.1 | 0.0 | 2.44 | 1.371 | 0.674 | DDLLW | -24.8 | AFWIJKEND |
-| Nottingham Forest | England - Premier League | 19 | 19 | 8 | 11 | 63.2 | 21.1 | 1.71 | 0.839 | 0.627 | DWLLL | +17.3 | AFWIJKEND |
+| Nottingham Forest | England - Premier League | 19 | 19 | 8 | 11 | 63.2 | 21.1 | 1.64 | 0.839 | 0.627 | DWLLL | +17.3 | AFWIJKEND |
 | Sunderland | England - Premier League | 19 | 19 | 12 | 7 | 57.9 | 21.1 | 2.00 | 1.017 | 0.678 | LLDLL | +12.1 |  |
 | Bayer Leverkusen | Germany - Bundesliga | 19 | 19 | 9 | 10 | 42.1 | 0.0 | 2.47 | 1.244 | 0.792 | WWLLL | -3.7 |  |
 | Stade Rennais | France - Ligue 1 | 19 | 19 | 12 | 7 | 36.8 | 5.3 | 2.13 | 1.31 | 0.963 | LWWLD | -9.0 |  |
@@ -40,25 +40,25 @@ Sterktemodel: basis 1.488 goals per team, thuisvoordeel x1.277 (aanval/verdedigi
 | Wrexham | England - Championship | 17 | 16 | 5 | 12 | 25.0 | 6.3 | 2.60 | 0.919 | 0.66 | WDLLW | -20.8 | AFWIJKEND |
 | Southampton | England - Championship | 17 | 16 | 10 | 7 | 68.8 | 25.0 | 1.50 | 1.74 | 0.643 | LWWWD | +22.9 | AFWIJKEND |
 | Hull City | England - Premier League | 16 | 16 | 7 | 9 | 31.3 | 6.3 | 1.50 | 1.074 | 0.58 | DLDDD | -14.6 |  |
-| Millwall | England - Championship | 17 | 16 | 6 | 11 | 43.8 | 6.3 | 2.06 | 1.148 | 0.871 | DWLWL | -2.1 |  |
+| Millwall | England - Championship | 17 | 16 | 6 | 11 | 43.8 | 6.3 | 2.13 | 1.148 | 0.871 | DWLWL | -2.1 |  |
 | VfB Stuttgart | Germany - Bundesliga | 16 | 16 | 8 | 8 | 68.8 | 18.8 | 1.71 | 1.632 | 0.748 | LLWWL | +22.9 | AFWIJKEND |
-| Eintracht Frankfurt | Germany - Bundesliga | 17 | 16 | 7 | 10 | 56.3 | 12.5 | 2.14 | 1.264 | 0.885 | WDLLW | +10.4 |  |
+| Eintracht Frankfurt | Germany - Bundesliga | 17 | 16 | 7 | 10 | 56.3 | 18.8 | 2.07 | 1.264 | 0.885 | WDLLW | +10.4 |  |
 | SpVgg Greuther Fürth | Germany - 2. Bundesliga | 16 | 16 | 5 | 11 | 50.0 | 12.5 | 1.50 | 0.685 | 0.779 | DLLWL | +4.2 |  |
 | Lyon | France - Ligue 1 | 16 | 16 | 8 | 8 | 37.5 | 6.3 | 2.46 | 1.089 | 0.604 | WLLWD | -8.3 |  |
 | Juventus | Italy - Serie A | 15 | 15 | 7 | 8 | 53.3 | 20.0 | 1.77 | 1.233 | 0.565 | WLWWW | +7.5 |  |
 | Fulham | England - Premier League | 16 | 15 | 6 | 10 | 46.7 | 0.0 | 1.79 | 0.927 | 0.619 | DDLWD | +0.8 |  |
-| Brentford | England - Premier League | 15 | 15 | 6 | 9 | 40.0 | 13.3 | 1.38 | 1.7 | 0.621 | DWDDW | -5.8 |  |
+| Brentford | England - Premier League | 15 | 15 | 6 | 9 | 40.0 | 13.3 | 1.31 | 1.7 | 0.621 | DWDDW | -5.8 |  |
 | West Ham United | England - Championship | 16 | 15 | 9 | 7 | 40.0 | 13.3 | 2.47 | 1.76 | 0.882 | DDLLD | -5.8 |  |
 | RKC Waalwijk | Netherlands - Eerste Divisie | 15 | 15 | 8 | 7 | 60.0 | 26.7 | 1.29 | 0.857 | 1.024 | LDLLD | +14.2 |  |
 | Blackburn Rovers | England - Championship | 16 | 15 | 8 | 8 | 46.7 | 13.3 | 1.73 | 1.082 | 0.874 | DWWLL | +0.8 |  |
-| RB Leipzig | Germany - Bundesliga | 16 | 15 | 8 | 8 | 66.7 | 0.0 | 2.57 | 1.659 | 0.693 | LWWWL | +20.8 | AFWIJKEND |
+| RB Leipzig | Germany - Bundesliga | 16 | 15 | 8 | 8 | 66.7 | 0.0 | 2.64 | 1.659 | 0.693 | LWWWL | +20.8 | AFWIJKEND |
 | VfL Wolfsburg | Germany - Bundesliga | 15 | 15 | 7 | 8 | 53.3 | 13.3 | 2.38 | 1.391 | 0.805 | DLWDW | +7.5 |  |
 | TSG Hoffenheim | Germany - Bundesliga | 15 | 15 | 7 | 8 | 33.3 | 0.0 | 2.20 | 1.236 | 0.82 | LLWLD | -12.5 |  |
 | 1. FC Union Berlin | Germany - Bundesliga | 16 | 15 | 8 | 8 | 33.3 | 6.7 | 2.50 | 0.97 | 0.872 | LLWDD | -12.5 |  |
 | TSV Eintracht Braunschweig | Germany - 2. Bundesliga | 15 | 15 | 8 | 7 | 26.7 | 0.0 | 1.64 | 1.033 | 0.835 | LWWLD | -19.2 | AFWIJKEND |
 | SC Paderborn 07 | Germany - Bundesliga | 16 | 15 | 9 | 7 | 46.7 | 6.7 | 2.47 | 0.76 | 0.708 | LWLWD | +0.8 |  |
 | 1. FC Magdeburg | Germany - Bundesliga | 16 | 15 | 10 | 6 | 33.3 | 13.3 | 1.71 | 1.368 | 0.723 | WDWWD | -12.5 |  |
-| Schalke 04 | Germany - Bundesliga | 16 | 15 | 7 | 9 | 33.3 | 0.0 | 2.43 | 0.727 | 0.648 | WDLDL | -12.5 |  |
+| Schalke 04 | Germany - Bundesliga | 16 | 15 | 7 | 9 | 33.3 | 0.0 | 2.50 | 0.727 | 0.648 | WDLDL | -12.5 |  |
 | Holstein Kiel | Germany - Bundesliga | 15 | 15 | 7 | 8 | 33.3 | 6.7 | 1.79 | 0.849 | 0.682 | LDLWL | -12.5 |  |
 | SV Darmstadt 98 | Germany - Bundesliga | 15 | 15 | 9 | 6 | 40.0 | 6.7 | 1.57 | 0.705 | 0.905 | LWLWD | -5.8 |  |
 | Hannover 96 | Germany - 2. Bundesliga | 15 | 15 | 7 | 8 | 53.3 | 20.0 | 2.08 | 0.916 | 0.849 | LWLLW | +7.5 |  |
@@ -114,9 +114,9 @@ Sterktemodel: basis 1.488 goals per team, thuisvoordeel x1.277 (aanval/verdedigi
 | Preston North End | England - Championship | 13 | 12 | 6 | 7 | 50.0 | 0.0 | 2.00 | 0.904 | 1.028 | DLDLL | +4.2 |  |
 | Queens Park Rangers | England - Championship | 13 | 12 | 8 | 5 | 50.0 | 33.3 | 1.33 | 1.158 | 0.712 | DDWLD | +4.2 |  |
 | Norwich City | England - Championship | 13 | 12 | 7 | 6 | 50.0 | 8.3 | 2.08 | 1.638 | 0.936 | LLWWW | +4.2 |  |
-| Derby County | England - Championship | 13 | 12 | 6 | 7 | 58.3 | 8.3 | 1.83 | 0.834 | 0.929 | DDLLW | +12.5 |  |
+| Derby County | England - Championship | 13 | 12 | 6 | 7 | 58.3 | 8.3 | 1.92 | 0.834 | 0.929 | DDLLW | +12.5 |  |
 | Stoke City | England - Championship | 13 | 12 | 8 | 5 | 66.7 | 33.3 | 1.42 | 1.118 | 0.602 | WWDWW | +20.8 | AFWIJKEND |
-| Hamburg SV | Germany - Bundesliga | 13 | 12 | 5 | 8 | 58.3 | 0.0 | 2.33 | 0.971 | 0.972 | WWLLW | +12.5 |  |
+| Hamburg SV | Germany - Bundesliga | 13 | 12 | 5 | 8 | 58.3 | 8.3 | 2.25 | 0.971 | 0.972 | WWLLW | +12.5 |  |
 | Werder Bremen | Germany - Bundesliga | 13 | 12 | 5 | 8 | 33.3 | 16.7 | 1.83 | 1.442 | 0.765 | DWDWW | -12.5 |  |
 | 1. FC Heidenheim 1846 | Germany - 2. Bundesliga | 13 | 12 | 7 | 6 | 33.3 | 0.0 | 1.80 | 1.011 | 0.717 | WDDDL | -12.5 |  |
 | Villarreal | Spain - LaLiga | 12 | 12 | 5 | 7 | 50.0 | 16.7 | 2.00 | 1.565 | 0.928 | WWWLL | +4.2 |  |
@@ -159,8 +159,8 @@ Sterktemodel: basis 1.488 goals per team, thuisvoordeel x1.277 (aanval/verdedigi
 | Lazio | Italy - Serie A | 10 | 10 | 5 | 5 | 40.0 | 10.0 | 2.13 | 0.95 | 0.94 | LWWWW | -5.8 |  |
 | Feyenoord | Netherlands - Eredivisie | 10 | 10 | 4 | 6 | 70.0 | 10.0 | 2.00 | 1.576 | 0.865 | DWLWW | +24.2 | AFWIJKEND |
 | MVV Maastricht | Netherlands - Eerste Divisie | 10 | 10 | 6 | 4 | 80.0 | 10.0 | 2.00 | 0.651 | 1.199 | LWLLL | +34.2 | AFWIJKEND |
-| Annecy | France - Ligue 2 | 10 | 10 | 4 | 6 | 40.0 | 20.0 | 2.22 | 0.829 | 1.012 | LLWLL | -5.8 |  |
-| Montpellier | France - Ligue 2 | 10 | 10 | 5 | 5 | 50.0 | 10.0 | 1.30 | 0.985 | 0.69 | DWWWL | +4.2 |  |
+| Annecy | France - Ligue 2 | 10 | 10 | 4 | 6 | 40.0 | 20.0 | 2.11 | 0.829 | 1.012 | LLWLL | -5.8 |  |
+| Montpellier | France - Ligue 2 | 10 | 10 | 5 | 5 | 50.0 | 10.0 | 1.20 | 0.985 | 0.69 | DWWWL | +4.2 |  |
 | Stade de Reims | France - Ligue 2 | 10 | 10 | 4 | 6 | 40.0 | 0.0 | 2.10 | 1.26 | 0.842 | DDDWL | -5.8 |  |
 | AS Nancy Lorraine | France - Ligue 2 | 10 | 10 | 5 | 5 | 30.0 | 0.0 | 2.70 | 1.2 | 0.796 | LWWWW | -15.8 | AFWIJKEND |
 | 1. FC Köln | Germany - Bundesliga | 10 | 10 | 6 | 4 | 30.0 | 20.0 | 1.88 | 1.038 | 0.866 | WLLDL | -15.8 | AFWIJKEND |
