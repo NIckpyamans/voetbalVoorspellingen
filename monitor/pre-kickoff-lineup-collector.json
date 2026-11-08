@@ -1,37 +1,37 @@
 {
-  "generatedAt": "2026-11-07T16:40:07.606Z",
-  "checked": 3,
+  "generatedAt": "2026-11-08T13:28:46.102Z",
+  "checked": 6,
   "confirmed": 0,
   "changedConfirmed": 0,
   "partial": 0,
-  "missing": 3,
+  "missing": 6,
   "r2Stored": 0,
   "playerFixtureStatsCaptured": 0,
   "databaseWritable": true,
   "databaseError": null,
   "captureWindows": {
     "t75": 1,
-    "t45": 2,
+    "t45": 5,
     "t20": 0,
     "outside": 0
   },
   "providers": {
-    "sofascore:schedule_http_403": 3,
-    "fotmob:fixture_not_found": 3,
-    "goal-api:acceptance_gate_closed": 3,
-    "sportmonks:plan_coverage_unavailable": 3,
-    "api-football:account_or_plan_unavailable": 3
+    "sofascore:schedule_http_403": 6,
+    "fotmob:fixture_not_found": 6,
+    "goal-api:acceptance_gate_closed": 6,
+    "sportmonks:plan_coverage_unavailable": 6,
+    "api-football:account_or_plan_unavailable": 6
   },
   "matches": [
     {
-      "matchId": "ss-espn-eng.1-401878757",
+      "matchId": "ss-espn-eng.1-401879239",
       "league": "England - Premier League",
       "agent": "england-premier-league-agent",
-      "kickoff": "2026-11-07T17:30:00.000Z",
-      "minutesBeforeKickoff": 49,
+      "kickoff": "2026-11-08T14:00:00.000Z",
+      "minutesBeforeKickoff": 31,
       "captureWindow": "t45",
-      "homeTeam": "Nottingham Forest",
-      "awayTeam": "Manchester City",
+      "homeTeam": "Sunderland",
+      "awayTeam": "Chelsea",
       "provider": "api-football",
       "status": "account_or_plan_unavailable",
       "attempts": [
@@ -106,96 +106,342 @@
       "partial": false
     },
     {
-      "matchId": "ss-espn-ger.1-401884743",
+      "matchId": "ss-espn-eng.1-401879243",
+      "league": "England - Premier League",
+      "agent": "england-premier-league-agent",
+      "kickoff": "2026-11-08T14:00:00.000Z",
+      "minutesBeforeKickoff": 31,
+      "captureWindow": "t45",
+      "homeTeam": "Crystal Palace",
+      "awayTeam": "Liverpool",
+      "provider": "api-football",
+      "status": "account_or_plan_unavailable",
+      "attempts": [
+        {
+          "provider": "sofascore",
+          "status": "schedule_http_403",
+          "lineup": false,
+          "confirmed": false,
+          "durationMs": null,
+          "quota": {
+            "remaining": null,
+            "limit": null,
+            "resetAt": null
+          },
+          "result": "http_error"
+        },
+        {
+          "provider": "fotmob",
+          "status": "fixture_not_found",
+          "lineup": false,
+          "confirmed": false,
+          "durationMs": null,
+          "quota": {
+            "remaining": null,
+            "limit": null,
+            "resetAt": null
+          },
+          "result": "no_coverage"
+        },
+        {
+          "provider": "goal-api",
+          "status": "acceptance_gate_closed",
+          "lineup": false,
+          "confirmed": false,
+          "durationMs": null,
+          "quota": {
+            "remaining": null,
+            "limit": null,
+            "resetAt": null
+          },
+          "result": "acceptance_blocked"
+        },
+        {
+          "provider": "sportmonks",
+          "status": "plan_coverage_unavailable",
+          "lineup": false,
+          "confirmed": false,
+          "durationMs": null,
+          "quota": {
+            "remaining": null,
+            "limit": null,
+            "resetAt": null
+          },
+          "result": "no_coverage"
+        },
+        {
+          "provider": "api-football",
+          "status": "account_or_plan_unavailable",
+          "fixtureMapped": false,
+          "lineup": false,
+          "confirmed": false,
+          "durationMs": null,
+          "quota": {
+            "remaining": null,
+            "limit": null,
+            "resetAt": null
+          },
+          "result": "acceptance_blocked"
+        }
+      ],
+      "confirmed": false,
+      "partial": false
+    },
+    {
+      "matchId": "ss-espn-eng.1-401878759",
+      "league": "England - Premier League",
+      "agent": "england-premier-league-agent",
+      "kickoff": "2026-11-08T14:00:00.000Z",
+      "minutesBeforeKickoff": 31,
+      "captureWindow": "t45",
+      "homeTeam": "Ipswich Town",
+      "awayTeam": "AFC Bournemouth",
+      "provider": "api-football",
+      "status": "account_or_plan_unavailable",
+      "attempts": [
+        {
+          "provider": "sofascore",
+          "status": "schedule_http_403",
+          "lineup": false,
+          "confirmed": false,
+          "durationMs": null,
+          "quota": {
+            "remaining": null,
+            "limit": null,
+            "resetAt": null
+          },
+          "result": "http_error"
+        },
+        {
+          "provider": "fotmob",
+          "status": "fixture_not_found",
+          "lineup": false,
+          "confirmed": false,
+          "durationMs": null,
+          "quota": {
+            "remaining": null,
+            "limit": null,
+            "resetAt": null
+          },
+          "result": "no_coverage"
+        },
+        {
+          "provider": "goal-api",
+          "status": "acceptance_gate_closed",
+          "lineup": false,
+          "confirmed": false,
+          "durationMs": null,
+          "quota": {
+            "remaining": null,
+            "limit": null,
+            "resetAt": null
+          },
+          "result": "acceptance_blocked"
+        },
+        {
+          "provider": "sportmonks",
+          "status": "plan_coverage_unavailable",
+          "lineup": false,
+          "confirmed": false,
+          "durationMs": null,
+          "quota": {
+            "remaining": null,
+            "limit": null,
+            "resetAt": null
+          },
+          "result": "no_coverage"
+        },
+        {
+          "provider": "api-football",
+          "status": "account_or_plan_unavailable",
+          "fixtureMapped": false,
+          "lineup": false,
+          "confirmed": false,
+          "durationMs": null,
+          "quota": {
+            "remaining": null,
+            "limit": null,
+            "resetAt": null
+          },
+          "result": "acceptance_blocked"
+        }
+      ],
+      "confirmed": false,
+      "partial": false
+    },
+    {
+      "matchId": "ss-espn-fra.1-401876406",
+      "league": "France - Ligue 1",
+      "agent": "france-ligue-1-agent",
+      "kickoff": "2026-11-08T14:00:00.000Z",
+      "minutesBeforeKickoff": 31,
+      "captureWindow": "t45",
+      "homeTeam": "Stade Rennais",
+      "awayTeam": "Lille",
+      "provider": "api-football",
+      "status": "account_or_plan_unavailable",
+      "attempts": [
+        {
+          "provider": "sofascore",
+          "status": "schedule_http_403",
+          "lineup": false,
+          "confirmed": false,
+          "durationMs": null,
+          "quota": {
+            "remaining": null,
+            "limit": null,
+            "resetAt": null
+          },
+          "result": "http_error"
+        },
+        {
+          "provider": "fotmob",
+          "status": "fixture_not_found",
+          "lineup": false,
+          "confirmed": false,
+          "durationMs": null,
+          "quota": {
+            "remaining": null,
+            "limit": null,
+            "resetAt": null
+          },
+          "result": "no_coverage"
+        },
+        {
+          "provider": "goal-api",
+          "status": "acceptance_gate_closed",
+          "lineup": false,
+          "confirmed": false,
+          "durationMs": null,
+          "quota": {
+            "remaining": null,
+            "limit": null,
+            "resetAt": null
+          },
+          "result": "acceptance_blocked"
+        },
+        {
+          "provider": "sportmonks",
+          "status": "plan_coverage_unavailable",
+          "lineup": false,
+          "confirmed": false,
+          "durationMs": null,
+          "quota": {
+            "remaining": null,
+            "limit": null,
+            "resetAt": null
+          },
+          "result": "no_coverage"
+        },
+        {
+          "provider": "api-football",
+          "status": "account_or_plan_unavailable",
+          "fixtureMapped": false,
+          "lineup": false,
+          "confirmed": false,
+          "durationMs": null,
+          "quota": {
+            "remaining": null,
+            "limit": null,
+            "resetAt": null
+          },
+          "result": "acceptance_blocked"
+        }
+      ],
+      "confirmed": false,
+      "partial": false
+    },
+    {
+      "matchId": "ss-espn-eng.1-401879244",
+      "league": "England - Premier League",
+      "agent": "england-premier-league-agent",
+      "kickoff": "2026-11-08T14:00:00.000Z",
+      "minutesBeforeKickoff": 31,
+      "captureWindow": "t45",
+      "homeTeam": "Brighton & Hove Albion",
+      "awayTeam": "Brentford",
+      "provider": "api-football",
+      "status": "account_or_plan_unavailable",
+      "attempts": [
+        {
+          "provider": "sofascore",
+          "status": "schedule_http_403",
+          "lineup": false,
+          "confirmed": false,
+          "durationMs": null,
+          "quota": {
+            "remaining": null,
+            "limit": null,
+            "resetAt": null
+          },
+          "result": "http_error"
+        },
+        {
+          "provider": "fotmob",
+          "status": "fixture_not_found",
+          "lineup": false,
+          "confirmed": false,
+          "durationMs": null,
+          "quota": {
+            "remaining": null,
+            "limit": null,
+            "resetAt": null
+          },
+          "result": "no_coverage"
+        },
+        {
+          "provider": "goal-api",
+          "status": "acceptance_gate_closed",
+          "lineup": false,
+          "confirmed": false,
+          "durationMs": null,
+          "quota": {
+            "remaining": null,
+            "limit": null,
+            "resetAt": null
+          },
+          "result": "acceptance_blocked"
+        },
+        {
+          "provider": "sportmonks",
+          "status": "plan_coverage_unavailable",
+          "lineup": false,
+          "confirmed": false,
+          "durationMs": null,
+          "quota": {
+            "remaining": null,
+            "limit": null,
+            "resetAt": null
+          },
+          "result": "no_coverage"
+        },
+        {
+          "provider": "api-football",
+          "status": "account_or_plan_unavailable",
+          "fixtureMapped": false,
+          "lineup": false,
+          "confirmed": false,
+          "durationMs": null,
+          "quota": {
+            "remaining": null,
+            "limit": null,
+            "resetAt": null
+          },
+          "result": "acceptance_blocked"
+        }
+      ],
+      "confirmed": false,
+      "partial": false
+    },
+    {
+      "matchId": "ss-espn-ger.1-401884738",
       "league": "Germany - Bundesliga",
       "agent": "germany-bundesliga-agent",
-      "kickoff": "2026-11-07T17:30:00.000Z",
-      "minutesBeforeKickoff": 49,
-      "captureWindow": "t45",
-      "homeTeam": "VfB Stuttgart",
-      "awayTeam": "Werder Bremen",
-      "provider": "api-football",
-      "status": "account_or_plan_unavailable",
-      "attempts": [
-        {
-          "provider": "sofascore",
-          "status": "schedule_http_403",
-          "lineup": false,
-          "confirmed": false,
-          "durationMs": null,
-          "quota": {
-            "remaining": null,
-            "limit": null,
-            "resetAt": null
-          },
-          "result": "http_error"
-        },
-        {
-          "provider": "fotmob",
-          "status": "fixture_not_found",
-          "lineup": false,
-          "confirmed": false,
-          "durationMs": null,
-          "quota": {
-            "remaining": null,
-            "limit": null,
-            "resetAt": null
-          },
-          "result": "no_coverage"
-        },
-        {
-          "provider": "goal-api",
-          "status": "acceptance_gate_closed",
-          "lineup": false,
-          "confirmed": false,
-          "durationMs": null,
-          "quota": {
-            "remaining": null,
-            "limit": null,
-            "resetAt": null
-          },
-          "result": "acceptance_blocked"
-        },
-        {
-          "provider": "sportmonks",
-          "status": "plan_coverage_unavailable",
-          "lineup": false,
-          "confirmed": false,
-          "durationMs": null,
-          "quota": {
-            "remaining": null,
-            "limit": null,
-            "resetAt": null
-          },
-          "result": "no_coverage"
-        },
-        {
-          "provider": "api-football",
-          "status": "account_or_plan_unavailable",
-          "fixtureMapped": false,
-          "lineup": false,
-          "confirmed": false,
-          "durationMs": null,
-          "quota": {
-            "remaining": null,
-            "limit": null,
-            "resetAt": null
-          },
-          "result": "acceptance_blocked"
-        }
-      ],
-      "confirmed": false,
-      "partial": false
-    },
-    {
-      "matchId": "ss-espn-ned.1-401875552",
-      "league": "Netherlands - Eredivisie",
-      "agent": "netherlands-eredivisie-agent",
-      "kickoff": "2026-11-07T17:45:00.000Z",
-      "minutesBeforeKickoff": 64,
+      "kickoff": "2026-11-08T14:30:00.000Z",
+      "minutesBeforeKickoff": 61,
       "captureWindow": "t75",
-      "homeTeam": "ADO Den Haag",
-      "awayTeam": "Sparta Rotterdam",
+      "homeTeam": "FC Cologne",
+      "awayTeam": "Bayer Leverkusen",
       "provider": "api-football",
       "status": "account_or_plan_unavailable",
       "attempts": [
@@ -273,6 +519,14 @@
   "leagueCoverage": [
     {
       "league": "England - Premier League",
+      "checked": 4,
+      "covered": 0,
+      "partial": 0,
+      "missing": 4,
+      "coverage": 0
+    },
+    {
+      "league": "France - Ligue 1",
       "checked": 1,
       "covered": 0,
       "partial": 0,
@@ -281,14 +535,6 @@
     },
     {
       "league": "Germany - Bundesliga",
-      "checked": 1,
-      "covered": 0,
-      "partial": 0,
-      "missing": 1,
-      "coverage": 0
-    },
-    {
-      "league": "Netherlands - Eredivisie",
       "checked": 1,
       "covered": 0,
       "partial": 0,
