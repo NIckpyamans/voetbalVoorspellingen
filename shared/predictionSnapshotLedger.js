@@ -1,4 +1,4 @@
-import crypto from "node:crypto";
+import { parseStreamingLedger, encodeStreamingLedger } from "./streamingLedger.js";
 import fs from "node:fs";
 import path from "node:path";
 import { gunzipSync, gzipSync } from "node:zlib";
@@ -274,14 +274,10 @@ function monthLedgerObjectKey(month, hash, api = false) {
   return `prediction-snapshots/year=${year}/month=${monthNumber}/${api ? "api-ledger" : "ledger"}-${hash}.json.gz`;
 }
 
-function checksum(value) {
-  return crypto.createHash("sha256").update(value).digest("hex");
-}
-
 // Laadt maandshards één voor één en vouwt elke shard direct in het resultaat, zodat
 // de uitgepakte tekst en de geparste JSON van één maand niet naast alle andere
 // maanden in het geheugen blijven staan.
-async function loadMonthShards({ config, entries, api = false, getObject = getR2Object, maxBytes = snapshotLedgerMonthMaxJsonBytes() }) {
+async function loadMonthShards({ config, entries, api = false, getObject = getR2Object }) {
   const accumulated = { predictionSnapshots: {}, postMatchReviews: {}, evaluations: {} };
   for (const entry of entries) {
     const month = entry?.month;
@@ -294,9 +290,7 @@ async function loadMonthShards({ config, entries, api = false, getObject = getR2
     const object = await getObject({ config, key: buildR2ObjectKey(config, relativeKey) });
     if (!object.ok) throw new Error(`R2 monthly ledger missing (${month}): ${object.reason || "unknown error"}`);
     const bytes = Buffer.isBuffer(object.body) ? object.body : Buffer.from(object.body);
-    const json = decodeLedgerJson(bytes, `maand ${month}`, maxBytes);
-    if (checksum(json) !== hash) throw new Error(`R2 monthly ledger checksum mismatch (${month})`);
-    const shard = normalizeSnapshotLedger(JSON.parse(json));
+    const shard = normalizeSnapshotLedger(await parseStreamingLedger(bytes, hash));
     for (const [predictionId, snapshot] of Object.entries(shard.predictionSnapshots)) {
       if (predictionId && snapshot && !accumulated.predictionSnapshots[predictionId]) accumulated.predictionSnapshots[predictionId] = snapshot;
     }
@@ -526,14 +520,14 @@ export async function persistSnapshotLedger(ledger, options = {}) {
     if (previous?.sha256 && previous.key !== monthLedgerObjectKey(month, previous.sha256)) {
       throw new Error(`Invalid existing R2 ledger reference for ${month}`);
     }
-    const json = JSON.stringify(monthLedger);
+    const encoded = await encodeStreamingLedger(monthLedger);
     const apiLedger = compactSnapshotLedgerForApi(monthLedger);
     apiLedger.generatedAt = monthLedger.generatedAt;
-    const apiJson = JSON.stringify(apiLedger);
-    const jsonHash = checksum(json);
-    const apiJsonHash = checksum(apiJson);
-    const body = gzipSync(Buffer.from(json, "utf8"), { level: 9 });
-    const apiBody = gzipSync(Buffer.from(apiJson, "utf8"), { level: 9 });
+    const encodedApi = await encodeStreamingLedger(apiLedger);
+    const jsonHash = encoded.sha256;
+    const apiJsonHash = encodedApi.sha256;
+    const body = encoded.body;
+    const apiBody = encodedApi.body;
     if (previous?.sha256 !== jsonHash) {
       const upload = await putObject({
         config,

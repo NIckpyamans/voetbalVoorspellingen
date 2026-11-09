@@ -17,3 +17,8 @@
 Eerdere lokale oktoberwijzigingen zijn veilig opgeslagen in Git-stashes; de nieuwste branch bevat inmiddels aanvullende reparaties. Deze worden niet blind overschreven.
 
 Live herstelruns en productie-uitrol moeten na publicatie afzonderlijk worden gecontroleerd; historische rode runs worden niet gewist.
+
+## Aanvullende herstelproef
+Modelonderhoud 42587686636 toonde dat de november-maandshard inmiddels de 512 MiB-grens overschrijdt. De maandreader/-writer verwerken daarom JSON nu per record met stream-json 1.9.1, checksumcontrole, een recordbudget en een totaalbudget. Dit voorkomt de extra enorme uitgepakte tekst en JSON.stringify-string. Canonieke snapshotvelden worden niet verwijderd.
+
+769 tests, typecontrole en productiebuild geslaagd. Het verlagen van duplicaatgeheugen is geen onbeperkte schaalgarantie: groei van het aantal geladen objecten blijft bewaakt en kan verdere opsplitsing vereisen.
