@@ -1,20 +1,24 @@
 {
   "ok": true,
-  "skipped": true,
-  "generatedAt": "2026-10-26T13:18:40.343Z",
-  "reason": "insufficient_unique_completed_regular_snapshot_matches",
-  "uniqueCompletedSnapshotMatches": 74,
-  "uniqueCompletedRegularSnapshotMatches": 3,
-  "minimumUniqueCompletedRegularSnapshotMatches": 50,
+  "applyLive": false,
+  "livePromotionApplied": false,
+  "promotionTargets": {
+    "neon": false,
+    "r2": {
+      "ok": false,
+      "skipped": true,
+      "reason": "not_requested"
+    }
+  },
   "promotionGate": {
-    "uniqueCompletedMatches": 3,
+    "uniqueCompletedMatches": 266,
     "calibrationMin": 50,
     "promotionMin": 150,
-    "calibrationGap": 47,
-    "promotionGap": 147,
-    "canCalibrate": false,
-    "canPromote": false,
-    "sampleCanPromote": false,
+    "calibrationGap": 0,
+    "promotionGap": 0,
+    "canCalibrate": true,
+    "canPromote": true,
+    "sampleCanPromote": true,
     "qualityEvidenceProvided": false,
     "quality": {
       "validationRows": 0,
@@ -27,16 +31,32 @@
       "minLogLossImprovement": 0.001,
       "reasons": []
     },
-    "stage": "collecting"
+    "stage": "professional_ready"
+  },
+  "calibrationSource": "merged_immutable_training_and_r2",
+  "database": {
+    "configured": true,
+    "available": false,
+    "error": "Server error (HTTP status 402): {\"message\":\"Your account or project has exceeded the quota. Upgrade your plan to increase limits.\",\"code\":\"\",\"detail\":null,\"hint\":null,\"position\":null,\"internalPosition\":null,\"internalQuery\":null,\"severity\":\"\",\"where\":null,\"table\":null,\"column\":null,\"schema\":null,\"dataType\":null,\"constraint\":null,\"file\":null,\"line\":null,\"routine\":null,\"neon:retryable\":true}",
+    "rows": 0
   },
   "immutableSources": {
     "selected": "merged_immutable_training_and_r2",
-    "mergedRows": 74,
-    "ledgerRows": 74,
+    "mergedRows": 519,
+    "ledgerRows": 519,
     "trainingRows": 0,
     "r2Configured": true,
-    "r2Available": false,
-    "r2Error": "Snapshot ledger maand 2026-08 is groter dan 100663296 bytes; weigert het volledig in geheugen te parsen"
+    "r2Available": true,
+    "r2Error": null
   },
-  "nextAction": "Wacht op 47 extra unieke afgeronde reguliere competitiewedstrijden met pre-match snapshots voordat league/phase-kalibratie draait."
+  "calibrationRows": 287,
+  "uniqueCompletedSnapshotMatches": 483,
+  "uniqueCompletedRegularSnapshotMatches": 266,
+  "generatedAt": "2026-11-09T12:57:38.674Z",
+  "groups": 26,
+  "candidates": 0,
+  "accepted": 0,
+  "liveProfileKeys": [],
+  "topCandidates": [],
+  "nextAction": "Geen profiel promoveren: geen unieke-wedstrijdenkandidaat haalt de minimale Brier-verbetering. Verzamel meer complete wedstrijden en herhaal de shadowrun."
 }

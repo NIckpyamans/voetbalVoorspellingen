@@ -1,13 +1,20 @@
 {
   "ok": true,
-  "generatedAt": "2026-10-26T13:18:40.738Z",
+  "generatedAt": "2026-11-09T12:57:40.217Z",
   "applyLive": false,
   "version": "prob-calibration-v1",
   "databaseAvailable": false,
-  "sourceRows": 348,
-  "regularRows": 23,
-  "calibrationRows": 23,
-  "leaguesEvaluated": 4,
+  "calibrationSource": "r2_snapshot_ledger",
+  "ledgerSources": {
+    "r2Available": true,
+    "r2Error": null,
+    "localAvailable": true
+  },
+  "sourceRows": 1015,
+  "regularRows": 407,
+  "validKickoffRows": 329,
+  "calibrationRows": 329,
+  "leaguesEvaluated": 11,
   "acceptedLeagues": [],
   "promotion": {
     "applied": false,
@@ -17,28 +24,531 @@
   "results": [
     {
       "league": "Belgium - Pro League",
+      "rows": 2,
+      "eligible": false,
+      "reason": "insufficient_rows",
+      "minRows": 20
+    },
+    {
+      "league": "England - Championship",
+      "rows": 49,
+      "eligible": true,
+      "accepted": false,
+      "promotionGate": {
+        "uniqueCompletedMatches": 49,
+        "calibrationMin": 40,
+        "promotionMin": 150,
+        "calibrationGap": 0,
+        "promotionGap": 101,
+        "canCalibrate": true,
+        "canPromote": false,
+        "sampleCanPromote": false,
+        "qualityEvidenceProvided": true,
+        "quality": {
+          "validationRows": 15,
+          "validationMin": 30,
+          "leakageCoverage": 1,
+          "minLeakageCoverage": 0.95,
+          "brierImprovement": -0.00396,
+          "minBrierImprovement": 0.003,
+          "logLossImprovement": -0.01103,
+          "minLogLossImprovement": 0.001,
+          "reasons": [
+            "insufficient_walk_forward_validation_rows",
+            "insufficient_brier_improvement",
+            "insufficient_log_loss_improvement"
+          ]
+        },
+        "stage": "experimental_ready"
+      },
+      "profile": {
+        "kind": "platt",
+        "slope": 0.2,
+        "intercept": 0.5354,
+        "rows": 34,
+        "version": "prob-calibration-v1",
+        "trainRows": 34,
+        "validationRows": 15
+      },
+      "baseline": {
+        "brier": 0.65474,
+        "logLoss": 1.08328,
+        "rows": 49
+      },
+      "calibrated": {
+        "brier": 0.66042,
+        "logLoss": 1.09056,
+        "rows": 49
+      },
+      "validationBaseline": {
+        "brier": 0.69846,
+        "logLoss": 1.15013,
+        "rows": 15
+      },
+      "validationCalibrated": {
+        "brier": 0.70242,
+        "logLoss": 1.16116,
+        "rows": 15
+      },
+      "brierImprovement": -0.00396,
+      "logLossImprovement": -0.01103
+    },
+    {
+      "league": "England - Premier League",
+      "rows": 39,
+      "eligible": false,
+      "accepted": false,
+      "promotionGate": {
+        "uniqueCompletedMatches": 39,
+        "calibrationMin": 40,
+        "promotionMin": 150,
+        "calibrationGap": 1,
+        "promotionGap": 111,
+        "canCalibrate": false,
+        "canPromote": false,
+        "sampleCanPromote": false,
+        "qualityEvidenceProvided": true,
+        "quality": {
+          "validationRows": 12,
+          "validationMin": 30,
+          "leakageCoverage": 1,
+          "minLeakageCoverage": 0.95,
+          "brierImprovement": -0.04924,
+          "minBrierImprovement": 0.003,
+          "logLossImprovement": -0.06975,
+          "minLogLossImprovement": 0.001,
+          "reasons": [
+            "insufficient_walk_forward_validation_rows",
+            "insufficient_brier_improvement",
+            "insufficient_log_loss_improvement"
+          ]
+        },
+        "stage": "collecting"
+      },
+      "profile": {
+        "kind": "platt",
+        "slope": 0.2,
+        "intercept": 0.593,
+        "rows": 27,
+        "version": "prob-calibration-v1",
+        "trainRows": 27,
+        "validationRows": 12
+      },
+      "baseline": {
+        "brier": 0.62843,
+        "logLoss": 1.04959,
+        "rows": 39
+      },
+      "calibrated": {
+        "brier": 0.66368,
+        "logLoss": 1.09957,
+        "rows": 39
+      },
+      "validationBaseline": {
+        "brier": 0.60649,
+        "logLoss": 1.0234,
+        "rows": 12
+      },
+      "validationCalibrated": {
+        "brier": 0.65573,
+        "logLoss": 1.09315,
+        "rows": 12
+      },
+      "brierImprovement": -0.04924,
+      "logLossImprovement": -0.06975
+    },
+    {
+      "league": "France - Ligue 1",
+      "rows": 39,
+      "eligible": false,
+      "accepted": false,
+      "promotionGate": {
+        "uniqueCompletedMatches": 39,
+        "calibrationMin": 40,
+        "promotionMin": 150,
+        "calibrationGap": 1,
+        "promotionGap": 111,
+        "canCalibrate": false,
+        "canPromote": false,
+        "sampleCanPromote": false,
+        "qualityEvidenceProvided": true,
+        "quality": {
+          "validationRows": 12,
+          "validationMin": 30,
+          "leakageCoverage": 1,
+          "minLeakageCoverage": 0.95,
+          "brierImprovement": -0.08273,
+          "minBrierImprovement": 0.003,
+          "logLossImprovement": -0.1117,
+          "minLogLossImprovement": 0.001,
+          "reasons": [
+            "insufficient_walk_forward_validation_rows",
+            "insufficient_brier_improvement",
+            "insufficient_log_loss_improvement"
+          ]
+        },
+        "stage": "collecting"
+      },
+      "profile": {
+        "kind": "platt",
+        "slope": 0.2,
+        "intercept": 0.5605,
+        "rows": 27,
+        "version": "prob-calibration-v1",
+        "trainRows": 27,
+        "validationRows": 12
+      },
+      "baseline": {
+        "brier": 0.6358,
+        "logLoss": 1.0574,
+        "rows": 39
+      },
+      "calibrated": {
+        "brier": 0.71352,
+        "logLoss": 1.16532,
+        "rows": 39
+      },
+      "validationBaseline": {
+        "brier": 0.54471,
+        "logLoss": 0.92723,
+        "rows": 12
+      },
+      "validationCalibrated": {
+        "brier": 0.62744,
+        "logLoss": 1.03893,
+        "rows": 12
+      },
+      "brierImprovement": -0.08273,
+      "logLossImprovement": -0.1117
+    },
+    {
+      "league": "France - Ligue 2",
+      "rows": 41,
+      "eligible": true,
+      "accepted": false,
+      "promotionGate": {
+        "uniqueCompletedMatches": 41,
+        "calibrationMin": 40,
+        "promotionMin": 150,
+        "calibrationGap": 0,
+        "promotionGap": 109,
+        "canCalibrate": true,
+        "canPromote": false,
+        "sampleCanPromote": false,
+        "qualityEvidenceProvided": true,
+        "quality": {
+          "validationRows": 13,
+          "validationMin": 30,
+          "leakageCoverage": 1,
+          "minLeakageCoverage": 0.95,
+          "brierImprovement": -0.0377,
+          "minBrierImprovement": 0.003,
+          "logLossImprovement": -0.06146,
+          "minLogLossImprovement": 0.001,
+          "reasons": [
+            "insufficient_walk_forward_validation_rows",
+            "insufficient_brier_improvement",
+            "insufficient_log_loss_improvement"
+          ]
+        },
+        "stage": "experimental_ready"
+      },
+      "profile": {
+        "kind": "platt",
+        "slope": 0.2,
+        "intercept": 0.5008,
+        "rows": 28,
+        "version": "prob-calibration-v1",
+        "trainRows": 28,
+        "validationRows": 13
+      },
+      "baseline": {
+        "brier": 0.67782,
+        "logLoss": 1.11954,
+        "rows": 41
+      },
+      "calibrated": {
+        "brier": 0.69577,
+        "logLoss": 1.14802,
+        "rows": 41
+      },
+      "validationBaseline": {
+        "brier": 0.66129,
+        "logLoss": 1.10889,
+        "rows": 13
+      },
+      "validationCalibrated": {
+        "brier": 0.69899,
+        "logLoss": 1.17035,
+        "rows": 13
+      },
+      "brierImprovement": -0.0377,
+      "logLossImprovement": -0.06146
+    },
+    {
+      "league": "Germany - 2. Bundesliga",
+      "rows": 30,
+      "eligible": false,
+      "accepted": false,
+      "promotionGate": {
+        "uniqueCompletedMatches": 30,
+        "calibrationMin": 40,
+        "promotionMin": 150,
+        "calibrationGap": 10,
+        "promotionGap": 120,
+        "canCalibrate": false,
+        "canPromote": false,
+        "sampleCanPromote": false,
+        "qualityEvidenceProvided": true,
+        "quality": {
+          "validationRows": 9,
+          "validationMin": 30,
+          "leakageCoverage": 1,
+          "minLeakageCoverage": 0.95,
+          "brierImprovement": -0.00322,
+          "minBrierImprovement": 0.003,
+          "logLossImprovement": -0.00851,
+          "minLogLossImprovement": 0.001,
+          "reasons": [
+            "insufficient_walk_forward_validation_rows",
+            "insufficient_brier_improvement",
+            "insufficient_log_loss_improvement"
+          ]
+        },
+        "stage": "collecting"
+      },
+      "profile": {
+        "kind": "platt",
+        "slope": 0.2,
+        "intercept": 0.5246,
+        "rows": 21,
+        "version": "prob-calibration-v1",
+        "trainRows": 21,
+        "validationRows": 9
+      },
+      "baseline": {
+        "brier": 0.63686,
+        "logLoss": 1.05366,
+        "rows": 30
+      },
+      "calibrated": {
+        "brier": 0.68752,
+        "logLoss": 1.12597,
+        "rows": 30
+      },
+      "validationBaseline": {
+        "brier": 0.57815,
+        "logLoss": 0.97694,
+        "rows": 9
+      },
+      "validationCalibrated": {
+        "brier": 0.58137,
+        "logLoss": 0.98545,
+        "rows": 9
+      },
+      "brierImprovement": -0.00322,
+      "logLossImprovement": -0.00851
+    },
+    {
+      "league": "Germany - Bundesliga",
+      "rows": 56,
+      "eligible": true,
+      "accepted": false,
+      "promotionGate": {
+        "uniqueCompletedMatches": 56,
+        "calibrationMin": 40,
+        "promotionMin": 150,
+        "calibrationGap": 0,
+        "promotionGap": 94,
+        "canCalibrate": true,
+        "canPromote": false,
+        "sampleCanPromote": false,
+        "qualityEvidenceProvided": true,
+        "quality": {
+          "validationRows": 17,
+          "validationMin": 30,
+          "leakageCoverage": 1,
+          "minLeakageCoverage": 0.95,
+          "brierImprovement": -0.04413,
+          "minBrierImprovement": 0.003,
+          "logLossImprovement": -0.06235,
+          "minLogLossImprovement": 0.001,
+          "reasons": [
+            "insufficient_walk_forward_validation_rows",
+            "insufficient_brier_improvement",
+            "insufficient_log_loss_improvement"
+          ]
+        },
+        "stage": "experimental_ready"
+      },
+      "profile": {
+        "kind": "platt",
+        "slope": 0.2465,
+        "intercept": 0.5311,
+        "rows": 39,
+        "version": "prob-calibration-v1",
+        "trainRows": 39,
+        "validationRows": 17
+      },
+      "baseline": {
+        "brier": 0.64651,
+        "logLoss": 1.07607,
+        "rows": 56
+      },
+      "calibrated": {
+        "brier": 0.71083,
+        "logLoss": 1.16791,
+        "rows": 56
+      },
+      "validationBaseline": {
+        "brier": 0.63159,
+        "logLoss": 1.0539,
+        "rows": 17
+      },
+      "validationCalibrated": {
+        "brier": 0.67572,
+        "logLoss": 1.11625,
+        "rows": 17
+      },
+      "brierImprovement": -0.04413,
+      "logLossImprovement": -0.06235
+    },
+    {
+      "league": "Netherlands - Eerste Divisie",
+      "rows": 46,
+      "eligible": true,
+      "accepted": false,
+      "promotionGate": {
+        "uniqueCompletedMatches": 46,
+        "calibrationMin": 40,
+        "promotionMin": 150,
+        "calibrationGap": 0,
+        "promotionGap": 104,
+        "canCalibrate": true,
+        "canPromote": false,
+        "sampleCanPromote": false,
+        "qualityEvidenceProvided": true,
+        "quality": {
+          "validationRows": 14,
+          "validationMin": 30,
+          "leakageCoverage": 1,
+          "minLeakageCoverage": 0.95,
+          "brierImprovement": 0.00534,
+          "minBrierImprovement": 0.003,
+          "logLossImprovement": 0.00479,
+          "minLogLossImprovement": 0.001,
+          "reasons": [
+            "insufficient_walk_forward_validation_rows"
+          ]
+        },
+        "stage": "experimental_ready"
+      },
+      "profile": {
+        "kind": "platt",
+        "slope": 0.2,
+        "intercept": 0.5923,
+        "rows": 32,
+        "version": "prob-calibration-v1",
+        "trainRows": 32,
+        "validationRows": 14
+      },
+      "baseline": {
+        "brier": 0.60384,
+        "logLoss": 1.01007,
+        "rows": 46
+      },
+      "calibrated": {
+        "brier": 0.57991,
+        "logLoss": 0.97683,
+        "rows": 46
+      },
+      "validationBaseline": {
+        "brier": 0.67283,
+        "logLoss": 1.10269,
+        "rows": 14
+      },
+      "validationCalibrated": {
+        "brier": 0.66749,
+        "logLoss": 1.0979,
+        "rows": 14
+      },
+      "brierImprovement": 0.00534,
+      "logLossImprovement": 0.00479
+    },
+    {
+      "league": "Netherlands - Eredivisie",
+      "rows": 22,
+      "eligible": false,
+      "accepted": false,
+      "promotionGate": {
+        "uniqueCompletedMatches": 22,
+        "calibrationMin": 40,
+        "promotionMin": 150,
+        "calibrationGap": 18,
+        "promotionGap": 128,
+        "canCalibrate": false,
+        "canPromote": false,
+        "sampleCanPromote": false,
+        "qualityEvidenceProvided": true,
+        "quality": {
+          "validationRows": 2,
+          "validationMin": 30,
+          "leakageCoverage": 1,
+          "minLeakageCoverage": 0.95,
+          "brierImprovement": -0.07426,
+          "minBrierImprovement": 0.003,
+          "logLossImprovement": -0.09629,
+          "minLogLossImprovement": 0.001,
+          "reasons": [
+            "insufficient_walk_forward_validation_rows",
+            "insufficient_brier_improvement",
+            "insufficient_log_loss_improvement"
+          ]
+        },
+        "stage": "collecting"
+      },
+      "profile": {
+        "kind": "platt",
+        "slope": 0.2,
+        "intercept": 0.4733,
+        "rows": 20,
+        "version": "prob-calibration-v1",
+        "trainRows": 20,
+        "validationRows": 2
+      },
+      "baseline": {
+        "brier": 0.65519,
+        "logLoss": 1.08353,
+        "rows": 22
+      },
+      "calibrated": {
+        "brier": 0.78825,
+        "logLoss": 1.26189,
+        "rows": 22
+      },
+      "validationBaseline": {
+        "brier": 0.54836,
+        "logLoss": 0.93193,
+        "rows": 2
+      },
+      "validationCalibrated": {
+        "brier": 0.62262,
+        "logLoss": 1.02822,
+        "rows": 2
+      },
+      "brierImprovement": -0.07426,
+      "logLossImprovement": -0.09629
+    },
+    {
+      "league": "Portugal - Liga Portugal",
       "rows": 1,
       "eligible": false,
       "reason": "insufficient_rows",
       "minRows": 20
     },
     {
-      "league": "France - Ligue 1",
-      "rows": 5,
-      "eligible": false,
-      "reason": "insufficient_rows",
-      "minRows": 20
-    },
-    {
-      "league": "Germany - Bundesliga",
-      "rows": 14,
-      "eligible": false,
-      "reason": "insufficient_rows",
-      "minRows": 20
-    },
-    {
-      "league": "Netherlands - Eredivisie",
-      "rows": 3,
+      "league": "Spain - LaLiga",
+      "rows": 4,
       "eligible": false,
       "reason": "insufficient_rows",
       "minRows": 20
