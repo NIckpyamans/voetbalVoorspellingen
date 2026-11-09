@@ -1,12 +1,12 @@
 # Upcoming H2H Backfill
 
-Laatst bijgewerkt: 2026-11-09T02:02:09.469Z
-Gecontroleerd: 17
+Laatst bijgewerkt: 2026-11-09T06:24:55.808Z
+Gecontroleerd: 42
 Gevuld: 0
-Geen directe H2H: 17
+Geen directe H2H: 42
 Errors: 0
-Providerfouten: 44
-Kwaliteitsgate: niet van toepassing
+Providerfouten: 113
+Kwaliteitsgate: gedegradeerd (providers geblokkeerd in een volle batch)
 
 Openstaand na deze batch: 0
 
@@ -16,9 +16,12 @@ Geen directe H2H gevonden voor de gecontroleerde wedstrijden. Breid team-ID mapp
 ## Gevuld
 
 ## Geen Directe H2H
-- 2026-11-26: Kairat Almaty - Mjällby AIF (no_direct_history)
-- 2026-11-26: Beşiktaş - Hapoel Be'er Sheva (no_direct_history)
-- 2026-11-26: Ajax Amsterdam - FC Thun (no_direct_history)
+- 2026-11-26: Brighton & Hove Albion - CSU Craiova (no_direct_history)
+- 2026-11-26: Besiktas - Hapoel Be'er (no_direct_history)
+- 2026-11-26: Egnatia - Lincoln Red Imps (no_direct_history)
+- 2026-11-26: Celta Vigo - AFC Bournemouth (rate_limited_locally)
+- 2026-11-26: Heart of Midlothian - AS Monaco (rate_limited_locally)
+- 2026-11-26: Iberia 1999 - Getafe (rate_limited_locally)
 - 2026-11-29: ADO Den Haag - FC Utrecht (rate_limited_locally)
 - 2026-11-29: 1. FC Magdeburg - Energie Cottbus (rate_limited_locally)
 - 2026-11-29: AJ Auxerre - Marseille (rate_limited_locally)
@@ -30,13 +33,13 @@ Geen directe H2H gevonden voor de gecontroleerde wedstrijden. Breid team-ID mapp
 - 2026-11-29: Fortuna Sittard - Heerenveen (rate_limited_locally)
 - 2026-11-29: TSV Eintracht Braunschweig - VfL Wolfsburg (rate_limited_locally)
 - 2026-11-29: PEC Zwolle - AZ Alkmaar (rate_limited_locally)
-- 2026-11-22: Burnley - Blackburn Rovers (rate_limited_locally)
-- 2026-11-22: Sparta Rotterdam - AZ (rate_limited_locally)
-- 2026-11-29: AJ Auxerre - Olympique de Marseille (rate_limited_locally)
+- 2026-11-21: Bayer 04 Leverkusen - SC Paderborn 07 (rate_limited_locally)
+- 2026-11-21: Hull City AFC - Brighton & Hove Albion FC (rate_limited_locally)
+- 2026-11-21: RC Strasbourg Alsace - Stade Brestois 29 (rate_limited_locally)
 
 ## Providerfouten
-- 17× goal-api: acceptance_gate_closed
-- 14× api-football: rate_limited_locally
-- 6× espn-team-schedule: team_mapping_missing
-- 4× football-data-co-uk: not_configured
+- 42× goal-api: acceptance_gate_closed
+- 39× api-football: rate_limited_locally
+- 16× espn-team-schedule: team_mapping_missing
+- 13× football-data-co-uk: not_configured
 - 3× api-football: team_mapping_missing
