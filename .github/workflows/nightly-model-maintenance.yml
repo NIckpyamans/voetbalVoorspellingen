@@ -65,8 +65,12 @@ jobs:
         if: github.event_name == 'workflow_dispatch' && steps.database.outputs.databaseWritable == 'true'
         run: node scripts/ci-neon-safe.js -- npm run db:logos:backfill:apply
 
+      # De recovery leest server_data.json en de R2-ledger en schrijft de lokale
+      # recovery-ledger; hij raakt Neon niet aan. Aan de Neon-check hangen sloeg
+      # hem juist over in het scenario waarvoor hij bestaat: bij een Neon-storing
+      # of quota-stop bleef het snapshotbewijs liggen en droogde het
+      # wedstrijdvolume verder op.
       - name: Recover historical snapshot training evidence from R2
-        if: steps.database.outputs.available == 'true'
         run: node scripts/ci-neon-safe.js -- npm run train:snapshots:recover
 
       - name: Backfill eligible immutable snapshots from historical results
