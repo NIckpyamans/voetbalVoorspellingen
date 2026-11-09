@@ -14,13 +14,25 @@ const quality = (row) => Number(Boolean(row.home_club_id)) * 8 + Number(Boolean(
   + Number(Boolean(row.competition_id)) * 6 + Number(Boolean(row.season_id)) * 4
   + Number(Boolean(row.has_result)) * 10 + Number(Boolean(row.has_stats)) * 6 + Number(row.odds_count || 0);
 
-const rows = await sql.query(`
-  select m.*,
-    exists(select 1 from match_results mr where mr.match_id=m.match_id) as has_result,
-    exists(select 1 from match_stats ms where ms.match_id=m.match_id) as has_stats,
-    (select count(*)::int from historical_odds_snapshots hos where hos.match_id=m.match_id) as odds_count
-  from matches m where m.date_key is not null
-`);
+// Identity/quality fields only: payload JSON can exceed Neon's 64 MB response limit.
+// Scan before mutating IDs so keyset pagination cannot skip a moved record.
+const rows = [];
+let cursor = "";
+while (true) {
+  const batch = await sql.query(`
+    select m.match_id, m.date_key, m.home_club_id, m.away_club_id,
+      m.home_team_name, m.away_team_name, m.competition_id, m.season_id,
+      m.canonical_fixture_id, m.source_match_id, m.data_source, m.league,
+      exists(select 1 from match_results mr where mr.match_id=m.match_id) as has_result,
+      exists(select 1 from match_stats ms where ms.match_id=m.match_id) as has_stats,
+      (select count(*)::int from historical_odds_snapshots hos where hos.match_id=m.match_id) as odds_count
+    from matches m where m.date_key is not null and m.match_id > $1
+    order by m.match_id limit 1000
+  `, [cursor]);
+  if (!batch.length) break;
+  rows.push(...batch);
+  cursor = batch[batch.length - 1].match_id;
+}
 const groups = new Map();
 for (const row of rows) {
   const id = idFor(row);

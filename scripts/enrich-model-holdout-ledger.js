@@ -7,6 +7,7 @@ import { getSql, loadLocalEnv } from "../shared/database.js";
 import {
   loadSnapshotLedger,
   mergeSnapshotLedgers,
+  ledgerDeltaSince,
   persistSnapshotLedger,
 } from "../shared/predictionSnapshotLedger.js";
 import { createEvaluationResultIndex, addEvaluationResult, resolveEvaluationResult } from "./worker/evaluation-result-matching.js";
@@ -97,7 +98,7 @@ async function main() {
     evaluations: { new: 0, refreshed: 0, unchanged: 0, noResult: 0, ambiguousResult: 0, ineligible: 0 },
     persistence: { ok: false, skipped: true, reason: process.argv.includes("--dry-run") ? "dry_run" : "not_attempted" },
   };
-  const ledger = canonicalLedger;
+  const ledger = mergeSnapshotLedgers(canonicalLedger);
   const snapshots = Object.values(ledger.predictionSnapshots || {})
     .filter((snapshot) => snapshot?.predictionId && snapshot?.matchId)
     .filter((snapshot) => REVIEWABLE_WINDOWS.has(String(
@@ -154,7 +155,7 @@ async function main() {
   }
 
   if (!report.dryRun && (report.evaluations.new || report.evaluations.refreshed)) {
-    const result = await persistSnapshotLedger(mergeSnapshotLedgers(ledger), { mergeRemote: true });
+    const result = await persistSnapshotLedger(ledgerDeltaSince(canonicalLedger, ledger), { touchedOnly: true, baselineR2: loaded.sources.r2 });
     report.persistence = { ok: Boolean(result.ok), skipped: Boolean(result.skipped), months: result.months || 0, evaluations: report.evaluations.new + report.evaluations.refreshed };
     if (!result.ok) throw new Error(`R2 ledger persistence failed: ${result.reason || "unknown"}`);
   }

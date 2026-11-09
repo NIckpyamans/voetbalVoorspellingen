@@ -673,6 +673,17 @@ async function upsertPredictionSnapshot(sql, snapshot, matchById) {
   return true;
 }
 
+// Bounded refreshes must not replay reviews for every archived match when
+// the matching fixture is absent from the current store.
+export function isInDatabaseSyncWindow(dateKeys, ...records) {
+  if (!dateKeys?.size) return true;
+  for (const record of records) {
+    const date = record?.date || record?.dateKey || record?.kickoff;
+    if (date) return dateKeys.has(String(date).slice(0, 10));
+  }
+  return false;
+}
+
 export async function syncStoreToDatabase(store, options = {}) {
   const sql = getSql();
   if (!sql) return { skipped: true, reason: "database_url_missing" };
@@ -697,13 +708,13 @@ export async function syncStoreToDatabase(store, options = {}) {
   }
 
   for (const snapshot of Object.values(store?.predictionSnapshots || {})) {
-    if (dateFilter && snapshot?.date && !dateFilter.has(snapshot.date)) continue;
+    if (!isInDatabaseSyncWindow(dateFilter, snapshot, matchById.get(String(snapshot?.matchId)))) continue;
     if (await upsertPredictionSnapshot(sql, snapshot, matchById)) predictionSnapshots += 1;
   }
 
   for (const [matchId, review] of Object.entries(store?.postMatchReviews || {})) {
     const match = matchById.get(String(matchId));
-    if (dateFilter && match?.date && !dateFilter.has(match.date)) continue;
+    if (!isInDatabaseSyncWindow(dateFilter, match, review, snapshotIndexes.byMatchId.get(String(matchId)))) continue;
     if (await upsertPredictionEvaluation(sql, matchId, review, snapshotIndexes)) predictionEvaluations += 1;
   }
 

@@ -327,3 +327,24 @@ describe("snapshot API projection", () => {
     expect(snapshot).not.toHaveProperty("explanation");
   });
 });
+
+ describe("loaded immutable shard reuse", () => {
+  it("avoids a second parse but reloads a concurrently changed shard", async () => {
+    const config = { configured: true, prefix: "test", bucket: "bucket" };
+    const objects = new Map(); const reads = [];
+    const getObject = async ({ key }) => { reads.push(key); return objects.has(key) ? { ok: true, body: objects.get(key) } : { ok: false, reason: "not_found" }; };
+    const putObject = async ({ key, body }) => { objects.set(key, Buffer.from(body)); return { ok: true }; };
+    const snapshot = (id) => ({ predictionId: id, matchId: id, generatedAt: "2026-11-01T10:00:00Z" });
+    const options = { config, getObject, putObject };
+    await persistSnapshotLedger({ predictionSnapshots: { a: snapshot("a") } }, { ...options, allowInitialize: true });
+    const baselineR2 = await readR2SnapshotLedger(options);
+    reads.length = 0;
+    await persistSnapshotLedger({ predictionSnapshots: { b: snapshot("b") } }, { ...options, touchedOnly: true, baselineR2 });
+    expect(reads).toHaveLength(1);
+    reads.length = 0;
+    await persistSnapshotLedger({ predictionSnapshots: { c: snapshot("c") } }, { ...options, touchedOnly: true, baselineR2 });
+    expect(reads.length).toBeGreaterThan(1);
+    const result = await readR2SnapshotLedger(options);
+    expect(Object.keys(result.ledger.predictionSnapshots).sort()).toEqual(["a", "b", "c"]);
+  });
+});

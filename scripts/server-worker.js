@@ -12733,7 +12733,7 @@ async function main() {
     // Alleen wat deze run nieuw of gewijzigd heeft gaat terug naar R2; alleen de
     // maandshards die die delta raakt worden gelezen en herschreven.
     const pendingLedger = ledgerDeltaSince(snapshotLedgerLoad.ledger, ledgerFromStore(store));
-    const persistedLedger = await persistSnapshotLedger(pendingLedger, { touchedOnly: true });
+    const persistedLedger = await persistSnapshotLedger(pendingLedger, { touchedOnly: true, baselineR2: snapshotLedgerLoad.sources.r2 });
     logPhase("snapshot-ledger naar R2", snapshotLedgerStartedAt);
     store.snapshotLedger = {
       ...(store.snapshotLedger || {}),

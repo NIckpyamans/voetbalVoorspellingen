@@ -312,7 +312,7 @@ async function loadMonthShards({ config, entries, api = false, getObject = getR2
 
 // Leest alleen de maandshards die een incrementele schrijfactie raakt. Ongewijzigde
 // maanden worden via de manifest-verwijzing doorgegeven zonder ze te downloaden.
-async function readTouchedR2Ledger({ config, ledger, getObject = getR2Object }) {
+async function readTouchedR2Ledger({ config, ledger, getObject = getR2Object, baselineR2 }) {
   const indexObject = await getObject({ config, key: buildR2ObjectKey(config, SNAPSHOT_LEDGER_MONTH_INDEX_R2_KEY) });
   if (!indexObject.ok) return readR2SnapshotLedger({ config, getObject });
   const manifest = JSON.parse(indexObject.body.toString("utf8"));
@@ -321,7 +321,14 @@ async function readTouchedR2Ledger({ config, ledger, getObject = getR2Object }) 
   }
   const touched = new Set(partitionSnapshotLedgerByMonth(ledger).keys());
   const entries = manifest.months.filter((entry) => touched.has(entry?.month));
-  const shardLedger = await loadMonthShards({ config, entries, getObject });
+  // Reuse immutable objects already loaded by this run only when the remote
+  // content hash still matches. Changed shards must be fetched before merging.
+  const known = new Map((baselineR2?.manifest?.months || []).map((entry) => [entry.month, entry.sha256]));
+  const reusable = entries.filter((entry) => baselineR2?.available && known.get(entry.month) === entry.sha256);
+  const changed = entries.filter((entry) => !reusable.includes(entry));
+  const baselinePartitions = partitionSnapshotLedgerByMonth(baselineR2?.ledger);
+  const fetched = await loadMonthShards({ config, entries: changed, getObject });
+  const shardLedger = mergeSnapshotLedgers(...reusable.map((entry) => baselinePartitions.get(entry.month)), fetched);
   return { available: true, configured: true, source: "r2", ledger: shardLedger, manifest, months: manifest.months.length, touchedMonths: entries.length };
 }
 
@@ -493,7 +500,7 @@ export async function persistSnapshotLedger(ledger, options = {}) {
   const current = options.mergeRemote === false
     ? { available: false, ledger: emptyLedger(), manifest: null }
     : options.touchedOnly
-      ? await readTouchedR2Ledger({ config, ledger, getObject })
+      ? await readTouchedR2Ledger({ config, ledger, getObject, baselineR2: options.baselineR2 })
       : await readR2SnapshotLedger({ config, getObject });
   if (current?.error) throw new Error(`Cannot safely update monthly R2 ledger: ${current.error}`);
   if (options.mergeRemote !== false && current?.reason === "not_found" && current?.configured && !options.allowInitialize) {
