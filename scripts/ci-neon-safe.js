@@ -20,6 +20,41 @@ function withNodeHeapLimit(options = "") {
   return `${withoutHeapLimit} --max-old-space-size=${NODE_MAX_OLD_SPACE_MB}`.trim();
 }
 
+// Een onverklaarde fout belandde eerder als kale "Process completed with exit
+// code 1" in de UI: de joblog is te groot om te openen en de annotatie was dan
+// het enige spoor. We herhalen daarom de laatste regels, met credentials
+// gemaskeerd, zodat de oorzaak zonder de volledige log leesbaar is.
+const FAILURE_TAIL_LINES = 20;
+const FAILURE_ANNOTATION_MAX_CHARS = 3000;
+
+function redactSecrets(text = "") {
+  return String(text)
+    .replace(/\b(postgres(?:ql)?:\/\/)[^\s"'`]+/gi, "$1***")
+    .replace(/([?&](?:api[_-]?key|key|token|access_token|secret|password|sig)=)[^&\s"'`]+/gi, "$1***")
+    .replace(
+      /\b((?:api[_-]?key|access[_-]?key|secret[_-]?access[_-]?key|token|secret|password|authorization)["']?\s*[:=]\s*["']?)[A-Za-z0-9_\-./+=]{12,}/gi,
+      "$1***",
+    )
+    .replace(/\b(Bearer\s+)[A-Za-z0-9_\-./+=]{12,}/gi, "$1***");
+}
+
+function escapeAnnotation(text) {
+  return String(text).replace(/%/g, "%25").replace(/\r/g, "%0D").replace(/\n/g, "%0A");
+}
+
+function annotateFailure(output, code, signal) {
+  if (process.env.GITHUB_ACTIONS !== "true") return;
+  const lines = String(output)
+    .split(/\r?\n/)
+    .map((line) => line.trimEnd())
+    .filter(Boolean);
+  const tail = lines.slice(-FAILURE_TAIL_LINES).join("\n");
+  const detail = redactSecrets(tail) || "(geen uitvoer opgevangen)";
+  const reason = signal ? `gestopt door signaal ${signal}` : `exit code ${code}`;
+  const message = `${reason}\n${detail}`.slice(0, FAILURE_ANNOTATION_MAX_CHARS);
+  console.log(`::error title=${escapeAnnotation(`${command} faalde`)}::${escapeAnnotation(message)}`);
+}
+
 let output = "";
 const executable = process.platform === "win32" && command === "npm" ? "npm.cmd" : command;
 const child = spawn(executable, args, {
@@ -48,6 +83,7 @@ child.on("error", (error) => {
 child.on("close", (code, signal) => {
   if (signal) {
     console.error(`[ci-neon-safe] ${command} stopped by signal ${signal}`);
+    annotateFailure(output, null, signal);
     process.exit(1);
   }
   if (code === 0) {
@@ -94,5 +130,6 @@ child.on("close", (code, signal) => {
     process.exit(0);
   }
 
+  annotateFailure(output, code);
   process.exit(code || 1);
 });
