@@ -1,211 +1,23 @@
 {
-  "generatedAt": "2026-11-08T18:32:24.980Z",
-  "checked": 2,
+  "generatedAt": "2026-11-09T16:30:26.127Z",
+  "checked": 0,
   "confirmed": 0,
   "changedConfirmed": 0,
   "partial": 0,
-  "missing": 2,
+  "missing": 0,
   "r2Stored": 0,
   "playerFixtureStatsCaptured": 0,
-  "databaseWritable": true,
-  "databaseError": null,
+  "databaseWritable": false,
+  "databaseError": "Server error (HTTP status 402): {\"message\":\"Your account or project has exceeded the quota. Upgrade your plan to increase limits.\",\"code\":\"\",\"detail\":null,\"hint\":null,\"position\":null,\"internalPosition\":null,\"internalQuery\":null,\"severity\":\"\",\"where\":null,\"table\":null,\"column\":null,\"schema\":null,\"dataType\":null,\"constraint\":null,\"file\":null,\"line\":null,\"routine\":null,\"neon:retryable\":true}",
   "captureWindows": {
-    "t75": 1,
+    "t75": 0,
     "t45": 0,
-    "t20": 1,
+    "t20": 0,
     "outside": 0
   },
-  "providers": {
-    "sofascore:schedule_http_403": 2,
-    "fotmob:fixture_not_found": 2,
-    "goal-api:acceptance_gate_closed": 2,
-    "sportmonks:plan_coverage_unavailable": 2,
-    "api-football:account_or_plan_unavailable": 2
-  },
-  "matches": [
-    {
-      "matchId": "ss-espn-ned.1-401875549",
-      "league": "Netherlands - Eredivisie",
-      "agent": "netherlands-eredivisie-agent",
-      "kickoff": "2026-11-08T19:00:00.000Z",
-      "minutesBeforeKickoff": 27,
-      "captureWindow": "t20",
-      "homeTeam": "FC Utrecht",
-      "awayTeam": "NEC Nijmegen",
-      "provider": "api-football",
-      "status": "account_or_plan_unavailable",
-      "attempts": [
-        {
-          "provider": "sofascore",
-          "status": "schedule_http_403",
-          "lineup": false,
-          "confirmed": false,
-          "durationMs": null,
-          "quota": {
-            "remaining": null,
-            "limit": null,
-            "resetAt": null
-          },
-          "result": "http_error"
-        },
-        {
-          "provider": "fotmob",
-          "status": "fixture_not_found",
-          "lineup": false,
-          "confirmed": false,
-          "durationMs": null,
-          "quota": {
-            "remaining": null,
-            "limit": null,
-            "resetAt": null
-          },
-          "result": "no_coverage"
-        },
-        {
-          "provider": "goal-api",
-          "status": "acceptance_gate_closed",
-          "lineup": false,
-          "confirmed": false,
-          "durationMs": null,
-          "quota": {
-            "remaining": null,
-            "limit": null,
-            "resetAt": null
-          },
-          "result": "acceptance_blocked"
-        },
-        {
-          "provider": "sportmonks",
-          "status": "plan_coverage_unavailable",
-          "lineup": false,
-          "confirmed": false,
-          "durationMs": null,
-          "quota": {
-            "remaining": null,
-            "limit": null,
-            "resetAt": null
-          },
-          "result": "no_coverage"
-        },
-        {
-          "provider": "api-football",
-          "status": "account_or_plan_unavailable",
-          "fixtureMapped": false,
-          "lineup": false,
-          "confirmed": false,
-          "durationMs": null,
-          "quota": {
-            "remaining": null,
-            "limit": null,
-            "resetAt": null
-          },
-          "result": "acceptance_blocked"
-        }
-      ],
-      "confirmed": false,
-      "partial": false
-    },
-    {
-      "matchId": "ss-espn-fra.1-401876404",
-      "league": "France - Ligue 1",
-      "agent": "france-ligue-1-agent",
-      "kickoff": "2026-11-08T19:45:00.000Z",
-      "minutesBeforeKickoff": 72,
-      "captureWindow": "t75",
-      "homeTeam": "Lens",
-      "awayTeam": "Marseille",
-      "provider": "api-football",
-      "status": "account_or_plan_unavailable",
-      "attempts": [
-        {
-          "provider": "sofascore",
-          "status": "schedule_http_403",
-          "lineup": false,
-          "confirmed": false,
-          "durationMs": null,
-          "quota": {
-            "remaining": null,
-            "limit": null,
-            "resetAt": null
-          },
-          "result": "http_error"
-        },
-        {
-          "provider": "fotmob",
-          "status": "fixture_not_found",
-          "lineup": false,
-          "confirmed": false,
-          "durationMs": null,
-          "quota": {
-            "remaining": null,
-            "limit": null,
-            "resetAt": null
-          },
-          "result": "no_coverage"
-        },
-        {
-          "provider": "goal-api",
-          "status": "acceptance_gate_closed",
-          "lineup": false,
-          "confirmed": false,
-          "durationMs": null,
-          "quota": {
-            "remaining": null,
-            "limit": null,
-            "resetAt": null
-          },
-          "result": "acceptance_blocked"
-        },
-        {
-          "provider": "sportmonks",
-          "status": "plan_coverage_unavailable",
-          "lineup": false,
-          "confirmed": false,
-          "durationMs": null,
-          "quota": {
-            "remaining": null,
-            "limit": null,
-            "resetAt": null
-          },
-          "result": "no_coverage"
-        },
-        {
-          "provider": "api-football",
-          "status": "account_or_plan_unavailable",
-          "fixtureMapped": false,
-          "lineup": false,
-          "confirmed": false,
-          "durationMs": null,
-          "quota": {
-            "remaining": null,
-            "limit": null,
-            "resetAt": null
-          },
-          "result": "acceptance_blocked"
-        }
-      ],
-      "confirmed": false,
-      "partial": false
-    }
-  ],
-  "leagueCoverage": [
-    {
-      "league": "France - Ligue 1",
-      "checked": 1,
-      "covered": 0,
-      "partial": 0,
-      "missing": 1,
-      "coverage": 0
-    },
-    {
-      "league": "Netherlands - Eredivisie",
-      "checked": 1,
-      "covered": 0,
-      "partial": 0,
-      "missing": 1,
-      "coverage": 0
-    }
-  ],
+  "providers": {},
+  "matches": [],
+  "leagueCoverage": [],
   "confirmedCoverage": 0,
   "recalculationRequired": false,
   "recalculationSlaMinutes": 5,
