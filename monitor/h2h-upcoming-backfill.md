@@ -1,12 +1,12 @@
 # Upcoming H2H Backfill
 
-Laatst bijgewerkt: 2026-11-08T22:32:39.502Z
-Gecontroleerd: 24
+Laatst bijgewerkt: 2026-11-09T02:02:09.469Z
+Gecontroleerd: 17
 Gevuld: 0
-Geen directe H2H: 24
+Geen directe H2H: 17
 Errors: 0
-Providerfouten: 64
-Kwaliteitsgate: gedegradeerd (providers geblokkeerd in een volle batch)
+Providerfouten: 44
+Kwaliteitsgate: niet van toepassing
 
 Openstaand na deze batch: 0
 
@@ -16,9 +16,9 @@ Geen directe H2H gevonden voor de gecontroleerde wedstrijden. Breid team-ID mapp
 ## Gevuld
 
 ## Geen Directe H2H
-- 2026-11-24: RB Leipzig - Lens (no_direct_history)
-- 2026-11-24: Real Madrid - PSV Eindhoven (no_direct_history)
-- 2026-11-24: Slovan Bratislava - Real Betis (no_direct_history)
+- 2026-11-26: Kairat Almaty - Mjällby AIF (no_direct_history)
+- 2026-11-26: Beşiktaş - Hapoel Be'er Sheva (no_direct_history)
+- 2026-11-26: Ajax Amsterdam - FC Thun (no_direct_history)
 - 2026-11-29: ADO Den Haag - FC Utrecht (rate_limited_locally)
 - 2026-11-29: 1. FC Magdeburg - Energie Cottbus (rate_limited_locally)
 - 2026-11-29: AJ Auxerre - Marseille (rate_limited_locally)
@@ -30,16 +30,13 @@ Geen directe H2H gevonden voor de gecontroleerde wedstrijden. Breid team-ID mapp
 - 2026-11-29: Fortuna Sittard - Heerenveen (rate_limited_locally)
 - 2026-11-29: TSV Eintracht Braunschweig - VfL Wolfsburg (rate_limited_locally)
 - 2026-11-29: PEC Zwolle - AZ Alkmaar (rate_limited_locally)
-- 2026-11-22: Paris FC - Angers SCO (rate_limited_locally)
-- 2026-11-22: US Sassuolo Calcio - Genoa CFC (rate_limited_locally)
-- 2026-11-22: FC Twente '65 - Willem II Tilburg (rate_limited_locally)
-- 2026-11-22: Olympique de Marseille - Le Mans FC (rate_limited_locally)
-- 2026-11-22: AC Milan - Frosinone Calcio (rate_limited_locally)
-- 2026-11-22: Go Ahead Eagles - Fortuna Sittard (rate_limited_locally)
+- 2026-11-22: Burnley - Blackburn Rovers (rate_limited_locally)
+- 2026-11-22: Sparta Rotterdam - AZ (rate_limited_locally)
+- 2026-11-29: AJ Auxerre - Olympique de Marseille (rate_limited_locally)
 
 ## Providerfouten
-- 24× goal-api: acceptance_gate_closed
-- 21× api-football: rate_limited_locally
-- 8× football-data-co-uk: not_configured
-- 8× espn-team-schedule: team_mapping_missing
+- 17× goal-api: acceptance_gate_closed
+- 14× api-football: rate_limited_locally
+- 6× espn-team-schedule: team_mapping_missing
+- 4× football-data-co-uk: not_configured
 - 3× api-football: team_mapping_missing
