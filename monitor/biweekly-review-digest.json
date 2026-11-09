@@ -1,9 +1,9 @@
 {
-  "generatedAt": "2026-11-02T16:02:21.222Z",
+  "generatedAt": "2026-11-09T16:29:01.132Z",
   "workflowHealth": {
-    "generatedAt": "2026-11-02T16:01:58.232Z",
-    "from": "2026-10-26T16:01:58.232Z",
-    "to": "2026-11-02T16:01:58.232Z",
+    "generatedAt": "2026-11-09T16:28:34.301Z",
+    "from": "2026-11-02T16:28:34.301Z",
+    "to": "2026-11-09T16:28:34.301Z",
     "status": "degraded",
     "scope": "GitHub execution evidence; successful execution does not prove data publication",
     "workflows": [
@@ -15,68 +15,74 @@
         ],
         "maxAgeHours": 4,
         "latestConclusion": "success",
-        "latestRunUrl": "https://github.com/NIckpyamans/voetbalVoorspellingen/actions/runs/41407887834",
-        "lastSuccessAt": "2026-11-02T07:41:41Z",
+        "latestRunUrl": "https://github.com/NIckpyamans/voetbalVoorspellingen/actions/runs/42596342503",
+        "lastSuccessAt": "2026-11-09T09:49:57Z",
         "consecutiveFailures": 0,
-        "observedRuns": 31,
-        "failures": 0,
+        "observedRuns": 28,
+        "failures": 1,
         "cancelled": 0,
         "pending": 0,
-        "p95ElapsedMinutes": 0.5,
-        "recovery": null,
+        "p95ElapsedMinutes": 0.9,
+        "recovery": "execution_recovered_data_unverified",
         "truncated": false
       },
       {
         "workflow": "worker.yml",
         "status": "degraded",
         "reasons": [
+          "stale_success",
           "latest_failure"
         ],
         "maxAgeHours": 12,
         "latestConclusion": "failure",
-        "latestRunUrl": "https://github.com/NIckpyamans/voetbalVoorspellingen/actions/runs/41420732124",
-        "lastSuccessAt": "2026-11-02T07:56:02Z",
+        "latestRunUrl": "https://github.com/NIckpyamans/voetbalVoorspellingen/actions/runs/42588841336",
+        "lastSuccessAt": "2026-11-08T18:47:51Z",
         "consecutiveFailures": 1,
-        "observedRuns": 38,
-        "failures": 4,
-        "cancelled": 9,
+        "observedRuns": 40,
+        "failures": 21,
+        "cancelled": 0,
         "pending": 0,
-        "p95ElapsedMinutes": 14.6,
+        "p95ElapsedMinutes": 16.1,
         "recovery": null,
         "truncated": false
       },
       {
         "workflow": "live-score.yml",
-        "status": "ok",
-        "reasons": [],
+        "status": "degraded",
+        "reasons": [
+          "stale_success",
+          "latest_failure"
+        ],
         "maxAgeHours": 6,
-        "latestConclusion": "success",
-        "latestRunUrl": "https://github.com/NIckpyamans/voetbalVoorspellingen/actions/runs/41432407542",
-        "lastSuccessAt": "2026-11-02T10:59:19Z",
-        "consecutiveFailures": 0,
-        "observedRuns": 52,
-        "failures": 2,
-        "cancelled": 3,
+        "latestConclusion": "failure",
+        "latestRunUrl": "https://github.com/NIckpyamans/voetbalVoorspellingen/actions/runs/42596369163",
+        "lastSuccessAt": "2026-11-09T07:58:24Z",
+        "consecutiveFailures": 1,
+        "observedRuns": 53,
+        "failures": 14,
+        "cancelled": 1,
         "pending": 0,
-        "p95ElapsedMinutes": 8.1,
-        "recovery": "execution_recovered_data_unverified",
+        "p95ElapsedMinutes": 14.3,
+        "recovery": null,
         "truncated": false
       },
       {
         "workflow": "neon-health.yml",
-        "status": "ok",
-        "reasons": [],
+        "status": "degraded",
+        "reasons": [
+          "stale_success"
+        ],
         "maxAgeHours": 4,
         "latestConclusion": "success",
-        "latestRunUrl": "https://github.com/NIckpyamans/voetbalVoorspellingen/actions/runs/41451081160",
-        "lastSuccessAt": "2026-11-02T13:13:40Z",
+        "latestRunUrl": "https://github.com/NIckpyamans/voetbalVoorspellingen/actions/runs/42605471566",
+        "lastSuccessAt": "2026-11-09T11:01:00Z",
         "consecutiveFailures": 0,
-        "observedRuns": 32,
-        "failures": 0,
+        "observedRuns": 27,
+        "failures": 1,
         "cancelled": 0,
         "pending": 0,
-        "p95ElapsedMinutes": 0.6,
-        "recovery": null,
+        "p95ElapsedMinutes": 1.1,
+        "recovery": "execution_recovered_data_unverified",
         "truncated": false
       },
       {
@@ -87,14 +93,14 @@
         ],
         "maxAgeHours": 36,
         "latestConclusion": "failure",
-        "latestRunUrl": "https://github.com/NIckpyamans/voetbalVoorspellingen/actions/runs/41456238326",
-        "lastSuccessAt": "2026-11-01T12:33:57Z",
+        "latestRunUrl": "https://github.com/NIckpyamans/voetbalVoorspellingen/actions/runs/42633352953",
+        "lastSuccessAt": "2026-11-08T12:16:36Z",
         "consecutiveFailures": 1,
-        "observedRuns": 9,
-        "failures": 1,
-        "cancelled": 1,
+        "observedRuns": 7,
+        "failures": 4,
+        "cancelled": 0,
         "pending": 0,
-        "p95ElapsedMinutes": 34.1,
+        "p95ElapsedMinutes": 10.2,
         "recovery": null,
         "truncated": false
       },
@@ -104,14 +110,14 @@
         "reasons": [],
         "maxAgeHours": 36,
         "latestConclusion": "success",
-        "latestRunUrl": "https://github.com/NIckpyamans/voetbalVoorspellingen/actions/runs/41312402304",
-        "lastSuccessAt": "2026-11-01T13:42:23Z",
+        "latestRunUrl": "https://github.com/NIckpyamans/voetbalVoorspellingen/actions/runs/42486328804",
+        "lastSuccessAt": "2026-11-08T13:46:10Z",
         "consecutiveFailures": 0,
         "observedRuns": 6,
         "failures": 0,
         "cancelled": 0,
         "pending": 0,
-        "p95ElapsedMinutes": 2.9,
+        "p95ElapsedMinutes": 3,
         "recovery": null,
         "truncated": false
       },
@@ -121,31 +127,35 @@
         "reasons": [],
         "maxAgeHours": 36,
         "latestConclusion": "success",
-        "latestRunUrl": "https://github.com/NIckpyamans/voetbalVoorspellingen/actions/runs/41444883407",
-        "lastSuccessAt": "2026-11-02T12:29:56Z",
+        "latestRunUrl": "https://github.com/NIckpyamans/voetbalVoorspellingen/actions/runs/42620956230",
+        "lastSuccessAt": "2026-11-09T12:56:54Z",
         "consecutiveFailures": 0,
         "observedRuns": 7,
         "failures": 0,
         "cancelled": 0,
         "pending": 0,
-        "p95ElapsedMinutes": 2.4,
+        "p95ElapsedMinutes": 2.3,
         "recovery": null,
         "truncated": false
       },
       {
         "workflow": "post-match-enrichment.yml",
-        "status": "ok",
-        "reasons": [],
+        "status": "degraded",
+        "reasons": [
+          "stale_success",
+          "latest_failure",
+          "repeated_failure"
+        ],
         "maxAgeHours": 36,
-        "latestConclusion": "success",
-        "latestRunUrl": "https://github.com/NIckpyamans/voetbalVoorspellingen/actions/runs/41424545075",
-        "lastSuccessAt": "2026-11-02T10:02:34Z",
-        "consecutiveFailures": 0,
-        "observedRuns": 7,
-        "failures": 0,
+        "latestConclusion": "failure",
+        "latestRunUrl": "https://github.com/NIckpyamans/voetbalVoorspellingen/actions/runs/42645931744",
+        "lastSuccessAt": "2026-11-07T09:24:47Z",
+        "consecutiveFailures": 7,
+        "observedRuns": 14,
+        "failures": 10,
         "cancelled": 0,
         "pending": 0,
-        "p95ElapsedMinutes": 7.4,
+        "p95ElapsedMinutes": 22.3,
         "recovery": null,
         "truncated": false
       },
@@ -155,14 +165,14 @@
         "reasons": [],
         "maxAgeHours": 36,
         "latestConclusion": "success",
-        "latestRunUrl": "https://github.com/NIckpyamans/voetbalVoorspellingen/actions/runs/41438514420",
-        "lastSuccessAt": "2026-11-02T11:39:44Z",
+        "latestRunUrl": "https://github.com/NIckpyamans/voetbalVoorspellingen/actions/runs/42645733939",
+        "lastSuccessAt": "2026-11-09T15:33:18Z",
         "consecutiveFailures": 0,
-        "observedRuns": 26,
+        "observedRuns": 16,
         "failures": 0,
         "cancelled": 0,
         "pending": 0,
-        "p95ElapsedMinutes": 0.8,
+        "p95ElapsedMinutes": 0.6,
         "recovery": null,
         "truncated": false
       },
@@ -191,15 +201,15 @@
         "reasons": [],
         "maxAgeHours": 18,
         "latestConclusion": "success",
-        "latestRunUrl": "https://github.com/NIckpyamans/voetbalVoorspellingen/actions/runs/41400102607",
-        "lastSuccessAt": "2026-11-02T06:30:30Z",
+        "latestRunUrl": "https://github.com/NIckpyamans/voetbalVoorspellingen/actions/runs/42575949586",
+        "lastSuccessAt": "2026-11-09T06:57:50Z",
         "consecutiveFailures": 0,
-        "observedRuns": 22,
-        "failures": 0,
+        "observedRuns": 17,
+        "failures": 1,
         "cancelled": 0,
         "pending": 0,
-        "p95ElapsedMinutes": 3.3,
-        "recovery": null,
+        "p95ElapsedMinutes": 6.7,
+        "recovery": "execution_recovered_data_unverified",
         "truncated": false
       }
     ],
@@ -210,125 +220,129 @@
   },
   "evidenceFreshness": {
     "dataQuality": {
-      "generatedAt": "2026-11-02T16:02:10.714Z",
-      "ageMs": 10513,
+      "generatedAt": "2026-11-09T16:28:45.632Z",
+      "ageMs": 15504,
       "maxAgeMs": 86400000,
       "fresh": true,
       "status": "fresh"
     },
     "widgetAudit": {
-      "generatedAt": "2026-11-02T16:02:17.215Z",
-      "ageMs": 4012,
+      "generatedAt": "2026-11-09T16:28:54.545Z",
+      "ageMs": 6591,
       "maxAgeMs": 86400000,
       "fresh": true,
       "status": "fresh"
     },
     "predictionEvaluation": {
       "generatedAt": "2026-09-27T10:45:05.146Z",
-      "ageMs": 3129436081,
+      "ageMs": 3735835990,
       "maxAgeMs": 86400000,
       "fresh": false,
       "status": "stale"
     },
     "snapshotGrowth": {
       "generatedAt": "2026-08-26T03:20:55.588Z",
-      "ageMs": 5920885639,
+      "ageMs": 6527285548,
       "maxAgeMs": 86400000,
       "fresh": false,
       "status": "stale"
     },
     "professionalAudit": {
-      "generatedAt": "2026-11-02T16:02:17.358Z",
-      "ageMs": 3869,
+      "generatedAt": "2026-11-09T16:28:54.677Z",
+      "ageMs": 6459,
       "maxAgeMs": 86400000,
       "fresh": true,
       "status": "fresh"
     },
     "lineupMonitor": {
-      "generatedAt": "2026-10-31T19:35:48.232Z",
-      "ageMs": 159992995,
+      "generatedAt": "2026-11-04T16:22:02.510Z",
+      "ageMs": 432418626,
       "maxAgeMs": 86400000,
       "fresh": false,
       "status": "stale"
     },
     "apiFootballAcceptance": {
-      "generatedAt": "2026-10-28T17:27:22.017Z",
-      "ageMs": 426899210,
+      "generatedAt": "2026-11-02T17:29:33.934Z",
+      "ageMs": 601167202,
       "maxAgeMs": 86400000,
       "fresh": false,
       "status": "stale"
     },
     "workflowHealth": {
-      "generatedAt": "2026-11-02T16:01:58.232Z",
-      "ageMs": 22995,
+      "generatedAt": "2026-11-09T16:28:34.301Z",
+      "ageMs": 26835,
       "maxAgeMs": 86400000,
       "fresh": true,
       "status": "fresh"
     }
   },
   "range": {
-    "from": "2026-10-27",
-    "to": "2026-11-02",
+    "from": "2026-11-03",
+    "to": "2026-11-09",
     "days": 7
   },
   "shouldNotify": false,
   "shouldRefresh": true,
   "cadence": "wekelijks op maandag 06:19 UTC (GitHub kan vertraagd starten)",
-  "summary": "Geen nieuwe dagelijkse alarmsignalen in 7 waarnemingen; 5 voorstellen blijven beschikbaar.",
+  "summary": "AI bundel over de laatste 7 dagen: 1 monitorthema's en 5 uitvoerbare verbeteracties.",
   "totals": {
     "totalRuns": 7,
-    "totalIssues": 0,
-    "uniqueIssueTypes": 0
+    "totalIssues": 3,
+    "uniqueIssueTypes": 1
   },
   "latestStats": {
-    "today": "2026-11-02",
-    "tomorrow": "2026-11-03",
+    "today": "2026-11-09",
+    "tomorrow": "2026-11-10",
     "dataPresent": true,
-    "lastRun": 1793573341588,
-    "ageMinutes": 163,
+    "lastRun": 1794185453479,
+    "ageMinutes": 54,
     "maxWorkerAgeMinutes": 180,
-    "todayMatches": 8,
-    "tomorrowMatches": 19,
+    "todayMatches": 0,
+    "tomorrowMatches": 0,
     "fixtureCalendar": {
-      "status": "has_current_matches",
+      "status": "idle_until_next_match",
       "healthy": true,
       "emptyWindowOk": true,
       "severity": "none",
-      "todayCount": 8,
-      "tomorrowCount": 19,
+      "todayCount": 0,
+      "tomorrowCount": 0,
       "windowDays": 7,
       "checkedDates": [
-        "2026-11-02",
-        "2026-11-03",
-        "2026-11-04",
-        "2026-11-05",
-        "2026-11-06",
-        "2026-11-07",
-        "2026-11-08"
+        "2026-11-14",
+        "2026-11-15"
       ],
-      "nextMatchDate": "2026-11-02",
-      "nextMatchCount": 8,
-      "explanation": "Vandaag of morgen staan er wedstrijden in de actuele data."
+      "nextMatchDate": "2026-11-14",
+      "nextMatchCount": 7,
+      "explanation": "Geen wedstrijden vandaag/morgen; eerstvolgende bekende speeldag is 2026-11-14."
     },
     "liveMatches": 0,
     "liveWithoutMinute": 0,
-    "h2hFilled": 3,
-    "h2hMissing": 5,
+    "h2hFilled": 0,
+    "h2hMissing": 0,
     "standingsCount": 11,
-    "cupSheetCount": 3,
+    "cupSheetCount": 2,
     "phaseReliabilityCount": 2
   },
-  "topFindings": [],
+  "topFindings": [
+    {
+      "key": "worker_stale",
+      "title": "Workerdata verouderd",
+      "count": 3,
+      "highestSeverity": "high",
+      "sampleMessage": "Workerdata is 666 minuten oud.",
+      "recommendation": "Gebruik het reviewbranch-voorstel als veilige volgende patchronde."
+    }
+  ],
   "dataQuality": {
-    "generatedAt": "2026-11-02T16:02:10.714Z",
+    "generatedAt": "2026-11-09T16:28:45.632Z",
     "totals": {
-      "matches": 451,
-      "pastMatches": 206,
+      "matches": 452,
+      "pastMatches": 225,
       "pendingResultBackfills": 0,
       "missingPastScores": 0,
-      "h2hMissing": 316,
-      "h2hCovered": 135,
-      "h2hCoverage": 0.299,
+      "h2hMissing": 244,
+      "h2hCovered": 208,
+      "h2hCoverage": 0.46,
       "immutableLedgerSnapshots": 708,
       "immutableLedgerEvaluations": 413
     },
@@ -345,20 +359,20 @@
     ]
   },
   "widgetAudit": {
-    "generatedAt": "2026-11-02T16:02:17.215Z",
+    "generatedAt": "2026-11-09T16:28:54.545Z",
     "baseUrl": "https://voetbalvoorspellingen-clean.vercel.app",
     "status": "degraded",
     "totals": {
       "checks": 10,
-      "passed": 9,
-      "failed": 1
+      "passed": 8,
+      "failed": 2
     },
     "neon": {
-      "connected": true,
-      "matches": 5629,
-      "predictionSnapshots": 6851,
+      "connected": false,
+      "matches": 0,
+      "predictionSnapshots": 0,
       "h2hEdges": 0,
-      "auditRows": 34255
+      "auditRows": 0
     },
     "checks": [
       {
@@ -371,9 +385,9 @@
       {
         "key": "neon",
         "label": "Neon database",
-        "passed": true,
+        "passed": false,
         "status": 200,
-        "detail": "5629 matches, 6851 snapshots"
+        "detail": "0 matches, 0 snapshots"
       },
       {
         "key": "provider_widget",
@@ -387,7 +401,7 @@
         "label": "Dashboard/matches-widget",
         "passed": true,
         "status": 200,
-        "detail": "8 actuele matches, bron github-worker-v4-split"
+        "detail": "0 actuele matches, bron no-matches-yet"
       },
       {
         "key": "standings_widget",
@@ -401,21 +415,21 @@
         "label": "Bekerschema-widget",
         "passed": true,
         "status": 200,
-        "detail": "4 actief; leeg is geldig buiten bekerrondes"
+        "detail": "2 actief; leeg is geldig buiten bekerrondes"
       },
       {
         "key": "season_widget",
         "label": "Neon seizoen-widget",
         "passed": true,
         "status": 200,
-        "detail": "101 seizoenovergangen"
+        "detail": "0 seizoenovergangen"
       },
       {
         "key": "history_widget",
         "label": "Geschiedenis-widget",
         "passed": true,
         "status": 200,
-        "detail": "1115 reviews"
+        "detail": "2046 reviews"
       },
       {
         "key": "snapshot_widget",
@@ -433,7 +447,8 @@
       }
     ],
     "opportunities": [
-      "Herstel de mislukte widgetcontracten: Provider- en integriteitswidget."
+      "Vul gratis pre-match odds snapshots voordat ROI/CLV wordt beoordeeld.",
+      "Herstel de mislukte widgetcontracten: Neon database, Provider- en integriteitswidget."
     ]
   },
   "predictionEvaluation": {
@@ -589,7 +604,7 @@
     }
   },
   "architectureAudit": {
-    "generatedAt": "2026-11-02T16:02:21.222Z",
+    "generatedAt": "2026-11-09T16:29:01.132Z",
     "summary": "Professionele architectuuranalyse voor schaalbaarheid, datakwaliteit, AI-agentwaarde, databasegroei en modelbetrouwbaarheid.",
     "findings": [
       {
@@ -675,9 +690,9 @@
         "title": "H2H-dekking gericht verhogen",
         "priority": "Hoog",
         "expectedImpact": "Hoog",
-        "metric": 0.299,
+        "metric": 0.46,
         "target": 0.85,
-        "reason": "Actuele H2H-dekking is 30%; doel is minimaal 85% met betrouwbare historie en expliciete missing reasons."
+        "reason": "Actuele H2H-dekking is 46%; doel is minimaal 85% met betrouwbare historie en expliciete missing reasons."
       },
       {
         "key": "confirmed_lineups",
@@ -693,9 +708,9 @@
         "title": "Opening-, prematch- en closing odds vastleggen",
         "priority": "Hoog",
         "expectedImpact": "Zeer hoog",
-        "metric": 0.719626168224299,
+        "metric": 0.7466666666666667,
         "target": 0.6,
-        "reason": "Echte oddsdekking is 72%; CLV/ROI blijft geblokkeerd zonder geldige timestamped paren. API-Football accepteert het huidige plan nog niet."
+        "reason": "Echte oddsdekking is 75%; CLV/ROI blijft geblokkeerd zonder geldige timestamped paren. API-Football accepteert het huidige plan nog niet."
       },
       {
         "key": "storage_recovery",
@@ -749,9 +764,9 @@
       "title": "H2H-dekking gericht verhogen",
       "priority": "Hoog",
       "expectedImpact": "Hoog",
-      "metric": 0.299,
+      "metric": 0.46,
       "target": 0.85,
-      "reason": "Actuele H2H-dekking is 30%; doel is minimaal 85% met betrouwbare historie en expliciete missing reasons."
+      "reason": "Actuele H2H-dekking is 46%; doel is minimaal 85% met betrouwbare historie en expliciete missing reasons."
     },
     {
       "key": "confirmed_lineups",
@@ -767,9 +782,9 @@
       "title": "Opening-, prematch- en closing odds vastleggen",
       "priority": "Hoog",
       "expectedImpact": "Zeer hoog",
-      "metric": 0.719626168224299,
+      "metric": 0.7466666666666667,
       "target": 0.6,
-      "reason": "Echte oddsdekking is 72%; CLV/ROI blijft geblokkeerd zonder geldige timestamped paren. API-Football accepteert het huidige plan nog niet."
+      "reason": "Echte oddsdekking is 75%; CLV/ROI blijft geblokkeerd zonder geldige timestamped paren. API-Football accepteert het huidige plan nog niet."
     },
     {
       "key": "storage_recovery",
@@ -796,10 +811,10 @@
       "title": "H2H-dekking gericht verhogen",
       "priority": "Hoog",
       "expectedImpact": "Hoog",
-      "metric": 0.299,
+      "metric": 0.46,
       "target": 0.85,
       "workflow": "h2h-enrichment.yml",
-      "reason": "Actuele H2H-dekking is 30%; doel is minimaal 85% met betrouwbare historie en expliciete missing reasons."
+      "reason": "Actuele H2H-dekking is 46%; doel is minimaal 85% met betrouwbare historie en expliciete missing reasons."
     },
     {
       "key": "confirmed_lineups",
@@ -816,10 +831,10 @@
       "title": "Opening-, prematch- en closing odds vastleggen",
       "priority": "Hoog",
       "expectedImpact": "Zeer hoog",
-      "metric": 0.719626168224299,
+      "metric": 0.7466666666666667,
       "target": 0.6,
       "workflow": "free-prematch-odds.yml",
-      "reason": "Echte oddsdekking is 72%; CLV/ROI blijft geblokkeerd zonder geldige timestamped paren. API-Football accepteert het huidige plan nog niet."
+      "reason": "Echte oddsdekking is 75%; CLV/ROI blijft geblokkeerd zonder geldige timestamped paren. API-Football accepteert het huidige plan nog niet."
     },
     {
       "key": "storage_recovery",

@@ -6,24 +6,24 @@
     "owner": "Nick",
     "status": "active"
   },
-  "generatedAt": "2026-11-02T16:02:17.358Z",
+  "generatedAt": "2026-11-09T16:28:54.677Z",
   "freshness": {
-    "generatedAt": "2026-11-02T16:02:17.358Z",
-    "ageMs": 3353,
+    "generatedAt": "2026-11-09T16:28:54.677Z",
+    "ageMs": 6178,
     "maxAgeMs": 86400000,
     "fresh": true,
     "status": "fresh"
   },
   "sourceFreshness": {
     "dayDocuments": {
-      "generatedAt": "2026-11-02T16:02:20.710Z",
-      "latestMatchDate": "2026-11-02",
-      "latestPredictionAt": "2026-11-02T14:07:03.935Z",
-      "latestSnapshotAt": "2026-11-02T14:07:03.935Z"
+      "generatedAt": "2026-11-09T16:29:00.853Z",
+      "latestMatchDate": "2026-11-08",
+      "latestPredictionAt": "2026-11-09T07:55:16.283Z",
+      "latestSnapshotAt": "2026-11-06T19:40:07.245Z"
     },
     "priorDataQualityAudit": {
-      "generatedAt": "2026-11-02T16:02:10.714Z",
-      "ageMs": 9997,
+      "generatedAt": "2026-11-09T16:28:45.632Z",
+      "ageMs": 15223,
       "maxAgeMs": 86400000,
       "fresh": true,
       "status": "fresh"
@@ -54,12 +54,12 @@
   "baseUrl": "https://voetbalvoorspellingen-clean.vercel.app",
   "summary": "Professionele audit actief. Kritieke opslagvelden lijken aanwezig; blijf kalibratie en bronkwaliteit bewaken.",
   "live": {
-    "matchesTotal": 8,
-    "predictionsTotal": 8,
-    "reviewCount": 1913,
+    "matchesTotal": 0,
+    "predictionsTotal": 225,
+    "reviewCount": 2069,
     "predictionSnapshotCount": 25,
-    "workerVersion": "v25-club-rating",
-    "sourceBranch": "codex/step3b-layout",
+    "workerVersion": "v18-score-data-scout",
+    "sourceBranch": "main",
     "sourceCoverage": null,
     "featureDiagnostics": null,
     "backtestSummary": null,
@@ -74,54 +74,54 @@
     }
   },
   "predictions": {
-    "total": 214,
-    "featureCoverage": 1,
-    "featureCoverageScope": "today-and-tomorrow-before-static-compaction",
-    "featureCoveragePredictions": 8,
-    "historicalInlineFeatureCoverage": 0.037383177570093455,
+    "total": 225,
+    "featureCoverage": 0,
+    "featureCoverageScope": "fallback-all-visible-records",
+    "featureCoveragePredictions": 225,
+    "historicalInlineFeatureCoverage": 0,
     "historicalFeatureStorage": "immutable-r2-snapshot-ledger",
-    "oddsCoverage": 0.719626168224299,
-    "historicalMarketOnly": 0.02336448598130841,
+    "oddsCoverage": 0.7466666666666667,
+    "historicalMarketOnly": 0,
     "reviewCoverage": 0,
-    "averageCompleteness": 0.9662149532710272
+    "averageCompleteness": 0.9822399999999994
   },
   "recent": {
-    "days": 11,
-    "matches": 214,
-    "uniqueFixtures": 209,
+    "days": 10,
+    "matches": 225,
+    "uniqueFixtures": 220,
     "duplicateMatchRows": 5,
-    "predictions": 214,
-    "finishedMatches": 206,
-    "finishedWithScore": 206,
+    "predictions": 225,
+    "finishedMatches": 225,
+    "finishedWithScore": 225,
     "resultCoverage": 1,
-    "reviewedMatches": 206,
+    "reviewedMatches": 225,
     "evaluationCoverage": 1,
-    "snapshotBackedReviews": 0,
-    "snapshotBackedReviewCoverage": 0,
-    "reviewRows": 206,
-    "uniqueReviewedFixtures": 201,
-    "predictionSnapshots": 14,
-    "uniqueSnapshotMatches": 7,
+    "snapshotBackedReviews": 99,
+    "snapshotBackedReviewCoverage": 0.44,
+    "reviewRows": 225,
+    "uniqueReviewedFixtures": 220,
+    "predictionSnapshots": 198,
+    "uniqueSnapshotMatches": 99,
     "snapshotEvaluations": {
-      "eligibleSnapshots": 14,
-      "eligibleFixtures": 7,
-      "evaluatedSnapshots": 0,
-      "evaluatedFixtures": 0,
-      "coverage": 0,
-      "repeatedSnapshotRows": 7,
-      "evaluatedFixturesMissing": 7
+      "eligibleSnapshots": 198,
+      "eligibleFixtures": 99,
+      "evaluatedSnapshots": 99,
+      "evaluatedFixtures": 99,
+      "coverage": 1,
+      "repeatedSnapshotRows": 99,
+      "evaluatedFixturesMissing": 0
     },
-    "dataCompleteness": 0.9662149532710272,
+    "dataCompleteness": 0.9822399999999994,
     "sourceMetadataCoverage": 1,
-    "actualOddsCoverage": 0.719626168224299,
+    "actualOddsCoverage": 0.7466666666666667,
     "confirmedLineupCoverage": 0,
     "performance": {
-      "reviews": 206,
-      "outcomeHitRate": 0.5679611650485437,
-      "exactHitRate": 0.0825242718446602,
-      "averageBrier": 0.550855825242718,
-      "averageLogLoss": 0.9333247572815536,
-      "averageConfidence": 0.4453300970873786
+      "reviews": 225,
+      "outcomeHitRate": 0.5688888888888889,
+      "exactHitRate": 0.09333333333333334,
+      "averageBrier": 0.5736133333333333,
+      "averageLogLoss": 0.9697262222222223,
+      "averageConfidence": 0.45199555555555565
     },
     "segments": {
       "club_friendlies": {
@@ -134,33 +134,33 @@
       },
       "european_knockout": {
         "reviews": 59,
-        "outcomeHitRate": 0.6440677966101694,
-        "exactHitRate": 0.11864406779661017,
-        "averageBrier": 0.522628813559322,
-        "averageLogLoss": 0.8960237288135593,
-        "averageConfidence": 0.4133559322033898
+        "outcomeHitRate": 0.4576271186440678,
+        "exactHitRate": 0.15254237288135594,
+        "averageBrier": 0.6055966101694915,
+        "averageLogLoss": 1.013501694915254,
+        "averageConfidence": 0.43900000000000006
       },
       "domestic_competitions": {
-        "reviews": 147,
-        "outcomeHitRate": 0.5374149659863946,
-        "exactHitRate": 0.06802721088435375,
-        "averageBrier": 0.5621850340136053,
-        "averageLogLoss": 0.9482959183673473,
-        "averageConfidence": 0.4581632653061226
+        "reviews": 166,
+        "outcomeHitRate": 0.608433734939759,
+        "exactHitRate": 0.07228915662650602,
+        "averageBrier": 0.56224578313253,
+        "averageLogLoss": 0.9541674698795182,
+        "averageConfidence": 0.45661445783132515
       }
     },
     "sourceFreshness": {
-      "generatedAt": "2026-11-02T16:02:20.710Z",
-      "latestMatchDate": "2026-11-02",
-      "latestPredictionAt": "2026-11-02T14:07:03.935Z",
-      "latestSnapshotAt": "2026-11-02T14:07:03.935Z"
+      "generatedAt": "2026-11-09T16:29:00.853Z",
+      "latestMatchDate": "2026-11-08",
+      "latestPredictionAt": "2026-11-09T07:55:16.283Z",
+      "latestSnapshotAt": "2026-11-06T19:40:07.245Z"
     },
     "uniqueFixtureAccounting": {
-      "matchRows": 214,
-      "uniqueFixtures": 209,
+      "matchRows": 225,
+      "uniqueFixtures": 220,
       "duplicateRows": 5,
-      "snapshotRows": 14,
-      "uniqueSnapshotFixtures": 7
+      "snapshotRows": 198,
+      "uniqueSnapshotFixtures": 99
     }
   },
   "storageAudit": [
@@ -178,7 +178,7 @@
     },
     {
       "field": "featureVector",
-      "present": true,
+      "present": false,
       "importance": "hoog",
       "advice": "Aanwezig waar predictions gevuld zijn; maak hem immutable per prediction_id."
     },
@@ -228,20 +228,21 @@
   "completed": [
     "Recente eindstanden en evaluaties zijn vrijwel volledig opgeslagen.",
     "Professionele snapshotgate gehaald met 523 unieke geëvalueerde wedstrijden.",
+    "Shadowkalibratie gecontroleerd op 338 unieke wedstrijdsamples; geen profiel voldeed aan de promotiedrempel.",
     "Actuele oddsdekking is voldoende voor gecontroleerde marktevaluatie."
   ],
   "recommendations": [
+    {
+      "key": "confirmed_lineups",
+      "priority": 1,
+      "title": "Verhoog confirmed-lineupdekking",
+      "advice": "Haal alleen rond T-75, T-45 en T-20 op en rapporteer dekking per competitie en provider."
+    },
     {
       "key": "neon_quota",
       "priority": 1,
       "title": "Herstel Neon-quota of verlaag datatransfer",
       "advice": "R2 houdt de leerlijn beschikbaar, maar relationele writes en monitors blijven beperkt zolang Neon HTTP 402 geeft."
-    },
-    {
-      "key": "shadow_calibration",
-      "priority": 2,
-      "title": "Kalibreer league en fase in shadow mode",
-      "advice": "Gebruik de volwassen club-only set, vergelijk Brier/log loss per segment en promoveer alleen aantoonbaar betere gewichten."
     },
     {
       "key": "snapshot_review_linking",
@@ -250,5 +251,5 @@
       "advice": "Verhoog de recente snapshot-backed reviewdekking naar minimaal 80%; gebruik actuele prediction fallback niet voor modelpromotie."
     }
   ],
-  "nextAction": "R2 houdt de leerlijn beschikbaar, maar relationele writes en monitors blijven beperkt zolang Neon HTTP 402 geeft."
+  "nextAction": "Haal alleen rond T-75, T-45 en T-20 op en rapporteer dekking per competitie en provider."
 }
