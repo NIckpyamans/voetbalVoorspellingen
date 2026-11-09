@@ -9,12 +9,23 @@ if (!command) {
   process.exit(2);
 }
 
+// De R2-snapshotrecovery en de post-matchbackfill bouwen de volledige ledger als
+// objectgraaf op. Met de standaard 4 GB heap van de runner stopte Node daar
+// middenin met "Ineffective mark-compacts near heap limit" en een SIGABRT; de
+// run leek dan op een gewone fout terwijl het echt een capaciteitsgrens was.
+const NODE_MAX_OLD_SPACE_MB = 8192;
+
+function withNodeHeapLimit(options = "") {
+  const withoutHeapLimit = String(options).replace(/--max-old-space-size=\d+/g, "").trim();
+  return `${withoutHeapLimit} --max-old-space-size=${NODE_MAX_OLD_SPACE_MB}`.trim();
+}
+
 let output = "";
 const executable = process.platform === "win32" && command === "npm" ? "npm.cmd" : command;
 const child = spawn(executable, args, {
   shell: false,
   stdio: ["inherit", "pipe", "pipe"],
-  env: process.env,
+  env: { ...process.env, NODE_OPTIONS: withNodeHeapLimit(process.env.NODE_OPTIONS) },
 });
 
 child.stdout.on("data", (chunk) => {
