@@ -58,6 +58,24 @@ describe("enrichment publication gate", () => {
     expect(result.next.playerIdentities.covered).toBe(1);
   });
 
+  it("keeps identified players when a fresher roster arrives without ids", () => {
+    const players = Array.from({ length: 11 }, (_, index) => ({ id: `player-${index}` }));
+    const anonymous = Array.from({ length: 11 }, (_, index) => ({ name: `speler-${index}` }));
+    const previous = match("identities", {
+      homeTeamProfile: { squad: { fetchedAt: Date.now() - 30 * 86400000, players } },
+      awayTeamProfile: { squad: { fetchedAt: Date.now() - 30 * 86400000, players } },
+    });
+    const incoming = match("identities", {
+      homeTeamProfile: { squad: { fetchedAt: Date.now(), players: anonymous } },
+      awayTeamProfile: { squad: { fetchedAt: Date.now(), players: anonymous } },
+    });
+
+    const [restored] = preserveEnrichmentEvidence([previous], [incoming]);
+    expect(restored.homeTeamProfile).toEqual(previous.homeTeamProfile);
+    expect(restored.awayTeamProfile).toEqual(previous.awayTeamProfile);
+    expect(evaluateEnrichmentPublication([previous], [restored])).toMatchObject({ allowed: true, evidenceLosses: [] });
+  });
+
   it("restores richer evidence before a lightweight refresh is published", () => {
     const players = Array.from({ length: 11 }, (_, index) => ({ id: `player-${index}`, rating: 70 }));
     const previous = match("stable", {
