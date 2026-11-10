@@ -46,7 +46,10 @@ jobs:
       - name: Free Neon storage on derived caches
         # Alleen afgeleide caches en audit-historie (geen canonieke data), zodat
         # de stappen hierna weer naar Neon kunnen schrijven als de limiet vol zit.
-        run: npm run db:neon-storage:recover
+        # Via ci-neon-safe: een volle of onbereikbare Neon is een soft skip met
+        # annotatie, zodat de R2-canary en de replay hierna wel draaien. Zonder
+        # deze wrapper stopte de job in 1 seconde en werden stap 6-11 overgeslagen.
+        run: node scripts/ci-neon-safe.js -- npm run db:neon-storage:recover
       - name: Verify immutable R2 storage
         run: npm run test:r2-snapshot-canary
       - id: database
