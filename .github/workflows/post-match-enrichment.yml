@@ -72,6 +72,13 @@ jobs:
       - name: Keep static day snapshots compact
         run: npm run data:days:compact
       - name: Commit enriched day data and audit
+        # Deze stap faalde op 10-11-2026 in 2 seconden: `git pull --rebase` viel
+        # met een conflict in een gegenereerd databestand om en door de impliciete
+        # `bash -e` stopte de stap vóór de retry-lus iets kon doen. Daardoor bleef
+        # alleen "Process completed with exit code 1" over. Een verse run is de
+        # nieuwste bron van waarheid voor data/, dus een conflict wordt op onze
+        # versie beslecht (-X theirs), een mislukte pull wordt geret in plaats van
+        # de stap te killen, en de laatste foutregel gaat als annotatie naar de run.
         run: |
           BRANCH_NAME="${DATA_BRANCH:-${{ github.ref_name }}}"
           git config user.name github-actions
@@ -83,11 +90,19 @@ jobs:
           for report in monitor/data-quality-audit.json monitor/data-quality-audit.md monitor/recent-match-context-backfill.json; do
             if [ -f "$report" ]; then git add -f "$report"; fi
           done
-          git diff --staged --quiet && echo "geen post-matchwijzigingen" && exit 0
+          if git diff --staged --quiet; then echo "geen post-matchwijzigingen"; exit 0; fi
           git commit -m "post-match enrichment [skip vercel]"
+          last_error=""
           for attempt in 1 2 3; do
-            git pull --rebase --autostash origin "$BRANCH_NAME"
-            if git push origin HEAD:"$BRANCH_NAME"; then exit 0; fi
-            sleep $((attempt * 5))
+            if ! last_error=$(git pull --rebase --autostash -X theirs origin "$BRANCH_NAME" 2>&1); then
+              git rebase --abort >/dev/null 2>&1 || true
+              echo "$last_error"
+              sleep "$((attempt * 5))"
+              continue
+            fi
+            if last_error=$(git push origin "HEAD:$BRANCH_NAME" 2>&1); then exit 0; fi
+            echo "$last_error"
+            sleep "$((attempt * 5))"
           done
+          echo "::error title=post-match commit faalde::$(printf '%s' "$last_error" | tr '\n' ' ' | cut -c1-1500)"
           exit 1
