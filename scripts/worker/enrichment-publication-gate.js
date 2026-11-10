@@ -80,9 +80,13 @@ function sharedFixtures(left, right) {
   return rows(left).filter((match) => fixtureKeys(match).some((key) => keys.has(key)));
 }
 
+function identifiedPlayerCount(profile) {
+  return profilePlayers(profile).filter((player) => player?.id || player?.playerId || player?.providerId || player?.sourceId).length;
+}
+
 function profileEvidenceScore(profile) {
   const players = profilePlayers(profile);
-  const identified = players.filter((player) => player?.id || player?.playerId || player?.providerId || player?.sourceId).length;
+  const identified = identifiedPlayerCount(profile);
   const rated = players.filter((player) => Number(player?.rating || 0) > 0).length;
   return players.length * 100 + identified * 10 + rated;
 }
@@ -90,6 +94,13 @@ function profileEvidenceScore(profile) {
 function preserveProfileEvidence(previous, next) {
   if (!previous) return next;
   if (!next) return previous;
+  // Een verse selectie zonder spelers-ID's is geen betere evidence dan een
+  // oudere cache mét ID's. Zodra de spelersbron 403 gaf, kwam er een verse maar
+  // anonieme selectie binnen, viel playerIdentities weg en blokkeerde de
+  // publicatiegate de hele post-matchrun. Speleridentiteit gaat daarom vóór
+  // versheid; de vorige selectie teruggeven kan per definitie geen dekking
+  // verliezen ten opzichte van de baseline.
+  if (identifiedPlayerCount(previous) > identifiedPlayerCount(next)) return previous;
   // Player count alone must not replace a fresh roster with an expired cache.
   const fresh = (profile) => hasFreshSquad({ homeTeamProfile: profile, awayTeamProfile: profile });
   if (fresh(previous) && !fresh(next)) return previous;
