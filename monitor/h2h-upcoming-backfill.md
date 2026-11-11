@@ -1,11 +1,11 @@
 # Upcoming H2H Backfill
 
-Laatst bijgewerkt: 2026-11-11T00:19:33.580Z
-Gecontroleerd: 1
+Laatst bijgewerkt: 2026-11-11T01:18:28.502Z
+Gecontroleerd: 0
 Gevuld: 0
-Geen directe H2H: 1
+Geen directe H2H: 0
 Errors: 0
-Providerfouten: 2
+Providerfouten: 0
 Kwaliteitsgate: niet van toepassing
 
 Openstaand na deze batch: 0
@@ -16,8 +16,3 @@ Geen directe H2H gevonden voor de gecontroleerde wedstrijden. Breid team-ID mapp
 ## Gevuld
 
 ## Geen Directe H2H
-- 2026-12-01: Coventry City - Ipswich Town (no_direct_history)
-
-## Providerfouten
-- 1× goal-api: acceptance_gate_closed
-- 1× api-football: team_mapping_missing

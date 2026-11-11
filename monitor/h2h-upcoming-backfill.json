@@ -1,56 +1,26 @@
 {
-  "generatedAt": "2026-11-11T00:19:33.580Z",
+  "generatedAt": "2026-11-11T01:18:28.502Z",
   "daysAhead": 21,
-  "checked": 1,
-  "candidateTotal": 1,
+  "checked": 0,
+  "candidateTotal": 0,
   "remaining": 0,
-  "byCompetition": {
-    "England - Premier League": {
-      "agent": "england-premier-league-agent",
-      "checked": 1
-    }
-  },
+  "byCompetition": {},
   "databaseWritable": false,
   "databaseError": "Server error (HTTP status 402): {\"message\":\"Your account or project has exceeded the quota. Upgrade your plan to increase limits.\",\"code\":\"\",\"detail\":null,\"hint\":null,\"position\":null,\"internalPosition\":null,\"internalQuery\":null,\"severity\":\"\",\"where\":null,\"table\":null,\"column\":null,\"schema\":null,\"dataType\":null,\"constraint\":null,\"file\":null,\"line\":null,\"routine\":null,\"neon:retryable\":true}",
   "r2SnapshotLedgerAvailable": true,
   "r2Stored": 0,
   "staticUpdated": 0,
   "filled": 0,
-  "noDirectHistory": 1,
+  "noDirectHistory": 0,
   "errors": 0,
-  "providerErrorCount": 2,
-  "providerErrors": [
-    {
-      "matchId": "ss-espn-eng.1-401879221",
-      "league": "England - Premier League",
-      "homeTeam": "Coventry City",
-      "awayTeam": "Ipswich Town",
-      "provider": "goal-api",
-      "status": "acceptance_gate_closed",
-      "result": "acceptance_blocked",
-      "statusCode": null,
-      "errorCategory": null,
-      "error": null
-    },
-    {
-      "matchId": "ss-espn-eng.1-401879221",
-      "league": "England - Premier League",
-      "homeTeam": "Coventry City",
-      "awayTeam": "Ipswich Town",
-      "provider": "api-football",
-      "status": "team_mapping_missing",
-      "result": "mapping_failed",
-      "statusCode": null,
-      "errorCategory": null,
-      "error": null
-    }
-  ],
+  "providerErrorCount": 0,
+  "providerErrors": [],
   "qualityGate": {
     "minBatch": 20,
-    "batch": 1,
+    "batch": 0,
     "filled": 0,
-    "attempts": 5,
-    "blockedAttempts": 1,
+    "attempts": 0,
+    "blockedAttempts": 0,
     "applied": false,
     "outcome": "not_applicable",
     "failed": false,
@@ -69,192 +39,34 @@
     "enabledByOperator": true,
     "pairLimit": 3,
     "gate": "h2h_enabled_independent_of_fixture_acceptance",
-    "pairsAttempted": 1
+    "pairsAttempted": 0
   },
   "apiFootball": {
     "configured": true,
     "enabled": true,
     "baseUrl": "v3.football.api-sports.io",
-    "requests": 2,
-    "statusCounts": {
-      "provider_error": 2
-    },
-    "errorCategories": {
-      "provider_payload_error": 2
-    },
+    "requests": 0,
+    "statusCounts": {},
+    "errorCategories": {},
     "resolvedTeams": 0,
-    "failedTeamMappings": 2,
-    "cachedPairs": 1,
+    "failedTeamMappings": 0,
+    "cachedPairs": 0,
     "availablePairs": 0,
     "providerResultCount": 0,
-    "lastStatus": "provider_error",
+    "lastStatus": null,
     "lastStatusCode": null,
-    "lastCheckedAt": "2026-11-11T00:19:32.869Z"
+    "lastCheckedAt": null
   },
-  "providerMetrics": {
-    "canonical-history": {
-      "attempts": 1,
-      "found": 0,
-      "noCoverage": 1,
-      "mappingFailed": 0,
-      "quota": 0,
-      "errors": 0,
-      "acceptanceBlocked": 0,
-      "latencyMsTotal": 0,
-      "latencySamples": 1,
-      "quotaRemaining": 0,
-      "quotaLimit": 0,
-      "successRate": 0,
-      "averageLatencyMs": 0
-    },
-    "football-data-co-uk": {
-      "attempts": 1,
-      "found": 0,
-      "noCoverage": 1,
-      "mappingFailed": 0,
-      "quota": 0,
-      "errors": 0,
-      "acceptanceBlocked": 0,
-      "latencyMsTotal": 0,
-      "latencySamples": 1,
-      "quotaRemaining": 0,
-      "quotaLimit": 0,
-      "successRate": 0,
-      "averageLatencyMs": 0
-    },
-    "goal-api": {
-      "attempts": 1,
-      "found": 0,
-      "noCoverage": 0,
-      "mappingFailed": 0,
-      "quota": 0,
-      "errors": 0,
-      "acceptanceBlocked": 1,
-      "latencyMsTotal": 0,
-      "latencySamples": 1,
-      "quotaRemaining": 0,
-      "quotaLimit": 0,
-      "successRate": 0,
-      "averageLatencyMs": 0
-    },
-    "api-football": {
-      "attempts": 1,
-      "found": 0,
-      "noCoverage": 0,
-      "mappingFailed": 1,
-      "quota": 0,
-      "errors": 0,
-      "acceptanceBlocked": 0,
-      "latencyMsTotal": 0,
-      "latencySamples": 1,
-      "quotaRemaining": 0,
-      "quotaLimit": 0,
-      "successRate": 0,
-      "averageLatencyMs": 0
-    },
-    "espn-team-schedule": {
-      "attempts": 1,
-      "found": 0,
-      "noCoverage": 1,
-      "mappingFailed": 0,
-      "quota": 0,
-      "errors": 0,
-      "acceptanceBlocked": 0,
-      "latencyMsTotal": 0,
-      "latencySamples": 1,
-      "quotaRemaining": 0,
-      "quotaLimit": 0,
-      "successRate": 0,
-      "averageLatencyMs": 0
-    }
-  },
+  "providerMetrics": {},
   "coverageTrend": {
-    "generatedAt": "2026-11-10T21:21:08.394Z",
-    "checked": 24,
+    "generatedAt": "2026-11-11T00:19:33.580Z",
+    "checked": 1,
     "filled": 0,
     "deltaFilled": 0,
-    "deltaChecked": -23
+    "deltaChecked": -1
   },
   "filledSamples": [],
-  "noDirectHistorySamples": [
-    {
-      "matchId": "ss-espn-eng.1-401879221",
-      "date": "2026-12-01",
-      "league": "England - Premier League",
-      "homeTeam": "Coventry City",
-      "awayTeam": "Ipswich Town",
-      "status": "no_direct_history",
-      "availabilityStatus": "no_direct_history",
-      "source": "canonical-history, football-data-co-uk, goal-api, api-football, espn-team-schedule",
-      "asOf": "2026-11-11T00:19:33.576Z",
-      "note": "Geen betrouwbare directe H2H gevonden bij de providers die met succes konden worden bevraagd.",
-      "providerAttempts": [
-        {
-          "provider": "canonical-history",
-          "status": "not_found",
-          "records": 0,
-          "durationMs": null,
-          "quota": {
-            "remaining": null,
-            "limit": null,
-            "resetAt": null
-          },
-          "result": "no_coverage"
-        },
-        {
-          "provider": "football-data-co-uk",
-          "status": "no_coverage",
-          "records": 0,
-          "durationMs": null,
-          "quota": {
-            "remaining": null,
-            "limit": null,
-            "resetAt": null
-          },
-          "result": "no_coverage"
-        },
-        {
-          "provider": "goal-api",
-          "status": "acceptance_gate_closed",
-          "records": 0,
-          "durationMs": null,
-          "quota": {
-            "remaining": null,
-            "limit": null,
-            "resetAt": null
-          },
-          "result": "acceptance_blocked"
-        },
-        {
-          "provider": "api-football",
-          "status": "team_mapping_missing",
-          "records": 0,
-          "errorCategory": null,
-          "error": null,
-          "durationMs": null,
-          "quota": {
-            "remaining": null,
-            "limit": null,
-            "resetAt": null
-          },
-          "result": "mapping_failed"
-        },
-        {
-          "provider": "espn-team-schedule",
-          "status": "not_found",
-          "records": 0,
-          "durationMs": null,
-          "quota": {
-            "remaining": null,
-            "limit": null,
-            "resetAt": null
-          },
-          "result": "no_coverage"
-        }
-      ],
-      "staticStatusUpdated": true
-    }
-  ],
+  "noDirectHistorySamples": [],
   "errorSamples": [],
   "attemptLedger": {
     "ss-fotmob-5795468": {
