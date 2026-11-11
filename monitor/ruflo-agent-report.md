@@ -1,13 +1,13 @@
 # Ruflo-style AI monitor
 
-Datum: 2026-11-10
+Datum: 2026-11-11
 
 Ruflo bundelt bestaande rapporten en vaste regels tot advies. Dit is geen zelfstandige AI- of internetanalyse; ontbrekende invoer blijft onbekend.
 
 ## Agents
 - Data: Bronbestand server_data.json ontbreekt of is ongeldig; geen betrouwbare meting beschikbaar.
 - Leren: Bronbestand server_data.json ontbreekt of is ongeldig; geen betrouwbare meting beschikbaar.
-- Controle: Ontwikkelcontrole: 0 actieve monitorissues op 2026-11-10; digest 2026-11-03 t/m 2026-11-09.
+- Controle: Ontwikkelcontrole: 0 actieve monitorissues op 2026-11-11; digest 2026-11-03 t/m 2026-11-09.
 
 ## Gratis acties
 
