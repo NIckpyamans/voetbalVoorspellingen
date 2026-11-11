@@ -12,6 +12,10 @@ function match(id, overrides = {}) {
   };
 }
 
+function identifiedCount(profile) {
+  return (profile?.squad?.players || []).filter((player) => player?.id).length;
+}
+
 describe("enrichment publication gate", () => {
   it("blocks loss of existing H2H and form evidence", () => {
     const before = [match("1"), match("2"), match("3")];
@@ -153,6 +157,36 @@ describe("enrichment publication gate", () => {
     expect(evaluateEnrichmentPublication([previous], [restored]).allowed).toBe(true);
     const [reverse] = preserveEnrichmentEvidence([incoming], [previous]);
     expect(reverse.homeTeamProfile).toEqual(previous.homeTeamProfile);
+  });
+
+  it("ranks usable identities above freshness and above completeness", () => {
+    const profile = (days, count, withIds = true) => ({
+      squad: {
+        fetchedAt: Date.now() - days * 86400000,
+        players: Array.from({ length: count }, (_, index) => (withIds ? { id: String(index) } : { name: `speler-${index}` })),
+      },
+    });
+
+    // 1. Onbruikbare identiteiten verliezen van bruikbare, ook als ze verser zijn.
+    const [keptIdentities] = preserveEnrichmentEvidence(
+      [match("order-ids", { homeTeamProfile: profile(30, 25), awayTeamProfile: profile(30, 25) })],
+      [match("order-ids", { homeTeamProfile: profile(0, 18, false), awayTeamProfile: profile(0, 18, false) })],
+    );
+    expect(identifiedCount(keptIdentities.homeTeamProfile)).toBe(25);
+
+    // 2. Zijn beide bruikbaar, dan wint versheid boven aantal spelers.
+    const [keptFresh] = preserveEnrichmentEvidence(
+      [match("order-fresh", { homeTeamProfile: profile(1, 18), awayTeamProfile: profile(1, 18) })],
+      [match("order-fresh", { homeTeamProfile: profile(30, 25), awayTeamProfile: profile(30, 25) })],
+    );
+    expect(identifiedCount(keptFresh.homeTeamProfile)).toBe(18);
+
+    // 3. Zonder bruikbare identiteiten beslist volledigheid.
+    const [keptFuller] = preserveEnrichmentEvidence(
+      [match("order-full", { homeTeamProfile: profile(2, 12, false), awayTeamProfile: profile(2, 12, false) })],
+      [match("order-full", { homeTeamProfile: profile(2, 14, false), awayTeamProfile: profile(2, 14, false) })],
+    );
+    expect(keptFuller.homeTeamProfile.squad.players).toHaveLength(14);
   });
 
 });

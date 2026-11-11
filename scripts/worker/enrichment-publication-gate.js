@@ -37,11 +37,13 @@ function hasFreshSquad(match, now = Date.now()) {
   });
 }
 
+function profileHasIdentities(profile) {
+  const players = profilePlayers(profile);
+  return players.length >= 11 && identifiedPlayerCount(profile) >= Math.min(11, players.length);
+}
+
 function hasPlayerIdentities(match) {
-  return [match?.homeTeamProfile, match?.awayTeamProfile].every((profile) => {
-    const players = profilePlayers(profile);
-    return players.length >= 11 && players.filter((player) => player?.id || player?.playerId || player?.providerId || player?.sourceId).length >= Math.min(11, players.length);
-  });
+  return [match?.homeTeamProfile, match?.awayTeamProfile].every(profileHasIdentities);
 }
 
 function hasTimestampedOdds(match) {
@@ -94,13 +96,16 @@ function profileEvidenceScore(profile) {
 function preserveProfileEvidence(previous, next) {
   if (!previous) return next;
   if (!next) return previous;
-  // Een verse selectie zonder spelers-ID's is geen betere evidence dan een
-  // oudere cache mét ID's. Zodra de spelersbron 403 gaf, kwam er een verse maar
-  // anonieme selectie binnen, viel playerIdentities weg en blokkeerde de
-  // publicatiegate de hele post-matchrun. Speleridentiteit gaat daarom vóór
-  // versheid; de vorige selectie teruggeven kan per definitie geen dekking
-  // verliezen ten opzichte van de baseline.
-  if (identifiedPlayerCount(previous) > identifiedPlayerCount(next)) return previous;
+  // Prioriteit, expliciet in deze volgorde:
+  //  1. bruikbare spelersidentiteit — een verse selectie zonder ID's (403 bij de
+  //     spelersbron) mag bestaande ID's niet wissen; dat liet de publicatiegate
+  //     de hele post-matchrun blokkeren.
+  //  2. versheid van de selectie.
+  //  3. volledigheid (aantal spelers, ID's, ratings).
+  // Het aantal ID's is bewust géén ordencriterium: 25 oude ID's zijn niet beter
+  // dan 18 verse ID's, want beide zijn bruikbaar. Alleen bruikbaarheid telt,
+  // anders duwt een rijke oude cache een verse selectie weg.
+  if (profileHasIdentities(previous) && !profileHasIdentities(next)) return previous;
   // Player count alone must not replace a fresh roster with an expired cache.
   const fresh = (profile) => hasFreshSquad({ homeTeamProfile: profile, awayTeamProfile: profile });
   if (fresh(previous) && !fresh(next)) return previous;
