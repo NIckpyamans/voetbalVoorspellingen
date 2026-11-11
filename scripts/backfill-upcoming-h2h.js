@@ -21,9 +21,9 @@ import { buildProviderAcceptanceState } from "./worker/orchestration-policy.js";
 import { buildApiFootballH2HPolicy } from "./worker/api-football-h2h-policy.js";
 import { orderH2HCandidatesByCompetition } from "./worker/h2h-candidate-priority.js";
 import { getCompetitionAgent } from "./worker/competition-agents.js";
-import { readLocalH2HProfile } from "./worker/local-h2h-history.js";
+import { buildLedgerHistoryIndex, readLocalH2HProfile } from "./worker/local-h2h-history.js";
 import { normalizeStaticH2H } from "./worker/h2h-static.js";
-import { loadSnapshotLedger } from "../shared/predictionSnapshotLedger.js";
+import { streamEvaluatedMatchResults } from "../shared/evaluatedMatchResults.js";
 import { normalizeProviderAttempt } from "./worker/provider-observability.js";
 
 const ROOT = process.cwd();
@@ -374,7 +374,15 @@ async function main() {
   candidates = orderedCandidates.slice(0, LIMIT);
 
   const store = {};
-  const snapshotLedgerLoad = await loadSnapshotLedger({ root: ROOT });
+  // Niet de volledige ledger in geheugen laden: dat liet deze stap op 11-11-2026
+  // met exit 134 (heap-abort) sterven, waardoor de hoofdworker de assembly en de
+  // publicatie oversloeg. We streamen de maandshards en houden alleen een
+  // compacte clubpaar-index over.
+  const ledgerResults = await streamEvaluatedMatchResults({ root: ROOT }).catch((error) => ({
+    results: [],
+    sources: { local: { available: false }, r2: { available: false, error: error?.message || String(error) } },
+  }));
+  const historyIndex = buildLedgerHistoryIndex(ledgerResults.results);
   const providerConfigured = Boolean(getApiFootballKey());
   const apiFootballAcceptance = buildProviderAcceptanceState(readJson(API_FOOTBALL_ACCEPTANCE_FILE));
   const apiFootballPolicy = buildApiFootballH2HPolicy({
@@ -425,7 +433,7 @@ async function main() {
         continue;
       }
       const providerAttempts = [];
-      const localCandidate = readLocalH2HProfile(ROOT, match, 5, { ledger: snapshotLedgerLoad.ledger });
+      const localCandidate = readLocalH2HProfile(ROOT, match, 5, { historyIndex });
       const localProfile = localCandidate ? normalizeH2HProfile(localCandidate, { match, provider: localCandidate.source || "canonical-history" }) : null;
       providerAttempts.push(normalizeProviderAttempt({ provider: "canonical-history", status: localProfile?.results?.length ? "ok" : "not_found", records: localProfile?.results?.length || 0 }));
       const footballDataProvider = String(match.league || "").match(/^(England - Premier League|England - Championship|Germany - (?:2\. )?Bundesliga|France - Ligue ?[12]|Netherlands - Eredivisie)$/i);
@@ -614,7 +622,9 @@ async function main() {
     ])),
     databaseWritable,
     databaseError,
-    r2SnapshotLedgerAvailable: Boolean(snapshotLedgerLoad.sources?.r2?.available),
+    r2SnapshotLedgerAvailable: Boolean(ledgerResults.sources?.r2?.available),
+    r2SnapshotLedgerError: ledgerResults.sources?.r2?.error || null,
+    r2SnapshotLedgerRows: ledgerResults.results.length,
     r2Stored,
     staticUpdated,
     filled: filled.length,
