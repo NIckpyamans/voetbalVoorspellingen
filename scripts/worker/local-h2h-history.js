@@ -64,6 +64,51 @@ function collectLedgerCandidates(ledger, match, cutoff, candidates) {
   return added;
 }
 
+function pairKey(homeName, awayName) {
+  const home = canonicalDedupeTeam(homeName);
+  const away = canonicalDedupeTeam(awayName);
+  if (!home || !away) return "";
+  return [home, away].sort().join("|");
+}
+
+// Bouwt een compacte index (clubpaar -> uitslagen) uit gestreamde ledgerrijen.
+// Zo kan de H2H-backfill per wedstrijd O(1) opzoeken zonder de volledige ledger
+// in het geheugen te houden.
+export function buildLedgerHistoryIndex(results = []) {
+  const index = new Map();
+  for (const row of Array.isArray(results) ? results : []) {
+    const key = pairKey(row?.homeTeam, row?.awayTeam);
+    if (!key) continue;
+    if (!index.has(key)) index.set(key, []);
+    index.get(key).push({
+      id: row.matchId,
+      kickoff: row.kickoff || null,
+      date: row.date,
+      league: row.league,
+      homeTeamName: row.homeTeam,
+      awayTeamName: row.awayTeam,
+      homeScore: row.homeScore,
+      awayScore: row.awayScore,
+      score: `${row.homeScore}-${row.awayScore}`,
+      status: "FT",
+      dataSource: row.source || "immutable-r2-snapshot-ledger",
+    });
+  }
+  return index;
+}
+
+function collectIndexedCandidates(index, match, cutoff, candidates) {
+  const entries = index?.get?.(pairKey(match.home_team_name, match.away_team_name)) || [];
+  let added = 0;
+  for (const item of entries) {
+    if (Date.parse(item.kickoff || item.date || "") >= cutoff) continue;
+    if (!samePair(item, match.home_team_name, match.away_team_name)) continue;
+    candidates.push(item);
+    added += 1;
+  }
+  return added;
+}
+
 export function readLocalH2HProfile(root, match, limit = 5, options = {}) {
   const cutoff = Date.parse(match?.kickoff_at || "") || Date.now();
   const candidates = [];
@@ -93,7 +138,9 @@ export function readLocalH2HProfile(root, match, limit = 5, options = {}) {
   } catch {
     // The day cache remains the fallback when the review summary is unavailable.
   }
-  const ledgerCandidates = collectLedgerCandidates(options.ledger, match, cutoff, candidates);
+  const ledgerCandidates = options.historyIndex
+    ? collectIndexedCandidates(options.historyIndex, match, cutoff, candidates)
+    : collectLedgerCandidates(options.ledger, match, cutoff, candidates);
   const unique = new Map();
   for (const item of candidates) {
     const result = orient(item, match.home_team_name);

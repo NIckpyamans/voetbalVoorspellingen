@@ -87,7 +87,14 @@ jobs:
         run: node scripts/ci-neon-safe.js -- npm run db:schema:apply
 
       - name: Backfill upcoming club H2H to R2 and Neon when available
-        run: npm run db:h2h:backfill-upcoming
+        # De losse H2H-workflow draait elke 3 uur en levert dezelfde verrijking.
+        # Deze stap mag de rest van de worker daarom nooit blokkeren: op 11-11-2026
+        # stopte hij met exit 134 (heap-abort) en werden "Assemble cached
+        # enrichments and predictions" en de audits volledig overgeslagen.
+        # continue-on-error houdt de run doorloopbaar; ci-neon-safe geeft de 8 GB
+        # heap en annoteert de echte fout in plaats van een kale exitcode.
+        continue-on-error: true
+        run: node scripts/ci-neon-safe.js -- npm run db:h2h:backfill-upcoming
         env:
           API_FOOTBALL_MAX_FETCHES_PER_RUN: "8"
           H2H_BACKFILL_DAYS_AHEAD: "14"
