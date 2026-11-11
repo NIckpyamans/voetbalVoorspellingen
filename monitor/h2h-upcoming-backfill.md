@@ -1,11 +1,11 @@
 # Upcoming H2H Backfill
 
-Laatst bijgewerkt: 2026-11-11T10:55:54.385Z
-Gecontroleerd: 3
+Laatst bijgewerkt: 2026-11-11T14:49:48.169Z
+Gecontroleerd: 9
 Gevuld: 0
-Geen directe H2H: 3
+Geen directe H2H: 9
 Errors: 0
-Providerfouten: 10
+Providerfouten: 29
 Kwaliteitsgate: niet van toepassing
 
 Openstaand na deze batch: 0
@@ -16,12 +16,19 @@ Geen directe H2H gevonden voor de gecontroleerde wedstrijden. Breid team-ID mapp
 ## Gevuld
 
 ## Geen Directe H2H
-- 2026-11-24: RB Leipzig - Lens (no_direct_history)
-- 2026-11-24: Real Madrid - PSV Eindhoven (no_direct_history)
-- 2026-11-24: Slovan Bratislava - Real Betis (no_direct_history)
+- 2026-11-26: Brighton & Hove Albion - CSU Craiova (no_direct_history)
+- 2026-11-26: Besiktas - Hapoel Be'er (no_direct_history)
+- 2026-11-26: Egnatia - Lincoln Red Imps (no_direct_history)
+- 2026-11-26: Celta Vigo - AFC Bournemouth (rate_limited_locally)
+- 2026-11-26: Heart of Midlothian - AS Monaco (rate_limited_locally)
+- 2026-11-26: Iberia 1999 - Getafe (rate_limited_locally)
+- 2026-12-02: Hull City - Nottingham Forest (rate_limited_locally)
+- 2026-12-02: AFC Bournemouth - Brighton & Hove Albion (rate_limited_locally)
+- 2026-12-02: Newcastle United - Manchester United (rate_limited_locally)
 
 ## Providerfouten
-- 3× football-data-co-uk: not_configured
-- 3× goal-api: acceptance_gate_closed
+- 9× goal-api: acceptance_gate_closed
+- 6× football-data-co-uk: not_configured
+- 6× api-football: rate_limited_locally
+- 5× espn-team-schedule: team_mapping_missing
 - 3× api-football: team_mapping_missing
-- 1× espn-team-schedule: team_mapping_missing
