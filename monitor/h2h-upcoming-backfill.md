@@ -1,11 +1,11 @@
 # Upcoming H2H Backfill
 
-Laatst bijgewerkt: 2026-11-11T14:49:48.169Z
-Gecontroleerd: 9
+Laatst bijgewerkt: 2026-11-11T15:16:55.184Z
+Gecontroleerd: 11
 Gevuld: 0
-Geen directe H2H: 9
+Geen directe H2H: 11
 Errors: 0
-Providerfouten: 29
+Providerfouten: 26
 Kwaliteitsgate: niet van toepassing
 
 Openstaand na deze batch: 0
@@ -16,19 +16,21 @@ Geen directe H2H gevonden voor de gecontroleerde wedstrijden. Breid team-ID mapp
 ## Gevuld
 
 ## Geen Directe H2H
-- 2026-11-26: Brighton & Hove Albion - CSU Craiova (no_direct_history)
-- 2026-11-26: Besiktas - Hapoel Be'er (no_direct_history)
-- 2026-11-26: Egnatia - Lincoln Red Imps (no_direct_history)
-- 2026-11-26: Celta Vigo - AFC Bournemouth (rate_limited_locally)
-- 2026-11-26: Heart of Midlothian - AS Monaco (rate_limited_locally)
-- 2026-11-26: Iberia 1999 - Getafe (rate_limited_locally)
-- 2026-12-02: Hull City - Nottingham Forest (rate_limited_locally)
-- 2026-12-02: AFC Bournemouth - Brighton & Hove Albion (rate_limited_locally)
-- 2026-12-02: Newcastle United - Manchester United (rate_limited_locally)
+- 2026-11-29: ADO Den Haag - FC Utrecht (no_direct_history)
+- 2026-11-29: 1. FC Magdeburg - Energie Cottbus (no_direct_history)
+- 2026-11-29: AJ Auxerre - Marseille (no_direct_history)
+- 2026-11-29: Brighton & Hove Albion - Newcastle United (rate_limited_locally)
+- 2026-11-29: Roda JC Kerkrade - De Graafschap (rate_limited_locally)
+- 2026-11-29: Feyenoord Rotterdam - Ajax Amsterdam (rate_limited_locally)
+- 2026-11-29: SpVgg Greuther Fürth - Arminia Bielefeld (rate_limited_locally)
+- 2026-11-29: Crystal Palace - Hull City (rate_limited_locally)
+- 2026-11-29: Fortuna Sittard - Heerenveen (rate_limited_locally)
+- 2026-11-29: TSV Eintracht Braunschweig - VfL Wolfsburg (rate_limited_locally)
+- 2026-11-29: PEC Zwolle - AZ Alkmaar (rate_limited_locally)
 
 ## Providerfouten
-- 9× goal-api: acceptance_gate_closed
-- 6× football-data-co-uk: not_configured
-- 6× api-football: rate_limited_locally
-- 5× espn-team-schedule: team_mapping_missing
+- 11× goal-api: acceptance_gate_closed
+- 8× api-football: rate_limited_locally
 - 3× api-football: team_mapping_missing
+- 3× espn-team-schedule: team_mapping_missing
+- 1× football-data-co-uk: not_configured
