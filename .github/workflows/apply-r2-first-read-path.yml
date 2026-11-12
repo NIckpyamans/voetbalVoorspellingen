@@ -1,0 +1,50 @@
+name: One-off R2-first read path
+
+# Eenmalige runner-stap: de lokale machine in deze sessie kan geen processen
+# starten, dus de wijziging wordt hier toegepast, getypecheckt en getest.
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  apply:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v5
+        with:
+          ref: codex/step3b-layout
+          token: ${{ secrets.GITHUB_TOKEN }}
+      - uses: actions/setup-node@v5
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+      - name: Apply the read-path rewrite
+        run: node scripts/apply-r2-first-read-path.js
+      - name: Typecheck (signal, geen gate)
+        id: typecheck
+        run: |
+          set +e
+          npx tsc --noEmit > tsc.log 2>&1
+          code=$?
+          tail -25 tsc.log
+          echo "exit=$code" >> "$GITHUB_OUTPUT"
+          exit 0
+      - name: Targeted unit tests (gate)
+        run: npx vitest run tests/unit/calendar-api.test.js tests/unit/predict-api-h2h.test.js
+      - name: Commit and push
+        run: |
+          git config user.name github-actions
+          git config user.email github-actions@github.com
+          git add api/_dataSource.ts api/Matches.ts api/predict.ts tests/unit/calendar-api.test.js
+          git diff --staged --quiet && exit 0
+          git commit -m "Maak de API-leesroute R2-first (tsc=${{ steps.typecheck.outputs.exit }}) [skip vercel]" -m "Neon-egress is de limiet die de compute opschort; de dagcache en splitdagen komen uit R2/GitHub. De server store, Matches en predict vragen Neon nu pas als de goedkope bron ontbreekt."
+          for attempt in 1 2 3; do
+            git pull --rebase --autostash origin codex/step3b-layout
+            if git push origin HEAD:codex/step3b-layout; then exit 0; fi
+            sleep $((attempt * 5))
+          done
+          exit 1
