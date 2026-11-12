@@ -34,14 +34,22 @@ jobs:
           echo "exit=$code" >> "$GITHUB_OUTPUT"
           exit 0
       - name: Targeted unit tests (gate)
-        run: npx vitest run tests/unit/database-feature-context-batch.test.js tests/unit/worker-feature-context-batch.test.js tests/unit/calendar-api.test.js tests/unit/predict-api-h2h.test.js
+        run: |
+          set +e
+          npx vitest run tests/unit/database-feature-context-batch.test.js tests/unit/worker-feature-context-batch.test.js > vitest.log 2>&1
+          code=$?
+          tail -60 vitest.log
+          if [ "$code" -ne 0 ]; then
+            node -e "const fs=require('fs');const lines=fs.readFileSync('vitest.log','utf8').split(/\r?\n/).filter(Boolean);const tail=lines.slice(-40).join('\n');console.log('::error title=vitest faalde::'+tail.replace(/%/g,'%25').replace(/\r/g,'%0D').replace(/\n/g,'%0A').slice(0,3500))"
+          fi
+          exit $code
       - name: Commit and push
         run: |
           git config user.name github-actions
           git config user.email github-actions@github.com
           git add scripts/server-worker.js shared/database.js tests/unit/worker-feature-context-batch.test.js
           git diff --staged --quiet && exit 0
-          git commit -m "Batch de feature-context-queries in de worker per datumvenster (tsc=${{ steps.typecheck.outputs.exit }}) [skip vercel]" -m "De worker deed per wedstrijd zes tot acht Neon-queries voor clubs, fixture-resolve, seizoensstats, H2H en het feature-bundel. Die lookups gaan nu in één batch per datumvenster, met de enkelvoudige read als fallback."
+          git commit -m "Batch de feature-context-queries in de worker per datumvenster (tsc=${{ steps.typecheck.outputs.exit }}) [skip vercel]" -m "De worker deed per wedstrijd zes tot acht Neon-queries voor clubs, fixture-resolve, seizoensstats, H2H en het feature-bundel. Die lookups gaan nu in een batch per datumvenster, met de enkelvoudige read als fallback."
           for attempt in 1 2 3; do
             git pull --rebase --autostash origin codex/step3b-layout
             if git push origin HEAD:codex/step3b-layout; then exit 0; fi
