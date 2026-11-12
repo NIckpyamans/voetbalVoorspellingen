@@ -6,7 +6,7 @@ function fakeSql(rowsByMarker) {
   return {
     calls,
     query: vi.fn(async (sqlText) => {
-      const marker = String(sqlText).match(/\/\* dfb:([a-z-]+) \*\//)?.[1] || "onbekend";
+      const marker = String(sqlText).match(/\/\* dfb:([a-z0-9-]+) \*\//)?.[1] || "onbekend";
       calls.push({ marker });
       return rowsByMarker[marker] || [];
     }),
