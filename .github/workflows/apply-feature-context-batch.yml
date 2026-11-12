@@ -1,0 +1,50 @@
+name: One-off feature-context batching
+
+# Eenmalige runner-stap: de lokale machine kan geen processen starten, dus de
+# bedrading wordt hier toegepast, getypecheckt en getest.
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  apply:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v5
+        with:
+          ref: codex/step3b-layout
+          token: ${{ secrets.GITHUB_TOKEN }}
+      - uses: actions/setup-node@v5
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+      - name: Wire the batch into the worker
+        run: node scripts/apply-feature-context-batch.js
+      - name: Typecheck (signal, geen gate)
+        id: typecheck
+        run: |
+          set +e
+          npx tsc --noEmit > tsc.log 2>&1
+          code=$?
+          tail -25 tsc.log
+          echo "exit=$code" >> "$GITHUB_OUTPUT"
+          exit 0
+      - name: Targeted unit tests (gate)
+        run: npx vitest run tests/unit/database-feature-context-batch.test.js tests/unit/worker-feature-context-batch.test.js tests/unit/calendar-api.test.js tests/unit/predict-api-h2h.test.js
+      - name: Commit and push
+        run: |
+          git config user.name github-actions
+          git config user.email github-actions@github.com
+          git add scripts/server-worker.js shared/database.js tests/unit/worker-feature-context-batch.test.js
+          git diff --staged --quiet && exit 0
+          git commit -m "Batch de feature-context-queries in de worker per datumvenster (tsc=${{ steps.typecheck.outputs.exit }}) [skip vercel]" -m "De worker deed per wedstrijd zes tot acht Neon-queries voor clubs, fixture-resolve, seizoensstats, H2H en het feature-bundel. Die lookups gaan nu in één batch per datumvenster, met de enkelvoudige read als fallback."
+          for attempt in 1 2 3; do
+            git pull --rebase --autostash origin codex/step3b-layout
+            if git push origin HEAD:codex/step3b-layout; then exit 0; fi
+            sleep $((attempt * 5))
+          done
+          exit 1
