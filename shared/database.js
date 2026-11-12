@@ -976,7 +976,7 @@ export async function readDatabaseCounts() {
   return { databaseConfigured: true, ...counts };
 }
 
-function dbAliasKey(value) {
+export function dbAliasKey(value) {
   return String(value || "")
     .toLowerCase()
     .normalize("NFKD")
@@ -988,7 +988,7 @@ function dbAliasKey(value) {
     .slice(0, 120);
 }
 
-function aliasVariants(value) {
+export function aliasVariants(value) {
   const base = dbAliasKey(value);
   const variants = new Set([base]);
   const compact = base.replace(/-/g, "");

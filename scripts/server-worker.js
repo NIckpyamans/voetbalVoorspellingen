@@ -40,6 +40,7 @@ import {
 import { buildCupSheetsFromMatches } from "../shared/cupSheets.js";
 import { mergeCatalogStandings, sameTeam } from "../shared/standingsCatalog.js";
 import { loadLocalEnv, readDatabaseFeatureContext, syncStoreToDatabase } from "../shared/database.js";
+import { readDatabaseFeatureContextBatch } from "../shared/databaseFeatureContextBatch.js";
 import {
   hydrateStoreFromSnapshotLedger,
   ledgerDeltaSince,
@@ -11611,6 +11612,21 @@ async function main() {
     const dayMatches = [];
     const dayPredictions = [];
 
+    // Één batch per datumvenster in plaats van zes tot acht Neon-queries per
+    // wedstrijd. Mislukt de batch, dan valt de lus hieronder terug op de
+    // bestaande enkelvoudige read.
+    const dbFeatureContextBatch = await readDatabaseFeatureContextBatch(
+      (allEvents[date] || []).map((event) => ({
+        matchId: `ss-${event.id}`,
+        homeClubId: event.homeTeam?.id ? String(event.homeTeam.id) : null,
+        awayClubId: event.awayTeam?.id ? String(event.awayTeam.id) : null,
+        competitionId: null,
+        dateKey: date,
+        homeTeamName: event.homeTeam?.name || "Home",
+        awayTeamName: event.awayTeam?.name || "Away",
+      }))
+    ).catch(() => new Map());
+
     for (const event of allEvents[date] || []) {
       const leagueInfo = getLeagueInfo(event);
       if (!leagueInfo) continue;
@@ -12122,7 +12138,9 @@ async function main() {
       }
       let sourceAsOfFallbackLineup = null;
       const matchId = `ss-${event.id}`;
-      const dbFeatureContext = await readDatabaseFeatureContext({
+      const dbFeatureContext = dbFeatureContextBatch.has(matchId)
+        ? dbFeatureContextBatch.get(matchId)
+        : await readDatabaseFeatureContext({
         matchId,
         homeClubId: homeId ? String(homeId) : null,
         awayClubId: awayId ? String(awayId) : null,
