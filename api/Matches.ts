@@ -550,11 +550,10 @@ export default async function handler(req: any, res: any) {
 
         const daysData = await mapWithConcurrency(offsets, 4, async (offset) => {
           const dateStr = addDaysToDateKey(targetDate, offset);
+          // Splitdag eerst (R2/GitHub, gratis egress); Neon alleen voor dagen
+          // die echt ontbreken, zodat een kalenderverzoek het egressbudget
+          // niet opbrandt.
           try {
-            const dbDay = databaseConfigured() ? await readDatabaseDay(dateStr).catch(() => null) : null;
-            if (dbDay?.matches?.length) {
-              return { date: dateStr, matches: dbDay.matches.map((match: any) => attachReviewAndNormalize(match, {})), branch: "postgres", error: null };
-            }
             const day = await readSplitDay(dateStr);
             return {
               date: dateStr,
@@ -562,8 +561,12 @@ export default async function handler(req: any, res: any) {
               branch: day.branch || "split-data",
               error: null,
             };
-          } catch (error: any) {
-            return { date: dateStr, matches: [], branch: null, error: error?.message || String(error) };
+          } catch (splitError: any) {
+            const dbDay = databaseConfigured() ? await readDatabaseDay(dateStr).catch(() => null) : null;
+            if (dbDay?.matches?.length) {
+              return { date: dateStr, matches: dbDay.matches.map((match: any) => attachReviewAndNormalize(match, {})), branch: "postgres", error: null };
+            }
+            return { date: dateStr, matches: [], branch: null, error: splitError?.message || String(splitError) };
           }
         });
 
@@ -637,16 +640,21 @@ export default async function handler(req: any, res: any) {
         sourceBranch = "r2-dashboard-cache";
         lastRun = cachedDay.generatedAt || lastRun;
       } else {
-      const dbDay = !detailRequest && databaseConfigured() ? await readDatabaseDay(targetDate).catch(() => null) : null;
-      if (dbDay?.matches?.length) {
-        baseMatches = dbDay.matches.map((match: any) => attachReviewAndNormalize(match, {}));
-        sourceBranch = "postgres";
-      } else {
+      // Splitdag eerst (R2/GitHub); Neon pas als de dag niet op te halen is.
+      try {
         const day = await readSplitDay(targetDate);
         baseMatches = day.matches.map((match: any) => attachReviewAndNormalize(match, day.reviews));
         lastRun = day.lastRun || lastRun;
         workerVersion = day.workerVersion || workerVersion;
         sourceBranch = day.branch || sourceBranch;
+      } catch (splitError) {
+        const dbDay = !detailRequest && databaseConfigured() ? await readDatabaseDay(targetDate).catch(() => null) : null;
+        if (dbDay?.matches?.length) {
+          baseMatches = dbDay.matches.map((match: any) => attachReviewAndNormalize(match, {}));
+          sourceBranch = "postgres";
+        } else {
+          throw splitError;
+        }
       }
       }
     } catch {

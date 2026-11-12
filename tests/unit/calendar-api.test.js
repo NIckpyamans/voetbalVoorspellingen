@@ -154,3 +154,48 @@ describe("matches calendar range API", () => {
     ]);
   });
 });
+
+describe("matches API keeps Neon out of the read path unless a day is missing", () => {
+  it("serves a split day without querying Neon", async () => {
+    const { databaseConfigured, readDatabaseDay } = await import("../../shared/database.js");
+    vi.mocked(databaseConfigured).mockReturnValue(true);
+    vi.mocked(readDatabaseDay).mockClear();
+
+    const req = { query: { date: "2026-10-03" }, method: "GET", headers: {} };
+    const res = responseStub();
+    await handler(req, res);
+
+    expect(res.result.statusCode).toBe(200);
+    expect(res.result.body.matches).toHaveLength(1);
+    expect(readDatabaseDay).not.toHaveBeenCalled();
+    vi.mocked(databaseConfigured).mockReturnValue(false);
+  });
+
+  it("queries Neon once when the split day cannot be loaded", async () => {
+    const { databaseConfigured, readDatabaseDay } = await import("../../shared/database.js");
+    vi.mocked(databaseConfigured).mockReturnValue(true);
+    vi.mocked(readDatabaseDay).mockResolvedValue({
+      matches: [{
+        id: "db-fixture",
+        date: "2026-10-03",
+        kickoff: "2026-10-03T15:00:00.000Z",
+        league: "Netherlands - Eredivisie",
+        homeTeamName: "Ajax",
+        awayTeamName: "PSV Eindhoven",
+      }],
+    });
+    fetchDayDataMock.mockImplementation(async () => {
+      throw new Error("missing split day");
+    });
+
+    const req = { query: { date: "2026-10-03" }, method: "GET", headers: {} };
+    const res = responseStub();
+    await handler(req, res);
+
+    expect(res.result.statusCode).toBe(200);
+    expect(res.result.body.sourceBranch).toBe("postgres");
+    expect(vi.mocked(readDatabaseDay).mock.calls).toHaveLength(1);
+    vi.mocked(readDatabaseDay).mockResolvedValue(null);
+    vi.mocked(databaseConfigured).mockReturnValue(false);
+  });
+});

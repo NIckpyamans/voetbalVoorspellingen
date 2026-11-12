@@ -72,15 +72,6 @@ function withOptionalCacheBust(url: string, force = false) {
 }
 
 export async function fetchServerStore() {
-  if (databaseConfigured()) {
-    try {
-      const databaseStore = await readDatabaseServerStore();
-      if (databaseStore?.store) return databaseStore;
-    } catch (err: any) {
-      logger.warning("database_server_store_fetch_failed", { error: getErrorDetails(err) });
-    }
-  }
-
   const cached = readCache("server_data.json");
   if (cached) {
     return {
@@ -118,6 +109,25 @@ export async function fetchServerStore() {
         lastError = `${branch}: ${err?.message || "unknown fetch error"}`;
         logger.warning("server_store_fetch_failed", { branch, error: getErrorDetails(err) });
       }
+    }
+  }
+
+  // Neon-egress is de limiet die bij overschrijding de hele compute opschort
+  // (HTTP 402, ook op `select 1`). De R2/GitHub-store en de dagcache zijn
+  // gratis, dus Neon is hier de laatste strohalm: pas na een echte miss.
+  if (databaseConfigured()) {
+    try {
+      const databaseStore = await readDatabaseServerStore();
+      if (databaseStore?.store) {
+        writeCache("server_data.json", {
+          data: databaseStore.store,
+          branch: databaseStore.branch,
+          sourceUrl: databaseStore.sourceUrl,
+        });
+        return databaseStore;
+      }
+    } catch (err: any) {
+      logger.warning("database_server_store_fetch_failed", { error: getErrorDetails(err) });
     }
   }
 

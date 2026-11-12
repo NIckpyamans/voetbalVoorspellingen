@@ -319,24 +319,31 @@ export default async function handler(req: any, res: any) {
         branch = "r2-dashboard-cache";
         lastRun = cachedDay.generatedAt || null;
       } else {
-      const dbDay = databaseConfigured() ? await readDatabaseDay(date).catch(() => null) : null;
-      if (dbDay?.matches?.length || dbDay?.predictions?.length) {
-        predictions = dbDay.predictions || [];
-        matches = dbDay.matches || [];
-        branch = "postgres";
-      } else {
-      const [dayResponse, metaResponse] = await Promise.all([
-        fetchDayData(date),
-        fetchMetaData().catch(() => ({ data: {}, branch: "split-data" })),
-      ]);
-      const day = dayResponse.data || {};
-      const meta = metaResponse.data || {};
-      predictions = Array.isArray(day.predictions) ? day.predictions : [];
-      matches = Array.isArray(day.matches) ? day.matches : [];
-      reviews = day.reviews || {};
-      branch = dayResponse.branch || branch;
-      lastRun = day.lastRun || meta.lastRun || null;
-      reviewCount = Number(meta.reviewCount || Object.keys(reviews).length || 0);
+      // Splitdag eerst: die komt uit R2/GitHub en kost geen Neon-egress. Neon
+      // is de dure bron (5 GB/maand) en wordt pas gebruikt als de dag echt
+      // niet op te halen is.
+      try {
+        const [dayResponse, metaResponse] = await Promise.all([
+          fetchDayData(date),
+          fetchMetaData().catch(() => ({ data: {}, branch: "split-data" })),
+        ]);
+        const day = dayResponse.data || {};
+        const meta = metaResponse.data || {};
+        predictions = Array.isArray(day.predictions) ? day.predictions : [];
+        matches = Array.isArray(day.matches) ? day.matches : [];
+        reviews = day.reviews || {};
+        branch = dayResponse.branch || branch;
+        lastRun = day.lastRun || meta.lastRun || null;
+        reviewCount = Number(meta.reviewCount || Object.keys(reviews).length || 0);
+      } catch (splitError) {
+        const dbDay = databaseConfigured() ? await readDatabaseDay(date).catch(() => null) : null;
+        if (dbDay?.matches?.length || dbDay?.predictions?.length) {
+          predictions = dbDay.predictions || [];
+          matches = dbDay.matches || [];
+          branch = "postgres";
+        } else {
+          throw splitError;
+        }
       }
       }
     } catch {
