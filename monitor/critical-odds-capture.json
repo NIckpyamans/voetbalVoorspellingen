@@ -1,13 +1,13 @@
 {
-  "generatedAt": "2026-11-12T20:08:24.062Z",
-  "checked": 0,
+  "generatedAt": "2026-11-13T06:57:35.896Z",
+  "checked": 1,
   "duplicateFixturesMerged": 0,
   "captureWindows": {
     "t20": 0,
     "t45": 0,
     "t75": 0,
     "prematch": 0,
-    "opening": 0,
+    "opening": 1,
     "outside": 0
   },
   "quotaBudget": {
@@ -41,23 +41,78 @@
   "prematchCaptured": 0,
   "closingCaptured": 0,
   "closingPairs": 0,
-  "statuses": {},
-  "attemptStatuses": {},
-  "providerStatuses": {},
-  "providerQuota": {},
+  "statuses": {
+    "not_found": 1
+  },
+  "attemptStatuses": {
+    "the-odds-api:seasonal_sport_unavailable": 1,
+    "the-odds-api:unsupported_sport": 2,
+    "the-odds-api:quota_reserve": 1,
+    "sportmonks:fixture_id_missing": 1
+  },
+  "providerStatuses": {
+    "the-odds-api": {
+      "seasonal_sport_unavailable": 1,
+      "unsupported_sport": 2,
+      "quota_reserve": 1
+    },
+    "sportmonks": {
+      "fixture_id_missing": 1
+    }
+  },
+  "providerQuota": {
+    "the-odds-api": {
+      "remaining": 51
+    }
+  },
   "skippedExistingRole": 0,
   "sportmonksMapped": 0,
-  "sportmonksMappingStatuses": {},
-  "matches": [],
+  "sportmonksMappingStatuses": {
+    "plan_coverage_unavailable": 1
+  },
+  "matches": [
+    {
+      "matchId": "ss-espn-ned.2-401875854",
+      "kickoff": "2026-11-14T15:30:00.000Z",
+      "league": "Netherlands - Eerste Divisie",
+      "homeTeam": "NAC Breda",
+      "awayTeam": "FC Emmen",
+      "minutesBeforeKickoff": 1952,
+      "captureWindow": "opening",
+      "closingWindow": false,
+      "status": "not_found",
+      "providerCompetitionAvailability": null,
+      "reason": "Sportmonks fixture-id ontbreekt; odds-by-fixture call overgeslagen.",
+      "sportmonksMapping": "plan_coverage_unavailable"
+    }
+  ],
   "oddspapi": {
-    "status": "skipped",
-    "candidates": 0,
-    "reason": "geen eerste-divisie-duels in dit venster"
+    "status": "missing_key",
+    "candidates": 1
   },
   "covered": 0,
   "alreadyCaptured": 0,
-  "missing": 0,
-  "missingMatches": [],
-  "leagueCoverage": [],
+  "missing": 1,
+  "missingMatches": [
+    {
+      "matchId": "ss-espn-ned.2-401875854",
+      "kickoff": "2026-11-14T15:30:00.000Z",
+      "league": "Netherlands - Eerste Divisie",
+      "home": "NAC Breda",
+      "away": "FC Emmen",
+      "status": "not_found",
+      "reason": "Sportmonks fixture-id ontbreekt; odds-by-fixture call overgeslagen."
+    }
+  ],
+  "leagueCoverage": [
+    {
+      "league": "Netherlands - Eerste Divisie",
+      "checked": 1,
+      "covered": 0,
+      "partial": 0,
+      "missing": 1,
+      "coverage": 0
+    }
+  ],
   "coverage": 0
 }
