@@ -1,5 +1,5 @@
 {
-  "checkedAt": "2026-11-14T11:32:29.900Z",
+  "checkedAt": "2026-11-15T11:59:35.148Z",
   "oddsApi": {
     "configured": true,
     "valid": true,
@@ -7,11 +7,11 @@
     "catalogIncludesInactive": true,
     "inactiveSoccerSportKeys": [
       "soccer_africa_cup_of_nations",
+      "soccer_brazil_serie_b",
       "soccer_china_superleague",
       "soccer_concacaf_gold_cup",
       "soccer_concacaf_leagues_cup",
       "soccer_conmebol_copa_america",
-      "soccer_england_efl_trophy",
       "soccer_fa_cup",
       "soccer_fifa_club_world_cup",
       "soccer_fifa_world_cup",
@@ -24,7 +24,6 @@
       "soccer_league_of_ireland",
       "soccer_saudi_arabia_pro_league",
       "soccer_uefa_champs_league_qualification",
-      "soccer_uefa_champs_league_women",
       "soccer_uefa_euro_qualification",
       "soccer_uefa_european_championship"
     ],
@@ -32,20 +31,20 @@
       "key": "soccer_fa_cup",
       "status": "expected_inactive"
     },
-    "activeSports": 80,
+    "activeSports": 79,
     "soccerSportKeys": [
       "soccer_argentina_primera_division",
       "soccer_australia_aleague",
       "soccer_austria_bundesliga",
       "soccer_belgium_first_div",
       "soccer_brazil_campeonato",
-      "soccer_brazil_serie_b",
       "soccer_chile_campeonato",
       "soccer_conmebol_copa_libertadores",
       "soccer_conmebol_copa_sudamericana",
       "soccer_denmark_superliga",
       "soccer_efl_champ",
       "soccer_england_efl_cup",
+      "soccer_england_efl_trophy",
       "soccer_england_league1",
       "soccer_england_league2",
       "soccer_epl",
@@ -77,6 +76,7 @@
       "soccer_switzerland_superleague",
       "soccer_turkey_super_league",
       "soccer_uefa_champs_league",
+      "soccer_uefa_champs_league_women",
       "soccer_uefa_europa_conference_league",
       "soccer_uefa_europa_league",
       "soccer_uefa_nations_league",
@@ -93,10 +93,13 @@
       "soccer_uefa_europa_conference_league_qualification"
     ],
     "competitionCoverageStatus": "seasonal_unavailable",
-    "newlyInactiveSports": [],
+    "newlyInactiveSports": [
+      "soccer_brazil_serie_b"
+    ],
     "newlyUnavailableSports": [],
     "newlyAvailableSports": [
-      "soccer_korea_kleague1"
+      "soccer_england_efl_trophy",
+      "soccer_uefa_champs_league_women"
     ],
     "quota": {
       "x-requests-remaining": "51",
@@ -173,7 +176,7 @@
     "quota": {
       "x-ratelimit-limit": "1000",
       "x-ratelimit-remaining": "973",
-      "x-ratelimit-reset": "1794700800"
+      "x-ratelimit-reset": "1794787200"
     },
     "accepted": false,
     "policy": "Veertien dagen meten; nooit automatisch promoveren op basis van alleen een geldige key."
@@ -247,7 +250,7 @@
         "firstName": null,
         "hasOddsFlag": false,
         "rateLimit": {
-          "resets_in_seconds": 3599,
+          "resets_in_seconds": 3600,
           "remaining": 178,
           "requested_entity": "Fixture"
         },
@@ -305,7 +308,7 @@
         "firstName": "1",
         "hasOddsFlag": false,
         "rateLimit": {
-          "resets_in_seconds": 3600,
+          "resets_in_seconds": 3599,
           "remaining": 178,
           "requested_entity": "Odd"
         },
@@ -324,7 +327,7 @@
         "firstName": null,
         "hasOddsFlag": false,
         "rateLimit": {
-          "resets_in_seconds": 3600,
+          "resets_in_seconds": 3599,
           "remaining": 177,
           "requested_entity": "Odd"
         },
