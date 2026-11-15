@@ -1,41 +1,41 @@
 {
-  "generatedAt": "2026-11-14T02:28:52.517Z",
-  "date": "2026-11-14",
+  "generatedAt": "2026-11-15T01:58:07.603Z",
+  "date": "2026-11-15",
   "proposalOnly": true,
   "shouldPropose": true,
-  "branchName": "codex/review-20261114",
-  "summary": "AI reviewvoorstel voor 2026-11-14: 2 aandachtspunt(en) met patchadvies, niet automatisch live.",
+  "branchName": "codex/review-20261115",
+  "summary": "AI reviewvoorstel voor 2026-11-15: 1 aandachtspunt(en) met patchadvies, niet automatisch live.",
   "latestStats": {
-    "today": "2026-11-14",
-    "tomorrow": "2026-11-15",
+    "today": "2026-11-15",
+    "tomorrow": "2026-11-16",
     "dataPresent": true,
-    "lastRun": 1794609422356,
-    "ageMinutes": 232,
+    "lastRun": 1794707480468,
+    "ageMinutes": 7,
     "maxWorkerAgeMinutes": 180,
-    "todayMatches": 7,
-    "tomorrowMatches": 1,
+    "todayMatches": 1,
+    "tomorrowMatches": 0,
     "fixtureCalendar": {
       "status": "has_current_matches",
       "healthy": true,
       "emptyWindowOk": true,
       "severity": "none",
-      "todayCount": 7,
-      "tomorrowCount": 1,
+      "todayCount": 1,
+      "tomorrowCount": 0,
       "windowDays": 7,
       "checkedDates": [
-        "2026-11-14",
         "2026-11-15",
         "2026-11-20",
-        "2026-11-21"
+        "2026-11-21",
+        "2026-11-22"
       ],
-      "nextMatchDate": "2026-11-14",
-      "nextMatchCount": 7,
+      "nextMatchDate": "2026-11-15",
+      "nextMatchCount": 1,
       "explanation": "Vandaag of morgen staan er wedstrijden in de actuele data."
     },
     "liveMatches": 0,
     "liveWithoutMinute": 0,
     "h2hFilled": 0,
-    "h2hMissing": 7,
+    "h2hMissing": 1,
     "standingsCount": 11,
     "cupSheetCount": 1,
     "phaseReliabilityCount": 5
@@ -43,18 +43,6 @@
   "findings": [
     {
       "priority": 1,
-      "key": "worker_stale",
-      "severity": "high",
-      "message": "Workerdata is 232 minuten oud.",
-      "whyItMatters": "Workerdata is te oud en verdient een workflow- of broncheck.",
-      "recommendedFiles": [
-        ".github/workflows/worker.yml",
-        "scripts/server-worker.js"
-      ],
-      "details": {}
-    },
-    {
-      "priority": 2,
       "key": "h2h_empty",
       "severity": "medium",
       "message": "Alle wedstrijden van vandaag hebben lege H2H-data.",
@@ -67,7 +55,6 @@
     }
   ],
   "recommendedFiles": [
-    ".github/workflows/worker.yml",
     "scripts/server-worker.js",
     "components/MatchCard.tsx"
   ],
