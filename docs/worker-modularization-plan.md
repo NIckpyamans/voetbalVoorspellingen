@@ -1,6 +1,6 @@
 # Worker Modularisatieplan
 
-Laatst bijgewerkt: 2026-11-09T16:29:01.132Z
+Laatst bijgewerkt: 2026-11-16T15:53:48.749Z
 
 ## Doel
 Splits scripts/server-worker.js zonder voorspelgedrag te veranderen. Iedere stap behoudt dezelfde output in server_data.json en data/*.json.

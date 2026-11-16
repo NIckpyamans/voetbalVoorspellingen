@@ -1,6 +1,6 @@
 # Database Migratieplan
 
-Laatst bijgewerkt: 2026-11-09T16:29:01.132Z
+Laatst bijgewerkt: 2026-11-16T15:53:48.749Z
 
 ## Doel
 Maak Postgres/Supabase de bron van waarheid voor een schaalbaar voetbal intelligence platform. JSON blijft alleen cache, export of fallback.

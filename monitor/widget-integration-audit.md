@@ -1,6 +1,6 @@
 # Widget Integration Audit
 
-Gegenereerd: 2026-11-09T16:28:54.545Z
+Gegenereerd: 2026-11-16T15:53:42.932Z
 Status: degraded
 
 ## Neon
@@ -16,9 +16,9 @@ Status: degraded
 - FOUT Provider- en integriteitswidget: 0 providers, 0 conflicten
 - OK Dashboard/matches-widget: 0 actuele matches, bron no-matches-yet
 - OK Standen-widget: 11 standen
-- OK Bekerschema-widget: 2 actief; leeg is geldig buiten bekerrondes
+- OK Bekerschema-widget: 1 actief; leeg is geldig buiten bekerrondes
 - OK Neon seizoen-widget: 0 seizoenovergangen
-- OK Geschiedenis-widget: 2046 reviews
+- OK Geschiedenis-widget: 2078 reviews
 - OK Prediction-snapshot-widget: 1 snapshots
 - OK Vraag FootyAI-widget: 30 brongebonden resultaten
 
