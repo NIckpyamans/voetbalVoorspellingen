@@ -99,7 +99,11 @@ function recordDiagnostic(store, status, details = {}) {
 function classifyProviderError(response = {}) {
   const text = JSON.stringify(response.errors || response.data?.errors || response.data || "").toLowerCase();
   if (/quota|limit|rate|request|too many/.test(text)) return "quota_or_rate_limit";
-  if (/token|key|auth|unauthorized|forbidden|subscription|plan|rapidapi|endpoint is disabled/.test(text)) return "auth_or_plan";
+  // "access" en "suspended" horen hier: bij een geschorst account antwoordt de
+  // provider met {"access":"Your account is suspended, ..."}. Zonder deze
+  // woorden belandde dat als provider_payload_error in het rapport en sloeg de
+  // circuit breaker nooit aan, waardoor de geblokkeerde key geblokkeerd bleef.
+  if (/token|key|auth|unauthorized|forbidden|subscri|plan|rapidapi|endpoint is disabled|access|suspend|blocked|banned/.test(text)) return "auth_or_plan";
   if (/endpoint|not found|not_found|coverage/.test(text)) return "endpoint_or_coverage";
   if (response.statusCode) return `http_${response.statusCode}`;
   return "provider_payload_error";
