@@ -34,7 +34,9 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 12
     env:
-      DATA_BRANCH: codex/step3b-layout
+      # Een handmatige dispatch op een branch test die branch; geplande runs
+      # blijven de productiebranch gebruiken.
+      DATA_BRANCH: ${{ github.event_name == 'workflow_dispatch' && github.ref_name || 'codex/step3b-layout' }}
       SQUAD_ENRICHMENT_DAYS_AHEAD: "8"
       # Een volledige batch blijft ruim binnen de workflow-timeout en werkt de
       # selectieachterstand ongeveer twee keer zo snel weg.

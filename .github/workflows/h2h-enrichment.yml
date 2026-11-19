@@ -21,7 +21,9 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 20
     env:
-      DATA_BRANCH: codex/step3b-layout
+      # Een handmatige dispatch op een branch test die branch (code + data);
+      # geplande runs blijven de productiebranch gebruiken.
+      DATA_BRANCH: ${{ github.event_name == 'workflow_dispatch' && github.ref_name || 'codex/step3b-layout' }}
       API_KEY_API_FOOTBALL: ${{ secrets.API_KEY_API_FOOTBALL }}
       APIFOOTBALL_API_KEY: ${{ secrets.APIFOOTBALL_API_KEY }}
       GOAL_API_KEY: ${{ secrets.GOAL_API_KEY }}
@@ -53,12 +55,22 @@ jobs:
           cache: npm
       - run: npm ci
       - name: Capture upcoming H2H independently
-        run: node scripts/ci-neon-safe.js -- npm run db:h2h:backfill-upcoming
+        timeout-minutes: 16
+        run: |
+          # De wachtrij is groter dan één batch. Blijf batches draaien tot de
+          # resterende fixtures verwerkt zijn, met een vaste bovengrens.
+          for attempt in 1 2 3; do
+            node scripts/ci-neon-safe.js -- npm run db:h2h:backfill-upcoming || exit $?
+            remaining=$(node -e "try{process.stdout.write(String(JSON.parse(require('fs').readFileSync('monitor/h2h-upcoming-backfill.json','utf8')).remaining||0))}catch(error){process.stdout.write('0')}")
+            echo "H2H-wachtrij na poging ${attempt}: ${remaining}"
+            if [ "$remaining" = "0" ]; then break; fi
+          done
       - name: Commit compact H2H coverage and retry state
         run: |
           git config user.name github-actions
           git config user.email github-actions@github.com
           git add monitor/h2h-upcoming-backfill.json monitor/h2h-upcoming-backfill.md
+          if [ -f monitor/provider-circuits.json ]; then git add monitor/provider-circuits.json; fi
           git diff --staged --quiet && echo "geen H2H-rapportwijzigingen" && exit 0
           git commit -m "update upcoming H2H coverage [skip vercel]"
           for attempt in 1 2 3; do

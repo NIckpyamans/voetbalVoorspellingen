@@ -9,6 +9,15 @@ const H2H_CACHE_TTL_MS = 12 * 60 * 60 * 1000;
 
 let fetchesThisRun = 0;
 
+// Account-/planblokkade binnen deze run: blijft een providerkey of abonnement
+// geblokkeerd, dan staken we de verdere aanvragen in plaats van elke wedstrijd
+// opnieuw dezelfde fout te laten ophalen.
+let accountBlock = null;
+
+export function resetApiFootballAccountBlockForTests() {
+  accountBlock = null;
+}
+
 const TEAM_SEARCH_ALIASES = new Map(
   Object.entries({
     "ararat armenia": ["FC Ararat-Armenia", "Ararat Armenia", "Ararat-Armenia"],
@@ -96,6 +105,26 @@ function classifyProviderError(response = {}) {
   return "provider_payload_error";
 }
 
+// De providerfouttekst zelf bewaren: zonder dit bleef in het H2H-rapport alleen
+// "provider_payload_error" over en was de accountfout niet te herleiden.
+function providerErrorText(response = {}) {
+  const raw = response?.errors ?? response?.data?.errors ?? null;
+  if (Array.isArray(raw) && raw.length) {
+    try { return JSON.stringify(raw).slice(0, 300); } catch { return null; }
+  }
+  if (raw && typeof raw === "object" && Object.keys(raw).length) {
+    try { return JSON.stringify(raw).slice(0, 300); } catch { return null; }
+  }
+  return response?.error ? String(response.error).slice(0, 300) : null;
+}
+
+function rememberAccountBlock(result) {
+  if (result?.errorCategory === "auth_or_plan" && !accountBlock) {
+    accountBlock = result.error || "provider_account_or_plan_blocked";
+  }
+  return result;
+}
+
 function searchVariantsForTeam(teamName) {
   const normalized = normalizeName(teamName);
   const aliases = TEAM_SEARCH_ALIASES.get(normalized) || [];
@@ -115,6 +144,9 @@ function maxFetchesPerRun() {
 async function apiFootballGet(path, params = {}, options = {}) {
   const apiKey = getApiFootballKey();
   if (!apiKey) return { status: "not_configured", data: null };
+  if (accountBlock) {
+    return { status: "provider_error", errorCategory: "auth_or_plan", error: accountBlock, blocked: true, data: null };
+  }
   if (fetchesThisRun >= maxFetchesPerRun()) {
     return { status: "rate_limited_locally", data: null };
   }
@@ -146,19 +178,20 @@ async function apiFootballGet(path, params = {}, options = {}) {
       } catch {
         payload = null;
       }
-      return {
+      return rememberAccountBlock({
         status: "provider_error",
         statusCode: response.status,
         errorCategory: classifyProviderError({ statusCode: response.status, data: payload }),
+        error: providerErrorText({ statusCode: response.status, data: payload }),
         data: payload,
-      };
+      });
     }
     const payload = await response.json();
     if (Array.isArray(payload?.errors) && payload.errors.length) {
-      return { status: "provider_error", errorCategory: classifyProviderError({ errors: payload.errors, data: payload }), errors: payload.errors, data: payload };
+      return rememberAccountBlock({ status: "provider_error", errorCategory: classifyProviderError({ errors: payload.errors, data: payload }), error: providerErrorText({ errors: payload.errors, data: payload }), errors: payload.errors, data: payload });
     }
     if (payload?.errors && typeof payload.errors === "object" && Object.keys(payload.errors).length) {
-      return { status: "provider_error", errorCategory: classifyProviderError({ errors: payload.errors, data: payload }), errors: payload.errors, data: payload };
+      return rememberAccountBlock({ status: "provider_error", errorCategory: classifyProviderError({ errors: payload.errors, data: payload }), error: providerErrorText({ errors: payload.errors, data: payload }), errors: payload.errors, data: payload });
     }
     return { status: "ok", data: payload };
   } catch (error) {
@@ -238,6 +271,7 @@ async function resolveTeamId(store, teamName, leagueLabel, options = {}) {
       statusCode: lastResponse?.statusCode || null,
       searchedAs,
       errorCategory: lastResponse?.errorCategory || classifyProviderError(lastResponse),
+      error: lastResponse?.error || providerErrorText(lastResponse),
     };
     return null;
   }
@@ -308,21 +342,33 @@ export async function fetchApiFootballH2HProfile({ store, homeName, awayName, ho
   const resolvedHomeId = await resolveTeamId(store, homeName, leagueLabel, { ...options, providerTeamId: homeProviderIds?.apiFootball });
   const resolvedAwayId = await resolveTeamId(store, awayName, leagueLabel, { ...options, providerTeamId: awayProviderIds?.apiFootball });
   if (!resolvedHomeId || !resolvedAwayId) {
+    // Neem de account-/planfout van de teamzoekopdracht mee: anders bleef in het
+    // rapport alleen "team_mapping_missing" staan zonder de echte reden.
+    const failedMapping = Object.values(store.apiFootballTeamMap || {})
+      .find((entry) => !entry?.teamId && entry?.errorCategory);
     store.apiFootballH2HCache[pairKey] = {
       updatedAt: new Date().toISOString(),
       status: "team_mapping_missing",
+      errorCategory: failedMapping?.errorCategory || null,
+      error: failedMapping?.error || null,
       data: null,
     };
     return null;
   }
 
   const response = await apiFootballGet("/fixtures/headtohead", { h2h: `${resolvedHomeId}-${resolvedAwayId}`, last: 8 }, options);
-  recordDiagnostic(store, response.status, { statusCode: response.statusCode, endpoint: "fixtures/headtohead" });
+  recordDiagnostic(store, response.status, {
+    statusCode: response.statusCode,
+    endpoint: "fixtures/headtohead",
+    errorCategory: response.status === "ok" ? "" : response.errorCategory || classifyProviderError(response),
+  });
   if (response.status !== "ok") {
     store.apiFootballH2HCache[pairKey] = {
       updatedAt: new Date().toISOString(),
       status: response.status,
       statusCode: response.statusCode || null,
+      errorCategory: response.errorCategory || classifyProviderError(response),
+      error: response.error || providerErrorText(response),
       data: null,
     };
     return null;
@@ -372,6 +418,7 @@ export function summarizeApiFootballUsage(store = {}) {
     providerResultCount: h2hEntries.reduce((sum, entry) => sum + Number(entry?.data?.results?.length || 0), 0),
     lastStatus: diagnostics.lastStatus || null,
     lastStatusCode: diagnostics.lastStatusCode || null,
+    accountBlocked: accountBlock,
     lastCheckedAt: diagnostics.lastCheckedAt || null,
   };
 }

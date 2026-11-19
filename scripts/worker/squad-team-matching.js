@@ -29,15 +29,42 @@ export const SQUAD_TEAM_ALIASES = {
   // Griekse club: providers schrijven Olympiacos en Olympiakos door elkaar.
   olympiakos: ["Olympiacos", "Olympiacos Piraeus", "Olympiakos Piraeus"],
   olympiacos: ["Olympiakos", "Olympiakos Piraeus", "Olympiacos Piraeus"],
+  // Duits/Frans/Italiaans/Noors: providers gebruiken de korte of juist de
+  // formele clubnaam. Zonder deze aliassen leverde de zoekopdracht niets op en
+  // bleef de selectie van Bayern, Rennes, Hertha, Köln, Roma, Bodø/Glimt, Como,
+  // Inter en LASK weeks oud of helemaal leeg.
+  "bayern munchen": ["Bayern Munich", "FC Bayern München", "FC Bayern Munich"],
+  "bayern munich": ["Bayern München", "FC Bayern München", "FC Bayern Munich"],
+  "stade rennais": ["Rennes", "Stade Rennais FC"],
+  rennes: ["Stade Rennais", "Stade Rennais FC"],
+  "hertha berlin": ["Hertha BSC", "Hertha BSC Berlin"],
+  "hertha bsc": ["Hertha Berlin", "Hertha BSC Berlin"],
+  "fc koln": ["1. FC Köln", "Köln"],
+  koln: ["1. FC Köln", "FC Köln"],
+  "1 fc koln": ["FC Köln", "Köln"],
+  "as roma": ["Roma"],
+  roma: ["AS Roma"],
+  "bodo glimt": ["Bodø/Glimt", "Bodø Glimt"],
+  como: ["Como 1907"],
+  "como 1907": ["Como"],
+  internazionale: ["Inter", "FC Internazionale", "Inter Milan"],
+  inter: ["Internazionale", "FC Internazionale", "Inter Milan"],
+  "lask linz": ["LASK"],
+  lask: ["LASK Linz"],
 };
 
 // Aliassen zijn gesleuteld op naam mét voorvoegsels ("fc drita"), zodat ook
 // bestaande entries als "fc bayern munchen" bereikbaar blijven.
+// NFD splitst é en ü, maar niet ø, ł, đ, ß of æ. Zonder deze vertaling kreeg
+// "Bodø/Glimt" de sleutel "bod glimt" en vond hij zijn eigen alias
+// "bodo glimt" niet terug, waardoor de providerzoekopdracht maar één variant had.
+const SPECIAL_LATIN = { "ß": "ss", "ø": "o", "æ": "ae", "œ": "oe", "ł": "l", "đ": "d", "ð": "d", "þ": "th", "ı": "i" };
+
 export function normalizeSquadAliasKey(value) {
   return String(value || "")
     .toLowerCase()
     .normalize("NFD")
-    .replace(/[\u0300-\u036f]/g, "")
+    .replace(/[\u0300-\u036f]/g, "").replace(/[ßøæœłđðþı]/g, (char) => SPECIAL_LATIN[char])
     .replace(/[^a-z0-9]+/g, " ")
     .trim()
     .replace(/\s+/g, " ");
@@ -49,7 +76,7 @@ export function normalizeSquadTeamKey(value) {
   return String(value || "")
     .toLowerCase()
     .normalize("NFD")
-    .replace(/[\u0300-\u036f]/g, "")
+    .replace(/[\u0300-\u036f]/g, "").replace(/[ßøæœłđðþı]/g, (char) => SPECIAL_LATIN[char])
     .replace(/[^a-z0-9]+/g, " ")
     .split(" ")
     .filter((token) => token && !CLUB_PREFIX_TOKENS.test(token))
@@ -79,6 +106,44 @@ export function providerTeamMatches(providerTeamName, queryName) {
   const left = normalizeSquadTeamKey(providerTeamName);
   const right = normalizeSquadTeamKey(queryName);
   return Boolean(left) && left === right;
+}
+
+// Controle op de providernaam inclusief de bekende aliassen: "1. FC Köln" en
+// "Hertha BSC" horen bij "FC Köln" en "Hertha Berlin" ook al is de genormeerde
+// sleutel niet gelijk.
+export function providerTeamMatchesAliases(providerTeamName, teamName) {
+  return squadQueryVariants(teamName).some((variant) => providerTeamMatches(providerTeamName, variant));
+}
+
+// Continentale competities zeggen niets over de clubidentiteit: FotMob noemt
+// bij een Champions League-club altijd zijn nationale competitie. Alleen
+// nationale labels zijn bruikbaar als competitiecontrole.
+const INTERNATIONAL_COMPETITION_LABEL = /^(europe|world|international|africa|asia|north america|south america)\b/i;
+
+export function isInternationalCompetitionLabel(value) {
+  return INTERNATIONAL_COMPETITION_LABEL.test(String(value || "").trim());
+}
+
+export function expectedLeagueKeys(competitions = []) {
+  const labels = Array.isArray(competitions)
+    ? competitions
+    : competitions instanceof Set
+      ? [...competitions]
+      : [competitions];
+  return [...new Set(
+    labels
+      .map((label) => String(label || "").trim())
+      .filter((label) => label && !isInternationalCompetitionLabel(label))
+      .map((label) => (label.includes(" - ") ? label.split(" - ").pop() : label))
+      .map((label) => normalizeSquadTeamKey(label))
+      .filter(Boolean)
+  )];
+}
+
+export function providerLeagueMatches(providerLeagueName, expectedKeys = []) {
+  const key = normalizeSquadTeamKey(providerLeagueName);
+  if (!key) return false;
+  return (Array.isArray(expectedKeys) ? expectedKeys : []).includes(key);
 }
 
 // Twee namen horen alleen bij dezelfde club als de tokens daarop wijzen.

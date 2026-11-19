@@ -6,7 +6,7 @@ import { fetchEspnSquad } from "./providers/espn-squad-provider.js";
 import { fetchWikipediaSquad } from "./providers/wikipedia-squad-provider.js";
 import { fetchTransfermarktDatasetSquad } from "./providers/transfermarkt-squad-provider.js";
 import { fetchFotMobSquad } from "./providers/fotmob-squad-provider.js";
-import { squadQueryVariants, providerTeamMatches, suggestAliasCandidates, canonicalizeSquadCache, purgeMismatchedSquadRosters } from "./worker/squad-team-matching.js";
+import { squadQueryVariants, providerTeamMatchesAliases, suggestAliasCandidates, canonicalizeSquadCache, purgeMismatchedSquadRosters } from "./worker/squad-team-matching.js";
 import { canonicalDedupeTeam } from "../shared/matchNormalization.js";
 
 const ROOT = process.cwd();
@@ -165,7 +165,7 @@ async function fetchSportsDbSquad(teamName, searchCandidates = []) {
     for (const item of payload?.teams || []) {
       if (item?.strTeam) searchCandidates.push(String(item.strTeam));
     }
-    team = (payload?.teams || []).find((item) => providerTeamMatches(item?.strTeam, teamName) || providerTeamMatches(item?.strTeam, query));
+    team = (payload?.teams || []).find((item) => providerTeamMatchesAliases(item?.strTeam, teamName) || providerTeamMatchesAliases(item?.strTeam, query));
     if (team?.idTeam) break;
   }
   if (!team?.idTeam) return null;
@@ -297,10 +297,17 @@ for (const candidate of pending) {
   let fotmobProfile = null;
   const providerProfiles = [];
   const searchCandidates = [];
-  for (const teamName of squadQueries(candidate.teamName)) {
+  // FotMob moet zowel op clubnaam als op competitie kloppen. De fixture-ID uit
+  // de dagdata wordt daarom alleen bij de eerste poging gebruikt; daarna zoekt
+  // de provider zelf op (alias)naam, zodat een verkeerde ID (Monza bij AS Roma)
+  // niet elke spellingvariant blokkeert.
+  const fotmobTeamIds = [...(candidate.fotmobTeamIds || [])];
+  const fotmobCompetitions = [...(candidate.leagues || [])];
+  for (const [fotmobAttempt, teamName] of squadQueries(candidate.teamName).entries()) {
     fotmobProfile = await fetchFotMobSquad({
       teamName,
-      teamIds: candidate.fotmobTeamIds || [],
+      teamIds: fotmobAttempt === 0 ? fotmobTeamIds : [],
+      competitions: fotmobCompetitions,
       fetchJson: (url) => fetchJson(url, { ignoreRateLimit: true }),
     });
     if (fotmobProfile) break;
@@ -353,12 +360,12 @@ for (const candidate of pending) {
   const verifiedProfiles = [];
   for (const item of providerProfiles) {
     const providerTeamName = String(item?.profile?.providerTeamName || "").trim();
-    if (!providerTeamName || providerTeamMatches(providerTeamName, candidate.teamName)) {
+    if (!providerTeamName || providerTeamMatchesAliases(providerTeamName, candidate.teamName)) {
       verifiedProfiles.push(item);
       continue;
     }
     report.rejectedProviderTeams = report.rejectedProviderTeams || [];
-    report.rejectedProviderTeams.push({ team: candidate.teamName, provider: item.provider, providerTeam: providerTeamName });
+    report.rejectedProviderTeams.push({ team: candidate.teamName, provider: item.provider, providerTeam: providerTeamName, reason: "team_or_competition_mismatch" });
     console.warn(`[squad-enrichment] ${candidate.teamName}: ${item.provider} leverde "${providerTeamName}"; selectie geweigerd (teamnaam komt niet overeen).`);
   }
   const preferredProfile = verifiedProfiles.find((item) => mergePlayers([], item.profile.players).length >= TARGET_SQUAD_PLAYERS) || null;

@@ -10,6 +10,7 @@ import { getSql, loadLocalEnv } from "../shared/database.js";
 import { buildR2ObjectKey, getR2Config, putR2Object } from "../shared/cloudflare-r2.js";
 import { isHiddenInternationalOrWorldCupEntity } from "../shared/competitionVisibility.js";
 import { getKnownProviderIds } from "./worker/team-identity.js";
+import { isProviderCircuitOpen, loadProviderCircuits, saveProviderCircuits, shouldTripProviderCircuit, tripProviderCircuit } from "./worker/provider-circuits.js";
 import { fetchEspnH2HProfile } from "./providers/espn-h2h-provider.js";
 import { fetchApiFootballComH2HProfile } from "./providers/apifootball-com-provider.js";
 import { fetchGoalApiH2HProfile } from "./providers/goal-api-provider.js";
@@ -115,6 +116,14 @@ function staticCandidates(attemptLedger = readJson(OUTPUT_JSON)?.attemptLedger |
         if (Date.parse(kickoff) < now) continue;
         const homeKey = `name_${digest(match.homeTeamName)}`;
         const awayKey = `name_${digest(match.awayTeamName)}`;
+        // ESPN-team-ID's staan in de dagdata; zonder deze koppeling bleef de
+        // ESPN-scheduleprovider op team_mapping_missing hangen. De match-ID
+        // begint bij ESPN-fixtures met de competitiecode (ss-espn-uefa.champions-…).
+        const espnFixture = /^ss-espn-([a-z0-9.]+)-\d+$/i.exec(String(match.id || ""));
+        const homeIds = match?.teamIdentity?.home?.providerIds || {};
+        const awayIds = match?.teamIdentity?.away?.providerIds || {};
+        const espnLeagueCode = String(homeIds.espnLeagueCode || awayIds.espnLeagueCode || (espnFixture ? espnFixture[1] : "")).trim();
+        const espnSideId = (ids, providerId) => String(ids?.espn || (espnFixture ? providerId : "") || "").trim();
         rows.push({
           match_id: String(match.id || `static_${digest(`${dateKey}|${match.homeTeamName}|${match.awayTeamName}`)}`),
           date_key: dateKey,
@@ -125,6 +134,9 @@ function staticCandidates(attemptLedger = readJson(OUTPUT_JSON)?.attemptLedger |
           away_team_name: match.awayTeamName,
           home_club_id: String(match.homeTeamId || homeKey),
           away_club_id: String(match.awayTeamId || awayKey),
+          home_espn_id: espnSideId(homeIds, match.homeTeamId) || null,
+          away_espn_id: espnSideId(awayIds, match.awayTeamId) || null,
+          espn_league_code: espnLeagueCode || null,
         });
       }
     } catch (error) {
@@ -321,6 +333,28 @@ function buildNoDirectHistoryProfile(match, status, providerAttempts = []) {
   };
 }
 
+// ESPN-competitiecode per UEFA-competitie, als de dagdata die niet meelevert.
+const UEFA_ESPN_LEAGUE_CODES = {
+  "Europe - Champions League": "uefa.champions",
+  "Europe - Europa League": "uefa.europa",
+  "Europe - Conference League": "uefa.europa.conf",
+};
+
+// Provider-ID's voor de ESPN-scheduleprovider: eerst de identiteit uit de
+// dagdata, daarna het geleerde/configuratie-ID en pas dan het ESPN-fixture-ID.
+function espnProviderIds(match, side) {
+  const known = getKnownProviderIds(match[`${side}_team_name`]);
+  const espn = String(match[`${side}_espn_id`] || known.espn || "").trim();
+  const espnLeagueCode = String(
+    match.espn_league_code || known.espnLeagueCode || UEFA_ESPN_LEAGUE_CODES[match.league] || ""
+  ).trim();
+  return {
+    ...known,
+    ...(espn ? { espn } : {}),
+    ...(espnLeagueCode ? { espnLeagueCode } : {}),
+  };
+}
+
 async function main() {
   loadLocalEnv(ROOT);
   const sql = getSql();
@@ -385,13 +419,18 @@ async function main() {
   const historyIndex = buildLedgerHistoryIndex(ledgerResults.results);
   const providerConfigured = Boolean(getApiFootballKey());
   const apiFootballAcceptance = buildProviderAcceptanceState(readJson(API_FOOTBALL_ACCEPTANCE_FILE));
+  let providerCircuits = loadProviderCircuits(ROOT);
+  const apiFootballCircuitOpen = isProviderCircuitOpen(providerCircuits, "api-football");
   const apiFootballPolicy = buildApiFootballH2HPolicy({
     configured: providerConfigured,
     enabledSetting: process.env.API_FOOTBALL_H2H_ENABLED,
     maxPairsPerRun: process.env.API_FOOTBALL_H2H_MAX_PAIRS_PER_RUN || 3,
   });
-  const apiFootballEnabled = apiFootballPolicy.enabled;
+  // Open circuit = account/plan geblokkeerd; de provider blijft uit tot de
+  // blokkade verloopt, zodat elke run niet opnieuw dezelfde fout ophaalt.
+  let apiFootballEnabled = apiFootballPolicy.enabled && !apiFootballCircuitOpen;
   let apiFootballPairsAttempted = 0;
+  let apiFootballCircuitTripped = false;
   const filled = [];
   const noDirectHistory = [];
   const errors = [];
@@ -400,6 +439,8 @@ async function main() {
 
   for (const match of candidates) {
     try {
+      const homeProviderIds = espnProviderIds(match, "home");
+      const awayProviderIds = espnProviderIds(match, "away");
       let databaseProfile = null;
       if (databaseWritable) {
         try {
@@ -471,8 +512,8 @@ async function main() {
               awayName: match.away_team_name,
               homeId: match.home_club_id,
               awayId: match.away_club_id,
-              homeProviderIds: getKnownProviderIds(match.home_team_name),
-              awayProviderIds: getKnownProviderIds(match.away_team_name),
+              homeProviderIds,
+              awayProviderIds,
               leagueLabel: match.league,
             });
           })();
@@ -496,18 +537,27 @@ async function main() {
           error: apiFootballAttempt?.error || apiFootballAttempt?.errorDetail || null,
         }));
       }
+      if (apiFootballAttemptedThisMatch && shouldTripProviderCircuit(apiFootballAttempt?.errorCategory)) {
+        providerCircuits = tripProviderCircuit(providerCircuits, "api-football", {
+          reason: "provider_account_or_plan_blocked",
+          category: apiFootballAttempt?.errorCategory,
+          error: apiFootballAttempt?.error,
+        });
+        apiFootballEnabled = false;
+        apiFootballCircuitTripped = true;
+      }
       const profile = localProfile?.results?.length ? localProfile : footballDataProfile?.results?.length ? footballDataProfile : apiFootballComProfile?.results?.length ? apiFootballComProfile : goalApiProfile?.results?.length ? goalApiProfile : apiFootballProfile;
       const espnCandidate = profile?.results?.length ? null : await fetchEspnH2HProfile({
         store,
         homeName: match.home_team_name,
         awayName: match.away_team_name,
-        homeProviderIds: getKnownProviderIds(match.home_team_name),
-        awayProviderIds: getKnownProviderIds(match.away_team_name),
+        homeProviderIds,
+        awayProviderIds,
         kickoff: match.kickoff_at,
       });
       const espnProfile = espnCandidate ? normalizeH2HProfile(espnCandidate, { match, provider: "espn-team-schedule" }) : null;
-      const homeEspnIds = getKnownProviderIds(match.home_team_name);
-      const awayEspnIds = getKnownProviderIds(match.away_team_name);
+      const homeEspnIds = homeProviderIds;
+      const awayEspnIds = awayProviderIds;
       const espnAttempt = store.espnH2HCache?.[`${homeEspnIds.espn}:${awayEspnIds.espn}:${homeEspnIds.espnLeagueCode || awayEspnIds.espnLeagueCode}`];
       if (!profile?.results?.length && homeEspnIds.espn && awayEspnIds.espn && (homeEspnIds.espnLeagueCode || awayEspnIds.espnLeagueCode)) {
         providerAttempts.push(normalizeProviderAttempt({
@@ -606,6 +656,7 @@ async function main() {
     filled: filled.length,
     attempts: [...filled, ...noDirectHistory].flatMap((item) => item.providerAttempts || []),
   });
+  if (apiFootballCircuitTripped) saveProviderCircuits(ROOT, providerCircuits);
   const remaining = Math.max(0, candidateTotal - candidates.length);
   const report = {
     generatedAt: new Date().toISOString(),
@@ -640,7 +691,16 @@ async function main() {
       reason: apiFootballAcceptance.reason,
       appliesToH2H: false,
     },
-    apiFootballH2HPolicy: { ...apiFootballPolicy, pairsAttempted: apiFootballPairsAttempted },
+    apiFootballH2HPolicy: {
+      ...apiFootballPolicy,
+      enabled: apiFootballEnabled,
+      circuitOpen: apiFootballCircuitOpen || apiFootballCircuitTripped,
+      pairsAttempted: apiFootballPairsAttempted,
+    },
+    providerCircuits: {
+      apiFootball: providerCircuits["api-football"] || null,
+      apiFootballOpen: isProviderCircuitOpen(providerCircuits, "api-football"),
+    },
     apiFootball: summarizeApiFootballUsage(store),
     providerMetrics: summarizeProviderMetrics([...filled.flatMap((item) => item.providerAttempts || []), ...noDirectHistory.flatMap((item) => item.providerAttempts || [])]),
     // Trend t.o.v. de vorige run: een zakkende dekking valt zo op vóór iemand
