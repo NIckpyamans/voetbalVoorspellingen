@@ -178,6 +178,16 @@ type HistorySummaryBucket = {
   biasSummary?: string;
 };
 
+type ClubRecentBucket = {
+  key: string;
+  total: number;
+  exact: number;
+  outcome: number;
+  exactPct: number;
+  outcomePct: number;
+  avgGoalError: number;
+};
+
 type HistoryServerSummary = {
   total: number;
   exactPct: number;
@@ -189,6 +199,7 @@ type HistoryServerSummary = {
   byModel?: HistorySummaryBucket[];
   byDataQuality?: HistorySummaryBucket[];
   byTeam?: HistorySummaryBucket[];
+  byClubRecent?: ClubRecentBucket[];
   recommendations?: string[];
   oddsDiagnostics?: {
     predictionSnapshots: number;
@@ -221,6 +232,41 @@ function formatSnapshotStatus(item: HistoryItem) {
     return item.leakageGuard?.cutoffBeforeKickoff === false ? "cutoff fout" : "snapshot";
   }
   return item.predictionId ? "vastgelegd" : "fallback";
+}
+
+// De ranglijst komt server-side uit de volledige historie (laatste 10 duels per
+// club). Valt die weg, dan gebruiken we de lokale telling van de geladen pagina.
+type ClubRankRow = {
+  team: string;
+  total: number;
+  exact: number;
+  outcome: number;
+  exactPct: number;
+  outcomePct: number;
+};
+
+function rankClubs(
+  serverSummary: HistoryServerSummary | null,
+  fallback: Array<ClubRankRow & { avgError?: number }>,
+): ClubRankRow[] {
+  if (serverSummary?.byClubRecent?.length) {
+    return serverSummary.byClubRecent.map((club) => ({
+      team: club.key,
+      total: club.total,
+      exact: club.exact,
+      outcome: club.outcome,
+      exactPct: club.exactPct,
+      outcomePct: club.outcomePct,
+    }));
+  }
+  return fallback.map((club) => ({
+    team: club.team,
+    total: club.total,
+    exact: club.exact,
+    outcome: club.outcome,
+    exactPct: club.exactPct,
+    outcomePct: club.outcomePct,
+  }));
 }
 
 function mergeHistory(localItems: HistoryItem[], serverItems: HistoryItem[]) {
@@ -730,22 +776,22 @@ const PredictionHistory: React.FC = () => {
         <div className="glass-card p-4 rounded-2xl border border-blue-500/15 bg-blue-500/5">
           <div className="flex items-center justify-between gap-3 mb-3">
             <div>
-              <div className="text-[10px] font-black text-blue-300 uppercase">Top 10 clubs waar AI exact vaak goed zit</div>
-              <div className="text-[11px] text-slate-500 mt-0.5">Patroonherkenning per club/team op juiste uitslag</div>
+              <div className="text-[10px] font-black text-blue-300 uppercase">Top 10 clubs op winnaar/gelijk · laatste 10 duels</div>
+              <div className="text-[11px] text-slate-500 mt-0.5">Volledige historie per club, gesorteerd op hoogste 1X2-score</div>
             </div>
           </div>
-          {stats.topClubs.length === 0 ? (
+          {rankClubs(serverSummary, stats.topClubs).length === 0 ? (
             <div className="text-[12px] text-slate-500 font-bold py-6">Nog te weinig clubdata om patronen betrouwbaar te tonen.</div>
           ) : (
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
-              {stats.topClubs.map((club, index) => (
+              {rankClubs(serverSummary, stats.topClubs).map((club, index) => (
                 <div key={club.team} className="rounded-xl bg-slate-950/40 border border-white/5 px-3 py-2">
                   <div className="flex items-center justify-between gap-2">
                     <div className="min-w-0">
                       <div className="text-[10px] font-black text-white truncate">#{index + 1} {club.team}</div>
-                      <div className="text-[8px] text-slate-500">{club.exact}/{club.total} exact ? uitkomst {club.outcomePct}%</div>
+                      <div className="text-[8px] text-slate-500">{club.outcome}/{club.total} winnaar ? uitkomst {club.outcomePct}%</div>
                     </div>
-                    <div className="text-sm font-black text-green-300">{club.exactPct}%</div>
+                    <div className="text-sm font-black text-green-300">{club.outcomePct}%</div>
                   </div>
                 </div>
               ))}

@@ -63,8 +63,12 @@ export function teamNameMatchStrength(left, right) {
   // Reserve-elftallen zijn andere teams met eigen uitslagen.
   if (a.startsWith("jong ") !== b.startsWith("jong ")) return null;
   const [shortTokens, longTokens] = aTokens.length <= bTokens.length ? [aTokens, bTokens] : [bTokens, aTokens];
+  // Alleen een voorvoegsel telt: "PSV" hoort bij "PSV Eindhoven", maar
+  // "FC Eindhoven" (canoniek "eindhoven") is een andere club en mag daar niet
+  // op matchen. Een token dat ergens in de lange naam voorkomt is te ruim.
+  const isPrefix = shortTokens.length < longTokens.length && shortTokens.every((token, index) => longTokens[index] === token);
   const shortKey = shortTokens.join("");
-  if (shortKey.length >= 3 && shortTokens.every((token) => longTokens.includes(token))) return "fuzzy";
+  if (shortKey.length >= 3 && isPrefix) return "fuzzy";
   if (a.length >= 5 && b.length >= 5 && (a.startsWith(`${b} `) || b.startsWith(`${a} `))) return "fuzzy";
   return null;
 }

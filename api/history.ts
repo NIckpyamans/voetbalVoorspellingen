@@ -306,6 +306,44 @@ function finalizeBucket(row: any) {
   };
 }
 
+// Ranglijst per club over de laatste N beoordeelde duels uit de volledige
+// historie. De dashboardkaart rekende eerst client-side over de geladen pagina,
+// waardoor een club met 2 geladen reviews op 50% stond terwijl het clubdossier
+// over alle reviews 60% liet zien.
+function buildClubRecentBuckets(evaluatedItems: any[], windowSize = 10, minMatches = 5) {
+  const byClub = new Map<string, any[]>();
+  for (const item of evaluatedItems) {
+    for (const team of [item.homeTeam, item.awayTeam]) {
+      const name = String(team || "").trim();
+      if (!name) continue;
+      const matches = byClub.get(name) || [];
+      // evaluatedItems loopt van nieuw naar oud, dus de eerste N zijn de laatste N.
+      if (matches.length >= windowSize) continue;
+      matches.push(item);
+      byClub.set(name, matches);
+    }
+  }
+  return [...byClub.entries()]
+    .map(([team, matches]) => {
+      const matchesTotal = matches.length;
+      const exact = matches.filter((item) => item.wasCorrect).length;
+      const outcome = matches.filter((item) => item.winnerCorrect).length;
+      const goalError = matches.reduce((sum, item) => sum + Number(item.errorMargin || 0), 0);
+      return {
+        key: team,
+        total: matchesTotal,
+        exact,
+        outcome,
+        exactPct: pct(exact, matchesTotal),
+        outcomePct: pct(outcome, matchesTotal),
+        avgGoalError: Number((goalError / Math.max(matchesTotal, 1)).toFixed(2)),
+      };
+    })
+    .filter((row) => row.total >= minMatches)
+    .sort((a, b) => b.outcomePct - a.outcomePct || b.exactPct - a.exactPct || b.total - a.total)
+    .slice(0, 10);
+}
+
 function buildHistorySummary(items: any[]) {
   const leagueBuckets: Record<string, any> = {};
   const modelBuckets: Record<string, any> = {};
@@ -320,10 +358,12 @@ function buildHistorySummary(items: any[]) {
   let logLossSum = 0;
   let logLossCount = 0;
   let evaluatedTotal = 0;
+  const evaluatedItems: any[] = [];
 
   for (const item of items) {
     if (!parseScoreline(item.prediction) || !parseScoreline(item.actual)) continue;
     evaluatedTotal += 1;
+    evaluatedItems.push(item);
     if (item.wasCorrect) exact += 1;
     if (item.winnerCorrect) outcome += 1;
     if (item.oddsStatus === "available" || item.oddsStatus === "partial" || (item.roi != null && Number.isFinite(Number(item.roi)))) withOdds += 1;
@@ -355,6 +395,7 @@ function buildHistorySummary(items: any[]) {
       .slice(0, limit);
 
   const total = evaluatedTotal;
+  const byClubRecent = buildClubRecentBuckets(evaluatedItems);
   const byLeague = top(leagueBuckets, 1, 12);
   const byModel = top(modelBuckets, 1, 8);
   const byTeam = top(teamBuckets, 2, 12);
@@ -387,6 +428,7 @@ function buildHistorySummary(items: any[]) {
     byLeague,
     byModel,
     byTeam,
+    byClubRecent,
     byDataQuality,
     recommendations,
     generatedAt: new Date().toISOString(),
