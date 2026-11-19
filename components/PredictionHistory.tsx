@@ -336,7 +336,7 @@ const PredictionHistory: React.FC = () => {
     setDossier(null);
     setDossierLoading(true);
     setDossierError(null);
-    fetch(`/api/team-results?team=${encodeURIComponent(bestName)}&limit=all`, {
+    fetch(`/api/history?team=${encodeURIComponent(bestName)}&limit=all`, {
       cache: "no-store",
       signal: controller.signal,
     })

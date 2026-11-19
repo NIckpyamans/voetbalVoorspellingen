@@ -347,7 +347,7 @@ const StandingsView: React.FC = () => {
     setTeamRecentLoading(true);
     const query = new URLSearchParams({ team: selectedTeam.team, limit: "5" });
     if (selectedTeam.league) query.set("league", selectedTeam.league);
-    fetch(`/api/team-results?${query.toString()}`, { cache: "no-store", signal: controller.signal })
+    fetch(`/api/history?${query.toString()}`, { cache: "no-store", signal: controller.signal })
       .then(async (response) => {
         const data = await response.json().catch(() => ({}));
         if (!response.ok || data.ok === false) {
