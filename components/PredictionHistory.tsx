@@ -1,5 +1,6 @@
 ﻿import React, { useEffect, useMemo, useRef, useState } from "react";
 import { parseScoreline } from "../shared/scoreOutcome.js";
+import { normalizeDedupeText } from "../shared/matchNormalization.js";
 
 interface HistoryItem {
   matchId: string;
@@ -51,6 +52,86 @@ type LeagueHistoryStats = {
   total: number;
   topChance: number;
 };
+
+// Clubdossier: alle beoordeelde wedstrijden van één club uit de volledige
+// serverhistorie, niet alleen uit de pagina die al geladen is.
+type ClubDossierMatch = {
+  matchId: string;
+  date: string;
+  league: string | null;
+  homeTeam: string;
+  awayTeam: string;
+  venue: "home" | "away";
+  opponent: string;
+  result: "W" | "D" | "L" | null;
+  predictedScore: string | null;
+  actualScore: string | null;
+  predictedOutcome: string | null;
+  probabilityOutcome: string | null;
+  actualOutcome: string | null;
+  outcomeHit: boolean | null;
+  topPickHit: boolean | null;
+  exactHit: boolean | null;
+  goalError: number | null;
+  confidence: number | null;
+  exactScoreConfidence: number | null;
+  brierScore: number | null;
+  logLoss: number | null;
+  oddsStatus: string | null;
+  modelVersion: string | null;
+};
+
+type ClubDossierSummary = {
+  matches: number;
+  available: number;
+  outcomeHits: number;
+  outcomeEvaluated: number;
+  outcomePct: number;
+  exactHits: number;
+  exactEvaluated: number;
+  exactPct: number;
+  topPickHits: number;
+  topPickEvaluated: number;
+  topPickPct: number;
+  wins: number;
+  draws: number;
+  losses: number;
+  goalsFor: number;
+  goalsAgainst: number;
+  avgGoalError: number | null;
+  firstDate: string | null;
+  lastDate: string | null;
+  leagues: Array<{ league: string; matches: number }>;
+};
+
+type ClubDossier = {
+  ok: boolean;
+  team?: string;
+  league?: string | null;
+  matches?: ClubDossierMatch[];
+  summary?: ClubDossierSummary | null;
+};
+
+function outcomeLabel(value?: string | null) {
+  const code = String(value || "").trim().toUpperCase();
+  if (code === "H" || code === "THUIS") return "thuis";
+  if (code === "D" || code === "GELIJK") return "gelijk";
+  if (code === "A" || code === "UIT") return "uit";
+  return "-";
+}
+
+function hitBadge(hit?: boolean | null) {
+  if (hit === true) return "border-emerald-500/30 bg-emerald-500/10 text-emerald-200";
+  if (hit === false) return "border-rose-500/30 bg-rose-500/10 text-rose-200";
+  return "border-slate-700 bg-slate-800/70 text-slate-400";
+}
+
+function dossierTone(value?: number | null) {
+  const pct = Number(value || 0);
+  if (pct >= 60) return "text-emerald-300";
+  if (pct >= 40) return "text-amber-300";
+  return "text-rose-300";
+}
 
 function outcomeFromScore(score?: string | null) {
   const parsed = parseScoreline(score);
@@ -161,6 +242,10 @@ const PredictionHistory: React.FC = () => {
   const [serverSummary, setServerSummary] = useState<HistoryServerSummary | null>(null);
   const [filter, setFilter] = useState<"alle" | "score" | "uitkomst" | "fout">("alle");
   const [search, setSearch] = useState("");
+  const [dossierQuery, setDossierQuery] = useState("");
+  const [dossier, setDossier] = useState<ClubDossier | null>(null);
+  const [dossierLoading, setDossierLoading] = useState(false);
+  const [dossierError, setDossierError] = useState<string | null>(null);
   const [page, setPage] = useState(0);
   const [serverOffset, setServerOffset] = useState(0);
   const [serverTotal, setServerTotal] = useState(0);
@@ -208,6 +293,79 @@ const PredictionHistory: React.FC = () => {
       cancelled = true;
     };
   }, []);
+
+  // Kleine vertraging zodat niet elke toetsaanslag een verzoek doet.
+  useEffect(() => {
+    const query = search.trim();
+    if (query.length < 2) {
+      setDossierQuery("");
+      return;
+    }
+    const timer = setTimeout(() => setDossierQuery(query), 350);
+    return () => clearTimeout(timer);
+  }, [search]);
+
+  // Zoekterm -> clubnaam: pak de meest voorkomende volledige clubnaam uit de
+  // geladen geschiedenis die bij de zoekterm past ("PSV" -> "PSV Eindhoven"),
+  // en haal daarna alle wedstrijden van die club op uit de serverhistorie.
+  useEffect(() => {
+    if (!dossierQuery) {
+      setDossier(null);
+      setDossierError(null);
+      setDossierLoading(false);
+      return;
+    }
+    const normalizedQuery = normalizeDedupeText(dossierQuery);
+    if (!normalizedQuery) {
+      setDossier(null);
+      setDossierLoading(false);
+      return;
+    }
+    let cancelled = false;
+    const controller = new AbortController();
+    const nameCounts = new Map<string, number>();
+    for (const item of history) {
+      for (const rawName of [item.homeTeam, item.awayTeam]) {
+        const name = String(rawName || "").trim();
+        if (!name || !normalizeDedupeText(name).includes(normalizedQuery)) continue;
+        nameCounts.set(name, (nameCounts.get(name) || 0) + 1);
+      }
+    }
+    const bestName =
+      [...nameCounts.entries()].sort((left, right) => right[1] - left[1])[0]?.[0] || dossierQuery;
+    setDossier(null);
+    setDossierLoading(true);
+    setDossierError(null);
+    fetch(`/api/team-results?team=${encodeURIComponent(bestName)}&limit=all`, {
+      cache: "no-store",
+      signal: controller.signal,
+    })
+      .then(async (response) => {
+        const data = await response.json().catch(() => ({}));
+        if (!response.ok || data.ok === false) {
+          throw new Error(data.error || `Clubgegevens ophalen mislukt (${response.status})`);
+        }
+        return data as ClubDossier;
+      })
+      .then((data) => {
+        // Alleen een dossier tonen als er echt beoordeelde wedstrijden zijn;
+        // bij een competitienaam in het zoekveld blijft het paneel weg.
+        if (!cancelled) setDossier((data.matches?.length || 0) > 0 ? data : null);
+      })
+      .catch((error) => {
+        if (!cancelled && error?.name !== "AbortError") {
+          setDossier(null);
+          setDossierError(error?.message || "Clubgegevens ophalen mislukt");
+        }
+      })
+      .finally(() => {
+        if (!cancelled) setDossierLoading(false);
+      });
+    return () => {
+      cancelled = true;
+      controller.abort();
+    };
+  }, [dossierQuery, history]);
 
   const loadMoreHistory = async () => {
     if (loadingMore || (serverTotal > 0 && serverOffset >= serverTotal)) return;
@@ -680,17 +838,166 @@ const PredictionHistory: React.FC = () => {
             setSearch(event.target.value);
             setPage(0);
           }}
-          placeholder="Zoek op teamnaam, competitie..."
+          placeholder="Zoek op clubnaam of competitie..."
           className="flex-1 bg-slate-900/60 border border-white/10 rounded-lg px-3 py-1.5 text-sm text-white placeholder-slate-600 outline-none focus:border-blue-500/40"
         />
       </div>
+
+      {dossierLoading && search.trim().length >= 2 && (
+        <div className="text-[10px] font-bold text-slate-500">Clubgeschiedenis laden...</div>
+      )}
+
+      {dossierError && search.trim().length >= 2 && (
+        <div className="rounded-2xl border border-rose-500/20 bg-rose-500/10 px-4 py-3 text-[11px] font-bold text-rose-200">
+          Clubgegevens laden mislukt: {dossierError}
+        </div>
+      )}
+
+      {dossier && (dossier.matches || []).length > 0 && (
+        <div className="glass-card rounded-2xl border border-cyan-500/20 bg-cyan-500/5 p-4">
+          <div className="flex items-start justify-between gap-3">
+            <div className="min-w-0">
+              <div className="text-[10px] font-black uppercase text-cyan-300">Clubdossier uit de geschiedenis</div>
+              <div className="truncate text-lg font-black text-white">{dossier.team || search.trim()}</div>
+              <div className="text-[10px] text-slate-500">
+                Alle opgeslagen wedstrijden van deze club met voorspelling, uitslag en beoordeling.
+              </div>
+            </div>
+            <button
+              type="button"
+              onClick={() => setSearch("")}
+              className="shrink-0 rounded-lg bg-slate-800 px-3 py-1.5 text-[10px] font-black text-slate-200 hover:bg-slate-700"
+            >
+              Sluiten
+            </button>
+          </div>
+
+          {dossier.summary && (
+            <>
+              <div className="mt-3 grid grid-cols-2 gap-2 sm:grid-cols-3 lg:grid-cols-6">
+                {[
+                  {
+                    label: "1X2 goed",
+                    value: `${Math.round(dossier.summary.outcomePct)}%`,
+                    detail: `${dossier.summary.outcomeHits}/${dossier.summary.outcomeEvaluated}`,
+                    tone: dossierTone(dossier.summary.outcomePct),
+                  },
+                  {
+                    label: "Exact goed",
+                    value: `${Math.round(dossier.summary.exactPct)}%`,
+                    detail: `${dossier.summary.exactHits}/${dossier.summary.exactEvaluated}`,
+                    tone: dossierTone(dossier.summary.exactPct),
+                  },
+                  {
+                    label: "Winst-gelijk-verlies",
+                    value: `${dossier.summary.wins}-${dossier.summary.draws}-${dossier.summary.losses}`,
+                    detail: `${dossier.summary.matches} wedstrijden`,
+                    tone: "text-white",
+                  },
+                  {
+                    label: "Doelpunten",
+                    value: `${dossier.summary.goalsFor}-${dossier.summary.goalsAgainst}`,
+                    detail: "voor-tegen",
+                    tone: "text-white",
+                  },
+                  {
+                    label: "Foutmarge",
+                    value: dossier.summary.avgGoalError != null ? String(dossier.summary.avgGoalError) : "-",
+                    detail: "lager is beter",
+                    tone: "text-amber-200",
+                  },
+                  {
+                    label: "Top pick goed",
+                    value: `${Math.round(dossier.summary.topPickPct)}%`,
+                    detail: `${dossier.summary.topPickHits}/${dossier.summary.topPickEvaluated}`,
+                    tone: dossierTone(dossier.summary.topPickPct),
+                  },
+                ].map((card) => (
+                  <div key={card.label} className="rounded-xl border border-white/5 bg-slate-950/40 px-3 py-2">
+                    <div className="text-[8px] font-black uppercase text-slate-500">{card.label}</div>
+                    <div className={`text-xl font-black ${card.tone}`}>{card.value}</div>
+                    <div className="text-[8px] text-slate-500">{card.detail}</div>
+                  </div>
+                ))}
+              </div>
+
+              {dossier.summary.leagues.length > 0 && (
+                <div className="mt-2 flex flex-wrap gap-1.5">
+                  {dossier.summary.leagues.map((entry) => (
+                    <span
+                      key={entry.league}
+                      className="rounded-full border border-white/10 bg-slate-950/50 px-2 py-0.5 text-[8px] font-black text-slate-300"
+                    >
+                      {entry.league} · {entry.matches}
+                    </span>
+                  ))}
+                </div>
+              )}
+
+              <div className="mt-3 max-h-[420px] space-y-2 overflow-y-auto pr-1">
+                {(dossier.matches || []).map((match) => (
+                  <div
+                    key={`${match.matchId}-${match.date}`}
+                    className="rounded-xl border border-white/5 bg-slate-950/40 px-3 py-2"
+                  >
+                    <div className="flex flex-wrap items-center justify-between gap-2">
+                      <div className="min-w-0">
+                        <div className="text-[9px] font-bold text-slate-500">
+                          {match.date} · {match.league || "onbekende competitie"}
+                        </div>
+                        <div className="text-[11px] font-black text-white">
+                          <span className={match.venue === "home" ? "text-cyan-200" : ""}>{match.homeTeam}</span>
+                          <span className="mx-1 text-slate-500">-</span>
+                          <span className={match.venue === "away" ? "text-cyan-200" : ""}>{match.awayTeam}</span>
+                        </div>
+                      </div>
+                      <div className="flex shrink-0 flex-wrap items-center gap-1.5 text-[10px] font-black">
+                        <span className="text-slate-400">uitslag</span>
+                        <span className="text-white">{match.actualScore || "-"}</span>
+                        <span className="text-slate-600">·</span>
+                        <span className="text-slate-400">voorspeld</span>
+                        <span className="text-yellow-300">{match.predictedScore || "-"}</span>
+                        <span className={`rounded-full border px-1.5 py-0.5 text-[8px] ${hitBadge(match.outcomeHit)}`}>
+                          {match.outcomeHit === true ? "1X2 goed" : match.outcomeHit === false ? "1X2 fout" : "1X2 -"}
+                        </span>
+                        <span className={`rounded-full border px-1.5 py-0.5 text-[8px] ${hitBadge(match.exactHit)}`}>
+                          {match.exactHit === true ? "exact goed" : match.exactHit === false ? "exact fout" : "exact -"}
+                        </span>
+                      </div>
+                    </div>
+                    <div className="mt-1 flex flex-wrap gap-x-2 gap-y-0.5 text-[8px] font-bold text-slate-500">
+                      <span>tegen {match.opponent}</span>
+                      <span>{match.venue === "home" ? "thuis" : "uit"}</span>
+                      <span>resultaat {match.result || "-"}</span>
+                      <span>
+                        1X2 voorspeld {outcomeLabel(match.predictedOutcome)} / werkelijk {outcomeLabel(match.actualOutcome)}
+                      </span>
+                      {match.probabilityOutcome && <span>kans-1X2 {outcomeLabel(match.probabilityOutcome)}</span>}
+                      {match.topPickHit != null && <span>top pick {match.topPickHit ? "goed" : "fout"}</span>}
+                      {match.goalError != null && <span>doelpuntfout {match.goalError}</span>}
+                      {match.confidence != null && <span>confidence {Math.round(Number(match.confidence) * 100)}%</span>}
+                      {match.exactScoreConfidence != null && (
+                        <span>exact-confidence {Math.round(Number(match.exactScoreConfidence) * 100)}%</span>
+                      )}
+                      {match.brierScore != null && <span>brier {Number(match.brierScore).toFixed(3)}</span>}
+                      {match.logLoss != null && <span>log loss {Number(match.logLoss).toFixed(3)}</span>}
+                      {match.oddsStatus && <span>odds {match.oddsStatus}</span>}
+                      {match.modelVersion && <span>model {match.modelVersion}</span>}
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </>
+          )}
+        </div>
+      )}
 
       {serverTotal > history.length && (
         <div className="flex items-center justify-between gap-3 rounded-2xl border border-blue-500/15 bg-blue-500/5 px-4 py-3">
           <div>
             <div className="text-[10px] font-black uppercase text-blue-200">Meer evaluaties beschikbaar</div>
             <div className="text-[11px] text-slate-500">
-              {history.length.toLocaleString()} geladen van {serverTotal.toLocaleString()} serverreviews. Zoek/filter werkt op geladen data.
+              {history.length.toLocaleString()} geladen van {serverTotal.toLocaleString()} serverreviews. Filteren werkt op geladen data; het clubdossier zoekt in de volledige historie.
             </div>
           </div>
           <button

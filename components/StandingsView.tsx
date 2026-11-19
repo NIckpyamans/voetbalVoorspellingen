@@ -1,5 +1,54 @@
 import React, { useEffect, useMemo, useState } from "react";
 
+interface TeamRecentMatch {
+  matchId: string;
+  date: string;
+  league: string | null;
+  homeTeam: string;
+  awayTeam: string;
+  venue: "home" | "away";
+  opponent: string;
+  result: "W" | "D" | "L" | null;
+  predictedScore: string | null;
+  actualScore: string | null;
+  predictedOutcome: string | null;
+  probabilityOutcome: string | null;
+  actualOutcome: string | null;
+  outcomeHit: boolean | null;
+  topPickHit: boolean | null;
+  exactHit: boolean | null;
+  goalError: number | null;
+  confidence: number | null;
+}
+
+interface TeamRecentSummary {
+  matches: number;
+  available: number;
+  outcomeHits: number;
+  outcomeEvaluated: number;
+  outcomePct: number;
+  exactHits: number;
+  exactEvaluated: number;
+  exactPct: number;
+  topPickHits: number;
+  topPickEvaluated: number;
+  topPickPct: number;
+}
+
+interface TeamRecentReport {
+  ok: boolean;
+  team?: string;
+  league?: string | null;
+  matches?: TeamRecentMatch[];
+  summary?: TeamRecentSummary | null;
+  error?: string;
+}
+
+interface SelectedStandingTeam {
+  team: string;
+  league: string;
+}
+
 interface StandingRow {
   pos: number;
   team: string;
@@ -244,6 +293,26 @@ function coverageTone(pct?: number) {
   return "border-slate-700 bg-slate-800/70 text-slate-400";
 }
 
+function outcomeLabel(code?: string | null) {
+  if (code === "H") return "Thuis";
+  if (code === "A") return "Uit";
+  if (code === "D") return "Gelijk";
+  return "-";
+}
+
+function hitClasses(hit?: boolean | null) {
+  if (hit === true) return "border-emerald-500/30 bg-emerald-500/10 text-emerald-200";
+  if (hit === false) return "border-rose-500/30 bg-rose-500/10 text-rose-200";
+  return "border-slate-700 bg-slate-800/70 text-slate-400";
+}
+
+function percentageTone(value?: number) {
+  const pct = Number(value || 0);
+  if (pct >= 60) return "border-emerald-500/25 bg-emerald-500/10 text-emerald-100";
+  if (pct >= 40) return "border-amber-500/25 bg-amber-500/10 text-amber-100";
+  return "border-rose-500/25 bg-rose-500/10 text-rose-100";
+}
+
 const StandingsView: React.FC = () => {
   const [standings, setStandings] = useState<Record<string, LeagueStanding>>({});
   const [cupSheets, setCupSheets] = useState<Record<string, CupSheet>>({});
@@ -259,6 +328,40 @@ const StandingsView: React.FC = () => {
   const [selectedCoverageKey, setSelectedCoverageKey] = useState<string | null>(null);
   const [coverageRepairStatus, setCoverageRepairStatus] = useState<string | null>(null);
   const [coverageRepairRequest, setCoverageRepairRequest] = useState<CoverageRepairRequest | null>(null);
+  const [selectedTeam, setSelectedTeam] = useState<SelectedStandingTeam | null>(null);
+  const [teamRecent, setTeamRecent] = useState<TeamRecentReport | null>(null);
+  const [teamRecentLoading, setTeamRecentLoading] = useState(false);
+  const [teamRecentError, setTeamRecentError] = useState<string | null>(null);
+
+  const openTeamPanel = (row: StandingRow, league: string) => {
+    setSelectedTeam({ team: row.team, league });
+  };
+
+  const closeTeamPanel = () => setSelectedTeam(null);
+
+  useEffect(() => {
+    if (!selectedTeam) return;
+    const controller = new AbortController();
+    setTeamRecent(null);
+    setTeamRecentError(null);
+    setTeamRecentLoading(true);
+    const query = new URLSearchParams({ team: selectedTeam.team, limit: "5" });
+    if (selectedTeam.league) query.set("league", selectedTeam.league);
+    fetch(`/api/team-results?${query.toString()}`, { cache: "no-store", signal: controller.signal })
+      .then(async (response) => {
+        const data = await response.json().catch(() => ({}));
+        if (!response.ok || data.ok === false) {
+          throw new Error(data.error || `Wedstrijden ophalen mislukt (${response.status})`);
+        }
+        return data as TeamRecentReport;
+      })
+      .then((data) => setTeamRecent(data))
+      .catch((error) => {
+        if (error?.name !== "AbortError") setTeamRecentError(error?.message || "Wedstrijden ophalen mislukt");
+      })
+      .finally(() => setTeamRecentLoading(false));
+    return () => controller.abort();
+  }, [selectedTeam]);
 
   useEffect(() => {
     try {
@@ -458,6 +561,8 @@ const StandingsView: React.FC = () => {
   const selectedCoverageMissing = currentCoverage && selectedCoverageKey
     ? currentCoverage.missing?.[selectedCoverageKey] || []
     : [];
+  const teamRecentMatches = teamRecent?.matches || [];
+  const teamRecentSummary = teamRecent?.summary || null;
 
   if (loading) {
     return (
@@ -819,7 +924,17 @@ const StandingsView: React.FC = () => {
                   return (
                     <div
                       key={row.teamId || `${row.team}-${index}`}
-                      className={`grid grid-cols-[30px_minmax(145px,1fr)_38px_38px_38px_38px_68px_44px_52px] gap-1 px-4 py-2.5 border-b border-white/5 last:border-0 text-sm items-center hover:bg-white/3 transition border-l-2 ${zoneClasses(zone?.color)}`}
+                      role="button"
+                      tabIndex={0}
+                      title={`Laatste 5 wedstrijden met voorspelling van ${row.team}`}
+                      onClick={() => openTeamPanel(row, currentStanding.label)}
+                      onKeyDown={(event) => {
+                        if (event.key === "Enter" || event.key === " ") {
+                          event.preventDefault();
+                          openTeamPanel(row, currentStanding.label);
+                        }
+                      }}
+                      className={`grid cursor-pointer grid-cols-[30px_minmax(145px,1fr)_38px_38px_38px_38px_68px_44px_52px] gap-1 px-4 py-2.5 border-b border-white/5 last:border-0 text-sm items-center hover:bg-white/3 transition border-l-2 focus:outline-none focus-visible:ring-2 focus-visible:ring-cyan-400/60 ${zoneClasses(zone?.color)}`}
                     >
                       <div className="text-[11px] font-black">{row.pos}</div>
                       <div>
@@ -872,6 +987,9 @@ const StandingsView: React.FC = () => {
                     </div>
                   ))}
                 </div>
+                <div className="text-[10px] font-bold text-cyan-200/80">
+                  Klik op een club voor de laatste 5 wedstrijden met de voorspelling en of die goed of fout was.
+                </div>
                 <div className="text-[10px] text-slate-500">
                   Broncontrole: deze tabel wordt na elke worker-run opnieuw opgebouwd en daarna aangevuld met
                   live/FT-wedstrijden uit de opgeslagen dagdata.
@@ -885,6 +1003,119 @@ const StandingsView: React.FC = () => {
             </div>
           )}
         </>
+      )}
+
+      {selectedTeam && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center px-3 py-6">
+          <div className="absolute inset-0 bg-black/70" onClick={closeTeamPanel} />
+          <div className="relative z-50 flex max-h-[85vh] w-full max-w-2xl flex-col overflow-hidden rounded-2xl border border-white/10 bg-[#071023] shadow-2xl">
+            <div className="flex items-start justify-between gap-3 border-b border-white/5 px-4 py-3">
+              <div className="min-w-0">
+                <div className="truncate text-sm font-black uppercase text-white">{selectedTeam.team}</div>
+                <div className="text-[10px] text-slate-500">
+                  Laatste 5 wedstrijden met voorspelling
+                  {selectedTeam.league ? ` · ${selectedTeam.league}` : ""}
+                </div>
+              </div>
+              <button
+                onClick={closeTeamPanel}
+                className="shrink-0 rounded-lg bg-slate-800 px-3 py-1.5 text-[10px] font-black text-slate-200 hover:bg-slate-700"
+              >
+                Sluiten
+              </button>
+            </div>
+
+            <div className="space-y-3 overflow-y-auto px-4 py-3">
+              {teamRecentLoading && (
+                <div className="py-6 text-center text-[11px] font-bold text-slate-400">Wedstrijden laden...</div>
+              )}
+              {teamRecentError && !teamRecentLoading && (
+                <div className="rounded-xl border border-rose-500/20 bg-rose-500/10 px-3 py-2 text-[11px] font-bold text-rose-200">
+                  {teamRecentError}
+                </div>
+              )}
+              {!teamRecentLoading && !teamRecentError && teamRecentSummary && teamRecentMatches.length > 0 && (
+                <>
+                  <div className="grid grid-cols-2 gap-2">
+                    <div className={`rounded-xl border p-3 ${percentageTone(teamRecentSummary.outcomePct)}`}>
+                      <div className="text-[8px] font-black uppercase opacity-80">Winnaar / 1X2 goed</div>
+                      <div className="text-xl font-black">{Math.round(teamRecentSummary.outcomePct)}%</div>
+                      <div className="text-[9px] opacity-80">
+                        {teamRecentSummary.outcomeHits} van {teamRecentSummary.outcomeEvaluated} wedstrijden
+                      </div>
+                    </div>
+                    <div className={`rounded-xl border p-3 ${percentageTone(teamRecentSummary.exactPct)}`}>
+                      <div className="text-[8px] font-black uppercase opacity-80">Exacte uitslag goed</div>
+                      <div className="text-xl font-black">{Math.round(teamRecentSummary.exactPct)}%</div>
+                      <div className="text-[9px] opacity-80">
+                        {teamRecentSummary.exactHits} van {teamRecentSummary.exactEvaluated} wedstrijden
+                      </div>
+                    </div>
+                  </div>
+                  <div className="text-[9px] text-slate-500">
+                    Percentages over de laatste {teamRecentSummary.matches} beoordeelde wedstrijden
+                    {teamRecentSummary.available > teamRecentSummary.matches
+                      ? ` van ${teamRecentSummary.available} beschikbaar`
+                      : ""}
+                    .
+                  </div>
+
+                  <div className="space-y-2">
+                    {teamRecentMatches.map((match) => (
+                      <div
+                        key={`${match.matchId}-${match.date}`}
+                        className="rounded-xl border border-white/5 bg-slate-900/60 p-2.5"
+                      >
+                        <div className="flex items-center justify-between gap-2 text-[9px] font-bold text-slate-500">
+                          <span>{match.date}</span>
+                          <span className="truncate">{match.league || ""}</span>
+                        </div>
+                        <div className="mt-1 flex flex-wrap items-center justify-between gap-2">
+                          <div className="min-w-0 text-[11px] font-black text-white">
+                            <span className={match.venue === "home" ? "text-cyan-200" : ""}>{match.homeTeam}</span>
+                            <span className="mx-1 text-slate-500">-</span>
+                            <span className={match.venue === "away" ? "text-cyan-200" : ""}>{match.awayTeam}</span>
+                          </div>
+                          <div className="flex shrink-0 items-center gap-2 text-[10px] font-black">
+                            <span className="text-slate-400">uitslag</span>
+                            <span className="text-white">{match.actualScore || "-"}</span>
+                            <span className="text-slate-600">·</span>
+                            <span className="text-slate-400">voorspeld</span>
+                            <span className="text-yellow-300">{match.predictedScore || "-"}</span>
+                          </div>
+                        </div>
+                        <div className="mt-1.5 flex flex-wrap items-center gap-1.5 text-[8px] font-black">
+                          <span className={`rounded-full border px-1.5 py-0.5 ${hitClasses(match.outcomeHit)}`}>
+                            1X2 {match.outcomeHit === true ? "goed" : match.outcomeHit === false ? "fout" : "-"}
+                          </span>
+                          <span className={`rounded-full border px-1.5 py-0.5 ${hitClasses(match.exactHit)}`}>
+                            Exact {match.exactHit === true ? "goed" : match.exactHit === false ? "fout" : "-"}
+                          </span>
+                          <span className="rounded-full border border-slate-700 bg-slate-800/70 px-1.5 py-0.5 text-slate-300">
+                            Voorspeld: {outcomeLabel(match.predictedOutcome)}
+                          </span>
+                          <span className="rounded-full border border-slate-700 bg-slate-800/70 px-1.5 py-0.5 text-slate-300">
+                            Uitslag: {outcomeLabel(match.actualOutcome)}
+                          </span>
+                          {match.goalError != null && (
+                            <span className="rounded-full border border-slate-700 bg-slate-800/70 px-1.5 py-0.5 text-slate-400">
+                              doelpuntfout {match.goalError}
+                            </span>
+                          )}
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </>
+              )}
+              {!teamRecentLoading && !teamRecentError && (!teamRecentSummary || teamRecentMatches.length === 0) && (
+                <div className="rounded-xl border border-dashed border-white/10 px-3 py-6 text-center text-[11px] font-bold text-slate-500">
+                  Nog geen beoordeelde wedstrijden met voorspelling voor deze club.
+                </div>
+              )}
+            </div>
+          </div>
+        </div>
       )}
 
       {mode === "cup" && sortedCupKeys.length > 0 && (
