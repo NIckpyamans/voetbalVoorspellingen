@@ -138,6 +138,25 @@ export function readLocalH2HProfile(root, match, limit = 5, options = {}) {
   } catch {
     // The day cache remains the fallback when the review summary is unavailable.
   }
+  // ESPN-seizoensuitslagen (scripts/sync-espn-season-results.js) overbruggen het
+  // gat van de dagelijkse cache: die bewaart alleen de laatste weken, terwijl de
+  // Eerste Divisie-historie van dit seizoen juist eerder is gespeeld.
+  let espnSeasonCandidates = 0;
+  try {
+    const espnSeasonResults = JSON.parse(
+      fs.readFileSync(path.join(root, "data", "h2h", "espn-season-results.json"), "utf8")
+    );
+    for (const league of Object.values(espnSeasonResults?.leagues || {})) {
+      for (const item of Array.isArray(league?.results) ? league.results : []) {
+        if (Date.parse(`${item?.date || ""}T00:00:00Z`) >= cutoff) continue;
+        if (!samePair(item, match.home_team_name, match.away_team_name)) continue;
+        candidates.push({ ...item, league: item.league || match.league });
+        espnSeasonCandidates += 1;
+      }
+    }
+  } catch {
+    // Zonder cache blijven de dagbestanden en de ledger de bron.
+  }
   const ledgerCandidates = options.historyIndex
     ? collectIndexedCandidates(options.historyIndex, match, cutoff, candidates)
     : collectLedgerCandidates(options.ledger, match, cutoff, candidates);
@@ -151,7 +170,11 @@ export function readLocalH2HProfile(root, match, limit = 5, options = {}) {
   return results.length ? {
     results,
     played: results.length,
-    source: ledgerCandidates > 0 ? "local immutable R2 match history" : "local immutable match history",
+    source: ledgerCandidates > 0
+      ? "local immutable R2 match history"
+      : espnSeasonCandidates > 0
+        ? "ESPN season results"
+        : "local immutable match history",
     asOf: new Date().toISOString(),
   } : null;
 }

@@ -5194,6 +5194,60 @@ function buildPairKey(homeTeam, awayTeam) {
   return [normalizeName(homeTeam), normalizeName(awayTeam)].filter(Boolean).sort().join("__");
 }
 
+// ESPN-seizoensuitslagen (scripts/sync-espn-season-results.js): één compacte
+// index per clubpaar, zodat de worker H2H kan vullen voor competities waar
+// providers niets leveren zonder per wedstrijd door de dagbestanden te lopen.
+let espnSeasonH2HIndexCache = null;
+let espnSeasonH2HByIdCache = null;
+let espnSeasonH2HLabels = new Set();
+// Alleen competities die de cache echt dekt mogen als "geen ontmoetingen"
+// gelden; een lege cache betekent voor andere leagues niets.
+function espnSeasonCoversLeague(leagueLabel) {
+  espnSeasonH2HIndex();
+  return espnSeasonH2HLabels.has(normalizeName(leagueLabel));
+}
+function espnSeasonH2HIndex() {
+  if (espnSeasonH2HIndexCache) return espnSeasonH2HIndexCache;
+  espnSeasonH2HIndexCache = new Map();
+  espnSeasonH2HByIdCache = new Map();
+  espnSeasonH2HLabels = new Set();
+  try {
+    const payload = JSON.parse(
+      fs.readFileSync(path.join(process.cwd(), "data", "h2h", "espn-season-results.json"), "utf8")
+    );
+    for (const league of Object.values(payload?.leagues || {})) {
+      if (league?.label) espnSeasonH2HLabels.add(normalizeName(league.label));
+      for (const item of Array.isArray(league?.results) ? league.results : []) {
+        const key = buildPairKey(item?.homeTeamName, item?.awayTeamName);
+        if (key) {
+          if (!espnSeasonH2HIndexCache.has(key)) espnSeasonH2HIndexCache.set(key, []);
+          espnSeasonH2HIndexCache.get(key).push(item);
+        }
+        // Clubnamen verschillen tussen bronnen ("Almere City" vs "Almere City
+        // FC"); de ESPN-ids zijn eenduidig, dus die index is de betrouwbare route.
+        const idKey = [String(item?.homeTeamId || ""), String(item?.awayTeamId || "")].filter(Boolean).sort().join("__");
+        if (idKey) {
+          if (!espnSeasonH2HByIdCache.has(idKey)) espnSeasonH2HByIdCache.set(idKey, []);
+          espnSeasonH2HByIdCache.get(idKey).push(item);
+        }
+      }
+    }
+  } catch {
+    // Zonder cache blijft de bestaande providerketen de bron.
+  }
+  return espnSeasonH2HIndexCache;
+}
+
+function espnSeasonH2HForPair(homeName, awayName, kickoff, homeEspnId = "", awayEspnId = "") {
+  espnSeasonH2HIndex();
+  const idKey = [String(homeEspnId || ""), String(awayEspnId || "")].filter(Boolean).sort().join("__");
+  const rows = (idKey && espnSeasonH2HByIdCache.get(idKey)) ||
+    espnSeasonH2HIndexCache.get(buildPairKey(homeName, awayName)) ||
+    [];
+  const cutoff = Date.parse(kickoff || "") || Date.now();
+  return rows.filter((item) => Date.parse(`${item?.date || ""}T23:59:59Z`) < cutoff);
+}
+
 function hashString(value) {
   const text = String(value || "");
   let hash = 0;
@@ -11853,6 +11907,19 @@ async function main() {
             kickoff,
           }).catch(() => null)
         : null;
+      // Lokale ESPN-seizoenshistorie: geen netwerk, geen quota, en de enige bron
+      // die de Eerste Divisie vult (dagcache begint pas in november).
+      const espnSeasonLeagueCovered = espnSeasonCoversLeague(leagueInfo.label);
+      const espnSeasonResults =
+        espnSeasonLeagueCovered &&
+        !apiFootballProfile?.results?.length &&
+        !espnProfile?.results?.length &&
+        !footballDataProfile?.results?.length
+          ? espnSeasonH2HForPair(homeName, awayName, kickoff, homeProviderIds?.espn, awayProviderIds?.espn)
+          : [];
+      const espnSeasonProfile = espnSeasonResults.length
+        ? { results: espnSeasonResults, source: "espn-season-results", asOf: new Date().toISOString() }
+        : null;
       // Elke H2H-bron levert een status, zodat "geen ontmoetingen gevonden"
       // niet wordt verward met een geblokkeerde of onbereikbare provider.
       const h2hProviderAttempts = [];
@@ -11862,11 +11929,15 @@ async function main() {
       if (h2h?.results?.length) {
         h2hProviderAttempts.push({ provider: "sofascore-h2h", status: "available", records: h2h.results.length });
       } else if (!isFallbackEvent) {
-        h2hProviderAttempts.push({ provider: "sofascore-h2h", status: LIGHTWEIGHT_REFRESH ? "skipped_lightweight" : h2h?.status || "not_checked" });
+        h2hProviderAttempts.push({ provider: "sofascore-h2h", status: h2h?.status || "not_checked" });
       }
       const apiFootballEnabled = String(process.env.API_FOOTBALL_H2H_ENABLED || "true").toLowerCase() !== "false";
       if (LIGHTWEIGHT_REFRESH) {
-        h2hProviderAttempts.push({ provider: "api-football", status: "skipped_lightweight" });
+        // Een lichte refresh slaat de fetch bewust over, maar dat is geen
+        // vaststelling dat H2H ontbreekt: de vorige providerstatus (of
+        // "not_checked") blijft staan, zodat het dashboard niet ten onrechte
+        // "nog niet opgehaald" toont.
+        h2hProviderAttempts.push({ provider: "api-football", status: apiFootballCachedAttempt?.status || "not_checked" });
       } else if (!apiFootballEnabled) {
         h2hProviderAttempts.push({ provider: "api-football", status: "acceptance_gate_closed" });
       } else if (!getApiFootballKey()) {
@@ -11885,7 +11956,7 @@ async function main() {
       } else if (espnPairUsable) {
         h2hProviderAttempts.push({
           provider: "espn-team-schedule",
-          status: espnCachedAttempt?.status || (LIGHTWEIGHT_REFRESH ? "skipped_lightweight" : "not_checked"),
+          status: espnCachedAttempt?.status || "not_checked",
         });
       } else {
         h2hProviderAttempts.push({ provider: "espn-team-schedule", status: "team_mapping_missing" });
@@ -11894,6 +11965,13 @@ async function main() {
         h2hProviderAttempts.push({ provider: "football-data-co-uk", status: "available", records: footballDataProfile.results.length });
       } else if (footballDataLeagueCode(leagueInfo.label)) {
         h2hProviderAttempts.push({ provider: "football-data-co-uk", status: "no_coverage" });
+      }
+      if (espnSeasonLeagueCovered) {
+        h2hProviderAttempts.push({
+          provider: "espn-season-results",
+          status: espnSeasonProfile ? "available" : "no_coverage",
+          records: espnSeasonResults.length,
+        });
       }
       h2h = buildH2HAgentProfile({
         baseH2H: h2h,
@@ -11904,6 +11982,7 @@ async function main() {
         apiFootballProfile,
         espnProfile,
         footballDataProfile,
+        localHistoryProfile: espnSeasonProfile,
         extraProfiles: globalTeamFormProfiles,
         homeName,
         awayName,

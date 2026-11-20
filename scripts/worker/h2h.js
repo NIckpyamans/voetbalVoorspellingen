@@ -19,6 +19,7 @@ export function buildH2HAgentProfile(input, deps) {
     apiFootballProfile,
     espnProfile,
     footballDataProfile,
+    localHistoryProfile,
     extraProfiles = [],
     providerAttempts = [],
     asOf,
@@ -47,6 +48,14 @@ export function buildH2HAgentProfile(input, deps) {
     results = mergeH2HResultLists(results, curatedH2H.results);
     sources.push(curatedH2H.status);
     sameCompetitionPlayed += Number(curatedH2H.sameCompetitionPlayed || 0);
+  }
+
+  // Lokale ESPN-seizoensuitslagen: dezelfde bron als de H2H-backfill, zodat een
+  // worker-run een eerder gevuld profiel niet leeg overschrijft.
+  if (localHistoryProfile?.results?.length) {
+    results = mergeH2HResultLists(results, localHistoryProfile.results);
+    sources.push(localHistoryProfile.source || "espn-season-results");
+    sameCompetitionPlayed += Number(localHistoryProfile.results.length || 0);
   }
 
   const historicalProfiles = [marketProfile, openFootballProfile, ...extraProfiles].filter(Boolean);

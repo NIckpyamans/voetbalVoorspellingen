@@ -33,6 +33,10 @@ jobs:
       H2H_BACKFILL_DAYS_AHEAD: "21"
       H2H_BACKFILL_LIMIT: "50"
       H2H_BACKFILL_STALE_DAYS: "1"
+      # ESPN-seizoensuitslagen als lokale H2H-historie voor competities zonder
+      # providerdekking (Eerste Divisie). Geen key, geen quota.
+      ESPN_SYNC_LEAGUES: "ned.2"
+      ESPN_H2H_SEASONS_BACK: "4"
       DATABASE_URL: ${{ secrets.DATABASE_URL }}
       POSTGRES_URL: ${{ secrets.POSTGRES_URL }}
       CLOUDFLARE_R2_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_R2_ACCOUNT_ID }}
@@ -52,13 +56,17 @@ jobs:
           node-version: 22
           cache: npm
       - run: npm ci
+      - name: Sync ESPN season results as local H2H history
+        run: node scripts/sync-espn-season-results.js
       - name: Capture upcoming H2H independently
         run: node scripts/ci-neon-safe.js -- npm run db:h2h:backfill-upcoming
       - name: Commit compact H2H coverage and retry state
         run: |
           git config user.name github-actions
           git config user.email github-actions@github.com
-          git add monitor/h2h-upcoming-backfill.json monitor/h2h-upcoming-backfill.md
+          for report in monitor/h2h-upcoming-backfill.json monitor/h2h-upcoming-backfill.md data/h2h/espn-season-results.json; do
+            if [ -f "$report" ]; then git add -f "$report"; fi
+          done
           git diff --staged --quiet && echo "geen H2H-rapportwijzigingen" && exit 0
           git commit -m "update upcoming H2H coverage [skip vercel]"
           for attempt in 1 2 3; do
