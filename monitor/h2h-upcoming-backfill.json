@@ -1,21 +1,49 @@
 {
-  "generatedAt": "2026-11-19T11:38:40.552Z",
+  "generatedAt": "2026-11-20T11:38:39.547Z",
   "daysAhead": 21,
-  "checked": 3,
-  "candidateTotal": 3,
-  "remaining": 0,
+  "checked": 50,
+  "candidateTotal": 70,
+  "remaining": 20,
   "byCompetition": {
     "Netherlands - Eerste Divisie": {
       "agent": "netherlands-eerste-divisie-agent",
+      "checked": 3
+    },
+    "England - Championship": {
+      "agent": "england-championship-agent",
+      "checked": 7
+    },
+    "Germany - 2. Bundesliga": {
+      "agent": "germany-2-bundesliga-agent",
+      "checked": 2
+    },
+    "France - Ligue 2": {
+      "agent": "france-ligue-2-agent",
+      "checked": 2
+    },
+    "Germany - Bundesliga": {
+      "agent": "germany-bundesliga-agent",
+      "checked": 2
+    },
+    "England - Premier League": {
+      "agent": "england-premier-league-agent",
+      "checked": 4
+    },
+    "France - Ligue 1": {
+      "agent": "france-ligue-1-agent",
       "checked": 1
     },
     "Europe - Champions League": {
       "agent": "champions-league-agent",
-      "checked": 1
+      "checked": 9
     },
-    "England - Championship": {
-      "agent": "england-championship-agent",
-      "checked": 1
+    "Europe - Conference League": {
+      "agent": "conference-league-agent",
+      "checked": 10
+    },
+    "Europe - Europa League": {
+      "agent": "europa-league-agent",
+      "checked": 10
     }
   },
   "databaseWritable": false,
@@ -26,15 +54,15 @@
   "r2Stored": 0,
   "staticUpdated": 0,
   "filled": 0,
-  "noDirectHistory": 3,
+  "noDirectHistory": 50,
   "errors": 0,
-  "providerErrorCount": 9,
+  "providerErrorCount": 156,
   "providerErrors": [
     {
-      "matchId": "ss-espn-ned.2-401876068",
+      "matchId": "ss-espn-ned.2-401876064",
       "league": "Netherlands - Eerste Divisie",
-      "homeTeam": "Jong PSV",
-      "awayTeam": "De Graafschap",
+      "homeTeam": "RKC Waalwijk",
+      "awayTeam": "Jong AZ",
       "provider": "football-data-co-uk",
       "status": "not_configured",
       "result": "not_configured",
@@ -43,10 +71,10 @@
       "error": null
     },
     {
-      "matchId": "ss-espn-ned.2-401876068",
+      "matchId": "ss-espn-ned.2-401876064",
       "league": "Netherlands - Eerste Divisie",
-      "homeTeam": "Jong PSV",
-      "awayTeam": "De Graafschap",
+      "homeTeam": "RKC Waalwijk",
+      "awayTeam": "Jong AZ",
       "provider": "goal-api",
       "status": "acceptance_gate_closed",
       "result": "acceptance_blocked",
@@ -55,10 +83,10 @@
       "error": null
     },
     {
-      "matchId": "ss-espn-ned.2-401876068",
+      "matchId": "ss-espn-ned.2-401876064",
       "league": "Netherlands - Eerste Divisie",
-      "homeTeam": "Jong PSV",
-      "awayTeam": "De Graafschap",
+      "homeTeam": "RKC Waalwijk",
+      "awayTeam": "Jong AZ",
       "provider": "api-football",
       "status": "team_mapping_missing",
       "result": "mapping_failed",
@@ -67,10 +95,34 @@
       "error": null
     },
     {
-      "matchId": "ss-espn-uefa.champions-401915290",
-      "league": "Europe - Champions League",
-      "homeTeam": "Viking FK",
-      "awayTeam": "Feyenoord Rotterdam",
+      "matchId": "ss-espn-eng.2-401880116",
+      "league": "England - Championship",
+      "homeTeam": "Sheffield United",
+      "awayTeam": "West Ham United",
+      "provider": "goal-api",
+      "status": "acceptance_gate_closed",
+      "result": "acceptance_blocked",
+      "statusCode": null,
+      "errorCategory": null,
+      "error": null
+    },
+    {
+      "matchId": "ss-espn-eng.2-401880116",
+      "league": "England - Championship",
+      "homeTeam": "Sheffield United",
+      "awayTeam": "West Ham United",
+      "provider": "api-football",
+      "status": "team_mapping_missing",
+      "result": "mapping_failed",
+      "statusCode": null,
+      "errorCategory": null,
+      "error": null
+    },
+    {
+      "matchId": "ss-espn-ned.2-401876065",
+      "league": "Netherlands - Eerste Divisie",
+      "homeTeam": "TOP Oss",
+      "awayTeam": "Almere City",
       "provider": "football-data-co-uk",
       "status": "not_configured",
       "result": "not_configured",
@@ -79,10 +131,10 @@
       "error": null
     },
     {
-      "matchId": "ss-espn-uefa.champions-401915290",
-      "league": "Europe - Champions League",
-      "homeTeam": "Viking FK",
-      "awayTeam": "Feyenoord Rotterdam",
+      "matchId": "ss-espn-ned.2-401876065",
+      "league": "Netherlands - Eerste Divisie",
+      "homeTeam": "TOP Oss",
+      "awayTeam": "Almere City",
       "provider": "goal-api",
       "status": "acceptance_gate_closed",
       "result": "acceptance_blocked",
@@ -91,10 +143,10 @@
       "error": null
     },
     {
-      "matchId": "ss-espn-uefa.champions-401915290",
-      "league": "Europe - Champions League",
-      "homeTeam": "Viking FK",
-      "awayTeam": "Feyenoord Rotterdam",
+      "matchId": "ss-espn-ned.2-401876065",
+      "league": "Netherlands - Eerste Divisie",
+      "homeTeam": "TOP Oss",
+      "awayTeam": "Almere City",
       "provider": "api-football",
       "status": "team_mapping_missing",
       "result": "mapping_failed",
@@ -103,10 +155,70 @@
       "error": null
     },
     {
-      "matchId": "ss-espn-uefa.champions-401915290",
-      "league": "Europe - Champions League",
-      "homeTeam": "Viking FK",
-      "awayTeam": "Feyenoord Rotterdam",
+      "matchId": "ss-espn-ned.2-401876066",
+      "league": "Netherlands - Eerste Divisie",
+      "homeTeam": "Vitesse",
+      "awayTeam": "VVV-Venlo",
+      "provider": "football-data-co-uk",
+      "status": "not_configured",
+      "result": "not_configured",
+      "statusCode": null,
+      "errorCategory": null,
+      "error": null
+    },
+    {
+      "matchId": "ss-espn-ned.2-401876066",
+      "league": "Netherlands - Eerste Divisie",
+      "homeTeam": "Vitesse",
+      "awayTeam": "VVV-Venlo",
+      "provider": "goal-api",
+      "status": "acceptance_gate_closed",
+      "result": "acceptance_blocked",
+      "statusCode": null,
+      "errorCategory": null,
+      "error": null
+    },
+    {
+      "matchId": "ss-espn-ned.2-401876066",
+      "league": "Netherlands - Eerste Divisie",
+      "homeTeam": "Vitesse",
+      "awayTeam": "VVV-Venlo",
+      "provider": "api-football",
+      "status": "rate_limited_locally",
+      "result": "quota",
+      "statusCode": null,
+      "errorCategory": null,
+      "error": null
+    },
+    {
+      "matchId": "ss-espn-ger.2-401885032",
+      "league": "Germany - 2. Bundesliga",
+      "homeTeam": "Karlsruher SC",
+      "awayTeam": "Holstein Kiel",
+      "provider": "goal-api",
+      "status": "acceptance_gate_closed",
+      "result": "acceptance_blocked",
+      "statusCode": null,
+      "errorCategory": null,
+      "error": null
+    },
+    {
+      "matchId": "ss-espn-ger.2-401885032",
+      "league": "Germany - 2. Bundesliga",
+      "homeTeam": "Karlsruher SC",
+      "awayTeam": "Holstein Kiel",
+      "provider": "api-football",
+      "status": "rate_limited_locally",
+      "result": "quota",
+      "statusCode": null,
+      "errorCategory": null,
+      "error": null
+    },
+    {
+      "matchId": "ss-espn-ger.2-401885032",
+      "league": "Germany - 2. Bundesliga",
+      "homeTeam": "Karlsruher SC",
+      "awayTeam": "Holstein Kiel",
       "provider": "espn-team-schedule",
       "status": "team_mapping_missing",
       "result": "mapping_failed",
@@ -115,10 +227,10 @@
       "error": null
     },
     {
-      "matchId": "ss-espn-eng.2-401880109",
+      "matchId": "ss-espn-eng.2-401880124",
       "league": "England - Championship",
-      "homeTeam": "Queens Park Rangers",
-      "awayTeam": "Wolverhampton Wanderers",
+      "homeTeam": "Bolton Wanderers",
+      "awayTeam": "Blackburn Rovers",
       "provider": "goal-api",
       "status": "acceptance_gate_closed",
       "result": "acceptance_blocked",
@@ -127,13 +239,121 @@
       "error": null
     },
     {
-      "matchId": "ss-espn-eng.2-401880109",
+      "matchId": "ss-espn-eng.2-401880124",
       "league": "England - Championship",
-      "homeTeam": "Queens Park Rangers",
-      "awayTeam": "Wolverhampton Wanderers",
+      "homeTeam": "Bolton Wanderers",
+      "awayTeam": "Blackburn Rovers",
       "provider": "api-football",
-      "status": "team_mapping_missing",
-      "result": "mapping_failed",
+      "status": "rate_limited_locally",
+      "result": "quota",
+      "statusCode": null,
+      "errorCategory": null,
+      "error": null
+    },
+    {
+      "matchId": "ss-espn-fra.2-401876676",
+      "league": "France - Ligue 2",
+      "homeTeam": "Montpellier",
+      "awayTeam": "Nantes",
+      "provider": "goal-api",
+      "status": "acceptance_gate_closed",
+      "result": "acceptance_blocked",
+      "statusCode": null,
+      "errorCategory": null,
+      "error": null
+    },
+    {
+      "matchId": "ss-espn-fra.2-401876676",
+      "league": "France - Ligue 2",
+      "homeTeam": "Montpellier",
+      "awayTeam": "Nantes",
+      "provider": "api-football",
+      "status": "rate_limited_locally",
+      "result": "quota",
+      "statusCode": null,
+      "errorCategory": null,
+      "error": null
+    },
+    {
+      "matchId": "ss-espn-ger.1-401884713",
+      "league": "Germany - Bundesliga",
+      "homeTeam": "FC Augsburg",
+      "awayTeam": "FC Cologne",
+      "provider": "goal-api",
+      "status": "acceptance_gate_closed",
+      "result": "acceptance_blocked",
+      "statusCode": null,
+      "errorCategory": null,
+      "error": null
+    },
+    {
+      "matchId": "ss-espn-ger.1-401884713",
+      "league": "Germany - Bundesliga",
+      "homeTeam": "FC Augsburg",
+      "awayTeam": "FC Cologne",
+      "provider": "api-football",
+      "status": "rate_limited_locally",
+      "result": "quota",
+      "statusCode": null,
+      "errorCategory": null,
+      "error": null
+    },
+    {
+      "matchId": "ss-espn-eng.1-401879216",
+      "league": "England - Premier League",
+      "homeTeam": "AFC Bournemouth",
+      "awayTeam": "Hull City",
+      "provider": "goal-api",
+      "status": "acceptance_gate_closed",
+      "result": "acceptance_blocked",
+      "statusCode": null,
+      "errorCategory": null,
+      "error": null
+    },
+    {
+      "matchId": "ss-espn-eng.1-401879216",
+      "league": "England - Premier League",
+      "homeTeam": "AFC Bournemouth",
+      "awayTeam": "Hull City",
+      "provider": "api-football",
+      "status": "rate_limited_locally",
+      "result": "quota",
+      "statusCode": null,
+      "errorCategory": null,
+      "error": null
+    },
+    {
+      "matchId": "ss-espn-fra.1-401876381",
+      "league": "France - Ligue 1",
+      "homeTeam": "Paris FC",
+      "awayTeam": "Le Mans",
+      "provider": "goal-api",
+      "status": "acceptance_gate_closed",
+      "result": "acceptance_blocked",
+      "statusCode": null,
+      "errorCategory": null,
+      "error": null
+    },
+    {
+      "matchId": "ss-espn-fra.1-401876381",
+      "league": "France - Ligue 1",
+      "homeTeam": "Paris FC",
+      "awayTeam": "Le Mans",
+      "provider": "api-football",
+      "status": "rate_limited_locally",
+      "result": "quota",
+      "statusCode": null,
+      "errorCategory": null,
+      "error": null
+    },
+    {
+      "matchId": "ss-espn-ger.2-401885036",
+      "league": "Germany - 2. Bundesliga",
+      "homeTeam": "Hannover 96",
+      "awayTeam": "Hertha Berlin",
+      "provider": "goal-api",
+      "status": "acceptance_gate_closed",
+      "result": "acceptance_blocked",
       "statusCode": null,
       "errorCategory": null,
       "error": null
@@ -141,14 +361,14 @@
   ],
   "qualityGate": {
     "minBatch": 20,
-    "batch": 3,
+    "batch": 50,
     "filled": 0,
-    "attempts": 16,
-    "blockedAttempts": 4,
-    "applied": false,
-    "outcome": "not_applicable",
+    "attempts": 212,
+    "blockedAttempts": 27,
+    "applied": true,
+    "outcome": "provider_blocked",
     "failed": false,
-    "degraded": false
+    "degraded": true
   },
   "apiFootballAcceptance": {
     "configured": true,
@@ -183,94 +403,94 @@
     "providerResultCount": 0,
     "lastStatus": "provider_error",
     "lastStatusCode": null,
-    "lastCheckedAt": "2026-11-19T11:38:40.221Z"
+    "lastCheckedAt": "2026-11-20T11:37:30.477Z"
   },
   "providerMetrics": {
     "canonical-history": {
-      "attempts": 3,
+      "attempts": 50,
       "found": 0,
-      "noCoverage": 3,
+      "noCoverage": 50,
       "mappingFailed": 0,
       "quota": 0,
       "errors": 0,
       "acceptanceBlocked": 0,
       "latencyMsTotal": 0,
-      "latencySamples": 3,
+      "latencySamples": 50,
       "quotaRemaining": 0,
       "quotaLimit": 0,
       "successRate": 0,
       "averageLatencyMs": 0
     },
     "football-data-co-uk": {
-      "attempts": 3,
+      "attempts": 50,
       "found": 0,
-      "noCoverage": 1,
+      "noCoverage": 18,
       "mappingFailed": 0,
       "quota": 0,
       "errors": 0,
-      "acceptanceBlocked": 2,
+      "acceptanceBlocked": 32,
       "latencyMsTotal": 0,
-      "latencySamples": 3,
+      "latencySamples": 50,
       "quotaRemaining": 0,
       "quotaLimit": 0,
       "successRate": 0,
       "averageLatencyMs": 0
     },
     "goal-api": {
-      "attempts": 3,
+      "attempts": 50,
       "found": 0,
       "noCoverage": 0,
       "mappingFailed": 0,
       "quota": 0,
       "errors": 0,
-      "acceptanceBlocked": 3,
+      "acceptanceBlocked": 50,
       "latencyMsTotal": 0,
-      "latencySamples": 3,
+      "latencySamples": 50,
       "quotaRemaining": 0,
       "quotaLimit": 0,
       "successRate": 0,
       "averageLatencyMs": 0
     },
     "api-football": {
-      "attempts": 3,
+      "attempts": 50,
       "found": 0,
       "noCoverage": 0,
       "mappingFailed": 3,
-      "quota": 0,
+      "quota": 47,
       "errors": 0,
       "acceptanceBlocked": 0,
       "latencyMsTotal": 0,
-      "latencySamples": 3,
+      "latencySamples": 50,
       "quotaRemaining": 0,
       "quotaLimit": 0,
       "successRate": 0,
       "averageLatencyMs": 0
     },
     "espn-team-schedule": {
-      "attempts": 3,
+      "attempts": 50,
       "found": 0,
-      "noCoverage": 2,
-      "mappingFailed": 1,
+      "noCoverage": 26,
+      "mappingFailed": 24,
       "quota": 0,
       "errors": 0,
       "acceptanceBlocked": 0,
       "latencyMsTotal": 0,
-      "latencySamples": 3,
+      "latencySamples": 50,
       "quotaRemaining": 0,
       "quotaLimit": 0,
       "successRate": 0,
       "averageLatencyMs": 0
     },
     "apifootball-com": {
-      "attempts": 1,
+      "attempts": 9,
       "found": 0,
-      "noCoverage": 1,
+      "noCoverage": 9,
       "mappingFailed": 0,
       "quota": 0,
       "errors": 0,
       "acceptanceBlocked": 0,
       "latencyMsTotal": 0,
-      "latencySamples": 1,
+      "latencySamples": 9,
       "quotaRemaining": 0,
       "quotaLimit": 0,
       "successRate": 0,
@@ -278,24 +498,24 @@
     }
   },
   "coverageTrend": {
-    "generatedAt": "2026-11-19T08:04:14.037Z",
-    "checked": 41,
+    "generatedAt": "2026-11-20T07:23:51.869Z",
+    "checked": 50,
     "filled": 0,
     "deltaFilled": 0,
-    "deltaChecked": -38
+    "deltaChecked": 0
   },
   "filledSamples": [],
   "noDirectHistorySamples": [
     {
-      "matchId": "ss-espn-ned.2-401876068",
-      "date": "2026-12-07",
+      "matchId": "ss-espn-ned.2-401876064",
+      "date": "2026-12-04",
       "league": "Netherlands - Eerste Divisie",
-      "homeTeam": "Jong PSV",
-      "awayTeam": "De Graafschap",
+      "homeTeam": "RKC Waalwijk",
+      "awayTeam": "Jong AZ",
       "status": "no_direct_history",
       "availabilityStatus": "no_direct_history",
       "source": "canonical-history, football-data-co-uk, goal-api, api-football, espn-team-schedule",
-      "asOf": "2026-11-19T11:38:34.066Z",
+      "asOf": "2026-11-20T11:37:23.770Z",
       "note": "Geen betrouwbare directe H2H gevonden bij de providers die met succes konden worden bevraagd.",
       "providerAttempts": [
         {
@@ -364,91 +584,15 @@
       "staticStatusUpdated": true
     },
     {
-      "matchId": "ss-espn-uefa.champions-401915290",
-      "date": "2026-12-08",
-      "league": "Europe - Champions League",
-      "homeTeam": "Viking FK",
-      "awayTeam": "Feyenoord Rotterdam",
-      "status": "no_direct_history",
-      "availabilityStatus": "no_direct_history",
-      "source": "canonical-history, football-data-co-uk, goal-api, api-football, espn-team-schedule",
-      "asOf": "2026-11-19T11:38:34.740Z",
-      "note": "Geen betrouwbare directe H2H gevonden bij de providers die met succes konden worden bevraagd.",
-      "providerAttempts": [
-        {
-          "provider": "canonical-history",
-          "status": "not_found",
-          "records": 0,
-          "durationMs": null,
-          "quota": {
-            "remaining": null,
-            "limit": null,
-            "resetAt": null
-          },
-          "result": "no_coverage"
-        },
-        {
-          "provider": "football-data-co-uk",
-          "status": "not_configured",
-          "reason": "league_unsupported",
-          "durationMs": null,
-          "quota": {
-            "remaining": null,
-            "limit": null,
-            "resetAt": null
-          },
-          "result": "not_configured"
-        },
-        {
-          "provider": "goal-api",
-          "status": "acceptance_gate_closed",
-          "records": 0,
-          "durationMs": null,
-          "quota": {
-            "remaining": null,
-            "limit": null,
-            "resetAt": null
-          },
-          "result": "acceptance_blocked"
-        },
-        {
-          "provider": "api-football",
-          "status": "team_mapping_missing",
-          "records": 0,
-          "errorCategory": null,
-          "error": null,
-          "durationMs": null,
-          "quota": {
-            "remaining": null,
-            "limit": null,
-            "resetAt": null
-          },
-          "result": "mapping_failed"
-        },
-        {
-          "provider": "espn-team-schedule",
-          "status": "team_mapping_missing",
-          "durationMs": null,
-          "quota": {
-            "remaining": null,
-            "limit": null,
-            "resetAt": null
-          },
-          "result": "mapping_failed"
-        }
-      ],
-      "staticStatusUpdated": true
-    },
-    {
-      "matchId": "ss-espn-eng.2-401880109",
-      "date": "2026-12-08",
+      "matchId": "ss-espn-eng.2-401880116",
+      "date": "2026-12-04",
       "league": "England - Championship",
-      "homeTeam": "Queens Park Rangers",
-      "awayTeam": "Wolverhampton Wanderers",
+      "homeTeam": "Sheffield United",
+      "awayTeam": "West Ham United",
       "status": "no_direct_history",
       "availabilityStatus": "no_direct_history",
       "source": "canonical-history, football-data-co-uk, apifootball-com, goal-api, api-football, espn-team-schedule",
-      "asOf": "2026-11-19T11:38:40.472Z",
+      "asOf": "2026-11-20T11:37:29.766Z",
       "note": "Geen betrouwbare directe H2H gevonden bij de providers die met succes konden worden bevraagd.",
       "providerAttempts": [
         {
@@ -527,118 +671,1478 @@
         }
       ],
       "staticStatusUpdated": true
+    },
+    {
+      "matchId": "ss-espn-ned.2-401876065",
+      "date": "2026-12-04",
+      "league": "Netherlands - Eerste Divisie",
+      "homeTeam": "TOP Oss",
+      "awayTeam": "Almere City",
+      "status": "no_direct_history",
+      "availabilityStatus": "no_direct_history",
+      "source": "canonical-history, football-data-co-uk, goal-api, api-football, espn-team-schedule",
+      "asOf": "2026-11-20T11:37:30.655Z",
+      "note": "Geen betrouwbare directe H2H gevonden bij de providers die met succes konden worden bevraagd.",
+      "providerAttempts": [
+        {
+          "provider": "canonical-history",
+          "status": "not_found",
+          "records": 0,
+          "durationMs": null,
+          "quota": {
+            "remaining": null,
+            "limit": null,
+            "resetAt": null
+          },
+          "result": "no_coverage"
+        },
+        {
+          "provider": "football-data-co-uk",
+          "status": "not_configured",
+          "reason": "league_unsupported",
+          "durationMs": null,
+          "quota": {
+            "remaining": null,
+            "limit": null,
+            "resetAt": null
+          },
+          "result": "not_configured"
+        },
+        {
+          "provider": "goal-api",
+          "status": "acceptance_gate_closed",
+          "records": 0,
+          "durationMs": null,
+          "quota": {
+            "remaining": null,
+            "limit": null,
+            "resetAt": null
+          },
+          "result": "acceptance_blocked"
+        },
+        {
+          "provider": "api-football",
+          "status": "team_mapping_missing",
+          "records": 0,
+          "errorCategory": null,
+          "error": null,
+          "durationMs": null,
+          "quota": {
+            "remaining": null,
+            "limit": null,
+            "resetAt": null
+          },
+          "result": "mapping_failed"
+        },
+        {
+          "provider": "espn-team-schedule",
+          "status": "not_found",
+          "records": 0,
+          "durationMs": null,
+          "quota": {
+            "remaining": null,
+            "limit": null,
+            "resetAt": null
+          },
+          "result": "no_coverage"
+        }
+      ],
+      "staticStatusUpdated": true
+    },
+    {
+      "matchId": "ss-espn-ned.2-401876066",
+      "date": "2026-12-04",
+      "league": "Netherlands - Eerste Divisie",
+      "homeTeam": "Vitesse",
+      "awayTeam": "VVV-Venlo",
+      "status": "rate_limited_locally",
+      "availabilityStatus": "rate_limited_locally",
+      "source": "canonical-history, football-data-co-uk, goal-api, api-football, espn-team-schedule",
+      "asOf": "2026-11-20T11:37:31.359Z",
+      "note": "Providerquota voor deze run is bereikt; volgende geplande run probeert opnieuw.",
+      "providerAttempts": [
+        {
+          "provider": "canonical-history",
+          "status": "not_found",
+          "records": 0,
+          "durationMs": null,
+          "quota": {
+            "remaining": null,
+            "limit": null,
+            "resetAt": null
+          },
+          "result": "no_coverage"
+        },
+        {
+          "provider": "football-data-co-uk",
+          "status": "not_configured",
+          "reason": "league_unsupported",
+          "durationMs": null,
+          "quota": {
+            "remaining": null,
+            "limit": null,
+            "resetAt": null
+          },
+          "result": "not_configured"
+        },
+        {
+          "provider": "goal-api",
+          "status": "acceptance_gate_closed",
+          "records": 0,
+          "durationMs": null,
+          "quota": {
+            "remaining": null,
+            "limit": null,
+            "resetAt": null
+          },
+          "result": "acceptance_blocked"
+        },
+        {
+          "provider": "api-football",
+          "status": "rate_limited_locally",
+          "records": 0,
+          "errorCategory": null,
+          "error": null,
+          "durationMs": null,
+          "quota": {
+            "remaining": null,
+            "limit": null,
+            "resetAt": null
+          },
+          "result": "quota"
+        },
+        {
+          "provider": "espn-team-schedule",
+          "status": "not_found",
+          "records": 0,
+          "durationMs": null,
+          "quota": {
+            "remaining": null,
+            "limit": null,
+            "resetAt": null
+          },
+          "result": "no_coverage"
+        }
+      ],
+      "staticStatusUpdated": true
+    },
+    {
+      "matchId": "ss-espn-ger.2-401885032",
+      "date": "2026-12-05",
+      "league": "Germany - 2. Bundesliga",
+      "homeTeam": "Karlsruher SC",
+      "awayTeam": "Holstein Kiel",
+      "status": "rate_limited_locally",
+      "availabilityStatus": "rate_limited_locally",
+      "source": "canonical-history, football-data-co-uk, goal-api, api-football, espn-team-schedule",
+      "asOf": "2026-11-20T11:37:34.091Z",
+      "note": "Providerquota voor deze run is bereikt; volgende geplande run probeert opnieuw.",
+      "providerAttempts": [
+        {
+          "provider": "canonical-history",
+          "status": "not_found",
+          "records": 0,
+          "durationMs": null,
+          "quota": {
+            "remaining": null,
+            "limit": null,
+            "resetAt": null
+          },
+          "result": "no_coverage"
+        },
+        {
+          "provider": "football-data-co-uk",
+          "status": "no_coverage",
+          "records": 0,
+          "durationMs": null,
+          "quota": {
+            "remaining": null,
+            "limit": null,
+            "resetAt": null
+          },
+          "result": "no_coverage"
+        },
+        {
+          "provider": "goal-api",
+          "status": "acceptance_gate_closed",
+          "records": 0,
+          "durationMs": null,
+          "quota": {
+            "remaining": null,
+            "limit": null,
+            "resetAt": null
+          },
+          "result": "acceptance_blocked"
+        },
+        {
+          "provider": "api-football",
+          "status": "rate_limited_locally",
+          "records": 0,
+          "errorCategory": null,
+          "error": null,
+          "durationMs": null,
+          "quota": {
+            "remaining": null,
+            "limit": null,
+            "resetAt": null
+          },
+          "result": "quota"
+        },
+        {
+          "provider": "espn-team-schedule",
+          "status": "team_mapping_missing",
+          "durationMs": null,
+          "quota": {
+            "remaining": null,
+            "limit": null,
+            "resetAt": null
+          },
+          "result": "mapping_failed"
+        }
+      ],
+      "staticStatusUpdated": true
+    },
+    {
+      "matchId": "ss-espn-eng.2-401880124",
+      "date": "2026-12-05",
+      "league": "England - Championship",
+      "homeTeam": "Bolton Wanderers",
+      "awayTeam": "Blackburn Rovers",
+      "status": "rate_limited_locally",
+      "availabilityStatus": "rate_limited_locally",
+      "source": "canonical-history, football-data-co-uk, apifootball-com, goal-api, api-football, espn-team-schedule",
+      "asOf": "2026-11-20T11:37:37.445Z",
+      "note": "Providerquota voor deze run is bereikt; volgende geplande run probeert opnieuw.",
+      "providerAttempts": [
+        {
+          "provider": "canonical-history",
+          "status": "not_found",
+          "records": 0,
+          "durationMs": null,
+          "quota": {
+            "remaining": null,
+            "limit": null,
+            "resetAt": null
+          },
+          "result": "no_coverage"
+        },
+        {
+          "provider": "football-data-co-uk",
+          "status": "no_coverage",
+          "records": 0,
+          "durationMs": null,
+          "quota": {
+            "remaining": null,
+            "limit": null,
+            "resetAt": null
+          },
+          "result": "no_coverage"
+        },
+        {
+          "provider": "apifootball-com",
+          "status": "no_coverage",
+          "records": 0,
+          "durationMs": null,
+          "quota": {
+            "remaining": null,
+            "limit": null,
+            "resetAt": null
+          },
+          "result": "no_coverage"
+        },
+        {
+          "provider": "goal-api",
+          "status": "acceptance_gate_closed",
+          "records": 0,
+          "durationMs": null,
+          "quota": {
+            "remaining": null,
+            "limit": null,
+            "resetAt": null
+          },
+          "result": "acceptance_blocked"
+        },
+        {
+          "provider": "api-football",
+          "status": "rate_limited_locally",
+          "records": 0,
+          "errorCategory": null,
+          "error": null,
+          "durationMs": null,
+          "quota": {
+            "remaining": null,
+            "limit": null,
+            "resetAt": null
+          },
+          "result": "quota"
+        },
+        {
+          "provider": "espn-team-schedule",
+          "status": "not_found",
+          "records": 0,
+          "durationMs": null,
+          "quota": {
+            "remaining": null,
+            "limit": null,
+            "resetAt": null
+          },
+          "result": "no_coverage"
+        }
+      ],
+      "staticStatusUpdated": true
+    },
+    {
+      "matchId": "ss-espn-fra.2-401876676",
+      "date": "2026-12-05",
+      "league": "France - Ligue 2",
+      "homeTeam": "Montpellier",
+      "awayTeam": "Nantes",
+      "status": "rate_limited_locally",
+      "availabilityStatus": "rate_limited_locally",
+      "source": "canonical-history, football-data-co-uk, apifootball-com, goal-api, api-football, espn-team-schedule",
+      "asOf": "2026-11-20T11:37:42.007Z",
+      "note": "Providerquota voor deze run is bereikt; volgende geplande run probeert opnieuw.",
+      "providerAttempts": [
+        {
+          "provider": "canonical-history",
+          "status": "not_found",
+          "records": 0,
+          "durationMs": null,
+          "quota": {
+            "remaining": null,
+            "limit": null,
+            "resetAt": null
+          },
+          "result": "no_coverage"
+        },
+        {
+          "provider": "football-data-co-uk",
+          "status": "no_coverage",
+          "records": 0,
+          "durationMs": null,
+          "quota": {
+            "remaining": null,
+            "limit": null,
+            "resetAt": null
+          },
+          "result": "no_coverage"
+        },
+        {
+          "provider": "apifootball-com",
+          "status": "no_coverage",
+          "records": 0,
+          "durationMs": null,
+          "quota": {
+            "remaining": null,
+            "limit": null,
+            "resetAt": null
+          },
+          "result": "no_coverage"
+        },
+        {
+          "provider": "goal-api",
+          "status": "acceptance_gate_closed",
+          "records": 0,
+          "durationMs": null,
+          "quota": {
+            "remaining": null,
+            "limit": null,
+            "resetAt": null
+          },
+          "result": "acceptance_blocked"
+        },
+        {
+          "provider": "api-football",
+          "status": "rate_limited_locally",
+          "records": 0,
+          "errorCategory": null,
+          "error": null,
+          "durationMs": null,
+          "quota": {
+            "remaining": null,
+            "limit": null,
+            "resetAt": null
+          },
+          "result": "quota"
+        },
+        {
+          "provider": "espn-team-schedule",
+          "status": "not_found",
+          "records": 0,
+          "durationMs": null,
+          "quota": {
+            "remaining": null,
+            "limit": null,
+            "resetAt": null
+          },
+          "result": "no_coverage"
+        }
+      ],
+      "staticStatusUpdated": true
+    },
+    {
+      "matchId": "ss-espn-ger.1-401884713",
+      "date": "2026-12-05",
+      "league": "Germany - Bundesliga",
+      "homeTeam": "FC Augsburg",
+      "awayTeam": "FC Cologne",
+      "status": "rate_limited_locally",
+      "availabilityStatus": "rate_limited_locally",
+      "source": "canonical-history, football-data-co-uk, goal-api, api-football, espn-team-schedule",
+      "asOf": "2026-11-20T11:37:44.415Z",
+      "note": "Providerquota voor deze run is bereikt; volgende geplande run probeert opnieuw.",
+      "providerAttempts": [
+        {
+          "provider": "canonical-history",
+          "status": "not_found",
+          "records": 0,
+          "durationMs": null,
+          "quota": {
+            "remaining": null,
+            "limit": null,
+            "resetAt": null
+          },
+          "result": "no_coverage"
+        },
+        {
+          "provider": "football-data-co-uk",
+          "status": "no_coverage",
+          "records": 0,
+          "durationMs": null,
+          "quota": {
+            "remaining": null,
+            "limit": null,
+            "resetAt": null
+          },
+          "result": "no_coverage"
+        },
+        {
+          "provider": "goal-api",
+          "status": "acceptance_gate_closed",
+          "records": 0,
+          "durationMs": null,
+          "quota": {
+            "remaining": null,
+            "limit": null,
+            "resetAt": null
+          },
+          "result": "acceptance_blocked"
+        },
+        {
+          "provider": "api-football",
+          "status": "rate_limited_locally",
+          "records": 0,
+          "errorCategory": null,
+          "error": null,
+          "durationMs": null,
+          "quota": {
+            "remaining": null,
+            "limit": null,
+            "resetAt": null
+          },
+          "result": "quota"
+        },
+        {
+          "provider": "espn-team-schedule",
+          "status": "not_found",
+          "records": 0,
+          "durationMs": null,
+          "quota": {
+            "remaining": null,
+            "limit": null,
+            "resetAt": null
+          },
+          "result": "no_coverage"
+        }
+      ],
+      "staticStatusUpdated": true
+    },
+    {
+      "matchId": "ss-espn-eng.1-401879216",
+      "date": "2026-12-05",
+      "league": "England - Premier League",
+      "homeTeam": "AFC Bournemouth",
+      "awayTeam": "Hull City",
+      "status": "rate_limited_locally",
+      "availabilityStatus": "rate_limited_locally",
+      "source": "canonical-history, football-data-co-uk, goal-api, api-football, espn-team-schedule",
+      "asOf": "2026-11-20T11:37:46.738Z",
+      "note": "Providerquota voor deze run is bereikt; volgende geplande run probeert opnieuw.",
+      "providerAttempts": [
+        {
+          "provider": "canonical-history",
+          "status": "not_found",
+          "records": 0,
+          "durationMs": null,
+          "quota": {
+            "remaining": null,
+            "limit": null,
+            "resetAt": null
+          },
+          "result": "no_coverage"
+        },
+        {
+          "provider": "football-data-co-uk",
+          "status": "no_coverage",
+          "records": 0,
+          "durationMs": null,
+          "quota": {
+            "remaining": null,
+            "limit": null,
+            "resetAt": null
+          },
+          "result": "no_coverage"
+        },
+        {
+          "provider": "goal-api",
+          "status": "acceptance_gate_closed",
+          "records": 0,
+          "durationMs": null,
+          "quota": {
+            "remaining": null,
+            "limit": null,
+            "resetAt": null
+          },
+          "result": "acceptance_blocked"
+        },
+        {
+          "provider": "api-football",
+          "status": "rate_limited_locally",
+          "records": 0,
+          "errorCategory": null,
+          "error": null,
+          "durationMs": null,
+          "quota": {
+            "remaining": null,
+            "limit": null,
+            "resetAt": null
+          },
+          "result": "quota"
+        },
+        {
+          "provider": "espn-team-schedule",
+          "status": "not_found",
+          "records": 0,
+          "durationMs": null,
+          "quota": {
+            "remaining": null,
+            "limit": null,
+            "resetAt": null
+          },
+          "result": "no_coverage"
+        }
+      ],
+      "staticStatusUpdated": true
+    },
+    {
+      "matchId": "ss-espn-fra.1-401876381",
+      "date": "2026-12-05",
+      "league": "France - Ligue 1",
+      "homeTeam": "Paris FC",
+      "awayTeam": "Le Mans",
+      "status": "rate_limited_locally",
+      "availabilityStatus": "rate_limited_locally",
+      "source": "canonical-history, football-data-co-uk, goal-api, api-football, espn-team-schedule",
+      "asOf": "2026-11-20T11:37:48.985Z",
+      "note": "Providerquota voor deze run is bereikt; volgende geplande run probeert opnieuw.",
+      "providerAttempts": [
+        {
+          "provider": "canonical-history",
+          "status": "not_found",
+          "records": 0,
+          "durationMs": null,
+          "quota": {
+            "remaining": null,
+            "limit": null,
+            "resetAt": null
+          },
+          "result": "no_coverage"
+        },
+        {
+          "provider": "football-data-co-uk",
+          "status": "no_coverage",
+          "records": 0,
+          "durationMs": null,
+          "quota": {
+            "remaining": null,
+            "limit": null,
+            "resetAt": null
+          },
+          "result": "no_coverage"
+        },
+        {
+          "provider": "goal-api",
+          "status": "acceptance_gate_closed",
+          "records": 0,
+          "durationMs": null,
+          "quota": {
+            "remaining": null,
+            "limit": null,
+            "resetAt": null
+          },
+          "result": "acceptance_blocked"
+        },
+        {
+          "provider": "api-football",
+          "status": "rate_limited_locally",
+          "records": 0,
+          "errorCategory": null,
+          "error": null,
+          "durationMs": null,
+          "quota": {
+            "remaining": null,
+            "limit": null,
+            "resetAt": null
+          },
+          "result": "quota"
+        },
+        {
+          "provider": "espn-team-schedule",
+          "status": "not_found",
+          "records": 0,
+          "durationMs": null,
+          "quota": {
+            "remaining": null,
+            "limit": null,
+            "resetAt": null
+          },
+          "result": "no_coverage"
+        }
+      ],
+      "staticStatusUpdated": true
+    },
+    {
+      "matchId": "ss-espn-ger.2-401885036",
+      "date": "2026-12-05",
+      "league": "Germany - 2. Bundesliga",
+      "homeTeam": "Hannover 96",
+      "awayTeam": "Hertha Berlin",
+      "status": "rate_limited_locally",
+      "availabilityStatus": "rate_limited_locally",
+      "source": "canonical-history, football-data-co-uk, goal-api, api-football, espn-team-schedule",
+      "asOf": "2026-11-20T11:37:49.705Z",
+      "note": "Providerquota voor deze run is bereikt; volgende geplande run probeert opnieuw.",
+      "providerAttempts": [
+        {
+          "provider": "canonical-history",
+          "status": "not_found",
+          "records": 0,
+          "durationMs": null,
+          "quota": {
+            "remaining": null,
+            "limit": null,
+            "resetAt": null
+          },
+          "result": "no_coverage"
+        },
+        {
+          "provider": "football-data-co-uk",
+          "status": "no_coverage",
+          "records": 0,
+          "durationMs": null,
+          "quota": {
+            "remaining": null,
+            "limit": null,
+            "resetAt": null
+          },
+          "result": "no_coverage"
+        },
+        {
+          "provider": "goal-api",
+          "status": "acceptance_gate_closed",
+          "records": 0,
+          "durationMs": null,
+          "quota": {
+            "remaining": null,
+            "limit": null,
+            "resetAt": null
+          },
+          "result": "acceptance_blocked"
+        },
+        {
+          "provider": "api-football",
+          "status": "rate_limited_locally",
+          "records": 0,
+          "errorCategory": null,
+          "error": null,
+          "durationMs": null,
+          "quota": {
+            "remaining": null,
+            "limit": null,
+            "resetAt": null
+          },
+          "result": "quota"
+        },
+        {
+          "provider": "espn-team-schedule",
+          "status": "team_mapping_missing",
+          "durationMs": null,
+          "quota": {
+            "remaining": null,
+            "limit": null,
+            "resetAt": null
+          },
+          "result": "mapping_failed"
+        }
+      ],
+      "staticStatusUpdated": true
+    },
+    {
+      "matchId": "ss-espn-eng.2-401880121",
+      "date": "2026-12-05",
+      "league": "England - Championship",
+      "homeTeam": "Cardiff City",
+      "awayTeam": "Lincoln City",
+      "status": "rate_limited_locally",
+      "availabilityStatus": "rate_limited_locally",
+      "source": "canonical-history, football-data-co-uk, apifootball-com, goal-api, api-football, espn-team-schedule",
+      "asOf": "2026-11-20T11:37:53.193Z",
+      "note": "Providerquota voor deze run is bereikt; volgende geplande run probeert opnieuw.",
+      "providerAttempts": [
+        {
+          "provider": "canonical-history",
+          "status": "not_found",
+          "records": 0,
+          "durationMs": null,
+          "quota": {
+            "remaining": null,
+            "limit": null,
+            "resetAt": null
+          },
+          "result": "no_coverage"
+        },
+        {
+          "provider": "football-data-co-uk",
+          "status": "no_coverage",
+          "records": 0,
+          "durationMs": null,
+          "quota": {
+            "remaining": null,
+            "limit": null,
+            "resetAt": null
+          },
+          "result": "no_coverage"
+        },
+        {
+          "provider": "apifootball-com",
+          "status": "no_coverage",
+          "records": 0,
+          "durationMs": null,
+          "quota": {
+            "remaining": null,
+            "limit": null,
+            "resetAt": null
+          },
+          "result": "no_coverage"
+        },
+        {
+          "provider": "goal-api",
+          "status": "acceptance_gate_closed",
+          "records": 0,
+          "durationMs": null,
+          "quota": {
+            "remaining": null,
+            "limit": null,
+            "resetAt": null
+          },
+          "result": "acceptance_blocked"
+        },
+        {
+          "provider": "api-football",
+          "status": "rate_limited_locally",
+          "records": 0,
+          "errorCategory": null,
+          "error": null,
+          "durationMs": null,
+          "quota": {
+            "remaining": null,
+            "limit": null,
+            "resetAt": null
+          },
+          "result": "quota"
+        },
+        {
+          "provider": "espn-team-schedule",
+          "status": "not_found",
+          "records": 0,
+          "durationMs": null,
+          "quota": {
+            "remaining": null,
+            "limit": null,
+            "resetAt": null
+          },
+          "result": "no_coverage"
+        }
+      ],
+      "staticStatusUpdated": true
+    },
+    {
+      "matchId": "ss-espn-fra.2-401876674",
+      "date": "2026-12-05",
+      "league": "France - Ligue 2",
+      "homeTeam": "Saint-Étienne",
+      "awayTeam": "AS Nancy Lorraine",
+      "status": "rate_limited_locally",
+      "availabilityStatus": "rate_limited_locally",
+      "source": "canonical-history, football-data-co-uk, apifootball-com, goal-api, api-football, espn-team-schedule",
+      "asOf": "2026-11-20T11:38:02.248Z",
+      "note": "Providerquota voor deze run is bereikt; volgende geplande run probeert opnieuw.",
+      "providerAttempts": [
+        {
+          "provider": "canonical-history",
+          "status": "not_found",
+          "records": 0,
+          "durationMs": null,
+          "quota": {
+            "remaining": null,
+            "limit": null,
+            "resetAt": null
+          },
+          "result": "no_coverage"
+        },
+        {
+          "provider": "football-data-co-uk",
+          "status": "no_coverage",
+          "records": 0,
+          "durationMs": null,
+          "quota": {
+            "remaining": null,
+            "limit": null,
+            "resetAt": null
+          },
+          "result": "no_coverage"
+        },
+        {
+          "provider": "apifootball-com",
+          "status": "no_coverage",
+          "records": 0,
+          "durationMs": null,
+          "quota": {
+            "remaining": null,
+            "limit": null,
+            "resetAt": null
+          },
+          "result": "no_coverage"
+        },
+        {
+          "provider": "goal-api",
+          "status": "acceptance_gate_closed",
+          "records": 0,
+          "durationMs": null,
+          "quota": {
+            "remaining": null,
+            "limit": null,
+            "resetAt": null
+          },
+          "result": "acceptance_blocked"
+        },
+        {
+          "provider": "api-football",
+          "status": "rate_limited_locally",
+          "records": 0,
+          "errorCategory": null,
+          "error": null,
+          "durationMs": null,
+          "quota": {
+            "remaining": null,
+            "limit": null,
+            "resetAt": null
+          },
+          "result": "quota"
+        },
+        {
+          "provider": "espn-team-schedule",
+          "status": "not_found",
+          "records": 0,
+          "durationMs": null,
+          "quota": {
+            "remaining": null,
+            "limit": null,
+            "resetAt": null
+          },
+          "result": "no_coverage"
+        }
+      ],
+      "staticStatusUpdated": true
+    },
+    {
+      "matchId": "ss-espn-ger.1-401884714",
+      "date": "2026-12-05",
+      "league": "Germany - Bundesliga",
+      "homeTeam": "Eintracht Frankfurt",
+      "awayTeam": "Werder Bremen",
+      "status": "rate_limited_locally",
+      "availabilityStatus": "rate_limited_locally",
+      "source": "canonical-history, football-data-co-uk, goal-api, api-football, espn-team-schedule",
+      "asOf": "2026-11-20T11:38:03.213Z",
+      "note": "Providerquota voor deze run is bereikt; volgende geplande run probeert opnieuw.",
+      "providerAttempts": [
+        {
+          "provider": "canonical-history",
+          "status": "not_found",
+          "records": 0,
+          "durationMs": null,
+          "quota": {
+            "remaining": null,
+            "limit": null,
+            "resetAt": null
+          },
+          "result": "no_coverage"
+        },
+        {
+          "provider": "football-data-co-uk",
+          "status": "no_coverage",
+          "records": 0,
+          "durationMs": null,
+          "quota": {
+            "remaining": null,
+            "limit": null,
+            "resetAt": null
+          },
+          "result": "no_coverage"
+        },
+        {
+          "provider": "goal-api",
+          "status": "acceptance_gate_closed",
+          "records": 0,
+          "durationMs": null,
+          "quota": {
+            "remaining": null,
+            "limit": null,
+            "resetAt": null
+          },
+          "result": "acceptance_blocked"
+        },
+        {
+          "provider": "api-football",
+          "status": "rate_limited_locally",
+          "records": 0,
+          "errorCategory": null,
+          "error": null,
+          "durationMs": null,
+          "quota": {
+            "remaining": null,
+            "limit": null,
+            "resetAt": null
+          },
+          "result": "quota"
+        },
+        {
+          "provider": "espn-team-schedule",
+          "status": "not_found",
+          "records": 0,
+          "durationMs": null,
+          "quota": {
+            "remaining": null,
+            "limit": null,
+            "resetAt": null
+          },
+          "result": "no_coverage"
+        }
+      ],
+      "staticStatusUpdated": true
+    },
+    {
+      "matchId": "ss-espn-eng.1-401879211",
+      "date": "2026-12-05",
+      "league": "England - Premier League",
+      "homeTeam": "Leeds United",
+      "awayTeam": "Ipswich Town",
+      "status": "rate_limited_locally",
+      "availabilityStatus": "rate_limited_locally",
+      "source": "canonical-history, football-data-co-uk, goal-api, api-football, espn-team-schedule",
+      "asOf": "2026-11-20T11:38:04.204Z",
+      "note": "Providerquota voor deze run is bereikt; volgende geplande run probeert opnieuw.",
+      "providerAttempts": [
+        {
+          "provider": "canonical-history",
+          "status": "not_found",
+          "records": 0,
+          "durationMs": null,
+          "quota": {
+            "remaining": null,
+            "limit": null,
+            "resetAt": null
+          },
+          "result": "no_coverage"
+        },
+        {
+          "provider": "football-data-co-uk",
+          "status": "no_coverage",
+          "records": 0,
+          "durationMs": null,
+          "quota": {
+            "remaining": null,
+            "limit": null,
+            "resetAt": null
+          },
+          "result": "no_coverage"
+        },
+        {
+          "provider": "goal-api",
+          "status": "acceptance_gate_closed",
+          "records": 0,
+          "durationMs": null,
+          "quota": {
+            "remaining": null,
+            "limit": null,
+            "resetAt": null
+          },
+          "result": "acceptance_blocked"
+        },
+        {
+          "provider": "api-football",
+          "status": "rate_limited_locally",
+          "records": 0,
+          "errorCategory": null,
+          "error": null,
+          "durationMs": null,
+          "quota": {
+            "remaining": null,
+            "limit": null,
+            "resetAt": null
+          },
+          "result": "quota"
+        },
+        {
+          "provider": "espn-team-schedule",
+          "status": "not_found",
+          "records": 0,
+          "durationMs": null,
+          "quota": {
+            "remaining": null,
+            "limit": null,
+            "resetAt": null
+          },
+          "result": "no_coverage"
+        }
+      ],
+      "staticStatusUpdated": true
+    },
+    {
+      "matchId": "ss-espn-eng.2-401880117",
+      "date": "2026-12-05",
+      "league": "England - Championship",
+      "homeTeam": "Portsmouth",
+      "awayTeam": "West Bromwich Albion",
+      "status": "rate_limited_locally",
+      "availabilityStatus": "rate_limited_locally",
+      "source": "canonical-history, football-data-co-uk, apifootball-com, goal-api, api-football, espn-team-schedule",
+      "asOf": "2026-11-20T11:38:07.332Z",
+      "note": "Providerquota voor deze run is bereikt; volgende geplande run probeert opnieuw.",
+      "providerAttempts": [
+        {
+          "provider": "canonical-history",
+          "status": "not_found",
+          "records": 0,
+          "durationMs": null,
+          "quota": {
+            "remaining": null,
+            "limit": null,
+            "resetAt": null
+          },
+          "result": "no_coverage"
+        },
+        {
+          "provider": "football-data-co-uk",
+          "status": "no_coverage",
+          "records": 0,
+          "durationMs": null,
+          "quota": {
+            "remaining": null,
+            "limit": null,
+            "resetAt": null
+          },
+          "result": "no_coverage"
+        },
+        {
+          "provider": "apifootball-com",
+          "status": "no_coverage",
+          "records": 0,
+          "durationMs": null,
+          "quota": {
+            "remaining": null,
+            "limit": null,
+            "resetAt": null
+          },
+          "result": "no_coverage"
+        },
+        {
+          "provider": "goal-api",
+          "status": "acceptance_gate_closed",
+          "records": 0,
+          "durationMs": null,
+          "quota": {
+            "remaining": null,
+            "limit": null,
+            "resetAt": null
+          },
+          "result": "acceptance_blocked"
+        },
+        {
+          "provider": "api-football",
+          "status": "rate_limited_locally",
+          "records": 0,
+          "errorCategory": null,
+          "error": null,
+          "durationMs": null,
+          "quota": {
+            "remaining": null,
+            "limit": null,
+            "resetAt": null
+          },
+          "result": "quota"
+        },
+        {
+          "provider": "espn-team-schedule",
+          "status": "not_found",
+          "records": 0,
+          "durationMs": null,
+          "quota": {
+            "remaining": null,
+            "limit": null,
+            "resetAt": null
+          },
+          "result": "no_coverage"
+        }
+      ],
+      "staticStatusUpdated": true
+    },
+    {
+      "matchId": "ss-espn-eng.1-401879210",
+      "date": "2026-12-05",
+      "league": "England - Premier League",
+      "homeTeam": "Manchester United",
+      "awayTeam": "Coventry City",
+      "status": "rate_limited_locally",
+      "availabilityStatus": "rate_limited_locally",
+      "source": "canonical-history, football-data-co-uk, goal-api, api-football, espn-team-schedule",
+      "asOf": "2026-11-20T11:38:08.243Z",
+      "note": "Providerquota voor deze run is bereikt; volgende geplande run probeert opnieuw.",
+      "providerAttempts": [
+        {
+          "provider": "canonical-history",
+          "status": "not_found",
+          "records": 0,
+          "durationMs": null,
+          "quota": {
+            "remaining": null,
+            "limit": null,
+            "resetAt": null
+          },
+          "result": "no_coverage"
+        },
+        {
+          "provider": "football-data-co-uk",
+          "status": "no_coverage",
+          "records": 0,
+          "durationMs": null,
+          "quota": {
+            "remaining": null,
+            "limit": null,
+            "resetAt": null
+          },
+          "result": "no_coverage"
+        },
+        {
+          "provider": "goal-api",
+          "status": "acceptance_gate_closed",
+          "records": 0,
+          "durationMs": null,
+          "quota": {
+            "remaining": null,
+            "limit": null,
+            "resetAt": null
+          },
+          "result": "acceptance_blocked"
+        },
+        {
+          "provider": "api-football",
+          "status": "rate_limited_locally",
+          "records": 0,
+          "errorCategory": null,
+          "error": null,
+          "durationMs": null,
+          "quota": {
+            "remaining": null,
+            "limit": null,
+            "resetAt": null
+          },
+          "result": "quota"
+        },
+        {
+          "provider": "espn-team-schedule",
+          "status": "not_found",
+          "records": 0,
+          "durationMs": null,
+          "quota": {
+            "remaining": null,
+            "limit": null,
+            "resetAt": null
+          },
+          "result": "no_coverage"
+        }
+      ],
+      "staticStatusUpdated": true
+    },
+    {
+      "matchId": "ss-espn-eng.2-401880115",
+      "date": "2026-12-05",
+      "league": "England - Championship",
+      "homeTeam": "Stoke City",
+      "awayTeam": "Queens Park Rangers",
+      "status": "rate_limited_locally",
+      "availabilityStatus": "rate_limited_locally",
+      "source": "canonical-history, football-data-co-uk, apifootball-com, goal-api, api-football, espn-team-schedule",
+      "asOf": "2026-11-20T11:38:11.533Z",
+      "note": "Providerquota voor deze run is bereikt; volgende geplande run probeert opnieuw.",
+      "providerAttempts": [
+        {
+          "provider": "canonical-history",
+          "status": "not_found",
+          "records": 0,
+          "durationMs": null,
+          "quota": {
+            "remaining": null,
+            "limit": null,
+            "resetAt": null
+          },
+          "result": "no_coverage"
+        },
+        {
+          "provider": "football-data-co-uk",
+          "status": "no_coverage",
+          "records": 0,
+          "durationMs": null,
+          "quota": {
+            "remaining": null,
+            "limit": null,
+            "resetAt": null
+          },
+          "result": "no_coverage"
+        },
+        {
+          "provider": "apifootball-com",
+          "status": "no_coverage",
+          "records": 0,
+          "durationMs": null,
+          "quota": {
+            "remaining": null,
+            "limit": null,
+            "resetAt": null
+          },
+          "result": "no_coverage"
+        },
+        {
+          "provider": "goal-api",
+          "status": "acceptance_gate_closed",
+          "records": 0,
+          "durationMs": null,
+          "quota": {
+            "remaining": null,
+            "limit": null,
+            "resetAt": null
+          },
+          "result": "acceptance_blocked"
+        },
+        {
+          "provider": "api-football",
+          "status": "rate_limited_locally",
+          "records": 0,
+          "errorCategory": null,
+          "error": null,
+          "durationMs": null,
+          "quota": {
+            "remaining": null,
+            "limit": null,
+            "resetAt": null
+          },
+          "result": "quota"
+        },
+        {
+          "provider": "espn-team-schedule",
+          "status": "not_found",
+          "records": 0,
+          "durationMs": null,
+          "quota": {
+            "remaining": null,
+            "limit": null,
+            "resetAt": null
+          },
+          "result": "no_coverage"
+        }
+      ],
+      "staticStatusUpdated": true
+    },
+    {
+      "matchId": "ss-espn-eng.1-401878747",
+      "date": "2026-12-05",
+      "league": "England - Premier League",
+      "homeTeam": "Nottingham Forest",
+      "awayTeam": "Brighton & Hove Albion",
+      "status": "rate_limited_locally",
+      "availabilityStatus": "rate_limited_locally",
+      "source": "canonical-history, football-data-co-uk, goal-api, api-football, espn-team-schedule",
+      "asOf": "2026-11-20T11:38:12.457Z",
+      "note": "Providerquota voor deze run is bereikt; volgende geplande run probeert opnieuw.",
+      "providerAttempts": [
+        {
+          "provider": "canonical-history",
+          "status": "not_found",
+          "records": 0,
+          "durationMs": null,
+          "quota": {
+            "remaining": null,
+            "limit": null,
+            "resetAt": null
+          },
+          "result": "no_coverage"
+        },
+        {
+          "provider": "football-data-co-uk",
+          "status": "no_coverage",
+          "records": 0,
+          "durationMs": null,
+          "quota": {
+            "remaining": null,
+            "limit": null,
+            "resetAt": null
+          },
+          "result": "no_coverage"
+        },
+        {
+          "provider": "goal-api",
+          "status": "acceptance_gate_closed",
+          "records": 0,
+          "durationMs": null,
+          "quota": {
+            "remaining": null,
+            "limit": null,
+            "resetAt": null
+          },
+          "result": "acceptance_blocked"
+        },
+        {
+          "provider": "api-football",
+          "status": "rate_limited_locally",
+          "records": 0,
+          "errorCategory": null,
+          "error": null,
+          "durationMs": null,
+          "quota": {
+            "remaining": null,
+            "limit": null,
+            "resetAt": null
+          },
+          "result": "quota"
+        },
+        {
+          "provider": "espn-team-schedule",
+          "status": "not_found",
+          "records": 0,
+          "durationMs": null,
+          "quota": {
+            "remaining": null,
+            "limit": null,
+            "resetAt": null
+          },
+          "result": "no_coverage"
+        }
+      ],
+      "staticStatusUpdated": true
+    },
+    {
+      "matchId": "ss-espn-eng.2-401880113",
+      "date": "2026-12-05",
+      "league": "England - Championship",
+      "homeTeam": "Wolverhampton Wanderers",
+      "awayTeam": "Southampton",
+      "status": "rate_limited_locally",
+      "availabilityStatus": "rate_limited_locally",
+      "source": "canonical-history, football-data-co-uk, apifootball-com, goal-api, api-football, espn-team-schedule",
+      "asOf": "2026-11-20T11:38:15.458Z",
+      "note": "Providerquota voor deze run is bereikt; volgende geplande run probeert opnieuw.",
+      "providerAttempts": [
+        {
+          "provider": "canonical-history",
+          "status": "not_found",
+          "records": 0,
+          "durationMs": null,
+          "quota": {
+            "remaining": null,
+            "limit": null,
+            "resetAt": null
+          },
+          "result": "no_coverage"
+        },
+        {
+          "provider": "football-data-co-uk",
+          "status": "no_coverage",
+          "records": 0,
+          "durationMs": null,
+          "quota": {
+            "remaining": null,
+            "limit": null,
+            "resetAt": null
+          },
+          "result": "no_coverage"
+        },
+        {
+          "provider": "apifootball-com",
+          "status": "no_coverage",
+          "records": 0,
+          "durationMs": null,
+          "quota": {
+            "remaining": null,
+            "limit": null,
+            "resetAt": null
+          },
+          "result": "no_coverage"
+        },
+        {
+          "provider": "goal-api",
+          "status": "acceptance_gate_closed",
+          "records": 0,
+          "durationMs": null,
+          "quota": {
+            "remaining": null,
+            "limit": null,
+            "resetAt": null
+          },
+          "result": "acceptance_blocked"
+        },
+        {
+          "provider": "api-football",
+          "status": "rate_limited_locally",
+          "records": 0,
+          "errorCategory": null,
+          "error": null,
+          "durationMs": null,
+          "quota": {
+            "remaining": null,
+            "limit": null,
+            "resetAt": null
+          },
+          "result": "quota"
+        },
+        {
+          "provider": "espn-team-schedule",
+          "status": "not_found",
+          "records": 0,
+          "durationMs": null,
+          "quota": {
+            "remaining": null,
+            "limit": null,
+            "resetAt": null
+          },
+          "result": "no_coverage"
+        }
+      ],
+      "staticStatusUpdated": true
     }
   ],
   "errorSamples": [],
   "attemptLedger": {
-    "ss-espn-uefa.champions-401915397": {
-      "attempts": 15,
-      "checkedAt": "2026-10-20T14:20:35.373Z",
-      "status": "no_direct_history",
-      "result": "no_coverage",
-      "error": null,
-      "nextRetryAt": null,
-      "backoffHours": 0
-    },
-    "ss-espn-uefa.champions-401915401": {
-      "attempts": 15,
-      "checkedAt": "2026-10-20T14:20:35.373Z",
-      "status": "no_direct_history",
-      "result": "no_coverage",
-      "error": null,
-      "nextRetryAt": null,
-      "backoffHours": 0
-    },
-    "ss-espn-uefa.champions-401915400": {
-      "attempts": 15,
-      "checkedAt": "2026-10-20T14:20:35.373Z",
-      "status": "no_direct_history",
-      "result": "no_coverage",
-      "error": null,
-      "nextRetryAt": null,
-      "backoffHours": 0
-    },
-    "ss-espn-uefa.champions-401915395": {
-      "attempts": 14,
-      "checkedAt": "2026-10-20T23:54:08.928Z",
-      "status": "no_direct_history",
-      "result": "no_coverage",
-      "error": null,
-      "nextRetryAt": null,
-      "backoffHours": 0
-    },
-    "ss-espn-uefa.champions-401915396": {
-      "attempts": 14,
-      "checkedAt": "2026-10-20T23:54:08.928Z",
-      "status": "no_direct_history",
-      "result": "no_coverage",
-      "error": null,
-      "nextRetryAt": null,
-      "backoffHours": 0
-    },
-    "ss-espn-uefa.champions-401915394": {
-      "attempts": 14,
-      "checkedAt": "2026-10-20T23:54:08.928Z",
-      "status": "no_direct_history",
-      "result": "no_coverage",
-      "error": null,
-      "nextRetryAt": null,
-      "backoffHours": 0
-    },
-    "ss-espn-uefa.champions-401915312": {
-      "attempts": 14,
-      "checkedAt": "2026-10-20T23:54:08.928Z",
-      "status": "rate_limited_locally",
-      "result": "quota",
-      "error": null,
-      "nextRetryAt": "2026-10-21T23:54:08.928Z",
-      "backoffHours": 24
-    },
-    "ss-espn-uefa.champions-401915388": {
-      "attempts": 14,
-      "checkedAt": "2026-10-20T23:54:08.928Z",
-      "status": "rate_limited_locally",
-      "result": "quota",
-      "error": null,
-      "nextRetryAt": "2026-10-21T23:54:08.928Z",
-      "backoffHours": 24
-    },
-    "ss-espn-uefa.champions-401915390": {
-      "attempts": 14,
-      "checkedAt": "2026-10-20T23:54:08.928Z",
-      "status": "rate_limited_locally",
-      "result": "quota",
-      "error": null,
-      "nextRetryAt": "2026-10-21T23:54:08.928Z",
-      "backoffHours": 24
-    },
-    "ss-espn-uefa.champions-401915389": {
-      "attempts": 14,
-      "checkedAt": "2026-10-20T23:54:08.928Z",
-      "status": "rate_limited_locally",
-      "result": "quota",
-      "error": null,
-      "nextRetryAt": "2026-10-21T23:54:08.928Z",
-      "backoffHours": 24
-    },
-    "ss-espn-uefa.champions-401915313": {
-      "attempts": 14,
-      "checkedAt": "2026-10-20T23:54:08.928Z",
-      "status": "rate_limited_locally",
-      "result": "quota",
-      "error": null,
-      "nextRetryAt": "2026-10-21T23:54:08.928Z",
-      "backoffHours": 24
-    },
-    "ss-fotmob-6106281": {
-      "attempts": 14,
-      "checkedAt": "2026-10-20T23:54:08.928Z",
-      "status": "rate_limited_locally",
-      "result": "quota",
-      "error": null,
-      "nextRetryAt": "2026-10-21T23:54:08.928Z",
-      "backoffHours": 24
-    },
     "ss-espn-uefa.europa-401915548": {
       "attempts": 15,
       "checkedAt": "2026-10-22T01:58:36.575Z",
@@ -2854,8 +4358,8 @@
       "backoffHours": 0
     },
     "ss-espn-ger.2-401885049": {
-      "attempts": 20,
-      "checkedAt": "2026-11-18T20:33:14.278Z",
+      "attempts": 21,
+      "checkedAt": "2026-11-19T20:38:14.175Z",
       "status": "no_direct_history",
       "result": "no_coverage",
       "error": null,
@@ -2863,8 +4367,8 @@
       "backoffHours": 0
     },
     "ss-espn-fra.2-401876691": {
-      "attempts": 20,
-      "checkedAt": "2026-11-18T20:33:14.278Z",
+      "attempts": 21,
+      "checkedAt": "2026-11-19T20:38:14.175Z",
       "status": "no_direct_history",
       "result": "no_coverage",
       "error": null,
@@ -2872,8 +4376,8 @@
       "backoffHours": 0
     },
     "ss-espn-ned.2-401875846": {
-      "attempts": 20,
-      "checkedAt": "2026-11-18T20:33:14.278Z",
+      "attempts": 21,
+      "checkedAt": "2026-11-19T20:38:14.175Z",
       "status": "no_direct_history",
       "result": "no_coverage",
       "error": null,
@@ -2881,12 +4385,12 @@
       "backoffHours": 0
     },
     "ss-espn-fra.1-401876395": {
-      "attempts": 20,
-      "checkedAt": "2026-11-18T20:33:14.278Z",
+      "attempts": 21,
+      "checkedAt": "2026-11-19T20:38:14.175Z",
       "status": "rate_limited_locally",
       "result": "quota",
       "error": null,
-      "nextRetryAt": "2026-11-19T20:33:14.278Z",
+      "nextRetryAt": "2026-11-20T20:38:14.175Z",
       "backoffHours": 24
     },
     "ss-espn-ger.2-401885053": {
@@ -2899,21 +4403,21 @@
       "backoffHours": 0
     },
     "ss-espn-fra.2-401876687": {
-      "attempts": 20,
-      "checkedAt": "2026-11-18T20:33:14.278Z",
+      "attempts": 21,
+      "checkedAt": "2026-11-19T20:38:14.175Z",
       "status": "rate_limited_locally",
       "result": "quota",
       "error": null,
-      "nextRetryAt": "2026-11-19T20:33:14.278Z",
+      "nextRetryAt": "2026-11-20T20:38:14.175Z",
       "backoffHours": 24
     },
     "ss-espn-ned.2-401875845": {
-      "attempts": 20,
-      "checkedAt": "2026-11-18T20:33:14.278Z",
+      "attempts": 21,
+      "checkedAt": "2026-11-19T20:38:14.175Z",
       "status": "rate_limited_locally",
       "result": "quota",
       "error": null,
-      "nextRetryAt": "2026-11-19T20:33:14.278Z",
+      "nextRetryAt": "2026-11-20T20:38:14.175Z",
       "backoffHours": 24
     },
     "ss-espn-fra.2-401876690": {
@@ -2926,30 +4430,30 @@
       "backoffHours": 0
     },
     "ss-espn-ned.2-401875844": {
-      "attempts": 20,
-      "checkedAt": "2026-11-18T20:33:14.278Z",
+      "attempts": 21,
+      "checkedAt": "2026-11-19T20:38:14.175Z",
       "status": "rate_limited_locally",
       "result": "quota",
       "error": null,
-      "nextRetryAt": "2026-11-19T20:33:14.278Z",
+      "nextRetryAt": "2026-11-20T20:38:14.175Z",
       "backoffHours": 24
     },
     "ss-espn-fra.2-401876688": {
-      "attempts": 20,
-      "checkedAt": "2026-11-18T20:33:14.278Z",
+      "attempts": 21,
+      "checkedAt": "2026-11-19T20:38:14.175Z",
       "status": "rate_limited_locally",
       "result": "quota",
       "error": null,
-      "nextRetryAt": "2026-11-19T20:33:14.278Z",
+      "nextRetryAt": "2026-11-20T20:38:14.175Z",
       "backoffHours": 24
     },
     "ss-espn-ned.2-401875843": {
-      "attempts": 20,
-      "checkedAt": "2026-11-18T20:33:14.278Z",
+      "attempts": 21,
+      "checkedAt": "2026-11-19T20:38:14.175Z",
       "status": "rate_limited_locally",
       "result": "quota",
       "error": null,
-      "nextRetryAt": "2026-11-19T20:33:14.278Z",
+      "nextRetryAt": "2026-11-20T20:38:14.175Z",
       "backoffHours": 24
     },
     "ss-espn-fra.2-401876685": {
@@ -2962,57 +4466,57 @@
       "backoffHours": 0
     },
     "ss-espn-ned.2-401875842": {
-      "attempts": 20,
-      "checkedAt": "2026-11-18T20:33:14.278Z",
+      "attempts": 21,
+      "checkedAt": "2026-11-19T20:38:14.175Z",
       "status": "rate_limited_locally",
       "result": "quota",
       "error": null,
-      "nextRetryAt": "2026-11-19T20:33:14.278Z",
+      "nextRetryAt": "2026-11-20T20:38:14.175Z",
       "backoffHours": 24
     },
     "ss-espn-ned.2-401875841": {
-      "attempts": 20,
-      "checkedAt": "2026-11-18T20:33:14.278Z",
+      "attempts": 21,
+      "checkedAt": "2026-11-19T20:38:14.175Z",
       "status": "rate_limited_locally",
       "result": "quota",
       "error": null,
-      "nextRetryAt": "2026-11-19T20:33:14.278Z",
+      "nextRetryAt": "2026-11-20T20:38:14.175Z",
       "backoffHours": 24
     },
     "ss-espn-ned.2-401875840": {
-      "attempts": 20,
-      "checkedAt": "2026-11-18T20:33:14.278Z",
+      "attempts": 21,
+      "checkedAt": "2026-11-19T20:38:14.175Z",
       "status": "rate_limited_locally",
       "result": "quota",
       "error": null,
-      "nextRetryAt": "2026-11-19T20:33:14.278Z",
+      "nextRetryAt": "2026-11-20T20:38:14.175Z",
       "backoffHours": 24
     },
     "ss-espn-ned.2-401875839": {
-      "attempts": 20,
-      "checkedAt": "2026-11-18T20:33:14.278Z",
+      "attempts": 21,
+      "checkedAt": "2026-11-19T20:38:14.175Z",
       "status": "rate_limited_locally",
       "result": "quota",
       "error": null,
-      "nextRetryAt": "2026-11-19T20:33:14.278Z",
+      "nextRetryAt": "2026-11-20T20:38:14.175Z",
       "backoffHours": 24
     },
     "ss-espn-ned.2-401875838": {
-      "attempts": 20,
-      "checkedAt": "2026-11-18T20:33:14.278Z",
+      "attempts": 21,
+      "checkedAt": "2026-11-19T20:38:14.175Z",
       "status": "rate_limited_locally",
       "result": "quota",
       "error": null,
-      "nextRetryAt": "2026-11-19T20:33:14.278Z",
+      "nextRetryAt": "2026-11-20T20:38:14.175Z",
       "backoffHours": 24
     },
     "ss-espn-ger.2-401885051": {
-      "attempts": 20,
-      "checkedAt": "2026-11-18T20:33:14.278Z",
+      "attempts": 21,
+      "checkedAt": "2026-11-19T20:38:14.175Z",
       "status": "rate_limited_locally",
       "result": "quota",
       "error": null,
-      "nextRetryAt": "2026-11-19T20:33:14.278Z",
+      "nextRetryAt": "2026-11-20T20:38:14.175Z",
       "backoffHours": 24
     },
     "ss-espn-eng.1-401879233": {
@@ -3034,30 +4538,30 @@
       "backoffHours": 24
     },
     "ss-espn-ger.1-401884735": {
-      "attempts": 20,
-      "checkedAt": "2026-11-18T20:33:14.278Z",
+      "attempts": 21,
+      "checkedAt": "2026-11-19T20:38:14.175Z",
       "status": "rate_limited_locally",
       "result": "quota",
       "error": null,
-      "nextRetryAt": "2026-11-19T20:33:14.278Z",
+      "nextRetryAt": "2026-11-20T20:38:14.175Z",
       "backoffHours": 24
     },
     "ss-espn-eng.2-401880160": {
-      "attempts": 19,
-      "checkedAt": "2026-11-18T20:33:14.278Z",
+      "attempts": 20,
+      "checkedAt": "2026-11-19T20:38:14.175Z",
       "status": "rate_limited_locally",
       "result": "quota",
       "error": null,
-      "nextRetryAt": "2026-11-19T20:33:14.278Z",
+      "nextRetryAt": "2026-11-20T20:38:14.175Z",
       "backoffHours": 24
     },
     "ss-espn-ned.2-401875837": {
-      "attempts": 19,
-      "checkedAt": "2026-11-18T20:33:14.278Z",
+      "attempts": 20,
+      "checkedAt": "2026-11-19T20:38:14.175Z",
       "status": "rate_limited_locally",
       "result": "quota",
       "error": null,
-      "nextRetryAt": "2026-11-19T20:33:14.278Z",
+      "nextRetryAt": "2026-11-20T20:38:14.175Z",
       "backoffHours": 24
     },
     "ss-espn-ned.1-401875541": {
@@ -3088,21 +4592,21 @@
       "backoffHours": 0
     },
     "ss-espn-ger.1-401884734": {
-      "attempts": 18,
-      "checkedAt": "2026-11-18T20:33:14.278Z",
+      "attempts": 19,
+      "checkedAt": "2026-11-19T20:38:14.175Z",
       "status": "rate_limited_locally",
       "result": "quota",
       "error": null,
-      "nextRetryAt": "2026-11-19T20:33:14.278Z",
+      "nextRetryAt": "2026-11-20T20:38:14.175Z",
       "backoffHours": 24
     },
     "ss-espn-eng.2-401880158": {
-      "attempts": 18,
-      "checkedAt": "2026-11-18T20:33:14.278Z",
+      "attempts": 19,
+      "checkedAt": "2026-11-19T20:38:14.175Z",
       "status": "rate_limited_locally",
       "result": "quota",
       "error": null,
-      "nextRetryAt": "2026-11-19T20:33:14.278Z",
+      "nextRetryAt": "2026-11-20T20:38:14.175Z",
       "backoffHours": 24
     },
     "ss-espn-eng.1-401878756": {
@@ -3133,21 +4637,21 @@
       "backoffHours": 0
     },
     "ss-espn-ger.2-401885056": {
-      "attempts": 19,
-      "checkedAt": "2026-11-18T20:33:14.278Z",
+      "attempts": 20,
+      "checkedAt": "2026-11-19T20:38:14.175Z",
       "status": "rate_limited_locally",
       "result": "quota",
       "error": null,
-      "nextRetryAt": "2026-11-19T20:33:14.278Z",
+      "nextRetryAt": "2026-11-20T20:38:14.175Z",
       "backoffHours": 24
     },
     "ss-espn-ger.1-401884728": {
-      "attempts": 19,
-      "checkedAt": "2026-11-18T20:33:14.278Z",
+      "attempts": 20,
+      "checkedAt": "2026-11-19T20:38:14.175Z",
       "status": "rate_limited_locally",
       "result": "quota",
       "error": null,
-      "nextRetryAt": "2026-11-19T20:33:14.278Z",
+      "nextRetryAt": "2026-11-20T20:38:14.175Z",
       "backoffHours": 24
     },
     "ss-espn-eng.2-401880157": {
@@ -3169,21 +4673,21 @@
       "backoffHours": 24
     },
     "ss-espn-fra.1-401876399": {
-      "attempts": 19,
-      "checkedAt": "2026-11-18T20:33:14.278Z",
+      "attempts": 20,
+      "checkedAt": "2026-11-19T20:38:14.175Z",
       "status": "rate_limited_locally",
       "result": "quota",
       "error": null,
-      "nextRetryAt": "2026-11-19T20:33:14.278Z",
+      "nextRetryAt": "2026-11-20T20:38:14.175Z",
       "backoffHours": 24
     },
     "ss-espn-ned.1-401875543": {
-      "attempts": 19,
-      "checkedAt": "2026-11-18T20:33:14.278Z",
+      "attempts": 20,
+      "checkedAt": "2026-11-19T20:38:14.175Z",
       "status": "rate_limited_locally",
       "result": "quota",
       "error": null,
-      "nextRetryAt": "2026-11-19T20:33:14.278Z",
+      "nextRetryAt": "2026-11-20T20:38:14.175Z",
       "backoffHours": 24
     },
     "ss-espn-fra.2-401876684": {
@@ -3205,12 +4709,12 @@
       "backoffHours": 0
     },
     "ss-espn-eng.1-401879235": {
-      "attempts": 19,
-      "checkedAt": "2026-11-18T20:33:14.278Z",
+      "attempts": 20,
+      "checkedAt": "2026-11-19T20:38:14.175Z",
       "status": "rate_limited_locally",
       "result": "quota",
       "error": null,
-      "nextRetryAt": "2026-11-19T20:33:14.278Z",
+      "nextRetryAt": "2026-11-20T20:38:14.175Z",
       "backoffHours": 24
     },
     "ss-espn-fra.1-401876403": {
@@ -3232,12 +4736,12 @@
       "backoffHours": 0
     },
     "ss-espn-ger.2-401885055": {
-      "attempts": 19,
-      "checkedAt": "2026-11-18T20:33:14.278Z",
+      "attempts": 20,
+      "checkedAt": "2026-11-19T20:38:14.175Z",
       "status": "rate_limited_locally",
       "result": "quota",
       "error": null,
-      "nextRetryAt": "2026-11-19T20:33:14.278Z",
+      "nextRetryAt": "2026-11-20T20:38:14.175Z",
       "backoffHours": 24
     },
     "ss-espn-ger.1-401884729": {
@@ -3277,12 +4781,12 @@
       "backoffHours": 0
     },
     "ss-espn-ned.1-401875539": {
-      "attempts": 19,
-      "checkedAt": "2026-11-18T20:33:14.278Z",
+      "attempts": 20,
+      "checkedAt": "2026-11-19T20:38:14.175Z",
       "status": "rate_limited_locally",
       "result": "quota",
       "error": null,
-      "nextRetryAt": "2026-11-19T20:33:14.278Z",
+      "nextRetryAt": "2026-11-20T20:38:14.175Z",
       "backoffHours": 24
     },
     "ss-espn-eng.2-401880151": {
@@ -3295,21 +4799,21 @@
       "backoffHours": 0
     },
     "ss-espn-eng.2-401880150": {
-      "attempts": 19,
-      "checkedAt": "2026-11-18T20:33:14.278Z",
+      "attempts": 20,
+      "checkedAt": "2026-11-19T20:38:14.175Z",
       "status": "rate_limited_locally",
       "result": "quota",
       "error": null,
-      "nextRetryAt": "2026-11-19T20:33:14.278Z",
+      "nextRetryAt": "2026-11-20T20:38:14.175Z",
       "backoffHours": 24
     },
     "ss-espn-eng.2-401880149": {
-      "attempts": 19,
-      "checkedAt": "2026-11-18T20:33:14.278Z",
+      "attempts": 20,
+      "checkedAt": "2026-11-19T20:38:14.175Z",
       "status": "rate_limited_locally",
       "result": "quota",
       "error": null,
-      "nextRetryAt": "2026-11-19T20:33:14.278Z",
+      "nextRetryAt": "2026-11-20T20:38:14.175Z",
       "backoffHours": 24
     },
     "ss-espn-eng.2-401880159": {
@@ -3322,66 +4826,66 @@
       "backoffHours": 24
     },
     "ss-espn-ger.2-401885048": {
-      "attempts": 18,
-      "checkedAt": "2026-11-18T20:33:14.278Z",
+      "attempts": 19,
+      "checkedAt": "2026-11-19T20:38:14.175Z",
       "status": "rate_limited_locally",
       "result": "quota",
       "error": null,
-      "nextRetryAt": "2026-11-19T20:33:14.278Z",
+      "nextRetryAt": "2026-11-20T20:38:14.175Z",
       "backoffHours": 24
     },
     "ss-espn-ned.1-401875547": {
-      "attempts": 18,
-      "checkedAt": "2026-11-18T20:33:14.278Z",
+      "attempts": 19,
+      "checkedAt": "2026-11-19T20:38:14.175Z",
       "status": "rate_limited_locally",
       "result": "quota",
       "error": null,
-      "nextRetryAt": "2026-11-19T20:33:14.278Z",
+      "nextRetryAt": "2026-11-20T20:38:14.175Z",
       "backoffHours": 24
     },
     "ss-espn-eng.1-401879234": {
-      "attempts": 18,
-      "checkedAt": "2026-11-18T20:33:14.278Z",
+      "attempts": 19,
+      "checkedAt": "2026-11-19T20:38:14.175Z",
       "status": "rate_limited_locally",
       "result": "quota",
       "error": null,
-      "nextRetryAt": "2026-11-19T20:33:14.278Z",
+      "nextRetryAt": "2026-11-20T20:38:14.175Z",
       "backoffHours": 24
     },
     "ss-espn-fra.1-401876400": {
-      "attempts": 18,
-      "checkedAt": "2026-11-18T20:33:14.278Z",
+      "attempts": 19,
+      "checkedAt": "2026-11-19T20:38:14.175Z",
       "status": "rate_limited_locally",
       "result": "quota",
       "error": null,
-      "nextRetryAt": "2026-11-19T20:33:14.278Z",
+      "nextRetryAt": "2026-11-20T20:38:14.175Z",
       "backoffHours": 24
     },
     "ss-espn-ger.2-401885050": {
-      "attempts": 18,
-      "checkedAt": "2026-11-18T20:33:14.278Z",
+      "attempts": 19,
+      "checkedAt": "2026-11-19T20:38:14.175Z",
       "status": "rate_limited_locally",
       "result": "quota",
       "error": null,
-      "nextRetryAt": "2026-11-19T20:33:14.278Z",
+      "nextRetryAt": "2026-11-20T20:38:14.175Z",
       "backoffHours": 24
     },
     "ss-espn-ned.1-401875542": {
-      "attempts": 18,
-      "checkedAt": "2026-11-18T20:33:14.278Z",
+      "attempts": 19,
+      "checkedAt": "2026-11-19T20:38:14.175Z",
       "status": "rate_limited_locally",
       "result": "quota",
       "error": null,
-      "nextRetryAt": "2026-11-19T20:33:14.278Z",
+      "nextRetryAt": "2026-11-20T20:38:14.175Z",
       "backoffHours": 24
     },
     "ss-espn-eng.1-401878755": {
-      "attempts": 18,
-      "checkedAt": "2026-11-18T20:33:14.278Z",
+      "attempts": 19,
+      "checkedAt": "2026-11-19T20:38:14.175Z",
       "status": "rate_limited_locally",
       "result": "quota",
       "error": null,
-      "nextRetryAt": "2026-11-19T20:33:14.278Z",
+      "nextRetryAt": "2026-11-20T20:38:14.175Z",
       "backoffHours": 24
     },
     "ss-tsdb-Germany - Bundesliga-2508411": {
@@ -3394,75 +4898,75 @@
       "backoffHours": 24
     },
     "ss-espn-ned.2-401875836": {
-      "attempts": 18,
-      "checkedAt": "2026-11-18T20:33:14.278Z",
+      "attempts": 19,
+      "checkedAt": "2026-11-19T20:38:14.175Z",
       "status": "rate_limited_locally",
       "result": "quota",
       "error": null,
-      "nextRetryAt": "2026-11-19T20:33:14.278Z",
+      "nextRetryAt": "2026-11-20T20:38:14.175Z",
       "backoffHours": 24
     },
     "ss-espn-fra.2-401876683": {
-      "attempts": 18,
-      "checkedAt": "2026-11-18T20:33:14.278Z",
+      "attempts": 19,
+      "checkedAt": "2026-11-19T20:38:14.175Z",
       "status": "rate_limited_locally",
       "result": "quota",
       "error": null,
-      "nextRetryAt": "2026-11-19T20:33:14.278Z",
+      "nextRetryAt": "2026-11-20T20:38:14.175Z",
       "backoffHours": 24
     },
     "ss-espn-ned.2-401875835": {
-      "attempts": 18,
-      "checkedAt": "2026-11-18T20:33:14.278Z",
+      "attempts": 19,
+      "checkedAt": "2026-11-19T20:38:14.175Z",
       "status": "rate_limited_locally",
       "result": "quota",
       "error": null,
-      "nextRetryAt": "2026-11-19T20:33:14.278Z",
+      "nextRetryAt": "2026-11-20T20:38:14.175Z",
       "backoffHours": 24
     },
     "ss-espn-uefa.champions-401915380": {
-      "attempts": 17,
-      "checkedAt": "2026-11-18T20:33:14.278Z",
+      "attempts": 18,
+      "checkedAt": "2026-11-19T20:38:14.175Z",
       "status": "rate_limited_locally",
       "result": "quota",
       "error": null,
-      "nextRetryAt": "2026-11-19T20:33:14.278Z",
+      "nextRetryAt": "2026-11-20T20:38:14.175Z",
       "backoffHours": 24
     },
     "ss-espn-eng.2-401880147": {
-      "attempts": 17,
-      "checkedAt": "2026-11-18T20:33:14.278Z",
+      "attempts": 18,
+      "checkedAt": "2026-11-19T20:38:14.175Z",
       "status": "rate_limited_locally",
       "result": "quota",
       "error": null,
-      "nextRetryAt": "2026-11-19T20:33:14.278Z",
+      "nextRetryAt": "2026-11-20T20:38:14.175Z",
       "backoffHours": 24
     },
     "ss-espn-uefa.champions-401915300": {
-      "attempts": 17,
-      "checkedAt": "2026-11-18T20:33:14.278Z",
+      "attempts": 18,
+      "checkedAt": "2026-11-19T20:38:14.175Z",
       "status": "rate_limited_locally",
       "result": "quota",
       "error": null,
-      "nextRetryAt": "2026-11-19T20:33:14.278Z",
+      "nextRetryAt": "2026-11-20T20:38:14.175Z",
       "backoffHours": 24
     },
     "ss-espn-eng.2-401880146": {
-      "attempts": 18,
-      "checkedAt": "2026-11-18T20:33:14.278Z",
+      "attempts": 19,
+      "checkedAt": "2026-11-19T20:38:14.175Z",
       "status": "rate_limited_locally",
       "result": "quota",
       "error": null,
-      "nextRetryAt": "2026-11-19T20:33:14.278Z",
+      "nextRetryAt": "2026-11-20T20:38:14.175Z",
       "backoffHours": 24
     },
     "ss-fotmob-6106317": {
-      "attempts": 18,
-      "checkedAt": "2026-11-18T20:33:14.278Z",
+      "attempts": 19,
+      "checkedAt": "2026-11-19T20:38:14.175Z",
       "status": "rate_limited_locally",
       "result": "quota",
       "error": null,
-      "nextRetryAt": "2026-11-19T20:33:14.278Z",
+      "nextRetryAt": "2026-11-20T20:38:14.175Z",
       "backoffHours": 24
     },
     "ss-espn-eng.2-401880145": {
@@ -3475,53 +4979,53 @@
       "backoffHours": 24
     },
     "ss-espn-uefa.champions-401915296": {
-      "attempts": 18,
-      "checkedAt": "2026-11-18T20:33:14.278Z",
+      "attempts": 19,
+      "checkedAt": "2026-11-19T20:38:14.175Z",
       "status": "rate_limited_locally",
       "result": "quota",
       "error": null,
-      "nextRetryAt": "2026-11-19T20:33:14.278Z",
+      "nextRetryAt": "2026-11-20T20:38:14.175Z",
       "backoffHours": 24
     },
     "ss-espn-eng.2-401880144": {
-      "attempts": 18,
-      "checkedAt": "2026-11-18T20:33:14.278Z",
+      "attempts": 19,
+      "checkedAt": "2026-11-19T20:38:14.175Z",
       "status": "rate_limited_locally",
       "result": "quota",
       "error": null,
-      "nextRetryAt": "2026-11-19T20:33:14.278Z",
+      "nextRetryAt": "2026-11-20T20:38:14.175Z",
       "backoffHours": 24
     },
     "ss-espn-uefa.champions-401915294": {
-      "attempts": 18,
-      "checkedAt": "2026-11-18T20:33:14.278Z",
+      "attempts": 19,
+      "checkedAt": "2026-11-19T20:38:14.175Z",
       "status": "rate_limited_locally",
       "result": "quota",
       "error": null,
-      "nextRetryAt": "2026-11-19T20:33:14.278Z",
+      "nextRetryAt": "2026-11-20T20:38:14.175Z",
       "backoffHours": 24
     },
     "ss-espn-eng.2-401880141": {
-      "attempts": 18,
-      "checkedAt": "2026-11-18T20:33:14.278Z",
+      "attempts": 19,
+      "checkedAt": "2026-11-19T20:38:14.175Z",
       "status": "rate_limited_locally",
       "result": "quota",
       "error": null,
-      "nextRetryAt": "2026-11-19T20:33:14.278Z",
+      "nextRetryAt": "2026-11-20T20:38:14.175Z",
       "backoffHours": 24
     },
     "ss-espn-uefa.champions-401915379": {
-      "attempts": 18,
-      "checkedAt": "2026-11-18T20:33:14.278Z",
+      "attempts": 19,
+      "checkedAt": "2026-11-19T20:38:14.175Z",
       "status": "rate_limited_locally",
       "result": "quota",
       "error": null,
-      "nextRetryAt": "2026-11-19T20:33:14.278Z",
+      "nextRetryAt": "2026-11-20T20:38:14.175Z",
       "backoffHours": 24
     },
     "ss-espn-uefa.champions-401915299": {
-      "attempts": 18,
-      "checkedAt": "2026-11-19T02:36:43.196Z",
+      "attempts": 19,
+      "checkedAt": "2026-11-20T07:23:51.872Z",
       "status": "no_direct_history",
       "result": "no_coverage",
       "error": null,
@@ -3529,8 +5033,8 @@
       "backoffHours": 0
     },
     "ss-espn-uefa.champions-401915298": {
-      "attempts": 18,
-      "checkedAt": "2026-11-19T02:36:43.196Z",
+      "attempts": 19,
+      "checkedAt": "2026-11-20T07:23:51.872Z",
       "status": "no_direct_history",
       "result": "no_coverage",
       "error": null,
@@ -3538,8 +5042,8 @@
       "backoffHours": 0
     },
     "ss-espn-uefa.champions-401915297": {
-      "attempts": 18,
-      "checkedAt": "2026-11-19T02:36:43.196Z",
+      "attempts": 19,
+      "checkedAt": "2026-11-20T07:23:51.872Z",
       "status": "no_direct_history",
       "result": "no_coverage",
       "error": null,
@@ -3547,8 +5051,8 @@
       "backoffHours": 0
     },
     "ss-espn-uefa.champions-401915378": {
-      "attempts": 16,
-      "checkedAt": "2026-11-18T11:40:48.526Z",
+      "attempts": 17,
+      "checkedAt": "2026-11-19T17:29:41.508Z",
       "status": "no_direct_history",
       "result": "no_coverage",
       "error": null,
@@ -3556,8 +5060,8 @@
       "backoffHours": 0
     },
     "ss-espn-eng.2-401880140": {
-      "attempts": 16,
-      "checkedAt": "2026-11-18T11:40:48.526Z",
+      "attempts": 17,
+      "checkedAt": "2026-11-19T17:29:41.508Z",
       "status": "no_direct_history",
       "result": "no_coverage",
       "error": null,
@@ -3565,8 +5069,8 @@
       "backoffHours": 0
     },
     "ss-espn-uefa.champions-401915293": {
-      "attempts": 16,
-      "checkedAt": "2026-11-18T11:40:48.526Z",
+      "attempts": 17,
+      "checkedAt": "2026-11-19T17:29:41.508Z",
       "status": "no_direct_history",
       "result": "no_coverage",
       "error": null,
@@ -3583,12 +5087,12 @@
       "backoffHours": 8
     },
     "ss-espn-uefa.champions-401915291": {
-      "attempts": 16,
-      "checkedAt": "2026-11-18T11:40:48.526Z",
+      "attempts": 17,
+      "checkedAt": "2026-11-19T17:29:41.508Z",
       "status": "rate_limited_locally",
       "result": "quota",
       "error": null,
-      "nextRetryAt": "2026-11-19T11:40:48.526Z",
+      "nextRetryAt": "2026-11-20T17:29:41.508Z",
       "backoffHours": 24
     },
     "ss-espn-eng.2-401880137": {
@@ -3601,12 +5105,12 @@
       "backoffHours": 8
     },
     "ss-espn-uefa.champions-401915292": {
-      "attempts": 16,
-      "checkedAt": "2026-11-18T11:40:48.526Z",
+      "attempts": 17,
+      "checkedAt": "2026-11-19T17:29:41.508Z",
       "status": "rate_limited_locally",
       "result": "quota",
       "error": null,
-      "nextRetryAt": "2026-11-19T11:40:48.526Z",
+      "nextRetryAt": "2026-11-20T17:29:41.508Z",
       "backoffHours": 24
     },
     "ss-espn-eng.2-401880138": {
@@ -3619,489 +5123,489 @@
       "backoffHours": 8
     },
     "ss-espn-uefa.champions-401915376": {
-      "attempts": 16,
-      "checkedAt": "2026-11-18T11:40:48.526Z",
+      "attempts": 17,
+      "checkedAt": "2026-11-19T17:29:41.508Z",
       "status": "rate_limited_locally",
       "result": "quota",
       "error": null,
-      "nextRetryAt": "2026-11-19T11:40:48.526Z",
+      "nextRetryAt": "2026-11-20T17:29:41.508Z",
       "backoffHours": 24
     },
     "ss-espn-uefa.champions-401915377": {
-      "attempts": 16,
-      "checkedAt": "2026-11-18T11:40:48.526Z",
+      "attempts": 17,
+      "checkedAt": "2026-11-19T17:29:41.508Z",
       "status": "rate_limited_locally",
       "result": "quota",
       "error": null,
-      "nextRetryAt": "2026-11-19T11:40:48.526Z",
+      "nextRetryAt": "2026-11-20T17:29:41.508Z",
       "backoffHours": 24
     },
     "ss-espn-uefa.champions-401915374": {
-      "attempts": 16,
-      "checkedAt": "2026-11-18T11:40:48.526Z",
+      "attempts": 17,
+      "checkedAt": "2026-11-19T17:29:41.508Z",
       "status": "rate_limited_locally",
       "result": "quota",
       "error": null,
-      "nextRetryAt": "2026-11-19T11:40:48.526Z",
+      "nextRetryAt": "2026-11-20T17:29:41.508Z",
       "backoffHours": 24
     },
     "ss-espn-uefa.champions-401915375": {
-      "attempts": 16,
-      "checkedAt": "2026-11-18T11:40:48.526Z",
+      "attempts": 17,
+      "checkedAt": "2026-11-19T17:29:41.508Z",
       "status": "rate_limited_locally",
       "result": "quota",
       "error": null,
-      "nextRetryAt": "2026-11-19T11:40:48.526Z",
+      "nextRetryAt": "2026-11-20T17:29:41.508Z",
       "backoffHours": 24
     },
     "ss-espn-uefa.champions-401915373": {
-      "attempts": 16,
-      "checkedAt": "2026-11-18T11:40:48.526Z",
+      "attempts": 17,
+      "checkedAt": "2026-11-19T17:29:41.508Z",
       "status": "rate_limited_locally",
       "result": "quota",
       "error": null,
-      "nextRetryAt": "2026-11-19T11:40:48.526Z",
+      "nextRetryAt": "2026-11-20T17:29:41.508Z",
       "backoffHours": 24
     },
     "ss-espn-uefa.europa.conf-401915816": {
-      "attempts": 13,
-      "checkedAt": "2026-11-18T11:40:48.526Z",
+      "attempts": 14,
+      "checkedAt": "2026-11-19T17:29:41.508Z",
       "status": "rate_limited_locally",
       "result": "quota",
       "error": null,
-      "nextRetryAt": "2026-11-19T11:40:48.526Z",
+      "nextRetryAt": "2026-11-20T17:29:41.508Z",
       "backoffHours": 24
     },
     "ss-bbc-2026-11-26-besiktas-hapoel be er sheva": {
-      "attempts": 13,
-      "checkedAt": "2026-11-18T11:40:48.526Z",
+      "attempts": 14,
+      "checkedAt": "2026-11-19T17:29:41.508Z",
       "status": "rate_limited_locally",
       "result": "quota",
       "error": null,
-      "nextRetryAt": "2026-11-19T11:40:48.526Z",
+      "nextRetryAt": "2026-11-20T17:29:41.508Z",
       "backoffHours": 24
     },
     "ss-espn-uefa.europa.conf-401915815": {
-      "attempts": 13,
-      "checkedAt": "2026-11-18T11:40:48.526Z",
+      "attempts": 14,
+      "checkedAt": "2026-11-19T17:29:41.508Z",
       "status": "rate_limited_locally",
       "result": "quota",
       "error": null,
-      "nextRetryAt": "2026-11-19T11:40:48.526Z",
+      "nextRetryAt": "2026-11-20T17:29:41.508Z",
       "backoffHours": 24
     },
     "ss-espn-uefa.europa-401915506": {
-      "attempts": 14,
-      "checkedAt": "2026-11-19T02:36:43.196Z",
+      "attempts": 15,
+      "checkedAt": "2026-11-20T07:23:51.872Z",
       "status": "rate_limited_locally",
       "result": "quota",
       "error": null,
-      "nextRetryAt": "2026-11-20T02:36:43.196Z",
+      "nextRetryAt": "2026-11-21T07:23:51.872Z",
       "backoffHours": 24
     },
     "ss-espn-uefa.europa.conf-401915814": {
-      "attempts": 14,
-      "checkedAt": "2026-11-19T02:36:43.196Z",
+      "attempts": 15,
+      "checkedAt": "2026-11-20T07:23:51.872Z",
       "status": "rate_limited_locally",
       "result": "quota",
       "error": null,
-      "nextRetryAt": "2026-11-20T02:36:43.196Z",
+      "nextRetryAt": "2026-11-21T07:23:51.872Z",
       "backoffHours": 24
     },
     "ss-espn-uefa.europa-401915519": {
-      "attempts": 15,
-      "checkedAt": "2026-11-19T02:36:43.196Z",
+      "attempts": 16,
+      "checkedAt": "2026-11-20T07:23:51.872Z",
       "status": "rate_limited_locally",
       "result": "quota",
       "error": null,
-      "nextRetryAt": "2026-11-20T02:36:43.196Z",
+      "nextRetryAt": "2026-11-21T07:23:51.872Z",
       "backoffHours": 24
     },
     "ss-espn-uefa.europa.conf-401915810": {
-      "attempts": 14,
-      "checkedAt": "2026-11-19T02:36:43.196Z",
+      "attempts": 15,
+      "checkedAt": "2026-11-20T07:23:51.872Z",
       "status": "rate_limited_locally",
       "result": "quota",
       "error": null,
-      "nextRetryAt": "2026-11-20T02:36:43.196Z",
+      "nextRetryAt": "2026-11-21T07:23:51.872Z",
       "backoffHours": 24
     },
     "ss-espn-uefa.europa-401915517": {
-      "attempts": 15,
-      "checkedAt": "2026-11-18T11:40:48.526Z",
+      "attempts": 16,
+      "checkedAt": "2026-11-19T17:29:41.508Z",
       "status": "rate_limited_locally",
       "result": "quota",
       "error": null,
-      "nextRetryAt": "2026-11-19T11:40:48.526Z",
+      "nextRetryAt": "2026-11-20T17:29:41.508Z",
       "backoffHours": 24
     },
     "ss-espn-uefa.europa.conf-401915811": {
-      "attempts": 15,
-      "checkedAt": "2026-11-19T02:36:43.196Z",
+      "attempts": 16,
+      "checkedAt": "2026-11-20T07:23:51.872Z",
       "status": "rate_limited_locally",
       "result": "quota",
       "error": null,
-      "nextRetryAt": "2026-11-20T02:36:43.196Z",
+      "nextRetryAt": "2026-11-21T07:23:51.872Z",
       "backoffHours": 24
     },
     "ss-espn-uefa.europa-401915507": {
-      "attempts": 15,
-      "checkedAt": "2026-11-18T11:40:48.526Z",
+      "attempts": 16,
+      "checkedAt": "2026-11-19T17:29:41.508Z",
       "status": "rate_limited_locally",
       "result": "quota",
       "error": null,
-      "nextRetryAt": "2026-11-19T11:40:48.526Z",
+      "nextRetryAt": "2026-11-20T17:29:41.508Z",
       "backoffHours": 24
     },
     "ss-espn-uefa.europa.conf-401915813": {
-      "attempts": 15,
-      "checkedAt": "2026-11-19T02:36:43.196Z",
+      "attempts": 16,
+      "checkedAt": "2026-11-20T07:23:51.872Z",
       "status": "rate_limited_locally",
       "result": "quota",
       "error": null,
-      "nextRetryAt": "2026-11-20T02:36:43.196Z",
+      "nextRetryAt": "2026-11-21T07:23:51.872Z",
       "backoffHours": 24
     },
     "ss-espn-uefa.europa-401915521": {
-      "attempts": 15,
-      "checkedAt": "2026-11-18T11:40:48.526Z",
+      "attempts": 16,
+      "checkedAt": "2026-11-19T17:29:41.508Z",
       "status": "rate_limited_locally",
       "result": "quota",
       "error": null,
-      "nextRetryAt": "2026-11-19T11:40:48.526Z",
+      "nextRetryAt": "2026-11-20T17:29:41.508Z",
       "backoffHours": 24
     },
     "ss-espn-uefa.europa.conf-401915812": {
-      "attempts": 15,
-      "checkedAt": "2026-11-18T11:40:48.526Z",
+      "attempts": 16,
+      "checkedAt": "2026-11-19T17:29:41.508Z",
       "status": "rate_limited_locally",
       "result": "quota",
       "error": null,
-      "nextRetryAt": "2026-11-19T11:40:48.526Z",
+      "nextRetryAt": "2026-11-20T17:29:41.508Z",
       "backoffHours": 24
     },
     "ss-espn-uefa.europa-401915520": {
-      "attempts": 15,
-      "checkedAt": "2026-11-18T11:40:48.526Z",
+      "attempts": 16,
+      "checkedAt": "2026-11-19T17:29:41.508Z",
       "status": "rate_limited_locally",
       "result": "quota",
       "error": null,
-      "nextRetryAt": "2026-11-19T11:40:48.526Z",
+      "nextRetryAt": "2026-11-20T17:29:41.508Z",
       "backoffHours": 24
     },
     "ss-espn-uefa.europa.conf-401915739": {
-      "attempts": 15,
-      "checkedAt": "2026-11-18T11:40:48.526Z",
+      "attempts": 16,
+      "checkedAt": "2026-11-19T17:29:41.508Z",
       "status": "rate_limited_locally",
       "result": "quota",
       "error": null,
-      "nextRetryAt": "2026-11-19T11:40:48.526Z",
+      "nextRetryAt": "2026-11-20T17:29:41.508Z",
       "backoffHours": 24
     },
     "ss-espn-uefa.europa-401915508": {
-      "attempts": 15,
-      "checkedAt": "2026-11-18T11:40:48.526Z",
+      "attempts": 16,
+      "checkedAt": "2026-11-19T17:29:41.508Z",
       "status": "rate_limited_locally",
       "result": "quota",
       "error": null,
-      "nextRetryAt": "2026-11-19T11:40:48.526Z",
+      "nextRetryAt": "2026-11-20T17:29:41.508Z",
       "backoffHours": 24
     },
     "ss-espn-uefa.europa.conf-401915809": {
-      "attempts": 15,
-      "checkedAt": "2026-11-18T11:40:48.526Z",
+      "attempts": 16,
+      "checkedAt": "2026-11-19T17:29:41.508Z",
       "status": "rate_limited_locally",
       "result": "quota",
       "error": null,
-      "nextRetryAt": "2026-11-19T11:40:48.526Z",
+      "nextRetryAt": "2026-11-20T17:29:41.508Z",
       "backoffHours": 24
     },
     "ss-espn-uefa.europa-401915518": {
-      "attempts": 15,
-      "checkedAt": "2026-11-18T11:40:48.526Z",
+      "attempts": 16,
+      "checkedAt": "2026-11-19T17:29:41.508Z",
       "status": "rate_limited_locally",
       "result": "quota",
       "error": null,
-      "nextRetryAt": "2026-11-19T11:40:48.526Z",
+      "nextRetryAt": "2026-11-20T17:29:41.508Z",
       "backoffHours": 24
     },
     "ss-espn-uefa.europa.conf-401915808": {
-      "attempts": 15,
-      "checkedAt": "2026-11-18T11:40:48.526Z",
+      "attempts": 16,
+      "checkedAt": "2026-11-19T17:29:41.508Z",
       "status": "rate_limited_locally",
       "result": "quota",
       "error": null,
-      "nextRetryAt": "2026-11-19T11:40:48.526Z",
+      "nextRetryAt": "2026-11-20T17:29:41.508Z",
       "backoffHours": 24
     },
     "ss-fotmob-6112357": {
-      "attempts": 15,
-      "checkedAt": "2026-11-18T11:40:48.526Z",
+      "attempts": 16,
+      "checkedAt": "2026-11-19T17:29:41.508Z",
       "status": "rate_limited_locally",
       "result": "quota",
       "error": null,
-      "nextRetryAt": "2026-11-19T11:40:48.526Z",
+      "nextRetryAt": "2026-11-20T17:29:41.508Z",
       "backoffHours": 24
     },
     "ss-espn-uefa.europa.conf-401915806": {
-      "attempts": 15,
-      "checkedAt": "2026-11-18T11:40:48.526Z",
+      "attempts": 16,
+      "checkedAt": "2026-11-19T17:29:41.508Z",
       "status": "rate_limited_locally",
       "result": "quota",
       "error": null,
-      "nextRetryAt": "2026-11-19T11:40:48.526Z",
+      "nextRetryAt": "2026-11-20T17:29:41.508Z",
       "backoffHours": 24
     },
     "ss-espn-uefa.europa-401915504": {
-      "attempts": 15,
-      "checkedAt": "2026-11-18T11:40:48.526Z",
+      "attempts": 16,
+      "checkedAt": "2026-11-19T17:29:41.508Z",
       "status": "rate_limited_locally",
       "result": "quota",
       "error": null,
-      "nextRetryAt": "2026-11-19T11:40:48.526Z",
+      "nextRetryAt": "2026-11-20T17:29:41.508Z",
       "backoffHours": 24
     },
     "ss-espn-uefa.europa.conf-401915802": {
-      "attempts": 15,
-      "checkedAt": "2026-11-18T11:40:48.526Z",
+      "attempts": 16,
+      "checkedAt": "2026-11-19T17:29:41.508Z",
       "status": "rate_limited_locally",
       "result": "quota",
       "error": null,
-      "nextRetryAt": "2026-11-19T11:40:48.526Z",
+      "nextRetryAt": "2026-11-20T17:29:41.508Z",
       "backoffHours": 24
     },
     "ss-espn-uefa.europa-401915516": {
-      "attempts": 15,
-      "checkedAt": "2026-11-18T11:40:48.526Z",
+      "attempts": 16,
+      "checkedAt": "2026-11-19T17:29:41.508Z",
       "status": "rate_limited_locally",
       "result": "quota",
       "error": null,
-      "nextRetryAt": "2026-11-19T11:40:48.526Z",
+      "nextRetryAt": "2026-11-20T17:29:41.508Z",
       "backoffHours": 24
     },
     "ss-espn-uefa.europa.conf-401915803": {
-      "attempts": 15,
-      "checkedAt": "2026-11-18T11:40:48.526Z",
+      "attempts": 16,
+      "checkedAt": "2026-11-19T17:29:41.508Z",
       "status": "rate_limited_locally",
       "result": "quota",
       "error": null,
-      "nextRetryAt": "2026-11-19T11:40:48.526Z",
+      "nextRetryAt": "2026-11-20T17:29:41.508Z",
       "backoffHours": 24
     },
     "ss-espn-uefa.europa-401915502": {
-      "attempts": 15,
-      "checkedAt": "2026-11-18T11:40:48.526Z",
+      "attempts": 16,
+      "checkedAt": "2026-11-19T17:29:41.508Z",
       "status": "rate_limited_locally",
       "result": "quota",
       "error": null,
-      "nextRetryAt": "2026-11-19T11:40:48.526Z",
+      "nextRetryAt": "2026-11-20T17:29:41.508Z",
       "backoffHours": 24
     },
     "ss-espn-uefa.europa.conf-401915807": {
-      "attempts": 15,
-      "checkedAt": "2026-11-18T11:40:48.526Z",
+      "attempts": 16,
+      "checkedAt": "2026-11-19T17:29:41.508Z",
       "status": "rate_limited_locally",
       "result": "quota",
       "error": null,
-      "nextRetryAt": "2026-11-19T11:40:48.526Z",
+      "nextRetryAt": "2026-11-20T17:29:41.508Z",
       "backoffHours": 24
     },
     "ss-espn-uefa.europa-401915501": {
-      "attempts": 15,
-      "checkedAt": "2026-11-18T11:40:48.526Z",
+      "attempts": 16,
+      "checkedAt": "2026-11-19T17:29:41.508Z",
       "status": "rate_limited_locally",
       "result": "quota",
       "error": null,
-      "nextRetryAt": "2026-11-19T11:40:48.526Z",
+      "nextRetryAt": "2026-11-20T17:29:41.508Z",
       "backoffHours": 24
     },
     "ss-espn-uefa.europa.conf-401915805": {
-      "attempts": 15,
-      "checkedAt": "2026-11-18T11:40:48.526Z",
+      "attempts": 16,
+      "checkedAt": "2026-11-19T17:29:41.508Z",
       "status": "rate_limited_locally",
       "result": "quota",
       "error": null,
-      "nextRetryAt": "2026-11-19T11:40:48.526Z",
+      "nextRetryAt": "2026-11-20T17:29:41.508Z",
       "backoffHours": 24
     },
     "ss-espn-uefa.europa-401915505": {
-      "attempts": 15,
-      "checkedAt": "2026-11-18T11:40:48.526Z",
+      "attempts": 16,
+      "checkedAt": "2026-11-19T17:29:41.508Z",
       "status": "rate_limited_locally",
       "result": "quota",
       "error": null,
-      "nextRetryAt": "2026-11-19T11:40:48.526Z",
+      "nextRetryAt": "2026-11-20T17:29:41.508Z",
       "backoffHours": 24
     },
     "ss-espn-uefa.europa.conf-401915738": {
-      "attempts": 15,
-      "checkedAt": "2026-11-18T11:40:48.526Z",
+      "attempts": 16,
+      "checkedAt": "2026-11-19T17:29:41.508Z",
       "status": "rate_limited_locally",
       "result": "quota",
       "error": null,
-      "nextRetryAt": "2026-11-19T11:40:48.526Z",
+      "nextRetryAt": "2026-11-20T17:29:41.508Z",
       "backoffHours": 24
     },
     "ss-espn-uefa.europa-401915503": {
-      "attempts": 15,
-      "checkedAt": "2026-11-18T11:40:48.526Z",
+      "attempts": 16,
+      "checkedAt": "2026-11-19T17:29:41.508Z",
       "status": "rate_limited_locally",
       "result": "quota",
       "error": null,
-      "nextRetryAt": "2026-11-19T11:40:48.526Z",
+      "nextRetryAt": "2026-11-20T17:29:41.508Z",
       "backoffHours": 24
     },
     "ss-espn-uefa.europa.conf-401915804": {
-      "attempts": 15,
-      "checkedAt": "2026-11-18T11:40:48.526Z",
+      "attempts": 16,
+      "checkedAt": "2026-11-19T17:29:41.508Z",
       "status": "rate_limited_locally",
       "result": "quota",
       "error": null,
-      "nextRetryAt": "2026-11-19T11:40:48.526Z",
+      "nextRetryAt": "2026-11-20T17:29:41.508Z",
       "backoffHours": 24
     },
     "ss-espn-uefa.europa-401915514": {
-      "attempts": 15,
-      "checkedAt": "2026-11-18T11:40:48.526Z",
+      "attempts": 16,
+      "checkedAt": "2026-11-19T17:29:41.508Z",
       "status": "rate_limited_locally",
       "result": "quota",
       "error": null,
-      "nextRetryAt": "2026-11-19T11:40:48.526Z",
+      "nextRetryAt": "2026-11-20T17:29:41.508Z",
       "backoffHours": 24
     },
     "ss-espn-uefa.europa.conf-401915801": {
-      "attempts": 15,
-      "checkedAt": "2026-11-18T11:40:48.526Z",
+      "attempts": 16,
+      "checkedAt": "2026-11-19T17:29:41.508Z",
       "status": "rate_limited_locally",
       "result": "quota",
       "error": null,
-      "nextRetryAt": "2026-11-19T11:40:48.526Z",
+      "nextRetryAt": "2026-11-20T17:29:41.508Z",
       "backoffHours": 24
     },
     "ss-espn-uefa.europa-401915513": {
-      "attempts": 15,
-      "checkedAt": "2026-11-18T11:40:48.526Z",
+      "attempts": 16,
+      "checkedAt": "2026-11-19T17:29:41.508Z",
       "status": "rate_limited_locally",
       "result": "quota",
       "error": null,
-      "nextRetryAt": "2026-11-19T11:40:48.526Z",
+      "nextRetryAt": "2026-11-20T17:29:41.508Z",
       "backoffHours": 24
     },
     "ss-fotmob-6112535": {
-      "attempts": 14,
-      "checkedAt": "2026-11-18T11:40:48.526Z",
+      "attempts": 15,
+      "checkedAt": "2026-11-19T17:29:41.508Z",
       "status": "rate_limited_locally",
       "result": "quota",
       "error": null,
-      "nextRetryAt": "2026-11-19T11:40:48.526Z",
+      "nextRetryAt": "2026-11-20T17:29:41.508Z",
       "backoffHours": 24
     },
     "ss-espn-uefa.europa-401915512": {
-      "attempts": 14,
-      "checkedAt": "2026-11-18T11:40:48.526Z",
+      "attempts": 15,
+      "checkedAt": "2026-11-19T17:29:41.508Z",
       "status": "rate_limited_locally",
       "result": "quota",
       "error": null,
-      "nextRetryAt": "2026-11-19T11:40:48.526Z",
+      "nextRetryAt": "2026-11-20T17:29:41.508Z",
       "backoffHours": 24
     },
     "ss-espn-uefa.europa-401915515": {
-      "attempts": 14,
-      "checkedAt": "2026-11-19T02:36:43.196Z",
+      "attempts": 15,
+      "checkedAt": "2026-11-20T07:23:51.872Z",
       "status": "rate_limited_locally",
       "result": "quota",
       "error": null,
-      "nextRetryAt": "2026-11-20T02:36:43.196Z",
+      "nextRetryAt": "2026-11-21T07:23:51.872Z",
       "backoffHours": 24
     },
     "ss-fotmob-6112261": {
-      "attempts": 15,
-      "checkedAt": "2026-11-19T02:36:43.196Z",
+      "attempts": 16,
+      "checkedAt": "2026-11-20T07:23:51.872Z",
       "status": "rate_limited_locally",
       "result": "quota",
       "error": null,
-      "nextRetryAt": "2026-11-20T02:36:43.196Z",
+      "nextRetryAt": "2026-11-21T07:23:51.872Z",
       "backoffHours": 24
     },
     "ss-fotmob-6112332": {
-      "attempts": 15,
-      "checkedAt": "2026-11-19T02:36:43.196Z",
+      "attempts": 16,
+      "checkedAt": "2026-11-20T07:23:51.872Z",
       "status": "rate_limited_locally",
       "result": "quota",
       "error": null,
-      "nextRetryAt": "2026-11-20T02:36:43.196Z",
+      "nextRetryAt": "2026-11-21T07:23:51.872Z",
       "backoffHours": 24
     },
     "ss-espn-ned.2-401875834": {
-      "attempts": 15,
-      "checkedAt": "2026-11-19T02:36:43.196Z",
+      "attempts": 16,
+      "checkedAt": "2026-11-20T07:23:51.872Z",
       "status": "rate_limited_locally",
       "result": "quota",
       "error": null,
-      "nextRetryAt": "2026-11-20T02:36:43.196Z",
+      "nextRetryAt": "2026-11-21T07:23:51.872Z",
       "backoffHours": 24
     },
     "ss-espn-ger.1-401884720": {
-      "attempts": 15,
-      "checkedAt": "2026-11-19T02:36:43.196Z",
+      "attempts": 16,
+      "checkedAt": "2026-11-20T07:23:51.872Z",
       "status": "rate_limited_locally",
       "result": "quota",
       "error": null,
-      "nextRetryAt": "2026-11-20T02:36:43.196Z",
+      "nextRetryAt": "2026-11-21T07:23:51.872Z",
       "backoffHours": 24
     },
     "ss-espn-ned.2-401875833": {
-      "attempts": 15,
-      "checkedAt": "2026-11-19T02:36:43.196Z",
+      "attempts": 16,
+      "checkedAt": "2026-11-20T07:23:51.872Z",
       "status": "rate_limited_locally",
       "result": "quota",
       "error": null,
-      "nextRetryAt": "2026-11-20T02:36:43.196Z",
+      "nextRetryAt": "2026-11-21T07:23:51.872Z",
       "backoffHours": 24
     },
     "ss-espn-ned.2-401875832": {
-      "attempts": 15,
-      "checkedAt": "2026-11-19T02:36:43.196Z",
+      "attempts": 16,
+      "checkedAt": "2026-11-20T07:23:51.872Z",
       "status": "rate_limited_locally",
       "result": "quota",
       "error": null,
-      "nextRetryAt": "2026-11-20T02:36:43.196Z",
+      "nextRetryAt": "2026-11-21T07:23:51.872Z",
       "backoffHours": 24
     },
     "ss-espn-ned.2-401875831": {
-      "attempts": 15,
-      "checkedAt": "2026-11-19T02:36:43.196Z",
+      "attempts": 16,
+      "checkedAt": "2026-11-20T07:23:51.872Z",
       "status": "rate_limited_locally",
       "result": "quota",
       "error": null,
-      "nextRetryAt": "2026-11-20T02:36:43.196Z",
+      "nextRetryAt": "2026-11-21T07:23:51.872Z",
       "backoffHours": 24
     },
     "ss-espn-ned.2-401875830": {
-      "attempts": 15,
-      "checkedAt": "2026-11-19T02:36:43.196Z",
+      "attempts": 16,
+      "checkedAt": "2026-11-20T07:23:51.872Z",
       "status": "rate_limited_locally",
       "result": "quota",
       "error": null,
-      "nextRetryAt": "2026-11-20T02:36:43.196Z",
+      "nextRetryAt": "2026-11-21T07:23:51.872Z",
       "backoffHours": 24
     },
     "ss-espn-ned.2-401875829": {
-      "attempts": 15,
-      "checkedAt": "2026-11-19T02:36:43.196Z",
+      "attempts": 16,
+      "checkedAt": "2026-11-20T07:23:51.872Z",
       "status": "rate_limited_locally",
       "result": "quota",
       "error": null,
-      "nextRetryAt": "2026-11-20T02:36:43.196Z",
+      "nextRetryAt": "2026-11-21T07:23:51.872Z",
       "backoffHours": 24
     },
     "ss-espn-ned.2-401876061": {
-      "attempts": 15,
-      "checkedAt": "2026-11-19T02:36:43.196Z",
+      "attempts": 16,
+      "checkedAt": "2026-11-20T07:23:51.872Z",
       "status": "rate_limited_locally",
       "result": "quota",
       "error": null,
-      "nextRetryAt": "2026-11-20T02:36:43.196Z",
+      "nextRetryAt": "2026-11-21T07:23:51.872Z",
       "backoffHours": 24
     },
     "of-de.1-2026-11-20-9c5041d465ae6f964f58": {
@@ -4564,111 +6068,111 @@
       "backoffHours": 24
     },
     "ss-espn-ger.2-401885044": {
-      "attempts": 14,
-      "checkedAt": "2026-11-19T02:36:43.196Z",
+      "attempts": 15,
+      "checkedAt": "2026-11-20T07:23:51.872Z",
       "status": "rate_limited_locally",
       "result": "quota",
       "error": null,
-      "nextRetryAt": "2026-11-20T02:36:43.196Z",
+      "nextRetryAt": "2026-11-21T07:23:51.872Z",
       "backoffHours": 24
     },
     "ss-espn-eng.2-401880133": {
-      "attempts": 14,
-      "checkedAt": "2026-11-19T02:36:43.196Z",
+      "attempts": 15,
+      "checkedAt": "2026-11-20T07:23:51.872Z",
       "status": "rate_limited_locally",
       "result": "quota",
       "error": null,
-      "nextRetryAt": "2026-11-20T02:36:43.196Z",
+      "nextRetryAt": "2026-11-21T07:23:51.872Z",
       "backoffHours": 24
     },
     "ss-espn-ger.1-401884721": {
-      "attempts": 14,
-      "checkedAt": "2026-11-19T02:36:43.196Z",
+      "attempts": 15,
+      "checkedAt": "2026-11-20T07:23:51.872Z",
       "status": "rate_limited_locally",
       "result": "quota",
       "error": null,
-      "nextRetryAt": "2026-11-20T02:36:43.196Z",
+      "nextRetryAt": "2026-11-21T07:23:51.872Z",
       "backoffHours": 24
     },
     "ss-espn-eng.1-401879227": {
-      "attempts": 14,
-      "checkedAt": "2026-11-19T02:36:43.196Z",
+      "attempts": 15,
+      "checkedAt": "2026-11-20T07:23:51.872Z",
       "status": "rate_limited_locally",
       "result": "quota",
       "error": null,
-      "nextRetryAt": "2026-11-20T02:36:43.196Z",
+      "nextRetryAt": "2026-11-21T07:23:51.872Z",
       "backoffHours": 24
     },
     "ss-espn-ned.2-401875828": {
-      "attempts": 14,
-      "checkedAt": "2026-11-19T02:36:43.196Z",
+      "attempts": 15,
+      "checkedAt": "2026-11-20T07:23:51.872Z",
       "status": "rate_limited_locally",
       "result": "quota",
       "error": null,
-      "nextRetryAt": "2026-11-20T02:36:43.196Z",
+      "nextRetryAt": "2026-11-21T07:23:51.872Z",
       "backoffHours": 24
     },
     "ss-espn-fra.1-401876390": {
-      "attempts": 14,
-      "checkedAt": "2026-11-19T02:36:43.196Z",
+      "attempts": 15,
+      "checkedAt": "2026-11-20T07:23:51.872Z",
       "status": "rate_limited_locally",
       "result": "quota",
       "error": null,
-      "nextRetryAt": "2026-11-20T02:36:43.196Z",
+      "nextRetryAt": "2026-11-21T07:23:51.872Z",
       "backoffHours": 24
     },
     "ss-espn-ger.2-401885046": {
-      "attempts": 14,
-      "checkedAt": "2026-11-19T02:36:43.196Z",
+      "attempts": 15,
+      "checkedAt": "2026-11-20T07:23:51.872Z",
       "status": "rate_limited_locally",
       "result": "quota",
       "error": null,
-      "nextRetryAt": "2026-11-20T02:36:43.196Z",
+      "nextRetryAt": "2026-11-21T07:23:51.872Z",
       "backoffHours": 24
     },
     "ss-espn-eng.2-401880131": {
-      "attempts": 14,
-      "checkedAt": "2026-11-19T02:36:43.196Z",
+      "attempts": 15,
+      "checkedAt": "2026-11-20T07:23:51.872Z",
       "status": "rate_limited_locally",
       "result": "quota",
       "error": null,
-      "nextRetryAt": "2026-11-20T02:36:43.196Z",
+      "nextRetryAt": "2026-11-21T07:23:51.872Z",
       "backoffHours": 24
     },
     "ss-espn-eng.2-401880136": {
-      "attempts": 14,
-      "checkedAt": "2026-11-19T02:36:43.196Z",
+      "attempts": 15,
+      "checkedAt": "2026-11-20T07:23:51.872Z",
       "status": "rate_limited_locally",
       "result": "quota",
       "error": null,
-      "nextRetryAt": "2026-11-20T02:36:43.196Z",
+      "nextRetryAt": "2026-11-21T07:23:51.872Z",
       "backoffHours": 24
     },
     "ss-espn-eng.2-401880130": {
-      "attempts": 14,
-      "checkedAt": "2026-11-19T02:36:43.196Z",
+      "attempts": 15,
+      "checkedAt": "2026-11-20T07:23:51.872Z",
       "status": "rate_limited_locally",
       "result": "quota",
       "error": null,
-      "nextRetryAt": "2026-11-20T02:36:43.196Z",
+      "nextRetryAt": "2026-11-21T07:23:51.872Z",
       "backoffHours": 24
     },
     "ss-espn-eng.2-401880127": {
-      "attempts": 14,
-      "checkedAt": "2026-11-19T02:36:43.196Z",
+      "attempts": 15,
+      "checkedAt": "2026-11-20T07:23:51.872Z",
       "status": "rate_limited_locally",
       "result": "quota",
       "error": null,
-      "nextRetryAt": "2026-11-20T02:36:43.196Z",
+      "nextRetryAt": "2026-11-21T07:23:51.872Z",
       "backoffHours": 24
     },
     "ss-espn-eng.2-401880126": {
-      "attempts": 14,
-      "checkedAt": "2026-11-19T02:36:43.196Z",
+      "attempts": 15,
+      "checkedAt": "2026-11-20T07:23:51.872Z",
       "status": "rate_limited_locally",
       "result": "quota",
       "error": null,
-      "nextRetryAt": "2026-11-20T02:36:43.196Z",
+      "nextRetryAt": "2026-11-21T07:23:51.872Z",
       "backoffHours": 24
     },
     "of-de.1-2026-11-28-4f87fbb07787bb4ca65d": {
@@ -5302,102 +6806,102 @@
       "backoffHours": 0
     },
     "ss-espn-ned.1-401875538": {
-      "attempts": 14,
-      "checkedAt": "2026-11-19T02:36:43.196Z",
+      "attempts": 15,
+      "checkedAt": "2026-11-20T07:23:51.872Z",
       "status": "rate_limited_locally",
       "result": "quota",
       "error": null,
-      "nextRetryAt": "2026-11-20T02:36:43.196Z",
+      "nextRetryAt": "2026-11-21T07:23:51.872Z",
       "backoffHours": 24
     },
     "ss-espn-ger.2-401885042": {
-      "attempts": 14,
-      "checkedAt": "2026-11-19T02:36:43.196Z",
+      "attempts": 15,
+      "checkedAt": "2026-11-20T07:23:51.872Z",
       "status": "rate_limited_locally",
       "result": "quota",
       "error": null,
-      "nextRetryAt": "2026-11-20T02:36:43.196Z",
+      "nextRetryAt": "2026-11-21T07:23:51.872Z",
       "backoffHours": 24
     },
     "ss-espn-fra.1-401876393": {
-      "attempts": 14,
-      "checkedAt": "2026-11-19T02:36:43.196Z",
+      "attempts": 15,
+      "checkedAt": "2026-11-20T07:23:51.872Z",
       "status": "rate_limited_locally",
       "result": "quota",
       "error": null,
-      "nextRetryAt": "2026-11-20T02:36:43.196Z",
+      "nextRetryAt": "2026-11-21T07:23:51.872Z",
       "backoffHours": 24
     },
     "ss-espn-eng.1-401879231": {
-      "attempts": 14,
-      "checkedAt": "2026-11-19T02:36:43.196Z",
+      "attempts": 15,
+      "checkedAt": "2026-11-20T07:23:51.872Z",
       "status": "rate_limited_locally",
       "result": "quota",
       "error": null,
-      "nextRetryAt": "2026-11-20T02:36:43.196Z",
+      "nextRetryAt": "2026-11-21T07:23:51.872Z",
       "backoffHours": 24
     },
     "ss-espn-ned.2-401876063": {
-      "attempts": 14,
-      "checkedAt": "2026-11-19T02:36:43.196Z",
+      "attempts": 15,
+      "checkedAt": "2026-11-20T07:23:51.872Z",
       "status": "rate_limited_locally",
       "result": "quota",
       "error": null,
-      "nextRetryAt": "2026-11-20T02:36:43.196Z",
+      "nextRetryAt": "2026-11-21T07:23:51.872Z",
       "backoffHours": 24
     },
     "ss-espn-ned.1-401875535": {
-      "attempts": 14,
-      "checkedAt": "2026-11-19T02:36:43.196Z",
+      "attempts": 15,
+      "checkedAt": "2026-11-20T07:23:51.872Z",
       "status": "rate_limited_locally",
       "result": "quota",
       "error": null,
-      "nextRetryAt": "2026-11-20T02:36:43.196Z",
+      "nextRetryAt": "2026-11-21T07:23:51.872Z",
       "backoffHours": 24
     },
     "ss-espn-ger.2-401885040": {
-      "attempts": 14,
-      "checkedAt": "2026-11-19T02:36:43.196Z",
+      "attempts": 15,
+      "checkedAt": "2026-11-20T07:23:51.872Z",
       "status": "rate_limited_locally",
       "result": "quota",
       "error": null,
-      "nextRetryAt": "2026-11-20T02:36:43.196Z",
+      "nextRetryAt": "2026-11-21T07:23:51.872Z",
       "backoffHours": 24
     },
     "ss-espn-eng.1-401879230": {
-      "attempts": 14,
-      "checkedAt": "2026-11-19T02:36:43.196Z",
+      "attempts": 15,
+      "checkedAt": "2026-11-20T07:23:51.872Z",
       "status": "rate_limited_locally",
       "result": "quota",
       "error": null,
-      "nextRetryAt": "2026-11-20T02:36:43.196Z",
+      "nextRetryAt": "2026-11-21T07:23:51.872Z",
       "backoffHours": 24
     },
     "ss-espn-ned.1-401875534": {
-      "attempts": 14,
-      "checkedAt": "2026-11-19T02:36:43.196Z",
+      "attempts": 15,
+      "checkedAt": "2026-11-20T07:23:51.872Z",
       "status": "rate_limited_locally",
       "result": "quota",
       "error": null,
-      "nextRetryAt": "2026-11-20T02:36:43.196Z",
+      "nextRetryAt": "2026-11-21T07:23:51.872Z",
       "backoffHours": 24
     },
     "ss-espn-ger.2-401885041": {
-      "attempts": 14,
-      "checkedAt": "2026-11-19T02:36:43.196Z",
+      "attempts": 15,
+      "checkedAt": "2026-11-20T07:23:51.872Z",
       "status": "rate_limited_locally",
       "result": "quota",
       "error": null,
-      "nextRetryAt": "2026-11-20T02:36:43.196Z",
+      "nextRetryAt": "2026-11-21T07:23:51.872Z",
       "backoffHours": 24
     },
     "ss-espn-ned.1-401875532": {
-      "attempts": 14,
-      "checkedAt": "2026-11-19T02:36:43.196Z",
+      "attempts": 15,
+      "checkedAt": "2026-11-20T07:23:51.872Z",
       "status": "rate_limited_locally",
       "result": "quota",
       "error": null,
-      "nextRetryAt": "2026-11-20T02:36:43.196Z",
+      "nextRetryAt": "2026-11-21T07:23:51.872Z",
       "backoffHours": 24
     },
     "of-de.1-2026-11-29-032e2332a61aeb044186": {
@@ -5446,80 +6950,80 @@
       "backoffHours": 8
     },
     "ss-espn-eng.1-401879221": {
-      "attempts": 11,
-      "checkedAt": "2026-11-19T02:36:43.196Z",
+      "attempts": 12,
+      "checkedAt": "2026-11-20T07:23:51.872Z",
       "status": "rate_limited_locally",
       "result": "quota",
       "error": null,
-      "nextRetryAt": "2026-11-20T02:36:43.196Z",
+      "nextRetryAt": "2026-11-21T07:23:51.872Z",
       "backoffHours": 24
     },
     "ss-espn-eng.1-401879220": {
-      "attempts": 9,
-      "checkedAt": "2026-11-19T02:36:43.196Z",
+      "attempts": 10,
+      "checkedAt": "2026-11-20T07:23:51.872Z",
       "status": "rate_limited_locally",
       "result": "quota",
       "error": null,
-      "nextRetryAt": "2026-11-20T02:36:43.196Z",
+      "nextRetryAt": "2026-11-21T07:23:51.872Z",
       "backoffHours": 24
     },
     "ss-espn-eng.1-401879223": {
-      "attempts": 9,
-      "checkedAt": "2026-11-19T02:36:43.196Z",
+      "attempts": 10,
+      "checkedAt": "2026-11-20T07:23:51.872Z",
       "status": "rate_limited_locally",
       "result": "quota",
       "error": null,
-      "nextRetryAt": "2026-11-20T02:36:43.196Z",
+      "nextRetryAt": "2026-11-21T07:23:51.872Z",
       "backoffHours": 24
     },
     "ss-espn-eng.1-401879217": {
-      "attempts": 9,
-      "checkedAt": "2026-11-19T02:36:43.196Z",
+      "attempts": 10,
+      "checkedAt": "2026-11-20T07:23:51.872Z",
       "status": "rate_limited_locally",
       "result": "quota",
       "error": null,
-      "nextRetryAt": "2026-11-20T02:36:43.196Z",
+      "nextRetryAt": "2026-11-21T07:23:51.872Z",
       "backoffHours": 24
     },
     "ss-espn-ger.2-401885031": {
-      "attempts": 8,
-      "checkedAt": "2026-11-18T11:40:48.526Z",
+      "attempts": 9,
+      "checkedAt": "2026-11-19T17:29:41.508Z",
       "status": "rate_limited_locally",
       "result": "quota",
       "error": null,
-      "nextRetryAt": "2026-11-19T11:40:48.526Z",
+      "nextRetryAt": "2026-11-20T17:29:41.508Z",
       "backoffHours": 24
     },
     "ss-espn-fra.2-401876680": {
-      "attempts": 8,
-      "checkedAt": "2026-11-18T11:40:48.526Z",
+      "attempts": 9,
+      "checkedAt": "2026-11-19T17:29:41.508Z",
       "status": "rate_limited_locally",
       "result": "quota",
       "error": null,
-      "nextRetryAt": "2026-11-19T11:40:48.526Z",
+      "nextRetryAt": "2026-11-20T17:29:41.508Z",
       "backoffHours": 24
     },
     "ss-espn-ned.2-401875826": {
-      "attempts": 8,
-      "checkedAt": "2026-11-18T11:40:48.526Z",
+      "attempts": 9,
+      "checkedAt": "2026-11-19T17:29:41.508Z",
       "status": "rate_limited_locally",
       "result": "quota",
       "error": null,
-      "nextRetryAt": "2026-11-19T11:40:48.526Z",
+      "nextRetryAt": "2026-11-20T17:29:41.508Z",
       "backoffHours": 24
     },
     "ss-espn-ger.1-401884718": {
-      "attempts": 9,
-      "checkedAt": "2026-11-19T02:36:43.196Z",
+      "attempts": 10,
+      "checkedAt": "2026-11-20T07:23:51.872Z",
       "status": "rate_limited_locally",
       "result": "quota",
       "error": null,
-      "nextRetryAt": "2026-11-20T02:36:43.196Z",
+      "nextRetryAt": "2026-11-21T07:23:51.872Z",
       "backoffHours": 24
     },
     "ss-espn-eng.2-401880116": {
-      "attempts": 9,
-      "checkedAt": "2026-11-19T08:04:14.041Z",
+      "attempts": 10,
+      "checkedAt": "2026-11-20T11:38:39.551Z",
       "status": "no_direct_history",
       "result": "no_coverage",
       "error": null,
@@ -5527,26 +7031,26 @@
       "backoffHours": 0
     },
     "ss-espn-ger.2-401885030": {
-      "attempts": 9,
-      "checkedAt": "2026-11-19T02:36:43.196Z",
+      "attempts": 10,
+      "checkedAt": "2026-11-20T07:23:51.872Z",
       "status": "rate_limited_locally",
       "result": "quota",
       "error": null,
-      "nextRetryAt": "2026-11-20T02:36:43.196Z",
+      "nextRetryAt": "2026-11-21T07:23:51.872Z",
       "backoffHours": 24
     },
     "ss-espn-ned.2-401875824": {
-      "attempts": 9,
-      "checkedAt": "2026-11-19T02:36:43.196Z",
+      "attempts": 10,
+      "checkedAt": "2026-11-20T07:23:51.872Z",
       "status": "rate_limited_locally",
       "result": "quota",
       "error": null,
-      "nextRetryAt": "2026-11-20T02:36:43.196Z",
+      "nextRetryAt": "2026-11-21T07:23:51.872Z",
       "backoffHours": 24
     },
     "ss-espn-ned.2-401876064": {
-      "attempts": 9,
-      "checkedAt": "2026-11-19T08:04:14.041Z",
+      "attempts": 10,
+      "checkedAt": "2026-11-20T11:38:39.551Z",
       "status": "no_direct_history",
       "result": "no_coverage",
       "error": null,
@@ -5554,8 +7058,8 @@
       "backoffHours": 0
     },
     "ss-espn-ned.2-401876065": {
-      "attempts": 9,
-      "checkedAt": "2026-11-19T08:04:14.041Z",
+      "attempts": 10,
+      "checkedAt": "2026-11-20T11:38:39.551Z",
       "status": "no_direct_history",
       "result": "no_coverage",
       "error": null,
@@ -5563,179 +7067,179 @@
       "backoffHours": 0
     },
     "ss-espn-ned.2-401876066": {
-      "attempts": 9,
-      "checkedAt": "2026-11-19T08:04:14.041Z",
+      "attempts": 10,
+      "checkedAt": "2026-11-20T11:38:39.551Z",
       "status": "rate_limited_locally",
       "result": "quota",
       "error": null,
-      "nextRetryAt": "2026-11-20T08:04:14.041Z",
+      "nextRetryAt": "2026-11-21T11:38:39.551Z",
       "backoffHours": 24
     },
     "ss-espn-ger.2-401885032": {
-      "attempts": 7,
-      "checkedAt": "2026-11-19T08:04:14.041Z",
+      "attempts": 8,
+      "checkedAt": "2026-11-20T11:38:39.551Z",
       "status": "rate_limited_locally",
       "result": "quota",
       "error": null,
-      "nextRetryAt": "2026-11-20T08:04:14.041Z",
+      "nextRetryAt": "2026-11-21T11:38:39.551Z",
       "backoffHours": 24
     },
     "ss-espn-eng.2-401880124": {
-      "attempts": 7,
-      "checkedAt": "2026-11-19T08:04:14.041Z",
+      "attempts": 8,
+      "checkedAt": "2026-11-20T11:38:39.551Z",
       "status": "rate_limited_locally",
       "result": "quota",
       "error": null,
-      "nextRetryAt": "2026-11-20T08:04:14.041Z",
+      "nextRetryAt": "2026-11-21T11:38:39.551Z",
       "backoffHours": 24
     },
     "ss-espn-fra.2-401876676": {
-      "attempts": 7,
-      "checkedAt": "2026-11-19T08:04:14.041Z",
+      "attempts": 8,
+      "checkedAt": "2026-11-20T11:38:39.551Z",
       "status": "rate_limited_locally",
       "result": "quota",
       "error": null,
-      "nextRetryAt": "2026-11-20T08:04:14.041Z",
+      "nextRetryAt": "2026-11-21T11:38:39.551Z",
       "backoffHours": 24
     },
     "ss-espn-ger.1-401884716": {
-      "attempts": 8,
-      "checkedAt": "2026-11-18T11:40:48.526Z",
+      "attempts": 9,
+      "checkedAt": "2026-11-19T17:29:41.508Z",
       "status": "rate_limited_locally",
       "result": "quota",
       "error": null,
-      "nextRetryAt": "2026-11-19T11:40:48.526Z",
+      "nextRetryAt": "2026-11-20T17:29:41.508Z",
       "backoffHours": 24
     },
     "ss-espn-eng.1-401879216": {
-      "attempts": 8,
-      "checkedAt": "2026-11-19T08:04:14.041Z",
+      "attempts": 9,
+      "checkedAt": "2026-11-20T11:38:39.551Z",
       "status": "rate_limited_locally",
       "result": "quota",
       "error": null,
-      "nextRetryAt": "2026-11-20T08:04:14.041Z",
+      "nextRetryAt": "2026-11-21T11:38:39.551Z",
       "backoffHours": 24
     },
     "ss-espn-ned.1-401875521": {
-      "attempts": 8,
-      "checkedAt": "2026-11-18T11:40:48.526Z",
+      "attempts": 9,
+      "checkedAt": "2026-11-19T17:29:41.508Z",
       "status": "rate_limited_locally",
       "result": "quota",
       "error": null,
-      "nextRetryAt": "2026-11-19T11:40:48.526Z",
+      "nextRetryAt": "2026-11-20T17:29:41.508Z",
       "backoffHours": 24
     },
     "ss-espn-fra.1-401876381": {
-      "attempts": 8,
-      "checkedAt": "2026-11-19T08:04:14.041Z",
+      "attempts": 9,
+      "checkedAt": "2026-11-20T11:38:39.551Z",
       "status": "rate_limited_locally",
       "result": "quota",
       "error": null,
-      "nextRetryAt": "2026-11-20T08:04:14.041Z",
+      "nextRetryAt": "2026-11-21T11:38:39.551Z",
       "backoffHours": 24
     },
     "ss-espn-ger.2-401885036": {
-      "attempts": 8,
-      "checkedAt": "2026-11-19T08:04:14.041Z",
+      "attempts": 9,
+      "checkedAt": "2026-11-20T11:38:39.551Z",
       "status": "rate_limited_locally",
       "result": "quota",
       "error": null,
-      "nextRetryAt": "2026-11-20T08:04:14.041Z",
+      "nextRetryAt": "2026-11-21T11:38:39.551Z",
       "backoffHours": 24
     },
     "ss-espn-eng.2-401880121": {
-      "attempts": 8,
-      "checkedAt": "2026-11-19T08:04:14.041Z",
+      "attempts": 9,
+      "checkedAt": "2026-11-20T11:38:39.551Z",
       "status": "rate_limited_locally",
       "result": "quota",
       "error": null,
-      "nextRetryAt": "2026-11-20T08:04:14.041Z",
+      "nextRetryAt": "2026-11-21T11:38:39.551Z",
       "backoffHours": 24
     },
     "ss-espn-fra.2-401876674": {
-      "attempts": 8,
-      "checkedAt": "2026-11-19T08:04:14.041Z",
+      "attempts": 9,
+      "checkedAt": "2026-11-20T11:38:39.551Z",
       "status": "rate_limited_locally",
       "result": "quota",
       "error": null,
-      "nextRetryAt": "2026-11-20T08:04:14.041Z",
+      "nextRetryAt": "2026-11-21T11:38:39.551Z",
       "backoffHours": 24
     },
     "ss-espn-ger.1-401884713": {
-      "attempts": 8,
-      "checkedAt": "2026-11-19T08:04:14.041Z",
+      "attempts": 9,
+      "checkedAt": "2026-11-20T11:38:39.551Z",
       "status": "rate_limited_locally",
       "result": "quota",
       "error": null,
-      "nextRetryAt": "2026-11-20T08:04:14.041Z",
+      "nextRetryAt": "2026-11-21T11:38:39.551Z",
       "backoffHours": 24
     },
     "ss-espn-eng.1-401879211": {
-      "attempts": 8,
-      "checkedAt": "2026-11-19T08:04:14.041Z",
+      "attempts": 9,
+      "checkedAt": "2026-11-20T11:38:39.551Z",
       "status": "rate_limited_locally",
       "result": "quota",
       "error": null,
-      "nextRetryAt": "2026-11-20T08:04:14.041Z",
+      "nextRetryAt": "2026-11-21T11:38:39.551Z",
       "backoffHours": 24
     },
     "ss-espn-eng.2-401880117": {
-      "attempts": 8,
-      "checkedAt": "2026-11-19T08:04:14.041Z",
+      "attempts": 9,
+      "checkedAt": "2026-11-20T11:38:39.551Z",
       "status": "rate_limited_locally",
       "result": "quota",
       "error": null,
-      "nextRetryAt": "2026-11-20T08:04:14.041Z",
+      "nextRetryAt": "2026-11-21T11:38:39.551Z",
       "backoffHours": 24
     },
     "ss-espn-ger.1-401884714": {
-      "attempts": 8,
-      "checkedAt": "2026-11-19T08:04:14.041Z",
+      "attempts": 9,
+      "checkedAt": "2026-11-20T11:38:39.551Z",
       "status": "rate_limited_locally",
       "result": "quota",
       "error": null,
-      "nextRetryAt": "2026-11-20T08:04:14.041Z",
+      "nextRetryAt": "2026-11-21T11:38:39.551Z",
       "backoffHours": 24
     },
     "ss-espn-eng.1-401879210": {
-      "attempts": 8,
-      "checkedAt": "2026-11-19T08:04:14.041Z",
+      "attempts": 9,
+      "checkedAt": "2026-11-20T11:38:39.551Z",
       "status": "rate_limited_locally",
       "result": "quota",
       "error": null,
-      "nextRetryAt": "2026-11-20T08:04:14.041Z",
+      "nextRetryAt": "2026-11-21T11:38:39.551Z",
       "backoffHours": 24
     },
     "ss-espn-eng.2-401880115": {
-      "attempts": 8,
-      "checkedAt": "2026-11-19T08:04:14.041Z",
+      "attempts": 9,
+      "checkedAt": "2026-11-20T11:38:39.551Z",
       "status": "rate_limited_locally",
       "result": "quota",
       "error": null,
-      "nextRetryAt": "2026-11-20T08:04:14.041Z",
+      "nextRetryAt": "2026-11-21T11:38:39.551Z",
       "backoffHours": 24
     },
     "ss-espn-eng.1-401878747": {
-      "attempts": 8,
-      "checkedAt": "2026-11-19T08:04:14.041Z",
+      "attempts": 9,
+      "checkedAt": "2026-11-20T11:38:39.551Z",
       "status": "rate_limited_locally",
       "result": "quota",
       "error": null,
-      "nextRetryAt": "2026-11-20T08:04:14.041Z",
+      "nextRetryAt": "2026-11-21T11:38:39.551Z",
       "backoffHours": 24
     },
     "ss-espn-eng.2-401880113": {
-      "attempts": 8,
-      "checkedAt": "2026-11-19T08:04:14.041Z",
+      "attempts": 9,
+      "checkedAt": "2026-11-20T11:38:39.551Z",
       "status": "rate_limited_locally",
       "result": "quota",
       "error": null,
-      "nextRetryAt": "2026-11-20T08:04:14.041Z",
+      "nextRetryAt": "2026-11-21T11:38:39.551Z",
       "backoffHours": 24
     },
     "ss-espn-eng.2-401880122": {
-      "attempts": 7,
-      "checkedAt": "2026-11-18T18:12:27.512Z",
+      "attempts": 8,
+      "checkedAt": "2026-11-19T23:56:15.704Z",
       "status": "no_direct_history",
       "result": "no_coverage",
       "error": null,
@@ -5743,8 +7247,8 @@
       "backoffHours": 0
     },
     "ss-espn-ger.2-401885035": {
-      "attempts": 7,
-      "checkedAt": "2026-11-18T18:12:27.512Z",
+      "attempts": 8,
+      "checkedAt": "2026-11-19T23:56:15.704Z",
       "status": "no_direct_history",
       "result": "no_coverage",
       "error": null,
@@ -5752,66 +7256,66 @@
       "backoffHours": 0
     },
     "ss-espn-ned.2-401875825": {
-      "attempts": 7,
-      "checkedAt": "2026-11-18T18:12:27.512Z",
-      "status": "rate_limited_locally",
-      "result": "quota",
+      "attempts": 8,
+      "checkedAt": "2026-11-19T23:56:15.704Z",
+      "status": "no_direct_history",
+      "result": "no_coverage",
       "error": null,
-      "nextRetryAt": "2026-11-19T18:12:27.512Z",
-      "backoffHours": 24
+      "nextRetryAt": null,
+      "backoffHours": 0
     },
     "ss-espn-ger.1-401884711": {
-      "attempts": 7,
-      "checkedAt": "2026-11-18T18:12:27.512Z",
+      "attempts": 8,
+      "checkedAt": "2026-11-19T23:56:15.704Z",
       "status": "rate_limited_locally",
       "result": "quota",
       "error": null,
-      "nextRetryAt": "2026-11-19T18:12:27.512Z",
+      "nextRetryAt": "2026-11-20T23:56:15.704Z",
       "backoffHours": 24
     },
     "ss-espn-ned.1-401875529": {
-      "attempts": 7,
-      "checkedAt": "2026-11-18T18:12:27.512Z",
+      "attempts": 8,
+      "checkedAt": "2026-11-19T23:56:15.704Z",
       "status": "rate_limited_locally",
       "result": "quota",
       "error": null,
-      "nextRetryAt": "2026-11-19T18:12:27.512Z",
+      "nextRetryAt": "2026-11-20T23:56:15.704Z",
       "backoffHours": 24
     },
     "ss-espn-ger.2-401885038": {
-      "attempts": 7,
-      "checkedAt": "2026-11-18T18:12:27.512Z",
+      "attempts": 8,
+      "checkedAt": "2026-11-19T23:56:15.704Z",
       "status": "rate_limited_locally",
       "result": "quota",
       "error": null,
-      "nextRetryAt": "2026-11-19T18:12:27.512Z",
+      "nextRetryAt": "2026-11-20T23:56:15.704Z",
       "backoffHours": 24
     },
     "ss-espn-ned.2-401875827": {
-      "attempts": 7,
-      "checkedAt": "2026-11-18T18:12:27.512Z",
+      "attempts": 8,
+      "checkedAt": "2026-11-19T23:56:15.704Z",
       "status": "rate_limited_locally",
       "result": "quota",
       "error": null,
-      "nextRetryAt": "2026-11-19T18:12:27.512Z",
+      "nextRetryAt": "2026-11-20T23:56:15.704Z",
       "backoffHours": 24
     },
     "ss-espn-ger.1-401884710": {
-      "attempts": 7,
-      "checkedAt": "2026-11-18T18:12:27.512Z",
+      "attempts": 8,
+      "checkedAt": "2026-11-19T23:56:15.704Z",
       "status": "rate_limited_locally",
       "result": "quota",
       "error": null,
-      "nextRetryAt": "2026-11-19T18:12:27.512Z",
+      "nextRetryAt": "2026-11-20T23:56:15.704Z",
       "backoffHours": 24
     },
     "ss-espn-ned.2-401876067": {
-      "attempts": 7,
-      "checkedAt": "2026-11-18T18:12:27.512Z",
+      "attempts": 8,
+      "checkedAt": "2026-11-19T23:56:15.704Z",
       "status": "rate_limited_locally",
       "result": "quota",
       "error": null,
-      "nextRetryAt": "2026-11-19T18:12:27.512Z",
+      "nextRetryAt": "2026-11-20T23:56:15.704Z",
       "backoffHours": 24
     },
     "ss-espn-ned.2-401876068": {
@@ -5824,8 +7328,8 @@
       "backoffHours": 0
     },
     "ss-fotmob-5803322": {
-      "attempts": 2,
-      "checkedAt": "2026-11-18T18:12:27.512Z",
+      "attempts": 4,
+      "checkedAt": "2026-11-20T02:23:21.318Z",
       "status": "no_direct_history",
       "result": "no_coverage",
       "error": null,
@@ -5851,221 +7355,581 @@
       "backoffHours": 0
     },
     "ss-espn-uefa.champions-401915372": {
-      "attempts": 5,
-      "checkedAt": "2026-11-19T08:04:14.041Z",
-      "status": "rate_limited_locally",
-      "result": "quota",
+      "attempts": 6,
+      "checkedAt": "2026-11-20T02:23:21.318Z",
+      "status": "no_direct_history",
+      "result": "no_coverage",
       "error": null,
-      "nextRetryAt": "2026-11-20T00:04:14.041Z",
-      "backoffHours": 16
+      "nextRetryAt": null,
+      "backoffHours": 0
     },
     "ss-espn-eng.2-401880108": {
-      "attempts": 5,
-      "checkedAt": "2026-11-19T08:04:14.041Z",
-      "status": "rate_limited_locally",
-      "result": "quota",
+      "attempts": 6,
+      "checkedAt": "2026-11-20T02:23:21.318Z",
+      "status": "no_direct_history",
+      "result": "no_coverage",
       "error": null,
-      "nextRetryAt": "2026-11-20T00:04:14.041Z",
-      "backoffHours": 16
+      "nextRetryAt": null,
+      "backoffHours": 0
     },
     "ss-espn-uefa.champions-401915289": {
-      "attempts": 5,
-      "checkedAt": "2026-11-19T08:04:14.041Z",
+      "attempts": 6,
+      "checkedAt": "2026-11-20T02:23:21.318Z",
       "status": "rate_limited_locally",
       "result": "quota",
       "error": null,
-      "nextRetryAt": "2026-11-20T00:04:14.041Z",
-      "backoffHours": 16
+      "nextRetryAt": "2026-11-21T02:23:21.318Z",
+      "backoffHours": 24
     },
     "ss-espn-eng.2-401880107": {
-      "attempts": 5,
-      "checkedAt": "2026-11-19T08:04:14.041Z",
+      "attempts": 6,
+      "checkedAt": "2026-11-20T02:23:21.318Z",
       "status": "rate_limited_locally",
       "result": "quota",
       "error": null,
-      "nextRetryAt": "2026-11-20T00:04:14.041Z",
-      "backoffHours": 16
+      "nextRetryAt": "2026-11-21T02:23:21.318Z",
+      "backoffHours": 24
     },
     "ss-espn-uefa.champions-401915288": {
-      "attempts": 5,
-      "checkedAt": "2026-11-19T08:04:14.041Z",
+      "attempts": 6,
+      "checkedAt": "2026-11-20T02:23:21.318Z",
       "status": "rate_limited_locally",
       "result": "quota",
       "error": null,
-      "nextRetryAt": "2026-11-20T00:04:14.041Z",
-      "backoffHours": 16
+      "nextRetryAt": "2026-11-21T02:23:21.318Z",
+      "backoffHours": 24
     },
     "ss-espn-eng.2-401880106": {
-      "attempts": 5,
-      "checkedAt": "2026-11-19T08:04:14.041Z",
+      "attempts": 6,
+      "checkedAt": "2026-11-20T02:23:21.318Z",
       "status": "rate_limited_locally",
       "result": "quota",
       "error": null,
-      "nextRetryAt": "2026-11-20T00:04:14.041Z",
-      "backoffHours": 16
+      "nextRetryAt": "2026-11-21T02:23:21.318Z",
+      "backoffHours": 24
     },
     "ss-espn-uefa.champions-401915286": {
-      "attempts": 5,
-      "checkedAt": "2026-11-19T08:04:14.041Z",
+      "attempts": 6,
+      "checkedAt": "2026-11-20T02:23:21.318Z",
       "status": "rate_limited_locally",
       "result": "quota",
       "error": null,
-      "nextRetryAt": "2026-11-20T00:04:14.041Z",
-      "backoffHours": 16
+      "nextRetryAt": "2026-11-21T02:23:21.318Z",
+      "backoffHours": 24
     },
     "ss-espn-uefa.champions-401915285": {
-      "attempts": 5,
-      "checkedAt": "2026-11-19T08:04:14.041Z",
+      "attempts": 6,
+      "checkedAt": "2026-11-20T02:23:21.318Z",
       "status": "rate_limited_locally",
       "result": "quota",
       "error": null,
-      "nextRetryAt": "2026-11-20T00:04:14.041Z",
-      "backoffHours": 16
+      "nextRetryAt": "2026-11-21T02:23:21.318Z",
+      "backoffHours": 24
     },
     "ss-espn-uefa.champions-401915284": {
-      "attempts": 5,
-      "checkedAt": "2026-11-19T08:04:14.041Z",
+      "attempts": 6,
+      "checkedAt": "2026-11-20T02:23:21.318Z",
       "status": "rate_limited_locally",
       "result": "quota",
       "error": null,
-      "nextRetryAt": "2026-11-20T00:04:14.041Z",
-      "backoffHours": 16
+      "nextRetryAt": "2026-11-21T02:23:21.318Z",
+      "backoffHours": 24
     },
     "ss-espn-uefa.champions-401915371": {
-      "attempts": 5,
-      "checkedAt": "2026-11-19T08:04:14.041Z",
+      "attempts": 6,
+      "checkedAt": "2026-11-20T02:23:21.318Z",
       "status": "rate_limited_locally",
       "result": "quota",
       "error": null,
-      "nextRetryAt": "2026-11-20T00:04:14.041Z",
-      "backoffHours": 16
+      "nextRetryAt": "2026-11-21T02:23:21.318Z",
+      "backoffHours": 24
     },
     "ss-espn-uefa.champions-401915287": {
-      "attempts": 5,
-      "checkedAt": "2026-11-19T08:04:14.041Z",
+      "attempts": 6,
+      "checkedAt": "2026-11-20T02:23:21.318Z",
       "status": "rate_limited_locally",
       "result": "quota",
       "error": null,
-      "nextRetryAt": "2026-11-20T00:04:14.041Z",
-      "backoffHours": 16
+      "nextRetryAt": "2026-11-21T02:23:21.318Z",
+      "backoffHours": 24
     },
     "ss-espn-uefa.champions-401915283": {
-      "attempts": 3,
-      "checkedAt": "2026-11-19T00:29:13.466Z",
-      "status": "no_direct_history",
-      "result": "no_coverage",
+      "attempts": 5,
+      "checkedAt": "2026-11-20T11:38:39.551Z",
+      "status": "rate_limited_locally",
+      "result": "quota",
       "error": null,
-      "nextRetryAt": null,
-      "backoffHours": 0
+      "nextRetryAt": "2026-11-21T03:38:39.551Z",
+      "backoffHours": 16
     },
     "ss-espn-eng.2-401880103": {
-      "attempts": 2,
-      "checkedAt": "2026-11-19T00:29:13.466Z",
-      "status": "no_direct_history",
-      "result": "no_coverage",
+      "attempts": 4,
+      "checkedAt": "2026-11-20T11:38:39.551Z",
+      "status": "rate_limited_locally",
+      "result": "quota",
       "error": null,
-      "nextRetryAt": null,
-      "backoffHours": 0
+      "nextRetryAt": "2026-11-20T19:38:39.551Z",
+      "backoffHours": 8
     },
     "ss-espn-uefa.champions-401915282": {
-      "attempts": 2,
-      "checkedAt": "2026-11-19T00:29:13.466Z",
-      "status": "no_direct_history",
-      "result": "no_coverage",
+      "attempts": 4,
+      "checkedAt": "2026-11-20T11:38:39.551Z",
+      "status": "rate_limited_locally",
+      "result": "quota",
       "error": null,
-      "nextRetryAt": null,
-      "backoffHours": 0
+      "nextRetryAt": "2026-11-20T19:38:39.551Z",
+      "backoffHours": 8
     },
     "ss-espn-eng.2-401880102": {
-      "attempts": 3,
-      "checkedAt": "2026-11-19T08:04:14.041Z",
+      "attempts": 5,
+      "checkedAt": "2026-11-20T02:23:21.318Z",
       "status": "rate_limited_locally",
       "result": "quota",
       "error": null,
-      "nextRetryAt": "2026-11-19T12:04:14.041Z",
-      "backoffHours": 4
+      "nextRetryAt": "2026-11-20T18:23:21.318Z",
+      "backoffHours": 16
     },
     "ss-espn-uefa.champions-401915367": {
-      "attempts": 3,
-      "checkedAt": "2026-11-19T08:04:14.041Z",
+      "attempts": 5,
+      "checkedAt": "2026-11-20T02:23:21.318Z",
       "status": "rate_limited_locally",
       "result": "quota",
       "error": null,
-      "nextRetryAt": "2026-11-19T12:04:14.041Z",
-      "backoffHours": 4
+      "nextRetryAt": "2026-11-20T18:23:21.318Z",
+      "backoffHours": 16
     },
     "ss-espn-eng.2-401880101": {
-      "attempts": 3,
-      "checkedAt": "2026-11-19T08:04:14.041Z",
+      "attempts": 5,
+      "checkedAt": "2026-11-20T02:23:21.318Z",
       "status": "rate_limited_locally",
       "result": "quota",
       "error": null,
-      "nextRetryAt": "2026-11-19T12:04:14.041Z",
-      "backoffHours": 4
+      "nextRetryAt": "2026-11-20T18:23:21.318Z",
+      "backoffHours": 16
     },
     "ss-espn-uefa.champions-401915368": {
-      "attempts": 3,
-      "checkedAt": "2026-11-19T08:04:14.041Z",
+      "attempts": 5,
+      "checkedAt": "2026-11-20T11:38:39.551Z",
       "status": "rate_limited_locally",
       "result": "quota",
       "error": null,
-      "nextRetryAt": "2026-11-19T12:04:14.041Z",
-      "backoffHours": 4
+      "nextRetryAt": "2026-11-21T03:38:39.551Z",
+      "backoffHours": 16
     },
     "ss-espn-uefa.champions-401915281": {
-      "attempts": 3,
-      "checkedAt": "2026-11-19T08:04:14.041Z",
+      "attempts": 5,
+      "checkedAt": "2026-11-20T11:38:39.551Z",
       "status": "rate_limited_locally",
       "result": "quota",
       "error": null,
-      "nextRetryAt": "2026-11-19T12:04:14.041Z",
-      "backoffHours": 4
+      "nextRetryAt": "2026-11-21T03:38:39.551Z",
+      "backoffHours": 16
     },
     "ss-espn-uefa.champions-401915370": {
-      "attempts": 3,
-      "checkedAt": "2026-11-19T08:04:14.041Z",
+      "attempts": 5,
+      "checkedAt": "2026-11-20T11:38:39.551Z",
       "status": "rate_limited_locally",
       "result": "quota",
       "error": null,
-      "nextRetryAt": "2026-11-19T12:04:14.041Z",
-      "backoffHours": 4
+      "nextRetryAt": "2026-11-21T03:38:39.551Z",
+      "backoffHours": 16
     },
     "ss-espn-uefa.champions-401915369": {
-      "attempts": 3,
-      "checkedAt": "2026-11-19T08:04:14.041Z",
+      "attempts": 5,
+      "checkedAt": "2026-11-20T11:38:39.551Z",
       "status": "rate_limited_locally",
       "result": "quota",
       "error": null,
-      "nextRetryAt": "2026-11-19T12:04:14.041Z",
-      "backoffHours": 4
+      "nextRetryAt": "2026-11-21T03:38:39.551Z",
+      "backoffHours": 16
     },
     "ss-espn-uefa.champions-401915366": {
-      "attempts": 3,
-      "checkedAt": "2026-11-19T08:04:14.041Z",
+      "attempts": 5,
+      "checkedAt": "2026-11-20T11:38:39.551Z",
       "status": "rate_limited_locally",
       "result": "quota",
       "error": null,
-      "nextRetryAt": "2026-11-19T12:04:14.041Z",
-      "backoffHours": 4
+      "nextRetryAt": "2026-11-21T03:38:39.551Z",
+      "backoffHours": 16
     },
     "ss-espn-uefa.champions-401915365": {
-      "attempts": 3,
-      "checkedAt": "2026-11-19T08:04:14.041Z",
+      "attempts": 5,
+      "checkedAt": "2026-11-20T11:38:39.551Z",
       "status": "rate_limited_locally",
       "result": "quota",
       "error": null,
-      "nextRetryAt": "2026-11-19T12:04:14.041Z",
-      "backoffHours": 4
+      "nextRetryAt": "2026-11-21T03:38:39.551Z",
+      "backoffHours": 16
     },
     "ss-fotmob-6106415": {
-      "attempts": 3,
-      "checkedAt": "2026-11-19T08:04:14.041Z",
+      "attempts": 5,
+      "checkedAt": "2026-11-20T11:38:39.551Z",
       "status": "rate_limited_locally",
       "result": "quota",
       "error": null,
-      "nextRetryAt": "2026-11-19T12:04:14.041Z",
+      "nextRetryAt": "2026-11-21T03:38:39.551Z",
+      "backoffHours": 16
+    },
+    "ss-espn-uefa.europa.conf-401915737": {
+      "attempts": 3,
+      "checkedAt": "2026-11-20T11:38:39.551Z",
+      "status": "rate_limited_locally",
+      "result": "quota",
+      "error": null,
+      "nextRetryAt": "2026-11-20T15:38:39.551Z",
       "backoffHours": 4
+    },
+    "ss-espn-uefa.europa-401915511": {
+      "attempts": 3,
+      "checkedAt": "2026-11-20T11:38:39.551Z",
+      "status": "rate_limited_locally",
+      "result": "quota",
+      "error": null,
+      "nextRetryAt": "2026-11-20T15:38:39.551Z",
+      "backoffHours": 4
+    },
+    "ss-espn-uefa.europa.conf-401915800": {
+      "attempts": 3,
+      "checkedAt": "2026-11-20T11:38:39.551Z",
+      "status": "rate_limited_locally",
+      "result": "quota",
+      "error": null,
+      "nextRetryAt": "2026-11-20T15:38:39.551Z",
+      "backoffHours": 4
+    },
+    "ss-espn-uefa.europa-401915500": {
+      "attempts": 3,
+      "checkedAt": "2026-11-20T11:38:39.551Z",
+      "status": "rate_limited_locally",
+      "result": "quota",
+      "error": null,
+      "nextRetryAt": "2026-11-20T15:38:39.551Z",
+      "backoffHours": 4
+    },
+    "ss-espn-uefa.europa.conf-401915736": {
+      "attempts": 3,
+      "checkedAt": "2026-11-20T11:38:39.551Z",
+      "status": "rate_limited_locally",
+      "result": "quota",
+      "error": null,
+      "nextRetryAt": "2026-11-20T15:38:39.551Z",
+      "backoffHours": 4
+    },
+    "ss-espn-uefa.europa-401915494": {
+      "attempts": 3,
+      "checkedAt": "2026-11-20T11:38:39.551Z",
+      "status": "rate_limited_locally",
+      "result": "quota",
+      "error": null,
+      "nextRetryAt": "2026-11-20T15:38:39.551Z",
+      "backoffHours": 4
+    },
+    "ss-espn-uefa.europa.conf-401915799": {
+      "attempts": 3,
+      "checkedAt": "2026-11-20T11:38:39.551Z",
+      "status": "rate_limited_locally",
+      "result": "quota",
+      "error": null,
+      "nextRetryAt": "2026-11-20T15:38:39.551Z",
+      "backoffHours": 4
+    },
+    "ss-espn-uefa.europa-401915499": {
+      "attempts": 3,
+      "checkedAt": "2026-11-20T11:38:39.551Z",
+      "status": "rate_limited_locally",
+      "result": "quota",
+      "error": null,
+      "nextRetryAt": "2026-11-20T15:38:39.551Z",
+      "backoffHours": 4
+    },
+    "ss-espn-uefa.europa.conf-401915735": {
+      "attempts": 3,
+      "checkedAt": "2026-11-20T11:38:39.551Z",
+      "status": "rate_limited_locally",
+      "result": "quota",
+      "error": null,
+      "nextRetryAt": "2026-11-20T15:38:39.551Z",
+      "backoffHours": 4
+    },
+    "ss-espn-uefa.europa-401915496": {
+      "attempts": 3,
+      "checkedAt": "2026-11-20T11:38:39.551Z",
+      "status": "rate_limited_locally",
+      "result": "quota",
+      "error": null,
+      "nextRetryAt": "2026-11-20T15:38:39.551Z",
+      "backoffHours": 4
+    },
+    "ss-espn-uefa.europa.conf-401915798": {
+      "attempts": 3,
+      "checkedAt": "2026-11-20T11:38:39.551Z",
+      "status": "rate_limited_locally",
+      "result": "quota",
+      "error": null,
+      "nextRetryAt": "2026-11-20T15:38:39.551Z",
+      "backoffHours": 4
+    },
+    "ss-espn-uefa.europa-401915495": {
+      "attempts": 3,
+      "checkedAt": "2026-11-20T11:38:39.551Z",
+      "status": "rate_limited_locally",
+      "result": "quota",
+      "error": null,
+      "nextRetryAt": "2026-11-20T15:38:39.551Z",
+      "backoffHours": 4
+    },
+    "ss-espn-uefa.europa.conf-401915734": {
+      "attempts": 3,
+      "checkedAt": "2026-11-20T11:38:39.551Z",
+      "status": "rate_limited_locally",
+      "result": "quota",
+      "error": null,
+      "nextRetryAt": "2026-11-20T15:38:39.551Z",
+      "backoffHours": 4
+    },
+    "ss-espn-uefa.europa-401915487": {
+      "attempts": 3,
+      "checkedAt": "2026-11-20T11:38:39.551Z",
+      "status": "rate_limited_locally",
+      "result": "quota",
+      "error": null,
+      "nextRetryAt": "2026-11-20T15:38:39.551Z",
+      "backoffHours": 4
+    },
+    "ss-espn-uefa.europa.conf-401915733": {
+      "attempts": 3,
+      "checkedAt": "2026-11-20T11:38:39.551Z",
+      "status": "rate_limited_locally",
+      "result": "quota",
+      "error": null,
+      "nextRetryAt": "2026-11-20T15:38:39.551Z",
+      "backoffHours": 4
+    },
+    "ss-espn-uefa.europa-401915498": {
+      "attempts": 3,
+      "checkedAt": "2026-11-20T11:38:39.551Z",
+      "status": "rate_limited_locally",
+      "result": "quota",
+      "error": null,
+      "nextRetryAt": "2026-11-20T15:38:39.551Z",
+      "backoffHours": 4
+    },
+    "ss-espn-uefa.europa.conf-401915797": {
+      "attempts": 3,
+      "checkedAt": "2026-11-20T11:38:39.551Z",
+      "status": "rate_limited_locally",
+      "result": "quota",
+      "error": null,
+      "nextRetryAt": "2026-11-20T15:38:39.551Z",
+      "backoffHours": 4
+    },
+    "ss-espn-uefa.europa-401915497": {
+      "attempts": 3,
+      "checkedAt": "2026-11-20T11:38:39.551Z",
+      "status": "rate_limited_locally",
+      "result": "quota",
+      "error": null,
+      "nextRetryAt": "2026-11-20T15:38:39.551Z",
+      "backoffHours": 4
+    },
+    "ss-espn-uefa.europa.conf-401915796": {
+      "attempts": 3,
+      "checkedAt": "2026-11-20T11:38:39.551Z",
+      "status": "rate_limited_locally",
+      "result": "quota",
+      "error": null,
+      "nextRetryAt": "2026-11-20T15:38:39.551Z",
+      "backoffHours": 4
+    },
+    "ss-fotmob-6112362": {
+      "attempts": 3,
+      "checkedAt": "2026-11-20T11:38:39.551Z",
+      "status": "rate_limited_locally",
+      "result": "quota",
+      "error": null,
+      "nextRetryAt": "2026-11-20T15:38:39.551Z",
+      "backoffHours": 4
+    },
+    "ss-fotmob-6112403": {
+      "attempts": 2,
+      "checkedAt": "2026-11-20T02:23:21.318Z",
+      "status": "rate_limited_locally",
+      "result": "quota",
+      "error": null,
+      "nextRetryAt": "2026-11-20T04:23:21.318Z",
+      "backoffHours": 2
+    },
+    "ss-fotmob-6112340": {
+      "attempts": 2,
+      "checkedAt": "2026-11-20T02:23:21.318Z",
+      "status": "rate_limited_locally",
+      "result": "quota",
+      "error": null,
+      "nextRetryAt": "2026-11-20T04:23:21.318Z",
+      "backoffHours": 2
+    },
+    "ss-espn-uefa.europa.conf-401915795": {
+      "attempts": 2,
+      "checkedAt": "2026-11-20T02:23:21.318Z",
+      "status": "rate_limited_locally",
+      "result": "quota",
+      "error": null,
+      "nextRetryAt": "2026-11-20T04:23:21.318Z",
+      "backoffHours": 2
+    },
+    "ss-espn-uefa.europa-401915493": {
+      "attempts": 2,
+      "checkedAt": "2026-11-20T02:23:21.318Z",
+      "status": "rate_limited_locally",
+      "result": "quota",
+      "error": null,
+      "nextRetryAt": "2026-11-20T04:23:21.318Z",
+      "backoffHours": 2
+    },
+    "ss-espn-uefa.europa.conf-401915732": {
+      "attempts": 2,
+      "checkedAt": "2026-11-20T02:23:21.318Z",
+      "status": "rate_limited_locally",
+      "result": "quota",
+      "error": null,
+      "nextRetryAt": "2026-11-20T04:23:21.318Z",
+      "backoffHours": 2
+    },
+    "ss-espn-uefa.europa-401915488": {
+      "attempts": 1,
+      "checkedAt": "2026-11-19T23:56:15.704Z",
+      "status": "rate_limited_locally",
+      "result": "quota",
+      "error": null,
+      "nextRetryAt": "2026-11-20T00:56:15.704Z",
+      "backoffHours": 1
+    },
+    "ss-espn-uefa.europa.conf-401915629": {
+      "attempts": 2,
+      "checkedAt": "2026-11-20T02:23:21.318Z",
+      "status": "rate_limited_locally",
+      "result": "quota",
+      "error": null,
+      "nextRetryAt": "2026-11-20T04:23:21.318Z",
+      "backoffHours": 2
+    },
+    "ss-espn-uefa.europa-401915492": {
+      "attempts": 1,
+      "checkedAt": "2026-11-19T23:56:15.704Z",
+      "status": "rate_limited_locally",
+      "result": "quota",
+      "error": null,
+      "nextRetryAt": "2026-11-20T00:56:15.704Z",
+      "backoffHours": 1
+    },
+    "ss-espn-uefa.europa.conf-401915794": {
+      "attempts": 1,
+      "checkedAt": "2026-11-19T23:56:15.704Z",
+      "status": "rate_limited_locally",
+      "result": "quota",
+      "error": null,
+      "nextRetryAt": "2026-11-20T00:56:15.704Z",
+      "backoffHours": 1
+    },
+    "ss-espn-uefa.europa-401915491": {
+      "attempts": 1,
+      "checkedAt": "2026-11-19T23:56:15.704Z",
+      "status": "rate_limited_locally",
+      "result": "quota",
+      "error": null,
+      "nextRetryAt": "2026-11-20T00:56:15.704Z",
+      "backoffHours": 1
+    },
+    "ss-espn-uefa.europa.conf-401915792": {
+      "attempts": 1,
+      "checkedAt": "2026-11-19T23:56:15.704Z",
+      "status": "rate_limited_locally",
+      "result": "quota",
+      "error": null,
+      "nextRetryAt": "2026-11-20T00:56:15.704Z",
+      "backoffHours": 1
+    },
+    "ss-espn-uefa.europa-401915486": {
+      "attempts": 1,
+      "checkedAt": "2026-11-19T23:56:15.704Z",
+      "status": "rate_limited_locally",
+      "result": "quota",
+      "error": null,
+      "nextRetryAt": "2026-11-20T00:56:15.704Z",
+      "backoffHours": 1
+    },
+    "ss-espn-uefa.europa.conf-401915793": {
+      "attempts": 1,
+      "checkedAt": "2026-11-19T23:56:15.704Z",
+      "status": "rate_limited_locally",
+      "result": "quota",
+      "error": null,
+      "nextRetryAt": "2026-11-20T00:56:15.704Z",
+      "backoffHours": 1
+    },
+    "ss-espn-uefa.europa-401915510": {
+      "attempts": 1,
+      "checkedAt": "2026-11-19T23:56:15.704Z",
+      "status": "rate_limited_locally",
+      "result": "quota",
+      "error": null,
+      "nextRetryAt": "2026-11-20T00:56:15.704Z",
+      "backoffHours": 1
+    },
+    "ss-espn-uefa.europa.conf-401915628": {
+      "attempts": 1,
+      "checkedAt": "2026-11-20T02:23:21.318Z",
+      "status": "rate_limited_locally",
+      "result": "quota",
+      "error": null,
+      "nextRetryAt": "2026-11-20T03:23:21.318Z",
+      "backoffHours": 1
+    },
+    "ss-espn-uefa.europa-401915485": {
+      "attempts": 1,
+      "checkedAt": "2026-11-20T02:23:21.318Z",
+      "status": "rate_limited_locally",
+      "result": "quota",
+      "error": null,
+      "nextRetryAt": "2026-11-20T03:23:21.318Z",
+      "backoffHours": 1
+    },
+    "ss-espn-uefa.europa.conf-401915630": {
+      "attempts": 1,
+      "checkedAt": "2026-11-20T02:23:21.318Z",
+      "status": "rate_limited_locally",
+      "result": "quota",
+      "error": null,
+      "nextRetryAt": "2026-11-20T03:23:21.318Z",
+      "backoffHours": 1
+    },
+    "ss-espn-uefa.europa-401915489": {
+      "attempts": 1,
+      "checkedAt": "2026-11-20T02:23:21.318Z",
+      "status": "rate_limited_locally",
+      "result": "quota",
+      "error": null,
+      "nextRetryAt": "2026-11-20T03:23:21.318Z",
+      "backoffHours": 1
+    },
+    "ss-espn-uefa.europa-401915490": {
+      "attempts": 1,
+      "checkedAt": "2026-11-20T02:23:21.318Z",
+      "status": "rate_limited_locally",
+      "result": "quota",
+      "error": null,
+      "nextRetryAt": "2026-11-20T03:23:21.318Z",
+      "backoffHours": 1
+    },
+    "ss-fotmob-6112381": {
+      "attempts": 1,
+      "checkedAt": "2026-11-20T02:23:21.318Z",
+      "status": "rate_limited_locally",
+      "result": "quota",
+      "error": null,
+      "nextRetryAt": "2026-11-20T03:23:21.318Z",
+      "backoffHours": 1
     }
   },
-  "recommendation": "Geen directe H2H gevonden voor de gecontroleerde wedstrijden. Breid team-ID mapping/providerdekking uit of accepteer expliciet no-direct-history voor deze fixtures."
+  "recommendation": "API-Football H2H is onafhankelijk van fixture-acceptatie ingeschakeld; 3/3 beperkte paarpogingen gedaan. Er staan nog 20 fixtures in de wachtrij."
 }
