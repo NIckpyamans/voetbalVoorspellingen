@@ -4,7 +4,7 @@ import fs from "fs";
 import path from "path";
 import { buildR2ObjectKey, getR2Config, getR2Object, putR2Object } from "../shared/cloudflare-r2.js";
 import { loadLocalEnv } from "../shared/database.js";
-import { fetchOddsAtPrediction } from "./odds-provider.js";
+import { fetchOddsAtPrediction, theOddsApiCoversLeague } from "./odds-provider.js";
 import { findSportmonksFixture } from "./sportmonks-fixture-resolver.js";
 import { sportmonksEligibleFixtures } from "./worker/sportmonks-coverage-policy.js";
 import { classifyOddsCaptureRole, mergeOddsCaptureLedger, summarizeOddsCapture } from "./worker/critical-captures.js";
@@ -62,16 +62,71 @@ async function readLedger(config, key) {
   return JSON.parse(object.body.toString("utf8"));
 }
 
-// OddsPapi dekt de Eerste Divisie waar The Odds API geen sportkey voor heeft. Eén
-// odds-by-tournaments-call levert alle fixtures van de competitie tegelijk, dus we
-// halen hem hooguit één keer per run op — en alleen als er nog een divisieduel
-// zonder de juiste oddsrol openstaat. Zo blijft het verbruik ruim onder de 250
-// requests van het gratis plan.
+// The Odds API heeft geen sportkey voor een aantal competities (zoals de
+// Nederlandse Eerste Divisie). OddsPapi dekt die alleen per tournament-id, dus we
+// vragen uitsluitend de tournaments waarvoor we een id én een bijbehorende
+// competitie hebben. Eén odds-by-tournaments-call levert alle fixtures van die
+// tournaments tegelijk, dus we halen hem hooguit één keer per run op — en alleen
+// als er nog een duel zonder de juiste oddsrol openstaat.
+const ODDSPAPI_DEFAULT_TOURNAMENT_ID = 131;
+const ODDSPAPI_KNOWN_TOURNAMENTS = { 131: "eerste divisie" };
+
+// ODDSPAPI_TOURNAMENT_IDS accepteert "131:Eerste Divisie,17:Premier League" of
+// losse ids. Zonder label valt een id terug op de bekendelijst; een tournament
+// zonder bekend competitielabel wordt nooit ingezet, want dan betaalt de run een
+// request voor data die bij geen enkel openstaand duel hoort.
+function oddspapiTournaments() {
+  const raw = String(process.env.ODDSPAPI_TOURNAMENT_IDS || "").trim();
+  const parsed = [];
+  if (raw) {
+    for (const part of raw.split(",")) {
+      const [idPart, ...labelParts] = part.split(":");
+      const id = Number(idPart.trim());
+      if (!Number.isFinite(id) || id <= 0) continue;
+      const label = labelParts.join(":").trim().toLowerCase();
+      parsed.push({ id, league: label || ODDSPAPI_KNOWN_TOURNAMENTS[id] || null });
+    }
+  }
+  if (parsed.length) return parsed;
+  const legacy = Number(process.env.ODDSPAPI_TOURNAMENT_ID || ODDSPAPI_DEFAULT_TOURNAMENT_ID);
+  const id = Number.isFinite(legacy) && legacy > 0 ? legacy : ODDSPAPI_DEFAULT_TOURNAMENT_ID;
+  return [{ id, league: ODDSPAPI_KNOWN_TOURNAMENTS[id] || null }];
+}
+
+function tournamentForLeague(league, tournaments = []) {
+  const value = String(league || "").trim().toLowerCase();
+  if (!value) return null;
+  return tournaments.find((tournament) => tournament.league && value.includes(tournament.league)) || null;
+}
+
 async function captureOddspapiFallback({ config, matches, report, readLedger }) {
-  const divisieMatches = matches.filter((match) => /eerste\s*divisie/i.test(String(match?.league || "")));
-  const state = { status: "skipped", candidates: divisieMatches.length };
-  if (!divisieMatches.length) {
-    state.reason = "geen eerste-divisie-duels in dit venster";
+  // Alleen duels waarvan de competitie daadwerkelijk aan een tournament-id is
+  // gekoppeld. Zonder deze koppeling leverde de call alleen tournament 131-data op
+  // terwijl elk duel zonder Odds API-sportkey hem aftrapte: dubbel verbruik zonder
+  // extra dekking.
+  const tournaments = oddspapiTournaments();
+  const uncovered = matches.filter((match) => !theOddsApiCoversLeague(match?.league));
+  const fallbackMatches = [];
+  const unmappedLeagues = new Set();
+  for (const match of uncovered) {
+    const tournament = tournamentForLeague(match?.league, tournaments);
+    if (tournament) fallbackMatches.push({ match, tournament });
+    else unmappedLeagues.add(String(match?.league || "unknown"));
+  }
+  const tournamentIds = [...new Set(fallbackMatches.map((entry) => entry.tournament.id))];
+  const state = {
+    status: "skipped",
+    candidates: fallbackMatches.length,
+    mappedTournamentIds: tournamentIds,
+    unmappedLeagues: [...unmappedLeagues],
+  };
+  if (!uncovered.length) {
+    state.reason = "geen duels zonder Odds API-sportkey in dit venster";
+    report.oddspapi = state;
+    return new Map();
+  }
+  if (!fallbackMatches.length) {
+    state.reason = "geen tournament-id voor de openstaande competities";
     report.oddspapi = state;
     return new Map();
   }
@@ -82,17 +137,32 @@ async function captureOddspapiFallback({ config, matches, report, readLedger }) 
     return new Map();
   }
   const pending = [];
-  for (const match of divisieMatches) {
+  const tournamentByMatch = new Map();
+  for (const entry of fallbackMatches) {
+    const match = entry.match;
     const key = buildR2ObjectKey(config, `critical-captures/odds/${match.matchId}.json`);
     const ledger = await readLedger(config, key);
     const minutes = Math.round((Date.parse(match.kickoff) - Date.now()) / 60000);
     const role = classifyOddsCaptureRole(minutes);
     const existing = role === "closing" ? ledger?.closing : role === "prematch" ? ledger?.prematch : ledger?.opening;
-    if (!existing) pending.push(match);
+    if (!existing) {
+      pending.push(match);
+      tournamentByMatch.set(String(match.matchId), entry.tournament.id);
+    }
   }
   state.pending = pending.length;
   if (!pending.length) {
     state.status = "all_roles_captured";
+    report.oddspapi = state;
+    return new Map();
+  }
+  // Alleen de tournaments van de duels die nog een rol missen: een competitie
+  // waarvan alles al vastligt hoeft geen request te kosten.
+  const requestedTournamentIds = [...new Set(pending.map((match) => tournamentByMatch.get(String(match.matchId))))]
+    .filter((id) => Number.isFinite(id));
+  if (!requestedTournamentIds.length) {
+    state.status = "missing_tournament";
+    state.reason = "geen tournament-id voor de openstaande duels";
     report.oddspapi = state;
     return new Map();
   }
@@ -110,10 +180,9 @@ async function captureOddspapiFallback({ config, matches, report, readLedger }) 
     .map((item) => item.trim())
     .filter(Boolean);
   const bookmakers = (usage.preferredBookmaker ? [usage.preferredBookmaker] : configured).slice(0, allowance.perRunCap);
-  const tournamentId = Number(process.env.ODDSPAPI_TOURNAMENT_ID || 131);
   const result = await fetchOddspapiTournamentOdds({
     apiKey,
-    tournamentIds: [tournamentId],
+    tournamentIds: requestedTournamentIds,
     bookmakers,
     minIntervalMs: 1100,
   });
@@ -132,7 +201,7 @@ async function captureOddspapiFallback({ config, matches, report, readLedger }) 
   report.oddspapi = {
     ...state,
     status: byMatch.size ? "captured" : "no_match",
-    tournamentId,
+    tournamentIds: requestedTournamentIds,
     bookmakersTried: bookmakers,
     requests: result.requests,
     monthlyUsed: saved.requests,
@@ -238,13 +307,13 @@ async function main() {
     }
     const providerOdds = result?.oddsAtPrediction;
     const providerUsable = providerOdds && [providerOdds.home, providerOdds.draw, providerOdds.away].every((value) => Number(value) > 1);
-    // The Odds API heeft geen sportkey voor de Eerste Divisie; OddsPapi levert die
-    // odds in één call per run, hier als terugvaloptie.
-    const divisieOdds = providerUsable ? null : oddspapiOdds.get(String(match.matchId));
+    // Voor competities zonder Odds API-sportkey levert OddsPapi de odds in één
+    // call per run, hier als terugvaloptie.
+    const fallbackOdds = providerUsable ? null : oddspapiOdds.get(String(match.matchId));
     const odds = providerUsable
       ? providerOdds
-      : divisieOdds
-        ? { provider: "oddspapi", bookmaker: divisieOdds.bookmaker, market: "1X2", home: divisieOdds.home, draw: divisieOdds.draw, away: divisieOdds.away, capturedAt }
+      : fallbackOdds
+        ? { provider: "oddspapi", bookmaker: fallbackOdds.bookmaker, market: "1X2", home: fallbackOdds.home, draw: fallbackOdds.draw, away: fallbackOdds.away, capturedAt }
         : null;
     if (!odds) {
       report.matches.push({
@@ -266,7 +335,7 @@ async function main() {
     if (ledger.prematch) report.prematchCaptured += 1;
     if (ledger.closing) report.closingCaptured += 1;
     if (ledger.opening && ledger.prematch && ledger.closing) report.closingPairs += 1;
-    report.matches.push({ ...match, minutesBeforeKickoff, closingWindow, status: "captured", provider: odds.provider, captureRole: latestRole, sportmonksFixtureId: sportmonks?.fixtureId || null, oddspapiFixtureId: divisieOdds?.fixtureId || null, opening: Boolean(ledger.opening), prematch: Boolean(ledger.prematch), closing: Boolean(ledger.closing) });
+    report.matches.push({ ...match, minutesBeforeKickoff, closingWindow, status: "captured", provider: odds.provider, captureRole: latestRole, sportmonksFixtureId: sportmonks?.fixtureId || null, oddspapiFixtureId: fallbackOdds?.fixtureId || null, opening: Boolean(ledger.opening), prematch: Boolean(ledger.prematch), closing: Boolean(ledger.closing) });
   }
   // Dekking: opgeslagen rollen (already_captured) tellen mee als gedekt en de
   // werkelijk ontbrekende duels worden apart gerapporteerd, zodat een herhaalrun
