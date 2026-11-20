@@ -1,54 +1,46 @@
 # Upcoming H2H Backfill
 
-Laatst bijgewerkt: 2026-11-20T16:30:14.393Z
-Gecontroleerd: 33
-Gevuld: 9
-Geen directe H2H: 24
+Laatst bijgewerkt: 2026-11-20T20:15:58.003Z
+Gecontroleerd: 50
+Gevuld: 1
+Geen directe H2H: 49
 Errors: 0
-Providerfouten: 86
+Providerfouten: 176
 Kwaliteitsgate: geslaagd (filled)
 
-Openstaand na deze batch: 0
+Openstaand na deze batch: 26
 
 ## Aanbeveling
-H2H-profielen zijn naar R2 geschreven. Laat de worker draaien zodat voorspellingen de nieuwe captures gebruikt.
+API-Football H2H is onafhankelijk van fixture-acceptatie ingeschakeld; 3/3 beperkte paarpogingen gedaan. Er staan nog 26 fixtures in de wachtrij.
 
 ## Gevuld
-- 2026-12-11: Almere City - VVV-Venlo (2)
-- 2026-12-11: De Graafschap - FC Dordrecht (5)
-- 2026-12-11: FC Emmen - Jong PSV (5)
-- 2026-12-11: Jong Ajax - MVV Maastricht (5)
-- 2026-12-11: Jong AZ - NAC Breda (2)
-- 2026-12-11: Jong FC Utrecht - RKC Waalwijk (2)
-- 2026-12-11: Roda JC Kerkrade - FC Den Bosch (5)
-- 2026-12-11: TOP Oss - FC Eindhoven (5)
-- 2026-12-11: Vitesse - Helmond Sport (4)
+- 2026-12-04: Helmond Sport - Jong FC Utrecht (5)
 
 ## Geen Directe H2H
-- 2026-12-10: Kairat Almaty - CSU Craiova (no_direct_history)
-- 2026-12-10: Anderlecht - TSG Hoffenheim (no_direct_history)
-- 2026-12-10: F.C. København - FC Lugano (no_direct_history)
-- 2026-12-10: Ararat-Armenia - NEC Nijmegen (rate_limited_locally)
-- 2026-12-10: Getafe - Inter D'Escaldes (rate_limited_locally)
-- 2026-12-10: AZ Alkmaar - SK Sturm Graz (rate_limited_locally)
-- 2026-12-10: Iberia 1999 - Red Star Belgrade (rate_limited_locally)
-- 2026-12-10: Hapoel Be'er - Juventus (rate_limited_locally)
-- 2026-12-10: KuPS Kuopio - CSKA Sofia (rate_limited_locally)
-- 2026-12-10: Jagiellonia Bialystok - Crystal Palace (rate_limited_locally)
-- 2026-12-10: Lincoln Red Imps - FC Midtjylland (rate_limited_locally)
-- 2026-12-10: Marseille - Celta Vigo (rate_limited_locally)
-- 2026-12-10: Riga FC - Atalanta (rate_limited_locally)
-- 2026-12-10: NK Celje - Olympiacos (rate_limited_locally)
-- 2026-12-10: SC Freiburg - Panathinaikos (rate_limited_locally)
-- 2026-12-10: Omonia Nicosia - Celtic (rate_limited_locally)
-- 2026-12-10: SK Brann - Braga (rate_limited_locally)
-- 2026-12-10: Stade Rennais - Dinamo Zagreb (rate_limited_locally)
-- 2026-12-10: Trabzonspor - Jablonec (rate_limited_locally)
-- 2026-12-10: Hapoel Beer Sheva - Juventus (rate_limited_locally)
+- 2026-11-25: Sabah FK - Barcelona (no_direct_history)
+- 2026-11-25: Bolton Wanderers - West Bromwich Albion (no_direct_history)
+- 2026-11-25: Slavia Prague - Villarreal (no_direct_history)
+- 2026-11-25: Atlético Madrid - Viking FK (rate_limited_locally)
+- 2026-11-25: Club Brugge - Liverpool (rate_limited_locally)
+- 2026-11-25: Internazionale - VfB Stuttgart (rate_limited_locally)
+- 2026-11-25: Lille - Bayern Munich (rate_limited_locally)
+- 2026-11-25: Paris Saint-Germain - AS Roma (rate_limited_locally)
+- 2026-11-25: Shakhtar Donetsk - Fenerbahce (rate_limited_locally)
+- 2026-11-25: Sporting CP - Manchester United (rate_limited_locally)
+- 2026-11-26: Kairat Almaty - Mjällby AIF (rate_limited_locally)
+- 2026-11-26: Beşiktaş - Hapoel Be'er Sheva (rate_limited_locally)
+- 2026-11-26: Ajax Amsterdam - FC Thun (rate_limited_locally)
+- 2026-11-26: Dinamo Zagreb - Bayer Leverkusen (rate_limited_locally)
+- 2026-11-26: Jablonec - FC Lugano (rate_limited_locally)
+- 2026-11-26: Marseille - Levski Sofia (rate_limited_locally)
+- 2026-11-26: Kauno Zalgiris - Riga FC (rate_limited_locally)
+- 2026-11-26: Olympiacos - AC Milan (rate_limited_locally)
+- 2026-11-26: Pafos - FC Midtjylland (rate_limited_locally)
+- 2026-11-26: RB Salzburg - Ararat-Armenia (rate_limited_locally)
 
 ## Providerfouten
-- 24× goal-api: acceptance_gate_closed
-- 21× api-football: rate_limited_locally
-- 20× football-data-co-uk: not_configured
-- 18× espn-team-schedule: team_mapping_missing
+- 49× goal-api: acceptance_gate_closed
+- 46× api-football: rate_limited_locally
+- 43× football-data-co-uk: not_configured
+- 35× espn-team-schedule: team_mapping_missing
 - 3× api-football: team_mapping_missing
