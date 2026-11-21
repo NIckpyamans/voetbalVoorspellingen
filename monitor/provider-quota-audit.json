@@ -1,5 +1,5 @@
 {
-  "checkedAt": "2026-11-20T12:58:37.410Z",
+  "checkedAt": "2026-11-21T12:43:53.991Z",
   "oddsApi": {
     "configured": true,
     "valid": true,
@@ -12,7 +12,6 @@
       "soccer_concacaf_leagues_cup",
       "soccer_conmebol_copa_america",
       "soccer_england_efl_trophy",
-      "soccer_fa_cup",
       "soccer_fifa_club_world_cup",
       "soccer_fifa_world_cup",
       "soccer_fifa_world_cup_qualifiers_europe",
@@ -23,19 +22,17 @@
       "soccer_france_coupe_de_france",
       "soccer_italy_coppa_italia",
       "soccer_league_of_ireland",
-      "soccer_saudi_arabia_pro_league",
       "soccer_spain_copa_del_rey",
       "soccer_uefa_champs_league_qualification",
       "soccer_uefa_champs_league_women",
       "soccer_uefa_euro_qualification",
-      "soccer_uefa_european_championship",
-      "soccer_uefa_nations_league"
+      "soccer_uefa_european_championship"
     ],
     "faCup": {
       "key": "soccer_fa_cup",
-      "status": "expected_inactive"
+      "status": "active"
     },
-    "activeSports": 74,
+    "activeSports": 79,
     "soccerSportKeys": [
       "soccer_argentina_primera_division",
       "soccer_australia_aleague",
@@ -52,6 +49,7 @@
       "soccer_england_league1",
       "soccer_england_league2",
       "soccer_epl",
+      "soccer_fa_cup",
       "soccer_france_ligue_one",
       "soccer_france_ligue_two",
       "soccer_germany_bundesliga",
@@ -70,6 +68,7 @@
       "soccer_poland_ekstraklasa",
       "soccer_portugal_primeira_liga",
       "soccer_russia_premier_league",
+      "soccer_saudi_arabia_pro_league",
       "soccer_spain_la_liga",
       "soccer_spain_segunda_division",
       "soccer_spl",
@@ -80,6 +79,7 @@
       "soccer_uefa_champs_league",
       "soccer_uefa_europa_conference_league",
       "soccer_uefa_europa_league",
+      "soccer_uefa_nations_league",
       "soccer_usa_mls"
     ],
     "expectedSeasonalSports": [
@@ -93,14 +93,16 @@
       "soccer_uefa_europa_conference_league_qualification"
     ],
     "competitionCoverageStatus": "seasonal_unavailable",
-    "newlyInactiveSports": [
-      "soccer_uefa_champs_league_women"
-    ],
+    "newlyInactiveSports": [],
     "newlyUnavailableSports": [],
-    "newlyAvailableSports": [],
+    "newlyAvailableSports": [
+      "soccer_fa_cup",
+      "soccer_saudi_arabia_pro_league",
+      "soccer_uefa_nations_league"
+    ],
     "quota": {
-      "x-requests-remaining": "51",
-      "x-requests-used": "449",
+      "x-requests-remaining": "50",
+      "x-requests-used": "450",
       "x-requests-last": "0"
     },
     "errorCode": null
@@ -173,7 +175,7 @@
     "quota": {
       "x-ratelimit-limit": "1000",
       "x-ratelimit-remaining": "962",
-      "x-ratelimit-reset": "1795219200"
+      "x-ratelimit-reset": "1795305600"
     },
     "accepted": false,
     "policy": "Veertien dagen meten; nooit automatisch promoveren op basis van alleen een geldige key."
@@ -243,11 +245,11 @@
         "valid": true,
         "status": 200,
         "records": 1,
-        "firstId": 19713849,
-        "firstName": "AGF vs Lyngby Boldklub",
+        "firstId": 19722096,
+        "firstName": "Manchester City vs Fulham",
         "hasOddsFlag": true,
         "rateLimit": {
-          "resets_in_seconds": 3600,
+          "resets_in_seconds": 3599,
           "remaining": 178,
           "requested_entity": "Fixture"
         },
@@ -261,11 +263,11 @@
         "valid": true,
         "status": 200,
         "records": 1,
-        "firstId": 19713849,
-        "firstName": "AGF vs Lyngby Boldklub",
+        "firstId": 19735108,
+        "firstName": "Elversberg vs SC Freiburg",
         "hasOddsFlag": true,
         "rateLimit": {
-          "resets_in_seconds": 3599,
+          "resets_in_seconds": 3598,
           "remaining": 177,
           "requested_entity": "Fixture"
         },
@@ -275,13 +277,13 @@
         },
         "errorCode": null
       },
-      "testedFixtureId": 19713849,
+      "testedFixtureId": 19722096,
       "oddsByFixture": {
         "label": "oddsByFixture",
         "valid": true,
         "status": 200,
         "records": 3,
-        "firstId": 252783428316,
+        "firstId": 251291119896,
         "firstName": null,
         "hasOddsFlag": false,
         "rateLimit": {
@@ -305,7 +307,7 @@
         "firstName": "1",
         "hasOddsFlag": false,
         "rateLimit": {
-          "resets_in_seconds": 3600,
+          "resets_in_seconds": 3599,
           "remaining": 178,
           "requested_entity": "Odd"
         },
@@ -320,7 +322,7 @@
         "valid": true,
         "status": 200,
         "records": 3,
-        "firstId": 252783428316,
+        "firstId": 251291119896,
         "firstName": null,
         "hasOddsFlag": false,
         "rateLimit": {
