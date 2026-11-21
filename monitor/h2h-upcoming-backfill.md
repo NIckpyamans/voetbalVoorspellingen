@@ -1,54 +1,48 @@
 # Upcoming H2H Backfill
 
-Laatst bijgewerkt: 2026-11-21T11:03:30.675Z
-Gecontroleerd: 50
-Gevuld: 9
-Geen directe H2H: 41
+Laatst bijgewerkt: 2026-11-21T12:48:10.976Z
+Gecontroleerd: 45
+Gevuld: 3
+Geen directe H2H: 42
 Errors: 0
-Providerfouten: 110
+Providerfouten: 124
 Kwaliteitsgate: geslaagd (filled)
 
-Openstaand na deze batch: 16
+Openstaand na deze batch: 0
 
 ## Aanbeveling
-API-Football H2H is onafhankelijk van fixture-acceptatie ingeschakeld; 3/3 beperkte paarpogingen gedaan. Er staan nog 16 fixtures in de wachtrij.
+H2H-profielen zijn naar R2 geschreven. Laat de worker draaien zodat voorspellingen de nieuwe captures gebruikt.
 
 ## Gevuld
-- 2026-11-27: FC Dordrecht - Vitesse (4)
-- 2026-11-27: Jong AZ - TOP Oss (5)
-- 2026-11-27: Jong FC Utrecht - Almere City (2)
-- 2026-11-27: MVV Maastricht - Jong PSV (5)
-- 2026-11-27: NAC Breda - FC Den Bosch (2)
-- 2026-11-27: VVV-Venlo - RKC Waalwijk (2)
-- 2026-11-28: FC Emmen - Helmond Sport (5)
-- 2026-11-29: Roda JC Kerkrade - De Graafschap (5)
-- 2026-12-04: MVV Maastricht - FC Dordrecht (5)
+- 2026-12-04: RKC Waalwijk - Jong AZ (2)
+- 2026-12-04: TOP Oss - Almere City (2)
+- 2026-12-04: Vitesse - VVV-Venlo (4)
 
 ## Geen Directe H2H
-- 2026-11-24: RB Leipzig - Lens (no_direct_history)
-- 2026-11-24: Real Madrid - PSV Eindhoven (no_direct_history)
-- 2026-11-24: Slovan Bratislava - Real Betis (no_direct_history)
-- 2026-11-26: Brighton & Hove Albion - CSU Craiova (rate_limited_locally)
-- 2026-11-26: Besiktas - Hapoel Be'er (rate_limited_locally)
-- 2026-11-26: Egnatia - Lincoln Red Imps (rate_limited_locally)
-- 2026-11-26: Celta Vigo - AFC Bournemouth (rate_limited_locally)
-- 2026-11-26: Heart of Midlothian - AS Monaco (rate_limited_locally)
-- 2026-11-26: TSG Hoffenheim - SK Sturm Graz (rate_limited_locally)
-- 2026-11-26: Iberia 1999 - Getafe (rate_limited_locally)
-- 2026-11-26: Lyon - Lillestrøm (rate_limited_locally)
-- 2026-11-26: Sunderland - Jagiellonia Białystok (rate_limited_locally)
-- 2026-11-27: Werder Bremen - Borussia Mönchengladbach (rate_limited_locally)
-- 2026-11-27: Jong Ajax - Heracles Almelo (rate_limited_locally)
-- 2026-11-28: Dynamo Dresden - St. Pauli (rate_limited_locally)
-- 2026-11-28: Lincoln City - Wolverhampton Wanderers (rate_limited_locally)
-- 2026-11-28: FC Cologne - SV Elversberg (rate_limited_locally)
-- 2026-11-28: Leeds United - Coventry City (rate_limited_locally)
-- 2026-11-28: Le Mans - Lille (rate_limited_locally)
-- 2026-11-28: Hertha Berlin - Karlsruher SC (rate_limited_locally)
+- 2026-12-04: Sheffield United - West Ham United (no_direct_history)
+- 2026-12-05: Karlsruher SC - Holstein Kiel (no_direct_history)
+- 2026-12-05: Bolton Wanderers - Blackburn Rovers (no_direct_history)
+- 2026-12-05: Montpellier - Nantes (rate_limited_locally)
+- 2026-12-05: FC Augsburg - FC Cologne (rate_limited_locally)
+- 2026-12-05: AFC Bournemouth - Hull City (rate_limited_locally)
+- 2026-12-05: Paris FC - Le Mans (rate_limited_locally)
+- 2026-12-05: Hannover 96 - Hertha Berlin (rate_limited_locally)
+- 2026-12-05: Cardiff City - Lincoln City (rate_limited_locally)
+- 2026-12-05: Saint-Étienne - AS Nancy Lorraine (rate_limited_locally)
+- 2026-12-05: Eintracht Frankfurt - Werder Bremen (rate_limited_locally)
+- 2026-12-05: Leeds United - Ipswich Town (rate_limited_locally)
+- 2026-12-05: Portsmouth - West Bromwich Albion (rate_limited_locally)
+- 2026-12-05: Manchester United - Coventry City (rate_limited_locally)
+- 2026-12-05: Stoke City - Queens Park Rangers (rate_limited_locally)
+- 2026-12-05: Nottingham Forest - Brighton & Hove Albion (rate_limited_locally)
+- 2026-12-05: Wolverhampton Wanderers - Southampton (rate_limited_locally)
+- 2026-12-09: Slovan Bratislava - Shakhtar Donetsk (rate_limited_locally)
+- 2026-12-10: Jagiellonia Białystok - Crystal Palace (rate_limited_locally)
+- 2026-12-10: FC København - Lugano (rate_limited_locally)
 
 ## Providerfouten
-- 41× goal-api: acceptance_gate_closed
-- 38× api-football: rate_limited_locally
-- 15× espn-team-schedule: team_mapping_missing
-- 13× football-data-co-uk: not_configured
+- 42× goal-api: acceptance_gate_closed
+- 39× api-football: rate_limited_locally
+- 21× football-data-co-uk: not_configured
+- 19× espn-team-schedule: team_mapping_missing
 - 3× api-football: team_mapping_missing
