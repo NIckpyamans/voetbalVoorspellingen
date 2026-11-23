@@ -6,24 +6,24 @@
     "owner": "Nick",
     "status": "active"
   },
-  "generatedAt": "2026-11-16T15:53:43.031Z",
+  "generatedAt": "2026-11-23T18:16:59.361Z",
   "freshness": {
-    "generatedAt": "2026-11-16T15:53:43.031Z",
-    "ageMs": 5424,
+    "generatedAt": "2026-11-23T18:16:59.361Z",
+    "ageMs": 5756,
     "maxAgeMs": 86400000,
     "fresh": true,
     "status": "fresh"
   },
   "sourceFreshness": {
     "dayDocuments": {
-      "generatedAt": "2026-11-16T15:53:48.453Z",
-      "latestMatchDate": "2026-11-15",
-      "latestPredictionAt": "2026-11-16T10:12:39.973Z",
-      "latestSnapshotAt": "2026-11-15T13:10:47.052Z"
+      "generatedAt": "2026-11-23T18:17:05.115Z",
+      "latestMatchDate": "2026-11-23",
+      "latestPredictionAt": "2026-11-23T16:32:26.245Z",
+      "latestSnapshotAt": "2026-11-23T16:32:26.245Z"
     },
     "priorDataQualityAudit": {
-      "generatedAt": "2026-11-16T15:53:33.464Z",
-      "ageMs": 14991,
+      "generatedAt": "2026-11-23T18:16:49.512Z",
+      "ageMs": 15605,
       "maxAgeMs": 86400000,
       "fresh": true,
       "status": "fresh"
@@ -54,12 +54,12 @@
   "baseUrl": "https://voetbalvoorspellingen-clean.vercel.app",
   "summary": "Professionele audit actief. Kritieke opslagvelden lijken aanwezig; blijf kalibratie en bronkwaliteit bewaken.",
   "live": {
-    "matchesTotal": 0,
-    "predictionsTotal": 155,
-    "reviewCount": 2078,
+    "matchesTotal": 6,
+    "predictionsTotal": 6,
+    "reviewCount": 2153,
     "predictionSnapshotCount": 25,
-    "workerVersion": "v18-score-data-scout",
-    "sourceBranch": "main",
+    "workerVersion": "v25-club-rating",
+    "sourceBranch": "codex/step3b-layout",
     "sourceCoverage": null,
     "featureDiagnostics": null,
     "backtestSummary": null,
@@ -74,54 +74,54 @@
     }
   },
   "predictions": {
-    "total": 155,
-    "featureCoverage": 0,
-    "featureCoverageScope": "fallback-all-visible-records",
-    "featureCoveragePredictions": 155,
-    "historicalInlineFeatureCoverage": 0,
+    "total": 89,
+    "featureCoverage": 1,
+    "featureCoverageScope": "today-and-tomorrow-before-static-compaction",
+    "featureCoveragePredictions": 6,
+    "historicalInlineFeatureCoverage": 0.06741573033707865,
     "historicalFeatureStorage": "immutable-r2-snapshot-ledger",
-    "oddsCoverage": 0.6838709677419355,
-    "historicalMarketOnly": 0,
+    "oddsCoverage": 0.07865168539325842,
+    "historicalMarketOnly": 0.06741573033707865,
     "reviewCoverage": 0,
-    "averageCompleteness": 0.9795612903225801
+    "averageCompleteness": 0.9864494382022468
   },
   "recent": {
-    "days": 8,
-    "matches": 155,
-    "uniqueFixtures": 150,
-    "duplicateMatchRows": 5,
-    "predictions": 155,
-    "finishedMatches": 155,
-    "finishedWithScore": 155,
+    "days": 6,
+    "matches": 89,
+    "uniqueFixtures": 88,
+    "duplicateMatchRows": 1,
+    "predictions": 89,
+    "finishedMatches": 83,
+    "finishedWithScore": 83,
     "resultCoverage": 1,
-    "reviewedMatches": 155,
-    "evaluationCoverage": 1,
-    "snapshotBackedReviews": 155,
-    "snapshotBackedReviewCoverage": 1,
-    "reviewRows": 155,
-    "uniqueReviewedFixtures": 150,
-    "predictionSnapshots": 310,
-    "uniqueSnapshotMatches": 155,
+    "reviewedMatches": 84,
+    "evaluationCoverage": 1.0120481927710843,
+    "snapshotBackedReviews": 76,
+    "snapshotBackedReviewCoverage": 0.9047619047619048,
+    "reviewRows": 84,
+    "uniqueReviewedFixtures": 83,
+    "predictionSnapshots": 160,
+    "uniqueSnapshotMatches": 80,
     "snapshotEvaluations": {
-      "eligibleSnapshots": 310,
-      "eligibleFixtures": 155,
-      "evaluatedSnapshots": 155,
-      "evaluatedFixtures": 155,
-      "coverage": 1,
-      "repeatedSnapshotRows": 155,
-      "evaluatedFixturesMissing": 0
+      "eligibleSnapshots": 160,
+      "eligibleFixtures": 80,
+      "evaluatedSnapshots": 75,
+      "evaluatedFixtures": 75,
+      "coverage": 0.9375,
+      "repeatedSnapshotRows": 80,
+      "evaluatedFixturesMissing": 5
     },
-    "dataCompleteness": 0.9795612903225801,
+    "dataCompleteness": 0.9864494382022468,
     "sourceMetadataCoverage": 1,
-    "actualOddsCoverage": 0.6838709677419355,
+    "actualOddsCoverage": 0.07865168539325842,
     "confirmedLineupCoverage": 0,
     "performance": {
-      "reviews": 155,
-      "outcomeHitRate": 0.49032258064516127,
-      "exactHitRate": 0.07741935483870968,
-      "averageBrier": 0.6231251612903227,
-      "averageLogLoss": 1.040824516129032,
-      "averageConfidence": 0.44896129032258053
+      "reviews": 84,
+      "outcomeHitRate": 0.5595238095238095,
+      "exactHitRate": 0.07142857142857142,
+      "averageBrier": 0.5966452380952383,
+      "averageLogLoss": 1.0022273809523812,
+      "averageConfidence": 0.4489642857142857
     },
     "segments": {
       "club_friendlies": {
@@ -133,34 +133,34 @@
         "averageConfidence": null
       },
       "european_knockout": {
-        "reviews": 59,
-        "outcomeHitRate": 0.4576271186440678,
-        "exactHitRate": 0.15254237288135594,
-        "averageBrier": 0.6055966101694915,
-        "averageLogLoss": 1.013501694915254,
-        "averageConfidence": 0.43900000000000006
+        "reviews": 0,
+        "outcomeHitRate": null,
+        "exactHitRate": null,
+        "averageBrier": null,
+        "averageLogLoss": null,
+        "averageConfidence": null
       },
       "domestic_competitions": {
-        "reviews": 96,
-        "outcomeHitRate": 0.5104166666666666,
-        "exactHitRate": 0.03125,
-        "averageBrier": 0.6338979166666666,
-        "averageLogLoss": 1.0576166666666662,
-        "averageConfidence": 0.45508333333333334
+        "reviews": 84,
+        "outcomeHitRate": 0.5595238095238095,
+        "exactHitRate": 0.07142857142857142,
+        "averageBrier": 0.5966452380952383,
+        "averageLogLoss": 1.0022273809523812,
+        "averageConfidence": 0.4489642857142857
       }
     },
     "sourceFreshness": {
-      "generatedAt": "2026-11-16T15:53:48.453Z",
-      "latestMatchDate": "2026-11-15",
-      "latestPredictionAt": "2026-11-16T10:12:39.973Z",
-      "latestSnapshotAt": "2026-11-15T13:10:47.052Z"
+      "generatedAt": "2026-11-23T18:17:05.115Z",
+      "latestMatchDate": "2026-11-23",
+      "latestPredictionAt": "2026-11-23T16:32:26.245Z",
+      "latestSnapshotAt": "2026-11-23T16:32:26.245Z"
     },
     "uniqueFixtureAccounting": {
-      "matchRows": 155,
-      "uniqueFixtures": 150,
-      "duplicateRows": 5,
-      "snapshotRows": 310,
-      "uniqueSnapshotFixtures": 155
+      "matchRows": 89,
+      "uniqueFixtures": 88,
+      "duplicateRows": 1,
+      "snapshotRows": 160,
+      "uniqueSnapshotFixtures": 80
     }
   },
   "storageAudit": [
@@ -178,7 +178,7 @@
     },
     {
       "field": "featureVector",
-      "present": false,
+      "present": true,
       "importance": "hoog",
       "advice": "Aanwezig waar predictions gevuld zijn; maak hem immutable per prediction_id."
     },
@@ -228,10 +228,15 @@
   "completed": [
     "Recente eindstanden en evaluaties zijn vrijwel volledig opgeslagen.",
     "Professionele snapshotgate gehaald met 523 unieke geëvalueerde wedstrijden.",
-    "Shadowkalibratie gecontroleerd op 338 unieke wedstrijdsamples; geen profiel voldeed aan de promotiedrempel.",
-    "Actuele oddsdekking is voldoende voor gecontroleerde marktevaluatie."
+    "Shadowkalibratie gecontroleerd op 347 unieke wedstrijdsamples; geen profiel voldeed aan de promotiedrempel."
   ],
   "recommendations": [
+    {
+      "key": "timestamped_odds",
+      "priority": 1,
+      "title": "Vul opening-, prematch- en closing odds",
+      "advice": "Meet per provider en competitie; gebruik ROI/CLV pas wanneer timestamped oddsparen aantoonbaar compleet zijn."
+    },
     {
       "key": "confirmed_lineups",
       "priority": 1,
@@ -245,5 +250,5 @@
       "advice": "R2 houdt de leerlijn beschikbaar, maar relationele writes en monitors blijven beperkt zolang Neon HTTP 402 geeft."
     }
   ],
-  "nextAction": "Haal alleen rond T-75, T-45 en T-20 op en rapporteer dekking per competitie en provider."
+  "nextAction": "Meet per provider en competitie; gebruik ROI/CLV pas wanneer timestamped oddsparen aantoonbaar compleet zijn."
 }
