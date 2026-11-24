@@ -1,6 +1,6 @@
 {
-  "generatedAt": "2026-11-23T02:47:00.336Z",
-  "date": "2026-11-23",
+  "generatedAt": "2026-11-24T06:05:23.461Z",
+  "date": "2026-11-24",
   "name": "Ruflo-style gratis AI monitor",
   "mode": "naast-productie",
   "productionSafe": true,
@@ -72,15 +72,45 @@
       "status": "unknown"
     },
     "control": {
-      "score": 100,
-      "summary": "Ontwikkelcontrole: 0 actieve monitorissues op 2026-11-23; digest 2026-11-10 t/m 2026-11-16.",
-      "latestDay": "2026-11-23",
-      "shouldPropose": false,
-      "actions": []
+      "score": 52,
+      "summary": "Ontwikkelcontrole: 1 actieve monitorissues op 2026-11-24; digest 2026-11-17 t/m 2026-11-23.",
+      "latestDay": "2026-11-24",
+      "shouldPropose": true,
+      "actions": [
+        {
+          "priority": "high",
+          "title": "Workerdata is 437 minuten oud.",
+          "freeSolution": "Laat GitHub Actions schedule + manual dispatch draaien; geen mail nodig, alleen data committen.",
+          "files": [
+            ".github/workflows/worker.yml"
+          ],
+          "status": "monitor"
+        }
+      ]
     }
   },
-  "topThemes": [],
-  "recommendedNextActions": [],
+  "topThemes": [
+    {
+      "title": "Workerdata is 437 minuten oud.",
+      "count": 1,
+      "priority": "high",
+      "agents": [
+        "control"
+      ]
+    }
+  ],
+  "recommendedNextActions": [
+    {
+      "priority": "high",
+      "title": "Workerdata is 437 minuten oud.",
+      "freeSolution": "Laat GitHub Actions schedule + manual dispatch draaien; geen mail nodig, alleen data committen.",
+      "files": [
+        ".github/workflows/worker.yml"
+      ],
+      "status": "monitor",
+      "agent": "control"
+    }
+  ],
   "freeOnlyGuardrails": [
     "Geen betaalde API key verplicht maken.",
     "Geen externe AI blind laten pushen naar productie.",
