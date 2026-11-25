@@ -1,12 +1,12 @@
 # Upcoming H2H Backfill
 
-Laatst bijgewerkt: 2026-11-25T02:53:49.235Z
-Gecontroleerd: 47
+Laatst bijgewerkt: 2026-11-25T08:32:00.766Z
+Gecontroleerd: 9
 Gevuld: 0
-Geen directe H2H: 47
+Geen directe H2H: 9
 Errors: 0
-Providerfouten: 165
-Kwaliteitsgate: gedegradeerd (providers geblokkeerd in een volle batch)
+Providerfouten: 24
+Kwaliteitsgate: niet van toepassing
 
 Openstaand na deze batch: 0
 
@@ -16,30 +16,19 @@ Geen directe H2H gevonden voor de gecontroleerde wedstrijden. Breid team-ID mapp
 ## Gevuld
 
 ## Geen Directe H2H
-- 2026-11-25: Sabah FK - Barcelona (no_direct_history)
-- 2026-11-25: Bolton Wanderers - West Bromwich Albion (no_direct_history)
-- 2026-11-25: Slavia Prague - Villarreal (no_direct_history)
-- 2026-11-25: Atlético Madrid - Viking FK (rate_limited_locally)
-- 2026-11-25: Club Brugge - Liverpool (rate_limited_locally)
-- 2026-11-25: Internazionale - VfB Stuttgart (rate_limited_locally)
-- 2026-11-25: Lille - Bayern Munich (rate_limited_locally)
-- 2026-11-25: Paris Saint-Germain - AS Roma (rate_limited_locally)
-- 2026-11-25: Shakhtar Donetsk - Fenerbahce (rate_limited_locally)
-- 2026-11-25: Sporting CP - Manchester United (rate_limited_locally)
-- 2026-11-26: Kairat Almaty - Mjällby AIF (rate_limited_locally)
-- 2026-11-26: Beşiktaş - Hapoel Be'er Sheva (rate_limited_locally)
-- 2026-11-26: Ajax Amsterdam - FC Thun (rate_limited_locally)
-- 2026-11-26: Dinamo Zagreb - Bayer Leverkusen (rate_limited_locally)
-- 2026-11-26: Jablonec - FC Lugano (rate_limited_locally)
-- 2026-11-26: Marseille - Levski Sofia (rate_limited_locally)
-- 2026-11-26: Kauno Zalgiris - Riga FC (rate_limited_locally)
-- 2026-11-26: Olympiacos - AC Milan (rate_limited_locally)
-- 2026-11-26: Pafos - FC Midtjylland (rate_limited_locally)
-- 2026-11-26: RB Salzburg - Ararat-Armenia (rate_limited_locally)
+- 2026-11-26: Sunderland - Jagiellonia Bialystok (no_direct_history)
+- 2026-11-26: Torreense - Celtic (no_direct_history)
+- 2026-12-04: Arminia Bielefeld - Dynamo Dresden (no_direct_history)
+- 2026-12-04: Clermont Foot - Metz (rate_limited_locally)
+- 2026-12-05: Bayer Leverkusen - Borussia Mönchengladbach (rate_limited_locally)
+- 2026-12-05: Willem II - Feyenoord Rotterdam (rate_limited_locally)
+- 2026-12-09: Preston North End - Portsmouth (rate_limited_locally)
+- 2026-12-09: Arsenal - Real Madrid (rate_limited_locally)
+- 2026-12-09: Southampton - Burnley (rate_limited_locally)
 
 ## Providerfouten
-- 47× goal-api: acceptance_gate_closed
-- 44× api-football: rate_limited_locally
-- 39× football-data-co-uk: not_configured
-- 32× espn-team-schedule: team_mapping_missing
+- 9× goal-api: acceptance_gate_closed
+- 6× api-football: rate_limited_locally
+- 3× football-data-co-uk: not_configured
 - 3× api-football: team_mapping_missing
+- 3× espn-team-schedule: team_mapping_missing
