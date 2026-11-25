@@ -1,11 +1,11 @@
 # Upcoming H2H Backfill
 
-Laatst bijgewerkt: 2026-11-25T08:32:00.766Z
-Gecontroleerd: 9
+Laatst bijgewerkt: 2026-11-25T13:04:42.843Z
+Gecontroleerd: 2
 Gevuld: 0
-Geen directe H2H: 9
+Geen directe H2H: 2
 Errors: 0
-Providerfouten: 24
+Providerfouten: 4
 Kwaliteitsgate: niet van toepassing
 
 Openstaand na deze batch: 0
@@ -16,19 +16,9 @@ Geen directe H2H gevonden voor de gecontroleerde wedstrijden. Breid team-ID mapp
 ## Gevuld
 
 ## Geen Directe H2H
-- 2026-11-26: Sunderland - Jagiellonia Bialystok (no_direct_history)
-- 2026-11-26: Torreense - Celtic (no_direct_history)
-- 2026-12-04: Arminia Bielefeld - Dynamo Dresden (no_direct_history)
-- 2026-12-04: Clermont Foot - Metz (rate_limited_locally)
-- 2026-12-05: Bayer Leverkusen - Borussia Mönchengladbach (rate_limited_locally)
-- 2026-12-05: Willem II - Feyenoord Rotterdam (rate_limited_locally)
-- 2026-12-09: Preston North End - Portsmouth (rate_limited_locally)
-- 2026-12-09: Arsenal - Real Madrid (rate_limited_locally)
-- 2026-12-09: Southampton - Burnley (rate_limited_locally)
+- 2026-12-14: Sochaux - Montpellier (no_direct_history)
+- 2026-12-14: Hull City - Tottenham Hotspur (no_direct_history)
 
 ## Providerfouten
-- 9× goal-api: acceptance_gate_closed
-- 6× api-football: rate_limited_locally
-- 3× football-data-co-uk: not_configured
-- 3× api-football: team_mapping_missing
-- 3× espn-team-schedule: team_mapping_missing
+- 2× goal-api: acceptance_gate_closed
+- 2× api-football: team_mapping_missing
