@@ -1,16 +1,15 @@
 # Ruflo-style AI monitor
 
-Datum: 2026-11-24
+Datum: 2026-11-25
 
 Ruflo bundelt bestaande rapporten en vaste regels tot advies. Dit is geen zelfstandige AI- of internetanalyse; ontbrekende invoer blijft onbekend.
 
 ## Agents
 - Data: Bronbestand server_data.json ontbreekt of is ongeldig; geen betrouwbare meting beschikbaar.
 - Leren: Bronbestand server_data.json ontbreekt of is ongeldig; geen betrouwbare meting beschikbaar.
-- Controle: Ontwikkelcontrole: 1 actieve monitorissues op 2026-11-24; digest 2026-11-17 t/m 2026-11-23.
+- Controle: Ontwikkelcontrole: 0 actieve monitorissues op 2026-11-25; digest 2026-11-17 t/m 2026-11-23.
 
 ## Gratis acties
-1. [high] Workerdata is 437 minuten oud. (control) - Laat GitHub Actions schedule + manual dispatch draaien; geen mail nodig, alleen data committen.
 
 ## Guardrails
 - Geen betaalde API key verplicht maken.
