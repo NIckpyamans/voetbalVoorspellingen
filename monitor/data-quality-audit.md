@@ -1,11 +1,11 @@
 # Data Quality Audit
 
-Laatst bijgewerkt: 2026-11-25T11:50:38.739Z
+Laatst bijgewerkt: 2026-11-26T11:40:58.325Z
 Lookback: 45 dagen
 
 ## Scores
 - Wedstrijden: 464
-- Oude wedstrijden: 107
+- Oude wedstrijden: 120
 - Pending result backfills: 0
 - Ontbrekende oude scores: 0
 - H2H-dekking: 46%
@@ -17,11 +17,11 @@ Lookback: 45 dagen
 - Auditstatus freshness: fresh
 - Bruikbare wedstrijdstatistieken: 90%
 - Bevestigde opstellingen: 0%
-- Historisch teruggevonden basiselftallen: 82%
+- Historisch teruggevonden basiselftallen: 83%
 - Verse getimestampte prematch-odds: 2%
 - Volledige pre-match bewijsset: 0%
-- Doelpunten met tijdlijn: 87%
-- Kaarten met tijdlijn: 87%
+- Doelpunten met tijdlijn: 88%
+- Kaarten met tijdlijn: 88%
 
 ## Per competitie
 - Netherlands - Eredivisie: 36 duels, vorm 100%, H2H 67%, inzetbewijs 0%, lekvrije reviews 0% (0/0), stats 100%; gaten: h2h, confirmed_lineups, timestamped_odds, immutable_snapshot_windows, leak_free_reviews
