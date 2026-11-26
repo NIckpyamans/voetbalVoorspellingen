@@ -11238,6 +11238,65 @@
           "issues": []
         }
       ]
+    },
+    "2026-11-26": {
+      "runs": [
+        {
+          "timestamp": "2026-11-26T04:11:31.691Z",
+          "stats": {
+            "today": "2026-11-26",
+            "tomorrow": "2026-11-27",
+            "dataPresent": true,
+            "lastRun": 1795646581243,
+            "ageMinutes": 329,
+            "maxWorkerAgeMinutes": 180,
+            "todayMatches": 41,
+            "tomorrowMatches": 14,
+            "fixtureCalendar": {
+              "status": "has_current_matches",
+              "healthy": true,
+              "emptyWindowOk": true,
+              "severity": "none",
+              "todayCount": 41,
+              "tomorrowCount": 14,
+              "windowDays": 7,
+              "checkedDates": [
+                "2026-11-26",
+                "2026-11-27",
+                "2026-11-28",
+                "2026-11-29",
+                "2026-12-01",
+                "2026-12-02",
+                "2026-12-03"
+              ],
+              "nextMatchDate": "2026-11-26",
+              "nextMatchCount": 41,
+              "explanation": "Vandaag of morgen staan er wedstrijden in de actuele data."
+            },
+            "liveMatches": 0,
+            "liveWithoutMinute": 0,
+            "h2hFilled": 0,
+            "h2hMissing": 41,
+            "standingsCount": 11,
+            "cupSheetCount": 4,
+            "phaseReliabilityCount": 5
+          },
+          "issues": [
+            {
+              "key": "worker_stale",
+              "severity": "high",
+              "message": "Workerdata is 329 minuten oud.",
+              "details": {}
+            },
+            {
+              "key": "h2h_empty",
+              "severity": "medium",
+              "message": "Alle wedstrijden van vandaag hebben lege H2H-data.",
+              "details": {}
+            }
+          ]
+        }
+      ]
     }
   }
 }
