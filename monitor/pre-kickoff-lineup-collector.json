@@ -1,50 +1,41 @@
 {
-  "generatedAt": "2026-11-24T18:23:01.684Z",
-  "checked": 7,
-  "confirmed": 7,
-  "changedConfirmed": 7,
+  "generatedAt": "2026-11-26T14:32:28.947Z",
+  "checked": 2,
+  "confirmed": 1,
+  "changedConfirmed": 1,
   "partial": 0,
-  "missing": 0,
-  "r2Stored": 7,
+  "missing": 1,
+  "r2Stored": 1,
   "playerFixtureStatsCaptured": 0,
   "databaseWritable": false,
   "databaseError": "Server error (HTTP status 402): {\"message\":\"Your account or project has exceeded the quota. Upgrade your plan to increase limits.\",\"code\":\"\",\"detail\":null,\"hint\":null,\"position\":null,\"internalPosition\":null,\"internalQuery\":null,\"severity\":\"\",\"where\":null,\"table\":null,\"column\":null,\"schema\":null,\"dataType\":null,\"constraint\":null,\"file\":null,\"line\":null,\"routine\":null,\"neon:retryable\":true}",
   "captureWindows": {
-    "t75": 7,
-    "t45": 0,
+    "t75": 1,
+    "t45": 1,
     "t20": 0,
     "outside": 0
   },
   "providers": {
-    "sofascore:schedule_http_403": 7,
-    "fotmob:ok": 7
+    "fotmob:ok": 1,
+    "fotmob:fixture_not_found": 1,
+    "sofascore:schedule_http_403": 1,
+    "goal-api:acceptance_gate_closed": 1,
+    "api-football:account_or_plan_unavailable": 1,
+    "sportmonks:plan_coverage_unavailable": 1
   },
   "matches": [
     {
-      "matchId": "ss-espn-eng.2-401880148",
-      "league": "England - Championship",
-      "agent": "england-championship-agent",
-      "kickoff": "2026-11-24T19:45:00.000Z",
-      "minutesBeforeKickoff": 81,
-      "captureWindow": "t75",
-      "homeTeam": "Bristol City",
-      "awayTeam": "Wrexham",
+      "matchId": "ss-espn-uefa.europa.conf-401915816",
+      "league": "Europe - Conference League",
+      "agent": "conference-league-agent",
+      "kickoff": "2026-11-26T15:30:00.000Z",
+      "minutesBeforeKickoff": 57,
+      "captureWindow": "t45",
+      "homeTeam": "Kairat Almaty",
+      "awayTeam": "Mjällby AIF",
       "provider": "fotmob",
       "status": "ok",
       "attempts": [
-        {
-          "provider": "sofascore",
-          "status": "schedule_http_403",
-          "lineup": false,
-          "confirmed": false,
-          "durationMs": null,
-          "quota": {
-            "remaining": null,
-            "limit": null,
-            "resetAt": null
-          },
-          "result": "http_error"
-        },
         {
           "provider": "fotmob",
           "status": "ok",
@@ -63,17 +54,30 @@
       "partial": false
     },
     {
-      "matchId": "ss-espn-eng.2-401880147",
-      "league": "England - Championship",
-      "agent": "england-championship-agent",
-      "kickoff": "2026-11-24T19:45:00.000Z",
-      "minutesBeforeKickoff": 81,
+      "matchId": "ss-bbc-2026-11-26-besiktas-hapoel be er sheva",
+      "league": "Europe - Europa League",
+      "agent": "europa-league-agent",
+      "kickoff": "2026-11-26T15:45:00.000Z",
+      "minutesBeforeKickoff": 72,
       "captureWindow": "t75",
-      "homeTeam": "Cardiff City",
-      "awayTeam": "Preston North End",
-      "provider": "fotmob",
-      "status": "ok",
+      "homeTeam": "Beşiktaş",
+      "awayTeam": "Hapoel Be'er Sheva",
+      "provider": "sportmonks",
+      "status": "plan_coverage_unavailable",
       "attempts": [
+        {
+          "provider": "fotmob",
+          "status": "fixture_not_found",
+          "lineup": false,
+          "confirmed": false,
+          "durationMs": null,
+          "quota": {
+            "remaining": null,
+            "limit": null,
+            "resetAt": null
+          },
+          "result": "no_coverage"
+        },
         {
           "provider": "sofascore",
           "status": "schedule_http_403",
@@ -88,37 +92,8 @@
           "result": "http_error"
         },
         {
-          "provider": "fotmob",
-          "status": "ok",
-          "lineup": true,
-          "confirmed": true,
-          "durationMs": null,
-          "quota": {
-            "remaining": null,
-            "limit": null,
-            "resetAt": null
-          },
-          "result": "found"
-        }
-      ],
-      "confirmed": true,
-      "partial": false
-    },
-    {
-      "matchId": "ss-espn-eng.2-401880146",
-      "league": "England - Championship",
-      "agent": "england-championship-agent",
-      "kickoff": "2026-11-24T19:45:00.000Z",
-      "minutesBeforeKickoff": 81,
-      "captureWindow": "t75",
-      "homeTeam": "Charlton Athletic",
-      "awayTeam": "Lincoln City",
-      "provider": "fotmob",
-      "status": "ok",
-      "attempts": [
-        {
-          "provider": "sofascore",
-          "status": "schedule_http_403",
+          "provider": "goal-api",
+          "status": "acceptance_gate_closed",
           "lineup": false,
           "confirmed": false,
           "durationMs": null,
@@ -127,40 +102,12 @@
             "limit": null,
             "resetAt": null
           },
-          "result": "http_error"
+          "result": "acceptance_blocked"
         },
         {
-          "provider": "fotmob",
-          "status": "ok",
-          "lineup": true,
-          "confirmed": true,
-          "durationMs": null,
-          "quota": {
-            "remaining": null,
-            "limit": null,
-            "resetAt": null
-          },
-          "result": "found"
-        }
-      ],
-      "confirmed": true,
-      "partial": false
-    },
-    {
-      "matchId": "ss-espn-eng.2-401880145",
-      "league": "England - Championship",
-      "agent": "england-championship-agent",
-      "kickoff": "2026-11-24T19:45:00.000Z",
-      "minutesBeforeKickoff": 81,
-      "captureWindow": "t75",
-      "homeTeam": "Middlesbrough",
-      "awayTeam": "Swansea City",
-      "provider": "fotmob",
-      "status": "ok",
-      "attempts": [
-        {
-          "provider": "sofascore",
-          "status": "schedule_http_403",
+          "provider": "api-football",
+          "status": "account_or_plan_unavailable",
+          "fixtureMapped": false,
           "lineup": false,
           "confirmed": false,
           "durationMs": null,
@@ -169,40 +116,11 @@
             "limit": null,
             "resetAt": null
           },
-          "result": "http_error"
+          "result": "acceptance_blocked"
         },
         {
-          "provider": "fotmob",
-          "status": "ok",
-          "lineup": true,
-          "confirmed": true,
-          "durationMs": null,
-          "quota": {
-            "remaining": null,
-            "limit": null,
-            "resetAt": null
-          },
-          "result": "found"
-        }
-      ],
-      "confirmed": true,
-      "partial": false
-    },
-    {
-      "matchId": "ss-espn-eng.2-401880144",
-      "league": "England - Championship",
-      "agent": "england-championship-agent",
-      "kickoff": "2026-11-24T19:45:00.000Z",
-      "minutesBeforeKickoff": 81,
-      "captureWindow": "t75",
-      "homeTeam": "Norwich City",
-      "awayTeam": "Queens Park Rangers",
-      "provider": "fotmob",
-      "status": "ok",
-      "attempts": [
-        {
-          "provider": "sofascore",
-          "status": "schedule_http_403",
+          "provider": "sportmonks",
+          "status": "plan_coverage_unavailable",
           "lineup": false,
           "confirmed": false,
           "durationMs": null,
@@ -211,121 +129,32 @@
             "limit": null,
             "resetAt": null
           },
-          "result": "http_error"
-        },
-        {
-          "provider": "fotmob",
-          "status": "ok",
-          "lineup": true,
-          "confirmed": true,
-          "durationMs": null,
-          "quota": {
-            "remaining": null,
-            "limit": null,
-            "resetAt": null
-          },
-          "result": "found"
+          "result": "no_coverage"
         }
       ],
-      "confirmed": true,
-      "partial": false
-    },
-    {
-      "matchId": "ss-espn-eng.2-401880143",
-      "league": "England - Championship",
-      "agent": "england-championship-agent",
-      "kickoff": "2026-11-24T19:45:00.000Z",
-      "minutesBeforeKickoff": 81,
-      "captureWindow": "t75",
-      "homeTeam": "Portsmouth",
-      "awayTeam": "West Ham United",
-      "provider": "fotmob",
-      "status": "ok",
-      "attempts": [
-        {
-          "provider": "sofascore",
-          "status": "schedule_http_403",
-          "lineup": false,
-          "confirmed": false,
-          "durationMs": null,
-          "quota": {
-            "remaining": null,
-            "limit": null,
-            "resetAt": null
-          },
-          "result": "http_error"
-        },
-        {
-          "provider": "fotmob",
-          "status": "ok",
-          "lineup": true,
-          "confirmed": true,
-          "durationMs": null,
-          "quota": {
-            "remaining": null,
-            "limit": null,
-            "resetAt": null
-          },
-          "result": "found"
-        }
-      ],
-      "confirmed": true,
-      "partial": false
-    },
-    {
-      "matchId": "ss-espn-eng.2-401880142",
-      "league": "England - Championship",
-      "agent": "england-championship-agent",
-      "kickoff": "2026-11-24T19:45:00.000Z",
-      "minutesBeforeKickoff": 81,
-      "captureWindow": "t75",
-      "homeTeam": "Sheffield United",
-      "awayTeam": "Southampton",
-      "provider": "fotmob",
-      "status": "ok",
-      "attempts": [
-        {
-          "provider": "sofascore",
-          "status": "schedule_http_403",
-          "lineup": false,
-          "confirmed": false,
-          "durationMs": null,
-          "quota": {
-            "remaining": null,
-            "limit": null,
-            "resetAt": null
-          },
-          "result": "http_error"
-        },
-        {
-          "provider": "fotmob",
-          "status": "ok",
-          "lineup": true,
-          "confirmed": true,
-          "durationMs": null,
-          "quota": {
-            "remaining": null,
-            "limit": null,
-            "resetAt": null
-          },
-          "result": "found"
-        }
-      ],
-      "confirmed": true,
+      "confirmed": false,
       "partial": false
     }
   ],
   "leagueCoverage": [
     {
-      "league": "England - Championship",
-      "checked": 7,
-      "covered": 7,
+      "league": "Europe - Europa League",
+      "checked": 1,
+      "covered": 0,
+      "partial": 0,
+      "missing": 1,
+      "coverage": 0
+    },
+    {
+      "league": "Europe - Conference League",
+      "checked": 1,
+      "covered": 1,
       "partial": 0,
       "missing": 0,
       "coverage": 1
     }
   ],
-  "confirmedCoverage": 1,
+  "confirmedCoverage": 0.5,
   "recalculationRequired": true,
   "recalculationSlaMinutes": 5,
   "recalculationReason": "confirmed_lineup_changed"
