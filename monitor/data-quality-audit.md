@@ -1,27 +1,27 @@
 # Data Quality Audit
 
-Laatst bijgewerkt: 2026-11-26T11:40:58.325Z
+Laatst bijgewerkt: 2026-11-27T11:33:32.342Z
 Lookback: 45 dagen
 
 ## Scores
-- Wedstrijden: 464
-- Oude wedstrijden: 120
+- Wedstrijden: 482
+- Oude wedstrijden: 160
 - Pending result backfills: 0
 - Ontbrekende oude scores: 0
-- H2H-dekking: 46%
+- H2H-dekking: 45%
 - Reviews na afloop: 100%
 - Lekvrije post-matchreviews: 0% (0/0)
 - Immutable snapshot-evaluaties: 0% (0/0 unieke fixtures)
 - Snapshotrijen / unieke fixtures: 708/545 (163 herhaalde rijen)
-- Dagbestandwedstrijden / unieke fixtures: 464/452
+- Dagbestandwedstrijden / unieke fixtures: 482/470
 - Auditstatus freshness: fresh
-- Bruikbare wedstrijdstatistieken: 90%
+- Bruikbare wedstrijdstatistieken: 84%
 - Bevestigde opstellingen: 0%
-- Historisch teruggevonden basiselftallen: 83%
+- Historisch teruggevonden basiselftallen: 85%
 - Verse getimestampte prematch-odds: 2%
 - Volledige pre-match bewijsset: 0%
-- Doelpunten met tijdlijn: 88%
-- Kaarten met tijdlijn: 88%
+- Doelpunten met tijdlijn: 81%
+- Kaarten met tijdlijn: 83%
 
 ## Per competitie
 - Netherlands - Eredivisie: 36 duels, vorm 100%, H2H 67%, inzetbewijs 0%, lekvrije reviews 0% (0/0), stats 100%; gaten: h2h, confirmed_lineups, timestamped_odds, immutable_snapshot_windows, leak_free_reviews
@@ -33,8 +33,8 @@ Lookback: 45 dagen
 - France - Ligue 1: 36 duels, vorm 100%, H2H 78%, inzetbewijs 0%, lekvrije reviews 0% (0/0), stats 89%; gaten: h2h, confirmed_lineups, timestamped_odds, immutable_snapshot_windows, leak_free_reviews
 - France - Ligue 2: 27 duels, vorm 100%, H2H 52%, inzetbewijs 0%, lekvrije reviews 0% (0/0), stats 44%; gaten: h2h, confirmed_lineups, timestamped_odds, immutable_snapshot_windows, leak_free_reviews, post_match_statistics, referee, goal_timeline, card_timeline
 - Europe - Champions League: 38 duels, vorm 100%, H2H 3%, inzetbewijs 0%, lekvrije reviews 0% (0/0), stats 90%; gaten: h2h, confirmed_lineups, timestamped_odds, immutable_snapshot_windows, leak_free_reviews
-- Europe - Europa League: 43 duels, vorm 93%, H2H 0%, inzetbewijs 0%, lekvrije reviews 0% (0/0), stats 100%; gaten: h2h, confirmed_lineups, timestamped_odds, immutable_snapshot_windows, leak_free_reviews
-- Europe - Conference League: 38 duels, vorm 74%, H2H 0%, inzetbewijs 0%, lekvrije reviews 0% (0/0), stats 100%; gaten: form, h2h, confirmed_lineups, timestamped_odds, immutable_snapshot_windows, leak_free_reviews
+- Europe - Europa League: 42 duels, vorm 95%, H2H 0%, inzetbewijs 0%, lekvrije reviews 0% (0/0), stats 76%; gaten: h2h, confirmed_lineups, timestamped_odds, immutable_snapshot_windows, leak_free_reviews, post_match_statistics, goal_timeline, card_timeline
+- Europe - Conference League: 57 duels, vorm 77%, H2H 0%, inzetbewijs 0%, lekvrije reviews 0% (0/0), stats 58%; gaten: form, h2h, confirmed_lineups, timestamped_odds, immutable_snapshot_windows, leak_free_reviews, post_match_statistics, referee, goal_timeline, card_timeline
 
 ## Aanbevelingen
 - Resultaatbackfill is schoon binnen de auditperiode.
