@@ -1,5 +1,5 @@
 {
-  "checkedAt": "2026-11-26T13:57:27.027Z",
+  "checkedAt": "2026-11-27T13:56:16.525Z",
   "oddsApi": {
     "configured": true,
     "valid": true,
@@ -21,20 +21,20 @@
       "soccer_fifa_world_cup_womens",
       "soccer_finland_veikkausliiga",
       "soccer_france_coupe_de_france",
-      "soccer_france_ligue_two",
       "soccer_germany_bundesliga_women",
       "soccer_league_of_ireland",
       "soccer_spain_copa_del_rey",
       "soccer_uefa_champs_league_qualification",
       "soccer_uefa_champs_league_women",
       "soccer_uefa_euro_qualification",
+      "soccer_uefa_europa_conference_league",
       "soccer_uefa_european_championship"
     ],
     "faCup": {
       "key": "soccer_fa_cup",
       "status": "active"
     },
-    "activeSports": 76,
+    "activeSports": 75,
     "soccerSportKeys": [
       "soccer_argentina_primera_division",
       "soccer_australia_aleague",
@@ -52,6 +52,7 @@
       "soccer_epl",
       "soccer_fa_cup",
       "soccer_france_ligue_one",
+      "soccer_france_ligue_two",
       "soccer_germany_bundesliga",
       "soccer_germany_bundesliga2",
       "soccer_germany_dfb_pokal",
@@ -77,7 +78,6 @@
       "soccer_switzerland_superleague",
       "soccer_turkey_super_league",
       "soccer_uefa_champs_league",
-      "soccer_uefa_europa_conference_league",
       "soccer_uefa_europa_league",
       "soccer_uefa_nations_league",
       "soccer_usa_mls"
@@ -94,10 +94,12 @@
     ],
     "competitionCoverageStatus": "seasonal_unavailable",
     "newlyInactiveSports": [
-      "soccer_england_efl_trophy"
+      "soccer_uefa_europa_conference_league"
     ],
     "newlyUnavailableSports": [],
-    "newlyAvailableSports": [],
+    "newlyAvailableSports": [
+      "soccer_france_ligue_two"
+    ],
     "quota": {
       "x-requests-remaining": "48",
       "x-requests-used": "452",
@@ -172,8 +174,8 @@
     "records": 50,
     "quota": {
       "x-ratelimit-limit": "1000",
-      "x-ratelimit-remaining": "965",
-      "x-ratelimit-reset": "1795737600"
+      "x-ratelimit-remaining": "964",
+      "x-ratelimit-reset": "1795824000"
     },
     "accepted": false,
     "policy": "Veertien dagen meten; nooit automatisch promoveren op basis van alleen een geldige key."
@@ -242,10 +244,10 @@
       "fixturesDate": {
         "valid": true,
         "status": 200,
-        "records": 0,
-        "firstId": null,
-        "firstName": null,
-        "hasOddsFlag": false,
+        "records": 1,
+        "firstId": 19713841,
+        "firstName": "Sønderjyske Fodbold vs Brøndby IF",
+        "hasOddsFlag": true,
         "rateLimit": {
           "resets_in_seconds": 3599,
           "remaining": 178,
@@ -305,7 +307,7 @@
         "firstName": "1",
         "hasOddsFlag": false,
         "rateLimit": {
-          "resets_in_seconds": 3599,
+          "resets_in_seconds": 3600,
           "remaining": 178,
           "requested_entity": "Odd"
         },
