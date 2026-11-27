@@ -1,6 +1,6 @@
 {
-  "generatedAt": "2026-11-26T04:11:35.234Z",
-  "date": "2026-11-26",
+  "generatedAt": "2026-11-27T04:17:05.590Z",
+  "date": "2026-11-27",
   "name": "Ruflo-style gratis AI monitor",
   "mode": "naast-productie",
   "productionSafe": true,
@@ -72,27 +72,17 @@
       "status": "unknown"
     },
     "control": {
-      "score": 36,
-      "summary": "Ontwikkelcontrole: 2 actieve monitorissues op 2026-11-26; digest 2026-11-17 t/m 2026-11-23.",
-      "latestDay": "2026-11-26",
+      "score": 52,
+      "summary": "Ontwikkelcontrole: 1 actieve monitorissues op 2026-11-27; digest 2026-11-17 t/m 2026-11-23.",
+      "latestDay": "2026-11-27",
       "shouldPropose": true,
       "actions": [
         {
           "priority": "high",
-          "title": "Workerdata is 329 minuten oud.",
+          "title": "Workerdata is 289 minuten oud.",
           "freeSolution": "Laat GitHub Actions schedule + manual dispatch draaien; geen mail nodig, alleen data committen.",
           "files": [
             ".github/workflows/worker.yml"
-          ],
-          "status": "monitor"
-        },
-        {
-          "priority": "medium",
-          "title": "Alle wedstrijden van vandaag hebben lege H2H-data.",
-          "freeSolution": "Vul H2H uit openfootball/football-data competitiebestanden voordat de UI leeg toont.",
-          "files": [
-            "scripts/server-worker.js",
-            "components/MatchCard.tsx"
           ],
           "status": "monitor"
         }
@@ -101,17 +91,9 @@
   },
   "topThemes": [
     {
-      "title": "Workerdata is 329 minuten oud.",
+      "title": "Workerdata is 289 minuten oud.",
       "count": 1,
       "priority": "high",
-      "agents": [
-        "control"
-      ]
-    },
-    {
-      "title": "Alle wedstrijden van vandaag hebben lege H2H-data.",
-      "count": 1,
-      "priority": "medium",
       "agents": [
         "control"
       ]
@@ -120,21 +102,10 @@
   "recommendedNextActions": [
     {
       "priority": "high",
-      "title": "Workerdata is 329 minuten oud.",
+      "title": "Workerdata is 289 minuten oud.",
       "freeSolution": "Laat GitHub Actions schedule + manual dispatch draaien; geen mail nodig, alleen data committen.",
       "files": [
         ".github/workflows/worker.yml"
-      ],
-      "status": "monitor",
-      "agent": "control"
-    },
-    {
-      "priority": "medium",
-      "title": "Alle wedstrijden van vandaag hebben lege H2H-data.",
-      "freeSolution": "Vul H2H uit openfootball/football-data competitiebestanden voordat de UI leeg toont.",
-      "files": [
-        "scripts/server-worker.js",
-        "components/MatchCard.tsx"
       ],
       "status": "monitor",
       "agent": "control"
