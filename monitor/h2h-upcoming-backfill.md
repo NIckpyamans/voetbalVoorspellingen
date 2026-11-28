@@ -1,45 +1,45 @@
 # Upcoming H2H Backfill
 
-Laatst bijgewerkt: 2026-11-27T23:52:31.101Z
-Gecontroleerd: 50
+Laatst bijgewerkt: 2026-11-28T03:24:41.653Z
+Gecontroleerd: 41
 Gevuld: 0
-Geen directe H2H: 50
+Geen directe H2H: 41
 Errors: 0
-Providerfouten: 111
+Providerfouten: 134
 Kwaliteitsgate: gedegradeerd (providers geblokkeerd in een volle batch)
 
-Openstaand na deze batch: 1
+Openstaand na deze batch: 0
 
 ## Aanbeveling
-API-Football H2H is onafhankelijk van fixture-acceptatie ingeschakeld; 3/3 beperkte paarpogingen gedaan. Er staan nog 1 fixtures in de wachtrij.
+Geen directe H2H gevonden voor de gecontroleerde wedstrijden. Breid team-ID mapping/providerdekking uit of accepteer expliciet no-direct-history voor deze fixtures.
 
 ## Gevuld
 
 ## Geen Directe H2H
-- 2026-11-28: Dynamo Dresden - St. Pauli (no_direct_history)
-- 2026-11-28: Lincoln City - Wolverhampton Wanderers (no_direct_history)
-- 2026-11-28: FC Cologne - SV Elversberg (no_direct_history)
-- 2026-11-28: Leeds United - Coventry City (rate_limited_locally)
-- 2026-11-28: Le Mans - Lille (rate_limited_locally)
-- 2026-11-28: Hertha Berlin - Karlsruher SC (rate_limited_locally)
-- 2026-11-28: Preston North End - Norwich City (rate_limited_locally)
-- 2026-11-28: Birmingham City - Bolton Wanderers (rate_limited_locally)
-- 2026-11-28: Queens Park Rangers - Sheffield United (rate_limited_locally)
-- 2026-11-28: West Bromwich Albion - Bristol City (rate_limited_locally)
-- 2026-11-28: West Ham United - Stoke City (rate_limited_locally)
-- 2026-11-29: ADO Den Haag - FC Utrecht (rate_limited_locally)
-- 2026-11-29: 1. FC Magdeburg - Energie Cottbus (rate_limited_locally)
-- 2026-11-29: AJ Auxerre - Marseille (rate_limited_locally)
-- 2026-11-29: Brighton & Hove Albion - Newcastle United (rate_limited_locally)
-- 2026-11-29: Feyenoord Rotterdam - Ajax Amsterdam (rate_limited_locally)
-- 2026-11-29: SpVgg Greuther Fürth - Arminia Bielefeld (rate_limited_locally)
-- 2026-11-29: Crystal Palace - Hull City (rate_limited_locally)
-- 2026-11-29: Fortuna Sittard - Heerenveen (rate_limited_locally)
-- 2026-11-29: TSV Eintracht Braunschweig - VfL Wolfsburg (rate_limited_locally)
+- 2026-12-06: VfL Wolfsburg - 1. FC Magdeburg (no_direct_history)
+- 2026-12-06: NAC Breda - FC Volendam (no_direct_history)
+- 2026-12-06: ADO Den Haag - Excelsior (no_direct_history)
+- 2026-12-06: SV Elversberg - VfB Stuttgart (rate_limited_locally)
+- 2026-12-08: Villarreal - Sabah FK (rate_limited_locally)
+- 2026-12-08: Swansea City - Bolton Wanderers (rate_limited_locally)
+- 2026-12-08: AEK Athens - Galatasaray (rate_limited_locally)
+- 2026-12-08: West Bromwich Albion - Cardiff City (rate_limited_locally)
+- 2026-12-08: AS Roma - Sporting CP (rate_limited_locally)
+- 2026-12-08: West Ham United - Middlesbrough (rate_limited_locally)
+- 2026-12-08: Aston Villa - Paris Saint-Germain (rate_limited_locally)
+- 2026-12-08: Barcelona - Manchester City (rate_limited_locally)
+- 2026-12-08: Bayern Munich - Slavia Prague (rate_limited_locally)
+- 2026-12-08: Manchester United - RB Leipzig (rate_limited_locally)
+- 2026-12-08: Napoli - Club Brugge (rate_limited_locally)
+- 2026-12-09: Real Betis - Como (rate_limited_locally)
+- 2026-12-09: Slovan Bratislava - Shakhtar Donetsk (rate_limited_locally)
+- 2026-12-09: Borussia Dortmund - Internazionale (rate_limited_locally)
+- 2026-12-09: LASK Linz - Fenerbahce (rate_limited_locally)
+- 2026-12-09: Lens - Bodo/Glimt (rate_limited_locally)
 
 ## Providerfouten
-- 50× goal-api: acceptance_gate_closed
-- 47× api-football: rate_limited_locally
-- 10× espn-team-schedule: team_mapping_missing
+- 41× goal-api: acceptance_gate_closed
+- 38× api-football: rate_limited_locally
+- 32× football-data-co-uk: not_configured
+- 20× espn-team-schedule: team_mapping_missing
 - 3× api-football: team_mapping_missing
-- 1× football-data-co-uk: not_configured
